@@ -9,18 +9,13 @@ import (
 	"testing"
 
 	"github.com/cshum/imagor-studio/server/internal/license"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
 
-// LicenseServiceInterface defines the interface for license service
-type LicenseServiceInterface interface {
-	GetLicenseStatus(ctx context.Context, includeDetails bool) (*license.LicenseStatus, error)
-	ActivateLicense(ctx context.Context, key string) (*license.LicenseStatus, error)
-}
-
-// MockLicenseService is a mock implementation of the license service
+// MockLicenseService is a mock implementation of LicenseServicer
 type MockLicenseService struct {
 	mock.Mock
 }
@@ -35,84 +30,6 @@ func (m *MockLicenseService) ActivateLicense(ctx context.Context, key string) (*
 	return args.Get(0).(*license.LicenseStatus), args.Error(1)
 }
 
-// TestLicenseHandler wraps the real handler but accepts our interface
-type TestLicenseHandler struct {
-	service LicenseServiceInterface
-	logger  *zap.Logger
-}
-
-func NewTestLicenseHandler(service LicenseServiceInterface, logger *zap.Logger) *TestLicenseHandler {
-	return &TestLicenseHandler{
-		service: service,
-		logger:  logger,
-	}
-}
-
-func (h *TestLicenseHandler) GetPublicStatus() http.HandlerFunc {
-	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
-		status, err := h.service.GetLicenseStatus(r.Context(), false) // false for public access
-		if err != nil {
-			h.logger.Error("Failed to get public license status", zap.Error(err))
-			// Return a safe default status instead of exposing the error
-			status = &license.LicenseStatus{
-				IsLicensed:     false,
-				Message:        "Support ongoing development",
-				SupportMessage: stringPtr("From the creator of imagor & vipsgen"),
-			}
-		}
-
-		// Convert to public response format (hide sensitive fields)
-		response := map[string]interface{}{
-			"isLicensed": status.IsLicensed,
-			"message":    status.Message,
-		}
-
-		if status.LicenseType != "" {
-			response["licenseType"] = status.LicenseType
-		}
-
-		if status.SupportMessage != nil {
-			response["supportMessage"] = *status.SupportMessage
-		}
-
-		return WriteSuccess(w, response)
-	})
-}
-
-func (h *TestLicenseHandler) ActivateLicense() http.HandlerFunc {
-	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
-		var request struct {
-			Key string `json:"key"`
-		}
-
-		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-			return WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
-		}
-
-		if request.Key == "" {
-			return WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "License key is required"})
-		}
-
-		status, err := h.service.ActivateLicense(r.Context(), request.Key)
-		if err != nil {
-			h.logger.Error("Failed to activate license", zap.Error(err))
-			return WriteJSON(w, http.StatusBadRequest, map[string]string{"error": "Failed to activate license: " + err.Error()})
-		}
-
-		// Convert to public response format
-		response := map[string]interface{}{
-			"isLicensed": status.IsLicensed,
-			"message":    status.Message,
-		}
-
-		if status.LicenseType != "" {
-			response["licenseType"] = status.LicenseType
-		}
-
-		return WriteSuccess(w, response)
-	})
-}
-
 func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -120,7 +37,7 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 		mockStatus     *license.LicenseStatus
 		mockError      error
 		expectedStatus int
-		expectedBody   map[string]interface{}
+		checkBody      func(t *testing.T, body map[string]interface{})
 	}{
 		{
 			name:   "successful unlicensed status",
@@ -132,10 +49,12 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 			},
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody: map[string]interface{}{
-				"isLicensed":     false,
-				"message":        "Support ongoing development",
-				"supportMessage": "From the creator of imagor & vipsgen",
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, false, body["isLicensed"])
+				assert.Equal(t, "Support ongoing development", body["message"])
+				assert.Equal(t, "From the creator of imagor & vipsgen", body["supportMessage"])
+				assert.Nil(t, body["appTitle"])
+				assert.Nil(t, body["appUrl"])
 			},
 		},
 		{
@@ -148,10 +67,10 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 			},
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody: map[string]interface{}{
-				"isLicensed":  true,
-				"licenseType": "personal",
-				"message":     "Licensed",
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, true, body["isLicensed"])
+				assert.Equal(t, "personal", body["licenseType"])
+				assert.Equal(t, "Licensed", body["message"])
 			},
 		},
 		{
@@ -160,10 +79,10 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 			mockStatus:     nil,
 			mockError:      assert.AnError,
 			expectedStatus: http.StatusOK,
-			expectedBody: map[string]interface{}{
-				"isLicensed":     false,
-				"message":        "Support ongoing development",
-				"supportMessage": "From the creator of imagor & vipsgen",
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, false, body["isLicensed"])
+				assert.Equal(t, "Support ongoing development", body["message"])
+				assert.Equal(t, "From the creator of imagor & vipsgen", body["supportMessage"])
 			},
 		},
 		{
@@ -175,36 +94,136 @@ func TestLicenseHandler_GetPublicStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup
 			mockService := new(MockLicenseService)
 			logger := zap.NewNop()
-			handler := NewTestLicenseHandler(mockService, logger)
+			handler := NewLicenseHandler(mockService, nil, logger)
 
-			// Setup mock expectations
 			if tt.method == "GET" && tt.mockStatus != nil {
 				mockService.On("GetLicenseStatus", mock.Anything, false).Return(tt.mockStatus, tt.mockError)
 			} else if tt.method == "GET" && tt.mockError != nil {
 				mockService.On("GetLicenseStatus", mock.Anything, false).Return((*license.LicenseStatus)(nil), tt.mockError)
 			}
 
-			// Create request
 			req := httptest.NewRequest(tt.method, "/api/public/license-status", nil)
 			w := httptest.NewRecorder()
-
-			// Execute
 			handler.GetPublicStatus()(w, req)
 
-			// Assert
 			assert.Equal(t, tt.expectedStatus, w.Code)
-
-			if tt.expectedStatus == http.StatusOK {
-				var response map[string]interface{}
-				err := json.Unmarshal(w.Body.Bytes(), &response)
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedBody, response)
+			if tt.expectedStatus == http.StatusOK && tt.checkBody != nil {
+				var body map[string]interface{}
+				assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+				tt.checkBody(t, body)
 			}
+			mockService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestLicenseHandler_GetPublicStatus_Brand(t *testing.T) {
+	tests := []struct {
+		name          string
+		mockStatus    *license.LicenseStatus
+		registrySetup func(m *MockRegistryStore)
+		checkBody     func(t *testing.T, body map[string]interface{})
+	}{
+		{
+			name: "licensed with brand values returns appTitle and appUrl",
+			mockStatus: &license.LicenseStatus{
+				IsLicensed:  true,
+				LicenseType: "personal",
+				Message:     "Licensed",
+			},
+			registrySetup: func(m *MockRegistryStore) {
+				m.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+					[]string{"config.app_title", "config.app_url"}).
+					Return([]*registrystore.Registry{
+						{Key: "config.app_title", Value: "My Studio"},
+						{Key: "config.app_url", Value: "https://example.com"},
+					}, nil)
+			},
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, true, body["isLicensed"])
+				assert.Equal(t, "My Studio", body["appTitle"])
+				assert.Equal(t, "https://example.com", body["appUrl"])
+			},
+		},
+		{
+			name: "licensed with empty brand values omits appTitle and appUrl",
+			mockStatus: &license.LicenseStatus{
+				IsLicensed:  true,
+				LicenseType: "personal",
+				Message:     "Licensed",
+			},
+			registrySetup: func(m *MockRegistryStore) {
+				m.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+					[]string{"config.app_title", "config.app_url"}).
+					Return([]*registrystore.Registry{
+						{Key: "config.app_title", Value: "   "},
+						{Key: "config.app_url", Value: ""},
+					}, nil)
+			},
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, true, body["isLicensed"])
+				assert.Nil(t, body["appTitle"])
+				assert.Nil(t, body["appUrl"])
+			},
+		},
+		{
+			name: "licensed with registry error omits brand fields",
+			mockStatus: &license.LicenseStatus{
+				IsLicensed:  true,
+				LicenseType: "personal",
+				Message:     "Licensed",
+			},
+			registrySetup: func(m *MockRegistryStore) {
+				m.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+					[]string{"config.app_title", "config.app_url"}).
+					Return([]*registrystore.Registry{}, assert.AnError)
+			},
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, true, body["isLicensed"])
+				assert.Nil(t, body["appTitle"])
+				assert.Nil(t, body["appUrl"])
+			},
+		},
+		{
+			name: "unlicensed does not call registry",
+			mockStatus: &license.LicenseStatus{
+				IsLicensed: false,
+				Message:    "Support ongoing development",
+			},
+			registrySetup: func(m *MockRegistryStore) {
+				// no expectations — GetMulti must NOT be called
+			},
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, false, body["isLicensed"])
+				assert.Nil(t, body["appTitle"])
+				assert.Nil(t, body["appUrl"])
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockService := new(MockLicenseService)
+			mockRegistry := new(MockRegistryStore)
+			logger := zap.NewNop()
+			handler := NewLicenseHandler(mockService, mockRegistry, logger)
+
+			mockService.On("GetLicenseStatus", mock.Anything, false).Return(tt.mockStatus, nil)
+			tt.registrySetup(mockRegistry)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/public/license-status", nil)
+			w := httptest.NewRecorder()
+			handler.GetPublicStatus()(w, req)
+
+			assert.Equal(t, http.StatusOK, w.Code)
+			var body map[string]interface{}
+			assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+			tt.checkBody(t, body)
 
 			mockService.AssertExpectations(t)
+			mockRegistry.AssertExpectations(t)
 		})
 	}
 }
@@ -217,7 +236,7 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 		mockStatus     *license.LicenseStatus
 		mockError      error
 		expectedStatus int
-		expectedBody   map[string]interface{}
+		checkBody      func(t *testing.T, body map[string]interface{})
 	}{
 		{
 			name:   "successful activation",
@@ -233,10 +252,11 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 			},
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody: map[string]interface{}{
-				"isLicensed":  true,
-				"licenseType": "personal",
-				"message":     "License activated successfully",
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, true, body["isLicensed"])
+				assert.Equal(t, "personal", body["licenseType"])
+				assert.Equal(t, "test@example.com", body["email"])
+				assert.Equal(t, "License activated successfully", body["message"])
 			},
 		},
 		{
@@ -248,8 +268,8 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 			mockStatus:     nil,
 			mockError:      assert.AnError,
 			expectedStatus: http.StatusBadRequest,
-			expectedBody: map[string]interface{}{
-				"error": "Failed to activate license: assert.AnError general error for testing",
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, "Failed to activate license: assert.AnError general error for testing", body["error"])
 			},
 		},
 		{
@@ -261,8 +281,8 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 			mockStatus:     nil,
 			mockError:      nil,
 			expectedStatus: http.StatusBadRequest,
-			expectedBody: map[string]interface{}{
-				"error": "License key is required",
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, "License key is required", body["error"])
 			},
 		},
 		{
@@ -274,8 +294,8 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 			mockStatus:     nil,
 			mockError:      nil,
 			expectedStatus: http.StatusBadRequest,
-			expectedBody: map[string]interface{}{
-				"error": "License key is required",
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, "License key is required", body["error"])
 			},
 		},
 		{
@@ -285,8 +305,8 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 			mockStatus:     nil,
 			mockError:      nil,
 			expectedStatus: http.StatusBadRequest,
-			expectedBody: map[string]interface{}{
-				"error": "Invalid request body",
+			checkBody: func(t *testing.T, body map[string]interface{}) {
+				assert.Equal(t, "Invalid request body", body["error"])
 			},
 		},
 		{
@@ -299,12 +319,10 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup
 			mockService := new(MockLicenseService)
 			logger := zap.NewNop()
-			handler := NewTestLicenseHandler(mockService, logger)
+			handler := NewLicenseHandler(mockService, nil, logger)
 
-			// Setup mock expectations
 			if tt.method == "POST" && tt.mockStatus != nil {
 				key := tt.requestBody.(map[string]string)["key"]
 				mockService.On("ActivateLicense", mock.Anything, key).Return(tt.mockStatus, tt.mockError)
@@ -313,7 +331,6 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 				mockService.On("ActivateLicense", mock.Anything, key).Return((*license.LicenseStatus)(nil), tt.mockError)
 			}
 
-			// Create request
 			var req *http.Request
 			if tt.requestBody != nil {
 				var body []byte
@@ -331,32 +348,26 @@ func TestLicenseHandler_ActivateLicense(t *testing.T) {
 			}
 
 			w := httptest.NewRecorder()
-
-			// Execute
 			handler.ActivateLicense()(w, req)
 
-			// Assert
 			assert.Equal(t, tt.expectedStatus, w.Code)
-
-			if tt.expectedStatus == http.StatusOK || tt.expectedStatus == http.StatusBadRequest {
-				var response map[string]interface{}
-				err := json.Unmarshal(w.Body.Bytes(), &response)
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedBody, response)
+			if tt.checkBody != nil {
+				var body map[string]interface{}
+				assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+				tt.checkBody(t, body)
 			}
-
 			mockService.AssertExpectations(t)
 		})
 	}
 }
 
 func TestLicenseHandler_Integration(t *testing.T) {
-	// Test the integration between both endpoints
 	mockService := new(MockLicenseService)
+	mockRegistry := new(MockRegistryStore)
 	logger := zap.NewNop()
-	handler := NewTestLicenseHandler(mockService, logger)
+	handler := NewLicenseHandler(mockService, mockRegistry, logger)
 
-	// Test 1: Check unlicensed status
+	// Test 1: Check unlicensed status — registry must NOT be called
 	mockService.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{
 		IsLicensed:     false,
 		Message:        "Support ongoing development",
@@ -369,9 +380,9 @@ func TestLicenseHandler_Integration(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
 	assert.False(t, response["isLicensed"].(bool))
+	assert.Nil(t, response["appTitle"])
 
 	// Test 2: Activate license
 	mockService.On("ActivateLicense", mock.Anything, "valid-key").Return(&license.LicenseStatus{
@@ -380,46 +391,50 @@ func TestLicenseHandler_Integration(t *testing.T) {
 		Message:     "License activated successfully",
 	}, nil).Once()
 
-	requestBody := map[string]string{"key": "valid-key"}
-	body, _ := json.Marshal(requestBody)
-	req = httptest.NewRequest("POST", "/api/public/activate-license", bytes.NewReader(body))
+	reqBody, _ := json.Marshal(map[string]string{"key": "valid-key"})
+	req = httptest.NewRequest("POST", "/api/public/activate-license", bytes.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 	handler.ActivateLicense()(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	err = json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
 	assert.True(t, response["isLicensed"].(bool))
 	assert.Equal(t, "personal", response["licenseType"])
 
-	// Test 3: Check licensed status
+	// Test 3: Check licensed status with brand values
 	mockService.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{
 		IsLicensed:  true,
 		LicenseType: "personal",
 		Message:     "Licensed",
 	}, nil).Once()
+	mockRegistry.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+		[]string{"config.app_title", "config.app_url"}).
+		Return([]*registrystore.Registry{
+			{Key: "config.app_title", Value: "Acme Studio"},
+			{Key: "config.app_url", Value: "https://acme.example.com"},
+		}, nil).Once()
 
 	req = httptest.NewRequest("GET", "/api/public/license-status", nil)
 	w = httptest.NewRecorder()
 	handler.GetPublicStatus()(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	err = json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
 	assert.True(t, response["isLicensed"].(bool))
-	assert.Equal(t, "personal", response["licenseType"])
+	assert.Equal(t, "Acme Studio", response["appTitle"])
+	assert.Equal(t, "https://acme.example.com", response["appUrl"])
 
 	mockService.AssertExpectations(t)
+	mockRegistry.AssertExpectations(t)
 }
 
-func TestNewTestLicenseHandler(t *testing.T) {
+func TestNewLicenseHandler(t *testing.T) {
 	mockService := new(MockLicenseService)
+	mockRegistry := new(MockRegistryStore)
 	logger := zap.NewNop()
 
-	handler := NewTestLicenseHandler(mockService, logger)
+	handler := NewLicenseHandler(mockService, mockRegistry, logger)
 
 	assert.NotNil(t, handler)
-	assert.Equal(t, mockService, handler.service)
-	assert.Equal(t, logger, handler.logger)
 }

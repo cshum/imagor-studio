@@ -1,6 +1,7 @@
 package httphandler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -10,13 +11,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// LicenseServicer is the interface used by LicenseHandler for license operations.
+type LicenseServicer interface {
+	GetLicenseStatus(ctx context.Context, includeDetails bool) (*license.LicenseStatus, error)
+	ActivateLicense(ctx context.Context, key string) (*license.LicenseStatus, error)
+}
+
 type LicenseHandler struct {
-	licenseService *license.Service
+	licenseService LicenseServicer
 	registryStore  registrystore.Store
 	logger         *zap.Logger
 }
 
-func NewLicenseHandler(licenseService *license.Service, registryStore registrystore.Store, logger *zap.Logger) *LicenseHandler {
+func NewLicenseHandler(licenseService LicenseServicer, registryStore registrystore.Store, logger *zap.Logger) *LicenseHandler {
 	return &LicenseHandler{
 		licenseService: licenseService,
 		registryStore:  registryStore,
