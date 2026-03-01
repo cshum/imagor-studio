@@ -1,6 +1,7 @@
 import { activateLicense as activateLicenseAPI } from '@/api/license-api'
 import { getBaseUrl } from '@/lib/api-utils.ts'
 import { createStore } from '@/lib/create-store'
+import { setBrand } from '@/stores/brand-store'
 
 const BASE_URL = getBaseUrl()
 
@@ -129,6 +130,8 @@ export const checkLicense = async () => {
         supportMessage: data.supportMessage || undefined,
       },
     })
+    // Populate brand from the same public response (only set when licensed)
+    setBrand(data.appTitle || '', data.appUrl || '')
   } catch {
     // Fallback for public access
     licenseStore.dispatch({

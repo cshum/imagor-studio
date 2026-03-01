@@ -90,7 +90,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
 
 	// License endpoints (public - no auth required)
-	licenseHandler := httphandler.NewLicenseHandler(services.LicenseService, services.Logger)
+	licenseHandler := httphandler.NewLicenseHandler(services.LicenseService, services.RegistryStore, services.Logger)
 	mux.HandleFunc("/api/public/license-status", licenseHandler.GetPublicStatus())
 	mux.HandleFunc("/api/public/activate-license", licenseHandler.ActivateLicense())
 

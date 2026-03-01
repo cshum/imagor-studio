@@ -1,4 +1,3 @@
-import { getSystemRegistryMultiple } from '@/api/registry-api'
 import { createStore } from '@/lib/create-store'
 
 export interface BrandState {
@@ -30,21 +29,6 @@ const reducer = (state: BrandState, action: BrandAction): BrandState => {
 }
 
 export const brandStore = createStore(initialState, reducer)
-
-export const loadBrand = async () => {
-  try {
-    const entries = await getSystemRegistryMultiple(['config.app_title', 'config.app_url'])
-    const titleEntry = entries.find((e) => e.key === 'config.app_title')
-    const urlEntry = entries.find((e) => e.key === 'config.app_url')
-    brandStore.dispatch({
-      type: 'SET_BRAND',
-      title: titleEntry?.value?.trim() || '',
-      url: urlEntry?.value?.trim() || '',
-    })
-  } catch {
-    brandStore.dispatch({ type: 'SET_BRAND', title: '', url: '' })
-  }
-}
 
 export const setBrand = (title: string, url: string) => {
   brandStore.dispatch({ type: 'SET_BRAND', title, url })
