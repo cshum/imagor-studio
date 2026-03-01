@@ -462,7 +462,8 @@
       "testConfigFirst": "请先填写 {{storageType}} 存储配置"
     },
     "systemSettings": {
-      "settingOverridden": "此设置被配置文件或环境变量覆盖"
+      "settingOverridden": "此设置被配置文件或环境变量覆盖",
+      "licenseRequired": "使用此设置需要有效的许可证"
     },
     "imagor": {
       "imagorConfiguration": "Imagor 配置",

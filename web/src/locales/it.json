@@ -459,7 +459,8 @@
       "testConfigFirst": "Compila prima la configurazione di archiviazione {{storageType}}"
     },
     "systemSettings": {
-      "settingOverridden": "Questa impostazione è sovrascritta dal file di configurazione o dalla variabile d'ambiente"
+      "settingOverridden": "Questa impostazione è sovrascritta dal file di configurazione o dalla variabile d'ambiente",
+      "licenseRequired": "Per utilizzare questa impostazione è necessaria una licenza valida"
     },
     "imagor": {
       "imagorConfiguration": "Configurazione Imagor",
