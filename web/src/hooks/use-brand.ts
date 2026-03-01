@@ -1,4 +1,3 @@
-import { brandStore } from '@/stores/brand-store'
 import { licenseStore } from '@/stores/license-store'
 
 const DEFAULT_TITLE = 'Imagor Studio'
@@ -10,8 +9,7 @@ const DEFAULT_URL = 'https://imagor.net'
  * otherwise falls back to the Imagor Studio defaults.
  */
 export function useBrand(): { title: string; url: string } {
-  const { isLicensed } = licenseStore.useStore()
-  const { appTitle, appUrl } = brandStore.useStore()
+  const { isLicensed, appTitle, appUrl } = licenseStore.useStore()
 
   if (!isLicensed) {
     return { title: DEFAULT_TITLE, url: DEFAULT_URL }

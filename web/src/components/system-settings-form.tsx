@@ -18,9 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { extractErrorMessage } from '@/lib/error-utils'
-import { setBrand } from '@/stores/brand-store'
 import { setHomeTitle } from '@/stores/folder-tree-store'
-import { licenseStore } from '@/stores/license-store'
+import { licenseStore, setBrand } from '@/stores/license-store'
 
 export interface SystemSetting {
   key: string
