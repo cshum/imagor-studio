@@ -52,6 +52,7 @@ export interface SystemSettingsFormProps {
   onFormChange?: (values: Record<string, string>) => void
   showCard?: boolean
   hideUpdateButton?: boolean
+  compact?: boolean
 }
 
 export function SystemSettingsForm({
@@ -64,6 +65,7 @@ export function SystemSettingsForm({
   onFormChange,
   showCard = true,
   hideUpdateButton = false,
+  compact = false,
 }: SystemSettingsFormProps) {
   const router = useRouter()
   const { t } = useTranslation()
@@ -256,7 +258,11 @@ export function SystemSettingsForm({
       return (
         <div
           key={setting.key}
-          className='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
+          className={
+            compact
+              ? 'flex flex-col gap-2 px-4 py-3'
+              : 'flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
+          }
         >
           <div className='min-w-0 flex-1 space-y-0.5'>
             <Label htmlFor={setting.key} className='text-sm font-medium'>
@@ -282,7 +288,7 @@ export function SystemSettingsForm({
               )}
             </div>
           </div>
-          <div className='w-full shrink-0 sm:w-72 lg:w-100'>
+          <div className={compact ? 'w-full' : 'w-full shrink-0 sm:w-72 lg:w-100'}>
             <Input
               id={setting.key}
               value={isLicenseRequired ? '' : effectiveValue}
@@ -303,7 +309,11 @@ export function SystemSettingsForm({
       return (
         <div
           key={setting.key}
-          className='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
+          className={
+            compact
+              ? 'flex flex-col gap-2 px-4 py-3'
+              : 'flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
+          }
         >
           <div className='min-w-0 flex-1 space-y-0.5'>
             <Label htmlFor={setting.key} className='text-sm font-medium'>
@@ -318,7 +328,7 @@ export function SystemSettingsForm({
               )}
             </div>
           </div>
-          <div className='w-full shrink-0 sm:w-72 lg:w-100'>
+          <div className={compact ? 'w-full' : 'w-full shrink-0 sm:w-72 lg:w-100'}>
             <Select
               value={effectiveValue}
               onValueChange={(value: string) => {

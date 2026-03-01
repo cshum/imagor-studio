@@ -218,6 +218,7 @@ function SystemSettingsStepContent({
         onFormChange={onFormValuesChange}
         hideUpdateButton={true}
         showCard={false}
+        compact={true}
       />
 
       {/* Navigation */}
