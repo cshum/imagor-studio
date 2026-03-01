@@ -96,6 +96,7 @@
     height: 100%;
     width: 100%;
     overflow-x: hidden;
+    overscroll-behavior: none;
   }
 
   body {
@@ -107,6 +108,7 @@
     min-height: 100%;
     width: 100%;
     overflow-x: hidden;
+    overscroll-behavior: none;
   }
 
   button,

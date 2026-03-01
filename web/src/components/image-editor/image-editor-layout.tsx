@@ -337,7 +337,7 @@ export function ImageEditorLayout({
         </div>
 
         {/* Status bar */}
-        <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden border-t px-4'>
+        <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
           <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
             {imagorPath}
           </code>
@@ -409,7 +409,7 @@ export function ImageEditorLayout({
       </DndContext>
 
       {/* Status bar */}
-      <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden border-t px-4'>
+      <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
         <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
           {imagorPath}
         </code>
