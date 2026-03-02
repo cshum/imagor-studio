@@ -147,10 +147,10 @@ export class ImageEditor {
   private abortController: AbortController | null = null
   private lastPreviewUrl: string | null = null
   private previewLoadResolvers: Array<() => void> = []
-  // Snapshot of the "clean" state set by the loader (after importTemplate for templates,
-  // or {} for plain images). initialize() restores this so that navigating back to the
-  // same cached instance always starts from the original loader state — not from
-  // whatever edits the user made in the previous session.
+  // Snapshot of the "clean" state set by the loader. Defaults to {} for plain images
+  // (no explicit markInitialState() needed). For templates, markInitialState() is called
+  // after importTemplate() to capture the full template state. initialize() restores this
+  // snapshot so navigating back to the cached instance always starts fresh.
   private cleanInitialState: ImageEditorState = {}
   private undoStack: ImageEditorState[] = []
   private redoStack: ImageEditorState[] = []
@@ -219,6 +219,11 @@ export class ImageEditor {
     // state set by importTemplate() in the loader — so navigating back always
     // discards the user's unsaved edits and shows the original template.
     this.state = { ...this.cleanInitialState }
+    // Notify React immediately so slider/control state reflects the reset.
+    // Without this, the useState lazy initializer in the page component may
+    // have captured stale dirty state from the cached instance, and sliders
+    // would not reset until the user interacts with them.
+    this.callbacks.onStateChange?.(this.getState())
   }
 
   /**
