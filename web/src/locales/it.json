@@ -549,7 +549,7 @@
         "dragAndDrop": "Gestione drag-and-drop — carica, organizza, selezione multipla per operazioni bulk",
         "nonDestructiveWorkflow": "Workflow non distruttivo — originali intoccati, tutte le trasformazioni via URL"
       },
-      "supportOngoingDevelopment": "Nessun abbonamento. Nessun vendor lock-in. Il tuo supporto mantiene tutto questo.",
+      "supportOngoingDevelopment": "Nessun abbonamento. Nessun vendor lock-in. Il tuo supporto consente uno sviluppo continuo.",
       "getEarlyBirdLicense": "Ottieni la licenza Early Bird ($39)",
       "licenseTypes": {
         "early_bird": "Early Bird",

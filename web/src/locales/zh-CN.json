@@ -552,7 +552,7 @@
         "dragAndDrop": "拖放管理——上传、整理、批量多选操作",
         "nonDestructiveWorkflow": "非破坏性工作流程——原始文件保持不变，所有变换均通过 URL 应用"
       },
-      "supportOngoingDevelopment": "无订阅费。不锁定供应商。您的支持使这一切持续。",
+      "supportOngoingDevelopment": "无订阅费。不锁定供应商。您的支持让持续开发成为可能。",
       "getEarlyBirdLicense": "获取早鸟许可证（$39）",
       "licenseTypes": {
         "early_bird": "早鸟",
