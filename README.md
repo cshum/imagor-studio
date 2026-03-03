@@ -5,9 +5,11 @@
 
 Self-hosted image gallery with built-in editing. Virtual scrolling, drag-and-drop management, multi-layer compositing, and template workflows.
 
-* Image editing with real-time preview, multi-layer compositing, and template workflows
-* Template workflows stored as portable JSON files for reusable editing
-* Non-destructive editing - all transformations are URL-based, originals stay safe
+* Virtual Scrolling Gallery — browse thousands of images instantly, no indexing or waiting
+* Image Editing — multi-layer compositing, template workflows with instant URL generation
+* Drag-and-Drop Management — upload, organize, multi-select for bulk operations
+* Non-Destructive Workflow — originals untouched, all transformations via URL
+No
 
 ![Screenshots](assets/screenshots.jpg)
 

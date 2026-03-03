@@ -42,11 +42,10 @@ Save editing workflows as reusable templates. Stored as portable JSON files, app
 ## Key Features
 
 - **Self-hosted image management** - Full control over your image library and data
-- **No subscriptions or premium tiers** - Open source with optional one-time supporter license
 - **Virtual scrolling gallery** - Browse thousands of images instantly with efficient rendering
 - **URL-based transformations** - Non-destructive image processing powered by [imagor](https://github.com/cshum/imagor) and libvips
-- **Template-driven workflows** - Save and reuse editing workflows in open JSON format
 - **Multi-layer compositing** - Stack and composite multiple images with independent transformations
+- **Template-driven workflows** - Save and reuse editing workflows in open JSON format
 - **Universal storage support** - Works with local filesystem, S3, MinIO, Cloudflare R2, and more
 
 ## What Makes Imagor Studio Special?
