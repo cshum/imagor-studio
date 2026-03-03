@@ -46,11 +46,6 @@ export function GalleryDropZone({
     [],
   )
 
-  const handleFilesDropped = useCallback(() => {
-    // Scroll to top when files are dropped
-    window.scrollTo({ top: 0 })
-  }, [])
-
   const {
     isDragActive,
     files,
@@ -62,7 +57,6 @@ export function GalleryDropZone({
     isUploading,
   } = useDragDrop({
     onFileUpload: handleFileUpload,
-    onFilesDropped: handleFilesDropped,
     existingFiles,
     currentPath,
     imageExtensions,
