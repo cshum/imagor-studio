@@ -511,6 +511,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       fontSize: Math.max(12, Math.round(outputDims.height * 0.05)),
       color: '000000',
       width: 0,
+      height: 0,
       align: 'low' as const,
       justify: false,
       wrap: 'word' as const,

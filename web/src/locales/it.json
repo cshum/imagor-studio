@@ -834,6 +834,7 @@
       "textAlignment": "Allineamento",
       "justifyText": "Giustifica",
       "wrapWidth": "Larghezza Testo",
+      "layerHeight": "Altezza",
       "wrapMode": "Modalità A Capo",
       "lineSpacing": "Interlinea",
       "wrapModes": {

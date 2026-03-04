@@ -173,14 +173,47 @@ export function calculateTextLayerBoundingBox(
     width = 200 // safe fallback
   }
 
-  // --- Estimate height ---
-  const lineCount = Math.max(1, layer.text.split('\n').length)
-  const height = Math.max(
-    layer.fontSize,
-    Math.round(lineCount * layer.fontSize * LINE_HEIGHT_FACTOR),
-  )
+  // --- Resolve height ---
+  // height is user-settable; line count does NOT affect it.
+  // The imagor text() filter auto-sizes height server-side based on wrap width — we
+  // just need a stable bounding-box estimate for the UI overlay.
+  let height: number
+  const rawHeight = layer.height
 
-  return { width: Math.round(width), height }
+  if (typeof rawHeight === 'number') {
+    if (rawHeight > 0) {
+      height = rawHeight
+    } else {
+      // 0 = auto: single-line estimate, independent of line count
+      height = Math.max(layer.fontSize, Math.round(layer.fontSize * LINE_HEIGHT_FACTOR))
+    }
+  } else if (typeof rawHeight === 'string') {
+    const fullH = parentDimensions?.height ?? 400
+    if (rawHeight === 'f' || rawHeight === 'full') {
+      height = fullH
+    } else {
+      const fullMinusMatch = rawHeight.match(/^(?:f|full)-(\d+)$/)
+      if (fullMinusMatch) {
+        height = Math.max(1, fullH - parseInt(fullMinusMatch[1]))
+      } else {
+        const pctMatch = rawHeight.match(/^(\d+(?:\.\d+)?)p$/)
+        if (pctMatch) {
+          height = Math.round(fullH * (parseFloat(pctMatch[1]) / 100))
+        } else {
+          const floatVal = parseFloat(rawHeight)
+          height = isNaN(floatVal)
+            ? Math.max(layer.fontSize, Math.round(layer.fontSize * LINE_HEIGHT_FACTOR))
+            : floatVal <= 1
+              ? Math.round(fullH * floatVal)
+              : floatVal
+        }
+      }
+    }
+  } else {
+    height = Math.max(layer.fontSize, Math.round(layer.fontSize * LINE_HEIGHT_FACTOR))
+  }
+
+  return { width: Math.round(width), height: Math.round(height) }
 }
 
 /**

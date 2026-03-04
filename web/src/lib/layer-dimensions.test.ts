@@ -563,6 +563,7 @@ const makeTextLayer = (overrides: Partial<TextLayer> = {}): TextLayer => ({
   fontSize: 20,
   color: '000000',
   width: 0, // unconstrained by default
+  height: 0, // auto (single-line estimate) by default
   align: 'low',
   justify: false,
   wrap: 'word',
@@ -620,27 +621,59 @@ describe('calculateTextLayerBoundingBox', () => {
   describe('height resolution', () => {
     const LINE_HEIGHT_FACTOR = 1.4
 
-    it('single line: height = round(fontSize * LINE_HEIGHT_FACTOR)', () => {
+    it('height=0 (auto): returns single-line estimate, ignores line count', () => {
       const result = calculateTextLayerBoundingBox(
-        makeTextLayer({ text: 'Hello', fontSize: 20, width: 200 }),
+        makeTextLayer({ text: 'Hello', fontSize: 20, width: 200, height: 0 }),
         parent,
       )
-      // 1 line: max(20, round(1 * 20 * 1.4)) = max(20, 28) = 28
-      expect(result.height).toBe(Math.round(1 * 20 * LINE_HEIGHT_FACTOR))
+      // Auto: max(20, round(20 * 1.4)) = 28 — line count does NOT matter
+      expect(result.height).toBe(Math.round(20 * LINE_HEIGHT_FACTOR))
     })
 
-    it('multi-line: height scales with line count', () => {
+    it('multi-line text does NOT change height when height=0 (auto)', () => {
       const result = calculateTextLayerBoundingBox(
-        makeTextLayer({ text: 'Line1\nLine2\nLine3', fontSize: 20, width: 200 }),
+        makeTextLayer({ text: 'Line1\nLine2\nLine3', fontSize: 20, width: 200, height: 0 }),
         parent,
       )
-      // 3 lines: round(3 * 20 * 1.4) = 84
-      expect(result.height).toBe(Math.round(3 * 20 * LINE_HEIGHT_FACTOR))
+      // Still single-line estimate: 28 — line count is ignored
+      expect(result.height).toBe(Math.round(20 * LINE_HEIGHT_FACTOR))
     })
 
-    it('height is at least fontSize (single large font)', () => {
+    it('explicit numeric height is used as-is', () => {
       const result = calculateTextLayerBoundingBox(
-        makeTextLayer({ text: 'X', fontSize: 50, width: 100 }),
+        makeTextLayer({ fontSize: 20, height: 120 }),
+        parent,
+      )
+      expect(result.height).toBe(120)
+    })
+
+    it('height="f" resolves to full parent height', () => {
+      const result = calculateTextLayerBoundingBox(
+        makeTextLayer({ height: 'f' }),
+        parent,
+      )
+      expect(result.height).toBe(600)
+    })
+
+    it('height="f-100" subtracts offset from parent height', () => {
+      const result = calculateTextLayerBoundingBox(
+        makeTextLayer({ height: 'f-100' }),
+        parent,
+      )
+      expect(result.height).toBe(500)
+    })
+
+    it('height="50p" resolves to 50% of parent height', () => {
+      const result = calculateTextLayerBoundingBox(
+        makeTextLayer({ height: '50p' }),
+        parent,
+      )
+      expect(result.height).toBe(300)
+    })
+
+    it('height is at least fontSize (single large font, auto)', () => {
+      const result = calculateTextLayerBoundingBox(
+        makeTextLayer({ text: 'X', fontSize: 50, width: 100, height: 0 }),
         parent,
       )
       expect(result.height).toBeGreaterThanOrEqual(50)

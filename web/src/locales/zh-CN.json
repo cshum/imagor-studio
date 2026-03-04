@@ -837,6 +837,7 @@
       "textAlignment": "对齐",
       "justifyText": "两端对齐",
       "wrapWidth": "换行宽度",
+      "layerHeight": "高度",
       "wrapMode": "换行模式",
       "lineSpacing": "行间距",
       "wrapModes": {

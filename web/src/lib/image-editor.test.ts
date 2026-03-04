@@ -3649,6 +3649,7 @@ describe('TextLayer support', () => {
     fontSize: 20,
     color: '000000',
     width: 0,
+    height: 0,
     align: 'low',
     justify: false,
     wrap: 'word',

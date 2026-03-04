@@ -593,13 +593,16 @@ export function PreviewArea({
                               layerHeight={layerOutputDims.height}
                               onLayerChange={(updates) => {
                                 if (selectedLayer.type === 'text') {
-                                  // Text layers: only x/y can be dragged
-                                  if (updates.x !== undefined || updates.y !== undefined) {
-                                    imageEditor.updateLayer(selectedLayerId, {
-                                      x: updates.x ?? selectedLayer.x,
-                                      y: updates.y ?? selectedLayer.y,
-                                    })
-                                  }
+                                  const layerUpdates: Partial<typeof selectedLayer> = {}
+                                  if (updates.x !== undefined) layerUpdates.x = updates.x
+                                  if (updates.y !== undefined) layerUpdates.y = updates.y
+                                  // Resize handles emit transforms.width/height — map to text layer's own fields
+                                  if (updates.transforms?.width !== undefined)
+                                    layerUpdates.width = updates.transforms.width
+                                  if (updates.transforms?.height !== undefined)
+                                    layerUpdates.height = updates.transforms.height
+                                  if (Object.keys(layerUpdates).length > 0)
+                                    imageEditor.updateLayer(selectedLayerId, layerUpdates)
                                 } else if (updates.transforms) {
                                   imageEditor.updateLayer(selectedLayerId, {
                                     ...updates,

@@ -63,7 +63,8 @@ export interface TextLayer {
   color: string // Hex without '#', default "000000"
 
   // Wrap
-  width: number | string // 0=unconstrained, px, "80p", "f", "f-N"
+  width: number | string // 0=unconstrained, px, "80p", "f", "f-N" — controls text wrap boundary
+  height: number | string // 0=auto (single-line estimate), px, "80p", "f", "f-N" — bounding box height only (not sent to imagor)
   align: TextAlign
   justify: boolean
   wrap: TextWrap

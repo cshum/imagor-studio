@@ -134,6 +134,23 @@ export function TextLayerControls({
     [onUpdate],
   )
 
+  const handleHeightChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = e.target.value.trim()
+      if (raw === '' || raw === '0') {
+        onUpdate({ height: 0 })
+      } else if (raw === 'f') {
+        onUpdate({ height: 'f' })
+      } else if (raw.endsWith('p')) {
+        onUpdate({ height: raw })
+      } else {
+        const n = parseInt(raw)
+        if (!isNaN(n) && n >= 0) onUpdate({ height: n })
+      }
+    },
+    [onUpdate],
+  )
+
   const handleWrapModeChange = useCallback(
     (value: string) => {
       onUpdate({ wrap: value as TextWrap })
@@ -171,6 +188,7 @@ export function TextLayerControls({
   const hasItalic = layer.fontStyle.includes('italic')
   const colorHex = `#${layer.color.padStart(6, '0')}`
   const wrapWidthDisplay = String(layer.width)
+  const heightDisplay = String(layer.height)
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -296,16 +314,28 @@ export function TextLayerControls({
         </Button>
       </div>
 
-      {/* Wrap Width */}
-      <div className='space-y-1.5'>
-        <Label className='text-sm font-medium'>{t('imageEditor.layers.wrapWidth')}</Label>
-        <Input
-          type='text'
-          value={wrapWidthDisplay}
-          onChange={handleWrapWidthChange}
-          placeholder='0 / px / 80p / f'
-          className='h-8'
-        />
+      {/* Wrap Width + Height row */}
+      <div className='flex gap-2'>
+        <div className='flex-1 space-y-1.5'>
+          <Label className='text-sm font-medium'>{t('imageEditor.layers.wrapWidth')}</Label>
+          <Input
+            type='text'
+            value={wrapWidthDisplay}
+            onChange={handleWrapWidthChange}
+            placeholder='0 / px / 80p / f'
+            className='h-8'
+          />
+        </div>
+        <div className='flex-1 space-y-1.5'>
+          <Label className='text-sm font-medium'>{t('imageEditor.layers.layerHeight')}</Label>
+          <Input
+            type='text'
+            value={heightDisplay}
+            onChange={handleHeightChange}
+            placeholder='0 / px / 80p / f'
+            className='h-8'
+          />
+        </div>
       </div>
 
       {/* Wrap Mode */}

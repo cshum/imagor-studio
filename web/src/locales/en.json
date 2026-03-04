@@ -815,6 +815,7 @@
       "textAlignment": "Alignment",
       "justifyText": "Justify",
       "wrapWidth": "Wrap Width",
+      "layerHeight": "Height",
       "wrapMode": "Wrap Mode",
       "lineSpacing": "Line Spacing",
       "wrapModes": {
