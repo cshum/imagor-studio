@@ -802,6 +802,33 @@
     "layers": {
       "title": "Layers",
       "addLayer": "Add Layer",
+      "addImageLayer": "Add Image Layer",
+      "addTextLayer": "Add Text Layer",
+      "textLayer": "Text Layer",
+      "textLayerDefaultText": "Text",
+      "editText": "Edit Text",
+      "textContent": "Text Content",
+      "fontFamily": "Font Family",
+      "fontStyle": "Style",
+      "fontSize": "Font Size",
+      "textColor": "Color",
+      "textAlignment": "Alignment",
+      "justifyText": "Justify",
+      "wrapWidth": "Wrap Width",
+      "wrapMode": "Wrap Mode",
+      "lineSpacing": "Line Spacing",
+      "wrapModes": {
+        "word": "Word",
+        "char": "Character",
+        "wordchar": "Word + Character",
+        "none": "None"
+      },
+      "fontStyles": {
+        "normal": "Regular",
+        "bold": "Bold",
+        "italic": "Italic",
+        "boldItalic": "Bold Italic"
+      },
       "noLayers": "No layers added yet",
       "layerNumber": "Layer {{number}}",
       "dragToReorder": "Drag to reorder",

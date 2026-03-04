@@ -824,6 +824,33 @@
     "layers": {
       "title": "圖層",
       "addLayer": "新增圖層",
+      "addImageLayer": "新增圖片圖層",
+      "addTextLayer": "新增文字圖層",
+      "textLayer": "文字圖層",
+      "textLayerDefaultText": "文字",
+      "editText": "編輯文字",
+      "textContent": "文字內容",
+      "fontFamily": "字體",
+      "fontStyle": "樣式",
+      "fontSize": "字級",
+      "textColor": "顏色",
+      "textAlignment": "對齊",
+      "justifyText": "左右對齊",
+      "wrapWidth": "換行寬度",
+      "wrapMode": "換行模式",
+      "lineSpacing": "行距",
+      "wrapModes": {
+        "word": "按詞",
+        "char": "按字",
+        "wordchar": "詞+字",
+        "none": "不換行"
+      },
+      "fontStyles": {
+        "normal": "一般",
+        "bold": "粗體",
+        "italic": "斜體",
+        "boldItalic": "粗斜體"
+      },
       "noLayers": "尚未新增圖層",
       "layerNumber": "圖層 {{number}}",
       "dragToReorder": "拖動以重新排序",

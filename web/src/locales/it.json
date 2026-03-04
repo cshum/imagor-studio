@@ -821,6 +821,33 @@
     "layers": {
       "title": "Livelli",
       "addLayer": "Aggiungi Livello",
+      "addImageLayer": "Aggiungi Livello Immagine",
+      "addTextLayer": "Aggiungi Livello Testo",
+      "textLayer": "Livello Testo",
+      "textLayerDefaultText": "Testo",
+      "editText": "Modifica Testo",
+      "textContent": "Contenuto Testo",
+      "fontFamily": "Famiglia Font",
+      "fontStyle": "Stile",
+      "fontSize": "Dimensione Font",
+      "textColor": "Colore",
+      "textAlignment": "Allineamento",
+      "justifyText": "Giustifica",
+      "wrapWidth": "Larghezza Testo",
+      "wrapMode": "Modalità A Capo",
+      "lineSpacing": "Interlinea",
+      "wrapModes": {
+        "word": "Parola",
+        "char": "Carattere",
+        "wordchar": "Parola + Carattere",
+        "none": "Nessuno"
+      },
+      "fontStyles": {
+        "normal": "Normale",
+        "bold": "Grassetto",
+        "italic": "Corsivo",
+        "boldItalic": "Grassetto Corsivo"
+      },
       "noLayers": "Nessun livello aggiunto ancora",
       "layerNumber": "Livello {{number}}",
       "dragToReorder": "Trascina per riordinare",

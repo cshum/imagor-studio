@@ -5,7 +5,7 @@
  * accounting for crop, resize, padding, and rotation.
  */
 
-import type { ImageDimensions, ImageEditorState } from './image-editor'
+import type { ImageDimensions, ImageEditorState, Layer, TextLayer } from './image-editor'
 
 /**
  * Check if all crop parameters are defined
@@ -113,8 +113,96 @@ export function calculateLayerOutputDimensions(
 }
 
 /**
- * Calculate the output dimensions of the base canvas (main image editor panel).
+ * Estimate the bounding box of a text layer for hit-region and drag-handle purposes.
+ * The server (Pango) determines the true height; this is a best-effort approximation
+ * for the UI overlay — accuracy is intentionally traded for simplicity.
  *
+ * Width:
+ *   - Numeric width > 0 → use as-is (wrap boundary)
+ *   - "f" → full parent width
+ *   - "f-N" → parent width − N
+ *   - 0 or unconstrained → estimate from text length (capped at parentWidth)
+ *
+ * Height:
+ *   - lineCount × fontSize × LINE_HEIGHT_FACTOR
+ *
+ * @param layer - The TextLayer
+ * @param parentDimensions - Parent canvas dimensions (needed for % / full width resolution)
+ * @returns Estimated bounding box
+ */
+export function calculateTextLayerBoundingBox(
+  layer: TextLayer,
+  parentDimensions?: ImageDimensions,
+): ImageDimensions {
+  const LINE_HEIGHT_FACTOR = 1.4
+
+  // --- Estimate width ---
+  let width: number
+  const rawWidth = layer.width
+
+  if (typeof rawWidth === 'number') {
+    if (rawWidth > 0) {
+      width = rawWidth
+    } else {
+      // 0 = unconstrained; estimate from text content
+      const longestLine = layer.text
+        .split('\n')
+        .reduce((a, b) => (a.length > b.length ? a : b), '')
+      width = Math.max(60, Math.min(longestLine.length * layer.fontSize * 0.6, parentDimensions?.width ?? 600))
+    }
+  } else if (typeof rawWidth === 'string') {
+    const full = parentDimensions?.width ?? 600
+    if (rawWidth === 'f' || rawWidth === 'full') {
+      width = full
+    } else {
+      const fullMinusMatch = rawWidth.match(/^(?:f|full)-(\d+)$/)
+      if (fullMinusMatch) {
+        width = Math.max(1, full - parseInt(fullMinusMatch[1]))
+      } else {
+        const pctMatch = rawWidth.match(/^(\d+(?:\.\d+)?)p$/)
+        if (pctMatch) {
+          width = Math.round(full * (parseFloat(pctMatch[1]) / 100))
+        } else {
+          const floatVal = parseFloat(rawWidth)
+          width = isNaN(floatVal) ? 200 : floatVal <= 1 ? Math.round(full * floatVal) : floatVal
+        }
+      }
+    }
+  } else {
+    width = 200 // safe fallback
+  }
+
+  // --- Estimate height ---
+  const lineCount = Math.max(1, layer.text.split('\n').length)
+  const height = Math.max(layer.fontSize, Math.round(lineCount * layer.fontSize * LINE_HEIGHT_FACTOR))
+
+  return { width: Math.round(width), height }
+}
+
+/**
+ * Unified helper: get the bounding dimensions of any layer type.
+ * For ImageLayer, delegates to calculateLayerOutputDimensions.
+ * For TextLayer, delegates to calculateTextLayerBoundingBox.
+ *
+ * @param layer - Any layer (ImageLayer or TextLayer)
+ * @param parentDimensions - Parent canvas dimensions
+ * @returns Estimated or computed bounding box
+ */
+export function calculateLayerBoundingBox(
+  layer: Layer,
+  parentDimensions?: ImageDimensions,
+): ImageDimensions {
+  if (layer.type === 'text') {
+    return calculateTextLayerBoundingBox(layer, parentDimensions)
+  }
+  return calculateLayerOutputDimensions(
+    layer.originalDimensions,
+    layer.transforms,
+    parentDimensions,
+  )
+}
+
+/**
  * Processing order:
  *   1. Source = crop region if active, otherwise original image.
  *   2. Fill-mode axes (widthFull / heightFull) resolve against parentDimensions.

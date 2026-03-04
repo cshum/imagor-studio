@@ -18,6 +18,7 @@ export type BlendMode =
   | 'mask'
 
 export interface ImageLayer {
+  type: 'image'
   id: string // Unique identifier (crypto.randomUUID())
   imagePath: string // Path to overlay image
 
@@ -39,6 +40,45 @@ export interface ImageLayer {
   visible: boolean // Toggle layer visibility
   name: string // Display name (from filename)
 }
+
+export type TextWrap = 'word' | 'char' | 'wordchar' | 'none'
+export type TextAlign = 'low' | 'centre' | 'high'
+
+export interface TextLayer {
+  type: 'text'
+  id: string // Unique identifier
+  name: string // Display name
+
+  // Content
+  text: string // Raw text content (multi-line, stored decoded)
+
+  // Position (same semantics as ImageLayer)
+  x: string | number
+  y: string | number
+
+  // Typography
+  font: string // Pango font family, e.g. "sans", "serif", "monospace"
+  fontStyle: '' | 'bold' | 'italic' | 'bold italic'
+  fontSize: number // In points/pixels (at 72dpi, 1pt = 1px)
+  color: string // Hex without '#', default "000000"
+
+  // Wrap
+  width: number | string // 0=unconstrained, px, "80p", "f", "f-N"
+  align: TextAlign
+  justify: boolean
+  wrap: TextWrap
+  spacing: number // Extra line spacing px
+  dpi: number // Render DPI, default 72
+
+  // Compositing
+  alpha: number // 0-100 (0=opaque, 100=transparent)
+  blendMode: BlendMode
+
+  // UI state
+  visible: boolean
+}
+
+export type Layer = ImageLayer | TextLayer
 
 export interface ImageEditorState {
   // Base image (for root context only - captured in history for swap image undo/redo)
@@ -108,8 +148,8 @@ export interface ImageEditorState {
   paddingBottom?: number
   paddingLeft?: number
 
-  // Layers (image overlays with transforms)
-  layers?: ImageLayer[]
+  // Layers (image and text overlays)
+  layers?: Layer[]
 }
 
 export interface ImageEditorConfig {
@@ -132,6 +172,7 @@ export interface ImageEditorCallbacks {
   onHistoryChange?: () => void
   onSelectedLayerChange?: (layerId: string | null) => void
   onEditingContextChange?: (layerId: string | null) => void
+  onTextEditingLayerChange?: (layerId: string | null) => void
 }
 
 /**
@@ -158,6 +199,10 @@ export class ImageEditor {
   private historyDebounceTimer: number | null = null
   private pendingHistorySnapshot: ImageEditorState | null = null
   private previewRequestId: number = 0
+  // Layer ID currently being edited inline (text editing mode).
+  // When set, this layer is excluded from the preview URL so the
+  // textarea overlay is the only visible text during editing.
+  private textEditingLayerId: string | null = null
   private loadingRequestId: number = 0
 
   /**
@@ -214,6 +259,8 @@ export class ImageEditor {
     this.pendingHistorySnapshot = null
     // Reset selected layer
     this.selectedLayerId = null
+    // Reset text editing mode
+    this.textEditingLayerId = null
     // Restore the clean initial state captured by markInitialState().
     // For plain images this is {} (same as before). For templates it is the
     // state set by importTemplate() in the loader — so navigating back always
@@ -282,6 +329,21 @@ export class ImageEditor {
       'smart/',
     ]
     return reservedPrefixes.some((prefix) => imagePath.startsWith(prefix))
+  }
+
+  /**
+   * Encode arbitrary text to base64url format (RFC 4648 Section 5)
+   * Used for safely passing text content in the text() filter URL argument.
+   * Always encodes (handles newlines, unicode, commas, special chars).
+   * @param text - Text to encode
+   * @returns base64url encoded text with b64: prefix
+   */
+  private static encodeTextToBase64url(text: string): string {
+    const encoder = new TextEncoder()
+    const bytes = encoder.encode(text)
+    const base64 = btoa(String.fromCharCode(...bytes))
+    const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    return `b64:${base64url}`
   }
 
   /**
@@ -502,11 +564,11 @@ export class ImageEditor {
     }
 
     // Walk ancestors (all context ids except the last, which is the layer being edited)
-    let currentLayers: ImageLayer[] = this.savedBaseState.layers ?? []
+    let currentLayers: Layer[] = this.savedBaseState.layers ?? []
     for (let i = 0; i < this.editingContext.length - 1; i++) {
       const layerId = this.editingContext[i]
       const layer = currentLayers.find((l) => l.id === layerId)
-      if (!layer) return currentDims
+      if (!layer || layer.type === 'text') return currentDims
 
       // Compute this ancestor layer's output using its own transforms and its parent dims
       currentDims = this.computeOutputDimensionsFromState(
@@ -615,6 +677,7 @@ export class ImageEditor {
     imagePath: string,
     scaleFactor: number,
     forPreview = false,
+    skipLayerId?: string,
   ): string {
     const parts: string[] = []
 
@@ -766,8 +829,97 @@ export class ImageEditor {
     if (shouldApplyLayers && state.layers && state.layers.length > 0) {
       for (const layer of state.layers) {
         if (!layer.visible) continue
+        if (skipLayerId && layer.id === skipLayerId) continue
 
-        // Generate layer path with its transforms
+        if (layer.type === 'text') {
+          // Emit text() filter
+          const encodedText = ImageEditor.encodeTextToBase64url(layer.text)
+          const x = ImageEditor.scalePositionValue(layer.x, scaleFactor)
+          const y = ImageEditor.scalePositionValue(layer.y, scaleFactor)
+
+          // Build Pango font arg: family + style + size (scaled), hyphens as spaces
+          const scaledFontSize = Math.max(1, Math.round(layer.fontSize * scaleFactor))
+          const fontParts = [layer.font, layer.fontStyle, String(scaledFontSize)].filter(Boolean)
+          const font = fontParts.join(' ').replace(/ /g, '-')
+
+          // Scale numeric wrap width
+          let width: string | number = layer.width
+          if (typeof width === 'number' && width > 0) {
+            width = Math.round(width * scaleFactor)
+          }
+
+          // Build args, omitting trailing defaults
+          // text(text, x, y[, font[, color[, alpha[, width[, align[, justify[, wrap[, spacing[, dpi]]]]]]]]])
+          const args: (string | number)[] = [encodedText, x, y]
+
+          const hasNonDefaultTrailing =
+            font !== 'sans-20' ||
+            layer.color !== '000000' ||
+            layer.alpha !== 0 ||
+            (typeof width === 'number' ? width > 0 : width !== '0') ||
+            layer.align !== 'low' ||
+            layer.justify ||
+            layer.wrap !== 'word' ||
+            layer.spacing !== 0 ||
+            layer.dpi !== 72
+
+          if (hasNonDefaultTrailing) {
+            args.push(font)
+            args.push(layer.color || '000000')
+            if (
+              layer.alpha !== 0 ||
+              (typeof width === 'number' ? width > 0 : width !== '0') ||
+              layer.align !== 'low' ||
+              layer.justify ||
+              layer.wrap !== 'word' ||
+              layer.spacing !== 0 ||
+              layer.dpi !== 72
+            ) {
+              args.push(layer.alpha)
+              if (
+                (typeof width === 'number' ? width > 0 : width !== '0') ||
+                layer.align !== 'low' ||
+                layer.justify ||
+                layer.wrap !== 'word' ||
+                layer.spacing !== 0 ||
+                layer.dpi !== 72
+              ) {
+                args.push(width)
+                if (
+                  layer.align !== 'low' ||
+                  layer.justify ||
+                  layer.wrap !== 'word' ||
+                  layer.spacing !== 0 ||
+                  layer.dpi !== 72
+                ) {
+                  args.push(layer.align)
+                  if (layer.justify || layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
+                    args.push(layer.justify ? 'true' : 'false')
+                    if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
+                      args.push(layer.wrap)
+                      if (layer.spacing !== 0 || layer.dpi !== 72) {
+                        args.push(Math.round(layer.spacing * scaleFactor))
+                        if (layer.dpi !== 72) {
+                          args.push(layer.dpi)
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          let textFilter = `text(${args.join(',')})`
+          if (layer.blendMode !== 'normal') {
+            // text() doesn't have a blendMode arg — wrap with image() if non-normal blend needed
+            // For now emit as-is (blendMode on text layers is informational until imagor supports it)
+          }
+          filters.push(textFilter)
+          continue
+        }
+
+        // ImageLayer — generate layer path with its transforms
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
           // Build path from layer transforms (excluding nested layers to prevent recursion)
@@ -861,6 +1013,7 @@ export class ImageEditor {
   convertStateToGraphQLParams(
     state: ImageEditorState,
     forPreview = false,
+    skipLayerId?: string,
   ): Partial<ImagorParamsInput> {
     const graphqlParams: Partial<ImagorParamsInput> = {}
 
@@ -1113,8 +1266,86 @@ export class ImageEditor {
     if (shouldApplyLayers && state.layers && state.layers.length > 0) {
       for (const layer of state.layers) {
         if (!layer.visible) continue
+        if (skipLayerId && layer.id === skipLayerId) continue
 
-        // Generate layer imagor path using static helper (synchronous)
+        if (layer.type === 'text') {
+          // Build text() filter
+          const encodedText = ImageEditor.encodeTextToBase64url(layer.text)
+          const sf = forPreview ? scaleFactor : 1
+          const x = ImageEditor.scalePositionValue(layer.x, sf).toString()
+          const y = ImageEditor.scalePositionValue(layer.y, sf).toString()
+
+          const scaledFontSize = Math.max(1, Math.round(layer.fontSize * sf))
+          const fontParts = [layer.font, layer.fontStyle, String(scaledFontSize)].filter(Boolean)
+          const font = fontParts.join(' ').replace(/ /g, '-')
+
+          let width: string | number = layer.width
+          if (typeof width === 'number' && width > 0) {
+            width = Math.round(width * sf)
+          }
+
+          const args: (string | number)[] = [encodedText, x, y]
+          const hasNonDefault =
+            font !== 'sans-20' ||
+            layer.color !== '000000' ||
+            layer.alpha !== 0 ||
+            (typeof width === 'number' ? width > 0 : width !== '0') ||
+            layer.align !== 'low' ||
+            layer.justify ||
+            layer.wrap !== 'word' ||
+            layer.spacing !== 0 ||
+            layer.dpi !== 72
+
+          if (hasNonDefault) {
+            args.push(font)
+            args.push(layer.color || '000000')
+            if (
+              layer.alpha !== 0 ||
+              (typeof width === 'number' ? width > 0 : width !== '0') ||
+              layer.align !== 'low' ||
+              layer.justify ||
+              layer.wrap !== 'word' ||
+              layer.spacing !== 0 ||
+              layer.dpi !== 72
+            ) {
+              args.push(layer.alpha)
+              if (
+                (typeof width === 'number' ? width > 0 : width !== '0') ||
+                layer.align !== 'low' ||
+                layer.justify ||
+                layer.wrap !== 'word' ||
+                layer.spacing !== 0 ||
+                layer.dpi !== 72
+              ) {
+                args.push(width)
+                if (
+                  layer.align !== 'low' ||
+                  layer.justify ||
+                  layer.wrap !== 'word' ||
+                  layer.spacing !== 0 ||
+                  layer.dpi !== 72
+                ) {
+                  args.push(layer.align)
+                  if (layer.justify || layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
+                    args.push(layer.justify ? 'true' : 'false')
+                    if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
+                      args.push(layer.wrap)
+                      if (layer.spacing !== 0 || layer.dpi !== 72) {
+                        args.push(Math.round(layer.spacing * sf))
+                        if (layer.dpi !== 72) args.push(layer.dpi)
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          filters.push({ name: 'text', args: args.join(',') })
+          continue
+        }
+
+        // ImageLayer — generate imagor path using static helper (synchronous)
         // Each layer is a simple image (no nested layers - prevents recursion)
         let layerPath: string
         if (layer.transforms && Object.keys(layer.transforms).length > 0) {
@@ -1217,7 +1448,11 @@ export class ImageEditor {
     this.abortController = new AbortController()
 
     try {
-      const graphqlParams = this.convertStateToGraphQLParams(this.state, true)
+      const graphqlParams = this.convertStateToGraphQLParams(
+        this.state,
+        true,
+        this.textEditingLayerId ?? undefined,
+      )
       const url = await generateImagorUrl(
         {
           imagePath: this.config.imagePath,
@@ -1380,7 +1615,12 @@ export class ImageEditor {
   /**
    * Deep clone a layer and all its nested transforms/layers
    */
-  private deepCloneLayer(layer: ImageLayer): ImageLayer {
+  private deepCloneLayer(layer: Layer): Layer {
+    if (layer.type === 'text') {
+      // Text layers are plain objects — shallow clone is sufficient
+      return { ...layer }
+    }
+
     const cloned: ImageLayer = {
       ...layer,
       originalDimensions: { ...layer.originalDimensions },
@@ -1772,10 +2012,10 @@ export class ImageEditor {
    * @returns Updated layers array
    */
   private updateLayersInTree(
-    layers: ImageLayer[],
+    layers: Layer[],
     path: string[],
-    updater: (layers: ImageLayer[]) => ImageLayer[],
-  ): ImageLayer[] {
+    updater: (layers: Layer[]) => Layer[],
+  ): Layer[] {
     if (path.length === 0) {
       // We're at the target depth - apply the updater
       return updater(layers)
@@ -1785,6 +2025,7 @@ export class ImageEditor {
 
     return layers.map((l) => {
       if (l.id !== currentId) return l
+      if (l.type === 'text') return l // text layers have no nested layers
 
       const nestedLayers = l.transforms?.layers || []
       return {
@@ -1838,6 +2079,28 @@ export class ImageEditor {
   }
 
   /**
+   * Set/clear which text layer is currently being edited inline.
+   * When set, that layer is excluded from the preview URL so the
+   * canvas textarea is the sole visible text during editing.
+   * Pass null to exit text editing mode and regenerate the preview.
+   * @param layerId - ID of the text layer being edited, or null
+   */
+  setTextEditingLayerId(layerId: string | null): void {
+    if (this.textEditingLayerId === layerId) return
+    this.textEditingLayerId = layerId
+    this.callbacks.onTextEditingLayerChange?.(layerId)
+    // Regenerate preview immediately to include/exclude the layer
+    this.schedulePreviewUpdate()
+  }
+
+  /**
+   * Get the ID of the layer currently in text editing mode, or null
+   */
+  getTextEditingLayerId(): string | null {
+    return this.textEditingLayerId
+  }
+
+  /**
    * Set the currently selected layer ID
    * Triggers onSelectedLayerChange callback if selection changes
    * @param layerId - ID of the layer to select, or null for base image
@@ -1859,6 +2122,13 @@ export class ImageEditor {
 
     // Check if already in this context
     if (currentLayerId === layerId) return
+
+    // Block context switching for text layers — they have no transforms/nested editing
+    if (layerId !== null) {
+      const layers = this.getContextLayers()
+      const targetLayer = layers.find((l) => l.id === layerId)
+      if (targetLayer?.type === 'text') return
+    }
 
     // Flush any pending snapshot before switching contexts
     // This ensures layer edits are saved to history before context switch
@@ -1913,12 +2183,12 @@ export class ImageEditor {
       // in the NEW context (which might be deeper in the tree)
 
       // Traverse the tree following the new editingContext path to find the target layer
-      let currentLayers = this.savedBaseState?.layers || []
-      let targetLayer: ImageLayer | undefined
+      let currentLayers: Layer[] = this.savedBaseState?.layers || []
+      let targetLayer: Layer | undefined
 
       for (const contextLayerId of this.editingContext) {
         targetLayer = currentLayers.find((l) => l.id === contextLayerId)
-        if (!targetLayer) break
+        if (!targetLayer || targetLayer.type === 'text') break
 
         // If this is the layer we're looking for, stop here
         if (contextLayerId === newLayerId) break
@@ -1927,7 +2197,7 @@ export class ImageEditor {
         currentLayers = targetLayer.transforms?.layers || []
       }
 
-      if (targetLayer) {
+      if (targetLayer && targetLayer.type === 'image') {
         // Save base image config (first time only)
         if (!this.savedBaseImagePath) {
           this.savedBaseImagePath = this.config.imagePath
@@ -2016,6 +2286,7 @@ export class ImageEditor {
       // We're at the correct level - update the target layer
       return layersAtPath.map((l) => {
         if (l.id !== layerId) return l
+        if (l.type === 'text') return l // text layers have no transforms (guard for type safety)
         return { ...l, transforms }
       })
     })
@@ -2035,16 +2306,17 @@ export class ImageEditor {
    * @param layerId - ID of the layer to load from (the target layer to load)
    * @param layers - The base layers array to start traversal from
    */
-  private loadContextFromLayer(layerId: string, layers: ImageLayer[]): void {
+  private loadContextFromLayer(layerId: string, layers: Layer[]): void {
     // Traverse the editing context path to find the target layer
     // editingContext is the full path, e.g., ["layer-1", "layer-2"]
     // We need to traverse down to find the final layer
     let currentLayers = layers
-    let targetLayer: ImageLayer | undefined
+    let targetLayer: Layer | undefined
 
     for (const contextLayerId of this.editingContext) {
       targetLayer = currentLayers.find((l) => l.id === contextLayerId)
       if (!targetLayer) return
+      if (targetLayer.type === 'text') return // text layers have no nested editing
 
       // If this is the target layer we're looking for, stop here
       if (contextLayerId === layerId) break
@@ -2053,7 +2325,7 @@ export class ImageEditor {
       currentLayers = targetLayer.transforms?.layers || []
     }
 
-    if (!targetLayer) return
+    if (!targetLayer || targetLayer.type === 'text') return
 
     // Update config to match the layer's image (critical for undo/redo after swap)
     this.config.imagePath = targetLayer.imagePath
@@ -2082,9 +2354,9 @@ export class ImageEditor {
    * Add a new layer to the current editing context
    * If at base level, adds to base layers
    * If editing a layer, adds to that layer's nested layers
-   * @param layer - The layer to add
+   * @param layer - The layer to add (ImageLayer or TextLayer)
    */
-  addLayer(layer: ImageLayer): void {
+  addLayer(layer: Layer): void {
     // Flush any pending snapshot first
     this.flushPendingHistorySnapshot()
 
@@ -2204,15 +2476,25 @@ export class ImageEditor {
     this.saveHistorySnapshot()
 
     // Create duplicate with new ID and offset position
-    const duplicatedLayer: ImageLayer = {
-      ...sourceLayer,
-      id: `layer-${Date.now()}`,
-      name: `${sourceLayer.name} Copy`,
-      // Offset position if numeric (so user can see it's duplicated)
-      x: typeof sourceLayer.x === 'number' ? sourceLayer.x + 10 : sourceLayer.x,
-      y: typeof sourceLayer.y === 'number' ? sourceLayer.y + 10 : sourceLayer.y,
-      // Deep copy transforms if present
-      transforms: sourceLayer.transforms ? { ...sourceLayer.transforms } : undefined,
+    const newId = `layer-${Date.now()}`
+    let duplicatedLayer: Layer
+    if (sourceLayer.type === 'text') {
+      duplicatedLayer = {
+        ...sourceLayer,
+        id: newId,
+        name: `${sourceLayer.name} Copy`,
+        x: typeof sourceLayer.x === 'number' ? sourceLayer.x + 10 : sourceLayer.x,
+        y: typeof sourceLayer.y === 'number' ? sourceLayer.y + 10 : sourceLayer.y,
+      }
+    } else {
+      duplicatedLayer = {
+        ...sourceLayer,
+        id: newId,
+        name: `${sourceLayer.name} Copy`,
+        x: typeof sourceLayer.x === 'number' ? sourceLayer.x + 10 : sourceLayer.x,
+        y: typeof sourceLayer.y === 'number' ? sourceLayer.y + 10 : sourceLayer.y,
+        transforms: sourceLayer.transforms ? { ...sourceLayer.transforms } : undefined,
+      }
     }
 
     // If at base level, add to current state layers
@@ -2263,7 +2545,7 @@ export class ImageEditor {
    * @param updates - Partial layer properties to update
    * @param replaceTransforms - If true, replace transforms instead of merging (for swap image)
    */
-  updateLayer(layerId: string, updates: Partial<ImageLayer>, replaceTransforms = false): void {
+  updateLayer(layerId: string, updates: Partial<Layer>, replaceTransforms = false): void {
     if (!this.state.layers) return
 
     // Use debounced history snapshot (like updateParams)
@@ -2274,35 +2556,38 @@ export class ImageEditor {
     const updatedLayers = this.state.layers.map((layer) => {
       if (layer.id !== layerId) return layer
 
-      // Merge transforms object if present in updates
-      // This preserves existing transform properties like fitIn
-      const mergedLayer = { ...layer, ...updates }
-      if (updates.transforms) {
-        if (replaceTransforms || !layer.transforms) {
-          // Replace transforms entirely (used for swap image to remove crop)
-          mergedLayer.transforms = updates.transforms
-        } else {
-          // Merge transforms (preserves existing properties)
-          mergedLayer.transforms = { ...layer.transforms, ...updates.transforms }
+      const mergedLayer = { ...layer, ...updates } as Layer
+
+      if (layer.type === 'image') {
+        const imgUpdates = updates as Partial<ImageLayer>
+        const mergedImg = mergedLayer as ImageLayer
+
+        // Merge transforms object if present in updates
+        // This preserves existing transform properties like fitIn
+        if (imgUpdates.transforms) {
+          if (replaceTransforms || !layer.transforms) {
+            mergedImg.transforms = imgUpdates.transforms
+          } else {
+            mergedImg.transforms = { ...layer.transforms, ...imgUpdates.transforms }
+          }
         }
-      }
-      // Clamp roundCornerRadius: same rule as root — max = floor(min(w, h) / 2),
-      // using the layer's effective output dimensions (transforms override originals).
-      // When widthFull/heightFull is set, the layer renders at the parent canvas size
-      // which is unknown here; we approximate using originalDimensions (always a safe
-      // number — never NaN). The clamp may be slightly over-permissive for fill-mode
-      // layers but avoids any crash or type-error.
-      if (
-        mergedLayer.transforms?.roundCornerRadius &&
-        mergedLayer.transforms.roundCornerRadius > 0
-      ) {
-        const lw = mergedLayer.transforms.width ?? layer.originalDimensions.width
-        const lh = mergedLayer.transforms.height ?? layer.originalDimensions.height
-        const maxR = Math.floor(Math.min(lw, lh) / 2)
-        if (mergedLayer.transforms.roundCornerRadius > maxR) {
-          mergedLayer.transforms = { ...mergedLayer.transforms, roundCornerRadius: maxR }
+        // Clamp roundCornerRadius: same rule as root — max = floor(min(w, h) / 2),
+        // using the layer's effective output dimensions (transforms override originals).
+        // When widthFull/heightFull is set, the layer renders at the parent canvas size
+        // which is unknown here; we approximate using originalDimensions (always a safe
+        // number — never NaN). The clamp may be slightly over-permissive for fill-mode
+        // layers but avoids any crash or type-error.
+        if (mergedImg.transforms?.roundCornerRadius && mergedImg.transforms.roundCornerRadius > 0) {
+          const lw = mergedImg.transforms.width ?? layer.originalDimensions.width
+          const lh = mergedImg.transforms.height ?? layer.originalDimensions.height
+          const maxR = Math.floor(Math.min(lw, lh) / 2)
+          if (mergedImg.transforms.roundCornerRadius > maxR) {
+            mergedImg.transforms = { ...mergedImg.transforms, roundCornerRadius: maxR }
+          }
         }
+        return mergedImg
       }
+
       return mergedLayer
     })
 
@@ -2324,30 +2609,35 @@ export class ImageEditor {
           return layersAtPath.map((l) => {
             if (l.id !== layerId) return l
 
-            const mergedLayer = { ...l, ...updates }
-            if (updates.transforms) {
-              if (replaceTransforms || !l.transforms) {
-                // Replace transforms entirely (used for swap image to remove crop)
-                mergedLayer.transforms = updates.transforms
-              } else {
-                // Merge transforms (preserves existing properties)
-                mergedLayer.transforms = { ...l.transforms, ...updates.transforms }
+            const mergedL = { ...l, ...updates } as Layer
+
+            if (l.type === 'image') {
+              const imgUpdates = updates as Partial<ImageLayer>
+              const mergedImg = mergedL as ImageLayer
+
+              if (imgUpdates.transforms) {
+                if (replaceTransforms || !l.transforms) {
+                  mergedImg.transforms = imgUpdates.transforms
+                } else {
+                  mergedImg.transforms = { ...l.transforms, ...imgUpdates.transforms }
+                }
               }
-            }
-            // Clamp roundCornerRadius in savedBaseState too (keep in sync).
-            // See note above: approximates with originalDimensions for fill-mode layers.
-            if (
-              mergedLayer.transforms?.roundCornerRadius &&
-              mergedLayer.transforms.roundCornerRadius > 0
-            ) {
-              const lw = mergedLayer.transforms.width ?? l.originalDimensions.width
-              const lh = mergedLayer.transforms.height ?? l.originalDimensions.height
-              const maxR = Math.floor(Math.min(lw, lh) / 2)
-              if (mergedLayer.transforms.roundCornerRadius > maxR) {
-                mergedLayer.transforms = { ...mergedLayer.transforms, roundCornerRadius: maxR }
+              // Clamp roundCornerRadius in savedBaseState too (keep in sync).
+              if (
+                mergedImg.transforms?.roundCornerRadius &&
+                mergedImg.transforms.roundCornerRadius > 0
+              ) {
+                const lw = mergedImg.transforms.width ?? l.originalDimensions.width
+                const lh = mergedImg.transforms.height ?? l.originalDimensions.height
+                const maxR = Math.floor(Math.min(lw, lh) / 2)
+                if (mergedImg.transforms.roundCornerRadius > maxR) {
+                  mergedImg.transforms = { ...mergedImg.transforms, roundCornerRadius: maxR }
+                }
               }
+              return mergedImg
             }
-            return mergedLayer
+
+            return mergedL
           })
         },
       )
@@ -2366,7 +2656,7 @@ export class ImageEditor {
    * Reorder layers (for drag-and-drop)
    * @param newOrder - New array of layers in desired order
    */
-  reorderLayers(newOrder: ImageLayer[]): void {
+  reorderLayers(newOrder: Layer[]): void {
     this.scheduleHistorySnapshot()
 
     this.state = {
@@ -2401,7 +2691,7 @@ export class ImageEditor {
    * Always returns layers from base state, regardless of editing context
    * @returns Array of layers or empty array
    */
-  getBaseLayers(): ImageLayer[] {
+  getBaseLayers(): Layer[] {
     // Always get layers from base state, not current editing context
     if (this.editingContext.length > 0) {
       // We're editing a layer - get layers from savedBaseState
@@ -2417,7 +2707,7 @@ export class ImageEditor {
    * Traverses the layer tree to find the layers at the current depth
    * @returns Array of layers for current context or empty array
    */
-  getContextLayers(): ImageLayer[] {
+  getContextLayers(): Layer[] {
     // If at base level, return base layers
     if (this.editingContext.length === 0) {
       return this.state.layers || []
@@ -2429,7 +2719,7 @@ export class ImageEditor {
     let currentLayers = this.savedBaseState?.layers || []
     for (const layerId of this.editingContext) {
       const layer = currentLayers.find((l) => l.id === layerId)
-      if (!layer) return []
+      if (!layer || layer.type === 'text') return []
 
       // Get this layer's nested layers from its transforms
       currentLayers = layer.transforms?.layers || []
@@ -2443,7 +2733,7 @@ export class ImageEditor {
    * @param layerId - ID of the layer to get
    * @returns The layer or undefined if not found
    */
-  getLayer(layerId: string): ImageLayer | undefined {
+  getLayer(layerId: string): Layer | undefined {
     return this.getContextLayers().find((l) => l.id === layerId)
   }
 
@@ -2674,7 +2964,7 @@ export class ImageEditor {
 
     // Check for missing layer images
     if (state.layers && state.layers.length > 0) {
-      const validLayers: ImageLayer[] = []
+      const validLayers: Layer[] = []
       for (const layer of state.layers) {
         // For now, we'll include all layers and let the editor handle missing images
         // In a future enhancement, we could check if images exist

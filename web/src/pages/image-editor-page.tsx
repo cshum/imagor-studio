@@ -114,6 +114,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const [isShiftPressed, setIsShiftPressed] = useState(false)
   const [zoom, setZoom] = useState<number | 'fit'>('fit')
   const [actualScale, setActualScale] = useState<number | null>(null)
+  const [textEditingLayerId, setTextEditingLayerId] = useState<string | null>(null)
   const isSavedRef = useRef(false)
 
   // Preview container ref and image dimensions for viewport calculations
@@ -183,6 +184,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       },
       onSelectedLayerChange: setSelectedLayerId,
       onEditingContextChange: setEditingContext,
+      onTextEditingLayerChange: setTextEditingLayerId,
     })
 
     // Restore state from URL if present (overrides cleanInitialState)
@@ -495,6 +497,52 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     setReplaceImageDialogOpen(true)
   }, [])
 
+  const handleAddTextLayer = useCallback(() => {
+    const outputDims = imageEditor.getOutputDimensions()
+    const newLayer = {
+      type: 'text' as const,
+      id: `layer-${Date.now()}`,
+      name: t('imageEditor.layers.textLayer'),
+      text: t('imageEditor.layers.textLayerDefaultText'),
+      x: Math.round(outputDims.width * 0.1),
+      y: Math.round(outputDims.height * 0.1),
+      font: 'sans',
+      fontStyle: '' as const,
+      fontSize: Math.max(12, Math.round(outputDims.height * 0.05)),
+      color: '000000',
+      width: 0,
+      align: 'low' as const,
+      justify: false,
+      wrap: 'word' as const,
+      spacing: 0,
+      dpi: 72,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+    }
+    imageEditor.addLayer(newLayer)
+    imageEditor.setSelectedLayerId(newLayer.id)
+    imageEditor.setTextEditingLayerId(newLayer.id)
+  }, [imageEditor, t])
+
+  const handleTextEdit = useCallback(
+    (layerId: string | null) => {
+      imageEditor.setTextEditingLayerId(layerId)
+    },
+    [imageEditor],
+  )
+
+  const handleTextEditEnd = useCallback(
+    (text: string | null) => {
+      const layerId = imageEditor.getTextEditingLayerId()
+      if (layerId && text !== null) {
+        imageEditor.updateLayer(layerId, { text })
+      }
+      imageEditor.setTextEditingLayerId(null)
+    },
+    [imageEditor],
+  )
+
   const handleAddLayerWithViewport = useCallback(
     async (paths: string[]) => {
       if (paths.length === 0) return
@@ -653,11 +701,14 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             imageEditor={imageEditor}
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
+            textEditingLayerId={textEditingLayerId}
             layerAspectRatioLocked={layerAspectRatioLocked}
             onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
             visualCropEnabled={visualCropEnabled}
             onReplaceImage={handleReplaceImageClick}
             onAddLayer={handleAddLayerWithViewport}
+            onAddTextLayer={handleAddTextLayer}
+            onTextEdit={handleTextEdit}
           />
         ),
       }) as Record<SectionKey, React.ReactNode>,
@@ -674,6 +725,9 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       setLayerAspectRatioLockToggle,
       handleReplaceImageClick,
       handleAddLayerWithViewport,
+      handleAddTextLayer,
+      handleTextEdit,
+      textEditingLayerId,
     ],
   )
 
@@ -737,6 +791,9 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             onOpenControls={isMobile ? () => setMobileSheetOpen(true) : undefined}
             isLeftColumnEmpty={isLeftColumnEmpty}
             isRightColumnEmpty={isRightColumnEmpty}
+            textEditingLayerId={textEditingLayerId}
+            onTextEdit={handleTextEdit}
+            onTextEditEnd={handleTextEditEnd}
           />
         )}
         leftControls={

@@ -6,13 +6,14 @@ import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
 import { LayerOverlay } from '@/components/image-editor/layer-overlay'
 import { LayerRegionsOverlay } from '@/components/image-editor/layer-regions-overlay'
+import { TextEditOverlay } from '@/components/image-editor/text-edit-overlay'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImageEditor } from '@/lib/image-editor'
-import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
+import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { enrichTransformsForFillMode } from '@/lib/layer-fill'
 import { calculateScrollAdjustment } from '@/lib/scroll-utils'
 import { cn } from '@/lib/utils'
@@ -43,6 +44,9 @@ interface PreviewAreaProps {
   zoom?: number | 'fit'
   previewContainerRef?: React.RefObject<HTMLDivElement | null>
   onImageDimensionsChange?: (dimensions: { width: number; height: number } | null) => void
+  textEditingLayerId?: string | null
+  onTextEdit?: (layerId: string | null) => void
+  onTextEditEnd?: (text: string | null) => void
 }
 
 export function PreviewArea({
@@ -71,6 +75,9 @@ export function PreviewArea({
   zoom = 'fit',
   previewContainerRef: externalPreviewContainerRef,
   onImageDimensionsChange,
+  textEditingLayerId = null,
+  onTextEdit,
+  onTextEditEnd,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -557,19 +564,15 @@ export function PreviewArea({
                           const selectedLayer = imageEditor.getLayer(selectedLayerId)
                           if (!selectedLayer) return null
 
-                          // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
-                          // Pass outputDims as parentDimensions so widthFull/heightFull resolve correctly
-                          const layerOutputDims = calculateLayerOutputDimensions(
-                            selectedLayer.originalDimensions,
-                            selectedLayer.transforms,
-                            outputDims,
-                          )
+                          // Unified bounding box — works for both image and text layers
+                          const layerOutputDims = calculateLayerBoundingBox(selectedLayer, outputDims)
 
-                          // Get layer's own padding (if it has any) for positioning calculations
-                          const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
-                          const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
-                          const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
-                          const layerPaddingBottom = selectedLayer.transforms?.paddingBottom || 0
+                          // Image-layer-only fields
+                          const isImageLayer = selectedLayer.type !== 'text'
+                          const layerPaddingLeft = isImageLayer ? (selectedLayer.transforms?.paddingLeft || 0) : 0
+                          const layerPaddingRight = isImageLayer ? (selectedLayer.transforms?.paddingRight || 0) : 0
+                          const layerPaddingTop = isImageLayer ? (selectedLayer.transforms?.paddingTop || 0) : 0
+                          const layerPaddingBottom = isImageLayer ? (selectedLayer.transforms?.paddingBottom || 0) : 0
 
                           return (
                             <LayerOverlay
@@ -578,9 +581,15 @@ export function PreviewArea({
                               layerWidth={layerOutputDims.width}
                               layerHeight={layerOutputDims.height}
                               onLayerChange={(updates) => {
-                                // Drag-only updates (x/y, no transforms key) go straight through.
-                                // Fill-mode axes get their incoming px size converted to an inset offset.
-                                if (updates.transforms) {
+                                if (selectedLayer.type === 'text') {
+                                  // Text layers: only x/y can be dragged
+                                  if (updates.x !== undefined || updates.y !== undefined) {
+                                    imageEditor.updateLayer(selectedLayerId, {
+                                      x: updates.x ?? selectedLayer.x,
+                                      y: updates.y ?? selectedLayer.y,
+                                    })
+                                  }
+                                } else if (updates.transforms) {
                                   imageEditor.updateLayer(selectedLayerId, {
                                     ...updates,
                                     transforms: enrichTransformsForFillMode(
@@ -602,10 +611,10 @@ export function PreviewArea({
                               layerPaddingRight={layerPaddingRight}
                               layerPaddingTop={layerPaddingTop}
                               layerPaddingBottom={layerPaddingBottom}
-                              layerRotation={selectedLayer.transforms?.rotation || 0}
-                              layerFillColor={selectedLayer.transforms?.fillColor}
+                              layerRotation={isImageLayer ? (selectedLayer.transforms?.rotation || 0) : 0}
+                              layerFillColor={isImageLayer ? selectedLayer.transforms?.fillColor : undefined}
                               onDeselect={() => imageEditor.setSelectedLayerId(null)}
-                              onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
+                              onEnterEditMode={isImageLayer ? () => imageEditor.switchContext(selectedLayerId) : undefined}
                             />
                           )
                         } else {
@@ -623,10 +632,34 @@ export function PreviewArea({
                               paddingTop={paddingTop}
                               paddingBottom={paddingBottom}
                               onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
+                              onTextEdit={onTextEdit}
                             />
                           )
                         }
                       })()}
+                  {/* Text editing overlay — rendered on top of everything when a text layer is active */}
+                  {textEditingLayerId &&
+                    imageEditor &&
+                    onTextEditEnd &&
+                    (() => {
+                      const outputDims = imageEditor.getOutputDimensions()
+                      const state = imageEditor.getState()
+                      const pl = state.paddingLeft || 0
+                      const pt = state.paddingTop || 0
+                      const textLayer = imageEditor.getLayer(textEditingLayerId)
+                      if (!textLayer || textLayer.type !== 'text') return null
+                      return (
+                        <TextEditOverlay
+                          layer={textLayer}
+                          baseImageWidth={outputDims.width}
+                          baseImageHeight={outputDims.height}
+                          paddingLeft={pl}
+                          paddingTop={pt}
+                          onCommit={(text) => onTextEditEnd(text)}
+                          onCancel={() => onTextEditEnd(null)}
+                        />
+                      )
+                    })()}
                   </div>
                 )}
               </div>

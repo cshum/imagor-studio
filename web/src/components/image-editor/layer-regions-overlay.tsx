@@ -1,12 +1,12 @@
 import { useCallback } from 'react'
 
-import type { ImageLayer } from '@/lib/image-editor'
-import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
+import type { Layer } from '@/lib/image-editor'
+import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
 interface LayerRegionsOverlayProps {
-  layers: ImageLayer[]
+  layers: Layer[]
   baseImageWidth: number
   baseImageHeight: number
   paddingLeft?: number
@@ -14,6 +14,7 @@ interface LayerRegionsOverlayProps {
   paddingTop?: number
   paddingBottom?: number
   onLayerSelect: (layerId: string) => void
+  onTextEdit?: (layerId: string) => void
 }
 
 export function LayerRegionsOverlay({
@@ -25,6 +26,7 @@ export function LayerRegionsOverlay({
   paddingTop = 0,
   paddingBottom = 0,
   onLayerSelect,
+  onTextEdit,
 }: LayerRegionsOverlayProps) {
   // Calculate content area dimensions (image without padding)
   // Layers are positioned relative to the content area, not the total canvas
@@ -44,14 +46,13 @@ export function LayerRegionsOverlay({
   // Calculate CSS percentage strings for position and size
   // Uses same logic as LayerOverlay for consistency
   const getLayerStyles = useCallback(
-    (layer: ImageLayer) => {
-      // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
+    (layer: Layer) => {
+      // Calculate layer's actual output dimensions (accounting for type-specific logic)
       // Pass the full canvas as parentDimensions so widthFull/heightFull resolve correctly
-      const layerOutputDims = calculateLayerOutputDimensions(
-        layer.originalDimensions,
-        layer.transforms,
-        { width: baseImageWidth, height: baseImageHeight },
-      )
+      const layerOutputDims = calculateLayerBoundingBox(layer, {
+        width: baseImageWidth,
+        height: baseImageHeight,
+      })
 
       const layerWidth = layerOutputDims.width
       const layerHeight = layerOutputDims.height
@@ -103,6 +104,7 @@ export function LayerRegionsOverlay({
     <div className='pointer-events-none absolute inset-0 z-10 h-full w-full'>
       {visibleLayers.map((layer) => {
         const styles = getLayerStyles(layer)
+        const isTextLayer = layer.type === 'text'
         return (
           <div
             key={layer.id}
@@ -117,6 +119,7 @@ export function LayerRegionsOverlay({
             style={styles}
             onMouseDown={handleLayerSelect(layer.id)}
             onTouchStart={handleLayerSelect(layer.id)}
+            onDoubleClick={isTextLayer && onTextEdit ? () => onTextEdit(layer.id) : undefined}
           />
         )
       })}

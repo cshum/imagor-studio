@@ -31,11 +31,13 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Type,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
+import { TextLayerControls } from '@/components/image-editor/controls/text-layer-controls'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -64,42 +66,49 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
+import type { ImageEditor, Layer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
   imageEditor: ImageEditor
   selectedLayerId: string | null
   editingContext: string | null
+  textEditingLayerId: string | null
   layerAspectRatioLocked: boolean
   onLayerAspectRatioLockChange: (locked: boolean) => void
   visualCropEnabled?: boolean
   onReplaceImage: (layerId: string | null) => void
   onAddLayer: (paths: string[]) => Promise<void>
+  onAddTextLayer: () => void
+  onTextEdit: (layerId: string | null) => void
 }
 
 interface SortableLayerItemProps {
-  layer: ImageLayer
+  layer: Layer
   isSelected: boolean
   isEditing: boolean
+  isTextEditing: boolean
   onSelect: (layerId: string) => void
   onToggleVisibility: (layerId: string) => void
   onDelete: (layerId: string) => void
   onEdit: (layerId: string) => void
   onDuplicate: (layerId: string) => void
   onRename: (layerId: string) => void
+  onTextEdit: (layerId: string) => void
 }
 
 function SortableLayerItem({
   layer,
   isSelected,
   isEditing,
+  isTextEditing,
   onSelect,
   onToggleVisibility,
   onDelete,
   onEdit,
   onDuplicate,
   onRename,
+  onTextEdit,
 }: SortableLayerItemProps) {
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -111,8 +120,17 @@ function SortableLayerItem({
     transition,
   }
 
-  // Use layer.name (custom name) or fallback to filename from imagePath
-  const displayName = layer.name || layer.imagePath.split('/').pop() || layer.imagePath
+  const isText = layer.type === 'text'
+
+  // Display name: for text layers show the text snippet, for image layers show filename
+  const displayName =
+    layer.name ||
+    (isText
+      ? t('imageEditor.layers.textLayer')
+      : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || '')
+
+  // Subtitle: for text layers show a text preview; for image layers nothing additional
+  const textPreview = isText ? layer.text.replace(/\n/g, '⏎ ').slice(0, 40) : null
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
@@ -123,12 +141,16 @@ function SortableLayerItem({
               'flex h-12 cursor-pointer items-center gap-2 rounded-md px-3',
               'hover:bg-accent',
               // Use ring style for both selected and editing
-              (isSelected || isEditing) && 'ring-primary ring-2 ring-inset',
+              (isSelected || isEditing || isTextEditing) && 'ring-primary ring-2 ring-inset',
             )}
             onClick={() => onSelect(layer.id)}
             onDoubleClick={(e) => {
               e.stopPropagation()
-              onEdit(layer.id)
+              if (isText) {
+                onTextEdit(layer.id)
+              } else {
+                onEdit(layer.id)
+              }
             }}
           >
             {/* Drag handle */}
@@ -143,10 +165,20 @@ function SortableLayerItem({
               <GripVertical className='h-4 w-4' />
             </button>
 
-            {/* Layer name */}
-            <span className='flex-1 truncate text-sm' title={displayName}>
-              {displayName}
-            </span>
+            {/* Layer thumbnail icon for text layers */}
+            {isText && <Type className='text-muted-foreground h-4 w-4 shrink-0' />}
+
+            {/* Layer name + text preview */}
+            <div className='min-w-0 flex-1'>
+              <span className='block truncate text-sm' title={displayName}>
+                {displayName}
+              </span>
+              {textPreview && (
+                <span className='text-muted-foreground block truncate text-xs' title={layer.text}>
+                  {textPreview}
+                </span>
+              )}
+            </div>
 
             {/* Action buttons (always visible, fixed width) */}
             <div className='flex shrink-0 gap-1'>
@@ -185,15 +217,27 @@ function SortableLayerItem({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end' className='min-w-[180px]'>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onEdit(layer.id)
-                    }}
-                  >
-                    <Edit className='mr-2 h-4 w-4' />
-                    {t('imageEditor.layers.editLayer')}
-                  </DropdownMenuItem>
+                  {isText ? (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onTextEdit(layer.id)
+                      }}
+                    >
+                      <Type className='mr-2 h-4 w-4' />
+                      {t('imageEditor.layers.editText')}
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEdit(layer.id)
+                      }}
+                    >
+                      <Edit className='mr-2 h-4 w-4' />
+                      {t('imageEditor.layers.editLayer')}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onSelect={() => {
                       // onSelect fires after menu closes (Radix behavior)
@@ -257,10 +301,17 @@ function SortableLayerItem({
 
         {/* Context Menu */}
         <ContextMenuContent className='min-w-[180px]'>
-          <ContextMenuItem onClick={() => onEdit(layer.id)}>
-            <Edit className='mr-2 h-4 w-4' />
-            {t('imageEditor.layers.editLayer')}
-          </ContextMenuItem>
+          {isText ? (
+            <ContextMenuItem onClick={() => onTextEdit(layer.id)}>
+              <Type className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.editText')}
+            </ContextMenuItem>
+          ) : (
+            <ContextMenuItem onClick={() => onEdit(layer.id)}>
+              <Edit className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.editLayer')}
+            </ContextMenuItem>
+          )}
           <ContextMenuItem onClick={() => onRename(layer.id)}>
             <Pencil className='mr-2 h-4 w-4' />
             {t('imageEditor.layers.renameLayer')}
@@ -352,11 +403,14 @@ export function LayerPanel({
   imageEditor,
   selectedLayerId,
   editingContext,
+  textEditingLayerId,
   layerAspectRatioLocked,
   onLayerAspectRatioLockChange,
   visualCropEnabled = false,
   onReplaceImage,
   onAddLayer,
+  onAddTextLayer,
+  onTextEdit,
 }: LayerPanelProps) {
   const { t } = useTranslation()
   const imagePath = imageEditor.getImagePath()
@@ -490,7 +544,7 @@ export function LayerPanel({
   }, [imageEditor])
 
   const handleUpdateLayer = useCallback(
-    (layerId: string, updates: Partial<ImageLayer>) => {
+    (layerId: string, updates: Partial<import('@/lib/image-editor').Layer>) => {
       imageEditor.updateLayer(layerId, updates)
     },
     [imageEditor],
@@ -551,15 +605,28 @@ export function LayerPanel({
     <div className='flex h-full flex-col'>
       {/* Add Layer button */}
       <div className='px-1 pb-2'>
-        <Button
-          variant='outline'
-          onClick={() => setFilePickerOpen(true)}
-          disabled={isAddingLayer || visualCropEnabled}
-          className='w-full'
-        >
-          <Plus className='mr-1 h-4 w-4' />
-          {t('imageEditor.layers.addLayer')}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant='outline'
+              disabled={isAddingLayer || visualCropEnabled}
+              className='w-full'
+            >
+              <Plus className='mr-1 h-4 w-4' />
+              {t('imageEditor.layers.addLayer')}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='center' className='w-[--radix-dropdown-menu-trigger-width]'>
+            <DropdownMenuItem onClick={() => setFilePickerOpen(true)}>
+              <Image className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.addImageLayer')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onAddTextLayer}>
+              <Type className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.addTextLayer')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Layer list (scrollable) */}
@@ -580,12 +647,14 @@ export function LayerPanel({
                   layer={layer}
                   isSelected={selectedLayerId === layer.id}
                   isEditing={editingContext === layer.id}
+                  isTextEditing={textEditingLayerId === layer.id}
                   onSelect={handleSelectLayer}
                   onToggleVisibility={handleToggleVisibility}
                   onDelete={handleDelete}
                   onEdit={handleEditLayer}
                   onDuplicate={handleDuplicateLayer}
                   onRename={handleRenameLayer}
+                  onTextEdit={onTextEdit}
                 />
               ))}
             </SortableContext>
@@ -593,10 +662,14 @@ export function LayerPanel({
               {activeLayer ? (
                 <div className='bg-background flex h-12 items-center gap-2 rounded-md border px-2 shadow-lg'>
                   <GripVertical className='h-4 w-4' />
+                  {activeLayer.type === 'text' && (
+                    <Type className='text-muted-foreground h-4 w-4 shrink-0' />
+                  )}
                   <span className='flex-1 truncate text-sm'>
                     {activeLayer.name ||
-                      activeLayer.imagePath.split('/').pop() ||
-                      activeLayer.imagePath}
+                      (activeLayer.type === 'text'
+                        ? t('imageEditor.layers.textLayer')
+                        : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath)}
                   </span>
                   {/* Match layer item button structure */}
                   <div className='flex shrink-0 gap-1'>
@@ -630,17 +703,27 @@ export function LayerPanel({
       {/* Layer properties panel (when layer selected and not dragging) */}
       {selectedLayer && !activeId && (
         <div className='shrink-0'>
-          <LayerControls
-            layer={selectedLayer}
-            imageEditor={imageEditor}
-            isEditing={editingContext === selectedLayer.id}
-            aspectRatioLocked={layerAspectRatioLocked}
-            onAspectRatioLockChange={onLayerAspectRatioLockChange}
-            visualCropEnabled={visualCropEnabled}
-            onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
-            onEditLayer={() => handleEditLayer(selectedLayer.id)}
-            onReplaceImage={() => onReplaceImage(selectedLayer.id)}
-          />
+          {selectedLayer.type === 'text' ? (
+            <TextLayerControls
+              layer={selectedLayer}
+              imageEditor={imageEditor}
+              isTextEditing={textEditingLayerId === selectedLayer.id}
+              onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
+              onEditText={() => onTextEdit(selectedLayer.id)}
+            />
+          ) : (
+            <LayerControls
+              layer={selectedLayer}
+              imageEditor={imageEditor}
+              isEditing={editingContext === selectedLayer.id}
+              aspectRatioLocked={layerAspectRatioLocked}
+              onAspectRatioLockChange={onLayerAspectRatioLockChange}
+              visualCropEnabled={visualCropEnabled}
+              onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
+              onEditLayer={() => handleEditLayer(selectedLayer.id)}
+              onReplaceImage={() => onReplaceImage(selectedLayer.id)}
+            />
+          )}
         </div>
       )}
 

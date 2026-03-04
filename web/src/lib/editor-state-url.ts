@@ -42,6 +42,14 @@ export function deserializeStateFromUrl(encoded: string): Partial<ImageEditorSta
       return null
     }
 
+    // Backwards compatibility: layers serialised before TextLayer was introduced
+    // have no `type` field — default them to 'image' so the discriminated union works.
+    if (Array.isArray(state.layers)) {
+      state.layers = state.layers.map((layer) =>
+        layer && typeof layer === 'object' && !layer.type ? { ...layer, type: 'image' } : layer,
+      )
+    }
+
     return state
   } catch {
     return null
