@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { TextEditToolbar } from '@/components/image-editor/text-edit-toolbar'
 import type { TextLayer } from '@/lib/image-editor'
@@ -38,8 +38,21 @@ export function TextEditOverlay({
   const [value, setValue] = useState(layer.text)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   // Timer ref for deferred blur — avoids premature commit when focus moves into toolbar
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Measured pixel height of the overlay container — used to derive font-size in px
+  const [containerHeightPx, setContainerHeightPx] = useState(0)
+
+  // Keep containerHeightPx in sync with the actual rendered overlay size
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    setContainerHeightPx(el.clientHeight)
+    const ro = new ResizeObserver(() => setContainerHeightPx(el.clientHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   // Focus the textarea when mounted
   useEffect(() => {
@@ -111,17 +124,26 @@ export function TextEditOverlay({
   const rightFrac = leftFrac + widthFrac
   const bottomFrac = topFrac + heightFrac
 
-  // Width as a percentage of total canvas
+  // Size as percentages of total canvas — matches the rendered bounding box exactly
   const wPercent = layerDims.width > 0 ? `${widthFrac * 100}%` : '80%'
+  const hPercent = layerDims.height > 0 ? `${heightFrac * 100}%` : undefined
 
-  const fontSizePct = `${(layer.fontSize / baseImageHeight) * 100}%`
+  // font-size in px: scale imagor canvas pixels → display pixels using measured container height
+  // CSS font-size % is relative to parent font-size (not container height), so we must use px.
+  const scale = containerHeightPx > 0 ? containerHeightPx / baseImageHeight : 1
+  const fontSizePx = `${layer.fontSize * scale}px`
+  // lineHeight = fontSize + spacing in the same imagor pixel space, scaled to display px
+  const lineHeightPx = `${(layer.fontSize + (layer.spacing ?? 0)) * scale}px`
   const cssFontFamily = layer.font || 'sans-serif'
   const fontWeight = layer.fontStyle.includes('bold') ? 'bold' : 'normal'
   const fontStyle = layer.fontStyle.includes('italic') ? 'italic' : 'normal'
+  const textAlign =
+    layer.align === 'centre' ? 'center' : layer.align === 'high' ? 'right' : 'left'
 
   return (
     /* Capture-layer: clicks on the background commit the edit */
     <div
+      ref={containerRef}
       className='pointer-events-auto absolute inset-0 z-30'
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {
@@ -155,34 +177,33 @@ export function TextEditOverlay({
         }}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        rows={1}
         spellCheck={false}
         style={{
           position: 'absolute',
           left: leftPercent,
           top: topPercent,
           width: wPercent,
+          height: hPercent,
           minWidth: '4em',
-          fontSize: fontSizePct,
+          minHeight: '1em',
+          fontSize: fontSizePx,
+          lineHeight: lineHeightPx,
           fontFamily: cssFontFamily,
           fontWeight,
           fontStyle,
+          textAlign,
           color: `#${layer.color}`,
-          background: 'rgba(255,255,255,0.15)',
+          background: 'rgba(255,255,255,0.08)',
           border: '2px dashed rgba(255,255,255,0.8)',
           outline: 'none',
           resize: 'none',
-          padding: '2px 4px',
-          lineHeight: '1.4',
-          overflow: 'hidden',
+          padding: '0',
+          overflow: hPercent ? 'auto' : 'hidden',
           boxSizing: 'border-box',
-          backdropFilter: 'blur(1px)',
           boxShadow: '0 0 0 1px rgba(0,0,0,0.4)',
           borderRadius: '2px',
-          textShadow: '0 0 4px rgba(0,0,0,0.3)',
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
-          height: 'auto',
         }}
       />
     </div>
