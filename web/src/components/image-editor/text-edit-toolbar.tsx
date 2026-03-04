@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { TextAlign, TextLayer, TextWrap } from '@/lib/image-editor'
+import type { TextAlign, TextLayer } from '@/lib/image-editor'
 
 interface TextEditToolbarProps {
   layer: TextLayer
@@ -37,8 +37,6 @@ const FONTS = [
   'Liberation Sans',
   'Ubuntu',
 ]
-
-const WRAP_MODES: TextWrap[] = ['word', 'char', 'wordchar', 'none']
 
 export function TextEditToolbar({
   layer,
@@ -275,58 +273,6 @@ export function TextEditToolbar({
           <AlignRight />
         </ToggleGroupItem>
       </ToggleGroup>
-
-      <div className='bg-border mx-0.5 h-5 w-px' />
-
-      {/* Wrap mode */}
-      <Select value={layer.wrap} onValueChange={(v) => onUpdate({ wrap: v as TextWrap })}>
-        <SelectTrigger className='h-8 w-28' onMouseDown={(e) => e.preventDefault()}>
-          <SelectValue>{t(`imageEditor.layers.wrapModes.${layer.wrap}`)}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {WRAP_MODES.map((mode) => (
-            <SelectItem key={mode} value={mode}>
-              {t(`imageEditor.layers.wrapModes.${mode}`)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Line spacing stepper */}
-      <div className='flex items-center'>
-        <Button
-          variant='ghost'
-          size='sm'
-          className='w-7 px-0'
-          onMouseDown={(e) => {
-            e.preventDefault()
-            onUpdate({ spacing: Math.max(-100, (layer.spacing ?? 0) - 1) })
-          }}
-          tabIndex={-1}
-          title={t('imageEditor.layers.lineSpacing')}
-        >
-          −
-        </Button>
-        <span
-          className='w-8 text-center text-sm tabular-nums'
-          title={t('imageEditor.layers.lineSpacing')}
-        >
-          {layer.spacing ?? 0}
-        </span>
-        <Button
-          variant='ghost'
-          size='sm'
-          className='w-7 px-0'
-          onMouseDown={(e) => {
-            e.preventDefault()
-            onUpdate({ spacing: Math.min(200, (layer.spacing ?? 0) + 1) })
-          }}
-          tabIndex={-1}
-          title={t('imageEditor.layers.lineSpacing')}
-        >
-          +
-        </Button>
-      </div>
     </div>,
     document.body,
   )
