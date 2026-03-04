@@ -113,6 +113,14 @@ export function PreviewArea({
   const [isTransitioning, setIsTransitioning] = useState(false)
   const previousEditingContextRef = useRef(editingContext)
 
+  // Mirrors textEditingLayerId but only updates after the preview image for that
+  // state has finished loading. This keeps the overlay in sync with the preview:
+  // — entering edit: overlay appears only after the text-skipped preview loads
+  // — exiting edit:  overlay stays until the rendered-text preview loads
+  const [effectiveTextEditingLayerId, setEffectiveTextEditingLayerId] = useState<string | null>(
+    null,
+  )
+
   // Track if image fits in container (for smart centering)
   const [imageFitsInContainer, setImageFitsInContainer] = useState(true)
 
@@ -163,6 +171,9 @@ export function PreviewArea({
 
     // Clear transition flag after preview loads
     setIsTransitioning(false)
+
+    // Sync effective text editing layer ID — overlay visibility follows the loaded preview
+    setEffectiveTextEditingLayerId(textEditingLayerId ?? null)
 
     onLoad?.(width, height)
   }
@@ -662,7 +673,7 @@ export function PreviewArea({
                         }
                       })()}
                     {/* Text editing overlay — rendered on top of everything when a text layer is active */}
-                    {textEditingLayerId &&
+                    {effectiveTextEditingLayerId &&
                       imageEditor &&
                       onTextEditEnd &&
                       (() => {
@@ -670,7 +681,7 @@ export function PreviewArea({
                         const state = imageEditor.getState()
                         const pl = state.paddingLeft || 0
                         const pt = state.paddingTop || 0
-                        const textLayer = imageEditor.getLayer(textEditingLayerId)
+                        const textLayer = imageEditor.getLayer(effectiveTextEditingLayerId)
                         if (!textLayer || textLayer.type !== 'text') return null
                         return (
                           <TextEditOverlay
@@ -682,7 +693,7 @@ export function PreviewArea({
                             onCommit={(text) => onTextEditEnd(text)}
                             onCancel={() => onTextEditEnd(null)}
                             onUpdate={(updates) =>
-                              imageEditor.updateLayer(textEditingLayerId, updates)
+                              imageEditor.updateLayer(effectiveTextEditingLayerId, updates)
                             }
                           />
                         )
