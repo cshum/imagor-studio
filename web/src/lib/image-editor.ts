@@ -853,10 +853,13 @@ export class ImageEditor {
           // text(text, x, y[, font[, color[, alpha[, width[, align[, justify[, wrap[, spacing[, dpi]]]]]]]]])
           const args: (string | number)[] = [encodedText, x, y]
 
+          // text(text,x,y,font,color,alpha,blend_mode,width,align,justify,wrap,spacing,dpi)
+          // blend_mode is at index 6 — must be emitted before width (index 7).
           const hasNonDefaultTrailing =
             font !== 'sans-20' ||
             layer.color !== '000000' ||
             layer.alpha !== 0 ||
+            layer.blendMode !== 'normal' ||
             (typeof width === 'number' ? width > 0 : width !== '0') ||
             layer.align !== 'low' ||
             layer.justify ||
@@ -869,6 +872,7 @@ export class ImageEditor {
             args.push(layer.color || '000000')
             if (
               layer.alpha !== 0 ||
+              layer.blendMode !== 'normal' ||
               (typeof width === 'number' ? width > 0 : width !== '0') ||
               layer.align !== 'low' ||
               layer.justify ||
@@ -878,6 +882,7 @@ export class ImageEditor {
             ) {
               args.push(layer.alpha)
               if (
+                layer.blendMode !== 'normal' ||
                 (typeof width === 'number' ? width > 0 : width !== '0') ||
                 layer.align !== 'low' ||
                 layer.justify ||
@@ -885,28 +890,38 @@ export class ImageEditor {
                 layer.spacing !== 0 ||
                 layer.dpi !== 72
               ) {
-                args.push(width)
+                args.push(layer.blendMode) // index 6: blend_mode
                 if (
+                  (typeof width === 'number' ? width > 0 : width !== '0') ||
                   layer.align !== 'low' ||
                   layer.justify ||
                   layer.wrap !== 'word' ||
                   layer.spacing !== 0 ||
                   layer.dpi !== 72
                 ) {
-                  args.push(layer.align)
+                  args.push(width) // index 7: width
                   if (
+                    layer.align !== 'low' ||
                     layer.justify ||
                     layer.wrap !== 'word' ||
                     layer.spacing !== 0 ||
                     layer.dpi !== 72
                   ) {
-                    args.push(layer.justify ? 'true' : 'false')
-                    if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
-                      args.push(layer.wrap)
-                      if (layer.spacing !== 0 || layer.dpi !== 72) {
-                        args.push(Math.round(layer.spacing * scaleFactor))
-                        if (layer.dpi !== 72) {
-                          args.push(layer.dpi)
+                    args.push(layer.align) // index 8: align
+                    if (
+                      layer.justify ||
+                      layer.wrap !== 'word' ||
+                      layer.spacing !== 0 ||
+                      layer.dpi !== 72
+                    ) {
+                      args.push(layer.justify ? 'true' : 'false')
+                      if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
+                        args.push(layer.wrap)
+                        if (layer.spacing !== 0 || layer.dpi !== 72) {
+                          args.push(Math.round(layer.spacing * scaleFactor))
+                          if (layer.dpi !== 72) {
+                            args.push(layer.dpi)
+                          }
                         }
                       }
                     }
@@ -916,11 +931,7 @@ export class ImageEditor {
             }
           }
 
-          let textFilter = `text(${args.join(',')})`
-          if (layer.blendMode !== 'normal') {
-            // text() doesn't have a blendMode arg — wrap with image() if non-normal blend needed
-            // For now emit as-is (blendMode on text layers is informational until imagor supports it)
-          }
+          const textFilter = `text(${args.join(',')})`
           filters.push(textFilter)
           continue
         }
