@@ -98,12 +98,11 @@ export function TextEditOverlay({
     return () => ro.disconnect()
   }, [])
 
-  // Focus the textarea on mount, cursor at end
+  // Focus the textarea on mount and select all text so typing immediately replaces the prefill.
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus()
-      const len = textareaRef.current.value.length
-      textareaRef.current.setSelectionRange(len, len)
+      textareaRef.current.select()
     }
     return () => {
       if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
