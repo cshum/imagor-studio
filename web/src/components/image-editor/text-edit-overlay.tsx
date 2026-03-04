@@ -174,6 +174,27 @@ export function TextEditOverlay({
   const widthFrac = layerDims.width / baseImageWidth
   const rightFrac = leftFrac + widthFrac
 
+  // When align changes via the toolbar, also reposition x so the visual anchor
+  // matches: left→left-anchor, centre→center-anchor, high→right-anchor.
+  const handleToolbarUpdate = (updates: Partial<TextLayer>) => {
+    if ('align' in updates && updates.align !== layer.align) {
+      const newAlign = updates.align!
+      const visualLeft = Math.round(leftFrac * baseImageWidth)
+      let newX: number | string
+      if (newAlign === 'centre') {
+        newX = 'center'
+      } else if (newAlign === 'high') {
+        const d = baseImageWidth - layerDims.width - visualLeft
+        newX = d === 0 ? 'right' : d < 0 ? `right-${-d}` : -d
+      } else {
+        newX = visualLeft === 0 ? 'left' : visualLeft < 0 ? `left-${-visualLeft}` : visualLeft
+      }
+      onUpdate({ ...updates, x: newX })
+    } else {
+      onUpdate(updates)
+    }
+  }
+
   // Uniform scale: imagor canvas pixels → display pixels
   const scale = containerHeightPx > 0 ? containerHeightPx / baseImageHeight : 1
   scaleRef.current = scale
@@ -244,7 +265,7 @@ export function TextEditOverlay({
         topFrac={topFrac}
         canvasContainerRef={containerRef}
         toolbarRef={toolbarRef}
-        onUpdate={onUpdate}
+        onUpdate={handleToolbarUpdate}
       />
 
       {/*

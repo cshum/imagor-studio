@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { BlendMode, ImageEditor, TextLayer } from '@/lib/image-editor'
+import type { BlendMode, ImageEditor, TextAlign, TextLayer } from '@/lib/image-editor'
 import { calculateTextLayerBoundingBox } from '@/lib/layer-dimensions'
 
 interface TextLayerControlsProps {
@@ -161,8 +161,10 @@ export function TextLayerControls({
 
   const handleHAlignChange = useCallback(
     (value: string) => {
+      // Sync layer.align to match the new x-anchor so text flow matches position
+      const align: TextAlign = value === 'center' ? 'centre' : value === 'right' ? 'high' : 'low'
       if (value === 'center') {
-        onUpdate({ x: 'center' })
+        onUpdate({ x: 'center', align })
       } else if (value === hAlign) {
         return
       } else {
@@ -173,14 +175,14 @@ export function TextLayerControls({
 
         if (value === 'left') {
           const newOffset = Math.round(visualX)
-          if (newOffset < 0) onUpdate({ x: `left-${Math.abs(newOffset)}` })
-          else if (newOffset === 0) onUpdate({ x: 'left' })
-          else onUpdate({ x: newOffset })
+          if (newOffset < 0) onUpdate({ x: `left-${Math.abs(newOffset)}`, align })
+          else if (newOffset === 0) onUpdate({ x: 'left', align })
+          else onUpdate({ x: newOffset, align })
         } else {
           const newOffset = Math.round(baseWidth - currentWidth - visualX)
-          if (newOffset < 0) onUpdate({ x: `right-${Math.abs(newOffset)}` })
-          else if (newOffset === 0) onUpdate({ x: 'right' })
-          else onUpdate({ x: -newOffset })
+          if (newOffset < 0) onUpdate({ x: `right-${Math.abs(newOffset)}`, align })
+          else if (newOffset === 0) onUpdate({ x: 'right', align })
+          else onUpdate({ x: -newOffset, align })
         }
       }
     },
