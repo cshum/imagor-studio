@@ -71,7 +71,7 @@ export function CompositingControls({
           onValueChange={(v) => onBlendModeChange(v as BlendMode)}
           disabled={disabled}
         >
-          <SelectTrigger className='h-8'>
+          <SelectTrigger className='h-9'>
             <SelectValue>{t(`imageEditor.layers.blendModes.${blendMode}`)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
