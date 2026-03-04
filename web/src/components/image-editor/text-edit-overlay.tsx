@@ -116,6 +116,12 @@ export function TextEditOverlay({
       if (textareaRef.current?.contains(active) || toolbarRef.current?.contains(active)) {
         return // focus stayed within the editing UI — don't commit yet
       }
+      // Radix Select/Popover/etc. render their content in a portal outside toolbarRef.
+      // Check whether focus is inside any Radix popper portal so we don't exit text
+      // edit just because the font-family (or other) dropdown is open.
+      if (active?.closest('[data-radix-popper-content-wrapper],[data-radix-select-content]')) {
+        return
+      }
       // Sync final text to layer then close
       onUpdate({ text: value })
       onCommit(value)
