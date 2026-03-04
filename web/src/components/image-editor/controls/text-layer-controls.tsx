@@ -317,7 +317,9 @@ export function TextLayerControls({
   // ── Derived values ───────────────────────────────────────────────────────
 
   // In fill mode show the resolved pixel width (baseWidth minus inset), matching image layer
-  const wrapWidthDisplay = widthFull ? String(Math.max(1, baseWidth - widthFullOffset)) : String(layer.width || '')
+  const wrapWidthDisplay = widthFull
+    ? String(Math.max(1, baseWidth - widthFullOffset))
+    : String(layer.width || '')
   const heightDisplay = String(layer.height)
 
   // ── Render ───────────────────────────────────────────────────────────────

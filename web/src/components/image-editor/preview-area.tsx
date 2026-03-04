@@ -632,7 +632,8 @@ export function PreviewArea({
                                     const isFill = /^(?:f|full)(-\d+)?$/.test(widthStr)
                                     if (isFill) {
                                       const inset = outputDims.width - newPxWidth
-                                      layerUpdates.width = inset > 0 ? `f-${Math.round(inset)}` : 'f'
+                                      layerUpdates.width =
+                                        inset > 0 ? `f-${Math.round(inset)}` : 'f'
                                     } else {
                                       layerUpdates.width = newPxWidth
                                     }

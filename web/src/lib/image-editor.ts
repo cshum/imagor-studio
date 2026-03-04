@@ -1307,6 +1307,12 @@ export class ImageEditor {
           let width: string | number = layer.width
           if (typeof width === 'number' && width > 0) {
             width = Math.round(width * sf)
+          } else if (typeof width === 'string' && sf !== 1) {
+            const fInsetMatch = width.match(/^(?:f|full)-(\d+)$/)
+            if (fInsetMatch) {
+              const scaledInset = Math.round(parseInt(fInsetMatch[1]) * sf)
+              width = scaledInset === 0 ? 'f' : `f-${scaledInset}`
+            }
           }
 
           const args: (string | number)[] = [encodedText, x, y]
