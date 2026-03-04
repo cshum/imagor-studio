@@ -500,16 +500,20 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const handleAddTextLayer = useCallback(() => {
     const outputDims = imageEditor.getOutputDimensions()
     const fontSize = Math.max(12, Math.round(outputDims.height * 0.05))
-    // Default to 40% of canvas width so the text box is immediately usable.
-    // Centred horizontally so it lands in a sensible position.
     const defaultWidth = Math.round(outputDims.width * 0.4)
+    // Single-line height estimate (fontSize × 1.4 line-height factor)
+    const singleLineHeight = Math.round(fontSize * 1.4)
+    // Center on canvas using pixel offsets (left/top anchor) to match image layer UX.
+    // Controls will show left+top alignment toggles, same as newly added image layers.
+    const x = Math.round((outputDims.width - defaultWidth) / 2)
+    const y = Math.round((outputDims.height - singleLineHeight) / 2)
     const newLayer = {
       type: 'text' as const,
       id: `layer-${Date.now()}`,
       name: t('imageEditor.layers.textLayer'),
       text: t('imageEditor.layers.textLayerDefaultText'),
-      x: 'center' as const,
-      y: 'center' as const,
+      x,
+      y,
       font: 'sans',
       fontStyle: '' as const,
       fontSize,
