@@ -635,7 +635,9 @@ export function PreviewArea({
                               onEnterEditMode={
                                 isImageLayer
                                   ? () => imageEditor.switchContext(selectedLayerId)
-                                  : undefined
+                                  : onTextEdit
+                                    ? () => onTextEdit(selectedLayerId)
+                                    : undefined
                               }
                             />
                           )
