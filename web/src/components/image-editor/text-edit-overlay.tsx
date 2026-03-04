@@ -89,10 +89,8 @@ export function TextEditOverlay({
     }
   }, [])
 
-  // Keep value in sync if the layer text changes externally
-  useEffect(() => {
-    setValue(layer.text)
-  }, [layer.text])
+  // Note: we intentionally do NOT sync value from layer.text here.
+  // The textarea owns the draft text; layer.text is only updated on blur/commit.
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -101,12 +99,13 @@ export function TextEditOverlay({
         onCancel()
       } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
+        onUpdate({ text: value })
         onCommit(value)
       }
       // Stop propagation so canvas keyboard shortcuts don't fire while editing
       e.stopPropagation()
     },
-    [value, onCommit, onCancel],
+    [value, onCommit, onCancel, onUpdate],
   )
 
   const handleBlur = useCallback(() => {
@@ -117,9 +116,11 @@ export function TextEditOverlay({
       if (textareaRef.current?.contains(active) || toolbarRef.current?.contains(active)) {
         return // focus stayed within the editing UI — don't commit yet
       }
+      // Sync final text to layer then close
+      onUpdate({ text: value })
       onCommit(value)
     }, 120)
-  }, [value, onCommit])
+  }, [value, onCommit, onUpdate])
 
   // ── Position calculations ────────────────────────────────────────────────
 
@@ -160,8 +161,7 @@ export function TextEditOverlay({
   const cssFontFamily = imagorFontToCss(layer.font)
   const fontWeight = layer.fontStyle.includes('bold') ? 'bold' : 'normal'
   const fontStyle = layer.fontStyle.includes('italic') ? 'italic' : 'normal'
-  const textAlign =
-    layer.align === 'centre' ? 'center' : layer.align === 'high' ? 'right' : 'left'
+  const textAlign = layer.align === 'centre' ? 'center' : layer.align === 'high' ? 'right' : 'left'
 
   return (
     /* Capture-layer: clicks on the background commit the edit */
@@ -171,6 +171,7 @@ export function TextEditOverlay({
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {
           e.preventDefault()
+          onUpdate({ text: value })
           onCommit(value)
         }
       }}
@@ -184,19 +185,17 @@ export function TextEditOverlay({
         bottomFrac={bottomFrac}
         toolbarRef={toolbarRef}
         onUpdate={onUpdate}
-        onDone={() => onCommit(value)}
+        onDone={() => {
+          onUpdate({ text: value })
+          onCommit(value)
+        }}
       />
 
       <textarea
         ref={textareaRef}
         value={value}
         onChange={(e) => {
-          const newValue = e.target.value
-          setValue(newValue)
-          // Live-sync the text so the layer always has the latest value.
-          // This means sidebar / toolbar "Done" only needs to end the
-          // editing session — no text update required at commit time.
-          onUpdate({ text: newValue })
+          setValue(e.target.value)
         }}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
