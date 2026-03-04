@@ -113,23 +113,17 @@ export function PreviewArea({
   const [isTransitioning, setIsTransitioning] = useState(false)
   const previousEditingContextRef = useRef(editingContext)
 
-  // Mirrors textEditingLayerId but keeps overlay sync with the displayed preview:
-  // — entering edit: set immediately so the overlay mounts right away.
-  //   (The text-skipped preview URL may equal the current URL — e.g. when the
-  //    layer was just added — so handleImageLoad might never fire.)
-  // — exiting edit:  cleared only inside handleImageLoad after the rendered-text
-  //   preview loads, preventing a flicker where overlay and rendered text overlap.
+  // Mirrors textEditingLayerId but only updates after the preview image for that
+  // state has finished loading. This keeps the overlay in sync with the preview:
+  // — entering edit: overlay appears only after the text-skipped preview loads
+  // — exiting edit:  overlay stays until the rendered-text preview loads
+  //
+  // ImageEditor appends a #te-{layerId} fragment to the previewUrl when in text-edit
+  // mode. This guarantees the URL string changes (so PreloadImage always reloads and
+  // fires handleImageLoad), even in the first-add case where the base URL is unchanged.
   const [effectiveTextEditingLayerId, setEffectiveTextEditingLayerId] = useState<string | null>(
     null,
   )
-
-  // Entering edit mode: immediately expose the overlay.
-  // Do NOT clear here on null — handleImageLoad owns that transition.
-  useEffect(() => {
-    if (textEditingLayerId !== null) {
-      setEffectiveTextEditingLayerId(textEditingLayerId)
-    }
-  }, [textEditingLayerId])
 
   // Track if image fits in container (for smart centering)
   const [imageFitsInContainer, setImageFitsInContainer] = useState(true)

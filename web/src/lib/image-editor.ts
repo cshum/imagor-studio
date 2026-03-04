@@ -1472,10 +1472,20 @@ export class ImageEditor {
         this.abortController.signal,
       )
 
+      // When in text-editing mode, append a URL fragment to differentiate the
+      // "text-skipped" preview from the normal preview. Fragments are stripped by the
+      // browser before HTTP requests, so no extra network request is made — the browser
+      // serves the same resource from cache. The different string forces React to see
+      // a URL change, triggering PreloadImage to reload and fire handleImageLoad, which
+      // keeps the text-edit overlay perfectly in sync with the displayed image.
+      const finalUrl = this.textEditingLayerId
+        ? `${url}#te-${this.textEditingLayerId}`
+        : url
+
       // Only update if URL actually changed
-      if (url !== this.lastPreviewUrl) {
-        this.lastPreviewUrl = url
-        this.callbacks.onPreviewUpdate?.(url)
+      if (finalUrl !== this.lastPreviewUrl) {
+        this.lastPreviewUrl = finalUrl
+        this.callbacks.onPreviewUpdate?.(finalUrl)
         // Don't clear loading here - let PreviewArea clear it when image actually loads
       } else {
         this.callbacks.onLoadingChange?.(false)
