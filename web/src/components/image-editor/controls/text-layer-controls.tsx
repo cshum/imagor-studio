@@ -221,7 +221,11 @@ export function TextLayerControls({
 
   // ── Text-layout handlers ────────────────────────────────────────────────
 
-  const widthFull = layer.width === 'f'
+  // Match 'f' or 'f-N' (full width with optional pixel inset)
+  const widthFullMatch =
+    typeof layer.width === 'string' ? layer.width.match(/^(?:f|full)(?:-(\d+))?$/) : null
+  const widthFull = widthFullMatch !== null
+  const widthFullOffset = widthFullMatch?.[1] ? parseInt(widthFullMatch[1]) : 0
 
   const handleWrapWidthChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -242,12 +246,14 @@ export function TextLayerControls({
 
   const handleWidthModeToggle = useCallback(() => {
     if (widthFull) {
-      // Switch back to a fixed pixel width — use the base canvas width as starting point
-      onUpdate({ width: baseWidth })
+      // fill → px: resolve 'f' / 'f-N' back to absolute pixels (preserves visual size)
+      onUpdate({ width: Math.max(1, baseWidth - widthFullOffset) })
     } else {
-      onUpdate({ width: 'f' })
+      // px → fill: compute inset so the visual wrap width stays the same
+      const inset = Math.max(0, baseWidth - currentWidth)
+      onUpdate({ width: inset === 0 ? 'f' : `f-${inset}` })
     }
-  }, [widthFull, baseWidth, onUpdate])
+  }, [widthFull, widthFullOffset, baseWidth, currentWidth, onUpdate])
 
   const handleHeightChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -302,7 +308,8 @@ export function TextLayerControls({
 
   // ── Derived values ───────────────────────────────────────────────────────
 
-  const wrapWidthDisplay = widthFull ? String(baseWidth) : String(layer.width)
+  // In fill mode show the resolved pixel width (currentWidth), not the raw 'f'/'f-N' token
+  const wrapWidthDisplay = widthFull ? String(currentWidth) : String(layer.width)
   const heightDisplay = String(layer.height)
 
   // ── Render ───────────────────────────────────────────────────────────────
