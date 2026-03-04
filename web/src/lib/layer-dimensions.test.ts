@@ -648,26 +648,17 @@ describe('calculateTextLayerBoundingBox', () => {
     })
 
     it('height="f" resolves to full parent height', () => {
-      const result = calculateTextLayerBoundingBox(
-        makeTextLayer({ height: 'f' }),
-        parent,
-      )
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ height: 'f' }), parent)
       expect(result.height).toBe(600)
     })
 
     it('height="f-100" subtracts offset from parent height', () => {
-      const result = calculateTextLayerBoundingBox(
-        makeTextLayer({ height: 'f-100' }),
-        parent,
-      )
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ height: 'f-100' }), parent)
       expect(result.height).toBe(500)
     })
 
     it('height="50p" resolves to 50% of parent height', () => {
-      const result = calculateTextLayerBoundingBox(
-        makeTextLayer({ height: '50p' }),
-        parent,
-      )
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ height: '50p' }), parent)
       expect(result.height).toBe(300)
     })
 
