@@ -1078,13 +1078,25 @@ export function buildDragUpdates(
   }
 
   if (!disableSnapping) {
-    if (snapped.snappedToCenter.x && snapped.snappedToCenter.y) {
+    // Only snap-lock to 'center' if the layer is already center-aligned on that axis.
+    // Non-center layers should never have their anchor changed by snapping — the
+    // snapped display coordinate is still used (visual magnetism), but the anchor
+    // (left/right/top/bottom) must stay unchanged.
+    const alreadyCenterX = layerX === 'center'
+    const alreadyCenterY = layerY === 'center'
+
+    if (
+      snapped.snappedToCenter.x &&
+      snapped.snappedToCenter.y &&
+      alreadyCenterX &&
+      alreadyCenterY
+    ) {
       return { x: 'center', y: 'center' }
     }
-    if (snapped.snappedToCenter.x && canDragX) {
+    if (snapped.snappedToCenter.x && canDragX && alreadyCenterX) {
       return buildPositionUpdates({ x: 'center' })
     }
-    if (snapped.snappedToCenter.y && canDragY) {
+    if (snapped.snappedToCenter.y && canDragY && alreadyCenterY) {
       return buildPositionUpdates({ y: 'center' })
     }
   }

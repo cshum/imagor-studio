@@ -2777,31 +2777,36 @@ describe('buildDragUpdates', () => {
     expect(updates.x).toBe(100)
   })
 
-  it('snaps to center X+Y and returns {x:center, y:center} (no further computation)', () => {
+  it('snaps to center X+Y: anchor stays left/top since layer is not center-aligned', () => {
     // Position at exact center: displayX=(500-100)/2=200, displayY=(400-50)/2=175
+    // Default layerX=0 (left-aligned), layerY=0 (top-aligned) — NOT center-aligned.
+    // The snap magnetism moves the display coords to center, but the anchor must not change.
+    // canvasX = round(200/500 * 1000) = 400; canvasY = round(175/400 * 800) = 350
     const centerX = (ow - dw) / 2
     const centerY = (oh - dh) / 2
     const updates = drag(centerX, centerY, { disableSnapping: false })
-    expect(updates.x).toBe('center')
-    expect(updates.y).toBe('center')
-    // When both snap, we return early — no other keys
-    expect(Object.keys(updates)).toEqual(['x', 'y'])
+    expect(updates.x).toBe(400) // left-aligned at 400px from left (visual center)
+    expect(updates.y).toBe(350) // top-aligned at 350px from top (visual center)
+    expect(updates.transforms).toBeUndefined()
   })
 
-  it('snaps center X only: overrides x to center, y computed normally', () => {
+  it('snaps center X only: anchor stays left-aligned since layer is not center-aligned', () => {
+    // layerX=50 (left-aligned), layerY=0 (top-aligned) — neither is 'center'.
+    // Snap magnetism adjusts snapped.x to the center display coord but must not switch anchor.
+    // canvasX = round(200/500 * 1000) = 400; y not snapped, displayY=0 → canvasY=0 → 'top'
     const centerX = (ow - dw) / 2
-    // Place Y far from center so only X snaps
     const updates = drag(centerX, 0, { disableSnapping: false, layerX: 50, layerY: 0 })
-    expect(updates.x).toBe('center')
-    // Y should be a converted position, not center
+    expect(updates.x).toBe(400) // left-aligned at visual-center position
     expect(updates.y).not.toBe('center')
     expect(updates.transforms).toBeUndefined()
   })
 
-  it('snaps center Y only: overrides y to center, x computed normally', () => {
+  it('snaps center Y only: anchor stays top-aligned since layer is not center-aligned', () => {
+    // layerX=0 (top-aligned), layerY=50 (top-aligned) — neither is 'center'.
+    // canvasY = round(175/400 * 800) = 350; x not snapped, displayX=0 → canvasX=0 → 'left'
     const centerY = (oh - dh) / 2
     const updates = drag(0, centerY, { disableSnapping: false, layerX: 0, layerY: 50 })
-    expect(updates.y).toBe('center')
+    expect(updates.y).toBe(350) // top-aligned at visual-center position
     expect(updates.x).not.toBe('center')
     expect(updates.transforms).toBeUndefined()
   })
