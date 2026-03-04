@@ -8,6 +8,7 @@ import {
   AlignVerticalJustifyEnd,
   AlignVerticalJustifyStart,
   Check,
+  MoveHorizontal,
   Type,
 } from 'lucide-react'
 
@@ -25,6 +26,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { BlendMode, ImageEditor, TextAlign, TextLayer } from '@/lib/image-editor'
 import { calculateTextLayerBoundingBox } from '@/lib/layer-dimensions'
+import { cn } from '@/lib/utils'
 
 interface TextLayerControlsProps {
   layer: TextLayer
@@ -219,6 +221,8 @@ export function TextLayerControls({
 
   // ── Text-layout handlers ────────────────────────────────────────────────
 
+  const widthFull = layer.width === 'f'
+
   const handleWrapWidthChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value.trim()
@@ -235,6 +239,15 @@ export function TextLayerControls({
     },
     [onUpdate],
   )
+
+  const handleWidthModeToggle = useCallback(() => {
+    if (widthFull) {
+      // Switch back to a fixed pixel width — use the base canvas width as starting point
+      onUpdate({ width: baseWidth })
+    } else {
+      onUpdate({ width: 'f' })
+    }
+  }, [widthFull, baseWidth, onUpdate])
 
   const handleHeightChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -289,7 +302,7 @@ export function TextLayerControls({
 
   // ── Derived values ───────────────────────────────────────────────────────
 
-  const wrapWidthDisplay = String(layer.width)
+  const wrapWidthDisplay = widthFull ? String(baseWidth) : String(layer.width)
   const heightDisplay = String(layer.height)
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -298,12 +311,7 @@ export function TextLayerControls({
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
       {/* Edit Text Button - only show when not already editing */}
       {!isTextEditing && (
-        <Button
-          variant='outline'
-          size='default'
-          onClick={onEditText}
-          className='w-full'
-        >
+        <Button variant='outline' size='default' onClick={onEditText} className='w-full'>
           <Type className='mr-2 h-4 w-4' />
           {t('imageEditor.layers.editText')}
         </Button>
@@ -311,12 +319,7 @@ export function TextLayerControls({
 
       {/* Apply Text Edit Button - only show when editing */}
       {isTextEditing && (
-        <Button
-          variant='outline'
-          size='default'
-          onClick={onEditText}
-          className='w-full'
-        >
+        <Button variant='outline' size='default' onClick={onEditText} className='w-full'>
           <Check className='mr-2 h-4 w-4' />
           {t('imageEditor.layers.applyTextEdit')}
         </Button>
@@ -419,13 +422,43 @@ export function TextLayerControls({
 
       {/* ── W / H — always visible ── */}
       <div className='flex gap-2'>
-        <div className='flex-1 space-y-1.5'>
-          <Label className='text-muted-foreground text-xs'>W</Label>
+        <div className='flex-1 space-y-1'>
+          <div className='flex items-center justify-between'>
+            <Label className='text-muted-foreground text-xs'>W</Label>
+            <div className='flex items-center'>
+              <button
+                type='button'
+                onClick={widthFull ? handleWidthModeToggle : undefined}
+                className={cn(
+                  'px-1 py-0.5 text-xs transition-colors',
+                  !widthFull
+                    ? 'text-foreground cursor-default font-medium'
+                    : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                )}
+              >
+                px
+              </button>
+              <button
+                type='button'
+                onClick={!widthFull ? handleWidthModeToggle : undefined}
+                className={cn(
+                  'px-1 py-0.5 transition-colors',
+                  widthFull
+                    ? 'text-primary cursor-default'
+                    : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                )}
+                title='Stretch to fill width'
+              >
+                <MoveHorizontal className='h-3 w-3' />
+              </button>
+            </div>
+          </div>
           <Input
             type='text'
             value={wrapWidthDisplay}
             onChange={handleWrapWidthChange}
-            placeholder='0 / px / 80p / f'
+            disabled={widthFull}
+            placeholder='auto'
             className='h-8'
           />
         </div>
