@@ -807,6 +807,7 @@
       "textLayer": "Text Layer",
       "textLayerDefaultText": "Text",
       "editText": "Edit Text",
+      "applyTextEdit": "Apply Text Edit",
       "textContent": "Text Content",
       "fontFamily": "Font Family",
       "fontStyle": "Style",

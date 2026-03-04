@@ -241,8 +241,6 @@ export function TextLayerControls({
       const raw = e.target.value.trim()
       if (raw === '' || raw === '0') {
         onUpdate({ height: 0 })
-      } else if (raw === 'f') {
-        onUpdate({ height: 'f' })
       } else if (raw.endsWith('p')) {
         onUpdate({ height: raw })
       } else {
@@ -298,25 +296,31 @@ export function TextLayerControls({
 
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-      {/* Edit Text / Done Button */}
-      <Button
-        variant={isTextEditing ? 'default' : 'outline'}
-        size='default'
-        onClick={onEditText}
-        className='w-full'
-      >
-        {isTextEditing ? (
-          <>
-            <Check className='mr-2 h-4 w-4' />
-            Done
-          </>
-        ) : (
-          <>
-            <Type className='mr-2 h-4 w-4' />
-            {t('imageEditor.layers.editText')}
-          </>
-        )}
-      </Button>
+      {/* Edit Text Button - only show when not already editing */}
+      {!isTextEditing && (
+        <Button
+          variant='outline'
+          size='default'
+          onClick={onEditText}
+          className='w-full'
+        >
+          <Type className='mr-2 h-4 w-4' />
+          {t('imageEditor.layers.editText')}
+        </Button>
+      )}
+
+      {/* Apply Text Edit Button - only show when editing */}
+      {isTextEditing && (
+        <Button
+          variant='outline'
+          size='default'
+          onClick={onEditText}
+          className='w-full'
+        >
+          <Check className='mr-2 h-4 w-4' />
+          {t('imageEditor.layers.applyTextEdit')}
+        </Button>
+      )}
 
       {/* ── Position Controls — always visible ── */}
       <div className='space-y-1.5'>
@@ -431,7 +435,7 @@ export function TextLayerControls({
             type='text'
             value={heightDisplay}
             onChange={handleHeightChange}
-            placeholder='0 / px / 80p / f'
+            placeholder='0 / px / 80p'
             className='h-8'
           />
         </div>

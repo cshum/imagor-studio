@@ -829,6 +829,7 @@
       "textLayer": "文字图层",
       "textLayerDefaultText": "文字",
       "editText": "编辑文字",
+      "applyTextEdit": "应用文字编辑",
       "textContent": "文字内容",
       "fontFamily": "字体",
       "fontStyle": "样式",
