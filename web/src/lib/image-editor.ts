@@ -1478,9 +1478,7 @@ export class ImageEditor {
       // serves the same resource from cache. The different string forces React to see
       // a URL change, triggering PreloadImage to reload and fire handleImageLoad, which
       // keeps the text-edit overlay perfectly in sync with the displayed image.
-      const finalUrl = this.textEditingLayerId
-        ? `${url}#te-${this.textEditingLayerId}`
-        : url
+      const finalUrl = this.textEditingLayerId ? `${url}#te-${this.textEditingLayerId}` : url
 
       // Only update if URL actually changed
       if (finalUrl !== this.lastPreviewUrl) {
