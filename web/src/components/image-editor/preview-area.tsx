@@ -654,6 +654,20 @@ export function PreviewArea({
                                     ? () => onTextEdit(selectedLayerId)
                                     : undefined
                               }
+                              onHandleDoubleClick={
+                                !isImageLayer
+                                  ? (handle) => {
+                                      // e/w handles reset wrap width to auto (0)
+                                      if (handle === 'e' || handle === 'w') {
+                                        imageEditor.updateLayer(selectedLayerId, { width: 0 })
+                                      }
+                                      // n/s handles reset fixed height to auto (0)
+                                      else if (handle === 'n' || handle === 's') {
+                                        imageEditor.updateLayer(selectedLayerId, { height: 0 })
+                                      }
+                                    }
+                                  : undefined
+                              }
                             />
                           )
                         } else {

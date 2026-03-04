@@ -35,6 +35,8 @@ interface LayerOverlayProps {
   layerFillColor?: string
   onDeselect?: () => void
   onEnterEditMode?: () => void
+  /** Called when a resize handle is double-clicked. Used by text layers to reset width/height to auto. */
+  onHandleDoubleClick?: (handle: ResizeHandle) => void
 }
 
 export function LayerOverlay({
@@ -56,6 +58,7 @@ export function LayerOverlay({
   layerFillColor,
   onDeselect,
   onEnterEditMode,
+  onHandleDoubleClick,
 }: LayerOverlayProps) {
   // Calculate CSS percentage strings, drag capabilities and alignment flags
   const { leftPercent, topPercent, widthPercent, heightPercent, canDragX, canDragY } =
@@ -350,6 +353,11 @@ export function LayerOverlay({
             )}
             onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
             onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
+            onDoubleClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onHandleDoubleClick?.(handle as ResizeHandle)
+            }}
           >
             {/* Visual handle: Photoshop-style white square with black border */}
             <div
