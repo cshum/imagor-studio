@@ -5,6 +5,29 @@ import type { TextLayer } from '@/lib/image-editor'
 import { calculateTextLayerBoundingBox } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'
 
+/**
+ * Convert an imagor font identifier to a CSS font-family string.
+ * Imagor accepts short aliases ('sans', 'serif', 'monospace') that are
+ * NOT valid CSS generic families — 'sans' in CSS is treated as an unknown
+ * named font and falls back to the browser default serif, not sans-serif.
+ */
+export function imagorFontToCss(font: string | undefined): string {
+  if (!font) return 'sans-serif'
+  switch (font.toLowerCase()) {
+    case 'sans':
+      return 'sans-serif'
+    case 'serif':
+      return 'serif'
+    case 'monospace':
+    case 'mono':
+      return 'monospace'
+    default:
+      // Named fonts (e.g. 'Noto Sans', 'DejaVu Sans') — use as-is with a
+      // generic fallback so the browser degrades gracefully if not installed.
+      return `"${font}", sans-serif`
+  }
+}
+
 interface TextEditOverlayProps {
   layer: TextLayer
   baseImageWidth: number
@@ -134,7 +157,7 @@ export function TextEditOverlay({
   const fontSizePx = `${layer.fontSize * scale}px`
   // lineHeight = fontSize + spacing in the same imagor pixel space, scaled to display px
   const lineHeightPx = `${(layer.fontSize + (layer.spacing ?? 0)) * scale}px`
-  const cssFontFamily = layer.font || 'sans-serif'
+  const cssFontFamily = imagorFontToCss(layer.font)
   const fontWeight = layer.fontStyle.includes('bold') ? 'bold' : 'normal'
   const fontStyle = layer.fontStyle.includes('italic') ? 'italic' : 'normal'
   const textAlign =
