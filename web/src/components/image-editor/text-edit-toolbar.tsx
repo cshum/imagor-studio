@@ -109,14 +109,23 @@ export function TextEditToolbar({
     computePosition()
   }, [computePosition])
 
-  // Also recompute when the canvas container or toolbar resizes.
+  // Recompute when the canvas container or toolbar resizes, or when any
+  // ancestor scrolls (e.g. the zoomed preview container).
   const observersRef = useRef<ResizeObserver[]>([])
   useLayoutEffect(() => {
     const observers = [new ResizeObserver(computePosition), new ResizeObserver(computePosition)]
     observersRef.current = observers
     if (canvasContainerRef.current) observers[0].observe(canvasContainerRef.current)
     if (toolbarRef.current) observers[1].observe(toolbarRef.current)
-    return () => observers.forEach((o) => o.disconnect())
+
+    // Capture-phase scroll catches scroll events from any element, including
+    // the zoomed preview container, without needing a ref to it.
+    window.addEventListener('scroll', computePosition, { capture: true, passive: true })
+
+    return () => {
+      observers.forEach((o) => o.disconnect())
+      window.removeEventListener('scroll', computePosition, { capture: true })
+    }
   }, [canvasContainerRef, toolbarRef, computePosition])
 
   // ── Derived ──────────────────────────────────────────────────────────────
