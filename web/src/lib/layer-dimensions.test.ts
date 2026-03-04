@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import type { ImageDimensions, ImageEditorState } from './image-editor'
-import { calculateCanvasOutputDimensions, calculateLayerOutputDimensions } from './layer-dimensions'
+import type { ImageDimensions, ImageEditorState, TextLayer } from './image-editor'
+import {
+  calculateCanvasOutputDimensions,
+  calculateLayerBoundingBox,
+  calculateLayerOutputDimensions,
+  calculateTextLayerBoundingBox,
+} from './layer-dimensions'
 
 describe('calculateLayerOutputDimensions', () => {
   const originalDimensions: ImageDimensions = {
@@ -538,5 +543,190 @@ describe('calculateCanvasOutputDimensions', () => {
       )
       expect(result).toEqual({ width: 1000, height: 400 })
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// calculateTextLayerBoundingBox
+// ---------------------------------------------------------------------------
+
+/** Minimal valid TextLayer for bounding-box tests */
+const makeTextLayer = (overrides: Partial<TextLayer> = {}): TextLayer => ({
+  type: 'text',
+  id: 'txt-1',
+  name: 'Test text',
+  text: 'Hello',
+  x: 0,
+  y: 0,
+  font: 'sans',
+  fontStyle: '',
+  fontSize: 20,
+  color: '000000',
+  width: 0, // unconstrained by default
+  align: 'low',
+  justify: false,
+  wrap: 'word',
+  spacing: 0,
+  dpi: 72,
+  alpha: 0,
+  blendMode: 'normal',
+  visible: true,
+  ...overrides,
+})
+
+describe('calculateTextLayerBoundingBox', () => {
+  const parent: ImageDimensions = { width: 800, height: 600 }
+
+  describe('width resolution', () => {
+    it('uses numeric width > 0 as-is', () => {
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ width: 300 }), parent)
+      expect(result.width).toBe(300)
+    })
+
+    it('width=0 estimates from text length (unconstrained), capped at parentWidth', () => {
+      // Short text → well below parentWidth
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ text: 'Hi', width: 0 }), parent)
+      expect(result.width).toBeGreaterThan(0)
+      expect(result.width).toBeLessThanOrEqual(parent.width)
+    })
+
+    it('width="f" resolves to full parent width', () => {
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ width: 'f' }), parent)
+      expect(result.width).toBe(800)
+    })
+
+    it('width="full" resolves to full parent width', () => {
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ width: 'full' }), parent)
+      expect(result.width).toBe(800)
+    })
+
+    it('width="f-100" subtracts offset from parent width', () => {
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ width: 'f-100' }), parent)
+      expect(result.width).toBe(700)
+    })
+
+    it('width="50p" resolves to 50% of parent width', () => {
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ width: '50p' }), parent)
+      expect(result.width).toBe(400)
+    })
+
+    it('falls back to 600 parent width when no parentDimensions given and width="f"', () => {
+      const result = calculateTextLayerBoundingBox(makeTextLayer({ width: 'f' }))
+      // Default parent width = 600 when parentDimensions is undefined
+      expect(result.width).toBe(600)
+    })
+  })
+
+  describe('height resolution', () => {
+    const LINE_HEIGHT_FACTOR = 1.4
+
+    it('single line: height = round(fontSize * LINE_HEIGHT_FACTOR)', () => {
+      const result = calculateTextLayerBoundingBox(
+        makeTextLayer({ text: 'Hello', fontSize: 20, width: 200 }),
+        parent,
+      )
+      // 1 line: max(20, round(1 * 20 * 1.4)) = max(20, 28) = 28
+      expect(result.height).toBe(Math.round(1 * 20 * LINE_HEIGHT_FACTOR))
+    })
+
+    it('multi-line: height scales with line count', () => {
+      const result = calculateTextLayerBoundingBox(
+        makeTextLayer({ text: 'Line1\nLine2\nLine3', fontSize: 20, width: 200 }),
+        parent,
+      )
+      // 3 lines: round(3 * 20 * 1.4) = 84
+      expect(result.height).toBe(Math.round(3 * 20 * LINE_HEIGHT_FACTOR))
+    })
+
+    it('height is at least fontSize (single large font)', () => {
+      const result = calculateTextLayerBoundingBox(
+        makeTextLayer({ text: 'X', fontSize: 50, width: 100 }),
+        parent,
+      )
+      expect(result.height).toBeGreaterThanOrEqual(50)
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// calculateLayerBoundingBox
+// ---------------------------------------------------------------------------
+
+describe('calculateLayerBoundingBox', () => {
+  const parent: ImageDimensions = { width: 1000, height: 800 }
+
+  it('delegates to calculateLayerOutputDimensions for ImageLayer (no transforms)', () => {
+    const layer = {
+      type: 'image' as const,
+      id: 'img-1',
+      imagePath: 'test.jpg',
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+      name: 'Test',
+      originalDimensions: { width: 400, height: 300 },
+    }
+    const result = calculateLayerBoundingBox(layer, parent)
+    expect(result).toEqual({ width: 400, height: 300 })
+  })
+
+  it('delegates to calculateLayerOutputDimensions for ImageLayer (with transforms)', () => {
+    const layer = {
+      type: 'image' as const,
+      id: 'img-2',
+      imagePath: 'test.jpg',
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+      name: 'Test',
+      originalDimensions: { width: 800, height: 600 },
+      transforms: { width: 400, height: 300, fitIn: false },
+    }
+    const result = calculateLayerBoundingBox(layer, parent)
+    expect(result).toEqual({ width: 400, height: 300 })
+  })
+
+  it('delegates to calculateTextLayerBoundingBox for TextLayer with numeric width', () => {
+    const layer = makeTextLayer({ width: 500, fontSize: 20, text: 'Hello' })
+    const result = calculateLayerBoundingBox(layer, parent)
+    // Width 500 as-is; height = round(1 * 20 * 1.4) = 28
+    expect(result.width).toBe(500)
+    expect(result.height).toBe(28)
+  })
+
+  it('delegates to calculateTextLayerBoundingBox for TextLayer with full width', () => {
+    const layer = makeTextLayer({ width: 'f', fontSize: 20, text: 'Hello' })
+    const result = calculateLayerBoundingBox(layer, parent)
+    expect(result.width).toBe(1000) // full parent width
+  })
+
+  it('ImageLayer with padding (fillColor set) includes padding in result', () => {
+    const layer = {
+      type: 'image' as const,
+      id: 'img-3',
+      imagePath: 'test.jpg',
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+      name: 'Test',
+      originalDimensions: { width: 400, height: 300 },
+      transforms: {
+        width: 400,
+        height: 300,
+        fillColor: 'ffffff',
+        paddingLeft: 20,
+        paddingRight: 20,
+        paddingTop: 10,
+        paddingBottom: 10,
+      },
+    }
+    const result = calculateLayerBoundingBox(layer, parent)
+    expect(result).toEqual({ width: 440, height: 320 })
   })
 })

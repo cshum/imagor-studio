@@ -893,7 +893,12 @@ export class ImageEditor {
                   layer.dpi !== 72
                 ) {
                   args.push(layer.align)
-                  if (layer.justify || layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
+                  if (
+                    layer.justify ||
+                    layer.wrap !== 'word' ||
+                    layer.spacing !== 0 ||
+                    layer.dpi !== 72
+                  ) {
                     args.push(layer.justify ? 'true' : 'false')
                     if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
                       args.push(layer.wrap)
@@ -1326,7 +1331,12 @@ export class ImageEditor {
                   layer.dpi !== 72
                 ) {
                   args.push(layer.align)
-                  if (layer.justify || layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
+                  if (
+                    layer.justify ||
+                    layer.wrap !== 'word' ||
+                    layer.spacing !== 0 ||
+                    layer.dpi !== 72
+                  ) {
                     args.push(layer.justify ? 'true' : 'false')
                     if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
                       args.push(layer.wrap)
@@ -2197,7 +2207,7 @@ export class ImageEditor {
         currentLayers = targetLayer.transforms?.layers || []
       }
 
-      if (targetLayer && targetLayer.type === 'image') {
+      if (targetLayer && targetLayer.type !== 'text') {
         // Save base image config (first time only)
         if (!this.savedBaseImagePath) {
           this.savedBaseImagePath = this.config.imagePath
@@ -2558,7 +2568,7 @@ export class ImageEditor {
 
       const mergedLayer = { ...layer, ...updates } as Layer
 
-      if (layer.type === 'image') {
+      if (layer.type !== 'text') {
         const imgUpdates = updates as Partial<ImageLayer>
         const mergedImg = mergedLayer as ImageLayer
 
@@ -2611,7 +2621,7 @@ export class ImageEditor {
 
             const mergedL = { ...l, ...updates } as Layer
 
-            if (l.type === 'image') {
+            if (l.type !== 'text') {
               const imgUpdates = updates as Partial<ImageLayer>
               const mergedImg = mergedL as ImageLayer
 

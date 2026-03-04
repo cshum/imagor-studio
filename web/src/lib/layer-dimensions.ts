@@ -145,10 +145,11 @@ export function calculateTextLayerBoundingBox(
       width = rawWidth
     } else {
       // 0 = unconstrained; estimate from text content
-      const longestLine = layer.text
-        .split('\n')
-        .reduce((a, b) => (a.length > b.length ? a : b), '')
-      width = Math.max(60, Math.min(longestLine.length * layer.fontSize * 0.6, parentDimensions?.width ?? 600))
+      const longestLine = layer.text.split('\n').reduce((a, b) => (a.length > b.length ? a : b), '')
+      width = Math.max(
+        60,
+        Math.min(longestLine.length * layer.fontSize * 0.6, parentDimensions?.width ?? 600),
+      )
     }
   } else if (typeof rawWidth === 'string') {
     const full = parentDimensions?.width ?? 600
@@ -174,7 +175,10 @@ export function calculateTextLayerBoundingBox(
 
   // --- Estimate height ---
   const lineCount = Math.max(1, layer.text.split('\n').length)
-  const height = Math.max(layer.fontSize, Math.round(lineCount * layer.fontSize * LINE_HEIGHT_FACTOR))
+  const height = Math.max(
+    layer.fontSize,
+    Math.round(lineCount * layer.fontSize * LINE_HEIGHT_FACTOR),
+  )
 
   return { width: Math.round(width), height }
 }

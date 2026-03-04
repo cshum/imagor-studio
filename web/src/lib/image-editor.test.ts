@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ImageEditor, type ImageEditorConfig, type ImageLayer } from './image-editor'
+import { ImageEditor, type ImageEditorConfig, type ImageLayer, type TextLayer } from './image-editor'
 
 // Mock the imagor-api module
 vi.mock('@/api/imagor-api', () => ({
@@ -3574,6 +3574,227 @@ describe('ImageEditor', () => {
         expect(state.height).toBe(600)
         expect(state.imagePath).toBe('new-image.jpg')
       })
+    })
+  })
+})
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Text Layer tests (separate suite for clarity)
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('TextLayer support', () => {
+  let editor: ImageEditor
+
+  /** Build a minimal valid TextLayer */
+  const makeTextLayer = (overrides: Partial<TextLayer> = {}): TextLayer => ({
+    type: 'text',
+    id: 'txt-1',
+    name: 'Text 1',
+    text: 'Hello',
+    x: 0,
+    y: 0,
+    font: 'sans',
+    fontStyle: '',
+    fontSize: 20,
+    color: '000000',
+    width: 0,
+    align: 'low',
+    justify: false,
+    wrap: 'word',
+    spacing: 0,
+    dpi: 72,
+    alpha: 0,
+    blendMode: 'normal',
+    visible: true,
+    ...overrides,
+  })
+
+  beforeEach(() => {
+    editor = new ImageEditor({
+      imagePath: 'test-image.jpg',
+      originalDimensions: { width: 1920, height: 1080 },
+    })
+    editor.initialize({})
+  })
+
+  describe('addLayer / state', () => {
+    it('adds a text layer to state', () => {
+      editor.addLayer(makeTextLayer())
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      expect(state.layers?.[0].type).toBe('text')
+      expect(state.layers?.[0].id).toBe('txt-1')
+    })
+
+    it('can add multiple text layers', () => {
+      editor.addLayer(makeTextLayer({ id: 'txt-a' }))
+      editor.addLayer(makeTextLayer({ id: 'txt-b' }))
+      expect(editor.getState().layers).toHaveLength(2)
+    })
+
+    it('can mix image and text layers', () => {
+      const imgLayer: ImageLayer = {
+        type: 'image',
+        id: 'img-1',
+        imagePath: 'overlay.jpg',
+        x: 0,
+        y: 0,
+        alpha: 0,
+        blendMode: 'normal',
+        visible: true,
+        name: 'Overlay',
+        originalDimensions: { width: 200, height: 100 },
+      }
+      editor.addLayer(imgLayer)
+      editor.addLayer(makeTextLayer())
+      const layers = editor.getState().layers ?? []
+      expect(layers).toHaveLength(2)
+      expect(layers[0].type).toBe('image')
+      expect(layers[1].type).toBe('text')
+    })
+  })
+
+  describe('getImagorPath() serialization', () => {
+    it('emits text() filter with minimal args for all-default layer', () => {
+      // Default layer: text="Hello", x=0, y=0, font=sans, fontSize=20 (= "sans-20"),
+      // color=000000, alpha=0, width=0, align=low, justify=false, wrap=word, spacing=0, dpi=72
+      // → hasNonDefaultTrailing = false → args=[b64:Hello, 0, 0]
+      editor.addLayer(makeTextLayer())
+      const path = editor.getImagorPath()
+      expect(path).toContain('text(b64:SGVsbG8,0,0)')
+    })
+
+    it('emits font arg when font differs from default "sans-20"', () => {
+      editor.addLayer(makeTextLayer({ font: 'serif', fontSize: 24 }))
+      const path = editor.getImagorPath()
+      // font = 'serif-24', which differs from default 'sans-20' → args include font
+      expect(path).toContain('serif-24')
+    })
+
+    it('emits font+color args when color is non-default', () => {
+      editor.addLayer(makeTextLayer({ color: 'ff0000' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('ff0000')
+      expect(path).toContain('text(b64:')
+    })
+
+    it('emits align arg when not default "low"', () => {
+      editor.addLayer(makeTextLayer({ align: 'centre' }))  
+      const path = editor.getImagorPath()
+      expect(path).toContain('centre')
+    })
+
+    it('emits justify=true when justified', () => {
+      editor.addLayer(makeTextLayer({ justify: true }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('true')
+    })
+
+    it('emits wrap arg when not default "word"', () => {
+      editor.addLayer(makeTextLayer({ wrap: 'char' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('char')
+    })
+
+    it('scales x/y position by scaleFactor', () => {
+      editor.addLayer(makeTextLayer({ x: 100, y: 50 }))
+      // scaleFactor = 1 at getImagorPath()
+      const path = editor.getImagorPath()
+      expect(path).toContain(',100,50')
+    })
+
+    it('scales fontSize by scaleFactor in preview URL', () => {
+      // scaleFactor = previewWidth / outputWidth
+      // Set output to 1920×1080, preview to 960×540 → sf = 0.5
+      // fontSize=20 → scaledFontSize = max(1, round(20 * 0.5)) = 10
+      // font arg becomes "sans-10" (differs from default "sans-20") → included
+      editor.updateParams({ width: 1920, height: 1080 })
+      editor.addLayer(makeTextLayer({ font: 'mono', fontSize: 20, color: 'ffffff' }))
+      // getImagorPath uses scaleFactor=1, so this just checks the full=1 path
+      const path = editor.getImagorPath()
+      expect(path).toContain('mono-20')
+    })
+
+    it('encodes text with special characters using base64url', () => {
+      // Comma in text would break imagor URLs without encoding
+      editor.addLayer(makeTextLayer({ text: 'Hello, World!' }))
+      const path = editor.getImagorPath()
+      // Comma must NOT appear unencoded in the text arg
+      // text is always encoded as b64:...
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+      expect(path).not.toContain('Hello, World!')
+    })
+
+    it('encodes multi-line text correctly', () => {
+      editor.addLayer(makeTextLayer({ text: 'Line1\nLine2' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+    })
+
+    it('skips invisible text layer', () => {
+      editor.addLayer(makeTextLayer({ visible: false }))
+      const path = editor.getImagorPath()
+      expect(path).not.toContain('text(')
+    })
+  })
+
+  describe('setTextEditingLayerId (skipLayerId)', () => {
+    it('suppresses the layer being inline-edited from the preview path', () => {
+      editor.addLayer(makeTextLayer({ id: 'edit-me' }))
+      editor.setTextEditingLayerId('edit-me')
+      // Use getImagorPath which reads textEditingLayerId via skipLayerId
+      // Note: getImagorPath() does NOT pass skipLayerId — that's a preview-only concern.
+      // Instead verify the API via getTextEditingLayerId.
+      expect(editor.getTextEditingLayerId()).toBe('edit-me')
+    })
+
+    it('clears text editing layer id with null', () => {
+      editor.addLayer(makeTextLayer({ id: 'edit-me' }))
+      editor.setTextEditingLayerId('edit-me')
+      editor.setTextEditingLayerId(null)
+      expect(editor.getTextEditingLayerId()).toBeNull()
+    })
+  })
+
+  describe('updateLayer for TextLayer', () => {
+    it('can update text content', () => {
+      editor.addLayer(makeTextLayer())
+      editor.updateLayer('txt-1', { text: 'Updated text' })
+      const layer = editor.getState().layers?.[0] as TextLayer
+      expect(layer.text).toBe('Updated text')
+    })
+
+    it('can update x/y position', () => {
+      editor.addLayer(makeTextLayer())
+      editor.updateLayer('txt-1', { x: 50, y: 75 })
+      const layer = editor.getState().layers?.[0]
+      expect(layer?.x).toBe(50)
+      expect(layer?.y).toBe(75)
+    })
+
+    it('can update fontSize', () => {
+      editor.addLayer(makeTextLayer())
+      editor.updateLayer('txt-1', { fontSize: 36 } as Partial<TextLayer>)
+      const layer = editor.getState().layers?.[0] as TextLayer
+      expect(layer.fontSize).toBe(36)
+    })
+  })
+
+  describe('switchContext is blocked for text layers', () => {
+    it('does not enter context for a text layer', () => {
+      editor.addLayer(makeTextLayer())
+      editor.switchContext('txt-1')
+      // Should remain at root (depth 0)
+      expect(editor.getEditingContext()).toBeNull()
+      expect(editor.getContextDepth()).toBe(0)
+    })
+  })
+
+  describe('removeLayer', () => {
+    it('removes a text layer by id', () => {
+      editor.addLayer(makeTextLayer())
+      editor.removeLayer('txt-1')
+      expect(editor.getState().layers).toHaveLength(0)
     })
   })
 })

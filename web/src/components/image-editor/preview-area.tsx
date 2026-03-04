@@ -565,14 +565,25 @@ export function PreviewArea({
                           if (!selectedLayer) return null
 
                           // Unified bounding box — works for both image and text layers
-                          const layerOutputDims = calculateLayerBoundingBox(selectedLayer, outputDims)
+                          const layerOutputDims = calculateLayerBoundingBox(
+                            selectedLayer,
+                            outputDims,
+                          )
 
                           // Image-layer-only fields
                           const isImageLayer = selectedLayer.type !== 'text'
-                          const layerPaddingLeft = isImageLayer ? (selectedLayer.transforms?.paddingLeft || 0) : 0
-                          const layerPaddingRight = isImageLayer ? (selectedLayer.transforms?.paddingRight || 0) : 0
-                          const layerPaddingTop = isImageLayer ? (selectedLayer.transforms?.paddingTop || 0) : 0
-                          const layerPaddingBottom = isImageLayer ? (selectedLayer.transforms?.paddingBottom || 0) : 0
+                          const layerPaddingLeft = isImageLayer
+                            ? selectedLayer.transforms?.paddingLeft || 0
+                            : 0
+                          const layerPaddingRight = isImageLayer
+                            ? selectedLayer.transforms?.paddingRight || 0
+                            : 0
+                          const layerPaddingTop = isImageLayer
+                            ? selectedLayer.transforms?.paddingTop || 0
+                            : 0
+                          const layerPaddingBottom = isImageLayer
+                            ? selectedLayer.transforms?.paddingBottom || 0
+                            : 0
 
                           return (
                             <LayerOverlay
@@ -611,10 +622,18 @@ export function PreviewArea({
                               layerPaddingRight={layerPaddingRight}
                               layerPaddingTop={layerPaddingTop}
                               layerPaddingBottom={layerPaddingBottom}
-                              layerRotation={isImageLayer ? (selectedLayer.transforms?.rotation || 0) : 0}
-                              layerFillColor={isImageLayer ? selectedLayer.transforms?.fillColor : undefined}
+                              layerRotation={
+                                isImageLayer ? selectedLayer.transforms?.rotation || 0 : 0
+                              }
+                              layerFillColor={
+                                isImageLayer ? selectedLayer.transforms?.fillColor : undefined
+                              }
                               onDeselect={() => imageEditor.setSelectedLayerId(null)}
-                              onEnterEditMode={isImageLayer ? () => imageEditor.switchContext(selectedLayerId) : undefined}
+                              onEnterEditMode={
+                                isImageLayer
+                                  ? () => imageEditor.switchContext(selectedLayerId)
+                                  : undefined
+                              }
                             />
                           )
                         } else {
@@ -637,29 +656,29 @@ export function PreviewArea({
                           )
                         }
                       })()}
-                  {/* Text editing overlay — rendered on top of everything when a text layer is active */}
-                  {textEditingLayerId &&
-                    imageEditor &&
-                    onTextEditEnd &&
-                    (() => {
-                      const outputDims = imageEditor.getOutputDimensions()
-                      const state = imageEditor.getState()
-                      const pl = state.paddingLeft || 0
-                      const pt = state.paddingTop || 0
-                      const textLayer = imageEditor.getLayer(textEditingLayerId)
-                      if (!textLayer || textLayer.type !== 'text') return null
-                      return (
-                        <TextEditOverlay
-                          layer={textLayer}
-                          baseImageWidth={outputDims.width}
-                          baseImageHeight={outputDims.height}
-                          paddingLeft={pl}
-                          paddingTop={pt}
-                          onCommit={(text) => onTextEditEnd(text)}
-                          onCancel={() => onTextEditEnd(null)}
-                        />
-                      )
-                    })()}
+                    {/* Text editing overlay — rendered on top of everything when a text layer is active */}
+                    {textEditingLayerId &&
+                      imageEditor &&
+                      onTextEditEnd &&
+                      (() => {
+                        const outputDims = imageEditor.getOutputDimensions()
+                        const state = imageEditor.getState()
+                        const pl = state.paddingLeft || 0
+                        const pt = state.paddingTop || 0
+                        const textLayer = imageEditor.getLayer(textEditingLayerId)
+                        if (!textLayer || textLayer.type !== 'text') return null
+                        return (
+                          <TextEditOverlay
+                            layer={textLayer}
+                            baseImageWidth={outputDims.width}
+                            baseImageHeight={outputDims.height}
+                            paddingLeft={pl}
+                            paddingTop={pt}
+                            onCommit={(text) => onTextEditEnd(text)}
+                            onCancel={() => onTextEditEnd(null)}
+                          />
+                        )
+                      })()}
                   </div>
                 )}
               </div>
