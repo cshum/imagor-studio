@@ -208,13 +208,16 @@ export function TextLayerControls({
             className='h-8'
           />
         </div>
-        <div className='flex-1 space-y-1.5'>
-          <Label className='text-muted-foreground text-xs'>H</Label>
+        <div className='flex-1 space-y-1'>
+          <div className='flex items-center justify-between'>
+            <Label className='text-muted-foreground text-xs'>H</Label>
+            <span className='text-foreground px-1 py-0.5 text-xs font-medium'>px</span>
+          </div>
           <Input
             type='text'
             value={heightDisplay}
             onChange={handleHeightChange}
-            placeholder='0 / px / 80p'
+            placeholder='auto'
             className='h-8'
           />
         </div>
