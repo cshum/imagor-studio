@@ -58,7 +58,7 @@ export function LayerBreadcrumb({
         icon: Layers,
       })
       // Go deeper into nested layers for next iteration
-      currentLayers = layer.transforms?.layers || []
+      currentLayers = layer.type !== 'text' ? (layer.transforms?.layers ?? []) : []
     } else {
       // Layer not found in current depth, stop here
       break

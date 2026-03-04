@@ -573,6 +573,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
         // Create new layer with calculated positioning
         const newLayer = {
           id: `layer-${Date.now()}`, // Simple unique ID
+          type: 'image' as const,
           imagePath,
           originalDimensions: dimensions,
           x: layerPosition.x,

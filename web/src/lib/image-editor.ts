@@ -3155,6 +3155,7 @@ export class ImageEditor {
         (layersAtPath) =>
           layersAtPath.map((l) => {
             if (l.id !== currentLayerId) return l
+            if (l.type === 'text') return l
             return {
               ...l,
               imagePath: newImagePath,
@@ -3195,7 +3196,7 @@ export class ImageEditor {
       }
 
       // If layer has transforms, remove crop only (preserve dimensions)
-      if (layer.transforms) {
+      if (layer.type !== 'text' && layer.transforms) {
         updatedLayer.transforms = removeCropOnly(layer.transforms)
       }
 

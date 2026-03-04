@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ImageEditor, type ImageEditorConfig, type ImageLayer, type TextLayer } from './image-editor'
+import {
+  ImageEditor,
+  type ImageEditorConfig,
+  type ImageLayer,
+  type TextLayer,
+} from './image-editor'
 
 // Mock the imagor-api module
 vi.mock('@/api/imagor-api', () => ({
@@ -239,6 +244,7 @@ describe('ImageEditor', () => {
 
     beforeEach(() => {
       mockLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -340,6 +346,7 @@ describe('ImageEditor', () => {
 
     beforeEach(() => {
       mockLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -434,6 +441,7 @@ describe('ImageEditor', () => {
 
     beforeEach(() => {
       mockLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -509,6 +517,7 @@ describe('ImageEditor', () => {
   describe('Deep Cloning', () => {
     it('should deep clone layer transforms in history', () => {
       const layerWithTransforms: ImageLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -536,12 +545,13 @@ describe('ImageEditor', () => {
 
       // Undo should restore original brightness
       editor.undo()
-      const layer = editor.getLayer('layer-1')
+      const layer = editor.getLayer('layer-1') as ImageLayer | undefined
       expect(layer?.transforms?.brightness).toBe(50)
     })
 
     it('should deep clone nested layers in history', () => {
       const nestedLayer: ImageLayer = {
+        type: 'image',
         id: 'nested-1',
         imagePath: 'nested.jpg',
         x: 0,
@@ -554,6 +564,7 @@ describe('ImageEditor', () => {
       }
 
       const parentLayer: ImageLayer = {
+        type: 'image',
         id: 'parent-1',
         imagePath: 'parent.jpg',
         x: 0,
@@ -599,6 +610,7 @@ describe('ImageEditor', () => {
 
       // Add layer
       const mockLayer: ImageLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -619,7 +631,7 @@ describe('ImageEditor', () => {
       const baseState = editor.getBaseState()
       expect(baseState.contrast).toBe(30)
       expect(baseState.layers).toHaveLength(1)
-      expect(baseState.layers?.[0].transforms?.brightness).toBe(50)
+      expect((baseState.layers?.[0] as ImageLayer | undefined)?.transforms?.brightness).toBe(50)
     })
   })
 
@@ -1016,6 +1028,7 @@ describe('ImageEditor', () => {
 
       it('should encode layer image paths with special characters', () => {
         const layerWithSpaces: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay image.jpg',
           x: 100,
@@ -1037,6 +1050,7 @@ describe('ImageEditor', () => {
 
       it('should encode nested layer paths with special characters', () => {
         const layerWithTransforms: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'my overlay?.jpg',
           x: 100,
@@ -1064,6 +1078,7 @@ describe('ImageEditor', () => {
 
       it('should handle multiple layers with mixed encoding needs', () => {
         const layer1: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'normal.jpg',
           x: 100,
@@ -1076,6 +1091,7 @@ describe('ImageEditor', () => {
         }
 
         const layer2: ImageLayer = {
+          type: 'image',
           id: 'layer-2',
           imagePath: 'special image.jpg',
           x: 150,
@@ -1239,6 +1255,7 @@ describe('ImageEditor', () => {
 
       beforeEach(() => {
         mockLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 100,
@@ -1398,6 +1415,7 @@ describe('ImageEditor', () => {
 
       it('should emit proportion after image() layer filters (end of pipeline)', () => {
         const layer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -1423,6 +1441,7 @@ describe('ImageEditor', () => {
 
       it('should not include proportion in layer sub-paths', () => {
         const layer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 100,
@@ -1561,7 +1580,13 @@ describe('ImageEditor', () => {
   })
 
   describe('layer round corner radius clamping', () => {
-    const makeRcLayer = (id: string, origW: number, origH: number, transforms?: object) => ({
+    const makeRcLayer = (
+      id: string,
+      origW: number,
+      origH: number,
+      transforms?: ImageLayer['transforms'],
+    ): ImageLayer => ({
+      type: 'image',
       id,
       imagePath: 'overlay.jpg',
       x: 0 as const,
@@ -1580,7 +1605,9 @@ describe('ImageEditor', () => {
       )
       // Shrink to 100x80: max = floor(80/2) = 40
       editor.updateLayer('rc-shrink', { transforms: { width: 100, height: 80 } })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-shrink')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-shrink') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
 
@@ -1590,7 +1617,9 @@ describe('ImageEditor', () => {
       )
       // Grow to 800x600: max = 300 — 50 stays
       editor.updateLayer('rc-grow', { transforms: { width: 800, height: 600 } })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-grow')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-grow') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).toBe(50)
     })
 
@@ -1600,7 +1629,9 @@ describe('ImageEditor', () => {
       editor.updateLayer('rc-same', {
         transforms: { width: 100, height: 80, roundCornerRadius: 200 },
       })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-same')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-same') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
 
@@ -1608,7 +1639,9 @@ describe('ImageEditor', () => {
       // originalDimensions 100x80 → max = floor(80/2) = 40
       editor.addLayer(makeRcLayer('rc-orig', 100, 80))
       editor.updateLayer('rc-orig', { transforms: { roundCornerRadius: 200 } })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-orig')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-orig') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
 
@@ -1617,7 +1650,9 @@ describe('ImageEditor', () => {
       editor.addLayer(makeRcLayer('rc-fill', 100, 80))
       // widthFull: no width set, clamp uses originalDimensions → still safe
       editor.updateLayer('rc-fill', { transforms: { widthFull: true, roundCornerRadius: 200 } })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-fill')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-fill') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).not.toBeNaN()
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
@@ -1625,6 +1660,7 @@ describe('ImageEditor', () => {
 
   describe('fill-mode layer dimensions (widthFull / heightFull)', () => {
     const makeLayer = (id: string): ImageLayer => ({
+      type: 'image',
       id,
       imagePath: 'overlay.jpg',
       x: 0,
@@ -1723,6 +1759,7 @@ describe('ImageEditor', () => {
 
     const makeNestedSetup = () => {
       const layerB: ImageLayer = {
+        type: 'image',
         id: 'fill-d2-b',
         imagePath: 'overlay-b.jpg',
         x: 0,
@@ -1740,6 +1777,7 @@ describe('ImageEditor', () => {
         },
       }
       const layerA: ImageLayer = {
+        type: 'image',
         id: 'fill-d2-a',
         imagePath: 'overlay-a.jpg',
         x: 0,
@@ -1909,6 +1947,7 @@ describe('ImageEditor', () => {
         editor.updateParams({ width: 1920, height: 1080 })
 
         const layer: ImageLayer = {
+          type: 'image',
           id: 'fill-scale-test',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -1960,6 +1999,7 @@ describe('ImageEditor', () => {
         })
 
         const layer: ImageLayer = {
+          type: 'image',
           id: 'fill-pad-test',
           imagePath: 'layer.jpg',
           x: -736,
@@ -2227,6 +2267,7 @@ describe('ImageEditor', () => {
 
       beforeEach(() => {
         mockLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2247,7 +2288,7 @@ describe('ImageEditor', () => {
 
         // Switch back to base to check layer was updated
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('new-overlay.jpg')
         expect(layer?.originalDimensions).toEqual({ width: 1024, height: 768 })
       })
@@ -2257,7 +2298,7 @@ describe('ImageEditor', () => {
 
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('new-overlay.jpg')
         expect(layer?.originalDimensions).toEqual({ width: 1024, height: 768 })
       })
@@ -2279,7 +2320,7 @@ describe('ImageEditor', () => {
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
         vi.runAllTimers() // Flush swap history
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.transforms?.cropLeft).toBeUndefined()
         expect(layer?.transforms?.cropTop).toBeUndefined()
         expect(layer?.transforms?.cropWidth).toBeUndefined()
@@ -2308,7 +2349,7 @@ describe('ImageEditor', () => {
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
         vi.runAllTimers() // Flush swap history
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.transforms?.width).toBe(400)
         expect(layer?.transforms?.height).toBe(300)
         expect(layer?.transforms?.brightness).toBe(75)
@@ -2341,6 +2382,7 @@ describe('ImageEditor', () => {
 
       it('should NOT include imagePath when editing nested layer', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2418,6 +2460,7 @@ describe('ImageEditor', () => {
 
       it('should undo layer image swap in nested context', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2438,13 +2481,14 @@ describe('ImageEditor', () => {
 
         // Switch back to check layer
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('overlay.jpg')
         expect(layer?.originalDimensions).toEqual({ width: 800, height: 600 })
       })
 
       it('should undo specific layer image swap', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2462,7 +2506,7 @@ describe('ImageEditor', () => {
 
         editor.undo()
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('overlay.jpg')
         expect(layer?.originalDimensions).toEqual({ width: 800, height: 600 })
       })
@@ -2513,6 +2557,7 @@ describe('ImageEditor', () => {
 
       it('should swap in nested context → switch context → verify persistence', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2533,7 +2578,7 @@ describe('ImageEditor', () => {
         editor.switchContext(null)
 
         // Verify layer was updated
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('new-overlay.jpg')
 
         // Switch back to layer
@@ -3260,6 +3305,7 @@ describe('ImageEditor', () => {
     describe('Layer Base Image - Adaptive Mode', () => {
       it('should update layer dimensions when not customized (adaptive)', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3279,7 +3325,7 @@ describe('ImageEditor', () => {
 
         // Switch back to check layer
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should update to new dimensions (adaptive mode)
         expect(layer?.transforms?.width).toBe(1024)
@@ -3288,6 +3334,7 @@ describe('ImageEditor', () => {
 
       it('should update layer dimensions when set to original (adaptive)', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3311,7 +3358,7 @@ describe('ImageEditor', () => {
 
         // Switch back to check layer
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should update to new dimensions (not customized)
         expect(layer?.transforms?.width).toBe(1024)
@@ -3324,6 +3371,7 @@ describe('ImageEditor', () => {
     describe('Layer Base Image - Predefined Mode', () => {
       it('should preserve layer dimensions when customized (predefined)', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3347,7 +3395,7 @@ describe('ImageEditor', () => {
 
         // Switch back to check layer
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should preserve customized dimensions (predefined mode)
         expect(layer?.transforms?.width).toBe(400)
@@ -3360,6 +3408,7 @@ describe('ImageEditor', () => {
     describe('Specific Layer Swap - Always Predefined', () => {
       it('should always preserve layer dimensions when swapping specific layer', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3380,7 +3429,7 @@ describe('ImageEditor', () => {
         // Swap specific layer (not in nested context)
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should preserve dimensions (layers always predefined)
         expect(layer?.transforms?.width).toBe(400)
@@ -3391,6 +3440,7 @@ describe('ImageEditor', () => {
 
       it('should preserve dimensions even when not customized (layers always predefined)', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3411,7 +3461,7 @@ describe('ImageEditor', () => {
         // Swap specific layer
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should preserve dimensions (layers always predefined, even if matching original)
         expect(layer?.transforms?.width).toBe(800)
@@ -3420,6 +3470,7 @@ describe('ImageEditor', () => {
 
       it('should preserve dimensions when layer has no transforms', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3436,7 +3487,7 @@ describe('ImageEditor', () => {
         // Swap specific layer
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should not add dimensions (no transforms to preserve)
         expect(layer?.transforms?.width).toBeUndefined()
@@ -3679,7 +3730,7 @@ describe('TextLayer support', () => {
     })
 
     it('emits align arg when not default "low"', () => {
-      editor.addLayer(makeTextLayer({ align: 'centre' }))  
+      editor.addLayer(makeTextLayer({ align: 'centre' }))
       const path = editor.getImagorPath()
       expect(path).toContain('centre')
     })

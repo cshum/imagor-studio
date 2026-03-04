@@ -174,7 +174,7 @@ function SortableLayerItem({
                 {displayName}
               </span>
               {textPreview && (
-                <span className='text-muted-foreground block truncate text-xs' title={layer.text}>
+                <span className='text-muted-foreground block truncate text-xs' title={textPreview}>
                   {textPreview}
                 </span>
               )}
