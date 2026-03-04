@@ -14,16 +14,14 @@ import type { TextAlign, TextLayer } from '@/lib/image-editor'
 
 interface TextEditToolbarProps {
   layer: TextLayer
-  /**
-   * Top edge of the text layer as a fraction of the canvas height (0–1).
-   * Used together with heightFrac to decide whether the toolbar floats
-   * above or below the textarea.
-   */
+  /** Left edge of the text layer as a fraction of the canvas width (0–1). */
+  leftFrac: number
+  /** Right edge of the text layer as a fraction of the canvas width (0–1). */
+  rightFrac: number
+  /** Top edge of the text layer as a fraction of the canvas height (0–1). */
   topFrac: number
-  /** Bounding-box height of the text layer as a fraction of canvas height. */
-  heightFrac: number
-  /** Horizontal centre of the text layer as a fraction of canvas width. */
-  centerXFrac: number
+  /** Bottom edge of the text layer as a fraction of the canvas height (0–1). */
+  bottomFrac: number
   toolbarRef: React.RefObject<HTMLDivElement | null>
   onUpdate: (updates: Partial<TextLayer>) => void
   onDone: () => void
@@ -41,9 +39,10 @@ const FONTS = [
 
 export function TextEditToolbar({
   layer,
+  leftFrac,
+  rightFrac,
   topFrac,
-  heightFrac,
-  centerXFrac,
+  bottomFrac,
   toolbarRef,
   onUpdate,
   onDone,
@@ -51,23 +50,45 @@ export function TextEditToolbar({
   const { t } = useTranslation()
 
   // ── Smart placement ──────────────────────────────────────────────────────
-  // Compare available space above vs below; prefer the side with more room.
-  const spaceAbove = topFrac
-  const spaceBelow = 1 - topFrac - heightFrac
-  const placeBelow = spaceBelow >= spaceAbove
+  // Vertical: prefer above the layer top edge; fall back to below bottom edge.
+  const placeAbove = topFrac >= 0.08
 
-  const toolbarStyle: React.CSSProperties = {
+  // Horizontal: prefer left-anchored to the layer's left edge (toolbar grows
+  // rightward). If the layer is close to the right canvas edge, right-anchor
+  // it to the layer's right edge (toolbar grows leftward). Otherwise centre.
+  // TOOLBAR_WIDTH_FRAC is a rough estimate of how wide the toolbar is as a
+  // fraction of the canvas — used only to decide which anchor fits.
+  const TOOLBAR_WIDTH_FRAC = 0.45
+  const spaceToRight = 1 - leftFrac // canvas space starting from layer's left edge
+  const spaceToLeft = rightFrac // canvas space ending at layer's right edge
+
+  const commonStyle: React.CSSProperties = {
     position: 'absolute',
-    // Center toolbar over the text layer horizontally
-    left: `${centerXFrac * 100}%`,
-    transform: placeBelow
-      ? 'translateX(-50%) translateY(6px)'
-      : 'translateX(-50%) translateY(calc(-100% - 6px))',
-    top: placeBelow ? `${(topFrac + heightFrac) * 100}%` : `${topFrac * 100}%`,
+    // Vertical edge: pin toolbar bottom to layer top (above), or top to layer bottom (below)
+    top: placeAbove ? undefined : `${bottomFrac * 100}%`,
+    bottom: placeAbove ? `${(1 - topFrac) * 100}%` : undefined,
+    marginTop: placeAbove ? undefined : '4px',
+    marginBottom: placeAbove ? '4px' : undefined,
     zIndex: 40,
     pointerEvents: 'auto',
-    // Prevent toolbar from being clipped when near edges — use min/max via JS below
     whiteSpace: 'nowrap',
+  }
+
+  let toolbarStyle: React.CSSProperties
+  if (spaceToRight >= TOOLBAR_WIDTH_FRAC) {
+    // Anchor toolbar's left edge to layer's left edge — grows rightward
+    toolbarStyle = { ...commonStyle, left: `${leftFrac * 100}%` }
+  } else if (spaceToLeft >= TOOLBAR_WIDTH_FRAC) {
+    // Anchor toolbar's right edge to layer's right edge — grows leftward
+    toolbarStyle = { ...commonStyle, right: `${(1 - rightFrac) * 100}%` }
+  } else {
+    // Not enough room on either side — centre over the layer
+    const centerXFrac = (leftFrac + rightFrac) / 2
+    toolbarStyle = {
+      ...commonStyle,
+      left: `${centerXFrac * 100}%`,
+      transform: 'translateX(-50%)',
+    }
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────

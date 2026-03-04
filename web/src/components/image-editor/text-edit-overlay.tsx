@@ -107,8 +107,9 @@ export function TextEditOverlay({
   const leftFrac = parseFloat(leftPercent) / 100
   const heightFrac = layerDims.height / baseImageHeight
   const widthFrac = layerDims.width / baseImageWidth
-  // Horizontal centre of the text layer (fraction of canvas width)
-  const centerXFrac = leftFrac + widthFrac / 2
+  // All four layer edges as canvas fractions
+  const rightFrac = leftFrac + widthFrac
+  const bottomFrac = topFrac + heightFrac
 
   // Width as a percentage of total canvas
   const wPercent = layerDims.width > 0 ? `${widthFrac * 100}%` : '80%'
@@ -132,9 +133,10 @@ export function TextEditOverlay({
       {/* Floating typography toolbar — above or below the textarea */}
       <TextEditToolbar
         layer={layer}
+        leftFrac={leftFrac}
+        rightFrac={rightFrac}
         topFrac={topFrac}
-        heightFrac={heightFrac}
-        centerXFrac={centerXFrac}
+        bottomFrac={bottomFrac}
         toolbarRef={toolbarRef}
         onUpdate={onUpdate}
         onDone={() => onCommit(value)}
