@@ -1,6 +1,15 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlignCenter, AlignLeft, AlignRight, Bold, Italic, Type } from 'lucide-react'
+import {
+  AlignHorizontalJustifyCenter,
+  AlignHorizontalJustifyEnd,
+  AlignHorizontalJustifyStart,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalJustifyStart,
+  Check,
+  Type,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +23,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { BlendMode, ImageEditor, TextAlign, TextLayer, TextWrap } from '@/lib/image-editor'
+import type { BlendMode, ImageEditor, TextLayer, TextWrap } from '@/lib/image-editor'
+import { calculateTextLayerBoundingBox } from '@/lib/layer-dimensions'
 
 interface TextLayerControlsProps {
   layer: TextLayer
@@ -23,16 +33,6 @@ interface TextLayerControlsProps {
   onUpdate: (updates: Partial<TextLayer>) => void
   onEditText: () => void
 }
-
-const FONTS = [
-  'sans',
-  'serif',
-  'monospace',
-  'Noto Sans',
-  'DejaVu Sans',
-  'Liberation Sans',
-  'Ubuntu',
-]
 
 const BLEND_MODES: BlendMode[] = [
   'normal',
@@ -49,73 +49,175 @@ const WRAP_MODES: TextWrap[] = ['word', 'char', 'wordchar', 'none']
 
 export function TextLayerControls({
   layer,
+  imageEditor,
   isTextEditing,
   onUpdate,
   onEditText,
 }: TextLayerControlsProps) {
   const { t } = useTranslation()
 
-  // ── Typography handlers ──────────────────────────────────────────────────
+  // ── Base / bounding-box dimensions ──────────────────────────────────────
 
-  const handleFontChange = useCallback(
-    (value: string) => {
-      onUpdate({ font: value })
-    },
-    [onUpdate],
+  const baseDimensions = imageEditor.getOutputDimensions()
+  const baseWidth = baseDimensions.width
+  const baseHeight = baseDimensions.height
+
+  const textBBox = useMemo(
+    () => calculateTextLayerBoundingBox(layer, baseDimensions),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [layer, baseDimensions.width, baseDimensions.height],
   )
+  const currentWidth = textBBox.width
+  const currentHeight = textBBox.height
 
-  const handleBoldToggle = useCallback(() => {
-    const hasBold = layer.fontStyle.includes('bold')
-    const hasItalic = layer.fontStyle.includes('italic')
-    if (hasBold) {
-      onUpdate({ fontStyle: hasItalic ? 'italic' : '' })
+  // ── X/Y alignment parsing (same semantics as ImageLayer) ─────────────────
+
+  const { hAlign, vAlign, xOffset, yOffset } = useMemo(() => {
+    const x = layer.x
+    const y = layer.y
+
+    let hAlign: 'left' | 'center' | 'right' = 'center'
+    let xOffset = 0
+    if (typeof x === 'string') {
+      if (x === 'left') hAlign = 'left'
+      else if (x === 'right') hAlign = 'right'
+      else if (x === 'center') hAlign = 'center'
+      else {
+        const leftMatch = x.match(/^(?:left|l)-(\d+)$/)
+        const rightMatch = x.match(/^(?:right|r)-(\d+)$/)
+        if (leftMatch) {
+          hAlign = 'left'
+          xOffset = -parseInt(leftMatch[1])
+        } else if (rightMatch) {
+          hAlign = 'right'
+          xOffset = -parseInt(rightMatch[1])
+        }
+      }
     } else {
-      onUpdate({ fontStyle: hasItalic ? 'bold italic' : 'bold' })
+      if (x < 0) {
+        hAlign = 'right'
+        xOffset = Math.abs(x)
+      } else {
+        hAlign = 'left'
+        xOffset = x
+      }
     }
-  }, [layer.fontStyle, onUpdate])
 
-  const handleItalicToggle = useCallback(() => {
-    const hasBold = layer.fontStyle.includes('bold')
-    const hasItalic = layer.fontStyle.includes('italic')
-    if (hasItalic) {
-      onUpdate({ fontStyle: hasBold ? 'bold' : '' })
+    let vAlign: 'top' | 'center' | 'bottom' = 'center'
+    let yOffset = 0
+    if (typeof y === 'string') {
+      if (y === 'top') vAlign = 'top'
+      else if (y === 'bottom') vAlign = 'bottom'
+      else if (y === 'center') vAlign = 'center'
+      else {
+        const topMatch = y.match(/^(?:top|t)-(\d+)$/)
+        const bottomMatch = y.match(/^(?:bottom|b)-(\d+)$/)
+        if (topMatch) {
+          vAlign = 'top'
+          yOffset = -parseInt(topMatch[1])
+        } else if (bottomMatch) {
+          vAlign = 'bottom'
+          yOffset = -parseInt(bottomMatch[1])
+        }
+      }
     } else {
-      onUpdate({ fontStyle: hasBold ? 'bold italic' : 'italic' })
+      if (y < 0) {
+        vAlign = 'bottom'
+        yOffset = Math.abs(y)
+      } else {
+        vAlign = 'top'
+        yOffset = y
+      }
     }
-  }, [layer.fontStyle, onUpdate])
 
-  const handleFontSizeChange = useCallback(
+    return { hAlign, vAlign, xOffset, yOffset }
+  }, [layer.x, layer.y])
+
+  // ── Position handlers ────────────────────────────────────────────────────
+
+  const handleXOffsetChange = useCallback(
     (value: number) => {
-      onUpdate({ fontSize: value })
-    },
-    [onUpdate],
-  )
-
-  const handleColorChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      // Input value is #RRGGBB — strip the '#'
-      onUpdate({ color: e.target.value.replace('#', '') })
-    },
-    [onUpdate],
-  )
-
-  // ── Alignment & wrap handlers ────────────────────────────────────────────
-
-  const handleAlignChange = useCallback(
-    (value: string) => {
-      if (value) {
-        onUpdate({ align: value as TextAlign })
+      if (value === 0) {
+        onUpdate({ x: hAlign })
+      } else if (value < 0) {
+        onUpdate({ x: `${hAlign}-${Math.abs(value)}` })
+      } else {
+        onUpdate({ x: hAlign === 'right' ? -value : value })
       }
     },
-    [onUpdate],
+    [onUpdate, hAlign],
   )
 
-  const handleJustifyChange = useCallback(
-    (checked: boolean) => {
-      onUpdate({ justify: checked })
+  const handleYOffsetChange = useCallback(
+    (value: number) => {
+      if (value === 0) {
+        onUpdate({ y: vAlign })
+      } else if (value < 0) {
+        onUpdate({ y: `${vAlign}-${Math.abs(value)}` })
+      } else {
+        onUpdate({ y: vAlign === 'bottom' ? -value : value })
+      }
     },
-    [onUpdate],
+    [onUpdate, vAlign],
   )
+
+  const handleHAlignChange = useCallback(
+    (value: string) => {
+      if (value === 'center') {
+        onUpdate({ x: 'center' })
+      } else if (value === hAlign) {
+        return
+      } else {
+        let visualX: number
+        if (hAlign === 'left') visualX = xOffset
+        else if (hAlign === 'right') visualX = baseWidth - currentWidth - xOffset
+        else visualX = (baseWidth - currentWidth) / 2
+
+        if (value === 'left') {
+          const newOffset = Math.round(visualX)
+          if (newOffset < 0) onUpdate({ x: `left-${Math.abs(newOffset)}` })
+          else if (newOffset === 0) onUpdate({ x: 'left' })
+          else onUpdate({ x: newOffset })
+        } else {
+          const newOffset = Math.round(baseWidth - currentWidth - visualX)
+          if (newOffset < 0) onUpdate({ x: `right-${Math.abs(newOffset)}` })
+          else if (newOffset === 0) onUpdate({ x: 'right' })
+          else onUpdate({ x: -newOffset })
+        }
+      }
+    },
+    [onUpdate, hAlign, xOffset, baseWidth, currentWidth],
+  )
+
+  const handleVAlignChange = useCallback(
+    (value: string) => {
+      if (value === 'center') {
+        onUpdate({ y: 'center' })
+      } else if (value === vAlign) {
+        return
+      } else {
+        let visualY: number
+        if (vAlign === 'top') visualY = yOffset
+        else if (vAlign === 'bottom') visualY = baseHeight - currentHeight - yOffset
+        else visualY = (baseHeight - currentHeight) / 2
+
+        if (value === 'top') {
+          const newOffset = Math.round(visualY)
+          if (newOffset < 0) onUpdate({ y: `top-${Math.abs(newOffset)}` })
+          else if (newOffset === 0) onUpdate({ y: 'top' })
+          else onUpdate({ y: newOffset })
+        } else {
+          const newOffset = Math.round(baseHeight - currentHeight - visualY)
+          if (newOffset < 0) onUpdate({ y: `bottom-${Math.abs(newOffset)}` })
+          else if (newOffset === 0) onUpdate({ y: 'bottom' })
+          else onUpdate({ y: -newOffset })
+        }
+      }
+    },
+    [onUpdate, vAlign, yOffset, baseHeight, currentHeight],
+  )
+
+  // ── Text-layout handlers ────────────────────────────────────────────────
 
   const handleWrapWidthChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,11 +284,27 @@ export function TextLayerControls({
     [onUpdate],
   )
 
+  // ── Arrow key positioning (only when not text-editing) ───────────────────
+
+  useEffect(() => {
+    if (isTextEditing) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return
+      e.preventDefault()
+
+      if (e.key === 'ArrowLeft' && hAlign !== 'center') handleXOffsetChange(xOffset - 1)
+      else if (e.key === 'ArrowRight' && hAlign !== 'center') handleXOffsetChange(xOffset + 1)
+      if (e.key === 'ArrowUp' && vAlign !== 'center') handleYOffsetChange(yOffset - 1)
+      else if (e.key === 'ArrowDown' && vAlign !== 'center') handleYOffsetChange(yOffset + 1)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isTextEditing, hAlign, vAlign, xOffset, yOffset, handleXOffsetChange, handleYOffsetChange])
+
   // ── Derived values ───────────────────────────────────────────────────────
 
-  const hasBold = layer.fontStyle.includes('bold')
-  const hasItalic = layer.fontStyle.includes('italic')
-  const colorHex = `#${layer.color.padStart(6, '0')}`
   const wrapWidthDisplay = String(layer.width)
   const heightDisplay = String(layer.height)
 
@@ -194,130 +312,125 @@ export function TextLayerControls({
 
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-      {/* Edit Text Button */}
+      {/* Edit Text / Done Button */}
       <Button
         variant={isTextEditing ? 'default' : 'outline'}
         size='default'
         onClick={onEditText}
         className='w-full'
       >
-        <Type className='mr-2 h-4 w-4' />
-        {isTextEditing ? t('imageEditor.layers.editText') + '…' : t('imageEditor.layers.editText')}
+        {isTextEditing ? (
+          <>
+            <Check className='mr-2 h-4 w-4' />
+            Done
+          </>
+        ) : (
+          <>
+            <Type className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.editText')}
+          </>
+        )}
       </Button>
 
-      {/* Font Family */}
+      {/* ── Position Controls — always visible ── */}
       <div className='space-y-1.5'>
-        <Label className='text-sm font-medium'>{t('imageEditor.layers.fontFamily')}</Label>
-        <Select value={layer.font} onValueChange={handleFontChange}>
-          <SelectTrigger className='h-8'>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FONTS.map((f) => (
-              <SelectItem key={f} value={f}>
-                {f}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Font Style + Size row */}
-      <div className='flex items-end gap-2'>
-        {/* Bold / Italic toggles */}
-        <div className='space-y-1.5'>
-          <Label className='text-sm font-medium'>{t('imageEditor.layers.fontStyle')}</Label>
-          <div className='flex gap-1'>
-            <Button
-              variant={hasBold ? 'default' : 'outline'}
-              size='icon'
-              className='h-8 w-8'
-              onClick={handleBoldToggle}
-              title='Bold'
+        {/* Horizontal alignment + X offset */}
+        <div className='flex items-center gap-2'>
+          <ToggleGroup
+            type='single'
+            value={hAlign}
+            onValueChange={handleHAlignChange}
+            variant='outline'
+            size='sm'
+            className='flex-1 gap-0'
+          >
+            <ToggleGroupItem
+              value='left'
+              aria-label='Align left'
+              className='w-full rounded-r-none border-r-0'
             >
-              <Bold className='h-3.5 w-3.5' />
-            </Button>
-            <Button
-              variant={hasItalic ? 'default' : 'outline'}
-              size='icon'
-              className='h-8 w-8'
-              onClick={handleItalicToggle}
-              title='Italic'
+              <AlignHorizontalJustifyStart className='h-4 w-4' />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='center'
+              aria-label='Align center'
+              className='w-full rounded-none border-r-0'
             >
-              <Italic className='h-3.5 w-3.5' />
-            </Button>
-          </div>
-        </div>
-
-        {/* Font Size */}
-        <div className='flex-1 space-y-1.5'>
-          <Label className='text-sm font-medium'>{t('imageEditor.layers.fontSize')}</Label>
+              <AlignHorizontalJustifyCenter className='h-4 w-4' />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='right'
+              aria-label='Align right'
+              className='w-full rounded-l-none'
+            >
+              <AlignHorizontalJustifyEnd className='h-4 w-4' />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <span className='text-muted-foreground w-3 shrink-0 text-center text-xs font-medium'>
+            X
+          </span>
           <Input
             type='number'
-            value={layer.fontSize}
-            min={1}
-            max={999}
-            onChange={(e) => {
-              const v = parseInt(e.target.value)
-              if (!isNaN(v) && v > 0) handleFontSizeChange(v)
-            }}
-            className='h-8'
+            value={hAlign === 'center' ? '' : xOffset}
+            onChange={(e) => handleXOffsetChange(Number(e.target.value) || 0)}
+            disabled={hAlign === 'center'}
+            placeholder='—'
+            step={1}
+            className='h-9 w-20 px-2'
           />
         </div>
 
-        {/* Color picker */}
-        <div className='space-y-1.5'>
-          <Label className='text-sm font-medium'>{t('imageEditor.layers.textColor')}</Label>
-          <div className='flex h-8 w-8 overflow-hidden rounded border'>
-            <input
-              type='color'
-              value={colorHex}
-              onChange={handleColorChange}
-              className='h-10 w-10 -translate-x-1 -translate-y-1 cursor-pointer border-0 bg-transparent p-0'
-              title={t('imageEditor.layers.textColor')}
-            />
-          </div>
+        {/* Vertical alignment + Y offset */}
+        <div className='flex items-center gap-2'>
+          <ToggleGroup
+            type='single'
+            value={vAlign}
+            onValueChange={handleVAlignChange}
+            variant='outline'
+            size='sm'
+            className='flex-1 gap-0'
+          >
+            <ToggleGroupItem
+              value='top'
+              aria-label='Align top'
+              className='w-full rounded-r-none border-r-0'
+            >
+              <AlignVerticalJustifyStart className='h-4 w-4' />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='center'
+              aria-label='Align middle'
+              className='w-full rounded-none border-r-0'
+            >
+              <AlignVerticalJustifyCenter className='h-4 w-4' />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value='bottom'
+              aria-label='Align bottom'
+              className='w-full rounded-l-none'
+            >
+              <AlignVerticalJustifyEnd className='h-4 w-4' />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <span className='text-muted-foreground w-3 shrink-0 text-center text-xs font-medium'>
+            Y
+          </span>
+          <Input
+            type='number'
+            value={vAlign === 'center' ? '' : yOffset}
+            onChange={(e) => handleYOffsetChange(Number(e.target.value) || 0)}
+            disabled={vAlign === 'center'}
+            placeholder='—'
+            step={1}
+            className='h-9 w-20 px-2'
+          />
         </div>
       </div>
 
-      {/* Alignment */}
-      <div className='space-y-1.5'>
-        <Label className='text-sm font-medium'>{t('imageEditor.layers.textAlignment')}</Label>
-        <ToggleGroup
-          type='single'
-          value={layer.align}
-          onValueChange={handleAlignChange}
-          className='justify-start'
-        >
-          <ToggleGroupItem value='low' size='sm' title='Left'>
-            <AlignLeft className='h-4 w-4' />
-          </ToggleGroupItem>
-          <ToggleGroupItem value='centre' size='sm' title='Center'>
-            <AlignCenter className='h-4 w-4' />
-          </ToggleGroupItem>
-          <ToggleGroupItem value='high' size='sm' title='Right'>
-            <AlignRight className='h-4 w-4' />
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-
-      {/* Justify */}
-      <div className='flex items-center justify-between'>
-        <Label className='text-sm font-medium'>{t('imageEditor.layers.justifyText')}</Label>
-        <Button
-          variant={layer.justify ? 'default' : 'outline'}
-          size='sm'
-          className='h-7 px-2 text-xs'
-          onClick={() => handleJustifyChange(!layer.justify)}
-        >
-          {t('imageEditor.layers.justifyText')}
-        </Button>
-      </div>
-
-      {/* Wrap Width + Height row */}
+      {/* ── W / H — always visible ── */}
       <div className='flex gap-2'>
         <div className='flex-1 space-y-1.5'>
-          <Label className='text-sm font-medium'>{t('imageEditor.layers.wrapWidth')}</Label>
+          <Label className='text-muted-foreground text-xs'>W</Label>
           <Input
             type='text'
             value={wrapWidthDisplay}
@@ -327,7 +440,7 @@ export function TextLayerControls({
           />
         </div>
         <div className='flex-1 space-y-1.5'>
-          <Label className='text-sm font-medium'>{t('imageEditor.layers.layerHeight')}</Label>
+          <Label className='text-muted-foreground text-xs'>H</Label>
           <Input
             type='text'
             value={heightDisplay}
@@ -338,35 +451,7 @@ export function TextLayerControls({
         </div>
       </div>
 
-      {/* Wrap Mode */}
-      <div className='space-y-1.5'>
-        <Label className='text-sm font-medium'>{t('imageEditor.layers.wrapMode')}</Label>
-        <Select value={layer.wrap} onValueChange={handleWrapModeChange}>
-          <SelectTrigger className='h-8'>
-            <SelectValue>{t(`imageEditor.layers.wrapModes.${layer.wrap}`)}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {WRAP_MODES.map((mode) => (
-              <SelectItem key={mode} value={mode}>
-                {t(`imageEditor.layers.wrapModes.${mode}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Line Spacing */}
-      <NumericControl
-        label={t('imageEditor.layers.lineSpacing')}
-        value={layer.spacing}
-        min={-100}
-        max={200}
-        step={1}
-        unit='px'
-        onChange={handleLineSpacingChange}
-      />
-
-      {/* Opacity */}
+      {/* ── Opacity — always visible ── */}
       <NumericControl
         label={t('imageEditor.layers.transparency')}
         value={100 - layer.alpha}
@@ -377,7 +462,7 @@ export function TextLayerControls({
         onChange={handleAlphaChange}
       />
 
-      {/* Blend Mode */}
+      {/* ── Blend Mode — always visible ── */}
       <div className='space-y-1.5'>
         <Label className='text-sm font-medium'>{t('imageEditor.layers.blendMode')}</Label>
         <Select value={layer.blendMode} onValueChange={handleBlendModeChange}>
@@ -399,6 +484,41 @@ export function TextLayerControls({
           </SelectContent>
         </Select>
       </div>
+
+      {/* ── Wrap mode + line spacing — advanced, shown when text editing ── */}
+      {isTextEditing && (
+        <>
+          <div className='border-t pt-1'>
+            {/* Wrap Mode */}
+            <div className='space-y-1.5'>
+              <Label className='text-sm font-medium'>{t('imageEditor.layers.wrapMode')}</Label>
+              <Select value={layer.wrap} onValueChange={handleWrapModeChange}>
+                <SelectTrigger className='h-8'>
+                  <SelectValue>{t(`imageEditor.layers.wrapModes.${layer.wrap}`)}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {WRAP_MODES.map((mode) => (
+                    <SelectItem key={mode} value={mode}>
+                      {t(`imageEditor.layers.wrapModes.${mode}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Line Spacing */}
+          <NumericControl
+            label={t('imageEditor.layers.lineSpacing')}
+            value={layer.spacing}
+            min={-100}
+            max={200}
+            step={1}
+            unit='px'
+            onChange={handleLineSpacingChange}
+          />
+        </>
+      )}
     </div>
   )
 }

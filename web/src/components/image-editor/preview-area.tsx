@@ -679,6 +679,9 @@ export function PreviewArea({
                             paddingTop={pt}
                             onCommit={(text) => onTextEditEnd(text)}
                             onCancel={() => onTextEditEnd(null)}
+                            onUpdate={(updates) =>
+                              imageEditor.updateLayer(textEditingLayerId, updates)
+                            }
                           />
                         )
                       })()}

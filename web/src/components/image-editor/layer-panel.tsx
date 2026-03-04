@@ -709,7 +709,9 @@ export function LayerPanel({
               imageEditor={imageEditor}
               isTextEditing={textEditingLayerId === selectedLayer.id}
               onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
-              onEditText={() => onTextEdit(selectedLayer.id)}
+              onEditText={() =>
+                onTextEdit(textEditingLayerId === selectedLayer.id ? null : selectedLayer.id)
+              }
             />
           ) : (
             <LayerControls

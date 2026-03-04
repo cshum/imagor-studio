@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { TextEditToolbar } from '@/components/image-editor/text-edit-toolbar'
 import type { TextLayer } from '@/lib/image-editor'
 import { calculateTextLayerBoundingBox } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'
@@ -12,12 +13,13 @@ interface TextEditOverlayProps {
   paddingTop?: number
   onCommit: (text: string) => void
   onCancel: () => void
+  onUpdate: (updates: Partial<TextLayer>) => void
 }
 
 /**
  * Full-overlay text editor — renders a `<textarea>` absolutely positioned
- * over the text layer's bounding region.  The overlay captures keyboard
- * events so Escape cancels and Ctrl/Cmd+Enter commits.
+ * over the text layer's bounding region, plus a floating `TextEditToolbar`
+ * that appears above or below the textarea depending on available canvas space.
  *
  * This is mounted inside the percentage-based overlay <div> that already
  * covers the rendered image, so all coordinates are expressed as percentages
@@ -31,17 +33,23 @@ export function TextEditOverlay({
   paddingTop = 0,
   onCommit,
   onCancel,
+  onUpdate,
 }: TextEditOverlayProps) {
   const [value, setValue] = useState(layer.text)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  // Timer ref for deferred blur — avoids premature commit when focus moves into toolbar
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Focus the textarea when mounted
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus()
-      // Place cursor at end
       const len = textareaRef.current.value.length
       textareaRef.current.setSelectionRange(len, len)
+    }
+    return () => {
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
     }
   }, [])
 
@@ -66,11 +74,19 @@ export function TextEditOverlay({
   )
 
   const handleBlur = useCallback(() => {
-    // Blur = commit current value
-    onCommit(value)
+    // Defer the commit so focus can settle on a toolbar element first.
+    // If focus lands inside the toolbar or back in the textarea, cancel the commit.
+    blurTimerRef.current = setTimeout(() => {
+      const active = document.activeElement
+      if (textareaRef.current?.contains(active) || toolbarRef.current?.contains(active)) {
+        return // focus stayed within the editing UI — don't commit yet
+      }
+      onCommit(value)
+    }, 120)
   }, [value, onCommit])
 
-  // Calculate position as percentage of the total canvas
+  // ── Position calculations ────────────────────────────────────────────────
+
   const layerDims = calculateTextLayerBoundingBox(layer, {
     width: baseImageWidth,
     height: baseImageHeight,
@@ -86,28 +102,24 @@ export function TextEditOverlay({
     paddingTop,
   )
 
-  // Width as a percentage of total canvas (0 = full width)
-  const wPercent = layerDims.width > 0 ? `${(layerDims.width / baseImageWidth) * 100}%` : '80%'
+  // Convert string percentages to 0-1 fractions for toolbar placement logic
+  const topFrac = parseFloat(topPercent) / 100
+  const leftFrac = parseFloat(leftPercent) / 100
+  const heightFrac = layerDims.height / baseImageHeight
+  const widthFrac = layerDims.width / baseImageWidth
+  // Horizontal centre of the text layer (fraction of canvas width)
+  const centerXFrac = leftFrac + widthFrac / 2
 
-  // Approximate font size in percentage
-  // The canvas is rendered at `baseImageWidth` logical pixels but displayed at
-  // its intrinsic CSS pixel size (which matches 100% for the overlay container).
-  // Since the overlay is 100% wide = baseImageWidth logical px, we express font
-  // size in the same logical-px units via CSS em/px is fine here because the
-  // overlay div takes the full image size in CSS px.
-  //
-  // We store fontSize as imagor pts (72 dpi → 1pt ≈ 1.333 CSS px at 96dpi).
-  // For a close-enough approximation, just use `fontSize` as plain px here.
+  // Width as a percentage of total canvas
+  const wPercent = layerDims.width > 0 ? `${widthFrac * 100}%` : '80%'
+
   const fontSizePct = `${(layer.fontSize / baseImageHeight) * 100}%`
-
-  // Map imagor font family name to CSS font-family
   const cssFontFamily = layer.font || 'sans-serif'
-
   const fontWeight = layer.fontStyle.includes('bold') ? 'bold' : 'normal'
   const fontStyle = layer.fontStyle.includes('italic') ? 'italic' : 'normal'
 
   return (
-    /* Capture-layer: forwards clicks on the background to cancel */
+    /* Capture-layer: clicks on the background commit the edit */
     <div
       className='pointer-events-auto absolute inset-0 z-30'
       onMouseDown={(e) => {
@@ -117,10 +129,28 @@ export function TextEditOverlay({
         }
       }}
     >
+      {/* Floating typography toolbar — above or below the textarea */}
+      <TextEditToolbar
+        layer={layer}
+        topFrac={topFrac}
+        heightFrac={heightFrac}
+        centerXFrac={centerXFrac}
+        toolbarRef={toolbarRef}
+        onUpdate={onUpdate}
+        onDone={() => onCommit(value)}
+      />
+
       <textarea
         ref={textareaRef}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          const newValue = e.target.value
+          setValue(newValue)
+          // Live-sync the text so the layer always has the latest value.
+          // This means sidebar / toolbar "Done" only needs to end the
+          // editing session — no text update required at commit time.
+          onUpdate({ text: newValue })
+        }}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         rows={1}
@@ -131,13 +161,11 @@ export function TextEditOverlay({
           top: topPercent,
           width: wPercent,
           minWidth: '4em',
-          // Use inline font size relative to font size / canvas height
           fontSize: fontSizePct,
           fontFamily: cssFontFamily,
           fontWeight,
           fontStyle,
           color: `#${layer.color}`,
-          // Transparent/glass look so the server render underneath is visible as reference
           background: 'rgba(255,255,255,0.15)',
           border: '2px dashed rgba(255,255,255,0.8)',
           outline: 'none',
@@ -149,11 +177,9 @@ export function TextEditOverlay({
           backdropFilter: 'blur(1px)',
           boxShadow: '0 0 0 1px rgba(0,0,0,0.4)',
           borderRadius: '2px',
-          // White text-shadow for contrast on dark backgrounds
           textShadow: '0 0 4px rgba(0,0,0,0.3)',
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
-          // Rows auto-expand via JS below; start at 1 row
           height: 'auto',
         }}
       />
