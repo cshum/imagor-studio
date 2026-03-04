@@ -499,18 +499,22 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
 
   const handleAddTextLayer = useCallback(() => {
     const outputDims = imageEditor.getOutputDimensions()
+    const fontSize = Math.max(12, Math.round(outputDims.height * 0.05))
+    // Default to 40% of canvas width so the text box is immediately usable.
+    // Centred horizontally so it lands in a sensible position.
+    const defaultWidth = Math.round(outputDims.width * 0.4)
     const newLayer = {
       type: 'text' as const,
       id: `layer-${Date.now()}`,
       name: t('imageEditor.layers.textLayer'),
       text: t('imageEditor.layers.textLayerDefaultText'),
-      x: Math.round(outputDims.width * 0.1),
-      y: Math.round(outputDims.height * 0.1),
+      x: 'center' as const,
+      y: 'center' as const,
       font: 'sans',
       fontStyle: '' as const,
-      fontSize: Math.max(12, Math.round(outputDims.height * 0.05)),
+      fontSize,
       color: '000000',
-      width: 0,
+      width: defaultWidth,
       height: 0,
       align: 'low' as const,
       justify: false,

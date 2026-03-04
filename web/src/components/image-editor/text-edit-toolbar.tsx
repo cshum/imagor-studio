@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { AlignCenter, AlignLeft, AlignRight, Bold, Check, Italic } from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, Bold, Italic } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -20,11 +20,8 @@ interface TextEditToolbarProps {
   rightFrac: number
   /** Top edge of the text layer as a fraction of the canvas height (0–1). */
   topFrac: number
-  /** Bottom edge of the text layer as a fraction of the canvas height (0–1). */
-  bottomFrac: number
   toolbarRef: React.RefObject<HTMLDivElement | null>
   onUpdate: (updates: Partial<TextLayer>) => void
-  onDone: () => void
 }
 
 const FONTS = [
@@ -42,33 +39,22 @@ export function TextEditToolbar({
   leftFrac,
   rightFrac,
   topFrac,
-  bottomFrac,
   toolbarRef,
   onUpdate,
-  onDone,
 }: TextEditToolbarProps) {
   const { t } = useTranslation()
 
-  // ── Smart placement ──────────────────────────────────────────────────────
-  // Vertical: prefer above the layer top edge; fall back to below bottom edge.
-  const placeAbove = topFrac >= 0.08
-
-  // Horizontal: prefer left-anchored to the layer's left edge (toolbar grows
-  // rightward). If the layer is close to the right canvas edge, right-anchor
-  // it to the layer's right edge (toolbar grows leftward). Otherwise centre.
-  // TOOLBAR_WIDTH_FRAC is a rough estimate of how wide the toolbar is as a
-  // fraction of the canvas — used only to decide which anchor fits.
+  // ── Placement — always above the layer top edge ──────────────────────────
+  // Horizontal: left-anchored where there's room, right-anchored near the
+  // right edge, centred if neither side fits.
   const TOOLBAR_WIDTH_FRAC = 0.45
-  const spaceToRight = 1 - leftFrac // canvas space starting from layer's left edge
-  const spaceToLeft = rightFrac // canvas space ending at layer's right edge
+  const spaceToRight = 1 - leftFrac
+  const spaceToLeft = rightFrac
 
   const commonStyle: React.CSSProperties = {
     position: 'absolute',
-    // Vertical edge: pin toolbar bottom to layer top (above), or top to layer bottom (below)
-    top: placeAbove ? undefined : `${bottomFrac * 100}%`,
-    bottom: placeAbove ? `${(1 - topFrac) * 100}%` : undefined,
-    marginTop: placeAbove ? undefined : '4px',
-    marginBottom: placeAbove ? '4px' : undefined,
+    bottom: `${(1 - topFrac) * 100}%`,
+    marginBottom: '4px',
     zIndex: 40,
     pointerEvents: 'auto',
     whiteSpace: 'nowrap',
@@ -76,19 +62,12 @@ export function TextEditToolbar({
 
   let toolbarStyle: React.CSSProperties
   if (spaceToRight >= TOOLBAR_WIDTH_FRAC) {
-    // Anchor toolbar's left edge to layer's left edge — grows rightward
     toolbarStyle = { ...commonStyle, left: `${leftFrac * 100}%` }
   } else if (spaceToLeft >= TOOLBAR_WIDTH_FRAC) {
-    // Anchor toolbar's right edge to layer's right edge — grows leftward
     toolbarStyle = { ...commonStyle, right: `${(1 - rightFrac) * 100}%` }
   } else {
-    // Not enough room on either side — centre over the layer
     const centerXFrac = (leftFrac + rightFrac) / 2
-    toolbarStyle = {
-      ...commonStyle,
-      left: `${centerXFrac * 100}%`,
-      transform: 'translateX(-50%)',
-    }
+    toolbarStyle = { ...commonStyle, left: `${centerXFrac * 100}%`, transform: 'translateX(-50%)' }
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────
@@ -253,23 +232,6 @@ export function TextEditToolbar({
           <AlignRight className='h-3.5 w-3.5' />
         </ToggleGroupItem>
       </ToggleGroup>
-
-      <div className='bg-border mx-0.5 h-5 w-px' />
-
-      {/* Done */}
-      <Button
-        variant='default'
-        size='sm'
-        className='h-7 px-2 text-xs'
-        onMouseDown={(e) => {
-          e.preventDefault()
-          onDone()
-        }}
-        tabIndex={-1}
-      >
-        <Check className='mr-1 h-3 w-3' />
-        Done
-      </Button>
     </div>
   )
 }

@@ -425,7 +425,11 @@ export function PreviewArea({
           // Smart centering: apply when in fit mode OR when image fits in container
           // This prevents jarring jumps during zoom transitions while avoiding edge cropping
           (zoom === 'fit' || imageFitsInContainer) && 'items-center justify-center',
-          zoom === 'fit' || imageFitsInContainer ? 'overflow-hidden' : 'overflow-auto',
+          zoom === 'fit' || imageFitsInContainer
+            ? effectiveTextEditingLayerId
+              ? 'overflow-auto'
+              : 'overflow-hidden'
+            : 'overflow-auto',
           // Disable elastic/springy scroll effect
           'overscroll-none',
         )}
@@ -575,6 +579,14 @@ export function PreviewArea({
                         const paddingBottom = state.paddingBottom || 0
 
                         if (selectedLayerId) {
+                          // Don't render LayerOverlay while the text-edit overlay is active for
+                          // this layer — TextEditOverlay is the sole interactive bounding box.
+                          if (
+                            effectiveTextEditingLayerId &&
+                            effectiveTextEditingLayerId === selectedLayerId
+                          )
+                            return null
+
                           // Show single layer overlay with drag/resize handles
                           const selectedLayer = imageEditor.getLayer(selectedLayerId)
                           if (!selectedLayer) return null

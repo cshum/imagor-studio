@@ -58,16 +58,14 @@ interface TextEditOverlayProps {
 
 /**
  * Full-overlay text editor — renders a `<textarea>` absolutely positioned
- * over the text layer's bounding region, plus a floating `TextEditToolbar`
- * that appears above or below the textarea depending on available canvas space.
+ * over the text layer's bounding region, plus a floating `TextEditToolbar`.
  *
- * Sizing modes (matching imagor's layer.width / layer.height semantics):
- *   width=0, height=0  → auto-width (no wrap, textarea spans to canvas right),
- *                         auto-height (grows to fit line count)
- *   width>0, height=0  → fixed wrap width, auto-height
- *   width>0, height>0  → fixed wrap width, fixed height (scrollable)
+ * The textarea always wraps at the layer's bounding-box width and auto-grows
+ * in height to fit content — it never clips or scrolls during editing.
+ * `layer.height` is a server-side render-clip value only and is not reflected
+ * in the editing UI.
  *
- * Edge drag handles let the user set/reset width and height while editing.
+ * Right-edge drag handle — drag to change wrap width, double-click to reset.
  */
 export function TextEditOverlay({
   layer,
@@ -87,6 +85,8 @@ export function TextEditOverlay({
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Measured pixel height of the overlay container — used to convert imagor px → display px
   const [containerHeightPx, setContainerHeightPx] = useState(0)
+  // Kept in sync with `scale` so callbacks always see the latest value without re-creating
+  const scaleRef = useRef(1)
 
   // Track containerHeightPx with a ResizeObserver on the full-canvas container div
   useLayoutEffect(() => {
@@ -113,6 +113,15 @@ export function TextEditOverlay({
   // Note: we intentionally do NOT sync value from layer.text here.
   // The textarea owns the draft text; layer.text is only updated on blur/commit.
 
+  // On commit: save the actual textarea content height back to the layer so that
+  // the selection bounding box matches the real text height after editing ends.
+  const doCommit = useCallback(() => {
+    const heightPx = textareaRef.current?.scrollHeight ?? 0
+    const contentHeight = scaleRef.current > 0 ? Math.round(heightPx / scaleRef.current) : 0
+    onUpdate({ text: value, ...(contentHeight > 0 ? { height: contentHeight } : {}) })
+    onCommit(value)
+  }, [value, onUpdate, onCommit])
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Escape') {
@@ -120,13 +129,12 @@ export function TextEditOverlay({
         onCancel()
       } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
-        onUpdate({ text: value })
-        onCommit(value)
+        doCommit()
       }
       // Stop propagation so canvas keyboard shortcuts don't fire while editing
       e.stopPropagation()
     },
-    [value, onCommit, onCancel, onUpdate],
+    [doCommit, onCancel],
   )
 
   const handleBlur = useCallback(() => {
@@ -140,17 +148,11 @@ export function TextEditOverlay({
       if (active?.closest('[data-radix-popper-content-wrapper],[data-radix-select-content]')) {
         return
       }
-      onUpdate({ text: value })
-      onCommit(value)
+      doCommit()
     }, 120)
-  }, [value, onCommit, onUpdate])
+  }, [doCommit])
 
-  // ── Sizing mode ──────────────────────────────────────────────────────────
-
-  const hasFixedWidth = typeof layer.width === 'number' && (layer.width as number) > 0
-  const hasFixedHeight = typeof layer.height === 'number' && (layer.height as number) > 0
-
-  // ── Position calculations ────────────────────────────────────────────────
+  // ── Position & size ────────────────────────────────────────────────────────
 
   const layerDims = calculateTextLayerBoundingBox(layer, {
     width: baseImageWidth,
@@ -170,13 +172,12 @@ export function TextEditOverlay({
   // 0–1 fractions for toolbar placement
   const topFrac = parseFloat(topPercent) / 100
   const leftFrac = parseFloat(leftPercent) / 100
-  const heightFrac = layerDims.height / baseImageHeight
   const widthFrac = layerDims.width / baseImageWidth
   const rightFrac = leftFrac + widthFrac
-  const bottomFrac = topFrac + heightFrac
 
   // Uniform scale: imagor canvas pixels → display pixels
   const scale = containerHeightPx > 0 ? containerHeightPx / baseImageHeight : 1
+  scaleRef.current = scale
 
   // Typography
   const fontSizePx = `${layer.fontSize * scale}px`
@@ -186,38 +187,31 @@ export function TextEditOverlay({
   const fontItalic = layer.fontStyle.includes('italic') ? 'italic' : 'normal'
   const textAlign = layer.align === 'centre' ? 'center' : layer.align === 'high' ? 'right' : 'left'
 
-  // ── Auto-grow height ─────────────────────────────────────────────────────
-  // Runs after every value / font change when not in fixed-height mode.
+  // ── Auto-grow height (always — textarea never scrolls or clips) ──────────
+  // containerHeightPx in deps: scale changes when the preview area resizes, which
+  // changes the rendered font size, which changes scrollHeight — recalculate then.
   useLayoutEffect(() => {
-    if (!hasFixedHeight && textareaRef.current) {
+    if (textareaRef.current) {
       const el = textareaRef.current
-      el.style.height = '0px' // Shrink to get accurate scrollHeight
+      el.style.height = '0px'
       el.style.height = `${el.scrollHeight}px`
     }
-  }, [value, hasFixedHeight, layer.fontSize, layer.spacing])
+  }, [value, layer.fontSize, layer.spacing, containerHeightPx])
 
-  // ── In-overlay edge drag handles ─────────────────────────────────────────
+  // ── Right-edge drag handle ───────────────────────────────────────────
 
-  const [resizeDrag, setResizeDrag] = useState<'right' | 'bottom' | null>(null)
-  const resizeDragStartRef = useRef({ x: 0, y: 0, initial: 0 })
+  const [resizeDrag, setResizeDrag] = useState<'right' | null>(null)
+  const resizeDragStartRef = useRef({ x: 0, initial: 0 })
 
   useEffect(() => {
     if (!resizeDrag || scale <= 0) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (resizeDrag === 'right') {
-        const deltaX = e.clientX - resizeDragStartRef.current.x
-        const newWidth = Math.round(
-          Math.max(layer.fontSize * 2, resizeDragStartRef.current.initial + deltaX / scale),
-        )
-        onUpdate({ width: newWidth })
-      } else {
-        const deltaY = e.clientY - resizeDragStartRef.current.y
-        const newHeight = Math.round(
-          Math.max(layer.fontSize, resizeDragStartRef.current.initial + deltaY / scale),
-        )
-        onUpdate({ height: newHeight })
-      }
+      const deltaX = e.clientX - resizeDragStartRef.current.x
+      const newWidth = Math.round(
+        Math.max(layer.fontSize * 2, resizeDragStartRef.current.initial + deltaX / scale),
+      )
+      onUpdate({ width: newWidth })
     }
 
     const handleMouseUp = () => setResizeDrag(null)
@@ -239,8 +233,7 @@ export function TextEditOverlay({
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {
           e.preventDefault()
-          onUpdate({ text: value })
-          onCommit(value)
+          doCommit()
         }
       }}
     >
@@ -250,27 +243,22 @@ export function TextEditOverlay({
         leftFrac={leftFrac}
         rightFrac={rightFrac}
         topFrac={topFrac}
-        bottomFrac={bottomFrac}
         toolbarRef={toolbarRef}
         onUpdate={onUpdate}
-        onDone={() => {
-          onUpdate({ text: value })
-          onCommit(value)
-        }}
       />
 
       {/*
-       * Wrapper div — positioned at the layer's top-left corner.
-       * In fixed-width mode: explicit width (percentage of canvas).
-       * In auto-width mode: stretches from layer left to near the canvas right edge.
-       * Height is not set here so the wrapper sizes to the textarea content.
+       * Wrapper div — always sized to the layer's bounding-box width.
+       * Height is not set; the wrapper grows with the textarea.
        */}
       <div
         style={{
           position: 'absolute',
           left: leftPercent,
           top: topPercent,
-          ...(hasFixedWidth ? { width: `${widthFrac * 100}%` } : { right: '1%' }),
+          width: `${widthFrac * 100}%`,
+          border: '1px solid white',
+          boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
         }}
       >
         <textarea
@@ -283,8 +271,7 @@ export function TextEditOverlay({
           style={{
             display: 'block',
             width: '100%',
-            // Fixed height when layer.height > 0, otherwise auto (useLayoutEffect drives it)
-            height: hasFixedHeight ? `${layerDims.height * scale}px` : undefined,
+            // Height driven entirely by useLayoutEffect (auto-grow). Never fixed, never scrolls.
             minHeight: lineHeightPx,
             fontSize: fontSizePx,
             lineHeight: lineHeightPx,
@@ -293,22 +280,20 @@ export function TextEditOverlay({
             fontStyle: fontItalic,
             textAlign,
             color: `#${layer.color}`,
-            background: 'rgba(255,255,255,0.08)',
-            border: '2px dashed rgba(255,255,255,0.8)',
+            background: 'transparent',
+            border: 'none',
             outline: 'none',
             resize: 'none',
             padding: '0',
-            overflow: hasFixedHeight ? 'auto' : 'hidden',
+            overflow: 'hidden',
             boxSizing: 'border-box',
-            boxShadow: '0 0 0 1px rgba(0,0,0,0.4)',
-            borderRadius: '2px',
-            // auto-width: no wrap (imagor renders without wrap); fixed-width: wrap at that width
-            whiteSpace: hasFixedWidth ? 'pre-wrap' : 'nowrap',
-            wordBreak: hasFixedWidth ? 'break-word' : 'normal',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            caretColor: `#${layer.color}`,
           }}
         />
 
-        {/* ── Right edge handle — drag to set wrap width, double-click to reset ── */}
+        {/* ── Right edge handle — drag to resize wrap width, double-click resets to auto ── */}
         <div
           style={{
             position: 'absolute',
@@ -328,7 +313,6 @@ export function TextEditOverlay({
             setResizeDrag('right')
             resizeDragStartRef.current = {
               x: e.clientX,
-              y: e.clientY,
               initial: layerDims.width,
             }
           }}
@@ -339,39 +323,6 @@ export function TextEditOverlay({
           }}
         >
           <HandlePill vertical />
-        </div>
-
-        {/* ── Bottom edge handle — drag to fix height, double-click to reset ── */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: -10,
-            left: 0,
-            right: 0,
-            height: 20,
-            cursor: 'ns-resize',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'auto',
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            setResizeDrag('bottom')
-            resizeDragStartRef.current = {
-              x: e.clientX,
-              y: e.clientY,
-              initial: layerDims.height,
-            }
-          }}
-          onDoubleClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            onUpdate({ height: 0 }) // reset to auto-height
-          }}
-        >
-          <HandlePill />
         </div>
       </div>
     </div>
