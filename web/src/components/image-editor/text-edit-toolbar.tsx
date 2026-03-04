@@ -28,14 +28,11 @@ interface TextEditToolbarProps {
   onUpdate: (updates: Partial<TextLayer>) => void
 }
 
-const FONTS = [
-  'sans',
-  'serif',
-  'monospace',
-  'Noto Sans',
-  'DejaVu Sans',
-  'Liberation Sans',
-  'Ubuntu',
+// label = what the user sees; value = font param sent to imagor
+const FONTS: { label: string; value: string }[] = [
+  { label: 'Sans', value: 'sans' },
+  { label: 'Serif', value: 'serif' },
+  { label: 'Monospace', value: 'monospace' },
 ]
 
 export function TextEditToolbar({
@@ -201,8 +198,8 @@ export function TextEditToolbar({
         </SelectTrigger>
         <SelectContent>
           {FONTS.map((f) => (
-            <SelectItem key={f} value={f}>
-              {f}
+            <SelectItem key={f.value} value={f.value}>
+              {f.label}
             </SelectItem>
           ))}
         </SelectContent>
