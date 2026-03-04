@@ -218,16 +218,20 @@ export function TextEditOverlay({
     }
   }, [value, layer.fontSize, layer.spacing, containerHeightPx])
 
-  // ── Right-edge drag handle ───────────────────────────────────────────
+  // ── Width-resize drag handle (left edge for right-aligned, right edge otherwise) ─────
 
-  const [resizeDrag, setResizeDrag] = useState<'right' | null>(null)
+  // 'left' means handle is on left edge (right-aligned text); 'right' means right edge
+  const [resizeDrag, setResizeDrag] = useState<'left' | 'right' | null>(null)
   const resizeDragStartRef = useRef({ x: 0, initial: 0 })
 
   useEffect(() => {
     if (!resizeDrag || scale <= 0) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - resizeDragStartRef.current.x
+      const rawDelta = e.clientX - resizeDragStartRef.current.x
+      // Left-edge: drag left = wider (negate). Center: both edges are symmetric so ×2.
+      const multiplier = layer.align === 'centre' ? 2 : 1
+      const deltaX = resizeDrag === 'left' ? -rawDelta * multiplier : rawDelta * multiplier
       const newWidth = Math.round(
         Math.max(layer.fontSize * 2, resizeDragStartRef.current.initial + deltaX / scale),
       )
@@ -241,7 +245,7 @@ export function TextEditOverlay({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [resizeDrag, scale, onUpdate, layer.fontSize])
+  }, [resizeDrag, scale, onUpdate, layer.fontSize, layer.align])
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -314,37 +318,68 @@ export function TextEditOverlay({
           }}
         />
 
-        {/* ── Right edge handle — drag to resize wrap width, double-click resets to auto ── */}
-        <div
-          style={{
-            position: 'absolute',
-            right: -10,
-            top: 0,
-            bottom: 0,
-            width: 20,
-            cursor: 'ew-resize',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'auto',
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            setResizeDrag('right')
-            resizeDragStartRef.current = {
-              x: e.clientX,
-              initial: layerDims.width,
-            }
-          }}
-          onDoubleClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            onUpdate({ width: 0 }) // reset to auto-width
-          }}
-        >
-          <HandlePill vertical />
-        </div>
+        {/* ── Width resize handle(s) ──────────────────────────────────────────────────────
+             Left-aligned  → right edge only
+             Right-aligned → left edge only
+             Center        → both edges (symmetric expansion, delta ×2) ── */}
+        {['low', 'centre'].includes(layer.align) && (
+          <div
+            style={{
+              position: 'absolute',
+              right: -10,
+              top: 0,
+              bottom: 0,
+              width: 20,
+              cursor: 'ew-resize',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'auto',
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setResizeDrag('right')
+              resizeDragStartRef.current = { x: e.clientX, initial: layerDims.width }
+            }}
+            onDoubleClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onUpdate({ width: 0 })
+            }}
+          >
+            <HandlePill vertical />
+          </div>
+        )}
+        {['high', 'centre'].includes(layer.align) && (
+          <div
+            style={{
+              position: 'absolute',
+              left: -10,
+              top: 0,
+              bottom: 0,
+              width: 20,
+              cursor: 'ew-resize',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'auto',
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setResizeDrag('left')
+              resizeDragStartRef.current = { x: e.clientX, initial: layerDims.width }
+            }}
+            onDoubleClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onUpdate({ width: 0 })
+            }}
+          >
+            <HandlePill vertical />
+          </div>
+        )}
       </div>
     </div>
   )
