@@ -143,6 +143,14 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     setZoom('fit')
   }, [editingContext])
 
+  // Reset zoom to fit when entering or exiting visual crop mode.
+  // On enter: the preview switches to the full original image so the user needs
+  //           to see it all to position the crop handles.
+  // On apply: the crop dimensions have changed so any fixed zoom would be wrong.
+  useEffect(() => {
+    setZoom('fit')
+  }, [visualCropEnabled])
+
   // Reset aspect ratio lock when switching layers
   // Default to unlocked for maximum flexibility
   useEffect(() => {

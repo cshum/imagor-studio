@@ -380,6 +380,16 @@ export class ImageEditor {
   getOutputDimensions(): { width: number; height: number } {
     const state = this.state
 
+    // When visual crop mode is active, the crop hasn't been applied yet.
+    // Return original dimensions to prevent the preview area from resizing or
+    // scrolling while the user drags a crop handle.
+    if (state.visualCropEnabled) {
+      return {
+        width: this.config.originalDimensions.width,
+        height: this.config.originalDimensions.height,
+      }
+    }
+
     // Determine the source dimensions (what goes INTO the resize operation)
     let sourceWidth: number
     let sourceHeight: number
