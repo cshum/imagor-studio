@@ -843,10 +843,18 @@ export class ImageEditor {
           const fontParts = [layer.font, layer.fontStyle, String(scaledFontSize)].filter(Boolean)
           const font = fontParts.join(' ').replace(/ /g, '-')
 
-          // Scale numeric wrap width
+          // Scale wrap width for the preview resolution.
+          // Numeric px: multiply by scaleFactor.
+          // f-N inset: the N offset is in original pixels and must also be scaled.
           let width: string | number = layer.width
           if (typeof width === 'number' && width > 0) {
             width = Math.round(width * scaleFactor)
+          } else if (typeof width === 'string' && scaleFactor !== 1) {
+            const fInsetMatch = width.match(/^(?:f|full)-(\d+)$/)
+            if (fInsetMatch) {
+              const scaledInset = Math.round(parseInt(fInsetMatch[1]) * scaleFactor)
+              width = scaledInset === 0 ? 'f' : `f-${scaledInset}`
+            }
           }
 
           // Build args, omitting trailing defaults

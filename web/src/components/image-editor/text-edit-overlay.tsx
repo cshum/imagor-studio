@@ -222,7 +222,10 @@ export function TextEditOverlay({
 
   // 'left' means handle is on left edge (right-aligned text); 'right' means right edge
   const [resizeDrag, setResizeDrag] = useState<'left' | 'right' | null>(null)
-  const resizeDragStartRef = useRef({ x: 0, initial: 0 })
+  // Capture all drag-start state in a ref so the mousemove closure never goes stale.
+  // Crucially isFill is captured once at mouseDown — reading layer.width inside the
+  // effect deps would tear down and re-register the listener on every onUpdate call.
+  const resizeDragStartRef = useRef({ x: 0, initial: 0, isFill: false, canvasWidth: 0 })
 
   useEffect(() => {
     if (!resizeDrag || scale <= 0) return
@@ -235,7 +238,13 @@ export function TextEditOverlay({
       const newWidth = Math.round(
         Math.max(layer.fontSize * 2, resizeDragStartRef.current.initial + deltaX / scale),
       )
-      onUpdate({ width: newWidth })
+      // isFill was captured at mouseDown — stays stable for the whole drag
+      if (resizeDragStartRef.current.isFill) {
+        const inset = Math.max(0, resizeDragStartRef.current.canvasWidth - newWidth)
+        onUpdate({ width: inset === 0 ? 'f' : `f-${inset}` })
+      } else {
+        onUpdate({ width: newWidth })
+      }
     }
 
     const handleMouseUp = () => setResizeDrag(null)
@@ -340,7 +349,12 @@ export function TextEditOverlay({
               e.preventDefault()
               e.stopPropagation()
               setResizeDrag('right')
-              resizeDragStartRef.current = { x: e.clientX, initial: layerDims.width }
+              resizeDragStartRef.current = {
+                x: e.clientX,
+                initial: layerDims.width,
+                isFill: typeof layer.width === 'string' && /^(?:f|full)(-\d+)?$/.test(layer.width),
+                canvasWidth: baseImageWidth,
+              }
             }}
             onDoubleClick={(e) => {
               e.preventDefault()
@@ -369,7 +383,12 @@ export function TextEditOverlay({
               e.preventDefault()
               e.stopPropagation()
               setResizeDrag('left')
-              resizeDragStartRef.current = { x: e.clientX, initial: layerDims.width }
+              resizeDragStartRef.current = {
+                x: e.clientX,
+                initial: layerDims.width,
+                isFill: typeof layer.width === 'string' && /^(?:f|full)(-\d+)?$/.test(layer.width),
+                canvasWidth: baseImageWidth,
+              }
             }}
             onDoubleClick={(e) => {
               e.preventDefault()

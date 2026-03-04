@@ -623,9 +623,20 @@ export function PreviewArea({
                                   const layerUpdates: Partial<typeof selectedLayer> = {}
                                   if (updates.x !== undefined) layerUpdates.x = updates.x
                                   if (updates.y !== undefined) layerUpdates.y = updates.y
-                                  // Resize handles emit transforms.width/height — map to text layer's own fields
-                                  if (updates.transforms?.width !== undefined)
-                                    layerUpdates.width = updates.transforms.width
+                                  // Resize handles emit transforms.width/height — map to text layer's own fields.
+                                  // If the layer is in fill mode ('f' / 'f-N'), preserve fill mode and
+                                  // convert the new pixel width to an inset instead.
+                                  if (updates.transforms?.width !== undefined) {
+                                    const newPxWidth = updates.transforms.width
+                                    const widthStr = String(selectedLayer.width)
+                                    const isFill = /^(?:f|full)(-\d+)?$/.test(widthStr)
+                                    if (isFill) {
+                                      const inset = outputDims.width - newPxWidth
+                                      layerUpdates.width = inset > 0 ? `f-${Math.round(inset)}` : 'f'
+                                    } else {
+                                      layerUpdates.width = newPxWidth
+                                    }
+                                  }
                                   if (updates.transforms?.height !== undefined)
                                     layerUpdates.height = updates.transforms.height
                                   if (Object.keys(layerUpdates).length > 0)

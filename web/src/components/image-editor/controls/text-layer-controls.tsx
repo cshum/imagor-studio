@@ -255,6 +255,14 @@ export function TextLayerControls({
     }
   }, [widthFull, widthFullOffset, baseWidth, currentWidth, onUpdate])
 
+  const handleWidthInsetChange = useCallback(
+    (enteredWidth: number) => {
+      const inset = Math.max(0, baseWidth - (enteredWidth || 1))
+      onUpdate({ width: inset === 0 ? 'f' : `f-${inset}` })
+    },
+    [baseWidth, onUpdate],
+  )
+
   const handleHeightChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value.trim()
@@ -308,8 +316,8 @@ export function TextLayerControls({
 
   // ── Derived values ───────────────────────────────────────────────────────
 
-  // In fill mode show the resolved pixel width (currentWidth), not the raw 'f'/'f-N' token
-  const wrapWidthDisplay = widthFull ? String(currentWidth) : String(layer.width)
+  // In fill mode show the resolved pixel width (baseWidth minus inset), matching image layer
+  const wrapWidthDisplay = widthFull ? String(Math.max(1, baseWidth - widthFullOffset)) : String(layer.width || '')
   const heightDisplay = String(layer.height)
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -461,10 +469,15 @@ export function TextLayerControls({
             </div>
           </div>
           <Input
-            type='text'
+            type={widthFull ? 'number' : 'text'}
             value={wrapWidthDisplay}
-            onChange={handleWrapWidthChange}
-            disabled={widthFull}
+            onChange={(e) =>
+              widthFull
+                ? handleWidthInsetChange(Number(e.target.value) || 1)
+                : handleWrapWidthChange(e)
+            }
+            min={widthFull ? '1' : undefined}
+            max={widthFull ? baseWidth : undefined}
             placeholder='auto'
             className='h-8'
           />
