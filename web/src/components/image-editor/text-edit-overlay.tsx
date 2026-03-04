@@ -242,6 +242,7 @@ export function TextEditOverlay({
         leftFrac={leftFrac}
         rightFrac={rightFrac}
         topFrac={topFrac}
+        canvasContainerRef={containerRef}
         toolbarRef={toolbarRef}
         onUpdate={onUpdate}
       />

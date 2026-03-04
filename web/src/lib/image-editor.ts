@@ -1291,11 +1291,13 @@ export class ImageEditor {
           }
 
           const args: (string | number)[] = [encodedText, x, y]
+          const widthNonDefault2 = typeof width === 'number' ? width > 0 : width !== '0'
           const hasNonDefault =
             font !== 'sans-20' ||
             layer.color !== '000000' ||
             layer.alpha !== 0 ||
-            (typeof width === 'number' ? width > 0 : width !== '0') ||
+            layer.blendMode !== 'normal' ||
+            widthNonDefault2 ||
             layer.align !== 'low' ||
             layer.justify ||
             layer.wrap !== 'word' ||
@@ -1307,7 +1309,8 @@ export class ImageEditor {
             args.push(layer.color || '000000')
             if (
               layer.alpha !== 0 ||
-              (typeof width === 'number' ? width > 0 : width !== '0') ||
+              layer.blendMode !== 'normal' ||
+              widthNonDefault2 ||
               layer.align !== 'low' ||
               layer.justify ||
               layer.wrap !== 'word' ||
@@ -1316,34 +1319,45 @@ export class ImageEditor {
             ) {
               args.push(layer.alpha)
               if (
-                (typeof width === 'number' ? width > 0 : width !== '0') ||
+                layer.blendMode !== 'normal' ||
+                widthNonDefault2 ||
                 layer.align !== 'low' ||
                 layer.justify ||
                 layer.wrap !== 'word' ||
                 layer.spacing !== 0 ||
                 layer.dpi !== 72
               ) {
-                args.push(width)
+                args.push(layer.blendMode)
                 if (
+                  widthNonDefault2 ||
                   layer.align !== 'low' ||
                   layer.justify ||
                   layer.wrap !== 'word' ||
                   layer.spacing !== 0 ||
                   layer.dpi !== 72
                 ) {
-                  args.push(layer.align)
+                  args.push(width)
                   if (
+                    layer.align !== 'low' ||
                     layer.justify ||
                     layer.wrap !== 'word' ||
                     layer.spacing !== 0 ||
                     layer.dpi !== 72
                   ) {
-                    args.push(layer.justify ? 'true' : 'false')
-                    if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
-                      args.push(layer.wrap)
-                      if (layer.spacing !== 0 || layer.dpi !== 72) {
-                        args.push(Math.round(layer.spacing * sf))
-                        if (layer.dpi !== 72) args.push(layer.dpi)
+                    args.push(layer.align)
+                    if (
+                      layer.justify ||
+                      layer.wrap !== 'word' ||
+                      layer.spacing !== 0 ||
+                      layer.dpi !== 72
+                    ) {
+                      args.push(layer.justify ? 'true' : 'false')
+                      if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
+                        args.push(layer.wrap)
+                        if (layer.spacing !== 0 || layer.dpi !== 72) {
+                          args.push(Math.round(layer.spacing * sf))
+                          if (layer.dpi !== 72) args.push(layer.dpi)
+                        }
                       }
                     }
                   }

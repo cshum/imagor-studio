@@ -1,3 +1,5 @@
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { AlignCenter, AlignLeft, AlignRight, Bold, Italic } from 'lucide-react'
 
@@ -10,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { TextAlign, TextLayer } from '@/lib/image-editor'
+import type { TextAlign, TextLayer, TextWrap } from '@/lib/image-editor'
 
 interface TextEditToolbarProps {
   layer: TextLayer
@@ -20,6 +22,8 @@ interface TextEditToolbarProps {
   rightFrac: number
   /** Top edge of the text layer as a fraction of the canvas height (0–1). */
   topFrac: number
+  /** Ref to the canvas-sized container div, used to compute screen coordinates. */
+  canvasContainerRef: React.RefObject<HTMLElement | null>
   toolbarRef: React.RefObject<HTMLDivElement | null>
   onUpdate: (updates: Partial<TextLayer>) => void
 }
@@ -34,41 +38,88 @@ const FONTS = [
   'Ubuntu',
 ]
 
+const WRAP_MODES: TextWrap[] = ['word', 'char', 'wordchar', 'none']
+
 export function TextEditToolbar({
   layer,
   leftFrac,
   rightFrac,
   topFrac,
+  canvasContainerRef,
   toolbarRef,
   onUpdate,
 }: TextEditToolbarProps) {
   const { t } = useTranslation()
 
-  // ── Placement — always above the layer top edge ──────────────────────────
-  // Horizontal: left-anchored where there's room, right-anchored near the
-  // right edge, centred if neither side fits.
-  const TOOLBAR_WIDTH_FRAC = 0.45
-  const spaceToRight = 1 - leftFrac
-  const spaceToLeft = rightFrac
+  // ── Fixed-position placement via portal ───────────────────────────────────
+  // The toolbar is rendered into document.body via createPortal so it escapes
+  // any overflow:hidden ancestor and can overlay the editor header when the
+  // layer is near the top of the canvas.
+  const [fixedStyle, setFixedStyle] = useState<React.CSSProperties>({
+    position: 'fixed',
+    visibility: 'hidden',
+  })
 
-  const commonStyle: React.CSSProperties = {
-    position: 'absolute',
-    bottom: `${(1 - topFrac) * 100}%`,
-    marginBottom: '4px',
-    zIndex: 40,
-    pointerEvents: 'auto',
-    whiteSpace: 'nowrap',
-  }
+  const computePosition = useCallback(() => {
+    const container = canvasContainerRef.current
+    const toolbar = toolbarRef.current
+    if (!container || !toolbar) return
 
-  let toolbarStyle: React.CSSProperties
-  if (spaceToRight >= TOOLBAR_WIDTH_FRAC) {
-    toolbarStyle = { ...commonStyle, left: `${leftFrac * 100}%` }
-  } else if (spaceToLeft >= TOOLBAR_WIDTH_FRAC) {
-    toolbarStyle = { ...commonStyle, right: `${(1 - rightFrac) * 100}%` }
-  } else {
-    const centerXFrac = (leftFrac + rightFrac) / 2
-    toolbarStyle = { ...commonStyle, left: `${centerXFrac * 100}%`, transform: 'translateX(-50%)' }
-  }
+    const rect = container.getBoundingClientRect()
+    const canvasTopScreen = rect.top + topFrac * rect.height
+    const canvasLeftScreen = rect.left + leftFrac * rect.width
+    const canvasRightScreen = rect.left + rightFrac * rect.width
+    const toolbarW = toolbar.offsetWidth
+
+    // Always render above the layer top edge; use bottom so it doesn't shift
+    // if the toolbar itself changes height.
+    const bottomFixed = window.innerHeight - canvasTopScreen + 4
+
+    // Horizontal: left-anchor if space, right-anchor near right edge, else center.
+    const MARGIN = 8
+    let left: number | undefined
+    let right: number | undefined
+    let transform: string | undefined
+
+    const spaceToRight = window.innerWidth - canvasLeftScreen
+    const spaceToLeft = canvasRightScreen
+
+    if (spaceToRight >= toolbarW + MARGIN) {
+      left = canvasLeftScreen
+    } else if (spaceToLeft >= toolbarW + MARGIN) {
+      right = window.innerWidth - canvasRightScreen
+    } else {
+      left = (canvasLeftScreen + canvasRightScreen) / 2
+      transform = 'translateX(-50%)'
+    }
+
+    setFixedStyle({
+      position: 'fixed',
+      bottom: bottomFixed,
+      left,
+      right,
+      transform,
+      zIndex: 9999,
+      pointerEvents: 'auto',
+      whiteSpace: 'nowrap',
+      visibility: 'visible',
+    })
+  }, [canvasContainerRef, toolbarRef, topFrac, leftFrac, rightFrac])
+
+  // Recompute on every relevant change.
+  useLayoutEffect(() => {
+    computePosition()
+  }, [computePosition])
+
+  // Also recompute when the canvas container or toolbar resizes.
+  const observersRef = useRef<ResizeObserver[]>([])
+  useLayoutEffect(() => {
+    const observers = [new ResizeObserver(computePosition), new ResizeObserver(computePosition)]
+    observersRef.current = observers
+    if (canvasContainerRef.current) observers[0].observe(canvasContainerRef.current)
+    if (toolbarRef.current) observers[1].observe(toolbarRef.current)
+    return () => observers.forEach((o) => o.disconnect())
+  }, [canvasContainerRef, toolbarRef, computePosition])
 
   // ── Derived ──────────────────────────────────────────────────────────────
 
@@ -96,12 +147,12 @@ export function TextEditToolbar({
     }
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Render (via portal so it overlays the header) ─────────────────────────
 
-  return (
+  return createPortal(
     <div
       ref={toolbarRef}
-      style={toolbarStyle}
+      style={fixedStyle}
       className='bg-background/95 border-border flex items-center gap-1 rounded-md border px-1.5 py-1 shadow-lg backdrop-blur-sm'
       // Prevent the overlay's background onMouseDown (which commits) from firing
       onMouseDown={(e) => e.stopPropagation()}
@@ -110,24 +161,24 @@ export function TextEditToolbar({
       <Button
         variant={hasBold ? 'default' : 'ghost'}
         size='icon'
-        className='h-7 w-7'
+        className='h-8 w-8'
         onMouseDown={toggleBold}
         tabIndex={-1}
         title='Bold'
       >
-        <Bold className='h-3.5 w-3.5' />
+        <Bold />
       </Button>
 
       {/* Italic */}
       <Button
         variant={hasItalic ? 'default' : 'ghost'}
         size='icon'
-        className='h-7 w-7'
+        className='h-8 w-8'
         onMouseDown={toggleItalic}
         tabIndex={-1}
         title='Italic'
       >
-        <Italic className='h-3.5 w-3.5' />
+        <Italic />
       </Button>
 
       <div className='bg-border mx-0.5 h-5 w-px' />
@@ -135,7 +186,7 @@ export function TextEditToolbar({
       {/* Font family */}
       <Select value={layer.font} onValueChange={(v) => onUpdate({ font: v })}>
         <SelectTrigger
-          className='h-7 w-28 px-2 text-xs'
+          className='h-8 w-32'
           // preventDefault keeps focus on the textarea while still opening the dropdown
           onMouseDown={(e) => e.preventDefault()}
         >
@@ -143,7 +194,7 @@ export function TextEditToolbar({
         </SelectTrigger>
         <SelectContent>
           {FONTS.map((f) => (
-            <SelectItem key={f} value={f} className='text-xs'>
+            <SelectItem key={f} value={f}>
               {f}
             </SelectItem>
           ))}
@@ -154,8 +205,8 @@ export function TextEditToolbar({
       <div className='flex items-center'>
         <Button
           variant='ghost'
-          size='icon'
-          className='h-7 w-6 text-sm'
+          size='sm'
+          className='w-7 px-0'
           onMouseDown={(e) => {
             e.preventDefault()
             onUpdate({ fontSize: Math.max(1, layer.fontSize - 1) })
@@ -164,11 +215,11 @@ export function TextEditToolbar({
         >
           −
         </Button>
-        <span className='w-8 text-center text-xs tabular-nums'>{layer.fontSize}</span>
+        <span className='w-8 text-center text-sm tabular-nums'>{layer.fontSize}</span>
         <Button
           variant='ghost'
-          size='icon'
-          className='h-7 w-6 text-sm'
+          size='sm'
+          className='w-7 px-0'
           onMouseDown={(e) => {
             e.preventDefault()
             onUpdate({ fontSize: Math.min(999, layer.fontSize + 1) })
@@ -181,14 +232,14 @@ export function TextEditToolbar({
 
       {/* Color swatch */}
       <div
-        className='flex h-7 w-7 items-center justify-center overflow-hidden rounded border'
+        className='flex h-8 w-8 items-center justify-center overflow-hidden rounded border'
         title={t('imageEditor.layers.textColor')}
       >
         <input
           type='color'
           value={colorHex}
           onChange={(e) => onUpdate({ color: e.target.value.replace('#', '') })}
-          className='h-9 w-9 -translate-x-1 -translate-y-1 cursor-pointer border-0 bg-transparent p-0'
+          className='h-9 w-9 -translate-x-0.5 -translate-y-0.5 cursor-pointer border-0 bg-transparent p-0'
           tabIndex={-1}
         />
       </div>
@@ -204,34 +255,79 @@ export function TextEditToolbar({
         }}
         className='gap-0'
       >
-        <ToggleGroupItem
-          value='low'
-          size='sm'
-          className='h-7 w-7 p-0'
-          title='Left'
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          <AlignLeft className='h-3.5 w-3.5' />
+        <ToggleGroupItem value='low' size='sm' title='Left' onMouseDown={(e) => e.preventDefault()}>
+          <AlignLeft />
         </ToggleGroupItem>
         <ToggleGroupItem
           value='centre'
           size='sm'
-          className='h-7 w-7 p-0'
           title='Center'
           onMouseDown={(e) => e.preventDefault()}
         >
-          <AlignCenter className='h-3.5 w-3.5' />
+          <AlignCenter />
         </ToggleGroupItem>
         <ToggleGroupItem
           value='high'
           size='sm'
-          className='h-7 w-7 p-0'
           title='Right'
           onMouseDown={(e) => e.preventDefault()}
         >
-          <AlignRight className='h-3.5 w-3.5' />
+          <AlignRight />
         </ToggleGroupItem>
       </ToggleGroup>
-    </div>
+
+      <div className='bg-border mx-0.5 h-5 w-px' />
+
+      {/* Wrap mode */}
+      <Select value={layer.wrap} onValueChange={(v) => onUpdate({ wrap: v as TextWrap })}>
+        <SelectTrigger className='h-8 w-28' onMouseDown={(e) => e.preventDefault()}>
+          <SelectValue>{t(`imageEditor.layers.wrapModes.${layer.wrap}`)}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {WRAP_MODES.map((mode) => (
+            <SelectItem key={mode} value={mode}>
+              {t(`imageEditor.layers.wrapModes.${mode}`)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* Line spacing stepper */}
+      <div className='flex items-center'>
+        <Button
+          variant='ghost'
+          size='sm'
+          className='w-7 px-0'
+          onMouseDown={(e) => {
+            e.preventDefault()
+            onUpdate({ spacing: Math.max(-100, (layer.spacing ?? 0) - 1) })
+          }}
+          tabIndex={-1}
+          title={t('imageEditor.layers.lineSpacing')}
+        >
+          −
+        </Button>
+        <span
+          className='w-8 text-center text-sm tabular-nums'
+          title={t('imageEditor.layers.lineSpacing')}
+        >
+          {layer.spacing ?? 0}
+        </span>
+        <Button
+          variant='ghost'
+          size='sm'
+          className='w-7 px-0'
+          onMouseDown={(e) => {
+            e.preventDefault()
+            onUpdate({ spacing: Math.min(200, (layer.spacing ?? 0) + 1) })
+          }}
+          tabIndex={-1}
+          title={t('imageEditor.layers.lineSpacing')}
+        >
+          +
+        </Button>
+      </div>
+    </div>,
+    document.body,
   )
 }

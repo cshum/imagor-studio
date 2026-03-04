@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { BlendMode, ImageEditor, TextLayer, TextWrap } from '@/lib/image-editor'
+import type { BlendMode, ImageEditor, TextLayer } from '@/lib/image-editor'
 import { calculateTextLayerBoundingBox } from '@/lib/layer-dimensions'
 
 interface TextLayerControlsProps {
@@ -44,8 +44,6 @@ const BLEND_MODES: BlendMode[] = [
   'lighten',
   'mask',
 ]
-
-const WRAP_MODES: TextWrap[] = ['word', 'char', 'wordchar', 'none']
 
 export function TextLayerControls({
   layer,
@@ -249,20 +247,6 @@ export function TextLayerControls({
         const n = parseInt(raw)
         if (!isNaN(n) && n >= 0) onUpdate({ height: n })
       }
-    },
-    [onUpdate],
-  )
-
-  const handleWrapModeChange = useCallback(
-    (value: string) => {
-      onUpdate({ wrap: value as TextWrap })
-    },
-    [onUpdate],
-  )
-
-  const handleLineSpacingChange = useCallback(
-    (value: number) => {
-      onUpdate({ spacing: value })
     },
     [onUpdate],
   )
@@ -484,41 +468,6 @@ export function TextLayerControls({
           </SelectContent>
         </Select>
       </div>
-
-      {/* ── Wrap mode + line spacing — advanced, shown when text editing ── */}
-      {isTextEditing && (
-        <>
-          <div className='border-t pt-1'>
-            {/* Wrap Mode */}
-            <div className='space-y-1.5'>
-              <Label className='text-sm font-medium'>{t('imageEditor.layers.wrapMode')}</Label>
-              <Select value={layer.wrap} onValueChange={handleWrapModeChange}>
-                <SelectTrigger className='h-8'>
-                  <SelectValue>{t(`imageEditor.layers.wrapModes.${layer.wrap}`)}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {WRAP_MODES.map((mode) => (
-                    <SelectItem key={mode} value={mode}>
-                      {t(`imageEditor.layers.wrapModes.${mode}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Line Spacing */}
-          <NumericControl
-            label={t('imageEditor.layers.lineSpacing')}
-            value={layer.spacing}
-            min={-100}
-            max={200}
-            step={1}
-            unit='px'
-            onChange={handleLineSpacingChange}
-          />
-        </>
-      )}
     </div>
   )
 }
