@@ -3849,4 +3849,121 @@ describe('TextLayer support', () => {
       expect(editor.getState().layers).toHaveLength(0)
     })
   })
+
+  // ── text() filter arg ordering ────────────────────────────────────────────
+  // imagor signature: text(text,x,y,font,color,alpha,blend_mode,width,align,…)
+  // blend_mode is at index 6, width at index 7.  Getting this wrong causes the
+  // width token to be silently swallowed as the blend_mode slot (and vice-versa).
+  describe('text() filter — arg position correctness', () => {
+    it('places blend_mode at index 6 and numeric width at index 7', () => {
+      editor.addLayer(makeTextLayer({ blendMode: 'multiply', width: 200 }))
+      const path = editor.getImagorPath()
+      // Expected: text(b64:SGVsbG8,0,0,sans-20,000000,0,multiply,200)
+      expect(path).toContain('sans-20,000000,0,multiply,200')
+    })
+
+    it('places blend_mode at index 6 and fill width "f" at index 7', () => {
+      editor.addLayer(makeTextLayer({ blendMode: 'screen', width: 'f' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('sans-20,000000,0,screen,f')
+    })
+
+    it('places blend_mode at index 6 and fill-inset width "f-N" at index 7', () => {
+      editor.addLayer(makeTextLayer({ blendMode: 'overlay', width: 'f-400' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('sans-20,000000,0,overlay,f-400')
+    })
+
+    it('places "normal" blend_mode (explicit) then width correctly', () => {
+      // blendMode is default but when width forces the trailing args to be emitted,
+      // "normal" must still sit at index 6.
+      editor.addLayer(makeTextLayer({ width: 300 }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('sans-20,000000,0,normal,300')
+    })
+
+    it('width appears at index 7 followed by align when align is non-default', () => {
+      editor.addLayer(makeTextLayer({ width: 'f-200', align: 'centre' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('f-200,centre')
+    })
+  })
+
+  // ── wrap-width serialization (copy URL, scaleFactor = 1) ─────────────────
+  describe('text() filter — wrap width serialization', () => {
+    it('emits numeric px width correctly', () => {
+      editor.addLayer(makeTextLayer({ width: 500 }))
+      const path = editor.getImagorPath()
+      expect(path).toContain(',500')
+    })
+
+    it('emits fill "f" width correctly', () => {
+      editor.addLayer(makeTextLayer({ width: 'f' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/,f[,)]/)
+    })
+
+    it('emits fill "f-N" width correctly', () => {
+      editor.addLayer(makeTextLayer({ width: 'f-2032' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain(',f-2032')
+    })
+
+    it('omits width when 0 (auto wrap)', () => {
+      editor.addLayer(makeTextLayer({ width: 0 }))
+      const path = editor.getImagorPath()
+      // All other args are default too → minimal form, no width token
+      expect(path).toContain('text(b64:SGVsbG8,0,0)')
+    })
+  })
+
+  // ── wrap-width scaling in preview URL (scaleFactor = 0.5) ────────────────
+  describe('text() filter — preview URL wrap-width scaling', () => {
+    const getLastTextFilterArgs = async (): Promise<string> => {
+      const { generateImagorUrl } = await import('@/api/imagor-api')
+      await vi.runAllTimersAsync()
+      const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
+      const lastCall = calls[calls.length - 1][0] as {
+        params: { filters: Array<{ name: string; args: string }> }
+      }
+      const textFilter = lastCall.params.filters.find((f) => f.name === 'text')
+      if (!textFilter) throw new Error('No text filter found in preview call')
+      return textFilter.args
+    }
+
+    beforeEach(() => {
+      // 1920×1080 output, 960×540 preview → scaleFactor = 0.5
+      editor.updateParams({ width: 1920, height: 1080 })
+      editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
+    })
+
+    it('scales numeric px width by scaleFactor', async () => {
+      editor.addLayer(makeTextLayer({ width: 200, color: 'ffffff' }))
+      const args = await getLastTextFilterArgs()
+      // 200 × 0.5 = 100
+      expect(args).toContain(',100')
+    })
+
+    it('scales f-N inset by scaleFactor', async () => {
+      editor.addLayer(makeTextLayer({ width: 'f-2032', color: 'ffffff' }))
+      const args = await getLastTextFilterArgs()
+      // 2032 × 0.5 = 1016
+      expect(args).toContain(',f-1016')
+    })
+
+    it('keeps "f" (no inset) unchanged', async () => {
+      editor.addLayer(makeTextLayer({ width: 'f', color: 'ffffff' }))
+      const args = await getLastTextFilterArgs()
+      // Plain 'f' has no numeric part — stays as 'f'.  The args string ends after
+      // the last token so match ,f at either a comma or end-of-string.
+      expect(args).toMatch(/,f(?:,|$)/)
+    })
+
+    it('rounds scaled inset correctly (f-3 × 0.5 → f-2 via Math.round)', async () => {
+      editor.addLayer(makeTextLayer({ width: 'f-3', color: 'ffffff' }))
+      const args = await getLastTextFilterArgs()
+      // Math.round(3 * 0.5) = Math.round(1.5) = 2 → emits 'f-2'
+      expect(args).toContain(',f-2')
+    })
+  })
 })
