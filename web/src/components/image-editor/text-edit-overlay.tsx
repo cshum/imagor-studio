@@ -5,19 +5,12 @@ import type { TextLayer } from '@/lib/image-editor'
 import { calculateTextLayerBoundingBox } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'
 
-/** Rounded pill visual for edge-drag handles */
-function HandlePill({ vertical }: { vertical?: boolean }) {
+/** Photoshop-style white square handle dot — matches LayerOverlay */
+function HandleDot() {
   return (
     <div
-      style={{
-        ...(vertical
-          ? { width: 4, height: '40%', minHeight: 12 }
-          : { height: 4, width: '40%', minWidth: 12 }),
-        background: 'rgba(255,255,255,0.95)',
-        borderRadius: 3,
-        boxShadow: '0 0 0 1px rgba(0,0,0,0.55)',
-        margin: 'auto',
-      }}
+      className='h-2 w-2 border border-black bg-white'
+      style={{ boxShadow: '0 0 0 1px white' }}
     />
   )
 }
@@ -376,18 +369,8 @@ export function TextEditOverlay({
              Center        → both edges (symmetric expansion, delta ×2) ── */}
         {['low', 'centre'].includes(layer.align) && (
           <div
-            style={{
-              position: 'absolute',
-              right: -10,
-              top: 0,
-              bottom: 0,
-              width: 20,
-              cursor: 'ew-resize',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'auto',
-            }}
+            className='absolute top-1/2 -right-5.5 flex h-11 w-11 -translate-y-1/2 cursor-ew-resize items-center justify-center'
+            style={{ pointerEvents: 'auto' }}
             onMouseDown={(e) => {
               e.preventDefault()
               e.stopPropagation()
@@ -405,23 +388,13 @@ export function TextEditOverlay({
               onUpdate({ width: 0 })
             }}
           >
-            <HandlePill vertical />
+            <HandleDot />
           </div>
         )}
         {['high', 'centre'].includes(layer.align) && (
           <div
-            style={{
-              position: 'absolute',
-              left: -10,
-              top: 0,
-              bottom: 0,
-              width: 20,
-              cursor: 'ew-resize',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'auto',
-            }}
+            className='absolute top-1/2 -left-5.5 flex h-11 w-11 -translate-y-1/2 cursor-ew-resize items-center justify-center'
+            style={{ pointerEvents: 'auto' }}
             onMouseDown={(e) => {
               e.preventDefault()
               e.stopPropagation()
@@ -439,28 +412,17 @@ export function TextEditOverlay({
               onUpdate({ width: 0 })
             }}
           >
-            <HandlePill vertical />
+            <HandleDot />
           </div>
         )}
 
         {/* ── Font-size resize handle (bottom edge) ──────────────────────────
              Drag down → larger font, drag up → smaller font.
              Delta is divided by lineCount so the change is proportional
-             to drag distance regardless of how many lines the text spans.
-             Double-click resets fontSize to the sidebar control default. ── */}
+             to drag distance regardless of how many lines the text spans. ── */}
         <div
-          style={{
-            position: 'absolute',
-            bottom: -10,
-            left: 0,
-            right: 0,
-            height: 20,
-            cursor: 'ns-resize',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'auto',
-          }}
+          className='absolute -bottom-5.5 left-1/2 flex h-11 w-11 -translate-x-1/2 cursor-ns-resize items-center justify-center'
+          style={{ pointerEvents: 'auto' }}
           onMouseDown={(e) => {
             e.preventDefault()
             e.stopPropagation()
@@ -479,7 +441,7 @@ export function TextEditOverlay({
             setFontResizeDragging(true)
           }}
         >
-          <HandlePill />
+          <HandleDot />
         </div>
       </div>
     </div>
