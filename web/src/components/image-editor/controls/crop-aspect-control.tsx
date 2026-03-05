@@ -132,7 +132,7 @@ export function CropAspectControl({
       {/* Crop Button */}
       {onVisualCropToggle && (
         <Button
-          variant='outline'
+          variant={isVisualCropEnabled ? 'default' : 'outline'}
           size='default'
           onClick={handleVisualCropToggle}
           disabled={isToggling}
