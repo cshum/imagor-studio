@@ -116,6 +116,8 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const [actualScale, setActualScale] = useState<number | null>(null)
   const [textEditingLayerId, setTextEditingLayerId] = useState<string | null>(null)
   const isSavedRef = useRef(false)
+  // Resolver for the text-edit toggle Promise — resolved when the next preview loads
+  const textEditLoadResolverRef = useRef<(() => void) | null>(null)
 
   // Preview container ref and image dimensions for viewport calculations
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -535,8 +537,13 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   }, [imageEditor, t])
 
   const handleTextEdit = useCallback(
-    (layerId: string | null) => {
+    (layerId: string | null): Promise<void> => {
       imageEditor.setTextEditingLayerId(layerId)
+      // Return a Promise that resolves once the preview has loaded with the new
+      // text-editing state (i.e. when handlePreviewLoad fires next).
+      return new Promise<void>((resolve) => {
+        textEditLoadResolverRef.current = resolve
+      })
     },
     [imageEditor],
   )
@@ -643,6 +650,11 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     setIsLoading(false)
     // Notify ImageEditor that preview has loaded
     imageEditor.notifyPreviewLoaded()
+    // Resolve any pending text-edit toggle Promise so the button loading state clears
+    if (textEditLoadResolverRef.current) {
+      textEditLoadResolverRef.current()
+      textEditLoadResolverRef.current = null
+    }
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {

@@ -1,6 +1,6 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, MoveHorizontal, Type } from 'lucide-react'
+import { Check, LoaderCircle, MoveHorizontal, Type } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,7 +17,7 @@ interface TextLayerControlsProps {
   imageEditor: ImageEditor
   isTextEditing: boolean
   onUpdate: (updates: Partial<TextLayer>) => void
-  onEditText: () => void
+  onEditText: () => Promise<void>
 }
 
 export function TextLayerControls({
@@ -28,6 +28,16 @@ export function TextLayerControls({
   onEditText,
 }: TextLayerControlsProps) {
   const { t } = useTranslation()
+  const [isToggling, setIsToggling] = useState(false)
+
+  const handleEditText = async () => {
+    setIsToggling(true)
+    try {
+      await onEditText()
+    } finally {
+      setIsToggling(false)
+    }
+  }
 
   // ── Base / bounding-box dimensions ──────────────────────────────────────
 
@@ -132,21 +142,23 @@ export function TextLayerControls({
 
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-      {/* Edit Text Button - only show when not already editing */}
-      {!isTextEditing && (
-        <Button variant='outline' size='default' onClick={onEditText} className='w-full'>
-          <Type className='mr-2 h-4 w-4' />
-          {t('imageEditor.layers.editText')}
-        </Button>
-      )}
-
-      {/* Apply Text Edit Button - only show when editing */}
-      {isTextEditing && (
-        <Button variant='outline' size='default' onClick={onEditText} className='w-full'>
+      {/* Edit Text / Loading / Apply Text Edit Button */}
+      <Button
+        variant='outline'
+        size='default'
+        onClick={handleEditText}
+        disabled={isToggling}
+        className='w-full'
+      >
+        {isToggling ? (
+          <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
+        ) : isTextEditing ? (
           <Check className='mr-2 h-4 w-4' />
-          {t('imageEditor.layers.applyTextEdit')}
-        </Button>
-      )}
+        ) : (
+          <Type className='mr-2 h-4 w-4' />
+        )}
+        {isTextEditing ? t('imageEditor.layers.applyTextEdit') : t('imageEditor.layers.editText')}
+      </Button>
 
       {/* ── Position Controls ── */}
       <PositionControls

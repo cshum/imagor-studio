@@ -80,7 +80,7 @@ interface LayerPanelProps {
   onReplaceImage: (layerId: string | null) => void
   onAddLayer: (paths: string[]) => Promise<void>
   onAddTextLayer: () => void
-  onTextEdit: (layerId: string | null) => void
+  onTextEdit: (layerId: string | null) => Promise<void>
 }
 
 interface SortableLayerItemProps {

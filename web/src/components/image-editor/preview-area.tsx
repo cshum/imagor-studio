@@ -45,7 +45,7 @@ interface PreviewAreaProps {
   previewContainerRef?: React.RefObject<HTMLDivElement | null>
   onImageDimensionsChange?: (dimensions: { width: number; height: number } | null) => void
   textEditingLayerId?: string | null
-  onTextEdit?: (layerId: string | null) => void
+  onTextEdit?: (layerId: string | null) => void | Promise<void>
   onTextEditEnd?: (text: string | null) => void
 }
 
