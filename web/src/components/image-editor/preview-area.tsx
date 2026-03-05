@@ -621,7 +621,24 @@ export function PreviewArea({
                               onLayerChange={(updates) => {
                                 if (selectedLayer.type === 'text') {
                                   const layerUpdates: Partial<typeof selectedLayer> = {}
-                                  if (updates.x !== undefined) layerUpdates.x = updates.x
+                                  if (updates.x !== undefined) {
+                                    layerUpdates.x = updates.x
+                                    // Sync layer.align with the new x anchor so the text
+                                    // alignment indicator in the controls stays in sync.
+                                    const newX = updates.x
+                                    layerUpdates.align =
+                                      typeof newX === 'string'
+                                        ? newX === 'center'
+                                          ? ('centre' as const)
+                                          : newX === 'right' ||
+                                              newX.startsWith('right') ||
+                                              newX.startsWith('r-')
+                                            ? ('high' as const)
+                                            : ('low' as const)
+                                        : newX < 0
+                                          ? ('high' as const)
+                                          : ('low' as const)
+                                  }
                                   if (updates.y !== undefined) layerUpdates.y = updates.y
                                   // Resize handles emit transforms.width/height — map to text layer's own fields.
                                   // If the layer is in fill mode ('f' / 'f-N'), preserve fill mode and

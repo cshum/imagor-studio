@@ -54,13 +54,25 @@ export function TextLayerControls({
 
   const handleXChange = useCallback(
     (newX: string | number, newHAlign?: 'left' | 'center' | 'right') => {
-      if (newHAlign !== undefined) {
-        const align: TextAlign =
-          newHAlign === 'center' ? 'centre' : newHAlign === 'right' ? 'high' : 'low'
-        onUpdate({ x: newX, align })
-      } else {
-        onUpdate({ x: newX })
-      }
+      // Determine the effective horizontal alignment from the new x value when
+      // newHAlign is not explicitly provided (e.g. drag from LayerOverlay sends
+      // a raw numeric x without an alignment hint).
+      const effectiveHAlign: 'left' | 'center' | 'right' =
+        newHAlign ??
+        (() => {
+          if (typeof newX === 'string') {
+            if (newX === 'center') return 'center'
+            if (newX === 'right' || newX.startsWith('right') || newX.startsWith('r-'))
+              return 'right'
+            return 'left'
+          }
+          // Numeric: negative = right anchor, non-negative = left anchor
+          return newX < 0 ? 'right' : 'left'
+        })()
+
+      const align: TextAlign =
+        effectiveHAlign === 'center' ? 'centre' : effectiveHAlign === 'right' ? 'high' : 'low'
+      onUpdate({ x: newX, align })
     },
     [onUpdate],
   )
