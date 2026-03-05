@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, TextAlign, TextLayer } from '@/lib/image-editor'
 import { calculateTextLayerBoundingBox } from '@/lib/layer-dimensions'
+import { deriveTextAlignFromX } from '@/lib/text-layer-utils'
 import { cn } from '@/lib/utils'
 
 import { CompositingControls } from './compositing-controls'
@@ -54,24 +55,14 @@ export function TextLayerControls({
 
   const handleXChange = useCallback(
     (newX: string | number, newHAlign?: 'left' | 'center' | 'right') => {
-      // Determine the effective horizontal alignment from the new x value when
-      // newHAlign is not explicitly provided (e.g. drag from LayerOverlay sends
-      // a raw numeric x without an alignment hint).
-      const effectiveHAlign: 'left' | 'center' | 'right' =
-        newHAlign ??
-        (() => {
-          if (typeof newX === 'string') {
-            if (newX === 'center') return 'center'
-            if (newX === 'right' || newX.startsWith('right') || newX.startsWith('r-'))
-              return 'right'
-            return 'left'
-          }
-          // Numeric: negative = right anchor, non-negative = left anchor
-          return newX < 0 ? 'right' : 'left'
-        })()
-
-      const align: TextAlign =
-        effectiveHAlign === 'center' ? 'centre' : effectiveHAlign === 'right' ? 'high' : 'low'
+      // When newHAlign is explicitly provided (alignment button click), map it to TextAlign.
+      // Otherwise derive it from the x value itself (drag / offset input / arrow keys).
+      let align: TextAlign
+      if (newHAlign !== undefined) {
+        align = newHAlign === 'center' ? 'centre' : newHAlign === 'right' ? 'high' : 'low'
+      } else {
+        align = deriveTextAlignFromX(newX)
+      }
       onUpdate({ x: newX, align })
     },
     [onUpdate],

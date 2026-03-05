@@ -16,6 +16,7 @@ import type { ImageEditor } from '@/lib/image-editor'
 import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { enrichTransformsForFillMode } from '@/lib/layer-fill'
 import { calculateScrollAdjustment } from '@/lib/scroll-utils'
+import { deriveTextAlignFromX } from '@/lib/text-layer-utils'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
@@ -625,19 +626,7 @@ export function PreviewArea({
                                     layerUpdates.x = updates.x
                                     // Sync layer.align with the new x anchor so the text
                                     // alignment indicator in the controls stays in sync.
-                                    const newX = updates.x
-                                    layerUpdates.align =
-                                      typeof newX === 'string'
-                                        ? newX === 'center'
-                                          ? ('centre' as const)
-                                          : newX === 'right' ||
-                                              newX.startsWith('right') ||
-                                              newX.startsWith('r-')
-                                            ? ('high' as const)
-                                            : ('low' as const)
-                                        : newX < 0
-                                          ? ('high' as const)
-                                          : ('low' as const)
+                                    layerUpdates.align = deriveTextAlignFromX(updates.x)
                                   }
                                   if (updates.y !== undefined) layerUpdates.y = updates.y
                                   // Resize handles emit transforms.width/height — map to text layer's own fields.
