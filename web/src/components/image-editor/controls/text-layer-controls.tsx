@@ -140,7 +140,7 @@ export function TextLayerControls({
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
       {/* Edit Text / Loading / Apply Text Edit Button */}
       <Button
-        variant={isTextEditing ? 'default' : 'outline'}
+        variant={isTextEditing && !isToggling ? 'default' : 'outline'}
         size='default'
         onClick={handleEditText}
         disabled={isToggling}
