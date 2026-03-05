@@ -256,6 +256,49 @@ export function TextEditOverlay({
     }
   }, [resizeDrag, scale, onUpdate, layer.fontSize, layer.align])
 
+  // ── Font-size resize drag handle (bottom edge) ────────────────────────────
+  // Dragging down increases fontSize, dragging up decreases it.
+  // The delta is divided by lineCount so the visual change is proportional
+  // to the drag distance regardless of how many lines the text spans.
+
+  const [fontResizeDragging, setFontResizeDragging] = useState(false)
+  const fontResizeDragStartRef = useRef({
+    y: 0,
+    initialFontSize: 0,
+    lineCount: 1,
+    spacing: 0,
+  })
+
+  useEffect(() => {
+    if (!fontResizeDragging || scale <= 0) return
+
+    const MIN_FONT_SIZE = 4
+    const MAX_FONT_SIZE = 500
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const { y, initialFontSize, lineCount, spacing } = fontResizeDragStartRef.current
+      // Convert display-pixel delta to imagor-pixel delta
+      const deltaImagor = (e.clientY - y) / scale
+      // Spread the delta evenly across all lines
+      const newLineHeight = Math.max(
+        MIN_FONT_SIZE + spacing,
+        initialFontSize + spacing + deltaImagor / lineCount,
+      )
+      const newFontSize = Math.round(
+        Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, newLineHeight - spacing)),
+      )
+      onUpdate({ fontSize: newFontSize })
+    }
+
+    const handleMouseUp = () => setFontResizeDragging(false)
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [fontResizeDragging, scale, onUpdate])
+
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
@@ -399,6 +442,45 @@ export function TextEditOverlay({
             <HandlePill vertical />
           </div>
         )}
+
+        {/* ── Font-size resize handle (bottom edge) ──────────────────────────
+             Drag down → larger font, drag up → smaller font.
+             Delta is divided by lineCount so the change is proportional
+             to drag distance regardless of how many lines the text spans.
+             Double-click resets fontSize to the sidebar control default. ── */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: -10,
+            left: 0,
+            right: 0,
+            height: 20,
+            cursor: 'ns-resize',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'auto',
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            const el = textareaRef.current
+            const lineHeightDisplayPx = (layer.fontSize + (layer.spacing ?? 0)) * scale
+            const lineCount =
+              el && lineHeightDisplayPx > 0
+                ? Math.max(1, Math.round(el.scrollHeight / lineHeightDisplayPx))
+                : 1
+            fontResizeDragStartRef.current = {
+              y: e.clientY,
+              initialFontSize: layer.fontSize,
+              lineCount,
+              spacing: layer.spacing ?? 0,
+            }
+            setFontResizeDragging(true)
+          }}
+        >
+          <HandlePill />
+        </div>
       </div>
     </div>
   )
