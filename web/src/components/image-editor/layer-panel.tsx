@@ -74,6 +74,7 @@ interface LayerPanelProps {
   selectedLayerId: string | null
   editingContext: string | null
   textEditingLayerId: string | null
+  isTextEditToggling?: boolean
   layerAspectRatioLocked: boolean
   onLayerAspectRatioLockChange: (locked: boolean) => void
   visualCropEnabled?: boolean
@@ -404,6 +405,7 @@ export function LayerPanel({
   selectedLayerId,
   editingContext,
   textEditingLayerId,
+  isTextEditToggling = false,
   layerAspectRatioLocked,
   onLayerAspectRatioLockChange,
   visualCropEnabled = false,
@@ -721,6 +723,7 @@ export function LayerPanel({
               layer={selectedLayer}
               imageEditor={imageEditor}
               isTextEditing={textEditingLayerId === selectedLayer.id}
+              isToggling={isTextEditToggling}
               onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
               onEditText={() =>
                 onTextEdit(textEditingLayerId === selectedLayer.id ? null : selectedLayer.id)

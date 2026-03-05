@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, LoaderCircle, MoveHorizontal, Type } from 'lucide-react'
 
@@ -16,6 +16,7 @@ interface TextLayerControlsProps {
   layer: TextLayer
   imageEditor: ImageEditor
   isTextEditing: boolean
+  isToggling?: boolean
   onUpdate: (updates: Partial<TextLayer>) => void
   onEditText: () => Promise<void>
 }
@@ -24,19 +25,14 @@ export function TextLayerControls({
   layer,
   imageEditor,
   isTextEditing,
+  isToggling = false,
   onUpdate,
   onEditText,
 }: TextLayerControlsProps) {
   const { t } = useTranslation()
-  const [isToggling, setIsToggling] = useState(false)
 
   const handleEditText = async () => {
-    setIsToggling(true)
-    try {
-      await onEditText()
-    } finally {
-      setIsToggling(false)
-    }
+    await onEditText()
   }
 
   // ── Base / bounding-box dimensions ──────────────────────────────────────

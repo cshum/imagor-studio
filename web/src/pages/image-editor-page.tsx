@@ -115,6 +115,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const [zoom, setZoom] = useState<number | 'fit'>('fit')
   const [actualScale, setActualScale] = useState<number | null>(null)
   const [textEditingLayerId, setTextEditingLayerId] = useState<string | null>(null)
+  const [isTextEditToggling, setIsTextEditToggling] = useState(false)
   const isSavedRef = useRef(false)
   // Resolver for the text-edit toggle Promise — resolved when the next preview loads
   const textEditLoadResolverRef = useRef<(() => void) | null>(null)
@@ -539,6 +540,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const handleTextEdit = useCallback(
     (layerId: string | null): Promise<void> => {
       imageEditor.setTextEditingLayerId(layerId)
+      setIsTextEditToggling(true)
       // Return a Promise that resolves once the preview has loaded with the new
       // text-editing state (i.e. when handlePreviewLoad fires next).
       return new Promise<void>((resolve) => {
@@ -655,6 +657,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       textEditLoadResolverRef.current()
       textEditLoadResolverRef.current = null
     }
+    setIsTextEditToggling(false)
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
@@ -724,6 +727,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
             textEditingLayerId={textEditingLayerId}
+            isTextEditToggling={isTextEditToggling}
             layerAspectRatioLocked={layerAspectRatioLocked}
             onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
             visualCropEnabled={visualCropEnabled}
@@ -750,6 +754,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       handleAddTextLayer,
       handleTextEdit,
       textEditingLayerId,
+      isTextEditToggling,
     ],
   )
 
