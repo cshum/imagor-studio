@@ -323,18 +323,6 @@ export function LayerOverlay({
     [onEnterEditMode],
   )
 
-  // Compute isFirst/isLast from the live layer list (for disabling Move Up/Down menu items)
-  let isFirst = false
-  let isLast = false
-  if (imageEditor) {
-    const contextLayers = imageEditor.getContextLayers()
-    const idx = contextLayers.findIndex((l) => l.id === layer.id)
-    if (idx !== -1) {
-      isFirst = idx === contextLayers.length - 1 // topmost visually
-      isLast = idx === 0 // bottommost visually
-    }
-  }
-
   const layerBoxContent = (
     <div
       ref={layerBoxRef}
@@ -397,13 +385,7 @@ export function LayerOverlay({
     >
       {/* Layer box — wrapped in context menu when imageEditor is provided */}
       {imageEditor ? (
-        <LayerContextMenu
-          layer={layer}
-          isFirst={isFirst}
-          isLast={isLast}
-          imageEditor={imageEditor}
-          onTextEdit={onTextEdit}
-        >
+        <LayerContextMenu layer={layer} imageEditor={imageEditor} onTextEdit={onTextEdit}>
           {layerBoxContent}
         </LayerContextMenu>
       ) : (

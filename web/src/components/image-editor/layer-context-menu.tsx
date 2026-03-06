@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowUp, Copy, Edit, Eye, EyeOff, Pencil, Trash2, Type } from 'lucide-react'
 
@@ -13,8 +14,6 @@ import type { ImageEditor, Layer } from '@/lib/image-editor'
 
 interface LayerContextMenuProps {
   layer: Layer
-  isFirst: boolean
-  isLast: boolean
   imageEditor: ImageEditor
   onTextEdit?: (layerId: string) => void
   children: React.ReactNode
@@ -23,18 +22,29 @@ interface LayerContextMenuProps {
 /**
  * Reusable right-click context menu for a layer.
  * Accepts an `imageEditor` instance and handles all actions internally.
+ * isFirst/isLast are computed lazily when the menu opens — always fresh.
  * Used in the layer panel list and the canvas overlays.
  */
 export function LayerContextMenu({
   layer,
-  isFirst,
-  isLast,
   imageEditor,
   onTextEdit,
   children,
 }: LayerContextMenuProps) {
   const { t } = useTranslation()
   const isText = layer.type === 'text'
+  const [isFirst, setIsFirst] = useState(false)
+  const [isLast, setIsLast] = useState(false)
+
+  // Compute isFirst/isLast fresh each time the menu opens
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      const layers = imageEditor.getContextLayers()
+      const idx = layers.findIndex((l) => l.id === layer.id)
+      setIsFirst(idx === layers.length - 1) // topmost visually
+      setIsLast(idx === 0) // bottommost visually
+    }
+  }
 
   const handleEdit = () => imageEditor.switchContext(layer.id)
 
@@ -74,7 +84,7 @@ export function LayerContextMenu({
   const handleDelete = () => imageEditor.removeLayer(layer.id)
 
   return (
-    <ContextMenu>
+    <ContextMenu onOpenChange={handleOpenChange}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent className='min-w-[180px]'>
         {isText ? (

@@ -82,8 +82,6 @@ interface LayerPanelProps {
 
 interface SortableLayerItemProps {
   layer: Layer
-  isFirst: boolean
-  isLast: boolean
   isSelected: boolean
   isEditing: boolean
   isTextEditing: boolean
@@ -94,8 +92,6 @@ interface SortableLayerItemProps {
 
 function SortableLayerItem({
   layer,
-  isFirst,
-  isLast,
   isSelected,
   isEditing,
   isTextEditing,
@@ -156,13 +152,7 @@ function SortableLayerItem({
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
-      <LayerContextMenu
-        layer={layer}
-        isFirst={isFirst}
-        isLast={isLast}
-        imageEditor={imageEditor}
-        onTextEdit={onTextEdit}
-      >
+      <LayerContextMenu layer={layer} imageEditor={imageEditor} onTextEdit={onTextEdit}>
         <div
           className={cn(
             'flex h-9 cursor-pointer items-center gap-1.5 rounded-md px-2',
@@ -286,7 +276,6 @@ function SortableLayerItem({
                     e.stopPropagation()
                     handleMoveUp()
                   }}
-                  disabled={isFirst}
                 >
                   <ArrowUp className='mr-2 h-4 w-4' />
                   {t('imageEditor.layers.moveUp')}
@@ -296,7 +285,6 @@ function SortableLayerItem({
                     e.stopPropagation()
                     handleMoveDown()
                   }}
-                  disabled={isLast}
                 >
                   <ArrowDown className='mr-2 h-4 w-4' />
                   {t('imageEditor.layers.moveDown')}
@@ -618,18 +606,11 @@ export function LayerPanel({
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={layers.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-              {[...layers].reverse().map((layer, reversedIdx) => {
-                // In the reversed (visual) array: index 0 = topmost layer
-                // isFirst = topmost visually (last in storage array)
-                // isLast  = bottommost visually (first in storage array)
-                const isFirst = reversedIdx === 0
-                const isLast = reversedIdx === layers.length - 1
+              {[...layers].reverse().map((layer) => {
                 return (
                   <SortableLayerItem
                     key={layer.id}
                     layer={layer}
-                    isFirst={isFirst}
-                    isLast={isLast}
                     isSelected={selectedLayerId === layer.id}
                     isEditing={editingContext === layer.id}
                     isTextEditing={textEditingLayerId === layer.id}

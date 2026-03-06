@@ -106,13 +106,9 @@ export function LayerRegionsOverlay({
 
   return (
     <div className='pointer-events-none absolute inset-0 z-10 h-full w-full'>
-      {visibleLayers.map((layer, visibleIdx) => {
+      {visibleLayers.map((layer) => {
         const styles = getLayerStyles(layer)
         const isTextLayer = layer.type === 'text'
-        // isFirst = topmost visible layer (highest index in visible array)
-        // isLast  = bottommost visible layer (index 0)
-        const isFirst = visibleIdx === visibleLayers.length - 1
-        const isLast = visibleIdx === 0
         const regionDiv = (
           <div
             className={cn(
@@ -134,8 +130,6 @@ export function LayerRegionsOverlay({
             <LayerContextMenu
               key={layer.id}
               layer={layer}
-              isFirst={isFirst}
-              isLast={isLast}
               imageEditor={imageEditor}
               onTextEdit={onTextEdit}
             >
