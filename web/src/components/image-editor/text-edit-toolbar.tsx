@@ -38,11 +38,11 @@ interface TextEditToolbarProps {
   onUpdate: (updates: Partial<TextLayer>) => void
 }
 
-// label = what the user sees; value = font param sent to imagor
-const FONTS: { label: string; value: string }[] = [
-  { label: 'Sans', value: 'sans' },
-  { label: 'Serif', value: 'serif' },
-  { label: 'Monospace', value: 'monospace' },
+// label = what the user sees; value = font param sent to imagor; cssFamily = preview style
+const FONTS: { label: string; value: string; cssFamily: string }[] = [
+  { label: 'Sans', value: 'sans', cssFamily: 'sans-serif' },
+  { label: 'Serif', value: 'serif', cssFamily: 'serif' },
+  { label: 'Monospace', value: 'monospace', cssFamily: 'monospace' },
 ]
 
 export function TextEditToolbar({
@@ -204,11 +204,15 @@ export function TextEditToolbar({
           // preventDefault keeps focus on the textarea while still opening the dropdown
           onMouseDown={(e) => e.preventDefault()}
         >
-          <SelectValue />
+          <SelectValue>
+            <span style={{ fontFamily: FONTS.find((f) => f.value === layer.font)?.cssFamily }}>
+              {FONTS.find((f) => f.value === layer.font)?.label ?? layer.font}
+            </span>
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {FONTS.map((f) => (
-            <SelectItem key={f.value} value={f.value}>
+            <SelectItem key={f.value} value={f.value} style={{ fontFamily: f.cssFamily }}>
               {f.label}
             </SelectItem>
           ))}
