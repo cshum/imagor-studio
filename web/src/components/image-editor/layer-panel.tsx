@@ -611,14 +611,17 @@ export function LayerPanel({
             <Button
               variant='outline'
               className='w-full'
-              disabled={isAddingLayer || visualCropEnabled}
+              disabled={isAddingLayer || visualCropEnabled || !!textEditingLayerId}
             >
               <Plus className='mr-1 h-4 w-4' />
               {t('imageEditor.layers.addLayer')}
               <ChevronDown className='ml-auto h-4 w-4' />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align='start' className='w-48'>
+          <DropdownMenuContent
+            align='start'
+            style={{ minWidth: 'var(--radix-dropdown-menu-trigger-width)' }}
+          >
             <DropdownMenuItem onSelect={() => setFilePickerOpen(true)}>
               <Image className='mr-2 h-4 w-4' />
               {t('imageEditor.layers.addImage')}
