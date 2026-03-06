@@ -161,15 +161,22 @@ export function TextEditOverlay({
 
   // ── Position & size ────────────────────────────────────────────────────────
 
-  const layerDims = calculateTextLayerBoundingBox(layer, {
+  // Position is derived from the committed layer (x/y don't change during text editing).
+  // Width is derived from draftLayer so the wrapper visually resizes as the user drags
+  // the width handle — draftLayer.width is updated by setDraftLayer during the drag.
+  const layerDimsForPosition = calculateTextLayerBoundingBox(layer, {
+    width: baseImageWidth,
+    height: baseImageHeight,
+  })
+  const layerDims = calculateTextLayerBoundingBox(draftLayer, {
     width: baseImageWidth,
     height: baseImageHeight,
   })
   const { leftPercent, topPercent } = calculateLayerPosition(
     layer.x,
     layer.y,
-    layerDims.width,
-    layerDims.height,
+    layerDimsForPosition.width,
+    layerDimsForPosition.height,
     baseImageWidth,
     baseImageHeight,
     paddingLeft,
@@ -243,7 +250,7 @@ export function TextEditOverlay({
       el.style.height = '0px'
       el.style.height = `${el.scrollHeight}px`
     }
-  }, [value, draftLayer.fontSize, draftLayer.spacing, containerHeightPx])
+  }, [value, draftLayer.fontSize, draftLayer.spacing, draftLayer.width, containerHeightPx])
 
   // ── Width-resize drag handle (left edge for right-aligned, right edge otherwise) ─────
 
