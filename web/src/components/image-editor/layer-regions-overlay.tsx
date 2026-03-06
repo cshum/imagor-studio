@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { LayerContextMenu } from '@/components/image-editor/layer-context-menu'
+import { LayerContextMenu } from '@/components/image-editor/layer-menu'
 import type { ImageEditor, Layer } from '@/lib/image-editor'
 import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'

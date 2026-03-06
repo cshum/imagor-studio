@@ -20,20 +20,14 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  ArrowDown,
-  ArrowUp,
   ChevronDown,
-  Copy,
-  Edit,
   Eye,
   EyeOff,
   GripVertical,
   Image,
   Layers,
   MoreVertical,
-  Pencil,
   Plus,
-  Trash2,
   Type,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -41,7 +35,7 @@ import { toast } from 'sonner'
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
 import { TextLayerControls } from '@/components/image-editor/controls/text-layer-controls'
-import { LayerContextMenu } from '@/components/image-editor/layer-context-menu'
+import { LayerContextMenu, LayerDropdownMenu } from '@/components/image-editor/layer-menu'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -56,8 +50,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
@@ -121,34 +113,9 @@ function SortableLayerItem({
       ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
       : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || ''
 
-  // Inline action helpers (used by the dropdown menu)
   const handleEdit = () => imageEditor.switchContext(layer.id)
   const handleToggleVisibility = () =>
     imageEditor.updateLayer(layer.id, { visible: !layer.visible })
-  const handleDuplicate = () => imageEditor.duplicateLayer(layer.id)
-  const handleMoveUp = () => {
-    const layers = imageEditor.getContextLayers()
-    const idx = layers.findIndex((l) => l.id === layer.id)
-    if (idx < layers.length - 1) {
-      const newOrder = [...layers]
-      ;[newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]]
-      imageEditor.reorderLayers(newOrder)
-    }
-  }
-  const handleMoveDown = () => {
-    const layers = imageEditor.getContextLayers()
-    const idx = layers.findIndex((l) => l.id === layer.id)
-    if (idx > 0) {
-      const newOrder = [...layers]
-      ;[newOrder[idx], newOrder[idx - 1]] = [newOrder[idx - 1], newOrder[idx]]
-      imageEditor.reorderLayers(newOrder)
-    }
-  }
-  const handleRename = () => {
-    imageEditor.setSelectedLayerId(layer.id)
-    window.dispatchEvent(new CustomEvent('layer:rename', { detail: { layerId: layer.id } }))
-  }
-  const handleDelete = () => imageEditor.removeLayer(layer.id)
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
@@ -221,110 +188,7 @@ function SortableLayerItem({
             </Button>
 
             {/* Layer Actions Dropdown Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='h-7 w-7'
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className='h-3.5 w-3.5' />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='min-w-[180px]'>
-                {isText ? (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onTextEdit(layer.id)
-                    }}
-                  >
-                    <Type className='mr-2 h-4 w-4' />
-                    {t('imageEditor.layers.editText')}
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleEdit()
-                    }}
-                  >
-                    <Edit className='mr-2 h-4 w-4' />
-                    {t('imageEditor.layers.editLayer')}
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onSelect={handleRename}>
-                  <Pencil className='mr-2 h-4 w-4' />
-                  {t('imageEditor.layers.renameLayer')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDuplicate()
-                  }}
-                >
-                  <div className='flex flex-1 items-center'>
-                    <Copy className='mr-2 h-4 w-4' />
-                    {t('imageEditor.layers.duplicateLayer')}
-                  </div>
-                  <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleMoveUp()
-                  }}
-                >
-                  <ArrowUp className='mr-2 h-4 w-4' />
-                  {t('imageEditor.layers.moveUp')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleMoveDown()
-                  }}
-                >
-                  <ArrowDown className='mr-2 h-4 w-4' />
-                  {t('imageEditor.layers.moveDown')}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleToggleVisibility()
-                  }}
-                >
-                  <div className='flex flex-1 items-center'>
-                    {layer.visible ? (
-                      <>
-                        <EyeOff className='mr-2 h-4 w-4' />
-                        {t('imageEditor.layers.hideLayer')}
-                      </>
-                    ) : (
-                      <>
-                        <Eye className='mr-2 h-4 w-4' />
-                        {t('imageEditor.layers.showLayer')}
-                      </>
-                    )}
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDelete()
-                  }}
-                  className='text-destructive'
-                >
-                  <div className='flex flex-1 items-center'>
-                    <Trash2 className='mr-2 h-4 w-4' />
-                    {t('imageEditor.layers.deleteLayer')}
-                  </div>
-                  <DropdownMenuShortcut>⌫</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <LayerDropdownMenu layer={layer} imageEditor={imageEditor} onTextEdit={onTextEdit} />
           </div>
         </div>
       </LayerContextMenu>

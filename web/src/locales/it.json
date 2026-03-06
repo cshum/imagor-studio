@@ -837,6 +837,7 @@
       "duplicateLayer": "Duplica Livello",
       "moveUp": "Sposta Su",
       "moveDown": "Sposta Giù",
+      "layerActions": "Azioni Layer",
       "failedToAddLayer": "Impossibile aggiungere il livello",
       "selectImage": "Seleziona Immagine per Livello",
       "selectImageDescription": "Scegli un'immagine da aggiungere come nuovo livello",
