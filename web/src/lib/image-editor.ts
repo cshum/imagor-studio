@@ -340,6 +340,11 @@ export class ImageEditor {
    * @returns base64url encoded text with b64: prefix
    */
   private static encodeTextToBase64url(text: string): string {
+    // If text only contains URL-safe chars that won't break imagor's filter parser,
+    // pass it through as-is (no b64: prefix needed).
+    if (/^[a-zA-Z0-9_-]+$/.test(text)) {
+      return text
+    }
     const encoder = new TextEncoder()
     const bytes = encoder.encode(text)
     const base64 = btoa(String.fromCharCode(...bytes))

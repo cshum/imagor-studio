@@ -3710,10 +3710,11 @@ describe('TextLayer support', () => {
     it('emits text() filter with minimal args for all-default layer', () => {
       // Default layer: text="Hello", x=0, y=0, font=sans, fontSize=20 (= "sans-20"),
       // color=000000, alpha=0, width=0, align=low, justify=false, wrap=word, spacing=0, dpi=72
-      // → hasNonDefaultTrailing = false → args=[b64:Hello, 0, 0]
+      // → hasNonDefaultTrailing = false → args=[Hello, 0, 0]
+      // "Hello" is all alpha → no b64: encoding needed
       editor.addLayer(makeTextLayer())
       const path = editor.getImagorPath()
-      expect(path).toContain('text(b64:SGVsbG8,0,0)')
+      expect(path).toContain('text(Hello,0,0)')
     })
 
     it('emits font arg when font differs from default "sans-20"', () => {
@@ -3727,7 +3728,8 @@ describe('TextLayer support', () => {
       editor.addLayer(makeTextLayer({ color: 'ff0000' }))
       const path = editor.getImagorPath()
       expect(path).toContain('ff0000')
-      expect(path).toContain('text(b64:')
+      // "Hello" is all alpha → no b64: encoding; text appears as-is
+      expect(path).toContain('text(Hello,')
     })
 
     it('emits align arg when not default "low"', () => {
@@ -3767,17 +3769,49 @@ describe('TextLayer support', () => {
       expect(path).toContain('mono-20')
     })
 
-    it('encodes text with special characters using base64url', () => {
-      // Comma in text would break imagor URLs without encoding
+    it('passes through plain alphanumeric text without b64: encoding', () => {
+      // "Hello" is all [a-zA-Z0-9_-] → no encoding needed
+      editor.addLayer(makeTextLayer({ text: 'Hello' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('text(Hello,')
+      expect(path).not.toContain('b64:')
+    })
+
+    it('passes through text with digits and hyphens without b64: encoding', () => {
+      editor.addLayer(makeTextLayer({ text: 'item-42' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('text(item-42,')
+      expect(path).not.toContain('b64:')
+    })
+
+    it('encodes text with a space using b64:', () => {
+      editor.addLayer(makeTextLayer({ text: 'Hello World' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+      expect(path).not.toContain('Hello World')
+    })
+
+    it('encodes text with a comma using b64: (comma breaks filter parser)', () => {
       editor.addLayer(makeTextLayer({ text: 'Hello, World!' }))
       const path = editor.getImagorPath()
-      // Comma must NOT appear unencoded in the text arg
-      // text is always encoded as b64:...
       expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
       expect(path).not.toContain('Hello, World!')
     })
 
-    it('encodes multi-line text correctly', () => {
+    it('encodes text with a closing paren using b64: (paren breaks filter parser)', () => {
+      editor.addLayer(makeTextLayer({ text: 'foo)bar' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+      expect(path).not.toContain('foo)bar')
+    })
+
+    it('encodes unicode text using b64:', () => {
+      editor.addLayer(makeTextLayer({ text: '你好' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+    })
+
+    it('encodes multi-line text using b64:', () => {
       editor.addLayer(makeTextLayer({ text: 'Line1\nLine2' }))
       const path = editor.getImagorPath()
       expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
@@ -3913,7 +3947,8 @@ describe('TextLayer support', () => {
       editor.addLayer(makeTextLayer({ width: 0 }))
       const path = editor.getImagorPath()
       // All other args are default too → minimal form, no width token
-      expect(path).toContain('text(b64:SGVsbG8,0,0)')
+      // "Hello" is all alpha → no b64: encoding
+      expect(path).toContain('text(Hello,0,0)')
     })
   })
 
