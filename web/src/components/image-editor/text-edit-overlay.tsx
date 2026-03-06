@@ -71,6 +71,10 @@ export function TextEditOverlay({
   onUpdate,
 }: TextEditOverlayProps) {
   const [value, setValue] = useState(layer.text)
+  // Draft layer state — toolbar changes are buffered here and only flushed to the
+  // parent onUpdate on commit. This avoids triggering a new imagor preview load
+  // for every bold/italic/font/color/size change during editing.
+  const [draftLayer, setDraftLayer] = useState<TextLayer>(layer)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -105,14 +109,25 @@ export function TextEditOverlay({
   // Note: we intentionally do NOT sync value from layer.text here.
   // The textarea owns the draft text; layer.text is only updated on blur/commit.
 
-  // On commit: save the actual textarea content height back to the layer so that
-  // the selection bounding box matches the real text height after editing ends.
+  // On commit: flush all draft layer changes + text to the parent in one atomic call.
+  // This avoids triggering multiple imagor preview reloads during editing.
   const doCommit = useCallback(() => {
     const heightPx = textareaRef.current?.scrollHeight ?? 0
     const contentHeight = scaleRef.current > 0 ? Math.round(heightPx / scaleRef.current) : 0
-    onUpdate({ text: value, ...(contentHeight > 0 ? { height: contentHeight } : {}) })
+    // Compute diff between draftLayer and original layer — only send changed fields
+    const draft = draftLayer
+    const updates: Partial<TextLayer> = { text: value }
+    if (contentHeight > 0)
+      updates.height = contentHeight
+      // Include all draft fields that differ from the original layer
+    ;(Object.keys(draft) as (keyof TextLayer)[]).forEach((k) => {
+      if (draft[k] !== (layer as TextLayer)[k]) {
+        ;(updates as Record<string, unknown>)[k] = draft[k]
+      }
+    })
+    onUpdate(updates)
     onCommit(value)
-  }, [value, onUpdate, onCommit])
+  }, [value, draftLayer, layer, onUpdate, onCommit])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -169,8 +184,9 @@ export function TextEditOverlay({
 
   // When align changes via the toolbar, also reposition x so the visual anchor
   // matches: left→left-anchor, centre→center-anchor, high→right-anchor.
+  // All changes are buffered into draftLayer — no parent onUpdate until commit.
   const handleToolbarUpdate = (updates: Partial<TextLayer>) => {
-    if ('align' in updates && updates.align !== layer.align) {
+    if ('align' in updates && updates.align !== draftLayer.align) {
       const newAlign = updates.align!
       const visualLeft = Math.round(leftFrac * baseImageWidth)
       let newX: number | string
@@ -182,9 +198,9 @@ export function TextEditOverlay({
       } else {
         newX = visualLeft === 0 ? 'left' : visualLeft < 0 ? `left-${-visualLeft}` : visualLeft
       }
-      onUpdate({ ...updates, x: newX })
+      setDraftLayer((prev) => ({ ...prev, ...updates, x: newX }))
     } else {
-      onUpdate(updates)
+      setDraftLayer((prev) => ({ ...prev, ...updates }))
     }
   }
 
@@ -192,17 +208,17 @@ export function TextEditOverlay({
   const scale = containerHeightPx > 0 ? containerHeightPx / baseImageHeight : 1
   scaleRef.current = scale
 
-  // Typography
-  const fontSizePx = `${layer.fontSize * scale}px`
-  const lineHeightPx = `${(layer.fontSize + (layer.spacing ?? 0)) * scale}px`
-  const cssFontFamily = imagorFontToCss(layer.font)
-  const fontWeight = layer.fontStyle.includes('bold') ? 'bold' : 'normal'
-  const fontItalic = layer.fontStyle.includes('italic') ? 'italic' : 'normal'
-  const textAlign = layer.justify
+  // Typography — derived from draftLayer so the textarea reflects toolbar changes immediately
+  const fontSizePx = `${draftLayer.fontSize * scale}px`
+  const lineHeightPx = `${(draftLayer.fontSize + (draftLayer.spacing ?? 0)) * scale}px`
+  const cssFontFamily = imagorFontToCss(draftLayer.font)
+  const fontWeight = draftLayer.fontStyle.includes('bold') ? 'bold' : 'normal'
+  const fontItalic = draftLayer.fontStyle.includes('italic') ? 'italic' : 'normal'
+  const textAlign = draftLayer.justify
     ? 'justify'
-    : layer.align === 'centre'
+    : draftLayer.align === 'centre'
       ? 'center'
-      : layer.align === 'high'
+      : draftLayer.align === 'high'
         ? 'right'
         : 'left'
 
@@ -213,10 +229,10 @@ export function TextEditOverlay({
   // Pango 'char'     → break at any character — CSS word-break: break-all
   // Pango 'wordchar' → word first, then char fallback — CSS overflow-wrap: break-word
   // Pango 'none'     → no wrapping at all — white-space: pre
-  const cssWhiteSpace = layer.wrap === 'none' ? 'pre' : 'pre-wrap'
-  const cssWordBreak = layer.wrap === 'char' ? 'break-all' : 'normal'
+  const cssWhiteSpace = draftLayer.wrap === 'none' ? 'pre' : 'pre-wrap'
+  const cssWordBreak = draftLayer.wrap === 'char' ? 'break-all' : 'normal'
   // All wrapping modes use break-word so long words never disappear in the editor
-  const cssOverflowWrap = layer.wrap === 'none' ? 'normal' : 'break-word'
+  const cssOverflowWrap = draftLayer.wrap === 'none' ? 'normal' : 'break-word'
 
   // ── Auto-grow height (always — textarea never scrolls or clips) ──────────
   // containerHeightPx in deps: scale changes when the preview area resizes, which
@@ -227,7 +243,7 @@ export function TextEditOverlay({
       el.style.height = '0px'
       el.style.height = `${el.scrollHeight}px`
     }
-  }, [value, layer.fontSize, layer.spacing, containerHeightPx])
+  }, [value, draftLayer.fontSize, draftLayer.spacing, containerHeightPx])
 
   // ── Width-resize drag handle (left edge for right-aligned, right edge otherwise) ─────
 
@@ -244,17 +260,17 @@ export function TextEditOverlay({
     const handleMouseMove = (e: MouseEvent) => {
       const rawDelta = e.clientX - resizeDragStartRef.current.x
       // Left-edge: drag left = wider (negate). Center: both edges are symmetric so ×2.
-      const multiplier = layer.align === 'centre' ? 2 : 1
+      const multiplier = draftLayer.align === 'centre' ? 2 : 1
       const deltaX = resizeDrag === 'left' ? -rawDelta * multiplier : rawDelta * multiplier
       const newWidth = Math.round(
-        Math.max(layer.fontSize * 2, resizeDragStartRef.current.initial + deltaX / scale),
+        Math.max(draftLayer.fontSize * 2, resizeDragStartRef.current.initial + deltaX / scale),
       )
       // isFill was captured at mouseDown — stays stable for the whole drag
       if (resizeDragStartRef.current.isFill) {
         const inset = Math.max(0, resizeDragStartRef.current.canvasWidth - newWidth)
-        onUpdate({ width: inset === 0 ? 'f' : `f-${inset}` })
+        setDraftLayer((prev) => ({ ...prev, width: inset === 0 ? 'f' : `f-${inset}` }))
       } else {
-        onUpdate({ width: newWidth })
+        setDraftLayer((prev) => ({ ...prev, width: newWidth }))
       }
     }
 
@@ -265,7 +281,7 @@ export function TextEditOverlay({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [resizeDrag, scale, onUpdate, layer.fontSize, layer.align])
+  }, [resizeDrag, scale, draftLayer.fontSize, draftLayer.align])
 
   // ── Font-size resize drag handle (bottom edge) ────────────────────────────
   // Dragging down increases fontSize, dragging up decreases it.
@@ -298,7 +314,7 @@ export function TextEditOverlay({
       const newFontSize = Math.round(
         Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, newLineHeight - spacing)),
       )
-      onUpdate({ fontSize: newFontSize })
+      setDraftLayer((prev) => ({ ...prev, fontSize: newFontSize }))
     }
 
     const handleMouseUp = () => setFontResizeDragging(false)
@@ -308,7 +324,7 @@ export function TextEditOverlay({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [fontResizeDragging, scale, onUpdate])
+  }, [fontResizeDragging, scale])
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -324,9 +340,9 @@ export function TextEditOverlay({
         }
       }}
     >
-      {/* Floating typography toolbar */}
+      {/* Floating typography toolbar — receives draftLayer so it reflects local changes */}
       <TextEditToolbar
-        layer={layer}
+        layer={draftLayer}
         leftFrac={leftFrac}
         rightFrac={rightFrac}
         topFrac={topFrac}
@@ -367,7 +383,7 @@ export function TextEditOverlay({
             fontWeight,
             fontStyle: fontItalic,
             textAlign,
-            color: `#${layer.color}`,
+            color: `#${draftLayer.color}`,
             background: 'transparent',
             border: 'none',
             outline: 'none',
@@ -378,7 +394,7 @@ export function TextEditOverlay({
             whiteSpace: cssWhiteSpace,
             wordBreak: cssWordBreak,
             overflowWrap: cssOverflowWrap,
-            caretColor: `#${layer.color}`,
+            caretColor: `#${draftLayer.color}`,
           }}
         />
 
@@ -386,7 +402,7 @@ export function TextEditOverlay({
              Left-aligned  → right edge only
              Right-aligned → left edge only
              Center        → both edges (symmetric expansion, delta ×2) ── */}
-        {['low', 'centre'].includes(layer.align) && (
+        {['low', 'centre'].includes(draftLayer.align) && (
           <div
             className='absolute top-1/2 -right-5.5 flex h-11 w-11 -translate-y-1/2 cursor-ew-resize items-center justify-center'
             style={{ pointerEvents: 'auto' }}
@@ -397,20 +413,22 @@ export function TextEditOverlay({
               resizeDragStartRef.current = {
                 x: e.clientX,
                 initial: layerDims.width,
-                isFill: typeof layer.width === 'string' && /^(?:f|full)(-\d+)?$/.test(layer.width),
+                isFill:
+                  typeof draftLayer.width === 'string' &&
+                  /^(?:f|full)(-\d+)?$/.test(draftLayer.width),
                 canvasWidth: baseImageWidth,
               }
             }}
             onDoubleClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              onUpdate({ width: 0 })
+              setDraftLayer((prev) => ({ ...prev, width: 0 }))
             }}
           >
             <HandleDot />
           </div>
         )}
-        {['high', 'centre'].includes(layer.align) && (
+        {['high', 'centre'].includes(draftLayer.align) && (
           <div
             className='absolute top-1/2 -left-5.5 flex h-11 w-11 -translate-y-1/2 cursor-ew-resize items-center justify-center'
             style={{ pointerEvents: 'auto' }}
@@ -421,14 +439,16 @@ export function TextEditOverlay({
               resizeDragStartRef.current = {
                 x: e.clientX,
                 initial: layerDims.width,
-                isFill: typeof layer.width === 'string' && /^(?:f|full)(-\d+)?$/.test(layer.width),
+                isFill:
+                  typeof draftLayer.width === 'string' &&
+                  /^(?:f|full)(-\d+)?$/.test(draftLayer.width),
                 canvasWidth: baseImageWidth,
               }
             }}
             onDoubleClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              onUpdate({ width: 0 })
+              setDraftLayer((prev) => ({ ...prev, width: 0 }))
             }}
           >
             <HandleDot />
@@ -446,16 +466,16 @@ export function TextEditOverlay({
             e.preventDefault()
             e.stopPropagation()
             const el = textareaRef.current
-            const lineHeightDisplayPx = (layer.fontSize + (layer.spacing ?? 0)) * scale
+            const lineHeightDisplayPx = (draftLayer.fontSize + (draftLayer.spacing ?? 0)) * scale
             const lineCount =
               el && lineHeightDisplayPx > 0
                 ? Math.max(1, Math.round(el.scrollHeight / lineHeightDisplayPx))
                 : 1
             fontResizeDragStartRef.current = {
               y: e.clientY,
-              initialFontSize: layer.fontSize,
+              initialFontSize: draftLayer.fontSize,
               lineCount,
-              spacing: layer.spacing ?? 0,
+              spacing: draftLayer.spacing ?? 0,
             }
             setFontResizeDragging(true)
           }}
