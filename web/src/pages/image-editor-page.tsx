@@ -121,6 +121,9 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const isSavedRef = useRef(false)
   // Resolver for the text-edit toggle Promise — resolved when the next preview loads
   const textEditLoadResolverRef = useRef<(() => void) | null>(null)
+  // Stable ref to handleVisualCropToggle so the keydown useEffect can call it
+  // without being declared after it (avoids "used before declaration" TS error)
+  const handleVisualCropToggleRef = useRef<(enabled: boolean) => Promise<void>>(async () => {})
 
   // Preview container ref and image dimensions for viewport calculations
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -314,6 +317,23 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
         return
       }
 
+      // C key - toggle crop mode (Lightroom/Photoshop/Figma standard)
+      // Skip if text editing is active
+      if (e.key === 'c' || e.key === 'C') {
+        if (!e.metaKey && !e.ctrlKey && !textEditingLayerId) {
+          e.preventDefault()
+          void handleVisualCropToggleRef.current(!imageEditor.getState().visualCropEnabled)
+          return
+        }
+      }
+
+      // Enter key - apply/confirm crop when crop mode is active (Lightroom/Photoshop standard)
+      if (e.key === 'Enter' && imageEditor.getState().visualCropEnabled) {
+        e.preventDefault()
+        void handleVisualCropToggleRef.current(false)
+        return
+      }
+
       // Cmd+S (Mac) or Ctrl+S (Windows/Linux) - Save/Create Template
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault()
@@ -350,7 +370,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [imageEditor, isTemplate, templateMetadata])
+  }, [imageEditor, isTemplate, templateMetadata, textEditingLayerId])
 
   const updateParams = useCallback(
     (updates: Partial<ImageEditorState>) => {
@@ -656,6 +676,8 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     },
     [imageEditor],
   )
+  // Keep ref in sync so the keydown useEffect always calls the latest version
+  handleVisualCropToggleRef.current = handleVisualCropToggle
 
   const handlePreviewLoad = () => {
     setIsLoading(false)
