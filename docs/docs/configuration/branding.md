@@ -4,10 +4,10 @@ Imagor Studio supports customising the application title and brand link shown in
 
 ## Configuration Options
 
-| Option | Flag | Environment Variable | Registry Key | Default |
-|--------|------|---------------------|--------------|---------|
-| App Title | `--app-title` | `APP_TITLE` | `config.app_title` | `Imagor Studio` |
-| App URL | `--app-url` | `APP_URL` | `config.app_url` | `https://imagor.net` |
+| Option    | Flag          | Environment Variable | Registry Key       | Default              |
+| --------- | ------------- | -------------------- | ------------------ | -------------------- |
+| App Title | `--app-title` | `APP_TITLE`          | `config.app_title` | `Imagor Studio`      |
+| App URL   | `--app-url`   | `APP_URL`            | `config.app_url`   | `https://imagor.net` |
 
 ## License Requirement
 

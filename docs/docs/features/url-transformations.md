@@ -11,11 +11,13 @@ Imagor Studio uses URL-based image transformations. All edits generate imagor UR
 When you edit an image, the editor generates an imagor URL that contains transformation parameters. When the URL is requested, imagor processes the original image with those transformations and returns the result.
 
 **Example URL:**
+
 ```
 /unsafe/300x200/filters:brightness(10):contrast(5)/path/to/image.jpg
 ```
 
 This URL tells imagor to:
+
 - Resize to 300x200 pixels
 - Apply brightness +10
 - Apply contrast +5

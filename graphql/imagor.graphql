@@ -9,10 +9,7 @@ extend type Mutation {
   configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
 
   # Imagor URL Generation API
-  generateImagorUrl(
-    imagePath: String!
-    params: ImagorParamsInput!
-  ): String!
+  generateImagorUrl(imagePath: String!, params: ImagorParamsInput!): String!
 }
 
 # Imagor URL Generation Input Types

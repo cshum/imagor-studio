@@ -874,6 +874,8 @@
       },
       "replaceImage": "Sostituisci immagine",
       "replaceImageError": "Impossibile sostituire l'immagine",
+      "addImageLayer": "Aggiungi Livello Immagine",
+      "addImageLayerDescription": "Scegli un'immagine dal tuo archivio da aggiungere come nuovo livello.",
       "selectImageToReplace": "Seleziona immagine da sostituire",
       "selectImageToReplaceDescription": "Scegli una nuova immagine per sostituire quella corrente."
     }

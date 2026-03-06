@@ -877,6 +877,8 @@
       },
       "replaceImage": "替换图片",
       "replaceImageError": "替换图片失败",
+      "addImageLayer": "添加图片图层",
+      "addImageLayerDescription": "从您的存储空间选择图片以添加为新图层。",
       "selectImageToReplace": "选择要替换的图片",
       "selectImageToReplaceDescription": "选择新图片以替换当前图片。"
     },

@@ -61,6 +61,7 @@ Translations are stored in JSON files in the codebase. To contribute:
 3. Submit a pull request
 
 Translation files follow the format:
+
 ```
 web/src/locales/
   en.json       # English

@@ -877,6 +877,8 @@
       },
       "replaceImage": "替換圖片",
       "replaceImageError": "替換圖片失敗",
+      "addImageLayer": "新增圖片圖層",
+      "addImageLayerDescription": "從您的儲存空間選擇圖片以新增為新圖層。",
       "selectImageToReplace": "選擇要替換的圖片",
       "selectImageToReplaceDescription": "選擇新圖片以替換目前圖片。"
     }

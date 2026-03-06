@@ -59,6 +59,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const [applyTemplateDialogOpen, setApplyTemplateDialogOpen] = useState(false)
   const [replaceImageDialogOpen, setReplaceImageDialogOpen] = useState(false)
   const [replaceImageLayerId, setReplaceImageLayerId] = useState<string | null>(null)
+  const [addLayerDialogOpen, setAddLayerDialogOpen] = useState(false)
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -124,6 +125,9 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   // Stable ref to handleVisualCropToggle so the keydown useEffect can call it
   // without being declared after it (avoids "used before declaration" TS error)
   const handleVisualCropToggleRef = useRef<(enabled: boolean) => Promise<void>>(async () => {})
+  // Stable refs for add-layer callbacks (defined after the keydown useEffect)
+  const handleAddTextLayerRef = useRef<() => void>(() => {})
+  const handleAddLayerDialogOpenRef = useRef<() => void>(() => {})
 
   // Preview container ref and image dimensions for viewport calculations
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -332,6 +336,26 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
         e.preventDefault()
         void handleVisualCropToggleRef.current(false)
         return
+      }
+
+      // T key - Add Text Layer (Figma/Photoshop/Sketch standard)
+      // Skip if crop mode active, text editing active, or modifier keys held
+      if ((e.key === 't' || e.key === 'T') && !e.metaKey && !e.ctrlKey && !textEditingLayerId) {
+        if (!imageEditor.getState().visualCropEnabled) {
+          e.preventDefault()
+          handleAddTextLayerRef.current()
+          return
+        }
+      }
+
+      // Cmd+Shift+I (Mac only) - Add Image Layer
+      // Ctrl+Shift+I opens DevTools on Windows/Linux so we guard with metaKey only
+      if (e.metaKey && e.shiftKey && (e.key === 'i' || e.key === 'I')) {
+        if (!textEditingLayerId && !imageEditor.getState().visualCropEnabled) {
+          e.preventDefault()
+          handleAddLayerDialogOpenRef.current()
+          return
+        }
       }
 
       // Cmd+S (Mac) or Ctrl+S (Windows/Linux) - Save/Create Template
@@ -676,8 +700,10 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     },
     [imageEditor],
   )
-  // Keep ref in sync so the keydown useEffect always calls the latest version
+  // Keep refs in sync so the keydown useEffect always calls the latest versions
   handleVisualCropToggleRef.current = handleVisualCropToggle
+  handleAddTextLayerRef.current = handleAddTextLayer
+  handleAddLayerDialogOpenRef.current = () => setAddLayerDialogOpen(true)
 
   const handlePreviewLoad = () => {
     setIsLoading(false)
@@ -931,6 +957,18 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
         title={t('imageEditor.layers.selectImageToReplace')}
         description={t('imageEditor.layers.selectImageToReplaceDescription')}
         onSelect={handleReplaceImageSelect}
+        fileType='images'
+        selectionMode='single'
+      />
+      <FilePickerDialog
+        open={addLayerDialogOpen}
+        onOpenChange={setAddLayerDialogOpen}
+        title={t('imageEditor.layers.addImageLayer')}
+        description={t('imageEditor.layers.addImageLayerDescription')}
+        onSelect={async (paths) => {
+          setAddLayerDialogOpen(false)
+          await handleAddLayerWithViewport(paths)
+        }}
         fileType='images'
         selectionMode='single'
       />

@@ -134,11 +134,11 @@ Each layer maintains its own transformation state.
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `↵` | Edit Text (text layer) or Edit Layer (image layer) |
-| `⌘D` | Duplicate selected layer |
-| `⌫` / `Delete` | Delete selected layer |
-| `⌘]` | Move layer up (bring forward) |
-| `⌘[` | Move layer down (send backward) |
-| Arrow keys | Move selected layer position |
+| Shortcut       | Action                                             |
+| -------------- | -------------------------------------------------- |
+| `↵`            | Edit Text (text layer) or Edit Layer (image layer) |
+| `⌘D`           | Duplicate selected layer                           |
+| `⌫` / `Delete` | Delete selected layer                              |
+| `⌘]`           | Move layer up (bring forward)                      |
+| `⌘[`           | Move layer down (send backward)                    |
+| Arrow keys     | Move selected layer position                       |

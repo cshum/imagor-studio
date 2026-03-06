@@ -36,15 +36,17 @@ Navigate and control Imagor Studio using keyboard shortcuts.
 
 ### Layers
 
-| Shortcut | Action |
-|---|---|
-| `↵` | Edit Text (text layer) or Edit Layer (image layer) |
-| `⌘D` / `Ctrl+D` | Duplicate selected layer |
-| `⌫` / `Delete` | Delete selected layer |
-| `⌘]` / `Ctrl+]` | Move layer up (bring forward) |
-| `⌘[` / `Ctrl+[` | Move layer down (send backward) |
-| Arrow Keys | Move selected layer position |
-| `ESC` | Exit nested layer context |
+| Shortcut        | Action                                             |
+| --------------- | -------------------------------------------------- |
+| `T`             | Add text layer                                     |
+| `⌘⇧I` (Mac)     | Add image layer (opens file picker)                |
+| `↵`             | Edit Text (text layer) or Edit Layer (image layer) |
+| `⌘D` / `Ctrl+D` | Duplicate selected layer                           |
+| `⌫` / `Delete`  | Delete selected layer                              |
+| `⌘]` / `Ctrl+]` | Move layer up (bring forward)                      |
+| `⌘[` / `Ctrl+[` | Move layer down (send backward)                    |
+| Arrow Keys      | Move selected layer position                       |
+| `ESC`           | Exit nested layer context                          |
 
 ### Templates
 

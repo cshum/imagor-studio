@@ -50,6 +50,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
@@ -483,12 +484,18 @@ export function LayerPanel({
             style={{ minWidth: 'var(--radix-dropdown-menu-trigger-width)' }}
           >
             <DropdownMenuItem onSelect={() => setFilePickerOpen(true)}>
-              <Image className='mr-2 h-4 w-4' />
-              {t('imageEditor.layers.addImage')}
+              <div className='flex flex-1 items-center'>
+                <Image className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.addImage')}
+              </div>
+              <DropdownMenuShortcut>⌘⇧I</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setTimeout(onAddTextLayer, 0)}>
-              <Type className='mr-2 h-4 w-4' />
-              {t('imageEditor.layers.addText')}
+              <div className='flex flex-1 items-center'>
+                <Type className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.addText')}
+              </div>
+              <DropdownMenuShortcut>T</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

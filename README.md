@@ -5,11 +5,11 @@
 
 Self-hosted image gallery with built-in editing. Virtual scrolling, drag-and-drop management, multi-layer compositing, and template workflows.
 
-* Virtual Scrolling Gallery — browse thousands of images instantly, no indexing or waiting
-* Image Editing — multi-layer compositing, template workflows with instant URL generation
-* Drag-and-Drop Management — upload, organize, multi-select for bulk operations
-* Non-Destructive Workflow — originals untouched, all transformations via URL
-No
+- Virtual Scrolling Gallery — browse thousands of images instantly, no indexing or waiting
+- Image Editing — multi-layer compositing, template workflows with instant URL generation
+- Drag-and-Drop Management — upload, organize, multi-select for bulk operations
+- Non-Destructive Workflow — originals untouched, all transformations via URL
+  No
 
 ![Screenshots](assets/screenshots.jpg)
 
@@ -25,17 +25,17 @@ docker run -p 8000:8000 --rm \
   shumc/imagor-studio
 ```
 
-Open in browser 
+Open in browser
 
 ```
 http://localhost:8000
 ```
 
 **What this does:**
+
 - Mounts your Photos directory
 - Creates persistent storage for the app database (SQLite)
 - Redirects to admin setup process on first launch
-
 
 > [!NOTE]
 > Ready to dive deeper? Check out [Documentation](https://docs.studio.imagor.net/)

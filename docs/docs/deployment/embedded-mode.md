@@ -40,7 +40,7 @@ services:
 
       # Storage
       - FILE_STORAGE_BASE_DIR=/app/images
-      
+
       # License
       - LICENSE_KEY=your-license-key-here
     restart: unless-stopped
@@ -56,7 +56,7 @@ services:
 | `IMAGOR_SECRET`          | Imagor URL signing secret              | -       | `your-imagor-secret` |
 | `IMAGOR_SIGNER_TYPE`     | Signing algorithm (optional)           | `sha1`  | `sha256`             |
 | `IMAGOR_SIGNER_TRUNCATE` | Signature truncation length (optional) | `40`    | `32`                 |
-| `LICENSE_KEY`            | Imagor Studio license key (optional)   | -       | `IMGR-XXXX-XXXX...` |
+| `LICENSE_KEY`            | Imagor Studio license key (optional)   | -       | `IMGR-XXXX-XXXX...`  |
 
 ### File Storage Configuration
 
@@ -180,7 +180,6 @@ echo '<iframe src="' . htmlspecialchars($editorUrl) . '" width="100%" height="60
       title="Image Editor"
     >
     </iframe>
-
   </body>
 </html>
 ```
@@ -302,6 +301,7 @@ environment:
 ### Getting a License
 
 To obtain a license key:
+
 1. Visit [https://imagor.net/buy/early-bird/](https://imagor.net/buy/early-bird/)
 2. Purchase your license
 3. Configure the `LICENSE_KEY` environment variable with your key
