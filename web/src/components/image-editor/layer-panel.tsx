@@ -380,10 +380,9 @@ function BaseImageItem({
       )}
       onClick={onClick}
     >
-      {/* Icon instead of drag handle */}
-      <div className='flex h-4 w-4 shrink-0 items-center justify-center'>
-        <Icon className='text-muted-foreground h-3.5 w-3.5' />
-      </div>
+      {/* Spacer matching grip handle width, then layer type icon */}
+      <div className='h-4 w-4 shrink-0' />
+      <Icon className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
 
       {/* Base image name */}
       <span className='flex-1 truncate text-sm' title={displayName}>
