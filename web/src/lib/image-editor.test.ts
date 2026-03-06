@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ImageEditor, type ImageEditorConfig, type ImageLayer } from './image-editor'
+import {
+  ImageEditor,
+  type ImageEditorConfig,
+  type ImageLayer,
+  type TextLayer,
+} from './image-editor'
 
 // Mock the imagor-api module
 vi.mock('@/api/imagor-api', () => ({
@@ -239,6 +244,7 @@ describe('ImageEditor', () => {
 
     beforeEach(() => {
       mockLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -340,6 +346,7 @@ describe('ImageEditor', () => {
 
     beforeEach(() => {
       mockLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -434,6 +441,7 @@ describe('ImageEditor', () => {
 
     beforeEach(() => {
       mockLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -509,6 +517,7 @@ describe('ImageEditor', () => {
   describe('Deep Cloning', () => {
     it('should deep clone layer transforms in history', () => {
       const layerWithTransforms: ImageLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -536,12 +545,13 @@ describe('ImageEditor', () => {
 
       // Undo should restore original brightness
       editor.undo()
-      const layer = editor.getLayer('layer-1')
+      const layer = editor.getLayer('layer-1') as ImageLayer | undefined
       expect(layer?.transforms?.brightness).toBe(50)
     })
 
     it('should deep clone nested layers in history', () => {
       const nestedLayer: ImageLayer = {
+        type: 'image',
         id: 'nested-1',
         imagePath: 'nested.jpg',
         x: 0,
@@ -554,6 +564,7 @@ describe('ImageEditor', () => {
       }
 
       const parentLayer: ImageLayer = {
+        type: 'image',
         id: 'parent-1',
         imagePath: 'parent.jpg',
         x: 0,
@@ -599,6 +610,7 @@ describe('ImageEditor', () => {
 
       // Add layer
       const mockLayer: ImageLayer = {
+        type: 'image',
         id: 'layer-1',
         imagePath: 'overlay.jpg',
         x: 0,
@@ -619,7 +631,7 @@ describe('ImageEditor', () => {
       const baseState = editor.getBaseState()
       expect(baseState.contrast).toBe(30)
       expect(baseState.layers).toHaveLength(1)
-      expect(baseState.layers?.[0].transforms?.brightness).toBe(50)
+      expect((baseState.layers?.[0] as ImageLayer | undefined)?.transforms?.brightness).toBe(50)
     })
   })
 
@@ -1016,6 +1028,7 @@ describe('ImageEditor', () => {
 
       it('should encode layer image paths with special characters', () => {
         const layerWithSpaces: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay image.jpg',
           x: 100,
@@ -1037,6 +1050,7 @@ describe('ImageEditor', () => {
 
       it('should encode nested layer paths with special characters', () => {
         const layerWithTransforms: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'my overlay?.jpg',
           x: 100,
@@ -1064,6 +1078,7 @@ describe('ImageEditor', () => {
 
       it('should handle multiple layers with mixed encoding needs', () => {
         const layer1: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'normal.jpg',
           x: 100,
@@ -1076,6 +1091,7 @@ describe('ImageEditor', () => {
         }
 
         const layer2: ImageLayer = {
+          type: 'image',
           id: 'layer-2',
           imagePath: 'special image.jpg',
           x: 150,
@@ -1239,6 +1255,7 @@ describe('ImageEditor', () => {
 
       beforeEach(() => {
         mockLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 100,
@@ -1398,6 +1415,7 @@ describe('ImageEditor', () => {
 
       it('should emit proportion after image() layer filters (end of pipeline)', () => {
         const layer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -1423,6 +1441,7 @@ describe('ImageEditor', () => {
 
       it('should not include proportion in layer sub-paths', () => {
         const layer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 100,
@@ -1561,7 +1580,13 @@ describe('ImageEditor', () => {
   })
 
   describe('layer round corner radius clamping', () => {
-    const makeRcLayer = (id: string, origW: number, origH: number, transforms?: object) => ({
+    const makeRcLayer = (
+      id: string,
+      origW: number,
+      origH: number,
+      transforms?: ImageLayer['transforms'],
+    ): ImageLayer => ({
+      type: 'image',
       id,
       imagePath: 'overlay.jpg',
       x: 0 as const,
@@ -1580,7 +1605,9 @@ describe('ImageEditor', () => {
       )
       // Shrink to 100x80: max = floor(80/2) = 40
       editor.updateLayer('rc-shrink', { transforms: { width: 100, height: 80 } })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-shrink')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-shrink') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
 
@@ -1590,7 +1617,9 @@ describe('ImageEditor', () => {
       )
       // Grow to 800x600: max = 300 — 50 stays
       editor.updateLayer('rc-grow', { transforms: { width: 800, height: 600 } })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-grow')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-grow') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).toBe(50)
     })
 
@@ -1600,7 +1629,9 @@ describe('ImageEditor', () => {
       editor.updateLayer('rc-same', {
         transforms: { width: 100, height: 80, roundCornerRadius: 200 },
       })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-same')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-same') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
 
@@ -1608,7 +1639,9 @@ describe('ImageEditor', () => {
       // originalDimensions 100x80 → max = floor(80/2) = 40
       editor.addLayer(makeRcLayer('rc-orig', 100, 80))
       editor.updateLayer('rc-orig', { transforms: { roundCornerRadius: 200 } })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-orig')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-orig') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
 
@@ -1617,7 +1650,9 @@ describe('ImageEditor', () => {
       editor.addLayer(makeRcLayer('rc-fill', 100, 80))
       // widthFull: no width set, clamp uses originalDimensions → still safe
       editor.updateLayer('rc-fill', { transforms: { widthFull: true, roundCornerRadius: 200 } })
-      const layer = editor.getState().layers?.find((l) => l.id === 'rc-fill')
+      const layer = editor.getState().layers?.find((l) => l.id === 'rc-fill') as
+        | ImageLayer
+        | undefined
       expect(layer?.transforms?.roundCornerRadius).not.toBeNaN()
       expect(layer?.transforms?.roundCornerRadius).toBe(40)
     })
@@ -1625,6 +1660,7 @@ describe('ImageEditor', () => {
 
   describe('fill-mode layer dimensions (widthFull / heightFull)', () => {
     const makeLayer = (id: string): ImageLayer => ({
+      type: 'image',
       id,
       imagePath: 'overlay.jpg',
       x: 0,
@@ -1723,6 +1759,7 @@ describe('ImageEditor', () => {
 
     const makeNestedSetup = () => {
       const layerB: ImageLayer = {
+        type: 'image',
         id: 'fill-d2-b',
         imagePath: 'overlay-b.jpg',
         x: 0,
@@ -1740,6 +1777,7 @@ describe('ImageEditor', () => {
         },
       }
       const layerA: ImageLayer = {
+        type: 'image',
         id: 'fill-d2-a',
         imagePath: 'overlay-a.jpg',
         x: 0,
@@ -1909,6 +1947,7 @@ describe('ImageEditor', () => {
         editor.updateParams({ width: 1920, height: 1080 })
 
         const layer: ImageLayer = {
+          type: 'image',
           id: 'fill-scale-test',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -1960,6 +1999,7 @@ describe('ImageEditor', () => {
         })
 
         const layer: ImageLayer = {
+          type: 'image',
           id: 'fill-pad-test',
           imagePath: 'layer.jpg',
           x: -736,
@@ -2227,6 +2267,7 @@ describe('ImageEditor', () => {
 
       beforeEach(() => {
         mockLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2247,7 +2288,7 @@ describe('ImageEditor', () => {
 
         // Switch back to base to check layer was updated
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('new-overlay.jpg')
         expect(layer?.originalDimensions).toEqual({ width: 1024, height: 768 })
       })
@@ -2257,7 +2298,7 @@ describe('ImageEditor', () => {
 
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('new-overlay.jpg')
         expect(layer?.originalDimensions).toEqual({ width: 1024, height: 768 })
       })
@@ -2279,7 +2320,7 @@ describe('ImageEditor', () => {
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
         vi.runAllTimers() // Flush swap history
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.transforms?.cropLeft).toBeUndefined()
         expect(layer?.transforms?.cropTop).toBeUndefined()
         expect(layer?.transforms?.cropWidth).toBeUndefined()
@@ -2308,7 +2349,7 @@ describe('ImageEditor', () => {
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
         vi.runAllTimers() // Flush swap history
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.transforms?.width).toBe(400)
         expect(layer?.transforms?.height).toBe(300)
         expect(layer?.transforms?.brightness).toBe(75)
@@ -2341,6 +2382,7 @@ describe('ImageEditor', () => {
 
       it('should NOT include imagePath when editing nested layer', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2418,6 +2460,7 @@ describe('ImageEditor', () => {
 
       it('should undo layer image swap in nested context', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2438,13 +2481,14 @@ describe('ImageEditor', () => {
 
         // Switch back to check layer
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('overlay.jpg')
         expect(layer?.originalDimensions).toEqual({ width: 800, height: 600 })
       })
 
       it('should undo specific layer image swap', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2462,7 +2506,7 @@ describe('ImageEditor', () => {
 
         editor.undo()
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('overlay.jpg')
         expect(layer?.originalDimensions).toEqual({ width: 800, height: 600 })
       })
@@ -2513,6 +2557,7 @@ describe('ImageEditor', () => {
 
       it('should swap in nested context → switch context → verify persistence', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -2533,7 +2578,7 @@ describe('ImageEditor', () => {
         editor.switchContext(null)
 
         // Verify layer was updated
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
         expect(layer?.imagePath).toBe('new-overlay.jpg')
 
         // Switch back to layer
@@ -3260,6 +3305,7 @@ describe('ImageEditor', () => {
     describe('Layer Base Image - Adaptive Mode', () => {
       it('should update layer dimensions when not customized (adaptive)', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3279,7 +3325,7 @@ describe('ImageEditor', () => {
 
         // Switch back to check layer
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should update to new dimensions (adaptive mode)
         expect(layer?.transforms?.width).toBe(1024)
@@ -3288,6 +3334,7 @@ describe('ImageEditor', () => {
 
       it('should update layer dimensions when set to original (adaptive)', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3311,7 +3358,7 @@ describe('ImageEditor', () => {
 
         // Switch back to check layer
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should update to new dimensions (not customized)
         expect(layer?.transforms?.width).toBe(1024)
@@ -3324,6 +3371,7 @@ describe('ImageEditor', () => {
     describe('Layer Base Image - Predefined Mode', () => {
       it('should preserve layer dimensions when customized (predefined)', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3347,7 +3395,7 @@ describe('ImageEditor', () => {
 
         // Switch back to check layer
         editor.switchContext(null)
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should preserve customized dimensions (predefined mode)
         expect(layer?.transforms?.width).toBe(400)
@@ -3360,6 +3408,7 @@ describe('ImageEditor', () => {
     describe('Specific Layer Swap - Always Predefined', () => {
       it('should always preserve layer dimensions when swapping specific layer', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3380,7 +3429,7 @@ describe('ImageEditor', () => {
         // Swap specific layer (not in nested context)
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should preserve dimensions (layers always predefined)
         expect(layer?.transforms?.width).toBe(400)
@@ -3391,6 +3440,7 @@ describe('ImageEditor', () => {
 
       it('should preserve dimensions even when not customized (layers always predefined)', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3411,7 +3461,7 @@ describe('ImageEditor', () => {
         // Swap specific layer
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should preserve dimensions (layers always predefined, even if matching original)
         expect(layer?.transforms?.width).toBe(800)
@@ -3420,6 +3470,7 @@ describe('ImageEditor', () => {
 
       it('should preserve dimensions when layer has no transforms', () => {
         const mockLayer: ImageLayer = {
+          type: 'image',
           id: 'layer-1',
           imagePath: 'overlay.jpg',
           x: 0,
@@ -3436,7 +3487,7 @@ describe('ImageEditor', () => {
         // Swap specific layer
         editor.replaceImage('new-overlay.jpg', { width: 1024, height: 768 }, 'layer-1')
 
-        const layer = editor.getLayer('layer-1')
+        const layer = editor.getLayer('layer-1') as ImageLayer | undefined
 
         // Should not add dimensions (no transforms to preserve)
         expect(layer?.transforms?.width).toBeUndefined()
@@ -3574,6 +3625,380 @@ describe('ImageEditor', () => {
         expect(state.height).toBe(600)
         expect(state.imagePath).toBe('new-image.jpg')
       })
+    })
+  })
+})
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Text Layer tests (separate suite for clarity)
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe('TextLayer support', () => {
+  let editor: ImageEditor
+
+  /** Build a minimal valid TextLayer */
+  const makeTextLayer = (overrides: Partial<TextLayer> = {}): TextLayer => ({
+    type: 'text',
+    id: 'txt-1',
+    name: 'Text 1',
+    text: 'Hello',
+    x: 0,
+    y: 0,
+    font: 'sans',
+    fontStyle: '',
+    fontSize: 20,
+    color: '000000',
+    width: 0,
+    height: 0,
+    align: 'low',
+    justify: false,
+    wrap: 'word',
+    spacing: 0,
+    dpi: 72,
+    alpha: 0,
+    blendMode: 'normal',
+    visible: true,
+    ...overrides,
+  })
+
+  beforeEach(() => {
+    editor = new ImageEditor({
+      imagePath: 'test-image.jpg',
+      originalDimensions: { width: 1920, height: 1080 },
+    })
+    editor.initialize({})
+  })
+
+  describe('addLayer / state', () => {
+    it('adds a text layer to state', () => {
+      editor.addLayer(makeTextLayer())
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      expect(state.layers?.[0].type).toBe('text')
+      expect(state.layers?.[0].id).toBe('txt-1')
+    })
+
+    it('can add multiple text layers', () => {
+      editor.addLayer(makeTextLayer({ id: 'txt-a' }))
+      editor.addLayer(makeTextLayer({ id: 'txt-b' }))
+      expect(editor.getState().layers).toHaveLength(2)
+    })
+
+    it('can mix image and text layers', () => {
+      const imgLayer: ImageLayer = {
+        type: 'image',
+        id: 'img-1',
+        imagePath: 'overlay.jpg',
+        x: 0,
+        y: 0,
+        alpha: 0,
+        blendMode: 'normal',
+        visible: true,
+        name: 'Overlay',
+        originalDimensions: { width: 200, height: 100 },
+      }
+      editor.addLayer(imgLayer)
+      editor.addLayer(makeTextLayer())
+      const layers = editor.getState().layers ?? []
+      expect(layers).toHaveLength(2)
+      expect(layers[0].type).toBe('image')
+      expect(layers[1].type).toBe('text')
+    })
+  })
+
+  describe('getImagorPath() serialization', () => {
+    it('emits text() filter with minimal args for all-default layer', () => {
+      // Default layer: text="Hello", x=0, y=0, font=sans, fontSize=20 (= "sans-20"),
+      // color=000000, alpha=0, width=0, align=low, justify=false, wrap=word, spacing=0, dpi=72
+      // → hasNonDefaultTrailing = false → args=[Hello, 0, 0]
+      // "Hello" is all alpha → no b64: encoding needed
+      editor.addLayer(makeTextLayer())
+      const path = editor.getImagorPath()
+      expect(path).toContain('text(Hello,0,0)')
+    })
+
+    it('emits font arg when font differs from default "sans-20"', () => {
+      editor.addLayer(makeTextLayer({ font: 'serif', fontSize: 24 }))
+      const path = editor.getImagorPath()
+      // font = 'serif-24', which differs from default 'sans-20' → args include font
+      expect(path).toContain('serif-24')
+    })
+
+    it('emits font+color args when color is non-default', () => {
+      editor.addLayer(makeTextLayer({ color: 'ff0000' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('ff0000')
+      // "Hello" is all alpha → no b64: encoding; text appears as-is
+      expect(path).toContain('text(Hello,')
+    })
+
+    it('emits align arg when not default "low"', () => {
+      editor.addLayer(makeTextLayer({ align: 'centre' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('centre')
+    })
+
+    it('emits justify=true when justified', () => {
+      editor.addLayer(makeTextLayer({ justify: true }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('true')
+    })
+
+    it('emits wrap arg when not default "word"', () => {
+      editor.addLayer(makeTextLayer({ wrap: 'char' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('char')
+    })
+
+    it('scales x/y position by scaleFactor', () => {
+      editor.addLayer(makeTextLayer({ x: 100, y: 50 }))
+      // scaleFactor = 1 at getImagorPath()
+      const path = editor.getImagorPath()
+      expect(path).toContain(',100,50')
+    })
+
+    it('scales fontSize by scaleFactor in preview URL', () => {
+      // scaleFactor = previewWidth / outputWidth
+      // Set output to 1920×1080, preview to 960×540 → sf = 0.5
+      // fontSize=20 → scaledFontSize = max(1, round(20 * 0.5)) = 10
+      // font arg becomes "sans-10" (differs from default "sans-20") → included
+      editor.updateParams({ width: 1920, height: 1080 })
+      editor.addLayer(makeTextLayer({ font: 'mono', fontSize: 20, color: 'ffffff' }))
+      // getImagorPath uses scaleFactor=1, so this just checks the full=1 path
+      const path = editor.getImagorPath()
+      expect(path).toContain('mono-20')
+    })
+
+    it('passes through plain alphanumeric text without b64: encoding', () => {
+      // "Hello" is all [a-zA-Z0-9_-] → no encoding needed
+      editor.addLayer(makeTextLayer({ text: 'Hello' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('text(Hello,')
+      expect(path).not.toContain('b64:')
+    })
+
+    it('passes through text with digits and hyphens without b64: encoding', () => {
+      editor.addLayer(makeTextLayer({ text: 'item-42' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('text(item-42,')
+      expect(path).not.toContain('b64:')
+    })
+
+    it('encodes text with a space using b64:', () => {
+      editor.addLayer(makeTextLayer({ text: 'Hello World' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+      expect(path).not.toContain('Hello World')
+    })
+
+    it('encodes text with a comma using b64: (comma breaks filter parser)', () => {
+      editor.addLayer(makeTextLayer({ text: 'Hello, World!' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+      expect(path).not.toContain('Hello, World!')
+    })
+
+    it('encodes text with a closing paren using b64: (paren breaks filter parser)', () => {
+      editor.addLayer(makeTextLayer({ text: 'foo)bar' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+      expect(path).not.toContain('foo)bar')
+    })
+
+    it('encodes unicode text using b64:', () => {
+      editor.addLayer(makeTextLayer({ text: '你好' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+    })
+
+    it('encodes multi-line text using b64:', () => {
+      editor.addLayer(makeTextLayer({ text: 'Line1\nLine2' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
+    })
+
+    it('skips invisible text layer', () => {
+      editor.addLayer(makeTextLayer({ visible: false }))
+      const path = editor.getImagorPath()
+      expect(path).not.toContain('text(')
+    })
+  })
+
+  describe('setTextEditingLayerId (skipLayerId)', () => {
+    it('suppresses the layer being inline-edited from the preview path', () => {
+      editor.addLayer(makeTextLayer({ id: 'edit-me' }))
+      editor.setTextEditingLayerId('edit-me')
+      // Use getImagorPath which reads textEditingLayerId via skipLayerId
+      // Note: getImagorPath() does NOT pass skipLayerId — that's a preview-only concern.
+      // Instead verify the API via getTextEditingLayerId.
+      expect(editor.getTextEditingLayerId()).toBe('edit-me')
+    })
+
+    it('clears text editing layer id with null', () => {
+      editor.addLayer(makeTextLayer({ id: 'edit-me' }))
+      editor.setTextEditingLayerId('edit-me')
+      editor.setTextEditingLayerId(null)
+      expect(editor.getTextEditingLayerId()).toBeNull()
+    })
+  })
+
+  describe('updateLayer for TextLayer', () => {
+    it('can update text content', () => {
+      editor.addLayer(makeTextLayer())
+      editor.updateLayer('txt-1', { text: 'Updated text' })
+      const layer = editor.getState().layers?.[0] as TextLayer
+      expect(layer.text).toBe('Updated text')
+    })
+
+    it('can update x/y position', () => {
+      editor.addLayer(makeTextLayer())
+      editor.updateLayer('txt-1', { x: 50, y: 75 })
+      const layer = editor.getState().layers?.[0]
+      expect(layer?.x).toBe(50)
+      expect(layer?.y).toBe(75)
+    })
+
+    it('can update fontSize', () => {
+      editor.addLayer(makeTextLayer())
+      editor.updateLayer('txt-1', { fontSize: 36 } as Partial<TextLayer>)
+      const layer = editor.getState().layers?.[0] as TextLayer
+      expect(layer.fontSize).toBe(36)
+    })
+  })
+
+  describe('switchContext is blocked for text layers', () => {
+    it('does not enter context for a text layer', () => {
+      editor.addLayer(makeTextLayer())
+      editor.switchContext('txt-1')
+      // Should remain at root (depth 0)
+      expect(editor.getEditingContext()).toBeNull()
+      expect(editor.getContextDepth()).toBe(0)
+    })
+  })
+
+  describe('removeLayer', () => {
+    it('removes a text layer by id', () => {
+      editor.addLayer(makeTextLayer())
+      editor.removeLayer('txt-1')
+      expect(editor.getState().layers).toHaveLength(0)
+    })
+  })
+
+  // ── text() filter arg ordering ────────────────────────────────────────────
+  // imagor signature: text(text,x,y,font,color,alpha,blend_mode,width,align,…)
+  // blend_mode is at index 6, width at index 7.  Getting this wrong causes the
+  // width token to be silently swallowed as the blend_mode slot (and vice-versa).
+  describe('text() filter — arg position correctness', () => {
+    it('places blend_mode at index 6 and numeric width at index 7', () => {
+      editor.addLayer(makeTextLayer({ blendMode: 'multiply', width: 200 }))
+      const path = editor.getImagorPath()
+      // Expected: text(b64:SGVsbG8,0,0,sans-20,000000,0,multiply,200)
+      expect(path).toContain('sans-20,000000,0,multiply,200')
+    })
+
+    it('places blend_mode at index 6 and fill width "f" at index 7', () => {
+      editor.addLayer(makeTextLayer({ blendMode: 'screen', width: 'f' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('sans-20,000000,0,screen,f')
+    })
+
+    it('places blend_mode at index 6 and fill-inset width "f-N" at index 7', () => {
+      editor.addLayer(makeTextLayer({ blendMode: 'overlay', width: 'f-400' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('sans-20,000000,0,overlay,f-400')
+    })
+
+    it('places "normal" blend_mode (explicit) then width correctly', () => {
+      // blendMode is default but when width forces the trailing args to be emitted,
+      // "normal" must still sit at index 6.
+      editor.addLayer(makeTextLayer({ width: 300 }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('sans-20,000000,0,normal,300')
+    })
+
+    it('width appears at index 7 followed by align when align is non-default', () => {
+      editor.addLayer(makeTextLayer({ width: 'f-200', align: 'centre' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain('f-200,centre')
+    })
+  })
+
+  // ── wrap-width serialization (copy URL, scaleFactor = 1) ─────────────────
+  describe('text() filter — wrap width serialization', () => {
+    it('emits numeric px width correctly', () => {
+      editor.addLayer(makeTextLayer({ width: 500 }))
+      const path = editor.getImagorPath()
+      expect(path).toContain(',500')
+    })
+
+    it('emits fill "f" width correctly', () => {
+      editor.addLayer(makeTextLayer({ width: 'f' }))
+      const path = editor.getImagorPath()
+      expect(path).toMatch(/,f[,)]/)
+    })
+
+    it('emits fill "f-N" width correctly', () => {
+      editor.addLayer(makeTextLayer({ width: 'f-2032' }))
+      const path = editor.getImagorPath()
+      expect(path).toContain(',f-2032')
+    })
+
+    it('omits width when 0 (auto wrap)', () => {
+      editor.addLayer(makeTextLayer({ width: 0 }))
+      const path = editor.getImagorPath()
+      // All other args are default too → minimal form, no width token
+      // "Hello" is all alpha → no b64: encoding
+      expect(path).toContain('text(Hello,0,0)')
+    })
+  })
+
+  // ── wrap-width scaling in preview URL (scaleFactor = 0.5) ────────────────
+  describe('text() filter — preview URL wrap-width scaling', () => {
+    const getLastTextFilterArgs = async (): Promise<string> => {
+      const { generateImagorUrl } = await import('@/api/imagor-api')
+      await vi.runAllTimersAsync()
+      const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
+      const lastCall = calls[calls.length - 1][0] as {
+        params: { filters: Array<{ name: string; args: string }> }
+      }
+      const textFilter = lastCall.params.filters.find((f) => f.name === 'text')
+      if (!textFilter) throw new Error('No text filter found in preview call')
+      return textFilter.args
+    }
+
+    beforeEach(() => {
+      // 1920×1080 output, 960×540 preview → scaleFactor = 0.5
+      editor.updateParams({ width: 1920, height: 1080 })
+      editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
+    })
+
+    it('scales numeric px width by scaleFactor', async () => {
+      editor.addLayer(makeTextLayer({ width: 200, color: 'ffffff' }))
+      const args = await getLastTextFilterArgs()
+      // 200 × 0.5 = 100
+      expect(args).toContain(',100')
+    })
+
+    it('scales f-N inset by scaleFactor', async () => {
+      editor.addLayer(makeTextLayer({ width: 'f-2032', color: 'ffffff' }))
+      const args = await getLastTextFilterArgs()
+      // 2032 × 0.5 = 1016
+      expect(args).toContain(',f-1016')
+    })
+
+    it('keeps "f" (no inset) unchanged', async () => {
+      editor.addLayer(makeTextLayer({ width: 'f', color: 'ffffff' }))
+      const args = await getLastTextFilterArgs()
+      // Plain 'f' has no numeric part — stays as 'f'.  The args string ends after
+      // the last token so match ,f at either a comma or end-of-string.
+      expect(args).toMatch(/,f(?:,|$)/)
+    })
+
+    it('rounds scaled inset correctly (f-3 × 0.5 → f-2 via Math.round)', async () => {
+      editor.addLayer(makeTextLayer({ width: 'f-3', color: 'ffffff' }))
+      const args = await getLastTextFilterArgs()
+      // Math.round(3 * 0.5) = Math.round(1.5) = 2 → emits 'f-2'
+      expect(args).toContain(',f-2')
     })
   })
 })

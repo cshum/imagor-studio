@@ -79,7 +79,10 @@ export const imageEditorLoader = async ({
       actualImagePath = template.sourceImagePath
     } else if (template.transformations.layers && template.transformations.layers.length > 0) {
       // For old templates without sourceImagePath, use the first layer's image
-      actualImagePath = template.transformations.layers[0].imagePath
+      const firstLayer = template.transformations.layers[0]
+      if (firstLayer.type !== 'text') {
+        actualImagePath = firstLayer.imagePath
+      }
     } else {
       throw new Error(
         'Template is missing source image path and has no layers. Cannot determine source image.',

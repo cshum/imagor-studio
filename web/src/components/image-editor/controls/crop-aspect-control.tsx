@@ -21,6 +21,8 @@ interface CropAspectControlProps {
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
   onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
+  isToggling?: boolean
+  disabled?: boolean
   outputWidth: number
   outputHeight: number
   onAspectRatioChange?: (aspectRatio: number | null) => void
@@ -31,12 +33,13 @@ export function CropAspectControl({
   onUpdateParams,
   onVisualCropToggle,
   isVisualCropEnabled = false,
+  isToggling = false,
+  disabled = false,
   outputWidth,
   outputHeight,
   onAspectRatioChange,
 }: CropAspectControlProps) {
   const { t } = useTranslation()
-  const [isToggling, setIsToggling] = useState(false)
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('free')
 
   // Crop handlers
@@ -62,13 +65,7 @@ export function CropAspectControl({
 
   const handleVisualCropToggle = async () => {
     if (!onVisualCropToggle) return
-
-    setIsToggling(true)
-    try {
-      await onVisualCropToggle(!isVisualCropEnabled)
-    } finally {
-      setIsToggling(false)
-    }
+    await onVisualCropToggle(!isVisualCropEnabled)
   }
 
   const handleAspectRatioPreset = async (preset: (typeof ASPECT_RATIO_PRESETS)[0]) => {
@@ -110,12 +107,7 @@ export function CropAspectControl({
 
     // If visual crop is not enabled, enable it first
     if (!isVisualCropEnabled && onVisualCropToggle) {
-      setIsToggling(true)
-      try {
-        await onVisualCropToggle(true)
-      } finally {
-        setIsToggling(false)
-      }
+      await onVisualCropToggle(true)
     }
 
     // Apply the calculated crop values
@@ -128,74 +120,78 @@ export function CropAspectControl({
   }
 
   return (
-    <div className='space-y-2'>
-      {/* Crop Button */}
-      {onVisualCropToggle && (
-        <Button
-          variant='outline'
-          size='default'
-          onClick={handleVisualCropToggle}
-          disabled={isToggling}
-          className='w-full'
-        >
-          {isToggling ? (
-            <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
-          ) : isVisualCropEnabled ? (
-            <Check className='mr-2 h-4 w-4' />
-          ) : (
-            <Crop className='mr-2 h-4 w-4' />
-          )}
-          {isVisualCropEnabled ? t('imageEditor.crop.applyCrop') : t('imageEditor.crop.startCrop')}
-        </Button>
-      )}
-
-      {/* Aspect Ratio Presets */}
-      <div className='grid grid-cols-3 gap-1.5'>
-        {ASPECT_RATIO_PRESETS.map((preset) => (
+    <div className={disabled ? 'pointer-events-none opacity-50' : undefined}>
+      <div className='space-y-2'>
+        {/* Crop Button */}
+        {onVisualCropToggle && (
           <Button
-            key={preset.key}
-            variant={selectedAspectRatio === preset.key ? 'default' : 'outline'}
-            size='sm'
-            onClick={() => handleAspectRatioPreset(preset)}
+            variant={isVisualCropEnabled && !isToggling ? 'default' : 'outline'}
+            size='default'
+            onClick={handleVisualCropToggle}
             disabled={isToggling}
-            className='h-8 text-xs'
+            className='w-full'
           >
-            {preset.label}
+            {isToggling ? (
+              <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
+            ) : isVisualCropEnabled ? (
+              <Check className='mr-2 h-4 w-4' />
+            ) : (
+              <Crop className='mr-2 h-4 w-4' />
+            )}
+            {isVisualCropEnabled
+              ? t('imageEditor.crop.applyCrop')
+              : t('imageEditor.crop.startCrop')}
           </Button>
-        ))}
-      </div>
+        )}
 
-      {/* Only show crop inputs if crop parameters are set */}
-      {(params.cropLeft !== undefined ||
-        params.cropTop !== undefined ||
-        params.cropWidth !== undefined ||
-        params.cropHeight !== undefined) && (
-        <div className='grid grid-cols-2 gap-1.5'>
-          {(
-            [
-              { field: 'cropLeft', label: 'X' },
-              { field: 'cropTop', label: 'Y' },
-              { field: 'cropWidth', label: 'W' },
-              { field: 'cropHeight', label: 'H' },
-            ] as const
-          ).map(({ field, label }) => (
-            <div key={field} className='flex items-center gap-1.5'>
-              <span className='text-muted-foreground w-3 shrink-0 text-center text-xs font-medium'>
-                {label}
-              </span>
-              <Input
-                type='number'
-                placeholder='0'
-                value={getCropValue(field)}
-                onChange={(e) => handleCropChange(field, e.target.value)}
-                min='0'
-                step='1'
-                className='h-9 px-2'
-              />
-            </div>
+        {/* Aspect Ratio Presets */}
+        <div className='grid grid-cols-3 gap-1.5'>
+          {ASPECT_RATIO_PRESETS.map((preset) => (
+            <Button
+              key={preset.key}
+              variant={selectedAspectRatio === preset.key ? 'default' : 'outline'}
+              size='sm'
+              onClick={() => handleAspectRatioPreset(preset)}
+              disabled={isToggling}
+              className='h-8 text-xs'
+            >
+              {preset.label}
+            </Button>
           ))}
         </div>
-      )}
+
+        {/* Only show crop inputs if crop parameters are set */}
+        {(params.cropLeft !== undefined ||
+          params.cropTop !== undefined ||
+          params.cropWidth !== undefined ||
+          params.cropHeight !== undefined) && (
+          <div className='grid grid-cols-2 gap-1.5'>
+            {(
+              [
+                { field: 'cropLeft', label: 'X' },
+                { field: 'cropTop', label: 'Y' },
+                { field: 'cropWidth', label: 'W' },
+                { field: 'cropHeight', label: 'H' },
+              ] as const
+            ).map(({ field, label }) => (
+              <div key={field} className='flex items-center gap-1.5'>
+                <span className='text-muted-foreground w-3 shrink-0 text-center text-xs font-medium'>
+                  {label}
+                </span>
+                <Input
+                  type='number'
+                  placeholder='0'
+                  value={getCropValue(field)}
+                  onChange={(e) => handleCropChange(field, e.target.value)}
+                  min='0'
+                  step='1'
+                  className='h-9 px-2'
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

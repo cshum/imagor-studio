@@ -114,7 +114,13 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const [isShiftPressed, setIsShiftPressed] = useState(false)
   const [zoom, setZoom] = useState<number | 'fit'>('fit')
   const [actualScale, setActualScale] = useState<number | null>(null)
+  const [textEditingLayerId, setTextEditingLayerId] = useState<string | null>(null)
+  const [isNewTextLayer, setIsNewTextLayer] = useState(false)
+  const [isTextEditToggling, setIsTextEditToggling] = useState(false)
+  const [isVisualCropToggling, setIsVisualCropToggling] = useState(false)
   const isSavedRef = useRef(false)
+  // Resolver for the text-edit toggle Promise — resolved when the next preview loads
+  const textEditLoadResolverRef = useRef<(() => void) | null>(null)
 
   // Preview container ref and image dimensions for viewport calculations
   const previewContainerRef = useRef<HTMLDivElement>(null)
@@ -183,6 +189,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       },
       onSelectedLayerChange: setSelectedLayerId,
       onEditingContextChange: setEditingContext,
+      onTextEditingLayerChange: setTextEditingLayerId,
     })
 
     // Restore state from URL if present (overrides cleanInitialState)
@@ -495,6 +502,69 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     setReplaceImageDialogOpen(true)
   }, [])
 
+  const handleAddTextLayer = useCallback(() => {
+    const outputDims = imageEditor.getOutputDimensions()
+    const fontSize = Math.max(12, Math.round(outputDims.height * 0.05))
+    const defaultWidth = Math.round(outputDims.width * 0.4)
+    // Single-line height estimate (fontSize × 1.4 line-height factor)
+    const singleLineHeight = Math.round(fontSize * 1.4)
+    // Center on canvas using pixel offsets (left/top anchor) to match image layer UX.
+    // Controls will show left+top alignment toggles, same as newly added image layers.
+    const x = Math.round((outputDims.width - defaultWidth) / 2)
+    const y = Math.round((outputDims.height - singleLineHeight) / 2)
+    const newLayer = {
+      type: 'text' as const,
+      id: `layer-${Date.now()}`,
+      name: '',
+      text: t('imageEditor.layers.textLayerDefaultText'),
+      x,
+      y,
+      font: 'sans',
+      fontStyle: '' as const,
+      fontSize,
+      color: 'ffffff',
+      width: defaultWidth,
+      height: 0,
+      align: 'low' as const,
+      justify: false,
+      wrap: 'word' as const,
+      spacing: 0,
+      dpi: 72,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+    }
+    imageEditor.addLayer(newLayer)
+    imageEditor.setSelectedLayerId(newLayer.id)
+    setIsNewTextLayer(true)
+    imageEditor.setTextEditingLayerId(newLayer.id)
+  }, [imageEditor, t])
+
+  const handleTextEdit = useCallback(
+    (layerId: string | null): Promise<void> => {
+      setIsNewTextLayer(false)
+      imageEditor.setTextEditingLayerId(layerId)
+      setIsTextEditToggling(true)
+      // Return a Promise that resolves once the preview has loaded with the new
+      // text-editing state (i.e. when handlePreviewLoad fires next).
+      return new Promise<void>((resolve) => {
+        textEditLoadResolverRef.current = resolve
+      })
+    },
+    [imageEditor],
+  )
+
+  const handleTextEditEnd = useCallback(
+    (text: string | null) => {
+      const layerId = imageEditor.getTextEditingLayerId()
+      if (layerId && text !== null) {
+        imageEditor.updateLayer(layerId, { text })
+      }
+      imageEditor.setTextEditingLayerId(null)
+    },
+    [imageEditor],
+  )
+
   const handleAddLayerWithViewport = useCallback(
     async (paths: string[]) => {
       if (paths.length === 0) return
@@ -525,6 +595,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
         // Create new layer with calculated positioning
         const newLayer = {
           id: `layer-${Date.now()}`, // Simple unique ID
+          type: 'image' as const,
           imagePath,
           originalDimensions: dimensions,
           x: layerPosition.x,
@@ -576,7 +647,12 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
 
   const handleVisualCropToggle = useCallback(
     async (enabled: boolean) => {
-      await imageEditor.toggleVisualCrop(enabled)
+      setIsVisualCropToggling(true)
+      try {
+        await imageEditor.toggleVisualCrop(enabled)
+      } finally {
+        setIsVisualCropToggling(false)
+      }
     },
     [imageEditor],
   )
@@ -585,6 +661,12 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     setIsLoading(false)
     // Notify ImageEditor that preview has loaded
     imageEditor.notifyPreviewLoaded()
+    // Resolve any pending text-edit toggle Promise so the button loading state clears
+    if (textEditLoadResolverRef.current) {
+      textEditLoadResolverRef.current()
+      textEditLoadResolverRef.current = null
+    }
+    setIsTextEditToggling(false)
   }
 
   const handleCropChange = (crop: { left: number; top: number; width: number; height: number }) => {
@@ -621,6 +703,8 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             onUpdateParams={updateParams}
             onVisualCropToggle={handleVisualCropToggle}
             isVisualCropEnabled={visualCropEnabled}
+            isToggling={isVisualCropToggling}
+            disabled={!!textEditingLayerId}
             outputWidth={imageEditor.getOriginalDimensions().width}
             outputHeight={imageEditor.getOriginalDimensions().height}
             onAspectRatioChange={setCropAspectRatio}
@@ -653,11 +737,15 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             imageEditor={imageEditor}
             selectedLayerId={selectedLayerId}
             editingContext={editingContext}
+            textEditingLayerId={textEditingLayerId}
+            isTextEditToggling={isTextEditToggling}
             layerAspectRatioLocked={layerAspectRatioLocked}
             onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
             visualCropEnabled={visualCropEnabled}
             onReplaceImage={handleReplaceImageClick}
             onAddLayer={handleAddLayerWithViewport}
+            onAddTextLayer={handleAddTextLayer}
+            onTextEdit={handleTextEdit}
           />
         ),
       }) as Record<SectionKey, React.ReactNode>,
@@ -674,6 +762,11 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       setLayerAspectRatioLockToggle,
       handleReplaceImageClick,
       handleAddLayerWithViewport,
+      handleAddTextLayer,
+      handleTextEdit,
+      textEditingLayerId,
+      isTextEditToggling,
+      isVisualCropToggling,
     ],
   )
 
@@ -737,6 +830,11 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             onOpenControls={isMobile ? () => setMobileSheetOpen(true) : undefined}
             isLeftColumnEmpty={isLeftColumnEmpty}
             isRightColumnEmpty={isRightColumnEmpty}
+            textEditingLayerId={textEditingLayerId}
+            isNewTextLayer={isNewTextLayer}
+            onTextEdit={handleTextEdit}
+            onTextEditEnd={handleTextEditEnd}
+            isVisualCropToggling={isVisualCropToggling}
           />
         )}
         leftControls={

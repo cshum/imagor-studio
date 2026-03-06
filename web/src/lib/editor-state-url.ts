@@ -1,4 +1,4 @@
-import type { ImageEditorState } from '@/lib/image-editor'
+import type { ImageEditorState, ImageLayer, Layer } from '@/lib/image-editor'
 
 /**
  * Serialize ImageEditorState to URL-safe base64 string
@@ -40,6 +40,17 @@ export function deserializeStateFromUrl(encoded: string): Partial<ImageEditorSta
     // Validate that it's an object
     if (typeof state !== 'object' || state === null) {
       return null
+    }
+
+    // Backwards compatibility: layers serialised before TextLayer was introduced
+    // have no `type` field — default them to 'image' so the discriminated union works.
+    if (Array.isArray(state.layers)) {
+      state.layers = (state.layers as unknown[]).map((layer): Layer => {
+        if (layer && typeof layer === 'object' && !('type' in layer)) {
+          return { ...(layer as object), type: 'image' as const } as ImageLayer
+        }
+        return layer as Layer
+      })
     }
 
     return state

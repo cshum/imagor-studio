@@ -6,15 +6,17 @@ import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
 import { LayerOverlay } from '@/components/image-editor/layer-overlay'
 import { LayerRegionsOverlay } from '@/components/image-editor/layer-regions-overlay'
+import { TextEditOverlay } from '@/components/image-editor/text-edit-overlay'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImageEditor } from '@/lib/image-editor'
-import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
+import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { enrichTransformsForFillMode } from '@/lib/layer-fill'
 import { calculateScrollAdjustment } from '@/lib/scroll-utils'
+import { deriveTextAlignFromX } from '@/lib/text-layer-utils'
 import { cn } from '@/lib/utils'
 
 interface PreviewAreaProps {
@@ -43,6 +45,12 @@ interface PreviewAreaProps {
   zoom?: number | 'fit'
   previewContainerRef?: React.RefObject<HTMLDivElement | null>
   onImageDimensionsChange?: (dimensions: { width: number; height: number } | null) => void
+  textEditingLayerId?: string | null
+  onTextEdit?: (layerId: string | null) => void | Promise<void>
+  onTextEditEnd?: (text: string | null) => void
+  isVisualCropToggling?: boolean
+  /** When true, the text-edit overlay appears immediately (new layer, no rendered text to wait for) */
+  isNewTextLayer?: boolean
 }
 
 export function PreviewArea({
@@ -71,6 +79,11 @@ export function PreviewArea({
   zoom = 'fit',
   previewContainerRef: externalPreviewContainerRef,
   onImageDimensionsChange,
+  textEditingLayerId = null,
+  onTextEdit,
+  onTextEditEnd,
+  isVisualCropToggling = false,
+  isNewTextLayer = false,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -105,6 +118,39 @@ export function PreviewArea({
   // Track context transitions to hide layer overlay until new preview loads
   const [isTransitioning, setIsTransitioning] = useState(false)
   const previousEditingContextRef = useRef(editingContext)
+
+  // Mirrors textEditingLayerId but with asymmetric timing:
+  // — entering edit (null → value): overlay appears IMMEDIATELY so the textarea
+  //   is ready without waiting for the preview network round-trip.
+  // — exiting edit  (value → null): overlay stays until the rendered-text preview
+  //   loads (cleared in handleImageLoad) so there's no flash of missing text.
+  //
+  // ImageEditor appends a #te-{layerId} fragment to the previewUrl when in text-edit
+  // mode. This guarantees the URL string changes (so PreloadImage always reloads and
+  // fires handleImageLoad), even in the first-add case where the base URL is unchanged.
+  const [effectiveTextEditingLayerId, setEffectiveTextEditingLayerId] = useState<string | null>(
+    null,
+  )
+
+  // Track whether the current textEditingLayerId was set for a newly added layer
+  // (no rendered text to wait for) vs an existing layer (must wait for text-stripped preview).
+  const prevTextEditingLayerIdRef = useRef<string | null>(null)
+
+  // When entering text-edit mode for a NEW layer (isNewTextLayer=true), show the overlay
+  // immediately — the layer was never rendered so there's no text to wait for disappearing.
+  // For existing layers, keep the deferred behaviour (wait for handleImageLoad) so the
+  // overlay doesn't appear before the rendered text has been stripped from the preview.
+  useEffect(() => {
+    if (textEditingLayerId !== null && prevTextEditingLayerIdRef.current === null) {
+      if (isNewTextLayer) {
+        // New layer: no rendered text in the current preview — show overlay immediately
+        setEffectiveTextEditingLayerId(textEditingLayerId)
+      }
+      // Existing layer: wait for handleImageLoad (deferred) to avoid flash of rendered text
+    }
+    prevTextEditingLayerIdRef.current = textEditingLayerId
+    // null case is handled in handleImageLoad to avoid flash of missing text
+  }, [textEditingLayerId, isNewTextLayer])
 
   // Track if image fits in container (for smart centering)
   const [imageFitsInContainer, setImageFitsInContainer] = useState(true)
@@ -156,6 +202,9 @@ export function PreviewArea({
 
     // Clear transition flag after preview loads
     setIsTransitioning(false)
+
+    // Sync effective text editing layer ID — overlay visibility follows the loaded preview
+    setEffectiveTextEditingLayerId(textEditingLayerId ?? null)
 
     onLoad?.(width, height)
   }
@@ -403,7 +452,11 @@ export function PreviewArea({
           // Smart centering: apply when in fit mode OR when image fits in container
           // This prevents jarring jumps during zoom transitions while avoiding edge cropping
           (zoom === 'fit' || imageFitsInContainer) && 'items-center justify-center',
-          zoom === 'fit' || imageFitsInContainer ? 'overflow-hidden' : 'overflow-auto',
+          zoom === 'fit' || imageFitsInContainer
+            ? effectiveTextEditingLayerId
+              ? 'overflow-auto'
+              : 'overflow-hidden'
+            : 'overflow-auto',
           // Disable elastic/springy scroll effect
           'overscroll-none',
         )}
@@ -536,6 +589,7 @@ export function PreviewArea({
                       })()}
                     {!visualCropEnabled &&
                       !isTransitioning &&
+                      !isVisualCropToggling &&
                       imageEditor &&
                       imageDimensions &&
                       imageDimensions.width > 0 &&
@@ -553,34 +607,78 @@ export function PreviewArea({
                         const paddingBottom = state.paddingBottom || 0
 
                         if (selectedLayerId) {
+                          // Don't render LayerOverlay while the text-edit overlay is active for
+                          // this layer — TextEditOverlay is the sole interactive bounding box.
+                          if (
+                            effectiveTextEditingLayerId &&
+                            effectiveTextEditingLayerId === selectedLayerId
+                          )
+                            return null
+
                           // Show single layer overlay with drag/resize handles
                           const selectedLayer = imageEditor.getLayer(selectedLayerId)
                           if (!selectedLayer) return null
 
-                          // Calculate layer's actual output dimensions (accounting for crop, resize, padding, rotation)
-                          // Pass outputDims as parentDimensions so widthFull/heightFull resolve correctly
-                          const layerOutputDims = calculateLayerOutputDimensions(
-                            selectedLayer.originalDimensions,
-                            selectedLayer.transforms,
+                          // Unified bounding box — works for both image and text layers
+                          const layerOutputDims = calculateLayerBoundingBox(
+                            selectedLayer,
                             outputDims,
                           )
 
-                          // Get layer's own padding (if it has any) for positioning calculations
-                          const layerPaddingLeft = selectedLayer.transforms?.paddingLeft || 0
-                          const layerPaddingRight = selectedLayer.transforms?.paddingRight || 0
-                          const layerPaddingTop = selectedLayer.transforms?.paddingTop || 0
-                          const layerPaddingBottom = selectedLayer.transforms?.paddingBottom || 0
+                          // Image-layer-only fields
+                          const isImageLayer = selectedLayer.type !== 'text'
+                          const layerPaddingLeft = isImageLayer
+                            ? selectedLayer.transforms?.paddingLeft || 0
+                            : 0
+                          const layerPaddingRight = isImageLayer
+                            ? selectedLayer.transforms?.paddingRight || 0
+                            : 0
+                          const layerPaddingTop = isImageLayer
+                            ? selectedLayer.transforms?.paddingTop || 0
+                            : 0
+                          const layerPaddingBottom = isImageLayer
+                            ? selectedLayer.transforms?.paddingBottom || 0
+                            : 0
 
                           return (
                             <LayerOverlay
+                              layer={selectedLayer}
+                              imageEditor={imageEditor}
+                              onTextEdit={onTextEdit ? (id) => onTextEdit(id) : undefined}
                               layerX={selectedLayer.x}
                               layerY={selectedLayer.y}
                               layerWidth={layerOutputDims.width}
                               layerHeight={layerOutputDims.height}
                               onLayerChange={(updates) => {
-                                // Drag-only updates (x/y, no transforms key) go straight through.
-                                // Fill-mode axes get their incoming px size converted to an inset offset.
-                                if (updates.transforms) {
+                                if (selectedLayer.type === 'text') {
+                                  const layerUpdates: Partial<typeof selectedLayer> = {}
+                                  if (updates.x !== undefined) {
+                                    layerUpdates.x = updates.x
+                                    // Sync layer.align with the new x anchor so the text
+                                    // alignment indicator in the controls stays in sync.
+                                    layerUpdates.align = deriveTextAlignFromX(updates.x)
+                                  }
+                                  if (updates.y !== undefined) layerUpdates.y = updates.y
+                                  // Resize handles emit transforms.width/height — map to text layer's own fields.
+                                  // If the layer is in fill mode ('f' / 'f-N'), preserve fill mode and
+                                  // convert the new pixel width to an inset instead.
+                                  if (updates.transforms?.width !== undefined) {
+                                    const newPxWidth = updates.transforms.width
+                                    const widthStr = String(selectedLayer.width)
+                                    const isFill = /^(?:f|full)(-\d+)?$/.test(widthStr)
+                                    if (isFill) {
+                                      const inset = outputDims.width - newPxWidth
+                                      layerUpdates.width =
+                                        inset > 0 ? `f-${Math.round(inset)}` : 'f'
+                                    } else {
+                                      layerUpdates.width = newPxWidth
+                                    }
+                                  }
+                                  if (updates.transforms?.height !== undefined)
+                                    layerUpdates.height = updates.transforms.height
+                                  if (Object.keys(layerUpdates).length > 0)
+                                    imageEditor.updateLayer(selectedLayerId, layerUpdates)
+                                } else if (updates.transforms) {
                                   imageEditor.updateLayer(selectedLayerId, {
                                     ...updates,
                                     transforms: enrichTransformsForFillMode(
@@ -602,10 +700,34 @@ export function PreviewArea({
                               layerPaddingRight={layerPaddingRight}
                               layerPaddingTop={layerPaddingTop}
                               layerPaddingBottom={layerPaddingBottom}
-                              layerRotation={selectedLayer.transforms?.rotation || 0}
-                              layerFillColor={selectedLayer.transforms?.fillColor}
+                              layerRotation={
+                                isImageLayer ? selectedLayer.transforms?.rotation || 0 : 0
+                              }
+                              layerFillColor={
+                                isImageLayer ? selectedLayer.transforms?.fillColor : undefined
+                              }
                               onDeselect={() => imageEditor.setSelectedLayerId(null)}
-                              onEnterEditMode={() => imageEditor.switchContext(selectedLayerId)}
+                              onEnterEditMode={
+                                isImageLayer
+                                  ? () => imageEditor.switchContext(selectedLayerId)
+                                  : onTextEdit
+                                    ? () => onTextEdit(selectedLayerId)
+                                    : undefined
+                              }
+                              onHandleDoubleClick={
+                                !isImageLayer
+                                  ? (handle) => {
+                                      // e/w handles reset wrap width to auto (0)
+                                      if (handle === 'e' || handle === 'w') {
+                                        imageEditor.updateLayer(selectedLayerId, { width: 0 })
+                                      }
+                                      // n/s handles reset fixed height to auto (0)
+                                      else if (handle === 'n' || handle === 's') {
+                                        imageEditor.updateLayer(selectedLayerId, { height: 0 })
+                                      }
+                                    }
+                                  : undefined
+                              }
                             />
                           )
                         } else {
@@ -623,9 +745,39 @@ export function PreviewArea({
                               paddingTop={paddingTop}
                               paddingBottom={paddingBottom}
                               onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
+                              imageEditor={imageEditor}
+                              onTextEdit={onTextEdit ? (id) => onTextEdit(id) : undefined}
                             />
                           )
                         }
+                      })()}
+                    {/* Text editing overlay — rendered on top of everything when a text layer is active */}
+                    {!visualCropEnabled &&
+                      !isVisualCropToggling &&
+                      effectiveTextEditingLayerId &&
+                      imageEditor &&
+                      onTextEditEnd &&
+                      (() => {
+                        const outputDims = imageEditor.getOutputDimensions()
+                        const state = imageEditor.getState()
+                        const pl = state.paddingLeft || 0
+                        const pt = state.paddingTop || 0
+                        const textLayer = imageEditor.getLayer(effectiveTextEditingLayerId)
+                        if (!textLayer || textLayer.type !== 'text') return null
+                        return (
+                          <TextEditOverlay
+                            layer={textLayer}
+                            baseImageWidth={outputDims.width}
+                            baseImageHeight={outputDims.height}
+                            paddingLeft={pl}
+                            paddingTop={pt}
+                            onCommit={(text) => onTextEditEnd(text)}
+                            onCancel={() => onTextEditEnd(null)}
+                            onUpdate={(updates) =>
+                              imageEditor.updateLayer(effectiveTextEditingLayerId, updates)
+                            }
+                          />
+                        )
                       })()}
                   </div>
                 )}

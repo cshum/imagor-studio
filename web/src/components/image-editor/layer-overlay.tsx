@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { LayerContextMenu } from '@/components/image-editor/layer-menu'
+import type { ImageEditor, Layer } from '@/lib/image-editor'
 import {
   buildDragUpdates,
   calculateOverlayLayout,
@@ -10,6 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 
 interface LayerOverlayProps {
+  layer: Layer
   layerX: string | number
   layerY: string | number
   layerWidth: number
@@ -35,9 +38,15 @@ interface LayerOverlayProps {
   layerFillColor?: string
   onDeselect?: () => void
   onEnterEditMode?: () => void
+  /** Called when a resize handle is double-clicked. Used by text layers to reset width/height to auto. */
+  onHandleDoubleClick?: (handle: ResizeHandle) => void
+  /** When provided, enables the right-click context menu for this layer. */
+  imageEditor?: ImageEditor
+  onTextEdit?: (layerId: string) => void
 }
 
 export function LayerOverlay({
+  layer,
   layerX,
   layerY,
   layerWidth,
@@ -56,6 +65,9 @@ export function LayerOverlay({
   layerFillColor,
   onDeselect,
   onEnterEditMode,
+  onHandleDoubleClick,
+  imageEditor,
+  onTextEdit,
 }: LayerOverlayProps) {
   // Calculate CSS percentage strings, drag capabilities and alignment flags
   const { leftPercent, topPercent, widthPercent, heightPercent, canDragX, canDragY } =
@@ -88,6 +100,9 @@ export function LayerOverlay({
   // Handle mouse/touch down on layer box (for dragging)
   const handleLayerMouseDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      // Ignore right-click (button=2) — prevents drag state getting stuck when context menu opens
+      if ('button' in e && e.button !== 0) return
+
       if ((e.target as HTMLElement).classList.contains('layer-box')) {
         e.preventDefault()
         e.stopPropagation()
@@ -121,6 +136,8 @@ export function LayerOverlay({
   // Handle mouse/touch down on resize handles
   const handleResizeMouseDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent, handle: ResizeHandle) => {
+      // Ignore right-click
+      if ('button' in e && e.button !== 0) return
       e.preventDefault()
       e.stopPropagation()
 
@@ -306,59 +323,74 @@ export function LayerOverlay({
     [onEnterEditMode],
   )
 
+  const layerBoxContent = (
+    <div
+      ref={layerBoxRef}
+      className={cn(
+        'layer-box pointer-events-auto absolute cursor-move border border-white',
+        (isDragging || isResizing) && 'cursor-grabbing',
+      )}
+      style={{
+        left: leftPercent,
+        top: topPercent,
+        width: widthPercent,
+        height: heightPercent,
+        boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
+      }}
+      onMouseDown={handleLayerMouseDown}
+      onTouchStart={handleLayerMouseDown}
+      onDoubleClick={handleLayerDoubleClick}
+    >
+      {/* NO grid lines - as requested */}
+
+      {/* Resize handles */}
+      {['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map((handle) => (
+        <div
+          key={handle}
+          className={cn(
+            'absolute flex items-center justify-center',
+            'h-11 w-11',
+            handle === 'nw' && '-top-5.5 -left-5.5 cursor-nw-resize',
+            handle === 'n' && '-top-5.5 left-1/2 -translate-x-1/2 cursor-n-resize',
+            handle === 'ne' && '-top-5.5 -right-5.5 cursor-ne-resize',
+            handle === 'e' && 'top-1/2 -right-5.5 -translate-y-1/2 cursor-e-resize',
+            handle === 'se' && '-right-5.5 -bottom-5.5 cursor-se-resize',
+            handle === 's' && '-bottom-5.5 left-1/2 -translate-x-1/2 cursor-s-resize',
+            handle === 'sw' && '-bottom-5.5 -left-5.5 cursor-sw-resize',
+            handle === 'w' && 'top-1/2 -left-5.5 -translate-y-1/2 cursor-w-resize',
+          )}
+          onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
+          onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
+          onDoubleClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onHandleDoubleClick?.(handle as ResizeHandle)
+          }}
+        >
+          {/* Visual handle: Photoshop-style white square with black border */}
+          <div
+            className='h-2 w-2 border border-black bg-white'
+            style={{ boxShadow: '0 0 0 1px white' }}
+          />
+        </div>
+      ))}
+    </div>
+  )
+
   return (
     <div
       ref={overlayRef}
       className='pointer-events-auto absolute inset-0 z-20 h-full w-full'
       onMouseDown={handleOverlayMouseDown}
     >
-      {/* Layer box and handles */}
-      <div
-        ref={layerBoxRef}
-        className={cn(
-          'layer-box pointer-events-auto absolute cursor-move border border-white',
-          (isDragging || isResizing) && 'cursor-grabbing',
-        )}
-        style={{
-          left: leftPercent,
-          top: topPercent,
-          width: widthPercent,
-          height: heightPercent,
-          boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
-        }}
-        onMouseDown={handleLayerMouseDown}
-        onTouchStart={handleLayerMouseDown}
-        onDoubleClick={handleLayerDoubleClick}
-      >
-        {/* NO grid lines - as requested */}
-
-        {/* Resize handles */}
-        {['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map((handle) => (
-          <div
-            key={handle}
-            className={cn(
-              'absolute flex items-center justify-center',
-              'h-11 w-11',
-              handle === 'nw' && '-top-5.5 -left-5.5 cursor-nw-resize',
-              handle === 'n' && '-top-5.5 left-1/2 -translate-x-1/2 cursor-n-resize',
-              handle === 'ne' && '-top-5.5 -right-5.5 cursor-ne-resize',
-              handle === 'e' && 'top-1/2 -right-5.5 -translate-y-1/2 cursor-e-resize',
-              handle === 'se' && '-right-5.5 -bottom-5.5 cursor-se-resize',
-              handle === 's' && '-bottom-5.5 left-1/2 -translate-x-1/2 cursor-s-resize',
-              handle === 'sw' && '-bottom-5.5 -left-5.5 cursor-sw-resize',
-              handle === 'w' && 'top-1/2 -left-5.5 -translate-y-1/2 cursor-w-resize',
-            )}
-            onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
-            onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
-          >
-            {/* Visual handle: Photoshop-style white square with black border */}
-            <div
-              className='h-2 w-2 border border-black bg-white'
-              style={{ boxShadow: '0 0 0 1px white' }}
-            />
-          </div>
-        ))}
-      </div>
+      {/* Layer box — wrapped in context menu when imageEditor is provided */}
+      {imageEditor ? (
+        <LayerContextMenu layer={layer} imageEditor={imageEditor} onTextEdit={onTextEdit}>
+          {layerBoxContent}
+        </LayerContextMenu>
+      ) : (
+        layerBoxContent
+      )}
     </div>
   )
 }
