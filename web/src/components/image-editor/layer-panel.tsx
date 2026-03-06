@@ -123,15 +123,15 @@ function SortableLayerItem({
 
   const isText = layer.type === 'text'
 
-  // Display name: for text layers show the text snippet, for image layers show filename
-  const displayName =
-    layer.name ||
-    (isText
-      ? t('imageEditor.layers.textLayer')
-      : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || '')
-
-  // Subtitle: for text layers show a text preview; for image layers nothing additional
-  const textPreview = isText ? layer.text.replace(/\n/g, '⏎ ').slice(0, 40) : null
+  // Display name — Figma/Photoshop style:
+  //   custom name (if renamed) → custom name
+  //   text layer (not renamed) → text content, or "Text Layer" if empty
+  //   image layer              → filename
+  const displayName = layer.name
+    ? layer.name
+    : isText
+      ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
+      : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || ''
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
@@ -169,16 +169,11 @@ function SortableLayerItem({
             {/* Layer thumbnail icon for text layers */}
             {isText && <Type className='text-muted-foreground h-4 w-4 shrink-0' />}
 
-            {/* Layer name + text preview */}
+            {/* Layer name */}
             <div className='min-w-0 flex-1'>
               <span className='block truncate text-sm' title={displayName}>
                 {displayName}
               </span>
-              {textPreview && (
-                <span className='text-muted-foreground block truncate text-xs' title={textPreview}>
-                  {textPreview}
-                </span>
-              )}
             </div>
 
             {/* Action buttons (always visible, fixed width) */}
@@ -681,10 +676,12 @@ export function LayerPanel({
                     <Type className='text-muted-foreground h-4 w-4 shrink-0' />
                   )}
                   <span className='flex-1 truncate text-sm'>
-                    {activeLayer.name ||
-                      (activeLayer.type === 'text'
-                        ? t('imageEditor.layers.textLayer')
-                        : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath)}
+                    {activeLayer.name
+                      ? activeLayer.name
+                      : activeLayer.type === 'text'
+                        ? activeLayer.text.replace(/\n/g, ' ').trim().slice(0, 60) ||
+                          t('imageEditor.layers.textLayer')
+                        : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
                   </span>
                   {/* Match layer item button structure */}
                   <div className='flex shrink-0 gap-1'>

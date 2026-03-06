@@ -514,7 +514,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     const newLayer = {
       type: 'text' as const,
       id: `layer-${Date.now()}`,
-      name: t('imageEditor.layers.textLayer'),
+      name: '',
       text: t('imageEditor.layers.textLayerDefaultText'),
       x,
       y,
