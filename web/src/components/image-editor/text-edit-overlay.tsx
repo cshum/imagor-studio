@@ -200,6 +200,18 @@ export function TextEditOverlay({
   const fontItalic = layer.fontStyle.includes('italic') ? 'italic' : 'normal'
   const textAlign = layer.align === 'centre' ? 'center' : layer.align === 'high' ? 'right' : 'left'
 
+  // Map imagor wrap mode → CSS for the editor textarea.
+  // The goal is good editor UX (no invisible overflow) while staying close to Pango's behaviour.
+  // Pango 'word'     → wraps at word boundaries; long words overflow in render but we use
+  //                    overflow-wrap:break-word in the editor so they wrap gracefully (no hyphens)
+  // Pango 'char'     → break at any character — CSS word-break: break-all
+  // Pango 'wordchar' → word first, then char fallback — CSS overflow-wrap: break-word
+  // Pango 'none'     → no wrapping at all — white-space: pre
+  const cssWhiteSpace = layer.wrap === 'none' ? 'pre' : 'pre-wrap'
+  const cssWordBreak = layer.wrap === 'char' ? 'break-all' : 'normal'
+  // All wrapping modes use break-word so long words never disappear in the editor
+  const cssOverflowWrap = layer.wrap === 'none' ? 'normal' : 'break-word'
+
   // ── Auto-grow height (always — textarea never scrolls or clips) ──────────
   // containerHeightPx in deps: scale changes when the preview area resizes, which
   // changes the rendered font size, which changes scrollHeight — recalculate then.
@@ -357,8 +369,9 @@ export function TextEditOverlay({
             padding: '0',
             overflow: 'hidden',
             boxSizing: 'border-box',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
+            whiteSpace: cssWhiteSpace,
+            wordBreak: cssWordBreak,
+            overflowWrap: cssOverflowWrap,
             caretColor: `#${layer.color}`,
           }}
         />
