@@ -137,7 +137,12 @@ export function TextEditToolbar({
 
     // Always render above the layer top edge; use bottom so it doesn't shift
     // if the toolbar itself changes height.
-    const bottomFixed = window.innerHeight - canvasTopScreen + 4
+    // Clamp so the toolbar never disappears above the viewport when text grows
+    // upward past the top of the screen.
+    const bottomFixed = Math.min(
+      window.innerHeight - canvasTopScreen + 4,
+      window.innerHeight - toolbar.offsetHeight,
+    )
 
     // Horizontal anchor follows text alignment (Canva/Figma-style UX):
     //   left-aligned  → anchor toolbar to left edge of text box
