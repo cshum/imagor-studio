@@ -593,7 +593,8 @@ export function LayerPanel({
       }
 
       // Only handle shortcuts when a layer is selected and conditions are met
-      if (!selectedLayerId || visualCropEnabled || activeId !== null) {
+      // Also skip when the rename dialog is open (so Backspace/Delete work in the input)
+      if (!selectedLayerId || visualCropEnabled || activeId !== null || renameDialogOpen) {
         return
       }
 
@@ -608,7 +609,14 @@ export function LayerPanel({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedLayerId, visualCropEnabled, activeId, handleDelete, handleDuplicateLayer])
+  }, [
+    selectedLayerId,
+    visualCropEnabled,
+    activeId,
+    renameDialogOpen,
+    handleDelete,
+    handleDuplicateLayer,
+  ])
 
   return (
     <div className='flex h-full flex-col'>
