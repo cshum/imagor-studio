@@ -138,7 +138,7 @@ function SortableLayerItem({
         <ContextMenuTrigger asChild>
           <div
             className={cn(
-              'flex h-12 cursor-pointer items-center gap-2 rounded-md px-3',
+              'flex h-9 cursor-pointer items-center gap-1.5 rounded-md px-2',
               'hover:bg-accent',
               // Use ring style for both selected and editing
               (isSelected || isEditing || isTextEditing) && 'ring-primary ring-2 ring-inset',
@@ -176,12 +176,12 @@ function SortableLayerItem({
             </div>
 
             {/* Action buttons (always visible, fixed width) */}
-            <div className='flex shrink-0 gap-1'>
+            <div className='flex shrink-0 gap-0.5'>
               {/* Visibility toggle */}
               <Button
                 variant='ghost'
                 size='icon'
-                className='h-8 w-8'
+                className='h-7 w-7'
                 onClick={(e) => {
                   e.stopPropagation()
                   onToggleVisibility(layer.id)
@@ -193,9 +193,9 @@ function SortableLayerItem({
                 }
               >
                 {layer.visible ? (
-                  <Eye className='h-4 w-4' />
+                  <Eye className='h-3.5 w-3.5' />
                 ) : (
-                  <EyeOff className='text-muted-foreground h-4 w-4' />
+                  <EyeOff className='text-muted-foreground h-3.5 w-3.5' />
                 )}
               </Button>
 
@@ -205,10 +205,10 @@ function SortableLayerItem({
                   <Button
                     variant='ghost'
                     size='icon'
-                    className='h-8 w-8'
+                    className='h-7 w-7'
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <MoreVertical className='h-4 w-4' />
+                    <MoreVertical className='h-3.5 w-3.5' />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end' className='min-w-[180px]'>
@@ -370,7 +370,7 @@ function BaseImageItem({
   return (
     <div
       className={cn(
-        'flex h-12 cursor-pointer items-center gap-2 rounded-md px-3',
+        'flex h-9 cursor-pointer items-center gap-1.5 rounded-md px-2',
         'hover:bg-accent',
         isSelected && 'ring-primary ring-2 ring-inset',
       )}
@@ -378,7 +378,7 @@ function BaseImageItem({
     >
       {/* Icon instead of drag handle */}
       <div className='flex h-4 w-4 shrink-0 items-center justify-center'>
-        <Icon className='text-muted-foreground h-4 w-4' />
+        <Icon className='text-muted-foreground h-3.5 w-3.5' />
       </div>
 
       {/* Base image name */}
@@ -654,10 +654,10 @@ export function LayerPanel({
             </SortableContext>
             <DragOverlay>
               {activeLayer ? (
-                <div className='bg-background flex h-12 items-center gap-2 rounded-md border px-2 shadow-lg'>
+                <div className='bg-background flex h-9 items-center gap-1.5 rounded-md border px-2 shadow-lg'>
                   <GripVertical className='h-4 w-4' />
                   {activeLayer.type === 'text' && (
-                    <Type className='text-muted-foreground h-4 w-4 shrink-0' />
+                    <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   )}
                   <span className='flex-1 truncate text-sm'>
                     {activeLayer.name
@@ -668,16 +668,16 @@ export function LayerPanel({
                         : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
                   </span>
                   {/* Match layer item button structure */}
-                  <div className='flex shrink-0 gap-1'>
-                    <div className='flex h-8 w-8 items-center justify-center'>
+                  <div className='flex shrink-0 gap-0.5'>
+                    <div className='flex h-7 w-7 items-center justify-center'>
                       {activeLayer.visible ? (
-                        <Eye className='h-4 w-4' />
+                        <Eye className='h-3.5 w-3.5' />
                       ) : (
-                        <EyeOff className='text-muted-foreground h-4 w-4' />
+                        <EyeOff className='text-muted-foreground h-3.5 w-3.5' />
                       )}
                     </div>
-                    <div className='flex h-8 w-8 items-center justify-center'>
-                      <MoreVertical className='h-4 w-4' />
+                    <div className='flex h-7 w-7 items-center justify-center'>
+                      <MoreVertical className='h-3.5 w-3.5' />
                     </div>
                   </div>
                 </div>
