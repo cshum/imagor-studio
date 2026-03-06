@@ -433,7 +433,7 @@ export function TextEditOverlay({
              Center        → both edges (symmetric expansion, delta ×2) ── */}
         {['low', 'centre'].includes(draftLayer.align) && (
           <div
-            className='absolute top-1/2 -right-5.5 flex h-11 w-11 -translate-y-1/2 cursor-ew-resize items-center justify-center'
+            className='absolute top-1/2 -right-2.5 flex h-8 w-5 -translate-y-1/2 cursor-ew-resize items-center justify-center'
             style={{ pointerEvents: 'auto' }}
             onMouseDown={(e) => {
               e.preventDefault()
@@ -459,7 +459,7 @@ export function TextEditOverlay({
         )}
         {['high', 'centre'].includes(draftLayer.align) && (
           <div
-            className='absolute top-1/2 -left-5.5 flex h-11 w-11 -translate-y-1/2 cursor-ew-resize items-center justify-center'
+            className='absolute top-1/2 -left-2.5 flex h-8 w-5 -translate-y-1/2 cursor-ew-resize items-center justify-center'
             style={{ pointerEvents: 'auto' }}
             onMouseDown={(e) => {
               e.preventDefault()
@@ -489,7 +489,7 @@ export function TextEditOverlay({
              Delta is divided by lineCount so the change is proportional
              to drag distance regardless of how many lines the text spans. ── */}
         <div
-          className='absolute -bottom-5.5 left-1/2 flex h-11 w-11 -translate-x-1/2 cursor-ns-resize items-center justify-center'
+          className='absolute -bottom-2.5 left-1/2 flex h-5 w-8 -translate-x-1/2 cursor-ns-resize items-center justify-center'
           style={{ pointerEvents: 'auto' }}
           onMouseDown={(e) => {
             e.preventDefault()
