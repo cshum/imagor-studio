@@ -161,6 +161,18 @@ export function TextEditOverlay({
 
   // ── Position & size ────────────────────────────────────────────────────────
 
+  // Live textarea height in canvas pixels — updated by the auto-grow useLayoutEffect.
+  // Initialized from the layer's bounding box so the first render is correct.
+  // Used instead of layerDims.height for Y positioning so center/bottom anchors
+  // track the growing text box in real time.
+  const [liveHeightCanvasPx, setLiveHeightCanvasPx] = useState(() => {
+    const dims = calculateTextLayerBoundingBox(layer, {
+      width: baseImageWidth,
+      height: baseImageHeight,
+    })
+    return dims.height
+  })
+
   // All position and size values are derived from draftLayer so that:
   // - Width drag: wrapper resizes live as draftLayer.width changes
   // - Alignment change (toolbar): wrapper repositions immediately when
@@ -171,11 +183,14 @@ export function TextEditOverlay({
     width: baseImageWidth,
     height: baseImageHeight,
   })
+  // Use live textarea height for Y positioning so center/bottom anchors track
+  // the growing text box in real time. liveHeightCanvasPx starts at layerDims.height
+  // and is updated by the auto-grow useLayoutEffect on every text/font change.
   const { leftPercent, topPercent } = calculateLayerPosition(
     draftLayer.x,
     draftLayer.y,
     layerDims.width,
-    layerDims.height,
+    liveHeightCanvasPx,
     baseImageWidth,
     baseImageHeight,
     paddingLeft,
@@ -248,6 +263,11 @@ export function TextEditOverlay({
       const el = textareaRef.current
       el.style.height = '0px'
       el.style.height = `${el.scrollHeight}px`
+      // Update live canvas height so center/bottom anchors reposition correctly
+      const currentScale = scaleRef.current
+      if (currentScale > 0) {
+        setLiveHeightCanvasPx(Math.round(el.scrollHeight / currentScale))
+      }
     }
   }, [value, draftLayer.fontSize, draftLayer.spacing, draftLayer.width, containerHeightPx])
 
@@ -305,8 +325,6 @@ export function TextEditOverlay({
   // Dynamic font size limits — max scales with the canvas so large canvases
   // (e.g. 4000px) aren't artificially capped at 500px.
   const MIN_FONT_SIZE = 4
-  const MAX_FONT_SIZE = Math.max(baseImageWidth, baseImageHeight)
-
   useEffect(() => {
     if (!fontResizeDragging || scale <= 0) return
 
@@ -319,9 +337,7 @@ export function TextEditOverlay({
         MIN_FONT_SIZE + spacing,
         initialFontSize + spacing + deltaImagor / lineCount,
       )
-      const newFontSize = Math.round(
-        Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, newLineHeight - spacing)),
-      )
+      const newFontSize = Math.round(Math.max(MIN_FONT_SIZE, newLineHeight - spacing))
       setDraftLayer((prev) => ({ ...prev, fontSize: newFontSize }))
     }
 
@@ -358,7 +374,6 @@ export function TextEditOverlay({
         toolbarRef={toolbarRef}
         onUpdate={handleToolbarUpdate}
         align={draftLayer.align}
-        maxFontSize={MAX_FONT_SIZE}
       />
 
       {/*

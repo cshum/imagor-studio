@@ -521,7 +521,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       font: 'sans',
       fontStyle: '' as const,
       fontSize,
-      color: '000000',
+      color: 'ffffff',
       width: defaultWidth,
       height: 0,
       align: 'low' as const,

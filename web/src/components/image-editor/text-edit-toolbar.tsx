@@ -28,8 +28,6 @@ interface TextEditToolbarProps {
   onUpdate: (updates: Partial<TextLayer>) => void
   /** Text alignment — toolbar anchor follows the text anchor point. */
   align?: TextLayer['align']
-  /** Maximum font size in canvas pixels — should be Math.max(canvasWidth, canvasHeight). */
-  maxFontSize?: number
 }
 
 /**
@@ -40,11 +38,9 @@ interface TextEditToolbarProps {
  */
 function FontSizeInput({
   fontSize,
-  maxFontSize,
   onUpdate,
 }: {
   fontSize: number
-  maxFontSize: number
   onUpdate: (updates: Partial<TextLayer>) => void
 }) {
   // Local string state so the user can type freely (e.g. clear field before typing new value)
@@ -66,7 +62,6 @@ function FontSizeInput({
       type='number'
       value={localValue}
       min={4}
-      max={maxFontSize}
       step={1}
       className='border-input bg-background h-8 w-16 rounded border px-1 text-center text-sm tabular-nums'
       title='Font size'
@@ -78,8 +73,8 @@ function FontSizeInput({
         const raw = e.target.value
         setLocalValue(raw)
         const v = parseInt(raw, 10)
-        // Update draft immediately for any valid value in range
-        if (!isNaN(v) && v >= 4 && v <= maxFontSize) {
+        // Update draft immediately for any valid value
+        if (!isNaN(v) && v >= 4) {
           onUpdate({ fontSize: v })
         }
       }}
@@ -116,7 +111,6 @@ export function TextEditToolbar({
   toolbarRef,
   onUpdate,
   align,
-  maxFontSize = 500,
 }: TextEditToolbarProps) {
   const { t } = useTranslation()
 
@@ -309,7 +303,7 @@ export function TextEditToolbar({
       </Select>
 
       {/* Font size — inline number input with stepper */}
-      <FontSizeInput fontSize={layer.fontSize} maxFontSize={maxFontSize} onUpdate={onUpdate} />
+      <FontSizeInput fontSize={layer.fontSize} onUpdate={onUpdate} />
 
       {/* Color swatch */}
       <div
