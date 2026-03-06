@@ -165,12 +165,18 @@ function LayerMenuItems({
       </Item>
       <Separator />
       <Item onClick={onMoveUp} disabled={isFirst}>
-        <ArrowUp className='mr-2 h-4 w-4' />
-        {t('imageEditor.layers.moveUp')}
+        <div className='flex flex-1 items-center'>
+          <ArrowUp className='mr-2 h-4 w-4' />
+          {t('imageEditor.layers.moveUp')}
+        </div>
+        <Shortcut>⌘]</Shortcut>
       </Item>
       <Item onClick={onMoveDown} disabled={isLast}>
-        <ArrowDown className='mr-2 h-4 w-4' />
-        {t('imageEditor.layers.moveDown')}
+        <div className='flex flex-1 items-center'>
+          <ArrowDown className='mr-2 h-4 w-4' />
+          {t('imageEditor.layers.moveDown')}
+        </div>
+        <Shortcut>⌘[</Shortcut>
       </Item>
       <Separator />
       <Item onClick={onToggleVisibility}>

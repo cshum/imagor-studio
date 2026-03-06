@@ -416,6 +416,26 @@ export function LayerPanel({
       } else if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
         event.preventDefault()
         imageEditor.duplicateLayer(selectedLayerId)
+      } else if ((event.ctrlKey || event.metaKey) && event.key === ']') {
+        // Move Up (bring forward) — ⌘] / Ctrl+]
+        event.preventDefault()
+        const layers = imageEditor.getContextLayers()
+        const idx = layers.findIndex((l) => l.id === selectedLayerId)
+        if (idx < layers.length - 1) {
+          const newOrder = [...layers]
+          ;[newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]]
+          imageEditor.reorderLayers(newOrder)
+        }
+      } else if ((event.ctrlKey || event.metaKey) && event.key === '[') {
+        // Move Down (send backward) — ⌘[ / Ctrl+[
+        event.preventDefault()
+        const layers = imageEditor.getContextLayers()
+        const idx = layers.findIndex((l) => l.id === selectedLayerId)
+        if (idx > 0) {
+          const newOrder = [...layers]
+          ;[newOrder[idx], newOrder[idx - 1]] = [newOrder[idx - 1], newOrder[idx]]
+          imageEditor.reorderLayers(newOrder)
+        }
       }
     }
 
