@@ -838,7 +838,8 @@ export class ImageEditor {
         if (skipLayerId && layer.id === skipLayerId) continue
 
         if (layer.type === 'text') {
-          // Emit text() filter
+          // Emit text() filter — skip if text is empty (nothing to render)
+          if (!layer.text.trim()) continue
           const encodedText = ImageEditor.encodeTextToBase64url(layer.text)
           const x = ImageEditor.scalePositionValue(layer.x, scaleFactor)
           const y = ImageEditor.scalePositionValue(layer.y, scaleFactor)
@@ -1299,7 +1300,8 @@ export class ImageEditor {
         if (skipLayerId && layer.id === skipLayerId) continue
 
         if (layer.type === 'text') {
-          // Build text() filter
+          // Build text() filter — skip if text is empty (nothing to render)
+          if (!layer.text.trim()) continue
           const encodedText = ImageEditor.encodeTextToBase64url(layer.text)
           const sf = forPreview ? scaleFactor : 1
           const x = ImageEditor.scalePositionValue(layer.x, sf).toString()

@@ -3822,6 +3822,18 @@ describe('TextLayer support', () => {
       const path = editor.getImagorPath()
       expect(path).not.toContain('text(')
     })
+
+    it('skips empty text layer (no text() filter emitted)', () => {
+      editor.addLayer(makeTextLayer({ text: '' }))
+      const path = editor.getImagorPath()
+      expect(path).not.toContain('text(')
+    })
+
+    it('skips whitespace-only text layer', () => {
+      editor.addLayer(makeTextLayer({ text: '   ' }))
+      const path = editor.getImagorPath()
+      expect(path).not.toContain('text(')
+    })
   })
 
   describe('setTextEditingLayerId (skipLayerId)', () => {
