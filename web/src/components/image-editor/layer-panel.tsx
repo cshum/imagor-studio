@@ -410,7 +410,18 @@ export function LayerPanel({
         return
       }
 
-      if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (event.key === 'Enter') {
+        // Enter = Edit Text (text layer) or Edit Layer (image layer) — Figma/Sketch standard
+        event.preventDefault()
+        const layer = layers.find((l) => l.id === selectedLayerId)
+        if (layer) {
+          if (layer.type === 'text') {
+            void onTextEdit(selectedLayerId)
+          } else {
+            imageEditor.switchContext(selectedLayerId)
+          }
+        }
+      } else if (event.key === 'Delete' || event.key === 'Backspace') {
         event.preventDefault()
         imageEditor.removeLayer(selectedLayerId)
       } else if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
@@ -441,7 +452,15 @@ export function LayerPanel({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedLayerId, visualCropEnabled, activeId, renameDialogOpen, imageEditor])
+  }, [
+    selectedLayerId,
+    visualCropEnabled,
+    activeId,
+    renameDialogOpen,
+    imageEditor,
+    layers,
+    onTextEdit,
+  ])
 
   return (
     <div className='flex h-full flex-col'>

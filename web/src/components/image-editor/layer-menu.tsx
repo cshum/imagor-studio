@@ -143,13 +143,19 @@ function LayerMenuItems({
     <>
       {isText ? (
         <Item onClick={onTextEdit}>
-          <Type className='mr-2 h-4 w-4' />
-          {t('imageEditor.layers.editText')}
+          <div className='flex flex-1 items-center'>
+            <Type className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.editText')}
+          </div>
+          <Shortcut>↵</Shortcut>
         </Item>
       ) : (
         <Item onClick={onEdit}>
-          <Edit className='mr-2 h-4 w-4' />
-          {t('imageEditor.layers.editLayer')}
+          <div className='flex flex-1 items-center'>
+            <Edit className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.editLayer')}
+          </div>
+          <Shortcut>↵</Shortcut>
         </Item>
       )}
       <Item onClick={onRename}>
