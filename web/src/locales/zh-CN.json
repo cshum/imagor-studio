@@ -824,8 +824,8 @@
     "layers": {
       "title": "图层",
       "addLayer": "添加图层",
-      "addImage": "添加图片",
-      "addText": "添加文字",
+      "addImage": "图片图层",
+      "addText": "文字图层",
       "textLayer": "文字图层",
       "textLayerDefaultText": "文字",
       "editText": "编辑文字",

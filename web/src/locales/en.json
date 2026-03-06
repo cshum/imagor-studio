@@ -802,8 +802,8 @@
     "layers": {
       "title": "Layers",
       "addLayer": "Add Layer",
-      "addImage": "Add Image",
-      "addText": "Add Text",
+      "addImage": "Image Layer",
+      "addText": "Text Layer",
       "textLayer": "Text Layer",
       "textLayerDefaultText": "Text",
       "editText": "Edit Text",

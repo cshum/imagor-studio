@@ -20,6 +20,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
+  ChevronDown,
   Copy,
   Edit,
   Eye,
@@ -29,6 +30,7 @@ import {
   Layers,
   MoreVertical,
   Pencil,
+  Plus,
   Trash2,
   Type,
 } from 'lucide-react'
@@ -602,28 +604,31 @@ export function LayerPanel({
 
   return (
     <div className='flex h-full flex-col'>
-      {/* Add Layer buttons — two direct actions, no dropdown */}
-      <div className='flex gap-1 px-1 pb-2'>
-        <Button
-          variant='outline'
-          className='flex-1'
-          disabled={isAddingLayer || visualCropEnabled}
-          onClick={() => setFilePickerOpen(true)}
-          title={t('imageEditor.layers.addImage')}
-        >
-          <Image className='mr-1 h-4 w-4' />
-          {t('imageEditor.layers.addImage')}
-        </Button>
-        <Button
-          variant='outline'
-          className='flex-1'
-          disabled={visualCropEnabled}
-          onClick={onAddTextLayer}
-          title={t('imageEditor.layers.addText')}
-        >
-          <Type className='mr-1 h-4 w-4' />
-          {t('imageEditor.layers.addText')}
-        </Button>
+      {/* Add Layer dropdown */}
+      <div className='px-1 pb-2'>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant='outline'
+              className='w-full'
+              disabled={isAddingLayer || visualCropEnabled}
+            >
+              <Plus className='mr-1 h-4 w-4' />
+              {t('imageEditor.layers.addLayer')}
+              <ChevronDown className='ml-auto h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='start' className='w-48'>
+            <DropdownMenuItem onSelect={() => setFilePickerOpen(true)}>
+              <Image className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.addImage')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onAddTextLayer}>
+              <Type className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.addText')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Layer list (scrollable) */}

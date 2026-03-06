@@ -821,8 +821,8 @@
     "layers": {
       "title": "Livelli",
       "addLayer": "Aggiungi Livello",
-      "addImage": "Immagine",
-      "addText": "Testo",
+      "addImage": "Livello Immagine",
+      "addText": "Livello Testo",
       "textLayer": "Livello Testo",
       "textLayerDefaultText": "Testo",
       "editText": "Modifica Testo",
