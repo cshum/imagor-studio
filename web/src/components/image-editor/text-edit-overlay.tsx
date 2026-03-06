@@ -161,22 +161,21 @@ export function TextEditOverlay({
 
   // ── Position & size ────────────────────────────────────────────────────────
 
-  // Position is derived from the committed layer (x/y don't change during text editing).
-  // Width is derived from draftLayer so the wrapper visually resizes as the user drags
-  // the width handle — draftLayer.width is updated by setDraftLayer during the drag.
-  const layerDimsForPosition = calculateTextLayerBoundingBox(layer, {
-    width: baseImageWidth,
-    height: baseImageHeight,
-  })
+  // All position and size values are derived from draftLayer so that:
+  // - Width drag: wrapper resizes live as draftLayer.width changes
+  // - Alignment change (toolbar): wrapper repositions immediately when
+  //   draftLayer.x/y changes to 'center', 'right', etc.
+  // calculateLayerPosition handles 'center' and 'right' anchoring correctly,
+  // so using draftLayer.x/y is all that's needed for proper positioning.
   const layerDims = calculateTextLayerBoundingBox(draftLayer, {
     width: baseImageWidth,
     height: baseImageHeight,
   })
   const { leftPercent, topPercent } = calculateLayerPosition(
-    layer.x,
-    layer.y,
-    layerDimsForPosition.width,
-    layerDimsForPosition.height,
+    draftLayer.x,
+    draftLayer.y,
+    layerDims.width,
+    layerDims.height,
     baseImageWidth,
     baseImageHeight,
     paddingLeft,
