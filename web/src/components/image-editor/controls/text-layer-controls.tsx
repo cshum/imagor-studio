@@ -187,10 +187,11 @@ export function TextLayerControls({
                 disabled={visualCropEnabled}
                 className={cn(
                   'px-1 py-0.5 text-xs transition-colors',
-                  !widthFull
-                    ? 'text-foreground cursor-default font-medium'
-                    : 'text-muted-foreground hover:text-foreground cursor-pointer',
-                  visualCropEnabled && 'pointer-events-none text-muted-foreground opacity-50',
+                  visualCropEnabled
+                    ? 'text-muted-foreground pointer-events-none cursor-default font-medium opacity-50'
+                    : !widthFull
+                      ? 'text-foreground cursor-default font-medium'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
                 )}
               >
                 px
@@ -201,10 +202,11 @@ export function TextLayerControls({
                 disabled={visualCropEnabled}
                 className={cn(
                   'px-1 py-0.5 transition-colors',
-                  widthFull
-                    ? 'text-primary cursor-default'
-                    : 'text-muted-foreground hover:text-foreground cursor-pointer',
-                  visualCropEnabled && 'pointer-events-none text-muted-foreground opacity-50',
+                  visualCropEnabled
+                    ? 'text-muted-foreground pointer-events-none cursor-default opacity-50'
+                    : widthFull
+                      ? 'text-primary cursor-default'
+                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
                 )}
                 title='Stretch to fill width'
               >
@@ -230,7 +232,14 @@ export function TextLayerControls({
         <div className='flex-1 space-y-1'>
           <div className='flex items-center justify-between'>
             <Label className='text-muted-foreground text-xs'>H</Label>
-            <span className='text-foreground px-1 py-0.5 text-xs font-medium'>px</span>
+            <span
+              className={cn(
+                'px-1 py-0.5 text-xs font-medium',
+                visualCropEnabled ? 'text-muted-foreground opacity-50' : 'text-foreground',
+              )}
+            >
+              px
+            </span>
           </div>
           <Input
             type='text'
