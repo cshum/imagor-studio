@@ -1,9 +1,19 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Italic } from 'lucide-react'
+import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  ChevronDown,
+  Italic,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { NumericControl } from '@/components/ui/numeric-control'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -205,34 +215,32 @@ export function TextEditToolbar({
         </SelectContent>
       </Select>
 
-      {/* Font size stepper — buttons only so focus stays on textarea */}
-      <div className='flex items-center'>
-        <Button
-          variant='ghost'
-          size='sm'
-          className='w-7 px-0'
-          onMouseDown={(e) => {
-            e.preventDefault()
-            onUpdate({ fontSize: Math.max(1, layer.fontSize - 1) })
-          }}
-          tabIndex={-1}
-        >
-          −
-        </Button>
-        <span className='w-8 text-center text-sm tabular-nums'>{layer.fontSize}</span>
-        <Button
-          variant='ghost'
-          size='sm'
-          className='w-7 px-0'
-          onMouseDown={(e) => {
-            e.preventDefault()
-            onUpdate({ fontSize: Math.min(999, layer.fontSize + 1) })
-          }}
-          tabIndex={-1}
-        >
-          +
-        </Button>
-      </div>
+      {/* Font size — select-style button opens a popover with slider + input */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant='outline'
+            size='sm'
+            className='h-8 gap-1 px-2 tabular-nums'
+            onMouseDown={(e) => e.preventDefault()}
+            tabIndex={-1}
+            title='Font size'
+          >
+            <span className='min-w-[1.5rem] text-center'>{layer.fontSize}</span>
+            <ChevronDown className='h-3 w-3 opacity-50' />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className='w-60 p-3' side='top' onOpenAutoFocus={(e) => e.preventDefault()}>
+          <NumericControl
+            label='Font size'
+            value={layer.fontSize}
+            min={4}
+            max={500}
+            step={1}
+            onChange={(v) => onUpdate({ fontSize: v })}
+          />
+        </PopoverContent>
+      </Popover>
 
       {/* Color swatch */}
       <div
