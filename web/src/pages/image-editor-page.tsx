@@ -116,6 +116,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const [actualScale, setActualScale] = useState<number | null>(null)
   const [textEditingLayerId, setTextEditingLayerId] = useState<string | null>(null)
   const [isTextEditToggling, setIsTextEditToggling] = useState(false)
+  const [isVisualCropToggling, setIsVisualCropToggling] = useState(false)
   const isSavedRef = useRef(false)
   // Resolver for the text-edit toggle Promise — resolved when the next preview loads
   const textEditLoadResolverRef = useRef<(() => void) | null>(null)
@@ -643,7 +644,12 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
 
   const handleVisualCropToggle = useCallback(
     async (enabled: boolean) => {
-      await imageEditor.toggleVisualCrop(enabled)
+      setIsVisualCropToggling(true)
+      try {
+        await imageEditor.toggleVisualCrop(enabled)
+      } finally {
+        setIsVisualCropToggling(false)
+      }
     },
     [imageEditor],
   )
@@ -694,6 +700,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             onUpdateParams={updateParams}
             onVisualCropToggle={handleVisualCropToggle}
             isVisualCropEnabled={visualCropEnabled}
+            isToggling={isVisualCropToggling}
             outputWidth={imageEditor.getOriginalDimensions().width}
             outputHeight={imageEditor.getOriginalDimensions().height}
             onAspectRatioChange={setCropAspectRatio}
@@ -755,6 +762,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       handleTextEdit,
       textEditingLayerId,
       isTextEditToggling,
+      isVisualCropToggling,
     ],
   )
 
@@ -821,6 +829,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             textEditingLayerId={textEditingLayerId}
             onTextEdit={handleTextEdit}
             onTextEditEnd={handleTextEditEnd}
+            isVisualCropToggling={isVisualCropToggling}
           />
         )}
         leftControls={

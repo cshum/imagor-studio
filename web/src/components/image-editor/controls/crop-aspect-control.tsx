@@ -21,6 +21,7 @@ interface CropAspectControlProps {
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
   onVisualCropToggle?: (enabled: boolean) => Promise<void>
   isVisualCropEnabled?: boolean
+  isToggling?: boolean
   outputWidth: number
   outputHeight: number
   onAspectRatioChange?: (aspectRatio: number | null) => void
@@ -31,12 +32,12 @@ export function CropAspectControl({
   onUpdateParams,
   onVisualCropToggle,
   isVisualCropEnabled = false,
+  isToggling = false,
   outputWidth,
   outputHeight,
   onAspectRatioChange,
 }: CropAspectControlProps) {
   const { t } = useTranslation()
-  const [isToggling, setIsToggling] = useState(false)
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('free')
 
   // Crop handlers
@@ -62,13 +63,7 @@ export function CropAspectControl({
 
   const handleVisualCropToggle = async () => {
     if (!onVisualCropToggle) return
-
-    setIsToggling(true)
-    try {
-      await onVisualCropToggle(!isVisualCropEnabled)
-    } finally {
-      setIsToggling(false)
-    }
+    await onVisualCropToggle(!isVisualCropEnabled)
   }
 
   const handleAspectRatioPreset = async (preset: (typeof ASPECT_RATIO_PRESETS)[0]) => {
@@ -110,12 +105,7 @@ export function CropAspectControl({
 
     // If visual crop is not enabled, enable it first
     if (!isVisualCropEnabled && onVisualCropToggle) {
-      setIsToggling(true)
-      try {
-        await onVisualCropToggle(true)
-      } finally {
-        setIsToggling(false)
-      }
+      await onVisualCropToggle(true)
     }
 
     // Apply the calculated crop values

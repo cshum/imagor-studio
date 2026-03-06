@@ -48,6 +48,7 @@ interface PreviewAreaProps {
   textEditingLayerId?: string | null
   onTextEdit?: (layerId: string | null) => void | Promise<void>
   onTextEditEnd?: (text: string | null) => void
+  isVisualCropToggling?: boolean
 }
 
 export function PreviewArea({
@@ -79,6 +80,7 @@ export function PreviewArea({
   textEditingLayerId = null,
   onTextEdit,
   onTextEditEnd,
+  isVisualCropToggling = false,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -563,6 +565,7 @@ export function PreviewArea({
                       })()}
                     {!visualCropEnabled &&
                       !isTransitioning &&
+                      !isVisualCropToggling &&
                       imageEditor &&
                       imageDimensions &&
                       imageDimensions.width > 0 &&
@@ -721,7 +724,9 @@ export function PreviewArea({
                         }
                       })()}
                     {/* Text editing overlay — rendered on top of everything when a text layer is active */}
-                    {effectiveTextEditingLayerId &&
+                    {!visualCropEnabled &&
+                      !isVisualCropToggling &&
+                      effectiveTextEditingLayerId &&
                       imageEditor &&
                       onTextEditEnd &&
                       (() => {
