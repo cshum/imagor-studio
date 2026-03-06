@@ -653,7 +653,10 @@ export function LayerPanel({
       {/* Layer list (scrollable) */}
       <div className='flex-1 overflow-y-auto px-1'>
         <div
-          className={cn('mb-2 space-y-0.5', visualCropEnabled && 'pointer-events-none opacity-50')}
+          className={cn(
+            'mb-2 space-y-0.5',
+            (visualCropEnabled || !!textEditingLayerId) && 'pointer-events-none opacity-50',
+          )}
         >
           <DndContext
             sensors={sensors}
