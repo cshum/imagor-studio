@@ -115,6 +115,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const [zoom, setZoom] = useState<number | 'fit'>('fit')
   const [actualScale, setActualScale] = useState<number | null>(null)
   const [textEditingLayerId, setTextEditingLayerId] = useState<string | null>(null)
+  const [isNewTextLayer, setIsNewTextLayer] = useState(false)
   const [isTextEditToggling, setIsTextEditToggling] = useState(false)
   const [isVisualCropToggling, setIsVisualCropToggling] = useState(false)
   const isSavedRef = useRef(false)
@@ -535,11 +536,13 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     }
     imageEditor.addLayer(newLayer)
     imageEditor.setSelectedLayerId(newLayer.id)
+    setIsNewTextLayer(true)
     imageEditor.setTextEditingLayerId(newLayer.id)
   }, [imageEditor, t])
 
   const handleTextEdit = useCallback(
     (layerId: string | null): Promise<void> => {
+      setIsNewTextLayer(false)
       imageEditor.setTextEditingLayerId(layerId)
       setIsTextEditToggling(true)
       // Return a Promise that resolves once the preview has loaded with the new
@@ -828,6 +831,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             isLeftColumnEmpty={isLeftColumnEmpty}
             isRightColumnEmpty={isRightColumnEmpty}
             textEditingLayerId={textEditingLayerId}
+            isNewTextLayer={isNewTextLayer}
             onTextEdit={handleTextEdit}
             onTextEditEnd={handleTextEditEnd}
             isVisualCropToggling={isVisualCropToggling}

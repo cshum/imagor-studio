@@ -49,6 +49,8 @@ interface PreviewAreaProps {
   onTextEdit?: (layerId: string | null) => void | Promise<void>
   onTextEditEnd?: (text: string | null) => void
   isVisualCropToggling?: boolean
+  /** When true, the text-edit overlay appears immediately (new layer, no rendered text to wait for) */
+  isNewTextLayer?: boolean
 }
 
 export function PreviewArea({
@@ -81,6 +83,7 @@ export function PreviewArea({
   onTextEdit,
   onTextEditEnd,
   isVisualCropToggling = false,
+  isNewTextLayer = false,
 }: PreviewAreaProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
@@ -116,10 +119,11 @@ export function PreviewArea({
   const [isTransitioning, setIsTransitioning] = useState(false)
   const previousEditingContextRef = useRef(editingContext)
 
-  // Mirrors textEditingLayerId but only updates after the preview image for that
-  // state has finished loading. This keeps the overlay in sync with the preview:
-  // — entering edit: overlay appears only after the text-skipped preview loads
-  // — exiting edit:  overlay stays until the rendered-text preview loads
+  // Mirrors textEditingLayerId but with asymmetric timing:
+  // — entering edit (null → value): overlay appears IMMEDIATELY so the textarea
+  //   is ready without waiting for the preview network round-trip.
+  // — exiting edit  (value → null): overlay stays until the rendered-text preview
+  //   loads (cleared in handleImageLoad) so there's no flash of missing text.
   //
   // ImageEditor appends a #te-{layerId} fragment to the previewUrl when in text-edit
   // mode. This guarantees the URL string changes (so PreloadImage always reloads and
@@ -127,6 +131,26 @@ export function PreviewArea({
   const [effectiveTextEditingLayerId, setEffectiveTextEditingLayerId] = useState<string | null>(
     null,
   )
+
+  // Track whether the current textEditingLayerId was set for a newly added layer
+  // (no rendered text to wait for) vs an existing layer (must wait for text-stripped preview).
+  const prevTextEditingLayerIdRef = useRef<string | null>(null)
+
+  // When entering text-edit mode for a NEW layer (isNewTextLayer=true), show the overlay
+  // immediately — the layer was never rendered so there's no text to wait for disappearing.
+  // For existing layers, keep the deferred behaviour (wait for handleImageLoad) so the
+  // overlay doesn't appear before the rendered text has been stripped from the preview.
+  useEffect(() => {
+    if (textEditingLayerId !== null && prevTextEditingLayerIdRef.current === null) {
+      if (isNewTextLayer) {
+        // New layer: no rendered text in the current preview — show overlay immediately
+        setEffectiveTextEditingLayerId(textEditingLayerId)
+      }
+      // Existing layer: wait for handleImageLoad (deferred) to avoid flash of rendered text
+    }
+    prevTextEditingLayerIdRef.current = textEditingLayerId
+    // null case is handled in handleImageLoad to avoid flash of missing text
+  }, [textEditingLayerId, isNewTextLayer])
 
   // Track if image fits in container (for smart centering)
   const [imageFitsInContainer, setImageFitsInContainer] = useState(true)
