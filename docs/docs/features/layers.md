@@ -4,43 +4,107 @@ sidebar_position: 3
 
 # Layers
 
-Stack multiple images and apply independent transformations to each layer. Layers support nesting for complex compositions.
+Stack multiple images and text on top of a base image, each with independent transformations. Layers support nesting for complex compositions.
 
 ## How Layers Work
 
-Each layer is an image with its own set of transformations (crop, resize, color adjustments, etc.). Layers are composited on top of the base image using imagor's layering capabilities.
+Each layer is an image or text element with its own set of transformations (crop, resize, color adjustments, etc.). Layers are composited on top of the base image using imagor's layering capabilities.
+
+## Layer Types
+
+### Image Layers
+
+Add images from your storage as overlay layers. Each image layer supports:
+
+- Independent crop, resize, and color adjustments
+- Opacity and blend mode controls
+- Position and dimension controls
+- Nested layers inside the layer
+
+### Text Layers
+
+Add text directly onto your image with full styling control:
+
+- **Add text layer** - Click "Add Layer → Add Text" in the layer panel
+- **Edit text** - Double-click a text layer or press `↵` to enter text editing mode
+- **Inline editing** - Edit text directly on the canvas with a live preview
+- **Exit text editing** - Press `Escape` or click outside the text area
+
+#### Text Properties
+
+- **Font family** - Choose from available fonts (sans, serif, mono, and more)
+- **Font style** - Regular, Bold, Italic, Bold Italic
+- **Font size** - Set size in pixels
+- **Color** - Set text color with hex input or color picker
+- **Alignment** - Horizontal alignment (left, center, right) and vertical alignment (top, middle, bottom)
+- **Word wrap** - Control how text wraps within the layer bounds
+- **Letter spacing** - Adjust spacing between characters
+- **Width** - Set the text box width; text wraps within this boundary
+
+## Layer Panel
+
+The layer panel (sidebar) shows all layers in the current context:
+
+- **Layer order** — Layers are listed top-to-bottom matching visual stacking order
+- **Layer icon** — Image (🖼) or Text (T) icon indicates layer type
+- **Layer name** — Auto-derived from text content or filename; shows custom name if renamed
+- **Visibility toggle** — Eye icon to show/hide individual layers
+- **Actions menu** — ⋮ button for layer operations
+- **Drag handle** — Grip icon to drag-and-drop reorder layers
 
 ## Layer Operations
 
 ### Adding Layers
 
-- **Add layer** - Upload or select an image to add as a new layer
-- **Layer from file** - Choose images from your storage
-- **Upload layer** - Upload new images directly
+- **Add Image Layer** — Select an image from your storage to add as a new layer
+- **Add Text Layer** — Add a new text layer centered on the canvas
 
 ### Managing Layers
 
-- **Reorder layers** - Drag layers to change stacking order
-- **Delete layers** - Remove layers from composition
-- **Duplicate layers** - Copy a layer with all its transformations
-- **Edit layer** - Click "Edit Layer" to apply transformations to that specific layer
-- **Replace image** - Swap layer image while keeping transformations
+- **Reorder layers** — Drag layers in the panel, or use Move Up (⌘]) / Move Down (⌘[)
+- **Toggle visibility** — Click the eye icon to show/hide a layer without deleting it
+- **Rename layer** — Right-click → Rename Layer to give a custom name
+- **Duplicate layer** — Right-click → Duplicate Layer (⌘D) to copy with all transformations
+- **Delete layer** — Right-click → Delete Layer (⌫) or press Backspace/Delete
+- **Edit layer** — Double-click or press `↵` to enter the layer's editing context (image layers) or text editing mode (text layers)
+- **Replace image** — Swap a layer's image while keeping all transformations
+
+### Layer Naming
+
+Layers display names automatically derived from their content:
+
+- **Text layers** — Shows the text content (first 60 characters)
+- **Image layers** — Shows the filename
+- **Custom name** — Rename a layer to override the auto-derived name
+- **Duplicated layers** — If the original has a custom name, the copy gets "Name Copy"; otherwise the duplicate inherits the same auto-derived display
 
 ### Layer Properties
 
-- **Opacity** - Adjust layer transparency (0-100%)
-- **Blend mode** - Set how layer blends with layers below (normal, multiply, screen, overlay, etc.)
-- **Position** - Set layer X/Y coordinates
-- **Dimensions** - Resize layer independently
+- **Opacity** — Adjust layer transparency (0–100%)
+- **Blend mode** — Set how the layer blends with layers below (normal, multiply, screen, overlay, etc.)
+- **Position** — Set layer X/Y coordinates
+- **Dimensions** — Resize layer independently
+
+## Context Menu
+
+Right-click any layer (in the panel, on the canvas overlay, or on the layer region) to access:
+
+- **Edit Text** / **Edit Layer** — Enter editing mode (`↵`)
+- **Rename Layer** — Give the layer a custom name
+- **Duplicate Layer** — Copy the layer (`⌘D`)
+- **Move Up** — Bring layer forward (`⌘]`)
+- **Move Down** — Send layer backward (`⌘[`)
+- **Show/Hide Layer** — Toggle visibility
+- **Delete Layer** — Remove the layer (`⌫`)
 
 ## Nested Layers
 
-Layers can contain other layers, creating a hierarchy:
+Image layers can contain other layers, creating a hierarchy:
 
-- **Edit layer** - Enter a layer to add nested layers inside it
-- **Layer breadcrumb** - Shows current editing level
-- **Exit to parent** - Navigate back up the layer hierarchy
-- **Independent transformations** - Each nesting level has its own transformations
+- **Edit layer** — Enter a layer to add nested layers inside it
+- **Layer breadcrumb** — Shows current editing level
+- **Exit to parent** — Navigate back up the layer hierarchy
+- **Independent transformations** — Each nesting level has its own transformations
 
 ### Use Cases for Nesting
 
@@ -50,7 +114,7 @@ Layers can contain other layers, creating a hierarchy:
 
 ## Layer Editing
 
-When editing a layer, all standard editing controls are available:
+When editing an image layer, all standard editing controls are available:
 
 - Crop & aspect
 - Dimensions & resize
@@ -63,13 +127,18 @@ Each layer maintains its own transformation state.
 
 ## Visual Controls
 
-- **Layer overlay** - Visual representation of layer boundaries in preview
-- **Layer regions** - Colored outlines showing each layer's position
-- **Resize handles** - Drag to resize layers visually
-- **Position handles** - Drag to reposition layers
+- **Layer overlay** — Visual representation of the selected layer's boundaries with resize handles
+- **Layer regions** — Colored outlines showing each layer's position when no layer is selected
+- **Resize handles** — Drag to resize layers visually
+- **Position handles** — Drag to reposition layers
 
 ## Keyboard Shortcuts
 
-- **Cmd/Ctrl+D** - Duplicate selected layer
-- **Delete/Backspace** - Delete selected layer
-- **Arrow keys** - Move selected layer position
+| Shortcut | Action |
+|---|---|
+| `↵` | Edit Text (text layer) or Edit Layer (image layer) |
+| `⌘D` | Duplicate selected layer |
+| `⌫` / `Delete` | Delete selected layer |
+| `⌘]` | Move layer up (bring forward) |
+| `⌘[` | Move layer down (send backward) |
+| Arrow keys | Move selected layer position |

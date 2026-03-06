@@ -88,4 +88,7 @@ The image editor generates imagor URLs that apply transformations when images ar
 
 - **Cmd/Ctrl+Z** - Undo
 - **Cmd/Ctrl+Shift+Z** - Redo
-- **ESC** - Close editor
+- **C** - Toggle crop mode on/off
+- **↵** - Apply/confirm crop (when crop mode is active)
+- **ESC** - Cancel crop / exit nested layer / close editor
+- **Cmd/Ctrl+S** - Save template

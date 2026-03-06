@@ -27,19 +27,34 @@ Navigate and control Imagor Studio using keyboard shortcuts.
 
 - **Cmd/Ctrl+Z** - Undo last change
 - **Cmd/Ctrl+Shift+Z** - Redo
-- **ESC** - Close editor
+
+### Crop
+
+- **C** - Toggle crop mode on/off
+- **↵** - Apply/confirm crop (when crop mode is active)
+- **ESC** - Cancel crop / exit crop mode
 
 ### Layers
 
-- **Cmd/Ctrl+D** - Duplicate selected layer
-- **Delete/Backspace** - Delete selected layer
-- **Arrow Keys** - Move selected layer position (when layer is selected)
+| Shortcut | Action |
+|---|---|
+| `↵` | Edit Text (text layer) or Edit Layer (image layer) |
+| `⌘D` / `Ctrl+D` | Duplicate selected layer |
+| `⌫` / `Delete` | Delete selected layer |
+| `⌘]` / `Ctrl+]` | Move layer up (bring forward) |
+| `⌘[` / `Ctrl+[` | Move layer down (send backward) |
+| Arrow Keys | Move selected layer position |
+| `ESC` | Exit nested layer context |
+
+### Templates
+
+- **Cmd/Ctrl+S** - Save template (existing) or open Save dialog (new)
+- **Cmd/Ctrl+Shift+S** - Save template as (always opens dialog)
 
 ## General
 
 ### File Operations
 
-- **Cmd/Ctrl+S** - Save (when in editor or template)
 - **ESC** - Close dialogs and modals
 
 ## Accessibility
