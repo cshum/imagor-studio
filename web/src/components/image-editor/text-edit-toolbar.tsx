@@ -38,6 +38,8 @@ interface TextEditToolbarProps {
   onUpdate: (updates: Partial<TextLayer>) => void
   /** Text alignment — toolbar anchor follows the text anchor point. */
   align?: TextLayer['align']
+  /** Maximum font size in canvas pixels — should be Math.max(canvasWidth, canvasHeight). */
+  maxFontSize?: number
 }
 
 // label = what the user sees; value = font param sent to imagor; cssFamily = preview style
@@ -56,6 +58,7 @@ export function TextEditToolbar({
   toolbarRef,
   onUpdate,
   align,
+  maxFontSize = 500,
 }: TextEditToolbarProps) {
   const { t } = useTranslation()
 
@@ -267,7 +270,7 @@ export function TextEditToolbar({
             label='Font size'
             value={layer.fontSize}
             min={4}
-            max={500}
+            max={maxFontSize}
             step={1}
             onChange={(v) => onUpdate({ fontSize: v })}
           />

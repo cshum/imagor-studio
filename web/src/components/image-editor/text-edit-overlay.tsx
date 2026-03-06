@@ -302,11 +302,13 @@ export function TextEditOverlay({
     spacing: 0,
   })
 
+  // Dynamic font size limits — max scales with the canvas so large canvases
+  // (e.g. 4000px) aren't artificially capped at 500px.
+  const MIN_FONT_SIZE = 4
+  const MAX_FONT_SIZE = Math.max(baseImageWidth, baseImageHeight)
+
   useEffect(() => {
     if (!fontResizeDragging || scale <= 0) return
-
-    const MIN_FONT_SIZE = 4
-    const MAX_FONT_SIZE = 500
 
     const handleMouseMove = (e: MouseEvent) => {
       const { y, initialFontSize, lineCount, spacing } = fontResizeDragStartRef.current
@@ -356,6 +358,7 @@ export function TextEditOverlay({
         toolbarRef={toolbarRef}
         onUpdate={handleToolbarUpdate}
         align={draftLayer.align}
+        maxFontSize={MAX_FONT_SIZE}
       />
 
       {/*
