@@ -502,7 +502,15 @@ export function LayerPanel({
       const layer = layers.find((l) => l.id === layerId)
       if (layer) {
         setRenamingLayerId(layerId)
-        setNewLayerName(layer.name)
+        // Pre-fill with the current display name (same as shown in layer list) — Figma-style UX.
+        // For text layers with no custom name, use the text content as the suggested name.
+        // For image layers with no custom name, use the filename.
+        const displayName = layer.name
+          ? layer.name
+          : layer.type === 'text'
+            ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60)
+            : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || ''
+        setNewLayerName(displayName)
         // Small delay to let dropdown fully close before opening modal dialog
         setTimeout(() => {
           setRenameDialogOpen(true)
@@ -786,6 +794,10 @@ export function LayerPanel({
                 if (e.key === 'Enter' && newLayerName.trim()) {
                   handleConfirmRename()
                 }
+              }}
+              onFocus={(e) => {
+                const input = e.target
+                setTimeout(() => input.select(), 0)
               }}
               placeholder={t('imageEditor.layers.enterLayerName')}
               autoFocus
