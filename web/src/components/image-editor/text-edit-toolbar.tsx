@@ -248,16 +248,17 @@ export function TextEditToolbar({
 
       {/* Color swatch */}
       <div
-        className='flex h-8 w-8 items-center justify-center overflow-hidden rounded border'
+        className='relative h-8 w-8 cursor-pointer overflow-hidden rounded border'
         title={t('imageEditor.layers.textColor')}
       >
         <input
           type='color'
           value={colorHex}
           onChange={(e) => onUpdate({ color: e.target.value.replace('#', '') })}
-          className='h-9 w-9 -translate-x-0.5 -translate-y-0.5 cursor-pointer border-0 bg-transparent p-0'
+          className='absolute inset-0 h-full w-full cursor-pointer opacity-0'
           tabIndex={-1}
         />
+        <div className='h-full w-full rounded' style={{ backgroundColor: colorHex }} />
       </div>
 
       <div className='bg-border mx-0.5 h-5 w-px' />
