@@ -1,15 +1,12 @@
 import { useCallback } from 'react'
 
-import {
-  LayerContextMenu,
-  type LayerContextMenuCallbacks,
-} from '@/components/image-editor/layer-context-menu'
-import type { Layer } from '@/lib/image-editor'
+import { LayerContextMenu } from '@/components/image-editor/layer-context-menu'
+import type { ImageEditor, Layer } from '@/lib/image-editor'
 import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
-interface LayerRegionsOverlayProps extends Partial<LayerContextMenuCallbacks> {
+interface LayerRegionsOverlayProps {
   layers: Layer[]
   baseImageWidth: number
   baseImageHeight: number
@@ -18,6 +15,8 @@ interface LayerRegionsOverlayProps extends Partial<LayerContextMenuCallbacks> {
   paddingTop?: number
   paddingBottom?: number
   onLayerSelect: (layerId: string) => void
+  /** When provided, enables the right-click context menu for each layer region. */
+  imageEditor?: ImageEditor
   onTextEdit?: (layerId: string) => void
 }
 
@@ -30,12 +29,8 @@ export function LayerRegionsOverlay({
   paddingTop = 0,
   paddingBottom = 0,
   onLayerSelect,
+  imageEditor,
   onTextEdit,
-  onEdit,
-  onRename,
-  onDuplicate,
-  onToggleVisibility,
-  onDelete,
 }: LayerRegionsOverlayProps) {
   // Calculate content area dimensions (image without padding)
   // Layers are positioned relative to the content area, not the total canvas
@@ -109,13 +104,15 @@ export function LayerRegionsOverlay({
     return null
   }
 
-  const hasContextMenu = !!(onEdit && onRename && onDuplicate && onToggleVisibility && onDelete)
-
   return (
     <div className='pointer-events-none absolute inset-0 z-10 h-full w-full'>
-      {visibleLayers.map((layer) => {
+      {visibleLayers.map((layer, visibleIdx) => {
         const styles = getLayerStyles(layer)
         const isTextLayer = layer.type === 'text'
+        // isFirst = topmost visible layer (highest index in visible array)
+        // isLast  = bottommost visible layer (index 0)
+        const isFirst = visibleIdx === visibleLayers.length - 1
+        const isLast = visibleIdx === 0
         const regionDiv = (
           <div
             className={cn(
@@ -132,17 +129,15 @@ export function LayerRegionsOverlay({
             onDoubleClick={isTextLayer && onTextEdit ? () => onTextEdit(layer.id) : undefined}
           />
         )
-        if (hasContextMenu && onEdit && onRename && onDuplicate && onToggleVisibility && onDelete) {
+        if (imageEditor) {
           return (
             <LayerContextMenu
               key={layer.id}
               layer={layer}
-              onEdit={onEdit}
-              onTextEdit={onTextEdit ?? (() => {})}
-              onRename={onRename}
-              onDuplicate={onDuplicate}
-              onToggleVisibility={onToggleVisibility}
-              onDelete={onDelete}
+              isFirst={isFirst}
+              isLast={isLast}
+              imageEditor={imageEditor}
+              onTextEdit={onTextEdit}
             >
               {regionDiv}
             </LayerContextMenu>

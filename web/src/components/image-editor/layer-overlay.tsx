@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import {
-  LayerContextMenu,
-  type LayerContextMenuCallbacks,
-} from '@/components/image-editor/layer-context-menu'
-import type { Layer } from '@/lib/image-editor'
+import { LayerContextMenu } from '@/components/image-editor/layer-context-menu'
+import type { ImageEditor, Layer } from '@/lib/image-editor'
 import {
   buildDragUpdates,
   calculateOverlayLayout,
@@ -14,7 +11,7 @@ import {
 } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
-interface LayerOverlayProps extends Partial<LayerContextMenuCallbacks> {
+interface LayerOverlayProps {
   layer: Layer
   layerX: string | number
   layerY: string | number
@@ -43,6 +40,9 @@ interface LayerOverlayProps extends Partial<LayerContextMenuCallbacks> {
   onEnterEditMode?: () => void
   /** Called when a resize handle is double-clicked. Used by text layers to reset width/height to auto. */
   onHandleDoubleClick?: (handle: ResizeHandle) => void
+  /** When provided, enables the right-click context menu for this layer. */
+  imageEditor?: ImageEditor
+  onTextEdit?: (layerId: string) => void
 }
 
 export function LayerOverlay({
@@ -66,12 +66,8 @@ export function LayerOverlay({
   onDeselect,
   onEnterEditMode,
   onHandleDoubleClick,
-  onEdit,
+  imageEditor,
   onTextEdit,
-  onRename,
-  onDuplicate,
-  onToggleVisibility,
-  onDelete,
 }: LayerOverlayProps) {
   // Calculate CSS percentage strings, drag capabilities and alignment flags
   const { leftPercent, topPercent, widthPercent, heightPercent, canDragX, canDragY } =
@@ -327,6 +323,18 @@ export function LayerOverlay({
     [onEnterEditMode],
   )
 
+  // Compute isFirst/isLast from the live layer list (for disabling Move Up/Down menu items)
+  let isFirst = false
+  let isLast = false
+  if (imageEditor) {
+    const contextLayers = imageEditor.getContextLayers()
+    const idx = contextLayers.findIndex((l) => l.id === layer.id)
+    if (idx !== -1) {
+      isFirst = idx === contextLayers.length - 1 // topmost visually
+      isLast = idx === 0 // bottommost visually
+    }
+  }
+
   const layerBoxContent = (
     <div
       ref={layerBoxRef}
@@ -387,16 +395,14 @@ export function LayerOverlay({
       className='pointer-events-auto absolute inset-0 z-20 h-full w-full'
       onMouseDown={handleOverlayMouseDown}
     >
-      {/* Layer box — wrapped in context menu when callbacks are provided */}
-      {onEdit && onTextEdit && onRename && onDuplicate && onToggleVisibility && onDelete ? (
+      {/* Layer box — wrapped in context menu when imageEditor is provided */}
+      {imageEditor ? (
         <LayerContextMenu
           layer={layer}
-          onEdit={onEdit}
+          isFirst={isFirst}
+          isLast={isLast}
+          imageEditor={imageEditor}
           onTextEdit={onTextEdit}
-          onRename={onRename}
-          onDuplicate={onDuplicate}
-          onToggleVisibility={onToggleVisibility}
-          onDelete={onDelete}
         >
           {layerBoxContent}
         </LayerContextMenu>

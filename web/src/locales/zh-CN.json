@@ -838,6 +838,8 @@
       "showLayer": "显示图层",
       "deleteLayer": "删除图层",
       "duplicateLayer": "复制图层",
+      "moveUp": "向上移动",
+      "moveDown": "向下移动",
       "failedToAddLayer": "添加图层失败",
       "selectImage": "选择图层图片",
       "selectImageDescription": "选择要添加为新图层的图片",

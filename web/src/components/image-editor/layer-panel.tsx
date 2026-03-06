@@ -20,6 +20,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
+  ArrowDown,
+  ArrowUp,
   ChevronDown,
   Copy,
   Edit,
@@ -80,29 +82,25 @@ interface LayerPanelProps {
 
 interface SortableLayerItemProps {
   layer: Layer
+  isFirst: boolean
+  isLast: boolean
   isSelected: boolean
   isEditing: boolean
   isTextEditing: boolean
+  imageEditor: ImageEditor
   onSelect: (layerId: string) => void
-  onToggleVisibility: (layerId: string) => void
-  onDelete: (layerId: string) => void
-  onEdit: (layerId: string) => void
-  onDuplicate: (layerId: string) => void
-  onRename: (layerId: string) => void
   onTextEdit: (layerId: string) => void
 }
 
 function SortableLayerItem({
   layer,
+  isFirst,
+  isLast,
   isSelected,
   isEditing,
   isTextEditing,
+  imageEditor,
   onSelect,
-  onToggleVisibility,
-  onDelete,
-  onEdit,
-  onDuplicate,
-  onRename,
   onTextEdit,
 }: SortableLayerItemProps) {
   const { t } = useTranslation()
@@ -127,16 +125,43 @@ function SortableLayerItem({
       ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
       : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || ''
 
+  // Inline action helpers (used by the dropdown menu)
+  const handleEdit = () => imageEditor.switchContext(layer.id)
+  const handleToggleVisibility = () =>
+    imageEditor.updateLayer(layer.id, { visible: !layer.visible })
+  const handleDuplicate = () => imageEditor.duplicateLayer(layer.id)
+  const handleMoveUp = () => {
+    const layers = imageEditor.getContextLayers()
+    const idx = layers.findIndex((l) => l.id === layer.id)
+    if (idx < layers.length - 1) {
+      const newOrder = [...layers]
+      ;[newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]]
+      imageEditor.reorderLayers(newOrder)
+    }
+  }
+  const handleMoveDown = () => {
+    const layers = imageEditor.getContextLayers()
+    const idx = layers.findIndex((l) => l.id === layer.id)
+    if (idx > 0) {
+      const newOrder = [...layers]
+      ;[newOrder[idx], newOrder[idx - 1]] = [newOrder[idx - 1], newOrder[idx]]
+      imageEditor.reorderLayers(newOrder)
+    }
+  }
+  const handleRename = () => {
+    imageEditor.setSelectedLayerId(layer.id)
+    window.dispatchEvent(new CustomEvent('layer:rename', { detail: { layerId: layer.id } }))
+  }
+  const handleDelete = () => imageEditor.removeLayer(layer.id)
+
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
       <LayerContextMenu
         layer={layer}
-        onEdit={onEdit}
+        isFirst={isFirst}
+        isLast={isLast}
+        imageEditor={imageEditor}
         onTextEdit={onTextEdit}
-        onRename={onRename}
-        onDuplicate={onDuplicate}
-        onToggleVisibility={onToggleVisibility}
-        onDelete={onDelete}
       >
         <div
           className={cn(
@@ -151,7 +176,7 @@ function SortableLayerItem({
             if (isText) {
               onTextEdit(layer.id)
             } else {
-              onEdit(layer.id)
+              handleEdit()
             }
           }}
         >
@@ -190,7 +215,7 @@ function SortableLayerItem({
               className='h-7 w-7'
               onClick={(e) => {
                 e.stopPropagation()
-                onToggleVisibility(layer.id)
+                handleToggleVisibility()
               }}
               title={
                 layer.visible
@@ -232,26 +257,21 @@ function SortableLayerItem({
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation()
-                      onEdit(layer.id)
+                      handleEdit()
                     }}
                   >
                     <Edit className='mr-2 h-4 w-4' />
                     {t('imageEditor.layers.editLayer')}
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem
-                  onSelect={() => {
-                    // onSelect fires after menu closes (Radix behavior)
-                    onRename(layer.id)
-                  }}
-                >
+                <DropdownMenuItem onSelect={handleRename}>
                   <Pencil className='mr-2 h-4 w-4' />
                   {t('imageEditor.layers.renameLayer')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation()
-                    onDuplicate(layer.id)
+                    handleDuplicate()
                   }}
                 >
                   <div className='flex flex-1 items-center'>
@@ -264,7 +284,28 @@ function SortableLayerItem({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation()
-                    onToggleVisibility(layer.id)
+                    handleMoveUp()
+                  }}
+                  disabled={isFirst}
+                >
+                  <ArrowUp className='mr-2 h-4 w-4' />
+                  {t('imageEditor.layers.moveUp')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleMoveDown()
+                  }}
+                  disabled={isLast}
+                >
+                  <ArrowDown className='mr-2 h-4 w-4' />
+                  {t('imageEditor.layers.moveDown')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleToggleVisibility()
                   }}
                 >
                   <div className='flex flex-1 items-center'>
@@ -284,7 +325,7 @@ function SortableLayerItem({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation()
-                    onDelete(layer.id)
+                    handleDelete()
                   }}
                   className='text-destructive'
                 >
@@ -418,35 +459,6 @@ export function LayerPanel({
     [imageEditor],
   )
 
-  const handleToggleVisibility = useCallback(
-    (layerId: string) => {
-      const layer = layers.find((l) => l.id === layerId)
-      if (layer) {
-        imageEditor.updateLayer(layerId, { visible: !layer.visible })
-      }
-    },
-    [imageEditor, layers],
-  )
-
-  const handleDelete = useCallback(
-    (layerId: string) => {
-      // Exit edit mode if deleting the editing layer
-      if (editingContext === layerId) {
-        imageEditor.switchContext(null)
-      }
-      // removeLayer will automatically clear selection if needed
-      imageEditor.removeLayer(layerId)
-    },
-    [imageEditor, editingContext],
-  )
-
-  const handleDuplicateLayer = useCallback(
-    (layerId: string) => {
-      imageEditor.duplicateLayer(layerId)
-    },
-    [imageEditor],
-  )
-
   const handleRenameLayer = useCallback(
     (layerId: string) => {
       const layer = layers.find((l) => l.id === layerId)
@@ -481,24 +493,12 @@ export function LayerPanel({
 
   const handleSelectLayer = useCallback(
     (layerId: string) => {
-      // Select layer without toggling (clicking same layer keeps it selected)
       imageEditor.setSelectedLayerId(layerId)
     },
     [imageEditor],
   )
 
-  const handleEditLayer = useCallback(
-    (layerId: string) => {
-      // Enter edit mode for this layer (switchContext will auto-select and notify via callback)
-      imageEditor.switchContext(layerId)
-    },
-    [imageEditor],
-  )
-
   const handleSelectBase = useCallback(() => {
-    // Deselect all layers (but stay in current editing context)
-    // This allows clicking "Base Layer" to view the layer's base image
-    // without exiting back to root
     imageEditor.setSelectedLayerId(null)
   }, [imageEditor])
 
@@ -534,7 +534,7 @@ export function LayerPanel({
   // Get selected layer for properties panel
   const selectedLayer = selectedLayerId ? layers.find((l) => l.id === selectedLayerId) : null
 
-  // Listen for rename events dispatched from canvas overlays
+  // Listen for rename events dispatched from LayerContextMenu (canvas overlays + layer panel)
   useEffect(() => {
     const handleRenameEvent = (e: Event) => {
       const layerId = (e as CustomEvent<{ layerId: string }>).detail?.layerId
@@ -560,23 +560,16 @@ export function LayerPanel({
 
       if (event.key === 'Delete' || event.key === 'Backspace') {
         event.preventDefault()
-        handleDelete(selectedLayerId)
+        imageEditor.removeLayer(selectedLayerId)
       } else if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
         event.preventDefault()
-        handleDuplicateLayer(selectedLayerId)
+        imageEditor.duplicateLayer(selectedLayerId)
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [
-    selectedLayerId,
-    visualCropEnabled,
-    activeId,
-    renameDialogOpen,
-    handleDelete,
-    handleDuplicateLayer,
-  ])
+  }, [selectedLayerId, visualCropEnabled, activeId, renameDialogOpen, imageEditor])
 
   return (
     <div className='flex h-full flex-col'>
@@ -625,22 +618,27 @@ export function LayerPanel({
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={layers.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-              {[...layers].reverse().map((layer) => (
-                <SortableLayerItem
-                  key={layer.id}
-                  layer={layer}
-                  isSelected={selectedLayerId === layer.id}
-                  isEditing={editingContext === layer.id}
-                  isTextEditing={textEditingLayerId === layer.id}
-                  onSelect={handleSelectLayer}
-                  onToggleVisibility={handleToggleVisibility}
-                  onDelete={handleDelete}
-                  onEdit={handleEditLayer}
-                  onDuplicate={handleDuplicateLayer}
-                  onRename={handleRenameLayer}
-                  onTextEdit={onTextEdit}
-                />
-              ))}
+              {[...layers].reverse().map((layer, reversedIdx) => {
+                // In the reversed (visual) array: index 0 = topmost layer
+                // isFirst = topmost visually (last in storage array)
+                // isLast  = bottommost visually (first in storage array)
+                const isFirst = reversedIdx === 0
+                const isLast = reversedIdx === layers.length - 1
+                return (
+                  <SortableLayerItem
+                    key={layer.id}
+                    layer={layer}
+                    isFirst={isFirst}
+                    isLast={isLast}
+                    isSelected={selectedLayerId === layer.id}
+                    isEditing={editingContext === layer.id}
+                    isTextEditing={textEditingLayerId === layer.id}
+                    imageEditor={imageEditor}
+                    onSelect={handleSelectLayer}
+                    onTextEdit={onTextEdit}
+                  />
+                )
+              })}
             </SortableContext>
             <DragOverlay>
               {activeLayer ? (
@@ -712,7 +710,7 @@ export function LayerPanel({
               onAspectRatioLockChange={onLayerAspectRatioLockChange}
               visualCropEnabled={visualCropEnabled}
               onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
-              onEditLayer={() => handleEditLayer(selectedLayer.id)}
+              onEditLayer={() => imageEditor.switchContext(selectedLayer.id)}
               onReplaceImage={() => onReplaceImage(selectedLayer.id)}
             />
           )}
