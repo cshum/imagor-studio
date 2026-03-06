@@ -36,6 +36,8 @@ interface TextEditToolbarProps {
   canvasContainerRef: React.RefObject<HTMLElement | null>
   toolbarRef: React.RefObject<HTMLDivElement | null>
   onUpdate: (updates: Partial<TextLayer>) => void
+  /** Text alignment — toolbar anchor follows the text anchor point. */
+  align?: TextLayer['align']
 }
 
 // label = what the user sees; value = font param sent to imagor; cssFamily = preview style
@@ -53,6 +55,7 @@ export function TextEditToolbar({
   canvasContainerRef,
   toolbarRef,
   onUpdate,
+  align,
 }: TextEditToolbarProps) {
   const { t } = useTranslation()
 
@@ -74,28 +77,53 @@ export function TextEditToolbar({
     const canvasTopScreen = rect.top + topFrac * rect.height
     const canvasLeftScreen = rect.left + leftFrac * rect.width
     const canvasRightScreen = rect.left + rightFrac * rect.width
+    const canvasCenterScreen = (canvasLeftScreen + canvasRightScreen) / 2
     const toolbarW = toolbar.offsetWidth
 
     // Always render above the layer top edge; use bottom so it doesn't shift
     // if the toolbar itself changes height.
     const bottomFixed = window.innerHeight - canvasTopScreen + 4
 
-    // Horizontal: left-anchor if space, right-anchor near right edge, else center.
+    // Horizontal anchor follows text alignment (Canva/Figma-style UX):
+    //   left-aligned  → anchor toolbar to left edge of text box
+    //   center-aligned → center toolbar over text box
+    //   right-aligned  → anchor toolbar to right edge of text box
+    // Fall back gracefully if there's not enough screen space.
     const MARGIN = 8
     let left: number | undefined
     let right: number | undefined
     let transform: string | undefined
 
-    const spaceToRight = window.innerWidth - canvasLeftScreen
-    const spaceToLeft = canvasRightScreen
-
-    if (spaceToRight >= toolbarW + MARGIN) {
-      left = canvasLeftScreen
-    } else if (spaceToLeft >= toolbarW + MARGIN) {
-      right = window.innerWidth - canvasRightScreen
+    if (align === 'centre') {
+      // Center: try to center the toolbar over the text box
+      const idealLeft = canvasCenterScreen - toolbarW / 2
+      if (idealLeft >= MARGIN && idealLeft + toolbarW <= window.innerWidth - MARGIN) {
+        left = idealLeft
+      } else if (idealLeft < MARGIN) {
+        left = MARGIN
+      } else {
+        left = window.innerWidth - toolbarW - MARGIN
+      }
+    } else if (align === 'high') {
+      // Right-aligned: anchor to right edge, fall back to left-anchor if no space
+      const spaceToLeft = canvasRightScreen
+      if (spaceToLeft >= toolbarW + MARGIN) {
+        right = window.innerWidth - canvasRightScreen
+      } else {
+        left = Math.max(MARGIN, canvasLeftScreen)
+      }
     } else {
-      left = (canvasLeftScreen + canvasRightScreen) / 2
-      transform = 'translateX(-50%)'
+      // Left-aligned (default): anchor to left edge, fall back to right-anchor or center
+      const spaceToRight = window.innerWidth - canvasLeftScreen
+      const spaceToLeft = canvasRightScreen
+      if (spaceToRight >= toolbarW + MARGIN) {
+        left = canvasLeftScreen
+      } else if (spaceToLeft >= toolbarW + MARGIN) {
+        right = window.innerWidth - canvasRightScreen
+      } else {
+        left = canvasCenterScreen
+        transform = 'translateX(-50%)'
+      }
     }
 
     setFixedStyle({
@@ -109,7 +137,7 @@ export function TextEditToolbar({
       whiteSpace: 'nowrap',
       visibility: 'visible',
     })
-  }, [canvasContainerRef, toolbarRef, topFrac, leftFrac, rightFrac])
+  }, [canvasContainerRef, toolbarRef, topFrac, leftFrac, rightFrac, align])
 
   // Recompute on every relevant change.
   useLayoutEffect(() => {

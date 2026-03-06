@@ -355,6 +355,7 @@ export function TextEditOverlay({
         canvasContainerRef={containerRef}
         toolbarRef={toolbarRef}
         onUpdate={handleToolbarUpdate}
+        align={draftLayer.align}
       />
 
       {/*
