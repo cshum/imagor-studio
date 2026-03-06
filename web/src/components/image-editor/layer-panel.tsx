@@ -30,9 +30,7 @@ import {
   Plus,
   Type,
 } from 'lucide-react'
-import { toast } from 'sonner'
 
-import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
 import { TextLayerControls } from '@/components/image-editor/controls/text-layer-controls'
 import { LayerContextMenu, LayerDropdownMenu } from '@/components/image-editor/layer-menu'
@@ -68,7 +66,7 @@ interface LayerPanelProps {
   onLayerAspectRatioLockChange: (locked: boolean) => void
   visualCropEnabled?: boolean
   onReplaceImage: (layerId: string | null) => void
-  onAddLayer: (paths: string[]) => Promise<void>
+  onAddImageLayer: () => void
   onAddTextLayer: () => void
   onTextEdit: (layerId: string | null) => Promise<void>
 }
@@ -253,7 +251,7 @@ export function LayerPanel({
   onLayerAspectRatioLockChange,
   visualCropEnabled = false,
   onReplaceImage,
-  onAddLayer,
+  onAddImageLayer,
   onAddTextLayer,
   onTextEdit,
 }: LayerPanelProps) {
@@ -261,8 +259,6 @@ export function LayerPanel({
   const imagePath = imageEditor.getImagePath()
   const layers = imageEditor.getContextLayers()
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [filePickerOpen, setFilePickerOpen] = useState(false)
-  const [isAddingLayer, setIsAddingLayer] = useState(false)
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingLayerId, setRenamingLayerId] = useState<string | null>(null)
   const [newLayerName, setNewLayerName] = useState('')
@@ -362,25 +358,6 @@ export function LayerPanel({
     [imageEditor],
   )
 
-  const handleAddLayer = useCallback(
-    async (paths: string[]) => {
-      if (paths.length === 0) {
-        return
-      }
-
-      setIsAddingLayer(true)
-      try {
-        await onAddLayer(paths)
-      } catch (error) {
-        console.error('Failed to add layer:', error)
-        toast.error(t('imageEditor.layers.failedToAddLayer'))
-      } finally {
-        setIsAddingLayer(false)
-      }
-    },
-    [onAddLayer, t],
-  )
-
   // Get the active layer for DragOverlay
   const activeLayer = activeId ? layers.find((l) => l.id === activeId) : null
 
@@ -472,7 +449,7 @@ export function LayerPanel({
             <Button
               variant='outline'
               className='w-full'
-              disabled={isAddingLayer || visualCropEnabled || !!textEditingLayerId}
+              disabled={visualCropEnabled || !!textEditingLayerId}
             >
               <Plus className='mr-1 h-4 w-4' />
               {t('imageEditor.layers.addLayer')}
@@ -483,7 +460,7 @@ export function LayerPanel({
             align='start'
             style={{ minWidth: 'var(--radix-dropdown-menu-trigger-width)' }}
           >
-            <DropdownMenuItem onSelect={() => setFilePickerOpen(true)}>
+            <DropdownMenuItem onSelect={() => setTimeout(onAddImageLayer, 0)}>
               <div className='flex flex-1 items-center'>
                 <Image className='mr-2 h-4 w-4' />
                 {t('imageEditor.layers.addImage')}
@@ -624,18 +601,6 @@ export function LayerPanel({
           </div>
         </div>
       )}
-
-      {/* File Picker Dialog */}
-      <FilePickerDialog
-        open={filePickerOpen}
-        onOpenChange={setFilePickerOpen}
-        onSelect={handleAddLayer}
-        selectionMode='single'
-        fileType='images'
-        title={t('imageEditor.layers.selectImage')}
-        description={t('imageEditor.layers.selectImageDescription')}
-        confirmButtonText={t('imageEditor.layers.addLayer')}
-      />
 
       {/* Rename Layer Dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>

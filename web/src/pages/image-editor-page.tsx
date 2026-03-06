@@ -791,7 +791,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             onLayerAspectRatioLockChange={setLayerAspectRatioLockToggle}
             visualCropEnabled={visualCropEnabled}
             onReplaceImage={handleReplaceImageClick}
-            onAddLayer={handleAddLayerWithViewport}
+            onAddImageLayer={() => setAddLayerDialogOpen(true)}
             onAddTextLayer={handleAddTextLayer}
             onTextEdit={handleTextEdit}
           />
