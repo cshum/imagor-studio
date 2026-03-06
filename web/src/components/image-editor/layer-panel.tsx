@@ -29,7 +29,6 @@ import {
   Layers,
   MoreVertical,
   Pencil,
-  Plus,
   Trash2,
   Type,
 } from 'lucide-react'
@@ -413,7 +412,6 @@ export function LayerPanel({
   const imagePath = imageEditor.getImagePath()
   const layers = imageEditor.getContextLayers()
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [addLayerDropdownOpen, setAddLayerDropdownOpen] = useState(false)
   const [filePickerOpen, setFilePickerOpen] = useState(false)
   const [isAddingLayer, setIsAddingLayer] = useState(false)
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
@@ -601,42 +599,28 @@ export function LayerPanel({
 
   return (
     <div className='flex h-full flex-col'>
-      {/* Add Layer button */}
-      <div className='px-1 pb-2'>
-        <DropdownMenu open={addLayerDropdownOpen} onOpenChange={setAddLayerDropdownOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant='outline'
-              disabled={isAddingLayer || visualCropEnabled}
-              className='w-full'
-            >
-              <Plus className='mr-1 h-4 w-4' />
-              {t('imageEditor.layers.addLayer')}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='center' className='w-[--radix-dropdown-menu-trigger-width]'>
-            <DropdownMenuItem
-              onSelect={() => {
-                // Close dropdown first; delay opening dialog until Radix finishes
-                // releasing its focus lock — otherwise pointer events stay blocked.
-                setAddLayerDropdownOpen(false)
-                setTimeout(() => setFilePickerOpen(true), 150)
-              }}
-            >
-              <Image className='mr-2 h-4 w-4' />
-              {t('imageEditor.layers.addImageLayer')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => {
-                setAddLayerDropdownOpen(false)
-                onAddTextLayer()
-              }}
-            >
-              <Type className='mr-2 h-4 w-4' />
-              {t('imageEditor.layers.addTextLayer')}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      {/* Add Layer buttons — two direct actions, no dropdown */}
+      <div className='flex gap-1 px-1 pb-2'>
+        <Button
+          variant='outline'
+          className='flex-1'
+          disabled={isAddingLayer || visualCropEnabled}
+          onClick={() => setFilePickerOpen(true)}
+          title={t('imageEditor.layers.addImage')}
+        >
+          <Image className='mr-1 h-4 w-4' />
+          {t('imageEditor.layers.addImage')}
+        </Button>
+        <Button
+          variant='outline'
+          className='flex-1'
+          disabled={visualCropEnabled}
+          onClick={onAddTextLayer}
+          title={t('imageEditor.layers.addText')}
+        >
+          <Type className='mr-1 h-4 w-4' />
+          {t('imageEditor.layers.addText')}
+        </Button>
       </div>
 
       {/* Layer list (scrollable) */}
