@@ -198,7 +198,13 @@ export function TextEditOverlay({
   const cssFontFamily = imagorFontToCss(layer.font)
   const fontWeight = layer.fontStyle.includes('bold') ? 'bold' : 'normal'
   const fontItalic = layer.fontStyle.includes('italic') ? 'italic' : 'normal'
-  const textAlign = layer.align === 'centre' ? 'center' : layer.align === 'high' ? 'right' : 'left'
+  const textAlign = layer.justify
+    ? 'justify'
+    : layer.align === 'centre'
+      ? 'center'
+      : layer.align === 'high'
+        ? 'right'
+        : 'left'
 
   // Map imagor wrap mode → CSS for the editor textarea.
   // The goal is good editor UX (no invisible overflow) while staying close to Pango's behaviour.

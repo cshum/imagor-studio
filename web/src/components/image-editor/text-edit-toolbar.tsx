@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { AlignCenter, AlignLeft, AlignRight, Bold, Italic } from 'lucide-react'
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Italic } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -279,6 +279,21 @@ export function TextEditToolbar({
           <AlignRight />
         </ToggleGroupItem>
       </ToggleGroup>
+
+      {/* Justify toggle */}
+      <Button
+        variant={layer.justify ? 'default' : 'ghost'}
+        size='icon'
+        className='h-8 w-8'
+        onMouseDown={(e) => {
+          e.preventDefault()
+          onUpdate({ justify: !layer.justify })
+        }}
+        tabIndex={-1}
+        title='Justify'
+      >
+        <AlignJustify />
+      </Button>
     </div>,
     document.body,
   )
