@@ -1,19 +1,9 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import {
-  AlignCenter,
-  AlignJustify,
-  AlignLeft,
-  AlignRight,
-  Bold,
-  ChevronDown,
-  Italic,
-} from 'lucide-react'
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Italic } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { NumericControl } from '@/components/ui/numeric-control'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -40,6 +30,75 @@ interface TextEditToolbarProps {
   align?: TextLayer['align']
   /** Maximum font size in canvas pixels — should be Math.max(canvasWidth, canvasHeight). */
   maxFontSize?: number
+}
+
+/**
+ * Font-size number input — updates draft state immediately on every valid change.
+ * Since this only touches draftLayer (not the final render), live updates are fine.
+ * The stepper arrows (↑/↓) work because we don't preventDefault on mousedown.
+ * We stop propagation so the overlay's background-click-to-commit doesn't fire.
+ */
+function FontSizeInput({
+  fontSize,
+  maxFontSize,
+  onUpdate,
+}: {
+  fontSize: number
+  maxFontSize: number
+  onUpdate: (updates: Partial<TextLayer>) => void
+}) {
+  // Local string state so the user can type freely (e.g. clear field before typing new value)
+  const [localValue, setLocalValue] = useState(String(fontSize))
+  const inputRef = useRef<HTMLInputElement>(null)
+  const isFocusedRef = useRef(false)
+
+  // Sync from external changes (e.g. drag handle) only when not focused
+  if (!isFocusedRef.current && String(fontSize) !== localValue) {
+    setLocalValue(String(fontSize))
+  }
+
+  return (
+    <input
+      ref={inputRef}
+      type='number'
+      value={localValue}
+      min={4}
+      max={maxFontSize}
+      step={1}
+      className='border-input bg-background h-8 w-16 rounded border px-1 text-center text-sm tabular-nums'
+      title='Font size'
+      onFocus={() => {
+        isFocusedRef.current = true
+      }}
+      onBlur={() => {
+        isFocusedRef.current = false
+        // Reset display to last valid value if field was left empty/invalid
+        setLocalValue(String(fontSize))
+      }}
+      onChange={(e) => {
+        const raw = e.target.value
+        setLocalValue(raw)
+        const v = parseInt(raw, 10)
+        // Update draft immediately for any valid value in range
+        if (!isNaN(v) && v >= 4 && v <= maxFontSize) {
+          onUpdate({ fontSize: v })
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          setLocalValue(String(fontSize))
+          inputRef.current?.blur()
+        }
+        // Stop propagation so canvas shortcuts don't fire while typing
+        // but allow ArrowUp/Down so the native stepper works
+        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') {
+          e.stopPropagation()
+        }
+      }}
+      // Stop propagation so the overlay background-click-to-commit doesn't fire
+      onMouseDown={(e) => e.stopPropagation()}
+    />
+  )
 }
 
 // label = what the user sees; value = font param sent to imagor; cssFamily = preview style
@@ -250,32 +309,8 @@ export function TextEditToolbar({
         </SelectContent>
       </Select>
 
-      {/* Font size — select-style button opens a popover with slider + input */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant='outline'
-            size='sm'
-            className='h-8 gap-1 px-2 tabular-nums'
-            onMouseDown={(e) => e.preventDefault()}
-            tabIndex={-1}
-            title='Font size'
-          >
-            <span className='min-w-[1.5rem] text-center'>{layer.fontSize}</span>
-            <ChevronDown className='h-3 w-3 opacity-50' />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className='w-60 p-3' side='top' onOpenAutoFocus={(e) => e.preventDefault()}>
-          <NumericControl
-            label='Font size'
-            value={layer.fontSize}
-            min={4}
-            max={maxFontSize}
-            step={1}
-            onChange={(v) => onUpdate({ fontSize: v })}
-          />
-        </PopoverContent>
-      </Popover>
+      {/* Font size — inline number input with stepper */}
+      <FontSizeInput fontSize={layer.fontSize} maxFontSize={maxFontSize} onUpdate={onUpdate} />
 
       {/* Color swatch */}
       <div
