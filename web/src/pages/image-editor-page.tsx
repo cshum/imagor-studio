@@ -701,6 +701,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             onVisualCropToggle={handleVisualCropToggle}
             isVisualCropEnabled={visualCropEnabled}
             isToggling={isVisualCropToggling}
+            disabled={!!textEditingLayerId}
             outputWidth={imageEditor.getOriginalDimensions().width}
             outputHeight={imageEditor.getOriginalDimensions().height}
             onAspectRatioChange={setCropAspectRatio}
