@@ -91,6 +91,9 @@ export function LayerOverlay({
   // Handle mouse/touch down on layer box (for dragging)
   const handleLayerMouseDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      // Ignore right-click (button=2) — prevents drag state getting stuck when context menu opens
+      if ('button' in e && e.button !== 0) return
+
       if ((e.target as HTMLElement).classList.contains('layer-box')) {
         e.preventDefault()
         e.stopPropagation()
@@ -124,6 +127,8 @@ export function LayerOverlay({
   // Handle mouse/touch down on resize handles
   const handleResizeMouseDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent, handle: ResizeHandle) => {
+      // Ignore right-click
+      if ('button' in e && e.button !== 0) return
       e.preventDefault()
       e.stopPropagation()
 
