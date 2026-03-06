@@ -711,6 +711,7 @@ export function LayerPanel({
               imageEditor={imageEditor}
               isTextEditing={textEditingLayerId === selectedLayer.id}
               isToggling={isTextEditToggling}
+              visualCropEnabled={visualCropEnabled}
               onUpdate={(updates) => handleUpdateLayer(selectedLayer.id, updates)}
               onEditText={() =>
                 onTextEdit(textEditingLayerId === selectedLayer.id ? null : selectedLayer.id)

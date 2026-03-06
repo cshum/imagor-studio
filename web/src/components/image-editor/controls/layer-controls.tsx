@@ -277,30 +277,32 @@ export function LayerControls({
                 W
               </Label>
               <div className='flex items-center'>
-                <button
-                  type='button'
-                  onClick={widthFull ? handleWidthModeToggle : undefined}
-                  disabled={visualCropEnabled}
-                  className={cn(
-                    'px-1 py-0.5 text-xs transition-colors',
-                    !widthFull
-                      ? 'text-foreground cursor-default font-medium'
-                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
-                  )}
-                >
-                  px
-                </button>
-                <button
-                  type='button'
-                  onClick={!widthFull ? handleWidthModeToggle : undefined}
-                  disabled={visualCropEnabled}
-                  className={cn(
-                    'px-1 py-0.5 transition-colors',
-                    widthFull
-                      ? 'text-primary cursor-default'
-                      : 'text-muted-foreground hover:text-foreground cursor-pointer',
-                  )}
-                  title='Stretch to fill width'
+          <button
+            type='button'
+            onClick={widthFull ? handleWidthModeToggle : undefined}
+            disabled={visualCropEnabled}
+            className={cn(
+              'px-1 py-0.5 text-xs transition-colors',
+              !widthFull
+                ? 'text-foreground cursor-default font-medium'
+                : 'text-muted-foreground hover:text-foreground cursor-pointer',
+              visualCropEnabled && 'pointer-events-none text-muted-foreground opacity-50',
+            )}
+          >
+            px
+          </button>
+          <button
+            type='button'
+            onClick={!widthFull ? handleWidthModeToggle : undefined}
+            disabled={visualCropEnabled}
+            className={cn(
+              'px-1 py-0.5 transition-colors',
+              widthFull
+                ? 'text-primary cursor-default'
+                : 'text-muted-foreground hover:text-foreground cursor-pointer',
+              visualCropEnabled && 'pointer-events-none text-muted-foreground opacity-50',
+            )}
+            title='Stretch to fill width'
                 >
                   <MoveHorizontal className='h-3 w-3' />
                 </button>
@@ -355,6 +357,7 @@ export function LayerControls({
                     !heightFull
                       ? 'text-foreground cursor-default font-medium'
                       : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                    visualCropEnabled && 'pointer-events-none text-muted-foreground opacity-50',
                   )}
                 >
                   px
@@ -368,6 +371,7 @@ export function LayerControls({
                     heightFull
                       ? 'text-primary cursor-default'
                       : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                    visualCropEnabled && 'pointer-events-none text-muted-foreground opacity-50',
                   )}
                   title='Stretch to fill height'
                 >

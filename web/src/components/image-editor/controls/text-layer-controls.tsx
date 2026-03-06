@@ -18,6 +18,7 @@ interface TextLayerControlsProps {
   imageEditor: ImageEditor
   isTextEditing: boolean
   isToggling?: boolean
+  visualCropEnabled?: boolean
   onUpdate: (updates: Partial<TextLayer>) => void
   onEditText: () => Promise<void>
 }
@@ -27,6 +28,7 @@ export function TextLayerControls({
   imageEditor,
   isTextEditing,
   isToggling = false,
+  visualCropEnabled = false,
   onUpdate,
   onEditText,
 }: TextLayerControlsProps) {
@@ -146,7 +148,7 @@ export function TextLayerControls({
         variant={isTextEditing && !isToggling ? 'default' : 'outline'}
         size='default'
         onClick={handleEditText}
-        disabled={isToggling}
+        disabled={isToggling || visualCropEnabled}
         className='w-full'
       >
         {isToggling ? (
@@ -167,7 +169,8 @@ export function TextLayerControls({
         currentHeight={currentHeight}
         baseWidth={baseWidth}
         baseHeight={baseHeight}
-        enableArrowKeys={!isTextEditing}
+        enableArrowKeys={!isTextEditing && !visualCropEnabled}
+        disabled={visualCropEnabled}
         onXChange={handleXChange}
         onYChange={handleYChange}
       />
@@ -180,24 +183,28 @@ export function TextLayerControls({
             <div className='flex items-center'>
               <button
                 type='button'
-                onClick={widthFull ? handleWidthModeToggle : undefined}
+                onClick={!visualCropEnabled && widthFull ? handleWidthModeToggle : undefined}
+                disabled={visualCropEnabled}
                 className={cn(
                   'px-1 py-0.5 text-xs transition-colors',
                   !widthFull
                     ? 'text-foreground cursor-default font-medium'
                     : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  visualCropEnabled && 'pointer-events-none text-muted-foreground opacity-50',
                 )}
               >
                 px
               </button>
               <button
                 type='button'
-                onClick={!widthFull ? handleWidthModeToggle : undefined}
+                onClick={!visualCropEnabled && !widthFull ? handleWidthModeToggle : undefined}
+                disabled={visualCropEnabled}
                 className={cn(
                   'px-1 py-0.5 transition-colors',
                   widthFull
                     ? 'text-primary cursor-default'
                     : 'text-muted-foreground hover:text-foreground cursor-pointer',
+                  visualCropEnabled && 'pointer-events-none text-muted-foreground opacity-50',
                 )}
                 title='Stretch to fill width'
               >
@@ -217,6 +224,7 @@ export function TextLayerControls({
             max={widthFull ? baseWidth : undefined}
             placeholder='auto'
             className='h-8'
+            disabled={visualCropEnabled}
           />
         </div>
         <div className='flex-1 space-y-1'>
@@ -230,6 +238,7 @@ export function TextLayerControls({
             onChange={handleHeightChange}
             placeholder='auto'
             className='h-8'
+            disabled={visualCropEnabled}
           />
         </div>
       </div>
@@ -240,6 +249,7 @@ export function TextLayerControls({
         blendMode={layer.blendMode}
         onAlphaChange={(a) => onUpdate({ alpha: a })}
         onBlendModeChange={(m) => onUpdate({ blendMode: m })}
+        disabled={visualCropEnabled}
       />
     </div>
   )
