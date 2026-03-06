@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
+  LayerContextMenu,
+  type LayerContextMenuCallbacks,
+} from '@/components/image-editor/layer-context-menu'
+import type { Layer } from '@/lib/image-editor'
+import {
   buildDragUpdates,
   calculateOverlayLayout,
   convertDisplayToLayerPosition,
@@ -9,7 +14,8 @@ import {
 } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
-interface LayerOverlayProps {
+interface LayerOverlayProps extends Partial<LayerContextMenuCallbacks> {
+  layer: Layer
   layerX: string | number
   layerY: string | number
   layerWidth: number
@@ -40,6 +46,7 @@ interface LayerOverlayProps {
 }
 
 export function LayerOverlay({
+  layer,
   layerX,
   layerY,
   layerWidth,
@@ -59,6 +66,12 @@ export function LayerOverlay({
   onDeselect,
   onEnterEditMode,
   onHandleDoubleClick,
+  onEdit,
+  onTextEdit,
+  onRename,
+  onDuplicate,
+  onToggleVisibility,
+  onDelete,
 }: LayerOverlayProps) {
   // Calculate CSS percentage strings, drag capabilities and alignment flags
   const { leftPercent, topPercent, widthPercent, heightPercent, canDragX, canDragY } =
@@ -314,64 +327,82 @@ export function LayerOverlay({
     [onEnterEditMode],
   )
 
+  const layerBoxContent = (
+    <div
+      ref={layerBoxRef}
+      className={cn(
+        'layer-box pointer-events-auto absolute cursor-move border border-white',
+        (isDragging || isResizing) && 'cursor-grabbing',
+      )}
+      style={{
+        left: leftPercent,
+        top: topPercent,
+        width: widthPercent,
+        height: heightPercent,
+        boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
+      }}
+      onMouseDown={handleLayerMouseDown}
+      onTouchStart={handleLayerMouseDown}
+      onDoubleClick={handleLayerDoubleClick}
+    >
+      {/* NO grid lines - as requested */}
+
+      {/* Resize handles */}
+      {['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map((handle) => (
+        <div
+          key={handle}
+          className={cn(
+            'absolute flex items-center justify-center',
+            'h-11 w-11',
+            handle === 'nw' && '-top-5.5 -left-5.5 cursor-nw-resize',
+            handle === 'n' && '-top-5.5 left-1/2 -translate-x-1/2 cursor-n-resize',
+            handle === 'ne' && '-top-5.5 -right-5.5 cursor-ne-resize',
+            handle === 'e' && 'top-1/2 -right-5.5 -translate-y-1/2 cursor-e-resize',
+            handle === 'se' && '-right-5.5 -bottom-5.5 cursor-se-resize',
+            handle === 's' && '-bottom-5.5 left-1/2 -translate-x-1/2 cursor-s-resize',
+            handle === 'sw' && '-bottom-5.5 -left-5.5 cursor-sw-resize',
+            handle === 'w' && 'top-1/2 -left-5.5 -translate-y-1/2 cursor-w-resize',
+          )}
+          onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
+          onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
+          onDoubleClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onHandleDoubleClick?.(handle as ResizeHandle)
+          }}
+        >
+          {/* Visual handle: Photoshop-style white square with black border */}
+          <div
+            className='h-2 w-2 border border-black bg-white'
+            style={{ boxShadow: '0 0 0 1px white' }}
+          />
+        </div>
+      ))}
+    </div>
+  )
+
   return (
     <div
       ref={overlayRef}
       className='pointer-events-auto absolute inset-0 z-20 h-full w-full'
       onMouseDown={handleOverlayMouseDown}
     >
-      {/* Layer box and handles */}
-      <div
-        ref={layerBoxRef}
-        className={cn(
-          'layer-box pointer-events-auto absolute cursor-move border border-white',
-          (isDragging || isResizing) && 'cursor-grabbing',
-        )}
-        style={{
-          left: leftPercent,
-          top: topPercent,
-          width: widthPercent,
-          height: heightPercent,
-          boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
-        }}
-        onMouseDown={handleLayerMouseDown}
-        onTouchStart={handleLayerMouseDown}
-        onDoubleClick={handleLayerDoubleClick}
-      >
-        {/* NO grid lines - as requested */}
-
-        {/* Resize handles */}
-        {['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map((handle) => (
-          <div
-            key={handle}
-            className={cn(
-              'absolute flex items-center justify-center',
-              'h-11 w-11',
-              handle === 'nw' && '-top-5.5 -left-5.5 cursor-nw-resize',
-              handle === 'n' && '-top-5.5 left-1/2 -translate-x-1/2 cursor-n-resize',
-              handle === 'ne' && '-top-5.5 -right-5.5 cursor-ne-resize',
-              handle === 'e' && 'top-1/2 -right-5.5 -translate-y-1/2 cursor-e-resize',
-              handle === 'se' && '-right-5.5 -bottom-5.5 cursor-se-resize',
-              handle === 's' && '-bottom-5.5 left-1/2 -translate-x-1/2 cursor-s-resize',
-              handle === 'sw' && '-bottom-5.5 -left-5.5 cursor-sw-resize',
-              handle === 'w' && 'top-1/2 -left-5.5 -translate-y-1/2 cursor-w-resize',
-            )}
-            onMouseDown={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
-            onTouchStart={(e) => handleResizeMouseDown(e, handle as ResizeHandle)}
-            onDoubleClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              onHandleDoubleClick?.(handle as ResizeHandle)
-            }}
-          >
-            {/* Visual handle: Photoshop-style white square with black border */}
-            <div
-              className='h-2 w-2 border border-black bg-white'
-              style={{ boxShadow: '0 0 0 1px white' }}
-            />
-          </div>
-        ))}
-      </div>
+      {/* Layer box — wrapped in context menu when callbacks are provided */}
+      {onEdit && onTextEdit && onRename && onDuplicate && onToggleVisibility && onDelete ? (
+        <LayerContextMenu
+          layer={layer}
+          onEdit={onEdit}
+          onTextEdit={onTextEdit}
+          onRename={onRename}
+          onDuplicate={onDuplicate}
+          onToggleVisibility={onToggleVisibility}
+          onDelete={onDelete}
+        >
+          {layerBoxContent}
+        </LayerContextMenu>
+      ) : (
+        layerBoxContent
+      )}
     </div>
   )
 }

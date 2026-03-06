@@ -606,6 +606,25 @@ export function PreviewArea({
                         const paddingTop = state.paddingTop || 0
                         const paddingBottom = state.paddingBottom || 0
 
+                        // Build shared context menu callbacks for both overlay types
+                        const ctxOnEdit = (layerId: string) => imageEditor.switchContext(layerId)
+                        const ctxOnTextEdit = (layerId: string) => onTextEdit?.(layerId)
+                        const ctxOnRename = (layerId: string) => {
+                          // Trigger rename by selecting the layer and dispatching a custom event
+                          // The LayerPanel listens for this via its own rename handler
+                          imageEditor.setSelectedLayerId(layerId)
+                          window.dispatchEvent(
+                            new CustomEvent('layer:rename', { detail: { layerId } }),
+                          )
+                        }
+                        const ctxOnDuplicate = (layerId: string) =>
+                          imageEditor.duplicateLayer(layerId)
+                        const ctxOnToggleVisibility = (layerId: string) => {
+                          const l = imageEditor.getLayer(layerId)
+                          if (l) imageEditor.updateLayer(layerId, { visible: !l.visible })
+                        }
+                        const ctxOnDelete = (layerId: string) => imageEditor.removeLayer(layerId)
+
                         if (selectedLayerId) {
                           // Don't render LayerOverlay while the text-edit overlay is active for
                           // this layer — TextEditOverlay is the sole interactive bounding box.
@@ -642,6 +661,13 @@ export function PreviewArea({
 
                           return (
                             <LayerOverlay
+                              layer={selectedLayer}
+                              onEdit={ctxOnEdit}
+                              onTextEdit={ctxOnTextEdit}
+                              onRename={ctxOnRename}
+                              onDuplicate={ctxOnDuplicate}
+                              onToggleVisibility={ctxOnToggleVisibility}
+                              onDelete={ctxOnDelete}
                               layerX={selectedLayer.x}
                               layerY={selectedLayer.y}
                               layerWidth={layerOutputDims.width}
@@ -743,6 +769,11 @@ export function PreviewArea({
                               paddingBottom={paddingBottom}
                               onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
                               onTextEdit={onTextEdit}
+                              onEdit={ctxOnEdit}
+                              onRename={ctxOnRename}
+                              onDuplicate={ctxOnDuplicate}
+                              onToggleVisibility={ctxOnToggleVisibility}
+                              onDelete={ctxOnDelete}
                             />
                           )
                         }

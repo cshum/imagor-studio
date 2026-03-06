@@ -1,11 +1,15 @@
 import { useCallback } from 'react'
 
+import {
+  LayerContextMenu,
+  type LayerContextMenuCallbacks,
+} from '@/components/image-editor/layer-context-menu'
 import type { Layer } from '@/lib/image-editor'
 import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
 
-interface LayerRegionsOverlayProps {
+interface LayerRegionsOverlayProps extends Partial<LayerContextMenuCallbacks> {
   layers: Layer[]
   baseImageWidth: number
   baseImageHeight: number
@@ -27,6 +31,11 @@ export function LayerRegionsOverlay({
   paddingBottom = 0,
   onLayerSelect,
   onTextEdit,
+  onEdit,
+  onRename,
+  onDuplicate,
+  onToggleVisibility,
+  onDelete,
 }: LayerRegionsOverlayProps) {
   // Calculate content area dimensions (image without padding)
   // Layers are positioned relative to the content area, not the total canvas
@@ -100,14 +109,15 @@ export function LayerRegionsOverlay({
     return null
   }
 
+  const hasContextMenu = !!(onEdit && onRename && onDuplicate && onToggleVisibility && onDelete)
+
   return (
     <div className='pointer-events-none absolute inset-0 z-10 h-full w-full'>
       {visibleLayers.map((layer) => {
         const styles = getLayerStyles(layer)
         const isTextLayer = layer.type === 'text'
-        return (
+        const regionDiv = (
           <div
-            key={layer.id}
             className={cn(
               'pointer-events-auto absolute cursor-pointer',
               'border border-dashed border-white/50',
@@ -122,6 +132,23 @@ export function LayerRegionsOverlay({
             onDoubleClick={isTextLayer && onTextEdit ? () => onTextEdit(layer.id) : undefined}
           />
         )
+        if (hasContextMenu && onEdit && onRename && onDuplicate && onToggleVisibility && onDelete) {
+          return (
+            <LayerContextMenu
+              key={layer.id}
+              layer={layer}
+              onEdit={onEdit}
+              onTextEdit={onTextEdit ?? (() => {})}
+              onRename={onRename}
+              onDuplicate={onDuplicate}
+              onToggleVisibility={onToggleVisibility}
+              onDelete={onDelete}
+            >
+              {regionDiv}
+            </LayerContextMenu>
+          )
+        }
+        return <div key={layer.id}>{regionDiv}</div>
       })}
     </div>
   )
