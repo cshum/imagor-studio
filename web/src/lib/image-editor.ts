@@ -2545,7 +2545,7 @@ export class ImageEditor {
       duplicatedLayer = {
         ...sourceLayer,
         id: newId,
-        name: `${sourceLayer.name} Copy`,
+        name: sourceLayer.name ? `${sourceLayer.name} Copy` : '',
         x: typeof sourceLayer.x === 'number' ? sourceLayer.x + 10 : sourceLayer.x,
         y: typeof sourceLayer.y === 'number' ? sourceLayer.y + 10 : sourceLayer.y,
       }
@@ -2553,7 +2553,7 @@ export class ImageEditor {
       duplicatedLayer = {
         ...sourceLayer,
         id: newId,
-        name: `${sourceLayer.name} Copy`,
+        name: sourceLayer.name ? `${sourceLayer.name} Copy` : '',
         x: typeof sourceLayer.x === 'number' ? sourceLayer.x + 10 : sourceLayer.x,
         y: typeof sourceLayer.y === 'number' ? sourceLayer.y + 10 : sourceLayer.y,
         transforms: sourceLayer.transforms ? { ...sourceLayer.transforms } : undefined,
