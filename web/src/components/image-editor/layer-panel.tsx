@@ -165,8 +165,12 @@ function SortableLayerItem({
               <GripVertical className='h-4 w-4' />
             </button>
 
-            {/* Layer thumbnail icon for text layers */}
-            {isText && <Type className='text-muted-foreground h-4 w-4 shrink-0' />}
+            {/* Layer type icon */}
+            {isText ? (
+              <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+            ) : (
+              <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+            )}
 
             {/* Layer name */}
             <div className='min-w-0 flex-1'>
@@ -656,8 +660,10 @@ export function LayerPanel({
               {activeLayer ? (
                 <div className='bg-background flex h-9 items-center gap-1.5 rounded-md border px-2 shadow-lg'>
                   <GripVertical className='h-4 w-4' />
-                  {activeLayer.type === 'text' && (
+                  {activeLayer.type === 'text' ? (
                     <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+                  ) : (
+                    <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   )}
                   <span className='flex-1 truncate text-sm'>
                     {activeLayer.name
