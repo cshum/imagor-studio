@@ -96,12 +96,16 @@ export function TextEditOverlay({
   }, [])
 
   // Focus the textarea on mount and select all text so typing immediately replaces the prefill.
+  // Use a short delay so the textarea focus wins over any dropdown/menu close focus-restoration.
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.focus()
-      textareaRef.current.select()
-    }
+    const timer = setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus()
+        textareaRef.current.select()
+      }
+    }, 50)
     return () => {
+      clearTimeout(timer)
       if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
     }
   }, [])

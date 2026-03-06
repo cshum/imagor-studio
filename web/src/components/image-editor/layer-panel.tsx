@@ -623,7 +623,7 @@ export function LayerPanel({
               <Image className='mr-2 h-4 w-4' />
               {t('imageEditor.layers.addImage')}
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onAddTextLayer}>
+            <DropdownMenuItem onSelect={() => setTimeout(onAddTextLayer, 0)}>
               <Type className='mr-2 h-4 w-4' />
               {t('imageEditor.layers.addText')}
             </DropdownMenuItem>
