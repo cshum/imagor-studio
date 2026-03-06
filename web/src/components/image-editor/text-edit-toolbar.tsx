@@ -50,10 +50,13 @@ function FontSizeInput({
   // Local string state so the user can type freely (e.g. clear field before typing new value)
   const [localValue, setLocalValue] = useState(String(fontSize))
   const inputRef = useRef<HTMLInputElement>(null)
-  const isFocusedRef = useRef(false)
 
-  // Sync from external changes (e.g. drag handle) only when not focused
-  if (!isFocusedRef.current && String(fontSize) !== localValue) {
+  // Always sync from external changes (e.g. drag handle) — including while focused.
+  // This lets the drag handle update the displayed value in real time.
+  // We use useEffect so it runs after render and doesn't conflict with onChange.
+  const prevFontSizeRef = useRef(fontSize)
+  if (prevFontSizeRef.current !== fontSize) {
+    prevFontSizeRef.current = fontSize
     setLocalValue(String(fontSize))
   }
 
@@ -67,11 +70,7 @@ function FontSizeInput({
       step={1}
       className='border-input bg-background h-8 w-16 rounded border px-1 text-center text-sm tabular-nums'
       title='Font size'
-      onFocus={() => {
-        isFocusedRef.current = true
-      }}
       onBlur={() => {
-        isFocusedRef.current = false
         // Reset display to last valid value if field was left empty/invalid
         setLocalValue(String(fontSize))
       }}
