@@ -56,10 +56,10 @@ github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UF
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cevatbarisyilmaz/ara v0.0.4 h1:SGH10hXpBJhhTlObuZzTuFn1rrdmjQImITXnZVPSodc=
 github.com/cevatbarisyilmaz/ara v0.0.4/go.mod h1:BfFOxnUd6Mj6xmcvRxHN3Sr21Z1T3U2MYkYOmoQe4Ts=
-github.com/cshum/imagor v1.7.0 h1:bt9w/wJvoGccgXW0OfC8pa6UHeFjetOBKVD4hkR/nQU=
-github.com/cshum/imagor v1.7.0/go.mod h1:225H832iXf1SdgpodhaKaVcjj3NIuix/lGZvZUlLRg0=
-github.com/cshum/imagorvideo v1.0.22 h1:fvpx2Rwlx9OB9BpkAY7YYD+3B/YYbnxuSwP7ArKEWdE=
-github.com/cshum/imagorvideo v1.0.22/go.mod h1:GlbCEtVDR9SB15xliPB4BksKnjuy2rhTyA8nVWMDDm4=
+github.com/cshum/imagor v1.7.1 h1:QwwLDz50WatcUN332UyDcohvlW6jsZQFVeTmaO0shk8=
+github.com/cshum/imagor v1.7.1/go.mod h1:225H832iXf1SdgpodhaKaVcjj3NIuix/lGZvZUlLRg0=
+github.com/cshum/imagorvideo v1.0.23 h1:eLl5diWAOdiJyMxK1LukDoPAqzKOO9A+ig/PdoAeCEg=
+github.com/cshum/imagorvideo v1.0.23/go.mod h1:GBdEWgxz3WBuQf5LAAJiXxhy1Cs3jiC/UzcoJ4eC6Eg=
 github.com/cshum/vipsgen v1.3.7 h1:6EPY8lQl+q0xp8KcVVU8bb9nC1yUdkn7rx1BhkTKBX4=
 github.com/cshum/vipsgen v1.3.7/go.mod h1:AmCpW+vKfu16ZFPN/PBgtLsAl3kt7c0y2uA4bD5Lzk8=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
