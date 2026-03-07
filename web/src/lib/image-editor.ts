@@ -3193,8 +3193,13 @@ export class ImageEditor {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { cropLeft, cropTop, cropWidth, cropHeight, ...rest } = state
 
-      // Check if user has customized dimensions
+      // Check if user has customized dimensions.
+      // Fill-mode (widthFull/heightFull) counts as "custom" — the layer's size is
+      // determined by the parent canvas, not the source image, so we must preserve
+      // the fill flags rather than overwriting them with newDimensions.
       const hasCustomDimensions =
+        state.widthFull ||
+        state.heightFull ||
         (state.width !== undefined && state.width !== oldDimensions.width) ||
         (state.height !== undefined && state.height !== oldDimensions.height)
 
