@@ -137,7 +137,7 @@ export function TextEditOverlay({
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Escape') {
         e.preventDefault()
-        onCancel()
+        doCommit()
       } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
         doCommit()
@@ -145,7 +145,7 @@ export function TextEditOverlay({
       // Stop propagation so canvas keyboard shortcuts don't fire while editing
       e.stopPropagation()
     },
-    [doCommit, onCancel],
+    [doCommit],
   )
 
   const handleBlur = useCallback(() => {
