@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
 
-import { useDebouncedCommit } from '@/hooks/use-debounced-commit'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -10,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useDebouncedCommit } from '@/hooks/use-debounced-commit'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
 interface FillPaddingControlProps {

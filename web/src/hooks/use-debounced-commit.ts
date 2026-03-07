@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef } from 'react'
  * @param delay     Debounce delay in milliseconds (default 300).
  * @returns         A stable function that accepts a value and schedules the commit.
  */
-export function useDebouncedCommit<T>(onCommit: (value: T) => void, delay = 300) {
+export function useDebouncedCommit<T>(onCommit: (value: T) => void, delay = 100) {
   const commitRef = useRef(onCommit)
   commitRef.current = onCommit
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
