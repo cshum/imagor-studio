@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
 
+import { useDebouncedCommit } from '@/hooks/use-debounced-commit'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -43,10 +44,15 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
     }
   }
 
+  // Debounced color commit — reactive live preview while dragging,
+  // but only pushes to undo history after the user stops (300ms).
+  const debouncedColorChange = useDebouncedCommit<string>((hex) => {
+    onUpdateParams({ fillColor: hex })
+  })
+
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newColor = e.target.value
-    const hexWithoutHash = newColor.replace('#', '')
-    onUpdateParams({ fillColor: hexWithoutHash })
+    const hexWithoutHash = e.target.value.replace('#', '')
+    debouncedColorChange(hexWithoutHash)
   }
 
   const handlePaddingChange = (side: 'top' | 'right' | 'bottom' | 'left', value: string) => {
