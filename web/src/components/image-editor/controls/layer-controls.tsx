@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Edit, Image as ImageIcon, Lock, MoveHorizontal, MoveVertical, Unlock } from 'lucide-react'
 
@@ -43,9 +43,27 @@ export function LayerControls({
   const isColor = isColorImage(layer.imagePath)
   const colorValue = isColor ? getColorFromPath(layer.imagePath) : ''
 
+  // Local state for hex text input — only commits on blur / Enter to avoid
+  // firing a preview for every keystroke (e.g. typing "ff" would otherwise
+  // trigger "f" then "ff" as intermediate states).
+  const [localHex, setLocalHex] = useState(colorValue)
+  // Sync local hex when the layer's color changes externally (e.g. color picker, undo)
+  useEffect(() => {
+    setLocalHex(colorValue)
+  }, [colorValue])
+
+  const commitHex = useCallback(
+    (val: string) => {
+      const cleaned = val.replace(/[^a-fA-F0-9]/g, '').slice(0, 6)
+      if (cleaned) onUpdate({ imagePath: colorToImagePath(cleaned) })
+    },
+    [onUpdate],
+  )
+
   // Debounced color commits — reactive live preview, but only pushes to undo
   // history after the user stops dragging (300ms debounce).
   const debouncedEditColor = useDebouncedCommit<string>((hex) => {
+    setLocalHex(hex)
     onUpdate({ imagePath: colorToImagePath(hex) })
   })
 
@@ -273,14 +291,18 @@ export function LayerControls({
             title={t('imageEditor.layers.setColor')}
           />
           <Input
-            value={colorValue}
+            value={localHex}
             onChange={(e) => {
-              const val = e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 8)
-              if (val) onUpdate({ imagePath: colorToImagePath(val) })
+              setLocalHex(e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 6))
+            }}
+            onBlur={() => commitHex(localHex)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitHex(localHex)
             }}
             disabled={visualCropEnabled}
             placeholder='hex color'
             className='h-8 flex-1 font-mono text-xs'
+            maxLength={6}
           />
         </div>
       ) : (

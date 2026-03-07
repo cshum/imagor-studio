@@ -276,7 +276,22 @@ export function LayerPanel({
   // Debounced base image color commit — reactive live preview, but only pushes
   // to undo history after the user stops dragging (300ms debounce).
   const isBaseColor = isColorImage(imagePath)
+  const baseColorValue = isBaseColor ? imagePath.replace(/^color:/i, '') : ''
+  // Local state for base color hex input — only commits on blur / Enter
+  const [localBaseHex, setLocalBaseHex] = useState(baseColorValue)
+  // Sync when color changes externally (color picker, undo)
+  useEffect(() => {
+    setLocalBaseHex(baseColorValue)
+  }, [baseColorValue])
+  const commitBaseHex = useCallback(
+    (val: string) => {
+      const cleaned = val.replace(/[^a-fA-F0-9]/g, '').slice(0, 6)
+      if (cleaned) imageEditor.replaceImage(colorToImagePath(cleaned), imageEditor.getOriginalDimensions(), null)
+    },
+    [imageEditor],
+  )
   const debouncedBaseColor = useDebouncedCommit<string>((hex) => {
+    setLocalBaseHex(hex)
     // Preserve current dimensions when changing color (don't reset to 1×1)
     imageEditor.replaceImage(colorToImagePath(hex), imageEditor.getOriginalDimensions(), null)
   })
@@ -634,14 +649,18 @@ export function LayerPanel({
                   title={t('imageEditor.layers.setColor')}
                 />
                 <Input
-                  value={imagePath.replace(/^color:/i, '')}
+                  value={localBaseHex}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 8)
-                    if (val) imageEditor.replaceImage(colorToImagePath(val), imageEditor.getOriginalDimensions(), null)
+                    setLocalBaseHex(e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 6))
+                  }}
+                  onBlur={() => commitBaseHex(localBaseHex)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitBaseHex(localBaseHex)
                   }}
                   disabled={visualCropEnabled}
                   placeholder='hex color'
                   className='h-8 flex-1 font-mono text-xs'
+                  maxLength={6}
                 />
               </div>
             ) : (
