@@ -127,6 +127,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const handleVisualCropToggleRef = useRef<(enabled: boolean) => Promise<void>>(async () => {})
   // Stable refs for add-layer callbacks (defined after the keydown useEffect)
   const handleAddTextLayerRef = useRef<() => void>(() => {})
+  const handleAddColorLayerRef = useRef<() => void>(() => {})
   const handleAddLayerDialogOpenRef = useRef<() => void>(() => {})
 
   // Preview container ref and image dimensions for viewport calculations
@@ -584,6 +585,29 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     imageEditor.setTextEditingLayerId(newLayer.id)
   }, [imageEditor, t])
 
+  const handleAddColorLayer = useCallback(() => {
+    // Color images have no inherent size (imagor defaults to 1×1).
+    // Use fill mode (widthFull/heightFull) so the layer fills the parent canvas.
+    const newLayer = {
+      type: 'image' as const,
+      id: `layer-${Date.now()}`,
+      imagePath: 'color:cccccc',
+      originalDimensions: { width: 1, height: 1 },
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+      name: '',
+      transforms: {
+        widthFull: true,
+        heightFull: true,
+      },
+    }
+    imageEditor.addLayer(newLayer)
+    imageEditor.setSelectedLayerId(newLayer.id)
+  }, [imageEditor])
+
   const handleTextEdit = useCallback(
     (layerId: string | null): Promise<void> => {
       setIsNewTextLayer(false)
@@ -703,6 +727,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   // Keep refs in sync so the keydown useEffect always calls the latest versions
   handleVisualCropToggleRef.current = handleVisualCropToggle
   handleAddTextLayerRef.current = handleAddTextLayer
+  handleAddColorLayerRef.current = handleAddColorLayer
   handleAddLayerDialogOpenRef.current = () => setAddLayerDialogOpen(true)
 
   const handlePreviewLoad = () => {
@@ -793,6 +818,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             onReplaceImage={handleReplaceImageClick}
             onAddImageLayer={() => setAddLayerDialogOpen(true)}
             onAddTextLayer={handleAddTextLayer}
+            onAddColorLayer={handleAddColorLayer}
             onTextEdit={handleTextEdit}
           />
         ),

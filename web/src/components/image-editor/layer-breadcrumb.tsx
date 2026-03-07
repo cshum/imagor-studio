@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronRight, FileText, Image, Layers } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { ChevronDown, ChevronRight, FileText, Image, Layers, Paintbrush } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -7,7 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { ImageEditor } from '@/lib/image-editor'
+import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
+import { isColorImage } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerBreadcrumbProps {
@@ -25,6 +27,7 @@ export function LayerBreadcrumb({
   baseLabel,
   baseName,
 }: LayerBreadcrumbProps) {
+  const { t } = useTranslation()
   const contextPath = imageEditor.getContextPath()
   const allLayers = imageEditor.getBaseLayers()
 
@@ -52,10 +55,11 @@ export function LayerBreadcrumb({
   for (const layerId of contextPath) {
     const layer = currentLayers.find((l) => l.id === layerId)
     if (layer) {
+      const isColor = layer.type !== 'text' && isColorImage((layer as ImageLayer).imagePath)
       breadcrumbItems.push({
         id: layerId,
-        name: layer.name,
-        icon: Layers,
+        name: layer.name || (isColor ? t('imageEditor.layers.colorLayer') : layer.name),
+        icon: isColor ? Paintbrush : Layers,
       })
       // Go deeper into nested layers for next iteration
       currentLayers = layer.type !== 'text' ? (layer.transforms?.layers ?? []) : []

@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
+import { colorToImagePath, getColorFromPath, isColorImage } from '@/lib/image-editor'
 import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
 import { clampFillOffset, toggleFillMode } from '@/lib/layer-fill'
 import { cn } from '@/lib/utils'
 
+import { ColorPickerInput } from './color-picker-input'
 import { CompositingControls } from './compositing-controls'
 import { PositionControls } from './position-controls'
 
@@ -37,6 +39,16 @@ export function LayerControls({
   onReplaceImage,
 }: LayerControlsProps) {
   const { t } = useTranslation()
+
+  const isColor = isColorImage(layer.imagePath)
+  const colorValue = isColor ? getColorFromPath(layer.imagePath) : ''
+
+  const handleColorChange = useCallback(
+    (hex: string) => {
+      onUpdate({ imagePath: colorToImagePath(hex) })
+    },
+    [onUpdate],
+  )
 
   // Calculate and store aspect ratio from original dimensions
   const [aspectRatio] = useState<number>(() => {
@@ -225,22 +237,39 @@ export function LayerControls({
 
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-      {/* Edit Layer Button - only show when not already editing */}
-      {!isEditing && (
-        <Button
-          variant='outline'
-          size='default'
-          onClick={onEditLayer}
+      {/* Edit Layer / Replace Image / Set Color — based on layer type */}
+      {!isEditing ? (
+        <div className='flex items-center gap-2'>
+          <Button
+            variant='outline'
+            size='default'
+            onClick={onEditLayer}
+            disabled={visualCropEnabled}
+            className='flex-1'
+          >
+            <Edit className='mr-2 h-4 w-4' />
+            {t('imageEditor.layers.editLayer')}
+          </Button>
+          {/* Color swatch — only for color layers next to Edit Layer */}
+          {isColor && (
+            <ColorPickerInput
+              value={colorValue}
+              onChange={handleColorChange}
+              disabled={visualCropEnabled}
+              swatchSize='md'
+              swatchOnly
+            />
+          )}
+        </div>
+      ) : isColor ? (
+        /* Color layer editing — color picker + hex input */
+        <ColorPickerInput
+          value={colorValue}
+          onChange={handleColorChange}
           disabled={visualCropEnabled}
-          className='w-full'
-        >
-          <Edit className='mr-2 h-4 w-4' />
-          {t('imageEditor.layers.editLayer')}
-        </Button>
-      )}
-
-      {/* Swap Image Button - only show when editing (no Edit Layer button) */}
-      {isEditing && (
+        />
+      ) : (
+        /* Image layer editing — Replace Image only, no color picker */
         <Button
           variant='outline'
           size='default'

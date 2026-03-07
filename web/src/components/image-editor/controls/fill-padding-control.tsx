@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/select'
 import type { ImageEditorState } from '@/lib/image-editor.ts'
 
+import { ColorPickerInput } from './color-picker-input'
+
 interface FillPaddingControlProps {
   params: ImageEditorState
   onUpdateParams: (updates: Partial<ImageEditorState>) => void
@@ -28,8 +30,7 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
 
   // Calculate values directly from params on every render
   const fillMode = getFillMode()
-  const customColor =
-    params.fillColor && params.fillColor !== 'none' ? `#${params.fillColor}` : '#FFFFFF'
+  const fillColorHex = params.fillColor && params.fillColor !== 'none' ? params.fillColor : 'FFFFFF'
 
   const handleFillModeChange = (mode: 'none' | 'transparent' | 'color') => {
     if (mode === 'none') {
@@ -38,15 +39,14 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
       onUpdateParams({ fillColor: 'none' })
     } else {
       // Color mode - use current custom color (or default white)
-      const hexWithoutHash = customColor.replace('#', '')
-      onUpdateParams({ fillColor: hexWithoutHash })
+      onUpdateParams({ fillColor: fillColorHex })
     }
   }
 
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newColor = e.target.value
-    const hexWithoutHash = newColor.replace('#', '')
-    onUpdateParams({ fillColor: hexWithoutHash })
+  // Color picker onChange — auto-switches to color mode if needed
+  const handleColorPickerChange = (hex: string) => {
+    if (fillMode !== 'color') handleFillModeChange('color')
+    onUpdateParams({ fillColor: hex })
   }
 
   const handlePaddingChange = (side: 'top' | 'right' | 'bottom' | 'left', value: string) => {
@@ -88,15 +88,11 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
             <SelectItem value='transparent'>{t('imageEditor.fillPadding.transparent')}</SelectItem>
           </SelectContent>
         </Select>
-        <input
-          type='color'
-          value={customColor}
-          onChange={handleColorChange}
-          onClick={() => {
-            if (fillMode !== 'color') handleFillModeChange('color')
-          }}
-          className='h-9 w-10 cursor-pointer rounded border'
-          title={t('imageEditor.fillPadding.customColor')}
+        <ColorPickerInput
+          value={fillColorHex}
+          onChange={handleColorPickerChange}
+          swatchOnly
+          swatchSize='md'
         />
       </div>
 

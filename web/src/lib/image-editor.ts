@@ -1,6 +1,7 @@
 import { generateImagorUrl } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
+import type { ImagorTemplate, TemplateWarning } from '@/lib/template-types'
 
 export interface ImageDimensions {
   width: number
@@ -80,6 +81,34 @@ export interface TextLayer {
 }
 
 export type Layer = ImageLayer | TextLayer
+
+/**
+ * Check if an image path is a color image (solid color or transparent).
+ * Color images use imagor's `color:<color>` syntax as the image path.
+ * @param imagePath - Image path to check
+ * @returns true if the path is a color image
+ */
+export function isColorImage(imagePath: string): boolean {
+  return imagePath.startsWith('color:')
+}
+
+/**
+ * Extract the color value from a color image path.
+ * @param imagePath - Image path like "color:ff6600" or "color:none"
+ * @returns The color value (e.g., "ff6600", "none", "red")
+ */
+export function getColorFromPath(imagePath: string): string {
+  return imagePath.replace(/^color:/, '')
+}
+
+/**
+ * Build a color image path from a color value.
+ * @param color - Color value (e.g., "ff6600", "none", "red")
+ * @returns Image path like "color:ff6600"
+ */
+export function colorToImagePath(color: string): string {
+  return `color:${color}`
+}
 
 export interface ImageEditorState {
   // Base image (for root context only - captured in history for swap image undo/redo)
@@ -2883,9 +2912,6 @@ export class ImageEditor {
     savePath: string,
     overwrite = false,
   ): Promise<{ success: boolean; templatePath: string }> {
-    // Import type at top of file instead
-    type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
-
     // Get base state
     const baseState = this.getBaseState()
 
@@ -2974,12 +3000,9 @@ export class ImageEditor {
   private validateAndLoadTemplate(jsonString: string): {
     success: boolean
     warnings: Array<{ type: string; message: string; substitution?: string }>
-    template: import('@/lib/template-types').ImagorTemplate | null
+    template: ImagorTemplate | null
     appliedState: ImageEditorState | null
   } {
-    type ImagorTemplate = import('@/lib/template-types').ImagorTemplate
-    type TemplateWarning = import('@/lib/template-types').TemplateWarning
-
     const warnings: TemplateWarning[] = []
 
     // Try to parse JSON
@@ -3063,9 +3086,7 @@ export class ImageEditor {
    * @param template - Template to apply
    * @returns Editor state to apply
    */
-  private applyTemplateState(
-    template: import('@/lib/template-types').ImagorTemplate,
-  ): ImageEditorState {
+  private applyTemplateState(template: ImagorTemplate): ImageEditorState {
     // Check if source and target images have same dimensions
     const sourceDims = template.predefinedDimensions
     const targetDims = this.config.originalDimensions
@@ -3172,8 +3193,13 @@ export class ImageEditor {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { cropLeft, cropTop, cropWidth, cropHeight, ...rest } = state
 
-      // Check if user has customized dimensions
+      // Check if user has customized dimensions.
+      // Fill-mode (widthFull/heightFull) counts as "custom" — the layer's size is
+      // determined by the parent canvas, not the source image, so we must preserve
+      // the fill flags rather than overwriting them with newDimensions.
       const hasCustomDimensions =
+        state.widthFull ||
+        state.heightFull ||
         (state.width !== undefined && state.width !== oldDimensions.width) ||
         (state.height !== undefined && state.height !== oldDimensions.height)
 
@@ -3190,11 +3216,15 @@ export class ImageEditor {
       }
     }
 
-    // Helper for layers: Always preserve dimensions (predefined mode)
-    const removeCropOnly = <T extends Partial<ImageEditorState>>(state: T): T => {
+    // Helper for layers: Always preserve dimensions (predefined mode).
+    // When fill mode is active (widthFull/heightFull), clear stale width/height
+    // since the f-token handles sizing relative to the parent canvas.
+    const removeCropOnly = (state: Partial<ImageEditorState>): Partial<ImageEditorState> => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { cropLeft, cropTop, cropWidth, cropHeight, ...rest } = state
-      return rest as T
+      if (rest.widthFull) rest.width = undefined
+      if (rest.heightFull) rest.height = undefined
+      return rest
     }
 
     // 2. Update based on context

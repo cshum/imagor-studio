@@ -27,10 +27,12 @@ import {
   Image,
   Layers,
   MoreVertical,
+  Paintbrush,
   Plus,
   Type,
 } from 'lucide-react'
 
+import { ColorPickerInput } from '@/components/image-editor/controls/color-picker-input'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
 import { TextLayerControls } from '@/components/image-editor/controls/text-layer-controls'
 import { LayerContextMenu, LayerDropdownMenu } from '@/components/image-editor/layer-menu'
@@ -53,7 +55,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { ImageEditor, Layer } from '@/lib/image-editor'
+import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
+import { colorToImagePath, isColorImage } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
@@ -68,6 +71,7 @@ interface LayerPanelProps {
   onReplaceImage: (layerId: string | null) => void
   onAddImageLayer: () => void
   onAddTextLayer: () => void
+  onAddColorLayer: () => void
   onTextEdit: (layerId: string | null) => Promise<void>
 }
 
@@ -106,11 +110,14 @@ function SortableLayerItem({
   //   custom name (if renamed) → custom name
   //   text layer (not renamed) → text content, or "Text Layer" if empty
   //   image layer              → filename
+  const isColor = !isText && isColorImage((layer as ImageLayer).imagePath)
   const displayName = layer.name
     ? layer.name
     : isText
       ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
-      : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || ''
+      : isColor
+        ? t('imageEditor.layers.colorLayer')
+        : (layer as ImageLayer).imagePath.split('/').pop() || ''
 
   const handleEdit = () => imageEditor.switchContext(layer.id)
   const handleToggleVisibility = () =>
@@ -151,6 +158,8 @@ function SortableLayerItem({
           {/* Layer type icon */}
           {isText ? (
             <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+          ) : !isText && isColorImage((layer as ImageLayer).imagePath) ? (
+            <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
           ) : (
             <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
           )}
@@ -211,9 +220,12 @@ function BaseImageItem({
   onClick,
 }: BaseImageItemProps) {
   const { t } = useTranslation()
-  const filename = imagePath.split('/').pop() || imagePath
+  const isColor = isColorImage(imagePath)
+  const filename = isColor
+    ? t('imageEditor.layers.colorLayer')
+    : imagePath.split('/').pop() || imagePath
   const displayName = name || filename
-  const Icon = isLayer ? Layers : Image
+  const Icon = isLayer ? Layers : isColor ? Paintbrush : Image
 
   return (
     <div
@@ -253,12 +265,23 @@ export function LayerPanel({
   onReplaceImage,
   onAddImageLayer,
   onAddTextLayer,
+  onAddColorLayer,
   onTextEdit,
 }: LayerPanelProps) {
   const { t } = useTranslation()
   const imagePath = imageEditor.getImagePath()
   const layers = imageEditor.getContextLayers()
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  const isBaseColor = isColorImage(imagePath)
+  const baseColorValue = isBaseColor ? imagePath.replace(/^color:/i, '') : ''
+
+  const handleBaseColorChange = useCallback(
+    (hex: string) => {
+      imageEditor.replaceImage(colorToImagePath(hex), imageEditor.getOriginalDimensions(), null)
+    },
+    [imageEditor],
+  )
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingLayerId, setRenamingLayerId] = useState<string | null>(null)
   const [newLayerName, setNewLayerName] = useState('')
@@ -320,7 +343,9 @@ export function LayerPanel({
           ? layer.name
           : layer.type === 'text'
             ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60)
-            : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || ''
+            : isColorImage((layer as ImageLayer).imagePath)
+              ? t('imageEditor.layers.colorLayer')
+              : (layer as ImageLayer).imagePath.split('/').pop() || ''
         setNewLayerName(displayName)
         // Small delay to let dropdown fully close before opening modal dialog
         setTimeout(() => {
@@ -352,7 +377,7 @@ export function LayerPanel({
   }, [imageEditor])
 
   const handleUpdateLayer = useCallback(
-    (layerId: string, updates: Partial<import('@/lib/image-editor').Layer>) => {
+    (layerId: string, updates: Partial<Layer>) => {
       imageEditor.updateLayer(layerId, updates)
     },
     [imageEditor],
@@ -474,6 +499,12 @@ export function LayerPanel({
               </div>
               <DropdownMenuShortcut>T</DropdownMenuShortcut>
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTimeout(onAddColorLayer, 0)}>
+              <div className='flex flex-1 items-center'>
+                <Paintbrush className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.addColor')}
+              </div>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -514,6 +545,8 @@ export function LayerPanel({
                   <GripVertical className='h-4 w-4' />
                   {activeLayer.type === 'text' ? (
                     <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+                  ) : isColorImage(activeLayer.imagePath) ? (
+                    <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   ) : (
                     <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   )}
@@ -523,7 +556,9 @@ export function LayerPanel({
                       : activeLayer.type === 'text'
                         ? activeLayer.text.replace(/\n/g, ' ').trim().slice(0, 60) ||
                           t('imageEditor.layers.textLayer')
-                        : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
+                        : isColorImage(activeLayer.imagePath)
+                          ? t('imageEditor.layers.colorLayer')
+                          : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
                   </span>
                   {/* Match layer item button structure */}
                   <div className='flex shrink-0 gap-0.5'>
@@ -589,15 +624,25 @@ export function LayerPanel({
       {selectedLayerId === null && !activeId && (
         <div className='shrink-0'>
           <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-            <Button
-              variant='outline'
-              onClick={() => onReplaceImage(null)}
-              disabled={visualCropEnabled}
-              className='w-full'
-            >
-              <Image className='mr-2 h-4 w-4' />
-              {t('imageEditor.layers.replaceImage')}
-            </Button>
+            {isBaseColor ? (
+              /* Color base — color picker + hex input */
+              <ColorPickerInput
+                value={baseColorValue}
+                onChange={handleBaseColorChange}
+                disabled={visualCropEnabled}
+              />
+            ) : (
+              /* Image base — Replace Image only, no color picker */
+              <Button
+                variant='outline'
+                onClick={() => onReplaceImage(null)}
+                disabled={visualCropEnabled}
+                className='w-full'
+              >
+                <Image className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.replaceImage')}
+              </Button>
+            )}
           </div>
         </div>
       )}
