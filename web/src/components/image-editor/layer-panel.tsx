@@ -220,9 +220,12 @@ function BaseImageItem({
   onClick,
 }: BaseImageItemProps) {
   const { t } = useTranslation()
-  const filename = imagePath.split('/').pop() || imagePath
+  const isColor = isColorImage(imagePath)
+  const filename = isColor
+    ? t('imageEditor.layers.colorLayer')
+    : imagePath.split('/').pop() || imagePath
   const displayName = name || filename
-  const Icon = isLayer ? Layers : Image
+  const Icon = isLayer ? Layers : isColor ? Paintbrush : Image
 
   return (
     <div
@@ -272,8 +275,10 @@ export function LayerPanel({
 
   // Debounced base image color commit — reactive live preview, but only pushes
   // to undo history after the user stops dragging (300ms debounce).
+  const isBaseColor = isColorImage(imagePath)
   const debouncedBaseColor = useDebouncedCommit<string>((hex) => {
-    imageEditor.replaceImage(colorToImagePath(hex), { width: 1, height: 1 }, null)
+    // Preserve current dimensions when changing color (don't reset to 1×1)
+    imageEditor.replaceImage(colorToImagePath(hex), imageEditor.getOriginalDimensions(), null)
   })
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingLayerId, setRenamingLayerId] = useState<string | null>(null)
@@ -617,30 +622,40 @@ export function LayerPanel({
       {selectedLayerId === null && !activeId && (
         <div className='shrink-0'>
           <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-            <div className='flex items-center gap-2'>
+            {isBaseColor ? (
+              /* Color base — color picker + hex input on one line */
+              <div className='flex items-center gap-2'>
+                <input
+                  type='color'
+                  value={`#${(imagePath.replace(/^color:/i, '') || 'cccccc').replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
+                  onChange={(e) => debouncedBaseColor(e.target.value.replace('#', ''))}
+                  disabled={visualCropEnabled}
+                  className='border-foreground/40 h-8 w-8 shrink-0 cursor-pointer rounded border-2 p-0.5'
+                  title={t('imageEditor.layers.setColor')}
+                />
+                <Input
+                  value={imagePath.replace(/^color:/i, '')}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 8)
+                    if (val) imageEditor.replaceImage(colorToImagePath(val), imageEditor.getOriginalDimensions(), null)
+                  }}
+                  disabled={visualCropEnabled}
+                  placeholder='hex color'
+                  className='h-8 flex-1 font-mono text-xs'
+                />
+              </div>
+            ) : (
+              /* Image base — Replace Image only, no color picker */
               <Button
                 variant='outline'
                 onClick={() => onReplaceImage(null)}
                 disabled={visualCropEnabled}
-                className='flex-1'
+                className='w-full'
               >
                 <Image className='mr-2 h-4 w-4' />
                 {t('imageEditor.layers.replaceImage')}
               </Button>
-              <input
-                type='color'
-                value={`#${isColorImage(imagePath) ? (imagePath.replace(/^color:/i, '') || 'cccccc').replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0') : 'cccccc'}`}
-                onChange={(e) => debouncedBaseColor(e.target.value.replace('#', ''))}
-                disabled={visualCropEnabled}
-                className={cn(
-                  'h-9 w-9 shrink-0 cursor-pointer rounded p-0.5',
-                  isColorImage(imagePath)
-                    ? 'border-foreground/40 border-2'
-                    : 'border border-dashed opacity-40',
-                )}
-                title={t('imageEditor.layers.setColor')}
-              />
-            </div>
+            )}
           </div>
         </div>
       )}
