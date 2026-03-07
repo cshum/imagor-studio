@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
+import { isColorImage, getColorFromPath, colorToImagePath } from '@/lib/image-editor'
 import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
 import { clampFillOffset, toggleFillMode } from '@/lib/layer-fill'
 import { cn } from '@/lib/utils'
@@ -37,6 +38,10 @@ export function LayerControls({
   onReplaceImage,
 }: LayerControlsProps) {
   const { t } = useTranslation()
+
+  const isColor = isColorImage(layer.imagePath)
+  const colorValue = isColor ? getColorFromPath(layer.imagePath) : ''
+  const isTransparent = colorValue === 'none' || colorValue === 'transparent'
 
   // Calculate and store aspect ratio from original dimensions
   const [aspectRatio] = useState<number>(() => {
@@ -225,8 +230,57 @@ export function LayerControls({
 
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-      {/* Edit Layer Button - only show when not already editing */}
-      {!isEditing && (
+      {/* Color picker for color layers */}
+      {isColor && (
+        <div className='space-y-1'>
+          <Label className='text-muted-foreground text-xs'>
+            {t('imageEditor.layers.layerColor')}
+          </Label>
+          <div className='flex items-center gap-2'>
+            <div className='relative'>
+              <input
+                type='color'
+                value={isTransparent ? '#cccccc' : `#${colorValue.padStart(6, '0')}`}
+                onChange={(e) => {
+                  const hex = e.target.value.replace('#', '')
+                  onUpdate({ imagePath: colorToImagePath(hex) })
+                }}
+                disabled={visualCropEnabled || isTransparent}
+                className='h-8 w-8 cursor-pointer rounded border p-0.5'
+              />
+            </div>
+            <Input
+              value={isTransparent ? '' : colorValue}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 8)
+                if (val) onUpdate({ imagePath: colorToImagePath(val) })
+              }}
+              disabled={visualCropEnabled || isTransparent}
+              placeholder={isTransparent ? t('imageEditor.layers.transparent') : 'hex'}
+              className='h-8 flex-1 font-mono text-xs'
+            />
+            <Button
+              variant={isTransparent ? 'default' : 'outline'}
+              size='sm'
+              className='h-8 shrink-0 px-2 text-xs'
+              disabled={visualCropEnabled}
+              onClick={() => {
+                if (isTransparent) {
+                  onUpdate({ imagePath: colorToImagePath('cccccc') })
+                } else {
+                  onUpdate({ imagePath: colorToImagePath('none') })
+                }
+              }}
+              title={t('imageEditor.layers.transparent')}
+            >
+              {t('imageEditor.layers.transparent')}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Layer Button - only show for non-color layers when not already editing */}
+      {!isEditing && !isColor && (
         <Button
           variant='outline'
           size='default'
@@ -239,8 +293,8 @@ export function LayerControls({
         </Button>
       )}
 
-      {/* Swap Image Button - only show when editing (no Edit Layer button) */}
-      {isEditing && (
+      {/* Swap Image Button - only show when editing non-color layers */}
+      {isEditing && !isColor && (
         <Button
           variant='outline'
           size='default'

@@ -127,6 +127,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const handleVisualCropToggleRef = useRef<(enabled: boolean) => Promise<void>>(async () => {})
   // Stable refs for add-layer callbacks (defined after the keydown useEffect)
   const handleAddTextLayerRef = useRef<() => void>(() => {})
+  const handleAddColorLayerRef = useRef<() => void>(() => {})
   const handleAddLayerDialogOpenRef = useRef<() => void>(() => {})
 
   // Preview container ref and image dimensions for viewport calculations
@@ -584,6 +585,32 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     imageEditor.setTextEditingLayerId(newLayer.id)
   }, [imageEditor, t])
 
+  const handleAddColorLayer = useCallback(() => {
+    const outputDims = imageEditor.getOutputDimensions()
+    // Default to a reasonable size (40% of canvas, square)
+    const size = Math.round(Math.min(outputDims.width, outputDims.height) * 0.4)
+    const x = Math.round((outputDims.width - size) / 2)
+    const y = Math.round((outputDims.height - size) / 2)
+    const newLayer = {
+      type: 'image' as const,
+      id: `layer-${Date.now()}`,
+      imagePath: 'color:cccccc',
+      originalDimensions: { width: size, height: size },
+      x,
+      y,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+      name: '',
+      transforms: {
+        width: size,
+        height: size,
+      },
+    }
+    imageEditor.addLayer(newLayer)
+    imageEditor.setSelectedLayerId(newLayer.id)
+  }, [imageEditor])
+
   const handleTextEdit = useCallback(
     (layerId: string | null): Promise<void> => {
       setIsNewTextLayer(false)
@@ -703,6 +730,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   // Keep refs in sync so the keydown useEffect always calls the latest versions
   handleVisualCropToggleRef.current = handleVisualCropToggle
   handleAddTextLayerRef.current = handleAddTextLayer
+  handleAddColorLayerRef.current = handleAddColorLayer
   handleAddLayerDialogOpenRef.current = () => setAddLayerDialogOpen(true)
 
   const handlePreviewLoad = () => {
@@ -793,6 +821,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             onReplaceImage={handleReplaceImageClick}
             onAddImageLayer={() => setAddLayerDialogOpen(true)}
             onAddTextLayer={handleAddTextLayer}
+            onAddColorLayer={handleAddColorLayer}
             onTextEdit={handleTextEdit}
           />
         ),

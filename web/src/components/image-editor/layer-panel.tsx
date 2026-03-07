@@ -27,6 +27,7 @@ import {
   Image,
   Layers,
   MoreVertical,
+  Paintbrush,
   Plus,
   Type,
 } from 'lucide-react'
@@ -54,6 +55,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, Layer } from '@/lib/image-editor'
+import { isColorImage } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
@@ -68,6 +70,7 @@ interface LayerPanelProps {
   onReplaceImage: (layerId: string | null) => void
   onAddImageLayer: () => void
   onAddTextLayer: () => void
+  onAddColorLayer: () => void
   onTextEdit: (layerId: string | null) => Promise<void>
 }
 
@@ -151,6 +154,8 @@ function SortableLayerItem({
           {/* Layer type icon */}
           {isText ? (
             <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+          ) : !isText && isColorImage((layer as import('@/lib/image-editor').ImageLayer).imagePath) ? (
+            <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
           ) : (
             <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
           )}
@@ -253,6 +258,7 @@ export function LayerPanel({
   onReplaceImage,
   onAddImageLayer,
   onAddTextLayer,
+  onAddColorLayer,
   onTextEdit,
 }: LayerPanelProps) {
   const { t } = useTranslation()
@@ -473,6 +479,12 @@ export function LayerPanel({
                 {t('imageEditor.layers.addText')}
               </div>
               <DropdownMenuShortcut>T</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTimeout(onAddColorLayer, 0)}>
+              <div className='flex flex-1 items-center'>
+                <Paintbrush className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.addColor')}
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

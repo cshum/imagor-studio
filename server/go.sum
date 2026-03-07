@@ -58,8 +58,8 @@ github.com/cevatbarisyilmaz/ara v0.0.4 h1:SGH10hXpBJhhTlObuZzTuFn1rrdmjQImITXnZV
 github.com/cevatbarisyilmaz/ara v0.0.4/go.mod h1:BfFOxnUd6Mj6xmcvRxHN3Sr21Z1T3U2MYkYOmoQe4Ts=
 github.com/cshum/imagor v1.6.18-0.20260307182407-f2438653e0df h1:BFnGCt0XNoQ22R23GKBmGwdOxz9JOGU1O5J2wZpwsiM=
 github.com/cshum/imagor v1.6.18-0.20260307182407-f2438653e0df/go.mod h1:ctld7LSWwOZCtgcgkbBpryamCmaeQMOjF7ti2kshkKo=
-github.com/cshum/imagorvideo v1.0.21 h1:lUQ8u2tkVRaKV+3mHKHxugO7+3qGTp0egca3X6PXXno=
-github.com/cshum/imagorvideo v1.0.21/go.mod h1:YmvUzPUPrdDZJCHXu9/xbm+IKn445a+GWdIzihNvYs8=
+github.com/cshum/imagorvideo v1.0.22-0.20260307190638-9d45fe659636 h1:6wsEa6B+dJy4WqFD521IGgOxG/1fssAFISgklvUZ1bM=
+github.com/cshum/imagorvideo v1.0.22-0.20260307190638-9d45fe659636/go.mod h1:zi7plBQrv2hmXd/lb1O8xP1QhLsWn5h0YZFJSmfafwg=
 github.com/cshum/vipsgen v1.3.7 h1:6EPY8lQl+q0xp8KcVVU8bb9nC1yUdkn7rx1BhkTKBX4=
 github.com/cshum/vipsgen v1.3.7/go.mod h1:AmCpW+vKfu16ZFPN/PBgtLsAl3kt7c0y2uA4bD5Lzk8=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=

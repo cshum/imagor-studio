@@ -81,6 +81,34 @@ export interface TextLayer {
 
 export type Layer = ImageLayer | TextLayer
 
+/**
+ * Check if an image path is a color image (solid color or transparent).
+ * Color images use imagor's `color:<color>` syntax as the image path.
+ * @param imagePath - Image path to check
+ * @returns true if the path is a color image
+ */
+export function isColorImage(imagePath: string): boolean {
+  return imagePath.startsWith('color:')
+}
+
+/**
+ * Extract the color value from a color image path.
+ * @param imagePath - Image path like "color:ff6600" or "color:none"
+ * @returns The color value (e.g., "ff6600", "none", "red")
+ */
+export function getColorFromPath(imagePath: string): string {
+  return imagePath.replace(/^color:/, '')
+}
+
+/**
+ * Build a color image path from a color value.
+ * @param color - Color value (e.g., "ff6600", "none", "red")
+ * @returns Image path like "color:ff6600"
+ */
+export function colorToImagePath(color: string): string {
+  return `color:${color}`
+}
+
 export interface ImageEditorState {
   // Base image (for root context only - captured in history for swap image undo/redo)
   imagePath?: string
