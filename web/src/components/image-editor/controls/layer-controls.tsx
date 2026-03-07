@@ -1,17 +1,17 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Edit, Image as ImageIcon, Lock, MoveHorizontal, MoveVertical, Unlock } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useDebouncedCommit } from '@/hooks/use-debounced-commit'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
 import { colorToImagePath, getColorFromPath, isColorImage } from '@/lib/image-editor'
 import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
 import { clampFillOffset, toggleFillMode } from '@/lib/layer-fill'
 import { cn } from '@/lib/utils'
 
+import { ColorPickerInput } from './color-picker-input'
 import { CompositingControls } from './compositing-controls'
 import { PositionControls } from './position-controls'
 
@@ -43,29 +43,12 @@ export function LayerControls({
   const isColor = isColorImage(layer.imagePath)
   const colorValue = isColor ? getColorFromPath(layer.imagePath) : ''
 
-  // Local state for hex text input — only commits on blur / Enter to avoid
-  // firing a preview for every keystroke (e.g. typing "ff" would otherwise
-  // trigger "f" then "ff" as intermediate states).
-  const [localHex, setLocalHex] = useState(colorValue)
-  // Sync local hex when the layer's color changes externally (e.g. color picker, undo)
-  useEffect(() => {
-    setLocalHex(colorValue)
-  }, [colorValue])
-
-  const commitHex = useCallback(
-    (val: string) => {
-      const cleaned = val.replace(/[^a-fA-F0-9]/g, '').slice(0, 6)
-      if (cleaned) onUpdate({ imagePath: colorToImagePath(cleaned) })
+  const handleColorChange = useCallback(
+    (hex: string) => {
+      onUpdate({ imagePath: colorToImagePath(hex) })
     },
     [onUpdate],
   )
-
-  // Debounced color commits — reactive live preview, but only pushes to undo
-  // history after the user stops dragging (300ms debounce).
-  const debouncedEditColor = useDebouncedCommit<string>((hex) => {
-    setLocalHex(hex)
-    onUpdate({ imagePath: colorToImagePath(hex) })
-  })
 
   // Calculate and store aspect ratio from original dimensions
   const [aspectRatio] = useState<number>(() => {
@@ -269,42 +252,22 @@ export function LayerControls({
           </Button>
           {/* Color swatch — only for color layers next to Edit Layer */}
           {isColor && (
-            <input
-              type='color'
-              value={`#${colorValue.replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
-              onChange={(e) => debouncedEditColor(e.target.value.replace('#', ''))}
+            <ColorPickerInput
+              value={colorValue}
+              onChange={handleColorChange}
               disabled={visualCropEnabled}
-              className='border-foreground/40 h-9 w-9 shrink-0 cursor-pointer rounded border-2 p-0.5'
-              title={t('imageEditor.layers.setColor')}
+              swatchSize='md'
+              swatchOnly
             />
           )}
         </div>
       ) : isColor ? (
-        /* Color layer editing — color picker + hex input on one line */
-        <div className='flex items-center gap-2'>
-          <input
-            type='color'
-            value={`#${colorValue.replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
-            onChange={(e) => debouncedEditColor(e.target.value.replace('#', ''))}
-            disabled={visualCropEnabled}
-            className='border-foreground/40 h-8 w-8 shrink-0 cursor-pointer rounded border-2 p-0.5'
-            title={t('imageEditor.layers.setColor')}
-          />
-          <Input
-            value={localHex}
-            onChange={(e) => {
-              setLocalHex(e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 6))
-            }}
-            onBlur={() => commitHex(localHex)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitHex(localHex)
-            }}
-            disabled={visualCropEnabled}
-            placeholder='hex color'
-            className='h-8 flex-1 font-mono text-xs'
-            maxLength={6}
-          />
-        </div>
+        /* Color layer editing — color picker + hex input */
+        <ColorPickerInput
+          value={colorValue}
+          onChange={handleColorChange}
+          disabled={visualCropEnabled}
+        />
       ) : (
         /* Image layer editing — Replace Image only, no color picker */
         <Button

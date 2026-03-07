@@ -32,6 +32,7 @@ import {
   Type,
 } from 'lucide-react'
 
+import { ColorPickerInput } from '@/components/image-editor/controls/color-picker-input'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
 import { TextLayerControls } from '@/components/image-editor/controls/text-layer-controls'
 import { LayerContextMenu, LayerDropdownMenu } from '@/components/image-editor/layer-menu'
@@ -54,7 +55,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useDebouncedCommit } from '@/hooks/use-debounced-commit'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
 import { colorToImagePath, isColorImage } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
@@ -273,28 +273,15 @@ export function LayerPanel({
   const layers = imageEditor.getContextLayers()
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  // Debounced base image color commit — reactive live preview, but only pushes
-  // to undo history after the user stops dragging (300ms debounce).
   const isBaseColor = isColorImage(imagePath)
   const baseColorValue = isBaseColor ? imagePath.replace(/^color:/i, '') : ''
-  // Local state for base color hex input — only commits on blur / Enter
-  const [localBaseHex, setLocalBaseHex] = useState(baseColorValue)
-  // Sync when color changes externally (color picker, undo)
-  useEffect(() => {
-    setLocalBaseHex(baseColorValue)
-  }, [baseColorValue])
-  const commitBaseHex = useCallback(
-    (val: string) => {
-      const cleaned = val.replace(/[^a-fA-F0-9]/g, '').slice(0, 6)
-      if (cleaned) imageEditor.replaceImage(colorToImagePath(cleaned), imageEditor.getOriginalDimensions(), null)
+
+  const handleBaseColorChange = useCallback(
+    (hex: string) => {
+      imageEditor.replaceImage(colorToImagePath(hex), imageEditor.getOriginalDimensions(), null)
     },
     [imageEditor],
   )
-  const debouncedBaseColor = useDebouncedCommit<string>((hex) => {
-    setLocalBaseHex(hex)
-    // Preserve current dimensions when changing color (don't reset to 1×1)
-    imageEditor.replaceImage(colorToImagePath(hex), imageEditor.getOriginalDimensions(), null)
-  })
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingLayerId, setRenamingLayerId] = useState<string | null>(null)
   const [newLayerName, setNewLayerName] = useState('')
@@ -638,31 +625,12 @@ export function LayerPanel({
         <div className='shrink-0'>
           <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
             {isBaseColor ? (
-              /* Color base — color picker + hex input on one line */
-              <div className='flex items-center gap-2'>
-                <input
-                  type='color'
-                  value={`#${(imagePath.replace(/^color:/i, '') || 'cccccc').replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
-                  onChange={(e) => debouncedBaseColor(e.target.value.replace('#', ''))}
-                  disabled={visualCropEnabled}
-                  className='border-foreground/40 h-8 w-8 shrink-0 cursor-pointer rounded border-2 p-0.5'
-                  title={t('imageEditor.layers.setColor')}
-                />
-                <Input
-                  value={localBaseHex}
-                  onChange={(e) => {
-                    setLocalBaseHex(e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 6))
-                  }}
-                  onBlur={() => commitBaseHex(localBaseHex)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') commitBaseHex(localBaseHex)
-                  }}
-                  disabled={visualCropEnabled}
-                  placeholder='hex color'
-                  className='h-8 flex-1 font-mono text-xs'
-                  maxLength={6}
-                />
-              </div>
+              /* Color base — color picker + hex input */
+              <ColorPickerInput
+                value={baseColorValue}
+                onChange={handleBaseColorChange}
+                disabled={visualCropEnabled}
+              />
             ) : (
               /* Image base — Replace Image only, no color picker */
               <Button
