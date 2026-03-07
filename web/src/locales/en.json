@@ -825,6 +825,7 @@
       "selectImageDescription": "Choose an image to add as a new layer",
       "baseImage": "Base",
       "replaceImage": "Replace Image",
+      "setColor": "Set Color",
       "replaceImageError": "Failed to replace image",
       "addImageLayer": "Add Image Layer",
       "addImageLayerDescription": "Choose an image from your storage to add as a new layer.",

@@ -154,7 +154,8 @@ function SortableLayerItem({
           {/* Layer type icon */}
           {isText ? (
             <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
-          ) : !isText && isColorImage((layer as import('@/lib/image-editor').ImageLayer).imagePath) ? (
+          ) : !isText &&
+            isColorImage((layer as import('@/lib/image-editor').ImageLayer).imagePath) ? (
             <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
           ) : (
             <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />

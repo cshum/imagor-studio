@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
-import { isColorImage, getColorFromPath, colorToImagePath } from '@/lib/image-editor'
+import { colorToImagePath, getColorFromPath, isColorImage } from '@/lib/image-editor'
 import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
 import { clampFillOffset, toggleFillMode } from '@/lib/layer-fill'
 import { cn } from '@/lib/utils'
@@ -231,75 +231,82 @@ export function LayerControls({
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
       {/* Edit Layer / Replace Image / Color picker */}
       {!isEditing ? (
-        isColor ? (
-          <div className='flex items-center gap-2'>
-            <Button
-              variant='outline'
-              size='default'
-              onClick={onEditLayer}
-              disabled={visualCropEnabled}
-              className='flex-1'
-            >
-              <Edit className='mr-2 h-4 w-4' />
-              {t('imageEditor.layers.editLayer')}
-            </Button>
-            <input
-              type='color'
-              value={`#${colorValue.replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
-              onChange={(e) => {
-                const hex = e.target.value.replace('#', '')
-                onUpdate({ imagePath: colorToImagePath(hex) })
-              }}
-              disabled={visualCropEnabled}
-              className='h-9 w-9 shrink-0 cursor-pointer rounded border p-0.5'
-            />
-          </div>
-        ) : (
+        <div className='flex items-center gap-2'>
           <Button
             variant='outline'
             size='default'
             onClick={onEditLayer}
             disabled={visualCropEnabled}
-            className='w-full'
+            className='flex-1'
           >
             <Edit className='mr-2 h-4 w-4' />
             {t('imageEditor.layers.editLayer')}
           </Button>
-        )
-      ) : isColor ? (
-        <div className='flex items-center gap-2'>
-          <Input
-            value={colorValue}
-            onChange={(e) => {
-              const val = e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 8)
-              if (val) onUpdate({ imagePath: colorToImagePath(val) })
-            }}
-            disabled={visualCropEnabled}
-            placeholder='hex'
-            className='h-9 flex-1 font-mono text-xs'
-          />
           <input
             type='color'
-            value={`#${colorValue.replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
+            value={`#${(isColor ? colorValue : 'cccccc').replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
             onChange={(e) => {
               const hex = e.target.value.replace('#', '')
               onUpdate({ imagePath: colorToImagePath(hex) })
             }}
             disabled={visualCropEnabled}
             className='h-9 w-9 shrink-0 cursor-pointer rounded border p-0.5'
+            title={t('imageEditor.layers.setColor')}
           />
         </div>
       ) : (
-        <Button
-          variant='outline'
-          size='default'
-          onClick={onReplaceImage}
-          disabled={visualCropEnabled}
-          className='w-full'
-        >
-          <ImageIcon className='mr-2 h-4 w-4' />
-          {t('imageEditor.layers.replaceImage')}
-        </Button>
+        <div className='space-y-2'>
+          {/* Color picker row — always visible in editing mode */}
+          <div className='flex items-center gap-2'>
+            {isColor ? (
+              <Input
+                value={colorValue}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 8)
+                  if (val) onUpdate({ imagePath: colorToImagePath(val) })
+                }}
+                disabled={visualCropEnabled}
+                placeholder='hex'
+                className='h-9 flex-1 font-mono text-xs'
+              />
+            ) : (
+              <Button
+                variant='outline'
+                size='default'
+                onClick={onReplaceImage}
+                disabled={visualCropEnabled}
+                className='flex-1'
+              >
+                <ImageIcon className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.replaceImage')}
+              </Button>
+            )}
+            <input
+              type='color'
+              value={`#${(isColor ? colorValue : 'cccccc').replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
+              onChange={(e) => {
+                const hex = e.target.value.replace('#', '')
+                onUpdate({ imagePath: colorToImagePath(hex) })
+              }}
+              disabled={visualCropEnabled}
+              className='h-9 w-9 shrink-0 cursor-pointer rounded border p-0.5'
+              title={t('imageEditor.layers.setColor')}
+            />
+          </div>
+          {/* Replace Image button for color layers */}
+          {isColor && (
+            <Button
+              variant='outline'
+              size='default'
+              onClick={onReplaceImage}
+              disabled={visualCropEnabled}
+              className='w-full'
+            >
+              <ImageIcon className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.replaceImage')}
+            </Button>
+          )}
+        </div>
       )}
 
       {/* Position */}
