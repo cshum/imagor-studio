@@ -805,6 +805,7 @@
       "addImage": "Image Layer",
       "addText": "Text Layer",
       "addColor": "Color Layer",
+      "colorLayer": "Color Layer",
       "textLayer": "Text Layer",
       "textLayerDefaultText": "Text",
       "editText": "Edit Text",

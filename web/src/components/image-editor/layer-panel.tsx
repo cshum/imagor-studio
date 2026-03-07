@@ -110,11 +110,14 @@ function SortableLayerItem({
   //   custom name (if renamed) → custom name
   //   text layer (not renamed) → text content, or "Text Layer" if empty
   //   image layer              → filename
+  const isColor = !isText && isColorImage((layer as ImageLayer).imagePath)
   const displayName = layer.name
     ? layer.name
     : isText
       ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
-      : (layer as ImageLayer).imagePath.split('/').pop() || ''
+      : isColor
+        ? t('imageEditor.layers.colorLayer')
+        : (layer as ImageLayer).imagePath.split('/').pop() || ''
 
   const handleEdit = () => imageEditor.switchContext(layer.id)
   const handleToggleVisibility = () =>
@@ -333,7 +336,9 @@ export function LayerPanel({
           ? layer.name
           : layer.type === 'text'
             ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60)
-            : (layer as ImageLayer).imagePath.split('/').pop() || ''
+            : isColorImage((layer as ImageLayer).imagePath)
+              ? t('imageEditor.layers.colorLayer')
+              : (layer as ImageLayer).imagePath.split('/').pop() || ''
         setNewLayerName(displayName)
         // Small delay to let dropdown fully close before opening modal dialog
         setTimeout(() => {
@@ -533,6 +538,8 @@ export function LayerPanel({
                   <GripVertical className='h-4 w-4' />
                   {activeLayer.type === 'text' ? (
                     <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+                  ) : isColorImage(activeLayer.imagePath) ? (
+                    <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   ) : (
                     <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   )}
@@ -542,7 +549,9 @@ export function LayerPanel({
                       : activeLayer.type === 'text'
                         ? activeLayer.text.replace(/\n/g, ' ').trim().slice(0, 60) ||
                           t('imageEditor.layers.textLayer')
-                        : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
+                        : isColorImage(activeLayer.imagePath)
+                          ? t('imageEditor.layers.colorLayer')
+                          : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
                   </span>
                   {/* Match layer item button structure */}
                   <div className='flex shrink-0 gap-0.5'>
