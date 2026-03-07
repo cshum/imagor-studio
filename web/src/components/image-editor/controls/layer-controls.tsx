@@ -5,6 +5,7 @@ import { Edit, Image as ImageIcon, Lock, MoveHorizontal, MoveVertical, Unlock } 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useDebouncedCommit } from '@/hooks/use-debounced-commit'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
 import { colorToImagePath, getColorFromPath, isColorImage } from '@/lib/image-editor'
 import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
@@ -41,6 +42,19 @@ export function LayerControls({
 
   const isColor = isColorImage(layer.imagePath)
   const colorValue = isColor ? getColorFromPath(layer.imagePath) : ''
+
+  // Debounced color commits — reactive live preview, but only pushes to undo
+  // history after the user stops dragging (300ms debounce).
+  const debouncedEditColor = useDebouncedCommit<string>((hex) => {
+    onUpdate({ imagePath: colorToImagePath(hex) })
+  })
+  const debouncedReplaceColor = useDebouncedCommit<string>((hex) => {
+    onUpdate({
+      imagePath: colorToImagePath(hex),
+      originalDimensions: isColor ? undefined : { width: 1, height: 1 },
+      transforms: isColor ? undefined : { ...layer.transforms, widthFull: true, heightFull: true },
+    })
+  })
 
   // Calculate and store aspect ratio from original dimensions
   const [aspectRatio] = useState<number>(() => {
@@ -229,7 +243,7 @@ export function LayerControls({
 
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-      {/* Edit Layer / Replace Image / Color picker */}
+      {/* Edit Layer / Replace Image + Color picker swatch */}
       {!isEditing ? (
         <div className='flex items-center gap-2'>
           <Button
@@ -242,69 +256,55 @@ export function LayerControls({
             <Edit className='mr-2 h-4 w-4' />
             {t('imageEditor.layers.editLayer')}
           </Button>
-          <input
-            type='color'
-            value={`#${(isColor ? colorValue : 'cccccc').replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
-            onChange={(e) => {
-              const hex = e.target.value.replace('#', '')
-              onUpdate({ imagePath: colorToImagePath(hex) })
-            }}
-            disabled={visualCropEnabled}
-            className='h-9 w-9 shrink-0 cursor-pointer rounded border p-0.5'
-            title={t('imageEditor.layers.setColor')}
-          />
+          {/* Color swatch — only for color layers next to Edit Layer */}
+          {isColor && (
+            <input
+              type='color'
+              value={`#${colorValue.replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
+              onChange={(e) => debouncedEditColor(e.target.value.replace('#', ''))}
+              disabled={visualCropEnabled}
+              className='border-foreground/40 h-9 w-9 shrink-0 cursor-pointer rounded border-2 p-0.5'
+              title={t('imageEditor.layers.setColor')}
+            />
+          )}
         </div>
       ) : (
         <div className='space-y-2'>
-          {/* Color picker row — always visible in editing mode */}
           <div className='flex items-center gap-2'>
-            {isColor ? (
-              <Input
-                value={colorValue}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 8)
-                  if (val) onUpdate({ imagePath: colorToImagePath(val) })
-                }}
-                disabled={visualCropEnabled}
-                placeholder='hex'
-                className='h-9 flex-1 font-mono text-xs'
-              />
-            ) : (
-              <Button
-                variant='outline'
-                size='default'
-                onClick={onReplaceImage}
-                disabled={visualCropEnabled}
-                className='flex-1'
-              >
-                <ImageIcon className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.replaceImage')}
-              </Button>
-            )}
-            <input
-              type='color'
-              value={`#${(isColor ? colorValue : 'cccccc').replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
-              onChange={(e) => {
-                const hex = e.target.value.replace('#', '')
-                onUpdate({ imagePath: colorToImagePath(hex) })
-              }}
-              disabled={visualCropEnabled}
-              className='h-9 w-9 shrink-0 cursor-pointer rounded border p-0.5'
-              title={t('imageEditor.layers.setColor')}
-            />
-          </div>
-          {/* Replace Image button for color layers */}
-          {isColor && (
             <Button
               variant='outline'
               size='default'
               onClick={onReplaceImage}
               disabled={visualCropEnabled}
-              className='w-full'
+              className='flex-1'
             >
               <ImageIcon className='mr-2 h-4 w-4' />
               {t('imageEditor.layers.replaceImage')}
             </Button>
+            <input
+              type='color'
+              value={`#${(isColor ? colorValue : 'cccccc').replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0')}`}
+              onChange={(e) => debouncedReplaceColor(e.target.value.replace('#', ''))}
+              disabled={visualCropEnabled}
+              className={cn(
+                'h-9 w-9 shrink-0 cursor-pointer rounded p-0.5',
+                isColor ? 'border-foreground/40 border-2' : 'border border-dashed opacity-40',
+              )}
+              title={t('imageEditor.layers.setColor')}
+            />
+          </div>
+          {/* Hex input — only for color layers */}
+          {isColor && (
+            <Input
+              value={colorValue}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^a-fA-F0-9]/g, '').slice(0, 8)
+                if (val) onUpdate({ imagePath: colorToImagePath(val) })
+              }}
+              disabled={visualCropEnabled}
+              placeholder='hex color'
+              className='h-8 font-mono text-xs'
+            />
           )}
         </div>
       )}

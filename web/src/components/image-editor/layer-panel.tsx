@@ -54,8 +54,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { ImageEditor, Layer } from '@/lib/image-editor'
-import { isColorImage } from '@/lib/image-editor'
+import { useDebouncedCommit } from '@/hooks/use-debounced-commit'
+import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
+import { colorToImagePath, isColorImage } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
@@ -113,7 +114,7 @@ function SortableLayerItem({
     ? layer.name
     : isText
       ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
-      : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || ''
+      : (layer as ImageLayer).imagePath.split('/').pop() || ''
 
   const handleEdit = () => imageEditor.switchContext(layer.id)
   const handleToggleVisibility = () =>
@@ -154,8 +155,7 @@ function SortableLayerItem({
           {/* Layer type icon */}
           {isText ? (
             <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
-          ) : !isText &&
-            isColorImage((layer as import('@/lib/image-editor').ImageLayer).imagePath) ? (
+          ) : !isText && isColorImage((layer as ImageLayer).imagePath) ? (
             <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
           ) : (
             <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
@@ -266,6 +266,12 @@ export function LayerPanel({
   const imagePath = imageEditor.getImagePath()
   const layers = imageEditor.getContextLayers()
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  // Debounced base image color commit — reactive live preview, but only pushes
+  // to undo history after the user stops dragging (300ms debounce).
+  const debouncedBaseColor = useDebouncedCommit<string>((hex) => {
+    imageEditor.replaceImage(colorToImagePath(hex), { width: 1, height: 1 }, null)
+  })
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [renamingLayerId, setRenamingLayerId] = useState<string | null>(null)
   const [newLayerName, setNewLayerName] = useState('')
@@ -327,7 +333,7 @@ export function LayerPanel({
           ? layer.name
           : layer.type === 'text'
             ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60)
-            : (layer as import('@/lib/image-editor').ImageLayer).imagePath.split('/').pop() || ''
+            : (layer as ImageLayer).imagePath.split('/').pop() || ''
         setNewLayerName(displayName)
         // Small delay to let dropdown fully close before opening modal dialog
         setTimeout(() => {
@@ -359,7 +365,7 @@ export function LayerPanel({
   }, [imageEditor])
 
   const handleUpdateLayer = useCallback(
-    (layerId: string, updates: Partial<import('@/lib/image-editor').Layer>) => {
+    (layerId: string, updates: Partial<Layer>) => {
       imageEditor.updateLayer(layerId, updates)
     },
     [imageEditor],
@@ -602,15 +608,30 @@ export function LayerPanel({
       {selectedLayerId === null && !activeId && (
         <div className='shrink-0'>
           <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-            <Button
-              variant='outline'
-              onClick={() => onReplaceImage(null)}
-              disabled={visualCropEnabled}
-              className='w-full'
-            >
-              <Image className='mr-2 h-4 w-4' />
-              {t('imageEditor.layers.replaceImage')}
-            </Button>
+            <div className='flex items-center gap-2'>
+              <Button
+                variant='outline'
+                onClick={() => onReplaceImage(null)}
+                disabled={visualCropEnabled}
+                className='flex-1'
+              >
+                <Image className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.replaceImage')}
+              </Button>
+              <input
+                type='color'
+                value={`#${isColorImage(imagePath) ? (imagePath.replace(/^color:/i, '') || 'cccccc').replace(/^(none|transparent)$/i, 'cccccc').padStart(6, '0') : 'cccccc'}`}
+                onChange={(e) => debouncedBaseColor(e.target.value.replace('#', ''))}
+                disabled={visualCropEnabled}
+                className={cn(
+                  'h-9 w-9 shrink-0 cursor-pointer rounded p-0.5',
+                  isColorImage(imagePath)
+                    ? 'border-foreground/40 border-2'
+                    : 'border border-dashed opacity-40',
+                )}
+                title={t('imageEditor.layers.setColor')}
+              />
+            </div>
           </div>
         </div>
       )}

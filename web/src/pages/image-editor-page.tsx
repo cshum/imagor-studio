@@ -586,25 +586,22 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   }, [imageEditor, t])
 
   const handleAddColorLayer = useCallback(() => {
-    const outputDims = imageEditor.getOutputDimensions()
-    // Default to a reasonable size (40% of canvas, square)
-    const size = Math.round(Math.min(outputDims.width, outputDims.height) * 0.4)
-    const x = Math.round((outputDims.width - size) / 2)
-    const y = Math.round((outputDims.height - size) / 2)
+    // Color images have no inherent size (imagor defaults to 1×1).
+    // Use fill mode (widthFull/heightFull) so the layer fills the parent canvas.
     const newLayer = {
       type: 'image' as const,
       id: `layer-${Date.now()}`,
       imagePath: 'color:cccccc',
-      originalDimensions: { width: size, height: size },
-      x,
-      y,
+      originalDimensions: { width: 1, height: 1 },
+      x: 0,
+      y: 0,
       alpha: 0,
       blendMode: 'normal' as const,
       visible: true,
       name: '',
       transforms: {
-        width: size,
-        height: size,
+        widthFull: true,
+        heightFull: true,
       },
     }
     imageEditor.addLayer(newLayer)
