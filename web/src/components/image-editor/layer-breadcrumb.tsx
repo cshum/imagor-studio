@@ -34,9 +34,10 @@ export function LayerBreadcrumb({
   // Extract filename from base image path
   const imagePath = imageEditor.getBaseImagePath()
   const baseImageName = imagePath.split('/').pop() || imagePath
+  const isBaseColor = isColorImage(imagePath)
 
-  // Use baseName if provided, otherwise use the image filename
-  const displayBaseName = baseName || baseImageName
+  // Use baseName if provided, otherwise use a friendly name for color images or the filename
+  const displayBaseName = baseName || (isBaseColor ? t('imageEditor.layers.colorLayer') : baseImageName)
 
   // Determine if this is a template (baseName is provided)
   const isTemplate = !!baseName
@@ -46,7 +47,7 @@ export function LayerBreadcrumb({
     {
       id: null,
       name: displayBaseName,
-      icon: isTemplate ? FileText : Image,
+      icon: isTemplate ? FileText : isBaseColor ? Paintbrush : Image,
     },
   ]
 
@@ -87,7 +88,7 @@ export function LayerBreadcrumb({
         <span
           className={cn('truncate', isMobile ? 'max-w-[260px] text-base' : 'max-w-[240px] text-sm')}
         >
-          {baseImageName}
+          {displayBaseName}
         </span>
       </div>
     )
