@@ -3,7 +3,7 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
-import { ImageEditor } from '@/lib/image-editor'
+import { ImageEditor, isColorImage } from '@/lib/image-editor'
 import { joinImagePath } from '@/lib/path-utils'
 import type { ImagorTemplate } from '@/lib/template-types'
 import { getAuth } from '@/stores/auth-store'
@@ -89,14 +89,18 @@ export const imageEditorLoader = async ({
       )
     }
 
-    // Verify source image exists
-    const sourceFileStat = await statFile(actualImagePath)
-    if (!sourceFileStat || sourceFileStat.isDirectory) {
-      throw new Error(`Template source image not found: ${actualImagePath}`)
+    // Color images are virtual (imagor generates them on-the-fly) — skip file stat.
+    // Real images need to be verified and have their dimensions fetched.
+    let originalDimensions: { width: number; height: number }
+    if (isColorImage(actualImagePath)) {
+      originalDimensions = { width: 1, height: 1 }
+    } else {
+      const sourceFileStat = await statFile(actualImagePath)
+      if (!sourceFileStat || sourceFileStat.isDirectory) {
+        throw new Error(`Template source image not found: ${actualImagePath}`)
+      }
+      originalDimensions = await fetchImageDimensions(actualImagePath)
     }
-
-    // Fetch source image dimensions
-    const originalDimensions = await fetchImageDimensions(actualImagePath)
 
     // Clear image position for better transition
     clearPosition(galleryKey, imageKey)

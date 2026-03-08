@@ -977,6 +977,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         onOpenChange={setSaveTemplateDialogOpen}
         imageEditor={imageEditor}
         templateMetadata={templateMetadata}
+        galleryKey={propGalleryKey}
         title={
           templateMetadata
             ? t('imageEditor.template.saveTemplateAs')
