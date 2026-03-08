@@ -869,15 +869,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           {showFileNames && <Check className='ml-auto h-4 w-4' />}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={() => {
-            setTimeout(() => setIsNewCanvasDialogOpen(true), 0)
-          }}
-        >
-          <Paintbrush className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.newCanvas.menuItem')}
-        </DropdownMenuItem>
+
         <DropdownMenuItem
           className='hover:cursor-pointer'
           onSelect={() => {
@@ -897,6 +889,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         >
           <Upload className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.gallery.upload.uploadFiles')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={() => {
+            setTimeout(() => setIsNewCanvasDialogOpen(true), 0)
+          }}
+        >
+          <Paintbrush className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.newCanvas.menuItem')}
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
