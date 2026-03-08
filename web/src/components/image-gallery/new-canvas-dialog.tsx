@@ -147,7 +147,7 @@ export function NewCanvasDialog({ open, onOpenChange, galleryKey }: NewCanvasDia
 
         <DialogFooter>
           <Button variant='outline' onClick={() => onOpenChange(false)}>
-            {t('common.cancel')}
+            {t('common.buttons.cancel')}
           </Button>
           <Button onClick={handleCreate}>{t('pages.gallery.newCanvas.create')}</Button>
         </DialogFooter>
