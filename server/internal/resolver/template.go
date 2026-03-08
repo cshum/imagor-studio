@@ -137,11 +137,11 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 		// Use provided preview params from frontend
 		params = convertToImagorParams(*previewParams)
 	} else {
-		// Fallback: simple 800x800 thumbnail
+		// Fallback: simple 400x400 thumbnail
 		params = imagorpath.Params{
-			Width:  800,
-			Height: 800,
-			FitIn:  true,
+			Width:     400,
+			Height:    400,
+			FullFitIn: true,
 			Filters: imagorpath.Filters{
 				{Name: "format", Args: "webp"},
 				{Name: "quality", Args: "80"},
