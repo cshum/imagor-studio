@@ -676,6 +676,7 @@
   "imageInformation": "Informazioni Immagine",
   "noImageInfo": "Nessuna informazione sull'immagine disponibile.",
   "imageEditor": {
+    "newCanvas": "Nuova Tela",
     "page": {
       "back": "Indietro",
       "controls": "Controlli",

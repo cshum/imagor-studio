@@ -679,6 +679,7 @@
   "imageInformation": "图片信息",
   "noImageInfo": "无可用的图片信息。",
   "imageEditor": {
+    "newCanvas": "新建画布",
     "page": {
       "back": "返回",
       "controls": "控制",

@@ -17,6 +17,7 @@ export interface TemplateMetadata {
 
 export interface ImageEditorLoaderData {
   initialEditorOpenSections: EditorSections
+  breadcrumb?: { label: string }
   imageEditor: ImageEditor
   isTemplate: boolean
   templateMetadata?: TemplateMetadata
@@ -147,8 +148,15 @@ export const imageEditorLoader = async ({
     imageEditor.markInitialState()
   }
 
+  // Set breadcrumb label for browser title:
+  // - template: use template name (e.g. "My Template")
+  // - normal image: use filename (e.g. "photo.jpg")
+  const breadcrumbLabel =
+    isTemplate && templateMetadata ? templateMetadata.name : imageKey.split('/').pop() || imageKey
+
   return {
     initialEditorOpenSections: editorOpenSections,
+    breadcrumb: { label: breadcrumbLabel },
     imageEditor,
     isTemplate,
     templateMetadata,

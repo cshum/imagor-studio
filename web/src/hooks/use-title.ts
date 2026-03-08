@@ -5,7 +5,7 @@ import { useBreadcrumb } from './use-breadcrumb'
 
 /**
  * Hook to dynamically update the document title based on the current breadcrumb
- * Formats the title as "{Current Page} | Imagor Studio"
+ * Formats the title as "{Current Page} | {App Title}"
  */
 export function useTitle(): void {
   const breadcrumbs = useBreadcrumb()
@@ -20,9 +20,9 @@ export function useTitle(): void {
     const homeTitle = breadcrumbs[0].label
 
     if (activeBreadcrumb?.label && activeBreadcrumb?.label !== homeTitle) {
-      document.title = `${activeBreadcrumb.label} · ${homeTitle} | ${appTitle}`
+      document.title = `${activeBreadcrumb.label} | ${appTitle}`
     } else {
-      document.title = `${homeTitle} | ${appTitle}`
+      document.title = `${appTitle}`
     }
   }, [breadcrumbs, appTitle])
 }

@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import { EditorSectionStorage } from '@/lib/editor-sections'
 import { colorToImagePath, ImageEditor } from '@/lib/image-editor'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
@@ -57,6 +58,7 @@ export const canvasEditorLoader = async ({
 
   return {
     initialEditorOpenSections: editorOpenSections,
+    breadcrumb: { label: i18n.t('imageEditor.newCanvas') },
     imageEditor,
     isTemplate: false,
   }
