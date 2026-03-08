@@ -56,7 +56,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
-import { colorToImagePath, isColorImage } from '@/lib/image-editor'
+import { colorToImagePath, getColorFromPath, isColorImage } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
@@ -274,11 +274,11 @@ export function LayerPanel({
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const isBaseColor = isColorImage(imagePath)
-  const baseColorValue = isBaseColor ? imagePath.replace(/^color:/i, '') : ''
+  const baseColorValue = isBaseColor ? getColorFromPath(imagePath) : ''
 
   const handleBaseColorChange = useCallback(
-    (hex: string) => {
-      imageEditor.replaceImage(colorToImagePath(hex), imageEditor.getOriginalDimensions(), null)
+    (color: string) => {
+      imageEditor.replaceImage(colorToImagePath(color), imageEditor.getOriginalDimensions(), null)
     },
     [imageEditor],
   )
@@ -625,11 +625,12 @@ export function LayerPanel({
         <div className='shrink-0'>
           <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
             {isBaseColor ? (
-              /* Color base — color picker + hex input */
+              /* Color base — color picker + hex input + opacity slider */
               <ColorPickerInput
                 value={baseColorValue}
                 onChange={handleBaseColorChange}
                 disabled={visualCropEnabled}
+                showOpacity
               />
             ) : (
               /* Image base — Replace Image only, no color picker */

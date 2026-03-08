@@ -213,6 +213,20 @@
     overscroll-behavior: none;
   }
 
+  /* Checkerboard pattern for indicating transparency in image previews */
+  .checkerboard-bg {
+    background-image: linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+      linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+      linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+    background-size: 16px 16px;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0px;
+  }
+
   .ios-no-image-drag {
     -webkit-user-drag: none;
   }

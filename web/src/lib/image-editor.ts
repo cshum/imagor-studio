@@ -110,6 +110,65 @@ export function colorToImagePath(color: string): string {
   return `color:${color}`
 }
 
+/**
+ * Check if a color value represents transparency.
+ * @param color - Color value from getColorFromPath() (e.g., "none", "transparent", "ff6600")
+ * @returns true if the color is fully transparent
+ */
+export function isTransparentColor(color: string): boolean {
+  return /^(none|transparent)$/i.test(color)
+}
+
+/**
+ * Parse a color value into its RGB hex and opacity (0–100) components.
+ *
+ * Handles:
+ * - "none" / "transparent" → { hex: '000000', opacity: 0 }
+ * - 6-char hex "ff6600"    → { hex: 'ff6600', opacity: 100 }
+ * - 3-char hex "f60"       → { hex: 'ff6600', opacity: 100 }
+ * - 8-char hex "ff660080"  → { hex: 'ff6600', opacity: ~50 }
+ * - 4-char hex "f608"      → { hex: 'ff6600', opacity: ~53 }
+ */
+export function parseColorValue(color: string): { hex: string; opacity: number } {
+  if (isTransparentColor(color)) {
+    return { hex: '000000', opacity: 0 }
+  }
+  const c = color.replace(/^#/, '').toLowerCase()
+  if (c.length === 8) {
+    // RRGGBBAA
+    const hex = c.slice(0, 6)
+    const alpha = parseInt(c.slice(6, 8), 16)
+    return { hex, opacity: Math.round((alpha / 255) * 100) }
+  }
+  if (c.length === 4) {
+    // RGBA shorthand → expand
+    const hex = c[0] + c[0] + c[1] + c[1] + c[2] + c[2]
+    const alpha = parseInt(c[3] + c[3], 16)
+    return { hex, opacity: Math.round((alpha / 255) * 100) }
+  }
+  if (c.length === 3) {
+    // RGB shorthand → expand
+    return { hex: c[0] + c[0] + c[1] + c[1] + c[2] + c[2], opacity: 100 }
+  }
+  // 6-char or fallback
+  return { hex: c.padStart(6, '0').slice(0, 6), opacity: 100 }
+}
+
+/**
+ * Build a color value string from RGB hex and opacity.
+ *
+ * - opacity 0   → "none"
+ * - opacity 100 → "ff6600" (6-char hex)
+ * - otherwise   → "ff660080" (8-char hex with alpha)
+ */
+export function buildColorValue(hex: string, opacity: number): string {
+  if (opacity <= 0) return 'none'
+  const h = hex.replace(/^#/, '').toLowerCase().padStart(6, '0').slice(0, 6)
+  if (opacity >= 100) return h
+  const alpha = Math.round((opacity / 100) * 255)
+  return h + alpha.toString(16).padStart(2, '0')
+}
+
 export interface ImageEditorState {
   // Base image (for root context only - captured in history for swap image undo/redo)
   imagePath?: string
