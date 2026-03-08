@@ -295,108 +295,6 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     }
   }, [])
 
-  // Keyboard shortcuts for undo/redo and escape to exit crop mode or nested layer
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger shortcuts when typing in input fields
-      const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        return
-      }
-
-      // Escape key - exit crop mode or nested layer editing
-      if (e.key === 'Escape') {
-        e.preventDefault()
-
-        // Priority 1: Exit crop mode if active (get state directly from imageEditor)
-        if (imageEditor.getState().visualCropEnabled) {
-          imageEditor.setVisualCropEnabled(false)
-          return
-        }
-
-        // Priority 2: Check if in nested context and exit one level up
-        const contextDepth = imageEditor.getContextDepth()
-        if (contextDepth > 0) {
-          imageEditor.switchContext(null)
-        }
-        return
-      }
-
-      // C key - toggle crop mode (Lightroom/Photoshop/Figma standard)
-      // Skip if text editing is active
-      if (e.key === 'c' || e.key === 'C') {
-        if (!e.metaKey && !e.ctrlKey && !textEditingLayerId) {
-          e.preventDefault()
-          void handleVisualCropToggleRef.current(!imageEditor.getState().visualCropEnabled)
-          return
-        }
-      }
-
-      // Enter key - apply/confirm crop when crop mode is active (Lightroom/Photoshop standard)
-      if (e.key === 'Enter' && imageEditor.getState().visualCropEnabled) {
-        e.preventDefault()
-        void handleVisualCropToggleRef.current(false)
-        return
-      }
-
-      // T key - Add Text Layer (Figma/Photoshop/Sketch standard)
-      // Skip if crop mode active, text editing active, or modifier keys held
-      if ((e.key === 't' || e.key === 'T') && !e.metaKey && !e.ctrlKey && !textEditingLayerId) {
-        if (!imageEditor.getState().visualCropEnabled) {
-          e.preventDefault()
-          handleAddTextLayerRef.current()
-          return
-        }
-      }
-
-      // Cmd+Shift+I (Mac only) - Add Image Layer
-      // Ctrl+Shift+I opens DevTools on Windows/Linux so we guard with metaKey only
-      if (e.metaKey && e.shiftKey && (e.key === 'i' || e.key === 'I')) {
-        if (!textEditingLayerId && !imageEditor.getState().visualCropEnabled) {
-          e.preventDefault()
-          handleAddLayerDialogOpenRef.current()
-          return
-        }
-      }
-
-      // Cmd+S (Mac) or Ctrl+S (Windows/Linux) - Save/Create Template
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault()
-
-        if (e.shiftKey) {
-          // Cmd+Shift+S = Save As / Create Template (always open dialog)
-          setSaveTemplateDialogOpen(true)
-        } else {
-          // Cmd+S = Save (existing template) or Create (new)
-          if (isTemplate && templateMetadata) {
-            // Existing template - direct save
-            handleSaveTemplateClick()
-          } else {
-            // New template - open dialog
-            setSaveTemplateDialogOpen(true)
-          }
-        }
-        return
-      }
-
-      // Cmd+Z (Mac) or Ctrl+Z (Windows/Linux)
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
-        e.preventDefault()
-
-        if (e.shiftKey) {
-          // Cmd+Shift+Z = Redo
-          imageEditor.redo()
-        } else {
-          // Cmd+Z = Undo
-          imageEditor.undo()
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [imageEditor, isTemplate, templateMetadata, textEditingLayerId])
-
   const updateParams = useCallback(
     (updates: Partial<ImageEditorState>) => {
       imageEditor.updateParams(updates)
@@ -468,7 +366,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     // No success toast for download as it's obvious when it works
   }
 
-  const handleSaveTemplateClick = async () => {
+  const handleSaveTemplateClick = useCallback(async () => {
     // Direct save for existing templates (no dialog)
     if (!templateMetadata) return
 
@@ -498,7 +396,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       console.error('Failed to save template:', error)
       toast.error(t('imageEditor.template.saveError'))
     }
-  }
+  }, [imageEditor, router, t, templateMetadata])
 
   const handleApplyTemplate = async (selectedPaths: string[]) => {
     if (selectedPaths.length === 0) return
@@ -765,6 +663,116 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
   const handleLanguageChange = async (languageCode: string) => {
     await setLocale(languageCode)
   }
+
+  // Keyboard shortcuts for undo/redo and escape to exit crop mode or nested layer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input fields
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
+      // Don't trigger shortcuts when a dialog/modal is open (e.g. FilePickerDialog)
+      // Use a live DOM check instead of React state — Radix Dialog may update state
+      // synchronously during the same keydown event (before our window listener fires),
+      // but the dialog DOM element is still present until React re-renders asynchronously.
+      if (document.querySelector('[role="dialog"]')) {
+        return
+      }
+
+      // Escape key - exit crop mode or nested layer editing
+      if (e.key === 'Escape') {
+        e.preventDefault()
+
+        // Priority 1: Exit crop mode if active (get state directly from imageEditor)
+        if (imageEditor.getState().visualCropEnabled) {
+          imageEditor.setVisualCropEnabled(false)
+          return
+        }
+
+        // Priority 2: Check if in nested context and exit one level up
+        const contextDepth = imageEditor.getContextDepth()
+        if (contextDepth > 0) {
+          imageEditor.switchContext(null)
+        }
+        return
+      }
+
+      // C key - toggle crop mode (Lightroom/Photoshop/Figma standard)
+      // Skip if text editing is active
+      if (e.key === 'c' || e.key === 'C') {
+        if (!e.metaKey && !e.ctrlKey && !textEditingLayerId) {
+          e.preventDefault()
+          void handleVisualCropToggleRef.current(!imageEditor.getState().visualCropEnabled)
+          return
+        }
+      }
+
+      // Enter key - apply/confirm crop when crop mode is active (Lightroom/Photoshop standard)
+      if (e.key === 'Enter' && imageEditor.getState().visualCropEnabled) {
+        e.preventDefault()
+        void handleVisualCropToggleRef.current(false)
+        return
+      }
+
+      // T key - Add Text Layer (Figma/Photoshop/Sketch standard)
+      // Skip if crop mode active, text editing active, or modifier keys held
+      if ((e.key === 't' || e.key === 'T') && !e.metaKey && !e.ctrlKey && !textEditingLayerId) {
+        if (!imageEditor.getState().visualCropEnabled) {
+          e.preventDefault()
+          handleAddTextLayerRef.current()
+          return
+        }
+      }
+
+      // Cmd+Shift+I (Mac only) - Add Image Layer
+      // Ctrl+Shift+I opens DevTools on Windows/Linux so we guard with metaKey only
+      if (e.metaKey && e.shiftKey && (e.key === 'i' || e.key === 'I')) {
+        if (!textEditingLayerId && !imageEditor.getState().visualCropEnabled) {
+          e.preventDefault()
+          handleAddLayerDialogOpenRef.current()
+          return
+        }
+      }
+
+      // Cmd+S (Mac) or Ctrl+S (Windows/Linux) - Save/Create Template
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+
+        if (e.shiftKey) {
+          // Cmd+Shift+S = Save As / Create Template (always open dialog)
+          setSaveTemplateDialogOpen(true)
+        } else {
+          // Cmd+S = Save (existing template) or Create (new)
+          if (isTemplate && templateMetadata) {
+            // Existing template - direct save
+            handleSaveTemplateClick()
+          } else {
+            // New template - open dialog
+            setSaveTemplateDialogOpen(true)
+          }
+        }
+        return
+      }
+
+      // Cmd+Z (Mac) or Ctrl+Z (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault()
+
+        if (e.shiftKey) {
+          // Cmd+Shift+Z = Redo
+          imageEditor.redo()
+        } else {
+          // Cmd+Z = Undo
+          imageEditor.undo()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleSaveTemplateClick, imageEditor, isTemplate, templateMetadata, textEditingLayerId])
 
   // Section components for drag overlay (shared between ImageEditorControls and ImageEditorLayout)
   const sectionComponents = useMemo(
