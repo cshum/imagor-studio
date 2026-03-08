@@ -143,6 +143,10 @@ export const imageEditorLoader = async ({
       imagePath,
       originalDimensions,
     })
+    // Snapshot the initial config so initialize() can restore it on remount.
+    // Consistent with canvas and template loaders — ensures imagePath and
+    // originalDimensions are always reset correctly if the instance is reused.
+    imageEditor.markInitialState()
   }
 
   return {

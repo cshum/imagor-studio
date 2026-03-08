@@ -277,10 +277,11 @@ export class ImageEditor {
   private abortController: AbortController | null = null
   private lastPreviewUrl: string | null = null
   private previewLoadResolvers: Array<() => void> = []
-  // Snapshot of the "clean" state set by the loader. Defaults to {} for plain images
-  // (no explicit markInitialState() needed). For templates, markInitialState() is called
-  // after importTemplate() to capture the full template state. initialize() restores this
-  // snapshot so navigating back to the cached instance always starts fresh.
+  // Snapshot of the "clean" state set by the loader (via markInitialState()).
+  // Always called by all loaders (canvas, template, normal image) after setup.
+  // Includes imagePath and originalDimensions so initialize() can fully restore
+  // the config — critical for the canvas editor where the same ImageEditor instance
+  // is reused across different canvases (same /editor/new route, different search params).
   private cleanInitialState: ImageEditorState = {}
   private undoStack: ImageEditorState[] = []
   private redoStack: ImageEditorState[] = []
@@ -355,6 +356,16 @@ export class ImageEditor {
     // state set by importTemplate() in the loader — so navigating back always
     // discards the user's unsaved edits and shows the original template.
     this.state = { ...this.cleanInitialState }
+    // Restore config (imagePath + originalDimensions) from the snapshot.
+    // This is critical for the canvas editor: the route /editor/new is always
+    // the same URL path, so TanStack Router reuses the same cached ImageEditor
+    // instance for every new canvas. Without this, opening a canvas with a
+    // different color would leave the old color's imagePath in config.
+    if (this.cleanInitialState.imagePath) {
+      this.config.imagePath = this.cleanInitialState.imagePath
+      this.config.originalDimensions = { ...this.cleanInitialState.originalDimensions! }
+      this.baseImagePath = this.cleanInitialState.imagePath
+    }
     // Notify React immediately so slider/control state reflects the reset.
     // Without this, the useState lazy initializer in the page component may
     // have captured stale dirty state from the cached instance, and sliders
@@ -367,9 +378,15 @@ export class ImageEditor {
    * Call this in the loader after all initial setup (e.g. importTemplate) is done.
    * initialize() will restore this snapshot on every subsequent mount so that
    * the same cached instance always starts fresh from the loader's intended state.
+   * Also snapshots config.imagePath and config.originalDimensions so that
+   * initialize() can restore them too (critical for canvas editor stale state fix).
    */
   markInitialState(): void {
-    this.cleanInitialState = { ...this.state }
+    this.cleanInitialState = {
+      ...this.state,
+      imagePath: this.config.imagePath,
+      originalDimensions: { ...this.config.originalDimensions },
+    }
   }
 
   /**
