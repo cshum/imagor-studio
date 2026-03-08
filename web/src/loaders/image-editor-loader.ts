@@ -1,5 +1,4 @@
 import { statFile } from '@/api/storage-api'
-import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
@@ -18,7 +17,6 @@ export interface TemplateMetadata {
 
 export interface ImageEditorLoaderData {
   initialEditorOpenSections: EditorSections
-  breadcrumb: BreadcrumbItem
   imageEditor: ImageEditor
   isTemplate: boolean
   templateMetadata?: TemplateMetadata
@@ -151,7 +149,6 @@ export const imageEditorLoader = async ({
 
   return {
     initialEditorOpenSections: editorOpenSections,
-    breadcrumb: { label: 'Imagor Studio' },
     imageEditor,
     isTemplate,
     templateMetadata,

@@ -1,8 +1,7 @@
 import { EditorSectionStorage } from '@/lib/editor-sections'
 import { colorToImagePath, ImageEditor } from '@/lib/image-editor'
+import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
 import { getAuth } from '@/stores/auth-store'
-
-import type { ImageEditorLoaderData } from './image-editor-loader'
 
 /**
  * Parse canvas search params from the URL query string.
@@ -58,7 +57,6 @@ export const canvasEditorLoader = async ({
 
   return {
     initialEditorOpenSections: editorOpenSections,
-    breadcrumb: { label: 'Imagor Studio' },
     imageEditor,
     isTemplate: false,
   }
