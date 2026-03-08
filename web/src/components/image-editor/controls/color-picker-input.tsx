@@ -118,15 +118,10 @@ export function ColorPickerInput({
       <div className='flex items-center gap-2'>
         {/* Color swatch with optional checkerboard for transparency */}
         <div
-          className={`${swatchDimClass} border-foreground/40 shrink-0 overflow-hidden rounded border-2`}
+          className={`${swatchDimClass} border-foreground/40 shrink-0 overflow-hidden rounded border-2 ${isTransparent ? 'checkerboard-bg' : ''}`}
           style={
             isTransparent
-              ? {
-                  backgroundImage:
-                    'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)',
-                  backgroundSize: '8px 8px',
-                  backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
-                }
+              ? { backgroundSize: '8px 8px', backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px' }
               : undefined
           }
         >
@@ -135,7 +130,7 @@ export function ColorPickerInput({
             value={swatchHex}
             onChange={(e) => debouncedColor(e.target.value.replace('#', ''))}
             disabled={disabled}
-            className='h-full w-full cursor-pointer border-0 p-0.5'
+            className='h-full w-full cursor-pointer border-0'
             style={isTransparent ? { opacity: localOpacity / 100 } : undefined}
             title={t('imageEditor.layers.setColor')}
           />
