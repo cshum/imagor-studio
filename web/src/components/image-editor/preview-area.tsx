@@ -10,9 +10,14 @@ import { TextEditOverlay } from '@/components/image-editor/text-edit-overlay'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
-import { getColorFromPath, isColorImage, isTransparentColor, parseColorValue } from '@/lib/image-editor'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
+import {
+  getColorFromPath,
+  isColorImage,
+  isTransparentColor,
+  parseColorValue,
+} from '@/lib/image-editor'
 import type { ImageEditor } from '@/lib/image-editor'
 import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { enrichTransformsForFillMode } from '@/lib/layer-fill'

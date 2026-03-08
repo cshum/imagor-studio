@@ -144,8 +144,6 @@
         "width": "宽度",
         "height": "高度",
         "background": "背景",
-        "solidColor": "颜色",
-        "transparent": "透明",
         "create": "创建"
       },
       "createFolder": {

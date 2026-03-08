@@ -141,8 +141,6 @@
         "width": "Larghezza",
         "height": "Altezza",
         "background": "Sfondo",
-        "solidColor": "Colore",
-        "transparent": "Trasparente",
         "create": "Crea"
       },
       "createFolder": {

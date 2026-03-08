@@ -215,7 +215,8 @@
 
   /* Checkerboard pattern for indicating transparency in image previews */
   .checkerboard-bg {
-    background-image: linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+    background-image:
+      linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
       linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
       linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
       linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);

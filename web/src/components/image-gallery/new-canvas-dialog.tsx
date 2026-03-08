@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
 import { useNavigate } from '@tanstack/react-router'
 import { Paintbrush } from 'lucide-react'
 
@@ -32,13 +31,13 @@ interface NewCanvasDialogProps {
 const CANVAS_PRESETS = [
   { label: '1920 × 1080 (HD)', w: 1920, h: 1080 },
   { label: '1080 × 1080 (Square)', w: 1080, h: 1080 },
-  { label: '1080 × 1920 (Portrait)', w: 1080, h: 1920 },
-  { label: '800 × 600', w: 800, h: 600 },
-  { label: '1200 × 630 (Social)', w: 1200, h: 630 },
+  { label: '1080 × 1350 (Portrait 4:5)', w: 1080, h: 1350 },
+  { label: '1080 × 1920 (Story / Reel)', w: 1080, h: 1920 },
+  { label: '1200 × 630 (Social Share)', w: 1200, h: 630 },
+  { label: '1500 × 500 (Banner)', w: 1500, h: 500 },
   { label: '2560 × 1440 (QHD)', w: 2560, h: 1440 },
+  { label: '3840 × 2160 (4K)', w: 3840, h: 2160 },
 ] as const
-
-type BackgroundMode = 'color' | 'transparent'
 
 export function NewCanvasDialog({ open, onOpenChange }: NewCanvasDialogProps) {
   const { t } = useTranslation()
@@ -46,8 +45,8 @@ export function NewCanvasDialog({ open, onOpenChange }: NewCanvasDialogProps) {
 
   const [width, setWidth] = useState(1080)
   const [height, setHeight] = useState(1080)
-  const [bgMode, setBgMode] = useState<BackgroundMode>('color')
-  const [color, setColor] = useState('ffffff')
+  // Color value with alpha support: 'none' = transparent, '000000' = solid black, 'ff660080' = semi-transparent
+  const [colorValue, setColorValue] = useState('none')
 
   const handlePresetChange = (value: string) => {
     if (value === 'custom') return
@@ -59,10 +58,9 @@ export function NewCanvasDialog({ open, onOpenChange }: NewCanvasDialogProps) {
   }
 
   const handleCreate = () => {
-    const canvasColor = bgMode === 'transparent' ? 'none' : color
     navigate({
       to: '/new/editor',
-      search: { color: canvasColor, w: width, h: height },
+      search: { color: colorValue, w: width, h: height },
     })
     onOpenChange(false)
   }
@@ -95,9 +93,7 @@ export function NewCanvasDialog({ open, onOpenChange }: NewCanvasDialogProps) {
                     {preset.label}
                   </SelectItem>
                 ))}
-                <SelectItem value='custom'>
-                  {t('pages.gallery.newCanvas.custom')}
-                </SelectItem>
+                <SelectItem value='custom'>{t('pages.gallery.newCanvas.custom')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -128,41 +124,15 @@ export function NewCanvasDialog({ open, onOpenChange }: NewCanvasDialogProps) {
             </div>
           </div>
 
-          {/* Background */}
+          {/* Background Color with Opacity */}
           <div className='grid gap-2'>
             <Label>{t('pages.gallery.newCanvas.background')}</Label>
-            <div className='flex items-center gap-3'>
-              <Select
-                value={bgMode}
-                onValueChange={(v) => setBgMode(v as BackgroundMode)}
-              >
-                <SelectTrigger className='w-[140px]'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='color'>
-                    {t('pages.gallery.newCanvas.solidColor')}
-                  </SelectItem>
-                  <SelectItem value='transparent'>
-                    {t('pages.gallery.newCanvas.transparent')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              {bgMode === 'color' && (
-                <ColorPickerInput value={color} onChange={setColor} swatchSize='md' />
-              )}
-              {bgMode === 'transparent' && (
-                <div
-                  className='h-8 w-8 rounded border'
-                  style={{
-                    backgroundImage:
-                      'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)',
-                    backgroundSize: '8px 8px',
-                    backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px',
-                  }}
-                />
-              )}
-            </div>
+            <ColorPickerInput
+              value={colorValue}
+              onChange={setColorValue}
+              swatchSize='md'
+              showOpacity
+            />
           </div>
         </div>
 
