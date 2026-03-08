@@ -181,13 +181,26 @@ const imagePage = createRoute({
 
 const canvasEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/new/editor',
+  path: '/editor/new',
   beforeLoad: requireImageEditorAuth,
   loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
   shouldReload: false,
   component: () => {
     const loaderData = canvasEditorRoute.useLoaderData()
     return <ImageEditorPage loaderData={loaderData} />
+  },
+})
+
+const galleryCanvasEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/gallery/$galleryKey/editor/new',
+  beforeLoad: requireImageEditorAuth,
+  loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = galleryCanvasEditorRoute.useLoaderData()
+    const { galleryKey } = galleryCanvasEditorRoute.useParams()
+    return <ImageEditorPage loaderData={loaderData} galleryKey={galleryKey} />
   },
 })
 
@@ -279,6 +292,7 @@ const routeTree = isEmbeddedMode
       loginRoute,
       adminSetupRoute,
       canvasEditorRoute,
+      galleryCanvasEditorRoute,
       rootImageEditorRoute,
       galleryImageEditorRoute,
       baseLayoutRoute.addChildren([

@@ -26,6 +26,7 @@ import {
 interface NewCanvasDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  galleryKey: string
 }
 
 const CANVAS_PRESETS = [
@@ -39,7 +40,7 @@ const CANVAS_PRESETS = [
   { label: '3840 × 2160 (4K)', w: 3840, h: 2160 },
 ] as const
 
-export function NewCanvasDialog({ open, onOpenChange }: NewCanvasDialogProps) {
+export function NewCanvasDialog({ open, onOpenChange, galleryKey }: NewCanvasDialogProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
@@ -58,10 +59,18 @@ export function NewCanvasDialog({ open, onOpenChange }: NewCanvasDialogProps) {
   }
 
   const handleCreate = () => {
-    navigate({
-      to: '/new/editor',
-      search: { color: colorValue, w: width, h: height },
-    })
+    if (galleryKey) {
+      navigate({
+        to: '/gallery/$galleryKey/editor/new',
+        params: { galleryKey },
+        search: { color: colorValue, w: width, h: height },
+      })
+    } else {
+      navigate({
+        to: '/editor/new',
+        search: { color: colorValue, w: width, h: height },
+      })
+    }
     onOpenChange(false)
   }
 

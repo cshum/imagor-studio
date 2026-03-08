@@ -1107,7 +1107,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         currentPath={createFolderPath !== null ? createFolderPath : galleryKey}
       />
 
-      <NewCanvasDialog open={isNewCanvasDialogOpen} onOpenChange={setIsNewCanvasDialogOpen} />
+      <NewCanvasDialog
+        open={isNewCanvasDialogOpen}
+        onOpenChange={setIsNewCanvasDialogOpen}
+        galleryKey={galleryKey}
+      />
 
       <DeleteItemDialog
         open={deleteItemDialog.open}

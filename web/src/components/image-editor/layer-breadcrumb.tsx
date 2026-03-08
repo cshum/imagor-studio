@@ -37,7 +37,8 @@ export function LayerBreadcrumb({
   const isBaseColor = isColorImage(imagePath)
 
   // Use baseName if provided, otherwise use a friendly name for color images or the filename
-  const displayBaseName = baseName || (isBaseColor ? t('imageEditor.layers.colorLayer') : baseImageName)
+  const displayBaseName =
+    baseName || (isBaseColor ? t('imageEditor.layers.colorLayer') : baseImageName)
 
   // Determine if this is a template (baseName is provided)
   const isTemplate = !!baseName

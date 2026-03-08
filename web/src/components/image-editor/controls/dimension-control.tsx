@@ -261,9 +261,7 @@ export function DimensionControl({
       {!isColorImage && (
         <>
           <div className='space-y-2'>
-            <Label className='text-sm font-medium'>
-              {t('imageEditor.dimensions.resizeMode')}
-            </Label>
+            <Label className='text-sm font-medium'>{t('imageEditor.dimensions.resizeMode')}</Label>
             <RadioGroup
               value={getCurrentFitMode()}
               onValueChange={handleFitModeChange}
