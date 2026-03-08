@@ -630,7 +630,7 @@ export function LayerPanel({
                 value={baseColorValue}
                 onChange={handleBaseColorChange}
                 disabled={visualCropEnabled}
-                showOpacity
+                showOpacity={!editingContext}
               />
             ) : (
               /* Image base — Replace Image only, no color picker */
