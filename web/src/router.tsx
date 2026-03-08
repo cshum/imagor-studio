@@ -140,7 +140,7 @@ const rootImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = rootImageEditorRoute.useLoaderData()
-    return <ImageEditorPage loaderData={loaderData} />
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
   },
 })
 
@@ -187,7 +187,7 @@ const canvasEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = canvasEditorRoute.useLoaderData()
-    return <ImageEditorPage loaderData={loaderData} />
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
   },
 })
 
@@ -212,7 +212,8 @@ const galleryImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = galleryImageEditorRoute.useLoaderData()
-    return <ImageEditorPage loaderData={loaderData} />
+    const { galleryKey } = galleryImageEditorRoute.useParams()
+    return <ImageEditorPage loaderData={loaderData} galleryKey={galleryKey} />
   },
 })
 
