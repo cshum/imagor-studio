@@ -8,6 +8,7 @@ import {
   Clock,
   FileText,
   FolderPlus,
+  Paintbrush,
   Search,
   Upload,
   X,
@@ -28,6 +29,7 @@ import { GalleryDropZone } from '@/components/image-gallery/gallery-drop-zone'
 import { ImageContextMenu } from '@/components/image-gallery/image-context-menu'
 import { ImageGrid } from '@/components/image-gallery/image-grid'
 import { MoveItem, MoveItemsDialog } from '@/components/image-gallery/move-items-dialog'
+import { NewCanvasDialog } from '@/components/image-gallery/new-canvas-dialog'
 import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import { SelectionMenu } from '@/components/image-gallery/selection-menu'
 import { LoadingBar } from '@/components/loading-bar.tsx'
@@ -83,6 +85,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const { isLoading, pendingMatches } = useRouterState()
   const { authState } = useAuth()
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
+  const [isNewCanvasDialogOpen, setIsNewCanvasDialogOpen] = useState(false)
   const [createFolderPath, setCreateFolderPath] = useState<string | null>(null)
   const [deleteItemDialog, setDeleteItemDialog] = useState<{
     open: boolean
@@ -887,6 +890,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           <Upload className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.gallery.upload.uploadFiles')}
         </DropdownMenuItem>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={() => {
+            setTimeout(() => setIsNewCanvasDialogOpen(true), 0)
+          }}
+        >
+          <Paintbrush className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.gallery.newCanvas.menuItem')}
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
         <DropdownMenuLabel>{t('pages.gallery.sorting.sort')}</DropdownMenuLabel>
@@ -1093,6 +1105,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={createFolderPath !== null ? createFolderPath : galleryKey}
+      />
+
+      <NewCanvasDialog
+        open={isNewCanvasDialogOpen}
+        onOpenChange={setIsNewCanvasDialogOpen}
+        galleryKey={galleryKey}
       />
 
       <DeleteItemDialog

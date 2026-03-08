@@ -63,6 +63,8 @@ interface SaveTemplateDialogProps {
   }
   onSaveSuccess?: (templatePath: string) => void
   title?: string // Custom dialog title
+  /** Fallback gallery key for save location when image path has no gallery (e.g. canvas/color images) */
+  galleryKey?: string
 }
 
 export function SaveTemplateDialog({
@@ -72,6 +74,7 @@ export function SaveTemplateDialog({
   templateMetadata,
   onSaveSuccess,
   title,
+  galleryKey: propGalleryKey,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const { homeTitle } = useFolderTree()
@@ -117,8 +120,10 @@ export function SaveTemplateDialog({
         setSavePath(galleryKey || '')
       } else {
         // Creating new template - use defaults
+        // For canvas/color images, splitImagePath returns no gallery key,
+        // so fall back to the propGalleryKey passed from the route.
         const { galleryKey } = splitImagePath(imagePath)
-        setSavePath(galleryKey || '')
+        setSavePath(galleryKey || propGalleryKey || '')
       }
     }
   }, [open, imagePath, templateMetadata])

@@ -33,7 +33,7 @@ import {
   updateLocationState,
 } from '@/lib/editor-state-url'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
-import { type ImageEditorState } from '@/lib/image-editor.ts'
+import { isColorImage, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
 import { debounce } from '@/lib/utils.ts'
 import { calculateLayerPositionForCurrentView } from '@/lib/viewport-utils'
@@ -43,9 +43,11 @@ import { setLocale } from '@/stores/locale-store'
 
 interface ImageEditorPageProps {
   loaderData: ImageEditorLoaderData
+  /** Gallery key for back navigation — passed from the route component */
+  galleryKey?: string
 }
 
-export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
+export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: ImageEditorPageProps) {
   const { imageEditor, initialEditorOpenSections, isTemplate, templateMetadata } = loaderData
 
   const { t } = useTranslation()
@@ -329,7 +331,10 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     // source image's folder (imageEditor.getImagePath() returns the source image).
     const backPath =
       isTemplate && templateMetadata ? templateMetadata.templatePath : imageEditor.getImagePath()
-    const { galleryKey } = splitImagePath(backPath)
+    const { galleryKey: pathGalleryKey } = splitImagePath(backPath)
+    // For canvas (color image) routes, fall back to the galleryKey prop
+    // since splitImagePath('color:ffffff') returns no gallery key.
+    const galleryKey = pathGalleryKey || propGalleryKey || ''
     if (galleryKey) {
       await navigate({
         to: '/gallery/$galleryKey',
@@ -465,7 +470,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
       font: 'sans',
       fontStyle: '' as const,
       fontSize,
-      color: 'ffffff',
+      color: '000000',
       width: defaultWidth,
       height: 0,
       align: 'low' as const,
@@ -774,6 +779,16 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleSaveTemplateClick, imageEditor, isTemplate, templateMetadata, textEditingLayerId])
 
+  // Hide sections that are irrelevant for the current base image type
+  // (e.g. crop is meaningless for solid color images — every pixel is identical)
+  const hiddenSections = useMemo<SectionKey[]>(() => {
+    const hidden: SectionKey[] = []
+    if (isColorImage(imageEditor.getImagePath())) {
+      hidden.push('crop')
+    }
+    return hidden
+  }, [imageEditor, params]) // params dependency ensures re-evaluation when base image is swapped
+
   // Section components for drag overlay (shared between ImageEditorControls and ImageEditorLayout)
   const sectionComponents = useMemo(
     () =>
@@ -809,6 +824,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             }}
             parentDimensions={contextParentDimensions ?? undefined}
             isEditingLayer={editingContext !== null}
+            isColorImage={isColorImage(imageEditor.getImagePath())}
           />
         ),
         fill: <FillPaddingControl params={params} onUpdateParams={updateParams} />,
@@ -925,6 +941,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             openSections={editorOpenSections}
             onOpenSectionsChange={handleOpenSectionsChange}
             column='left'
+            hiddenSections={hiddenSections}
           />
         }
         rightControls={
@@ -933,6 +950,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             openSections={editorOpenSections}
             onOpenSectionsChange={handleOpenSectionsChange}
             column='right'
+            hiddenSections={hiddenSections}
           />
         }
         singleColumnControls={
@@ -941,6 +959,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             openSections={editorOpenSections}
             onOpenSectionsChange={handleOpenSectionsChange}
             column='both'
+            hiddenSections={hiddenSections}
           />
         }
         imagorPath={imagorPath}
@@ -949,6 +968,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
         onMobileSheetOpenChange={setMobileSheetOpen}
         sectionComponents={sectionComponents}
         onOpenSectionsChange={handleOpenSectionsChange}
+        hiddenSections={hiddenSections}
       />
 
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
@@ -957,6 +977,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
         onOpenChange={setSaveTemplateDialogOpen}
         imageEditor={imageEditor}
         templateMetadata={templateMetadata}
+        galleryKey={propGalleryKey}
         title={
           templateMetadata
             ? t('imageEditor.template.saveTemplateAs')

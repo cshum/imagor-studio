@@ -132,6 +132,17 @@
         "clearFilter": "Cancella filtro"
       },
       "showFileNames": "Mostra i Nomi dei File",
+      "newCanvas": {
+        "menuItem": "Nuova Tela",
+        "title": "Nuova Tela",
+        "description": "Crea una tela vuota per iniziare a modificare da zero.",
+        "preset": "Dimensione Tela",
+        "custom": "Personalizzato",
+        "width": "Larghezza",
+        "height": "Altezza",
+        "background": "Sfondo",
+        "create": "Crea"
+      },
       "createFolder": {
         "newFolder": "Nuova Cartella",
         "title": "Crea Nuova Cartella",
@@ -665,6 +676,7 @@
   "imageInformation": "Informazioni Immagine",
   "noImageInfo": "Nessuna informazione sull'immagine disponibile.",
   "imageEditor": {
+    "newCanvas": "Nuova Tela",
     "page": {
       "back": "Indietro",
       "controls": "Controlli",

@@ -12,6 +12,12 @@ import { Button } from '@/components/ui/button'
 import { PreloadImage } from '@/components/ui/preload-image'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { getFullImageUrl } from '@/lib/api-utils'
+import {
+  getColorFromPath,
+  isColorImage,
+  isTransparentColor,
+  parseColorValue,
+} from '@/lib/image-editor'
 import type { ImageEditor } from '@/lib/image-editor'
 import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { enrichTransformsForFillMode } from '@/lib/layer-fill'
@@ -435,6 +441,23 @@ export function PreviewArea({
     onImageDimensionsChange?.(imageDimensions)
   }, [imageDimensions, onImageDimensionsChange])
 
+  // Determine if the preview image may contain transparency (show checkerboard behind it).
+  // True when the base image is a transparent/semi-transparent color, or when the fill
+  // color is transparent (padding areas will be see-through).
+  const hasTransparency = (() => {
+    if (!imageEditor) return false
+    const imgPath = imageEditor.getImagePath()
+    if (isColorImage(imgPath)) {
+      const colorVal = getColorFromPath(imgPath)
+      if (isTransparentColor(colorVal)) return true
+      const { opacity } = parseColorValue(colorVal)
+      if (opacity < 100) return true
+    }
+    const state = imageEditor.getState()
+    if (state.fillColor === 'none' || state.fillColor === 'transparent') return true
+    return false
+  })()
+
   return (
     <div className='relative flex h-full flex-col'>
       {!visualCropEnabled && <LicenseBadge />}
@@ -518,6 +541,8 @@ export function PreviewArea({
                       : undefined
                   }
                   className={cn(
+                    // Checkerboard background for transparent images
+                    hasTransparency && 'checkerboard-bg',
                     // Only apply auto-sizing and object-contain in fit mode
                     // When zoomed, image renders at natural size to enable scrolling
                     zoom === 'fit' && 'h-auto w-auto object-contain',

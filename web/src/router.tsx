@@ -25,6 +25,7 @@ import {
   requireAuth,
   requireImageEditorAuth,
 } from '@/loaders/auth-loader.ts'
+import { canvasEditorLoader } from '@/loaders/canvas-editor-loader.ts'
 import {
   embeddedLoader,
   embeddedLoaderDeps,
@@ -139,7 +140,7 @@ const rootImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = rootImageEditorRoute.useLoaderData()
-    return <ImageEditorPage loaderData={loaderData} />
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
   },
 })
 
@@ -178,6 +179,31 @@ const imagePage = createRoute({
   },
 })
 
+const canvasEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/editor/new',
+  beforeLoad: requireImageEditorAuth,
+  loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = canvasEditorRoute.useLoaderData()
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
+  },
+})
+
+const galleryCanvasEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/gallery/$galleryKey/editor/new',
+  beforeLoad: requireImageEditorAuth,
+  loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = galleryCanvasEditorRoute.useLoaderData()
+    const { galleryKey } = galleryCanvasEditorRoute.useParams()
+    return <ImageEditorPage loaderData={loaderData} galleryKey={galleryKey} />
+  },
+})
+
 const galleryImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/gallery/$galleryKey/$imageKey/editor',
@@ -186,7 +212,8 @@ const galleryImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = galleryImageEditorRoute.useLoaderData()
-    return <ImageEditorPage loaderData={loaderData} />
+    const { galleryKey } = galleryImageEditorRoute.useParams()
+    return <ImageEditorPage loaderData={loaderData} galleryKey={galleryKey} />
   },
 })
 
@@ -265,6 +292,8 @@ const routeTree = isEmbeddedMode
     rootRoute.addChildren([
       loginRoute,
       adminSetupRoute,
+      canvasEditorRoute,
+      galleryCanvasEditorRoute,
       rootImageEditorRoute,
       galleryImageEditorRoute,
       baseLayoutRoute.addChildren([

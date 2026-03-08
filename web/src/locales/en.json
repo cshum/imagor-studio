@@ -138,6 +138,17 @@
         "clearFilter": "Clear filter"
       },
       "showFileNames": "Show File Names",
+      "newCanvas": {
+        "menuItem": "New Canvas",
+        "title": "New Canvas",
+        "description": "Create a blank canvas to start editing from scratch.",
+        "preset": "Canvas Size",
+        "custom": "Custom",
+        "width": "Width",
+        "height": "Height",
+        "background": "Background",
+        "create": "Create"
+      },
       "createFolder": {
         "newFolder": "New Folder",
         "title": "Create New Folder",
@@ -672,6 +683,7 @@
   "imageInformation": "Image Information",
   "noImageInfo": "No image information available.",
   "imageEditor": {
+    "newCanvas": "New Canvas",
     "page": {
       "back": "Back",
       "controls": "Controls",

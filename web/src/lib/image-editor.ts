@@ -110,6 +110,65 @@ export function colorToImagePath(color: string): string {
   return `color:${color}`
 }
 
+/**
+ * Check if a color value represents transparency.
+ * @param color - Color value from getColorFromPath() (e.g., "none", "transparent", "ff6600")
+ * @returns true if the color is fully transparent
+ */
+export function isTransparentColor(color: string): boolean {
+  return /^(none|transparent)$/i.test(color)
+}
+
+/**
+ * Parse a color value into its RGB hex and opacity (0–100) components.
+ *
+ * Handles:
+ * - "none" / "transparent" → { hex: '000000', opacity: 0 }
+ * - 6-char hex "ff6600"    → { hex: 'ff6600', opacity: 100 }
+ * - 3-char hex "f60"       → { hex: 'ff6600', opacity: 100 }
+ * - 8-char hex "ff660080"  → { hex: 'ff6600', opacity: ~50 }
+ * - 4-char hex "f608"      → { hex: 'ff6600', opacity: ~53 }
+ */
+export function parseColorValue(color: string): { hex: string; opacity: number } {
+  if (isTransparentColor(color)) {
+    return { hex: '000000', opacity: 0 }
+  }
+  const c = color.replace(/^#/, '').toLowerCase()
+  if (c.length === 8) {
+    // RRGGBBAA
+    const hex = c.slice(0, 6)
+    const alpha = parseInt(c.slice(6, 8), 16)
+    return { hex, opacity: Math.round((alpha / 255) * 100) }
+  }
+  if (c.length === 4) {
+    // RGBA shorthand → expand
+    const hex = c[0] + c[0] + c[1] + c[1] + c[2] + c[2]
+    const alpha = parseInt(c[3] + c[3], 16)
+    return { hex, opacity: Math.round((alpha / 255) * 100) }
+  }
+  if (c.length === 3) {
+    // RGB shorthand → expand
+    return { hex: c[0] + c[0] + c[1] + c[1] + c[2] + c[2], opacity: 100 }
+  }
+  // 6-char or fallback
+  return { hex: c.padStart(6, '0').slice(0, 6), opacity: 100 }
+}
+
+/**
+ * Build a color value string from RGB hex and opacity.
+ *
+ * - opacity 0   → "none"
+ * - opacity 100 → "ff6600" (6-char hex)
+ * - otherwise   → "ff660080" (8-char hex with alpha)
+ */
+export function buildColorValue(hex: string, opacity: number): string {
+  if (opacity <= 0) return 'none'
+  const h = hex.replace(/^#/, '').toLowerCase().padStart(6, '0').slice(0, 6)
+  if (opacity >= 100) return h
+  const alpha = Math.round((opacity / 100) * 255)
+  return h + alpha.toString(16).padStart(2, '0')
+}
+
 export interface ImageEditorState {
   // Base image (for root context only - captured in history for swap image undo/redo)
   imagePath?: string
@@ -218,10 +277,11 @@ export class ImageEditor {
   private abortController: AbortController | null = null
   private lastPreviewUrl: string | null = null
   private previewLoadResolvers: Array<() => void> = []
-  // Snapshot of the "clean" state set by the loader. Defaults to {} for plain images
-  // (no explicit markInitialState() needed). For templates, markInitialState() is called
-  // after importTemplate() to capture the full template state. initialize() restores this
-  // snapshot so navigating back to the cached instance always starts fresh.
+  // Snapshot of the "clean" state set by the loader (via markInitialState()).
+  // Always called by all loaders (canvas, template, normal image) after setup.
+  // Includes imagePath and originalDimensions so initialize() can fully restore
+  // the config — critical for the canvas editor where the same ImageEditor instance
+  // is reused across different canvases (same /editor/new route, different search params).
   private cleanInitialState: ImageEditorState = {}
   private undoStack: ImageEditorState[] = []
   private redoStack: ImageEditorState[] = []
@@ -296,6 +356,16 @@ export class ImageEditor {
     // state set by importTemplate() in the loader — so navigating back always
     // discards the user's unsaved edits and shows the original template.
     this.state = { ...this.cleanInitialState }
+    // Restore config (imagePath + originalDimensions) from the snapshot.
+    // This is critical for the canvas editor: the route /editor/new is always
+    // the same URL path, so TanStack Router reuses the same cached ImageEditor
+    // instance for every new canvas. Without this, opening a canvas with a
+    // different color would leave the old color's imagePath in config.
+    if (this.cleanInitialState.imagePath) {
+      this.config.imagePath = this.cleanInitialState.imagePath
+      this.config.originalDimensions = { ...this.cleanInitialState.originalDimensions! }
+      this.baseImagePath = this.cleanInitialState.imagePath
+    }
     // Notify React immediately so slider/control state reflects the reset.
     // Without this, the useState lazy initializer in the page component may
     // have captured stale dirty state from the cached instance, and sliders
@@ -308,9 +378,15 @@ export class ImageEditor {
    * Call this in the loader after all initial setup (e.g. importTemplate) is done.
    * initialize() will restore this snapshot on every subsequent mount so that
    * the same cached instance always starts fresh from the loader's intended state.
+   * Also snapshots config.imagePath and config.originalDimensions so that
+   * initialize() can restore them too (critical for canvas editor stale state fix).
    */
   markInitialState(): void {
-    this.cleanInitialState = { ...this.state }
+    this.cleanInitialState = {
+      ...this.state,
+      imagePath: this.config.imagePath,
+      originalDimensions: { ...this.config.originalDimensions },
+    }
   }
 
   /**
@@ -2954,12 +3030,12 @@ export class ImageEditor {
       },
     }
 
-    // Generate preview params (800x800 thumbnail with transformations)
-    // Temporarily override previewMaxDimensions to ensure correct scaling for 800x800
+    // Generate preview params (400x400 thumbnail with transformations)
+    // Temporarily override previewMaxDimensions to ensure correct scaling for 400x400
     const originalPreviewDimensions = this.config.previewMaxDimensions
-    this.config.previewMaxDimensions = { width: 800, height: 800 }
+    this.config.previewMaxDimensions = { width: 400, height: 400 }
 
-    // Generate params with correct 800x800 scaling
+    // Generate params with correct 400x400 scaling
     const previewParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
 
     // Restore original preview dimensions

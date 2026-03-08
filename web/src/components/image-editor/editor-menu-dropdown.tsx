@@ -33,6 +33,8 @@ interface EditorMenuDropdownProps {
   canUndo?: boolean
   canRedo?: boolean
   isTemplate?: boolean
+  /** Sections to disable in the show/hide controls menu (grayed out, not toggleable) */
+  hiddenSections?: SectionKey[]
 }
 
 export function EditorMenuDropdown({
@@ -49,6 +51,7 @@ export function EditorMenuDropdown({
   canUndo = false,
   canRedo = false,
   isTemplate = false,
+  hiddenSections,
 }: EditorMenuDropdownProps) {
   const { t, i18n } = useTranslation()
 
@@ -179,15 +182,20 @@ export function EditorMenuDropdown({
         <DropdownMenuPortal>
           <DropdownMenuSubContent>
             {SECTION_KEYS.map((sectionKey) => {
-              const isVisible = editorOpenSections.visibleSections?.includes(sectionKey) ?? true
+              const isDisabled = hiddenSections?.includes(sectionKey) ?? false
+              const isVisible =
+                !isDisabled && (editorOpenSections.visibleSections?.includes(sectionKey) ?? true)
               const metadata = SECTION_METADATA[sectionKey]
               const SectionIcon = metadata.icon
               return (
                 <DropdownMenuItem
                   key={sectionKey}
+                  disabled={isDisabled}
                   onSelect={(e) => {
                     e.preventDefault()
-                    onToggleSectionVisibility(sectionKey)
+                    if (!isDisabled) {
+                      onToggleSectionVisibility(sectionKey)
+                    }
                   }}
                 >
                   <div className='flex w-full items-center justify-between gap-2'>

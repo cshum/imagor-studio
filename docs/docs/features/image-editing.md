@@ -10,6 +10,25 @@ URL-based image transformations powered by libvips. All edits generate URLs that
 
 The image editor generates imagor URLs that apply transformations when images are requested. Original files remain unchanged. All transformations are processed by libvips for efficient image manipulation.
 
+## New Canvas
+
+Start from scratch without an existing image — create a blank canvas with a custom size and background color:
+
+1. **Open the New Canvas dialog** — Click the **New Canvas** button (or the `+` menu) in the gallery toolbar
+2. **Set dimensions** — Enter the canvas width and height in pixels (e.g. 1080 × 1080 for a square social post)
+3. **Choose a background color** — Pick a solid hex color (e.g. `ffffff` for white, `000000` for black) or leave as the default
+4. **Create** — The editor opens with a color base image at the specified dimensions
+
+Once in the editor you can:
+
+- **Change the background color** — Select the base image in the layer panel and click the color swatch to pick a new color
+- **Add layers** — Stack image layers, text layers, and color layers on top of the canvas background
+- **Save as template** — Save the canvas composition as a reusable template (`Cmd/Ctrl+S`)
+
+:::tip
+Use a **color layer** (Add Layer → Add Color Layer) instead of the base image color when you want to control the background independently — for example, to toggle it on/off or apply blend modes.
+:::
+
 ## Editing Controls
 
 ### Crop & Aspect

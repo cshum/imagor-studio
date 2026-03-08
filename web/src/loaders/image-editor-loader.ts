@@ -1,9 +1,8 @@
 import { statFile } from '@/api/storage-api'
-import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
-import { ImageEditor } from '@/lib/image-editor'
+import { ImageEditor, isColorImage } from '@/lib/image-editor'
 import { joinImagePath } from '@/lib/path-utils'
 import type { ImagorTemplate } from '@/lib/template-types'
 import { getAuth } from '@/stores/auth-store'
@@ -18,7 +17,7 @@ export interface TemplateMetadata {
 
 export interface ImageEditorLoaderData {
   initialEditorOpenSections: EditorSections
-  breadcrumb: BreadcrumbItem
+  breadcrumb?: { label: string }
   imageEditor: ImageEditor
   isTemplate: boolean
   templateMetadata?: TemplateMetadata
@@ -89,14 +88,18 @@ export const imageEditorLoader = async ({
       )
     }
 
-    // Verify source image exists
-    const sourceFileStat = await statFile(actualImagePath)
-    if (!sourceFileStat || sourceFileStat.isDirectory) {
-      throw new Error(`Template source image not found: ${actualImagePath}`)
+    // Color images are virtual (imagor generates them on-the-fly) — skip file stat.
+    // Real images need to be verified and have their dimensions fetched.
+    let originalDimensions: { width: number; height: number }
+    if (isColorImage(actualImagePath)) {
+      originalDimensions = { width: 1, height: 1 }
+    } else {
+      const sourceFileStat = await statFile(actualImagePath)
+      if (!sourceFileStat || sourceFileStat.isDirectory) {
+        throw new Error(`Template source image not found: ${actualImagePath}`)
+      }
+      originalDimensions = await fetchImageDimensions(actualImagePath)
     }
-
-    // Fetch source image dimensions
-    const originalDimensions = await fetchImageDimensions(actualImagePath)
 
     // Clear image position for better transition
     clearPosition(galleryKey, imageKey)
@@ -139,11 +142,21 @@ export const imageEditorLoader = async ({
       imagePath,
       originalDimensions,
     })
+    // Snapshot the initial config so initialize() can restore it on remount.
+    // Consistent with canvas and template loaders — ensures imagePath and
+    // originalDimensions are always reset correctly if the instance is reused.
+    imageEditor.markInitialState()
   }
+
+  // Set breadcrumb label for browser title:
+  // - template: use template name (e.g. "My Template")
+  // - normal image: use filename (e.g. "photo.jpg")
+  const breadcrumbLabel =
+    isTemplate && templateMetadata ? templateMetadata.name : imageKey.split('/').pop() || imageKey
 
   return {
     initialEditorOpenSections: editorOpenSections,
-    breadcrumb: { label: 'Imagor Studio' },
+    breadcrumb: { label: breadcrumbLabel },
     imageEditor,
     isTemplate,
     templateMetadata,

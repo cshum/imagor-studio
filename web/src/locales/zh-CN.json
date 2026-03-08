@@ -135,6 +135,17 @@
         "clearFilter": "清除筛选"
       },
       "showFileNames": "显示文件名",
+      "newCanvas": {
+        "menuItem": "新建画布",
+        "title": "新建画布",
+        "description": "创建空白画布，从零开始编辑。",
+        "preset": "画布尺寸",
+        "custom": "自定义",
+        "width": "宽度",
+        "height": "高度",
+        "background": "背景",
+        "create": "创建"
+      },
       "createFolder": {
         "newFolder": "新建文件夹",
         "title": "创建新文件夹",
@@ -668,6 +679,7 @@
   "imageInformation": "图片信息",
   "noImageInfo": "无可用的图片信息。",
   "imageEditor": {
+    "newCanvas": "新建画布",
     "page": {
       "back": "返回",
       "controls": "控制",
