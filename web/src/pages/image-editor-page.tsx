@@ -819,6 +819,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             }}
             parentDimensions={contextParentDimensions ?? undefined}
             isEditingLayer={editingContext !== null}
+            isColorImage={isColorImage(imageEditor.getImagePath())}
           />
         ),
         fill: <FillPaddingControl params={params} onUpdateParams={updateParams} />,

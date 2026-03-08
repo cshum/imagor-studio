@@ -29,6 +29,8 @@ interface DimensionControlProps {
     height: number
   }
   isEditingLayer?: boolean
+  /** Hide resize mode / alignment (meaningless for solid color images) */
+  isColorImage?: boolean
 }
 
 export function DimensionControl({
@@ -37,6 +39,7 @@ export function DimensionControl({
   originalDimensions,
   parentDimensions,
   isEditingLayer = false,
+  isColorImage = false,
 }: DimensionControlProps) {
   const { t } = useTranslation()
 
@@ -254,118 +257,126 @@ export function DimensionControl({
         </div>
       </div>
 
-      {/* Resize Mode */}
-      <div className='space-y-2'>
-        <Label className='text-sm font-medium'>{t('imageEditor.dimensions.resizeMode')}</Label>
-        <RadioGroup
-          value={getCurrentFitMode()}
-          onValueChange={handleFitModeChange}
-          className='grid grid-cols-2 gap-2'
-        >
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='fit-in' id='fit-in' />
-            <Label htmlFor='fit-in' className='text-sm'>
-              {t('imageEditor.dimensions.modes.fitIn')}
+      {/* Resize Mode — hidden for color images (all modes produce identical results) */}
+      {!isColorImage && (
+        <>
+          <div className='space-y-2'>
+            <Label className='text-sm font-medium'>
+              {t('imageEditor.dimensions.resizeMode')}
             </Label>
+            <RadioGroup
+              value={getCurrentFitMode()}
+              onValueChange={handleFitModeChange}
+              className='grid grid-cols-2 gap-2'
+            >
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value='fit-in' id='fit-in' />
+                <Label htmlFor='fit-in' className='text-sm'>
+                  {t('imageEditor.dimensions.modes.fitIn')}
+                </Label>
+              </div>
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value='fill' id='fill' />
+                <Label htmlFor='fill' className='text-sm'>
+                  {t('imageEditor.dimensions.modes.fill')}
+                </Label>
+              </div>
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value='stretch' id='stretch' />
+                <Label htmlFor='stretch' className='text-sm'>
+                  {t('imageEditor.dimensions.modes.stretch')}
+                </Label>
+              </div>
+              <div className='flex items-center space-x-2'>
+                <RadioGroupItem value='smart' id='smart' />
+                <Label htmlFor='smart' className='text-sm'>
+                  {t('imageEditor.dimensions.modes.smart')}
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='fill' id='fill' />
-            <Label htmlFor='fill' className='text-sm'>
-              {t('imageEditor.dimensions.modes.fill')}
-            </Label>
-          </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='stretch' id='stretch' />
-            <Label htmlFor='stretch' className='text-sm'>
-              {t('imageEditor.dimensions.modes.stretch')}
-            </Label>
-          </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='smart' id='smart' />
-            <Label htmlFor='smart' className='text-sm'>
-              {t('imageEditor.dimensions.modes.smart')}
-            </Label>
-          </div>
-        </RadioGroup>
-      </div>
 
-      {/* Alignment - Only show when Fill mode is selected */}
-      {getCurrentFitMode() === 'fill' && (
-        <div className='space-y-2'>
-          <div className='grid grid-cols-2 gap-3'>
-            <div>
-              <Label htmlFor='h-align' className='text-muted-foreground text-xs'>
-                {t('imageEditor.dimensions.horizontal')}
-              </Label>
-              <Select
-                value={params.hAlign || 'center'}
-                onValueChange={(value) => handleAlignmentChange('horizontal', value)}
-              >
-                <SelectTrigger id='h-align' className='h-8'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='left'>
-                    {t('imageEditor.dimensions.alignments.left')}
-                  </SelectItem>
-                  <SelectItem value='center'>
-                    {t('imageEditor.dimensions.alignments.center')}
-                  </SelectItem>
-                  <SelectItem value='right'>
-                    {t('imageEditor.dimensions.alignments.right')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Alignment - Only show when Fill mode is selected */}
+          {getCurrentFitMode() === 'fill' && (
+            <div className='space-y-2'>
+              <div className='grid grid-cols-2 gap-3'>
+                <div>
+                  <Label htmlFor='h-align' className='text-muted-foreground text-xs'>
+                    {t('imageEditor.dimensions.horizontal')}
+                  </Label>
+                  <Select
+                    value={params.hAlign || 'center'}
+                    onValueChange={(value) => handleAlignmentChange('horizontal', value)}
+                  >
+                    <SelectTrigger id='h-align' className='h-8'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='left'>
+                        {t('imageEditor.dimensions.alignments.left')}
+                      </SelectItem>
+                      <SelectItem value='center'>
+                        {t('imageEditor.dimensions.alignments.center')}
+                      </SelectItem>
+                      <SelectItem value='right'>
+                        {t('imageEditor.dimensions.alignments.right')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label htmlFor='v-align' className='text-muted-foreground text-xs'>
-                {t('imageEditor.dimensions.vertical')}
-              </Label>
-              <Select
-                value={params.vAlign || 'middle'}
-                onValueChange={(value) => handleAlignmentChange('vertical', value)}
-              >
-                <SelectTrigger id='v-align' className='h-8'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='top'>{t('imageEditor.dimensions.alignments.top')}</SelectItem>
-                  <SelectItem value='middle'>
-                    {t('imageEditor.dimensions.alignments.middle')}
-                  </SelectItem>
-                  <SelectItem value='bottom'>
-                    {t('imageEditor.dimensions.alignments.bottom')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                <div>
+                  <Label htmlFor='v-align' className='text-muted-foreground text-xs'>
+                    {t('imageEditor.dimensions.vertical')}
+                  </Label>
+                  <Select
+                    value={params.vAlign || 'middle'}
+                    onValueChange={(value) => handleAlignmentChange('vertical', value)}
+                  >
+                    <SelectTrigger id='v-align' className='h-8'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='top'>
+                        {t('imageEditor.dimensions.alignments.top')}
+                      </SelectItem>
+                      <SelectItem value='middle'>
+                        {t('imageEditor.dimensions.alignments.middle')}
+                      </SelectItem>
+                      <SelectItem value='bottom'>
+                        {t('imageEditor.dimensions.alignments.bottom')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* Active mode description */}
+          <div className='bg-muted/50 rounded-lg px-3 py-2 text-xs'>
+            <p className='text-muted-foreground'>
+              <strong>
+                {getCurrentFitMode() === 'fit-in'
+                  ? t('imageEditor.dimensions.modes.fitIn')
+                  : getCurrentFitMode() === 'fill'
+                    ? t('imageEditor.dimensions.modes.fill')
+                    : getCurrentFitMode() === 'stretch'
+                      ? t('imageEditor.dimensions.modes.stretch')
+                      : t('imageEditor.dimensions.modes.smart')}
+                :{' '}
+              </strong>
+              {getCurrentFitMode() === 'fit-in'
+                ? t('imageEditor.dimensions.modeDescriptions.fitIn')
+                : getCurrentFitMode() === 'fill'
+                  ? t('imageEditor.dimensions.modeDescriptions.fill')
+                  : getCurrentFitMode() === 'stretch'
+                    ? t('imageEditor.dimensions.modeDescriptions.stretch')
+                    : t('imageEditor.dimensions.modeDescriptions.smart')}
+            </p>
           </div>
-        </div>
+        </>
       )}
-
-      {/* Active mode description */}
-      <div className='bg-muted/50 rounded-lg px-3 py-2 text-xs'>
-        <p className='text-muted-foreground'>
-          <strong>
-            {getCurrentFitMode() === 'fit-in'
-              ? t('imageEditor.dimensions.modes.fitIn')
-              : getCurrentFitMode() === 'fill'
-                ? t('imageEditor.dimensions.modes.fill')
-                : getCurrentFitMode() === 'stretch'
-                  ? t('imageEditor.dimensions.modes.stretch')
-                  : t('imageEditor.dimensions.modes.smart')}
-            :{' '}
-          </strong>
-          {getCurrentFitMode() === 'fit-in'
-            ? t('imageEditor.dimensions.modeDescriptions.fitIn')
-            : getCurrentFitMode() === 'fill'
-              ? t('imageEditor.dimensions.modeDescriptions.fill')
-              : getCurrentFitMode() === 'stretch'
-                ? t('imageEditor.dimensions.modeDescriptions.stretch')
-                : t('imageEditor.dimensions.modeDescriptions.smart')}
-        </p>
-      </div>
 
       {/* Scale – hidden when editing a layer (proportion is a global-only setting) */}
       {!isEditingLayer && (
