@@ -26,6 +26,10 @@ import {
   requireImageEditorAuth,
 } from '@/loaders/auth-loader.ts'
 import {
+  canvasEditorLoader,
+  canvasEditorValidateSearch,
+} from '@/loaders/canvas-editor-loader.ts'
+import {
   embeddedLoader,
   embeddedLoaderDeps,
   embeddedValidateSearch,
@@ -178,6 +182,19 @@ const imagePage = createRoute({
   },
 })
 
+const canvasEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/new/editor',
+  beforeLoad: requireImageEditorAuth,
+  validateSearch: canvasEditorValidateSearch,
+  loaderDeps: ({ search }) => search,
+  loader: ({ deps }) => canvasEditorLoader({ deps }),
+  component: () => {
+    const loaderData = canvasEditorRoute.useLoaderData()
+    return <ImageEditorPage loaderData={loaderData} />
+  },
+})
+
 const galleryImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/gallery/$galleryKey/$imageKey/editor',
@@ -265,6 +282,7 @@ const routeTree = isEmbeddedMode
     rootRoute.addChildren([
       loginRoute,
       adminSetupRoute,
+      canvasEditorRoute,
       rootImageEditorRoute,
       galleryImageEditorRoute,
       baseLayoutRoute.addChildren([

@@ -132,6 +132,19 @@
         "clearFilter": "Cancella filtro"
       },
       "showFileNames": "Mostra i Nomi dei File",
+      "newCanvas": {
+        "menuItem": "Nuova Tela",
+        "title": "Nuova Tela",
+        "description": "Crea una tela vuota per iniziare a modificare da zero.",
+        "preset": "Dimensione Tela",
+        "custom": "Personalizzato",
+        "width": "Larghezza",
+        "height": "Altezza",
+        "background": "Sfondo",
+        "solidColor": "Colore",
+        "transparent": "Trasparente",
+        "create": "Crea"
+      },
       "createFolder": {
         "newFolder": "Nuova Cartella",
         "title": "Crea Nuova Cartella",
