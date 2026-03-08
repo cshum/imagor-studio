@@ -33,7 +33,7 @@ import {
   updateLocationState,
 } from '@/lib/editor-state-url'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
-import { type ImageEditorState } from '@/lib/image-editor.ts'
+import { isColorImage, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
 import { debounce } from '@/lib/utils.ts'
 import { calculateLayerPositionForCurrentView } from '@/lib/viewport-utils'
@@ -774,6 +774,16 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleSaveTemplateClick, imageEditor, isTemplate, templateMetadata, textEditingLayerId])
 
+  // Hide sections that are irrelevant for the current base image type
+  // (e.g. crop is meaningless for solid color images — every pixel is identical)
+  const hiddenSections = useMemo<SectionKey[]>(() => {
+    const hidden: SectionKey[] = []
+    if (isColorImage(imageEditor.getImagePath())) {
+      hidden.push('crop')
+    }
+    return hidden
+  }, [imageEditor, params]) // params dependency ensures re-evaluation when base image is swapped
+
   // Section components for drag overlay (shared between ImageEditorControls and ImageEditorLayout)
   const sectionComponents = useMemo(
     () =>
@@ -925,6 +935,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             openSections={editorOpenSections}
             onOpenSectionsChange={handleOpenSectionsChange}
             column='left'
+            hiddenSections={hiddenSections}
           />
         }
         rightControls={
@@ -933,6 +944,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             openSections={editorOpenSections}
             onOpenSectionsChange={handleOpenSectionsChange}
             column='right'
+            hiddenSections={hiddenSections}
           />
         }
         singleColumnControls={
@@ -941,6 +953,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
             openSections={editorOpenSections}
             onOpenSectionsChange={handleOpenSectionsChange}
             column='both'
+            hiddenSections={hiddenSections}
           />
         }
         imagorPath={imagorPath}
@@ -949,6 +962,7 @@ export function ImageEditorPage({ loaderData }: ImageEditorPageProps) {
         onMobileSheetOpenChange={setMobileSheetOpen}
         sectionComponents={sectionComponents}
         onOpenSectionsChange={handleOpenSectionsChange}
+        hiddenSections={hiddenSections}
       />
 
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />

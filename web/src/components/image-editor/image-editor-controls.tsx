@@ -16,6 +16,8 @@ interface ImageEditorControlsProps {
   openSections: EditorSections
   onOpenSectionsChange: (sections: EditorSections) => void
   column?: 'left' | 'right' | 'both'
+  /** Sections to hide entirely (e.g. crop is irrelevant for color images) */
+  hiddenSections?: SectionKey[]
 }
 
 interface SectionConfig {
@@ -105,6 +107,7 @@ export function ImageEditorControls({
   openSections,
   onOpenSectionsChange,
   column = 'both',
+  hiddenSections,
 }: ImageEditorControlsProps) {
   // Use shared DnD hook
   const { activeId, sensors, handleDragStart, handleDragOver, handleDragEnd } = useEditorSectionDnd(
@@ -136,19 +139,20 @@ export function ImageEditorControls({
     [sectionComponents],
   )
 
-  // Get sections for each column (filtered by visibility)
+  // Get sections for each column (filtered by visibility and hiddenSections)
   const leftColumnSections = useMemo(
     () =>
       openSections.leftColumn
         .map((id) => sectionConfigs[id])
         .filter((section) => {
+          if (hiddenSections?.includes(section.key)) return false
           const visibleSections = openSections.visibleSections || []
           if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
             return false
           }
           return true
         }),
-    [openSections.leftColumn, openSections.visibleSections, sectionConfigs],
+    [openSections.leftColumn, openSections.visibleSections, hiddenSections, sectionConfigs],
   )
 
   const rightColumnSections = useMemo(
@@ -156,13 +160,14 @@ export function ImageEditorControls({
       openSections.rightColumn
         .map((id) => sectionConfigs[id])
         .filter((section) => {
+          if (hiddenSections?.includes(section.key)) return false
           const visibleSections = openSections.visibleSections || []
           if (visibleSections.length > 0 && !visibleSections.includes(section.key)) {
             return false
           }
           return true
         }),
-    [openSections.rightColumn, openSections.visibleSections, sectionConfigs],
+    [openSections.rightColumn, openSections.visibleSections, hiddenSections, sectionConfigs],
   )
 
   // Render based on column prop

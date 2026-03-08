@@ -65,6 +65,9 @@ export interface ImageEditorLayoutProps {
 
   // Section components for drag overlay (keyed by SectionKey)
   sectionComponents: Record<SectionKey, React.ReactNode>
+
+  /** Sections to hide entirely (e.g. crop is irrelevant for color images) */
+  hiddenSections?: SectionKey[]
 }
 
 export function ImageEditorLayout({
@@ -95,6 +98,7 @@ export function ImageEditorLayout({
   mobileSheetOpen,
   onMobileSheetOpenChange,
   sectionComponents,
+  hiddenSections,
 }: ImageEditorLayoutProps) {
   const { t } = useTranslation()
   const isMobile = !useBreakpoint('md')
@@ -114,6 +118,7 @@ export function ImageEditorLayout({
 
   // Calculate if columns are empty for smart sizing (desktop)
   const leftColumnSections = editorOpenSections.leftColumn.filter((id) => {
+    if (hiddenSections?.includes(id)) return false
     const visibleSections = editorOpenSections.visibleSections || []
     if (visibleSections.length > 0 && !visibleSections.includes(id)) {
       return false
@@ -122,6 +127,7 @@ export function ImageEditorLayout({
   })
 
   const rightColumnSections = editorOpenSections.rightColumn.filter((id) => {
+    if (hiddenSections?.includes(id)) return false
     const visibleSections = editorOpenSections.visibleSections || []
     if (visibleSections.length > 0 && !visibleSections.includes(id)) {
       return false
@@ -165,6 +171,7 @@ export function ImageEditorLayout({
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
           isTemplate={isTemplate}
+          hiddenSections={hiddenSections}
         />
       </DropdownMenu>
     </>
@@ -193,6 +200,7 @@ export function ImageEditorLayout({
           onLanguageChange={onLanguageChange}
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
+          hiddenSections={hiddenSections}
         />
       </DropdownMenu>
     </>
@@ -272,6 +280,7 @@ export function ImageEditorLayout({
                   onRedo={onRedo}
                   canUndo={canUndo}
                   canRedo={canRedo}
+                  hiddenSections={hiddenSections}
                 />
               </DropdownMenu>
             </div>

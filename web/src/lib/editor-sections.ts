@@ -19,8 +19,8 @@ const EDITOR_SECTIONS = {
 export type SectionKey = keyof typeof EDITOR_SECTIONS
 
 export const SECTION_KEYS: SectionKey[] = [
-  'crop',
   'layers',
+  'crop',
   'effects',
   'transform',
   'dimensions',
@@ -72,9 +72,9 @@ export interface EditorSections extends Record<SectionKey, boolean> {
 
 const defaultSections: EditorSections = {
   ...EDITOR_SECTIONS,
-  leftColumn: ['crop', 'layers'],
+  leftColumn: ['layers', 'crop'],
   rightColumn: ['effects', 'transform', 'dimensions', 'fill', 'output'],
-  visibleSections: ['crop', 'layers', 'effects', 'transform', 'dimensions', 'fill', 'output'],
+  visibleSections: ['layers', 'crop', 'effects', 'transform', 'dimensions', 'fill', 'output'],
 }
 
 export class EditorSectionStorage {
