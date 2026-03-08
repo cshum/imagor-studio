@@ -3013,12 +3013,12 @@ export class ImageEditor {
       },
     }
 
-    // Generate preview params (800x800 thumbnail with transformations)
-    // Temporarily override previewMaxDimensions to ensure correct scaling for 800x800
+    // Generate preview params (400x400 thumbnail with transformations)
+    // Temporarily override previewMaxDimensions to ensure correct scaling for 400x400
     const originalPreviewDimensions = this.config.previewMaxDimensions
-    this.config.previewMaxDimensions = { width: 800, height: 800 }
+    this.config.previewMaxDimensions = { width: 400, height: 400 }
 
-    // Generate params with correct 800x800 scaling
+    // Generate params with correct 400x400 scaling
     const previewParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
 
     // Restore original preview dimensions
