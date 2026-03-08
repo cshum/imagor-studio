@@ -45,7 +45,6 @@ interface TextEditOverlayProps {
   paddingLeft?: number
   paddingTop?: number
   onCommit: (text: string) => void
-  onCancel: () => void
   onUpdate: (updates: Partial<TextLayer>) => void
 }
 
@@ -67,7 +66,6 @@ export function TextEditOverlay({
   paddingLeft = 0,
   paddingTop = 0,
   onCommit,
-  onCancel,
   onUpdate,
 }: TextEditOverlayProps) {
   const [value, setValue] = useState(layer.text)
