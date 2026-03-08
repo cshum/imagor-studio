@@ -14,7 +14,7 @@ function parseCanvasSearch(search: string): {
   height: number
 } {
   const params = new URLSearchParams(search)
-  const color = params.get('color') || 'none'
+  const color = params.get('color') || 'ffffff'
   const w = parseInt(params.get('w') || '', 10)
   const h = parseInt(params.get('h') || '', 10)
   return {

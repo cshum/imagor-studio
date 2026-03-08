@@ -46,7 +46,7 @@ export function NewCanvasDialog({ open, onOpenChange }: NewCanvasDialogProps) {
   const [width, setWidth] = useState(1080)
   const [height, setHeight] = useState(1080)
   // Color value with alpha support: 'none' = transparent, '000000' = solid black, 'ff660080' = semi-transparent
-  const [colorValue, setColorValue] = useState('none')
+  const [colorValue, setColorValue] = useState('ffffff')
 
   const handlePresetChange = (value: string) => {
     if (value === 'custom') return
