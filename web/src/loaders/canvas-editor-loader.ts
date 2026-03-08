@@ -1,41 +1,42 @@
-import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections'
+import { EditorSectionStorage } from '@/lib/editor-sections'
 import { colorToImagePath, ImageEditor } from '@/lib/image-editor'
 import { getAuth } from '@/stores/auth-store'
 
 import type { ImageEditorLoaderData } from './image-editor-loader'
 
-export interface CanvasEditorSearch {
-  color?: string
-  w?: number
-  h?: number
-}
-
 /**
- * Validate search params for the canvas editor route.
- * Provides defaults: white 800×600 canvas.
+ * Parse canvas search params from the URL query string.
+ * These are one-time seed values used only at initial load.
  */
-export function canvasEditorValidateSearch(
-  search: Record<string, unknown>,
-): CanvasEditorSearch {
+function parseCanvasSearch(search: string): {
+  color: string
+  width: number
+  height: number
+} {
+  const params = new URLSearchParams(search)
+  const color = params.get('color') || 'ffffff'
+  const w = parseInt(params.get('w') || '', 10)
+  const h = parseInt(params.get('h') || '', 10)
   return {
-    color: typeof search.color === 'string' ? search.color : 'ffffff',
-    w: typeof search.w === 'number' && search.w > 0 ? Math.round(search.w) : 800,
-    h: typeof search.h === 'number' && search.h > 0 ? Math.round(search.h) : 600,
+    color,
+    width: w > 0 ? Math.round(w) : 800,
+    height: h > 0 ? Math.round(h) : 600,
   }
 }
 
 /**
  * Canvas editor loader — creates an ImageEditor from a color image path.
  * No file system access needed; the color image is virtual (imagor generates it).
+ *
+ * Search params (color, w, h) are one-time seed values read at initial load.
+ * Once the editor is open, all editing happens through ImageEditor state.
  */
 export const canvasEditorLoader = async ({
-  deps,
+  search,
 }: {
-  deps: CanvasEditorSearch
+  search: string
 }): Promise<ImageEditorLoaderData> => {
-  const color = deps.color || 'ffffff'
-  const width = deps.w || 800
-  const height = deps.h || 600
+  const { color, width, height } = parseCanvasSearch(search)
 
   // Load user preferences for editor open sections
   const authState = getAuth()
