@@ -21,6 +21,21 @@ Add images from your storage as overlay layers. Each image layer supports:
 - Position and dimension controls
 - Nested layers inside the layer
 
+### Color Layers
+
+Add a solid color fill as a layer — useful for backgrounds, overlays, and color blocks:
+
+- **Add color layer** — Click "Add Layer → Add Color Layer" (paintbrush icon) in the layer panel
+- **Auto-fill canvas** — Color layers automatically expand to fill the full canvas width and height
+- **Edit color** — Click the color swatch next to the layer name to open the color picker
+- **Opacity & blend modes** — Combine with opacity and blend modes (multiply, screen, overlay, etc.) for color grading effects
+
+#### Use Cases
+
+- **Solid background** — Add a color layer at the bottom of the stack as a canvas background
+- **Color overlay** — Place a semi-transparent color layer over an image for tinting effects
+- **Gradient-like effects** — Stack multiple color layers with different blend modes
+
 ### Text Layers
 
 Add text directly onto your image with full styling control:
@@ -58,6 +73,7 @@ The layer panel (sidebar) shows all layers in the current context:
 
 - **Add Image Layer** — Select an image from your storage to add as a new layer
 - **Add Text Layer** — Add a new text layer centered on the canvas
+- **Add Color Layer** — Add a solid color fill layer that auto-fills the canvas
 
 ### Managing Layers
 
