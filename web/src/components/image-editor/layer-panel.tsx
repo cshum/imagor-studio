@@ -523,6 +523,7 @@ export function LayerPanel({
                 <Folder className='mr-2 h-4 w-4' />
                 {t('imageEditor.layers.addGroup')}
               </div>
+              <DropdownMenuShortcut>⌘G</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

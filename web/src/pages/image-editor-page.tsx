@@ -758,6 +758,16 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         }
       }
 
+      // Cmd+G (Mac) or Ctrl+G (Windows/Linux) - Add Group Layer
+      // Industry standard: Photoshop, Figma, Sketch, Affinity
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === 'g' || e.key === 'G')) {
+        if (!textEditingLayerId && !imageEditor.getState().visualCropEnabled) {
+          e.preventDefault()
+          handleAddGroupLayerRef.current()
+          return
+        }
+      }
+
       // Cmd+Shift+I (Mac only) - Add Image Layer
       // Ctrl+Shift+I opens DevTools on Windows/Linux so we guard with metaKey only
       if (e.metaKey && e.shiftKey && (e.key === 'i' || e.key === 'I')) {

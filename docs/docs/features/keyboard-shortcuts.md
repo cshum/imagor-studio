@@ -39,6 +39,7 @@ Navigate and control Imagor Studio using keyboard shortcuts.
 | Shortcut        | Action                                             |
 | --------------- | -------------------------------------------------- |
 | `T`             | Add text layer                                     |
+| `⌘G` / `Ctrl+G` | Add group layer                                    |
 | `⌘⇧I` (Mac)     | Add image layer (opens file picker)                |
 | `↵`             | Edit Text (text layer) or Edit Layer (image layer) |
 | `⌘D` / `Ctrl+D` | Duplicate selected layer                           |

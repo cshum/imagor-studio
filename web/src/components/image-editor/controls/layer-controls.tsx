@@ -250,9 +250,7 @@ export function LayerControls({
             className='flex-1'
           >
             <Edit className='mr-2 h-4 w-4' />
-            {isGroup
-              ? t('imageEditor.layers.editGroup')
-              : t('imageEditor.layers.editImage')}
+            {isGroup ? t('imageEditor.layers.editGroup') : t('imageEditor.layers.editImage')}
           </Button>
           {/* Color swatch — only for color layers next to Edit Layer */}
           {isColor && (
