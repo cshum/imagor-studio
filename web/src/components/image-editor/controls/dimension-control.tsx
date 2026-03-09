@@ -29,8 +29,8 @@ interface DimensionControlProps {
     height: number
   }
   isEditingLayer?: boolean
-  /** Hide resize mode / alignment (meaningless for solid color images) */
-  isColorImage?: boolean // true for color layers (not group layers)
+  /** Hide resize mode / alignment (meaningless for solid color or group layers — no real image content) */
+  isColorImage?: boolean
 }
 
 export function DimensionControl({

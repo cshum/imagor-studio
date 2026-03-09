@@ -235,7 +235,7 @@ function BaseImageItem({
       ? t('imageEditor.layers.colorLayer')
       : imagePath.split('/').pop() || imagePath
   const displayName = name || filename
-  const Icon = isLayer ? Layers : isGroup ? Folder : isColor ? Paintbrush : Image
+  const Icon = isGroup ? Folder : isLayer ? Layers : isColor ? Paintbrush : Image
 
   return (
     <div
