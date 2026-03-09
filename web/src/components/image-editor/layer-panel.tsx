@@ -227,12 +227,15 @@ function BaseImageItem({
   onClick,
 }: BaseImageItemProps) {
   const { t } = useTranslation()
-  const isColor = isColorImage(imagePath)
-  const filename = isColor
-    ? t('imageEditor.layers.colorLayer')
-    : imagePath.split('/').pop() || imagePath
+  const isColor = isColorLayer(imagePath)
+  const isGroup = isGroupLayer(imagePath)
+  const filename = isGroup
+    ? t('imageEditor.layers.groupLayer')
+    : isColor
+      ? t('imageEditor.layers.colorLayer')
+      : imagePath.split('/').pop() || imagePath
   const displayName = name || filename
-  const Icon = isLayer ? Layers : isColor ? Paintbrush : Image
+  const Icon = isLayer ? Layers : isGroup ? Folder : isColor ? Paintbrush : Image
 
   return (
     <div
