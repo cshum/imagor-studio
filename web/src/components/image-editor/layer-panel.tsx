@@ -641,8 +641,8 @@ export function LayerPanel({
         </div>
       )}
 
-      {/* Base Image Swap - shown when base is selected */}
-      {selectedLayerId === null && !activeId && (
+      {/* Base Image Swap - shown when base is selected (hidden for group layers — nothing to configure) */}
+      {selectedLayerId === null && !activeId && !isGroupLayer(imagePath) && (
         <div className='shrink-0'>
           <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
             {isBaseColor ? (
