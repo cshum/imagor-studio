@@ -664,6 +664,13 @@ export function PreviewArea({
                                   // Resize handles emit transforms.width/height — map to text layer's own fields.
                                   // If the layer is in fill mode ('f' / 'f-N'), preserve fill mode and
                                   // convert the new pixel width to an inset instead.
+                                  //
+                                  // Guard: skip the update when the new pixel value is within 1px of the
+                                  // current rendered bounding-box width/height. A pure click on a handle
+                                  // (no drag) produces a 0-delta resize, but getBoundingClientRect()
+                                  // returns fractional pixels that round differently in
+                                  // convertDisplayToLayerPosition — causing a spurious 1px change that
+                                  // would silently convert an auto/fill width to a fixed pixel value.
                                   if (updates.transforms?.width !== undefined) {
                                     const newPxWidth = updates.transforms.width
                                     const widthStr = String(selectedLayer.width)
@@ -672,12 +679,18 @@ export function PreviewArea({
                                       const inset = outputDims.width - newPxWidth
                                       layerUpdates.width =
                                         inset > 0 ? `f-${Math.round(inset)}` : 'f'
-                                    } else {
+                                    } else if (Math.abs(newPxWidth - layerOutputDims.width) > 1) {
+                                      // Only apply if the value meaningfully differs from the
+                                      // current rendered width (> 1px = real drag, not a click)
                                       layerUpdates.width = newPxWidth
                                     }
                                   }
-                                  if (updates.transforms?.height !== undefined)
-                                    layerUpdates.height = updates.transforms.height
+                                  if (updates.transforms?.height !== undefined) {
+                                    const newPxHeight = updates.transforms.height
+                                    if (Math.abs(newPxHeight - layerOutputDims.height) > 1) {
+                                      layerUpdates.height = newPxHeight
+                                    }
+                                  }
                                   if (Object.keys(layerUpdates).length > 0)
                                     imageEditor.updateLayer(selectedLayerId, layerUpdates)
                                 } else if (updates.transforms) {
@@ -716,20 +729,12 @@ export function PreviewArea({
                                     ? () => onTextEdit(selectedLayerId)
                                     : undefined
                               }
-                              onHandleDoubleClick={
-                                !isImageLayer
-                                  ? (handle) => {
-                                      // e/w handles reset wrap width to auto (0)
-                                      if (handle === 'e' || handle === 'w') {
-                                        imageEditor.updateLayer(selectedLayerId, { width: 0 })
-                                      }
-                                      // n/s handles reset fixed height to auto (0)
-                                      else if (handle === 'n' || handle === 's') {
-                                        imageEditor.updateLayer(selectedLayerId, { height: 0 })
-                                      }
-                                    }
-                                  : undefined
-                              }
+                              // Text layers: no handle double-click action.
+                              // Double-clicking a resize handle should not auto-reset dimensions —
+                              // the user expects handle interactions to only resize on intentional drag.
+                              // (Double-click on the layer box itself still enters text-edit mode
+                              // via handleLayerDoubleClick, which is separate from handle events.)
+                              onHandleDoubleClick={undefined}
                             />
                           )
                         } else {
