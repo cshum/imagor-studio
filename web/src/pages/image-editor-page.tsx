@@ -533,6 +533,8 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
     }
     imageEditor.addLayer(newLayer)
     imageEditor.setSelectedLayerId(newLayer.id)
+    // Auto-enter the group context immediately (Figma-style: create group → edit inside it)
+    imageEditor.switchContext(newLayer.id)
   }, [imageEditor])
 
   const handleTextEdit = useCallback(
