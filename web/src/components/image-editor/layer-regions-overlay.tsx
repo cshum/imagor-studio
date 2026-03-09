@@ -149,11 +149,11 @@ export function LayerRegionsOverlay({
             {/* Layer name label — appears above top-left corner on hover (Figma-style) */}
             <span
               className={cn(
-                'pointer-events-none absolute left-0 -top-5',
+                'pointer-events-none absolute -top-5 left-0',
                 'max-w-[160px] truncate',
                 'rounded px-1.5 py-0.5',
-                'bg-black/70 text-white',
-                'text-[11px] leading-4 font-medium',
+                'bg-black/60 text-white/90',
+                'text-[11px] leading-4 font-normal',
                 'opacity-0 group-hover:opacity-100',
                 'transition-opacity duration-150',
                 'whitespace-nowrap',
