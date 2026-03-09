@@ -57,7 +57,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
-import { colorToImagePath, getColorFromPath, isColorImage, isColorLayer, isGroupLayer } from '@/lib/image-editor'
+import {
+  colorToImagePath,
+  getColorFromPath,
+  isColorImage,
+  isColorLayer,
+  isGroupLayer,
+} from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {

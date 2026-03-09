@@ -1,5 +1,13 @@
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronRight, FileText, Folder, Image, Layers, Paintbrush } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Folder,
+  Image,
+  Layers,
+  Paintbrush,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
