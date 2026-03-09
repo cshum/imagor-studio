@@ -33,7 +33,7 @@ import {
   updateLocationState,
 } from '@/lib/editor-state-url'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
-import { isColorImage, type ImageEditorState } from '@/lib/image-editor.ts'
+import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
 import { debounce } from '@/lib/utils.ts'
 import { calculateLayerPositionForCurrentView } from '@/lib/viewport-utils'
@@ -806,10 +806,15 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
   // Hide sections that are irrelevant for the current base image type
   // (e.g. crop is meaningless for solid color images — every pixel is identical)
+  // Group layers (color:none) also have no image content, so hide image-specific sections.
   const hiddenSections = useMemo<SectionKey[]>(() => {
     const hidden: SectionKey[] = []
-    if (isColorImage(imageEditor.getImagePath())) {
+    const path = imageEditor.getImagePath()
+    if (isColorLayer(path) || isGroupLayer(path)) {
       hidden.push('crop')
+    }
+    if (isGroupLayer(path)) {
+      hidden.push('effects', 'transform', 'fill')
     }
     return hidden
   }, [imageEditor, params]) // params dependency ensures re-evaluation when base image is swapped
@@ -849,7 +854,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
             }}
             parentDimensions={contextParentDimensions ?? undefined}
             isEditingLayer={editingContext !== null}
-            isColorImage={isColorImage(imageEditor.getImagePath())}
+            isColorImage={isColorLayer(imageEditor.getImagePath())}
           />
         ),
         fill: <FillPaddingControl params={params} onUpdateParams={updateParams} />,

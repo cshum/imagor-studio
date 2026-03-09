@@ -30,7 +30,7 @@ interface DimensionControlProps {
   }
   isEditingLayer?: boolean
   /** Hide resize mode / alignment (meaningless for solid color images) */
-  isColorImage?: boolean
+  isColorImage?: boolean // true for color layers (not group layers)
 }
 
 export function DimensionControl({

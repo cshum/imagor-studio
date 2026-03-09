@@ -57,13 +57,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
-import {
-  colorToImagePath,
-  getColorFromPath,
-  isColorImage,
-  isColorLayer,
-  isGroupLayer,
-} from '@/lib/image-editor'
+import { colorToImagePath, getColorFromPath, isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
@@ -118,7 +112,7 @@ function SortableLayerItem({
   //   custom name (if renamed) → custom name
   //   text layer (not renamed) → text content, or "Text Layer" if empty
   //   image layer              → filename
-  const isColor = !isText && isColorImage((layer as ImageLayer).imagePath)
+  const isColor = !isText && isColorLayer((layer as ImageLayer).imagePath)
   const isGroup = !isText && isGroupLayer((layer as ImageLayer).imagePath)
   const displayName = layer.name
     ? layer.name
@@ -360,7 +354,7 @@ export function LayerPanel({
           ? layer.name
           : layer.type === 'text'
             ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60)
-            : isColorImage((layer as ImageLayer).imagePath)
+            : isColorLayer((layer as ImageLayer).imagePath)
               ? t('imageEditor.layers.colorLayer')
               : (layer as ImageLayer).imagePath.split('/').pop() || ''
         setNewLayerName(displayName)
@@ -570,7 +564,7 @@ export function LayerPanel({
                     <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   ) : isGroupLayer(activeLayer.imagePath) ? (
                     <Folder className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
-                  ) : isColorImage(activeLayer.imagePath) ? (
+                  ) : isColorLayer(activeLayer.imagePath) ? (
                     <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   ) : (
                     <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
@@ -583,7 +577,7 @@ export function LayerPanel({
                           t('imageEditor.layers.textLayer')
                         : isGroupLayer(activeLayer.imagePath)
                           ? t('imageEditor.layers.groupLayer')
-                          : isColorImage(activeLayer.imagePath)
+                          : isColorLayer(activeLayer.imagePath)
                             ? t('imageEditor.layers.colorLayer')
                             : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
                   </span>
