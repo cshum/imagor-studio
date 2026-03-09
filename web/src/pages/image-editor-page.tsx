@@ -33,7 +33,7 @@ import {
   updateLocationState,
 } from '@/lib/editor-state-url'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
-import { isColorImage, type ImageEditorState } from '@/lib/image-editor.ts'
+import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
 import { debounce } from '@/lib/utils.ts'
 import { calculateLayerPositionForCurrentView } from '@/lib/viewport-utils'
@@ -130,6 +130,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
   // Stable refs for add-layer callbacks (defined after the keydown useEffect)
   const handleAddTextLayerRef = useRef<() => void>(() => {})
   const handleAddColorLayerRef = useRef<() => void>(() => {})
+  const handleAddGroupLayerRef = useRef<() => void>(() => {})
   const handleAddLayerDialogOpenRef = useRef<() => void>(() => {})
 
   // Preview container ref and image dimensions for viewport calculations
@@ -511,6 +512,31 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
     imageEditor.setSelectedLayerId(newLayer.id)
   }, [imageEditor])
 
+  const handleAddGroupLayer = useCallback(() => {
+    // Group layer = transparent color:none image layer that acts as a container.
+    // Use fill mode so it covers the parent canvas by default.
+    const newLayer = {
+      type: 'image' as const,
+      id: `layer-${Date.now()}`,
+      imagePath: 'color:none',
+      originalDimensions: { width: 1, height: 1 },
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+      name: '',
+      transforms: {
+        widthFull: true,
+        heightFull: true,
+      },
+    }
+    imageEditor.addLayer(newLayer)
+    imageEditor.setSelectedLayerId(newLayer.id)
+    // Auto-enter the group context immediately (Figma-style: create group → edit inside it)
+    imageEditor.switchContext(newLayer.id)
+  }, [imageEditor])
+
   const handleTextEdit = useCallback(
     (layerId: string | null): Promise<void> => {
       setIsNewTextLayer(false)
@@ -631,6 +657,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
   handleVisualCropToggleRef.current = handleVisualCropToggle
   handleAddTextLayerRef.current = handleAddTextLayer
   handleAddColorLayerRef.current = handleAddColorLayer
+  handleAddGroupLayerRef.current = handleAddGroupLayer
   handleAddLayerDialogOpenRef.current = () => setAddLayerDialogOpen(true)
 
   const handlePreviewLoad = () => {
@@ -731,6 +758,16 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         }
       }
 
+      // Cmd+G (Mac) or Ctrl+G (Windows/Linux) - Add Group Layer
+      // Industry standard: Photoshop, Figma, Sketch, Affinity
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === 'g' || e.key === 'G')) {
+        if (!textEditingLayerId && !imageEditor.getState().visualCropEnabled) {
+          e.preventDefault()
+          handleAddGroupLayerRef.current()
+          return
+        }
+      }
+
       // Cmd+Shift+I (Mac only) - Add Image Layer
       // Ctrl+Shift+I opens DevTools on Windows/Linux so we guard with metaKey only
       if (e.metaKey && e.shiftKey && (e.key === 'i' || e.key === 'I')) {
@@ -781,10 +818,15 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
   // Hide sections that are irrelevant for the current base image type
   // (e.g. crop is meaningless for solid color images — every pixel is identical)
+  // Group layers (color:none) also have no image content, so hide image-specific sections.
   const hiddenSections = useMemo<SectionKey[]>(() => {
     const hidden: SectionKey[] = []
-    if (isColorImage(imageEditor.getImagePath())) {
+    const path = imageEditor.getImagePath()
+    if (isColorLayer(path) || isGroupLayer(path)) {
       hidden.push('crop')
+    }
+    if (isGroupLayer(path)) {
+      hidden.push('effects', 'transform', 'fill')
     }
     return hidden
   }, [imageEditor, params]) // params dependency ensures re-evaluation when base image is swapped
@@ -824,7 +866,9 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
             }}
             parentDimensions={contextParentDimensions ?? undefined}
             isEditingLayer={editingContext !== null}
-            isColorImage={isColorImage(imageEditor.getImagePath())}
+            isColorImage={
+              isColorLayer(imageEditor.getImagePath()) || isGroupLayer(imageEditor.getImagePath())
+            }
           />
         ),
         fill: <FillPaddingControl params={params} onUpdateParams={updateParams} />,
@@ -843,6 +887,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
             onAddImageLayer={() => setAddLayerDialogOpen(true)}
             onAddTextLayer={handleAddTextLayer}
             onAddColorLayer={handleAddColorLayer}
+            onAddGroupLayer={handleAddGroupLayer}
             onTextEdit={handleTextEdit}
           />
         ),

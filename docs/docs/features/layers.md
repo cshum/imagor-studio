@@ -21,6 +21,21 @@ Add images from your storage as overlay layers. Each image layer supports:
 - Position and dimension controls
 - Nested layers inside the layer
 
+### Group Layers
+
+Group layers act as transparent containers that hold nested layers, enabling you to organise complex compositions:
+
+- **Add group layer** — Click "Add Layer → Add Group" (folder icon) in the layer panel, or press `⌘G` / `Ctrl+G`
+- **Auto-fill canvas** — Group layers automatically expand to fill the full canvas width and height
+- **Enter group** — Double-click a group layer or press `↵` to enter the group and add/edit layers inside it
+- **Exit group** — Press `Escape` or use the breadcrumb to navigate back to the parent context
+
+#### Use Cases
+
+- **Organise layers** — Group related layers together for easier management
+- **Apply shared effects** — Nest layers inside a group and apply blend modes or opacity to the whole group
+- **Reusable compositions** — Build self-contained layer stacks that can be duplicated as a unit
+
 ### Color Layers
 
 Add a solid color fill as a layer — useful for backgrounds, overlays, and color blocks:
@@ -71,9 +86,10 @@ The layer panel (sidebar) shows all layers in the current context:
 
 ### Adding Layers
 
-- **Add Image Layer** — Select an image from your storage to add as a new layer
-- **Add Text Layer** — Add a new text layer centered on the canvas
+- **Add Image Layer** — Select an image from your storage to add as a new layer (`⌘⇧I` on Mac)
+- **Add Text Layer** — Add a new text layer centered on the canvas (`T`)
 - **Add Color Layer** — Add a solid color fill layer that auto-fills the canvas
+- **Add Group Layer** — Add a transparent container layer for organising nested layers (`⌘G` / `Ctrl+G`)
 
 ### Managing Layers
 
@@ -150,11 +166,15 @@ Each layer maintains its own transformation state.
 
 ## Keyboard Shortcuts
 
-| Shortcut       | Action                                             |
-| -------------- | -------------------------------------------------- |
-| `↵`            | Edit Text (text layer) or Edit Layer (image layer) |
-| `⌘D`           | Duplicate selected layer                           |
-| `⌫` / `Delete` | Delete selected layer                              |
-| `⌘]`           | Move layer up (bring forward)                      |
-| `⌘[`           | Move layer down (send backward)                    |
-| Arrow keys     | Move selected layer position                       |
+| Shortcut            | Action                                             |
+| ------------------- | -------------------------------------------------- |
+| `T`                 | Add text layer                                     |
+| `⌘G` / `Ctrl+G`     | Add group layer                                    |
+| `⌘⇧I` (Mac)         | Add image layer (opens file picker)                |
+| `↵`                 | Edit Text (text layer) or Edit Layer (image layer) |
+| `⌘D` / `Ctrl+D`     | Duplicate selected layer                           |
+| `⌫` / `Delete`      | Delete selected layer                              |
+| `⌘]` / `Ctrl+]`     | Move layer up (bring forward)                      |
+| `⌘[` / `Ctrl+[`     | Move layer down (send backward)                    |
+| Arrow keys          | Move selected layer position                       |
+| `ESC`               | Exit nested layer / group context                  |

@@ -29,7 +29,7 @@ interface DimensionControlProps {
     height: number
   }
   isEditingLayer?: boolean
-  /** Hide resize mode / alignment (meaningless for solid color images) */
+  /** Hide resize mode / alignment (meaningless for solid color or group layers — no real image content) */
   isColorImage?: boolean
 }
 

@@ -2,7 +2,7 @@ import { statFile } from '@/api/storage-api'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
-import { ImageEditor, isColorImage } from '@/lib/image-editor'
+import { ImageEditor, isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import { joinImagePath } from '@/lib/path-utils'
 import type { ImagorTemplate } from '@/lib/template-types'
 import { getAuth } from '@/stores/auth-store'
@@ -91,7 +91,7 @@ export const imageEditorLoader = async ({
     // Color images are virtual (imagor generates them on-the-fly) — skip file stat.
     // Real images need to be verified and have their dimensions fetched.
     let originalDimensions: { width: number; height: number }
-    if (isColorImage(actualImagePath)) {
+    if (isColorLayer(actualImagePath) || isGroupLayer(actualImagePath)) {
       originalDimensions = { width: 1, height: 1 }
     } else {
       const sourceFileStat = await statFile(actualImagePath)

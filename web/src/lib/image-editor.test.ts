@@ -1579,7 +1579,13 @@ describe('ImageEditor', () => {
     })
   })
 
-  describe('layer round corner radius clamping', () => {
+  describe('layer round corner radius — no clamping in updateLayer', () => {
+    // The round corner clamp was removed from updateLayer() because:
+    // 1. The UI slider already enforces the max via its `max` prop.
+    // 2. Clamping on every updateLayer call (position, blend mode, etc.) was too aggressive.
+    // 3. For fill-mode layers (widthFull/heightFull), originalDimensions (1×1 for color
+    //    layers) is not a valid approximation and caused the value to be silently wiped.
+    // The value is preserved as-is; the UI is responsible for enforcing the max.
     const makeRcLayer = (
       id: string,
       origW: number,
@@ -1599,23 +1605,23 @@ describe('ImageEditor', () => {
       ...(transforms ? { transforms } : {}),
     })
 
-    it('should clamp roundCornerRadius when layer is shrunk below current value', () => {
+    it('should preserve roundCornerRadius when layer is shrunk (no clamping)', () => {
       editor.addLayer(
         makeRcLayer('rc-shrink', 400, 300, { width: 400, height: 300, roundCornerRadius: 100 }),
       )
-      // Shrink to 100x80: max = floor(80/2) = 40
+      // Shrink to 100x80 — radius is preserved (UI slider enforces max, not data layer)
       editor.updateLayer('rc-shrink', { transforms: { width: 100, height: 80 } })
       const layer = editor.getState().layers?.find((l) => l.id === 'rc-shrink') as
         | ImageLayer
         | undefined
-      expect(layer?.transforms?.roundCornerRadius).toBe(40)
+      expect(layer?.transforms?.roundCornerRadius).toBe(100)
     })
 
-    it('should NOT clamp roundCornerRadius when layer dims grow', () => {
+    it('should preserve roundCornerRadius when layer dims grow', () => {
       editor.addLayer(
         makeRcLayer('rc-grow', 400, 300, { width: 200, height: 150, roundCornerRadius: 50 }),
       )
-      // Grow to 800x600: max = 300 — 50 stays
+      // Grow to 800x600 — radius stays at 50
       editor.updateLayer('rc-grow', { transforms: { width: 800, height: 600 } })
       const layer = editor.getState().layers?.find((l) => l.id === 'rc-grow') as
         | ImageLayer
@@ -1623,38 +1629,36 @@ describe('ImageEditor', () => {
       expect(layer?.transforms?.roundCornerRadius).toBe(50)
     })
 
-    it('should clamp when radius and small dims are set in the same updateLayer call', () => {
+    it('should store radius as-is when set together with small dims', () => {
       editor.addLayer(makeRcLayer('rc-same', 400, 300))
-      // 100x80 → max = floor(80/2) = 40
+      // 100x80 + radius 200 — stored as 200 (UI slider would cap at 40 for this size)
       editor.updateLayer('rc-same', {
         transforms: { width: 100, height: 80, roundCornerRadius: 200 },
       })
       const layer = editor.getState().layers?.find((l) => l.id === 'rc-same') as
         | ImageLayer
         | undefined
-      expect(layer?.transforms?.roundCornerRadius).toBe(40)
+      expect(layer?.transforms?.roundCornerRadius).toBe(200)
     })
 
-    it('should fall back to originalDimensions when no explicit size in transforms', () => {
-      // originalDimensions 100x80 → max = floor(80/2) = 40
+    it('should store radius as-is when no explicit size in transforms', () => {
       editor.addLayer(makeRcLayer('rc-orig', 100, 80))
       editor.updateLayer('rc-orig', { transforms: { roundCornerRadius: 200 } })
       const layer = editor.getState().layers?.find((l) => l.id === 'rc-orig') as
         | ImageLayer
         | undefined
-      expect(layer?.transforms?.roundCornerRadius).toBe(40)
+      expect(layer?.transforms?.roundCornerRadius).toBe(200)
     })
 
-    it('should not NaN when widthFull is true (falls back to originalDimensions)', () => {
-      // originalDimensions 100x80 → max = floor(80/2) = 40
+    it('should not NaN when widthFull is true', () => {
       editor.addLayer(makeRcLayer('rc-fill', 100, 80))
-      // widthFull: no width set, clamp uses originalDimensions → still safe
+      // widthFull: fill-mode layer — radius is preserved without clamping
       editor.updateLayer('rc-fill', { transforms: { widthFull: true, roundCornerRadius: 200 } })
       const layer = editor.getState().layers?.find((l) => l.id === 'rc-fill') as
         | ImageLayer
         | undefined
       expect(layer?.transforms?.roundCornerRadius).not.toBeNaN()
-      expect(layer?.transforms?.roundCornerRadius).toBe(40)
+      expect(layer?.transforms?.roundCornerRadius).toBe(200)
     })
   })
 

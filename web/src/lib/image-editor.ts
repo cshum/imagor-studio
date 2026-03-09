@@ -88,8 +88,20 @@ export type Layer = ImageLayer | TextLayer
  * @param imagePath - Image path to check
  * @returns true if the path is a color image
  */
+export function isGroupLayer(imagePath: string): boolean {
+  return imagePath === 'color:none'
+}
+
 export function isColorImage(imagePath: string): boolean {
   return imagePath.startsWith('color:')
+}
+
+/**
+ * Check if an image path is a real color layer (solid or semi-transparent color).
+ * Excludes group layers (color:none) which share the color: prefix but are not color layers.
+ */
+export function isColorLayer(imagePath: string): boolean {
+  return imagePath.startsWith('color:') && imagePath !== 'color:none'
 }
 
 /**
@@ -157,13 +169,16 @@ export function parseColorValue(color: string): { hex: string; opacity: number }
 /**
  * Build a color value string from RGB hex and opacity.
  *
- * - opacity 0   → "none"
+ * - opacity 0   → "rrggbb00" (8-char hex with alpha 00, fully transparent)
+ *                 NOTE: never returns "none" — that is reserved exclusively for
+ *                 group layers (color:none sentinel). Color layers with 0% opacity
+ *                 use the 8-char hex form so isColorLayer() still identifies them.
  * - opacity 100 → "ff6600" (6-char hex)
  * - otherwise   → "ff660080" (8-char hex with alpha)
  */
 export function buildColorValue(hex: string, opacity: number): string {
-  if (opacity <= 0) return 'none'
   const h = hex.replace(/^#/, '').toLowerCase().padStart(6, '0').slice(0, 6)
+  if (opacity <= 0) return h + '00'
   if (opacity >= 100) return h
   const alpha = Math.round((opacity / 100) * 255)
   return h + alpha.toString(16).padStart(2, '0')
@@ -1729,6 +1744,21 @@ export class ImageEditor {
     // Directly update state without history
     this.state = { ...this.state, ...state }
 
+    // If imagePath is being restored, also update config so preview generation
+    // uses the correct image. This is critical for the canvas editor: when the
+    // page is refreshed, initialize() resets config.imagePath to the seed color
+    // from cleanInitialState, then restoreState() is called with the ?state= URL
+    // data which may contain a different imagePath (e.g. user changed the color).
+    // Without this, config.imagePath stays at the seed value and the preview
+    // shows the wrong color/opacity.
+    if (state.imagePath) {
+      this.config.imagePath = state.imagePath
+      this.baseImagePath = state.imagePath
+    }
+    if (state.originalDimensions) {
+      this.config.originalDimensions = { ...state.originalDimensions }
+    }
+
     // Notify state change
     this.callbacks.onStateChange?.(this.getState())
 
@@ -2741,20 +2771,6 @@ export class ImageEditor {
             mergedImg.transforms = { ...layer.transforms, ...imgUpdates.transforms }
           }
         }
-        // Clamp roundCornerRadius: same rule as root — max = floor(min(w, h) / 2),
-        // using the layer's effective output dimensions (transforms override originals).
-        // When widthFull/heightFull is set, the layer renders at the parent canvas size
-        // which is unknown here; we approximate using originalDimensions (always a safe
-        // number — never NaN). The clamp may be slightly over-permissive for fill-mode
-        // layers but avoids any crash or type-error.
-        if (mergedImg.transforms?.roundCornerRadius && mergedImg.transforms.roundCornerRadius > 0) {
-          const lw = mergedImg.transforms.width ?? layer.originalDimensions.width
-          const lh = mergedImg.transforms.height ?? layer.originalDimensions.height
-          const maxR = Math.floor(Math.min(lw, lh) / 2)
-          if (mergedImg.transforms.roundCornerRadius > maxR) {
-            mergedImg.transforms = { ...mergedImg.transforms, roundCornerRadius: maxR }
-          }
-        }
         return mergedImg
       }
 
@@ -2790,18 +2806,6 @@ export class ImageEditor {
                   mergedImg.transforms = imgUpdates.transforms
                 } else {
                   mergedImg.transforms = { ...l.transforms, ...imgUpdates.transforms }
-                }
-              }
-              // Clamp roundCornerRadius in savedBaseState too (keep in sync).
-              if (
-                mergedImg.transforms?.roundCornerRadius &&
-                mergedImg.transforms.roundCornerRadius > 0
-              ) {
-                const lw = mergedImg.transforms.width ?? l.originalDimensions.width
-                const lh = mergedImg.transforms.height ?? l.originalDimensions.height
-                const maxR = Math.floor(Math.min(lw, lh) / 2)
-                if (mergedImg.transforms.roundCornerRadius > maxR) {
-                  mergedImg.transforms = { ...mergedImg.transforms, roundCornerRadius: maxR }
                 }
               }
               return mergedImg

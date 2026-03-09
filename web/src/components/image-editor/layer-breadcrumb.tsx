@@ -1,5 +1,13 @@
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronRight, FileText, Image, Layers, Paintbrush } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Folder,
+  Image,
+  Layers,
+  Paintbrush,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -9,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
-import { isColorImage } from '@/lib/image-editor'
+import { isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerBreadcrumbProps {
@@ -34,11 +42,17 @@ export function LayerBreadcrumb({
   // Extract filename from base image path
   const imagePath = imageEditor.getBaseImagePath()
   const baseImageName = imagePath.split('/').pop() || imagePath
-  const isBaseColor = isColorImage(imagePath)
+  const isBaseColor = isColorLayer(imagePath)
+  const isBaseGroup = isGroupLayer(imagePath)
 
-  // Use baseName if provided, otherwise use a friendly name for color images or the filename
+  // Use baseName if provided, otherwise use a friendly name for color/group images or the filename
   const displayBaseName =
-    baseName || (isBaseColor ? t('imageEditor.layers.colorLayer') : baseImageName)
+    baseName ||
+    (isBaseGroup
+      ? t('imageEditor.layers.groupLayer')
+      : isBaseColor
+        ? t('imageEditor.layers.colorLayer')
+        : baseImageName)
 
   // Determine if this is a template (baseName is provided)
   const isTemplate = !!baseName
@@ -48,7 +62,7 @@ export function LayerBreadcrumb({
     {
       id: null,
       name: displayBaseName,
-      icon: isTemplate ? FileText : isBaseColor ? Paintbrush : Image,
+      icon: isTemplate ? FileText : isBaseGroup ? Folder : isBaseColor ? Paintbrush : Image,
     },
   ]
 
@@ -57,11 +71,18 @@ export function LayerBreadcrumb({
   for (const layerId of contextPath) {
     const layer = currentLayers.find((l) => l.id === layerId)
     if (layer) {
-      const isColor = layer.type !== 'text' && isColorImage((layer as ImageLayer).imagePath)
+      const isColor = layer.type !== 'text' && isColorLayer((layer as ImageLayer).imagePath)
+      const isGroup = layer.type !== 'text' && isGroupLayer((layer as ImageLayer).imagePath)
       breadcrumbItems.push({
         id: layerId,
-        name: layer.name || (isColor ? t('imageEditor.layers.colorLayer') : layer.name),
-        icon: isColor ? Paintbrush : Layers,
+        name:
+          layer.name ||
+          (isGroup
+            ? t('imageEditor.layers.groupLayer')
+            : isColor
+              ? t('imageEditor.layers.colorLayer')
+              : ''),
+        icon: isGroup ? Folder : isColor ? Paintbrush : Layers,
       })
       // Go deeper into nested layers for next iteration
       currentLayers = layer.type !== 'text' ? (layer.transforms?.layers ?? []) : []
