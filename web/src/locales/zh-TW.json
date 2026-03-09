@@ -864,6 +864,8 @@
       "baseLayer": "基礎圖片（底層）",
       "editing": "編輯",
       "editLayer": "編輯圖層",
+      "editImage": "編輯圖片",
+      "editGroup": "編輯群組",
       "renameLayer": "重新命名圖層",
       "renameLayerDescription": "為此圖層輸入新名稱。",
       "layerName": "圖層名稱",

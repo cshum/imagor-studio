@@ -861,6 +861,8 @@
       "baseLayer": "Immagine base (livello inferiore)",
       "editing": "MODIFICA",
       "editLayer": "Modifica Livello",
+      "editImage": "Modifica Immagine",
+      "editGroup": "Modifica Gruppo",
       "renameLayer": "Rinomina Livello",
       "renameLayerDescription": "Inserisci un nuovo nome per questo livello.",
       "layerName": "Nome Livello",

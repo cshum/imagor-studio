@@ -849,6 +849,8 @@
       "baseLayer": "Base image (bottom layer)",
       "editing": "EDIT",
       "editLayer": "Edit Layer",
+      "editImage": "Edit Image",
+      "editGroup": "Edit Group",
       "renameLayer": "Rename Layer",
       "renameLayerDescription": "Enter a new name for this layer.",
       "layerName": "Layer Name",

@@ -30,7 +30,8 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { ImageEditor, Layer } from '@/lib/image-editor'
+import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
+import { isGroupLayer } from '@/lib/image-editor'
 
 interface LayerMenuProps {
   layer: Layer
@@ -153,7 +154,9 @@ function LayerMenuItems({
         <Item onClick={onEdit}>
           <div className='flex flex-1 items-center'>
             <Edit className='mr-2 h-4 w-4' />
-            {t('imageEditor.layers.editLayer')}
+            {layer.type !== 'text' && isGroupLayer((layer as ImageLayer).imagePath)
+              ? t('imageEditor.layers.editGroup')
+              : t('imageEditor.layers.editImage')}
           </div>
           <Shortcut>↵</Shortcut>
         </Item>
