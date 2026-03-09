@@ -365,6 +365,8 @@ export function LayerOverlay({
             e.preventDefault()
             e.stopPropagation()
             onHandleDoubleClick?.(handle as ResizeHandle)
+            // Also enter edit/text mode — same as double-clicking the layer body
+            onEnterEditMode?.()
           }}
         >
           {/* Visual handle: Photoshop-style white square with black border */}
