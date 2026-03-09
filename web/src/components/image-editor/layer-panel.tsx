@@ -505,6 +505,13 @@ export function LayerPanel({
               </div>
               <DropdownMenuShortcut>⌘⇧I</DropdownMenuShortcut>
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTimeout(onAddGroupLayer, 0)}>
+              <div className='flex flex-1 items-center'>
+                <Folder className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.addGroup')}
+              </div>
+              <DropdownMenuShortcut>⌘G</DropdownMenuShortcut>
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setTimeout(onAddTextLayer, 0)}>
               <div className='flex flex-1 items-center'>
                 <Type className='mr-2 h-4 w-4' />
@@ -517,13 +524,6 @@ export function LayerPanel({
                 <Paintbrush className='mr-2 h-4 w-4' />
                 {t('imageEditor.layers.addColor')}
               </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setTimeout(onAddGroupLayer, 0)}>
-              <div className='flex flex-1 items-center'>
-                <Folder className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.addGroup')}
-              </div>
-              <DropdownMenuShortcut>⌘G</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
