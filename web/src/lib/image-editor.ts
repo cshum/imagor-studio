@@ -2771,20 +2771,6 @@ export class ImageEditor {
             mergedImg.transforms = { ...layer.transforms, ...imgUpdates.transforms }
           }
         }
-        // Clamp roundCornerRadius: same rule as root — max = floor(min(w, h) / 2),
-        // using the layer's effective output dimensions (transforms override originals).
-        // When widthFull/heightFull is set, the layer renders at the parent canvas size
-        // which is unknown here; we approximate using originalDimensions (always a safe
-        // number — never NaN). The clamp may be slightly over-permissive for fill-mode
-        // layers but avoids any crash or type-error.
-        if (mergedImg.transforms?.roundCornerRadius && mergedImg.transforms.roundCornerRadius > 0) {
-          const lw = mergedImg.transforms.width ?? layer.originalDimensions.width
-          const lh = mergedImg.transforms.height ?? layer.originalDimensions.height
-          const maxR = Math.floor(Math.min(lw, lh) / 2)
-          if (mergedImg.transforms.roundCornerRadius > maxR) {
-            mergedImg.transforms = { ...mergedImg.transforms, roundCornerRadius: maxR }
-          }
-        }
         return mergedImg
       }
 
@@ -2820,18 +2806,6 @@ export class ImageEditor {
                   mergedImg.transforms = imgUpdates.transforms
                 } else {
                   mergedImg.transforms = { ...l.transforms, ...imgUpdates.transforms }
-                }
-              }
-              // Clamp roundCornerRadius in savedBaseState too (keep in sync).
-              if (
-                mergedImg.transforms?.roundCornerRadius &&
-                mergedImg.transforms.roundCornerRadius > 0
-              ) {
-                const lw = mergedImg.transforms.width ?? l.originalDimensions.width
-                const lh = mergedImg.transforms.height ?? l.originalDimensions.height
-                const maxR = Math.floor(Math.min(lw, lh) / 2)
-                if (mergedImg.transforms.roundCornerRadius > maxR) {
-                  mergedImg.transforms = { ...mergedImg.transforms, roundCornerRadius: maxR }
                 }
               }
               return mergedImg
