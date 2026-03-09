@@ -354,9 +354,11 @@ export function LayerPanel({
           ? layer.name
           : layer.type === 'text'
             ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60)
-            : isColorLayer((layer as ImageLayer).imagePath)
-              ? t('imageEditor.layers.colorLayer')
-              : (layer as ImageLayer).imagePath.split('/').pop() || ''
+            : isGroupLayer((layer as ImageLayer).imagePath)
+              ? t('imageEditor.layers.groupLayer')
+              : isColorLayer((layer as ImageLayer).imagePath)
+                ? t('imageEditor.layers.colorLayer')
+                : (layer as ImageLayer).imagePath.split('/').pop() || ''
         setNewLayerName(displayName)
         // Small delay to let dropdown fully close before opening modal dialog
         setTimeout(() => {
