@@ -1,7 +1,9 @@
 import { useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LayerContextMenu } from '@/components/image-editor/layer-menu'
-import type { ImageEditor, Layer } from '@/lib/image-editor'
+import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
+import { isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
@@ -97,6 +99,25 @@ export function LayerRegionsOverlay({
     ],
   )
 
+  const { t } = useTranslation()
+
+  // Compute display name — same logic as layer-panel.tsx
+  const getDisplayName = useCallback(
+    (layer: Layer): string => {
+      if (layer.name) return layer.name
+      if (layer.type === 'text') {
+        return (
+          layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
+        )
+      }
+      const imagePath = (layer as ImageLayer).imagePath
+      if (isGroupLayer(imagePath)) return t('imageEditor.layers.groupLayer')
+      if (isColorLayer(imagePath)) return t('imageEditor.layers.colorLayer')
+      return imagePath.split('/').pop() || imagePath
+    },
+    [t],
+  )
+
   // Filter to only visible layers
   const visibleLayers = layers.filter((layer) => layer.visible)
 
@@ -109,10 +130,11 @@ export function LayerRegionsOverlay({
       {visibleLayers.map((layer) => {
         const styles = getLayerStyles(layer)
         const isTextLayer = layer.type === 'text'
+        const displayName = getDisplayName(layer)
         const regionDiv = (
           <div
             className={cn(
-              'pointer-events-auto absolute cursor-pointer',
+              'group pointer-events-auto absolute cursor-pointer',
               'border border-dashed border-white/50',
               'shadow-[0_0_0_1px_rgba(0,0,0,0.3)]',
               'transition-all duration-150',
@@ -123,7 +145,23 @@ export function LayerRegionsOverlay({
             onMouseDown={handleLayerSelect(layer.id)}
             onTouchStart={handleLayerSelect(layer.id)}
             onDoubleClick={isTextLayer && onTextEdit ? () => onTextEdit(layer.id) : undefined}
-          />
+          >
+            {/* Layer name label — appears above top-left corner on hover (Figma-style) */}
+            <span
+              className={cn(
+                'pointer-events-none absolute left-0 -top-5',
+                'max-w-[160px] truncate',
+                'rounded px-1.5 py-0.5',
+                'bg-black/70 text-white',
+                'text-[11px] leading-4 font-medium',
+                'opacity-0 group-hover:opacity-100',
+                'transition-opacity duration-150',
+                'whitespace-nowrap',
+              )}
+            >
+              {displayName}
+            </span>
+          </div>
         )
         if (imageEditor) {
           return (
