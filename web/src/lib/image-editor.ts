@@ -97,6 +97,14 @@ export function isColorImage(imagePath: string): boolean {
 }
 
 /**
+ * Check if an image path is a real color layer (solid or semi-transparent color).
+ * Excludes group layers (color:none) which share the color: prefix but are not color layers.
+ */
+export function isColorLayer(imagePath: string): boolean {
+  return imagePath.startsWith('color:') && imagePath !== 'color:none'
+}
+
+/**
  * Extract the color value from a color image path.
  * @param imagePath - Image path like "color:ff6600" or "color:none"
  * @returns The color value (e.g., "ff6600", "none", "red")
@@ -161,13 +169,16 @@ export function parseColorValue(color: string): { hex: string; opacity: number }
 /**
  * Build a color value string from RGB hex and opacity.
  *
- * - opacity 0   → "none"
+ * - opacity 0   → "rrggbb00" (8-char hex with alpha 00, fully transparent)
+ *                 NOTE: never returns "none" — that is reserved exclusively for
+ *                 group layers (color:none sentinel). Color layers with 0% opacity
+ *                 use the 8-char hex form so isColorLayer() still identifies them.
  * - opacity 100 → "ff6600" (6-char hex)
  * - otherwise   → "ff660080" (8-char hex with alpha)
  */
 export function buildColorValue(hex: string, opacity: number): string {
-  if (opacity <= 0) return 'none'
   const h = hex.replace(/^#/, '').toLowerCase().padStart(6, '0').slice(0, 6)
+  if (opacity <= 0) return h + '00'
   if (opacity >= 100) return h
   const alpha = Math.round((opacity / 100) * 255)
   return h + alpha.toString(16).padStart(2, '0')
