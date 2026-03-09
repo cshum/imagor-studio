@@ -97,6 +97,15 @@ export function updateLocationState(encoded: string): void {
 
   if (encoded) {
     url.searchParams.set('state', encoded)
+    // Remove one-time canvas seed params — once ?state= is set it is the
+    // single source of truth for the editor state. Keeping color/w/h around
+    // would cause the loader to re-seed from stale values on the next refresh
+    // (before restoreState() can override them), leading to a brief flash of
+    // the original color/size. Stripping them here keeps the URL clean and
+    // ensures the loader falls back to its own defaults on a fresh open.
+    url.searchParams.delete('color')
+    url.searchParams.delete('w')
+    url.searchParams.delete('h')
   } else {
     url.searchParams.delete('state')
   }

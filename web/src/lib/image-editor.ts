@@ -1744,6 +1744,21 @@ export class ImageEditor {
     // Directly update state without history
     this.state = { ...this.state, ...state }
 
+    // If imagePath is being restored, also update config so preview generation
+    // uses the correct image. This is critical for the canvas editor: when the
+    // page is refreshed, initialize() resets config.imagePath to the seed color
+    // from cleanInitialState, then restoreState() is called with the ?state= URL
+    // data which may contain a different imagePath (e.g. user changed the color).
+    // Without this, config.imagePath stays at the seed value and the preview
+    // shows the wrong color/opacity.
+    if (state.imagePath) {
+      this.config.imagePath = state.imagePath
+      this.baseImagePath = state.imagePath
+    }
+    if (state.originalDimensions) {
+      this.config.originalDimensions = { ...state.originalDimensions }
+    }
+
     // Notify state change
     this.callbacks.onStateChange?.(this.getState())
 
