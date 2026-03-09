@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
-import { colorToImagePath, getColorFromPath, isColorImage } from '@/lib/image-editor'
+import { colorToImagePath, getColorFromPath, isColorImage, isGroupLayer } from '@/lib/image-editor'
 import { calculateLayerOutputDimensions } from '@/lib/layer-dimensions'
 import { clampFillOffset, toggleFillMode } from '@/lib/layer-fill'
 import { cn } from '@/lib/utils'
@@ -40,7 +40,8 @@ export function LayerControls({
 }: LayerControlsProps) {
   const { t } = useTranslation()
 
-  const isColor = isColorImage(layer.imagePath)
+  // Group layers (color:none) are transparent containers — treat like image layers (no color picker)
+  const isColor = isColorImage(layer.imagePath) && !isGroupLayer(layer.imagePath)
   const colorValue = isColor ? getColorFromPath(layer.imagePath) : ''
 
   const handleColorChange = useCallback(

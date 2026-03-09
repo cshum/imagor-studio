@@ -130,6 +130,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
   // Stable refs for add-layer callbacks (defined after the keydown useEffect)
   const handleAddTextLayerRef = useRef<() => void>(() => {})
   const handleAddColorLayerRef = useRef<() => void>(() => {})
+  const handleAddGroupLayerRef = useRef<() => void>(() => {})
   const handleAddLayerDialogOpenRef = useRef<() => void>(() => {})
 
   // Preview container ref and image dimensions for viewport calculations
@@ -511,6 +512,29 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
     imageEditor.setSelectedLayerId(newLayer.id)
   }, [imageEditor])
 
+  const handleAddGroupLayer = useCallback(() => {
+    // Group layer = transparent color:none image layer that acts as a container.
+    // Use fill mode so it covers the parent canvas by default.
+    const newLayer = {
+      type: 'image' as const,
+      id: `layer-${Date.now()}`,
+      imagePath: 'color:none',
+      originalDimensions: { width: 1, height: 1 },
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal' as const,
+      visible: true,
+      name: '',
+      transforms: {
+        widthFull: true,
+        heightFull: true,
+      },
+    }
+    imageEditor.addLayer(newLayer)
+    imageEditor.setSelectedLayerId(newLayer.id)
+  }, [imageEditor])
+
   const handleTextEdit = useCallback(
     (layerId: string | null): Promise<void> => {
       setIsNewTextLayer(false)
@@ -631,6 +655,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
   handleVisualCropToggleRef.current = handleVisualCropToggle
   handleAddTextLayerRef.current = handleAddTextLayer
   handleAddColorLayerRef.current = handleAddColorLayer
+  handleAddGroupLayerRef.current = handleAddGroupLayer
   handleAddLayerDialogOpenRef.current = () => setAddLayerDialogOpen(true)
 
   const handlePreviewLoad = () => {
@@ -843,6 +868,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
             onAddImageLayer={() => setAddLayerDialogOpen(true)}
             onAddTextLayer={handleAddTextLayer}
             onAddColorLayer={handleAddColorLayer}
+            onAddGroupLayer={handleAddGroupLayer}
             onTextEdit={handleTextEdit}
           />
         ),

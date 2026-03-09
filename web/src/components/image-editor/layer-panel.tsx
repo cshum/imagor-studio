@@ -23,6 +23,7 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
+  Folder,
   GripVertical,
   Image,
   Layers,
@@ -56,7 +57,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
-import { colorToImagePath, getColorFromPath, isColorImage } from '@/lib/image-editor'
+import { colorToImagePath, getColorFromPath, isColorImage, isGroupLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
@@ -72,6 +73,7 @@ interface LayerPanelProps {
   onAddImageLayer: () => void
   onAddTextLayer: () => void
   onAddColorLayer: () => void
+  onAddGroupLayer: () => void
   onTextEdit: (layerId: string | null) => Promise<void>
 }
 
@@ -111,13 +113,16 @@ function SortableLayerItem({
   //   text layer (not renamed) → text content, or "Text Layer" if empty
   //   image layer              → filename
   const isColor = !isText && isColorImage((layer as ImageLayer).imagePath)
+  const isGroup = !isText && isGroupLayer((layer as ImageLayer).imagePath)
   const displayName = layer.name
     ? layer.name
     : isText
       ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
-      : isColor
-        ? t('imageEditor.layers.colorLayer')
-        : (layer as ImageLayer).imagePath.split('/').pop() || ''
+      : isGroup
+        ? t('imageEditor.layers.groupLayer')
+        : isColor
+          ? t('imageEditor.layers.colorLayer')
+          : (layer as ImageLayer).imagePath.split('/').pop() || ''
 
   const handleEdit = () => imageEditor.switchContext(layer.id)
   const handleToggleVisibility = () =>
@@ -158,7 +163,9 @@ function SortableLayerItem({
           {/* Layer type icon */}
           {isText ? (
             <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
-          ) : !isText && isColorImage((layer as ImageLayer).imagePath) ? (
+          ) : isGroup ? (
+            <Folder className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+          ) : isColor ? (
             <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
           ) : (
             <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
@@ -266,6 +273,7 @@ export function LayerPanel({
   onAddImageLayer,
   onAddTextLayer,
   onAddColorLayer,
+  onAddGroupLayer,
   onTextEdit,
 }: LayerPanelProps) {
   const { t } = useTranslation()
@@ -505,6 +513,12 @@ export function LayerPanel({
                 {t('imageEditor.layers.addColor')}
               </div>
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTimeout(onAddGroupLayer, 0)}>
+              <div className='flex flex-1 items-center'>
+                <Folder className='mr-2 h-4 w-4' />
+                {t('imageEditor.layers.addGroup')}
+              </div>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -545,6 +559,8 @@ export function LayerPanel({
                   <GripVertical className='h-4 w-4' />
                   {activeLayer.type === 'text' ? (
                     <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+                  ) : isGroupLayer(activeLayer.imagePath) ? (
+                    <Folder className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   ) : isColorImage(activeLayer.imagePath) ? (
                     <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   ) : (
@@ -556,9 +572,11 @@ export function LayerPanel({
                       : activeLayer.type === 'text'
                         ? activeLayer.text.replace(/\n/g, ' ').trim().slice(0, 60) ||
                           t('imageEditor.layers.textLayer')
-                        : isColorImage(activeLayer.imagePath)
-                          ? t('imageEditor.layers.colorLayer')
-                          : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
+                        : isGroupLayer(activeLayer.imagePath)
+                          ? t('imageEditor.layers.groupLayer')
+                          : isColorImage(activeLayer.imagePath)
+                            ? t('imageEditor.layers.colorLayer')
+                            : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
                   </span>
                   {/* Match layer item button structure */}
                   <div className='flex shrink-0 gap-0.5'>

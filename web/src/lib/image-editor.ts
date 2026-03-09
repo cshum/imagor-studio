@@ -88,6 +88,10 @@ export type Layer = ImageLayer | TextLayer
  * @param imagePath - Image path to check
  * @returns true if the path is a color image
  */
+export function isGroupLayer(imagePath: string): boolean {
+  return imagePath === 'color:none'
+}
+
 export function isColorImage(imagePath: string): boolean {
   return imagePath.startsWith('color:')
 }
