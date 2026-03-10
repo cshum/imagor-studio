@@ -10,6 +10,7 @@ import { calculateTextLayerBoundingBox } from '@/lib/layer-dimensions'
 import { deriveTextAlignFromX } from '@/lib/text-layer-utils'
 import { cn } from '@/lib/utils'
 
+import { ColorPickerInput } from './color-picker-input'
 import { CompositingControls } from './compositing-controls'
 import { PositionControls } from './position-controls'
 
@@ -143,23 +144,34 @@ export function TextLayerControls({
 
   return (
     <div className='bg-muted/30 space-y-3 rounded-lg border p-3'>
-      {/* Edit Text / Loading / Apply Text Edit Button */}
-      <Button
-        variant={isTextEditing && !isToggling ? 'default' : 'outline'}
-        size='default'
-        onClick={handleEditText}
-        disabled={isToggling || visualCropEnabled}
-        className='w-full'
-      >
-        {isToggling ? (
-          <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
-        ) : isTextEditing ? (
-          <Check className='mr-2 h-4 w-4' />
-        ) : (
-          <Type className='mr-2 h-4 w-4' />
+      {/* Edit Text button + color swatch (hidden while editing — toolbar has its own) */}
+      <div className='flex items-center gap-2'>
+        <Button
+          variant={isTextEditing && !isToggling ? 'default' : 'outline'}
+          size='default'
+          onClick={handleEditText}
+          disabled={isToggling || visualCropEnabled}
+          className='flex-1'
+        >
+          {isToggling ? (
+            <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
+          ) : isTextEditing ? (
+            <Check className='mr-2 h-4 w-4' />
+          ) : (
+            <Type className='mr-2 h-4 w-4' />
+          )}
+          {isTextEditing ? t('imageEditor.layers.applyTextEdit') : t('imageEditor.layers.editText')}
+        </Button>
+        {!isTextEditing && (
+          <ColorPickerInput
+            value={layer.color}
+            onChange={(color) => onUpdate({ color })}
+            swatchOnly
+            swatchSize='md'
+            disabled={visualCropEnabled}
+          />
         )}
-        {isTextEditing ? t('imageEditor.layers.applyTextEdit') : t('imageEditor.layers.editText')}
-      </Button>
+      </div>
 
       {/* ── Position Controls ── */}
       <PositionControls
