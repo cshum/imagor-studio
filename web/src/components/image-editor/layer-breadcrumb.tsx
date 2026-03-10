@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight, FileText, Layers } from 'lucide-react'
 
-import { getLayerIcon } from '@/components/image-editor/layer-icon'
+import { getLayerIcon } from '@/components/image-editor/layer-display'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,

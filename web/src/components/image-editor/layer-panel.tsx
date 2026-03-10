@@ -35,7 +35,11 @@ import {
 import { ColorPickerInput } from '@/components/image-editor/controls/color-picker-input'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
 import { TextLayerControls } from '@/components/image-editor/controls/text-layer-controls'
-import { getLayerIcon, LayerIcon } from '@/components/image-editor/layer-icon'
+import {
+  getLayerDisplayName,
+  getLayerIcon,
+  LayerIcon,
+} from '@/components/image-editor/layer-display'
 import { LayerContextMenu, LayerDropdownMenu } from '@/components/image-editor/layer-menu'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -112,17 +116,7 @@ function SortableLayerItem({
   //   custom name (if renamed) → custom name
   //   text layer (not renamed) → text content, or "Text Layer" if empty
   //   image layer              → filename
-  const isColor = !isText && isColorLayer((layer as ImageLayer).imagePath)
-  const isGroup = !isText && isGroupLayer((layer as ImageLayer).imagePath)
-  const displayName = layer.name
-    ? layer.name
-    : isText
-      ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
-      : isGroup
-        ? t('imageEditor.layers.groupLayer')
-        : isColor
-          ? t('imageEditor.layers.colorLayer')
-          : (layer as ImageLayer).imagePath.split('/').pop() || ''
+  const displayName = getLayerDisplayName(layer, t)
 
   const handleEdit = () => imageEditor.switchContext(layer.id)
   const handleToggleVisibility = () =>
@@ -342,16 +336,7 @@ export function LayerPanel({
         // Pre-fill with the current display name (same as shown in layer list) — Figma-style UX.
         // For text layers with no custom name, use the text content as the suggested name.
         // For image layers with no custom name, use the filename.
-        const displayName = layer.name
-          ? layer.name
-          : layer.type === 'text'
-            ? layer.text.replace(/\n/g, ' ').trim().slice(0, 60)
-            : isGroupLayer((layer as ImageLayer).imagePath)
-              ? t('imageEditor.layers.groupLayer')
-              : isColorLayer((layer as ImageLayer).imagePath)
-                ? t('imageEditor.layers.colorLayer')
-                : (layer as ImageLayer).imagePath.split('/').pop() || ''
-        setNewLayerName(displayName)
+        setNewLayerName(getLayerDisplayName(layer, t))
         // Small delay to let dropdown fully close before opening modal dialog
         setTimeout(() => {
           setRenameDialogOpen(true)
@@ -564,16 +549,7 @@ export function LayerPanel({
                     />
                   )}
                   <span className='flex-1 truncate text-sm'>
-                    {activeLayer.name
-                      ? activeLayer.name
-                      : activeLayer.type === 'text'
-                        ? activeLayer.text.replace(/\n/g, ' ').trim().slice(0, 60) ||
-                          t('imageEditor.layers.textLayer')
-                        : isGroupLayer(activeLayer.imagePath)
-                          ? t('imageEditor.layers.groupLayer')
-                          : isColorLayer(activeLayer.imagePath)
-                            ? t('imageEditor.layers.colorLayer')
-                            : activeLayer.imagePath.split('/').pop() || activeLayer.imagePath}
+                    {getLayerDisplayName(activeLayer, t)}
                   </span>
                   {/* Match layer item button structure */}
                   <div className='flex shrink-0 gap-0.5'>

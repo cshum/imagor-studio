@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { getLayerDisplayName } from '@/components/image-editor/layer-display'
 import { LayerContextMenu } from '@/components/image-editor/layer-menu'
-import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
-import { isColorLayer, isGroupLayer } from '@/lib/image-editor'
+import type { ImageEditor, Layer } from '@/lib/image-editor'
 import { calculateLayerBoundingBox } from '@/lib/layer-dimensions'
 import { calculateLayerPosition } from '@/lib/layer-position'
 import { cn } from '@/lib/utils'
@@ -101,23 +101,6 @@ export function LayerRegionsOverlay({
 
   const { t } = useTranslation()
 
-  // Compute display name — same logic as layer-panel.tsx
-  const getDisplayName = useCallback(
-    (layer: Layer): string => {
-      if (layer.name) return layer.name
-      if (layer.type === 'text') {
-        return (
-          layer.text.replace(/\n/g, ' ').trim().slice(0, 60) || t('imageEditor.layers.textLayer')
-        )
-      }
-      const imagePath = (layer as ImageLayer).imagePath
-      if (isGroupLayer(imagePath)) return t('imageEditor.layers.groupLayer')
-      if (isColorLayer(imagePath)) return t('imageEditor.layers.colorLayer')
-      return imagePath.split('/').pop() || imagePath
-    },
-    [t],
-  )
-
   // Filter to only visible layers
   const visibleLayers = layers.filter((layer) => layer.visible)
 
@@ -130,7 +113,7 @@ export function LayerRegionsOverlay({
       {visibleLayers.map((layer) => {
         const styles = getLayerStyles(layer)
         const isTextLayer = layer.type === 'text'
-        const displayName = getDisplayName(layer)
+        const displayName = getLayerDisplayName(layer, t)
         const regionDiv = (
           <div
             className={cn(
