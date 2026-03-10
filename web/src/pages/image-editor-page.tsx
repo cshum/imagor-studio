@@ -514,28 +514,44 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
   const handleAddGroupLayer = useCallback(() => {
     // Group layer = transparent color:none image layer that acts as a container.
-    // Use fill mode so it covers the parent canvas by default.
+    // Use the same viewport-aware centering as image layers so the group appears
+    // as a visible, grabbable box (50% of canvas) rather than filling the full canvas.
+    // Full-canvas resize handles are at the canvas edge and hard to grab.
+    const outputDims = imageEditor.getOutputDimensions()
+    const virtualDims = {
+      width: Math.round(outputDims.width * 0.5),
+      height: Math.round(outputDims.height * 0.5),
+    }
+    const layerPosition = calculateLayerPositionForCurrentView({
+      layerDimensions: virtualDims,
+      outputDimensions: outputDims,
+      zoom,
+      previewContainerRef,
+      previewImageDimensions,
+      scaleFactor: 0.9,
+      positioning: 'center',
+    })
     const newLayer = {
       type: 'image' as const,
       id: `layer-${Date.now()}`,
       imagePath: 'color:none',
       originalDimensions: { width: 1, height: 1 },
-      x: 0,
-      y: 0,
+      x: layerPosition.x,
+      y: layerPosition.y,
       alpha: 0,
       blendMode: 'normal' as const,
       visible: true,
       name: '',
       transforms: {
-        widthFull: true,
-        heightFull: true,
+        width: layerPosition.width,
+        height: layerPosition.height,
       },
     }
     imageEditor.addLayer(newLayer)
+    // Select the group layer so resize handles appear — user can resize before entering.
+    // To edit inside the group, double-click it on the canvas or use "Edit Group" in the menu.
     imageEditor.setSelectedLayerId(newLayer.id)
-    // Auto-enter the group context immediately (Figma-style: create group → edit inside it)
-    imageEditor.switchContext(newLayer.id)
-  }, [imageEditor])
+  }, [imageEditor, zoom, previewContainerRef, previewImageDimensions])
 
   const handleTextEdit = useCallback(
     (layerId: string | null): Promise<void> => {
