@@ -7,10 +7,12 @@ import {
   Edit,
   Eye,
   EyeOff,
+  Lock,
   MoreVertical,
   Pencil,
   Trash2,
   Type,
+  Unlock,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -74,6 +76,7 @@ function useLayerMenuHandlers(
   }
   const handleToggleVisibility = () =>
     imageEditor.updateLayer(layer.id, { visible: !layer.visible })
+  const handleToggleLock = () => imageEditor.updateLayer(layer.id, { locked: !layer.locked })
   const handleDelete = () => imageEditor.removeLayer(layer.id)
 
   return {
@@ -85,6 +88,7 @@ function useLayerMenuHandlers(
     onMoveUp: handleMoveUp,
     onMoveDown: handleMoveDown,
     onToggleVisibility: handleToggleVisibility,
+    onToggleLock: handleToggleLock,
     onDelete: handleDelete,
   }
 }
@@ -115,6 +119,7 @@ interface LayerMenuItemsProps {
   onMoveUp: () => void
   onMoveDown: () => void
   onToggleVisibility: () => void
+  onToggleLock: () => void
   onDelete: () => void
   variant: 'context' | 'dropdown'
 }
@@ -131,6 +136,7 @@ function LayerMenuItems({
   onMoveUp,
   onMoveDown,
   onToggleVisibility,
+  onToggleLock,
   onDelete,
   variant,
 }: LayerMenuItemsProps) {
@@ -199,6 +205,21 @@ function LayerMenuItems({
             <>
               <Eye className='mr-2 h-4 w-4' />
               {t('imageEditor.layers.showLayer')}
+            </>
+          )}
+        </div>
+      </Item>
+      <Item onClick={onToggleLock}>
+        <div className='flex flex-1 items-center'>
+          {layer.locked ? (
+            <>
+              <Unlock className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.unlockLayer')}
+            </>
+          ) : (
+            <>
+              <Lock className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.lockLayer')}
             </>
           )}
         </div>

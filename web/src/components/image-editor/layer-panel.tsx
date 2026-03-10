@@ -26,6 +26,7 @@ import {
   Folder,
   GripVertical,
   Image,
+  Lock,
   MoreVertical,
   Paintbrush,
   Plus,
@@ -137,6 +138,7 @@ function SortableLayerItem({
           onClick={() => onSelect(layer.id)}
           onDoubleClick={(e) => {
             e.stopPropagation()
+            if (layer.locked) return
             if (isText) {
               onTextEdit(layer.id)
             } else {
@@ -168,6 +170,16 @@ function SortableLayerItem({
 
           {/* Action buttons (always visible, fixed width) */}
           <div className='flex shrink-0 gap-0.5'>
+            {/* Lock indicator (shown when locked) */}
+            {layer.locked && (
+              <div
+                className='text-muted-foreground flex h-7 w-7 items-center justify-center'
+                title={t('imageEditor.layers.lockedLayer')}
+              >
+                <Lock className='h-3.5 w-3.5' />
+              </div>
+            )}
+
             {/* Visibility toggle */}
             <Button
               variant='ghost'
@@ -398,10 +410,15 @@ export function LayerPanel({
         return
       }
 
+      const selectedLayer = layers.find((l) => l.id === selectedLayerId)
+      const isLayerLocked = selectedLayer?.locked === true
+
       if (event.key === 'Enter') {
         // Enter = Edit Text (text layer) or Edit Layer (image layer) — Figma/Sketch standard
+        // Locked layers cannot be entered for editing
+        if (isLayerLocked) return
         event.preventDefault()
-        const layer = layers.find((l) => l.id === selectedLayerId)
+        const layer = selectedLayer
         if (layer) {
           if (layer.type === 'text') {
             void onTextEdit(selectedLayerId)
@@ -410,6 +427,8 @@ export function LayerPanel({
           }
         }
       } else if (event.key === 'Delete' || event.key === 'Backspace') {
+        // Locked layers cannot be deleted
+        if (isLayerLocked) return
         event.preventDefault()
         imageEditor.removeLayer(selectedLayerId)
       } else if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
@@ -574,8 +593,8 @@ export function LayerPanel({
         </div>
       </div>
 
-      {/* Layer properties panel (when layer selected and not dragging) */}
-      {selectedLayer && !activeId && (
+      {/* Layer properties panel (when layer selected, not dragging, and not locked) */}
+      {selectedLayer && !activeId && !selectedLayer.locked && (
         <div className='shrink-0'>
           {selectedLayer.type === 'text' ? (
             <TextLayerControls

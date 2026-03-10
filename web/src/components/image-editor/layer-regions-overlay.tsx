@@ -101,16 +101,19 @@ export function LayerRegionsOverlay({
 
   const { t } = useTranslation()
 
-  // Filter to only visible layers
-  const visibleLayers = layers.filter((layer) => layer.visible)
+  // Filter to only visible, unlocked layers
+  // Locked layers remain visible in the canvas (rendered by LayerOverlay) but have no
+  // selection border — matching Figma/Photoshop/Sketch behaviour where locked layers
+  // show no canvas affordance at all.
+  const selectableLayers = layers.filter((layer) => layer.visible && !layer.locked)
 
-  if (visibleLayers.length === 0) {
+  if (selectableLayers.length === 0) {
     return null
   }
 
   return (
     <div className='pointer-events-none absolute inset-0 z-10 h-full w-full'>
-      {visibleLayers.map((layer) => {
+      {selectableLayers.map((layer) => {
         const styles = getLayerStyles(layer)
         const isTextLayer = layer.type === 'text'
         const displayName = getLayerDisplayName(layer, t)

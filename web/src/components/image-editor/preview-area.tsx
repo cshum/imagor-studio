@@ -608,7 +608,14 @@ export function PreviewArea({
                         const paddingTop = state.paddingTop || 0
                         const paddingBottom = state.paddingBottom || 0
 
-                        if (selectedLayerId) {
+                        // Show LayerOverlay only when a non-locked layer is selected.
+                        // When the selected layer is locked (or missing), fall through to
+                        // LayerRegionsOverlay so the user can still click other layers or
+                        // click the background to deselect.
+                        const selectedLayer = selectedLayerId
+                          ? imageEditor.getLayer(selectedLayerId)
+                          : null
+                        if (selectedLayerId && selectedLayer && !selectedLayer.locked) {
                           // Don't render LayerOverlay while the text-edit overlay is active for
                           // this layer — TextEditOverlay is the sole interactive bounding box.
                           if (
@@ -617,9 +624,6 @@ export function PreviewArea({
                           )
                             return null
 
-                          // Show single layer overlay with drag/resize handles
-                          const selectedLayer = imageEditor.getLayer(selectedLayerId)
-                          if (!selectedLayer) return null
 
                           // Unified bounding box — works for both image and text layers
                           const layerOutputDims = calculateLayerBoundingBox(
