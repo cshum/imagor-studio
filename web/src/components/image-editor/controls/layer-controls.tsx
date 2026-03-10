@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Edit, Image as ImageIcon, Lock, MoveHorizontal, MoveVertical, Unlock } from 'lucide-react'
 
+import { getLayerEditLabel } from '@/components/image-editor/layer-display'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -250,11 +251,7 @@ export function LayerControls({
             className='flex-1'
           >
             <Edit className='mr-2 h-4 w-4' />
-            {isGroup
-              ? t('imageEditor.layers.editGroup')
-              : isColor
-                ? t('imageEditor.layers.editColor')
-                : t('imageEditor.layers.editImage')}
+            {getLayerEditLabel(layer.imagePath, t)}
           </Button>
           {/* Color swatch — only for color layers next to Edit Layer */}
           {isColor && (

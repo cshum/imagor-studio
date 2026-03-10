@@ -15,6 +15,7 @@ import {
   Unlock,
 } from 'lucide-react'
 
+import { getLayerEditLabel } from '@/components/image-editor/layer-display'
 import { Button } from '@/components/ui/button'
 import {
   ContextMenu,
@@ -33,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
-import { isGroupLayer } from '@/lib/image-editor'
 
 interface LayerMenuProps {
   layer: Layer
@@ -160,9 +160,7 @@ function LayerMenuItems({
         <Item onClick={onEdit}>
           <div className='flex flex-1 items-center'>
             <Edit className='mr-2 h-4 w-4' />
-            {layer.type !== 'text' && isGroupLayer((layer as ImageLayer).imagePath)
-              ? t('imageEditor.layers.editGroup')
-              : t('imageEditor.layers.editImage')}
+            {getLayerEditLabel((layer as ImageLayer).imagePath, t)}
           </div>
           <Shortcut>↵</Shortcut>
         </Item>
@@ -224,6 +222,7 @@ function LayerMenuItems({
           )}
         </div>
       </Item>
+      <Separator />
       <Item onClick={onDelete} className='text-destructive'>
         <div className='flex flex-1 items-center'>
           <Trash2 className='mr-2 h-4 w-4' />
