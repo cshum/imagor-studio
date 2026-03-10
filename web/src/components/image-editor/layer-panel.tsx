@@ -127,11 +127,13 @@ function SortableLayerItem({
       <LayerContextMenu layer={layer} imageEditor={imageEditor} onTextEdit={onTextEdit}>
         <div
           className={cn(
-            'flex h-9 cursor-pointer items-center gap-1.5 rounded-md px-2',
-            'hover:bg-accent',
+            'flex h-9 cursor-grab items-center gap-1.5 rounded-md px-2',
+            'hover:bg-accent active:cursor-grabbing',
             // Use ring style for both selected and editing
             (isSelected || isEditing || isTextEditing) && 'ring-primary ring-2 ring-inset',
           )}
+          {...attributes}
+          {...listeners}
           onClick={() => onSelect(layer.id)}
           onDoubleClick={(e) => {
             e.stopPropagation()
@@ -142,17 +144,10 @@ function SortableLayerItem({
             }
           }}
         >
-          {/* Drag handle */}
-          <button
-            className='shrink-0 cursor-grab touch-none active:cursor-grabbing'
-            {...attributes}
-            {...listeners}
-            onClick={(e) => e.stopPropagation()}
-            aria-label={t('imageEditor.layers.dragToReorder')}
-            tabIndex={-1}
-          >
+          {/* Drag handle — visual affordance only; whole row is the drag activator */}
+          <span className='shrink-0 touch-none' aria-label={t('imageEditor.layers.dragToReorder')}>
             <GripVertical className='h-4 w-4' />
-          </button>
+          </span>
 
           {/* Layer type icon */}
           {isText ? (
