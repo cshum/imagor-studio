@@ -311,7 +311,7 @@ export function LayerDropdownMenu({ layer, imageEditor, onTextEdit }: LayerMenuP
         <Button
           variant='ghost'
           size='icon'
-          className='h-7 w-7'
+          className='h-7 w-6'
           onClick={(e) => e.stopPropagation()}
           title={t('imageEditor.layers.layerActions')}
         >

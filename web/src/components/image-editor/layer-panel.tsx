@@ -31,6 +31,7 @@ import {
   Paintbrush,
   Plus,
   Type,
+  Unlock,
 } from 'lucide-react'
 
 import { ColorPickerInput } from '@/components/image-editor/controls/color-picker-input'
@@ -122,6 +123,7 @@ function SortableLayerItem({
   const handleEdit = () => imageEditor.switchContext(layer.id)
   const handleToggleVisibility = () =>
     imageEditor.updateLayer(layer.id, { visible: !layer.visible })
+  const handleToggleLock = () => imageEditor.updateLayer(layer.id, { locked: !layer.locked })
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
@@ -169,22 +171,34 @@ function SortableLayerItem({
           </div>
 
           {/* Action buttons (always visible, fixed width) */}
-          <div className='flex shrink-0 gap-0.5'>
-            {/* Lock indicator (shown when locked) */}
-            {layer.locked && (
-              <div
-                className='text-muted-foreground flex h-7 w-7 items-center justify-center'
-                title={t('imageEditor.layers.lockedLayer')}
-              >
+          <div className='flex shrink-0 gap-0'>
+            {/* Lock toggle — always visible; dimmed when unlocked (Figma/Photoshop style) */}
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-7 w-6'
+              onClick={(e) => {
+                e.stopPropagation()
+                handleToggleLock()
+              }}
+              title={
+                layer.locked
+                  ? t('imageEditor.layers.unlockLayer')
+                  : t('imageEditor.layers.lockLayer')
+              }
+            >
+              {layer.locked ? (
                 <Lock className='h-3.5 w-3.5' />
-              </div>
-            )}
+              ) : (
+                <Unlock className='text-muted-foreground h-3.5 w-3.5 opacity-40' />
+              )}
+            </Button>
 
             {/* Visibility toggle */}
             <Button
               variant='ghost'
               size='icon'
-              className='h-7 w-7'
+              className='h-7 w-6'
               onClick={(e) => {
                 e.stopPropagation()
                 handleToggleVisibility()
@@ -198,7 +212,7 @@ function SortableLayerItem({
               {layer.visible ? (
                 <Eye className='h-3.5 w-3.5' />
               ) : (
-                <EyeOff className='text-muted-foreground h-3.5 w-3.5' />
+                <EyeOff className='text-muted-foreground h-3.5 w-3.5 opacity-40' />
               )}
             </Button>
 
@@ -566,15 +580,22 @@ export function LayerPanel({
                     {getLayerDisplayName(activeLayer, t)}
                   </span>
                   {/* Match layer item button structure */}
-                  <div className='flex shrink-0 gap-0.5'>
-                    <div className='flex h-7 w-7 items-center justify-center'>
+                  <div className='flex shrink-0 gap-0'>
+                    <div className='flex h-7 w-6 items-center justify-center'>
+                      {activeLayer.locked ? (
+                        <Lock className='h-3.5 w-3.5' />
+                      ) : (
+                        <Unlock className='text-muted-foreground h-3.5 w-3.5 opacity-40' />
+                      )}
+                    </div>
+                    <div className='flex h-7 w-6 items-center justify-center'>
                       {activeLayer.visible ? (
                         <Eye className='h-3.5 w-3.5' />
                       ) : (
-                        <EyeOff className='text-muted-foreground h-3.5 w-3.5' />
+                        <EyeOff className='text-muted-foreground h-3.5 w-3.5 opacity-40' />
                       )}
                     </div>
-                    <div className='flex h-7 w-7 items-center justify-center'>
+                    <div className='flex h-7 w-6 items-center justify-center'>
                       <MoreVertical className='h-3.5 w-3.5' />
                     </div>
                   </div>
