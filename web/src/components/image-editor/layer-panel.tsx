@@ -130,7 +130,7 @@ function SortableLayerItem({
       <LayerContextMenu layer={layer} imageEditor={imageEditor} onTextEdit={onTextEdit}>
         <div
           className={cn(
-            'flex h-9 cursor-grab items-center gap-1.5 rounded-md px-2',
+            'flex h-9 cursor-grab items-center gap-1.5 rounded-md pr-1 pl-2',
             'hover:bg-accent active:cursor-grabbing',
             // Use ring style for both selected and editing
             (isSelected || isEditing || isTextEditing) && 'ring-primary ring-2 ring-inset',
@@ -566,7 +566,7 @@ export function LayerPanel({
             </SortableContext>
             <DragOverlay>
               {activeLayer ? (
-                <div className='bg-background flex h-9 items-center gap-1.5 rounded-md border px-2 shadow-lg'>
+                <div className='bg-background flex h-9 items-center gap-1.5 rounded-md border pr-1 pl-2 shadow-lg'>
                   <GripVertical className='h-4 w-4' />
                   {activeLayer.type === 'text' ? (
                     <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
