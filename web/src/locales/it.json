@@ -862,6 +862,7 @@
       "editing": "MODIFICA",
       "editLayer": "Modifica Livello",
       "editImage": "Modifica Immagine",
+      "editColor": "Modifica Colore",
       "editGroup": "Modifica Gruppo",
       "renameLayer": "Rinomina Livello",
       "renameLayerDescription": "Inserisci un nuovo nome per questo livello.",

@@ -850,6 +850,7 @@
       "editing": "EDIT",
       "editLayer": "Edit Layer",
       "editImage": "Edit Image",
+      "editColor": "Edit Color",
       "editGroup": "Edit Group",
       "renameLayer": "Rename Layer",
       "renameLayerDescription": "Enter a new name for this layer.",
