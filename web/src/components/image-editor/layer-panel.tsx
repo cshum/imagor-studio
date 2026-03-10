@@ -26,7 +26,6 @@ import {
   Folder,
   GripVertical,
   Image,
-  Layers,
   MoreVertical,
   Paintbrush,
   Plus,
@@ -36,6 +35,7 @@ import {
 import { ColorPickerInput } from '@/components/image-editor/controls/color-picker-input'
 import { LayerControls } from '@/components/image-editor/controls/layer-controls'
 import { TextLayerControls } from '@/components/image-editor/controls/text-layer-controls'
+import { getLayerIcon, LayerIcon } from '@/components/image-editor/layer-icon'
 import { LayerContextMenu, LayerDropdownMenu } from '@/components/image-editor/layer-menu'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -163,12 +163,11 @@ function SortableLayerItem({
           {/* Layer type icon */}
           {isText ? (
             <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
-          ) : isGroup ? (
-            <Folder className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
-          ) : isColor ? (
-            <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
           ) : (
-            <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+            <LayerIcon
+              imagePath={(layer as ImageLayer).imagePath}
+              className='text-muted-foreground h-3.5 w-3.5 shrink-0'
+            />
           )}
 
           {/* Layer name */}
@@ -214,18 +213,11 @@ function SortableLayerItem({
 interface BaseImageItemProps {
   imagePath: string
   name?: string
-  isLayer?: boolean
   isSelected: boolean
   onClick: () => void
 }
 
-function BaseImageItem({
-  imagePath,
-  name,
-  isLayer = false,
-  isSelected,
-  onClick,
-}: BaseImageItemProps) {
+function BaseImageItem({ imagePath, name, isSelected, onClick }: BaseImageItemProps) {
   const { t } = useTranslation()
   const isColor = isColorLayer(imagePath)
   const isGroup = isGroupLayer(imagePath)
@@ -235,7 +227,7 @@ function BaseImageItem({
       ? t('imageEditor.layers.colorLayer')
       : imagePath.split('/').pop() || imagePath
   const displayName = name || filename
-  const Icon = isGroup ? Folder : isLayer ? Layers : isColor ? Paintbrush : Image
+  const Icon = getLayerIcon(imagePath)
 
   return (
     <div
@@ -565,12 +557,11 @@ export function LayerPanel({
                   <GripVertical className='h-4 w-4' />
                   {activeLayer.type === 'text' ? (
                     <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
-                  ) : isGroupLayer(activeLayer.imagePath) ? (
-                    <Folder className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
-                  ) : isColorLayer(activeLayer.imagePath) ? (
-                    <Paintbrush className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
                   ) : (
-                    <Image className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+                    <LayerIcon
+                      imagePath={activeLayer.imagePath}
+                      className='text-muted-foreground h-3.5 w-3.5 shrink-0'
+                    />
                   )}
                   <span className='flex-1 truncate text-sm'>
                     {activeLayer.name
@@ -606,7 +597,6 @@ export function LayerPanel({
           <BaseImageItem
             imagePath={imagePath}
             name={editingLayer?.name}
-            isLayer={!!editingContext}
             isSelected={selectedLayerId === null}
             onClick={handleSelectBase}
           />

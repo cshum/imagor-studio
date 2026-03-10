@@ -1,14 +1,7 @@
 import { useTranslation } from 'react-i18next'
-import {
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  Folder,
-  Image,
-  Layers,
-  Paintbrush,
-} from 'lucide-react'
+import { ChevronDown, ChevronRight, FileText, Layers } from 'lucide-react'
 
+import { getLayerIcon } from '@/components/image-editor/layer-icon'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -58,11 +51,15 @@ export function LayerBreadcrumb({
   const isTemplate = !!baseName
 
   // Build breadcrumb items by traversing the layer tree
-  const breadcrumbItems: Array<{ id: string | null; name: string; icon: typeof Image }> = [
+  const breadcrumbItems: Array<{
+    id: string | null
+    name: string
+    icon: ReturnType<typeof getLayerIcon>
+  }> = [
     {
       id: null,
       name: displayBaseName,
-      icon: isTemplate ? FileText : isBaseGroup ? Folder : isBaseColor ? Paintbrush : Image,
+      icon: isTemplate ? FileText : getLayerIcon(imagePath),
     },
   ]
 
@@ -73,6 +70,7 @@ export function LayerBreadcrumb({
     if (layer) {
       const isColor = layer.type !== 'text' && isColorLayer((layer as ImageLayer).imagePath)
       const isGroup = layer.type !== 'text' && isGroupLayer((layer as ImageLayer).imagePath)
+      const layerImagePath = layer.type !== 'text' ? (layer as ImageLayer).imagePath : ''
       breadcrumbItems.push({
         id: layerId,
         name:
@@ -82,7 +80,7 @@ export function LayerBreadcrumb({
             : isColor
               ? t('imageEditor.layers.colorLayer')
               : ''),
-        icon: isGroup ? Folder : isColor ? Paintbrush : Layers,
+        icon: layer.type !== 'text' ? getLayerIcon(layerImagePath) : Layers,
       })
       // Go deeper into nested layers for next iteration
       currentLayers = layer.type !== 'text' ? (layer.transforms?.layers ?? []) : []
@@ -147,7 +145,12 @@ export function LayerBreadcrumb({
               isMobile ? 'h-auto min-h-[44px] w-full justify-start py-2' : 'h-9',
             )}
           >
-            <Layers className={cn('mr-1 flex-shrink-0', isMobile ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
+            {(() => {
+              const Icon = currentPage.icon
+              return (
+                <Icon className={cn('mr-1 flex-shrink-0', isMobile ? 'h-4 w-4' : 'h-3.5 w-3.5')} />
+              )
+            })()}
             <span
               className={cn(
                 'truncate',
