@@ -177,20 +177,25 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
         <Label className='text-sm font-medium'>{t('imageEditor.output.maxFileSize')}</Label>
 
         {/* Size Presets */}
-        <div className='flex flex-wrap gap-2'>
+        <div className='flex flex-wrap gap-1'>
           {sizePresets.map((preset) => (
             <Button
               key={preset.value}
               variant={maxBytesValue === preset.value ? 'default' : 'outline'}
               size='sm'
               onClick={() => handlePresetClick(preset.value)}
-              className='h-7 px-2 text-xs'
+              className='h-7 px-1.5 text-xs'
             >
               {preset.label}
             </Button>
           ))}
           {maxBytesValue > 0 && (
-            <Button variant='ghost' size='sm' onClick={clearMaxBytes} className='h-7 text-xs'>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={clearMaxBytes}
+              className='h-7 px-1.5 text-xs'
+            >
               {t('imageEditor.output.clear')}
             </Button>
           )}
