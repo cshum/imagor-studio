@@ -300,17 +300,6 @@ export function LayerOverlay({
     layerFillColor,
   ])
 
-  // Handle mousedown outside layer box to deselect
-  const handleOverlayMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      // Only deselect if mousedown directly on overlay background (not layer box or handles)
-      if (e.target === overlayRef.current && onDeselect) {
-        onDeselect()
-      }
-    },
-    [onDeselect],
-  )
-
   // Handle double-click on layer box to enter edit mode
   const handleLayerDoubleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -382,8 +371,7 @@ export function LayerOverlay({
   return (
     <div
       ref={overlayRef}
-      className='pointer-events-auto absolute inset-0 z-20 h-full w-full'
-      onMouseDown={handleOverlayMouseDown}
+      className='pointer-events-none absolute inset-0 z-20 h-full w-full'
     >
       {/* Layer box — wrapped in context menu when imageEditor is provided */}
       {imageEditor ? (

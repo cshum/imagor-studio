@@ -20,6 +20,8 @@ interface LayerRegionsOverlayProps {
   /** When provided, enables the right-click context menu for each layer region. */
   imageEditor?: ImageEditor
   onTextEdit?: (layerId: string) => void
+  /** When provided, this layer is excluded from the regions overlay (e.g. the currently selected layer). */
+  excludeLayerId?: string
 }
 
 export function LayerRegionsOverlay({
@@ -33,6 +35,7 @@ export function LayerRegionsOverlay({
   onLayerSelect,
   imageEditor,
   onTextEdit,
+  excludeLayerId,
 }: LayerRegionsOverlayProps) {
   // Calculate content area dimensions (image without padding)
   // Layers are positioned relative to the content area, not the total canvas
@@ -101,11 +104,12 @@ export function LayerRegionsOverlay({
 
   const { t } = useTranslation()
 
-  // Filter to only visible, unlocked layers
-  // Locked layers remain visible in the canvas (rendered by LayerOverlay) but have no
-  // selection border — matching Figma/Photoshop/Sketch behaviour where locked layers
-  // show no canvas affordance at all.
-  const selectableLayers = layers.filter((layer) => layer.visible && !layer.locked)
+  // Filter to only visible, unlocked layers, excluding the currently selected layer
+  // (which is handled by LayerOverlay with drag/resize handles).
+  // Locked layers have no canvas affordance — matching Figma/Photoshop/Sketch behaviour.
+  const selectableLayers = layers.filter(
+    (layer) => layer.visible && !layer.locked && layer.id !== excludeLayerId,
+  )
 
   if (selectableLayers.length === 0) {
     return null
@@ -121,11 +125,11 @@ export function LayerRegionsOverlay({
           <div
             className={cn(
               'group pointer-events-auto absolute cursor-pointer',
-              'border border-dashed border-white/50',
-              'shadow-[0_0_0_1px_rgba(0,0,0,0.3)]',
+              // Invisible at rest — subtle dashed border appears on hover only
+              'border border-transparent',
               'transition-all duration-150',
-              'hover:border-solid hover:border-white hover:bg-white/5',
-              'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.5)]',
+              'hover:border-dashed hover:border-white/50',
+              'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.3)]',
             )}
             style={styles}
             onMouseDown={handleLayerSelect(layer.id)}
