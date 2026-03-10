@@ -36,7 +36,6 @@ interface LayerOverlayProps {
   layerPaddingBottom?: number
   layerRotation?: number
   layerFillColor?: string
-  onDeselect?: () => void
   onEnterEditMode?: () => void
   /** Called when a resize handle is double-clicked. Used by text layers to reset width/height to auto. */
   onHandleDoubleClick?: (handle: ResizeHandle) => void
@@ -63,7 +62,6 @@ export function LayerOverlay({
   layerPaddingBottom = 0,
   layerRotation = 0,
   layerFillColor,
-  onDeselect,
   onEnterEditMode,
   onHandleDoubleClick,
   imageEditor,
@@ -369,10 +367,7 @@ export function LayerOverlay({
   )
 
   return (
-    <div
-      ref={overlayRef}
-      className='pointer-events-none absolute inset-0 z-20 h-full w-full'
-    >
+    <div ref={overlayRef} className='pointer-events-none absolute inset-0 z-20 h-full w-full'>
       {/* Layer box — wrapped in context menu when imageEditor is provided */}
       {imageEditor ? (
         <LayerContextMenu layer={layer} imageEditor={imageEditor} onTextEdit={onTextEdit}>

@@ -666,6 +666,16 @@ export function PreviewArea({
 
                           return (
                             <>
+                              {/* Deselect backdrop — transparent full-canvas div at z-0 that
+                                  catches clicks on the image background (outside any layer region)
+                                  and deselects the current layer. Sits below all overlays. */}
+                              <div
+                                className='absolute inset-0 z-0 cursor-default'
+                                onMouseDown={(e) => {
+                                  e.stopPropagation()
+                                  imageEditor.setSelectedLayerId(null)
+                                }}
+                              />
                               {regionsOverlay}
                               <LayerOverlay
                                 layer={selectedLayer}
@@ -745,7 +755,6 @@ export function PreviewArea({
                                 layerFillColor={
                                   isImageLayer ? selectedLayer.transforms?.fillColor : undefined
                                 }
-                                onDeselect={() => imageEditor.setSelectedLayerId(null)}
                                 onEnterEditMode={
                                   isImageLayer
                                     ? () => imageEditor.switchContext(selectedLayerId)

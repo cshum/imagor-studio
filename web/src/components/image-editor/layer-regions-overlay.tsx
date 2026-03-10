@@ -125,11 +125,12 @@ export function LayerRegionsOverlay({
           <div
             className={cn(
               'group pointer-events-auto absolute cursor-pointer',
-              // Invisible at rest — subtle dashed border appears on hover only
+              // Invisible at rest — solid border at reduced opacity on hover.
+              // More visible than dashed but clearly secondary to the selected layer's full-white border.
               'border border-transparent',
               'transition-all duration-150',
-              'hover:border-dashed hover:border-white/50',
-              'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.3)]',
+              'hover:border-solid hover:border-white/70',
+              'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.4)]',
             )}
             style={styles}
             onMouseDown={handleLayerSelect(layer.id)}
