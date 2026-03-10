@@ -20,6 +20,8 @@ interface LayerRegionsOverlayProps {
   /** When provided, enables the right-click context menu for each layer region. */
   imageEditor?: ImageEditor
   onTextEdit?: (layerId: string) => void
+  /** When provided, this layer is excluded from the regions overlay (e.g. the currently selected layer). */
+  excludeLayerId?: string
 }
 
 export function LayerRegionsOverlay({
@@ -33,6 +35,7 @@ export function LayerRegionsOverlay({
   onLayerSelect,
   imageEditor,
   onTextEdit,
+  excludeLayerId,
 }: LayerRegionsOverlayProps) {
   // Calculate content area dimensions (image without padding)
   // Layers are positioned relative to the content area, not the total canvas
@@ -101,16 +104,20 @@ export function LayerRegionsOverlay({
 
   const { t } = useTranslation()
 
-  // Filter to only visible layers
-  const visibleLayers = layers.filter((layer) => layer.visible)
+  // Filter to only visible, unlocked layers, excluding the currently selected layer
+  // (which is handled by LayerOverlay with drag/resize handles).
+  // Locked layers have no canvas affordance — matching Figma/Photoshop/Sketch behaviour.
+  const selectableLayers = layers.filter(
+    (layer) => layer.visible && !layer.locked && layer.id !== excludeLayerId,
+  )
 
-  if (visibleLayers.length === 0) {
+  if (selectableLayers.length === 0) {
     return null
   }
 
   return (
     <div className='pointer-events-none absolute inset-0 z-10 h-full w-full'>
-      {visibleLayers.map((layer) => {
+      {selectableLayers.map((layer) => {
         const styles = getLayerStyles(layer)
         const isTextLayer = layer.type === 'text'
         const displayName = getLayerDisplayName(layer, t)
@@ -118,11 +125,12 @@ export function LayerRegionsOverlay({
           <div
             className={cn(
               'group pointer-events-auto absolute cursor-pointer',
-              'border border-dashed border-white/50',
-              'shadow-[0_0_0_1px_rgba(0,0,0,0.3)]',
+              // Invisible at rest — solid border at reduced opacity on hover.
+              // More visible than dashed but clearly secondary to the selected layer's full-white border.
+              'border border-transparent',
               'transition-all duration-150',
-              'hover:border-solid hover:border-white hover:bg-white/5',
-              'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.5)]',
+              'hover:border-dashed hover:border-white/70',
+              'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.4)]',
             )}
             style={styles}
             onMouseDown={handleLayerSelect(layer.id)}

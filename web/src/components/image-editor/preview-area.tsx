@@ -608,19 +608,41 @@ export function PreviewArea({
                         const paddingTop = state.paddingTop || 0
                         const paddingBottom = state.paddingBottom || 0
 
-                        if (selectedLayerId) {
-                          // Don't render LayerOverlay while the text-edit overlay is active for
-                          // this layer — TextEditOverlay is the sole interactive bounding box.
-                          if (
+                        // Resolve the selected layer (null if none or locked)
+                        const selectedLayer = selectedLayerId
+                          ? imageEditor.getLayer(selectedLayerId)
+                          : null
+                        const hasActiveSelection =
+                          selectedLayerId &&
+                          selectedLayer &&
+                          !selectedLayer.locked &&
+                          !(
                             effectiveTextEditingLayerId &&
                             effectiveTextEditingLayerId === selectedLayerId
                           )
-                            return null
 
-                          // Show single layer overlay with drag/resize handles
-                          const selectedLayer = imageEditor.getLayer(selectedLayerId)
-                          if (!selectedLayer) return null
+                        // Always show layer regions for all layers except the selected one
+                        // (which is covered by LayerOverlay). This allows switching selection
+                        // by clicking other layers while one is already selected — Figma-style.
+                        const layers = imageEditor.getContextLayers()
+                        const regionsOverlay =
+                          layers.length > 0 ? (
+                            <LayerRegionsOverlay
+                              layers={layers}
+                              baseImageWidth={outputDims.width}
+                              baseImageHeight={outputDims.height}
+                              paddingLeft={paddingLeft}
+                              paddingRight={paddingRight}
+                              paddingTop={paddingTop}
+                              paddingBottom={paddingBottom}
+                              onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
+                              imageEditor={imageEditor}
+                              onTextEdit={onTextEdit ? (id) => onTextEdit(id) : undefined}
+                              excludeLayerId={selectedLayerId ?? undefined}
+                            />
+                          ) : null
 
+                        if (hasActiveSelection && selectedLayer) {
                           // Unified bounding box — works for both image and text layers
                           const layerOutputDims = calculateLayerBoundingBox(
                             selectedLayer,
@@ -643,119 +665,114 @@ export function PreviewArea({
                             : 0
 
                           return (
-                            <LayerOverlay
-                              layer={selectedLayer}
-                              imageEditor={imageEditor}
-                              onTextEdit={onTextEdit ? (id) => onTextEdit(id) : undefined}
-                              layerX={selectedLayer.x}
-                              layerY={selectedLayer.y}
-                              layerWidth={layerOutputDims.width}
-                              layerHeight={layerOutputDims.height}
-                              onLayerChange={(updates) => {
-                                if (selectedLayer.type === 'text') {
-                                  const layerUpdates: Partial<typeof selectedLayer> = {}
-                                  if (updates.x !== undefined) {
-                                    layerUpdates.x = updates.x
-                                    // Sync layer.align with the new x anchor so the text
-                                    // alignment indicator in the controls stays in sync.
-                                    layerUpdates.align = deriveTextAlignFromX(updates.x)
-                                  }
-                                  if (updates.y !== undefined) layerUpdates.y = updates.y
-                                  // Resize handles emit transforms.width/height — map to text layer's own fields.
-                                  // If the layer is in fill mode ('f' / 'f-N'), preserve fill mode and
-                                  // convert the new pixel width to an inset instead.
-                                  //
-                                  // Guard: skip the update when the new pixel value is within 1px of the
-                                  // current rendered bounding-box width/height. A pure click on a handle
-                                  // (no drag) produces a 0-delta resize, but getBoundingClientRect()
-                                  // returns fractional pixels that round differently in
-                                  // convertDisplayToLayerPosition — causing a spurious 1px change that
-                                  // would silently convert an auto/fill width to a fixed pixel value.
-                                  if (updates.transforms?.width !== undefined) {
-                                    const newPxWidth = updates.transforms.width
-                                    const widthStr = String(selectedLayer.width)
-                                    const isFill = /^(?:f|full)(-\d+)?$/.test(widthStr)
-                                    if (isFill) {
-                                      const inset = outputDims.width - newPxWidth
-                                      layerUpdates.width =
-                                        inset > 0 ? `f-${Math.round(inset)}` : 'f'
-                                    } else if (Math.abs(newPxWidth - layerOutputDims.width) > 1) {
-                                      // Only apply if the value meaningfully differs from the
-                                      // current rendered width (> 1px = real drag, not a click)
-                                      layerUpdates.width = newPxWidth
+                            <>
+                              {/* Deselect backdrop — transparent full-canvas div at z-0 that
+                                  catches clicks on the image background (outside any layer region)
+                                  and deselects the current layer. Sits below all overlays. */}
+                              <div
+                                className='absolute inset-0 z-0 cursor-default'
+                                onMouseDown={(e) => {
+                                  e.stopPropagation()
+                                  imageEditor.setSelectedLayerId(null)
+                                }}
+                              />
+                              {regionsOverlay}
+                              <LayerOverlay
+                                layer={selectedLayer}
+                                imageEditor={imageEditor}
+                                onTextEdit={onTextEdit ? (id) => onTextEdit(id) : undefined}
+                                layerX={selectedLayer.x}
+                                layerY={selectedLayer.y}
+                                layerWidth={layerOutputDims.width}
+                                layerHeight={layerOutputDims.height}
+                                onLayerChange={(updates) => {
+                                  if (selectedLayer.type === 'text') {
+                                    const layerUpdates: Partial<typeof selectedLayer> = {}
+                                    if (updates.x !== undefined) {
+                                      layerUpdates.x = updates.x
+                                      // Sync layer.align with the new x anchor so the text
+                                      // alignment indicator in the controls stays in sync.
+                                      layerUpdates.align = deriveTextAlignFromX(updates.x)
                                     }
-                                  }
-                                  if (updates.transforms?.height !== undefined) {
-                                    const newPxHeight = updates.transforms.height
-                                    if (Math.abs(newPxHeight - layerOutputDims.height) > 1) {
-                                      layerUpdates.height = newPxHeight
+                                    if (updates.y !== undefined) layerUpdates.y = updates.y
+                                    // Resize handles emit transforms.width/height — map to text layer's own fields.
+                                    // If the layer is in fill mode ('f' / 'f-N'), preserve fill mode and
+                                    // convert the new pixel width to an inset instead.
+                                    //
+                                    // Guard: skip the update when the new pixel value is within 1px of the
+                                    // current rendered bounding-box width/height. A pure click on a handle
+                                    // (no drag) produces a 0-delta resize, but getBoundingClientRect()
+                                    // returns fractional pixels that round differently in
+                                    // convertDisplayToLayerPosition — causing a spurious 1px change that
+                                    // would silently convert an auto/fill width to a fixed pixel value.
+                                    if (updates.transforms?.width !== undefined) {
+                                      const newPxWidth = updates.transforms.width
+                                      const widthStr = String(selectedLayer.width)
+                                      const isFill = /^(?:f|full)(-\d+)?$/.test(widthStr)
+                                      if (isFill) {
+                                        const inset = outputDims.width - newPxWidth
+                                        layerUpdates.width =
+                                          inset > 0 ? `f-${Math.round(inset)}` : 'f'
+                                      } else if (Math.abs(newPxWidth - layerOutputDims.width) > 1) {
+                                        // Only apply if the value meaningfully differs from the
+                                        // current rendered width (> 1px = real drag, not a click)
+                                        layerUpdates.width = newPxWidth
+                                      }
                                     }
+                                    if (updates.transforms?.height !== undefined) {
+                                      const newPxHeight = updates.transforms.height
+                                      if (Math.abs(newPxHeight - layerOutputDims.height) > 1) {
+                                        layerUpdates.height = newPxHeight
+                                      }
+                                    }
+                                    if (Object.keys(layerUpdates).length > 0)
+                                      imageEditor.updateLayer(selectedLayerId, layerUpdates)
+                                  } else if (updates.transforms) {
+                                    imageEditor.updateLayer(selectedLayerId, {
+                                      ...updates,
+                                      transforms: enrichTransformsForFillMode(
+                                        updates.transforms,
+                                        selectedLayer.transforms ?? {},
+                                        outputDims,
+                                      ),
+                                    })
+                                  } else {
+                                    imageEditor.updateLayer(selectedLayerId, updates)
                                   }
-                                  if (Object.keys(layerUpdates).length > 0)
-                                    imageEditor.updateLayer(selectedLayerId, layerUpdates)
-                                } else if (updates.transforms) {
-                                  imageEditor.updateLayer(selectedLayerId, {
-                                    ...updates,
-                                    transforms: enrichTransformsForFillMode(
-                                      updates.transforms,
-                                      selectedLayer.transforms ?? {},
-                                      outputDims,
-                                    ),
-                                  })
-                                } else {
-                                  imageEditor.updateLayer(selectedLayerId, updates)
+                                }}
+                                lockedAspectRatio={layerAspectRatioLocked}
+                                baseImageWidth={outputDims.width}
+                                baseImageHeight={outputDims.height}
+                                paddingLeft={paddingLeft}
+                                paddingTop={paddingTop}
+                                layerPaddingLeft={layerPaddingLeft}
+                                layerPaddingRight={layerPaddingRight}
+                                layerPaddingTop={layerPaddingTop}
+                                layerPaddingBottom={layerPaddingBottom}
+                                layerRotation={
+                                  isImageLayer ? selectedLayer.transforms?.rotation || 0 : 0
                                 }
-                              }}
-                              lockedAspectRatio={layerAspectRatioLocked}
-                              baseImageWidth={outputDims.width}
-                              baseImageHeight={outputDims.height}
-                              paddingLeft={paddingLeft}
-                              paddingTop={paddingTop}
-                              layerPaddingLeft={layerPaddingLeft}
-                              layerPaddingRight={layerPaddingRight}
-                              layerPaddingTop={layerPaddingTop}
-                              layerPaddingBottom={layerPaddingBottom}
-                              layerRotation={
-                                isImageLayer ? selectedLayer.transforms?.rotation || 0 : 0
-                              }
-                              layerFillColor={
-                                isImageLayer ? selectedLayer.transforms?.fillColor : undefined
-                              }
-                              onDeselect={() => imageEditor.setSelectedLayerId(null)}
-                              onEnterEditMode={
-                                isImageLayer
-                                  ? () => imageEditor.switchContext(selectedLayerId)
-                                  : onTextEdit
-                                    ? () => onTextEdit(selectedLayerId)
-                                    : undefined
-                              }
-                              // Text layers: no handle double-click action.
-                              // Double-clicking a resize handle should not auto-reset dimensions —
-                              // the user expects handle interactions to only resize on intentional drag.
-                              // (Double-click on the layer box itself still enters text-edit mode
-                              // via handleLayerDoubleClick, which is separate from handle events.)
-                              onHandleDoubleClick={undefined}
-                            />
+                                layerFillColor={
+                                  isImageLayer ? selectedLayer.transforms?.fillColor : undefined
+                                }
+                                onEnterEditMode={
+                                  isImageLayer
+                                    ? () => imageEditor.switchContext(selectedLayerId)
+                                    : onTextEdit
+                                      ? () => onTextEdit(selectedLayerId)
+                                      : undefined
+                                }
+                                // Text layers: no handle double-click action.
+                                // Double-clicking a resize handle should not auto-reset dimensions —
+                                // the user expects handle interactions to only resize on intentional drag.
+                                // (Double-click on the layer box itself still enters text-edit mode
+                                // via handleLayerDoubleClick, which is separate from handle events.)
+                                onHandleDoubleClick={undefined}
+                              />
+                            </>
                           )
                         } else {
-                          // Show all layer regions for selection
-                          const layers = imageEditor.getContextLayers()
-                          if (layers.length === 0) return null
-
-                          return (
-                            <LayerRegionsOverlay
-                              layers={layers}
-                              baseImageWidth={outputDims.width}
-                              baseImageHeight={outputDims.height}
-                              paddingLeft={paddingLeft}
-                              paddingRight={paddingRight}
-                              paddingTop={paddingTop}
-                              paddingBottom={paddingBottom}
-                              onLayerSelect={(layerId) => imageEditor.setSelectedLayerId(layerId)}
-                              imageEditor={imageEditor}
-                              onTextEdit={onTextEdit ? (id) => onTextEdit(id) : undefined}
-                            />
-                          )
+                          return regionsOverlay
                         }
                       })()}
                     {/* Text editing overlay — rendered on top of everything when a text layer is active */}

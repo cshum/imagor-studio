@@ -7,12 +7,15 @@ import {
   Edit,
   Eye,
   EyeOff,
+  Lock,
   MoreVertical,
   Pencil,
   Trash2,
   Type,
+  Unlock,
 } from 'lucide-react'
 
+import { getLayerEditLabel } from '@/components/image-editor/layer-display'
 import { Button } from '@/components/ui/button'
 import {
   ContextMenu,
@@ -31,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
-import { isGroupLayer } from '@/lib/image-editor'
 
 interface LayerMenuProps {
   layer: Layer
@@ -74,6 +76,7 @@ function useLayerMenuHandlers(
   }
   const handleToggleVisibility = () =>
     imageEditor.updateLayer(layer.id, { visible: !layer.visible })
+  const handleToggleLock = () => imageEditor.updateLayer(layer.id, { locked: !layer.locked })
   const handleDelete = () => imageEditor.removeLayer(layer.id)
 
   return {
@@ -85,6 +88,7 @@ function useLayerMenuHandlers(
     onMoveUp: handleMoveUp,
     onMoveDown: handleMoveDown,
     onToggleVisibility: handleToggleVisibility,
+    onToggleLock: handleToggleLock,
     onDelete: handleDelete,
   }
 }
@@ -115,6 +119,7 @@ interface LayerMenuItemsProps {
   onMoveUp: () => void
   onMoveDown: () => void
   onToggleVisibility: () => void
+  onToggleLock: () => void
   onDelete: () => void
   variant: 'context' | 'dropdown'
 }
@@ -131,6 +136,7 @@ function LayerMenuItems({
   onMoveUp,
   onMoveDown,
   onToggleVisibility,
+  onToggleLock,
   onDelete,
   variant,
 }: LayerMenuItemsProps) {
@@ -154,9 +160,7 @@ function LayerMenuItems({
         <Item onClick={onEdit}>
           <div className='flex flex-1 items-center'>
             <Edit className='mr-2 h-4 w-4' />
-            {layer.type !== 'text' && isGroupLayer((layer as ImageLayer).imagePath)
-              ? t('imageEditor.layers.editGroup')
-              : t('imageEditor.layers.editImage')}
+            {getLayerEditLabel((layer as ImageLayer).imagePath, t)}
           </div>
           <Shortcut>↵</Shortcut>
         </Item>
@@ -203,6 +207,22 @@ function LayerMenuItems({
           )}
         </div>
       </Item>
+      <Item onClick={onToggleLock}>
+        <div className='flex flex-1 items-center'>
+          {layer.locked ? (
+            <>
+              <Unlock className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.unlockLayer')}
+            </>
+          ) : (
+            <>
+              <Lock className='mr-2 h-4 w-4' />
+              {t('imageEditor.layers.lockLayer')}
+            </>
+          )}
+        </div>
+      </Item>
+      <Separator />
       <Item onClick={onDelete} className='text-destructive'>
         <div className='flex flex-1 items-center'>
           <Trash2 className='mr-2 h-4 w-4' />
@@ -291,7 +311,7 @@ export function LayerDropdownMenu({ layer, imageEditor, onTextEdit }: LayerMenuP
         <Button
           variant='ghost'
           size='icon'
-          className='h-7 w-7'
+          className='h-7 w-6'
           onClick={(e) => e.stopPropagation()}
           title={t('imageEditor.layers.layerActions')}
         >

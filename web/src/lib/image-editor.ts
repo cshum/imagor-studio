@@ -39,6 +39,7 @@ export interface ImageLayer {
 
   // UI state
   visible: boolean // Toggle layer visibility
+  locked?: boolean // When true, layer is not selectable/editable in the canvas overlay
   name: string // Display name (from filename)
 }
 
@@ -78,6 +79,7 @@ export interface TextLayer {
 
   // UI state
   visible: boolean
+  locked?: boolean // When true, layer is not selectable/editable in the canvas overlay
 }
 
 export type Layer = ImageLayer | TextLayer

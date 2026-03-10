@@ -78,6 +78,7 @@ The layer panel (sidebar) shows all layers in the current context:
 - **Layer order** — Layers are listed top-to-bottom matching visual stacking order
 - **Layer icon** — Image (🖼) or Text (T) icon indicates layer type
 - **Layer name** — Auto-derived from text content or filename; shows custom name if renamed
+- **Lock toggle** — Lock icon to lock/unlock a layer (always visible; dimmed when unlocked)
 - **Visibility toggle** — Eye icon to show/hide individual layers
 - **Actions menu** — ⋮ button for layer operations
 - **Drag handle** — Grip icon to drag-and-drop reorder layers
@@ -95,6 +96,7 @@ The layer panel (sidebar) shows all layers in the current context:
 
 - **Reorder layers** — Drag layers in the panel, or use Move Up (⌘]) / Move Down (⌘[)
 - **Toggle visibility** — Click the eye icon to show/hide a layer without deleting it
+- **Lock / Unlock layer** — Click the lock icon to lock a layer; locked layers remain visible but cannot be selected, edited, moved, or deleted
 - **Rename layer** — Right-click → Rename Layer to give a custom name
 - **Duplicate layer** — Right-click → Duplicate Layer (⌘D) to copy with all transformations
 - **Delete layer** — Right-click → Delete Layer (⌫) or press Backspace/Delete
@@ -117,6 +119,19 @@ Layers display names automatically derived from their content:
 - **Position** — Set layer X/Y coordinates
 - **Dimensions** — Resize layer independently
 
+## Locking Layers
+
+Lock a layer to protect it from accidental edits while keeping it visible in the output:
+
+- **Lock** — Click the lock icon in the layer row (or right-click → Lock Layer). The icon turns solid when locked.
+- **Unlock** — Click the lock icon again (or right-click → Unlock Layer). The icon dims when unlocked.
+- **Locked layer behaviour**:
+  - Remains fully visible in the canvas preview and final output
+  - Cannot be selected by clicking on the canvas layer region
+  - Cannot be edited, moved, resized, or deleted
+  - Properties panel is hidden while locked
+  - `↵` (Enter) and `⌫` (Delete/Backspace) keyboard shortcuts are blocked for locked layers
+
 ## Context Menu
 
 Right-click any layer (in the panel, on the canvas overlay, or on the layer region) to access:
@@ -127,6 +142,7 @@ Right-click any layer (in the panel, on the canvas overlay, or on the layer regi
 - **Move Up** — Bring layer forward (`⌘]`)
 - **Move Down** — Send layer backward (`⌘[`)
 - **Show/Hide Layer** — Toggle visibility
+- **Lock / Unlock Layer** — Protect the layer from edits
 - **Delete Layer** — Remove the layer (`⌫`)
 
 ## Nested Layers

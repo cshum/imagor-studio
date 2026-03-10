@@ -31,6 +31,20 @@ export function LayerIcon({ imagePath, className }: LayerIconProps) {
   return <Icon className={className} />
 }
 
+// ─── Edit label helper ───────────────────────────────────────────────────────
+
+/**
+ * Returns the i18n key for the "edit" action label based on the layer's image path.
+ * - Group layer → 'imageEditor.layers.editGroup'
+ * - Color layer → 'imageEditor.layers.editColor'
+ * - Image layer → 'imageEditor.layers.editImage'
+ */
+export function getLayerEditLabel(imagePath: string, t: TFunction): string {
+  if (isGroupLayer(imagePath)) return t('imageEditor.layers.editGroup')
+  if (isColorLayer(imagePath)) return t('imageEditor.layers.editColor')
+  return t('imageEditor.layers.editImage')
+}
+
 // ─── Display name helper ─────────────────────────────────────────────────────
 
 /**

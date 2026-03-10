@@ -26,10 +26,12 @@ import {
   Folder,
   GripVertical,
   Image,
+  Lock,
   MoreVertical,
   Paintbrush,
   Plus,
   Type,
+  Unlock,
 } from 'lucide-react'
 
 import { ColorPickerInput } from '@/components/image-editor/controls/color-picker-input'
@@ -121,13 +123,14 @@ function SortableLayerItem({
   const handleEdit = () => imageEditor.switchContext(layer.id)
   const handleToggleVisibility = () =>
     imageEditor.updateLayer(layer.id, { visible: !layer.visible })
+  const handleToggleLock = () => imageEditor.updateLayer(layer.id, { locked: !layer.locked })
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && 'opacity-0')}>
       <LayerContextMenu layer={layer} imageEditor={imageEditor} onTextEdit={onTextEdit}>
         <div
           className={cn(
-            'flex h-9 cursor-grab items-center gap-1.5 rounded-md px-2',
+            'flex h-9 cursor-grab items-center gap-1.5 rounded-md pr-1 pl-2',
             'hover:bg-accent active:cursor-grabbing',
             // Use ring style for both selected and editing
             (isSelected || isEditing || isTextEditing) && 'ring-primary ring-2 ring-inset',
@@ -137,6 +140,7 @@ function SortableLayerItem({
           onClick={() => onSelect(layer.id)}
           onDoubleClick={(e) => {
             e.stopPropagation()
+            if (layer.locked) return
             if (isText) {
               onTextEdit(layer.id)
             } else {
@@ -167,12 +171,34 @@ function SortableLayerItem({
           </div>
 
           {/* Action buttons (always visible, fixed width) */}
-          <div className='flex shrink-0 gap-0.5'>
+          <div className='flex shrink-0 gap-0'>
+            {/* Lock toggle — always visible; dimmed when unlocked (Figma/Photoshop style) */}
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-7 w-6'
+              onClick={(e) => {
+                e.stopPropagation()
+                handleToggleLock()
+              }}
+              title={
+                layer.locked
+                  ? t('imageEditor.layers.unlockLayer')
+                  : t('imageEditor.layers.lockLayer')
+              }
+            >
+              {layer.locked ? (
+                <Lock className='h-3.5 w-3.5' />
+              ) : (
+                <Unlock className='text-muted-foreground h-3.5 w-3.5 opacity-40' />
+              )}
+            </Button>
+
             {/* Visibility toggle */}
             <Button
               variant='ghost'
               size='icon'
-              className='h-7 w-7'
+              className='h-7 w-6'
               onClick={(e) => {
                 e.stopPropagation()
                 handleToggleVisibility()
@@ -186,7 +212,7 @@ function SortableLayerItem({
               {layer.visible ? (
                 <Eye className='h-3.5 w-3.5' />
               ) : (
-                <EyeOff className='text-muted-foreground h-3.5 w-3.5' />
+                <EyeOff className='text-muted-foreground h-3.5 w-3.5 opacity-40' />
               )}
             </Button>
 
@@ -398,10 +424,15 @@ export function LayerPanel({
         return
       }
 
+      const selectedLayer = layers.find((l) => l.id === selectedLayerId)
+      const isLayerLocked = selectedLayer?.locked === true
+
       if (event.key === 'Enter') {
         // Enter = Edit Text (text layer) or Edit Layer (image layer) — Figma/Sketch standard
+        // Locked layers cannot be entered for editing
+        if (isLayerLocked) return
         event.preventDefault()
-        const layer = layers.find((l) => l.id === selectedLayerId)
+        const layer = selectedLayer
         if (layer) {
           if (layer.type === 'text') {
             void onTextEdit(selectedLayerId)
@@ -410,6 +441,8 @@ export function LayerPanel({
           }
         }
       } else if (event.key === 'Delete' || event.key === 'Backspace') {
+        // Locked layers cannot be deleted
+        if (isLayerLocked) return
         event.preventDefault()
         imageEditor.removeLayer(selectedLayerId)
       } else if ((event.ctrlKey || event.metaKey) && event.key === 'd') {
@@ -533,7 +566,7 @@ export function LayerPanel({
             </SortableContext>
             <DragOverlay>
               {activeLayer ? (
-                <div className='bg-background flex h-9 items-center gap-1.5 rounded-md border px-2 shadow-lg'>
+                <div className='bg-background flex h-9 items-center gap-1.5 rounded-md border pr-1 pl-2 shadow-lg'>
                   <GripVertical className='h-4 w-4' />
                   {activeLayer.type === 'text' ? (
                     <Type className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
@@ -547,15 +580,22 @@ export function LayerPanel({
                     {getLayerDisplayName(activeLayer, t)}
                   </span>
                   {/* Match layer item button structure */}
-                  <div className='flex shrink-0 gap-0.5'>
-                    <div className='flex h-7 w-7 items-center justify-center'>
+                  <div className='flex shrink-0 gap-0'>
+                    <div className='flex h-7 w-6 items-center justify-center'>
+                      {activeLayer.locked ? (
+                        <Lock className='h-3.5 w-3.5' />
+                      ) : (
+                        <Unlock className='text-muted-foreground h-3.5 w-3.5 opacity-40' />
+                      )}
+                    </div>
+                    <div className='flex h-7 w-6 items-center justify-center'>
                       {activeLayer.visible ? (
                         <Eye className='h-3.5 w-3.5' />
                       ) : (
-                        <EyeOff className='text-muted-foreground h-3.5 w-3.5' />
+                        <EyeOff className='text-muted-foreground h-3.5 w-3.5 opacity-40' />
                       )}
                     </div>
-                    <div className='flex h-7 w-7 items-center justify-center'>
+                    <div className='flex h-7 w-6 items-center justify-center'>
                       <MoreVertical className='h-3.5 w-3.5' />
                     </div>
                   </div>
@@ -574,8 +614,8 @@ export function LayerPanel({
         </div>
       </div>
 
-      {/* Layer properties panel (when layer selected and not dragging) */}
-      {selectedLayer && !activeId && (
+      {/* Layer properties panel (when layer selected, not dragging, and not locked) */}
+      {selectedLayer && !activeId && !selectedLayer.locked && (
         <div className='shrink-0'>
           {selectedLayer.type === 'text' ? (
             <TextLayerControls
