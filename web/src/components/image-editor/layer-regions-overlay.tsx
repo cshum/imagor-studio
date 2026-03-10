@@ -129,7 +129,7 @@ export function LayerRegionsOverlay({
               // More visible than dashed but clearly secondary to the selected layer's full-white border.
               'border border-transparent',
               'transition-all duration-150',
-              'hover:border-solid hover:border-white/70',
+              'hover:border-dashed hover:border-white/70',
               'hover:shadow-[0_0_0_1px_rgba(0,0,0,0.4)]',
             )}
             style={styles}
