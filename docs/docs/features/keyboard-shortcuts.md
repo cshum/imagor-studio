@@ -49,6 +49,8 @@ Navigate and control Imagor Studio using keyboard shortcuts.
 | Arrow Keys      | Move selected layer position                       |
 | `ESC`           | Exit nested layer context                          |
 
+> **Note:** `↵` and `⌫` / `Delete` are blocked for locked layers. Unlock the layer first to edit or delete it.
+
 ### Templates
 
 - **Cmd/Ctrl+S** - Save template (existing) or open Save dialog (new)
