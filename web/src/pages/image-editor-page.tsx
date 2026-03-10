@@ -932,6 +932,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         onLanguageChange={handleLanguageChange}
         onToggleSectionVisibility={handleToggleSectionVisibility}
         editorOpenSections={editorOpenSections}
+        isNestedLayer={editingContext !== null}
         layerBreadcrumb={
           <LayerBreadcrumb
             imageEditor={imageEditor}

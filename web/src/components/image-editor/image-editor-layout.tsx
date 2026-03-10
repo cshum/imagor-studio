@@ -41,6 +41,8 @@ export interface ImageEditorLayoutProps {
 
   // Desktop-only header: layer breadcrumb
   layerBreadcrumb?: React.ReactNode
+  /** True when editing inside a nested layer context (editingContext !== null) */
+  isNestedLayer?: boolean
 
   // Preview area (render prop - receives column sizing info)
   previewArea: (props: {
@@ -89,6 +91,7 @@ export function ImageEditorLayout({
   editorOpenSections,
   onOpenSectionsChange,
   layerBreadcrumb,
+  isNestedLayer,
   previewArea,
   leftControls,
   rightControls,
@@ -219,7 +222,12 @@ export function ImageEditorLayout({
   )
 
   const backButton = (
-    <Button variant='outline' size='sm' className={cn(isEmbedded && 'invisible')} onClick={onBack}>
+    <Button
+      variant={isNestedLayer ? 'default' : 'outline'}
+      size='sm'
+      className={cn(isEmbedded && 'invisible')}
+      onClick={onBack}
+    >
       <ChevronLeft className='mr-1 h-4 w-4' />
       {t('imageEditor.page.back')}
     </Button>
