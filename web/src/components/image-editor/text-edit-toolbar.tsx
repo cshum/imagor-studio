@@ -96,12 +96,12 @@ function FontSizeInput({
 }
 
 // label = what the user sees; value = font param sent to imagor; cssFamily = preview style
-// 'Noto Sans' is used for the sans option so the browser editor overlay and the
-// imagor/Pango server render use the same typeface (fonts-noto-core in Docker).
+// All three use explicit Noto font names (fonts-noto-core in Docker) so the browser
+// editor overlay and the imagor/Pango server render use identical typefaces.
 const FONTS: { label: string; value: string; cssFamily: string }[] = [
   { label: 'Sans', value: 'Noto Sans', cssFamily: '"Noto Sans", sans-serif' },
-  { label: 'Serif', value: 'serif', cssFamily: 'serif' },
-  { label: 'Monospace', value: 'monospace', cssFamily: 'monospace' },
+  { label: 'Serif', value: 'Noto Serif', cssFamily: '"Noto Serif", serif' },
+  { label: 'Monospace', value: 'Noto Sans Mono', cssFamily: '"Noto Sans Mono", monospace' },
 ]
 
 export function TextEditToolbar({

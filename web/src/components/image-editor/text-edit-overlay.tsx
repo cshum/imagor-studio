@@ -34,10 +34,12 @@ export function imagorFontToCss(font: string | undefined): string {
       // editor overlay matches the server render.
       return '"Noto Sans", sans-serif'
     case 'serif':
-      return 'serif'
+      // Backward compat: old layers stored 'serif'; map to Noto Serif.
+      return '"Noto Serif", serif'
     case 'monospace':
     case 'mono':
-      return 'monospace'
+      // Backward compat: old layers stored 'monospace'/'mono'; map to Noto Sans Mono.
+      return '"Noto Sans Mono", monospace'
     default:
       // Named fonts (e.g. 'Noto Sans', 'DejaVu Sans') — use as-is with a
       // generic fallback so the browser degrades gracefully if not installed.

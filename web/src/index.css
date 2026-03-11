@@ -1,12 +1,19 @@
 @import 'scrollbar.css';
 
-/* Noto Sans — self-hosted via @fontsource, no external network requests.
-   Loaded here so the text-edit-overlay textarea and toolbar font preview
-   match the Noto Sans rendered by imagor/Pango on the server. */
+/* Noto fonts — self-hosted via @fontsource, no external network requests.
+   These match the fonts installed in the Docker runtime image (fonts-noto-core)
+   so the text-edit-overlay textarea and toolbar previews match the imagor/Pango
+   server render exactly for all three font options (sans, serif, monospace). */
 @import '@fontsource/noto-sans/400.css';
 @import '@fontsource/noto-sans/400-italic.css';
 @import '@fontsource/noto-sans/700.css';
 @import '@fontsource/noto-sans/700-italic.css';
+@import '@fontsource/noto-serif/400.css';
+@import '@fontsource/noto-serif/400-italic.css';
+@import '@fontsource/noto-serif/700.css';
+@import '@fontsource/noto-serif/700-italic.css';
+@import '@fontsource/noto-sans-mono/400.css';
+@import '@fontsource/noto-sans-mono/700.css';
 
 @import 'tailwindcss';
 
