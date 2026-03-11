@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Copy, Download, Eye, FolderInput, SquarePen, Trash2, Type } from 'lucide-react'
 
 import type { ImageContextData } from '@/components/image-gallery/image-context-menu'
+import { getGalleryDisplayName } from '@/lib/file-utils'
 import {
   ContextMenuItem,
   ContextMenuLabel,
@@ -91,7 +92,7 @@ export function useImageContextMenu({
     if (isTemplate) {
       return (
         <>
-          <ContextMenuLabel className='break-all'>{imageName}</ContextMenuLabel>
+          <ContextMenuLabel className='break-all'>{getGalleryDisplayName(imageName)}</ContextMenuLabel>
           <ContextMenuSeparator />
           {authenticated && (
             <>
@@ -134,7 +135,7 @@ export function useImageContextMenu({
     // For regular images/videos, show full menu
     return (
       <>
-        <ContextMenuLabel className='break-all'>{imageName}</ContextMenuLabel>
+        <ContextMenuLabel className='break-all'>{getGalleryDisplayName(imageName)}</ContextMenuLabel>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={() => onOpen(imageKey, position)}>
           <Eye className='mr-2 h-4 w-4' />
@@ -206,7 +207,7 @@ export function useImageContextMenu({
     if (isTemplate) {
       return (
         <>
-          <DropdownMenuLabel className='break-all'>{imageName}</DropdownMenuLabel>
+          <DropdownMenuLabel className='break-all'>{getGalleryDisplayName(imageName)}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {authenticated && (
             <>
@@ -239,7 +240,7 @@ export function useImageContextMenu({
     // For regular images/videos, show full menu
     return (
       <>
-        <DropdownMenuLabel className='break-all'>{imageName}</DropdownMenuLabel>
+        <DropdownMenuLabel className='break-all'>{getGalleryDisplayName(imageName)}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onOpen(imageKey)}>
           <Eye className='mr-2 h-4 w-4' />
