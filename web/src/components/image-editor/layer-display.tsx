@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next'
 import { Folder, Image, Paintbrush } from 'lucide-react'
 
+import { getFileDisplayName } from '@/lib/file-utils'
 import { isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import type { ImageLayer, Layer } from '@/lib/image-editor'
 
@@ -59,5 +60,6 @@ export function getLayerDisplayName(layer: Layer, t: TFunction): string {
   const imagePath = (layer as ImageLayer).imagePath
   if (isGroupLayer(imagePath)) return t('imageEditor.layers.groupLayer')
   if (isColorLayer(imagePath)) return t('imageEditor.layers.colorLayer')
-  return imagePath.split('/').pop() || imagePath
+  const filename = imagePath.split('/').pop() || imagePath
+  return getFileDisplayName(filename)
 }

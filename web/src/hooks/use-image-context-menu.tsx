@@ -12,6 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import { getFileDisplayName } from '@/lib/file-utils'
 import type { ImagePosition } from '@/stores/image-position-store'
 
 interface UseImageContextMenuProps {
@@ -91,7 +92,7 @@ export function useImageContextMenu({
     if (isTemplate) {
       return (
         <>
-          <ContextMenuLabel className='break-all'>{imageName}</ContextMenuLabel>
+          <ContextMenuLabel className='break-all'>{getFileDisplayName(imageName)}</ContextMenuLabel>
           <ContextMenuSeparator />
           {authenticated && (
             <>
@@ -134,7 +135,7 @@ export function useImageContextMenu({
     // For regular images/videos, show full menu
     return (
       <>
-        <ContextMenuLabel className='break-all'>{imageName}</ContextMenuLabel>
+        <ContextMenuLabel className='break-all'>{getFileDisplayName(imageName)}</ContextMenuLabel>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={() => onOpen(imageKey, position)}>
           <Eye className='mr-2 h-4 w-4' />
@@ -206,7 +207,9 @@ export function useImageContextMenu({
     if (isTemplate) {
       return (
         <>
-          <DropdownMenuLabel className='break-all'>{imageName}</DropdownMenuLabel>
+          <DropdownMenuLabel className='break-all'>
+            {getFileDisplayName(imageName)}
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {authenticated && (
             <>
@@ -239,7 +242,7 @@ export function useImageContextMenu({
     // For regular images/videos, show full menu
     return (
       <>
-        <DropdownMenuLabel className='break-all'>{imageName}</DropdownMenuLabel>
+        <DropdownMenuLabel className='break-all'>{getFileDisplayName(imageName)}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onOpen(imageKey)}>
           <Eye className='mr-2 h-4 w-4' />

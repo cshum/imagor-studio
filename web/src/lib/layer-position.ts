@@ -19,7 +19,7 @@ export interface LayerPositionResult {
  * Snapping thresholds for layer positioning
  */
 export const SNAP_THRESHOLDS = {
-  /** Fixed pixels for edge snapping (matches Figma/Photoshop) */
+  /** Fixed pixels for edge snapping */
   EDGE_PIXELS: 8,
   /** Percentage of canvas to snap TO center */
   CENTER_SNAP_PERCENT: 0.02,

@@ -1,6 +1,7 @@
 import { statFile } from '@/api/storage-api'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections'
+import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { ImageEditor, isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import { joinImagePath } from '@/lib/path-utils'
@@ -150,9 +151,11 @@ export const imageEditorLoader = async ({
 
   // Set breadcrumb label for browser title:
   // - template: use template name (e.g. "My Template")
-  // - normal image: use filename (e.g. "photo.jpg")
+  // - normal image: use filename without extension (e.g. "photo")
   const breadcrumbLabel =
-    isTemplate && templateMetadata ? templateMetadata.name : imageKey.split('/').pop() || imageKey
+    isTemplate && templateMetadata
+      ? templateMetadata.name
+      : getFileDisplayName(imageKey.split('/').pop() || imageKey)
 
   return {
     initialEditorOpenSections: editorOpenSections,

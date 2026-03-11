@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { DragItem } from '@/hooks/use-item-drag-drop'
 import { getFullImageUrl } from '@/lib/api-utils'
+import { getFileDisplayName } from '@/lib/file-utils'
 import { joinImagePath } from '@/lib/path-utils'
 
 interface ImageCellProps {
@@ -138,6 +139,8 @@ const ImageCell = ({
     onDragStart(e, items, galleryKey)
   }
 
+  const displayName = getFileDisplayName(image.imageName)
+
   return (
     <div
       key={image.imageKey}
@@ -161,7 +164,7 @@ const ImageCell = ({
       onKeyDown={handleKeyDown}
       tabIndex={index === firstVisibleImageIndex && focusedIndex === -1 ? 0 : isFocused ? 0 : -1}
       role='button'
-      aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${image.imageName}`}
+      aria-label={`${image.isVideo ? 'Video' : 'Image'}: ${displayName}`}
     >
       <div
         className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-opacity duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? `${boldSelection ? 'ring-[3px]' : 'ring-2'} ring-blue-600` : ''} ${isBeingDragged ? 'opacity-50' : ''}`}
@@ -222,8 +225,8 @@ const ImageCell = ({
         )}
         {showFileName && (
           <div className='absolute right-0 bottom-0 left-0 bg-black/60 px-2 py-1.5 text-xs text-white'>
-            <div className='truncate' title={image.imageName}>
-              {image.imageName}
+            <div className='truncate' title={displayName}>
+              {displayName}
             </div>
           </div>
         )}

@@ -106,7 +106,7 @@ export function LayerRegionsOverlay({
 
   // Filter to only visible, unlocked layers, excluding the currently selected layer
   // (which is handled by LayerOverlay with drag/resize handles).
-  // Locked layers have no canvas affordance — matching Figma/Photoshop/Sketch behaviour.
+  // Locked layers have no canvas affordance
   const selectableLayers = layers.filter(
     (layer) => layer.visible && !layer.locked && layer.id !== excludeLayerId,
   )
@@ -137,7 +137,7 @@ export function LayerRegionsOverlay({
             onTouchStart={handleLayerSelect(layer.id)}
             onDoubleClick={isTextLayer && onTextEdit ? () => onTextEdit(layer.id) : undefined}
           >
-            {/* Layer name label — appears above top-left corner on hover (Figma-style) */}
+            {/* Layer name label — appears above top-left corner on hover */}
             <span
               className={cn(
                 'pointer-events-none absolute -top-5 left-0',

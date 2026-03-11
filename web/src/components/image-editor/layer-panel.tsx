@@ -62,6 +62,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { getFileDisplayName } from '@/lib/file-utils'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
 import { colorToImagePath, getColorFromPath, isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
@@ -114,7 +115,6 @@ function SortableLayerItem({
 
   const isText = layer.type === 'text'
 
-  // Display name — Figma/Photoshop style:
   //   custom name (if renamed) → custom name
   //   text layer (not renamed) → text content, or "Text Layer" if empty
   //   image layer              → filename
@@ -172,7 +172,7 @@ function SortableLayerItem({
 
           {/* Action buttons (always visible, fixed width) */}
           <div className='flex shrink-0 gap-0'>
-            {/* Lock toggle — always visible; dimmed when unlocked (Figma/Photoshop style) */}
+            {/* Lock toggle — always visible; dimmed when unlocked */}
             <Button
               variant='ghost'
               size='icon'
@@ -240,7 +240,7 @@ function BaseImageItem({ imagePath, name, isSelected, onClick }: BaseImageItemPr
     ? t('imageEditor.layers.groupLayer')
     : isColor
       ? t('imageEditor.layers.colorLayer')
-      : imagePath.split('/').pop() || imagePath
+      : getFileDisplayName(imagePath.split('/').pop() || imagePath)
   const displayName = name || filename
   const Icon = getLayerIcon(imagePath)
 
@@ -354,7 +354,7 @@ export function LayerPanel({
       const layer = layers.find((l) => l.id === layerId)
       if (layer) {
         setRenamingLayerId(layerId)
-        // Pre-fill with the current display name (same as shown in layer list) — Figma-style UX.
+        // Pre-fill with the current display name (same as shown in layer list).
         // For text layers with no custom name, use the text content as the suggested name.
         // For image layers with no custom name, use the filename.
         setNewLayerName(getLayerDisplayName(layer, t))
@@ -428,7 +428,7 @@ export function LayerPanel({
       const isLayerLocked = selectedLayer?.locked === true
 
       if (event.key === 'Enter') {
-        // Enter = Edit Text (text layer) or Edit Layer (image layer) — Figma/Sketch standard
+        // Enter = Edit Text (text layer) or Edit Layer (image layer)
         // Locked layers cannot be entered for editing
         if (isLayerLocked) return
         event.preventDefault()

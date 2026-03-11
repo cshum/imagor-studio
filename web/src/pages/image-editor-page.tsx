@@ -32,6 +32,7 @@ import {
   serializeStateToUrl,
   updateLocationState,
 } from '@/lib/editor-state-url'
+import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
@@ -589,7 +590,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         const dimensions = await fetchImageDimensions(imagePath)
 
         // Extract filename for display name
-        const filename = imagePath.split('/').pop() || imagePath
+        const filename = getFileDisplayName(imagePath.split('/').pop() || imagePath)
 
         // Get current context output dimensions (context-aware)
         const outputDims = imageEditor.getOutputDimensions()
@@ -747,7 +748,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         return
       }
 
-      // C key - toggle crop mode (Lightroom/Photoshop/Figma standard)
+      // C key - toggle crop mode
       // Skip if text editing is active
       if (e.key === 'c' || e.key === 'C') {
         if (!e.metaKey && !e.ctrlKey && !textEditingLayerId) {
@@ -764,7 +765,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         return
       }
 
-      // T key - Add Text Layer (Figma/Photoshop/Sketch standard)
+      // T key - Add Text Layer
       // Skip if crop mode active, text editing active, or modifier keys held
       if ((e.key === 't' || e.key === 'T') && !e.metaKey && !e.ctrlKey && !textEditingLayerId) {
         if (!imageEditor.getState().visualCropEnabled) {
@@ -775,7 +776,6 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       }
 
       // Cmd+G (Mac) or Ctrl+G (Windows/Linux) - Add Group Layer
-      // Industry standard: Photoshop, Figma, Sketch, Affinity
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === 'g' || e.key === 'G')) {
         if (!textEditingLayerId && !imageEditor.getState().visualCropEnabled) {
           e.preventDefault()

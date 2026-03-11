@@ -88,3 +88,23 @@ export function getFileNameWithoutExtension(filename: string): string {
   const lastDotIndex = filename.lastIndexOf('.')
   return lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename
 }
+
+/**
+ * Returns a clean display name for a file item, stripping file extensions.
+ * Files ending with `.imagor.json` have that compound suffix removed; all other
+ * files have their last extension (e.g. `.jpg`, `.webp`) stripped.
+ *
+ * @param filename - The raw filename (e.g. "photo.jpg" or "my-template.imagor.json")
+ * @returns Display name without extension
+ *
+ * @example
+ * getFileDisplayName('photo.jpg')               // Returns 'photo'
+ * getFileDisplayName('my.photo.2024.webp')      // Returns 'my.photo.2024'
+ * getFileDisplayName('banner.imagor.json')      // Returns 'banner'
+ */
+export function getFileDisplayName(filename: string): string {
+  if (/\.imagor\.json$/i.test(filename)) {
+    return filename.replace(/\.imagor\.json$/i, '')
+  }
+  return filename.replace(/\.[^.]+$/, '')
+}

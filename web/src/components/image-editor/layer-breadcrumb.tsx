@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { getFileDisplayName } from '@/lib/file-utils'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
 import { isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
@@ -34,7 +35,7 @@ export function LayerBreadcrumb({
 
   // Extract filename from base image path
   const imagePath = imageEditor.getBaseImagePath()
-  const baseImageName = imagePath.split('/').pop() || imagePath
+  const baseImageName = getFileDisplayName(imagePath.split('/').pop() || imagePath)
   const isBaseColor = isColorLayer(imagePath)
   const isBaseGroup = isGroupLayer(imagePath)
 
