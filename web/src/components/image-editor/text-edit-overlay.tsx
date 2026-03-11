@@ -20,12 +20,19 @@ function HandleDot() {
  * Imagor accepts short aliases ('sans', 'serif', 'monospace') that are
  * NOT valid CSS generic families — 'sans' in CSS is treated as an unknown
  * named font and falls back to the browser default serif, not sans-serif.
+ *
+ * The default sans font is "Noto Sans" — the same font installed in the
+ * Docker runtime image (fonts-noto-core) so the browser editor overlay and
+ * the imagor/Pango server render use an identical typeface.
+ * Old layers saved with font:'sans' are mapped here for backward compat.
  */
 export function imagorFontToCss(font: string | undefined): string {
-  if (!font) return 'sans-serif'
+  if (!font) return '"Noto Sans", sans-serif'
   switch (font.toLowerCase()) {
     case 'sans':
-      return 'sans-serif'
+      // Backward compat: old layers stored 'sans'; map to Noto Sans so the
+      // editor overlay matches the server render.
+      return '"Noto Sans", sans-serif'
     case 'serif':
       return 'serif'
     case 'monospace':

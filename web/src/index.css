@@ -1,5 +1,13 @@
 @import 'scrollbar.css';
 
+/* Noto Sans — self-hosted via @fontsource, no external network requests.
+   Loaded here so the text-edit-overlay textarea and toolbar font preview
+   match the Noto Sans rendered by imagor/Pango on the server. */
+@import '@fontsource/noto-sans/400.css';
+@import '@fontsource/noto-sans/400-italic.css';
+@import '@fontsource/noto-sans/700.css';
+@import '@fontsource/noto-sans/700-italic.css';
+
 @import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
