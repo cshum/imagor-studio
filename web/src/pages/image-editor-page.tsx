@@ -32,7 +32,7 @@ import {
   serializeStateToUrl,
   updateLocationState,
 } from '@/lib/editor-state-url'
-import { getGalleryDisplayName } from '@/lib/file-utils'
+import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
@@ -590,7 +590,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         const dimensions = await fetchImageDimensions(imagePath)
 
         // Extract filename for display name (strip extension — Figma/Photoshop style)
-        const filename = getGalleryDisplayName(imagePath.split('/').pop() || imagePath)
+        const filename = getFileDisplayName(imagePath.split('/').pop() || imagePath)
 
         // Get current context output dimensions (context-aware)
         const outputDims = imageEditor.getOutputDimensions()

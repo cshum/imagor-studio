@@ -3,13 +3,13 @@ import { ChevronDown, ChevronRight, FileText, Layers } from 'lucide-react'
 
 import { getLayerIcon } from '@/components/image-editor/layer-display'
 import { Button } from '@/components/ui/button'
-import { getGalleryDisplayName } from '@/lib/file-utils'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { getFileDisplayName } from '@/lib/file-utils'
 import type { ImageEditor, ImageLayer } from '@/lib/image-editor'
 import { isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import { cn } from '@/lib/utils'
@@ -35,7 +35,7 @@ export function LayerBreadcrumb({
 
   // Extract filename from base image path
   const imagePath = imageEditor.getBaseImagePath()
-  const baseImageName = getGalleryDisplayName(imagePath.split('/').pop() || imagePath)
+  const baseImageName = getFileDisplayName(imagePath.split('/').pop() || imagePath)
   const isBaseColor = isColorLayer(imagePath)
   const isBaseGroup = isGroupLayer(imagePath)
 

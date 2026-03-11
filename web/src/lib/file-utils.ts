@@ -90,7 +90,7 @@ export function getFileNameWithoutExtension(filename: string): string {
 }
 
 /**
- * Returns a clean display name for a gallery item, stripping file extensions.
+ * Returns a clean display name for a file item, stripping file extensions.
  * Files ending with `.imagor.json` have that compound suffix removed; all other
  * files have their last extension (e.g. `.jpg`, `.webp`) stripped.
  *
@@ -102,7 +102,7 @@ export function getFileNameWithoutExtension(filename: string): string {
  * getGalleryDisplayName('my.photo.2024.webp')      // Returns 'my.photo.2024'
  * getGalleryDisplayName('banner.imagor.json')      // Returns 'banner'
  */
-export function getGalleryDisplayName(filename: string): string {
+export function getFileDisplayName(filename: string): string {
   if (/\.imagor\.json$/i.test(filename)) {
     return filename.replace(/\.imagor\.json$/i, '')
   }

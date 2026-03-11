@@ -1,7 +1,7 @@
 import { statFile } from '@/api/storage-api'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections'
-import { getGalleryDisplayName } from '@/lib/file-utils'
+import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { ImageEditor, isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import { joinImagePath } from '@/lib/path-utils'
@@ -155,7 +155,7 @@ export const imageEditorLoader = async ({
   const breadcrumbLabel =
     isTemplate && templateMetadata
       ? templateMetadata.name
-      : getGalleryDisplayName(imageKey.split('/').pop() || imageKey)
+      : getFileDisplayName(imageKey.split('/').pop() || imageKey)
 
   return {
     initialEditorOpenSections: editorOpenSections,

@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { DragItem } from '@/hooks/use-item-drag-drop'
 import { getFullImageUrl } from '@/lib/api-utils'
-import { getGalleryDisplayName } from '@/lib/file-utils'
+import { getFileDisplayName } from '@/lib/file-utils'
 import { joinImagePath } from '@/lib/path-utils'
 
 interface ImageCellProps {
@@ -139,7 +139,7 @@ const ImageCell = ({
     onDragStart(e, items, galleryKey)
   }
 
-  const displayName = getGalleryDisplayName(image.imageName)
+  const displayName = getFileDisplayName(image.imageName)
 
   return (
     <div
