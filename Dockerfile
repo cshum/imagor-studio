@@ -1,5 +1,5 @@
 ARG NODE_VERSION=22.19.0
-ARG BUILDER_IMAGE_TAG=ffmpeg-7.1.1-vips-8.18.0-go-1.25.5
+ARG BUILDER_IMAGE_TAG=ffmpeg-7.1.1-vips-8.18.0-go-1.26.1
 ARG EMBEDDED_MODE=false
 
 # Stage 1: Build web frontend
