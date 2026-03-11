@@ -623,7 +623,7 @@ export function PreviewArea({
 
                         // Always show layer regions for all layers except the selected one
                         // (which is covered by LayerOverlay). This allows switching selection
-                        // by clicking other layers while one is already selected — Figma-style.
+                        // by clicking other layers while one is already selected
                         const layers = imageEditor.getContextLayers()
                         const regionsOverlay =
                           layers.length > 0 ? (

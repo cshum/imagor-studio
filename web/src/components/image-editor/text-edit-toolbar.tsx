@@ -144,7 +144,7 @@ export function TextEditToolbar({
       window.innerHeight - toolbar.offsetHeight,
     )
 
-    // Horizontal anchor follows text alignment (Canva/Figma-style UX):
+    // Horizontal anchor follows text alignment
     //   left-aligned  → anchor toolbar to left edge of text box
     //   center-aligned → center toolbar over text box
     //   right-aligned  → anchor toolbar to right edge of text box

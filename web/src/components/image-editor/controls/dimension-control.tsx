@@ -59,7 +59,6 @@ export function DimensionControl({
 
   // Local string state allows free typing without triggering linked-field
   // updates on every keystroke. Linked values are computed only on commit
-  // (blur or Enter), matching standard design-tool behaviour (Figma, etc.).
   const [localWidth, setLocalWidth] = useState(params.width?.toString() ?? '')
   const [localHeight, setLocalHeight] = useState(params.height?.toString() ?? '')
   const focusedField = useRef<'width' | 'height' | null>(null)
