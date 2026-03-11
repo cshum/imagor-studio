@@ -3,6 +3,7 @@ import { Folder, Image, Paintbrush } from 'lucide-react'
 
 import { isColorLayer, isGroupLayer } from '@/lib/image-editor'
 import type { ImageLayer, Layer } from '@/lib/image-editor'
+import { getGalleryDisplayName } from '@/lib/file-utils'
 
 // ─── Icon helpers ────────────────────────────────────────────────────────────
 
@@ -59,5 +60,6 @@ export function getLayerDisplayName(layer: Layer, t: TFunction): string {
   const imagePath = (layer as ImageLayer).imagePath
   if (isGroupLayer(imagePath)) return t('imageEditor.layers.groupLayer')
   if (isColorLayer(imagePath)) return t('imageEditor.layers.colorLayer')
-  return imagePath.split('/').pop() || imagePath
+  const filename = imagePath.split('/').pop() || imagePath
+  return getGalleryDisplayName(filename)
 }

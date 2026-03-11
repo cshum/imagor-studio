@@ -64,6 +64,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
 import { colorToImagePath, getColorFromPath, isColorLayer, isGroupLayer } from '@/lib/image-editor'
+import { getGalleryDisplayName } from '@/lib/file-utils'
 import { cn } from '@/lib/utils'
 
 interface LayerPanelProps {
@@ -240,7 +241,7 @@ function BaseImageItem({ imagePath, name, isSelected, onClick }: BaseImageItemPr
     ? t('imageEditor.layers.groupLayer')
     : isColor
       ? t('imageEditor.layers.colorLayer')
-      : imagePath.split('/').pop() || imagePath
+      : getGalleryDisplayName(imagePath.split('/').pop() || imagePath)
   const displayName = name || filename
   const Icon = getLayerIcon(imagePath)
 
