@@ -732,7 +732,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
     setMoveDialog({
       open: true,
-      items: [{ key: fullItemKey, name: itemName, type: itemType }],
+      items: [
+        {
+          key: fullItemKey,
+          name: itemType === 'file' ? getFileDisplayName(itemName) : itemName,
+          type: itemType,
+        },
+      ],
     })
   }
 
@@ -748,7 +754,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         })),
         ...images.map((key) => ({
           key,
-          name: key.split('/').pop() || '',
+          name: getFileDisplayName(key.split('/').pop() || ''),
           type: 'file' as const,
         })),
       ]
