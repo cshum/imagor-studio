@@ -98,9 +98,9 @@ export function getFileNameWithoutExtension(filename: string): string {
  * @returns Display name without extension
  *
  * @example
- * getGalleryDisplayName('photo.jpg')               // Returns 'photo'
- * getGalleryDisplayName('my.photo.2024.webp')      // Returns 'my.photo.2024'
- * getGalleryDisplayName('banner.imagor.json')      // Returns 'banner'
+ * getFileDisplayName('photo.jpg')               // Returns 'photo'
+ * getFileDisplayName('my.photo.2024.webp')      // Returns 'my.photo.2024'
+ * getFileDisplayName('banner.imagor.json')      // Returns 'banner'
  */
 export function getFileDisplayName(filename: string): string {
   if (/\.imagor\.json$/i.test(filename)) {

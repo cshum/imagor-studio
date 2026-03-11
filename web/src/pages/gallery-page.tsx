@@ -56,6 +56,7 @@ import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
+import { getFileDisplayName } from '@/lib/file-utils'
 import { joinImagePath } from '@/lib/path-utils'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
@@ -438,7 +439,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     setDeleteItemDialog({
       open: true,
       itemKey,
-      itemName,
+      itemName: itemType === 'file' ? getFileDisplayName(itemName) : itemName,
       itemType,
       isDeleting: false,
     })
