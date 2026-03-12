@@ -991,7 +991,7 @@ export class ImageEditor {
 
           // text(text,x,y,font,color,alpha,blend_mode,width,align,justify,wrap,spacing,dpi)
           // blend_mode is at index 6 — must be emitted before width (index 7).
-          // We always emit wrap+spacing so the stored spacing value is preserved.
+          // Emit wrap+spacing when non-default so the stored spacing value is preserved.
           const hasNonDefaultTrailing =
             font !== 'sans-20' ||
             layer.color !== '000000' ||
@@ -1000,10 +1000,9 @@ export class ImageEditor {
             (typeof width === 'number' ? width > 0 : width !== '0') ||
             layer.align !== 'low' ||
             layer.justify ||
-            true // always emit wrap+spacing for Pango line-height correction
+            layer.wrap !== 'word' ||
+            layer.spacing !== 0
 
-          // Always emit all args through justify+wrap+spacing so the stored spacing value
-          // (extra leading on top of Pango's natural line height) is preserved.
           if (hasNonDefaultTrailing) {
             args.push(font)
             args.push(layer.color || '000000')
@@ -1406,7 +1405,8 @@ export class ImageEditor {
             widthNonDefault2 ||
             layer.align !== 'low' ||
             layer.justify ||
-            true // always emit wrap+spacing for Pango line-height correction
+            layer.wrap !== 'word' ||
+            layer.spacing !== 0
 
           // Always emit all args through justify+wrap+spacing so the stored spacing value
           // (extra leading on top of Pango's natural line height) is preserved.
