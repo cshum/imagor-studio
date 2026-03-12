@@ -991,6 +991,8 @@ export class ImageEditor {
 
           // text(text,x,y,font,color,alpha,blend_mode,width,align,justify,wrap,spacing,dpi)
           // blend_mode is at index 6 — must be emitted before width (index 7).
+          // We always emit wrap+spacing (Pango line-height correction), so the
+          // hasNonDefaultTrailing check must be true whenever we have any non-default arg.
           const hasNonDefaultTrailing =
             font !== 'sans-20' ||
             layer.color !== '000000' ||
@@ -999,71 +1001,26 @@ export class ImageEditor {
             (typeof width === 'number' ? width > 0 : width !== '0') ||
             layer.align !== 'low' ||
             layer.justify ||
-            layer.wrap !== 'word' ||
-            layer.spacing !== 0 ||
-            layer.dpi !== 72
+            true // always emit wrap+spacing for Pango line-height correction
 
+          // Always emit all args through justify+wrap+spacing (Pango line-height correction).
+          // The correction (≈ -0.164 × fontSize) is baked into spacing so the server
+          // render matches the CSS textarea (lineHeight = fontSize).
           if (hasNonDefaultTrailing) {
             args.push(font)
             args.push(layer.color || '000000')
-            if (
-              layer.alpha !== 0 ||
-              layer.blendMode !== 'normal' ||
-              (typeof width === 'number' ? width > 0 : width !== '0') ||
-              layer.align !== 'low' ||
-              layer.justify ||
-              layer.wrap !== 'word' ||
-              layer.spacing !== 0 ||
-              layer.dpi !== 72
-            ) {
-              args.push(layer.alpha)
-              if (
-                layer.blendMode !== 'normal' ||
-                (typeof width === 'number' ? width > 0 : width !== '0') ||
-                layer.align !== 'low' ||
-                layer.justify ||
-                layer.wrap !== 'word' ||
-                layer.spacing !== 0 ||
-                layer.dpi !== 72
-              ) {
-                args.push(layer.blendMode) // index 6: blend_mode
-                if (
-                  (typeof width === 'number' ? width > 0 : width !== '0') ||
-                  layer.align !== 'low' ||
-                  layer.justify ||
-                  layer.wrap !== 'word' ||
-                  layer.spacing !== 0 ||
-                  layer.dpi !== 72
-                ) {
-                  args.push(width) // index 7: width
-                  if (
-                    layer.align !== 'low' ||
-                    layer.justify ||
-                    layer.wrap !== 'word' ||
-                    layer.spacing !== 0 ||
-                    layer.dpi !== 72
-                  ) {
-                    args.push(layer.align) // index 8: align
-                    if (
-                      layer.justify ||
-                      layer.wrap !== 'word' ||
-                      layer.spacing !== 0 ||
-                      layer.dpi !== 72
-                    ) {
-                      args.push(layer.justify ? 'true' : 'false')
-                      if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
-                        args.push(layer.wrap)
-                        if (layer.spacing !== 0 || layer.dpi !== 72) {
-                          args.push(Math.round(layer.spacing * scaleFactor))
-                          if (layer.dpi !== 72) {
-                            args.push(layer.dpi)
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+            args.push(layer.alpha)
+            args.push(layer.blendMode)
+            args.push(width)
+            args.push(layer.align)
+            args.push(layer.justify ? 'true' : 'false')
+            args.push(layer.wrap)
+            const pangoSpacing = Math.round(
+              (layer.spacing - 0.164 * layer.fontSize) * scaleFactor,
+            )
+            args.push(pangoSpacing)
+            if (layer.dpi !== 72) {
+              args.push(layer.dpi)
             }
           }
 
@@ -1454,70 +1411,23 @@ export class ImageEditor {
             widthNonDefault2 ||
             layer.align !== 'low' ||
             layer.justify ||
-            layer.wrap !== 'word' ||
-            layer.spacing !== 0 ||
-            layer.dpi !== 72
+            true // always emit wrap+spacing for Pango line-height correction
 
+          // Always emit all args through justify+wrap+spacing (Pango line-height correction).
+          // The correction (≈ -0.164 × fontSize) is baked into spacing so the server
+          // render matches the CSS textarea (lineHeight = fontSize).
           if (hasNonDefault) {
             args.push(font)
             args.push(layer.color || '000000')
-            if (
-              layer.alpha !== 0 ||
-              layer.blendMode !== 'normal' ||
-              widthNonDefault2 ||
-              layer.align !== 'low' ||
-              layer.justify ||
-              layer.wrap !== 'word' ||
-              layer.spacing !== 0 ||
-              layer.dpi !== 72
-            ) {
-              args.push(layer.alpha)
-              if (
-                layer.blendMode !== 'normal' ||
-                widthNonDefault2 ||
-                layer.align !== 'low' ||
-                layer.justify ||
-                layer.wrap !== 'word' ||
-                layer.spacing !== 0 ||
-                layer.dpi !== 72
-              ) {
-                args.push(layer.blendMode)
-                if (
-                  widthNonDefault2 ||
-                  layer.align !== 'low' ||
-                  layer.justify ||
-                  layer.wrap !== 'word' ||
-                  layer.spacing !== 0 ||
-                  layer.dpi !== 72
-                ) {
-                  args.push(width)
-                  if (
-                    layer.align !== 'low' ||
-                    layer.justify ||
-                    layer.wrap !== 'word' ||
-                    layer.spacing !== 0 ||
-                    layer.dpi !== 72
-                  ) {
-                    args.push(layer.align)
-                    if (
-                      layer.justify ||
-                      layer.wrap !== 'word' ||
-                      layer.spacing !== 0 ||
-                      layer.dpi !== 72
-                    ) {
-                      args.push(layer.justify ? 'true' : 'false')
-                      if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
-                        args.push(layer.wrap)
-                        if (layer.spacing !== 0 || layer.dpi !== 72) {
-                          args.push(Math.round(layer.spacing * sf))
-                          if (layer.dpi !== 72) args.push(layer.dpi)
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            args.push(layer.alpha)
+            args.push(layer.blendMode)
+            args.push(width)
+            args.push(layer.align)
+            args.push(layer.justify ? 'true' : 'false')
+            args.push(layer.wrap)
+            const pangoSpacing = Math.round((layer.spacing - 0.164 * layer.fontSize) * sf)
+            args.push(pangoSpacing)
+            if (layer.dpi !== 72) args.push(layer.dpi)
           }
 
           filters.push({ name: 'text', args: args.join(',') })

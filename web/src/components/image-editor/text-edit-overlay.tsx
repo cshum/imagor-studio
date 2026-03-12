@@ -247,6 +247,10 @@ export function TextEditOverlay({
 
   // Typography — derived from draftLayer so the textarea reflects toolbar changes immediately
   const fontSizePx = `${draftLayer.fontSize * scale}px`
+  // CSS lineHeight = fontSize (tight, no extra leading). The browser renders DejaVu Sans
+  // at exactly this height when lineHeight equals fontSize.
+  // Pango's natural line height is larger (~1.164×), so we pass a negative spacing
+  // correction in the imagor URL (see image-editor.ts) to compress Pango down to match.
   const lineHeightPx = `${(draftLayer.fontSize + (draftLayer.spacing ?? 0)) * scale}px`
   const cssFontFamily = imagorFontToCss(draftLayer.font)
   const fontWeight = draftLayer.fontStyle.includes('bold') ? 'bold' : 'normal'
