@@ -985,13 +985,10 @@ export class ImageEditor {
             }
           }
 
-          // Build args, omitting trailing defaults
-          // text(text, x, y[, font[, color[, alpha[, width[, align[, justify[, wrap[, spacing[, dpi]]]]]]]]])
+          // Build args array with all optional fields, then trim trailing defaults.
+          // text(text,x,y,font,color,alpha,blend_mode,width,align,justify,wrap,spacing[,dpi])
           const args: (string | number)[] = [encodedText, x, y]
 
-          // text(text,x,y,font,color,alpha,blend_mode,width,align,justify,wrap,spacing,dpi)
-          // blend_mode is at index 6 — must be emitted before width (index 7).
-          // Emit wrap+spacing when non-default so the stored spacing value is preserved.
           const hasNonDefaultTrailing =
             font !== 'sans-20' ||
             layer.color !== '000000' ||
@@ -1013,8 +1010,19 @@ export class ImageEditor {
             args.push(layer.justify ? 'true' : 'false')
             args.push(layer.wrap)
             args.push(Math.round(layer.spacing * scaleFactor))
-            if (layer.dpi !== 72) {
-              args.push(layer.dpi)
+            if (layer.dpi !== 72) args.push(layer.dpi)
+
+            // Trim trailing defaults (right-to-left) to keep URLs minimal.
+            // Optional args in order: font, color, alpha, blendMode, width, align, justify, wrap, spacing
+            // Defaults in the same order:
+            const OPTIONAL_DEFAULTS: (string | number)[] = [
+              'sans-20', '000000', 0, 'normal', 0, 'low', 'false', 'word', 0,
+            ]
+            while (args.length > 3) {
+              const optIdx = args.length - 1 - 3 // index into OPTIONAL_DEFAULTS (0 = font)
+              if (optIdx < 0 || optIdx >= OPTIONAL_DEFAULTS.length) break
+              if (String(args[args.length - 1]) !== String(OPTIONAL_DEFAULTS[optIdx])) break
+              args.pop()
             }
           }
 
@@ -1408,8 +1416,6 @@ export class ImageEditor {
             layer.wrap !== 'word' ||
             layer.spacing !== 0
 
-          // Always emit all args through justify+wrap+spacing so the stored spacing value
-          // (extra leading on top of Pango's natural line height) is preserved.
           if (hasNonDefault) {
             args.push(font)
             args.push(layer.color || '000000')
@@ -1421,6 +1427,18 @@ export class ImageEditor {
             args.push(layer.wrap)
             args.push(Math.round(layer.spacing * sf))
             if (layer.dpi !== 72) args.push(layer.dpi)
+
+            // Trim trailing defaults (right-to-left) to keep URLs minimal.
+            // Optional args in order: font, color, alpha, blendMode, width, align, justify, wrap, spacing
+            const OPTIONAL_DEFAULTS: (string | number)[] = [
+              'sans-20', '000000', 0, 'normal', 0, 'low', 'false', 'word', 0,
+            ]
+            while (args.length > 3) {
+              const optIdx = args.length - 1 - 3 // index into OPTIONAL_DEFAULTS (0 = font)
+              if (optIdx < 0 || optIdx >= OPTIONAL_DEFAULTS.length) break
+              if (String(args[args.length - 1]) !== String(OPTIONAL_DEFAULTS[optIdx])) break
+              args.pop()
+            }
           }
 
           filters.push({ name: 'text', args: args.join(',') })
