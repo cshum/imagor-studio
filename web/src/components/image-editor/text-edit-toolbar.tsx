@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { TextAlign, TextLayer } from '@/lib/image-editor'
+import type { TextLayer } from '@/lib/image-editor'
 
 interface TextEditToolbarProps {
   layer: TextLayer
