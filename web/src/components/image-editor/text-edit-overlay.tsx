@@ -40,6 +40,11 @@ export function imagorFontToCss(font: string | undefined): string {
     case 'mono':
       // Backward compat: old layers stored 'monospace'/'mono'; map to Noto Sans Mono.
       return '"Noto Sans Mono", monospace'
+    case 'noto mono':
+    case 'noto sans mono':
+      // Current value stored by the toolbar. 'Noto Mono' is the imagor/Pango font name
+      // (two-word family, unambiguous). 'Noto Sans Mono' is kept as a compat alias.
+      return '"Noto Sans Mono", monospace'
     default:
       // Named fonts (e.g. 'Noto Sans', 'DejaVu Sans') — use as-is with a
       // generic fallback so the browser degrades gracefully if not installed.
