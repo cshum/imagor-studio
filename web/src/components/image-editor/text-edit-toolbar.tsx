@@ -332,22 +332,26 @@ export function TextEditToolbar({
       <div className='bg-border mx-0.5 h-5 w-px' />
 
       {/* Text alignment */}
-      <ToggleGroup
-        type='single'
-        value={layer.align}
-        onValueChange={(v) => {
-          if (v) onUpdate({ align: v as TextAlign })
-        }}
-        className='gap-0'
-      >
-        <ToggleGroupItem value='low' size='sm' title='Left' onMouseDown={(e) => e.preventDefault()}>
+      <ToggleGroup type='single' value={layer.align} className='gap-0'>
+        <ToggleGroupItem
+          value='low'
+          size='sm'
+          title='Left'
+          onMouseDown={(e) => {
+            e.preventDefault()
+            if (layer.align !== 'low') onUpdate({ align: 'low' })
+          }}
+        >
           <AlignLeft />
         </ToggleGroupItem>
         <ToggleGroupItem
           value='centre'
           size='sm'
           title='Center'
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => {
+            e.preventDefault()
+            if (layer.align !== 'centre') onUpdate({ align: 'centre' })
+          }}
         >
           <AlignCenter />
         </ToggleGroupItem>
@@ -355,7 +359,10 @@ export function TextEditToolbar({
           value='high'
           size='sm'
           title='Right'
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => {
+            e.preventDefault()
+            if (layer.align !== 'high') onUpdate({ align: 'high' })
+          }}
         >
           <AlignRight />
         </ToggleGroupItem>

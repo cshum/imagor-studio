@@ -257,13 +257,13 @@ export function TextEditOverlay({
   const cssFontFamily = imagorFontToCss(draftLayer.font)
   const fontWeight = draftLayer.fontStyle.includes('bold') ? 'bold' : 'normal'
   const fontItalic = draftLayer.fontStyle.includes('italic') ? 'italic' : 'normal'
-  const textAlign = draftLayer.justify
-    ? 'justify'
-    : draftLayer.align === 'centre'
-      ? 'center'
-      : draftLayer.align === 'high'
-        ? 'right'
-        : 'left'
+  const alignToCss = (align: string) =>
+    align === 'centre' ? 'center' : align === 'high' ? 'right' : 'left'
+  // Always use the alignment value in the textarea — never 'justify'.
+  // Pango's justify (word-spacing expansion) is a server-side render effect only;
+  // in the editor we just need to show the correct left/center/right alignment.
+  const textAlign = alignToCss(draftLayer.align)
+  const textAlignLast = 'auto'
 
   // Map imagor wrap mode → CSS for the editor textarea.
   // The goal is good editor UX (no invisible overflow) while staying close to Pango's behaviour.
@@ -430,6 +430,7 @@ export function TextEditOverlay({
             fontWeight,
             fontStyle: fontItalic,
             textAlign,
+            textAlignLast,
             color: `#${draftLayer.color}`,
             background: 'transparent',
             border: 'none',

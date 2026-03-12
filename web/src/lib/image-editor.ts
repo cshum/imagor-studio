@@ -1016,7 +1016,15 @@ export class ImageEditor {
             // Optional args in order: font, color, alpha, blendMode, width, align, justify, wrap, spacing
             // Defaults in the same order:
             const OPTIONAL_DEFAULTS: (string | number)[] = [
-              'sans-20', '000000', 0, 'normal', 0, 'low', 'false', 'word', 0,
+              'sans-20',
+              '000000',
+              0,
+              'normal',
+              0,
+              'low',
+              'false',
+              'word',
+              0,
             ]
             while (args.length > 3) {
               const optIdx = args.length - 1 - 3 // index into OPTIONAL_DEFAULTS (0 = font)
@@ -1431,7 +1439,15 @@ export class ImageEditor {
             // Trim trailing defaults (right-to-left) to keep URLs minimal.
             // Optional args in order: font, color, alpha, blendMode, width, align, justify, wrap, spacing
             const OPTIONAL_DEFAULTS: (string | number)[] = [
-              'sans-20', '000000', 0, 'normal', 0, 'low', 'false', 'word', 0,
+              'sans-20',
+              '000000',
+              0,
+              'normal',
+              0,
+              'low',
+              'false',
+              'word',
+              0,
             ]
             while (args.length > 3) {
               const optIdx = args.length - 1 - 3 // index into OPTIONAL_DEFAULTS (0 = font)
