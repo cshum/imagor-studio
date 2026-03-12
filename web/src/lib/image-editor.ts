@@ -991,8 +991,7 @@ export class ImageEditor {
 
           // text(text,x,y,font,color,alpha,blend_mode,width,align,justify,wrap,spacing,dpi)
           // blend_mode is at index 6 — must be emitted before width (index 7).
-          // We always emit wrap+spacing (Pango line-height correction), so the
-          // hasNonDefaultTrailing check must be true whenever we have any non-default arg.
+          // We always emit wrap+spacing so the stored spacing value is preserved.
           const hasNonDefaultTrailing =
             font !== 'sans-20' ||
             layer.color !== '000000' ||
@@ -1003,9 +1002,8 @@ export class ImageEditor {
             layer.justify ||
             true // always emit wrap+spacing for Pango line-height correction
 
-          // Always emit all args through justify+wrap+spacing (Pango line-height correction).
-          // The correction (≈ -0.164 × fontSize) is baked into spacing so the server
-          // render matches the CSS textarea (lineHeight = fontSize).
+          // Always emit all args through justify+wrap+spacing so the stored spacing value
+          // (extra leading on top of Pango's natural line height) is preserved.
           if (hasNonDefaultTrailing) {
             args.push(font)
             args.push(layer.color || '000000')
@@ -1015,10 +1013,7 @@ export class ImageEditor {
             args.push(layer.align)
             args.push(layer.justify ? 'true' : 'false')
             args.push(layer.wrap)
-            const pangoSpacing = Math.round(
-              (layer.spacing - 0.164 * layer.fontSize) * scaleFactor,
-            )
-            args.push(pangoSpacing)
+            args.push(Math.round(layer.spacing * scaleFactor))
             if (layer.dpi !== 72) {
               args.push(layer.dpi)
             }
@@ -1413,9 +1408,8 @@ export class ImageEditor {
             layer.justify ||
             true // always emit wrap+spacing for Pango line-height correction
 
-          // Always emit all args through justify+wrap+spacing (Pango line-height correction).
-          // The correction (≈ -0.164 × fontSize) is baked into spacing so the server
-          // render matches the CSS textarea (lineHeight = fontSize).
+          // Always emit all args through justify+wrap+spacing so the stored spacing value
+          // (extra leading on top of Pango's natural line height) is preserved.
           if (hasNonDefault) {
             args.push(font)
             args.push(layer.color || '000000')
@@ -1425,8 +1419,7 @@ export class ImageEditor {
             args.push(layer.align)
             args.push(layer.justify ? 'true' : 'false')
             args.push(layer.wrap)
-            const pangoSpacing = Math.round((layer.spacing - 0.164 * layer.fontSize) * sf)
-            args.push(pangoSpacing)
+            args.push(Math.round(layer.spacing * sf))
             if (layer.dpi !== 72) args.push(layer.dpi)
           }
 

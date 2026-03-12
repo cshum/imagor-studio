@@ -247,11 +247,13 @@ export function TextEditOverlay({
 
   // Typography — derived from draftLayer so the textarea reflects toolbar changes immediately
   const fontSizePx = `${draftLayer.fontSize * scale}px`
-  // CSS lineHeight = fontSize (tight, no extra leading). The browser renders DejaVu Sans
-  // at exactly this height when lineHeight equals fontSize.
-  // Pango's natural line height is larger (~1.164×), so we pass a negative spacing
-  // correction in the imagor URL (see image-editor.ts) to compress Pango down to match.
-  const lineHeightPx = `${(draftLayer.fontSize + (draftLayer.spacing ?? 0)) * scale}px`
+  // Pango's natural line height for DejaVu Sans/Serif/Mono is ~1.164× the font size
+  // (ascender=1901, descender=483, UPM=2048 → (1901+483)/2048 ≈ 1.164).
+  // Pango cannot reduce line height below this natural value (spacing only adds extra).
+  // So the CSS lineHeight must match Pango's natural height so the textarea height
+  // equals the imagor render height. layer.spacing is extra pixels on top of this.
+  const DEJAVU_LINE_HEIGHT_RATIO = (1901 + 483) / 2048 // ≈ 1.164
+  const lineHeightPx = `${(draftLayer.fontSize * DEJAVU_LINE_HEIGHT_RATIO + (draftLayer.spacing ?? 0)) * scale}px`
   const cssFontFamily = imagorFontToCss(draftLayer.font)
   const fontWeight = draftLayer.fontStyle.includes('bold') ? 'bold' : 'normal'
   const fontItalic = draftLayer.fontStyle.includes('italic') ? 'italic' : 'normal'
@@ -511,7 +513,8 @@ export function TextEditOverlay({
             e.preventDefault()
             e.stopPropagation()
             const el = textareaRef.current
-            const lineHeightDisplayPx = (draftLayer.fontSize + (draftLayer.spacing ?? 0)) * scale
+            const lineHeightDisplayPx =
+              (draftLayer.fontSize * DEJAVU_LINE_HEIGHT_RATIO + (draftLayer.spacing ?? 0)) * scale
             const lineCount =
               el && lineHeightDisplayPx > 0
                 ? Math.max(1, Math.round(el.scrollHeight / lineHeightDisplayPx))
