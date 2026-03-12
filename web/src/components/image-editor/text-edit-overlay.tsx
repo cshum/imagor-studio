@@ -17,36 +17,36 @@ function HandleDot() {
 
 /**
  * Convert an imagor font identifier to a CSS font-family string.
- * Imagor accepts short aliases ('sans', 'serif', 'monospace') that are
- * NOT valid CSS generic families — 'sans' in CSS is treated as an unknown
- * named font and falls back to the browser default serif, not sans-serif.
  *
- * The default sans font is "Noto Sans" — the same font installed in the
- * Docker runtime image (fonts-noto-core) so the browser editor overlay and
- * the imagor/Pango server render use an identical typeface.
- * Old layers saved with font:'sans' are mapped here for backward compat.
+ * Imagor sends Pango generic aliases ('sans', 'serif', 'monospace') which
+ * resolve to DejaVu Sans/Serif/Mono in the Docker runtime image via
+ * fonts-dejavu-core. The browser loads the same DejaVu fonts via @fontsource
+ * so the textarea overlay and the imagor/Pango server render use identical
+ * typefaces and line metrics.
+ *
+ * Backward-compat cases handle layers saved during the brief period when
+ * explicit Noto font names were stored ('Noto Sans', 'Noto Serif', 'Noto Mono').
  */
 export function imagorFontToCss(font: string | undefined): string {
-  if (!font) return '"Noto Sans", sans-serif'
+  if (!font) return '"DejaVu Sans", sans-serif'
   switch (font.toLowerCase()) {
     case 'sans':
-      // Backward compat: old layers stored 'sans'; map to Noto Sans so the
-      // editor overlay matches the server render.
-      return '"Noto Sans", sans-serif'
+      return '"DejaVu Sans", sans-serif'
     case 'serif':
-      // Backward compat: old layers stored 'serif'; map to Noto Serif.
-      return '"Noto Serif", serif'
+      return '"DejaVu Serif", serif'
     case 'monospace':
     case 'mono':
-      // Backward compat: old layers stored 'monospace'/'mono'; map to Noto Sans Mono.
-      return '"Noto Sans Mono", monospace'
+      return '"DejaVu Mono", monospace'
+    // Backward compat: layers saved when Noto fonts were used explicitly
+    case 'noto sans':
+      return '"DejaVu Sans", sans-serif'
+    case 'noto serif':
+      return '"DejaVu Serif", serif'
     case 'noto mono':
     case 'noto sans mono':
-      // Current value stored by the toolbar. 'Noto Mono' is the imagor/Pango font name
-      // (two-word family, unambiguous). 'Noto Sans Mono' is kept as a compat alias.
-      return '"Noto Sans Mono", monospace'
+      return '"DejaVu Mono", monospace'
     default:
-      // Named fonts (e.g. 'Noto Sans', 'DejaVu Sans') — use as-is with a
+      // Named fonts (e.g. 'DejaVu Sans', custom fonts) — use as-is with a
       // generic fallback so the browser degrades gracefully if not installed.
       return `"${font}", sans-serif`
   }

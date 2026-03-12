@@ -1,19 +1,20 @@
 @import 'scrollbar.css';
 
-/* Noto fonts — self-hosted via @fontsource, no external network requests.
-   These match the fonts installed in the Docker runtime image (fonts-noto-core)
+/* DejaVu fonts — self-hosted via @fontsource, no external network requests.
+   These match the fonts that Pango resolves for the 'sans', 'serif', and
+   'monospace' generic aliases in the Docker runtime image (fonts-dejavu-core),
    so the text-edit-overlay textarea and toolbar previews match the imagor/Pango
-   server render exactly for all three font options (sans, serif, monospace). */
-@import '@fontsource/noto-sans/400.css';
-@import '@fontsource/noto-sans/400-italic.css';
-@import '@fontsource/noto-sans/700.css';
-@import '@fontsource/noto-sans/700-italic.css';
-@import '@fontsource/noto-serif/400.css';
-@import '@fontsource/noto-serif/400-italic.css';
-@import '@fontsource/noto-serif/700.css';
-@import '@fontsource/noto-serif/700-italic.css';
-@import '@fontsource/noto-sans-mono/400.css';
-@import '@fontsource/noto-sans-mono/700.css';
+   server render exactly for all three font options. */
+@import '@fontsource/dejavu-sans/400.css';
+@import '@fontsource/dejavu-sans/400-italic.css';
+@import '@fontsource/dejavu-sans/700.css';
+@import '@fontsource/dejavu-sans/700-italic.css';
+@import '@fontsource/dejavu-serif/400.css';
+@import '@fontsource/dejavu-serif/400-italic.css';
+@import '@fontsource/dejavu-serif/700.css';
+@import '@fontsource/dejavu-serif/700-italic.css';
+@import '@fontsource/dejavu-mono/400.css';
+@import '@fontsource/dejavu-mono/700.css';
 
 @import 'tailwindcss';
 

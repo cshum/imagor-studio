@@ -96,17 +96,14 @@ function FontSizeInput({
 }
 
 // label = what the user sees; value = font param sent to imagor; cssFamily = preview style
-// All three use explicit Noto font names (fonts-noto-core in Docker) so the browser
-// editor overlay and the imagor/Pango server render use identical typefaces.
+// The short aliases 'sans', 'serif', 'monospace' are Pango generic family names that
+// resolve to DejaVu Sans/Serif/Mono in the Docker runtime image (fonts-dejavu-core).
+// The browser loads the same DejaVu fonts via @fontsource so the textarea overlay
+// and the imagor/Pango server render use identical typefaces and line metrics.
 const FONTS: { label: string; value: string; cssFamily: string }[] = [
-  { label: 'Sans', value: 'Noto Sans', cssFamily: '"Noto Sans", sans-serif' },
-  { label: 'Serif', value: 'Noto Serif', cssFamily: '"Noto Serif", serif' },
-  // 'Noto Mono' is used (not 'Noto Sans Mono') because imagor/Pango parses font
-  // description strings by splitting on spaces: "Noto Sans Mono 20" would be
-  // misread as family="Noto Sans" + unknown style "Mono". "Noto Mono" is a
-  // two-word family name that Pango parses unambiguously. The browser CSS still
-  // uses @fontsource/noto-sans-mono which is the modern equivalent.
-  { label: 'Monospace', value: 'Noto Mono', cssFamily: '"Noto Sans Mono", monospace' },
+  { label: 'Sans', value: 'sans', cssFamily: '"DejaVu Sans", sans-serif' },
+  { label: 'Serif', value: 'serif', cssFamily: '"DejaVu Serif", serif' },
+  { label: 'Monospace', value: 'monospace', cssFamily: '"DejaVu Mono", monospace' },
 ]
 
 export function TextEditToolbar({
