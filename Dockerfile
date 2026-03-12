@@ -62,7 +62,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
   libspng0 libcgif0 libheif1 libheif-plugin-x265 libheif-plugin-aomenc libjxl0.11 libraw23t64 \
   libmagickwand-7.q16-10 \
   libdav1d7 libx264-dev libx265-dev libnuma-dev libvpx9 libtheora0 libvorbis-dev gosu \
-  fontconfig && \
+  fontconfig fonts-dejavu-core && \
   ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
   apt-get autoremove -y && \
   apt-get autoclean && \

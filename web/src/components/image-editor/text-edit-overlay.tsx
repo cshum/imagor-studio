@@ -17,22 +17,36 @@ function HandleDot() {
 
 /**
  * Convert an imagor font identifier to a CSS font-family string.
- * Imagor accepts short aliases ('sans', 'serif', 'monospace') that are
- * NOT valid CSS generic families — 'sans' in CSS is treated as an unknown
- * named font and falls back to the browser default serif, not sans-serif.
+ *
+ * Imagor sends Pango generic aliases ('sans', 'serif', 'monospace') which
+ * resolve to DejaVu Sans/Serif/Mono in the Docker runtime image via
+ * fonts-dejavu-core. The browser loads the same DejaVu fonts via @fontsource
+ * so the textarea overlay and the imagor/Pango server render use identical
+ * typefaces and line metrics.
+ *
+ * Backward-compat cases handle layers saved during the brief period when
+ * explicit Noto font names were stored ('Noto Sans', 'Noto Serif', 'Noto Mono').
  */
 export function imagorFontToCss(font: string | undefined): string {
-  if (!font) return 'sans-serif'
+  if (!font) return '"DejaVu Sans", sans-serif'
   switch (font.toLowerCase()) {
     case 'sans':
-      return 'sans-serif'
+      return '"DejaVu Sans", sans-serif'
     case 'serif':
-      return 'serif'
+      return '"DejaVu Serif", serif'
     case 'monospace':
     case 'mono':
-      return 'monospace'
+      return '"DejaVu Mono", monospace'
+    // Backward compat: layers saved when Noto fonts were used explicitly
+    case 'noto sans':
+      return '"DejaVu Sans", sans-serif'
+    case 'noto serif':
+      return '"DejaVu Serif", serif'
+    case 'noto mono':
+    case 'noto sans mono':
+      return '"DejaVu Mono", monospace'
     default:
-      // Named fonts (e.g. 'Noto Sans', 'DejaVu Sans') — use as-is with a
+      // Named fonts (e.g. 'DejaVu Sans', custom fonts) — use as-is with a
       // generic fallback so the browser degrades gracefully if not installed.
       return `"${font}", sans-serif`
   }
@@ -233,17 +247,23 @@ export function TextEditOverlay({
 
   // Typography — derived from draftLayer so the textarea reflects toolbar changes immediately
   const fontSizePx = `${draftLayer.fontSize * scale}px`
-  const lineHeightPx = `${(draftLayer.fontSize + (draftLayer.spacing ?? 0)) * scale}px`
+  // Pango's natural line height for DejaVu Sans/Serif/Mono is ~1.164× the font size
+  // (ascender=1901, descender=483, UPM=2048 → (1901+483)/2048 ≈ 1.164).
+  // Pango cannot reduce line height below this natural value (spacing only adds extra).
+  // So the CSS lineHeight must match Pango's natural height so the textarea height
+  // equals the imagor render height. layer.spacing is extra pixels on top of this.
+  const DEJAVU_LINE_HEIGHT_RATIO = (1901 + 483) / 2048 // ≈ 1.164
+  const lineHeightPx = `${(draftLayer.fontSize * DEJAVU_LINE_HEIGHT_RATIO + (draftLayer.spacing ?? 0)) * scale}px`
   const cssFontFamily = imagorFontToCss(draftLayer.font)
   const fontWeight = draftLayer.fontStyle.includes('bold') ? 'bold' : 'normal'
   const fontItalic = draftLayer.fontStyle.includes('italic') ? 'italic' : 'normal'
-  const textAlign = draftLayer.justify
-    ? 'justify'
-    : draftLayer.align === 'centre'
-      ? 'center'
-      : draftLayer.align === 'high'
-        ? 'right'
-        : 'left'
+  const alignToCss = (align: string) =>
+    align === 'centre' ? 'center' : align === 'high' ? 'right' : 'left'
+  // Always use the alignment value in the textarea — never 'justify'.
+  // Pango's justify (word-spacing expansion) is a server-side render effect only;
+  // in the editor we just need to show the correct left/center/right alignment.
+  const textAlign = alignToCss(draftLayer.align)
+  const textAlignLast = 'auto'
 
   // Map imagor wrap mode → CSS for the editor textarea.
   // The goal is good editor UX (no invisible overflow) while staying close to Pango's behaviour.
@@ -410,6 +430,7 @@ export function TextEditOverlay({
             fontWeight,
             fontStyle: fontItalic,
             textAlign,
+            textAlignLast,
             color: `#${draftLayer.color}`,
             background: 'transparent',
             border: 'none',
@@ -493,7 +514,8 @@ export function TextEditOverlay({
             e.preventDefault()
             e.stopPropagation()
             const el = textareaRef.current
-            const lineHeightDisplayPx = (draftLayer.fontSize + (draftLayer.spacing ?? 0)) * scale
+            const lineHeightDisplayPx =
+              (draftLayer.fontSize * DEJAVU_LINE_HEIGHT_RATIO + (draftLayer.spacing ?? 0)) * scale
             const lineCount =
               el && lineHeightDisplayPx > 0
                 ? Math.max(1, Math.round(el.scrollHeight / lineHeightDisplayPx))

@@ -985,12 +985,10 @@ export class ImageEditor {
             }
           }
 
-          // Build args, omitting trailing defaults
-          // text(text, x, y[, font[, color[, alpha[, width[, align[, justify[, wrap[, spacing[, dpi]]]]]]]]])
+          // Build args array with all optional fields, then trim trailing defaults.
+          // text(text,x,y,font,color,alpha,blend_mode,width,align,justify,wrap,spacing[,dpi])
           const args: (string | number)[] = [encodedText, x, y]
 
-          // text(text,x,y,font,color,alpha,blend_mode,width,align,justify,wrap,spacing,dpi)
-          // blend_mode is at index 6 — must be emitted before width (index 7).
           const hasNonDefaultTrailing =
             font !== 'sans-20' ||
             layer.color !== '000000' ||
@@ -1000,70 +998,39 @@ export class ImageEditor {
             layer.align !== 'low' ||
             layer.justify ||
             layer.wrap !== 'word' ||
-            layer.spacing !== 0 ||
-            layer.dpi !== 72
+            layer.spacing !== 0
 
           if (hasNonDefaultTrailing) {
             args.push(font)
             args.push(layer.color || '000000')
-            if (
-              layer.alpha !== 0 ||
-              layer.blendMode !== 'normal' ||
-              (typeof width === 'number' ? width > 0 : width !== '0') ||
-              layer.align !== 'low' ||
-              layer.justify ||
-              layer.wrap !== 'word' ||
-              layer.spacing !== 0 ||
-              layer.dpi !== 72
-            ) {
-              args.push(layer.alpha)
-              if (
-                layer.blendMode !== 'normal' ||
-                (typeof width === 'number' ? width > 0 : width !== '0') ||
-                layer.align !== 'low' ||
-                layer.justify ||
-                layer.wrap !== 'word' ||
-                layer.spacing !== 0 ||
-                layer.dpi !== 72
-              ) {
-                args.push(layer.blendMode) // index 6: blend_mode
-                if (
-                  (typeof width === 'number' ? width > 0 : width !== '0') ||
-                  layer.align !== 'low' ||
-                  layer.justify ||
-                  layer.wrap !== 'word' ||
-                  layer.spacing !== 0 ||
-                  layer.dpi !== 72
-                ) {
-                  args.push(width) // index 7: width
-                  if (
-                    layer.align !== 'low' ||
-                    layer.justify ||
-                    layer.wrap !== 'word' ||
-                    layer.spacing !== 0 ||
-                    layer.dpi !== 72
-                  ) {
-                    args.push(layer.align) // index 8: align
-                    if (
-                      layer.justify ||
-                      layer.wrap !== 'word' ||
-                      layer.spacing !== 0 ||
-                      layer.dpi !== 72
-                    ) {
-                      args.push(layer.justify ? 'true' : 'false')
-                      if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
-                        args.push(layer.wrap)
-                        if (layer.spacing !== 0 || layer.dpi !== 72) {
-                          args.push(Math.round(layer.spacing * scaleFactor))
-                          if (layer.dpi !== 72) {
-                            args.push(layer.dpi)
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+            args.push(layer.alpha)
+            args.push(layer.blendMode)
+            args.push(width)
+            args.push(layer.align)
+            args.push(layer.justify ? 'true' : 'false')
+            args.push(layer.wrap)
+            args.push(Math.round(layer.spacing * scaleFactor))
+            if (layer.dpi !== 72) args.push(layer.dpi)
+
+            // Trim trailing defaults (right-to-left) to keep URLs minimal.
+            // Optional args in order: font, color, alpha, blendMode, width, align, justify, wrap, spacing
+            // Defaults in the same order:
+            const OPTIONAL_DEFAULTS: (string | number)[] = [
+              'sans-20',
+              '000000',
+              0,
+              'normal',
+              0,
+              'low',
+              'false',
+              'word',
+              0,
+            ]
+            while (args.length > 3) {
+              const optIdx = args.length - 1 - 3 // index into OPTIONAL_DEFAULTS (0 = font)
+              if (optIdx < 0 || optIdx >= OPTIONAL_DEFAULTS.length) break
+              if (String(args[args.length - 1]) !== String(OPTIONAL_DEFAULTS[optIdx])) break
+              args.pop()
             }
           }
 
@@ -1455,68 +1422,38 @@ export class ImageEditor {
             layer.align !== 'low' ||
             layer.justify ||
             layer.wrap !== 'word' ||
-            layer.spacing !== 0 ||
-            layer.dpi !== 72
+            layer.spacing !== 0
 
           if (hasNonDefault) {
             args.push(font)
             args.push(layer.color || '000000')
-            if (
-              layer.alpha !== 0 ||
-              layer.blendMode !== 'normal' ||
-              widthNonDefault2 ||
-              layer.align !== 'low' ||
-              layer.justify ||
-              layer.wrap !== 'word' ||
-              layer.spacing !== 0 ||
-              layer.dpi !== 72
-            ) {
-              args.push(layer.alpha)
-              if (
-                layer.blendMode !== 'normal' ||
-                widthNonDefault2 ||
-                layer.align !== 'low' ||
-                layer.justify ||
-                layer.wrap !== 'word' ||
-                layer.spacing !== 0 ||
-                layer.dpi !== 72
-              ) {
-                args.push(layer.blendMode)
-                if (
-                  widthNonDefault2 ||
-                  layer.align !== 'low' ||
-                  layer.justify ||
-                  layer.wrap !== 'word' ||
-                  layer.spacing !== 0 ||
-                  layer.dpi !== 72
-                ) {
-                  args.push(width)
-                  if (
-                    layer.align !== 'low' ||
-                    layer.justify ||
-                    layer.wrap !== 'word' ||
-                    layer.spacing !== 0 ||
-                    layer.dpi !== 72
-                  ) {
-                    args.push(layer.align)
-                    if (
-                      layer.justify ||
-                      layer.wrap !== 'word' ||
-                      layer.spacing !== 0 ||
-                      layer.dpi !== 72
-                    ) {
-                      args.push(layer.justify ? 'true' : 'false')
-                      if (layer.wrap !== 'word' || layer.spacing !== 0 || layer.dpi !== 72) {
-                        args.push(layer.wrap)
-                        if (layer.spacing !== 0 || layer.dpi !== 72) {
-                          args.push(Math.round(layer.spacing * sf))
-                          if (layer.dpi !== 72) args.push(layer.dpi)
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+            args.push(layer.alpha)
+            args.push(layer.blendMode)
+            args.push(width)
+            args.push(layer.align)
+            args.push(layer.justify ? 'true' : 'false')
+            args.push(layer.wrap)
+            args.push(Math.round(layer.spacing * sf))
+            if (layer.dpi !== 72) args.push(layer.dpi)
+
+            // Trim trailing defaults (right-to-left) to keep URLs minimal.
+            // Optional args in order: font, color, alpha, blendMode, width, align, justify, wrap, spacing
+            const OPTIONAL_DEFAULTS: (string | number)[] = [
+              'sans-20',
+              '000000',
+              0,
+              'normal',
+              0,
+              'low',
+              'false',
+              'word',
+              0,
+            ]
+            while (args.length > 3) {
+              const optIdx = args.length - 1 - 3 // index into OPTIONAL_DEFAULTS (0 = font)
+              if (optIdx < 0 || optIdx >= OPTIONAL_DEFAULTS.length) break
+              if (String(args[args.length - 1]) !== String(OPTIONAL_DEFAULTS[optIdx])) break
+              args.pop()
             }
           }
 

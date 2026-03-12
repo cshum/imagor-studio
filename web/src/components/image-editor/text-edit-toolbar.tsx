@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { TextAlign, TextLayer } from '@/lib/image-editor'
+import type { TextLayer } from '@/lib/image-editor'
 
 interface TextEditToolbarProps {
   layer: TextLayer
@@ -96,10 +96,14 @@ function FontSizeInput({
 }
 
 // label = what the user sees; value = font param sent to imagor; cssFamily = preview style
+// The short aliases 'sans', 'serif', 'monospace' are Pango generic family names that
+// resolve to DejaVu Sans/Serif/Mono in the Docker runtime image (fonts-dejavu-core).
+// The browser loads the same DejaVu fonts via @fontsource so the textarea overlay
+// and the imagor/Pango server render use identical typefaces and line metrics.
 const FONTS: { label: string; value: string; cssFamily: string }[] = [
-  { label: 'Sans', value: 'sans', cssFamily: 'sans-serif' },
-  { label: 'Serif', value: 'serif', cssFamily: 'serif' },
-  { label: 'Monospace', value: 'monospace', cssFamily: 'monospace' },
+  { label: 'Sans', value: 'sans', cssFamily: '"DejaVu Sans", sans-serif' },
+  { label: 'Serif', value: 'serif', cssFamily: '"DejaVu Serif", serif' },
+  { label: 'Monospace', value: 'monospace', cssFamily: '"DejaVu Mono", monospace' },
 ]
 
 export function TextEditToolbar({
@@ -328,22 +332,26 @@ export function TextEditToolbar({
       <div className='bg-border mx-0.5 h-5 w-px' />
 
       {/* Text alignment */}
-      <ToggleGroup
-        type='single'
-        value={layer.align}
-        onValueChange={(v) => {
-          if (v) onUpdate({ align: v as TextAlign })
-        }}
-        className='gap-0'
-      >
-        <ToggleGroupItem value='low' size='sm' title='Left' onMouseDown={(e) => e.preventDefault()}>
+      <ToggleGroup type='single' value={layer.align} className='gap-0'>
+        <ToggleGroupItem
+          value='low'
+          size='sm'
+          title='Left'
+          onMouseDown={(e) => {
+            e.preventDefault()
+            if (layer.align !== 'low') onUpdate({ align: 'low' })
+          }}
+        >
           <AlignLeft />
         </ToggleGroupItem>
         <ToggleGroupItem
           value='centre'
           size='sm'
           title='Center'
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => {
+            e.preventDefault()
+            if (layer.align !== 'centre') onUpdate({ align: 'centre' })
+          }}
         >
           <AlignCenter />
         </ToggleGroupItem>
@@ -351,7 +359,10 @@ export function TextEditToolbar({
           value='high'
           size='sm'
           title='Right'
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => {
+            e.preventDefault()
+            if (layer.align !== 'high') onUpdate({ align: 'high' })
+          }}
         >
           <AlignRight />
         </ToggleGroupItem>
