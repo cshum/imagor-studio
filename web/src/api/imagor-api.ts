@@ -2,10 +2,10 @@ import type {
   ConfigureEmbeddedImagorMutation,
   ConfigureExternalImagorMutation,
   ConfigureExternalImagorMutationVariables,
-  GenerateImagorUrlMutation,
-  GenerateImagorUrlMutationVariables,
   GenerateImagorUrlFromTemplateMutation,
   GenerateImagorUrlFromTemplateMutationVariables,
+  GenerateImagorUrlMutation,
+  GenerateImagorUrlMutationVariables,
   ImagorStatusQuery,
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'

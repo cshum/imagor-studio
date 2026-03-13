@@ -1841,9 +1841,7 @@ describe('ImageEditor', () => {
       const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
       const lastCall = calls[calls.length - 1][0] as { stateJson: string }
       const parsedState = JSON.parse(lastCall.stateJson)
-      const layerInState = parsedState.layers?.find(
-        (l: { id: string }) => l.id === 'fill-d2-a',
-      )
+      const layerInState = parsedState.layers?.find((l: { id: string }) => l.id === 'fill-d2-a')
       expect(layerInState?.transforms?.widthFull).toBe(true)
       expect(layerInState?.transforms?.heightFull).toBe(true)
     })
@@ -1895,7 +1893,9 @@ describe('ImageEditor', () => {
         expect(generateImagorUrlFromTemplate).toHaveBeenCalledWith(
           expect.objectContaining({
             forPreview: false,
-            appendFilters: expect.arrayContaining([expect.objectContaining({ name: 'attachment' })]),
+            appendFilters: expect.arrayContaining([
+              expect.objectContaining({ name: 'attachment' }),
+            ]),
           }),
         )
       })
