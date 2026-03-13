@@ -14,6 +14,7 @@ extend type Mutation {
   # Imagor URL generation from template JSON
   generateImagorUrlFromTemplate(
     templateJson: String!           # JSON-encoded ImagorTemplate envelope ({ version, transformations, ... })
+    imagePath: String               # Optional: override the image path; triggers applyTemplateState logic (fetches dimensions via meta, applies crop/dimension-mode rules)
     contextPath: [String!]          # Layer ID path for f-token parent-dim resolution ([] = root)
     forPreview: Boolean             # Adds preview/webp filters, scales blur/sharpen/padding
     previewMaxDimensions: DimensionsInput # Null = no preview constraint

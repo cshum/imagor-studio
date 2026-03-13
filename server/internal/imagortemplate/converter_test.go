@@ -518,3 +518,175 @@ func TestBuildTextFilter_ScaleFactor(t *testing.T) {
 	}
 	_ = f.Args
 }
+
+func TestApplyTemplateToImage_AdaptiveSameDims(t *testing.T) {
+	// Adaptive mode, same dimensions → crop preserved, width/height set to targetDims
+	cropL, cropT, cropW, cropH := 10.0, 20.0, 300.0, 200.0
+	tmpl := Template{
+		DimensionMode:  "adaptive",
+		PredefinedDims: &Dimensions{Width: 800, Height: 600},
+		Transformations: Transformations{
+			Width: intPtr(800), Height: intPtr(600),
+			CropLeft: &cropL, CropTop: &cropT, CropWidth: &cropW, CropHeight: &cropH,
+		},
+	}
+	target := Dimensions{Width: 800, Height: 600}
+	result := ApplyTemplateToImage(tmpl, target)
+
+	// Crop should be preserved (same dimensions)
+	if result.CropLeft == nil || *result.CropLeft != cropL {
+		t.Errorf("CropLeft = %v, want %v", result.CropLeft, cropL)
+	}
+	if result.CropTop == nil || *result.CropTop != cropT {
+		t.Errorf("CropTop = %v, want %v", result.CropTop, cropT)
+	}
+	// Adaptive: width/height set to targetDims
+	if result.Width == nil || *result.Width != 800 {
+		t.Errorf("Width = %v, want 800", result.Width)
+	}
+	if result.Height == nil || *result.Height != 600 {
+		t.Errorf("Height = %v, want 600", result.Height)
+	}
+	// OriginalDimensions set to targetDims
+	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	}
+}
+
+func TestApplyTemplateToImage_AdaptiveDifferentDims(t *testing.T) {
+	// Adaptive mode, different dimensions → crop stripped, width/height set to targetDims
+	cropL, cropT, cropW, cropH := 10.0, 20.0, 300.0, 200.0
+	tmpl := Template{
+		DimensionMode:  "adaptive",
+		PredefinedDims: &Dimensions{Width: 800, Height: 600},
+		Transformations: Transformations{
+			Width: intPtr(800), Height: intPtr(600),
+			CropLeft: &cropL, CropTop: &cropT, CropWidth: &cropW, CropHeight: &cropH,
+		},
+	}
+	target := Dimensions{Width: 1920, Height: 1080}
+	result := ApplyTemplateToImage(tmpl, target)
+
+	// Crop should be stripped (different dimensions)
+	if result.CropLeft != nil || result.CropTop != nil || result.CropWidth != nil || result.CropHeight != nil {
+		t.Error("crop fields should be nil for different dimensions")
+	}
+	// Adaptive: width/height set to targetDims
+	if result.Width == nil || *result.Width != 1920 {
+		t.Errorf("Width = %v, want 1920", result.Width)
+	}
+	if result.Height == nil || *result.Height != 1080 {
+		t.Errorf("Height = %v, want 1080", result.Height)
+	}
+	// OriginalDimensions set to targetDims
+	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	}
+}
+
+func TestApplyTemplateToImage_PredefinedSameDims(t *testing.T) {
+	// Predefined mode, same dimensions → crop preserved, width/height kept from template
+	cropL, cropT, cropW, cropH := 0.0, 0.0, 400.0, 300.0
+	tmpl := Template{
+		DimensionMode:  "predefined",
+		PredefinedDims: &Dimensions{Width: 800, Height: 600},
+		Transformations: Transformations{
+			Width: intPtr(400), Height: intPtr(300),
+			CropLeft: &cropL, CropTop: &cropT, CropWidth: &cropW, CropHeight: &cropH,
+		},
+	}
+	target := Dimensions{Width: 800, Height: 600}
+	result := ApplyTemplateToImage(tmpl, target)
+
+	// Crop preserved (same dimensions)
+	if result.CropLeft == nil {
+		t.Error("CropLeft should be preserved for same dimensions")
+	}
+	// Predefined: keep template's width/height (400x300, not 800x600)
+	if result.Width == nil || *result.Width != 400 {
+		t.Errorf("Width = %v, want 400 (template's output size)", result.Width)
+	}
+	if result.Height == nil || *result.Height != 300 {
+		t.Errorf("Height = %v, want 300 (template's output size)", result.Height)
+	}
+	// OriginalDimensions set to targetDims
+	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	}
+}
+
+func TestApplyTemplateToImage_PredefinedDifferentDims(t *testing.T) {
+	// Predefined mode, different dimensions → crop stripped, width/height kept from template
+	cropL, cropT, cropW, cropH := 10.0, 10.0, 200.0, 150.0
+	tmpl := Template{
+		DimensionMode:  "predefined",
+		PredefinedDims: &Dimensions{Width: 800, Height: 600},
+		Transformations: Transformations{
+			Width: intPtr(1280), Height: intPtr(720),
+			CropLeft: &cropL, CropTop: &cropT, CropWidth: &cropW, CropHeight: &cropH,
+		},
+	}
+	target := Dimensions{Width: 1920, Height: 1080}
+	result := ApplyTemplateToImage(tmpl, target)
+
+	// Crop stripped (different dimensions)
+	if result.CropLeft != nil || result.CropTop != nil {
+		t.Error("crop fields should be nil for different dimensions")
+	}
+	// Predefined: keep template's width/height
+	if result.Width == nil || *result.Width != 1280 {
+		t.Errorf("Width = %v, want 1280", result.Width)
+	}
+	if result.Height == nil || *result.Height != 720 {
+		t.Errorf("Height = %v, want 720", result.Height)
+	}
+	// OriginalDimensions set to targetDims
+	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	}
+}
+
+func TestApplyTemplateToImage_NoPredefinedDims(t *testing.T) {
+	// No predefinedDimensions in template → crop always stripped
+	cropL, cropT, cropW, cropH := 10.0, 10.0, 200.0, 150.0
+	tmpl := Template{
+		DimensionMode:  "adaptive",
+		PredefinedDims: nil, // no predefined dims
+		Transformations: Transformations{
+			CropLeft: &cropL, CropTop: &cropT, CropWidth: &cropW, CropHeight: &cropH,
+		},
+	}
+	target := Dimensions{Width: 800, Height: 600}
+	result := ApplyTemplateToImage(tmpl, target)
+
+	// Crop stripped (no predefined dims to compare against)
+	if result.CropLeft != nil || result.CropTop != nil {
+		t.Error("crop fields should be nil when no predefinedDimensions")
+	}
+	// OriginalDimensions set to targetDims
+	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	}
+}
+
+func TestApplyTemplateToImage_PreservesOtherTransforms(t *testing.T) {
+	// Other transformations (brightness, layers, etc.) should be preserved
+	brightness := 20.0
+	tmpl := Template{
+		DimensionMode:  "adaptive",
+		PredefinedDims: &Dimensions{Width: 800, Height: 600},
+		Transformations: Transformations{
+			Brightness: &brightness,
+			FitIn:      boolPtr(true),
+		},
+	}
+	target := Dimensions{Width: 1920, Height: 1080}
+	result := ApplyTemplateToImage(tmpl, target)
+
+	if result.Brightness == nil || *result.Brightness != brightness {
+		t.Errorf("Brightness = %v, want %v", result.Brightness, brightness)
+	}
+	if result.FitIn == nil || !*result.FitIn {
+		t.Error("FitIn should be preserved")
+	}
+}

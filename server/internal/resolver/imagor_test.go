@@ -1,12 +1,17 @@
 package resolver
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -755,4 +760,173 @@ func floatPtr(f float64) *float64 {
 
 func boolPtr(b bool) *bool {
 	return &b
+}
+
+// TestGenerateImagorURLFromTemplate_ImagePathOverride tests the imagePath override feature.
+// It uses an external-mode mock (GetInstance returns nil) so fetchImageDimensions
+// falls through to the HTTP GET path, which we intercept with a test HTTP server.
+func TestGenerateImagorURLFromTemplate_ImagePathOverride(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+
+	makeTemplateJSON := func(dimensionMode string, predefinedW, predefinedH int) string {
+		return fmt.Sprintf(`{
+			"version": "1.0",
+			"dimensionMode": %q,
+			"predefinedDimensions": {"width": %d, "height": %d},
+			"transformations": {
+				"imagePath": "original/photo.jpg",
+				"originalDimensions": {"width": %d, "height": %d},
+				"width": 800,
+				"height": 600,
+				"cropLeft": 10, "cropTop": 20, "cropWidth": 400, "cropHeight": 300
+			}
+		}`, dimensionMode, predefinedW, predefinedH, predefinedW, predefinedH)
+	}
+
+	tests := []struct {
+		name              string
+		templateJSON      string
+		overrideImagePath string
+		// metaResponse is the JSON the fake imagor meta server returns
+		metaResponse string
+		// expectedImagePath is what GenerateURL should be called with for the final URL
+		expectedImagePath string
+		// expectCrop: whether crop params should be present in the final imagor params
+		expectCrop bool
+		// expectedWidth/Height: what width/height should be in the final imagor params
+		expectedWidth  int
+		expectedHeight int
+	}{
+		{
+			name:              "adaptive mode same dimensions - crop preserved",
+			templateJSON:      makeTemplateJSON("adaptive", 800, 600),
+			overrideImagePath: "new/photo.jpg",
+			metaResponse:      `{"width":800,"height":600}`,
+			expectedImagePath: "new/photo.jpg",
+			expectCrop:        true,
+			expectedWidth:     800,
+			expectedHeight:    600,
+		},
+		{
+			name:              "adaptive mode different dimensions - crop stripped",
+			templateJSON:      makeTemplateJSON("adaptive", 800, 600),
+			overrideImagePath: "new/photo.jpg",
+			metaResponse:      `{"width":1920,"height":1080}`,
+			expectedImagePath: "new/photo.jpg",
+			expectCrop:        false,
+			expectedWidth:     1920,
+			expectedHeight:    1080,
+		},
+		{
+			name:              "predefined mode different dimensions - crop stripped, dims kept",
+			templateJSON:      makeTemplateJSON("predefined", 800, 600),
+			overrideImagePath: "new/photo.jpg",
+			metaResponse:      `{"width":1920,"height":1080}`,
+			expectedImagePath: "new/photo.jpg",
+			expectCrop:        false,
+			expectedWidth:     800, // predefined keeps template's width/height
+			expectedHeight:    600,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Start a fake HTTP server that serves the imagor meta response.
+			metaServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(tt.metaResponse))
+			}))
+			defer metaServer.Close()
+
+			mockStorage := new(MockStorage)
+			mockRegistryStore := new(MockRegistryStore)
+			mockUserStore := new(MockUserStore)
+			mockStorageProvider := NewMockStorageProvider(mockStorage)
+			mockImagorProvider := new(MockImagorProvider)
+			// GetInstance returns nil → external mode → HTTP GET path
+			mockImagorProvider.On("GetInstance").Return((*imagor.Imagor)(nil))
+
+			// fetchImageDimensions calls GenerateURL with Meta:true to get the meta URL.
+			// We return the test server URL so the HTTP GET hits our fake server.
+			mockImagorProvider.On("GenerateURL", tt.overrideImagePath, imagorpath.Params{Meta: true}).
+				Return(metaServer.URL, nil)
+
+			// The final GenerateURL call for the actual image URL.
+			mockImagorProvider.On("GenerateURL", tt.expectedImagePath, mock.MatchedBy(func(p imagorpath.Params) bool {
+				if tt.expectCrop && (p.CropLeft == 0 && p.CropTop == 0 && p.CropRight == 0 && p.CropBottom == 0) {
+					return false
+				}
+				if !tt.expectCrop && (p.CropLeft != 0 || p.CropTop != 0 || p.CropRight != 0 || p.CropBottom != 0) {
+					return false
+				}
+				return p.Width == tt.expectedWidth && p.Height == tt.expectedHeight
+			})).Return("/imagor/result.jpg", nil)
+
+			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+
+			ctx := createAdminContext("test-admin")
+			overridePath := tt.overrideImagePath
+			result, err := resolver.Mutation().GenerateImagorURLFromTemplate(
+				ctx,
+				tt.templateJSON,
+				&overridePath,
+				nil, // contextPath
+				nil, // forPreview
+				nil, // previewMaxDimensions
+				nil, // skipLayerId
+				nil, // appendFilters
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, "/imagor/result.jpg", result)
+			mockImagorProvider.AssertExpectations(t)
+		})
+	}
+}
+
+// TestGenerateImagorURLFromTemplate_NoImagePath tests that without imagePath override,
+// the resolver uses the imagePath from transformations as before.
+func TestGenerateImagorURLFromTemplate_NoImagePath(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+
+	templateJSON := `{
+		"version": "1.0",
+		"dimensionMode": "adaptive",
+		"transformations": {
+			"imagePath": "original/photo.jpg",
+			"originalDimensions": {"width": 800, "height": 600},
+			"width": 800,
+			"height": 600
+		}
+	}`
+
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	mockImagorProvider := new(MockImagorProvider)
+	mockImagorProvider.On("GenerateURL", "original/photo.jpg", mock.MatchedBy(func(p imagorpath.Params) bool {
+		return p.Width == 800 && p.Height == 600
+	})).Return("/imagor/original/photo.jpg", nil)
+
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+
+	ctx := createAdminContext("test-admin")
+	result, err := resolver.Mutation().GenerateImagorURLFromTemplate(
+		ctx,
+		templateJSON,
+		nil, // no imagePath override
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, "/imagor/original/photo.jpg", result)
+	mockImagorProvider.AssertExpectations(t)
 }

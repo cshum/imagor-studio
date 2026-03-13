@@ -851,3 +851,48 @@ func ifIntPtr(p *int, fallback int) int {
 	}
 	return fallback
 }
+
+// ApplyTemplateToImage applies a template's transformations to a target image,
+// mirroring the frontend's applyTemplateState logic in image-editor.ts.
+//
+// Rules:
+//   - Crop: kept only when predefinedDimensions matches targetDims (same source size);
+//     stripped otherwise (coordinates would be invalid for a different image).
+//   - Dimensions:
+//     "predefined" → keep the template's width/height (desired output size).
+//     "adaptive"   → replace width/height with targetDims (auto-size to new image).
+//   - OriginalDimensions is always set to targetDims so downstream callers have
+//     the correct source size for scaling calculations.
+func ApplyTemplateToImage(tmpl Template, targetDims Dimensions) Transformations {
+	state := tmpl.Transformations
+
+	// Crop handling: keep only if source and target dimensions match exactly.
+	sourceDims := tmpl.PredefinedDims
+	sameDimensions := sourceDims != nil &&
+		sourceDims.Width == targetDims.Width &&
+		sourceDims.Height == targetDims.Height
+
+	if !sameDimensions {
+		state.CropLeft = nil
+		state.CropTop = nil
+		state.CropWidth = nil
+		state.CropHeight = nil
+	}
+
+	// Dimension mode handling.
+	if tmpl.DimensionMode == "predefined" {
+		// Keep template's explicit width/height (the desired output size).
+		// state.Width / state.Height are already set from transformations.
+	} else {
+		// Adaptive: size to the target image's natural dimensions.
+		w := targetDims.Width
+		h := targetDims.Height
+		state.Width = &w
+		state.Height = &h
+	}
+
+	// Record the target image's original dimensions for downstream callers.
+	state.OriginalDimensions = &targetDims
+
+	return state
+}

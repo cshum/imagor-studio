@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"time"
 
@@ -44,9 +47,12 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 }
 
 // GenerateImagorURLFromTemplate converts a template JSON to an imagor URL on the backend.
+// When imagePath is provided it overrides the image in the template, applying the same
+// applyTemplateState logic as the frontend (crop validation, dimension mode handling).
 func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	ctx context.Context,
 	templateJSON string,
+	imagePath *string,
 	contextPath []string,
 	forPreview *bool,
 	previewMaxDimensions *gql.DimensionsInput,
@@ -61,6 +67,20 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	if err := json.Unmarshal([]byte(templateJSON), &tmpl); err != nil {
 		return "", fmt.Errorf("invalid templateJson: %w", err)
 	}
+
+	// If an imagePath override is provided, apply the frontend's applyTemplateState logic:
+	// fetch the target image's actual dimensions via the imagor meta URL, then apply
+	// crop-validation and dimension-mode rules before proceeding.
+	if imagePath != nil && *imagePath != "" {
+		targetDims, err := r.fetchImageDimensions(ctx, *imagePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to fetch dimensions for image %q: %w", *imagePath, err)
+		}
+		applied := it.ApplyTemplateToImage(tmpl, targetDims)
+		applied.ImagePath = imagePath
+		tmpl.Transformations = applied
+	}
+
 	base := tmpl.Transformations
 
 	if base.ImagePath == nil || *base.ImagePath == "" {
@@ -69,10 +89,10 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	if base.OriginalDimensions == nil {
 		return "", fmt.Errorf("templateJson missing transformations.originalDimensions")
 	}
-	imagePath := *base.ImagePath
+	baseImagePath := *base.ImagePath
 	origDims := *base.OriginalDimensions
 
-	res := it.ResolveContext(base, origDims, imagePath, contextPath)
+	res := it.ResolveContext(base, origDims, baseImagePath, contextPath)
 
 	var previewMaxDims *it.Dimensions
 	if previewMaxDimensions != nil {
@@ -98,6 +118,64 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		return "", fmt.Errorf("failed to generate imagor URL: %w", err)
 	}
 	return url, nil
+}
+
+// fetchImageDimensions fetches the width and height of an image via the imagor meta URL.
+// It mirrors the frontend's fetchImageDimensions logic: call the imagor meta endpoint
+// and parse the JSON response for width/height.
+// Supports both embedded mode (in-process ServeHTTP) and external mode (HTTP GET).
+func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath string) (it.Dimensions, error) {
+	metaURL, err := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{Meta: true})
+	if err != nil {
+		return it.Dimensions{}, fmt.Errorf("failed to generate meta URL: %w", err)
+	}
+
+	var body []byte
+
+	if imagorInstance := r.imagorProvider.GetInstance(); imagorInstance != nil {
+		// Embedded mode: call ServeHTTP in-process (no network overhead).
+		cfg := r.imagorProvider.GetConfig()
+		if cfg == nil {
+			return it.Dimensions{}, fmt.Errorf("imagor configuration not available")
+		}
+		path := strings.TrimPrefix(metaURL, cfg.BaseURL)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
+		if err != nil {
+			return it.Dimensions{}, fmt.Errorf("failed to create meta request: %w", err)
+		}
+		rec := httptest.NewRecorder()
+		imagorInstance.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			return it.Dimensions{}, fmt.Errorf("imagor meta returned status %d", rec.Code)
+		}
+		body = rec.Body.Bytes()
+	} else {
+		// External mode: plain HTTP GET.
+		resp, err := http.Get(metaURL) //nolint:noctx
+		if err != nil {
+			return it.Dimensions{}, fmt.Errorf("failed to fetch meta URL: %w", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return it.Dimensions{}, fmt.Errorf("imagor meta returned status %d", resp.StatusCode)
+		}
+		body, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return it.Dimensions{}, fmt.Errorf("failed to read meta response: %w", err)
+		}
+	}
+
+	var meta struct {
+		Width  int `json:"width"`
+		Height int `json:"height"`
+	}
+	if err := json.Unmarshal(body, &meta); err != nil {
+		return it.Dimensions{}, fmt.Errorf("failed to parse meta response: %w", err)
+	}
+	if meta.Width <= 0 || meta.Height <= 0 {
+		return it.Dimensions{}, fmt.Errorf("invalid dimensions from meta: %dx%d", meta.Width, meta.Height)
+	}
+	return it.Dimensions{Width: meta.Width, Height: meta.Height}, nil
 }
 
 // buildImagePath constructs the full image path from gallery and image keys
