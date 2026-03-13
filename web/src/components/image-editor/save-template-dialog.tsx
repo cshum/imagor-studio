@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Folder } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { saveTemplate } from '@/api/storage-api'
 import { FolderSelectionDialog } from '@/components/folder-picker/folder-selection-dialog'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
@@ -138,13 +139,15 @@ export function SaveTemplateDialog({
     setIsSaving(true)
 
     try {
-      const result = await imageEditor.exportTemplate(
+      const { saveInput } = imageEditor.buildExportTemplateInput(
         name.trim(),
         undefined,
         dimensionMode,
         savePath,
         overwrite,
       )
+
+      const result = await saveTemplate({ input: saveInput })
 
       // Backend already returns the complete path with savePath included
       const templatePath = result.templatePath

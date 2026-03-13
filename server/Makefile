@@ -48,6 +48,8 @@ build-linux:
 docker-build:
 	docker build -t imagor-studio-server .
 
+generate: gqlgen
+
 # gqlgen commands
 gqlgen:
 	$(GQLGEN) --config gqlgen.yml

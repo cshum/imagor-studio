@@ -4,7 +4,7 @@ import { useNavigate, useRouter } from '@tanstack/react-router'
 import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { statFile } from '@/api/storage-api'
+import { saveTemplate, statFile } from '@/api/storage-api'
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
@@ -383,13 +383,14 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
       const { galleryKey } = splitImagePath(templateMetadata.templatePath)
 
-      await imageEditor.exportTemplate(
+      const { saveInput } = imageEditor.buildExportTemplateInput(
         templateMetadata.name,
         undefined,
         dimensionMode,
         galleryKey || '',
         true, // overwrite = true for direct save
       )
+      await saveTemplate({ input: saveInput })
 
       // Mark as saved to skip unsaved changes warning
       isSavedRef.current = true
@@ -453,70 +454,16 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
   }, [])
 
   const handleAddTextLayer = useCallback(() => {
-    const outputDims = imageEditor.getOutputDimensions()
-    const fontSize = Math.max(12, Math.round(outputDims.height * 0.05))
-    const defaultWidth = Math.round(outputDims.width * 0.4)
-    // Single-line height estimate (fontSize × 1.4 line-height factor)
-    const singleLineHeight = Math.round(fontSize * 1.4)
-    // Center on canvas using pixel offsets (left/top anchor) to match image layer UX.
-    // Controls will show left+top alignment toggles, same as newly added image layers.
-    const x = Math.round((outputDims.width - defaultWidth) / 2)
-    const y = Math.round((outputDims.height - singleLineHeight) / 2)
-    const newLayer = {
-      type: 'text' as const,
-      id: `layer-${Date.now()}`,
-      name: '',
-      text: t('imageEditor.layers.textLayerDefaultText'),
-      x,
-      y,
-      font: 'sans',
-      fontStyle: '' as const,
-      fontSize,
-      color: '000000',
-      width: defaultWidth,
-      height: 0,
-      align: 'low' as const,
-      justify: false,
-      wrap: 'word' as const,
-      spacing: 0,
-      dpi: 72,
-      alpha: 0,
-      blendMode: 'normal' as const,
-      visible: true,
-    }
-    imageEditor.addLayer(newLayer)
-    imageEditor.setSelectedLayerId(newLayer.id)
+    imageEditor.addTextLayer(t('imageEditor.layers.textLayerDefaultText'))
     setIsNewTextLayer(true)
-    imageEditor.setTextEditingLayerId(newLayer.id)
   }, [imageEditor, t])
 
   const handleAddColorLayer = useCallback(() => {
-    // Color images have no inherent size (imagor defaults to 1×1).
-    // Use fill mode (widthFull/heightFull) so the layer fills the parent canvas.
-    const newLayer = {
-      type: 'image' as const,
-      id: `layer-${Date.now()}`,
-      imagePath: 'color:cccccc',
-      originalDimensions: { width: 1, height: 1 },
-      x: 0,
-      y: 0,
-      alpha: 0,
-      blendMode: 'normal' as const,
-      visible: true,
-      name: '',
-      transforms: {
-        widthFull: true,
-        heightFull: true,
-      },
-    }
-    imageEditor.addLayer(newLayer)
-    imageEditor.setSelectedLayerId(newLayer.id)
+    imageEditor.addColorLayer()
   }, [imageEditor])
 
   const handleAddGroupLayer = useCallback(() => {
-    // Group layer = transparent color:none image layer that acts as a container.
-    // Use the same viewport-aware centering as image layers so the group appears
-    // as a visible, grabbable box (50% of canvas) rather than filling the full canvas.
+    // Compute viewport-aware position for the group container (50% of canvas).
     // Full-canvas resize handles are at the canvas edge and hard to grab.
     const outputDims = imageEditor.getOutputDimensions()
     const virtualDims = {
@@ -532,26 +479,12 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       scaleFactor: 0.9,
       positioning: 'center',
     })
-    const newLayer = {
-      type: 'image' as const,
-      id: `layer-${Date.now()}`,
-      imagePath: 'color:none',
-      originalDimensions: { width: 1, height: 1 },
-      x: layerPosition.x,
-      y: layerPosition.y,
-      alpha: 0,
-      blendMode: 'normal' as const,
-      visible: true,
-      name: '',
-      transforms: {
-        width: layerPosition.width,
-        height: layerPosition.height,
-      },
-    }
-    imageEditor.addLayer(newLayer)
-    // Select the group layer so resize handles appear — user can resize before entering.
-    // To edit inside the group, double-click it on the canvas or use "Edit Group" in the menu.
-    imageEditor.setSelectedLayerId(newLayer.id)
+    imageEditor.addGroupLayer(
+      layerPosition.x,
+      layerPosition.y,
+      layerPosition.width,
+      layerPosition.height,
+    )
   }, [imageEditor, zoom, previewContainerRef, previewImageDimensions])
 
   const handleTextEdit = useCallback(
@@ -606,28 +539,8 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
           positioning: 'center',
         })
 
-        // Create new layer with calculated positioning
-        const newLayer = {
-          id: `layer-${Date.now()}`, // Simple unique ID
-          type: 'image' as const,
-          imagePath,
-          originalDimensions: dimensions,
-          x: layerPosition.x,
-          y: layerPosition.y,
-          alpha: 0, // 0 = opaque (no transparency)
-          blendMode: 'normal' as const,
-          visible: true,
-          name: filename,
-          transforms: {
-            width: layerPosition.width,
-            height: layerPosition.height,
-          },
-        }
-
-        imageEditor.addLayer(newLayer)
-
-        // Auto-select the newly added layer
-        imageEditor.setSelectedLayerId(newLayer.id)
+        // Add the layer via core method (handles construction, addLayer, and selection)
+        imageEditor.addImageLayer(imagePath, dimensions, filename, layerPosition)
       } catch (error) {
         console.error('Failed to add layer:', error)
         toast.error(t('imageEditor.layers.failedToAddLayer'))

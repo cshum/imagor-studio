@@ -37,6 +37,11 @@ export type CreateUserInput = {
 
 export type DimensionMode = 'ADAPTIVE' | 'PREDEFINED'
 
+export type DimensionsInput = {
+  height: Scalars['Int']['input']
+  width: Scalars['Int']['input']
+}
+
 export type ExternalImagorConfig = {
   __typename?: 'ExternalImagorConfig'
   baseUrl: Scalars['String']['output']
@@ -172,7 +177,9 @@ export type Mutation = {
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
+  generateImagorUrlFromTemplate: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
+  regenerateTemplatePreview: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
@@ -235,9 +242,23 @@ export type MutationGenerateImagorUrlArgs = {
   params: ImagorParamsInput
 }
 
+export type MutationGenerateImagorUrlFromTemplateArgs = {
+  appendFilters?: InputMaybe<Array<ImagorFilterInput>>
+  contextPath?: InputMaybe<Array<Scalars['String']['input']>>
+  forPreview?: InputMaybe<Scalars['Boolean']['input']>
+  imagePath?: InputMaybe<Scalars['String']['input']>
+  previewMaxDimensions?: InputMaybe<DimensionsInput>
+  skipLayerId?: InputMaybe<Scalars['String']['input']>
+  templateJson: Scalars['String']['input']
+}
+
 export type MutationMoveFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
+}
+
+export type MutationRegenerateTemplatePreviewArgs = {
+  templatePath: Scalars['String']['input']
 }
 
 export type MutationSaveTemplateArgs = {
@@ -361,7 +382,6 @@ export type SaveTemplateInput = {
   dimensionMode: DimensionMode
   name: Scalars['String']['input']
   overwrite: InputMaybe<Scalars['Boolean']['input']>
-  previewParams: InputMaybe<ImagorParamsInput>
   savePath: Scalars['String']['input']
   sourceImagePath: Scalars['String']['input']
   templateJson: Scalars['String']['input']
@@ -515,6 +535,20 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 }>
 
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
+
+export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
+  templateJson: Scalars['String']['input']
+  contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
+  forPreview?: InputMaybe<Scalars['Boolean']['input']>
+  previewMaxDimensions?: InputMaybe<DimensionsInput>
+  skipLayerId?: InputMaybe<Scalars['String']['input']>
+  appendFilters?: InputMaybe<Array<ImagorFilterInput> | ImagorFilterInput>
+}>
+
+export type GenerateImagorUrlFromTemplateMutation = {
+  __typename?: 'Mutation'
+  generateImagorUrlFromTemplate: string
+}
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -839,6 +873,15 @@ export type SaveTemplateMutation = {
   }
 }
 
+export type RegenerateTemplatePreviewMutationVariables = Exact<{
+  templatePath: Scalars['String']['input']
+}>
+
+export type RegenerateTemplatePreviewMutation = {
+  __typename?: 'Mutation'
+  regenerateTemplatePreview: boolean
+}
+
 export type UserInfoFragment = {
   __typename?: 'User'
   id: string
@@ -1024,6 +1067,25 @@ export const ConfigureExternalImagorDocument = gql`
 export const GenerateImagorUrlDocument = gql`
   mutation GenerateImagorUrl($imagePath: String!, $params: ImagorParamsInput!) {
     generateImagorUrl(imagePath: $imagePath, params: $params)
+  }
+`
+export const GenerateImagorUrlFromTemplateDocument = gql`
+  mutation GenerateImagorUrlFromTemplate(
+    $templateJson: String!
+    $contextPath: [String!]
+    $forPreview: Boolean
+    $previewMaxDimensions: DimensionsInput
+    $skipLayerId: String
+    $appendFilters: [ImagorFilterInput!]
+  ) {
+    generateImagorUrlFromTemplate(
+      templateJson: $templateJson
+      contextPath: $contextPath
+      forPreview: $forPreview
+      previewMaxDimensions: $previewMaxDimensions
+      skipLayerId: $skipLayerId
+      appendFilters: $appendFilters
+    )
   }
 `
 export const ListUserRegistryDocument = gql`
@@ -1249,6 +1311,11 @@ export const SaveTemplateDocument = gql`
     }
   }
 `
+export const RegenerateTemplatePreviewDocument = gql`
+  mutation RegenerateTemplatePreview($templatePath: String!) {
+    regenerateTemplatePreview(templatePath: $templatePath)
+  }
+`
 export const MeDocument = gql`
   query Me {
     me {
@@ -1383,6 +1450,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'GenerateImagorUrl',
+        'mutation',
+        variables,
+      )
+    },
+    GenerateImagorUrlFromTemplate(
+      variables: GenerateImagorUrlFromTemplateMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<GenerateImagorUrlFromTemplateMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<GenerateImagorUrlFromTemplateMutation>({
+            document: GenerateImagorUrlFromTemplateDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'GenerateImagorUrlFromTemplate',
         'mutation',
         variables,
       )
@@ -1761,6 +1846,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'SaveTemplate',
+        'mutation',
+        variables,
+      )
+    },
+    RegenerateTemplatePreview(
+      variables: RegenerateTemplatePreviewMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<RegenerateTemplatePreviewMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<RegenerateTemplatePreviewMutation>({
+            document: RegenerateTemplatePreviewDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'RegenerateTemplatePreview',
         'mutation',
         variables,
       )

@@ -10,6 +10,17 @@ extend type Mutation {
 
   # Imagor URL Generation API
   generateImagorUrl(imagePath: String!, params: ImagorParamsInput!): String!
+
+  # Imagor URL generation from template JSON
+  generateImagorUrlFromTemplate(
+    templateJson: String!           # JSON-encoded ImagorTemplate envelope ({ version, transformations, ... })
+    imagePath: String               # Optional: override the image path; triggers applyTemplateState logic (fetches dimensions via meta, applies crop/dimension-mode rules)
+    contextPath: [String!]          # Layer ID path for f-token parent-dim resolution ([] = root)
+    forPreview: Boolean             # Adds preview/webp filters, scales blur/sharpen/padding
+    previewMaxDimensions: DimensionsInput # Null = no preview constraint
+    skipLayerId: String             # Layer ID to exclude from rendering
+    appendFilters: [ImagorFilterInput!] # Extra filters appended after conversion (e.g. attachment)
+  ): String!
 }
 
 # Imagor URL Generation Input Types
@@ -56,6 +67,12 @@ input ImagorParamsInput {
 input ImagorFilterInput {
   name: String! # "quality", "brightness", etc.
   args: String! # "80", "10", etc.
+}
+
+# Dimensions input (width + height)
+input DimensionsInput {
+  width: Int!
+  height: Int!
 }
 
 # Imagor Configuration Types

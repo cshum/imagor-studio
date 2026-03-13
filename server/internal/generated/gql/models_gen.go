@@ -21,6 +21,11 @@ type CreateUserInput struct {
 	Role        string `json:"role"`
 }
 
+type DimensionsInput struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
 type ExternalImagorConfig struct {
 	BaseURL        string           `json:"baseUrl"`
 	HasSecret      bool             `json:"hasSecret"`
@@ -161,14 +166,13 @@ type S3StorageInput struct {
 }
 
 type SaveTemplateInput struct {
-	Name            string             `json:"name"`
-	Description     *string            `json:"description,omitempty"`
-	DimensionMode   DimensionMode      `json:"dimensionMode"`
-	TemplateJSON    string             `json:"templateJson"`
-	SourceImagePath string             `json:"sourceImagePath"`
-	SavePath        string             `json:"savePath"`
-	Overwrite       *bool              `json:"overwrite,omitempty"`
-	PreviewParams   *ImagorParamsInput `json:"previewParams,omitempty"`
+	Name            string        `json:"name"`
+	Description     *string       `json:"description,omitempty"`
+	DimensionMode   DimensionMode `json:"dimensionMode"`
+	TemplateJSON    string        `json:"templateJson"`
+	SourceImagePath string        `json:"sourceImagePath"`
+	SavePath        string        `json:"savePath"`
+	Overwrite       *bool         `json:"overwrite,omitempty"`
 }
 
 type StorageConfigInput struct {

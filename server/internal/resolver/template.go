@@ -13,6 +13,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/imagortemplate"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
 )
@@ -79,7 +80,8 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	}
 
 	// 3. Generate preview image using Imagor
-	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, input.PreviewParams)
+	previewParams := derivePreviewParamsFromTemplateJSON(input.TemplateJSON)
+	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, previewParams)
 	if err != nil {
 		r.logger.Warn("Preview generation failed (continuing without preview)", zap.Error(err))
 		// Don't fail the operation - template can work without preview
@@ -129,25 +131,50 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	}, nil
 }
 
-// generateTemplatePreview generates a preview image for the template using Imagor
-func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath string, previewParams *gql.ImagorParamsInput) ([]byte, error) {
-	// Convert preview params to imagorpath.Params
-	var params imagorpath.Params
-	if previewParams != nil {
-		// Use provided preview params from frontend
-		params = convertToImagorParams(*previewParams)
-	} else {
-		// Fallback: simple 400x400 thumbnail
-		params = imagorpath.Params{
-			Width:     400,
-			Height:    400,
-			FullFitIn: true,
-			Filters: imagorpath.Filters{
-				{Name: "format", Args: "webp"},
-				{Name: "quality", Args: "80"},
-			},
-		}
+// derivePreviewParamsFromTemplateJSON generates imagorpath.Params for a template preview
+// by parsing the template JSON and converting its transformations to imagor params.
+func derivePreviewParamsFromTemplateJSON(templateJSON string) imagorpath.Params {
+	fallback := imagorpath.Params{
+		Width:     400,
+		Height:    400,
+		FullFitIn: true,
+		Filters: imagorpath.Filters{
+			{Name: "format", Args: "webp"},
+			{Name: "quality", Args: "80"},
+		},
 	}
+
+	var tmpl struct {
+		Transformations json.RawMessage `json:"transformations"`
+		PredefinedDims  *struct {
+			Width  int `json:"width"`
+			Height int `json:"height"`
+		} `json:"predefinedDimensions"`
+	}
+	if err := json.Unmarshal([]byte(templateJSON), &tmpl); err != nil {
+		return fallback
+	}
+	if len(tmpl.Transformations) == 0 {
+		return fallback
+	}
+	var state imagortemplate.Transformations
+	if err := json.Unmarshal(tmpl.Transformations, &state); err != nil {
+		return fallback
+	}
+
+	origDims := imagortemplate.Dimensions{Width: 800, Height: 600} // sensible fallback
+	if tmpl.PredefinedDims != nil && tmpl.PredefinedDims.Width > 0 && tmpl.PredefinedDims.Height > 0 {
+		origDims = imagortemplate.Dimensions{Width: tmpl.PredefinedDims.Width, Height: tmpl.PredefinedDims.Height}
+	} else if state.OriginalDimensions != nil && state.OriginalDimensions.Width > 0 {
+		origDims = *state.OriginalDimensions
+	}
+
+	previewMax := &imagortemplate.Dimensions{Width: 400, Height: 400}
+	return imagortemplate.ConvertToImagorParams(state, origDims, nil, true, previewMax, "")
+}
+
+// generateTemplatePreview generates a preview image for the template using Imagor
+func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath string, params imagorpath.Params) ([]byte, error) {
 
 	var imageData []byte
 
@@ -218,6 +245,82 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 		zap.Int("size", len(imageData)))
 
 	return imageData, nil
+}
+
+// RegenerateTemplatePreview regenerates the preview image for an existing template.
+// It reads the template JSON from storage, derives preview params, generates the preview
+// via imagor, and writes the result back as a .imagor.preview file.
+// Returns true on success, false if the template JSON cannot be read or preview generation fails.
+func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templatePath string) (bool, error) {
+	if err := RequireWritePermission(ctx, templatePath); err != nil {
+		return false, err
+	}
+
+	// Validate that the path ends with .imagor.json
+	if !strings.HasSuffix(templatePath, ".imagor.json") {
+		return false, fmt.Errorf("templatePath must end with .imagor.json")
+	}
+
+	r.logger.Debug("Regenerating template preview", zap.String("templatePath", templatePath))
+
+	// Read the template JSON from storage
+	reader, err := r.getStorage().Get(ctx, templatePath)
+	if err != nil {
+		r.logger.Error("Failed to read template JSON", zap.Error(err), zap.String("templatePath", templatePath))
+		return false, nil
+	}
+	defer reader.Close()
+
+	templateJSONBytes, err := io.ReadAll(reader)
+	if err != nil {
+		r.logger.Error("Failed to read template JSON content", zap.Error(err))
+		return false, nil
+	}
+	templateJSON := string(templateJSONBytes)
+
+	// Parse template to get source image path
+	var tmpl struct {
+		SourceImagePath string `json:"sourceImagePath"`
+	}
+	if err := json.Unmarshal(templateJSONBytes, &tmpl); err != nil {
+		r.logger.Error("Failed to parse template JSON", zap.Error(err))
+		return false, nil
+	}
+
+	sourceImagePath := tmpl.SourceImagePath
+	if sourceImagePath == "" {
+		r.logger.Warn("Template has no sourceImagePath, cannot regenerate preview",
+			zap.String("templatePath", templatePath))
+		return false, nil
+	}
+
+	// Derive preview params from the template JSON
+	previewParams := derivePreviewParamsFromTemplateJSON(templateJSON)
+
+	// Generate preview image
+	previewImage, err := r.generateTemplatePreview(ctx, sourceImagePath, previewParams)
+	if err != nil {
+		r.logger.Error("Failed to generate template preview", zap.Error(err),
+			zap.String("templatePath", templatePath))
+		return false, nil
+	}
+
+	// Derive preview file path: replace .imagor.json with .imagor.preview
+	previewPath := strings.TrimSuffix(templatePath, ".imagor.json") + ".imagor.preview"
+
+	// Write preview to storage
+	previewReader := bytes.NewReader(previewImage)
+	if err := r.getStorage().Put(ctx, previewPath, previewReader); err != nil {
+		r.logger.Error("Failed to save regenerated preview", zap.Error(err),
+			zap.String("previewPath", previewPath))
+		return false, nil
+	}
+
+	r.logger.Info("Template preview regenerated successfully",
+		zap.String("templatePath", templatePath),
+		zap.String("previewPath", previewPath))
+
+	return true, nil
 }
 
 // sanitizeTemplateName sanitizes a template name for use as a filename

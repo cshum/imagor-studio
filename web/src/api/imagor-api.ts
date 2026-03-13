@@ -2,6 +2,8 @@ import type {
   ConfigureEmbeddedImagorMutation,
   ConfigureExternalImagorMutation,
   ConfigureExternalImagorMutationVariables,
+  GenerateImagorUrlFromTemplateMutation,
+  GenerateImagorUrlFromTemplateMutationVariables,
   GenerateImagorUrlMutation,
   GenerateImagorUrlMutationVariables,
   ImagorStatusQuery,
@@ -50,4 +52,17 @@ export async function generateImagorUrl(
   const sdk = getSdk(getGraphQLClient())
   const result = await sdk.GenerateImagorUrl(variables, undefined, signal)
   return result.generateImagorUrl
+}
+
+/**
+ * Generate Imagor URL from template JSON (backend conversion).
+ * Handles all URL generation: preview, copy URL, download (via appendFilters), thumbnail.
+ */
+export async function generateImagorUrlFromTemplate(
+  variables: GenerateImagorUrlFromTemplateMutationVariables,
+  signal?: AbortSignal,
+): Promise<GenerateImagorUrlFromTemplateMutation['generateImagorUrlFromTemplate']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.GenerateImagorUrlFromTemplate(variables, undefined, signal)
+  return result.generateImagorUrlFromTemplate
 }

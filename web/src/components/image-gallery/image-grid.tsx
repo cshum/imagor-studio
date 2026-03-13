@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DragItem } from '@/hooks/use-item-drag-drop'
-import { getFullImageUrl } from '@/lib/api-utils'
+import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
 import { joinImagePath } from '@/lib/path-utils'
 
@@ -37,6 +37,8 @@ interface ImageCellProps {
   selectedImageKeys?: Set<string>
   selectedFolderKeys?: Set<string>
   galleryKey?: string
+  /** Called when a template thumbnail fails to load — should regenerate the preview and return true on success */
+  onTemplatePreviewError?: (templatePath: string) => Promise<boolean>
 }
 
 const ImageCell = ({
@@ -63,8 +65,13 @@ const ImageCell = ({
   selectedImageKeys,
   selectedFolderKeys,
   galleryKey = '',
+  onTemplatePreviewError,
 }: ImageCellProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  // For template thumbnails: null = use imageSrc, '' = hide img (regenerating), string = fresh preview
+  const [thumbnailSrc, setThumbnailSrc] = useState<string | null>(null)
+  // Permanently true after first onError — prevents re-triggering on the regenerated src
+  const hasRegeneratedRef = useRef(false)
 
   const handleSelectionClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -139,6 +146,38 @@ const ImageCell = ({
     onDragStart(e, items, galleryKey)
   }
 
+  /**
+   * Handle thumbnail load error for template images.
+   * When the .imagor.preview file is missing, immediately hide the broken image
+   * (gray placeholder shows), silently regenerate the preview on the backend,
+   * then swap the src to the fresh preview.
+   * hasRegeneratedRef is permanently set to true after the first attempt so
+   * onError never fires again for this cell (prevents loops on the new src).
+   */
+  const handleImageError = async () => {
+    if (!image.isTemplate || hasRegeneratedRef.current) return
+    hasRegeneratedRef.current = true
+
+    // Immediately hide the broken image — gray bg + FileText icon shows cleanly
+    setThumbnailSrc('')
+
+    // Build the full template path (galleryKey/imageKey or just imageKey at root)
+    const templatePath = galleryKey ? `${galleryKey}/${image.imageKey}` : image.imageKey
+
+    try {
+      const success = await onTemplatePreviewError?.(templatePath)
+      if (success) {
+        // Re-request the original imagor grid URL with a cache buster.
+        // image.imageSrc is already the imagor-processed grid URL for the preview file
+        // (e.g. /imagor/300x225/filters:.../foo.imagor.preview). Busting the cache
+        // forces the browser to re-fetch it now that the preview file exists.
+        setThumbnailSrc(addCacheBuster(getFullImageUrl(image.imageSrc), String(Date.now())))
+      }
+    } catch {
+      // Silently ignore errors — gray placeholder + FileText icon remains visible
+    }
+  }
+
   const displayName = getFileDisplayName(image.imageName)
 
   return (
@@ -169,12 +208,16 @@ const ImageCell = ({
       <div
         className={`relative h-full w-full overflow-hidden rounded-md bg-gray-200 transition-opacity duration-300 group-[.not-scrolling]:hover:scale-105 dark:bg-gray-700 ${isSelected ? `${boldSelection ? 'ring-[3px]' : 'ring-2'} ring-blue-600` : ''} ${isBeingDragged ? 'opacity-50' : ''}`}
       >
-        <img
-          src={getFullImageUrl(image.imageSrc)}
-          alt={image.imageName}
-          className='h-full w-full object-cover'
-          draggable={false}
-        />
+        {/* Hide img entirely when thumbnailSrc='' (regenerating) to avoid broken-image icon */}
+        {thumbnailSrc !== '' && (
+          <img
+            src={thumbnailSrc ?? getFullImageUrl(image.imageSrc)}
+            alt={image.imageName}
+            className='h-full w-full object-cover'
+            draggable={false}
+            onError={image.isTemplate ? handleImageError : undefined}
+          />
+        )}
         {/* Selection checkbox - top left */}
         {onSelectionToggle && (
           <div
@@ -258,6 +301,8 @@ export interface ImageGridProps {
   onDragEnd?: (e: React.DragEvent) => void
   draggedItems?: DragItem[]
   galleryKey?: string
+  /** Called when a template thumbnail fails to load — should regenerate the preview and return true on success */
+  onTemplatePreviewError?: (templatePath: string) => Promise<boolean>
 }
 
 export const ImageGrid = ({
@@ -282,6 +327,7 @@ export const ImageGrid = ({
   onDragEnd,
   draggedItems = [],
   galleryKey = '',
+  onTemplatePreviewError,
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -363,6 +409,7 @@ export const ImageGrid = ({
           selectedImageKeys={selectedImageKeys}
           selectedFolderKeys={selectedFolderKeys}
           galleryKey={galleryKey}
+          onTemplatePreviewError={onTemplatePreviewError}
           imageRef={(el) => {
             if (imageRefs?.current) {
               if (el) {

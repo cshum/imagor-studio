@@ -1,7 +1,5 @@
-import { generateImagorUrl } from '@/api/imagor-api'
-import type { ImagorParamsInput } from '@/generated/graphql'
+import { generateImagorUrlFromTemplate } from '@/api/imagor-api'
 import { getFullImageUrl } from '@/lib/api-utils'
-import type { ImagorTemplate, TemplateWarning } from '@/lib/template-types'
 
 export interface ImageDimensions {
   width: number
@@ -256,6 +254,36 @@ export interface ImageEditorState {
 
   // Layers (image and text overlays)
   layers?: Layer[]
+}
+
+/**
+ * Warning encountered when loading a template.
+ */
+export interface TemplateWarning {
+  type: 'missing-layer' | 'invalid-filter' | 'version-mismatch' | 'invalid-json'
+  message: string
+  substitution?: string
+}
+
+/**
+ * Imagor Template File Format (.imagor.json).
+ * Note: Template name is derived from the filename, not stored in JSON.
+ */
+export interface ImagorTemplate {
+  version: '1.0'
+  description?: string
+  dimensionMode: 'adaptive' | 'predefined'
+  predefinedDimensions?: {
+    width: number
+    height: number
+  }
+  sourceImagePath: string
+  transformations: ImageEditorState
+  metadata: {
+    createdAt: string
+    /** @deprecated Preview is now saved as separate .imagor.preview.webp file */
+    previewImage?: string
+  }
 }
 
 export interface ImageEditorConfig {
@@ -798,6 +826,7 @@ export class ImageEditor {
    * @param imagePath - Image path
    * @param scaleFactor - Scale factor for preview (1.0 for actual)
    * @param forPreview - Whether generating for preview (affects layer visibility in visual crop mode)
+   * @param skipLayerId
    * @returns Imagor path string
    */
   private static editorStateToImagorPath(
@@ -1124,432 +1153,10 @@ export class ImageEditor {
   }
 
   /**
-   * Convert state to GraphQL input format
-   * Can be called with custom state for generating URLs with different parameters
-   * @param state - Image editor state with all transformation parameters
-   * @param forPreview - Whether to generate preview URL (adds preview filter, WebP format)
-   * @returns GraphQL parameters for Imagor URL generation
+   * Wrap transformations in the ImagorTemplate envelope expected by the backend API.
    */
-  convertStateToGraphQLParams(
-    state: ImageEditorState,
-    forPreview = false,
-    skipLayerId?: string,
-  ): Partial<ImagorParamsInput> {
-    const graphqlParams: Partial<ImagorParamsInput> = {}
-
-    // Crop handling (crops BEFORE resize in URL path)
-    // Convert from left/top/width/height to left/top/right/bottom
-    // Skip crop in preview when visual cropping is enabled (so user can see full image)
-    const shouldApplyCrop = !forPreview || (forPreview && !state.visualCropEnabled)
-
-    if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
-      graphqlParams.cropLeft = state.cropLeft
-      graphqlParams.cropTop = state.cropTop
-      graphqlParams.cropRight = state.cropLeft! + state.cropWidth!
-      graphqlParams.cropBottom = state.cropTop! + state.cropHeight!
-    }
-
-    // Dimensions - apply preview constraints if needed
-    let width = state.width
-    let height = state.height
-
-    // Resolve fill-mode (f-token) dimensions to concrete pixel values.
-    // widthFull/heightFull reference the parent canvas size at imagor render time
-    // (emitted as "f" / "f-N" in the path), but convertStateToGraphQLParams works with
-    // pixel values, so we resolve them here against the current context's parent dims.
-    // This ensures preview URL dimensions (and all downstream scale-factor math) use
-    // the correct fill-resolved size rather than the layer's natural source dimensions.
-    if (state.widthFull || state.heightFull) {
-      const fillParentDims = this.computeParentDimensionsForContext()
-      if (fillParentDims) {
-        if (state.widthFull && width === undefined) {
-          width = Math.max(1, fillParentDims.width - (state.widthFullOffset ?? 0))
-        }
-        if (state.heightFull && height === undefined) {
-          height = Math.max(1, fillParentDims.height - (state.heightFullOffset ?? 0))
-        }
-      }
-    }
-
-    // When visual crop is enabled in preview, use original dimensions
-    // so the crop overlay can work with the full original image
-    if (forPreview && state.visualCropEnabled) {
-      width = this.config.originalDimensions.width
-      height = this.config.originalDimensions.height
-    }
-
-    // Calculate scale factor for blur/sharpen/padding adjustments
-    let scaleFactor = 1
-
-    // Calculate actual output dimensions (after crop + resize) for padding calculations
-    // This is needed for both preview and actual URLs
-    let actualOutputWidth: number
-    let actualOutputHeight: number
-
-    // Determine the source dimensions (what goes INTO the resize operation)
-    let sourceWidth: number
-    let sourceHeight: number
-
-    if (shouldApplyCrop && ImageEditor.hasCropParams(state)) {
-      // Use cropped dimensions as the source
-      sourceWidth = state.cropWidth!
-      sourceHeight = state.cropHeight!
-    } else {
-      // Use original dimensions
-      sourceWidth = this.config.originalDimensions.width
-      sourceHeight = this.config.originalDimensions.height
-    }
-
-    // Calculate what the ACTUAL output will be after resize
-    const outputWidth = width ?? sourceWidth
-    const outputHeight = height ?? sourceHeight
-
-    if (state.fitIn) {
-      // fitIn mode: calculate what fitIn will produce
-      // fit-in doesn't upscale by default, so cap the scale at 1.0
-      const outputScale = Math.min(outputWidth / sourceWidth, outputHeight / sourceHeight, 1.0)
-      actualOutputWidth = Math.round(sourceWidth * outputScale)
-      actualOutputHeight = Math.round(sourceHeight * outputScale)
-    } else {
-      // Stretch/fill mode: use exact dimensions
-      actualOutputWidth = outputWidth
-      actualOutputHeight = outputHeight
-    }
-
-    // Derive the true final dimensions after the proportion filter.
-    // proportion runs as a filter after the main resize step, so the image
-    // ends up smaller by the proportion percentage. Keep actualOutputWidth/Height
-    // as the pre-proportion resize output (needed for the non-preview path) and
-    // compute a separate proportioned size used for the preview constraint check.
-    const proportionScale =
-      state.proportion !== undefined && state.proportion !== 100 ? state.proportion / 100 : 1
-    const proportionedOutputWidth = Math.round(actualOutputWidth * proportionScale)
-    const proportionedOutputHeight = Math.round(actualOutputHeight * proportionScale)
-
-    // In preview mode, bake the proportion effect directly into the requested
-    // dimensions so imagor only has to resize — the proportion filter must NOT
-    // also be emitted or the effect would be applied twice.
-    let proportionBakedIntoPreview = false
-
-    // Apply preview dimension constraints when generating preview URLs
-    if (forPreview && this.config.previewMaxDimensions) {
-      const previewWidth = this.config.previewMaxDimensions.width
-      const previewHeight = this.config.previewMaxDimensions.height
-
-      // Compare TRUE final output size (post-proportion) vs preview area.
-      // Padding will be scaled by the same factor as the image.
-      const widthScale = previewWidth / proportionedOutputWidth
-      const heightScale = previewHeight / proportionedOutputHeight
-      const scale = Math.min(widthScale, heightScale)
-
-      // Only scale down if the true final output is larger than the preview area.
-      // Never upscale small images - preview should match actual output size.
-      if (scale < 1) {
-        scaleFactor = scale
-        width = Math.round(proportionedOutputWidth * scale)
-        height = Math.round(proportionedOutputHeight * scale)
-      } else {
-        // Proportioned output fits within preview area — use it directly.
-        width = proportionedOutputWidth
-        height = proportionedOutputHeight
-        scaleFactor = 1
-      }
-      if (proportionScale !== 1) {
-        proportionBakedIntoPreview = true
-        // Layer dimensions and x/y positions are scaled by scaleFactor.
-        // The canvas is already shrunk to the proportioned size, so layers
-        // must also be scaled by proportionScale — otherwise they composite
-        // at full size on the reduced canvas and appear proportionally too big.
-        scaleFactor *= proportionScale
-      }
-    }
-
-    // For non-preview URLs, use actual output dimensions instead of original dimensions
-    // This ensures padding is relative to the correct output size
-    if (!forPreview) {
-      width = actualOutputWidth
-      height = actualOutputHeight
-    }
-
-    if (width !== undefined) graphqlParams.width = width
-    if (height !== undefined) graphqlParams.height = height
-
-    // Fitting
-    if (state.fitIn !== undefined) graphqlParams.fitIn = state.fitIn
-    if (state.stretch !== undefined) graphqlParams.stretch = state.stretch
-    if (state.smart !== undefined) graphqlParams.smart = state.smart
-
-    // Alignment (for Fill mode)
-    if (state.hAlign) graphqlParams.hAlign = state.hAlign
-    if (state.vAlign) graphqlParams.vAlign = state.vAlign
-
-    // Skip padding in preview when visual cropping is enabled
-    // (so user can crop without padding, padding applied after crop in final URL)
-    const shouldApplyPadding = !forPreview || (forPreview && !state.visualCropEnabled)
-
-    // Padding (adds space around the image)
-    // Scale padding values for preview to match visual appearance with actual output
-    if (shouldApplyPadding) {
-      if (state.paddingLeft !== undefined && state.paddingLeft > 0) {
-        graphqlParams.paddingLeft = forPreview
-          ? Math.round(state.paddingLeft * scaleFactor)
-          : state.paddingLeft
-      }
-      if (state.paddingTop !== undefined && state.paddingTop > 0) {
-        graphqlParams.paddingTop = forPreview
-          ? Math.round(state.paddingTop * scaleFactor)
-          : state.paddingTop
-      }
-      if (state.paddingRight !== undefined && state.paddingRight > 0) {
-        graphqlParams.paddingRight = forPreview
-          ? Math.round(state.paddingRight * scaleFactor)
-          : state.paddingRight
-      }
-      if (state.paddingBottom !== undefined && state.paddingBottom > 0) {
-        graphqlParams.paddingBottom = forPreview
-          ? Math.round(state.paddingBottom * scaleFactor)
-          : state.paddingBottom
-      }
-    }
-
-    // Transform (for Phase 5)
-    if (state.hFlip !== undefined) graphqlParams.hFlip = state.hFlip
-    if (state.vFlip !== undefined) graphqlParams.vFlip = state.vFlip
-
-    // Filters (for Phase 4)
-    // Order: color adjustments → blur/sharpen → round_corner → fill
-    const filters: Array<{ name: string; args: string }> = []
-
-    // Color adjustments first
-    if (state.brightness !== undefined && state.brightness !== 0) {
-      filters.push({ name: 'brightness', args: state.brightness.toString() })
-    }
-    if (state.contrast !== undefined && state.contrast !== 0) {
-      filters.push({ name: 'contrast', args: state.contrast.toString() })
-    }
-    if (state.saturation !== undefined && state.saturation !== 0) {
-      filters.push({ name: 'saturation', args: state.saturation.toString() })
-    }
-    if (state.hue !== undefined && state.hue !== 0) {
-      filters.push({ name: 'hue', args: state.hue.toString() })
-    }
-    if (state.grayscale) {
-      filters.push({ name: 'grayscale', args: '' })
-    }
-
-    // Blur and sharpen
-    // Scale blur/sharpen values for preview to match visual appearance with actual output
-    if (state.blur !== undefined && state.blur !== 0) {
-      const blurValue = forPreview ? Math.round(state.blur * scaleFactor * 100) / 100 : state.blur
-      filters.push({ name: 'blur', args: blurValue.toString() })
-    }
-    if (state.sharpen !== undefined && state.sharpen !== 0) {
-      const sharpenValue = forPreview
-        ? Math.round(state.sharpen * scaleFactor * 100) / 100
-        : state.sharpen
-      filters.push({ name: 'sharpen', args: sharpenValue.toString() })
-    }
-
-    // Round corner (applied before fill so fill can fill the rounded areas)
-    // Skip round corner in preview when visual cropping is enabled
-    // (so user can crop without round corner, applied after crop in final URL)
-    const shouldApplyRoundCorner = !forPreview || (forPreview && !state.visualCropEnabled)
-    if (
-      shouldApplyRoundCorner &&
-      state.roundCornerRadius !== undefined &&
-      state.roundCornerRadius > 0
-    ) {
-      const cornerValue = forPreview
-        ? Math.round(state.roundCornerRadius * scaleFactor)
-        : state.roundCornerRadius
-      filters.push({ name: 'round_corner', args: cornerValue.toString() })
-    }
-
-    // Fill color (for padding/transparent areas) - applied last
-    if (state.fillColor) {
-      filters.push({ name: 'fill', args: state.fillColor })
-    }
-
-    // Rotation (applied BEFORE layers so layers are positioned on rotated canvas)
-    // Skip rotation in preview when visual cropping is enabled
-    // (so user can crop on unrotated image, rotation applied after crop in final URL)
-    const shouldApplyRotation = !forPreview || (forPreview && !state.visualCropEnabled)
-    if (shouldApplyRotation && state.rotation !== undefined && state.rotation !== 0) {
-      filters.push({ name: 'rotate', args: state.rotation.toString() })
-    }
-
-    // Layer processing - add image() filters for each visible layer
-    // Skip layers in visual crop mode (positions won't be accurate on uncropped image)
-    // Note: When editing a layer, state.layers is undefined, so this won't run
-    const shouldApplyLayers = !forPreview || (forPreview && !state.visualCropEnabled)
-
-    if (shouldApplyLayers && state.layers && state.layers.length > 0) {
-      for (const layer of state.layers) {
-        if (!layer.visible) continue
-        if (skipLayerId && layer.id === skipLayerId) continue
-
-        if (layer.type === 'text') {
-          // Build text() filter — skip if text is empty (nothing to render)
-          if (!layer.text.trim()) continue
-          const encodedText = ImageEditor.encodeTextToBase64url(layer.text)
-          const sf = forPreview ? scaleFactor : 1
-          const x = ImageEditor.scalePositionValue(layer.x, sf).toString()
-          const y = ImageEditor.scalePositionValue(layer.y, sf).toString()
-
-          const scaledFontSize = Math.max(1, Math.round(layer.fontSize * sf))
-          const fontParts = [layer.font, layer.fontStyle, String(scaledFontSize)].filter(Boolean)
-          const font = fontParts.join(' ').replace(/ /g, '-')
-
-          let width: string | number = layer.width
-          if (typeof width === 'number' && width > 0) {
-            width = Math.round(width * sf)
-          } else if (typeof width === 'string' && sf !== 1) {
-            const fInsetMatch = width.match(/^(?:f|full)-(\d+)$/)
-            if (fInsetMatch) {
-              const scaledInset = Math.round(parseInt(fInsetMatch[1]) * sf)
-              width = scaledInset === 0 ? 'f' : `f-${scaledInset}`
-            }
-          }
-
-          const args: (string | number)[] = [encodedText, x, y]
-          const widthNonDefault2 = typeof width === 'number' ? width > 0 : width !== '0'
-          const hasNonDefault =
-            font !== 'sans-20' ||
-            layer.color !== '000000' ||
-            layer.alpha !== 0 ||
-            layer.blendMode !== 'normal' ||
-            widthNonDefault2 ||
-            layer.align !== 'low' ||
-            layer.justify ||
-            layer.wrap !== 'word' ||
-            layer.spacing !== 0
-
-          if (hasNonDefault) {
-            args.push(font)
-            args.push(layer.color || '000000')
-            args.push(layer.alpha)
-            args.push(layer.blendMode)
-            args.push(width)
-            args.push(layer.align)
-            args.push(layer.justify ? 'true' : 'false')
-            args.push(layer.wrap)
-            args.push(Math.round(layer.spacing * sf))
-            if (layer.dpi !== 72) args.push(layer.dpi)
-
-            // Trim trailing defaults (right-to-left) to keep URLs minimal.
-            // Optional args in order: font, color, alpha, blendMode, width, align, justify, wrap, spacing
-            const OPTIONAL_DEFAULTS: (string | number)[] = [
-              'sans-20',
-              '000000',
-              0,
-              'normal',
-              0,
-              'low',
-              'false',
-              'word',
-              0,
-            ]
-            while (args.length > 3) {
-              const optIdx = args.length - 1 - 3 // index into OPTIONAL_DEFAULTS (0 = font)
-              if (optIdx < 0 || optIdx >= OPTIONAL_DEFAULTS.length) break
-              if (String(args[args.length - 1]) !== String(OPTIONAL_DEFAULTS[optIdx])) break
-              args.pop()
-            }
-          }
-
-          filters.push({ name: 'text', args: args.join(',') })
-          continue
-        }
-
-        // ImageLayer — generate imagor path using static helper (synchronous)
-        // Each layer is a simple image (no nested layers - prevents recursion)
-        let layerPath: string
-        if (layer.transforms && Object.keys(layer.transforms).length > 0) {
-          // Build path from layer transforms (NO layers array - prevents recursion)
-          // proportion is global-only — strip it from layer paths
-          const layerState = { ...layer.transforms }
-          delete layerState.proportion
-          layerPath = ImageEditor.editorStateToImagorPath(
-            layerState,
-            layer.imagePath,
-            forPreview ? scaleFactor : 1,
-            forPreview,
-          )
-        } else {
-          // No transforms - minimal state (NO layers array)
-          const layerState: Partial<ImageEditorState> = {
-            width: layer.originalDimensions.width,
-            height: layer.originalDimensions.height,
-            fitIn: false, // Use fill mode for layers by default
-          }
-          layerPath = ImageEditor.editorStateToImagorPath(
-            layerState,
-            layer.imagePath,
-            forPreview ? scaleFactor : 1,
-            forPreview,
-          )
-        }
-
-        // Scale position values (including new string syntax) for preview
-        const scaledX = ImageEditor.scalePositionValue(layer.x, forPreview ? scaleFactor : 1)
-        const scaledY = ImageEditor.scalePositionValue(layer.y, forPreview ? scaleFactor : 1)
-        const x = scaledX.toString()
-        const y = scaledY.toString()
-
-        // Build image() filter args - omit trailing default parameters (alpha=0, blendMode='normal')
-        let args = `${layerPath},${x},${y}`
-        if (layer.alpha !== 0 || layer.blendMode !== 'normal') {
-          args += `,${layer.alpha}`
-          if (layer.blendMode !== 'normal') {
-            args += `,${layer.blendMode}`
-          }
-        }
-        filters.push({ name: 'image', args })
-      }
-    }
-
-    // Proportion – applied last, after all composition, to scale the entire result.
-    // In preview mode the effect is already baked into the target dimensions.
-    if (!proportionBakedIntoPreview && state.proportion !== undefined && state.proportion !== 100) {
-      filters.push({ name: 'proportion', args: state.proportion.toString() })
-    }
-
-    // Format handling
-    // Format handling
-    if (forPreview) {
-      // disable result storage on preview
-      filters.push({ name: 'preview', args: '' })
-      // Always WebP for preview
-      filters.push({ name: 'format', args: 'webp' })
-    } else if (state.format) {
-      // Use user-selected format for Copy URL / Download
-      filters.push({ name: 'format', args: state.format })
-    }
-    // If no format specified, Imagor uses original format
-
-    // Quality handling (only if format is specified)
-    if (state.quality && (forPreview || state.format)) {
-      filters.push({ name: 'quality', args: state.quality.toString() })
-    }
-
-    // Max bytes handling (automatic quality degradation)
-    if (state.maxBytes && (forPreview || state.format || state.quality)) {
-      filters.push({ name: 'max_bytes', args: state.maxBytes.toString() })
-    }
-
-    // Metadata stripping
-    if (state.stripIcc) {
-      filters.push({ name: 'strip_icc', args: '' })
-    }
-    if (state.stripExif) {
-      filters.push({ name: 'strip_exif', args: '' })
-    }
-
-    if (filters.length > 0) {
-      graphqlParams.filters = filters
-    }
-
-    return graphqlParams
+  private buildTemplateJson(transformations: ImageEditorState): string {
+    return JSON.stringify({ version: '1.0', transformations })
   }
 
   /**
@@ -1564,15 +1171,14 @@ export class ImageEditor {
     this.abortController = new AbortController()
 
     try {
-      const graphqlParams = this.convertStateToGraphQLParams(
-        this.state,
-        true,
-        this.textEditingLayerId ?? undefined,
-      )
-      const url = await generateImagorUrl(
+      const baseState = this.getBaseState()
+      const url = await generateImagorUrlFromTemplate(
         {
-          imagePath: this.config.imagePath,
-          params: graphqlParams as ImagorParamsInput,
+          templateJson: this.buildTemplateJson(baseState),
+          contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+          forPreview: true,
+          previewMaxDimensions: this.config.previewMaxDimensions ?? null,
+          skipLayerId: this.textEditingLayerId,
         },
         this.abortController.signal,
       )
@@ -1955,10 +1561,11 @@ export class ImageEditor {
    * Generate copy URL with user-selected format (not WebP)
    */
   async generateCopyUrl(): Promise<string> {
-    const copyParams = this.convertStateToGraphQLParams(this.state, false) // false = no WebP override
-    return await generateImagorUrl({
-      imagePath: this.config.imagePath,
-      params: copyParams as ImagorParamsInput,
+    const baseState = this.getBaseState()
+    return await generateImagorUrlFromTemplate({
+      templateJson: this.buildTemplateJson(baseState),
+      contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+      forPreview: false,
     })
   }
 
@@ -1966,17 +1573,12 @@ export class ImageEditor {
    * Generate download URL with attachment filter
    */
   async generateDownloadUrl(): Promise<string> {
-    const baseParams = this.convertStateToGraphQLParams(this.state, false) // false = no WebP override
-    const downloadParams = {
-      ...baseParams,
-      filters: [
-        ...(baseParams.filters || []),
-        { name: 'attachment', args: '' }, // Empty args for default filename
-      ],
-    }
-    return await generateImagorUrl({
-      imagePath: this.config.imagePath,
-      params: downloadParams as ImagorParamsInput,
+    const baseState = this.getBaseState()
+    return await generateImagorUrlFromTemplate({
+      templateJson: this.buildTemplateJson(baseState),
+      contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+      forPreview: false,
+      appendFilters: [{ name: 'attachment', args: '' }],
     })
   }
 
@@ -2490,6 +2092,134 @@ export class ImageEditor {
   }
 
   /**
+   * Add a text layer centered on the current canvas.
+   * Computes font size and position from output dimensions, constructs the layer,
+   * adds it, selects it, and enters text-editing mode.
+   * @param defaultText - Initial text content (caller supplies i18n string)
+   */
+  addTextLayer(defaultText: string): void {
+    const outputDims = this.getOutputDimensions()
+    const fontSize = Math.max(12, Math.round(outputDims.height * 0.05))
+    const defaultWidth = Math.round(outputDims.width * 0.4)
+    // Single-line height estimate (fontSize × 1.4 line-height factor)
+    const singleLineHeight = Math.round(fontSize * 1.4)
+    // Center on canvas using pixel offsets (left/top anchor)
+    const x = Math.round((outputDims.width - defaultWidth) / 2)
+    const y = Math.round((outputDims.height - singleLineHeight) / 2)
+    const newLayer: TextLayer = {
+      type: 'text',
+      id: `layer-${Date.now()}`,
+      name: '',
+      text: defaultText,
+      x,
+      y,
+      font: 'sans',
+      fontStyle: '',
+      fontSize,
+      color: '000000',
+      width: defaultWidth,
+      height: 0,
+      align: 'low',
+      justify: false,
+      wrap: 'word',
+      spacing: 0,
+      dpi: 72,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+    }
+    this.addLayer(newLayer)
+    this.setSelectedLayerId(newLayer.id)
+    this.setTextEditingLayerId(newLayer.id)
+  }
+
+  /**
+   * Add a color fill layer that covers the full parent canvas.
+   * Uses widthFull/heightFull so it always fills the parent at render time.
+   * @param color - Hex color string without '#' (default 'cccccc')
+   */
+  addColorLayer(color = 'cccccc'): void {
+    const newLayer: ImageLayer = {
+      type: 'image',
+      id: `layer-${Date.now()}`,
+      imagePath: `color:${color}`,
+      originalDimensions: { width: 1, height: 1 },
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+      name: '',
+      transforms: {
+        widthFull: true,
+        heightFull: true,
+      },
+    }
+    this.addLayer(newLayer)
+    this.setSelectedLayerId(newLayer.id)
+  }
+
+  /**
+   * Add a group layer (transparent color:none container) at the given position/size.
+   * The caller is responsible for computing position from the current viewport.
+   * @param x - X position on the canvas
+   * @param y - Y position on the canvas
+   * @param width - Width of the group container
+   * @param height - Height of the group container
+   */
+  addGroupLayer(x: number, y: number, width: number, height: number): void {
+    const newLayer: ImageLayer = {
+      type: 'image',
+      id: `layer-${Date.now()}`,
+      imagePath: 'color:none',
+      originalDimensions: { width: 1, height: 1 },
+      x,
+      y,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+      name: '',
+      transforms: { width, height },
+    }
+    this.addLayer(newLayer)
+    this.setSelectedLayerId(newLayer.id)
+  }
+
+  /**
+   * Add an image layer at the given position/size.
+   * The caller is responsible for fetching dimensions and computing position.
+   * @param imagePath - Path to the image
+   * @param originalDimensions - Natural dimensions of the image
+   * @param name - Display name (typically the filename)
+   * @param position - Computed position and display size on the canvas
+   */
+  addImageLayer(
+    imagePath: string,
+    originalDimensions: ImageDimensions,
+    name: string,
+    position: { x: number; y: number; width: number; height: number },
+  ): void {
+    const newLayer: ImageLayer = {
+      id: `layer-${Date.now()}`,
+      type: 'image',
+      imagePath,
+      originalDimensions,
+      x: position.x,
+      y: position.y,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+      name,
+      transforms: {
+        width: position.width,
+        height: position.height,
+      },
+    }
+    this.addLayer(newLayer)
+    this.setSelectedLayerId(newLayer.id)
+  }
+
+  /**
    * Add a new layer to the current editing context
    * If at base level, adds to base layers
    * If editing a layer, adds to that layer's nested layers
@@ -2857,28 +2587,12 @@ export class ImageEditor {
    * @returns Promise resolving to thumbnail URL
    */
   async generateThumbnailUrl(width = 200, height = 200): Promise<string> {
-    // Use existing convertStateToGraphQLParams with forPreview=true
-    const thumbnailParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
-
-    // Override dimensions for thumbnail
-    thumbnailParams.width = width
-    thumbnailParams.height = height
-    thumbnailParams.fitIn = true
-
-    // Ensure WebP format and good quality for thumbnails
-    const filters = thumbnailParams.filters || []
-    // Remove any existing format/quality filters
-    const filteredFilters = filters.filter(
-      (f) => f.name !== 'format' && f.name !== 'quality' && f.name !== 'preview',
-    )
-    // Add thumbnail-specific filters
-    filteredFilters.push({ name: 'format', args: 'webp' })
-    filteredFilters.push({ name: 'quality', args: '80' })
-    thumbnailParams.filters = filteredFilters
-
-    return await generateImagorUrl({
-      imagePath: this.baseImagePath,
-      params: thumbnailParams as ImagorParamsInput,
+    const baseState = this.getBaseState()
+    return await generateImagorUrlFromTemplate({
+      templateJson: this.buildTemplateJson(baseState),
+      contextPath: null,
+      forPreview: true,
+      previewMaxDimensions: { width, height },
     })
   }
 
@@ -2914,23 +2628,29 @@ export class ImageEditor {
   }
 
   /**
-   * Export current editor state as a template
-   * Saves template to backend (.templates folder) with preview
-   * @param name - Template name
-   * @param description - Optional template description
-   * @param dimensionMode - How dimensions should be handled
-   * @param savePath - Path to save the template
-   * @param overwrite - Whether to overwrite existing template
-   * @returns Promise that resolves with save result including normalized templatePath
-   * @throws Error with code 'CONFLICT' if template already exists
+   * Build the template JSON and save input for the current editor state.
+   * Returns the serialized template JSON and the save input object so the
+   * caller (page/dialog) can call saveTemplate() directly — keeping API
+   * calls out of this library class.
    */
-  async exportTemplate(
+  buildExportTemplateInput(
     name: string,
     description: string | undefined,
     dimensionMode: 'adaptive' | 'predefined',
     savePath: string,
     overwrite = false,
-  ): Promise<{ success: boolean; templatePath: string }> {
+  ): {
+    templateJson: string
+    saveInput: {
+      name: string
+      description: string | null
+      dimensionMode: 'ADAPTIVE' | 'PREDEFINED'
+      templateJson: string
+      sourceImagePath: string
+      savePath: string
+      overwrite: boolean
+    }
+  } {
     // Get base state
     const baseState = this.getBaseState()
 
@@ -2973,41 +2693,18 @@ export class ImageEditor {
       },
     }
 
-    // Generate preview params (400x400 thumbnail with transformations)
-    // Temporarily override previewMaxDimensions to ensure correct scaling for 400x400
-    const originalPreviewDimensions = this.config.previewMaxDimensions
-    this.config.previewMaxDimensions = { width: 400, height: 400 }
-
-    // Generate params with correct 400x400 scaling
-    const previewParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
-
-    // Restore original preview dimensions
-    this.config.previewMaxDimensions = originalPreviewDimensions
-
-    // Ensure fitIn is true (already set by convertStateToGraphQLParams, but be explicit)
-    previewParams.fitIn = true
-
-    // Filters (format, quality, preview) are already added by convertStateToGraphQLParams
-
-    // Call backend API to save template
-    const { saveTemplate } = await import('@/api/storage-api')
-
-    const result = await saveTemplate({
-      input: {
+    const templateJson = JSON.stringify(template)
+    return {
+      templateJson,
+      saveInput: {
         name,
         description: description || null,
         dimensionMode: dimensionMode.toUpperCase() as 'ADAPTIVE' | 'PREDEFINED',
-        templateJson: JSON.stringify(template, null, 2),
+        templateJson,
         sourceImagePath: this.baseImagePath,
         savePath,
         overwrite,
-        previewParams: previewParams as ImagorParamsInput,
       },
-    })
-
-    return {
-      success: result.success,
-      templatePath: result.templatePath,
     }
   }
 

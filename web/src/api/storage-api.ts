@@ -13,6 +13,8 @@ import type {
   ListFilesQueryVariables,
   MoveFileMutation,
   MoveFileMutationVariables,
+  RegenerateTemplatePreviewMutation,
+  RegenerateTemplatePreviewMutationVariables,
   SaveTemplateMutation,
   SaveTemplateMutationVariables,
   SortOption,
@@ -212,4 +214,19 @@ export async function saveTemplate(
   const sdk = getSdk(getGraphQLClient())
   const result = await sdk.SaveTemplate(variables)
   return result.saveTemplate
+}
+
+/**
+ * Regenerate the preview image for an existing template.
+ * Reads the template JSON from storage, generates a new preview via imagor,
+ * and writes it back as a .imagor.preview file.
+ * Returns true on success, false if generation fails (non-throwing).
+ */
+export async function regenerateTemplatePreview(
+  templatePath: string,
+): Promise<RegenerateTemplatePreviewMutation['regenerateTemplatePreview']> {
+  const sdk = getSdk(getGraphQLClient())
+  const variables: RegenerateTemplatePreviewMutationVariables = { templatePath }
+  const result = await sdk.RegenerateTemplatePreview(variables)
+  return result.regenerateTemplatePreview
 }

@@ -10,6 +10,7 @@ import {
 // Mock the imagor-api module
 vi.mock('@/api/imagor-api', () => ({
   generateImagorUrl: vi.fn().mockResolvedValue('http://localhost:8000/mocked-url'),
+  generateImagorUrlFromTemplate: vi.fn().mockResolvedValue('http://localhost:8000/mocked-url'),
 }))
 
 describe('ImageEditor', () => {
@@ -338,6 +339,274 @@ describe('ImageEditor', () => {
     it('should return undefined for non-existent layer', () => {
       const layer = editor.getLayer('non-existent')
       expect(layer).toBeUndefined()
+    })
+  })
+
+  describe('addTextLayer', () => {
+    it('should add a text layer with computed font size and centered position', () => {
+      // outputDimensions = 1920x1080 (no resize)
+      // fontSize = max(12, round(1080 * 0.05)) = 54
+      // defaultWidth = round(1920 * 0.4) = 768
+      // singleLineHeight = round(54 * 1.4) = 76
+      // x = round((1920 - 768) / 2) = 576
+      // y = round((1080 - 76) / 2) = 502
+      editor.addTextLayer('Hello World')
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      const layer = state.layers![0] as TextLayer
+      expect(layer.type).toBe('text')
+      expect(layer.text).toBe('Hello World')
+      expect(layer.fontSize).toBe(54)
+      expect(layer.width).toBe(768)
+      expect(layer.x).toBe(576)
+      expect(layer.y).toBe(502)
+    })
+
+    it('should use minimum font size of 12 for very small canvases', () => {
+      const smallEditor = new ImageEditor({
+        imagePath: 'small.jpg',
+        originalDimensions: { width: 100, height: 100 },
+      })
+      smallEditor.initialize({})
+      smallEditor.addTextLayer('Hi')
+      const layer = smallEditor.getState().layers![0] as TextLayer
+      // fontSize = max(12, round(100 * 0.05)) = max(12, 5) = 12
+      expect(layer.fontSize).toBe(12)
+    })
+
+    it('should set default text layer properties', () => {
+      editor.addTextLayer('Test')
+      const layer = editor.getState().layers![0] as TextLayer
+      expect(layer.font).toBe('sans')
+      expect(layer.fontStyle).toBe('')
+      expect(layer.color).toBe('000000')
+      expect(layer.alpha).toBe(0)
+      expect(layer.blendMode).toBe('normal')
+      expect(layer.visible).toBe(true)
+      expect(layer.align).toBe('low')
+      expect(layer.justify).toBe(false)
+      expect(layer.wrap).toBe('word')
+      expect(layer.spacing).toBe(0)
+      expect(layer.dpi).toBe(72)
+      expect(layer.height).toBe(0)
+    })
+
+    it('should auto-select the new text layer', () => {
+      editor.addTextLayer('Test')
+      // The layer should be selected (selectedLayerId set)
+      // We verify via setSelectedLayerId callback
+      const onSelectedLayerChange = vi.fn()
+      editor.initialize({ onSelectedLayerChange })
+      editor.addTextLayer('Test2')
+      const layer2 = editor.getState().layers![0]
+      expect(onSelectedLayerChange).toHaveBeenCalledWith(layer2.id)
+    })
+
+    it('should enter text editing mode for the new layer', () => {
+      editor.addTextLayer('Test')
+      const layer = editor.getState().layers![0]
+      expect(editor.getTextEditingLayerId()).toBe(layer.id)
+    })
+
+    it('should save to history before adding', () => {
+      editor.updateParams({ brightness: 50 })
+      vi.runAllTimers()
+      editor.addTextLayer('Test')
+      expect(editor.canUndo()).toBe(true)
+      editor.undo()
+      // After undo, the text layer should be gone
+      expect(editor.getState().layers).toBeUndefined()
+    })
+  })
+
+  describe('addColorLayer', () => {
+    it('should add a fill-mode color layer with default grey color', () => {
+      editor.addColorLayer()
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      const layer = state.layers![0] as ImageLayer
+      expect(layer.type).toBe('image')
+      expect(layer.imagePath).toBe('color:cccccc')
+      expect(layer.transforms?.widthFull).toBe(true)
+      expect(layer.transforms?.heightFull).toBe(true)
+    })
+
+    it('should accept a custom color', () => {
+      editor.addColorLayer('ff0000')
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.imagePath).toBe('color:ff0000')
+    })
+
+    it('should set originalDimensions to 1x1 (color images have no inherent size)', () => {
+      editor.addColorLayer()
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.originalDimensions).toEqual({ width: 1, height: 1 })
+    })
+
+    it('should position at origin with default compositing', () => {
+      editor.addColorLayer()
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.x).toBe(0)
+      expect(layer.y).toBe(0)
+      expect(layer.alpha).toBe(0)
+      expect(layer.blendMode).toBe('normal')
+      expect(layer.visible).toBe(true)
+    })
+
+    it('should auto-select the new color layer', () => {
+      const onSelectedLayerChange = vi.fn()
+      editor.initialize({ onSelectedLayerChange })
+      editor.addColorLayer()
+      const layer = editor.getState().layers![0]
+      expect(onSelectedLayerChange).toHaveBeenCalledWith(layer.id)
+    })
+
+    it('should emit fxf in imagor path (fill mode)', () => {
+      editor.addColorLayer()
+      const path = editor.getImagorPath()
+      expect(path).toContain('fxf/')
+    })
+
+    it('should save to history before adding', () => {
+      editor.addColorLayer()
+      expect(editor.canUndo()).toBe(true)
+      editor.undo()
+      expect(editor.getState().layers).toBeUndefined()
+    })
+  })
+
+  describe('addGroupLayer', () => {
+    it('should add a color:none group layer at the given position and size', () => {
+      editor.addGroupLayer(100, 200, 400, 300)
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      const layer = state.layers![0] as ImageLayer
+      expect(layer.type).toBe('image')
+      expect(layer.imagePath).toBe('color:none')
+      expect(layer.x).toBe(100)
+      expect(layer.y).toBe(200)
+      expect(layer.transforms?.width).toBe(400)
+      expect(layer.transforms?.height).toBe(300)
+    })
+
+    it('should set originalDimensions to 1x1', () => {
+      editor.addGroupLayer(0, 0, 500, 500)
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.originalDimensions).toEqual({ width: 1, height: 1 })
+    })
+
+    it('should set default compositing properties', () => {
+      editor.addGroupLayer(0, 0, 200, 200)
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.alpha).toBe(0)
+      expect(layer.blendMode).toBe('normal')
+      expect(layer.visible).toBe(true)
+    })
+
+    it('should auto-select the new group layer', () => {
+      const onSelectedLayerChange = vi.fn()
+      editor.initialize({ onSelectedLayerChange })
+      editor.addGroupLayer(0, 0, 200, 200)
+      const layer = editor.getState().layers![0]
+      expect(onSelectedLayerChange).toHaveBeenCalledWith(layer.id)
+    })
+
+    it('should save to history before adding', () => {
+      editor.addGroupLayer(0, 0, 200, 200)
+      expect(editor.canUndo()).toBe(true)
+      editor.undo()
+      expect(editor.getState().layers).toBeUndefined()
+    })
+
+    it('should emit correct dimensions in imagor path', () => {
+      editor.addGroupLayer(50, 75, 640, 480)
+      const path = editor.getImagorPath()
+      expect(path).toContain('640x480/')
+    })
+  })
+
+  describe('addImageLayer', () => {
+    const dims = { width: 800, height: 600 }
+    const pos = { x: 100, y: 150, width: 400, height: 300 }
+
+    it('should add an image layer at the given position and size', () => {
+      editor.addImageLayer('overlay.jpg', dims, 'My Overlay', pos)
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      const layer = state.layers![0] as ImageLayer
+      expect(layer.type).toBe('image')
+      expect(layer.imagePath).toBe('overlay.jpg')
+      expect(layer.originalDimensions).toEqual(dims)
+      expect(layer.x).toBe(100)
+      expect(layer.y).toBe(150)
+      expect(layer.transforms?.width).toBe(400)
+      expect(layer.transforms?.height).toBe(300)
+      expect(layer.name).toBe('My Overlay')
+    })
+
+    it('should set default compositing properties', () => {
+      editor.addImageLayer('overlay.jpg', dims, 'Test', pos)
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.alpha).toBe(0)
+      expect(layer.blendMode).toBe('normal')
+      expect(layer.visible).toBe(true)
+    })
+
+    it('should auto-select the new image layer', () => {
+      const onSelectedLayerChange = vi.fn()
+      editor.initialize({ onSelectedLayerChange })
+      editor.addImageLayer('overlay.jpg', dims, 'Test', pos)
+      const layer = editor.getState().layers![0]
+      expect(onSelectedLayerChange).toHaveBeenCalledWith(layer.id)
+    })
+
+    it('should save to history before adding', () => {
+      editor.addImageLayer('overlay.jpg', dims, 'Test', pos)
+      expect(editor.canUndo()).toBe(true)
+      editor.undo()
+      expect(editor.getState().layers).toBeUndefined()
+    })
+
+    it('should emit correct dimensions in imagor path', () => {
+      editor.addImageLayer('overlay.jpg', dims, 'Test', pos)
+      const path = editor.getImagorPath()
+      expect(path).toContain('400x300/')
+      expect(path).toContain('overlay.jpg')
+    })
+
+    it('should encode image path with special characters', () => {
+      editor.addImageLayer('my overlay.jpg', dims, 'Test', pos)
+      const path = editor.getImagorPath()
+      expect(path).toContain('b64:')
+      expect(path).not.toContain('my overlay.jpg')
+    })
+
+    it('should work with nested context (adds to current layer)', () => {
+      const parentLayer: ImageLayer = {
+        type: 'image',
+        id: 'parent-1',
+        imagePath: 'parent.jpg',
+        x: 0,
+        y: 0,
+        alpha: 0,
+        blendMode: 'normal',
+        visible: true,
+        name: 'Parent',
+        originalDimensions: { width: 1000, height: 800 },
+        transforms: { width: 1000, height: 800 },
+      }
+      editor.addLayer(parentLayer)
+      editor.switchContext('parent-1')
+      editor.addImageLayer('child.jpg', { width: 200, height: 150 }, 'Child', {
+        x: 10,
+        y: 20,
+        width: 200,
+        height: 150,
+      })
+      const contextLayers = editor.getContextLayers()
+      expect(contextLayers).toHaveLength(1)
+      expect((contextLayers[0] as ImageLayer).imagePath).toBe('child.jpg')
+      editor.switchContext(null)
     })
   })
 
@@ -1816,10 +2085,10 @@ describe('ImageEditor', () => {
     })
 
     it('preview URL emits f-tokens for all depths (imagor resolves nested f-tokens correctly)', async () => {
-      // imagor (commit 376cdaa) isolates f-token resolution per layer scope, so we no
-      // longer need to pre-resolve nested f-tokens client-side. f-tokens are emitted at
-      // every depth and imagor resolves them server-side against the correct parent canvas.
-      const { generateImagorUrl } = await import('@/api/imagor-api')
+      // With backend URL generation, the full state JSON (including nested layers with
+      // widthFull/heightFull) is sent to generateImagorUrlFromTemplate.  The backend
+      // applies the same f-token emission logic and imagor resolves them server-side.
+      const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
 
       // root 1920x1080, preview 960x540 → scaleFactor = 0.5
       editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
@@ -1829,18 +2098,20 @@ describe('ImageEditor', () => {
       editor.addLayer(layerA)
       await vi.runAllTimersAsync()
 
-      const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
-      const lastCall = calls[calls.length - 1][0] as {
-        params: { filters: Array<{ name: string; args: string }> }
-      }
-      const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
-      expect(imageFilter).toBeDefined()
-
-      const args = imageFilter!.args
-      // Layer-A: f-60xf-40 (offsets scaled by 0.5: 120*0.5=60, 80*0.5=40)
-      expect(args).toContain('f-60xf-40/')
-      // Layer-B: f-100xf-50 (offsets scaled by 0.5: 200*0.5=100, 100*0.5=50)
-      expect(args).toContain('f-100xf-50/')
+      // Backend receives state with nested layers carrying widthFull/heightFull
+      expect(generateImagorUrlFromTemplate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          forPreview: true,
+          previewMaxDimensions: { width: 960, height: 540 },
+        }),
+        expect.anything(),
+      )
+      const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+      const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+      const parsedState = JSON.parse(lastCall.templateJson).transformations
+      const layerInState = parsedState.layers?.find((l: { id: string }) => l.id === 'fill-d2-a')
+      expect(layerInState?.transforms?.widthFull).toBe(true)
+      expect(layerInState?.transforms?.heightFull).toBe(true)
     })
 
     it('getContextParentDimensions returns the immediate parent output dims at depth-2', () => {
@@ -1883,67 +2154,57 @@ describe('ImageEditor', () => {
       })
 
       it('should generate download URL with attachment filter', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
         await editor.generateDownloadUrl()
 
-        // Verify attachment filter was added
-        expect(generateImagorUrl).toHaveBeenCalledWith(
+        // Verify generateImagorUrlFromTemplate was called with appendFilters containing attachment
+        expect(generateImagorUrlFromTemplate).toHaveBeenCalledWith(
           expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([expect.objectContaining({ name: 'attachment' })]),
-            }),
+            forPreview: false,
+            appendFilters: expect.arrayContaining([
+              expect.objectContaining({ name: 'attachment' }),
+            ]),
           }),
         )
       })
 
       it('should include current state in generated URLs', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
         editor.updateParams({ brightness: 50, hue: 120 })
 
         await editor.generateCopyUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([
-                expect.objectContaining({ name: 'brightness', args: '50' }),
-                expect.objectContaining({ name: 'hue', args: '120' }),
-              ]),
-            }),
-          }),
-        )
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string; forPreview: boolean }
+        expect(lastCall.forPreview).toBe(false)
+        const state = JSON.parse(lastCall.templateJson).transformations
+        expect(state.brightness).toBe(50)
+        expect(state.hue).toBe(120)
       })
 
       it('should include proportion filter in generated URLs', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
         editor.updateParams({ proportion: 75 })
 
         await editor.generateCopyUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([
-                expect.objectContaining({ name: 'proportion', args: '75' }),
-              ]),
-            }),
-          }),
-        )
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+        const state = JSON.parse(lastCall.templateJson).transformations
+        expect(state.proportion).toBe(75)
       })
 
-      it('should not include proportion filter in generated URLs when value is 100', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+      it('should not include proportion filter in generated URLs when value is 100', () => {
         editor.updateParams({ proportion: 100 })
 
-        await editor.generateCopyUrl()
-
-        const callArg = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls[0][0]
-        const filterNames = (callArg.params.filters as Array<{ name: string }>).map((f) => f.name)
-        expect(filterNames).not.toContain('proportion')
+        // proportion=100 is the identity — should not be emitted as a filter.
+        // Verified via getImagorPath() which uses the same omission logic as the backend.
+        const path = editor.getImagorPath()
+        expect(path).not.toContain('proportion')
       })
 
       it('emits f-tokens in preview URL for depth-1 widthFull layers (imagor resolves at serve time)', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
 
         // originalDimensions = 1920x1080, previewMaxDimensions = 960x540 → scaleFactor = 0.5
         editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
@@ -1968,23 +2229,24 @@ describe('ImageEditor', () => {
         // Fire the debounced preview
         await vi.runAllTimersAsync()
 
-        // Inspect the most recent generateImagorUrl call
-        const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
-        const lastCall = calls[calls.length - 1][0] as {
-          params: { filters: Array<{ name: string; args: string }> }
-        }
-        const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
-
-        expect(imageFilter).toBeDefined()
-        // widthFull offset 20 scaled by 0.5 → f-10; height 200 scaled by 0.5 → 100
-        // imagor resolves f-10 against the parent canvas (960px wide) at serve time → 950px
-        expect(imageFilter!.args).toContain('f-10x100')
+        // Backend receives the full state with the layer's widthFull property intact
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+        const parsedState = JSON.parse(lastCall.templateJson).transformations
+        const layerInState = parsedState.layers?.find(
+          (l: { id: string }) => l.id === 'fill-scale-test',
+        )
+        expect(layerInState).toBeDefined()
+        expect(layerInState?.transforms?.widthFull).toBe(true)
+        expect(layerInState?.transforms?.widthFullOffset).toBe(20)
+        // The backend applies the same f-token emission logic:
+        // widthFull offset 20 → emits f-10 (scaled by 0.5); height 200 → 100 (scaled by 0.5)
       })
       it('emits f-tokens for heightFull layer when parent has fillColor+padding (imagor resolves against padded canvas)', async () => {
         // imagor applies fill()+padding to expand the canvas before resolving image() filters,
         // so f-tokens are correctly resolved against the padded canvas at serve time.
         // No client-side pre-resolution needed.
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
 
         const paddedEditor = new ImageEditor({
           imagePath: 'photo.jpg',
@@ -2019,16 +2281,17 @@ describe('ImageEditor', () => {
 
         await vi.runAllTimersAsync()
 
-        const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
-        const lastCall = calls[calls.length - 1][0] as {
-          params: { filters: Array<{ name: string; args: string }> }
-        }
-        const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
-        expect(imageFilter).toBeDefined()
-
-        // width=2025 (concrete), heightFull with offset 110 → f-110
-        // imagor resolves f-110 against padded canvas height (2800+200=3000) → 2890
-        expect(imageFilter!.args).toContain('2025xf-110/')
+        // Backend receives the full state with heightFull property intact
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+        const parsedState = JSON.parse(lastCall.templateJson).transformations
+        const layerInState = parsedState.layers?.find(
+          (l: { id: string }) => l.id === 'fill-pad-test',
+        )
+        expect(layerInState).toBeDefined()
+        expect(layerInState?.transforms?.heightFull).toBe(true)
+        expect(layerInState?.transforms?.heightFullOffset).toBe(110)
+        // Backend emits f-110 and imagor resolves against padded canvas height (2800+200=3000)
       })
     })
 
@@ -2176,12 +2439,12 @@ describe('ImageEditor', () => {
 
     describe('Error Handling', () => {
       it('should call onError callback on preview generation failure', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
         const onError = vi.fn()
         editor.initialize({ onError })
 
         // Mock API to reject
-        vi.mocked(generateImagorUrl).mockRejectedValueOnce(new Error('API Error'))
+        vi.mocked(generateImagorUrlFromTemplate).mockRejectedValueOnce(new Error('API Error'))
 
         editor.updateParams({ brightness: 50 })
         await vi.runAllTimersAsync()
@@ -2190,8 +2453,8 @@ describe('ImageEditor', () => {
       })
 
       it('should handle download errors gracefully', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
-        vi.mocked(generateImagorUrl).mockRejectedValueOnce(new Error('Download failed'))
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
+        vi.mocked(generateImagorUrlFromTemplate).mockRejectedValueOnce(new Error('Download failed'))
 
         const result = await editor.handleDownload()
 
@@ -3159,38 +3422,33 @@ describe('ImageEditor', () => {
 
     describe('generateThumbnailUrl', () => {
       it('should generate thumbnail URL with default dimensions', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
 
         await editor.generateThumbnailUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
+        expect(generateImagorUrlFromTemplate).toHaveBeenCalledWith(
           expect.objectContaining({
-            params: expect.objectContaining({
-              width: 200,
-              height: 200,
-              fitIn: true,
-            }),
+            forPreview: true,
+            previewMaxDimensions: { width: 200, height: 200 },
           }),
         )
       })
 
       it('should generate thumbnail URL with custom dimensions', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
 
         await editor.generateThumbnailUrl(400, 300)
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
+        expect(generateImagorUrlFromTemplate).toHaveBeenCalledWith(
           expect.objectContaining({
-            params: expect.objectContaining({
-              width: 400,
-              height: 300,
-            }),
+            forPreview: true,
+            previewMaxDimensions: { width: 400, height: 300 },
           }),
         )
       })
 
       it('should include transformations in thumbnail', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
 
         editor.updateParams({
           brightness: 50,
@@ -3199,32 +3457,21 @@ describe('ImageEditor', () => {
 
         await editor.generateThumbnailUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([
-                expect.objectContaining({ name: 'brightness', args: '50' }),
-                expect.objectContaining({ name: 'contrast', args: '30' }),
-              ]),
-            }),
-          }),
-        )
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+        const state = JSON.parse(lastCall.templateJson).transformations
+        expect(state.brightness).toBe(50)
+        expect(state.contrast).toBe(30)
       })
 
       it('should force WebP format for thumbnails', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
 
         await editor.generateThumbnailUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([
-                expect.objectContaining({ name: 'format', args: 'webp' }),
-                expect.objectContaining({ name: 'quality', args: '80' }),
-              ]),
-            }),
-          }),
+        // Backend sets format:webp when forPreview:true is passed
+        expect(generateImagorUrlFromTemplate).toHaveBeenCalledWith(
+          expect.objectContaining({ forPreview: true }),
         )
       })
     })
@@ -3965,56 +4212,6 @@ describe('TextLayer support', () => {
       // All other args are default too → minimal form, no width token
       // "Hello" is all alpha → no b64: encoding
       expect(path).toContain('text(Hello,0,0)')
-    })
-  })
-
-  // ── wrap-width scaling in preview URL (scaleFactor = 0.5) ────────────────
-  describe('text() filter — preview URL wrap-width scaling', () => {
-    const getLastTextFilterArgs = async (): Promise<string> => {
-      const { generateImagorUrl } = await import('@/api/imagor-api')
-      await vi.runAllTimersAsync()
-      const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
-      const lastCall = calls[calls.length - 1][0] as {
-        params: { filters: Array<{ name: string; args: string }> }
-      }
-      const textFilter = lastCall.params.filters.find((f) => f.name === 'text')
-      if (!textFilter) throw new Error('No text filter found in preview call')
-      return textFilter.args
-    }
-
-    beforeEach(() => {
-      // 1920×1080 output, 960×540 preview → scaleFactor = 0.5
-      editor.updateParams({ width: 1920, height: 1080 })
-      editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
-    })
-
-    it('scales numeric px width by scaleFactor', async () => {
-      editor.addLayer(makeTextLayer({ width: 200, color: 'ffffff' }))
-      const args = await getLastTextFilterArgs()
-      // 200 × 0.5 = 100
-      expect(args).toContain(',100')
-    })
-
-    it('scales f-N inset by scaleFactor', async () => {
-      editor.addLayer(makeTextLayer({ width: 'f-2032', color: 'ffffff' }))
-      const args = await getLastTextFilterArgs()
-      // 2032 × 0.5 = 1016
-      expect(args).toContain(',f-1016')
-    })
-
-    it('keeps "f" (no inset) unchanged', async () => {
-      editor.addLayer(makeTextLayer({ width: 'f', color: 'ffffff' }))
-      const args = await getLastTextFilterArgs()
-      // Plain 'f' has no numeric part — stays as 'f'.  The args string ends after
-      // the last token so match ,f at either a comma or end-of-string.
-      expect(args).toMatch(/,f(?:,|$)/)
-    })
-
-    it('rounds scaled inset correctly (f-3 × 0.5 → f-2 via Math.round)', async () => {
-      editor.addLayer(makeTextLayer({ width: 'f-3', color: 'ffffff' }))
-      const args = await getLastTextFilterArgs()
-      // Math.round(3 * 0.5) = Math.round(1.5) = 2 → emits 'f-2'
-      expect(args).toContain(',f-2')
     })
   })
 })
