@@ -1136,7 +1136,7 @@ export class ImageEditor {
 
     try {
       const baseState = this.getBaseState()
-      const url = await generateImagorUrlFromEditorState(
+      const url = await generateImagorUrlFromTemplate(
         {
           imagePath: this.baseImagePath,
           stateJson: JSON.stringify(baseState),
@@ -1528,7 +1528,7 @@ export class ImageEditor {
    */
   async generateCopyUrl(): Promise<string> {
     const baseState = this.getBaseState()
-    return await generateImagorUrlFromEditorState({
+    return await generateImagorUrlFromTemplate({
       imagePath: this.baseImagePath,
       stateJson: JSON.stringify(baseState),
       originalDimensions: this.config.originalDimensions,
@@ -1542,7 +1542,7 @@ export class ImageEditor {
    */
   async generateDownloadUrl(): Promise<string> {
     const baseState = this.getBaseState()
-    return await generateImagorUrlFromEditorState({
+    return await generateImagorUrlFromTemplate({
       imagePath: this.baseImagePath,
       stateJson: JSON.stringify(baseState),
       originalDimensions: this.config.originalDimensions,
@@ -2430,7 +2430,7 @@ export class ImageEditor {
    */
   async generateThumbnailUrl(width = 200, height = 200): Promise<string> {
     const baseState = this.getBaseState()
-    return await generateImagorUrlFromEditorState({
+    return await generateImagorUrlFromTemplate({
       imagePath: this.baseImagePath,
       stateJson: JSON.stringify(baseState),
       originalDimensions: this.config.originalDimensions,
