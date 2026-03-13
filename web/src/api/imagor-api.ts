@@ -4,6 +4,8 @@ import type {
   ConfigureExternalImagorMutationVariables,
   GenerateImagorUrlMutation,
   GenerateImagorUrlMutationVariables,
+  GenerateImagorUrlFromEditorStateMutation,
+  GenerateImagorUrlFromEditorStateMutationVariables,
   ImagorStatusQuery,
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'
@@ -50,4 +52,17 @@ export async function generateImagorUrl(
   const sdk = getSdk(getGraphQLClient())
   const result = await sdk.GenerateImagorUrl(variables, undefined, signal)
   return result.generateImagorUrl
+}
+
+/**
+ * Generate Imagor URL from a full ImageEditorState JSON (backend conversion).
+ * This replaces the frontend convertStateToGraphQLParams path for async calls.
+ */
+export async function generateImagorUrlFromEditorState(
+  variables: GenerateImagorUrlFromEditorStateMutationVariables,
+  signal?: AbortSignal,
+): Promise<GenerateImagorUrlFromEditorStateMutation['generateImagorUrlFromEditorState']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.GenerateImagorUrlFromEditorState(variables, undefined, signal)
+  return result.generateImagorUrlFromEditorState
 }

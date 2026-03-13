@@ -154,7 +154,7 @@ input SaveTemplateInput {
   sourceImagePath: String!
   savePath: String!
   overwrite: Boolean
-  previewParams: ImagorParamsInput
+  # previewParams removed: backend now derives preview from templateJson.transformations
 }
 
 enum DimensionMode {

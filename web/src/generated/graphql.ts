@@ -36,6 +36,11 @@ export type CreateUserInput = {
 
 export type DimensionMode = 'ADAPTIVE' | 'PREDEFINED'
 
+export type DimensionsInput = {
+  height: Scalars['Int']['input']
+  width: Scalars['Int']['input']
+}
+
 export type ExternalImagorConfig = {
   __typename?: 'ExternalImagorConfig'
   baseUrl: Scalars['String']['output']
@@ -171,6 +176,7 @@ export type Mutation = {
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
+  generateImagorUrlFromEditorState: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSystemRegistry: Array<SystemRegistry>
@@ -232,6 +238,16 @@ export type MutationDeleteUserRegistryArgs = {
 export type MutationGenerateImagorUrlArgs = {
   imagePath: Scalars['String']['input']
   params: ImagorParamsInput
+}
+
+export type MutationGenerateImagorUrlFromEditorStateArgs = {
+  contextPath?: InputMaybe<Array<Scalars['String']['input']>>
+  forPreview?: InputMaybe<Scalars['Boolean']['input']>
+  imagePath: Scalars['String']['input']
+  originalDimensions: DimensionsInput
+  previewMaxDimensions?: InputMaybe<DimensionsInput>
+  skipLayerId?: InputMaybe<Scalars['String']['input']>
+  stateJson: Scalars['String']['input']
 }
 
 export type MutationMoveFileArgs = {
@@ -360,7 +376,6 @@ export type SaveTemplateInput = {
   dimensionMode: DimensionMode
   name: Scalars['String']['input']
   overwrite: InputMaybe<Scalars['Boolean']['input']>
-  previewParams: InputMaybe<ImagorParamsInput>
   savePath: Scalars['String']['input']
   sourceImagePath: Scalars['String']['input']
   templateJson: Scalars['String']['input']
@@ -514,6 +529,21 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 }>
 
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
+
+export type GenerateImagorUrlFromEditorStateMutationVariables = Exact<{
+  imagePath: Scalars['String']['input']
+  stateJson: Scalars['String']['input']
+  originalDimensions: DimensionsInput
+  contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
+  forPreview?: InputMaybe<Scalars['Boolean']['input']>
+  previewMaxDimensions?: InputMaybe<DimensionsInput>
+  skipLayerId?: InputMaybe<Scalars['String']['input']>
+}>
+
+export type GenerateImagorUrlFromEditorStateMutation = {
+  __typename?: 'Mutation'
+  generateImagorUrlFromEditorState: string
+}
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -1186,6 +1216,117 @@ export const GenerateImagorUrlDocument = {
     },
   ],
 } as unknown as DocumentNode<GenerateImagorUrlMutation, GenerateImagorUrlMutationVariables>
+export const GenerateImagorUrlFromEditorStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'GenerateImagorUrlFromEditorState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'imagePath' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'stateJson' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'originalDimensions' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'DimensionsInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'contextPath' } },
+          type: {
+            kind: 'ListType',
+            type: {
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'forPreview' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'previewMaxDimensions' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'DimensionsInput' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'skipLayerId' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'generateImagorUrlFromEditorState' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'imagePath' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'imagePath' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'stateJson' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'stateJson' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'originalDimensions' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'originalDimensions' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'contextPath' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'contextPath' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'forPreview' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'forPreview' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'previewMaxDimensions' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'previewMaxDimensions' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'skipLayerId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'skipLayerId' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GenerateImagorUrlFromEditorStateMutation,
+  GenerateImagorUrlFromEditorStateMutationVariables
+>
 export const ListUserRegistryDocument = {
   kind: 'Document',
   definitions: [

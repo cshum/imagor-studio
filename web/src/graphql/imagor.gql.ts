@@ -56,3 +56,26 @@ export const GENERATE_IMAGOR_URL_MUTATION = gql(`
     )
   }
 `)
+
+// Mutation to generate imagor URL from full ImageEditorState JSON (backend conversion)
+export const GENERATE_IMAGOR_URL_FROM_EDITOR_STATE_MUTATION = gql(`
+  mutation GenerateImagorUrlFromEditorState(
+    $imagePath: String!
+    $stateJson: String!
+    $originalDimensions: DimensionsInput!
+    $contextPath: [String!]
+    $forPreview: Boolean
+    $previewMaxDimensions: DimensionsInput
+    $skipLayerId: String
+  ) {
+    generateImagorUrlFromEditorState(
+      imagePath: $imagePath
+      stateJson: $stateJson
+      originalDimensions: $originalDimensions
+      contextPath: $contextPath
+      forPreview: $forPreview
+      previewMaxDimensions: $previewMaxDimensions
+      skipLayerId: $skipLayerId
+    )
+  }
+`)

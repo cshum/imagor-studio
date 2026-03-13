@@ -19,6 +19,7 @@ type Documents = {
   '\n  mutation ConfigureEmbeddedImagor {\n    configureEmbeddedImagor {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureEmbeddedImagorDocument
   '\n  mutation ConfigureExternalImagor($input: ExternalImagorInput!) {\n    configureExternalImagor(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureExternalImagorDocument
   '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      params: $params\n    )\n  }\n': typeof types.GenerateImagorUrlDocument
+  '\n  mutation GenerateImagorUrlFromEditorState(\n    $imagePath: String!\n    $stateJson: String!\n    $originalDimensions: DimensionsInput!\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n  ) {\n    generateImagorUrlFromEditorState(\n      imagePath: $imagePath\n      stateJson: $stateJson\n      originalDimensions: $originalDimensions\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n    )\n  }\n': typeof types.GenerateImagorUrlFromEditorStateDocument
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
@@ -60,6 +61,8 @@ const documents: Documents = {
     types.ConfigureExternalImagorDocument,
   '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      params: $params\n    )\n  }\n':
     types.GenerateImagorUrlDocument,
+  '\n  mutation GenerateImagorUrlFromEditorState(\n    $imagePath: String!\n    $stateJson: String!\n    $originalDimensions: DimensionsInput!\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n  ) {\n    generateImagorUrlFromEditorState(\n      imagePath: $imagePath\n      stateJson: $stateJson\n      originalDimensions: $originalDimensions\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n    )\n  }\n':
+    types.GenerateImagorUrlFromEditorStateDocument,
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
     types.RegistryInfoFragmentDoc,
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n':
@@ -161,6 +164,12 @@ export function gql(
 export function gql(
   source: '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      params: $params\n    )\n  }\n',
 ): (typeof documents)['\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      params: $params\n    )\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation GenerateImagorUrlFromEditorState(\n    $imagePath: String!\n    $stateJson: String!\n    $originalDimensions: DimensionsInput!\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n  ) {\n    generateImagorUrlFromEditorState(\n      imagePath: $imagePath\n      stateJson: $stateJson\n      originalDimensions: $originalDimensions\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n    )\n  }\n',
+): (typeof documents)['\n  mutation GenerateImagorUrlFromEditorState(\n    $imagePath: String!\n    $stateJson: String!\n    $originalDimensions: DimensionsInput!\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n  ) {\n    generateImagorUrlFromEditorState(\n      imagePath: $imagePath\n      stateJson: $stateJson\n      originalDimensions: $originalDimensions\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n    )\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

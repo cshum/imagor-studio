@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"sync"
 	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -21,20 +20,10 @@ import (
 
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
-	return &executableSchema{
-		schema:     cfg.Schema,
-		resolvers:  cfg.Resolvers,
-		directives: cfg.Directives,
-		complexity: cfg.Complexity,
-	}
+	return &executableSchema{SchemaData: cfg.Schema, Resolvers: cfg.Resolvers, Directives: cfg.Directives, ComplexityRoot: cfg.Complexity}
 }
 
-type Config struct {
-	Schema     *ast.Schema
-	Resolvers  ResolverRoot
-	Directives DirectiveRoot
-	Complexity ComplexityRoot
-}
+type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
@@ -111,26 +100,27 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		ChangePassword          func(childComplexity int, input ChangePasswordInput, userID *string) int
-		ConfigureEmbeddedImagor func(childComplexity int) int
-		ConfigureExternalImagor func(childComplexity int, input ExternalImagorInput) int
-		ConfigureFileStorage    func(childComplexity int, input FileStorageInput) int
-		ConfigureS3Storage      func(childComplexity int, input S3StorageInput) int
-		CopyFile                func(childComplexity int, sourcePath string, destPath string) int
-		CreateFolder            func(childComplexity int, path string) int
-		CreateUser              func(childComplexity int, input CreateUserInput) int
-		DeactivateAccount       func(childComplexity int, userID *string) int
-		DeleteFile              func(childComplexity int, path string) int
-		DeleteSystemRegistry    func(childComplexity int, key *string, keys []string) int
-		DeleteUserRegistry      func(childComplexity int, key *string, keys []string, ownerID *string) int
-		GenerateImagorURL       func(childComplexity int, imagePath string, params ImagorParamsInput) int
-		MoveFile                func(childComplexity int, sourcePath string, destPath string) int
-		SaveTemplate            func(childComplexity int, input SaveTemplateInput) int
-		SetSystemRegistry       func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
-		SetUserRegistry         func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
-		TestStorageConfig       func(childComplexity int, input StorageConfigInput) int
-		UpdateProfile           func(childComplexity int, input UpdateProfileInput, userID *string) int
-		UploadFile              func(childComplexity int, path string, content graphql.Upload) int
+		ChangePassword                   func(childComplexity int, input ChangePasswordInput, userID *string) int
+		ConfigureEmbeddedImagor          func(childComplexity int) int
+		ConfigureExternalImagor          func(childComplexity int, input ExternalImagorInput) int
+		ConfigureFileStorage             func(childComplexity int, input FileStorageInput) int
+		ConfigureS3Storage               func(childComplexity int, input S3StorageInput) int
+		CopyFile                         func(childComplexity int, sourcePath string, destPath string) int
+		CreateFolder                     func(childComplexity int, path string) int
+		CreateUser                       func(childComplexity int, input CreateUserInput) int
+		DeactivateAccount                func(childComplexity int, userID *string) int
+		DeleteFile                       func(childComplexity int, path string) int
+		DeleteSystemRegistry             func(childComplexity int, key *string, keys []string) int
+		DeleteUserRegistry               func(childComplexity int, key *string, keys []string, ownerID *string) int
+		GenerateImagorURL                func(childComplexity int, imagePath string, params ImagorParamsInput) int
+		GenerateImagorURLFromEditorState func(childComplexity int, imagePath string, stateJSON string, originalDimensions DimensionsInput, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string) int
+		MoveFile                         func(childComplexity int, sourcePath string, destPath string) int
+		SaveTemplate                     func(childComplexity int, input SaveTemplateInput) int
+		SetSystemRegistry                func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
+		SetUserRegistry                  func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
+		TestStorageConfig                func(childComplexity int, input StorageConfigInput) int
+		UpdateProfile                    func(childComplexity int, input UpdateProfileInput, userID *string) int
+		UploadFile                       func(childComplexity int, path string, content graphql.Upload) int
 	}
 
 	Query struct {
@@ -236,6 +226,7 @@ type MutationResolver interface {
 	ConfigureEmbeddedImagor(ctx context.Context) (*ImagorConfigResult, error)
 	ConfigureExternalImagor(ctx context.Context, input ExternalImagorInput) (*ImagorConfigResult, error)
 	GenerateImagorURL(ctx context.Context, imagePath string, params ImagorParamsInput) (string, error)
+	GenerateImagorURLFromEditorState(ctx context.Context, imagePath string, stateJSON string, originalDimensions DimensionsInput, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string) (string, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
 	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
@@ -260,281 +251,276 @@ type QueryResolver interface {
 	Users(ctx context.Context, offset *int, limit *int) (*UserList, error)
 }
 
-type executableSchema struct {
-	schema     *ast.Schema
-	resolvers  ResolverRoot
-	directives DirectiveRoot
-	complexity ComplexityRoot
-}
+type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 func (e *executableSchema) Schema() *ast.Schema {
-	if e.schema != nil {
-		return e.schema
+	if e.SchemaData != nil {
+		return e.SchemaData
 	}
 	return parsedSchema
 }
 
 func (e *executableSchema) Complexity(ctx context.Context, typeName, field string, childComplexity int, rawArgs map[string]any) (int, bool) {
-	ec := executionContext{nil, e, 0, 0, nil}
+	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
 
 	case "ExternalImagorConfig.baseUrl":
-		if e.complexity.ExternalImagorConfig.BaseURL == nil {
+		if e.ComplexityRoot.ExternalImagorConfig.BaseURL == nil {
 			break
 		}
 
-		return e.complexity.ExternalImagorConfig.BaseURL(childComplexity), true
+		return e.ComplexityRoot.ExternalImagorConfig.BaseURL(childComplexity), true
 	case "ExternalImagorConfig.hasSecret":
-		if e.complexity.ExternalImagorConfig.HasSecret == nil {
+		if e.ComplexityRoot.ExternalImagorConfig.HasSecret == nil {
 			break
 		}
 
-		return e.complexity.ExternalImagorConfig.HasSecret(childComplexity), true
+		return e.ComplexityRoot.ExternalImagorConfig.HasSecret(childComplexity), true
 	case "ExternalImagorConfig.signerTruncate":
-		if e.complexity.ExternalImagorConfig.SignerTruncate == nil {
+		if e.ComplexityRoot.ExternalImagorConfig.SignerTruncate == nil {
 			break
 		}
 
-		return e.complexity.ExternalImagorConfig.SignerTruncate(childComplexity), true
+		return e.ComplexityRoot.ExternalImagorConfig.SignerTruncate(childComplexity), true
 	case "ExternalImagorConfig.signerType":
-		if e.complexity.ExternalImagorConfig.SignerType == nil {
+		if e.ComplexityRoot.ExternalImagorConfig.SignerType == nil {
 			break
 		}
 
-		return e.complexity.ExternalImagorConfig.SignerType(childComplexity), true
+		return e.ComplexityRoot.ExternalImagorConfig.SignerType(childComplexity), true
 	case "ExternalImagorConfig.unsafe":
-		if e.complexity.ExternalImagorConfig.Unsafe == nil {
+		if e.ComplexityRoot.ExternalImagorConfig.Unsafe == nil {
 			break
 		}
 
-		return e.complexity.ExternalImagorConfig.Unsafe(childComplexity), true
+		return e.ComplexityRoot.ExternalImagorConfig.Unsafe(childComplexity), true
 
 	case "FileItem.isDirectory":
-		if e.complexity.FileItem.IsDirectory == nil {
+		if e.ComplexityRoot.FileItem.IsDirectory == nil {
 			break
 		}
 
-		return e.complexity.FileItem.IsDirectory(childComplexity), true
+		return e.ComplexityRoot.FileItem.IsDirectory(childComplexity), true
 	case "FileItem.modifiedTime":
-		if e.complexity.FileItem.ModifiedTime == nil {
+		if e.ComplexityRoot.FileItem.ModifiedTime == nil {
 			break
 		}
 
-		return e.complexity.FileItem.ModifiedTime(childComplexity), true
+		return e.ComplexityRoot.FileItem.ModifiedTime(childComplexity), true
 	case "FileItem.name":
-		if e.complexity.FileItem.Name == nil {
+		if e.ComplexityRoot.FileItem.Name == nil {
 			break
 		}
 
-		return e.complexity.FileItem.Name(childComplexity), true
+		return e.ComplexityRoot.FileItem.Name(childComplexity), true
 	case "FileItem.path":
-		if e.complexity.FileItem.Path == nil {
+		if e.ComplexityRoot.FileItem.Path == nil {
 			break
 		}
 
-		return e.complexity.FileItem.Path(childComplexity), true
+		return e.ComplexityRoot.FileItem.Path(childComplexity), true
 	case "FileItem.size":
-		if e.complexity.FileItem.Size == nil {
+		if e.ComplexityRoot.FileItem.Size == nil {
 			break
 		}
 
-		return e.complexity.FileItem.Size(childComplexity), true
+		return e.ComplexityRoot.FileItem.Size(childComplexity), true
 	case "FileItem.thumbnailUrls":
-		if e.complexity.FileItem.ThumbnailUrls == nil {
+		if e.ComplexityRoot.FileItem.ThumbnailUrls == nil {
 			break
 		}
 
-		return e.complexity.FileItem.ThumbnailUrls(childComplexity), true
+		return e.ComplexityRoot.FileItem.ThumbnailUrls(childComplexity), true
 
 	case "FileList.items":
-		if e.complexity.FileList.Items == nil {
+		if e.ComplexityRoot.FileList.Items == nil {
 			break
 		}
 
-		return e.complexity.FileList.Items(childComplexity), true
+		return e.ComplexityRoot.FileList.Items(childComplexity), true
 	case "FileList.totalCount":
-		if e.complexity.FileList.TotalCount == nil {
+		if e.ComplexityRoot.FileList.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.FileList.TotalCount(childComplexity), true
+		return e.ComplexityRoot.FileList.TotalCount(childComplexity), true
 
 	case "FileStat.etag":
-		if e.complexity.FileStat.Etag == nil {
+		if e.ComplexityRoot.FileStat.Etag == nil {
 			break
 		}
 
-		return e.complexity.FileStat.Etag(childComplexity), true
+		return e.ComplexityRoot.FileStat.Etag(childComplexity), true
 	case "FileStat.isDirectory":
-		if e.complexity.FileStat.IsDirectory == nil {
+		if e.ComplexityRoot.FileStat.IsDirectory == nil {
 			break
 		}
 
-		return e.complexity.FileStat.IsDirectory(childComplexity), true
+		return e.ComplexityRoot.FileStat.IsDirectory(childComplexity), true
 	case "FileStat.modifiedTime":
-		if e.complexity.FileStat.ModifiedTime == nil {
+		if e.ComplexityRoot.FileStat.ModifiedTime == nil {
 			break
 		}
 
-		return e.complexity.FileStat.ModifiedTime(childComplexity), true
+		return e.ComplexityRoot.FileStat.ModifiedTime(childComplexity), true
 	case "FileStat.name":
-		if e.complexity.FileStat.Name == nil {
+		if e.ComplexityRoot.FileStat.Name == nil {
 			break
 		}
 
-		return e.complexity.FileStat.Name(childComplexity), true
+		return e.ComplexityRoot.FileStat.Name(childComplexity), true
 	case "FileStat.path":
-		if e.complexity.FileStat.Path == nil {
+		if e.ComplexityRoot.FileStat.Path == nil {
 			break
 		}
 
-		return e.complexity.FileStat.Path(childComplexity), true
+		return e.ComplexityRoot.FileStat.Path(childComplexity), true
 	case "FileStat.size":
-		if e.complexity.FileStat.Size == nil {
+		if e.ComplexityRoot.FileStat.Size == nil {
 			break
 		}
 
-		return e.complexity.FileStat.Size(childComplexity), true
+		return e.ComplexityRoot.FileStat.Size(childComplexity), true
 	case "FileStat.thumbnailUrls":
-		if e.complexity.FileStat.ThumbnailUrls == nil {
+		if e.ComplexityRoot.FileStat.ThumbnailUrls == nil {
 			break
 		}
 
-		return e.complexity.FileStat.ThumbnailUrls(childComplexity), true
+		return e.ComplexityRoot.FileStat.ThumbnailUrls(childComplexity), true
 
 	case "FileStorageConfig.baseDir":
-		if e.complexity.FileStorageConfig.BaseDir == nil {
+		if e.ComplexityRoot.FileStorageConfig.BaseDir == nil {
 			break
 		}
 
-		return e.complexity.FileStorageConfig.BaseDir(childComplexity), true
+		return e.ComplexityRoot.FileStorageConfig.BaseDir(childComplexity), true
 	case "FileStorageConfig.mkdirPermissions":
-		if e.complexity.FileStorageConfig.MkdirPermissions == nil {
+		if e.ComplexityRoot.FileStorageConfig.MkdirPermissions == nil {
 			break
 		}
 
-		return e.complexity.FileStorageConfig.MkdirPermissions(childComplexity), true
+		return e.ComplexityRoot.FileStorageConfig.MkdirPermissions(childComplexity), true
 	case "FileStorageConfig.writePermissions":
-		if e.complexity.FileStorageConfig.WritePermissions == nil {
+		if e.ComplexityRoot.FileStorageConfig.WritePermissions == nil {
 			break
 		}
 
-		return e.complexity.FileStorageConfig.WritePermissions(childComplexity), true
+		return e.ComplexityRoot.FileStorageConfig.WritePermissions(childComplexity), true
 
 	case "ImagorConfigResult.message":
-		if e.complexity.ImagorConfigResult.Message == nil {
+		if e.ComplexityRoot.ImagorConfigResult.Message == nil {
 			break
 		}
 
-		return e.complexity.ImagorConfigResult.Message(childComplexity), true
+		return e.ComplexityRoot.ImagorConfigResult.Message(childComplexity), true
 	case "ImagorConfigResult.restartRequired":
-		if e.complexity.ImagorConfigResult.RestartRequired == nil {
+		if e.ComplexityRoot.ImagorConfigResult.RestartRequired == nil {
 			break
 		}
 
-		return e.complexity.ImagorConfigResult.RestartRequired(childComplexity), true
+		return e.ComplexityRoot.ImagorConfigResult.RestartRequired(childComplexity), true
 	case "ImagorConfigResult.success":
-		if e.complexity.ImagorConfigResult.Success == nil {
+		if e.ComplexityRoot.ImagorConfigResult.Success == nil {
 			break
 		}
 
-		return e.complexity.ImagorConfigResult.Success(childComplexity), true
+		return e.ComplexityRoot.ImagorConfigResult.Success(childComplexity), true
 	case "ImagorConfigResult.timestamp":
-		if e.complexity.ImagorConfigResult.Timestamp == nil {
+		if e.ComplexityRoot.ImagorConfigResult.Timestamp == nil {
 			break
 		}
 
-		return e.complexity.ImagorConfigResult.Timestamp(childComplexity), true
+		return e.ComplexityRoot.ImagorConfigResult.Timestamp(childComplexity), true
 
 	case "ImagorStatus.configured":
-		if e.complexity.ImagorStatus.Configured == nil {
+		if e.ComplexityRoot.ImagorStatus.Configured == nil {
 			break
 		}
 
-		return e.complexity.ImagorStatus.Configured(childComplexity), true
+		return e.ComplexityRoot.ImagorStatus.Configured(childComplexity), true
 	case "ImagorStatus.externalConfig":
-		if e.complexity.ImagorStatus.ExternalConfig == nil {
+		if e.ComplexityRoot.ImagorStatus.ExternalConfig == nil {
 			break
 		}
 
-		return e.complexity.ImagorStatus.ExternalConfig(childComplexity), true
+		return e.ComplexityRoot.ImagorStatus.ExternalConfig(childComplexity), true
 	case "ImagorStatus.isOverriddenByConfig":
-		if e.complexity.ImagorStatus.IsOverriddenByConfig == nil {
+		if e.ComplexityRoot.ImagorStatus.IsOverriddenByConfig == nil {
 			break
 		}
 
-		return e.complexity.ImagorStatus.IsOverriddenByConfig(childComplexity), true
+		return e.ComplexityRoot.ImagorStatus.IsOverriddenByConfig(childComplexity), true
 	case "ImagorStatus.lastUpdated":
-		if e.complexity.ImagorStatus.LastUpdated == nil {
+		if e.ComplexityRoot.ImagorStatus.LastUpdated == nil {
 			break
 		}
 
-		return e.complexity.ImagorStatus.LastUpdated(childComplexity), true
+		return e.ComplexityRoot.ImagorStatus.LastUpdated(childComplexity), true
 	case "ImagorStatus.mode":
-		if e.complexity.ImagorStatus.Mode == nil {
+		if e.ComplexityRoot.ImagorStatus.Mode == nil {
 			break
 		}
 
-		return e.complexity.ImagorStatus.Mode(childComplexity), true
+		return e.ComplexityRoot.ImagorStatus.Mode(childComplexity), true
 	case "ImagorStatus.restartRequired":
-		if e.complexity.ImagorStatus.RestartRequired == nil {
+		if e.ComplexityRoot.ImagorStatus.RestartRequired == nil {
 			break
 		}
 
-		return e.complexity.ImagorStatus.RestartRequired(childComplexity), true
+		return e.ComplexityRoot.ImagorStatus.RestartRequired(childComplexity), true
 
 	case "LicenseStatus.activatedAt":
-		if e.complexity.LicenseStatus.ActivatedAt == nil {
+		if e.ComplexityRoot.LicenseStatus.ActivatedAt == nil {
 			break
 		}
 
-		return e.complexity.LicenseStatus.ActivatedAt(childComplexity), true
+		return e.ComplexityRoot.LicenseStatus.ActivatedAt(childComplexity), true
 	case "LicenseStatus.email":
-		if e.complexity.LicenseStatus.Email == nil {
+		if e.ComplexityRoot.LicenseStatus.Email == nil {
 			break
 		}
 
-		return e.complexity.LicenseStatus.Email(childComplexity), true
+		return e.ComplexityRoot.LicenseStatus.Email(childComplexity), true
 	case "LicenseStatus.isLicensed":
-		if e.complexity.LicenseStatus.IsLicensed == nil {
+		if e.ComplexityRoot.LicenseStatus.IsLicensed == nil {
 			break
 		}
 
-		return e.complexity.LicenseStatus.IsLicensed(childComplexity), true
+		return e.ComplexityRoot.LicenseStatus.IsLicensed(childComplexity), true
 	case "LicenseStatus.isOverriddenByConfig":
-		if e.complexity.LicenseStatus.IsOverriddenByConfig == nil {
+		if e.ComplexityRoot.LicenseStatus.IsOverriddenByConfig == nil {
 			break
 		}
 
-		return e.complexity.LicenseStatus.IsOverriddenByConfig(childComplexity), true
+		return e.ComplexityRoot.LicenseStatus.IsOverriddenByConfig(childComplexity), true
 	case "LicenseStatus.licenseType":
-		if e.complexity.LicenseStatus.LicenseType == nil {
+		if e.ComplexityRoot.LicenseStatus.LicenseType == nil {
 			break
 		}
 
-		return e.complexity.LicenseStatus.LicenseType(childComplexity), true
+		return e.ComplexityRoot.LicenseStatus.LicenseType(childComplexity), true
 	case "LicenseStatus.maskedLicenseKey":
-		if e.complexity.LicenseStatus.MaskedLicenseKey == nil {
+		if e.ComplexityRoot.LicenseStatus.MaskedLicenseKey == nil {
 			break
 		}
 
-		return e.complexity.LicenseStatus.MaskedLicenseKey(childComplexity), true
+		return e.ComplexityRoot.LicenseStatus.MaskedLicenseKey(childComplexity), true
 	case "LicenseStatus.message":
-		if e.complexity.LicenseStatus.Message == nil {
+		if e.ComplexityRoot.LicenseStatus.Message == nil {
 			break
 		}
 
-		return e.complexity.LicenseStatus.Message(childComplexity), true
+		return e.ComplexityRoot.LicenseStatus.Message(childComplexity), true
 	case "LicenseStatus.supportMessage":
-		if e.complexity.LicenseStatus.SupportMessage == nil {
+		if e.ComplexityRoot.LicenseStatus.SupportMessage == nil {
 			break
 		}
 
-		return e.complexity.LicenseStatus.SupportMessage(childComplexity), true
+		return e.ComplexityRoot.LicenseStatus.SupportMessage(childComplexity), true
 
 	case "Mutation.changePassword":
-		if e.complexity.Mutation.ChangePassword == nil {
+		if e.ComplexityRoot.Mutation.ChangePassword == nil {
 			break
 		}
 
@@ -543,15 +529,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ChangePassword(childComplexity, args["input"].(ChangePasswordInput), args["userId"].(*string)), true
+		return e.ComplexityRoot.Mutation.ChangePassword(childComplexity, args["input"].(ChangePasswordInput), args["userId"].(*string)), true
 	case "Mutation.configureEmbeddedImagor":
-		if e.complexity.Mutation.ConfigureEmbeddedImagor == nil {
+		if e.ComplexityRoot.Mutation.ConfigureEmbeddedImagor == nil {
 			break
 		}
 
-		return e.complexity.Mutation.ConfigureEmbeddedImagor(childComplexity), true
+		return e.ComplexityRoot.Mutation.ConfigureEmbeddedImagor(childComplexity), true
 	case "Mutation.configureExternalImagor":
-		if e.complexity.Mutation.ConfigureExternalImagor == nil {
+		if e.ComplexityRoot.Mutation.ConfigureExternalImagor == nil {
 			break
 		}
 
@@ -560,9 +546,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ConfigureExternalImagor(childComplexity, args["input"].(ExternalImagorInput)), true
+		return e.ComplexityRoot.Mutation.ConfigureExternalImagor(childComplexity, args["input"].(ExternalImagorInput)), true
 	case "Mutation.configureFileStorage":
-		if e.complexity.Mutation.ConfigureFileStorage == nil {
+		if e.ComplexityRoot.Mutation.ConfigureFileStorage == nil {
 			break
 		}
 
@@ -571,9 +557,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ConfigureFileStorage(childComplexity, args["input"].(FileStorageInput)), true
+		return e.ComplexityRoot.Mutation.ConfigureFileStorage(childComplexity, args["input"].(FileStorageInput)), true
 	case "Mutation.configureS3Storage":
-		if e.complexity.Mutation.ConfigureS3Storage == nil {
+		if e.ComplexityRoot.Mutation.ConfigureS3Storage == nil {
 			break
 		}
 
@@ -582,9 +568,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ConfigureS3Storage(childComplexity, args["input"].(S3StorageInput)), true
+		return e.ComplexityRoot.Mutation.ConfigureS3Storage(childComplexity, args["input"].(S3StorageInput)), true
 	case "Mutation.copyFile":
-		if e.complexity.Mutation.CopyFile == nil {
+		if e.ComplexityRoot.Mutation.CopyFile == nil {
 			break
 		}
 
@@ -593,9 +579,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CopyFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string)), true
+		return e.ComplexityRoot.Mutation.CopyFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string)), true
 	case "Mutation.createFolder":
-		if e.complexity.Mutation.CreateFolder == nil {
+		if e.ComplexityRoot.Mutation.CreateFolder == nil {
 			break
 		}
 
@@ -604,9 +590,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateFolder(childComplexity, args["path"].(string)), true
+		return e.ComplexityRoot.Mutation.CreateFolder(childComplexity, args["path"].(string)), true
 	case "Mutation.createUser":
-		if e.complexity.Mutation.CreateUser == nil {
+		if e.ComplexityRoot.Mutation.CreateUser == nil {
 			break
 		}
 
@@ -615,9 +601,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(CreateUserInput)), true
+		return e.ComplexityRoot.Mutation.CreateUser(childComplexity, args["input"].(CreateUserInput)), true
 	case "Mutation.deactivateAccount":
-		if e.complexity.Mutation.DeactivateAccount == nil {
+		if e.ComplexityRoot.Mutation.DeactivateAccount == nil {
 			break
 		}
 
@@ -626,9 +612,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeactivateAccount(childComplexity, args["userId"].(*string)), true
+		return e.ComplexityRoot.Mutation.DeactivateAccount(childComplexity, args["userId"].(*string)), true
 	case "Mutation.deleteFile":
-		if e.complexity.Mutation.DeleteFile == nil {
+		if e.ComplexityRoot.Mutation.DeleteFile == nil {
 			break
 		}
 
@@ -637,9 +623,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteFile(childComplexity, args["path"].(string)), true
+		return e.ComplexityRoot.Mutation.DeleteFile(childComplexity, args["path"].(string)), true
 	case "Mutation.deleteSystemRegistry":
-		if e.complexity.Mutation.DeleteSystemRegistry == nil {
+		if e.ComplexityRoot.Mutation.DeleteSystemRegistry == nil {
 			break
 		}
 
@@ -648,9 +634,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteSystemRegistry(childComplexity, args["key"].(*string), args["keys"].([]string)), true
+		return e.ComplexityRoot.Mutation.DeleteSystemRegistry(childComplexity, args["key"].(*string), args["keys"].([]string)), true
 	case "Mutation.deleteUserRegistry":
-		if e.complexity.Mutation.DeleteUserRegistry == nil {
+		if e.ComplexityRoot.Mutation.DeleteUserRegistry == nil {
 			break
 		}
 
@@ -659,9 +645,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteUserRegistry(childComplexity, args["key"].(*string), args["keys"].([]string), args["ownerID"].(*string)), true
+		return e.ComplexityRoot.Mutation.DeleteUserRegistry(childComplexity, args["key"].(*string), args["keys"].([]string), args["ownerID"].(*string)), true
 	case "Mutation.generateImagorUrl":
-		if e.complexity.Mutation.GenerateImagorURL == nil {
+		if e.ComplexityRoot.Mutation.GenerateImagorURL == nil {
 			break
 		}
 
@@ -670,9 +656,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.GenerateImagorURL(childComplexity, args["imagePath"].(string), args["params"].(ImagorParamsInput)), true
+		return e.ComplexityRoot.Mutation.GenerateImagorURL(childComplexity, args["imagePath"].(string), args["params"].(ImagorParamsInput)), true
+	case "Mutation.generateImagorUrlFromEditorState":
+		if e.ComplexityRoot.Mutation.GenerateImagorURLFromEditorState == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_generateImagorUrlFromEditorState_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.GenerateImagorURLFromEditorState(childComplexity, args["imagePath"].(string), args["stateJson"].(string), args["originalDimensions"].(DimensionsInput), args["contextPath"].([]string), args["forPreview"].(*bool), args["previewMaxDimensions"].(*DimensionsInput), args["skipLayerId"].(*string)), true
 	case "Mutation.moveFile":
-		if e.complexity.Mutation.MoveFile == nil {
+		if e.ComplexityRoot.Mutation.MoveFile == nil {
 			break
 		}
 
@@ -681,9 +678,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.MoveFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string)), true
+		return e.ComplexityRoot.Mutation.MoveFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string)), true
 	case "Mutation.saveTemplate":
-		if e.complexity.Mutation.SaveTemplate == nil {
+		if e.ComplexityRoot.Mutation.SaveTemplate == nil {
 			break
 		}
 
@@ -692,9 +689,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SaveTemplate(childComplexity, args["input"].(SaveTemplateInput)), true
+		return e.ComplexityRoot.Mutation.SaveTemplate(childComplexity, args["input"].(SaveTemplateInput)), true
 	case "Mutation.setSystemRegistry":
-		if e.complexity.Mutation.SetSystemRegistry == nil {
+		if e.ComplexityRoot.Mutation.SetSystemRegistry == nil {
 			break
 		}
 
@@ -703,9 +700,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetSystemRegistry(childComplexity, args["entry"].(*RegistryEntryInput), args["entries"].([]*RegistryEntryInput)), true
+		return e.ComplexityRoot.Mutation.SetSystemRegistry(childComplexity, args["entry"].(*RegistryEntryInput), args["entries"].([]*RegistryEntryInput)), true
 	case "Mutation.setUserRegistry":
-		if e.complexity.Mutation.SetUserRegistry == nil {
+		if e.ComplexityRoot.Mutation.SetUserRegistry == nil {
 			break
 		}
 
@@ -714,9 +711,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SetUserRegistry(childComplexity, args["entry"].(*RegistryEntryInput), args["entries"].([]*RegistryEntryInput), args["ownerID"].(*string)), true
+		return e.ComplexityRoot.Mutation.SetUserRegistry(childComplexity, args["entry"].(*RegistryEntryInput), args["entries"].([]*RegistryEntryInput), args["ownerID"].(*string)), true
 	case "Mutation.testStorageConfig":
-		if e.complexity.Mutation.TestStorageConfig == nil {
+		if e.ComplexityRoot.Mutation.TestStorageConfig == nil {
 			break
 		}
 
@@ -725,9 +722,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.TestStorageConfig(childComplexity, args["input"].(StorageConfigInput)), true
+		return e.ComplexityRoot.Mutation.TestStorageConfig(childComplexity, args["input"].(StorageConfigInput)), true
 	case "Mutation.updateProfile":
-		if e.complexity.Mutation.UpdateProfile == nil {
+		if e.ComplexityRoot.Mutation.UpdateProfile == nil {
 			break
 		}
 
@@ -736,9 +733,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateProfile(childComplexity, args["input"].(UpdateProfileInput), args["userId"].(*string)), true
+		return e.ComplexityRoot.Mutation.UpdateProfile(childComplexity, args["input"].(UpdateProfileInput), args["userId"].(*string)), true
 	case "Mutation.uploadFile":
-		if e.complexity.Mutation.UploadFile == nil {
+		if e.ComplexityRoot.Mutation.UploadFile == nil {
 			break
 		}
 
@@ -747,10 +744,10 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UploadFile(childComplexity, args["path"].(string), args["content"].(graphql.Upload)), true
+		return e.ComplexityRoot.Mutation.UploadFile(childComplexity, args["path"].(string), args["content"].(graphql.Upload)), true
 
 	case "Query.getSystemRegistry":
-		if e.complexity.Query.GetSystemRegistry == nil {
+		if e.ComplexityRoot.Query.GetSystemRegistry == nil {
 			break
 		}
 
@@ -759,9 +756,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.GetSystemRegistry(childComplexity, args["key"].(*string), args["keys"].([]string)), true
+		return e.ComplexityRoot.Query.GetSystemRegistry(childComplexity, args["key"].(*string), args["keys"].([]string)), true
 	case "Query.getUserRegistry":
-		if e.complexity.Query.GetUserRegistry == nil {
+		if e.ComplexityRoot.Query.GetUserRegistry == nil {
 			break
 		}
 
@@ -770,21 +767,22 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserRegistry(childComplexity, args["key"].(*string), args["keys"].([]string), args["ownerID"].(*string)), true
+		return e.ComplexityRoot.Query.GetUserRegistry(childComplexity, args["key"].(*string), args["keys"].([]string), args["ownerID"].(*string)), true
 	case "Query.imagorStatus":
-		if e.complexity.Query.ImagorStatus == nil {
+		if e.ComplexityRoot.Query.ImagorStatus == nil {
 			break
 		}
 
-		return e.complexity.Query.ImagorStatus(childComplexity), true
+		return e.ComplexityRoot.Query.ImagorStatus(childComplexity), true
+
 	case "Query.licenseStatus":
-		if e.complexity.Query.LicenseStatus == nil {
+		if e.ComplexityRoot.Query.LicenseStatus == nil {
 			break
 		}
 
-		return e.complexity.Query.LicenseStatus(childComplexity), true
+		return e.ComplexityRoot.Query.LicenseStatus(childComplexity), true
 	case "Query.listFiles":
-		if e.complexity.Query.ListFiles == nil {
+		if e.ComplexityRoot.Query.ListFiles == nil {
 			break
 		}
 
@@ -793,9 +791,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(*int), args["limit"].(*int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["extensions"].(*string), args["showHidden"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
+		return e.ComplexityRoot.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(*int), args["limit"].(*int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["extensions"].(*string), args["showHidden"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
 	case "Query.listSystemRegistry":
-		if e.complexity.Query.ListSystemRegistry == nil {
+		if e.ComplexityRoot.Query.ListSystemRegistry == nil {
 			break
 		}
 
@@ -804,9 +802,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.ListSystemRegistry(childComplexity, args["prefix"].(*string)), true
+		return e.ComplexityRoot.Query.ListSystemRegistry(childComplexity, args["prefix"].(*string)), true
 	case "Query.listUserRegistry":
-		if e.complexity.Query.ListUserRegistry == nil {
+		if e.ComplexityRoot.Query.ListUserRegistry == nil {
 			break
 		}
 
@@ -815,15 +813,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.ListUserRegistry(childComplexity, args["prefix"].(*string), args["ownerID"].(*string)), true
+		return e.ComplexityRoot.Query.ListUserRegistry(childComplexity, args["prefix"].(*string), args["ownerID"].(*string)), true
 	case "Query.me":
-		if e.complexity.Query.Me == nil {
+		if e.ComplexityRoot.Query.Me == nil {
 			break
 		}
 
-		return e.complexity.Query.Me(childComplexity), true
+		return e.ComplexityRoot.Query.Me(childComplexity), true
 	case "Query.statFile":
-		if e.complexity.Query.StatFile == nil {
+		if e.ComplexityRoot.Query.StatFile == nil {
 			break
 		}
 
@@ -832,15 +830,15 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.StatFile(childComplexity, args["path"].(string)), true
+		return e.ComplexityRoot.Query.StatFile(childComplexity, args["path"].(string)), true
 	case "Query.storageStatus":
-		if e.complexity.Query.StorageStatus == nil {
+		if e.ComplexityRoot.Query.StorageStatus == nil {
 			break
 		}
 
-		return e.complexity.Query.StorageStatus(childComplexity), true
+		return e.ComplexityRoot.Query.StorageStatus(childComplexity), true
 	case "Query.user":
-		if e.complexity.Query.User == nil {
+		if e.ComplexityRoot.Query.User == nil {
 			break
 		}
 
@@ -849,9 +847,9 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.User(childComplexity, args["id"].(string)), true
+		return e.ComplexityRoot.Query.User(childComplexity, args["id"].(string)), true
 	case "Query.users":
-		if e.complexity.Query.Users == nil {
+		if e.ComplexityRoot.Query.Users == nil {
 			break
 		}
 
@@ -860,281 +858,281 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.Users(childComplexity, args["offset"].(*int), args["limit"].(*int)), true
+		return e.ComplexityRoot.Query.Users(childComplexity, args["offset"].(*int), args["limit"].(*int)), true
 
 	case "S3StorageConfig.baseDir":
-		if e.complexity.S3StorageConfig.BaseDir == nil {
+		if e.ComplexityRoot.S3StorageConfig.BaseDir == nil {
 			break
 		}
 
-		return e.complexity.S3StorageConfig.BaseDir(childComplexity), true
+		return e.ComplexityRoot.S3StorageConfig.BaseDir(childComplexity), true
 	case "S3StorageConfig.bucket":
-		if e.complexity.S3StorageConfig.Bucket == nil {
+		if e.ComplexityRoot.S3StorageConfig.Bucket == nil {
 			break
 		}
 
-		return e.complexity.S3StorageConfig.Bucket(childComplexity), true
+		return e.ComplexityRoot.S3StorageConfig.Bucket(childComplexity), true
 	case "S3StorageConfig.endpoint":
-		if e.complexity.S3StorageConfig.Endpoint == nil {
+		if e.ComplexityRoot.S3StorageConfig.Endpoint == nil {
 			break
 		}
 
-		return e.complexity.S3StorageConfig.Endpoint(childComplexity), true
+		return e.ComplexityRoot.S3StorageConfig.Endpoint(childComplexity), true
 	case "S3StorageConfig.forcePathStyle":
-		if e.complexity.S3StorageConfig.ForcePathStyle == nil {
+		if e.ComplexityRoot.S3StorageConfig.ForcePathStyle == nil {
 			break
 		}
 
-		return e.complexity.S3StorageConfig.ForcePathStyle(childComplexity), true
+		return e.ComplexityRoot.S3StorageConfig.ForcePathStyle(childComplexity), true
 	case "S3StorageConfig.region":
-		if e.complexity.S3StorageConfig.Region == nil {
+		if e.ComplexityRoot.S3StorageConfig.Region == nil {
 			break
 		}
 
-		return e.complexity.S3StorageConfig.Region(childComplexity), true
+		return e.ComplexityRoot.S3StorageConfig.Region(childComplexity), true
 
 	case "StorageConfigResult.message":
-		if e.complexity.StorageConfigResult.Message == nil {
+		if e.ComplexityRoot.StorageConfigResult.Message == nil {
 			break
 		}
 
-		return e.complexity.StorageConfigResult.Message(childComplexity), true
+		return e.ComplexityRoot.StorageConfigResult.Message(childComplexity), true
 	case "StorageConfigResult.restartRequired":
-		if e.complexity.StorageConfigResult.RestartRequired == nil {
+		if e.ComplexityRoot.StorageConfigResult.RestartRequired == nil {
 			break
 		}
 
-		return e.complexity.StorageConfigResult.RestartRequired(childComplexity), true
+		return e.ComplexityRoot.StorageConfigResult.RestartRequired(childComplexity), true
 	case "StorageConfigResult.success":
-		if e.complexity.StorageConfigResult.Success == nil {
+		if e.ComplexityRoot.StorageConfigResult.Success == nil {
 			break
 		}
 
-		return e.complexity.StorageConfigResult.Success(childComplexity), true
+		return e.ComplexityRoot.StorageConfigResult.Success(childComplexity), true
 	case "StorageConfigResult.timestamp":
-		if e.complexity.StorageConfigResult.Timestamp == nil {
+		if e.ComplexityRoot.StorageConfigResult.Timestamp == nil {
 			break
 		}
 
-		return e.complexity.StorageConfigResult.Timestamp(childComplexity), true
+		return e.ComplexityRoot.StorageConfigResult.Timestamp(childComplexity), true
 
 	case "StorageStatus.configured":
-		if e.complexity.StorageStatus.Configured == nil {
+		if e.ComplexityRoot.StorageStatus.Configured == nil {
 			break
 		}
 
-		return e.complexity.StorageStatus.Configured(childComplexity), true
+		return e.ComplexityRoot.StorageStatus.Configured(childComplexity), true
 	case "StorageStatus.fileConfig":
-		if e.complexity.StorageStatus.FileConfig == nil {
+		if e.ComplexityRoot.StorageStatus.FileConfig == nil {
 			break
 		}
 
-		return e.complexity.StorageStatus.FileConfig(childComplexity), true
+		return e.ComplexityRoot.StorageStatus.FileConfig(childComplexity), true
 	case "StorageStatus.isOverriddenByConfig":
-		if e.complexity.StorageStatus.IsOverriddenByConfig == nil {
+		if e.ComplexityRoot.StorageStatus.IsOverriddenByConfig == nil {
 			break
 		}
 
-		return e.complexity.StorageStatus.IsOverriddenByConfig(childComplexity), true
+		return e.ComplexityRoot.StorageStatus.IsOverriddenByConfig(childComplexity), true
 	case "StorageStatus.lastUpdated":
-		if e.complexity.StorageStatus.LastUpdated == nil {
+		if e.ComplexityRoot.StorageStatus.LastUpdated == nil {
 			break
 		}
 
-		return e.complexity.StorageStatus.LastUpdated(childComplexity), true
+		return e.ComplexityRoot.StorageStatus.LastUpdated(childComplexity), true
 	case "StorageStatus.restartRequired":
-		if e.complexity.StorageStatus.RestartRequired == nil {
+		if e.ComplexityRoot.StorageStatus.RestartRequired == nil {
 			break
 		}
 
-		return e.complexity.StorageStatus.RestartRequired(childComplexity), true
+		return e.ComplexityRoot.StorageStatus.RestartRequired(childComplexity), true
 	case "StorageStatus.s3Config":
-		if e.complexity.StorageStatus.S3Config == nil {
+		if e.ComplexityRoot.StorageStatus.S3Config == nil {
 			break
 		}
 
-		return e.complexity.StorageStatus.S3Config(childComplexity), true
+		return e.ComplexityRoot.StorageStatus.S3Config(childComplexity), true
 	case "StorageStatus.type":
-		if e.complexity.StorageStatus.Type == nil {
+		if e.ComplexityRoot.StorageStatus.Type == nil {
 			break
 		}
 
-		return e.complexity.StorageStatus.Type(childComplexity), true
+		return e.ComplexityRoot.StorageStatus.Type(childComplexity), true
 
 	case "StorageTestResult.details":
-		if e.complexity.StorageTestResult.Details == nil {
+		if e.ComplexityRoot.StorageTestResult.Details == nil {
 			break
 		}
 
-		return e.complexity.StorageTestResult.Details(childComplexity), true
+		return e.ComplexityRoot.StorageTestResult.Details(childComplexity), true
 	case "StorageTestResult.message":
-		if e.complexity.StorageTestResult.Message == nil {
+		if e.ComplexityRoot.StorageTestResult.Message == nil {
 			break
 		}
 
-		return e.complexity.StorageTestResult.Message(childComplexity), true
+		return e.ComplexityRoot.StorageTestResult.Message(childComplexity), true
 	case "StorageTestResult.success":
-		if e.complexity.StorageTestResult.Success == nil {
+		if e.ComplexityRoot.StorageTestResult.Success == nil {
 			break
 		}
 
-		return e.complexity.StorageTestResult.Success(childComplexity), true
+		return e.ComplexityRoot.StorageTestResult.Success(childComplexity), true
 
 	case "SystemRegistry.isEncrypted":
-		if e.complexity.SystemRegistry.IsEncrypted == nil {
+		if e.ComplexityRoot.SystemRegistry.IsEncrypted == nil {
 			break
 		}
 
-		return e.complexity.SystemRegistry.IsEncrypted(childComplexity), true
+		return e.ComplexityRoot.SystemRegistry.IsEncrypted(childComplexity), true
 	case "SystemRegistry.isOverriddenByConfig":
-		if e.complexity.SystemRegistry.IsOverriddenByConfig == nil {
+		if e.ComplexityRoot.SystemRegistry.IsOverriddenByConfig == nil {
 			break
 		}
 
-		return e.complexity.SystemRegistry.IsOverriddenByConfig(childComplexity), true
+		return e.ComplexityRoot.SystemRegistry.IsOverriddenByConfig(childComplexity), true
 	case "SystemRegistry.key":
-		if e.complexity.SystemRegistry.Key == nil {
+		if e.ComplexityRoot.SystemRegistry.Key == nil {
 			break
 		}
 
-		return e.complexity.SystemRegistry.Key(childComplexity), true
+		return e.ComplexityRoot.SystemRegistry.Key(childComplexity), true
 	case "SystemRegistry.value":
-		if e.complexity.SystemRegistry.Value == nil {
+		if e.ComplexityRoot.SystemRegistry.Value == nil {
 			break
 		}
 
-		return e.complexity.SystemRegistry.Value(childComplexity), true
+		return e.ComplexityRoot.SystemRegistry.Value(childComplexity), true
 
 	case "TemplateResult.message":
-		if e.complexity.TemplateResult.Message == nil {
+		if e.ComplexityRoot.TemplateResult.Message == nil {
 			break
 		}
 
-		return e.complexity.TemplateResult.Message(childComplexity), true
+		return e.ComplexityRoot.TemplateResult.Message(childComplexity), true
 	case "TemplateResult.previewPath":
-		if e.complexity.TemplateResult.PreviewPath == nil {
+		if e.ComplexityRoot.TemplateResult.PreviewPath == nil {
 			break
 		}
 
-		return e.complexity.TemplateResult.PreviewPath(childComplexity), true
+		return e.ComplexityRoot.TemplateResult.PreviewPath(childComplexity), true
 	case "TemplateResult.success":
-		if e.complexity.TemplateResult.Success == nil {
+		if e.ComplexityRoot.TemplateResult.Success == nil {
 			break
 		}
 
-		return e.complexity.TemplateResult.Success(childComplexity), true
+		return e.ComplexityRoot.TemplateResult.Success(childComplexity), true
 	case "TemplateResult.templatePath":
-		if e.complexity.TemplateResult.TemplatePath == nil {
+		if e.ComplexityRoot.TemplateResult.TemplatePath == nil {
 			break
 		}
 
-		return e.complexity.TemplateResult.TemplatePath(childComplexity), true
+		return e.ComplexityRoot.TemplateResult.TemplatePath(childComplexity), true
 
 	case "ThumbnailUrls.full":
-		if e.complexity.ThumbnailUrls.Full == nil {
+		if e.ComplexityRoot.ThumbnailUrls.Full == nil {
 			break
 		}
 
-		return e.complexity.ThumbnailUrls.Full(childComplexity), true
+		return e.ComplexityRoot.ThumbnailUrls.Full(childComplexity), true
 	case "ThumbnailUrls.grid":
-		if e.complexity.ThumbnailUrls.Grid == nil {
+		if e.ComplexityRoot.ThumbnailUrls.Grid == nil {
 			break
 		}
 
-		return e.complexity.ThumbnailUrls.Grid(childComplexity), true
+		return e.ComplexityRoot.ThumbnailUrls.Grid(childComplexity), true
 	case "ThumbnailUrls.meta":
-		if e.complexity.ThumbnailUrls.Meta == nil {
+		if e.ComplexityRoot.ThumbnailUrls.Meta == nil {
 			break
 		}
 
-		return e.complexity.ThumbnailUrls.Meta(childComplexity), true
+		return e.ComplexityRoot.ThumbnailUrls.Meta(childComplexity), true
 	case "ThumbnailUrls.original":
-		if e.complexity.ThumbnailUrls.Original == nil {
+		if e.ComplexityRoot.ThumbnailUrls.Original == nil {
 			break
 		}
 
-		return e.complexity.ThumbnailUrls.Original(childComplexity), true
+		return e.ComplexityRoot.ThumbnailUrls.Original(childComplexity), true
 	case "ThumbnailUrls.preview":
-		if e.complexity.ThumbnailUrls.Preview == nil {
+		if e.ComplexityRoot.ThumbnailUrls.Preview == nil {
 			break
 		}
 
-		return e.complexity.ThumbnailUrls.Preview(childComplexity), true
+		return e.ComplexityRoot.ThumbnailUrls.Preview(childComplexity), true
 
 	case "User.createdAt":
-		if e.complexity.User.CreatedAt == nil {
+		if e.ComplexityRoot.User.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.User.CreatedAt(childComplexity), true
+		return e.ComplexityRoot.User.CreatedAt(childComplexity), true
 	case "User.displayName":
-		if e.complexity.User.DisplayName == nil {
+		if e.ComplexityRoot.User.DisplayName == nil {
 			break
 		}
 
-		return e.complexity.User.DisplayName(childComplexity), true
+		return e.ComplexityRoot.User.DisplayName(childComplexity), true
 	case "User.id":
-		if e.complexity.User.ID == nil {
+		if e.ComplexityRoot.User.ID == nil {
 			break
 		}
 
-		return e.complexity.User.ID(childComplexity), true
+		return e.ComplexityRoot.User.ID(childComplexity), true
 	case "User.isActive":
-		if e.complexity.User.IsActive == nil {
+		if e.ComplexityRoot.User.IsActive == nil {
 			break
 		}
 
-		return e.complexity.User.IsActive(childComplexity), true
+		return e.ComplexityRoot.User.IsActive(childComplexity), true
 	case "User.role":
-		if e.complexity.User.Role == nil {
+		if e.ComplexityRoot.User.Role == nil {
 			break
 		}
 
-		return e.complexity.User.Role(childComplexity), true
+		return e.ComplexityRoot.User.Role(childComplexity), true
 	case "User.updatedAt":
-		if e.complexity.User.UpdatedAt == nil {
+		if e.ComplexityRoot.User.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.User.UpdatedAt(childComplexity), true
+		return e.ComplexityRoot.User.UpdatedAt(childComplexity), true
 	case "User.username":
-		if e.complexity.User.Username == nil {
+		if e.ComplexityRoot.User.Username == nil {
 			break
 		}
 
-		return e.complexity.User.Username(childComplexity), true
+		return e.ComplexityRoot.User.Username(childComplexity), true
 
 	case "UserList.items":
-		if e.complexity.UserList.Items == nil {
+		if e.ComplexityRoot.UserList.Items == nil {
 			break
 		}
 
-		return e.complexity.UserList.Items(childComplexity), true
+		return e.ComplexityRoot.UserList.Items(childComplexity), true
 	case "UserList.totalCount":
-		if e.complexity.UserList.TotalCount == nil {
+		if e.ComplexityRoot.UserList.TotalCount == nil {
 			break
 		}
 
-		return e.complexity.UserList.TotalCount(childComplexity), true
+		return e.ComplexityRoot.UserList.TotalCount(childComplexity), true
 
 	case "UserRegistry.isEncrypted":
-		if e.complexity.UserRegistry.IsEncrypted == nil {
+		if e.ComplexityRoot.UserRegistry.IsEncrypted == nil {
 			break
 		}
 
-		return e.complexity.UserRegistry.IsEncrypted(childComplexity), true
+		return e.ComplexityRoot.UserRegistry.IsEncrypted(childComplexity), true
 	case "UserRegistry.key":
-		if e.complexity.UserRegistry.Key == nil {
+		if e.ComplexityRoot.UserRegistry.Key == nil {
 			break
 		}
 
-		return e.complexity.UserRegistry.Key(childComplexity), true
+		return e.ComplexityRoot.UserRegistry.Key(childComplexity), true
 	case "UserRegistry.value":
-		if e.complexity.UserRegistry.Value == nil {
+		if e.ComplexityRoot.UserRegistry.Value == nil {
 			break
 		}
 
-		return e.complexity.UserRegistry.Value(childComplexity), true
+		return e.ComplexityRoot.UserRegistry.Value(childComplexity), true
 
 	}
 	return 0, false
@@ -1142,10 +1140,11 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
-	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
+	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputChangePasswordInput,
 		ec.unmarshalInputCreateUserInput,
+		ec.unmarshalInputDimensionsInput,
 		ec.unmarshalInputExternalImagorInput,
 		ec.unmarshalInputFileStorageInput,
 		ec.unmarshalInputImagorFilterInput,
@@ -1168,9 +1167,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
-				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
-					result := <-ec.deferredResults
-					atomic.AddInt32(&ec.pendingDeferred, -1)
+				if atomic.LoadInt32(&ec.PendingDeferred) > 0 {
+					result := <-ec.DeferredResults
+					atomic.AddInt32(&ec.PendingDeferred, -1)
 					data = result.Result
 					response.Path = result.Path
 					response.Label = result.Label
@@ -1182,8 +1181,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
 			response.Data = buf.Bytes()
-			if atomic.LoadInt32(&ec.deferred) > 0 {
-				hasNext := atomic.LoadInt32(&ec.pendingDeferred) > 0
+			if atomic.LoadInt32(&ec.Deferred) > 0 {
+				hasNext := atomic.LoadInt32(&ec.PendingDeferred) > 0
 				response.HasNext = &hasNext
 			}
 
@@ -1211,44 +1210,22 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 }
 
 type executionContext struct {
-	*graphql.OperationContext
-	*executableSchema
-	deferred        int32
-	pendingDeferred int32
-	deferredResults chan graphql.DeferredResult
+	*graphql.ExecutionContextState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 }
 
-func (ec *executionContext) processDeferredGroup(dg graphql.DeferredGroup) {
-	atomic.AddInt32(&ec.pendingDeferred, 1)
-	go func() {
-		ctx := graphql.WithFreshResponseContext(dg.Context)
-		dg.FieldSet.Dispatch(ctx)
-		ds := graphql.DeferredResult{
-			Path:   dg.Path,
-			Label:  dg.Label,
-			Result: dg.FieldSet,
-			Errors: graphql.GetErrors(ctx),
-		}
-		// null fields should bubble up
-		if dg.FieldSet.Invalids > 0 {
-			ds.Result = graphql.Null
-		}
-		ec.deferredResults <- ds
-	}()
-}
-
-func (ec *executionContext) introspectSchema() (*introspection.Schema, error) {
-	if ec.DisableIntrospection {
-		return nil, errors.New("introspection disabled")
+func newExecutionContext(
+	opCtx *graphql.OperationContext,
+	execSchema *executableSchema,
+	deferredResults chan graphql.DeferredResult,
+) executionContext {
+	return executionContext{
+		ExecutionContextState: graphql.NewExecutionContextState[ResolverRoot, DirectiveRoot, ComplexityRoot](
+			opCtx,
+			(*graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot])(execSchema),
+			parsedSchema,
+			deferredResults,
+		),
 	}
-	return introspection.WrapSchema(ec.Schema()), nil
-}
-
-func (ec *executionContext) introspectType(name string) (*introspection.Type, error) {
-	if ec.DisableIntrospection {
-		return nil, errors.New("introspection disabled")
-	}
-	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
 var sources = []*ast.Source{
@@ -1263,9 +1240,17 @@ extend type Mutation {
   configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
 
   # Imagor URL Generation API
-  generateImagorUrl(
-    imagePath: String!
-    params: ImagorParamsInput!
+  generateImagorUrl(imagePath: String!, params: ImagorParamsInput!): String!
+
+  # Imagor URL Generation from editor state (consolidates convertStateToGraphQLParams logic in backend)
+  generateImagorUrlFromEditorState(
+    imagePath: String!              # Root image path
+    stateJson: String!              # JSON-encoded ImageEditorState (full base state)
+    originalDimensions: DimensionsInput! # Root image original dimensions
+    contextPath: [String!]          # Layer ID path for f-token parent-dim resolution ([] = root)
+    forPreview: Boolean             # Adds preview/webp filters, scales blur/sharpen/padding
+    previewMaxDimensions: DimensionsInput # Null = no preview constraint
+    skipLayerId: String             # Layer ID to exclude from rendering
   ): String!
 }
 
@@ -1313,6 +1298,12 @@ input ImagorParamsInput {
 input ImagorFilterInput {
   name: String! # "quality", "brightness", etc.
   args: String! # "80", "10", etc.
+}
+
+# Dimensions input (width + height)
+input DimensionsInput {
+  width: Int!
+  height: Int!
 }
 
 # Imagor Configuration Types
@@ -1577,7 +1568,7 @@ input SaveTemplateInput {
   sourceImagePath: String!
   savePath: String!
   overwrite: Boolean
-  previewParams: ImagorParamsInput
+  # previewParams removed: backend now derives preview from templateJson.transformations
 }
 
 enum DimensionMode {
@@ -1792,6 +1783,47 @@ func (ec *executionContext) field_Mutation_deleteUserRegistry_args(ctx context.C
 		return nil, err
 	}
 	args["ownerID"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_generateImagorUrlFromEditorState_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "imagePath", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["imagePath"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "stateJson", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["stateJson"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "originalDimensions", ec.unmarshalNDimensionsInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionsInput)
+	if err != nil {
+		return nil, err
+	}
+	args["originalDimensions"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "contextPath", ec.unmarshalOString2ᚕstringᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["contextPath"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "forPreview", ec.unmarshalOBoolean2ᚖbool)
+	if err != nil {
+		return nil, err
+	}
+	args["forPreview"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "previewMaxDimensions", ec.unmarshalODimensionsInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionsInput)
+	if err != nil {
+		return nil, err
+	}
+	args["previewMaxDimensions"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "skipLayerId", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["skipLayerId"] = arg6
 	return args, nil
 }
 
@@ -3381,7 +3413,7 @@ func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field grap
 		ec.fieldContext_Mutation_uploadFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UploadFile(ctx, fc.Args["path"].(string), fc.Args["content"].(graphql.Upload))
+			return ec.Resolvers.Mutation().UploadFile(ctx, fc.Args["path"].(string), fc.Args["content"].(graphql.Upload))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3422,7 +3454,7 @@ func (ec *executionContext) _Mutation_deleteFile(ctx context.Context, field grap
 		ec.fieldContext_Mutation_deleteFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteFile(ctx, fc.Args["path"].(string))
+			return ec.Resolvers.Mutation().DeleteFile(ctx, fc.Args["path"].(string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3463,7 +3495,7 @@ func (ec *executionContext) _Mutation_createFolder(ctx context.Context, field gr
 		ec.fieldContext_Mutation_createFolder,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateFolder(ctx, fc.Args["path"].(string))
+			return ec.Resolvers.Mutation().CreateFolder(ctx, fc.Args["path"].(string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3504,7 +3536,7 @@ func (ec *executionContext) _Mutation_copyFile(ctx context.Context, field graphq
 		ec.fieldContext_Mutation_copyFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CopyFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string))
+			return ec.Resolvers.Mutation().CopyFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3545,7 +3577,7 @@ func (ec *executionContext) _Mutation_moveFile(ctx context.Context, field graphq
 		ec.fieldContext_Mutation_moveFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().MoveFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string))
+			return ec.Resolvers.Mutation().MoveFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3586,7 +3618,7 @@ func (ec *executionContext) _Mutation_saveTemplate(ctx context.Context, field gr
 		ec.fieldContext_Mutation_saveTemplate,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().SaveTemplate(ctx, fc.Args["input"].(SaveTemplateInput))
+			return ec.Resolvers.Mutation().SaveTemplate(ctx, fc.Args["input"].(SaveTemplateInput))
 		},
 		nil,
 		ec.marshalNTemplateResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐTemplateResult,
@@ -3637,7 +3669,7 @@ func (ec *executionContext) _Mutation_configureFileStorage(ctx context.Context, 
 		ec.fieldContext_Mutation_configureFileStorage,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ConfigureFileStorage(ctx, fc.Args["input"].(FileStorageInput))
+			return ec.Resolvers.Mutation().ConfigureFileStorage(ctx, fc.Args["input"].(FileStorageInput))
 		},
 		nil,
 		ec.marshalNStorageConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigResult,
@@ -3688,7 +3720,7 @@ func (ec *executionContext) _Mutation_configureS3Storage(ctx context.Context, fi
 		ec.fieldContext_Mutation_configureS3Storage,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ConfigureS3Storage(ctx, fc.Args["input"].(S3StorageInput))
+			return ec.Resolvers.Mutation().ConfigureS3Storage(ctx, fc.Args["input"].(S3StorageInput))
 		},
 		nil,
 		ec.marshalNStorageConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigResult,
@@ -3739,7 +3771,7 @@ func (ec *executionContext) _Mutation_testStorageConfig(ctx context.Context, fie
 		ec.fieldContext_Mutation_testStorageConfig,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().TestStorageConfig(ctx, fc.Args["input"].(StorageConfigInput))
+			return ec.Resolvers.Mutation().TestStorageConfig(ctx, fc.Args["input"].(StorageConfigInput))
 		},
 		nil,
 		ec.marshalNStorageTestResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageTestResult,
@@ -3787,7 +3819,7 @@ func (ec *executionContext) _Mutation_configureEmbeddedImagor(ctx context.Contex
 		field,
 		ec.fieldContext_Mutation_configureEmbeddedImagor,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Mutation().ConfigureEmbeddedImagor(ctx)
+			return ec.Resolvers.Mutation().ConfigureEmbeddedImagor(ctx)
 		},
 		nil,
 		ec.marshalNImagorConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult,
@@ -3827,7 +3859,7 @@ func (ec *executionContext) _Mutation_configureExternalImagor(ctx context.Contex
 		ec.fieldContext_Mutation_configureExternalImagor,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ConfigureExternalImagor(ctx, fc.Args["input"].(ExternalImagorInput))
+			return ec.Resolvers.Mutation().ConfigureExternalImagor(ctx, fc.Args["input"].(ExternalImagorInput))
 		},
 		nil,
 		ec.marshalNImagorConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult,
@@ -3878,7 +3910,7 @@ func (ec *executionContext) _Mutation_generateImagorUrl(ctx context.Context, fie
 		ec.fieldContext_Mutation_generateImagorUrl,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().GenerateImagorURL(ctx, fc.Args["imagePath"].(string), fc.Args["params"].(ImagorParamsInput))
+			return ec.Resolvers.Mutation().GenerateImagorURL(ctx, fc.Args["imagePath"].(string), fc.Args["params"].(ImagorParamsInput))
 		},
 		nil,
 		ec.marshalNString2string,
@@ -3911,6 +3943,47 @@ func (ec *executionContext) fieldContext_Mutation_generateImagorUrl(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_generateImagorUrlFromEditorState(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_generateImagorUrlFromEditorState,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().GenerateImagorURLFromEditorState(ctx, fc.Args["imagePath"].(string), fc.Args["stateJson"].(string), fc.Args["originalDimensions"].(DimensionsInput), fc.Args["contextPath"].([]string), fc.Args["forPreview"].(*bool), fc.Args["previewMaxDimensions"].(*DimensionsInput), fc.Args["skipLayerId"].(*string))
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_generateImagorUrlFromEditorState(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_generateImagorUrlFromEditorState_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_setUserRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3919,7 +3992,7 @@ func (ec *executionContext) _Mutation_setUserRegistry(ctx context.Context, field
 		ec.fieldContext_Mutation_setUserRegistry,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().SetUserRegistry(ctx, fc.Args["entry"].(*RegistryEntryInput), fc.Args["entries"].([]*RegistryEntryInput), fc.Args["ownerID"].(*string))
+			return ec.Resolvers.Mutation().SetUserRegistry(ctx, fc.Args["entry"].(*RegistryEntryInput), fc.Args["entries"].([]*RegistryEntryInput), fc.Args["ownerID"].(*string))
 		},
 		nil,
 		ec.marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ,
@@ -3968,7 +4041,7 @@ func (ec *executionContext) _Mutation_deleteUserRegistry(ctx context.Context, fi
 		ec.fieldContext_Mutation_deleteUserRegistry,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteUserRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string), fc.Args["ownerID"].(*string))
+			return ec.Resolvers.Mutation().DeleteUserRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string), fc.Args["ownerID"].(*string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -4009,7 +4082,7 @@ func (ec *executionContext) _Mutation_setSystemRegistry(ctx context.Context, fie
 		ec.fieldContext_Mutation_setSystemRegistry,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().SetSystemRegistry(ctx, fc.Args["entry"].(*RegistryEntryInput), fc.Args["entries"].([]*RegistryEntryInput))
+			return ec.Resolvers.Mutation().SetSystemRegistry(ctx, fc.Args["entry"].(*RegistryEntryInput), fc.Args["entries"].([]*RegistryEntryInput))
 		},
 		nil,
 		ec.marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ,
@@ -4060,7 +4133,7 @@ func (ec *executionContext) _Mutation_deleteSystemRegistry(ctx context.Context, 
 		ec.fieldContext_Mutation_deleteSystemRegistry,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteSystemRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string))
+			return ec.Resolvers.Mutation().DeleteSystemRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -4101,7 +4174,7 @@ func (ec *executionContext) _Mutation_updateProfile(ctx context.Context, field g
 		ec.fieldContext_Mutation_updateProfile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateProfile(ctx, fc.Args["input"].(UpdateProfileInput), fc.Args["userId"].(*string))
+			return ec.Resolvers.Mutation().UpdateProfile(ctx, fc.Args["input"].(UpdateProfileInput), fc.Args["userId"].(*string))
 		},
 		nil,
 		ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser,
@@ -4158,7 +4231,7 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 		ec.fieldContext_Mutation_changePassword,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ChangePassword(ctx, fc.Args["input"].(ChangePasswordInput), fc.Args["userId"].(*string))
+			return ec.Resolvers.Mutation().ChangePassword(ctx, fc.Args["input"].(ChangePasswordInput), fc.Args["userId"].(*string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -4199,7 +4272,7 @@ func (ec *executionContext) _Mutation_deactivateAccount(ctx context.Context, fie
 		ec.fieldContext_Mutation_deactivateAccount,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeactivateAccount(ctx, fc.Args["userId"].(*string))
+			return ec.Resolvers.Mutation().DeactivateAccount(ctx, fc.Args["userId"].(*string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -4240,7 +4313,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 		ec.fieldContext_Mutation_createUser,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateUser(ctx, fc.Args["input"].(CreateUserInput))
+			return ec.Resolvers.Mutation().CreateUser(ctx, fc.Args["input"].(CreateUserInput))
 		},
 		nil,
 		ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser,
@@ -4297,7 +4370,7 @@ func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.
 		ec.fieldContext_Query_listFiles,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().ListFiles(ctx, fc.Args["path"].(string), fc.Args["offset"].(*int), fc.Args["limit"].(*int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["extensions"].(*string), fc.Args["showHidden"].(*bool), fc.Args["sortBy"].(*SortOption), fc.Args["sortOrder"].(*SortOrder))
+			return ec.Resolvers.Query().ListFiles(ctx, fc.Args["path"].(string), fc.Args["offset"].(*int), fc.Args["limit"].(*int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["extensions"].(*string), fc.Args["showHidden"].(*bool), fc.Args["sortBy"].(*SortOption), fc.Args["sortOrder"].(*SortOrder))
 		},
 		nil,
 		ec.marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileList,
@@ -4344,7 +4417,7 @@ func (ec *executionContext) _Query_statFile(ctx context.Context, field graphql.C
 		ec.fieldContext_Query_statFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().StatFile(ctx, fc.Args["path"].(string))
+			return ec.Resolvers.Query().StatFile(ctx, fc.Args["path"].(string))
 		},
 		nil,
 		ec.marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileStat,
@@ -4400,7 +4473,7 @@ func (ec *executionContext) _Query_storageStatus(ctx context.Context, field grap
 		field,
 		ec.fieldContext_Query_storageStatus,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().StorageStatus(ctx)
+			return ec.Resolvers.Query().StorageStatus(ctx)
 		},
 		nil,
 		ec.marshalNStorageStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageStatus,
@@ -4445,7 +4518,7 @@ func (ec *executionContext) _Query_imagorStatus(ctx context.Context, field graph
 		field,
 		ec.fieldContext_Query_imagorStatus,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().ImagorStatus(ctx)
+			return ec.Resolvers.Query().ImagorStatus(ctx)
 		},
 		nil,
 		ec.marshalNImagorStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorStatus,
@@ -4489,7 +4562,7 @@ func (ec *executionContext) _Query_listUserRegistry(ctx context.Context, field g
 		ec.fieldContext_Query_listUserRegistry,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().ListUserRegistry(ctx, fc.Args["prefix"].(*string), fc.Args["ownerID"].(*string))
+			return ec.Resolvers.Query().ListUserRegistry(ctx, fc.Args["prefix"].(*string), fc.Args["ownerID"].(*string))
 		},
 		nil,
 		ec.marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ,
@@ -4538,7 +4611,7 @@ func (ec *executionContext) _Query_getUserRegistry(ctx context.Context, field gr
 		ec.fieldContext_Query_getUserRegistry,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().GetUserRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string), fc.Args["ownerID"].(*string))
+			return ec.Resolvers.Query().GetUserRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string), fc.Args["ownerID"].(*string))
 		},
 		nil,
 		ec.marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ,
@@ -4587,7 +4660,7 @@ func (ec *executionContext) _Query_listSystemRegistry(ctx context.Context, field
 		ec.fieldContext_Query_listSystemRegistry,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().ListSystemRegistry(ctx, fc.Args["prefix"].(*string))
+			return ec.Resolvers.Query().ListSystemRegistry(ctx, fc.Args["prefix"].(*string))
 		},
 		nil,
 		ec.marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ,
@@ -4638,7 +4711,7 @@ func (ec *executionContext) _Query_getSystemRegistry(ctx context.Context, field 
 		ec.fieldContext_Query_getSystemRegistry,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().GetSystemRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string))
+			return ec.Resolvers.Query().GetSystemRegistry(ctx, fc.Args["key"].(*string), fc.Args["keys"].([]string))
 		},
 		nil,
 		ec.marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ,
@@ -4688,7 +4761,7 @@ func (ec *executionContext) _Query_licenseStatus(ctx context.Context, field grap
 		field,
 		ec.fieldContext_Query_licenseStatus,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().LicenseStatus(ctx)
+			return ec.Resolvers.Query().LicenseStatus(ctx)
 		},
 		nil,
 		ec.marshalNLicenseStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐLicenseStatus,
@@ -4735,7 +4808,7 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 		field,
 		ec.fieldContext_Query_me,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Query().Me(ctx)
+			return ec.Resolvers.Query().Me(ctx)
 		},
 		nil,
 		ec.marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser,
@@ -4781,7 +4854,7 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 		ec.fieldContext_Query_user,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().User(ctx, fc.Args["id"].(string))
+			return ec.Resolvers.Query().User(ctx, fc.Args["id"].(string))
 		},
 		nil,
 		ec.marshalOUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser,
@@ -4838,7 +4911,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 		ec.fieldContext_Query_users,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Users(ctx, fc.Args["offset"].(*int), fc.Args["limit"].(*int))
+			return ec.Resolvers.Query().Users(ctx, fc.Args["offset"].(*int), fc.Args["limit"].(*int))
 		},
 		nil,
 		ec.marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserList,
@@ -4885,7 +4958,7 @@ func (ec *executionContext) _Query___type(ctx context.Context, field graphql.Col
 		ec.fieldContext_Query___type,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.introspectType(fc.Args["name"].(string))
+			return ec.IntrospectType(fc.Args["name"].(string))
 		},
 		nil,
 		ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType,
@@ -4949,7 +5022,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 		field,
 		ec.fieldContext_Query___schema,
 		func(ctx context.Context) (any, error) {
-			return ec.introspectSchema()
+			return ec.IntrospectSchema()
 		},
 		nil,
 		ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema,
@@ -7745,6 +7818,10 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 func (ec *executionContext) unmarshalInputChangePasswordInput(ctx context.Context, obj any) (ChangePasswordInput, error) {
 	var it ChangePasswordInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -7773,12 +7850,15 @@ func (ec *executionContext) unmarshalInputChangePasswordInput(ctx context.Contex
 			it.NewPassword = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, obj any) (CreateUserInput, error) {
 	var it CreateUserInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -7821,12 +7901,52 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			it.Role = data
 		}
 	}
+	return it, nil
+}
 
+func (ec *executionContext) unmarshalInputDimensionsInput(ctx context.Context, obj any) (DimensionsInput, error) {
+	var it DimensionsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"width", "height"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "width":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("width"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Width = data
+		case "height":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("height"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Height = data
+		}
+	}
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputExternalImagorInput(ctx context.Context, obj any) (ExternalImagorInput, error) {
 	var it ExternalImagorInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -7876,12 +7996,15 @@ func (ec *executionContext) unmarshalInputExternalImagorInput(ctx context.Contex
 			it.SignerTruncate = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputFileStorageInput(ctx context.Context, obj any) (FileStorageInput, error) {
 	var it FileStorageInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -7917,12 +8040,15 @@ func (ec *executionContext) unmarshalInputFileStorageInput(ctx context.Context, 
 			it.WritePermissions = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputImagorFilterInput(ctx context.Context, obj any) (ImagorFilterInput, error) {
 	var it ImagorFilterInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -7951,12 +8077,15 @@ func (ec *executionContext) unmarshalInputImagorFilterInput(ctx context.Context,
 			it.Args = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputImagorParamsInput(ctx context.Context, obj any) (ImagorParamsInput, error) {
 	var it ImagorParamsInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -8118,12 +8247,15 @@ func (ec *executionContext) unmarshalInputImagorParamsInput(ctx context.Context,
 			it.Filters = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputRegistryEntryInput(ctx context.Context, obj any) (RegistryEntryInput, error) {
 	var it RegistryEntryInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -8159,12 +8291,15 @@ func (ec *executionContext) unmarshalInputRegistryEntryInput(ctx context.Context
 			it.IsEncrypted = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputS3StorageInput(ctx context.Context, obj any) (S3StorageInput, error) {
 	var it S3StorageInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -8235,18 +8370,21 @@ func (ec *executionContext) unmarshalInputS3StorageInput(ctx context.Context, ob
 			it.BaseDir = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context, obj any) (SaveTemplateInput, error) {
 	var it SaveTemplateInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "description", "dimensionMode", "templateJson", "sourceImagePath", "savePath", "overwrite", "previewParams"}
+	fieldsInOrder := [...]string{"name", "description", "dimensionMode", "templateJson", "sourceImagePath", "savePath", "overwrite"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8302,21 +8440,17 @@ func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context,
 				return it, err
 			}
 			it.Overwrite = data
-		case "previewParams":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("previewParams"))
-			data, err := ec.unmarshalOImagorParamsInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorParamsInput(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PreviewParams = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputStorageConfigInput(ctx context.Context, obj any) (StorageConfigInput, error) {
 	var it StorageConfigInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -8352,12 +8486,15 @@ func (ec *executionContext) unmarshalInputStorageConfigInput(ctx context.Context
 			it.S3Config = data
 		}
 	}
-
 	return it, nil
 }
 
 func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context, obj any) (UpdateProfileInput, error) {
 	var it UpdateProfileInput
+	if obj == nil {
+		return it, nil
+	}
+
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -8386,7 +8523,6 @@ func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context
 			it.Username = data
 		}
 	}
-
 	return it, nil
 }
 
@@ -8443,10 +8579,10 @@ func (ec *executionContext) _ExternalImagorConfig(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8504,10 +8640,10 @@ func (ec *executionContext) _FileItem(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8548,10 +8684,10 @@ func (ec *executionContext) _FileList(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8611,10 +8747,10 @@ func (ec *executionContext) _FileStat(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8660,10 +8796,10 @@ func (ec *executionContext) _FileStorageConfig(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8711,10 +8847,10 @@ func (ec *executionContext) _ImagorConfigResult(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8766,10 +8902,10 @@ func (ec *executionContext) _ImagorStatus(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8831,10 +8967,10 @@ func (ec *executionContext) _LicenseStatus(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -8948,6 +9084,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "generateImagorUrlFromEditorState":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_generateImagorUrlFromEditorState(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "setUserRegistry":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_setUserRegistry(ctx, field)
@@ -9013,10 +9156,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9318,10 +9461,10 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9365,10 +9508,10 @@ func (ec *executionContext) _S3StorageConfig(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9416,10 +9559,10 @@ func (ec *executionContext) _StorageConfigResult(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9473,10 +9616,10 @@ func (ec *executionContext) _StorageStatus(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9519,10 +9662,10 @@ func (ec *executionContext) _StorageTestResult(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9573,10 +9716,10 @@ func (ec *executionContext) _SystemRegistry(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9621,10 +9764,10 @@ func (ec *executionContext) _TemplateResult(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9665,10 +9808,10 @@ func (ec *executionContext) _ThumbnailUrls(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9734,10 +9877,10 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9778,10 +9921,10 @@ func (ec *executionContext) _UserList(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9827,10 +9970,10 @@ func (ec *executionContext) _UserRegistry(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9883,10 +10026,10 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9931,10 +10074,10 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -9989,10 +10132,10 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10044,10 +10187,10 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10099,10 +10242,10 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10158,10 +10301,10 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
 
 	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
 			Label:    label,
 			Path:     graphql.GetPath(ctx),
 			FieldSet: dfs,
@@ -10212,45 +10355,22 @@ func (ec *executionContext) marshalNDimensionMode2githubᚗcomᚋcshumᚋimagor�
 	return v
 }
 
+func (ec *executionContext) unmarshalNDimensionsInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionsInput(ctx context.Context, v any) (DimensionsInput, error) {
+	res, err := ec.unmarshalInputDimensionsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNExternalImagorInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐExternalImagorInput(ctx context.Context, v any) (ExternalImagorInput, error) {
 	res, err := ec.unmarshalInputExternalImagorInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*FileItem) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItem(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItem(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -10473,39 +10593,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 }
 
 func (ec *executionContext) marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistryᚄ(ctx context.Context, sel ast.SelectionSet, v []*SystemRegistry) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSystemRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistry(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSystemRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistry(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -10566,39 +10658,11 @@ func (ec *executionContext) marshalNUser2githubᚗcomᚋcshumᚋimagorᚑstudio�
 }
 
 func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*User) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -10634,39 +10698,11 @@ func (ec *executionContext) marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑ
 }
 
 func (ec *executionContext) marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ(ctx context.Context, sel ast.SelectionSet, v []*UserRegistry) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUserRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistry(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNUserRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistry(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -10692,39 +10728,11 @@ func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlge
 }
 
 func (ec *executionContext) marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirectiveᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.Directive) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -10767,39 +10775,11 @@ func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx conte
 }
 
 func (ec *executionContext) marshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__DirectiveLocation2string(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__DirectiveLocation2string(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -10823,39 +10803,11 @@ func (ec *executionContext) marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlg
 }
 
 func (ec *executionContext) marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.InputValue) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -10871,39 +10823,11 @@ func (ec *executionContext) marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋg
 }
 
 func (ec *executionContext) marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.Type) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -10968,6 +10892,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalODimensionsInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionsInput(ctx context.Context, v any) (*DimensionsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDimensionsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOExternalImagorConfig2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐExternalImagorConfig(ctx context.Context, sel ast.SelectionSet, v *ExternalImagorConfig) graphql.Marshaler {
@@ -11066,14 +10998,6 @@ func (ec *executionContext) marshalOImagorMode2ᚖgithubᚗcomᚋcshumᚋimagor�
 		return graphql.Null
 	}
 	return v
-}
-
-func (ec *executionContext) unmarshalOImagorParamsInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorParamsInput(ctx context.Context, v any) (*ImagorParamsInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputImagorParamsInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOImagorSignerType2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx context.Context, v any) (*ImagorSignerType, error) {
@@ -11255,39 +11179,11 @@ func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgq
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__EnumValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__EnumValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValue(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -11302,39 +11198,11 @@ func (ec *executionContext) marshalO__Field2ᚕgithubᚗcomᚋ99designsᚋgqlgen
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Field2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐField(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Field2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐField(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -11349,39 +11217,11 @@ func (ec *executionContext) marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__InputValue2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValue(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {
@@ -11403,39 +11243,11 @@ func (ec *executionContext) marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 	if v == nil {
 		return graphql.Null
 	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, sel, v[i])
+	})
 
 	for _, e := range ret {
 		if e == graphql.Null {

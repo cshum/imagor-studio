@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -38,6 +39,50 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 		zap.String("url", url),
 		zap.String("imagePath", imagePath))
 
+	return url, nil
+}
+
+// GenerateImagorURLFromEditorState converts a full ImageEditorState JSON to an imagor URL on the backend.
+func (r *mutationResolver) GenerateImagorURLFromEditorState(
+	ctx context.Context,
+	imagePath string,
+	stateJSON string,
+	originalDimensions gql.DimensionsInput,
+	contextPath []string,
+	forPreview *bool,
+	previewMaxDimensions *gql.DimensionsInput,
+	skipLayerID *string,
+) (string, error) {
+	if err := RequireEditPermission(ctx); err != nil {
+		return "", err
+	}
+
+	var base EditorState
+	if err := json.Unmarshal([]byte(stateJSON), &base); err != nil {
+		return "", fmt.Errorf("invalid stateJson: %w", err)
+	}
+
+	origDims := Dimensions{Width: originalDimensions.Width, Height: originalDimensions.Height}
+
+	res := resolveContextState(base, origDims, imagePath, contextPath)
+
+	var previewMaxDims *Dimensions
+	if previewMaxDimensions != nil {
+		previewMaxDims = &Dimensions{Width: previewMaxDimensions.Width, Height: previewMaxDimensions.Height}
+	}
+
+	preview := forPreview != nil && *forPreview
+	skipID := ""
+	if skipLayerID != nil {
+		skipID = *skipLayerID
+	}
+
+	params := convertEditorStateToImagorParams(res.State, res.OrigDims, res.ParentDims, preview, previewMaxDims, skipID)
+
+	url, err := r.imagorProvider.GenerateURL(res.ImagePath, params)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate imagor URL: %w", err)
+	}
 	return url, nil
 }
 

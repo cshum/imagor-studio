@@ -1,4 +1,4 @@
-import { generateImagorUrl } from '@/api/imagor-api'
+import { generateImagorUrl, generateImagorUrlFromEditorState } from '@/api/imagor-api'
 import type { ImagorParamsInput } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImagorTemplate, TemplateWarning } from '@/lib/template-types'
@@ -1128,6 +1128,7 @@ export class ImageEditor {
    * Can be called with custom state for generating URLs with different parameters
    * @param state - Image editor state with all transformation parameters
    * @param forPreview - Whether to generate preview URL (adds preview filter, WebP format)
+   * @param skipLayerId
    * @returns GraphQL parameters for Imagor URL generation
    */
   convertStateToGraphQLParams(
@@ -1564,15 +1565,16 @@ export class ImageEditor {
     this.abortController = new AbortController()
 
     try {
-      const graphqlParams = this.convertStateToGraphQLParams(
-        this.state,
-        true,
-        this.textEditingLayerId ?? undefined,
-      )
-      const url = await generateImagorUrl(
+      const baseState = this.getBaseState()
+      const url = await generateImagorUrlFromEditorState(
         {
-          imagePath: this.config.imagePath,
-          params: graphqlParams as ImagorParamsInput,
+          imagePath: this.baseImagePath,
+          stateJson: JSON.stringify(baseState),
+          originalDimensions: this.config.originalDimensions,
+          contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+          forPreview: true,
+          previewMaxDimensions: this.config.previewMaxDimensions ?? null,
+          skipLayerId: this.textEditingLayerId,
         },
         this.abortController.signal,
       )
@@ -1955,10 +1957,13 @@ export class ImageEditor {
    * Generate copy URL with user-selected format (not WebP)
    */
   async generateCopyUrl(): Promise<string> {
-    const copyParams = this.convertStateToGraphQLParams(this.state, false) // false = no WebP override
-    return await generateImagorUrl({
-      imagePath: this.config.imagePath,
-      params: copyParams as ImagorParamsInput,
+    const baseState = this.getBaseState()
+    return await generateImagorUrlFromEditorState({
+      imagePath: this.baseImagePath,
+      stateJson: JSON.stringify(baseState),
+      originalDimensions: this.config.originalDimensions,
+      contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+      forPreview: false,
     })
   }
 
@@ -2857,28 +2862,14 @@ export class ImageEditor {
    * @returns Promise resolving to thumbnail URL
    */
   async generateThumbnailUrl(width = 200, height = 200): Promise<string> {
-    // Use existing convertStateToGraphQLParams with forPreview=true
-    const thumbnailParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
-
-    // Override dimensions for thumbnail
-    thumbnailParams.width = width
-    thumbnailParams.height = height
-    thumbnailParams.fitIn = true
-
-    // Ensure WebP format and good quality for thumbnails
-    const filters = thumbnailParams.filters || []
-    // Remove any existing format/quality filters
-    const filteredFilters = filters.filter(
-      (f) => f.name !== 'format' && f.name !== 'quality' && f.name !== 'preview',
-    )
-    // Add thumbnail-specific filters
-    filteredFilters.push({ name: 'format', args: 'webp' })
-    filteredFilters.push({ name: 'quality', args: '80' })
-    thumbnailParams.filters = filteredFilters
-
-    return await generateImagorUrl({
+    const baseState = this.getBaseState()
+    return await generateImagorUrlFromEditorState({
       imagePath: this.baseImagePath,
-      params: thumbnailParams as ImagorParamsInput,
+      stateJson: JSON.stringify(baseState),
+      originalDimensions: this.config.originalDimensions,
+      contextPath: null,
+      forPreview: true,
+      previewMaxDimensions: { width, height },
     })
   }
 
@@ -2973,23 +2964,7 @@ export class ImageEditor {
       },
     }
 
-    // Generate preview params (400x400 thumbnail with transformations)
-    // Temporarily override previewMaxDimensions to ensure correct scaling for 400x400
-    const originalPreviewDimensions = this.config.previewMaxDimensions
-    this.config.previewMaxDimensions = { width: 400, height: 400 }
-
-    // Generate params with correct 400x400 scaling
-    const previewParams = this.convertStateToGraphQLParams(this.getBaseState(), true)
-
-    // Restore original preview dimensions
-    this.config.previewMaxDimensions = originalPreviewDimensions
-
-    // Ensure fitIn is true (already set by convertStateToGraphQLParams, but be explicit)
-    previewParams.fitIn = true
-
-    // Filters (format, quality, preview) are already added by convertStateToGraphQLParams
-
-    // Call backend API to save template
+    // Call backend API to save template (backend derives preview from templateJson)
     const { saveTemplate } = await import('@/api/storage-api')
 
     const result = await saveTemplate({
@@ -3001,7 +2976,6 @@ export class ImageEditor {
         sourceImagePath: this.baseImagePath,
         savePath,
         overwrite,
-        previewParams: previewParams as ImagorParamsInput,
       },
     })
 

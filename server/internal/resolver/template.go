@@ -79,7 +79,8 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	}
 
 	// 3. Generate preview image using Imagor
-	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, input.PreviewParams)
+	previewParams := derivePreviewParamsFromTemplateJSON(input.TemplateJSON)
+	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, previewParams)
 	if err != nil {
 		r.logger.Warn("Preview generation failed (continuing without preview)", zap.Error(err))
 		// Don't fail the operation - template can work without preview
@@ -129,25 +130,50 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	}, nil
 }
 
-// generateTemplatePreview generates a preview image for the template using Imagor
-func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath string, previewParams *gql.ImagorParamsInput) ([]byte, error) {
-	// Convert preview params to imagorpath.Params
-	var params imagorpath.Params
-	if previewParams != nil {
-		// Use provided preview params from frontend
-		params = convertToImagorParams(*previewParams)
-	} else {
-		// Fallback: simple 400x400 thumbnail
-		params = imagorpath.Params{
-			Width:     400,
-			Height:    400,
-			FullFitIn: true,
-			Filters: imagorpath.Filters{
-				{Name: "format", Args: "webp"},
-				{Name: "quality", Args: "80"},
-			},
-		}
+// derivePreviewParamsFromTemplateJSON generates imagorpath.Params for a template preview
+// by parsing the template JSON and converting its transformations to imagor params.
+func derivePreviewParamsFromTemplateJSON(templateJSON string) imagorpath.Params {
+	fallback := imagorpath.Params{
+		Width:     400,
+		Height:    400,
+		FullFitIn: true,
+		Filters: imagorpath.Filters{
+			{Name: "format", Args: "webp"},
+			{Name: "quality", Args: "80"},
+		},
 	}
+
+	var tmpl struct {
+		Transformations json.RawMessage `json:"transformations"`
+		PredefinedDims  *struct {
+			Width  int `json:"width"`
+			Height int `json:"height"`
+		} `json:"predefinedDimensions"`
+	}
+	if err := json.Unmarshal([]byte(templateJSON), &tmpl); err != nil {
+		return fallback
+	}
+	if len(tmpl.Transformations) == 0 {
+		return fallback
+	}
+	var state EditorState
+	if err := json.Unmarshal(tmpl.Transformations, &state); err != nil {
+		return fallback
+	}
+
+	origDims := Dimensions{Width: 800, Height: 600} // sensible fallback
+	if tmpl.PredefinedDims != nil && tmpl.PredefinedDims.Width > 0 && tmpl.PredefinedDims.Height > 0 {
+		origDims = Dimensions{Width: tmpl.PredefinedDims.Width, Height: tmpl.PredefinedDims.Height}
+	} else if state.OriginalDimensions != nil && state.OriginalDimensions.Width > 0 {
+		origDims = *state.OriginalDimensions
+	}
+
+	previewMax := &Dimensions{Width: 400, Height: 400}
+	return convertEditorStateToImagorParams(state, origDims, nil, true, previewMax, "")
+}
+
+// generateTemplatePreview generates a preview image for the template using Imagor
+func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath string, params imagorpath.Params) ([]byte, error) {
 
 	var imageData []byte
 

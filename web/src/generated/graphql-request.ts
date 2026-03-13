@@ -37,6 +37,11 @@ export type CreateUserInput = {
 
 export type DimensionMode = 'ADAPTIVE' | 'PREDEFINED'
 
+export type DimensionsInput = {
+  height: Scalars['Int']['input']
+  width: Scalars['Int']['input']
+}
+
 export type ExternalImagorConfig = {
   __typename?: 'ExternalImagorConfig'
   baseUrl: Scalars['String']['output']
@@ -172,6 +177,7 @@ export type Mutation = {
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
+  generateImagorUrlFromEditorState: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSystemRegistry: Array<SystemRegistry>
@@ -233,6 +239,16 @@ export type MutationDeleteUserRegistryArgs = {
 export type MutationGenerateImagorUrlArgs = {
   imagePath: Scalars['String']['input']
   params: ImagorParamsInput
+}
+
+export type MutationGenerateImagorUrlFromEditorStateArgs = {
+  contextPath?: InputMaybe<Array<Scalars['String']['input']>>
+  forPreview?: InputMaybe<Scalars['Boolean']['input']>
+  imagePath: Scalars['String']['input']
+  originalDimensions: DimensionsInput
+  previewMaxDimensions?: InputMaybe<DimensionsInput>
+  skipLayerId?: InputMaybe<Scalars['String']['input']>
+  stateJson: Scalars['String']['input']
 }
 
 export type MutationMoveFileArgs = {
@@ -361,7 +377,6 @@ export type SaveTemplateInput = {
   dimensionMode: DimensionMode
   name: Scalars['String']['input']
   overwrite: InputMaybe<Scalars['Boolean']['input']>
-  previewParams: InputMaybe<ImagorParamsInput>
   savePath: Scalars['String']['input']
   sourceImagePath: Scalars['String']['input']
   templateJson: Scalars['String']['input']
@@ -515,6 +530,21 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 }>
 
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
+
+export type GenerateImagorUrlFromEditorStateMutationVariables = Exact<{
+  imagePath: Scalars['String']['input']
+  stateJson: Scalars['String']['input']
+  originalDimensions: DimensionsInput
+  contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
+  forPreview?: InputMaybe<Scalars['Boolean']['input']>
+  previewMaxDimensions?: InputMaybe<DimensionsInput>
+  skipLayerId?: InputMaybe<Scalars['String']['input']>
+}>
+
+export type GenerateImagorUrlFromEditorStateMutation = {
+  __typename?: 'Mutation'
+  generateImagorUrlFromEditorState: string
+}
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -1026,6 +1056,27 @@ export const GenerateImagorUrlDocument = gql`
     generateImagorUrl(imagePath: $imagePath, params: $params)
   }
 `
+export const GenerateImagorUrlFromEditorStateDocument = gql`
+  mutation GenerateImagorUrlFromEditorState(
+    $imagePath: String!
+    $stateJson: String!
+    $originalDimensions: DimensionsInput!
+    $contextPath: [String!]
+    $forPreview: Boolean
+    $previewMaxDimensions: DimensionsInput
+    $skipLayerId: String
+  ) {
+    generateImagorUrlFromEditorState(
+      imagePath: $imagePath
+      stateJson: $stateJson
+      originalDimensions: $originalDimensions
+      contextPath: $contextPath
+      forPreview: $forPreview
+      previewMaxDimensions: $previewMaxDimensions
+      skipLayerId: $skipLayerId
+    )
+  }
+`
 export const ListUserRegistryDocument = gql`
   query ListUserRegistry($prefix: String, $ownerID: String) {
     listUserRegistry(prefix: $prefix, ownerID: $ownerID) {
@@ -1383,6 +1434,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'GenerateImagorUrl',
+        'mutation',
+        variables,
+      )
+    },
+    GenerateImagorUrlFromEditorState(
+      variables: GenerateImagorUrlFromEditorStateMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<GenerateImagorUrlFromEditorStateMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<GenerateImagorUrlFromEditorStateMutation>({
+            document: GenerateImagorUrlFromEditorStateDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'GenerateImagorUrlFromEditorState',
         'mutation',
         variables,
       )
