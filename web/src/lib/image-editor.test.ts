@@ -342,6 +342,274 @@ describe('ImageEditor', () => {
     })
   })
 
+  describe('addTextLayer', () => {
+    it('should add a text layer with computed font size and centered position', () => {
+      // outputDimensions = 1920x1080 (no resize)
+      // fontSize = max(12, round(1080 * 0.05)) = 54
+      // defaultWidth = round(1920 * 0.4) = 768
+      // singleLineHeight = round(54 * 1.4) = 76
+      // x = round((1920 - 768) / 2) = 576
+      // y = round((1080 - 76) / 2) = 502
+      editor.addTextLayer('Hello World')
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      const layer = state.layers![0] as TextLayer
+      expect(layer.type).toBe('text')
+      expect(layer.text).toBe('Hello World')
+      expect(layer.fontSize).toBe(54)
+      expect(layer.width).toBe(768)
+      expect(layer.x).toBe(576)
+      expect(layer.y).toBe(502)
+    })
+
+    it('should use minimum font size of 12 for very small canvases', () => {
+      const smallEditor = new ImageEditor({
+        imagePath: 'small.jpg',
+        originalDimensions: { width: 100, height: 100 },
+      })
+      smallEditor.initialize({})
+      smallEditor.addTextLayer('Hi')
+      const layer = smallEditor.getState().layers![0] as TextLayer
+      // fontSize = max(12, round(100 * 0.05)) = max(12, 5) = 12
+      expect(layer.fontSize).toBe(12)
+    })
+
+    it('should set default text layer properties', () => {
+      editor.addTextLayer('Test')
+      const layer = editor.getState().layers![0] as TextLayer
+      expect(layer.font).toBe('sans')
+      expect(layer.fontStyle).toBe('')
+      expect(layer.color).toBe('000000')
+      expect(layer.alpha).toBe(0)
+      expect(layer.blendMode).toBe('normal')
+      expect(layer.visible).toBe(true)
+      expect(layer.align).toBe('low')
+      expect(layer.justify).toBe(false)
+      expect(layer.wrap).toBe('word')
+      expect(layer.spacing).toBe(0)
+      expect(layer.dpi).toBe(72)
+      expect(layer.height).toBe(0)
+    })
+
+    it('should auto-select the new text layer', () => {
+      editor.addTextLayer('Test')
+      // The layer should be selected (selectedLayerId set)
+      // We verify via setSelectedLayerId callback
+      const onSelectedLayerChange = vi.fn()
+      editor.initialize({ onSelectedLayerChange })
+      editor.addTextLayer('Test2')
+      const layer2 = editor.getState().layers![0]
+      expect(onSelectedLayerChange).toHaveBeenCalledWith(layer2.id)
+    })
+
+    it('should enter text editing mode for the new layer', () => {
+      editor.addTextLayer('Test')
+      const layer = editor.getState().layers![0]
+      expect(editor.getTextEditingLayerId()).toBe(layer.id)
+    })
+
+    it('should save to history before adding', () => {
+      editor.updateParams({ brightness: 50 })
+      vi.runAllTimers()
+      editor.addTextLayer('Test')
+      expect(editor.canUndo()).toBe(true)
+      editor.undo()
+      // After undo, the text layer should be gone
+      expect(editor.getState().layers).toBeUndefined()
+    })
+  })
+
+  describe('addColorLayer', () => {
+    it('should add a fill-mode color layer with default grey color', () => {
+      editor.addColorLayer()
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      const layer = state.layers![0] as ImageLayer
+      expect(layer.type).toBe('image')
+      expect(layer.imagePath).toBe('color:cccccc')
+      expect(layer.transforms?.widthFull).toBe(true)
+      expect(layer.transforms?.heightFull).toBe(true)
+    })
+
+    it('should accept a custom color', () => {
+      editor.addColorLayer('ff0000')
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.imagePath).toBe('color:ff0000')
+    })
+
+    it('should set originalDimensions to 1x1 (color images have no inherent size)', () => {
+      editor.addColorLayer()
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.originalDimensions).toEqual({ width: 1, height: 1 })
+    })
+
+    it('should position at origin with default compositing', () => {
+      editor.addColorLayer()
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.x).toBe(0)
+      expect(layer.y).toBe(0)
+      expect(layer.alpha).toBe(0)
+      expect(layer.blendMode).toBe('normal')
+      expect(layer.visible).toBe(true)
+    })
+
+    it('should auto-select the new color layer', () => {
+      const onSelectedLayerChange = vi.fn()
+      editor.initialize({ onSelectedLayerChange })
+      editor.addColorLayer()
+      const layer = editor.getState().layers![0]
+      expect(onSelectedLayerChange).toHaveBeenCalledWith(layer.id)
+    })
+
+    it('should emit fxf in imagor path (fill mode)', () => {
+      editor.addColorLayer()
+      const path = editor.getImagorPath()
+      expect(path).toContain('fxf/')
+    })
+
+    it('should save to history before adding', () => {
+      editor.addColorLayer()
+      expect(editor.canUndo()).toBe(true)
+      editor.undo()
+      expect(editor.getState().layers).toBeUndefined()
+    })
+  })
+
+  describe('addGroupLayer', () => {
+    it('should add a color:none group layer at the given position and size', () => {
+      editor.addGroupLayer(100, 200, 400, 300)
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      const layer = state.layers![0] as ImageLayer
+      expect(layer.type).toBe('image')
+      expect(layer.imagePath).toBe('color:none')
+      expect(layer.x).toBe(100)
+      expect(layer.y).toBe(200)
+      expect(layer.transforms?.width).toBe(400)
+      expect(layer.transforms?.height).toBe(300)
+    })
+
+    it('should set originalDimensions to 1x1', () => {
+      editor.addGroupLayer(0, 0, 500, 500)
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.originalDimensions).toEqual({ width: 1, height: 1 })
+    })
+
+    it('should set default compositing properties', () => {
+      editor.addGroupLayer(0, 0, 200, 200)
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.alpha).toBe(0)
+      expect(layer.blendMode).toBe('normal')
+      expect(layer.visible).toBe(true)
+    })
+
+    it('should auto-select the new group layer', () => {
+      const onSelectedLayerChange = vi.fn()
+      editor.initialize({ onSelectedLayerChange })
+      editor.addGroupLayer(0, 0, 200, 200)
+      const layer = editor.getState().layers![0]
+      expect(onSelectedLayerChange).toHaveBeenCalledWith(layer.id)
+    })
+
+    it('should save to history before adding', () => {
+      editor.addGroupLayer(0, 0, 200, 200)
+      expect(editor.canUndo()).toBe(true)
+      editor.undo()
+      expect(editor.getState().layers).toBeUndefined()
+    })
+
+    it('should emit correct dimensions in imagor path', () => {
+      editor.addGroupLayer(50, 75, 640, 480)
+      const path = editor.getImagorPath()
+      expect(path).toContain('640x480/')
+    })
+  })
+
+  describe('addImageLayer', () => {
+    const dims = { width: 800, height: 600 }
+    const pos = { x: 100, y: 150, width: 400, height: 300 }
+
+    it('should add an image layer at the given position and size', () => {
+      editor.addImageLayer('overlay.jpg', dims, 'My Overlay', pos)
+      const state = editor.getState()
+      expect(state.layers).toHaveLength(1)
+      const layer = state.layers![0] as ImageLayer
+      expect(layer.type).toBe('image')
+      expect(layer.imagePath).toBe('overlay.jpg')
+      expect(layer.originalDimensions).toEqual(dims)
+      expect(layer.x).toBe(100)
+      expect(layer.y).toBe(150)
+      expect(layer.transforms?.width).toBe(400)
+      expect(layer.transforms?.height).toBe(300)
+      expect(layer.name).toBe('My Overlay')
+    })
+
+    it('should set default compositing properties', () => {
+      editor.addImageLayer('overlay.jpg', dims, 'Test', pos)
+      const layer = editor.getState().layers![0] as ImageLayer
+      expect(layer.alpha).toBe(0)
+      expect(layer.blendMode).toBe('normal')
+      expect(layer.visible).toBe(true)
+    })
+
+    it('should auto-select the new image layer', () => {
+      const onSelectedLayerChange = vi.fn()
+      editor.initialize({ onSelectedLayerChange })
+      editor.addImageLayer('overlay.jpg', dims, 'Test', pos)
+      const layer = editor.getState().layers![0]
+      expect(onSelectedLayerChange).toHaveBeenCalledWith(layer.id)
+    })
+
+    it('should save to history before adding', () => {
+      editor.addImageLayer('overlay.jpg', dims, 'Test', pos)
+      expect(editor.canUndo()).toBe(true)
+      editor.undo()
+      expect(editor.getState().layers).toBeUndefined()
+    })
+
+    it('should emit correct dimensions in imagor path', () => {
+      editor.addImageLayer('overlay.jpg', dims, 'Test', pos)
+      const path = editor.getImagorPath()
+      expect(path).toContain('400x300/')
+      expect(path).toContain('overlay.jpg')
+    })
+
+    it('should encode image path with special characters', () => {
+      editor.addImageLayer('my overlay.jpg', dims, 'Test', pos)
+      const path = editor.getImagorPath()
+      expect(path).toContain('b64:')
+      expect(path).not.toContain('my overlay.jpg')
+    })
+
+    it('should work with nested context (adds to current layer)', () => {
+      const parentLayer: ImageLayer = {
+        type: 'image',
+        id: 'parent-1',
+        imagePath: 'parent.jpg',
+        x: 0,
+        y: 0,
+        alpha: 0,
+        blendMode: 'normal',
+        visible: true,
+        name: 'Parent',
+        originalDimensions: { width: 1000, height: 800 },
+        transforms: { width: 1000, height: 800 },
+      }
+      editor.addLayer(parentLayer)
+      editor.switchContext('parent-1')
+      editor.addImageLayer('child.jpg', { width: 200, height: 150 }, 'Child', {
+        x: 10,
+        y: 20,
+        width: 200,
+        height: 150,
+      })
+      const contextLayers = editor.getContextLayers()
+      expect(contextLayers).toHaveLength(1)
+      expect((contextLayers[0] as ImageLayer).imagePath).toBe('child.jpg')
+      editor.switchContext(null)
+    })
+  })
+
   describe('Context Switching', () => {
     let mockLayer: ImageLayer
 

@@ -2092,6 +2092,134 @@ export class ImageEditor {
   }
 
   /**
+   * Add a text layer centered on the current canvas.
+   * Computes font size and position from output dimensions, constructs the layer,
+   * adds it, selects it, and enters text-editing mode.
+   * @param defaultText - Initial text content (caller supplies i18n string)
+   */
+  addTextLayer(defaultText: string): void {
+    const outputDims = this.getOutputDimensions()
+    const fontSize = Math.max(12, Math.round(outputDims.height * 0.05))
+    const defaultWidth = Math.round(outputDims.width * 0.4)
+    // Single-line height estimate (fontSize × 1.4 line-height factor)
+    const singleLineHeight = Math.round(fontSize * 1.4)
+    // Center on canvas using pixel offsets (left/top anchor)
+    const x = Math.round((outputDims.width - defaultWidth) / 2)
+    const y = Math.round((outputDims.height - singleLineHeight) / 2)
+    const newLayer: TextLayer = {
+      type: 'text',
+      id: `layer-${Date.now()}`,
+      name: '',
+      text: defaultText,
+      x,
+      y,
+      font: 'sans',
+      fontStyle: '',
+      fontSize,
+      color: '000000',
+      width: defaultWidth,
+      height: 0,
+      align: 'low',
+      justify: false,
+      wrap: 'word',
+      spacing: 0,
+      dpi: 72,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+    }
+    this.addLayer(newLayer)
+    this.setSelectedLayerId(newLayer.id)
+    this.setTextEditingLayerId(newLayer.id)
+  }
+
+  /**
+   * Add a color fill layer that covers the full parent canvas.
+   * Uses widthFull/heightFull so it always fills the parent at render time.
+   * @param color - Hex color string without '#' (default 'cccccc')
+   */
+  addColorLayer(color = 'cccccc'): void {
+    const newLayer: ImageLayer = {
+      type: 'image',
+      id: `layer-${Date.now()}`,
+      imagePath: `color:${color}`,
+      originalDimensions: { width: 1, height: 1 },
+      x: 0,
+      y: 0,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+      name: '',
+      transforms: {
+        widthFull: true,
+        heightFull: true,
+      },
+    }
+    this.addLayer(newLayer)
+    this.setSelectedLayerId(newLayer.id)
+  }
+
+  /**
+   * Add a group layer (transparent color:none container) at the given position/size.
+   * The caller is responsible for computing position from the current viewport.
+   * @param x - X position on the canvas
+   * @param y - Y position on the canvas
+   * @param width - Width of the group container
+   * @param height - Height of the group container
+   */
+  addGroupLayer(x: number, y: number, width: number, height: number): void {
+    const newLayer: ImageLayer = {
+      type: 'image',
+      id: `layer-${Date.now()}`,
+      imagePath: 'color:none',
+      originalDimensions: { width: 1, height: 1 },
+      x,
+      y,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+      name: '',
+      transforms: { width, height },
+    }
+    this.addLayer(newLayer)
+    this.setSelectedLayerId(newLayer.id)
+  }
+
+  /**
+   * Add an image layer at the given position/size.
+   * The caller is responsible for fetching dimensions and computing position.
+   * @param imagePath - Path to the image
+   * @param originalDimensions - Natural dimensions of the image
+   * @param name - Display name (typically the filename)
+   * @param position - Computed position and display size on the canvas
+   */
+  addImageLayer(
+    imagePath: string,
+    originalDimensions: ImageDimensions,
+    name: string,
+    position: { x: number; y: number; width: number; height: number },
+  ): void {
+    const newLayer: ImageLayer = {
+      id: `layer-${Date.now()}`,
+      type: 'image',
+      imagePath,
+      originalDimensions,
+      x: position.x,
+      y: position.y,
+      alpha: 0,
+      blendMode: 'normal',
+      visible: true,
+      name,
+      transforms: {
+        width: position.width,
+        height: position.height,
+      },
+    }
+    this.addLayer(newLayer)
+    this.setSelectedLayerId(newLayer.id)
+  }
+
+  /**
    * Add a new layer to the current editing context
    * If at base level, adds to base layers
    * If editing a layer, adds to that layer's nested layers
@@ -2499,17 +2627,6 @@ export class ImageEditor {
     }
   }
 
-  /**
-   * Export current editor state as a template
-   * Saves template to backend (.templates folder) with preview
-   * @param name - Template name
-   * @param description - Optional template description
-   * @param dimensionMode - How dimensions should be handled
-   * @param savePath - Path to save the template
-   * @param overwrite - Whether to overwrite existing template
-   * @returns Promise that resolves with save result including normalized templatePath
-   * @throws Error with code 'CONFLICT' if template already exists
-   */
   /**
    * Build the template JSON and save input for the current editor state.
    * Returns the serialized template JSON and the save input object so the
