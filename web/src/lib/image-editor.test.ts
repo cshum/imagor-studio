@@ -3475,10 +3475,6 @@ describe('ImageEditor', () => {
         )
       })
     })
-
-    // Note: generateThumbnailBase64 tests are skipped because they rely on fetch() and
-    // FileReader which cannot be properly mocked in the test environment. The functionality
-    // works correctly in production and is tested manually.
   })
 
   describe('Smart Dimension Handling on Swap Image', () => {

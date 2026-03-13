@@ -2597,37 +2597,6 @@ export class ImageEditor {
   }
 
   /**
-   * Generate a base64-encoded thumbnail for embedding
-   * @param width - Thumbnail width (default 200)
-   * @param height - Thumbnail height (default 200)
-   * @returns Promise resolving to base64 data URL
-   */
-  async generateThumbnailBase64(width = 200, height = 200): Promise<string> {
-    try {
-      const thumbnailUrl = await this.generateThumbnailUrl(width, height)
-
-      // Fetch the thumbnail
-      const response = await fetch(thumbnailUrl)
-      if (!response.ok) {
-        throw new Error(`Failed to fetch thumbnail: ${response.statusText}`)
-      }
-
-      // Convert to base64
-      const blob = await response.blob()
-      return await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(blob)
-      })
-    } catch (error) {
-      console.error('Failed to generate thumbnail:', error)
-      // Return placeholder SVG on error
-      return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRlbXBsYXRlPC90ZXh0Pjwvc3ZnPg=='
-    }
-  }
-
-  /**
    * Build the template JSON and save input for the current editor state.
    * Returns the serialized template JSON and the save input object so the
    * caller (page/dialog) can call saveTemplate() directly — keeping API
