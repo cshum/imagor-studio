@@ -241,6 +241,7 @@ export type MutationGenerateImagorUrlArgs = {
 }
 
 export type MutationGenerateImagorUrlFromEditorStateArgs = {
+  appendFilters?: InputMaybe<Array<ImagorFilterInput>>
   contextPath?: InputMaybe<Array<Scalars['String']['input']>>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
   imagePath: Scalars['String']['input']
@@ -538,6 +539,7 @@ export type GenerateImagorUrlFromEditorStateMutationVariables = Exact<{
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
+  appendFilters?: InputMaybe<Array<ImagorFilterInput> | ImagorFilterInput>
 }>
 
 export type GenerateImagorUrlFromEditorStateMutation = {
@@ -1274,6 +1276,17 @@ export const GenerateImagorUrlFromEditorStateDocument = {
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'skipLayerId' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'appendFilters' } },
+          type: {
+            kind: 'ListType',
+            type: {
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'ImagorFilterInput' } },
+            },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -1316,6 +1329,11 @@ export const GenerateImagorUrlFromEditorStateDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'skipLayerId' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'skipLayerId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'appendFilters' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'appendFilters' } },
               },
             ],
           },

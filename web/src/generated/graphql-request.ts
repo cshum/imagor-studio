@@ -242,6 +242,7 @@ export type MutationGenerateImagorUrlArgs = {
 }
 
 export type MutationGenerateImagorUrlFromEditorStateArgs = {
+  appendFilters?: InputMaybe<Array<ImagorFilterInput>>
   contextPath?: InputMaybe<Array<Scalars['String']['input']>>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
   imagePath: Scalars['String']['input']
@@ -539,6 +540,7 @@ export type GenerateImagorUrlFromEditorStateMutationVariables = Exact<{
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
+  appendFilters?: InputMaybe<Array<ImagorFilterInput> | ImagorFilterInput>
 }>
 
 export type GenerateImagorUrlFromEditorStateMutation = {
@@ -1065,6 +1067,7 @@ export const GenerateImagorUrlFromEditorStateDocument = gql`
     $forPreview: Boolean
     $previewMaxDimensions: DimensionsInput
     $skipLayerId: String
+    $appendFilters: [ImagorFilterInput!]
   ) {
     generateImagorUrlFromEditorState(
       imagePath: $imagePath
@@ -1074,6 +1077,7 @@ export const GenerateImagorUrlFromEditorStateDocument = gql`
       forPreview: $forPreview
       previewMaxDimensions: $previewMaxDimensions
       skipLayerId: $skipLayerId
+      appendFilters: $appendFilters
     )
   }
 `

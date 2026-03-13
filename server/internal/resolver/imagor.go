@@ -53,6 +53,7 @@ func (r *mutationResolver) GenerateImagorURLFromEditorState(
 	forPreview *bool,
 	previewMaxDimensions *gql.DimensionsInput,
 	skipLayerID *string,
+	appendFilters []*gql.ImagorFilterInput,
 ) (string, error) {
 	if err := RequireEditPermission(ctx); err != nil {
 		return "", err
@@ -79,6 +80,12 @@ func (r *mutationResolver) GenerateImagorURLFromEditorState(
 	}
 
 	params := it.ConvertToImagorParams(*res.Transforms, res.OrigDims, res.ParentDims, preview, previewMaxDims, skipID)
+
+	for _, f := range appendFilters {
+		if f != nil {
+			params.Filters = append(params.Filters, imagorpath.Filter{Name: f.Name, Args: f.Args})
+		}
+	}
 
 	url, err := r.imagorProvider.GenerateURL(res.ImagePath, params)
 	if err != nil {

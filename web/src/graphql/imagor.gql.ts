@@ -67,6 +67,7 @@ export const GENERATE_IMAGOR_URL_FROM_EDITOR_STATE_MUTATION = gql(`
     $forPreview: Boolean
     $previewMaxDimensions: DimensionsInput
     $skipLayerId: String
+    $appendFilters: [ImagorFilterInput!]
   ) {
     generateImagorUrlFromEditorState(
       imagePath: $imagePath
@@ -76,6 +77,7 @@ export const GENERATE_IMAGOR_URL_FROM_EDITOR_STATE_MUTATION = gql(`
       forPreview: $forPreview
       previewMaxDimensions: $previewMaxDimensions
       skipLayerId: $skipLayerId
+      appendFilters: $appendFilters
     )
   }
 `)

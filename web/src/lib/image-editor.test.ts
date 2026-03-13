@@ -1888,15 +1888,14 @@ describe('ImageEditor', () => {
       })
 
       it('should generate download URL with attachment filter', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
         await editor.generateDownloadUrl()
 
-        // Verify attachment filter was added
-        expect(generateImagorUrl).toHaveBeenCalledWith(
+        // Verify generateImagorUrlFromEditorState was called with appendFilters containing attachment
+        expect(generateImagorUrlFromEditorState).toHaveBeenCalledWith(
           expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([expect.objectContaining({ name: 'attachment' })]),
-            }),
+            forPreview: false,
+            appendFilters: expect.arrayContaining([expect.objectContaining({ name: 'attachment' })]),
           }),
         )
       })
@@ -1927,14 +1926,13 @@ describe('ImageEditor', () => {
         expect(state.proportion).toBe(75)
       })
 
-      it('should not include proportion filter in generated URLs when value is 100', async () => {
+      it('should not include proportion filter in generated URLs when value is 100', () => {
         editor.updateParams({ proportion: 100 })
 
-        // convertStateToGraphQLParams is the canonical frontend converter (still used by
-        // generateDownloadUrl).  Verify proportion=100 does not emit a proportion filter.
-        const params = editor.convertStateToGraphQLParams(editor.getState(), false)
-        const filterNames = (params.filters ?? []).map((f) => f.name)
-        expect(filterNames).not.toContain('proportion')
+        // proportion=100 is the identity — should not be emitted as a filter.
+        // Verified via getImagorPath() which uses the same omission logic as the backend.
+        const path = editor.getImagorPath()
+        expect(path).not.toContain('proportion')
       })
 
       it('emits f-tokens in preview URL for depth-1 widthFull layers (imagor resolves at serve time)', async () => {
@@ -2187,8 +2185,8 @@ describe('ImageEditor', () => {
       })
 
       it('should handle download errors gracefully', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
-        vi.mocked(generateImagorUrl).mockRejectedValueOnce(new Error('Download failed'))
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
+        vi.mocked(generateImagorUrlFromEditorState).mockRejectedValueOnce(new Error('Download failed'))
 
         const result = await editor.handleDownload()
 
@@ -3946,55 +3944,6 @@ describe('TextLayer support', () => {
       // All other args are default too → minimal form, no width token
       // "Hello" is all alpha → no b64: encoding
       expect(path).toContain('text(Hello,0,0)')
-    })
-  })
-
-  // ── wrap-width scaling in preview URL (scaleFactor = 0.5) ────────────────
-  describe('text() filter — preview URL wrap-width scaling', () => {
-    const getLastTextFilterArgs = async (): Promise<string> => {
-      await vi.runAllTimersAsync()
-      // convertStateToGraphQLParams holds the text-filter scaling logic (still used by
-      // generateDownloadUrl and as the canonical frontend converter).  Calling it
-      // directly avoids any mock-call inspection while still exercising the scaling path.
-      const params = editor.convertStateToGraphQLParams(editor.getState(), true)
-      const textFilter = (params.filters ?? []).find((f) => f.name === 'text')
-      if (!textFilter) throw new Error('No text filter found in preview call')
-      return textFilter.args
-    }
-
-    beforeEach(() => {
-      // 1920×1080 output, 960×540 preview → scaleFactor = 0.5
-      editor.updateParams({ width: 1920, height: 1080 })
-      editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
-    })
-
-    it('scales numeric px width by scaleFactor', async () => {
-      editor.addLayer(makeTextLayer({ width: 200, color: 'ffffff' }))
-      const args = await getLastTextFilterArgs()
-      // 200 × 0.5 = 100
-      expect(args).toContain(',100')
-    })
-
-    it('scales f-N inset by scaleFactor', async () => {
-      editor.addLayer(makeTextLayer({ width: 'f-2032', color: 'ffffff' }))
-      const args = await getLastTextFilterArgs()
-      // 2032 × 0.5 = 1016
-      expect(args).toContain(',f-1016')
-    })
-
-    it('keeps "f" (no inset) unchanged', async () => {
-      editor.addLayer(makeTextLayer({ width: 'f', color: 'ffffff' }))
-      const args = await getLastTextFilterArgs()
-      // Plain 'f' has no numeric part — stays as 'f'.  The args string ends after
-      // the last token so match ,f at either a comma or end-of-string.
-      expect(args).toMatch(/,f(?:,|$)/)
-    })
-
-    it('rounds scaled inset correctly (f-3 × 0.5 → f-2 via Math.round)', async () => {
-      editor.addLayer(makeTextLayer({ width: 'f-3', color: 'ffffff' }))
-      const args = await getLastTextFilterArgs()
-      // Math.round(3 * 0.5) = Math.round(1.5) = 2 → emits 'f-2'
-      expect(args).toContain(',f-2')
     })
   })
 })

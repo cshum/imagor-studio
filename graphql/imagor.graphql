@@ -20,6 +20,7 @@ extend type Mutation {
     forPreview: Boolean             # Adds preview/webp filters, scales blur/sharpen/padding
     previewMaxDimensions: DimensionsInput # Null = no preview constraint
     skipLayerId: String             # Layer ID to exclude from rendering
+    appendFilters: [ImagorFilterInput!] # Extra filters appended after conversion (e.g. attachment)
   ): String!
 }
 
