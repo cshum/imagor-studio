@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import type { ImageEditorState, ImageLayer, TextLayer } from './image-editor'
 import {
   editorStateToImagorPath,
   encodeImagePath,
@@ -7,7 +8,6 @@ import {
   needsBase64Encoding,
   scalePositionValue,
 } from './imagor-path'
-import type { ImageEditorState, ImageLayer, TextLayer } from './image-editor'
 
 // ─── scalePositionValue ───────────────────────────────────────────────────────
 
@@ -98,7 +98,11 @@ describe('encodeTextToBase64url', () => {
     // base64url must not contain + or /
     ['no + in output', 'Hello World', expect.not.stringContaining('+') as unknown as string],
     ['no / in output', 'Hello World', expect.not.stringContaining('/') as unknown as string],
-    ['no = padding in output', 'Hello World', expect.not.stringContaining('=') as unknown as string],
+    [
+      'no = padding in output',
+      'Hello World',
+      expect.not.stringContaining('=') as unknown as string,
+    ],
   ]
 
   for (const [name, text, want] of cases) {
@@ -434,9 +438,9 @@ describe('editorStateToImagorPath', () => {
     })
 
     it('emits quality filter when format is set (non-preview)', () => {
-      expect(
-        editorStateToImagorPath({ format: 'jpeg', quality: 85 }, 'p.jpg', 1, false),
-      ).toContain('quality(85)')
+      expect(editorStateToImagorPath({ format: 'jpeg', quality: 85 }, 'p.jpg', 1, false)).toContain(
+        'quality(85)',
+      )
     })
 
     it('omits quality filter without format', () => {
@@ -646,7 +650,11 @@ describe('editorStateToImagorPath', () => {
     })
 
     it('passes through plain alphanumeric text without b64:', () => {
-      const path = editorStateToImagorPath({ layers: [makeText({ text: 'item-42' })] }, 'base.jpg', 1)
+      const path = editorStateToImagorPath(
+        { layers: [makeText({ text: 'item-42' })] },
+        'base.jpg',
+        1,
+      )
       expect(path).toContain('text(item-42,')
       expect(path).not.toContain('b64:')
     })
@@ -661,11 +669,7 @@ describe('editorStateToImagorPath', () => {
     })
 
     it('encodes text with comma using b64:', () => {
-      const path = editorStateToImagorPath(
-        { layers: [makeText({ text: 'a,b' })] },
-        'base.jpg',
-        1,
-      )
+      const path = editorStateToImagorPath({ layers: [makeText({ text: 'a,b' })] }, 'base.jpg', 1)
       expect(path).toMatch(/text\(b64:[A-Za-z0-9_-]+/)
     })
 
@@ -734,20 +738,12 @@ describe('editorStateToImagorPath', () => {
     })
 
     it('emits justify=true when justified', () => {
-      const path = editorStateToImagorPath(
-        { layers: [makeText({ justify: true })] },
-        'base.jpg',
-        1,
-      )
+      const path = editorStateToImagorPath({ layers: [makeText({ justify: true })] }, 'base.jpg', 1)
       expect(path).toContain('true')
     })
 
     it('emits wrap arg when non-default', () => {
-      const path = editorStateToImagorPath(
-        { layers: [makeText({ wrap: 'char' })] },
-        'base.jpg',
-        1,
-      )
+      const path = editorStateToImagorPath({ layers: [makeText({ wrap: 'char' })] }, 'base.jpg', 1)
       expect(path).toContain('char')
     })
 
