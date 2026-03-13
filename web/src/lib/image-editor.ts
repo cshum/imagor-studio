@@ -2539,7 +2539,7 @@ export class ImageEditor {
         name,
         description: description || null,
         dimensionMode: dimensionMode.toUpperCase() as 'ADAPTIVE' | 'PREDEFINED',
-        templateJson: JSON.stringify(template, null, 2),
+        templateJson: JSON.stringify(template),
         sourceImagePath: this.baseImagePath,
         savePath,
         overwrite,
