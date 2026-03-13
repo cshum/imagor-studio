@@ -12,7 +12,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
-	it "github.com/cshum/imagor-studio/server/internal/imagortemplate"
+	"github.com/cshum/imagor-studio/server/internal/imagortemplate"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
@@ -63,7 +63,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		return "", err
 	}
 
-	var tmpl it.Template
+	var tmpl imagortemplate.Template
 	if err := json.Unmarshal([]byte(templateJSON), &tmpl); err != nil {
 		return "", fmt.Errorf("invalid templateJson: %w", err)
 	}
@@ -76,7 +76,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		if err != nil {
 			return "", fmt.Errorf("failed to fetch dimensions for image %q: %w", *imagePath, err)
 		}
-		applied := it.ApplyTemplateToImage(tmpl, targetDims)
+		applied := imagortemplate.ApplyTemplateToImage(tmpl, targetDims)
 		applied.ImagePath = imagePath
 		tmpl.Transformations = applied
 	}
@@ -92,11 +92,11 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	baseImagePath := *base.ImagePath
 	origDims := *base.OriginalDimensions
 
-	res := it.ResolveContext(base, origDims, baseImagePath, contextPath)
+	res := imagortemplate.ResolveContext(base, origDims, baseImagePath, contextPath)
 
-	var previewMaxDims *it.Dimensions
+	var previewMaxDims *imagortemplate.Dimensions
 	if previewMaxDimensions != nil {
-		previewMaxDims = &it.Dimensions{Width: previewMaxDimensions.Width, Height: previewMaxDimensions.Height}
+		previewMaxDims = &imagortemplate.Dimensions{Width: previewMaxDimensions.Width, Height: previewMaxDimensions.Height}
 	}
 
 	preview := forPreview != nil && *forPreview
@@ -105,7 +105,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		skipID = *skipLayerID
 	}
 
-	params := it.ConvertToImagorParams(*res.Transforms, res.OrigDims, res.ParentDims, preview, previewMaxDims, skipID)
+	params := imagortemplate.ConvertToImagorParams(*res.Transforms, res.OrigDims, res.ParentDims, preview, previewMaxDims, skipID)
 
 	for _, f := range appendFilters {
 		if f != nil {
@@ -124,10 +124,10 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 // It mirrors the frontend's fetchImageDimensions logic: call the imagor meta endpoint
 // and parse the JSON response for width/height.
 // Supports both embedded mode (in-process ServeHTTP) and external mode (HTTP GET).
-func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath string) (it.Dimensions, error) {
+func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath string) (imagortemplate.Dimensions, error) {
 	metaURL, err := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{Meta: true})
 	if err != nil {
-		return it.Dimensions{}, fmt.Errorf("failed to generate meta URL: %w", err)
+		return imagortemplate.Dimensions{}, fmt.Errorf("failed to generate meta URL: %w", err)
 	}
 
 	var body []byte
@@ -136,32 +136,32 @@ func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath s
 		// Embedded mode: call ServeHTTP in-process (no network overhead).
 		cfg := r.imagorProvider.GetConfig()
 		if cfg == nil {
-			return it.Dimensions{}, fmt.Errorf("imagor configuration not available")
+			return imagortemplate.Dimensions{}, fmt.Errorf("imagor configuration not available")
 		}
 		path := strings.TrimPrefix(metaURL, cfg.BaseURL)
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
 		if err != nil {
-			return it.Dimensions{}, fmt.Errorf("failed to create meta request: %w", err)
+			return imagortemplate.Dimensions{}, fmt.Errorf("failed to create meta request: %w", err)
 		}
 		rec := httptest.NewRecorder()
 		imagorInstance.ServeHTTP(rec, req)
 		if rec.Code != http.StatusOK {
-			return it.Dimensions{}, fmt.Errorf("imagor meta returned status %d", rec.Code)
+			return imagortemplate.Dimensions{}, fmt.Errorf("imagor meta returned status %d", rec.Code)
 		}
 		body = rec.Body.Bytes()
 	} else {
 		// External mode: plain HTTP GET.
 		resp, err := http.Get(metaURL) //nolint:noctx
 		if err != nil {
-			return it.Dimensions{}, fmt.Errorf("failed to fetch meta URL: %w", err)
+			return imagortemplate.Dimensions{}, fmt.Errorf("failed to fetch meta URL: %w", err)
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
-			return it.Dimensions{}, fmt.Errorf("imagor meta returned status %d", resp.StatusCode)
+			return imagortemplate.Dimensions{}, fmt.Errorf("imagor meta returned status %d", resp.StatusCode)
 		}
 		body, err = io.ReadAll(resp.Body)
 		if err != nil {
-			return it.Dimensions{}, fmt.Errorf("failed to read meta response: %w", err)
+			return imagortemplate.Dimensions{}, fmt.Errorf("failed to read meta response: %w", err)
 		}
 	}
 
@@ -170,12 +170,12 @@ func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath s
 		Height int `json:"height"`
 	}
 	if err := json.Unmarshal(body, &meta); err != nil {
-		return it.Dimensions{}, fmt.Errorf("failed to parse meta response: %w", err)
+		return imagortemplate.Dimensions{}, fmt.Errorf("failed to parse meta response: %w", err)
 	}
 	if meta.Width <= 0 || meta.Height <= 0 {
-		return it.Dimensions{}, fmt.Errorf("invalid dimensions from meta: %dx%d", meta.Width, meta.Height)
+		return imagortemplate.Dimensions{}, fmt.Errorf("invalid dimensions from meta: %dx%d", meta.Width, meta.Height)
 	}
-	return it.Dimensions{Width: meta.Width, Height: meta.Height}, nil
+	return imagortemplate.Dimensions{Width: meta.Width, Height: meta.Height}, nil
 }
 
 // buildImagePath constructs the full image path from gallery and image keys
