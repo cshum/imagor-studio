@@ -797,6 +797,7 @@ export class ImageEditor {
    * @param imagePath - Image path
    * @param scaleFactor - Scale factor for preview (1.0 for actual)
    * @param forPreview - Whether generating for preview (affects layer visibility in visual crop mode)
+   * @param skipLayerId
    * @returns Imagor path string
    */
   private static editorStateToImagorPath(
@@ -1121,7 +1122,6 @@ export class ImageEditor {
     // Combine parts with image path
     return parts.length > 0 ? `/${parts.join('/')}/${finalImagePath}` : `/${finalImagePath}`
   }
-
 
   /**
    * Generate preview URL and trigger callbacks
