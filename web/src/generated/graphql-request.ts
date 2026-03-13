@@ -245,8 +245,6 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   appendFilters?: InputMaybe<Array<ImagorFilterInput>>
   contextPath?: InputMaybe<Array<Scalars['String']['input']>>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
-  imagePath: Scalars['String']['input']
-  originalDimensions: DimensionsInput
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
@@ -533,9 +531,7 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
 
 export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
-  imagePath: Scalars['String']['input']
   templateJson: Scalars['String']['input']
-  originalDimensions: DimensionsInput
   contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
@@ -1060,9 +1056,7 @@ export const GenerateImagorUrlDocument = gql`
 `
 export const GenerateImagorUrlFromTemplateDocument = gql`
   mutation GenerateImagorUrlFromTemplate(
-    $imagePath: String!
     $templateJson: String!
-    $originalDimensions: DimensionsInput!
     $contextPath: [String!]
     $forPreview: Boolean
     $previewMaxDimensions: DimensionsInput
@@ -1070,9 +1064,7 @@ export const GenerateImagorUrlFromTemplateDocument = gql`
     $appendFilters: [ImagorFilterInput!]
   ) {
     generateImagorUrlFromTemplate(
-      imagePath: $imagePath
       templateJson: $templateJson
-      originalDimensions: $originalDimensions
       contextPath: $contextPath
       forPreview: $forPreview
       previewMaxDimensions: $previewMaxDimensions

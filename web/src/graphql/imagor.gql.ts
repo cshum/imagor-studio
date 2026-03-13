@@ -60,9 +60,7 @@ export const GENERATE_IMAGOR_URL_MUTATION = gql(`
 // Mutation to generate imagor URL from template JSON (backend conversion)
 export const GENERATE_IMAGOR_URL_FROM_TEMPLATE_MUTATION = gql(`
   mutation GenerateImagorUrlFromTemplate(
-    $imagePath: String!
     $templateJson: String!
-    $originalDimensions: DimensionsInput!
     $contextPath: [String!]
     $forPreview: Boolean
     $previewMaxDimensions: DimensionsInput
@@ -70,9 +68,7 @@ export const GENERATE_IMAGOR_URL_FROM_TEMPLATE_MUTATION = gql(`
     $appendFilters: [ImagorFilterInput!]
   ) {
     generateImagorUrlFromTemplate(
-      imagePath: $imagePath
       templateJson: $templateJson
-      originalDimensions: $originalDimensions
       contextPath: $contextPath
       forPreview: $forPreview
       previewMaxDimensions: $previewMaxDimensions

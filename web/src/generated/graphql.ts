@@ -244,8 +244,6 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   appendFilters?: InputMaybe<Array<ImagorFilterInput>>
   contextPath?: InputMaybe<Array<Scalars['String']['input']>>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
-  imagePath: Scalars['String']['input']
-  originalDimensions: DimensionsInput
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
@@ -532,9 +530,7 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
 
 export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
-  imagePath: Scalars['String']['input']
   templateJson: Scalars['String']['input']
-  originalDimensions: DimensionsInput
   contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
@@ -1228,26 +1224,10 @@ export const GenerateImagorUrlFromTemplateDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'imagePath' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'templateJson' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'originalDimensions' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'DimensionsInput' } },
           },
         },
         {
@@ -1297,18 +1277,8 @@ export const GenerateImagorUrlFromTemplateDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'imagePath' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'imagePath' } },
-              },
-              {
-                kind: 'Argument',
                 name: { kind: 'Name', value: 'templateJson' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'templateJson' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'originalDimensions' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'originalDimensions' } },
               },
               {
                 kind: 'Argument',

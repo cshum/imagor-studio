@@ -1174,9 +1174,7 @@ export class ImageEditor {
       const baseState = this.getBaseState()
       const url = await generateImagorUrlFromTemplate(
         {
-          imagePath: this.baseImagePath,
           templateJson: this.buildTemplateJson(baseState),
-          originalDimensions: this.config.originalDimensions,
           contextPath: this.editingContext.length > 0 ? this.editingContext : null,
           forPreview: true,
           previewMaxDimensions: this.config.previewMaxDimensions ?? null,
@@ -1565,9 +1563,7 @@ export class ImageEditor {
   async generateCopyUrl(): Promise<string> {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
-      imagePath: this.baseImagePath,
       templateJson: this.buildTemplateJson(baseState),
-      originalDimensions: this.config.originalDimensions,
       contextPath: this.editingContext.length > 0 ? this.editingContext : null,
       forPreview: false,
     })
@@ -1579,9 +1575,7 @@ export class ImageEditor {
   async generateDownloadUrl(): Promise<string> {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
-      imagePath: this.baseImagePath,
       templateJson: this.buildTemplateJson(baseState),
-      originalDimensions: this.config.originalDimensions,
       contextPath: this.editingContext.length > 0 ? this.editingContext : null,
       forPreview: false,
       appendFilters: [{ name: 'attachment', args: '' }],
@@ -2467,9 +2461,7 @@ export class ImageEditor {
   async generateThumbnailUrl(width = 200, height = 200): Promise<string> {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
-      imagePath: this.baseImagePath,
       templateJson: this.buildTemplateJson(baseState),
-      originalDimensions: this.config.originalDimensions,
       contextPath: null,
       forPreview: true,
       previewMaxDimensions: { width, height },

@@ -1560,30 +1560,6 @@
                 "deprecationReason": null
               },
               {
-                "name": "imagePath",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "originalDimensions",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": { "kind": "INPUT_OBJECT", "name": "DimensionsInput", "ofType": null }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
                 "name": "previewMaxDimensions",
                 "description": null,
                 "type": { "kind": "INPUT_OBJECT", "name": "DimensionsInput", "ofType": null },

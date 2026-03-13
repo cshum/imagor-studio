@@ -46,9 +46,7 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 // GenerateImagorURLFromTemplate converts a template JSON to an imagor URL on the backend.
 func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	ctx context.Context,
-	imagePath string,
 	stateJSON string,
-	originalDimensions gql.DimensionsInput,
 	contextPath []string,
 	forPreview *bool,
 	previewMaxDimensions *gql.DimensionsInput,
@@ -65,7 +63,14 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	}
 	base := tmpl.Transformations
 
-	origDims := it.Dimensions{Width: originalDimensions.Width, Height: originalDimensions.Height}
+	if base.ImagePath == nil || *base.ImagePath == "" {
+		return "", fmt.Errorf("templateJson missing transformations.imagePath")
+	}
+	if base.OriginalDimensions == nil {
+		return "", fmt.Errorf("templateJson missing transformations.originalDimensions")
+	}
+	imagePath := *base.ImagePath
+	origDims := *base.OriginalDimensions
 
 	res := it.ResolveContext(base, origDims, imagePath, contextPath)
 
