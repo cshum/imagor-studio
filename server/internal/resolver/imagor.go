@@ -76,9 +76,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		if err != nil {
 			return "", fmt.Errorf("failed to fetch dimensions for image %q: %w", *imagePath, err)
 		}
-		applied := imagortemplate.ApplyTemplateToImage(tmpl, targetDims)
-		applied.ImagePath = imagePath
-		tmpl.Transformations = applied
+		tmpl = imagortemplate.ApplyTemplateToImage(tmpl, *imagePath, targetDims)
 	}
 
 	base := tmpl.Transformations
