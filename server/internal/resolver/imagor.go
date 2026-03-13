@@ -9,6 +9,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
+	it "github.com/cshum/imagor-studio/server/internal/imagortemplate"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
@@ -57,18 +58,18 @@ func (r *mutationResolver) GenerateImagorURLFromEditorState(
 		return "", err
 	}
 
-	var base EditorState
+	var base it.Transformations
 	if err := json.Unmarshal([]byte(stateJSON), &base); err != nil {
 		return "", fmt.Errorf("invalid stateJson: %w", err)
 	}
 
-	origDims := Dimensions{Width: originalDimensions.Width, Height: originalDimensions.Height}
+	origDims := it.Dimensions{Width: originalDimensions.Width, Height: originalDimensions.Height}
 
-	res := resolveContextState(base, origDims, imagePath, contextPath)
+	res := it.ResolveContext(base, origDims, imagePath, contextPath)
 
-	var previewMaxDims *Dimensions
+	var previewMaxDims *it.Dimensions
 	if previewMaxDimensions != nil {
-		previewMaxDims = &Dimensions{Width: previewMaxDimensions.Width, Height: previewMaxDimensions.Height}
+		previewMaxDims = &it.Dimensions{Width: previewMaxDimensions.Width, Height: previewMaxDimensions.Height}
 	}
 
 	preview := forPreview != nil && *forPreview
@@ -77,7 +78,7 @@ func (r *mutationResolver) GenerateImagorURLFromEditorState(
 		skipID = *skipLayerID
 	}
 
-	params := convertEditorStateToImagorParams(res.State, res.OrigDims, res.ParentDims, preview, previewMaxDims, skipID)
+	params := it.ConvertToImagorParams(*res.Transforms, res.OrigDims, res.ParentDims, preview, previewMaxDims, skipID)
 
 	url, err := r.imagorProvider.GenerateURL(res.ImagePath, params)
 	if err != nil {

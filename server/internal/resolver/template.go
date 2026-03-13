@@ -13,6 +13,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	it "github.com/cshum/imagor-studio/server/internal/imagortemplate"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
 )
@@ -156,20 +157,20 @@ func derivePreviewParamsFromTemplateJSON(templateJSON string) imagorpath.Params 
 	if len(tmpl.Transformations) == 0 {
 		return fallback
 	}
-	var state EditorState
+	var state it.Transformations
 	if err := json.Unmarshal(tmpl.Transformations, &state); err != nil {
 		return fallback
 	}
 
-	origDims := Dimensions{Width: 800, Height: 600} // sensible fallback
+	origDims := it.Dimensions{Width: 800, Height: 600} // sensible fallback
 	if tmpl.PredefinedDims != nil && tmpl.PredefinedDims.Width > 0 && tmpl.PredefinedDims.Height > 0 {
-		origDims = Dimensions{Width: tmpl.PredefinedDims.Width, Height: tmpl.PredefinedDims.Height}
+		origDims = it.Dimensions{Width: tmpl.PredefinedDims.Width, Height: tmpl.PredefinedDims.Height}
 	} else if state.OriginalDimensions != nil && state.OriginalDimensions.Width > 0 {
 		origDims = *state.OriginalDimensions
 	}
 
-	previewMax := &Dimensions{Width: 400, Height: 400}
-	return convertEditorStateToImagorParams(state, origDims, nil, true, previewMax, "")
+	previewMax := &it.Dimensions{Width: 400, Height: 400}
+	return it.ConvertToImagorParams(state, origDims, nil, true, previewMax, "")
 }
 
 // generateTemplatePreview generates a preview image for the template using Imagor
