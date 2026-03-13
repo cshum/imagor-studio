@@ -4,7 +4,7 @@ import { useNavigate, useRouter } from '@tanstack/react-router'
 import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { statFile } from '@/api/storage-api'
+import { saveTemplate, statFile } from '@/api/storage-api'
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
@@ -383,13 +383,14 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
       const { galleryKey } = splitImagePath(templateMetadata.templatePath)
 
-      await imageEditor.exportTemplate(
+      const { saveInput } = imageEditor.buildExportTemplateInput(
         templateMetadata.name,
         undefined,
         dimensionMode,
         galleryKey || '',
         true, // overwrite = true for direct save
       )
+      await saveTemplate({ input: saveInput })
 
       // Mark as saved to skip unsaved changes warning
       isSavedRef.current = true
