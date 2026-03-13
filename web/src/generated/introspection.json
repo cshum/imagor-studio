@@ -1600,7 +1600,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "stateJson",
+                "name": "templateJson",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",

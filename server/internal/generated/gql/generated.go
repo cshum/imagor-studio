@@ -113,7 +113,7 @@ type ComplexityRoot struct {
 		DeleteSystemRegistry          func(childComplexity int, key *string, keys []string) int
 		DeleteUserRegistry            func(childComplexity int, key *string, keys []string, ownerID *string) int
 		GenerateImagorURL             func(childComplexity int, imagePath string, params ImagorParamsInput) int
-		GenerateImagorURLFromTemplate func(childComplexity int, imagePath string, stateJSON string, originalDimensions DimensionsInput, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
+		GenerateImagorURLFromTemplate func(childComplexity int, imagePath string, templateJSON string, originalDimensions DimensionsInput, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
 		MoveFile                      func(childComplexity int, sourcePath string, destPath string) int
 		SaveTemplate                  func(childComplexity int, input SaveTemplateInput) int
 		SetSystemRegistry             func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
@@ -226,7 +226,7 @@ type MutationResolver interface {
 	ConfigureEmbeddedImagor(ctx context.Context) (*ImagorConfigResult, error)
 	ConfigureExternalImagor(ctx context.Context, input ExternalImagorInput) (*ImagorConfigResult, error)
 	GenerateImagorURL(ctx context.Context, imagePath string, params ImagorParamsInput) (string, error)
-	GenerateImagorURLFromTemplate(ctx context.Context, imagePath string, stateJSON string, originalDimensions DimensionsInput, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) (string, error)
+	GenerateImagorURLFromTemplate(ctx context.Context, imagePath string, templateJSON string, originalDimensions DimensionsInput, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) (string, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
 	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
@@ -667,7 +667,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.GenerateImagorURLFromTemplate(childComplexity, args["imagePath"].(string), args["stateJson"].(string), args["originalDimensions"].(DimensionsInput), args["contextPath"].([]string), args["forPreview"].(*bool), args["previewMaxDimensions"].(*DimensionsInput), args["skipLayerId"].(*string), args["appendFilters"].([]*ImagorFilterInput)), true
+		return e.ComplexityRoot.Mutation.GenerateImagorURLFromTemplate(childComplexity, args["imagePath"].(string), args["templateJson"].(string), args["originalDimensions"].(DimensionsInput), args["contextPath"].([]string), args["forPreview"].(*bool), args["previewMaxDimensions"].(*DimensionsInput), args["skipLayerId"].(*string), args["appendFilters"].([]*ImagorFilterInput)), true
 	case "Mutation.moveFile":
 		if e.ComplexityRoot.Mutation.MoveFile == nil {
 			break
@@ -1245,7 +1245,7 @@ extend type Mutation {
   # Imagor URL generation from template JSON (backend conversion)
   generateImagorUrlFromTemplate(
     imagePath: String!              # Root image path
-    stateJson: String!              # JSON-encoded template (Transformations / ImageEditorState)
+    templateJson: String!           # JSON-encoded ImagorTemplate envelope ({ version, transformations, ... })
     originalDimensions: DimensionsInput! # Root image original dimensions
     contextPath: [String!]          # Layer ID path for f-token parent-dim resolution ([] = root)
     forPreview: Boolean             # Adds preview/webp filters, scales blur/sharpen/padding
@@ -1795,11 +1795,11 @@ func (ec *executionContext) field_Mutation_generateImagorUrlFromTemplate_args(ct
 		return nil, err
 	}
 	args["imagePath"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "stateJson", ec.unmarshalNString2string)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "templateJson", ec.unmarshalNString2string)
 	if err != nil {
 		return nil, err
 	}
-	args["stateJson"] = arg1
+	args["templateJson"] = arg1
 	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "originalDimensions", ec.unmarshalNDimensionsInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionsInput)
 	if err != nil {
 		return nil, err
@@ -3957,7 +3957,7 @@ func (ec *executionContext) _Mutation_generateImagorUrlFromTemplate(ctx context.
 		ec.fieldContext_Mutation_generateImagorUrlFromTemplate,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().GenerateImagorURLFromTemplate(ctx, fc.Args["imagePath"].(string), fc.Args["stateJson"].(string), fc.Args["originalDimensions"].(DimensionsInput), fc.Args["contextPath"].([]string), fc.Args["forPreview"].(*bool), fc.Args["previewMaxDimensions"].(*DimensionsInput), fc.Args["skipLayerId"].(*string), fc.Args["appendFilters"].([]*ImagorFilterInput))
+			return ec.Resolvers.Mutation().GenerateImagorURLFromTemplate(ctx, fc.Args["imagePath"].(string), fc.Args["templateJson"].(string), fc.Args["originalDimensions"].(DimensionsInput), fc.Args["contextPath"].([]string), fc.Args["forPreview"].(*bool), fc.Args["previewMaxDimensions"].(*DimensionsInput), fc.Args["skipLayerId"].(*string), fc.Args["appendFilters"].([]*ImagorFilterInput))
 		},
 		nil,
 		ec.marshalNString2string,

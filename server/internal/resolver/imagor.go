@@ -59,10 +59,11 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		return "", err
 	}
 
-	var base it.Transformations
-	if err := json.Unmarshal([]byte(stateJSON), &base); err != nil {
-		return "", fmt.Errorf("invalid stateJson: %w", err)
+	var tmpl it.Template
+	if err := json.Unmarshal([]byte(stateJSON), &tmpl); err != nil {
+		return "", fmt.Errorf("invalid templateJson: %w", err)
 	}
+	base := tmpl.Transformations
 
 	origDims := it.Dimensions{Width: originalDimensions.Width, Height: originalDimensions.Height}
 

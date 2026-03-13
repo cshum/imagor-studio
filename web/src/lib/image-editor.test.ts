@@ -1839,8 +1839,8 @@ describe('ImageEditor', () => {
         expect.anything(),
       )
       const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
-      const lastCall = calls[calls.length - 1][0] as { stateJson: string }
-      const parsedState = JSON.parse(lastCall.stateJson)
+      const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+      const parsedState = JSON.parse(lastCall.templateJson).transformations
       const layerInState = parsedState.layers?.find((l: { id: string }) => l.id === 'fill-d2-a')
       expect(layerInState?.transforms?.widthFull).toBe(true)
       expect(layerInState?.transforms?.heightFull).toBe(true)
@@ -1907,9 +1907,9 @@ describe('ImageEditor', () => {
         await editor.generateCopyUrl()
 
         const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
-        const lastCall = calls[calls.length - 1][0] as { stateJson: string; forPreview: boolean }
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string; forPreview: boolean }
         expect(lastCall.forPreview).toBe(false)
-        const state = JSON.parse(lastCall.stateJson)
+        const state = JSON.parse(lastCall.templateJson).transformations
         expect(state.brightness).toBe(50)
         expect(state.hue).toBe(120)
       })
@@ -1921,8 +1921,8 @@ describe('ImageEditor', () => {
         await editor.generateCopyUrl()
 
         const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
-        const lastCall = calls[calls.length - 1][0] as { stateJson: string }
-        const state = JSON.parse(lastCall.stateJson)
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+        const state = JSON.parse(lastCall.templateJson).transformations
         expect(state.proportion).toBe(75)
       })
 
@@ -1963,8 +1963,8 @@ describe('ImageEditor', () => {
 
         // Backend receives the full state with the layer's widthFull property intact
         const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
-        const lastCall = calls[calls.length - 1][0] as { stateJson: string }
-        const parsedState = JSON.parse(lastCall.stateJson)
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+        const parsedState = JSON.parse(lastCall.templateJson).transformations
         const layerInState = parsedState.layers?.find(
           (l: { id: string }) => l.id === 'fill-scale-test',
         )
@@ -2015,8 +2015,8 @@ describe('ImageEditor', () => {
 
         // Backend receives the full state with heightFull property intact
         const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
-        const lastCall = calls[calls.length - 1][0] as { stateJson: string }
-        const parsedState = JSON.parse(lastCall.stateJson)
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+        const parsedState = JSON.parse(lastCall.templateJson).transformations
         const layerInState = parsedState.layers?.find(
           (l: { id: string }) => l.id === 'fill-pad-test',
         )
@@ -3190,8 +3190,8 @@ describe('ImageEditor', () => {
         await editor.generateThumbnailUrl()
 
         const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
-        const lastCall = calls[calls.length - 1][0] as { stateJson: string }
-        const state = JSON.parse(lastCall.stateJson)
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+        const state = JSON.parse(lastCall.templateJson).transformations
         expect(state.brightness).toBe(50)
         expect(state.contrast).toBe(30)
       })

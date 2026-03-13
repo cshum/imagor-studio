@@ -1153,6 +1153,13 @@ export class ImageEditor {
   }
 
   /**
+   * Wrap transformations in the ImagorTemplate envelope expected by the backend API.
+   */
+  private buildTemplateJson(transformations: ImageEditorState): string {
+    return JSON.stringify({ version: '1.0', transformations })
+  }
+
+  /**
    * Generate preview URL and trigger callbacks
    */
   private async generatePreview(requestId: number): Promise<void> {
@@ -1168,7 +1175,7 @@ export class ImageEditor {
       const url = await generateImagorUrlFromTemplate(
         {
           imagePath: this.baseImagePath,
-          stateJson: JSON.stringify(baseState),
+          templateJson: this.buildTemplateJson(baseState),
           originalDimensions: this.config.originalDimensions,
           contextPath: this.editingContext.length > 0 ? this.editingContext : null,
           forPreview: true,
@@ -1559,7 +1566,7 @@ export class ImageEditor {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       imagePath: this.baseImagePath,
-      stateJson: JSON.stringify(baseState),
+      templateJson: this.buildTemplateJson(baseState),
       originalDimensions: this.config.originalDimensions,
       contextPath: this.editingContext.length > 0 ? this.editingContext : null,
       forPreview: false,
@@ -1573,7 +1580,7 @@ export class ImageEditor {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       imagePath: this.baseImagePath,
-      stateJson: JSON.stringify(baseState),
+      templateJson: this.buildTemplateJson(baseState),
       originalDimensions: this.config.originalDimensions,
       contextPath: this.editingContext.length > 0 ? this.editingContext : null,
       forPreview: false,
@@ -2461,7 +2468,7 @@ export class ImageEditor {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       imagePath: this.baseImagePath,
-      stateJson: JSON.stringify(baseState),
+      templateJson: this.buildTemplateJson(baseState),
       originalDimensions: this.config.originalDimensions,
       contextPath: null,
       forPreview: true,

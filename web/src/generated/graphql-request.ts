@@ -249,7 +249,7 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   originalDimensions: DimensionsInput
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
-  stateJson: Scalars['String']['input']
+  templateJson: Scalars['String']['input']
 }
 
 export type MutationMoveFileArgs = {
@@ -534,7 +534,7 @@ export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImago
 
 export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
   imagePath: Scalars['String']['input']
-  stateJson: Scalars['String']['input']
+  templateJson: Scalars['String']['input']
   originalDimensions: DimensionsInput
   contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
@@ -1061,7 +1061,7 @@ export const GenerateImagorUrlDocument = gql`
 export const GenerateImagorUrlFromTemplateDocument = gql`
   mutation GenerateImagorUrlFromTemplate(
     $imagePath: String!
-    $stateJson: String!
+    $templateJson: String!
     $originalDimensions: DimensionsInput!
     $contextPath: [String!]
     $forPreview: Boolean
@@ -1071,7 +1071,7 @@ export const GenerateImagorUrlFromTemplateDocument = gql`
   ) {
     generateImagorUrlFromTemplate(
       imagePath: $imagePath
-      stateJson: $stateJson
+      templateJson: $templateJson
       originalDimensions: $originalDimensions
       contextPath: $contextPath
       forPreview: $forPreview

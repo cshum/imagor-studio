@@ -248,7 +248,7 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   originalDimensions: DimensionsInput
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
-  stateJson: Scalars['String']['input']
+  templateJson: Scalars['String']['input']
 }
 
 export type MutationMoveFileArgs = {
@@ -533,7 +533,7 @@ export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImago
 
 export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
   imagePath: Scalars['String']['input']
-  stateJson: Scalars['String']['input']
+  templateJson: Scalars['String']['input']
   originalDimensions: DimensionsInput
   contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
@@ -1236,7 +1236,7 @@ export const GenerateImagorUrlFromTemplateDocument = {
         },
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'stateJson' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'templateJson' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -1302,8 +1302,8 @@ export const GenerateImagorUrlFromTemplateDocument = {
               },
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'stateJson' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'stateJson' } },
+                name: { kind: 'Name', value: 'templateJson' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'templateJson' } },
               },
               {
                 kind: 'Argument',

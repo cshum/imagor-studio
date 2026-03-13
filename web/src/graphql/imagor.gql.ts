@@ -61,7 +61,7 @@ export const GENERATE_IMAGOR_URL_MUTATION = gql(`
 export const GENERATE_IMAGOR_URL_FROM_TEMPLATE_MUTATION = gql(`
   mutation GenerateImagorUrlFromTemplate(
     $imagePath: String!
-    $stateJson: String!
+    $templateJson: String!
     $originalDimensions: DimensionsInput!
     $contextPath: [String!]
     $forPreview: Boolean
@@ -71,7 +71,7 @@ export const GENERATE_IMAGOR_URL_FROM_TEMPLATE_MUTATION = gql(`
   ) {
     generateImagorUrlFromTemplate(
       imagePath: $imagePath
-      stateJson: $stateJson
+      templateJson: $templateJson
       originalDimensions: $originalDimensions
       contextPath: $contextPath
       forPreview: $forPreview

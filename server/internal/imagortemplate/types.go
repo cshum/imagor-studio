@@ -113,6 +113,18 @@ type Layer struct {
 	DPI     *int     `json:"dpi,omitempty"`
 }
 
+// Template mirrors the TypeScript ImagorTemplate (.imagor.json file format).
+// The backend accepts the full template envelope so callers can pass a saved
+// .imagor.json file directly to GenerateImagorURLFromTemplate.
+type Template struct {
+	Version         string          `json:"version"`
+	Description     string          `json:"description,omitempty"`
+	DimensionMode   string          `json:"dimensionMode,omitempty"`
+	PredefinedDims  *Dimensions     `json:"predefinedDimensions,omitempty"`
+	SourceImagePath string          `json:"sourceImagePath,omitempty"`
+	Transformations Transformations `json:"transformations"`
+}
+
 // Resolution is the result of ResolveContext.
 type Resolution struct {
 	Transforms *Transformations
