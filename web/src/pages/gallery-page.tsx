@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 
 import { generateImagorUrl } from '@/api/imagor-api'
 import { setUserRegistryMultiple } from '@/api/registry-api.ts'
-import { deleteFile, moveFile } from '@/api/storage-api.ts'
+import { deleteFile, moveFile, regenerateTemplatePreview } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { BulkDeleteDialog } from '@/components/image-gallery/bulk-delete-dialog'
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
@@ -1096,6 +1096,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           }
                           draggedItems={dragState.draggedItems}
                           galleryKey={galleryKey}
+                          onTemplatePreviewError={regenerateTemplatePreview}
                           {...imageGridProps}
                         />
                       </ImageContextMenu>

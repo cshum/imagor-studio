@@ -2510,13 +2510,30 @@ export class ImageEditor {
    * @returns Promise that resolves with save result including normalized templatePath
    * @throws Error with code 'CONFLICT' if template already exists
    */
-  async exportTemplate(
+  /**
+   * Build the template JSON and save input for the current editor state.
+   * Returns the serialized template JSON and the save input object so the
+   * caller (page/dialog) can call saveTemplate() directly — keeping API
+   * calls out of this library class.
+   */
+  buildExportTemplateInput(
     name: string,
     description: string | undefined,
     dimensionMode: 'adaptive' | 'predefined',
     savePath: string,
     overwrite = false,
-  ): Promise<{ success: boolean; templatePath: string }> {
+  ): {
+    templateJson: string
+    saveInput: {
+      name: string
+      description: string | null
+      dimensionMode: 'ADAPTIVE' | 'PREDEFINED'
+      templateJson: string
+      sourceImagePath: string
+      savePath: string
+      overwrite: boolean
+    }
+  } {
     // Get base state
     const baseState = this.getBaseState()
 
@@ -2559,24 +2576,18 @@ export class ImageEditor {
       },
     }
 
-    // Call backend API to save template (backend derives preview from templateJson)
-    const { saveTemplate } = await import('@/api/storage-api')
-
-    const result = await saveTemplate({
-      input: {
+    const templateJson = JSON.stringify(template)
+    return {
+      templateJson,
+      saveInput: {
         name,
         description: description || null,
         dimensionMode: dimensionMode.toUpperCase() as 'ADAPTIVE' | 'PREDEFINED',
-        templateJson: JSON.stringify(template),
+        templateJson,
         sourceImagePath: this.baseImagePath,
         savePath,
         overwrite,
       },
-    })
-
-    return {
-      success: result.success,
-      templatePath: result.templatePath,
     }
   }
 

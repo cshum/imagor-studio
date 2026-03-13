@@ -7,7 +7,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { regenerateTemplatePreview } from '@/api/storage-api'
 import { DragItem } from '@/hooks/use-item-drag-drop'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
@@ -38,6 +37,8 @@ interface ImageCellProps {
   selectedImageKeys?: Set<string>
   selectedFolderKeys?: Set<string>
   galleryKey?: string
+  /** Called when a template thumbnail fails to load — should regenerate the preview and return true on success */
+  onTemplatePreviewError?: (templatePath: string) => Promise<boolean>
 }
 
 const ImageCell = ({
@@ -64,6 +65,7 @@ const ImageCell = ({
   selectedImageKeys,
   selectedFolderKeys,
   galleryKey = '',
+  onTemplatePreviewError,
 }: ImageCellProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   // For template thumbnails: null = use imageSrc, '' = hide img (regenerating), string = fresh preview
@@ -163,7 +165,7 @@ const ImageCell = ({
     const templatePath = galleryKey ? `${galleryKey}/${image.imageKey}` : image.imageKey
 
     try {
-      const success = await regenerateTemplatePreview(templatePath)
+      const success = await onTemplatePreviewError?.(templatePath)
       if (success) {
         // Re-request the original imagor grid URL with a cache buster.
         // image.imageSrc is already the imagor-processed grid URL for the preview file
@@ -299,6 +301,8 @@ export interface ImageGridProps {
   onDragEnd?: (e: React.DragEvent) => void
   draggedItems?: DragItem[]
   galleryKey?: string
+  /** Called when a template thumbnail fails to load — should regenerate the preview and return true on success */
+  onTemplatePreviewError?: (templatePath: string) => Promise<boolean>
 }
 
 export const ImageGrid = ({
@@ -323,6 +327,7 @@ export const ImageGrid = ({
   onDragEnd,
   draggedItems = [],
   galleryKey = '',
+  onTemplatePreviewError,
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -404,6 +409,7 @@ export const ImageGrid = ({
           selectedImageKeys={selectedImageKeys}
           selectedFolderKeys={selectedFolderKeys}
           galleryKey={galleryKey}
+          onTemplatePreviewError={onTemplatePreviewError}
           imageRef={(el) => {
             if (imageRefs?.current) {
               if (el) {
