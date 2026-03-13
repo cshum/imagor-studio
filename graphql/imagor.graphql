@@ -11,7 +11,7 @@ extend type Mutation {
   # Imagor URL Generation API
   generateImagorUrl(imagePath: String!, params: ImagorParamsInput!): String!
 
-  # Imagor URL generation from template JSON (backend conversion)
+  # Imagor URL generation from template JSON
   generateImagorUrlFromTemplate(
     templateJson: String!           # JSON-encoded ImagorTemplate envelope ({ version, transformations, ... })
     contextPath: [String!]          # Layer ID path for f-token parent-dim resolution ([] = root)
