@@ -176,7 +176,7 @@ export type Mutation = {
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
-  generateImagorUrlFromEditorState: Scalars['String']['output']
+  generateImagorUrlFromTemplate: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSystemRegistry: Array<SystemRegistry>
@@ -240,7 +240,7 @@ export type MutationGenerateImagorUrlArgs = {
   params: ImagorParamsInput
 }
 
-export type MutationGenerateImagorUrlFromEditorStateArgs = {
+export type MutationGenerateImagorUrlFromTemplateArgs = {
   appendFilters?: InputMaybe<Array<ImagorFilterInput>>
   contextPath?: InputMaybe<Array<Scalars['String']['input']>>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
@@ -531,7 +531,7 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
 
-export type GenerateImagorUrlFromEditorStateMutationVariables = Exact<{
+export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
   imagePath: Scalars['String']['input']
   stateJson: Scalars['String']['input']
   originalDimensions: DimensionsInput
@@ -542,9 +542,9 @@ export type GenerateImagorUrlFromEditorStateMutationVariables = Exact<{
   appendFilters?: InputMaybe<Array<ImagorFilterInput> | ImagorFilterInput>
 }>
 
-export type GenerateImagorUrlFromEditorStateMutation = {
+export type GenerateImagorUrlFromTemplateMutation = {
   __typename?: 'Mutation'
-  generateImagorUrlFromEditorState: string
+  generateImagorUrlFromTemplate: string
 }
 
 export type RegistryInfoFragment = {
@@ -1218,13 +1218,13 @@ export const GenerateImagorUrlDocument = {
     },
   ],
 } as unknown as DocumentNode<GenerateImagorUrlMutation, GenerateImagorUrlMutationVariables>
-export const GenerateImagorUrlFromEditorStateDocument = {
+export const GenerateImagorUrlFromTemplateDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'mutation',
-      name: { kind: 'Name', value: 'GenerateImagorUrlFromEditorState' },
+      name: { kind: 'Name', value: 'GenerateImagorUrlFromTemplate' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -1293,7 +1293,7 @@ export const GenerateImagorUrlFromEditorStateDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'generateImagorUrlFromEditorState' },
+            name: { kind: 'Name', value: 'generateImagorUrlFromTemplate' },
             arguments: [
               {
                 kind: 'Argument',
@@ -1342,8 +1342,8 @@ export const GenerateImagorUrlFromEditorStateDocument = {
     },
   ],
 } as unknown as DocumentNode<
-  GenerateImagorUrlFromEditorStateMutation,
-  GenerateImagorUrlFromEditorStateMutationVariables
+  GenerateImagorUrlFromTemplateMutation,
+  GenerateImagorUrlFromTemplateMutationVariables
 >
 export const ListUserRegistryDocument = {
   kind: 'Document',

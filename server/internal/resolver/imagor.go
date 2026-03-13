@@ -43,8 +43,8 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 	return url, nil
 }
 
-// GenerateImagorURLFromEditorState converts a full ImageEditorState JSON to an imagor URL on the backend.
-func (r *mutationResolver) GenerateImagorURLFromEditorState(
+// GenerateImagorURLFromTemplate converts a template JSON to an imagor URL on the backend.
+func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	ctx context.Context,
 	imagePath string,
 	stateJSON string,

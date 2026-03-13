@@ -1512,7 +1512,7 @@
             "deprecationReason": null
           },
           {
-            "name": "generateImagorUrlFromEditorState",
+            "name": "generateImagorUrlFromTemplate",
             "description": null,
             "args": [
               {

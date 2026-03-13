@@ -11,10 +11,10 @@ extend type Mutation {
   # Imagor URL Generation API
   generateImagorUrl(imagePath: String!, params: ImagorParamsInput!): String!
 
-  # Imagor URL Generation from editor state (consolidates convertStateToGraphQLParams logic in backend)
-  generateImagorUrlFromEditorState(
+  # Imagor URL generation from template JSON (backend conversion)
+  generateImagorUrlFromTemplate(
     imagePath: String!              # Root image path
-    stateJson: String!              # JSON-encoded ImageEditorState (full base state)
+    stateJson: String!              # JSON-encoded template (Transformations / ImageEditorState)
     originalDimensions: DimensionsInput! # Root image original dimensions
     contextPath: [String!]          # Layer ID path for f-token parent-dim resolution ([] = root)
     forPreview: Boolean             # Adds preview/webp filters, scales blur/sharpen/padding

@@ -177,7 +177,7 @@ export type Mutation = {
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
-  generateImagorUrlFromEditorState: Scalars['String']['output']
+  generateImagorUrlFromTemplate: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSystemRegistry: Array<SystemRegistry>
@@ -241,7 +241,7 @@ export type MutationGenerateImagorUrlArgs = {
   params: ImagorParamsInput
 }
 
-export type MutationGenerateImagorUrlFromEditorStateArgs = {
+export type MutationGenerateImagorUrlFromTemplateArgs = {
   appendFilters?: InputMaybe<Array<ImagorFilterInput>>
   contextPath?: InputMaybe<Array<Scalars['String']['input']>>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
@@ -532,7 +532,7 @@ export type GenerateImagorUrlMutationVariables = Exact<{
 
 export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImagorUrl: string }
 
-export type GenerateImagorUrlFromEditorStateMutationVariables = Exact<{
+export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
   imagePath: Scalars['String']['input']
   stateJson: Scalars['String']['input']
   originalDimensions: DimensionsInput
@@ -543,9 +543,9 @@ export type GenerateImagorUrlFromEditorStateMutationVariables = Exact<{
   appendFilters?: InputMaybe<Array<ImagorFilterInput> | ImagorFilterInput>
 }>
 
-export type GenerateImagorUrlFromEditorStateMutation = {
+export type GenerateImagorUrlFromTemplateMutation = {
   __typename?: 'Mutation'
-  generateImagorUrlFromEditorState: string
+  generateImagorUrlFromTemplate: string
 }
 
 export type RegistryInfoFragment = {
@@ -1058,8 +1058,8 @@ export const GenerateImagorUrlDocument = gql`
     generateImagorUrl(imagePath: $imagePath, params: $params)
   }
 `
-export const GenerateImagorUrlFromEditorStateDocument = gql`
-  mutation GenerateImagorUrlFromEditorState(
+export const GenerateImagorUrlFromTemplateDocument = gql`
+  mutation GenerateImagorUrlFromTemplate(
     $imagePath: String!
     $stateJson: String!
     $originalDimensions: DimensionsInput!
@@ -1069,7 +1069,7 @@ export const GenerateImagorUrlFromEditorStateDocument = gql`
     $skipLayerId: String
     $appendFilters: [ImagorFilterInput!]
   ) {
-    generateImagorUrlFromEditorState(
+    generateImagorUrlFromTemplate(
       imagePath: $imagePath
       stateJson: $stateJson
       originalDimensions: $originalDimensions
@@ -1442,20 +1442,20 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
         variables,
       )
     },
-    GenerateImagorUrlFromEditorState(
-      variables: GenerateImagorUrlFromEditorStateMutationVariables,
+    GenerateImagorUrlFromTemplate(
+      variables: GenerateImagorUrlFromTemplateMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<GenerateImagorUrlFromEditorStateMutation> {
+    ): Promise<GenerateImagorUrlFromTemplateMutation> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<GenerateImagorUrlFromEditorStateMutation>({
-            document: GenerateImagorUrlFromEditorStateDocument,
+          client.request<GenerateImagorUrlFromTemplateMutation>({
+            document: GenerateImagorUrlFromTemplateDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'GenerateImagorUrlFromEditorState',
+        'GenerateImagorUrlFromTemplate',
         'mutation',
         variables,
       )

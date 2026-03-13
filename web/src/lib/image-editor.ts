@@ -1,4 +1,4 @@
-import { generateImagorUrlFromEditorState } from '@/api/imagor-api'
+import { generateImagorUrlFromTemplate } from '@/api/imagor-api'
 import { getFullImageUrl } from '@/lib/api-utils'
 import type { ImagorTemplate, TemplateWarning } from '@/lib/template-types'
 
