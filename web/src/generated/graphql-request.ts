@@ -179,6 +179,7 @@ export type Mutation = {
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
+  regenerateTemplatePreview: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
@@ -245,6 +246,7 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   appendFilters?: InputMaybe<Array<ImagorFilterInput>>
   contextPath?: InputMaybe<Array<Scalars['String']['input']>>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
+  imagePath?: InputMaybe<Scalars['String']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
@@ -253,6 +255,10 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
 export type MutationMoveFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
+}
+
+export type MutationRegenerateTemplatePreviewArgs = {
+  templatePath: Scalars['String']['input']
 }
 
 export type MutationSaveTemplateArgs = {
@@ -867,6 +873,15 @@ export type SaveTemplateMutation = {
   }
 }
 
+export type RegenerateTemplatePreviewMutationVariables = Exact<{
+  templatePath: Scalars['String']['input']
+}>
+
+export type RegenerateTemplatePreviewMutation = {
+  __typename?: 'Mutation'
+  regenerateTemplatePreview: boolean
+}
+
 export type UserInfoFragment = {
   __typename?: 'User'
   id: string
@@ -1294,6 +1309,11 @@ export const SaveTemplateDocument = gql`
       previewPath
       message
     }
+  }
+`
+export const RegenerateTemplatePreviewDocument = gql`
+  mutation RegenerateTemplatePreview($templatePath: String!) {
+    regenerateTemplatePreview(templatePath: $templatePath)
   }
 `
 export const MeDocument = gql`
@@ -1826,6 +1846,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'SaveTemplate',
+        'mutation',
+        variables,
+      )
+    },
+    RegenerateTemplatePreview(
+      variables: RegenerateTemplatePreviewMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<RegenerateTemplatePreviewMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<RegenerateTemplatePreviewMutation>({
+            document: RegenerateTemplatePreviewDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'RegenerateTemplatePreview',
         'mutation',
         variables,
       )

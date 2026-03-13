@@ -158,3 +158,9 @@ export const SAVE_TEMPLATE = gql(`
     }
   }
 `)
+
+export const REGENERATE_TEMPLATE_PREVIEW = gql(`
+  mutation RegenerateTemplatePreview($templatePath: String!) {
+    regenerateTemplatePreview(templatePath: $templatePath)
+  }
+`)

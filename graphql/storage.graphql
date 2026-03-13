@@ -27,6 +27,7 @@ type Mutation {
 
   # Template management (write scope required)
   saveTemplate(input: SaveTemplateInput!): TemplateResult!
+  regenerateTemplatePreview(templatePath: String!): Boolean!
 
   # Storage Configuration APIs (admin only)
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!

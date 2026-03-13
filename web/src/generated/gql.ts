@@ -43,6 +43,7 @@ type Documents = {
   '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureS3StorageDocument
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n': typeof types.TestStorageConfigDocument
   '\n  mutation SaveTemplate($input: SaveTemplateInput!) {\n    saveTemplate(input: $input) {\n      success\n      templatePath\n      previewPath\n      message\n    }\n  }\n': typeof types.SaveTemplateDocument
+  '\n  mutation RegenerateTemplatePreview($templatePath: String!) {\n    regenerateTemplatePreview(templatePath: $templatePath)\n  }\n': typeof types.RegenerateTemplatePreviewDocument
   '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n': typeof types.UserInfoFragmentDoc
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': typeof types.MeDocument
   '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n': typeof types.GetUserDocument
@@ -109,6 +110,8 @@ const documents: Documents = {
     types.TestStorageConfigDocument,
   '\n  mutation SaveTemplate($input: SaveTemplateInput!) {\n    saveTemplate(input: $input) {\n      success\n      templatePath\n      previewPath\n      message\n    }\n  }\n':
     types.SaveTemplateDocument,
+  '\n  mutation RegenerateTemplatePreview($templatePath: String!) {\n    regenerateTemplatePreview(templatePath: $templatePath)\n  }\n':
+    types.RegenerateTemplatePreviewDocument,
   '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n  }\n':
     types.UserInfoFragmentDoc,
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': types.MeDocument,
@@ -308,6 +311,12 @@ export function gql(
 export function gql(
   source: '\n  mutation SaveTemplate($input: SaveTemplateInput!) {\n    saveTemplate(input: $input) {\n      success\n      templatePath\n      previewPath\n      message\n    }\n  }\n',
 ): (typeof documents)['\n  mutation SaveTemplate($input: SaveTemplateInput!) {\n    saveTemplate(input: $input) {\n      success\n      templatePath\n      previewPath\n      message\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation RegenerateTemplatePreview($templatePath: String!) {\n    regenerateTemplatePreview(templatePath: $templatePath)\n  }\n',
+): (typeof documents)['\n  mutation RegenerateTemplatePreview($templatePath: String!) {\n    regenerateTemplatePreview(templatePath: $templatePath)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

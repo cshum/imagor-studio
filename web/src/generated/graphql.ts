@@ -178,6 +178,7 @@ export type Mutation = {
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
+  regenerateTemplatePreview: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
@@ -244,6 +245,7 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   appendFilters?: InputMaybe<Array<ImagorFilterInput>>
   contextPath?: InputMaybe<Array<Scalars['String']['input']>>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
+  imagePath?: InputMaybe<Scalars['String']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
@@ -252,6 +254,10 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
 export type MutationMoveFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
+}
+
+export type MutationRegenerateTemplatePreviewArgs = {
+  templatePath: Scalars['String']['input']
 }
 
 export type MutationSaveTemplateArgs = {
@@ -864,6 +870,15 @@ export type SaveTemplateMutation = {
     previewPath: string | null
     message: string | null
   }
+}
+
+export type RegenerateTemplatePreviewMutationVariables = Exact<{
+  templatePath: Scalars['String']['input']
+}>
+
+export type RegenerateTemplatePreviewMutation = {
+  __typename?: 'Mutation'
+  regenerateTemplatePreview: boolean
 }
 
 export type UserInfoFragment = {
@@ -2502,6 +2517,45 @@ export const SaveTemplateDocument = {
     },
   ],
 } as unknown as DocumentNode<SaveTemplateMutation, SaveTemplateMutationVariables>
+export const RegenerateTemplatePreviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RegenerateTemplatePreview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'templatePath' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'regenerateTemplatePreview' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'templatePath' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'templatePath' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  RegenerateTemplatePreviewMutation,
+  RegenerateTemplatePreviewMutationVariables
+>
 export const MeDocument = {
   kind: 'Document',
   definitions: [

@@ -247,6 +247,82 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 	return imageData, nil
 }
 
+// RegenerateTemplatePreview regenerates the preview image for an existing template.
+// It reads the template JSON from storage, derives preview params, generates the preview
+// via imagor, and writes the result back as a .imagor.preview file.
+// Returns true on success, false if the template JSON cannot be read or preview generation fails.
+func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templatePath string) (bool, error) {
+	if err := RequireWritePermission(ctx, templatePath); err != nil {
+		return false, err
+	}
+
+	// Validate that the path ends with .imagor.json
+	if !strings.HasSuffix(templatePath, ".imagor.json") {
+		return false, fmt.Errorf("templatePath must end with .imagor.json")
+	}
+
+	r.logger.Debug("Regenerating template preview", zap.String("templatePath", templatePath))
+
+	// Read the template JSON from storage
+	reader, err := r.getStorage().Get(ctx, templatePath)
+	if err != nil {
+		r.logger.Error("Failed to read template JSON", zap.Error(err), zap.String("templatePath", templatePath))
+		return false, nil
+	}
+	defer reader.Close()
+
+	templateJSONBytes, err := io.ReadAll(reader)
+	if err != nil {
+		r.logger.Error("Failed to read template JSON content", zap.Error(err))
+		return false, nil
+	}
+	templateJSON := string(templateJSONBytes)
+
+	// Parse template to get source image path
+	var tmpl struct {
+		SourceImagePath string `json:"sourceImagePath"`
+	}
+	if err := json.Unmarshal(templateJSONBytes, &tmpl); err != nil {
+		r.logger.Error("Failed to parse template JSON", zap.Error(err))
+		return false, nil
+	}
+
+	sourceImagePath := tmpl.SourceImagePath
+	if sourceImagePath == "" {
+		r.logger.Warn("Template has no sourceImagePath, cannot regenerate preview",
+			zap.String("templatePath", templatePath))
+		return false, nil
+	}
+
+	// Derive preview params from the template JSON
+	previewParams := derivePreviewParamsFromTemplateJSON(templateJSON)
+
+	// Generate preview image
+	previewImage, err := r.generateTemplatePreview(ctx, sourceImagePath, previewParams)
+	if err != nil {
+		r.logger.Error("Failed to generate template preview", zap.Error(err),
+			zap.String("templatePath", templatePath))
+		return false, nil
+	}
+
+	// Derive preview file path: replace .imagor.json with .imagor.preview
+	previewPath := strings.TrimSuffix(templatePath, ".imagor.json") + ".imagor.preview"
+
+	// Write preview to storage
+	previewReader := bytes.NewReader(previewImage)
+	if err := r.getStorage().Put(ctx, previewPath, previewReader); err != nil {
+		r.logger.Error("Failed to save regenerated preview", zap.Error(err),
+			zap.String("previewPath", previewPath))
+		return false, nil
+	}
+
+	r.logger.Info("Template preview regenerated successfully",
+		zap.String("templatePath", templatePath),
+		zap.String("previewPath", previewPath))
+
+	return true, nil
+}
+
 // sanitizeTemplateName sanitizes a template name for use as a filename
 // Only removes filesystem-unsafe characters, preserves spaces and case
 func sanitizeTemplateName(name string) string {
