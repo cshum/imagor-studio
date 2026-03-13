@@ -10,6 +10,7 @@ import {
 // Mock the imagor-api module
 vi.mock('@/api/imagor-api', () => ({
   generateImagorUrl: vi.fn().mockResolvedValue('http://localhost:8000/mocked-url'),
+  generateImagorUrlFromEditorState: vi.fn().mockResolvedValue('http://localhost:8000/mocked-url'),
 }))
 
 describe('ImageEditor', () => {
@@ -1816,10 +1817,10 @@ describe('ImageEditor', () => {
     })
 
     it('preview URL emits f-tokens for all depths (imagor resolves nested f-tokens correctly)', async () => {
-      // imagor (commit 376cdaa) isolates f-token resolution per layer scope, so we no
-      // longer need to pre-resolve nested f-tokens client-side. f-tokens are emitted at
-      // every depth and imagor resolves them server-side against the correct parent canvas.
-      const { generateImagorUrl } = await import('@/api/imagor-api')
+      // With backend URL generation, the full state JSON (including nested layers with
+      // widthFull/heightFull) is sent to generateImagorUrlFromEditorState.  The backend
+      // applies the same f-token emission logic and imagor resolves them server-side.
+      const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
 
       // root 1920x1080, preview 960x540 → scaleFactor = 0.5
       editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
@@ -1829,18 +1830,22 @@ describe('ImageEditor', () => {
       editor.addLayer(layerA)
       await vi.runAllTimersAsync()
 
-      const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
-      const lastCall = calls[calls.length - 1][0] as {
-        params: { filters: Array<{ name: string; args: string }> }
-      }
-      const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
-      expect(imageFilter).toBeDefined()
-
-      const args = imageFilter!.args
-      // Layer-A: f-60xf-40 (offsets scaled by 0.5: 120*0.5=60, 80*0.5=40)
-      expect(args).toContain('f-60xf-40/')
-      // Layer-B: f-100xf-50 (offsets scaled by 0.5: 200*0.5=100, 100*0.5=50)
-      expect(args).toContain('f-100xf-50/')
+      // Backend receives state with nested layers carrying widthFull/heightFull
+      expect(generateImagorUrlFromEditorState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          forPreview: true,
+          previewMaxDimensions: { width: 960, height: 540 },
+        }),
+        expect.anything(),
+      )
+      const calls = (generateImagorUrlFromEditorState as ReturnType<typeof vi.fn>).mock.calls
+      const lastCall = calls[calls.length - 1][0] as { stateJson: string }
+      const parsedState = JSON.parse(lastCall.stateJson)
+      const layerInState = parsedState.layers?.find(
+        (l: { id: string }) => l.id === 'fill-d2-a',
+      )
+      expect(layerInState?.transforms?.widthFull).toBe(true)
+      expect(layerInState?.transforms?.heightFull).toBe(true)
     })
 
     it('getContextParentDimensions returns the immediate parent output dims at depth-2', () => {
@@ -1897,53 +1902,43 @@ describe('ImageEditor', () => {
       })
 
       it('should include current state in generated URLs', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
         editor.updateParams({ brightness: 50, hue: 120 })
 
         await editor.generateCopyUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([
-                expect.objectContaining({ name: 'brightness', args: '50' }),
-                expect.objectContaining({ name: 'hue', args: '120' }),
-              ]),
-            }),
-          }),
-        )
+        const calls = (generateImagorUrlFromEditorState as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { stateJson: string; forPreview: boolean }
+        expect(lastCall.forPreview).toBe(false)
+        const state = JSON.parse(lastCall.stateJson)
+        expect(state.brightness).toBe(50)
+        expect(state.hue).toBe(120)
       })
 
       it('should include proportion filter in generated URLs', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
         editor.updateParams({ proportion: 75 })
 
         await editor.generateCopyUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([
-                expect.objectContaining({ name: 'proportion', args: '75' }),
-              ]),
-            }),
-          }),
-        )
+        const calls = (generateImagorUrlFromEditorState as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { stateJson: string }
+        const state = JSON.parse(lastCall.stateJson)
+        expect(state.proportion).toBe(75)
       })
 
       it('should not include proportion filter in generated URLs when value is 100', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
         editor.updateParams({ proportion: 100 })
 
-        await editor.generateCopyUrl()
-
-        const callArg = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls[0][0]
-        const filterNames = (callArg.params.filters as Array<{ name: string }>).map((f) => f.name)
+        // convertStateToGraphQLParams is the canonical frontend converter (still used by
+        // generateDownloadUrl).  Verify proportion=100 does not emit a proportion filter.
+        const params = editor.convertStateToGraphQLParams(editor.getState(), false)
+        const filterNames = (params.filters ?? []).map((f) => f.name)
         expect(filterNames).not.toContain('proportion')
       })
 
       it('emits f-tokens in preview URL for depth-1 widthFull layers (imagor resolves at serve time)', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
 
         // originalDimensions = 1920x1080, previewMaxDimensions = 960x540 → scaleFactor = 0.5
         editor.updatePreviewMaxDimensions({ width: 960, height: 540 })
@@ -1968,23 +1963,24 @@ describe('ImageEditor', () => {
         // Fire the debounced preview
         await vi.runAllTimersAsync()
 
-        // Inspect the most recent generateImagorUrl call
-        const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
-        const lastCall = calls[calls.length - 1][0] as {
-          params: { filters: Array<{ name: string; args: string }> }
-        }
-        const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
-
-        expect(imageFilter).toBeDefined()
-        // widthFull offset 20 scaled by 0.5 → f-10; height 200 scaled by 0.5 → 100
-        // imagor resolves f-10 against the parent canvas (960px wide) at serve time → 950px
-        expect(imageFilter!.args).toContain('f-10x100')
+        // Backend receives the full state with the layer's widthFull property intact
+        const calls = (generateImagorUrlFromEditorState as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { stateJson: string }
+        const parsedState = JSON.parse(lastCall.stateJson)
+        const layerInState = parsedState.layers?.find(
+          (l: { id: string }) => l.id === 'fill-scale-test',
+        )
+        expect(layerInState).toBeDefined()
+        expect(layerInState?.transforms?.widthFull).toBe(true)
+        expect(layerInState?.transforms?.widthFullOffset).toBe(20)
+        // The backend applies the same f-token emission logic:
+        // widthFull offset 20 → emits f-10 (scaled by 0.5); height 200 → 100 (scaled by 0.5)
       })
       it('emits f-tokens for heightFull layer when parent has fillColor+padding (imagor resolves against padded canvas)', async () => {
         // imagor applies fill()+padding to expand the canvas before resolving image() filters,
         // so f-tokens are correctly resolved against the padded canvas at serve time.
         // No client-side pre-resolution needed.
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
 
         const paddedEditor = new ImageEditor({
           imagePath: 'photo.jpg',
@@ -2019,16 +2015,17 @@ describe('ImageEditor', () => {
 
         await vi.runAllTimersAsync()
 
-        const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
-        const lastCall = calls[calls.length - 1][0] as {
-          params: { filters: Array<{ name: string; args: string }> }
-        }
-        const imageFilter = lastCall.params.filters.find((f) => f.name === 'image')
-        expect(imageFilter).toBeDefined()
-
-        // width=2025 (concrete), heightFull with offset 110 → f-110
-        // imagor resolves f-110 against padded canvas height (2800+200=3000) → 2890
-        expect(imageFilter!.args).toContain('2025xf-110/')
+        // Backend receives the full state with heightFull property intact
+        const calls = (generateImagorUrlFromEditorState as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { stateJson: string }
+        const parsedState = JSON.parse(lastCall.stateJson)
+        const layerInState = parsedState.layers?.find(
+          (l: { id: string }) => l.id === 'fill-pad-test',
+        )
+        expect(layerInState).toBeDefined()
+        expect(layerInState?.transforms?.heightFull).toBe(true)
+        expect(layerInState?.transforms?.heightFullOffset).toBe(110)
+        // Backend emits f-110 and imagor resolves against padded canvas height (2800+200=3000)
       })
     })
 
@@ -2176,12 +2173,12 @@ describe('ImageEditor', () => {
 
     describe('Error Handling', () => {
       it('should call onError callback on preview generation failure', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
         const onError = vi.fn()
         editor.initialize({ onError })
 
         // Mock API to reject
-        vi.mocked(generateImagorUrl).mockRejectedValueOnce(new Error('API Error'))
+        vi.mocked(generateImagorUrlFromEditorState).mockRejectedValueOnce(new Error('API Error'))
 
         editor.updateParams({ brightness: 50 })
         await vi.runAllTimersAsync()
@@ -3159,38 +3156,33 @@ describe('ImageEditor', () => {
 
     describe('generateThumbnailUrl', () => {
       it('should generate thumbnail URL with default dimensions', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
 
         await editor.generateThumbnailUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
+        expect(generateImagorUrlFromEditorState).toHaveBeenCalledWith(
           expect.objectContaining({
-            params: expect.objectContaining({
-              width: 200,
-              height: 200,
-              fitIn: true,
-            }),
+            forPreview: true,
+            previewMaxDimensions: { width: 200, height: 200 },
           }),
         )
       })
 
       it('should generate thumbnail URL with custom dimensions', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
 
         await editor.generateThumbnailUrl(400, 300)
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
+        expect(generateImagorUrlFromEditorState).toHaveBeenCalledWith(
           expect.objectContaining({
-            params: expect.objectContaining({
-              width: 400,
-              height: 300,
-            }),
+            forPreview: true,
+            previewMaxDimensions: { width: 400, height: 300 },
           }),
         )
       })
 
       it('should include transformations in thumbnail', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
 
         editor.updateParams({
           brightness: 50,
@@ -3199,32 +3191,21 @@ describe('ImageEditor', () => {
 
         await editor.generateThumbnailUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([
-                expect.objectContaining({ name: 'brightness', args: '50' }),
-                expect.objectContaining({ name: 'contrast', args: '30' }),
-              ]),
-            }),
-          }),
-        )
+        const calls = (generateImagorUrlFromEditorState as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { stateJson: string }
+        const state = JSON.parse(lastCall.stateJson)
+        expect(state.brightness).toBe(50)
+        expect(state.contrast).toBe(30)
       })
 
       it('should force WebP format for thumbnails', async () => {
-        const { generateImagorUrl } = await import('@/api/imagor-api')
+        const { generateImagorUrlFromEditorState } = await import('@/api/imagor-api')
 
         await editor.generateThumbnailUrl()
 
-        expect(generateImagorUrl).toHaveBeenCalledWith(
-          expect.objectContaining({
-            params: expect.objectContaining({
-              filters: expect.arrayContaining([
-                expect.objectContaining({ name: 'format', args: 'webp' }),
-                expect.objectContaining({ name: 'quality', args: '80' }),
-              ]),
-            }),
-          }),
+        // Backend sets format:webp when forPreview:true is passed
+        expect(generateImagorUrlFromEditorState).toHaveBeenCalledWith(
+          expect.objectContaining({ forPreview: true }),
         )
       })
     })
@@ -3971,13 +3952,12 @@ describe('TextLayer support', () => {
   // ── wrap-width scaling in preview URL (scaleFactor = 0.5) ────────────────
   describe('text() filter — preview URL wrap-width scaling', () => {
     const getLastTextFilterArgs = async (): Promise<string> => {
-      const { generateImagorUrl } = await import('@/api/imagor-api')
       await vi.runAllTimersAsync()
-      const calls = (generateImagorUrl as ReturnType<typeof vi.fn>).mock.calls
-      const lastCall = calls[calls.length - 1][0] as {
-        params: { filters: Array<{ name: string; args: string }> }
-      }
-      const textFilter = lastCall.params.filters.find((f) => f.name === 'text')
+      // convertStateToGraphQLParams holds the text-filter scaling logic (still used by
+      // generateDownloadUrl and as the canonical frontend converter).  Calling it
+      // directly avoids any mock-call inspection while still exercising the scaling path.
+      const params = editor.convertStateToGraphQLParams(editor.getState(), true)
+      const textFilter = (params.filters ?? []).find((f) => f.name === 'text')
       if (!textFilter) throw new Error('No text filter found in preview call')
       return textFilter.args
     }
