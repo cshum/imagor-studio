@@ -4,8 +4,8 @@ import { EditorSectionStorage, type EditorSections } from '@/lib/editor-sections
 import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { ImageEditor, isColorLayer, isGroupLayer } from '@/lib/image-editor'
+import type { ImagorTemplate } from '@/lib/image-editor'
 import { joinImagePath } from '@/lib/path-utils'
-import type { ImagorTemplate } from '@/lib/template-types'
 import { getAuth } from '@/stores/auth-store'
 import { clearPosition } from '@/stores/image-position-store.ts'
 

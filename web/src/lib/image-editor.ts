@@ -1,6 +1,5 @@
 import { generateImagorUrlFromTemplate } from '@/api/imagor-api'
 import { getFullImageUrl } from '@/lib/api-utils'
-import type { ImagorTemplate, TemplateWarning } from '@/lib/template-types'
 
 export interface ImageDimensions {
   width: number
@@ -255,6 +254,36 @@ export interface ImageEditorState {
 
   // Layers (image and text overlays)
   layers?: Layer[]
+}
+
+/**
+ * Warning encountered when loading a template.
+ */
+export interface TemplateWarning {
+  type: 'missing-layer' | 'invalid-filter' | 'version-mismatch' | 'invalid-json'
+  message: string
+  substitution?: string
+}
+
+/**
+ * Imagor Template File Format (.imagor.json).
+ * Note: Template name is derived from the filename, not stored in JSON.
+ */
+export interface ImagorTemplate {
+  version: '1.0'
+  description?: string
+  dimensionMode: 'adaptive' | 'predefined'
+  predefinedDimensions?: {
+    width: number
+    height: number
+  }
+  sourceImagePath: string
+  transformations: ImageEditorState
+  metadata: {
+    createdAt: string
+    /** @deprecated Preview is now saved as separate .imagor.preview.webp file */
+    previewImage?: string
+  }
 }
 
 export interface ImageEditorConfig {
