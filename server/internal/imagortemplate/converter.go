@@ -854,6 +854,8 @@ func ifIntPtr(p *int, fallback int) int {
 
 // ApplyTemplateToImage applies a template's transformations to a target image,
 // mirroring the frontend's applyTemplateState logic in image-editor.ts.
+// It returns a new Template with the adjusted transformations, imagePath, and
+// sourceImagePath already set — callers do not need to patch these fields manually.
 //
 // Rules:
 //   - Crop: kept only when predefinedDimensions matches targetDims (same source size);
@@ -861,9 +863,9 @@ func ifIntPtr(p *int, fallback int) int {
 //   - Dimensions:
 //     "predefined" → keep the template's width/height (desired output size).
 //     "adaptive"   → replace width/height with targetDims (auto-size to new image).
-//   - OriginalDimensions is always set to targetDims so downstream callers have
-//     the correct source size for scaling calculations.
-func ApplyTemplateToImage(tmpl Template, targetDims Dimensions) Transformations {
+//   - OriginalDimensions and ImagePath are always set to targetDims / imagePath so
+//     downstream callers have the correct source size and path for URL generation.
+func ApplyTemplateToImage(tmpl Template, imagePath string, targetDims Dimensions) Template {
 	state := tmpl.Transformations
 
 	// Crop handling: keep only if source and target dimensions match exactly.
@@ -891,8 +893,13 @@ func ApplyTemplateToImage(tmpl Template, targetDims Dimensions) Transformations 
 		state.Height = &h
 	}
 
-	// Record the target image's original dimensions for downstream callers.
+	// Record the target image's original dimensions and path for downstream callers.
 	state.OriginalDimensions = &targetDims
+	state.ImagePath = &imagePath
 
-	return state
+	// Return a new Template with all fields preserved and transformations updated.
+	result := tmpl
+	result.Transformations = state
+	result.SourceImagePath = imagePath
+	return result
 }

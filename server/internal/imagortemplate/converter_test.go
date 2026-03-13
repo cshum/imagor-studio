@@ -531,25 +531,34 @@ func TestApplyTemplateToImage_AdaptiveSameDims(t *testing.T) {
 		},
 	}
 	target := Dimensions{Width: 800, Height: 600}
-	result := ApplyTemplateToImage(tmpl, target)
+	result := ApplyTemplateToImage(tmpl, "bucket/photo.jpg", target)
+	state := result.Transformations
 
 	// Crop should be preserved (same dimensions)
-	if result.CropLeft == nil || *result.CropLeft != cropL {
-		t.Errorf("CropLeft = %v, want %v", result.CropLeft, cropL)
+	if state.CropLeft == nil || *state.CropLeft != cropL {
+		t.Errorf("CropLeft = %v, want %v", state.CropLeft, cropL)
 	}
-	if result.CropTop == nil || *result.CropTop != cropT {
-		t.Errorf("CropTop = %v, want %v", result.CropTop, cropT)
+	if state.CropTop == nil || *state.CropTop != cropT {
+		t.Errorf("CropTop = %v, want %v", state.CropTop, cropT)
 	}
 	// Adaptive: width/height set to targetDims
-	if result.Width == nil || *result.Width != 800 {
-		t.Errorf("Width = %v, want 800", result.Width)
+	if state.Width == nil || *state.Width != 800 {
+		t.Errorf("Width = %v, want 800", state.Width)
 	}
-	if result.Height == nil || *result.Height != 600 {
-		t.Errorf("Height = %v, want 600", result.Height)
+	if state.Height == nil || *state.Height != 600 {
+		t.Errorf("Height = %v, want 600", state.Height)
 	}
 	// OriginalDimensions set to targetDims
-	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
-		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	if state.OriginalDimensions == nil || *state.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", state.OriginalDimensions, target)
+	}
+	// ImagePath set on transformations
+	if state.ImagePath == nil || *state.ImagePath != "bucket/photo.jpg" {
+		t.Errorf("ImagePath = %v, want bucket/photo.jpg", state.ImagePath)
+	}
+	// SourceImagePath set on template
+	if result.SourceImagePath != "bucket/photo.jpg" {
+		t.Errorf("SourceImagePath = %q, want bucket/photo.jpg", result.SourceImagePath)
 	}
 }
 
@@ -565,22 +574,30 @@ func TestApplyTemplateToImage_AdaptiveDifferentDims(t *testing.T) {
 		},
 	}
 	target := Dimensions{Width: 1920, Height: 1080}
-	result := ApplyTemplateToImage(tmpl, target)
+	result := ApplyTemplateToImage(tmpl, "bucket/new.jpg", target)
+	state := result.Transformations
 
 	// Crop should be stripped (different dimensions)
-	if result.CropLeft != nil || result.CropTop != nil || result.CropWidth != nil || result.CropHeight != nil {
+	if state.CropLeft != nil || state.CropTop != nil || state.CropWidth != nil || state.CropHeight != nil {
 		t.Error("crop fields should be nil for different dimensions")
 	}
 	// Adaptive: width/height set to targetDims
-	if result.Width == nil || *result.Width != 1920 {
-		t.Errorf("Width = %v, want 1920", result.Width)
+	if state.Width == nil || *state.Width != 1920 {
+		t.Errorf("Width = %v, want 1920", state.Width)
 	}
-	if result.Height == nil || *result.Height != 1080 {
-		t.Errorf("Height = %v, want 1080", result.Height)
+	if state.Height == nil || *state.Height != 1080 {
+		t.Errorf("Height = %v, want 1080", state.Height)
 	}
 	// OriginalDimensions set to targetDims
-	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
-		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	if state.OriginalDimensions == nil || *state.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", state.OriginalDimensions, target)
+	}
+	// ImagePath and SourceImagePath set
+	if state.ImagePath == nil || *state.ImagePath != "bucket/new.jpg" {
+		t.Errorf("ImagePath = %v, want bucket/new.jpg", state.ImagePath)
+	}
+	if result.SourceImagePath != "bucket/new.jpg" {
+		t.Errorf("SourceImagePath = %q, want bucket/new.jpg", result.SourceImagePath)
 	}
 }
 
@@ -596,22 +613,23 @@ func TestApplyTemplateToImage_PredefinedSameDims(t *testing.T) {
 		},
 	}
 	target := Dimensions{Width: 800, Height: 600}
-	result := ApplyTemplateToImage(tmpl, target)
+	result := ApplyTemplateToImage(tmpl, "bucket/photo.jpg", target)
+	state := result.Transformations
 
 	// Crop preserved (same dimensions)
-	if result.CropLeft == nil {
+	if state.CropLeft == nil {
 		t.Error("CropLeft should be preserved for same dimensions")
 	}
 	// Predefined: keep template's width/height (400x300, not 800x600)
-	if result.Width == nil || *result.Width != 400 {
-		t.Errorf("Width = %v, want 400 (template's output size)", result.Width)
+	if state.Width == nil || *state.Width != 400 {
+		t.Errorf("Width = %v, want 400 (template's output size)", state.Width)
 	}
-	if result.Height == nil || *result.Height != 300 {
-		t.Errorf("Height = %v, want 300 (template's output size)", result.Height)
+	if state.Height == nil || *state.Height != 300 {
+		t.Errorf("Height = %v, want 300 (template's output size)", state.Height)
 	}
 	// OriginalDimensions set to targetDims
-	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
-		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	if state.OriginalDimensions == nil || *state.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", state.OriginalDimensions, target)
 	}
 }
 
@@ -627,22 +645,23 @@ func TestApplyTemplateToImage_PredefinedDifferentDims(t *testing.T) {
 		},
 	}
 	target := Dimensions{Width: 1920, Height: 1080}
-	result := ApplyTemplateToImage(tmpl, target)
+	result := ApplyTemplateToImage(tmpl, "bucket/photo.jpg", target)
+	state := result.Transformations
 
 	// Crop stripped (different dimensions)
-	if result.CropLeft != nil || result.CropTop != nil {
+	if state.CropLeft != nil || state.CropTop != nil {
 		t.Error("crop fields should be nil for different dimensions")
 	}
 	// Predefined: keep template's width/height
-	if result.Width == nil || *result.Width != 1280 {
-		t.Errorf("Width = %v, want 1280", result.Width)
+	if state.Width == nil || *state.Width != 1280 {
+		t.Errorf("Width = %v, want 1280", state.Width)
 	}
-	if result.Height == nil || *result.Height != 720 {
-		t.Errorf("Height = %v, want 720", result.Height)
+	if state.Height == nil || *state.Height != 720 {
+		t.Errorf("Height = %v, want 720", state.Height)
 	}
 	// OriginalDimensions set to targetDims
-	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
-		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	if state.OriginalDimensions == nil || *state.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", state.OriginalDimensions, target)
 	}
 }
 
@@ -657,15 +676,16 @@ func TestApplyTemplateToImage_NoPredefinedDims(t *testing.T) {
 		},
 	}
 	target := Dimensions{Width: 800, Height: 600}
-	result := ApplyTemplateToImage(tmpl, target)
+	result := ApplyTemplateToImage(tmpl, "bucket/photo.jpg", target)
+	state := result.Transformations
 
 	// Crop stripped (no predefined dims to compare against)
-	if result.CropLeft != nil || result.CropTop != nil {
+	if state.CropLeft != nil || state.CropTop != nil {
 		t.Error("crop fields should be nil when no predefinedDimensions")
 	}
 	// OriginalDimensions set to targetDims
-	if result.OriginalDimensions == nil || *result.OriginalDimensions != target {
-		t.Errorf("OriginalDimensions = %v, want %v", result.OriginalDimensions, target)
+	if state.OriginalDimensions == nil || *state.OriginalDimensions != target {
+		t.Errorf("OriginalDimensions = %v, want %v", state.OriginalDimensions, target)
 	}
 }
 
@@ -681,12 +701,13 @@ func TestApplyTemplateToImage_PreservesOtherTransforms(t *testing.T) {
 		},
 	}
 	target := Dimensions{Width: 1920, Height: 1080}
-	result := ApplyTemplateToImage(tmpl, target)
+	result := ApplyTemplateToImage(tmpl, "bucket/photo.jpg", target)
+	state := result.Transformations
 
-	if result.Brightness == nil || *result.Brightness != brightness {
-		t.Errorf("Brightness = %v, want %v", result.Brightness, brightness)
+	if state.Brightness == nil || *state.Brightness != brightness {
+		t.Errorf("Brightness = %v, want %v", state.Brightness, brightness)
 	}
-	if result.FitIn == nil || !*result.FitIn {
+	if state.FitIn == nil || !*state.FitIn {
 		t.Error("FitIn should be preserved")
 	}
 }

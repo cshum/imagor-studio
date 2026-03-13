@@ -26,6 +26,14 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "API",
+      items: [
+        "api/authentication",
+        "api/graphql-url-generation",
+      ],
+    },
+    {
+      type: "category",
       label: "Configuration",
       items: [
         "configuration/overview",
