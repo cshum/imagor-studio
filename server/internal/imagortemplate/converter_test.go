@@ -432,6 +432,51 @@ func TestConvertToImagorParams_ProportionBakedInPreview(t *testing.T) {
 	}
 }
 
+func TestConvertToImagorParams_LayerNoTransformsPreview(t *testing.T) {
+	// A layer with no transforms and a 0.5 preview scale must NOT double-scale
+	// the layer dimensions: buildLayerInlinePath stores raw origDims and lets
+	// buildLayerParams apply scaleFactor exactly once.
+	ip := "layer.jpg"
+	layer := &Layer{
+		ID: "l1", Type: "image", Visible: true,
+		ImagePath:          &ip,
+		OriginalDimensions: &Dimensions{Width: 200, Height: 100},
+	}
+	state := Transformations{
+		Width: intPtr(400), Height: intPtr(200),
+		Layers: []*Layer{layer},
+	}
+	previewMax := &Dimensions{Width: 200, Height: 100}
+	params := ConvertToImagorParams(state, Dimensions{400, 200}, nil, true, previewMax, "")
+	// scaleFactor = 0.5; layer should be 100x50, not 50x25 (double-scaled)
+	found := false
+	for _, f := range params.Filters {
+		if f.Name == "image" {
+			// path segment starts with /100x50/
+			if len(f.Args) < 7 || f.Args[:7] != "/100x50" {
+				t.Errorf("layer path = %q, want prefix /100x50", f.Args)
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Error("no image filter found")
+	}
+}
+
+func TestConvertToImagorParams_PaddingWithoutFillColor(t *testing.T) {
+	// Padding should be emitted even when FillColor is nil (matches TS behaviour)
+	pv := 10
+	state := Transformations{
+		Width: intPtr(200), Height: intPtr(200),
+		PaddingTop: &pv, PaddingLeft: &pv,
+	}
+	params := ConvertToImagorParams(state, Dimensions{200, 200}, nil, false, nil, "")
+	if params.PaddingTop != 10 || params.PaddingLeft != 10 {
+		t.Errorf("paddingTop=%d paddingLeft=%d, want 10 10", params.PaddingTop, params.PaddingLeft)
+	}
+}
+
 func TestBuildTextFilter_Nil(t *testing.T) {
 	if f := buildTextFilter(&Layer{Type: "text"}, 1.0); f != nil {
 		t.Errorf("expected nil, got %+v", f)

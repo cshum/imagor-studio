@@ -235,17 +235,15 @@ func buildLayerParams(state Transformations, imagePath string, origDims Dimensio
 		params.Stretch = boolPtrVal(state.Stretch, false)
 	}
 
-	if state.FillColor != nil {
-		pTop := int(math.Round(float64(intPtrVal(state.PaddingTop)) * scaleFactor))
-		pRight := int(math.Round(float64(intPtrVal(state.PaddingRight)) * scaleFactor))
-		pBottom := int(math.Round(float64(intPtrVal(state.PaddingBottom)) * scaleFactor))
-		pLeft := int(math.Round(float64(intPtrVal(state.PaddingLeft)) * scaleFactor))
-		if pTop > 0 || pRight > 0 || pBottom > 0 || pLeft > 0 {
-			params.PaddingTop = pTop
-			params.PaddingRight = pRight
-			params.PaddingBottom = pBottom
-			params.PaddingLeft = pLeft
-		}
+	pTop := int(math.Round(float64(intPtrVal(state.PaddingTop)) * scaleFactor))
+	pRight := int(math.Round(float64(intPtrVal(state.PaddingRight)) * scaleFactor))
+	pBottom := int(math.Round(float64(intPtrVal(state.PaddingBottom)) * scaleFactor))
+	pLeft := int(math.Round(float64(intPtrVal(state.PaddingLeft)) * scaleFactor))
+	if pTop > 0 || pRight > 0 || pBottom > 0 || pLeft > 0 {
+		params.PaddingTop = pTop
+		params.PaddingRight = pRight
+		params.PaddingBottom = pBottom
+		params.PaddingLeft = pLeft
 	}
 
 	if !boolPtrVal(state.FitIn, false) && !boolPtrVal(state.Smart, false) {
@@ -360,8 +358,8 @@ func buildLayerInlinePath(layer *Layer, scaleFactor float64, forPreview bool) st
 		layerState = *layer.Transforms
 		layerState.Proportion = nil
 	} else {
-		w := int(math.Round(float64(origDims.Width) * scaleFactor))
-		h := int(math.Round(float64(origDims.Height) * scaleFactor))
+		w := origDims.Width
+		h := origDims.Height
 		layerState = Transformations{Width: &w, Height: &h}
 	}
 
@@ -703,7 +701,7 @@ func ConvertToImagorParams(
 		params.VFlip = *state.VFlip
 	}
 
-	if shouldApplyPadding && state.FillColor != nil {
+	if shouldApplyPadding {
 		if v := intPtrVal(state.PaddingLeft); v > 0 {
 			if forPreview {
 				params.PaddingLeft = int(math.Round(float64(v) * scaleFactor))
