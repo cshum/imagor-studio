@@ -175,4 +175,4 @@ Login failures always return the same generic `LOGIN_FAILED` error regardless of
 ## Related
 
 - [Security Configuration](../configuration/security) — JWT secret, token expiry, guest mode
-- [GraphQL URL Generation](./graphql-url-generation) — using the token to generate imagor URLs
+- [URL Generation](./graphql-url-generation) — using the token to generate imagor URLs

@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# GraphQL URL Generation
+# URL Generation
 
 Imagor Studio exposes two GraphQL mutations for generating signed [imagor](https://github.com/cshum/imagor) URLs. These are the core bridge between the image editor and the imagor processing engine.
 
