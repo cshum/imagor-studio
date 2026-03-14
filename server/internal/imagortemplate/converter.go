@@ -564,6 +564,10 @@ func fmtFloat(v float64) string {
 }
 
 // ConvertToImagorParams converts a Transformations value to imagorpath.Params.
+// isVisualCrop should be set from the ROOT transformations' VisualCropEnabled flag,
+// not from the active layer's state — this ensures the suppression fires correctly
+// even when operating inside a nested layer context (where the layer's own transforms
+// don't carry the visualCropEnabled flag).
 func ConvertToImagorParams(
 	state Transformations,
 	origDims Dimensions,
@@ -571,10 +575,10 @@ func ConvertToImagorParams(
 	forPreview bool,
 	previewMax *Dimensions,
 	skipLayerID string,
+	isVisualCrop bool,
 ) imagorpath.Params {
 	params := imagorpath.Params{}
 
-	isVisualCrop := state.IsVisualCropEnabled()
 	shouldApplyCrop := !forPreview || !isVisualCrop
 	shouldApplyPadding := !forPreview || !isVisualCrop
 	shouldApplyLayers := !forPreview || !isVisualCrop
@@ -679,26 +683,33 @@ func ConvertToImagorParams(
 		params.Height = *height
 	}
 
-	if state.FitIn != nil {
-		params.FitIn = *state.FitIn
-	}
-	if state.Stretch != nil {
-		params.Stretch = *state.Stretch
-	}
-	if state.Smart != nil {
-		params.Smart = *state.Smart
-	}
-	if state.HAlign != nil {
-		params.HAlign = *state.HAlign
-	}
-	if state.VAlign != nil {
-		params.VAlign = *state.VAlign
-	}
-	if state.HFlip != nil {
-		params.HFlip = *state.HFlip
-	}
-	if state.VFlip != nil {
-		params.VFlip = *state.VFlip
+	// During visual crop preview, suppress resize mode, alignment, flip, and fill so
+	// the preview shows the plain uncropped image at its natural dimensions.
+	// Only colour adjustments (brightness, contrast, etc.) and blur/sharpen remain.
+	shouldApplyResizeMode := !forPreview || !isVisualCrop
+
+	if shouldApplyResizeMode {
+		if state.FitIn != nil {
+			params.FitIn = *state.FitIn
+		}
+		if state.Stretch != nil {
+			params.Stretch = *state.Stretch
+		}
+		if state.Smart != nil {
+			params.Smart = *state.Smart
+		}
+		if state.HAlign != nil {
+			params.HAlign = *state.HAlign
+		}
+		if state.VAlign != nil {
+			params.VAlign = *state.VAlign
+		}
+		if state.HFlip != nil {
+			params.HFlip = *state.HFlip
+		}
+		if state.VFlip != nil {
+			params.VFlip = *state.VFlip
+		}
 	}
 
 	if shouldApplyPadding {
@@ -772,7 +783,7 @@ func ConvertToImagorParams(
 			filters = append(filters, imagorpath.Filter{Name: "round_corner", Args: strconv.Itoa(cv)})
 		}
 	}
-	if state.FillColor != nil && *state.FillColor != "" {
+	if shouldApplyResizeMode && state.FillColor != nil && *state.FillColor != "" {
 		filters = append(filters, imagorpath.Filter{Name: "fill", Args: *state.FillColor})
 	}
 	if shouldApplyRot && state.Rotation != nil && *state.Rotation != 0 {

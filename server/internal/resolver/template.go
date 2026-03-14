@@ -170,7 +170,7 @@ func derivePreviewParamsFromTemplateJSON(templateJSON string) imagorpath.Params 
 	}
 
 	previewMax := &imagortemplate.Dimensions{Width: 400, Height: 400}
-	return imagortemplate.ConvertToImagorParams(state, origDims, nil, true, previewMax, "")
+	return imagortemplate.ConvertToImagorParams(state, origDims, nil, true, previewMax, "", state.IsVisualCropEnabled())
 }
 
 // generateTemplatePreview generates a preview image for the template using Imagor

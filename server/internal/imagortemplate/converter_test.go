@@ -282,7 +282,7 @@ func TestResolveContext_UnknownLayer(t *testing.T) {
 
 func TestConvertToImagorParams_Dimensions(t *testing.T) {
 	state := Transformations{Width: intPtr(300), Height: intPtr(200)}
-	params := ConvertToImagorParams(state, Dimensions{600, 400}, nil, false, nil, "")
+	params := ConvertToImagorParams(state, Dimensions{600, 400}, nil, false, nil, "", false)
 	if params.Width != 300 || params.Height != 200 {
 		t.Errorf("dims = %dx%d, want 300x200", params.Width, params.Height)
 	}
@@ -293,7 +293,7 @@ func TestConvertToImagorParams_Crop(t *testing.T) {
 		CropLeft: float64Ptr(10), CropTop: float64Ptr(20),
 		CropWidth: float64Ptr(300), CropHeight: float64Ptr(200),
 	}
-	params := ConvertToImagorParams(state, Dimensions{600, 400}, nil, false, nil, "")
+	params := ConvertToImagorParams(state, Dimensions{600, 400}, nil, false, nil, "", false)
 	if params.CropLeft != 10 || params.CropTop != 20 || params.CropRight != 310 || params.CropBottom != 220 {
 		t.Errorf("crop = (%g,%g,%g,%g), want (10,20,310,220)",
 			params.CropLeft, params.CropTop, params.CropRight, params.CropBottom)
@@ -308,7 +308,7 @@ func TestConvertToImagorParams_Filters(t *testing.T) {
 		Rotation:   intPtr(90),
 		FillColor:  strPtr("white"),
 	}
-	params := ConvertToImagorParams(state, Dimensions{400, 300}, nil, false, nil, "")
+	params := ConvertToImagorParams(state, Dimensions{400, 300}, nil, false, nil, "", false)
 	fm := make(map[string]string)
 	for _, f := range params.Filters {
 		fm[f.Name] = f.Args
@@ -332,7 +332,7 @@ func TestConvertToImagorParams_Filters(t *testing.T) {
 
 func TestConvertToImagorParams_PreviewAddsWebp(t *testing.T) {
 	state := Transformations{Width: intPtr(800), Height: intPtr(600)}
-	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, true, nil, "")
+	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, true, nil, "", false)
 	fm := make(map[string]string)
 	for _, f := range params.Filters {
 		fm[f.Name] = f.Args
@@ -348,7 +348,7 @@ func TestConvertToImagorParams_PreviewAddsWebp(t *testing.T) {
 func TestConvertToImagorParams_PreviewMaxScales(t *testing.T) {
 	state := Transformations{Width: intPtr(800), Height: intPtr(600)}
 	previewMax := &Dimensions{Width: 400, Height: 400}
-	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, true, previewMax, "")
+	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, true, previewMax, "", false)
 	if params.Width != 400 || params.Height != 300 {
 		t.Errorf("dims = %dx%d, want 400x300", params.Width, params.Height)
 	}
@@ -356,7 +356,7 @@ func TestConvertToImagorParams_PreviewMaxScales(t *testing.T) {
 
 func TestConvertToImagorParams_NonPreviewFormat(t *testing.T) {
 	state := Transformations{Width: intPtr(800), Height: intPtr(600), Format: strPtr("jpeg")}
-	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, false, nil, "")
+	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, false, nil, "", false)
 	fm := make(map[string]string)
 	for _, f := range params.Filters {
 		fm[f.Name] = f.Args
@@ -376,12 +376,95 @@ func TestConvertToImagorParams_VisualCropPreview(t *testing.T) {
 		CropLeft:          float64Ptr(0), CropTop: float64Ptr(0),
 		CropWidth: float64Ptr(400), CropHeight: float64Ptr(300),
 	}
-	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, true, nil, "")
+	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, true, nil, "", state.IsVisualCropEnabled())
 	if params.CropRight != 0 {
 		t.Error("crop should be suppressed in visual-crop preview mode")
 	}
 	if params.Width != 800 || params.Height != 600 {
 		t.Errorf("dims = %dx%d, want 800x600", params.Width, params.Height)
+	}
+}
+
+func TestConvertToImagorParams_VisualCropPreview_SuppressFitInSmartFill(t *testing.T) {
+	fillColor := "ffffff"
+	hAlign := "left"
+	vAlign := "top"
+	state := Transformations{
+		Width: intPtr(800), Height: intPtr(600),
+		FitIn:             boolPtr(true),
+		Smart:             boolPtr(true),
+		HFlip:             boolPtr(true),
+		VFlip:             boolPtr(true),
+		HAlign:            &hAlign,
+		VAlign:            &vAlign,
+		FillColor:         &fillColor,
+		VisualCropEnabled: boolPtr(true),
+	}
+	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, true, nil, "", state.IsVisualCropEnabled())
+
+	if params.FitIn {
+		t.Error("FitIn should be suppressed in visual-crop preview mode")
+	}
+	if params.Smart {
+		t.Error("Smart should be suppressed in visual-crop preview mode")
+	}
+	if params.HFlip {
+		t.Error("HFlip should be suppressed in visual-crop preview mode")
+	}
+	if params.VFlip {
+		t.Error("VFlip should be suppressed in visual-crop preview mode")
+	}
+	if params.HAlign != "" {
+		t.Errorf("HAlign = %q, want empty in visual-crop preview mode", params.HAlign)
+	}
+	if params.VAlign != "" {
+		t.Errorf("VAlign = %q, want empty in visual-crop preview mode", params.VAlign)
+	}
+	for _, f := range params.Filters {
+		if f.Name == "fill" {
+			t.Error("fill filter should be suppressed in visual-crop preview mode")
+		}
+	}
+}
+
+func TestConvertToImagorParams_VisualCropPreview_NonPreviewAppliesAll(t *testing.T) {
+	// When forPreview=false, all params must be applied even with visualCropEnabled.
+	fillColor := "ffffff"
+	hAlign := "left"
+	vAlign := "top"
+	state := Transformations{
+		Width: intPtr(800), Height: intPtr(600),
+		FitIn:             boolPtr(true),
+		Smart:             boolPtr(true),
+		HFlip:             boolPtr(true),
+		VFlip:             boolPtr(true),
+		HAlign:            &hAlign,
+		VAlign:            &vAlign,
+		FillColor:         &fillColor,
+		VisualCropEnabled: boolPtr(true),
+	}
+	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, false, nil, "", false)
+
+	if !params.FitIn {
+		t.Error("FitIn should be applied in non-preview mode")
+	}
+	if !params.Smart {
+		t.Error("Smart should be applied in non-preview mode")
+	}
+	if !params.HFlip {
+		t.Error("HFlip should be applied in non-preview mode")
+	}
+	if !params.VFlip {
+		t.Error("VFlip should be applied in non-preview mode")
+	}
+	hasFill := false
+	for _, f := range params.Filters {
+		if f.Name == "fill" {
+			hasFill = true
+		}
+	}
+	if !hasFill {
+		t.Error("fill filter should be applied in non-preview mode")
 	}
 }
 
@@ -394,7 +477,7 @@ func TestConvertToImagorParams_SkipLayerID(t *testing.T) {
 			{ID: "keep", Type: "image", Visible: true, ImagePath: &ip},
 		},
 	}
-	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, false, nil, "skip")
+	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, false, nil, "skip", false)
 	count := 0
 	for _, f := range params.Filters {
 		if f.Name == "image" {
@@ -408,7 +491,7 @@ func TestConvertToImagorParams_SkipLayerID(t *testing.T) {
 
 func TestConvertToImagorParams_ProportionFilter(t *testing.T) {
 	state := Transformations{Width: intPtr(800), Height: intPtr(600), Proportion: float64Ptr(50)}
-	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, false, nil, "")
+	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, false, nil, "", false)
 	fm := make(map[string]string)
 	for _, f := range params.Filters {
 		fm[f.Name] = f.Args
@@ -421,7 +504,7 @@ func TestConvertToImagorParams_ProportionFilter(t *testing.T) {
 func TestConvertToImagorParams_ProportionBakedInPreview(t *testing.T) {
 	state := Transformations{Width: intPtr(800), Height: intPtr(600), Proportion: float64Ptr(50)}
 	previewMax := &Dimensions{Width: 1000, Height: 1000}
-	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, true, previewMax, "")
+	params := ConvertToImagorParams(state, Dimensions{800, 600}, nil, true, previewMax, "", false)
 	for _, f := range params.Filters {
 		if f.Name == "proportion" {
 			t.Error("proportion should be baked in, not emitted as a filter")
@@ -447,7 +530,7 @@ func TestConvertToImagorParams_LayerNoTransformsPreview(t *testing.T) {
 		Layers: []*Layer{layer},
 	}
 	previewMax := &Dimensions{Width: 200, Height: 100}
-	params := ConvertToImagorParams(state, Dimensions{400, 200}, nil, true, previewMax, "")
+	params := ConvertToImagorParams(state, Dimensions{400, 200}, nil, true, previewMax, "", false)
 	// scaleFactor = 0.5; layer should be 100x50, not 50x25 (double-scaled)
 	found := false
 	for _, f := range params.Filters {
@@ -471,7 +554,7 @@ func TestConvertToImagorParams_PaddingWithoutFillColor(t *testing.T) {
 		Width: intPtr(200), Height: intPtr(200),
 		PaddingTop: &pv, PaddingLeft: &pv,
 	}
-	params := ConvertToImagorParams(state, Dimensions{200, 200}, nil, false, nil, "")
+	params := ConvertToImagorParams(state, Dimensions{200, 200}, nil, false, nil, "", false)
 	if params.PaddingTop != 10 || params.PaddingLeft != 10 {
 		t.Errorf("paddingTop=%d paddingLeft=%d, want 10 10", params.PaddingTop, params.PaddingLeft)
 	}
@@ -517,6 +600,67 @@ func TestBuildTextFilter_ScaleFactor(t *testing.T) {
 		t.Fatal("expected non-nil filter")
 	}
 	_ = f.Args
+}
+
+func TestConvertToImagorParams_VisualCropPreview_LayerContext(t *testing.T) {
+	// Simulates the real-world case from the bug report:
+	// contextPath = ["layer-id"], forPreview = true, visualCropEnabled on ROOT only.
+	// The layer's own transforms do NOT carry visualCropEnabled, so the resolver
+	// must pass base.IsVisualCropEnabled() explicitly to ConvertToImagorParams.
+	layerIP := "Google Photos/IMG_20180109_120647-EFFECTS.jpg"
+	fillColor := "ffffff"
+	hAlign := "left"
+	vAlign := "top"
+	layerTransforms := Transformations{
+		Width: intPtr(1916), Height: intPtr(2988),
+		FitIn:     boolPtr(true),
+		Smart:     boolPtr(true),
+		FillColor: &fillColor,
+		HAlign:    &hAlign,
+		VAlign:    &vAlign,
+		CropLeft:  float64Ptr(0), CropTop: float64Ptr(0),
+		CropWidth: float64Ptr(4608), CropHeight: float64Ptr(3456),
+	}
+	layer := &Layer{
+		ID: "layer-1773508964915", Type: "image", Visible: true,
+		ImagePath:          &layerIP,
+		OriginalDimensions: &Dimensions{Width: 4608, Height: 3456},
+		Transforms:         &layerTransforms,
+	}
+	// Root has visualCropEnabled=true; layer transforms do NOT.
+	base := Transformations{
+		Width: intPtr(5312), Height: intPtr(2988),
+		VisualCropEnabled: boolPtr(true),
+		Layers:            []*Layer{layer},
+	}
+	origDims := Dimensions{Width: 5312, Height: 2988}
+	baseImagePath := "Google Photos/IMG_20160731_114223.jpg"
+
+	// Resolve to layer context (mirrors what the resolver does).
+	res := ResolveContext(base, origDims, baseImagePath, []string{"layer-1773508964915"})
+
+	// The layer's own transforms don't have visualCropEnabled, but the root does.
+	// Pass base.IsVisualCropEnabled() as the isVisualCrop argument.
+	params := ConvertToImagorParams(*res.Transforms, res.OrigDims, res.ParentDims, true, nil, "", base.IsVisualCropEnabled())
+
+	// Crop must be suppressed.
+	if params.CropRight != 0 {
+		t.Error("crop should be suppressed in visual-crop preview mode for layer context")
+	}
+	// FitIn must be suppressed.
+	if params.FitIn {
+		t.Error("FitIn should be suppressed in visual-crop preview mode for layer context")
+	}
+	// Smart must be suppressed.
+	if params.Smart {
+		t.Error("Smart should be suppressed in visual-crop preview mode for layer context")
+	}
+	// fill filter must be suppressed.
+	for _, f := range params.Filters {
+		if f.Name == "fill" {
+			t.Error("fill filter should be suppressed in visual-crop preview mode for layer context")
+		}
+	}
 }
 
 func TestApplyTemplateToImage_AdaptiveSameDims(t *testing.T) {
