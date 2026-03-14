@@ -2168,6 +2168,85 @@ describe('ImageEditor', () => {
         )
       })
 
+      it('should generate copy URL from base state even when editing a layer', async () => {
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
+
+        // Add a layer and switch into its editing context
+        const mockLayer: ImageLayer = {
+          type: 'image',
+          id: 'layer-copy-test',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          transforms: { brightness: 50 },
+        }
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-copy-test')
+
+        // Make a change inside the layer context
+        editor.updateParams({ contrast: 30 })
+
+        // Generate copy URL — should use base state (contextPath: null)
+        await editor.generateCopyUrl()
+
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as {
+          templateJson: string
+          contextPath: string[] | null
+          forPreview: boolean
+        }
+        expect(lastCall.contextPath).toBeNull()
+        expect(lastCall.forPreview).toBe(false)
+        // The templateJson should contain the full base state with the layer
+        const parsed = JSON.parse(lastCall.templateJson)
+        expect(parsed.transformations.layers).toHaveLength(1)
+
+        editor.switchContext(null)
+      })
+
+      it('should generate download URL from base state even when editing a layer', async () => {
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
+
+        // Add a layer and switch into its editing context
+        const mockLayer: ImageLayer = {
+          type: 'image',
+          id: 'layer-dl-test',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 800, height: 600 },
+          transforms: { brightness: 50 },
+        }
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-dl-test')
+
+        // Generate download URL — should use base state (contextPath: null)
+        await editor.generateDownloadUrl()
+
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as {
+          templateJson: string
+          contextPath: string[] | null
+          forPreview: boolean
+        }
+        expect(lastCall.contextPath).toBeNull()
+        expect(lastCall.forPreview).toBe(false)
+        // The templateJson should contain the full base state with the layer
+        const parsed = JSON.parse(lastCall.templateJson)
+        expect(parsed.transformations.layers).toHaveLength(1)
+
+        editor.switchContext(null)
+      })
+
       it('should include current state in generated URLs', async () => {
         const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
         editor.updateParams({ brightness: 50, hue: 120 })

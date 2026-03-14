@@ -1131,25 +1131,29 @@ export class ImageEditor {
   }
 
   /**
-   * Generate copy URL with user-selected format (not WebP)
+   * Generate copy URL with user-selected format (not WebP).
+   * Always generates the full composite image URL from the base state,
+   * regardless of which layer is currently being edited.
    */
   async generateCopyUrl(): Promise<string> {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       templateJson: this.buildTemplateJson(baseState),
-      contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+      contextPath: null,
       forPreview: false,
     })
   }
 
   /**
-   * Generate download URL with attachment filter
+   * Generate download URL with attachment filter.
+   * Always generates the full composite image URL from the base state,
+   * regardless of which layer is currently being edited.
    */
   async generateDownloadUrl(): Promise<string> {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       templateJson: this.buildTemplateJson(baseState),
-      contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+      contextPath: null,
       forPreview: false,
       appendFilters: [{ name: 'attachment', args: '' }],
     })
