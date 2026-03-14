@@ -330,6 +330,8 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 		),
 		vipsprocessor.NewProcessor(
 			vipsprocessor.WithLogger(p.logger),
+			vipsprocessor.WithCacheSize(200*1024*1024), // 200 MiB in-memory image cache
+			vipsprocessor.WithCacheTTL(time.Hour),
 		),
 	))
 
