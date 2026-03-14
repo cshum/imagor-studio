@@ -2435,6 +2435,37 @@ describe('ImageEditor', () => {
           expect(state.height).toBeUndefined()
         })
       })
+
+      it('should include visualCropEnabled:true in templateJson sent to backend during visual crop preview', async () => {
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
+
+        // Enable visual crop mode
+        const promise = editor.setVisualCropEnabled(true)
+        await vi.runAllTimersAsync()
+        editor.notifyPreviewLoaded()
+        await promise
+
+        // The last call to generateImagorUrlFromTemplate should have visualCropEnabled:true
+        // in the transformations of the templateJson
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string; forPreview: boolean }
+        const parsed = JSON.parse(lastCall.templateJson)
+        expect(parsed.transformations.visualCropEnabled).toBe(true)
+        expect(lastCall.forPreview).toBe(true)
+      })
+
+      it('should NOT include visualCropEnabled in templateJson when visual crop is disabled', async () => {
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
+
+        // Normal update (no visual crop)
+        editor.updateParams({ brightness: 10 })
+        await vi.runAllTimersAsync()
+
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as { templateJson: string }
+        const parsed = JSON.parse(lastCall.templateJson)
+        expect(parsed.transformations.visualCropEnabled).toBeUndefined()
+      })
     })
 
     describe('Error Handling', () => {

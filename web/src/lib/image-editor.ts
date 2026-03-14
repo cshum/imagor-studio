@@ -738,9 +738,16 @@ export class ImageEditor {
 
     try {
       const baseState = this.getBaseState()
+      // Include visualCropEnabled in the templateJson for the preview call so the
+      // backend can suppress fill/fitIn/smart/hFlip/vFlip/hAlign/vAlign during
+      // visual crop mode. visualCropEnabled is intentionally stripped from
+      // buildTemplateJson (used for saves/templates) but must be present here.
+      const previewTransformations = this.state.visualCropEnabled
+        ? { ...baseState, visualCropEnabled: true }
+        : baseState
       const url = await generateImagorUrlFromTemplate(
         {
-          templateJson: this.buildTemplateJson(baseState),
+          templateJson: this.buildTemplateJson(previewTransformations),
           contextPath: this.editingContext.length > 0 ? this.editingContext : null,
           forPreview: true,
           previewMaxDimensions: this.config.previewMaxDimensions ?? null,

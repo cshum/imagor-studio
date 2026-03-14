@@ -510,6 +510,129 @@ describe('editorStateToImagorPath', () => {
       )
       expect(path).not.toContain('image(')
     })
+
+    it('suppresses fit-in prefix in preview when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { width: 800, height: 600, fitIn: true, visualCropEnabled: true },
+        'p.jpg',
+        1,
+        true,
+      )
+      expect(path).not.toContain('fit-in')
+    })
+
+    it('applies fit-in in non-preview even when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { width: 800, height: 600, fitIn: true, visualCropEnabled: true },
+        'p.jpg',
+        1,
+        false,
+      )
+      expect(path).toContain('fit-in/')
+    })
+
+    it('suppresses stretch prefix in preview when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { width: 800, height: 600, stretch: true, visualCropEnabled: true },
+        'p.jpg',
+        1,
+        true,
+      )
+      expect(path).not.toContain('stretch')
+    })
+
+    it('suppresses smart in preview when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { width: 800, height: 600, smart: true, visualCropEnabled: true },
+        'p.jpg',
+        1,
+        true,
+      )
+      expect(path).not.toContain('smart')
+    })
+
+    it('applies smart in non-preview even when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { width: 800, height: 600, smart: true, visualCropEnabled: true },
+        'p.jpg',
+        1,
+        false,
+      )
+      expect(path).toContain('smart')
+    })
+
+    it('suppresses hAlign in preview when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { hAlign: 'left', visualCropEnabled: true },
+        'p.jpg',
+        1,
+        true,
+      )
+      expect(path).not.toContain('left')
+    })
+
+    it('suppresses vAlign in preview when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { vAlign: 'top', visualCropEnabled: true },
+        'p.jpg',
+        1,
+        true,
+      )
+      expect(path).not.toContain('top')
+    })
+
+    it('suppresses hFlip in preview when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { width: 800, height: 600, hFlip: true, visualCropEnabled: true },
+        'p.jpg',
+        1,
+        true,
+      )
+      // hFlip would produce -800x600; suppressed means no negative width
+      expect(path).not.toContain('-800')
+    })
+
+    it('suppresses vFlip in preview when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { width: 800, height: 600, vFlip: true, visualCropEnabled: true },
+        'p.jpg',
+        1,
+        true,
+      )
+      // vFlip would produce 800x-600; suppressed means no negative height
+      expect(path).not.toContain('-600')
+    })
+
+    it('suppresses fill filter in preview when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { fillColor: 'ffffff', visualCropEnabled: true },
+        'p.jpg',
+        1,
+        true,
+      )
+      expect(path).not.toContain('fill')
+    })
+
+    it('applies fill in non-preview even when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { fillColor: 'ffffff', visualCropEnabled: true },
+        'p.jpg',
+        1,
+        false,
+      )
+      expect(path).toContain('fill(ffffff)')
+    })
+
+    it('still applies brightness/contrast in preview when visualCropEnabled', () => {
+      const path = editorStateToImagorPath(
+        { brightness: 30, contrast: -10, visualCropEnabled: true },
+        'p.jpg',
+        1,
+        true,
+      )
+      expect(path).toContain('brightness(30)')
+      expect(path).toContain('contrast(-10)')
+    })
   })
 
   // ── image layers ─────────────────────────────────────────────────────────────

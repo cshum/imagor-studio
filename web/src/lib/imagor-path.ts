@@ -134,15 +134,21 @@ export function editorStateToImagorPath(
     parts.push(`${state.cropLeft}x${state.cropTop}:${right}x${bottom}`)
   }
 
+  // During visual crop preview, suppress resize mode (fitIn/stretch/smart/flip/alignment/fill)
+  // so the preview shows the plain uncropped image at its natural dimensions.
+  const isVisualCropPreview = forPreview && !!state.visualCropEnabled
+
   // Add dimensions with flip integration (scaled by scaleFactor).
   // Format: /fit-in/-200x-300 where minus signs indicate flips.
   // Fill mode (layer-only): widthFull/heightFull emit imagor f-tokens (e.g. "f", "f-20").
   if (state.width || state.height || state.widthFull || state.heightFull) {
     let prefix = ''
-    if (state.stretch) {
-      prefix = 'stretch/'
-    } else if (state.fitIn) {
-      prefix = 'fit-in/'
+    if (!isVisualCropPreview) {
+      if (state.stretch) {
+        prefix = 'stretch/'
+      } else if (state.fitIn) {
+        prefix = 'fit-in/'
+      }
     }
 
     let wStr: string
@@ -151,10 +157,10 @@ export function editorStateToImagorPath(
         state.widthFullOffset && state.widthFullOffset > 0
           ? `f-${Math.round(state.widthFullOffset * scaleFactor)}`
           : 'f'
-      wStr = state.hFlip ? `-${fToken}` : fToken
+      wStr = !isVisualCropPreview && state.hFlip ? `-${fToken}` : fToken
     } else {
       const w = state.width ? Math.round(state.width * scaleFactor) : 0
-      wStr = state.hFlip ? `-${w}` : `${w}`
+      wStr = !isVisualCropPreview && state.hFlip ? `-${w}` : `${w}`
     }
 
     let hStr: string
@@ -163,10 +169,10 @@ export function editorStateToImagorPath(
         state.heightFullOffset && state.heightFullOffset > 0
           ? `f-${Math.round(state.heightFullOffset * scaleFactor)}`
           : 'f'
-      hStr = state.vFlip ? `-${fToken}` : fToken
+      hStr = !isVisualCropPreview && state.vFlip ? `-${fToken}` : fToken
     } else {
       const h = state.height ? Math.round(state.height * scaleFactor) : 0
-      hStr = state.vFlip ? `-${h}` : `${h}`
+      hStr = !isVisualCropPreview && state.vFlip ? `-${h}` : `${h}`
     }
 
     parts.push(`${prefix}${wStr}x${hStr}`)
@@ -194,13 +200,15 @@ export function editorStateToImagorPath(
   }
 
   // Add alignment (for fill mode — not fitIn, not smart, not stretch).
-  if (!state.fitIn && !state.smart) {
+  // Suppressed during visual crop preview.
+  if (!isVisualCropPreview && !state.fitIn && !state.smart) {
     if (state.hAlign) parts.push(state.hAlign)
     if (state.vAlign) parts.push(state.vAlign)
   }
 
   // Add smart crop (after alignment, before filters).
-  if (state.smart) {
+  // Suppressed during visual crop preview.
+  if (!isVisualCropPreview && state.smart) {
     parts.push('smart')
   }
 
@@ -240,8 +248,8 @@ export function editorStateToImagorPath(
     filters.push(`round_corner(${value})`)
   }
 
-  // Fill color
-  if (state.fillColor) {
+  // Fill color — suppressed during visual crop preview.
+  if (!isVisualCropPreview && state.fillColor) {
     filters.push(`fill(${state.fillColor})`)
   }
 
