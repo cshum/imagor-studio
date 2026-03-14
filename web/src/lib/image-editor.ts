@@ -742,9 +742,25 @@ export class ImageEditor {
       // backend can suppress fill/fitIn/smart/hFlip/vFlip/hAlign/vAlign during
       // visual crop mode. visualCropEnabled is intentionally stripped from
       // buildTemplateJson (used for saves/templates) but must be present here.
-      const previewTransformations = this.state.visualCropEnabled
+      let previewTransformations = this.state.visualCropEnabled
         ? { ...baseState, visualCropEnabled: true }
         : baseState
+
+      // When visual crop is active on a layer, also strip the crop from that
+      // layer's transforms in the base preview so the composite image shows the
+      // full uncropped layer — giving the correct visual representation for the
+      // crop overlay to be positioned against.
+      if (this.state.visualCropEnabled && this.editingContext.length > 0) {
+        const activeLayerId = this.editingContext[this.editingContext.length - 1]
+        const strippedLayers = (previewTransformations.layers ?? []).map((layer) => {
+          if (layer.id !== activeLayerId || layer.type === 'text') return layer
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { cropLeft, cropTop, cropWidth, cropHeight, ...transformsWithoutCrop } =
+            layer.transforms ?? {}
+          return { ...layer, transforms: transformsWithoutCrop }
+        })
+        previewTransformations = { ...previewTransformations, layers: strippedLayers }
+      }
       const url = await generateImagorUrlFromTemplate(
         {
           templateJson: this.buildTemplateJson(previewTransformations),

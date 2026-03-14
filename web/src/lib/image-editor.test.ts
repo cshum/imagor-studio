@@ -2545,12 +2545,76 @@ describe('ImageEditor', () => {
         const parsed = JSON.parse(lastCall.templateJson)
         expect(parsed.transformations.visualCropEnabled).toBeUndefined()
       })
+
+      it('should strip crop from active layer transforms in base preview when visual crop is active on a layer', async () => {
+        const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
+
+        // Add a layer with crop transforms
+        const mockLayer: ImageLayer = {
+          type: 'image',
+          id: 'layer-crop-preview',
+          imagePath: 'overlay.jpg',
+          x: 0,
+          y: 0,
+          alpha: 0,
+          blendMode: 'normal',
+          visible: true,
+          name: 'Test Layer',
+          originalDimensions: { width: 4608, height: 3456 },
+          transforms: {
+            width: 1819,
+            height: 3456,
+            cropLeft: 2539,
+            cropTop: 0,
+            cropWidth: 2069,
+            cropHeight: 3456,
+          },
+        }
+        editor.addLayer(mockLayer)
+        editor.switchContext('layer-crop-preview')
+
+        // Enable visual crop on the layer
+        const promise = editor.setVisualCropEnabled(true)
+        await vi.runAllTimersAsync()
+        editor.notifyPreviewLoaded()
+        await promise
+
+        // The preview call should have the layer's crop stripped from the base preview
+        const calls = (generateImagorUrlFromTemplate as ReturnType<typeof vi.fn>).mock.calls
+        const lastCall = calls[calls.length - 1][0] as {
+          templateJson: string
+          contextPath: string[] | null
+        }
+        const parsed = JSON.parse(lastCall.templateJson)
+
+        // Root should have visualCropEnabled: true
+        expect(parsed.transformations.visualCropEnabled).toBe(true)
+
+        // The active layer's transforms should have crop stripped
+        const layerInPreview = parsed.transformations.layers?.find(
+          (l: { id: string }) => l.id === 'layer-crop-preview',
+        )
+        expect(layerInPreview).toBeDefined()
+        expect(layerInPreview?.transforms?.cropLeft).toBeUndefined()
+        expect(layerInPreview?.transforms?.cropTop).toBeUndefined()
+        expect(layerInPreview?.transforms?.cropWidth).toBeUndefined()
+        expect(layerInPreview?.transforms?.cropHeight).toBeUndefined()
+        // But other transforms should be preserved
+        expect(layerInPreview?.transforms?.width).toBe(1819)
+        expect(layerInPreview?.transforms?.height).toBe(3456)
+
+        editor.switchContext(null)
+      })
     })
 
     describe('Error Handling', () => {
       it('should call onError callback on preview generation failure', async () => {
         const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
         const onError = vi.fn()
+
+        // Flush any pending timers from previous tests before setting up the mock
+        await vi.runAllTimersAsync()
+
         editor.initialize({ onError })
 
         // Mock API to reject
