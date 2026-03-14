@@ -738,9 +738,16 @@ export class ImageEditor {
 
     try {
       const baseState = this.getBaseState()
+      // Include visualCropEnabled in the templateJson for the preview call so the
+      // backend can suppress fill/fitIn/smart/hFlip/vFlip/hAlign/vAlign during
+      // visual crop mode. visualCropEnabled is intentionally stripped from
+      // buildTemplateJson (used for saves/templates) but must be present here.
+      const previewTransformations = this.state.visualCropEnabled
+        ? { ...baseState, visualCropEnabled: true }
+        : baseState
       const url = await generateImagorUrlFromTemplate(
         {
-          templateJson: this.buildTemplateJson(baseState),
+          templateJson: this.buildTemplateJson(previewTransformations),
           contextPath: this.editingContext.length > 0 ? this.editingContext : null,
           forPreview: true,
           previewMaxDimensions: this.config.previewMaxDimensions ?? null,
@@ -1124,25 +1131,29 @@ export class ImageEditor {
   }
 
   /**
-   * Generate copy URL with user-selected format (not WebP)
+   * Generate copy URL with user-selected format (not WebP).
+   * Always generates the full composite image URL from the base state,
+   * regardless of which layer is currently being edited.
    */
   async generateCopyUrl(): Promise<string> {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       templateJson: this.buildTemplateJson(baseState),
-      contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+      contextPath: null,
       forPreview: false,
     })
   }
 
   /**
-   * Generate download URL with attachment filter
+   * Generate download URL with attachment filter.
+   * Always generates the full composite image URL from the base state,
+   * regardless of which layer is currently being edited.
    */
   async generateDownloadUrl(): Promise<string> {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       templateJson: this.buildTemplateJson(baseState),
-      contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+      contextPath: null,
       forPreview: false,
       appendFilters: [{ name: 'attachment', args: '' }],
     })

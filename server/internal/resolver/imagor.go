@@ -103,7 +103,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		skipID = *skipLayerID
 	}
 
-	params := imagortemplate.ConvertToImagorParams(*res.Transforms, res.OrigDims, res.ParentDims, preview, previewMaxDims, skipID)
+	params := imagortemplate.ConvertToImagorParams(*res.Transforms, res.OrigDims, res.ParentDims, preview, previewMaxDims, skipID, base.IsVisualCropEnabled())
 
 	for _, f := range appendFilters {
 		if f != nil {
