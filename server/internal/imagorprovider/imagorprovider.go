@@ -324,14 +324,13 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 
 	// Add processors in order: video processor first, then vips processor
 	// The video processor will handle video/audio files and forward others to vips
-	options = append(options, imagor.WithDebug(true), imagor.WithProcessors(
+	options = append(options, imagor.WithProcessors(
 		imagorvideo.NewProcessor(
 			imagorvideo.WithLogger(p.logger),
 		),
 		vipsprocessor.NewProcessor(
 			vipsprocessor.WithLogger(p.logger),
-			vipsprocessor.WithDebug(true),
-			vipsprocessor.WithCacheSize(100*1024*1024), // 100 MiB in-memory image cache
+			vipsprocessor.WithCacheSize(200*1024*1024), // 200 MiB in-memory image cache
 			vipsprocessor.WithCacheTTL(time.Hour),
 		),
 	))
