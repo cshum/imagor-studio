@@ -829,7 +829,7 @@ func TestRegisterAdmin(t *testing.T) {
 					languageFound := false
 					for _, entry := range entries {
 						if entry.Key == "config.app_image_extensions" &&
-							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2" &&
+							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw" &&
 							!entry.IsEncrypted {
 							imageExtensionsFound = true
 						}
