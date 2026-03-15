@@ -88,7 +88,7 @@ export function AdminPage({ loaderData }: AdminPageProps) {
       type: 'text',
       label: t('pages.admin.systemSettings.fields.imageExtensions.label'),
       description: t('pages.admin.systemSettings.fields.imageExtensions.description'),
-      defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2',
+      defaultValue: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw',
     },
     {
       key: 'config.app_video_extensions',
