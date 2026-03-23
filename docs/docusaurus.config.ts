@@ -53,6 +53,10 @@ const config: Config = {
         theme: {
           customCss: "./src/css/custom.css",
         },
+        gtag: {
+          trackingID: "G-ZVZSTF13C4",
+          anonymizeIP: true,
+        },
       } satisfies Preset.Options,
     ],
   ],
@@ -65,10 +69,32 @@ const config: Config = {
       title: "Imagor Studio",
       items: [
         {
-          type: "docSidebar",
-          sidebarId: "tutorialSidebar",
+          href: "https://imagor.net",
+          label: "imagor.net",
           position: "left",
-          label: "Documentation",
+        },
+        {
+          type: "dropdown",
+          label: "Ecosystem",
+          position: "left",
+          items: [
+            {
+              label: "imagor",
+              href: "https://github.com/cshum/imagor",
+            },
+            {
+              label: "imagor Studio",
+              href: "https://imagor.net",
+            },
+            {
+              label: "imagorvideo",
+              href: "https://github.com/cshum/imagorvideo",
+            },
+            {
+              label: "imagorface",
+              href: "https://github.com/cshum/imagorface",
+            },
+          ],
         },
         {
           href: "https://github.com/cshum/imagor-studio",
@@ -87,19 +113,6 @@ const config: Config = {
       style: "dark",
       links: [
         {
-          title: "Docs",
-          items: [
-            {
-              label: "Getting Started",
-              to: "/",
-            },
-            {
-              label: "Configuration",
-              to: "/configuration/overview",
-            },
-          ],
-        },
-        {
           title: "Ecosystem",
           items: [
             {
@@ -107,12 +120,16 @@ const config: Config = {
               href: "https://github.com/cshum/imagor",
             },
             {
-              label: "vipsgen",
-              href: "https://github.com/cshum/vipsgen",
+              label: "imagor Studio",
+              href: "https://imagor.net",
             },
             {
               label: "imagorvideo",
               href: "https://github.com/cshum/imagorvideo",
+            },
+            {
+              label: "imagorface",
+              href: "https://github.com/cshum/imagorface",
             },
           ],
         },
