@@ -120,7 +120,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
       {/* Actual header */}
       <header
-        className={`top-0 z-10 w-full px-2 ${isScrolledDown ? `bg-card/75 dark:shadow-secondary fixed shadow backdrop-blur transition-[left] duration-200 ease-linear ${sidebar && sidebar.open ? 'md:left-[var(--sidebar-width)] md:pr-[calc(var(--sidebar-width)+0.5rem)]' : ''} md:left-0` : ''}`}
+        className={`pointer-events-auto top-0 z-10 w-full px-2 ${isScrolledDown ? `bg-card/75 dark:shadow-secondary fixed shadow backdrop-blur transition-[left] duration-200 ease-linear ${sidebar && sidebar.open ? 'md:left-[var(--sidebar-width)] md:pr-[calc(var(--sidebar-width)+0.5rem)]' : ''} md:left-0` : ''}`}
       >
         <div className='mx-auto'>
           <div

@@ -12,15 +12,6 @@ import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -35,6 +26,13 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ListUsersQuery, User } from '@/generated/graphql'
 import { useFormErrors } from '@/hooks/use-form-errors'
@@ -232,132 +230,10 @@ export function UsersPage({ loaderData }: UsersPageProps) {
         <CardHeader>
           <div className='flex items-center justify-between'>
             <CardTitle>{t('pages.users.title')}</CardTitle>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className='mr-2 h-4 w-4' />
-                  {t('pages.users.createUser')}
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{t('pages.users.createNewUser')}</DialogTitle>
-                  <DialogDescription>{t('pages.users.createUserDescription')}</DialogDescription>
-                </DialogHeader>
-                <Form {...createForm}>
-                  <form onSubmit={createForm.handleSubmit(handleCreateUser)} className='space-y-4'>
-                    <FormField
-                      control={createForm.control}
-                      name='displayName'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.users.formLabels.displayName')}</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder={t('pages.users.placeholders.enterDisplayName')}
-                              {...field}
-                              disabled={isCreating}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={createForm.control}
-                      name='username'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.users.formLabels.username')}</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder={t('pages.users.placeholders.enterUsername')}
-                              {...field}
-                              disabled={isCreating}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={createForm.control}
-                      name='password'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.users.formLabels.password')}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type='password'
-                              placeholder={t('pages.users.placeholders.enterPassword')}
-                              {...field}
-                              disabled={isCreating}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={createForm.control}
-                      name='confirmPassword'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.users.formLabels.confirmPassword')}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type='password'
-                              placeholder={t('pages.users.placeholders.confirmPassword')}
-                              {...field}
-                              disabled={isCreating}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={createForm.control}
-                      name='role'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.users.formLabels.role')}</FormLabel>
-                          <FormControl>
-                            <select
-                              {...field}
-                              disabled={isCreating}
-                              className='border-input bg-background w-full rounded-md border p-2'
-                            >
-                              <option value='user'>{t('pages.users.roles.user')}</option>
-                              <option value='admin'>{t('pages.users.roles.admin')}</option>
-                            </select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <DialogFooter>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        onClick={() => setIsCreateDialogOpen(false)}
-                        disabled={isCreating}
-                      >
-                        {t('common.buttons.cancel')}
-                      </Button>
-                      <ButtonWithLoading type='submit' isLoading={isCreating}>
-                        {t('pages.users.createUserButton')}
-                      </ButtonWithLoading>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className='mr-2 h-4 w-4' />
+              {t('pages.users.createUser')}
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -529,178 +405,294 @@ export function UsersPage({ loaderData }: UsersPageProps) {
         </CardContent>
       </Card>
 
+      {/* Create User Dialog */}
+      <ResponsiveDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.users.createNewUser')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.users.createUserDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <Form {...createForm}>
+          <form onSubmit={createForm.handleSubmit(handleCreateUser)} className='space-y-4'>
+            <FormField
+              control={createForm.control}
+              name='displayName'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.users.formLabels.displayName')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('pages.users.placeholders.enterDisplayName')}
+                      {...field}
+                      disabled={isCreating}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={createForm.control}
+              name='username'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.users.formLabels.username')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('pages.users.placeholders.enterUsername')}
+                      {...field}
+                      disabled={isCreating}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={createForm.control}
+              name='password'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.users.formLabels.password')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('pages.users.placeholders.enterPassword')}
+                      {...field}
+                      disabled={isCreating}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={createForm.control}
+              name='confirmPassword'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.users.formLabels.confirmPassword')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('pages.users.placeholders.confirmPassword')}
+                      {...field}
+                      disabled={isCreating}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={createForm.control}
+              name='role'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.users.formLabels.role')}</FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      disabled={isCreating}
+                      className='border-input bg-background w-full rounded-md border p-2'
+                    >
+                      <option value='user'>{t('pages.users.roles.user')}</option>
+                      <option value='admin'>{t('pages.users.roles.admin')}</option>
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <ResponsiveDialogFooter>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setIsCreateDialogOpen(false)}
+                disabled={isCreating}
+              >
+                {t('common.buttons.cancel')}
+              </Button>
+              <ButtonWithLoading type='submit' isLoading={isCreating}>
+                {t('pages.users.createUserButton')}
+              </ButtonWithLoading>
+            </ResponsiveDialogFooter>
+          </form>
+        </Form>
+      </ResponsiveDialog>
+
       {/* Edit User Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('pages.users.editUser')}</DialogTitle>
-            <DialogDescription>{t('pages.users.editUserDescription')}</DialogDescription>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleEditUser)} className='space-y-4'>
-              <FormField
-                control={editForm.control}
-                name='displayName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.users.formLabels.displayName')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t('pages.users.placeholders.enterDisplayName')}
-                        {...field}
-                        disabled={isUpdating}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      <ResponsiveDialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.users.editUser')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.users.editUserDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <Form {...editForm}>
+          <form onSubmit={editForm.handleSubmit(handleEditUser)} className='space-y-4'>
+            <FormField
+              control={editForm.control}
+              name='displayName'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.users.formLabels.displayName')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('pages.users.placeholders.enterDisplayName')}
+                      {...field}
+                      disabled={isUpdating}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={editForm.control}
-                name='username'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.users.formLabels.username')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t('pages.users.placeholders.enterUsername')}
-                        {...field}
-                        disabled={isUpdating}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={editForm.control}
+              name='username'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.users.formLabels.username')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('pages.users.placeholders.enterUsername')}
+                      {...field}
+                      disabled={isUpdating}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={editForm.control}
-                name='role'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.users.formLabels.role')}</FormLabel>
-                    <FormControl>
-                      <select
-                        {...field}
-                        disabled={isUpdating}
-                        className='border-input bg-background w-full rounded-md border p-2'
-                      >
-                        <option value='user'>{t('pages.users.roles.user')}</option>
-                        <option value='admin'>{t('pages.users.roles.admin')}</option>
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={editForm.control}
+              name='role'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.users.formLabels.role')}</FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      disabled={isUpdating}
+                      className='border-input bg-background w-full rounded-md border p-2'
+                    >
+                      <option value='user'>{t('pages.users.roles.user')}</option>
+                      <option value='admin'>{t('pages.users.roles.admin')}</option>
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              {/* Deactivate Section - Separate Row */}
-              <div className='mt-4 border-t pt-4'>
-                <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
-                  <div>
-                    <h4 className='text-sm font-medium'>
-                      {selectedUser?.isActive
-                        ? t('pages.users.deactivateUser')
-                        : t('pages.users.reactivateUser')}
-                    </h4>
-                    <p className='text-muted-foreground text-xs'>
-                      {selectedUser?.isActive
-                        ? t('pages.users.deactivateUserWarning')
-                        : t('pages.users.reactivateUserWarning')}
-                    </p>
-                  </div>
-                  <Button
-                    type='button'
-                    variant={selectedUser?.isActive ? 'destructive' : 'default'}
-                    size='sm'
-                    onClick={() => {
-                      if (!selectedUser) {
-                        return
-                      }
-                      if (selectedUser.isActive) {
-                        // Show confirmation dialog for deactivation
-                        setIsConfirmDialogOpen(true)
-                      } else {
-                        // No confirmation needed for reactivation
-                        handleDeactivateUser(selectedUser.id, selectedUser.isActive)
-                      }
-                    }}
-                    disabled={isUpdating || isDeactivating === selectedUser?.id}
-                  >
-                    {selectedUser?.isActive ? (
-                      <>
-                        <UserX className='mr-2 h-4 w-4' />
-                        {t('pages.users.actions.deactivate')}
-                      </>
-                    ) : (
-                      <>
-                        <UserCheck className='mr-2 h-4 w-4' />
-                        {t('pages.users.actions.reactivate')}
-                      </>
-                    )}
-                  </Button>
+            {/* Deactivate Section - Separate Row */}
+            <div className='mt-4 border-t pt-4'>
+              <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
+                <div>
+                  <h4 className='text-sm font-medium'>
+                    {selectedUser?.isActive
+                      ? t('pages.users.deactivateUser')
+                      : t('pages.users.reactivateUser')}
+                  </h4>
+                  <p className='text-muted-foreground text-xs'>
+                    {selectedUser?.isActive
+                      ? t('pages.users.deactivateUserWarning')
+                      : t('pages.users.reactivateUserWarning')}
+                  </p>
                 </div>
-              </div>
-
-              <DialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
                 <Button
                   type='button'
-                  variant='outline'
-                  onClick={() => setIsEditDialogOpen(false)}
-                  disabled={isUpdating}
-                  className='w-full sm:w-auto'
+                  variant={selectedUser?.isActive ? 'destructive' : 'default'}
+                  size='sm'
+                  onClick={() => {
+                    if (!selectedUser) {
+                      return
+                    }
+                    if (selectedUser.isActive) {
+                      // Show confirmation dialog for deactivation
+                      setIsConfirmDialogOpen(true)
+                    } else {
+                      // No confirmation needed for reactivation
+                      handleDeactivateUser(selectedUser.id, selectedUser.isActive)
+                    }
+                  }}
+                  disabled={isUpdating || isDeactivating === selectedUser?.id}
                 >
-                  {t('common.buttons.cancel')}
+                  {selectedUser?.isActive ? (
+                    <>
+                      <UserX className='mr-2 h-4 w-4' />
+                      {t('pages.users.actions.deactivate')}
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className='mr-2 h-4 w-4' />
+                      {t('pages.users.actions.reactivate')}
+                    </>
+                  )}
                 </Button>
-                <ButtonWithLoading
-                  type='submit'
-                  isLoading={isUpdating}
-                  className='w-full sm:w-auto'
-                >
-                  {t('pages.users.updateUser')}
-                </ButtonWithLoading>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+              </div>
+            </div>
+
+            <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setIsEditDialogOpen(false)}
+                disabled={isUpdating}
+                className='w-full sm:w-auto'
+              >
+                {t('common.buttons.cancel')}
+              </Button>
+              <ButtonWithLoading type='submit' isLoading={isUpdating} className='w-full sm:w-auto'>
+                {t('pages.users.updateUser')}
+              </ButtonWithLoading>
+            </ResponsiveDialogFooter>
+          </form>
+        </Form>
+      </ResponsiveDialog>
 
       {/* Confirmation Dialog for Deactivation */}
-      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('pages.users.deactivateUser')}</DialogTitle>
-            <DialogDescription>
-              {t('pages.users.deactivateUserDescription')}{' '}
-              <strong>{selectedUser?.displayName}</strong>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
-            <Button
-              variant='outline'
-              onClick={() => setIsConfirmDialogOpen(false)}
-              disabled={isDeactivating === selectedUser?.id}
-              className='w-full sm:w-auto'
-            >
-              {t('common.buttons.cancel')}
-            </Button>
-            <ButtonWithLoading
-              variant='destructive'
-              onClick={() => {
-                if (selectedUser) {
-                  handleDeactivateUser(selectedUser.id, selectedUser.isActive)
-                  setIsConfirmDialogOpen(false)
-                }
-              }}
-              isLoading={isDeactivating === selectedUser?.id}
-              className='w-full sm:w-auto'
-            >
-              {t('pages.users.actions.deactivate')}
-            </ButtonWithLoading>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ResponsiveDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.users.deactivateUser')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.users.deactivateUserDescription')}{' '}
+            <strong>{selectedUser?.displayName}</strong>?
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+          <Button
+            variant='outline'
+            onClick={() => setIsConfirmDialogOpen(false)}
+            disabled={isDeactivating === selectedUser?.id}
+            className='w-full sm:w-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+          <ButtonWithLoading
+            variant='destructive'
+            onClick={() => {
+              if (selectedUser) {
+                handleDeactivateUser(selectedUser.id, selectedUser.isActive)
+                setIsConfirmDialogOpen(false)
+              }
+            }}
+            isLoading={isDeactivating === selectedUser?.id}
+            className='w-full sm:w-auto'
+          >
+            {t('pages.users.actions.deactivate')}
+          </ButtonWithLoading>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialog>
     </div>
   )
 }

@@ -10,14 +10,6 @@ import { activateLicense } from '@/api/license-api.ts'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog.tsx'
-import {
   Form,
   FormControl,
   FormDescription,
@@ -26,6 +18,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form.tsx'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Textarea } from '@/components/ui/textarea.tsx'
 import { cn } from '@/lib/utils.ts'
 import { checkLicense } from '@/stores/license-store.ts'
@@ -94,112 +93,114 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
-        <DialogHeader>
-          <DialogTitle>{t('pages.license.registerForLicense')}</DialogTitle>
-          <DialogDescription>{t('pages.license.registerDescription')}</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={handleClose}
+      contentClassName='max-h-[90vh] sm:max-w-2xl overflow-y-auto'
+    >
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>{t('pages.license.registerForLicense')}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>
+          {t('pages.license.registerDescription')}
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-        <div className='space-y-6'>
-          {/* From the Creator Section */}
-          <div className='rounded-lg border bg-blue-50 p-4 dark:bg-blue-900/20'>
-            <h4 className='mb-2 text-sm font-medium text-blue-900 dark:text-blue-400'>
-              {t('pages.license.supportTitle')}
-            </h4>
-            <p className='mb-3 text-sm text-blue-800 dark:text-blue-300'>
-              {t('pages.license.creatorStory')}
-            </p>
-            <ul className='space-y-1 text-sm text-blue-800 dark:text-blue-300'>
-              <li>• {t('pages.license.features.virtualScrollingGallery')}</li>
-              <li>• {t('pages.license.features.imageEditing')}</li>
-              <li>• {t('pages.license.features.dragAndDrop')}</li>
-              <li>• {t('pages.license.features.nonDestructiveWorkflow')}</li>
-            </ul>
-            <p className='mt-3 text-sm text-blue-800 dark:text-blue-300'>
-              {t('pages.license.supportOngoingDevelopment')}
-            </p>
-          </div>
-
-          {/* License Key Form - Hidden in embedded mode */}
-          {!isEmbeddedMode && (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-                <div className={cn('space-y-6', isLoading && 'opacity-60')}>
-                  <FormField
-                    control={form.control}
-                    name='licenseKey'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t('pages.license.licenseKeyLabel')}</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder='IMGR-...'
-                            className='min-h-[120px] resize-none font-mono text-sm'
-                            rows={5}
-                            disabled={isLoading}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          {t('pages.license.licenseKeyDescription')}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                  <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
-                    {error}
-                  </div>
-                )}
-              </form>
-            </Form>
-          )}
-
-          {/* Embedded Mode Note */}
-          {isEmbeddedMode && (
-            <div className='rounded-lg border bg-amber-50 p-4 dark:bg-amber-900/20'>
-              <h4 className='mb-2 text-sm font-medium text-amber-900 dark:text-amber-400'>
-                Embedded Mode Configuration
-              </h4>
-              <p className='text-sm text-amber-800 dark:text-amber-300'>
-                In embedded mode, configure your license key via the{' '}
-                <code className='rounded bg-amber-100 px-1 py-0.5 text-xs dark:bg-amber-800'>
-                  LICENSE_KEY
-                </code>{' '}
-                environment variable when deploying the container.
-              </p>
-            </div>
-          )}
+      <div className='space-y-6'>
+        {/* From the Creator Section */}
+        <div className='rounded-lg border bg-blue-50 p-4 dark:bg-blue-900/20'>
+          <h4 className='mb-2 text-sm font-medium text-blue-900 dark:text-blue-400'>
+            {t('pages.license.supportTitle')}
+          </h4>
+          <p className='mb-3 text-sm text-blue-800 dark:text-blue-300'>
+            {t('pages.license.creatorStory')}
+          </p>
+          <ul className='space-y-1 text-sm text-blue-800 dark:text-blue-300'>
+            <li>• {t('pages.license.features.virtualScrollingGallery')}</li>
+            <li>• {t('pages.license.features.imageEditing')}</li>
+            <li>• {t('pages.license.features.dragAndDrop')}</li>
+            <li>• {t('pages.license.features.nonDestructiveWorkflow')}</li>
+          </ul>
+          <p className='mt-3 text-sm text-blue-800 dark:text-blue-300'>
+            {t('pages.license.supportOngoingDevelopment')}
+          </p>
         </div>
 
-        <DialogFooter className='flex justify-end gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => {
-              window.open('https://imagor.net/buy/early-bird/', '_blank')
-            }}
+        {/* License Key Form - Hidden in embedded mode */}
+        {!isEmbeddedMode && (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+              <div className={cn('space-y-6', isLoading && 'opacity-60')}>
+                <FormField
+                  control={form.control}
+                  name='licenseKey'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('pages.license.licenseKeyLabel')}</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder='IMGR-...'
+                          className='min-h-[120px] resize-none font-mono text-sm'
+                          rows={5}
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>{t('pages.license.licenseKeyDescription')}</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
+                  {error}
+                </div>
+              )}
+            </form>
+          </Form>
+        )}
+
+        {/* Embedded Mode Note */}
+        {isEmbeddedMode && (
+          <div className='rounded-lg border bg-amber-50 p-4 dark:bg-amber-900/20'>
+            <h4 className='mb-2 text-sm font-medium text-amber-900 dark:text-amber-400'>
+              Embedded Mode Configuration
+            </h4>
+            <p className='text-sm text-amber-800 dark:text-amber-300'>
+              In embedded mode, configure your license key via the{' '}
+              <code className='rounded bg-amber-100 px-1 py-0.5 text-xs dark:bg-amber-800'>
+                LICENSE_KEY
+              </code>{' '}
+              environment variable when deploying the container.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <ResponsiveDialogFooter className='flex justify-end gap-2'>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={() => {
+            window.open('https://imagor.net/buy/early-bird/', '_blank')
+          }}
+        >
+          {t('pages.license.getEarlyBirdLicense')}
+        </Button>
+        {/* Hide Activate License button in embedded mode */}
+        {!isEmbeddedMode && (
+          <ButtonWithLoading
+            type='submit'
+            onClick={form.handleSubmit(handleSubmit)}
+            disabled={!form.formState.isValid}
+            isLoading={isLoading}
           >
-            {t('pages.license.getEarlyBirdLicense')}
-          </Button>
-          {/* Hide Activate License button in embedded mode */}
-          {!isEmbeddedMode && (
-            <ButtonWithLoading
-              type='submit'
-              onClick={form.handleSubmit(handleSubmit)}
-              disabled={!form.formState.isValid}
-              isLoading={isLoading}
-            >
-              {t('pages.license.activateLicense')}
-            </ButtonWithLoading>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {t('pages.license.activateLicense')}
+          </ButtonWithLoading>
+        )}
+      </ResponsiveDialogFooter>
+    </ResponsiveDialog>
   )
 }

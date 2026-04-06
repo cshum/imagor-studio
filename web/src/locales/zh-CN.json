@@ -22,7 +22,8 @@
       "close": "关闭",
       "more": "更多",
       "switchTheme": "切换主题",
-      "select": "选择"
+      "select": "选择",
+      "back": "返回"
     },
     "navigation": {
       "title": "Imagor Studio",

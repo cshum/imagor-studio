@@ -5,16 +5,15 @@ import { Paintbrush } from 'lucide-react'
 
 import { ColorPickerInput } from '@/components/image-editor/controls/color-picker-input'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import {
   Select,
   SelectContent,
@@ -78,80 +77,80 @@ export function NewCanvasDialog({ open, onOpenChange, galleryKey }: NewCanvasDia
   const presetValue = currentPreset ? `${currentPreset.w}x${currentPreset.h}` : 'custom'
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
-        <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <Paintbrush className='h-5 w-5' />
-            {t('pages.gallery.newCanvas.title')}
-          </DialogTitle>
-          <DialogDescription>{t('pages.gallery.newCanvas.description')}</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange} contentClassName='sm:max-w-[425px]'>
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle className='flex items-center gap-2'>
+          <Paintbrush className='h-5 w-5' />
+          {t('pages.gallery.newCanvas.title')}
+        </ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>
+          {t('pages.gallery.newCanvas.description')}
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-        <div className='grid gap-4 py-4'>
-          {/* Canvas Size Preset */}
+      <div className='grid gap-4 py-4'>
+        {/* Canvas Size Preset */}
+        <div className='grid gap-2'>
+          <Label>{t('pages.gallery.newCanvas.preset')}</Label>
+          <Select value={presetValue} onValueChange={handlePresetChange}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CANVAS_PRESETS.map((preset) => (
+                <SelectItem key={`${preset.w}x${preset.h}`} value={`${preset.w}x${preset.h}`}>
+                  {preset.label}
+                </SelectItem>
+              ))}
+              <SelectItem value='custom'>{t('pages.gallery.newCanvas.custom')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Width × Height */}
+        <div className='grid grid-cols-2 gap-3'>
           <div className='grid gap-2'>
-            <Label>{t('pages.gallery.newCanvas.preset')}</Label>
-            <Select value={presetValue} onValueChange={handlePresetChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CANVAS_PRESETS.map((preset) => (
-                  <SelectItem key={`${preset.w}x${preset.h}`} value={`${preset.w}x${preset.h}`}>
-                    {preset.label}
-                  </SelectItem>
-                ))}
-                <SelectItem value='custom'>{t('pages.gallery.newCanvas.custom')}</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor='canvas-width'>{t('pages.gallery.newCanvas.width')}</Label>
+            <Input
+              id='canvas-width'
+              type='number'
+              min={1}
+              max={10000}
+              value={width}
+              onChange={(e) => setWidth(Math.max(1, parseInt(e.target.value) || 1))}
+            />
           </div>
-
-          {/* Width × Height */}
-          <div className='grid grid-cols-2 gap-3'>
-            <div className='grid gap-2'>
-              <Label htmlFor='canvas-width'>{t('pages.gallery.newCanvas.width')}</Label>
-              <Input
-                id='canvas-width'
-                type='number'
-                min={1}
-                max={10000}
-                value={width}
-                onChange={(e) => setWidth(Math.max(1, parseInt(e.target.value) || 1))}
-              />
-            </div>
-            <div className='grid gap-2'>
-              <Label htmlFor='canvas-height'>{t('pages.gallery.newCanvas.height')}</Label>
-              <Input
-                id='canvas-height'
-                type='number'
-                min={1}
-                max={10000}
-                value={height}
-                onChange={(e) => setHeight(Math.max(1, parseInt(e.target.value) || 1))}
-              />
-            </div>
-          </div>
-
-          {/* Background Color with Opacity */}
           <div className='grid gap-2'>
-            <Label>{t('pages.gallery.newCanvas.background')}</Label>
-            <ColorPickerInput
-              value={colorValue}
-              onChange={setColorValue}
-              swatchSize='md'
-              showOpacity
+            <Label htmlFor='canvas-height'>{t('pages.gallery.newCanvas.height')}</Label>
+            <Input
+              id='canvas-height'
+              type='number'
+              min={1}
+              max={10000}
+              value={height}
+              onChange={(e) => setHeight(Math.max(1, parseInt(e.target.value) || 1))}
             />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)}>
-            {t('common.buttons.cancel')}
-          </Button>
-          <Button onClick={handleCreate}>{t('pages.gallery.newCanvas.create')}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        {/* Background Color with Opacity */}
+        <div className='grid gap-2'>
+          <Label>{t('pages.gallery.newCanvas.background')}</Label>
+          <ColorPickerInput
+            value={colorValue}
+            onChange={setColorValue}
+            swatchSize='md'
+            showOpacity
+          />
+        </div>
+      </div>
+
+      <ResponsiveDialogFooter>
+        <Button variant='outline' onClick={() => onOpenChange(false)}>
+          {t('common.buttons.cancel')}
+        </Button>
+        <Button onClick={handleCreate}>{t('pages.gallery.newCanvas.create')}</Button>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialog>
   )
 }

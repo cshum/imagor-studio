@@ -3,12 +3,11 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { silentCopyToClipboard } from '@/lib/browser-utils'
 
@@ -46,28 +45,28 @@ export function CopyUrlDialog({ open, onOpenChange, url }: CopyUrlDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-md'>
-        <DialogHeader>
-          <DialogTitle>{t('pages.gallery.copyUrlDialog.title')}</DialogTitle>
-          <DialogDescription>{t('pages.gallery.copyUrlDialog.description')}</DialogDescription>
-        </DialogHeader>
-        <div className='flex flex-col space-y-4'>
-          <Textarea
-            ref={textareaRef}
-            value={url}
-            readOnly
-            className='min-h-[100px] resize-none'
-            onClick={handleCopyClick}
-          />
-          <div className='flex justify-between'>
-            <Button variant='outline' onClick={() => onOpenChange(false)}>
-              {t('pages.gallery.copyUrlDialog.closeButton')}
-            </Button>
-            <Button onClick={handleCopyClick}>{t('pages.gallery.copyUrlDialog.copyButton')}</Button>
-          </div>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange} contentClassName='sm:max-w-md'>
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>{t('pages.gallery.copyUrlDialog.title')}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>
+          {t('pages.gallery.copyUrlDialog.description')}
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
+      <div className='flex flex-col space-y-4'>
+        <Textarea
+          ref={textareaRef}
+          value={url}
+          readOnly
+          className='min-h-[100px] resize-none'
+          onClick={handleCopyClick}
+        />
+        <div className='flex justify-between'>
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
+            {t('pages.gallery.copyUrlDialog.closeButton')}
+          </Button>
+          <Button onClick={handleCopyClick}>{t('pages.gallery.copyUrlDialog.copyButton')}</Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </ResponsiveDialog>
   )
 }

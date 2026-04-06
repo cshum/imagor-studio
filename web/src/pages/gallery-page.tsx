@@ -83,7 +83,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const contentRef = useRef<HTMLDivElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const fileSelectHandlerRef = useRef<((fileList: FileList | null) => void) | null>(null)
-  const { isLoading, pendingMatches } = useRouterState()
+  const { isLoading, pendingMatches, matches } = useRouterState()
   const { authState } = useAuth()
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
   const [isNewCanvasDialogOpen, setIsNewCanvasDialogOpen] = useState(false)
@@ -631,6 +631,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     pendingMatches[pendingMatches.length - 1].routeId?.toString()?.includes('$imageKey')
   )
 
+  // Detect if the image view child route is currently active (URL contains an imageKey param)
+  const isImageViewOpen = matches.some((m) => m.routeId?.toString()?.includes('$imageKey'))
+
   // Handler for toggling show file names
   const handleToggleShowFileNames = async () => {
     const newValue = !showFileNames
@@ -1097,6 +1100,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           draggedItems={dragState.draggedItems}
                           galleryKey={galleryKey}
                           onTemplatePreviewError={regenerateTemplatePreview}
+                          interactive={!isImageViewOpen}
                           {...imageGridProps}
                         />
                       </ImageContextMenu>

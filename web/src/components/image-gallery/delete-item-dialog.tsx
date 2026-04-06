@@ -3,13 +3,12 @@ import { Trans, useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 
 export interface DeleteItemDialogProps {
   open: boolean
@@ -35,27 +34,25 @@ export function DeleteItemDialog({
   const valueKey = itemType === 'file' ? 'imageName' : 'folderName'
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t(`pages.gallery.${translationKey}.title`)}</DialogTitle>
-          <DialogDescription className='break-words'>
-            <Trans
-              i18nKey={`pages.gallery.${translationKey}.description`}
-              values={{ [valueKey]: itemName }}
-              components={{ 1: <strong className='break-all' /> }}
-            />
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isDeleting}>
-            {t('common.buttons.cancel')}
-          </Button>
-          <ButtonWithLoading variant='destructive' onClick={onConfirm} isLoading={isDeleting}>
-            {t('common.buttons.delete')}
-          </ButtonWithLoading>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>{t(`pages.gallery.${translationKey}.title`)}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription className='break-words'>
+          <Trans
+            i18nKey={`pages.gallery.${translationKey}.description`}
+            values={{ [valueKey]: itemName }}
+            components={{ 1: <strong className='break-all' /> }}
+          />
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
+      <ResponsiveDialogFooter>
+        <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isDeleting}>
+          {t('common.buttons.cancel')}
+        </Button>
+        <ButtonWithLoading variant='destructive' onClick={onConfirm} isLoading={isDeleting}>
+          {t('common.buttons.delete')}
+        </ButtonWithLoading>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialog>
   )
 }
