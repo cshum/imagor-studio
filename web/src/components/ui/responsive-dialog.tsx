@@ -168,9 +168,6 @@ export function ResponsiveDialogFooter({
   }
 
   return (
-    <SheetFooter
-      className={cn('flex flex-col gap-2 pt-4 sm:flex-row sm:justify-end', className)}
-      {...props}
-    />
+    <SheetFooter className={cn('flex flex-row justify-end gap-2 pt-4', className)} {...props} />
   )
 }
