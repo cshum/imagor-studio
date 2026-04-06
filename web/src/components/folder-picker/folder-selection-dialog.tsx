@@ -232,8 +232,8 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
         <ResponsiveDialogDescription>{dialogDescription}</ResponsiveDialogDescription>
       </ResponsiveDialogHeader>
 
-      <div>
-        <ScrollArea className='border-muted h-96 w-full max-w-[340px] overflow-x-hidden rounded-md border md:max-w-[460px] [&>div>div]:!block [&>div>div]:!min-w-0'>
+      <div className='w-full'>
+        <ScrollArea className='border-muted h-96 w-full overflow-x-hidden rounded-md border [&>div>div]:!block [&>div>div]:!min-w-0'>
           {isLoading ? (
             <div className='flex h-full items-center justify-center'>
               <div className='text-muted-foreground text-sm'>{t('common.status.loading')}</div>
