@@ -12,13 +12,6 @@ import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  ResponsiveDialog,
-  ResponsiveDialogFooter,
-  ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
-} from '@/components/ui/responsive-dialog'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -33,6 +26,13 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ListUsersQuery, User } from '@/generated/graphql'
 import { useFormErrors } from '@/hooks/use-form-errors'
@@ -652,11 +652,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
               >
                 {t('common.buttons.cancel')}
               </Button>
-              <ButtonWithLoading
-                type='submit'
-                isLoading={isUpdating}
-                className='w-full sm:w-auto'
-              >
+              <ButtonWithLoading type='submit' isLoading={isUpdating} className='w-full sm:w-auto'>
                 {t('pages.users.updateUser')}
               </ButtonWithLoading>
             </ResponsiveDialogFooter>

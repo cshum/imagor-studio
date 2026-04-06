@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
+import { Input } from '@/components/ui/input'
 import {
   ResponsiveDialog,
+  ResponsiveDialogDescription,
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
 } from '@/components/ui/responsive-dialog'
-import { Input } from '@/components/ui/input'
 
 export interface RenameItemDialogProps {
   open: boolean
@@ -87,7 +87,9 @@ export function RenameItemDialog({
   return (
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
       <ResponsiveDialogHeader>
-        <ResponsiveDialogTitle>{t(`pages.gallery.renameItem.${itemType}.title`)}</ResponsiveDialogTitle>
+        <ResponsiveDialogTitle>
+          {t(`pages.gallery.renameItem.${itemType}.title`)}
+        </ResponsiveDialogTitle>
         <ResponsiveDialogDescription>
           {t(`pages.gallery.renameItem.${itemType}.description`)}
         </ResponsiveDialogDescription>

@@ -15,15 +15,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   ResponsiveDialog,
+  ResponsiveDialogDescription,
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
 } from '@/components/ui/responsive-dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import type { ImageEditor } from '@/lib/image-editor'
 import { splitImagePath } from '@/lib/path-utils'
 import { useFolderTree } from '@/stores/folder-tree-store'
@@ -188,11 +188,7 @@ export function SaveTemplateDialog({
   }
 
   return (
-    <ResponsiveDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      contentClassName='sm:max-w-[500px]'
-    >
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange} contentClassName='sm:max-w-[500px]'>
       <ResponsiveDialogHeader>
         <ResponsiveDialogTitle>{dialogTitle}</ResponsiveDialogTitle>
         <ResponsiveDialogDescription>
@@ -215,9 +211,7 @@ export function SaveTemplateDialog({
           />
           {/* Filename Preview or Error */}
           {hasInvalidChars ? (
-            <p className='text-destructive text-sm'>
-              Invalid characters: / \ : * ? " &lt; &gt; |
-            </p>
+            <p className='text-destructive text-sm'>Invalid characters: / \ : * ? " &lt; &gt; |</p>
           ) : (
             filename && (
               <p className='text-muted-foreground text-sm'>

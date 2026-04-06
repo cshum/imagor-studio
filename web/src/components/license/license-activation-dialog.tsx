@@ -10,13 +10,6 @@ import { activateLicense } from '@/api/license-api.ts'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import {
-  ResponsiveDialog,
-  ResponsiveDialogFooter,
-  ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
-} from '@/components/ui/responsive-dialog'
-import {
   Form,
   FormControl,
   FormDescription,
@@ -25,6 +18,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form.tsx'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Textarea } from '@/components/ui/textarea.tsx'
 import { cn } from '@/lib/utils.ts'
 import { checkLicense } from '@/stores/license-store.ts'
@@ -145,9 +145,7 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
                           {...field}
                         />
                       </FormControl>
-                      <FormDescription>
-                        {t('pages.license.licenseKeyDescription')}
-                      </FormDescription>
+                      <FormDescription>{t('pages.license.licenseKeyDescription')}</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

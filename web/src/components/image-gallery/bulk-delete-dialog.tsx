@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import {
   ResponsiveDialog,
+  ResponsiveDialogDescription,
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
 } from '@/components/ui/responsive-dialog'
 
 export interface BulkDeleteDialogProps {

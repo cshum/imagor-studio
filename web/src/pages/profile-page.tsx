@@ -10,12 +10,6 @@ import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  ResponsiveDialog,
-  ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
-} from '@/components/ui/responsive-dialog'
-import {
   Form,
   FormControl,
   FormField,
@@ -24,6 +18,12 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { useFormErrors } from '@/hooks/use-form-errors'
 import type { ProfileLoaderData } from '@/loaders/account-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
@@ -237,10 +237,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <Form {...passwordForm}>
-          <form
-            onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
-            className='space-y-4'
-          >
+          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-4'>
             <FormField
               control={passwordForm.control}
               name='currentPassword'

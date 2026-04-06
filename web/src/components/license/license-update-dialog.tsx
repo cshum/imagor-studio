@@ -10,13 +10,6 @@ import { activateLicense } from '@/api/license-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
-  ResponsiveDialog,
-  ResponsiveDialogFooter,
-  ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
-} from '@/components/ui/responsive-dialog'
-import {
   Form,
   FormControl,
   FormDescription,
@@ -25,6 +18,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { checkLicense } from '@/stores/license-store'

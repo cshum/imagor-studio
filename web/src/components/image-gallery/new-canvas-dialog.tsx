@@ -5,15 +5,15 @@ import { Paintbrush } from 'lucide-react'
 
 import { ColorPickerInput } from '@/components/image-editor/controls/color-picker-input'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   ResponsiveDialog,
+  ResponsiveDialogDescription,
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
 } from '@/components/ui/responsive-dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -77,11 +77,7 @@ export function NewCanvasDialog({ open, onOpenChange, galleryKey }: NewCanvasDia
   const presetValue = currentPreset ? `${currentPreset.w}x${currentPreset.h}` : 'custom'
 
   return (
-    <ResponsiveDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      contentClassName='sm:max-w-[425px]'
-    >
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange} contentClassName='sm:max-w-[425px]'>
       <ResponsiveDialogHeader>
         <ResponsiveDialogTitle className='flex items-center gap-2'>
           <Paintbrush className='h-5 w-5' />

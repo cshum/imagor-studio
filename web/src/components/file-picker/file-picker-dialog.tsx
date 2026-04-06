@@ -7,10 +7,10 @@ import { FilePickerContent } from '@/components/file-picker/file-picker-content'
 import { Button } from '@/components/ui/button'
 import {
   ResponsiveDialog,
+  ResponsiveDialogDescription,
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
 } from '@/components/ui/responsive-dialog'
 import { useAuth } from '@/stores/auth-store'
 import { loadRootFolders } from '@/stores/folder-tree-store'

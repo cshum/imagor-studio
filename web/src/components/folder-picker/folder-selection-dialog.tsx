@@ -6,10 +6,10 @@ import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-
 import { Button } from '@/components/ui/button.tsx'
 import {
   ResponsiveDialog,
+  ResponsiveDialogDescription,
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
 } from '@/components/ui/responsive-dialog'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import {
