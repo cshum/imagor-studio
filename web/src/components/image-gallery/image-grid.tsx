@@ -39,6 +39,8 @@ interface ImageCellProps {
   galleryKey?: string
   /** Called when a template thumbnail fails to load — should regenerate the preview and return true on success */
   onTemplatePreviewError?: (templatePath: string) => Promise<boolean>
+  /** When false, disables mobile pointer-events on the overlay buttons (e.g. when image view is open) */
+  interactive?: boolean
 }
 
 const ImageCell = ({
@@ -66,6 +68,7 @@ const ImageCell = ({
   selectedFolderKeys,
   galleryKey = '',
   onTemplatePreviewError,
+  interactive = true,
 }: ImageCellProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   // For template thumbnails: null = use imageSrc, '' = hide img (regenerating), string = fresh preview
@@ -221,7 +224,7 @@ const ImageCell = ({
         {/* Selection checkbox - top left */}
         {onSelectionToggle && (
           <div
-            className={`pointer-events-auto absolute top-2 left-2 opacity-0 transition-opacity sm:pointer-events-none sm:group-hover/image:pointer-events-auto sm:group-hover/image:opacity-100 ${isSelected ? '!opacity-100' : ''}`}
+            className={`absolute top-2 left-2 opacity-0 transition-opacity sm:pointer-events-none sm:group-hover/image:pointer-events-auto sm:group-hover/image:opacity-100 ${interactive ? 'pointer-events-auto' : 'pointer-events-none'} ${isSelected ? '!opacity-100' : ''}`}
             onClick={handleSelectionClick}
           >
             <div
@@ -237,7 +240,7 @@ const ImageCell = ({
         {renderMenuItems && (
           <DropdownMenu onOpenChange={setIsDropdownOpen} modal={false}>
             <div
-              className={`pointer-events-auto absolute top-2 right-2 opacity-0 transition-opacity sm:pointer-events-none sm:group-hover/image:pointer-events-auto sm:group-hover/image:opacity-100 ${isDropdownOpen ? '!opacity-100' : ''}`}
+              className={`absolute top-2 right-2 opacity-0 transition-opacity sm:pointer-events-none sm:group-hover/image:pointer-events-auto sm:group-hover/image:opacity-100 ${interactive ? 'pointer-events-auto' : 'pointer-events-none'} ${isDropdownOpen ? '!opacity-100' : ''}`}
               onClick={(e) => e.stopPropagation()}
             >
               <DropdownMenuTrigger asChild>
@@ -303,6 +306,8 @@ export interface ImageGridProps {
   galleryKey?: string
   /** Called when a template thumbnail fails to load — should regenerate the preview and return true on success */
   onTemplatePreviewError?: (templatePath: string) => Promise<boolean>
+  /** When false, disables mobile pointer-events on overlay buttons (e.g. when image view is open) */
+  interactive?: boolean
 }
 
 export const ImageGrid = ({
@@ -328,6 +333,7 @@ export const ImageGrid = ({
   draggedItems = [],
   galleryKey = '',
   onTemplatePreviewError,
+  interactive = true,
 }: ImageGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -410,6 +416,7 @@ export const ImageGrid = ({
           selectedFolderKeys={selectedFolderKeys}
           galleryKey={galleryKey}
           onTemplatePreviewError={onTemplatePreviewError}
+          interactive={interactive}
           imageRef={(el) => {
             if (imageRefs?.current) {
               if (el) {
