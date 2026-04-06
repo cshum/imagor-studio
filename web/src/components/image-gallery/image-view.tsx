@@ -94,6 +94,7 @@ export function ImageView({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isZoomGesture, setIsZoomGesture] = useState(false)
   const zoomGestureTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
+  const clickTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   // Auto-hide controls on desktop after inactivity
   const { showControls } = useAutoHideControls({
@@ -113,6 +114,20 @@ export function ImageView({
       overlay.removeEventListener('touchmove', preventDefault)
     }
   }, [])
+
+  // Native dblclick listener on the container — fires even when child overlays have pointerEvents:none
+  // This enables double-click to zoom in/out at any zoom level
+  useEffect(() => {
+    const overlay = overlayRef.current
+    if (!overlay || image.isVideo) return
+    const handleDblClick = () => {
+      handleOverlayDoubleClick()
+    }
+    overlay.addEventListener('dblclick', handleDblClick)
+    return () => {
+      overlay.removeEventListener('dblclick', handleDblClick)
+    }
+  }, [scale, image.isVideo])
 
   // Manage HTML overflow to prevent background scrolling
   useEffect(() => {
@@ -227,13 +242,27 @@ export function ImageView({
   const handleOverlayClick = () => {
     // Only handle click if we weren't dragging
     if (!isDragging) {
-      if (isFullscreen) {
-        // Exit fullscreen when clicking overlay in fullscreen mode
-        toggleFullscreen()
-      } else {
-        // Close image view when not in fullscreen
-        handleCloseFullView()
-      }
+      // Debounce single click to avoid firing when double-click is detected
+      if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current)
+      clickTimeoutRef.current = setTimeout(() => {
+        if (isFullscreen) {
+          // Exit fullscreen when clicking overlay in fullscreen mode
+          toggleFullscreen()
+        } else {
+          // Close image view when not in fullscreen
+          handleCloseFullView()
+        }
+      }, 250)
+    }
+  }
+
+  const handleOverlayDoubleClick = () => {
+    // Cancel the pending single-click action
+    if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current)
+    if (scale > 1) {
+      transformComponentRef.current?.resetTransform()
+    } else {
+      transformComponentRef.current?.zoomIn()
     }
   }
 
@@ -352,7 +381,7 @@ export function ImageView({
       onTouchEnd={handlePinchEnd}
       style={{
         cursor: 'grab',
-        pointerEvents: isZoomGesture ? 'none' : 'auto',
+        pointerEvents: isZoomGesture || scale > 1 ? 'none' : 'auto',
       }}
       whileDrag={{
         cursor: 'grabbing',
@@ -639,7 +668,7 @@ export function ImageView({
               </motion.div>
             )}
 
-            {scale <= 1 && !image.isVideo && overlayHandler}
+            {!image.isVideo && overlayHandler}
 
             <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
               <ImageViewInfo imageInfo={image.imageInfo} />
