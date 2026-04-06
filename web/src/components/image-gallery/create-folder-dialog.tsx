@@ -11,13 +11,12 @@ import { createFolder } from '@/api/storage-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+} from '@/components/ui/responsive-dialog'
 import {
   Form,
   FormControl,
@@ -105,56 +104,60 @@ export function CreateFolderDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className='sm:max-w-[425px]'>
-        <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
-            <FolderPlus className='h-5 w-5' />
-            {t('pages.gallery.createFolder.title')}
-          </DialogTitle>
-          <DialogDescription>{t('pages.gallery.createFolder.description')}</DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
-            <FormField
-              control={form.control}
-              name='folderName'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('pages.gallery.createFolder.folderName')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={t('pages.gallery.createFolder.placeholder')}
-                      {...field}
-                      disabled={isCreating}
-                      autoFocus
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      contentClassName='sm:max-w-[425px]'
+    >
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle className='flex items-center gap-2'>
+          <FolderPlus className='h-5 w-5' />
+          {t('pages.gallery.createFolder.title')}
+        </ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>
+          {t('pages.gallery.createFolder.description')}
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-4'>
+          <FormField
+            control={form.control}
+            name='folderName'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('pages.gallery.createFolder.folderName')}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={t('pages.gallery.createFolder.placeholder')}
+                    {...field}
+                    disabled={isCreating}
+                    autoFocus
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <DialogFooter>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => handleOpenChange(false)}
-                disabled={isCreating}
-              >
-                {t('common.buttons.cancel')}
-              </Button>
-              <ButtonWithLoading
-                type='submit'
-                isLoading={isCreating}
-                disabled={!form.watch('folderName')?.trim()}
-              >
-                {t('common.buttons.create')}
-              </ButtonWithLoading>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <ResponsiveDialogFooter>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => handleOpenChange(false)}
+              disabled={isCreating}
+            >
+              {t('common.buttons.cancel')}
+            </Button>
+            <ButtonWithLoading
+              type='submit'
+              isLoading={isCreating}
+              disabled={!form.watch('folderName')?.trim()}
+            >
+              {t('common.buttons.create')}
+            </ButtonWithLoading>
+          </ResponsiveDialogFooter>
+        </form>
+      </Form>
+    </ResponsiveDialog>
   )
 }

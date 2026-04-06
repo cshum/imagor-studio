@@ -4,13 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+} from '@/components/ui/responsive-dialog'
 import { Input } from '@/components/ui/input'
 
 export interface RenameItemDialogProps {
@@ -86,60 +85,58 @@ export function RenameItemDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t(`pages.gallery.renameItem.${itemType}.title`)}</DialogTitle>
-          <DialogDescription>
-            {t(`pages.gallery.renameItem.${itemType}.description`)}
-          </DialogDescription>
-        </DialogHeader>
-        <div className='grid gap-4 py-4'>
-          {fileExtension ? (
-            <div className='border-input focus-within:ring-ring flex overflow-hidden rounded-md border focus-within:ring-2 focus-within:ring-offset-2'>
-              <Input
-                value={renameInput}
-                onChange={(e) => setRenameInput(e.target.value)}
-                placeholder={t('pages.gallery.renameItem.placeholder')}
-                disabled={isRenaming}
-                className='flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0'
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && renameInput.trim()) {
-                    handleConfirm()
-                  }
-                }}
-              />
-              <div className='bg-muted text-muted-foreground flex items-center border-l px-3 font-mono text-sm'>
-                {fileExtension}
-              </div>
-            </div>
-          ) : (
+    <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>{t(`pages.gallery.renameItem.${itemType}.title`)}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>
+          {t(`pages.gallery.renameItem.${itemType}.description`)}
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
+      <div className='grid gap-4 py-4'>
+        {fileExtension ? (
+          <div className='border-input focus-within:ring-ring flex overflow-hidden rounded-md border focus-within:ring-2 focus-within:ring-offset-2'>
             <Input
               value={renameInput}
               onChange={(e) => setRenameInput(e.target.value)}
               placeholder={t('pages.gallery.renameItem.placeholder')}
               disabled={isRenaming}
+              className='flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0'
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && renameInput.trim()) {
                   handleConfirm()
                 }
               }}
             />
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant='outline' onClick={() => handleOpenChange(false)} disabled={isRenaming}>
-            {t('common.buttons.cancel')}
-          </Button>
-          <ButtonWithLoading
-            onClick={handleConfirm}
-            disabled={!renameInput.trim()}
-            isLoading={isRenaming}
-          >
-            {t('pages.gallery.renameItem.rename')}
-          </ButtonWithLoading>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <div className='bg-muted text-muted-foreground flex items-center border-l px-3 font-mono text-sm'>
+              {fileExtension}
+            </div>
+          </div>
+        ) : (
+          <Input
+            value={renameInput}
+            onChange={(e) => setRenameInput(e.target.value)}
+            placeholder={t('pages.gallery.renameItem.placeholder')}
+            disabled={isRenaming}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && renameInput.trim()) {
+                handleConfirm()
+              }
+            }}
+          />
+        )}
+      </div>
+      <ResponsiveDialogFooter>
+        <Button variant='outline' onClick={() => handleOpenChange(false)} disabled={isRenaming}>
+          {t('common.buttons.cancel')}
+        </Button>
+        <ButtonWithLoading
+          onClick={handleConfirm}
+          disabled={!renameInput.trim()}
+          isLoading={isRenaming}
+        >
+          {t('pages.gallery.renameItem.rename')}
+        </ButtonWithLoading>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialog>
   )
 }

@@ -15,6 +15,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+} from '@/components/ui/responsive-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { ImageEditor } from '@/lib/image-editor'
@@ -181,69 +188,73 @@ export function SaveTemplateDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
-      <DialogContent className='sm:max-w-[500px]'>
-        <DialogHeader>
-          <DialogTitle>{dialogTitle}</DialogTitle>
-          <DialogDescription>{t('imageEditor.template.saveDescription')}</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      contentClassName='sm:max-w-[500px]'
+    >
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>{dialogTitle}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>
+          {t('imageEditor.template.saveDescription')}
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-        <div className='grid gap-4 py-4'>
-          {/* Template Name */}
-          <div className='grid gap-2'>
-            <Label htmlFor='template-name'>
-              {t('imageEditor.template.templateName')} <span className='text-red-500'>*</span>
-            </Label>
-            <Input
-              id='template-name'
-              placeholder={t('imageEditor.template.templateNamePlaceholder')}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={100}
-            />
-            {/* Filename Preview or Error */}
-            {hasInvalidChars ? (
-              <p className='text-destructive text-sm'>
-                Invalid characters: / \ : * ? " &lt; &gt; |
+      <div className='grid gap-4 py-4'>
+        {/* Template Name */}
+        <div className='grid gap-2'>
+          <Label htmlFor='template-name'>
+            {t('imageEditor.template.templateName')} <span className='text-red-500'>*</span>
+          </Label>
+          <Input
+            id='template-name'
+            placeholder={t('imageEditor.template.templateNamePlaceholder')}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={100}
+          />
+          {/* Filename Preview or Error */}
+          {hasInvalidChars ? (
+            <p className='text-destructive text-sm'>
+              Invalid characters: / \ : * ? " &lt; &gt; |
+            </p>
+          ) : (
+            filename && (
+              <p className='text-muted-foreground text-sm'>
+                {t('imageEditor.template.filenamePreview')}:{' '}
+                <code className='bg-muted rounded px-1.5 py-0.5'>{filename}</code>
               </p>
-            ) : (
-              filename && (
-                <p className='text-muted-foreground text-sm'>
-                  {t('imageEditor.template.filenamePreview')}:{' '}
-                  <code className='bg-muted rounded px-1.5 py-0.5'>{filename}</code>
-                </p>
-              )
-            )}
-          </div>
-
-          {/* Save Location */}
-          <div className='grid gap-2'>
-            <Label>{t('imageEditor.template.saveLocation')}</Label>
-            <Button
-              type='button'
-              variant='outline'
-              className='justify-start'
-              onClick={() => setFolderDialogOpen(true)}
-            >
-              <Folder className='mr-2 h-4 w-4' />
-              <span className='flex-1 truncate text-left'>{savePath || homeTitle}</span>
-            </Button>
-          </div>
+            )
+          )}
         </div>
 
-        <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSaving}>
-            {t('common.buttons.cancel')}
-          </Button>
-          <ButtonWithLoading
-            onClick={() => handleSave()}
-            isLoading={isSaving}
-            disabled={!name.trim() || hasInvalidChars}
+        {/* Save Location */}
+        <div className='grid gap-2'>
+          <Label>{t('imageEditor.template.saveLocation')}</Label>
+          <Button
+            type='button'
+            variant='outline'
+            className='justify-start'
+            onClick={() => setFolderDialogOpen(true)}
           >
-            {t('imageEditor.template.saveTemplate')}
-          </ButtonWithLoading>
-        </DialogFooter>
-      </DialogContent>
+            <Folder className='mr-2 h-4 w-4' />
+            <span className='flex-1 truncate text-left'>{savePath || homeTitle}</span>
+          </Button>
+        </div>
+      </div>
+
+      <ResponsiveDialogFooter>
+        <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSaving}>
+          {t('common.buttons.cancel')}
+        </Button>
+        <ButtonWithLoading
+          onClick={() => handleSave()}
+          isLoading={isSaving}
+          disabled={!name.trim() || hasInvalidChars}
+        >
+          {t('imageEditor.template.saveTemplate')}
+        </ButtonWithLoading>
+      </ResponsiveDialogFooter>
 
       {/* Folder Selection Dialog */}
       <FolderSelectionDialog
@@ -285,6 +296,6 @@ export function SaveTemplateDialog({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Dialog>
+    </ResponsiveDialog>
   )
 }

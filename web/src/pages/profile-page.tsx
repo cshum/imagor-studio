@@ -10,13 +10,11 @@ import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+} from '@/components/ui/responsive-dialog'
 import {
   Form,
   FormControl,
@@ -220,101 +218,102 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 {t('pages.profile.passwordDescription')}
               </div>
             </div>
-            <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant='outline' className='sm:ml-4'>
-                  {t('pages.profile.changePassword')}
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{t('pages.profile.changePasswordTitle')}</DialogTitle>
-                  <DialogDescription>
-                    {t('pages.profile.changePasswordDescription')}
-                  </DialogDescription>
-                </DialogHeader>
-                <Form {...passwordForm}>
-                  <form
-                    onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
-                    className='space-y-4'
-                  >
-                    <FormField
-                      control={passwordForm.control}
-                      name='currentPassword'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.profile.currentPassword')}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type='password'
-                              placeholder={t('pages.profile.currentPasswordPlaceholder')}
-                              {...field}
-                              disabled={isUpdatingPassword}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={passwordForm.control}
-                      name='newPassword'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.profile.newPassword')}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type='password'
-                              placeholder={t('pages.profile.newPasswordPlaceholder')}
-                              {...field}
-                              disabled={isUpdatingPassword}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={passwordForm.control}
-                      name='confirmPassword'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.profile.confirmPassword')}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type='password'
-                              placeholder={t('pages.profile.confirmPasswordPlaceholder')}
-                              {...field}
-                              disabled={isUpdatingPassword}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className='flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3'>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        onClick={() => setPasswordDialogOpen(false)}
-                        disabled={isUpdatingPassword}
-                      >
-                        {t('common.buttons.cancel')}
-                      </Button>
-                      <ButtonWithLoading type='submit' isLoading={isUpdatingPassword}>
-                        {t('pages.profile.updatePassword')}
-                      </ButtonWithLoading>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+            <Button
+              variant='outline'
+              className='sm:ml-4'
+              onClick={() => setPasswordDialogOpen(true)}
+            >
+              {t('pages.profile.changePassword')}
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      <ResponsiveDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.profile.changePasswordTitle')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.profile.changePasswordDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <Form {...passwordForm}>
+          <form
+            onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
+            className='space-y-4'
+          >
+            <FormField
+              control={passwordForm.control}
+              name='currentPassword'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.profile.currentPassword')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('pages.profile.currentPasswordPlaceholder')}
+                      {...field}
+                      disabled={isUpdatingPassword}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={passwordForm.control}
+              name='newPassword'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.profile.newPassword')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('pages.profile.newPasswordPlaceholder')}
+                      {...field}
+                      disabled={isUpdatingPassword}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={passwordForm.control}
+              name='confirmPassword'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.profile.confirmPassword')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('pages.profile.confirmPasswordPlaceholder')}
+                      {...field}
+                      disabled={isUpdatingPassword}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className='flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setPasswordDialogOpen(false)}
+                disabled={isUpdatingPassword}
+              >
+                {t('common.buttons.cancel')}
+              </Button>
+              <ButtonWithLoading type='submit' isLoading={isUpdatingPassword}>
+                {t('pages.profile.updatePassword')}
+              </ButtonWithLoading>
+            </div>
+          </form>
+        </Form>
+      </ResponsiveDialog>
     </div>
   )
 }

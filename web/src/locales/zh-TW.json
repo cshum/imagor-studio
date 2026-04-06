@@ -22,7 +22,8 @@
       "close": "關閉",
       "more": "更多",
       "switchTheme": "切換主題",
-      "select": "選擇"
+      "select": "選擇",
+      "back": "返回"
     },
     "navigation": {
       "title": "Imagor Studio",

@@ -10,13 +10,12 @@ import { activateLicense } from '@/api/license-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+} from '@/components/ui/responsive-dialog'
 import {
   Form,
   FormControl,
@@ -104,90 +103,92 @@ export const LicenseUpdateDialog: React.FC<LicenseUpdateDialogProps> = ({
   const isCurrentlyLicensed = currentLicenseType && currentMaskedKey
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
-        <DialogHeader>
-          <DialogTitle>
-            {isCurrentlyLicensed
-              ? t('pages.license.updateLicense')
-              : t('pages.license.activateLicense')}
-          </DialogTitle>
-          <DialogDescription>
-            {isCurrentlyLicensed
-              ? t('pages.license.updateDialogDescription')
-              : t('pages.license.activateDialogDescription')}
-          </DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={handleClose}
+      contentClassName='max-h-[90vh] sm:max-w-2xl overflow-y-auto'
+    >
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>
+          {isCurrentlyLicensed
+            ? t('pages.license.updateLicense')
+            : t('pages.license.activateLicense')}
+        </ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>
+          {isCurrentlyLicensed
+            ? t('pages.license.updateDialogDescription')
+            : t('pages.license.activateDialogDescription')}
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-        <div className='space-y-6'>
-          {/* License Key Form */}
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-              <div className={cn('space-y-6', isLoading && 'opacity-60')}>
-                <FormField
-                  control={form.control}
-                  name='licenseKey'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {isCurrentlyLicensed
-                          ? t('pages.license.newLicenseKeyLabel')
-                          : t('pages.license.licenseKeyLabel')}
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder='IMGR-...'
-                          className='min-h-[120px] resize-none font-mono text-sm'
-                          rows={5}
-                          disabled={isLoading}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {isCurrentlyLicensed
-                          ? t('pages.license.newLicenseKeyDescription')
-                          : t('pages.license.licenseKeyDescription')}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <div className='space-y-6'>
+        {/* License Key Form */}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+            <div className={cn('space-y-6', isLoading && 'opacity-60')}>
+              <FormField
+                control={form.control}
+                name='licenseKey'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {isCurrentlyLicensed
+                        ? t('pages.license.newLicenseKeyLabel')
+                        : t('pages.license.licenseKeyLabel')}
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder='IMGR-...'
+                        className='min-h-[120px] resize-none font-mono text-sm'
+                        rows={5}
+                        disabled={isLoading}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {isCurrentlyLicensed
+                        ? t('pages.license.newLicenseKeyDescription')
+                        : t('pages.license.licenseKeyDescription')}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
+                {error}
               </div>
+            )}
+          </form>
+        </Form>
+      </div>
 
-              {/* Error Message */}
-              {error && (
-                <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
-                  {error}
-                </div>
-              )}
-            </form>
-          </Form>
-        </div>
-
-        <DialogFooter className='flex justify-end gap-3'>
-          {!isCurrentlyLicensed && (
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => {
-                window.open('https://imagor.net/buy/early-bird/', '_blank')
-              }}
-            >
-              {t('pages.license.purchaseLicense')}
-            </Button>
-          )}
-          <ButtonWithLoading
-            type='submit'
-            onClick={form.handleSubmit(handleSubmit)}
-            disabled={!form.formState.isValid}
-            isLoading={isLoading}
+      <ResponsiveDialogFooter className='flex justify-end gap-3'>
+        {!isCurrentlyLicensed && (
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => {
+              window.open('https://imagor.net/buy/early-bird/', '_blank')
+            }}
           >
-            {isCurrentlyLicensed
-              ? t('pages.license.updateLicense')
-              : t('pages.license.activateLicense')}
-          </ButtonWithLoading>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            {t('pages.license.purchaseLicense')}
+          </Button>
+        )}
+        <ButtonWithLoading
+          type='submit'
+          onClick={form.handleSubmit(handleSubmit)}
+          disabled={!form.formState.isValid}
+          isLoading={isLoading}
+        >
+          {isCurrentlyLicensed
+            ? t('pages.license.updateLicense')
+            : t('pages.license.activateLicense')}
+        </ButtonWithLoading>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialog>
   )
 }

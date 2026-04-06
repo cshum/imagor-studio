@@ -22,7 +22,8 @@
       "close": "Close",
       "more": "More",
       "switchTheme": "Switch Theme",
-      "select": "Select"
+      "select": "Select",
+      "back": "Back"
     },
     "language": {
       "title": "Language",

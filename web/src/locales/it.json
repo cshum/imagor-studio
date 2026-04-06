@@ -22,7 +22,8 @@
       "close": "Chiudi",
       "more": "Altro",
       "switchTheme": "Cambia Tema",
-      "select": "Seleziona"
+      "select": "Seleziona",
+      "back": "Indietro"
     },
     "navigation": {
       "title": "Imagor Studio",

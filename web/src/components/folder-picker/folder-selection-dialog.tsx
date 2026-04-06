@@ -5,13 +5,12 @@ import { FolderPlus } from 'lucide-react'
 import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-picker-node.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog.tsx'
+  ResponsiveDialog,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+} from '@/components/ui/responsive-dialog'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import {
   invalidateFolderCache,
@@ -227,59 +226,57 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='w-sm md:w-lg'>
-        <DialogHeader className='min-w-0'>
-          <DialogTitle className='truncate'>{displayTitle}</DialogTitle>
-          <DialogDescription>{dialogDescription}</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange} contentClassName='sm:w-lg'>
+      <ResponsiveDialogHeader className='min-w-0'>
+        <ResponsiveDialogTitle className='truncate'>{displayTitle}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>{dialogDescription}</ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-        <div>
-          <ScrollArea className='border-muted h-96 w-full max-w-[340px] overflow-x-hidden rounded-md border md:max-w-[460px] [&>div>div]:!block [&>div>div]:!min-w-0'>
-            {isLoading ? (
-              <div className='flex h-full items-center justify-center'>
-                <div className='text-muted-foreground text-sm'>{t('common.status.loading')}</div>
+      <div>
+        <ScrollArea className='border-muted h-96 w-full max-w-[340px] overflow-x-hidden rounded-md border md:max-w-[460px] [&>div>div]:!block [&>div>div]:!min-w-0'>
+          {isLoading ? (
+            <div className='flex h-full items-center justify-center'>
+              <div className='text-muted-foreground text-sm'>{t('common.status.loading')}</div>
+            </div>
+          ) : tree.length === 0 ? (
+            <div className='flex h-full items-center justify-center'>
+              <div className='text-muted-foreground text-sm'>
+                {t('components.folderTree.noFoldersFound')}
               </div>
-            ) : tree.length === 0 ? (
-              <div className='flex h-full items-center justify-center'>
-                <div className='text-muted-foreground text-sm'>
-                  {t('components.folderTree.noFoldersFound')}
-                </div>
-              </div>
-            ) : (
-              <div className='w-full min-w-0 space-y-0.5 p-2'>
-                {tree.map((folder) => (
-                  <FolderPickerNode
-                    key={folder.path}
-                    folder={folder}
-                    selectedPath={selectedPath}
-                    excludePaths={excludePathsSet}
-                    onSelect={setSelectedPath}
-                    onUpdateNode={updateNode}
-                  />
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </div>
-
-        <DialogFooter className='flex-row justify-between sm:justify-between'>
-          {showNewFolderButton && onCreateFolder && (
-            <Button variant='outline' onClick={handleCreateFolder} className='gap-2'>
-              <FolderPlus className='h-4 w-4' />
-              {t('pages.gallery.createFolder.newFolder')}
-            </Button>
+            </div>
+          ) : (
+            <div className='w-full min-w-0 space-y-0.5 p-2'>
+              {tree.map((folder) => (
+                <FolderPickerNode
+                  key={folder.path}
+                  folder={folder}
+                  selectedPath={selectedPath}
+                  excludePaths={excludePathsSet}
+                  onSelect={setSelectedPath}
+                  onUpdateNode={updateNode}
+                />
+              ))}
+            </div>
           )}
-          <div className='flex gap-2'>
-            <Button variant='outline' onClick={() => onOpenChange(false)}>
-              {t('common.buttons.cancel')}
-            </Button>
-            <Button onClick={handleSelect} disabled={selectedPath === null}>
-              {buttonText}
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ScrollArea>
+      </div>
+
+      <ResponsiveDialogFooter className='flex-row justify-between sm:justify-between'>
+        {showNewFolderButton && onCreateFolder && (
+          <Button variant='outline' onClick={handleCreateFolder} className='gap-2'>
+            <FolderPlus className='h-4 w-4' />
+            {t('pages.gallery.createFolder.newFolder')}
+          </Button>
+        )}
+        <div className='flex gap-2'>
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
+            {t('common.buttons.cancel')}
+          </Button>
+          <Button onClick={handleSelect} disabled={selectedPath === null}>
+            {buttonText}
+          </Button>
+        </div>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialog>
   )
 }
