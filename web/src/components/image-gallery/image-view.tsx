@@ -92,6 +92,8 @@ export function ImageView({
   const [isVisible, setIsVisible] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isZoomGesture, setIsZoomGesture] = useState(false)
+  const zoomGestureTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   // Auto-hide controls on desktop after inactivity
   const { showControls } = useAutoHideControls({
@@ -177,6 +179,20 @@ export function ImageView({
   const handleNextImage = () => {
     setDirection(1)
     onNextImage?.()
+  }
+
+  const handleWheelOnOverlay = () => {
+    setIsZoomGesture(true)
+    if (zoomGestureTimeoutRef.current) clearTimeout(zoomGestureTimeoutRef.current)
+    zoomGestureTimeoutRef.current = setTimeout(() => setIsZoomGesture(false), 200)
+  }
+
+  const handlePinchStart = (e: React.TouchEvent) => {
+    if (e.touches.length >= 2) setIsZoomGesture(true)
+  }
+
+  const handlePinchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length < 2) setIsZoomGesture(false)
   }
 
   const handleDragStart = () => {
@@ -331,8 +347,12 @@ export function ImageView({
       dragElastic={0.2}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onWheel={handleWheelOnOverlay}
+      onTouchStart={handlePinchStart}
+      onTouchEnd={handlePinchEnd}
       style={{
         cursor: 'grab',
+        pointerEvents: isZoomGesture ? 'none' : 'auto',
       }}
       whileDrag={{
         cursor: 'grabbing',
