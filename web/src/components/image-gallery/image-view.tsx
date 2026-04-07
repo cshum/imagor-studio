@@ -196,18 +196,14 @@ export function ImageView({
     onNextImage?.()
   }
 
+  // ─── Desktop gesture handlers ──────────────────────────────────────────────
+  // On desktop the overlay div intercepts mouse/wheel events for drag & click.
   const handleWheelOnOverlay = () => {
+    // While the user is wheel-zooming, hide the overlay so TransformWrapper
+    // can take over panning. Re-show it shortly after the wheel stops.
     setIsZoomGesture(true)
     if (zoomGestureTimeoutRef.current) clearTimeout(zoomGestureTimeoutRef.current)
     zoomGestureTimeoutRef.current = setTimeout(() => setIsZoomGesture(false), 200)
-  }
-
-  const handlePinchStart = (e: React.TouchEvent) => {
-    if (e.touches.length >= 2) setIsZoomGesture(true)
-  }
-
-  const handlePinchEnd = (e: React.TouchEvent) => {
-    if (e.touches.length < 2) setIsZoomGesture(false)
   }
 
   const handleDragStart = () => {
@@ -218,7 +214,6 @@ export function ImageView({
     const horizontalSwipePower = Math.abs(info.offset.x) * info.velocity.x
     const verticalSwipePower = Math.abs(info.offset.y) * info.velocity.y
 
-    // Handle horizontal swipes for navigation (only when not zoomed and navigation is available)
     if (scale <= 1 && (onPrevImage || onNextImage)) {
       if (horizontalSwipePower < -SWIPE_CONFIDENCE_THRESHOLD && onNextImage) {
         handleNextImage()
@@ -235,26 +230,88 @@ export function ImageView({
       setTimeout(() => setIsDragging(false), 100)
       return
     }
-    // Reset dragging state after a short delay to prevent onClick from firing
     setTimeout(() => setIsDragging(false), 100)
   }
 
   const handleOverlayClick = () => {
-    // Only handle click if we weren't dragging
     if (!isDragging) {
-      // Debounce single click to avoid firing when double-click is detected
       if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current)
       clickTimeoutRef.current = setTimeout(() => {
         if (isFullscreen) {
-          // Exit fullscreen when clicking overlay in fullscreen mode
           toggleFullscreen()
         } else {
-          // Close image view when not in fullscreen
           handleCloseFullView()
         }
       }, 250)
     }
   }
+
+  // ─── Mobile gesture handler ─────────────────────────────────────────────────
+  // On mobile the overlay has pointerEvents:none so TransformWrapper receives
+  // ALL touch events, enabling native pinch-to-zoom.
+  // We detect swipe gestures here via native listeners on the outer container.
+  useEffect(() => {
+    if (isDesktop) return
+    const container = overlayRef.current
+    if (!container) return
+
+    let startX = 0
+    let startY = 0
+    let startTime = 0
+    let isPinch = false // true as soon as a second finger joins
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        // Fresh single-finger gesture: record start position
+        startX = e.touches[0].clientX
+        startY = e.touches[0].clientY
+        startTime = Date.now()
+        isPinch = false
+      } else {
+        // Second (or more) finger joined → this is a pinch, not a swipe
+        isPinch = true
+      }
+    }
+
+    const onTouchEnd = (e: TouchEvent) => {
+      // Ignore if this was a multi-touch (pinch) gesture
+      if (isPinch) return
+      // Ignore touches that originated on an interactive element (buttons etc.)
+      const target = e.target as HTMLElement
+      if (target.closest('button, a, [role="button"]')) return
+      // Ignore if zoomed in — TransformWrapper handles panning
+      if (scale > 1) return
+
+      const touch = e.changedTouches[0]
+      const dx = touch.clientX - startX
+      const dy = touch.clientY - startY
+      const dt = Date.now() - startTime
+
+      if (dt > 600) return // too slow to be a swipe
+
+      const absDx = Math.abs(dx)
+      const absDy = Math.abs(dy)
+
+      // Horizontal swipe → navigate (need clear horizontal intent)
+      if (absDx > 60 && absDx > absDy * 2) {
+        if (dx < 0 && onNextImage) handleNextImage()
+        else if (dx > 0 && onPrevImage) handlePrevImage()
+        return
+      }
+
+      // Swipe down → close
+      if (dy > 100 && absDy > absDx * 2) {
+        handleCloseFullView()
+      }
+    }
+
+    container.addEventListener('touchstart', onTouchStart, { passive: true })
+    container.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      container.removeEventListener('touchstart', onTouchStart)
+      container.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [isDesktop, scale, onPrevImage, onNextImage])
 
   const handleOverlayDoubleClick = () => {
     // Cancel the pending single-click action
@@ -367,25 +424,23 @@ export function ImageView({
     }),
   }
 
+  // Desktop only: overlay intercepts mouse events for click-to-close and drag-to-navigate.
+  // On mobile: pointerEvents:none — TransformWrapper handles all touch events directly.
   const overlayHandler = (
     <motion.div
       className='absolute top-0 right-0 bottom-0 left-0 z-1'
-      onClick={handleOverlayClick}
-      drag={onPrevImage || onNextImage ? true : 'y'}
+      onClick={isDesktop ? handleOverlayClick : undefined}
+      drag={isDesktop ? (onPrevImage || onNextImage ? true : 'y') : false}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.2}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onWheel={handleWheelOnOverlay}
-      onTouchStart={handlePinchStart}
-      onTouchEnd={handlePinchEnd}
+      onDragStart={isDesktop ? handleDragStart : undefined}
+      onDragEnd={isDesktop ? handleDragEnd : undefined}
+      onWheel={isDesktop ? handleWheelOnOverlay : undefined}
       style={{
-        cursor: 'grab',
-        pointerEvents: isZoomGesture || scale > 1 ? 'none' : 'auto',
+        cursor: isDesktop ? 'grab' : 'default',
+        pointerEvents: !isDesktop || isZoomGesture || scale > 1 ? 'none' : 'auto',
       }}
-      whileDrag={{
-        cursor: 'grabbing',
-      }}
+      whileDrag={isDesktop ? { cursor: 'grabbing' } : undefined}
     />
   )
 
@@ -446,6 +501,7 @@ export function ImageView({
               smooth={true}
               wheel={{ step: 0.05 }}
               pinch={{ step: 0.05 }}
+              panning={{ disabled: scale <= 1 }}
               ref={transformComponentRef}
             >
               {({ zoomIn, resetTransform }) => (
