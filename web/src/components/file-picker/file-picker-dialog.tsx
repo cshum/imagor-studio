@@ -6,12 +6,13 @@ import { statFile } from '@/api/storage-api'
 import { FilePickerContent } from '@/components/file-picker/file-picker-content'
 import { Button } from '@/components/ui/button'
 import {
-  ResponsiveDialog,
-  ResponsiveDialogDescription,
-  ResponsiveDialogFooter,
-  ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
-} from '@/components/ui/responsive-dialog'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useAuth } from '@/stores/auth-store'
 import { loadRootFolders } from '@/stores/folder-tree-store'
 
@@ -159,63 +160,63 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   }
 
   return (
-    <ResponsiveDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      contentClassName='bg-sidebar flex h-[80vh] max-w-7xl flex-col gap-0 p-0'
-    >
-      <ResponsiveDialogHeader className='relative p-6'>
-        <ResponsiveDialogTitle>{dialogTitle}</ResponsiveDialogTitle>
-        <ResponsiveDialogDescription>{dialogDescription}</ResponsiveDialogDescription>
-      </ResponsiveDialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className='bg-sidebar flex h-[80vh] max-w-7xl flex-col gap-0 p-0'>
+          <DialogHeader className='relative p-6'>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogDescription>{dialogDescription}</DialogDescription>
+          </DialogHeader>
 
-      <div className='min-h-0 flex-1 overflow-hidden'>
-        <FilePickerContent
-          currentPath={currentPath}
-          selectedPaths={selectedPaths}
-          fileType={fileType}
-          fileExtensions={fileExtensions}
-          maxItemWidth={maxItemWidth}
-          onPathChange={handlePathChange}
-          onSelectionChange={handleSelectionChange}
-        />
-      </div>
+          <div className='min-h-0 flex-1 overflow-hidden'>
+            <FilePickerContent
+              currentPath={currentPath}
+              selectedPaths={selectedPaths}
+              fileType={fileType}
+              fileExtensions={fileExtensions}
+              maxItemWidth={maxItemWidth}
+              onPathChange={handlePathChange}
+              onSelectionChange={handleSelectionChange}
+            />
+          </div>
 
-      <ResponsiveDialogFooter className='flex-row justify-between p-4 sm:justify-between'>
-        {/* Left side - Selection info */}
-        <div className='flex items-center gap-4'>
-          {selectionMode === 'single' ? (
-            // Single selection: show filename
-            <span className='text-muted-foreground max-w-sm truncate text-sm md:inline'>
-              {Array.from(selectedPaths)[0]?.split('/').pop()}
-            </span>
-          ) : selectionMode === 'multiple' ? (
-            // Multiple selection: reset button + counter
-            <>
-              <Button
-                variant='outline'
-                disabled={selectedPaths.size === 0}
-                onClick={() => setSelectedPaths(new Set())}
-              >
-                {t('components.filePicker.resetSelection')}
+          <DialogFooter className='flex-row justify-between p-4 sm:justify-between'>
+            {/* Left side - Selection info */}
+            <div className='flex items-center gap-4'>
+              {selectionMode === 'single' ? (
+                // Single selection: show filename
+                <span className='text-muted-foreground max-w-sm truncate text-sm md:inline'>
+                  {Array.from(selectedPaths)[0]?.split('/').pop()}
+                </span>
+              ) : selectionMode === 'multiple' ? (
+                // Multiple selection: reset button + counter
+                <>
+                  <Button
+                    variant='outline'
+                    disabled={selectedPaths.size === 0}
+                    onClick={() => setSelectedPaths(new Set())}
+                  >
+                    {t('components.filePicker.resetSelection')}
+                  </Button>
+                  <span className='text-muted-foreground hidden text-sm md:inline'>
+                    {t('components.filePicker.selectedCount', { count: selectedPaths.size })}
+                  </span>
+                </>
+              ) : null}
+            </div>
+
+            {/* Right side - Action buttons */}
+            <div className='flex gap-2'>
+              <Button variant='outline' onClick={handleCancel}>
+                {t('common.buttons.cancel')}
               </Button>
-              <span className='text-muted-foreground hidden text-sm md:inline'>
-                {t('components.filePicker.selectedCount', { count: selectedPaths.size })}
-              </span>
-            </>
-          ) : null}
-        </div>
-
-        {/* Right side - Action buttons */}
-        <div className='flex gap-2'>
-          <Button variant='outline' onClick={handleCancel}>
-            {t('common.buttons.cancel')}
-          </Button>
-          <Button onClick={handleConfirm} disabled={selectedPaths.size === 0}>
-            {buttonText}
-          </Button>
-        </div>
-      </ResponsiveDialogFooter>
-    </ResponsiveDialog>
+              <Button onClick={handleConfirm} disabled={selectedPaths.size === 0}>
+                {buttonText}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

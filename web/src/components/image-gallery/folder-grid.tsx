@@ -201,7 +201,7 @@ const FolderCard = ({
         <span className='truncate text-sm font-medium'>{folder.galleryName}</span>
         {renderMenuItems && (
           <div
-            className='pointer-events-none absolute right-2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100'
+            className='touch-device:pointer-events-auto touch-device:opacity-100 pointer-events-none absolute right-2 opacity-0 transition-opacity group-hover/folder:pointer-events-auto group-hover/folder:opacity-100'
             onClick={(e) => e.stopPropagation()}
           >
             <DropdownMenu modal={false}>
