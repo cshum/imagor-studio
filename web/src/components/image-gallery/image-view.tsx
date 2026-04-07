@@ -300,7 +300,7 @@ export function ImageView({
       }
 
       // Swipe down → close
-      if (dy > 100 && absDy > absDx * 2) {
+      if (absDy > 100 && absDy > absDx * 2) {
         handleCloseFullView()
       }
     }
