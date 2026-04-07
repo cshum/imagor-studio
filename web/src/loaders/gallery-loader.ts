@@ -268,12 +268,13 @@ export const imageLoader = async ({
 
   const isVideo = hasExtension(fileStat.name, videoExtensions)
 
-  // Use the full-size thumbnail URL for the detail view (same for both images and videos)
-  const fullSizeSrc = getFullImageUrl(
-    fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
+  // Preload the preview (1200px) for fast initial display
+  const previewSrc = getFullImageUrl(
+    fileStat.thumbnailUrls.preview || fileStat.thumbnailUrls.full || '',
   )
+  const fullViewSrc = getFullImageUrl(fileStat.thumbnailUrls.full || '')
 
-  const imageElement = await preloadImage(fullSizeSrc)
+  const imageElement = await preloadImage(previewSrc)
 
   // Fetch real metadata from imagor meta API (works for both images and videos)
   let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
@@ -288,7 +289,8 @@ export const imageLoader = async ({
 
   const image: GalleryImage = {
     imageKey: fileStat.name,
-    imageSrc: fullSizeSrc,
+    imageSrc: previewSrc,
+    fullSrc: fullViewSrc || undefined,
     originalSrc: getFullImageUrl(fileStat.thumbnailUrls.original || ''),
     imageName: fileStat.name,
     isVideo,

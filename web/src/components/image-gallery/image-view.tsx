@@ -29,6 +29,7 @@ export interface GalleryImage {
   isVideo?: boolean
   isTemplate?: boolean
   originalSrc?: string
+  fullSrc?: string
   imageInfo?: ImageInfo
 }
 
@@ -95,6 +96,8 @@ export function ImageView({
   const [isZoomGesture, setIsZoomGesture] = useState(false)
   const zoomGestureTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
+  const [displaySrc, setDisplaySrc] = useState(image.imageSrc)
+  const fullLoadedRef = useRef(false)
 
   // Auto-hide controls on desktop after inactivity
   const { showControls } = useAutoHideControls({
@@ -128,6 +131,25 @@ export function ImageView({
       overlay.removeEventListener('dblclick', handleDblClick)
     }
   }, [scale, image.isVideo])
+
+  // Reset displaySrc when image changes
+  useEffect(() => {
+    setDisplaySrc(image.imageSrc)
+    fullLoadedRef.current = false
+  }, [image.imageSrc])
+
+  // Progressive full-resolution loading: silently upgrade to fullSrc when display exceeds preview quality
+  useEffect(() => {
+    if (!image.fullSrc || fullLoadedRef.current) return
+    if (scale * dimensions.width * (window.devicePixelRatio || 1) > 1200) {
+      const img = new Image()
+      img.onload = () => {
+        setDisplaySrc(image.fullSrc!)
+        fullLoadedRef.current = true
+      }
+      img.src = image.fullSrc
+    }
+  }, [scale, dimensions.width, image.fullSrc])
 
   // Manage HTML overflow to prevent background scrolling
   useEffect(() => {
@@ -509,7 +531,7 @@ export function ImageView({
                           </>
                         ) : (
                           <motion.img
-                            src={image.imageSrc}
+                            src={displaySrc}
                             alt={image.imageName}
                             initial={{
                               width: initialPosition.width,
@@ -572,7 +594,7 @@ export function ImageView({
                           </>
                         ) : (
                           <motion.img
-                            src={image.imageSrc}
+                            src={displaySrc}
                             alt={image.imageName}
                             initial={false}
                             animate={{

@@ -351,8 +351,8 @@ func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos str
 	})
 
 	fullURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
-		Width:   2400,
-		Height:  1800,
+		Width:   3840,
+		Height:  2880,
 		FitIn:   true,
 		Filters: buildFilters("95"),
 	})

@@ -281,14 +281,14 @@ func TestGenerateThumbnailUrls(t *testing.T) {
 		}).Return("/imagor/fit-in/1200x900/filters:quality(90):format(webp)/test/image.jpg", nil)
 
 		mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
-			Width:  2400,
-			Height: 1800,
+			Width:  3840,
+			Height: 2880,
 			FitIn:  true,
 			Filters: imagorpath.Filters{
 				{Name: "quality", Args: "95"},
 				{Name: "format", Args: "webp"},
 			},
-		}).Return("/imagor/fit-in/2400x1800/filters:quality(95):format(webp)/test/image.jpg", nil)
+		}).Return("/imagor/fit-in/3840x2880/filters:quality(95):format(webp)/test/image.jpg", nil)
 
 		mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
 			Filters: imagorpath.Filters{
@@ -462,8 +462,8 @@ func TestGenerateThumbnailUrls_WithVideoThumbnailPosition(t *testing.T) {
 			}).Return(previewURL, nil)
 
 			mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
-				Width:   2400,
-				Height:  1800,
+				Width:   3840,
+				Height:  2880,
 				FitIn:   true,
 				Filters: fullFilters,
 			}).Return(fullURL, nil)
@@ -621,8 +621,8 @@ func TestGenerateThumbnailUrls_WithSvgAndPdf(t *testing.T) {
 			}).Return(previewURL, nil)
 
 			mockImagorProvider.On("GenerateURL", tt.imagePath, imagorpath.Params{
-				Width:   2400,
-				Height:  1800,
+				Width:   3840,
+				Height:  2880,
 				FitIn:   true,
 				Filters: fullFilters,
 			}).Return(fullURL, nil)
@@ -708,14 +708,14 @@ func TestGenerateThumbnailUrls_TemplateFile(t *testing.T) {
 	}).Return("/imagor/fit-in/1200x900/filters:quality(90):format(webp)/test.imagor.preview", nil)
 
 	mockImagorProvider.On("GenerateURL", previewPath, imagorpath.Params{
-		Width:  2400,
-		Height: 1800,
+		Width:  3840,
+		Height: 2880,
 		FitIn:  true,
 		Filters: imagorpath.Filters{
 			{Name: "quality", Args: "95"},
 			{Name: "format", Args: "webp"},
 		},
-	}).Return("/imagor/fit-in/2400x1800/filters:quality(95):format(webp)/test.imagor.preview", nil)
+	}).Return("/imagor/fit-in/3840x2880/filters:quality(95):format(webp)/test.imagor.preview", nil)
 
 	mockImagorProvider.On("GenerateURL", previewPath, imagorpath.Params{
 		Filters: imagorpath.Filters{{Name: "raw"}},
