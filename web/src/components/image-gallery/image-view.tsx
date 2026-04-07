@@ -293,7 +293,7 @@ export function ImageView({
       const absDy = Math.abs(dy)
 
       // Horizontal swipe → navigate (need clear horizontal intent)
-      if (absDx > 60 && absDx > absDy * 2) {
+      if (absDx > 60 && absDx > absDy * 1.5) {
         if (dx < 0 && onNextImage) handleNextImage()
         else if (dx > 0 && onPrevImage) handlePrevImage()
         return
