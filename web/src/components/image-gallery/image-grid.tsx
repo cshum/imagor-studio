@@ -245,7 +245,7 @@ const ImageCell = ({
             >
               <DropdownMenuTrigger asChild>
                 <div
-                  className='cursor-pointer rounded-full bg-black/30 p-1.5 touch-manipulation transition-all hover:bg-black/60'
+                  className='cursor-pointer touch-manipulation rounded-full bg-black/30 p-1.5 transition-all hover:bg-black/60'
                   role='button'
                   aria-label='More options'
                   tabIndex={-1}
