@@ -39,13 +39,22 @@ export function useProgressiveImage(
 ): string {
   const initialSrc = preloadedSrc ?? sources[0]?.src ?? ''
   const [displaySrc, setDisplaySrc] = useState(initialSrc)
-  const loadedRef = useRef<Set<string>>(new Set(preloadedSrc ? [preloadedSrc] : []))
+
+  // Pre-seed loadedRef with the preloaded tier AND all tiers below it —
+  // no need to (re-)fetch lower tiers when we already have a higher-quality one.
+  const seedLoaded = (baseSrc: string) => {
+    const idx = sources.findIndex((s) => s.src === baseSrc)
+    return new Set(
+      idx >= 0 ? sources.slice(0, idx + 1).map((s) => s.src) : baseSrc ? [baseSrc] : [],
+    )
+  }
+  const loadedRef = useRef<Set<string>>(seedLoaded(initialSrc))
 
   // Reset when the base image or preloaded src changes
   useEffect(() => {
     const baseSrc = preloadedSrc ?? sources[0]?.src ?? ''
     setDisplaySrc(baseSrc)
-    loadedRef.current = new Set(baseSrc ? [baseSrc] : [])
+    loadedRef.current = seedLoaded(baseSrc)
   }, [preloadedSrc ?? sources[0]?.src]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check tiers whenever scale or dimensions change and trigger background loads

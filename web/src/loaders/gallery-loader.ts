@@ -2,9 +2,9 @@ import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/regist
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
-import { ImageSource } from '@/hooks/use-progressive-image.ts'
 import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
+import { ImageSource } from '@/hooks/use-progressive-image.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { hasExtension } from '@/lib/file-extensions.ts'
@@ -284,28 +284,16 @@ export const imageLoader = async ({
       ]
     : []
 
-  // Pick the appropriate initial tier based on the image's longest displayed edge × DPR:
-  // compute display dimensions from imageElement aspect ratio + screen size
+  // Pick the appropriate initial tier based on screen's longest physical edge × DPR.
+  // Using max(innerWidth, innerHeight) covers both portrait and landscape orientations
+  // without needing to preload for aspect-ratio — all tiers share the same aspect ratio.
   const dpr = window.devicePixelRatio || 1
-  const previewEl = await preloadImage(previewSrc)
-  const imageAspect = previewEl.width / previewEl.height
-  const screenAspect = window.innerWidth / window.innerHeight
-  const displayWidth =
-    imageAspect > screenAspect ? window.innerWidth : window.innerHeight * imageAspect
-  const displayHeight =
-    imageAspect > screenAspect ? window.innerWidth / imageAspect : window.innerHeight
-  const longestEdge = Math.max(displayWidth, displayHeight)
-  const physicalPixels = longestEdge * dpr
+  const screenPhysical = Math.max(window.innerWidth, window.innerHeight) * dpr
+  const initialTier = imageSources.find((s) => s.maxWidth >= screenPhysical) ??
+    imageSources[imageSources.length - 1] ?? { src: previewSrc, maxWidth: 1200 }
 
-  // Find smallest tier whose maxWidth covers the current screen (no swap needed on first render)
-  const initialTier =
-    imageSources.find((s) => s.maxWidth >= physicalPixels) ??
-    imageSources[imageSources.length - 1] ??
-    { src: previewSrc, maxWidth: 1200 }
-
-  // Preload the chosen initial tier (if it's not already the preview we just fetched)
-  const imageElement =
-    initialTier.src === previewSrc ? previewEl : await preloadImage(initialTier.src)
+  // Single preload — no sequential double-download
+  const imageElement = await preloadImage(initialTier.src)
 
   // Fetch real metadata from imagor meta API (works for both images and videos)
   let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
