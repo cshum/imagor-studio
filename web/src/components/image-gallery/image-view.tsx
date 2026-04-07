@@ -20,6 +20,7 @@ import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Sheet } from '@/components/ui/sheet'
 import { useAutoHideControls } from '@/hooks/use-auto-hide-controls'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
+import { useProgressiveImage } from '@/hooks/use-progressive-image'
 import { useAuth } from '@/stores/auth-store'
 
 export interface GalleryImage {
@@ -96,9 +97,16 @@ export function ImageView({
   const [isZoomGesture, setIsZoomGesture] = useState(false)
   const zoomGestureTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
-  const [displaySrc, setDisplaySrc] = useState(image.imageSrc)
-  const fullLoadedRef = useRef(false)
-  const originalLoadedRef = useRef(false)
+
+  const displaySrc = useProgressiveImage(
+    [
+      { src: image.imageSrc, threshold: 0 },
+      ...(image.fullSrc ? [{ src: image.fullSrc, threshold: 1200 }] : []),
+      ...(!image.isVideo && image.originalSrc ? [{ src: image.originalSrc, threshold: 3840 }] : []),
+    ],
+    dimensions.width,
+    scale,
+  )
 
   // Auto-hide controls on desktop after inactivity
   const { showControls } = useAutoHideControls({
@@ -132,39 +140,6 @@ export function ImageView({
       overlay.removeEventListener('dblclick', handleDblClick)
     }
   }, [scale, image.isVideo])
-
-  // Reset displaySrc when image changes
-  useEffect(() => {
-    setDisplaySrc(image.imageSrc)
-    fullLoadedRef.current = false
-    originalLoadedRef.current = false
-  }, [image.imageSrc])
-
-  // Tier 2: silently upgrade to fullSrc (3840px) when display exceeds preview (1200px) quality
-  useEffect(() => {
-    if (!image.fullSrc || fullLoadedRef.current) return
-    if (scale * dimensions.width * (window.devicePixelRatio || 1) > 1200) {
-      const img = new Image()
-      img.onload = () => {
-        setDisplaySrc(image.fullSrc!)
-        fullLoadedRef.current = true
-      }
-      img.src = image.fullSrc
-    }
-  }, [scale, dimensions.width, image.fullSrc])
-
-  // Tier 3: silently upgrade to originalSrc when display exceeds full (3840px) quality
-  useEffect(() => {
-    if (!image.originalSrc || image.isVideo || originalLoadedRef.current) return
-    if (scale * dimensions.width * (window.devicePixelRatio || 1) > 3840) {
-      const img = new Image()
-      img.onload = () => {
-        setDisplaySrc(image.originalSrc!)
-        originalLoadedRef.current = true
-      }
-      img.src = image.originalSrc
-    }
-  }, [scale, dimensions.width, image.originalSrc, image.isVideo])
 
   // Manage HTML overflow to prevent background scrolling
   useEffect(() => {
