@@ -6,8 +6,9 @@ import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { ImageSource } from '@/hooks/use-progressive-image.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
-import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
+import { convertMetadataToImageInfo, fetchImageMetadata, ImagorMetadata } from '@/lib/exif-utils.ts'
 import { hasExtension } from '@/lib/file-extensions.ts'
+import { computeFitDimensions } from '@/lib/image-utils.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
 import { getAuth } from '@/stores/auth-store.ts'
 import { FolderNode, folderTreeStore, updateTreeData } from '@/stores/folder-tree-store.ts'
@@ -284,27 +285,42 @@ export const imageLoader = async ({
       ]
     : []
 
-  // Pick the appropriate initial tier based on screen's longest physical edge × DPR.
-  // Using max(innerWidth, innerHeight) covers both portrait and landscape orientations
-  // without needing to preload for aspect-ratio — all tiers share the same aspect ratio.
-  const dpr = window.devicePixelRatio || 1
-  const screenPhysical = Math.max(window.innerWidth, window.innerHeight) * dpr
-  const initialTier = imageSources.find((s) => s.maxWidth >= screenPhysical) ??
-    imageSources[imageSources.length - 1] ?? { src: previewSrc, maxWidth: 1200 }
-
-  // Single preload — no sequential double-download
-  const imageElement = await preloadImage(initialTier.src)
-
-  // Fetch real metadata from imagor meta API (works for both images and videos)
-  let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
+  // Fetch metadata FIRST (tiny JSON, already needed for imageInfo).
+  // metadata.width/height lets us compute the exact fit-to-screen display size
+  // and pick the right resolution tier without guesswork or double-downloading.
+  let metadata: ImagorMetadata | null = null
   if (fileStat.thumbnailUrls.meta) {
     try {
-      const metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
-      imageInfo = convertMetadataToImageInfo(metadata, fileStat.name, galleryKey)
+      metadata = await fetchImageMetadata(getFullImageUrl(fileStat.thumbnailUrls.meta))
     } catch {
-      // Fall back to basic info without metadata
+      // metadata unavailable — fall back to screen-width heuristic below
     }
   }
+  const imageInfo = convertMetadataToImageInfo(metadata, fileStat.name, galleryKey)
+
+  // Compute the longest displayed physical edge using the actual image aspect ratio.
+  // Mirrors the fit-to-window logic used in ImageView.calculateDimensions.
+  const dpr = window.devicePixelRatio || 1
+  let longestDisplayedPhysical: number
+  if (metadata?.width && metadata?.height) {
+    const { width: displayW, height: displayH } = computeFitDimensions(
+      metadata.width,
+      metadata.height,
+      window.innerWidth,
+      window.innerHeight,
+    )
+    longestDisplayedPhysical = Math.max(displayW, displayH) * dpr
+  } else {
+    // No metadata — conservative fallback using screen width only
+    longestDisplayedPhysical = window.innerWidth * dpr
+  }
+
+  // Pick the smallest tier whose maxWidth covers the actual displayed physical pixels
+  const initialTier = imageSources.find((s) => s.maxWidth >= longestDisplayedPhysical) ??
+    imageSources[imageSources.length - 1] ?? { src: previewSrc, maxWidth: 1200 }
+
+  // Single preload of the exact right tier
+  const imageElement = await preloadImage(initialTier.src)
 
   const image: GalleryImage = {
     imageKey: fileStat.name,
@@ -314,6 +330,10 @@ export const imageLoader = async ({
     imageName: fileStat.name,
     isVideo,
     imageInfo,
+    // Pass original pixel dimensions so ImageView uses the real aspect ratio for
+    // display-size calculations, not the (smaller) thumbnail's pixel dimensions.
+    imageNaturalWidth: metadata?.width,
+    imageNaturalHeight: metadata?.height,
   }
 
   return {

@@ -21,6 +21,7 @@ import { Sheet } from '@/components/ui/sheet'
 import { useAutoHideControls } from '@/hooks/use-auto-hide-controls'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { ImageSource, useProgressiveImage } from '@/hooks/use-progressive-image'
+import { computeFitDimensions } from '@/lib/image-utils'
 import { useAuth } from '@/stores/auth-store'
 
 export interface GalleryImage {
@@ -34,6 +35,9 @@ export interface GalleryImage {
   /** Video stream URL (videos only) */
   videoSrc?: string
   imageInfo?: ImageInfo
+  /** Original image pixel dimensions from metadata (not the thumbnail file dimensions) */
+  imageNaturalWidth?: number
+  imageNaturalHeight?: number
 }
 
 export interface Position {
@@ -84,11 +88,22 @@ export function ImageView({
   const transformComponentRef = useRef<ReactZoomPanPinchRef>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  const [dimensions, setDimensions] = useState<ImageDimensions>({
-    width: 0,
-    height: 0,
-    naturalWidth: 0,
-    naturalHeight: 0,
+  const [dimensions, setDimensions] = useState<ImageDimensions>(() => {
+    const imgW = image.imageNaturalWidth ?? imageElement.width
+    const imgH = image.imageNaturalHeight ?? imageElement.height
+    // isInfoOpen is false on mount, so no panel-offset needed for the initial computation.
+    const { width, height } = computeFitDimensions(
+      imgW,
+      imgH,
+      window.innerWidth,
+      window.innerHeight,
+    )
+    return {
+      width: Math.round(width),
+      height: Math.round(height),
+      naturalWidth: imgW,
+      naturalHeight: imgH,
+    }
   })
   const [isInfoOpen, setIsInfoOpen] = useState(false)
   const isDesktop = useBreakpoint('md')
@@ -99,6 +114,8 @@ export function ImageView({
   const [isZoomGesture, setIsZoomGesture] = useState(false)
   const zoomGestureTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
+  const wasPinchingRef = useRef(false)
+  const pinchEndTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   const displaySrc = useProgressiveImage(
     image.imageSources ?? [],
@@ -164,29 +181,20 @@ export function ImageView({
   useEffect(() => {
     const calculateDimensions = () => {
       const img = imageElement
-      const windowWidth = window.innerWidth - (isInfoOpen && isDesktop ? 300 : 0)
-      const windowHeight = window.innerHeight
-      const imageAspectRatio = img.width / img.height
-      const windowAspectRatio = windowWidth / windowHeight
-
-      let newWidth: number, newHeight: number
-
-      if (img.width <= windowWidth && img.height <= windowHeight) {
-        newWidth = img.width
-        newHeight = img.height
-      } else if (imageAspectRatio > windowAspectRatio) {
-        newWidth = windowWidth
-        newHeight = windowWidth / imageAspectRatio
-      } else {
-        newHeight = windowHeight
-        newWidth = windowHeight * imageAspectRatio
-      }
-
+      const containerW = window.innerWidth - (isInfoOpen && isDesktop ? 300 : 0)
+      const containerH = window.innerHeight
+      // Use the original image dimensions from metadata when available.
+      // imageElement may be a lower-res thumbnail (e.g. preview at 1200px) whose pixel
+      // dimensions would incorrectly trigger the natural-size branch of computeFitDimensions,
+      // capping display at 1200×900 even on large/fullscreen containers.
+      const imgW = image.imageNaturalWidth ?? img.width
+      const imgH = image.imageNaturalHeight ?? img.height
+      const { width, height } = computeFitDimensions(imgW, imgH, containerW, containerH)
       setDimensions({
-        width: Math.round(newWidth),
-        height: Math.round(newHeight),
-        naturalWidth: img.width,
-        naturalHeight: img.height,
+        width: Math.round(width),
+        height: Math.round(height),
+        naturalWidth: imgW,
+        naturalHeight: imgH,
       })
     }
     calculateDimensions()
@@ -215,11 +223,23 @@ export function ImageView({
   }
 
   const handlePinchStart = (e: React.TouchEvent) => {
-    if (e.touches.length >= 2) setIsZoomGesture(true)
+    if (e.touches.length >= 2) {
+      setIsZoomGesture(true)
+      wasPinchingRef.current = true
+      if (pinchEndTimeoutRef.current) clearTimeout(pinchEndTimeoutRef.current)
+    }
   }
 
   const handlePinchEnd = (e: React.TouchEvent) => {
-    if (e.touches.length < 2) setIsZoomGesture(false)
+    if (e.touches.length < 2) {
+      setIsZoomGesture(false)
+      // Keep wasPinching true for 300ms to swallow the synthetic click that
+      // fires after a pinch gesture ends on iOS/Android
+      if (pinchEndTimeoutRef.current) clearTimeout(pinchEndTimeoutRef.current)
+      pinchEndTimeoutRef.current = setTimeout(() => {
+        wasPinchingRef.current = false
+      }, 300)
+    }
   }
 
   const handleDragStart = () => {
@@ -252,6 +272,8 @@ export function ImageView({
   }
 
   const handleOverlayClick = () => {
+    // Swallow clicks that are the synthetic tap fired right after a pinch gesture
+    if (wasPinchingRef.current) return
     // Only handle click if we weren't dragging
     if (!isDragging) {
       // Debounce single click to avoid firing when double-click is detected

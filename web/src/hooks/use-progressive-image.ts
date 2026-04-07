@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { preloadImage } from '@/lib/preload-image'
+
 export interface ImageSource {
   /** URL of the image at this resolution tier */
   src: string
@@ -38,7 +40,6 @@ export function useProgressiveImage(
   preloadedSrc?: string,
 ): string {
   const initialSrc = preloadedSrc ?? sources[0]?.src ?? ''
-  const [displaySrc, setDisplaySrc] = useState(initialSrc)
 
   // Pre-seed loadedRef with the preloaded tier AND all tiers below it —
   // no need to (re-)fetch lower tiers when we already have a higher-quality one.
@@ -48,14 +49,21 @@ export function useProgressiveImage(
       idx >= 0 ? sources.slice(0, idx + 1).map((s) => s.src) : baseSrc ? [baseSrc] : [],
     )
   }
-  const loadedRef = useRef<Set<string>>(seedLoaded(initialSrc))
 
-  // Reset when the base image or preloaded src changes
-  useEffect(() => {
-    const baseSrc = preloadedSrc ?? sources[0]?.src ?? ''
-    setDisplaySrc(baseSrc)
-    loadedRef.current = seedLoaded(baseSrc)
-  }, [preloadedSrc ?? sources[0]?.src]) // eslint-disable-line react-hooks/exhaustive-deps
+  const [displaySrc, setDisplaySrc] = useState(initialSrc)
+  const loadedRef = useRef<Set<string>>(seedLoaded(initialSrc))
+  const prevSrcRef = useRef(initialSrc)
+
+  // Derived state: reset displaySrc and loadedRef synchronously when preloadedSrc changes.
+  // Calling setDisplaySrc *during render* tells React to discard the current render and
+  // immediately re-render with the new state — the user never sees an intermediate frame
+  // with the old URL. This replaces the previous useEffect-based reset which caused a
+  // one-frame flash of the old image when navigating to the next/previous image.
+  if (prevSrcRef.current !== initialSrc) {
+    prevSrcRef.current = initialSrc
+    setDisplaySrc(initialSrc)
+    loadedRef.current = seedLoaded(initialSrc)
+  }
 
   // Check tiers whenever scale or dimensions change and trigger background loads
   useEffect(() => {
@@ -70,16 +78,16 @@ export function useProgressiveImage(
       // Upgrade threshold: previous tier's maxWidth (tier[0] is always eligible)
       const threshold = index === 0 ? 0 : (sources[index - 1].maxWidth ?? 0)
       if (physicalPixels > threshold) {
-        const img = new Image()
-        img.onload = () => {
+        // Use preloadImage (with <link rel="preload"> hint) so Safari shares the
+        // fetch result with the <img> DOM element — prevents re-download / flash.
+        preloadImage(src).then(() => {
           loadedRef.current.add(src)
           // Upgrade displaySrc only if this is a higher tier than currently shown
           setDisplaySrc((current) => {
             const currentIndex = sources.findIndex((s) => s.src === current)
             return index > currentIndex ? src : current
           })
-        }
-        img.src = src
+        })
       }
     })
   }, [scale, displayWidth, displayHeight, sources])
