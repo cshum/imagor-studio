@@ -268,13 +268,18 @@ export const imageLoader = async ({
 
   const isVideo = hasExtension(fileStat.name, videoExtensions)
 
-  // Preload the preview (1200px) for fast initial display
   const previewSrc = getFullImageUrl(
     fileStat.thumbnailUrls.preview || fileStat.thumbnailUrls.full || '',
   )
   const fullViewSrc = getFullImageUrl(fileStat.thumbnailUrls.full || '')
 
-  const imageElement = await preloadImage(previewSrc)
+  // Pick the right initial tier based on screen physical pixels at load time:
+  // desktop/Retina (physical px > 1200) starts at full (3840px) directly,
+  // mobile starts at preview (1200px) and upgrades on zoom.
+  const physicalPixels = window.innerWidth * (window.devicePixelRatio || 1)
+  const initialSrc = physicalPixels > 1200 && fullViewSrc ? fullViewSrc : previewSrc
+
+  const imageElement = await preloadImage(initialSrc)
 
   // Fetch real metadata from imagor meta API (works for both images and videos)
   let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
@@ -289,8 +294,9 @@ export const imageLoader = async ({
 
   const image: GalleryImage = {
     imageKey: fileStat.name,
-    imageSrc: previewSrc,
-    fullSrc: fullViewSrc || undefined,
+    imageSrc: initialSrc,
+    // fullSrc only needed if we started at preview (mobile); desktop already at full tier
+    fullSrc: initialSrc === previewSrc ? fullViewSrc || undefined : undefined,
     originalSrc: getFullImageUrl(fileStat.thumbnailUrls.original || ''),
     imageName: fileStat.name,
     isVideo,

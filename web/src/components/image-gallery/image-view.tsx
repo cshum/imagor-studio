@@ -98,6 +98,7 @@ export function ImageView({
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
   const [displaySrc, setDisplaySrc] = useState(image.imageSrc)
   const fullLoadedRef = useRef(false)
+  const originalLoadedRef = useRef(false)
 
   // Auto-hide controls on desktop after inactivity
   const { showControls } = useAutoHideControls({
@@ -136,9 +137,10 @@ export function ImageView({
   useEffect(() => {
     setDisplaySrc(image.imageSrc)
     fullLoadedRef.current = false
+    originalLoadedRef.current = false
   }, [image.imageSrc])
 
-  // Progressive full-resolution loading: silently upgrade to fullSrc when display exceeds preview quality
+  // Tier 2: silently upgrade to fullSrc (3840px) when display exceeds preview (1200px) quality
   useEffect(() => {
     if (!image.fullSrc || fullLoadedRef.current) return
     if (scale * dimensions.width * (window.devicePixelRatio || 1) > 1200) {
@@ -150,6 +152,19 @@ export function ImageView({
       img.src = image.fullSrc
     }
   }, [scale, dimensions.width, image.fullSrc])
+
+  // Tier 3: silently upgrade to originalSrc when display exceeds full (3840px) quality
+  useEffect(() => {
+    if (!image.originalSrc || image.isVideo || originalLoadedRef.current) return
+    if (scale * dimensions.width * (window.devicePixelRatio || 1) > 3840) {
+      const img = new Image()
+      img.onload = () => {
+        setDisplaySrc(image.originalSrc!)
+        originalLoadedRef.current = true
+      }
+      img.src = image.originalSrc
+    }
+  }, [scale, dimensions.width, image.originalSrc, image.isVideo])
 
   // Manage HTML overflow to prevent background scrolling
   useEffect(() => {
