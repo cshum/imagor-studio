@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef, useState } from 'react'
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react'
 
 export interface UseAutoHideControlsOptions {
   enabled?: boolean
@@ -8,14 +8,17 @@ export interface UseAutoHideControlsOptions {
 
 export interface UseAutoHideControlsReturn {
   showControls: boolean
+  resetTimer: () => void
 }
 
 /**
- * Custom hook to auto-hide controls after a period of inactivity
- * @param enabled - Whether the auto-hide feature is enabled (e.g., isDesktop)
+ * Custom hook to auto-hide controls after a period of inactivity.
+ * On desktop, mouse movement resets the timer.
+ * On mobile (touch devices), tapping the element resets the timer.
+ * @param enabled - Whether the auto-hide feature is enabled
  * @param hideDelay - Delay in milliseconds before hiding controls (default: 3000)
- * @param elementRef - Ref to the element to attach the mouse move listener
- * @returns Object containing showControls boolean state
+ * @param elementRef - Ref to the element to attach the event listeners
+ * @returns Object containing showControls boolean state and a resetTimer function
  */
 export function useAutoHideControls({
   enabled = true,
@@ -23,7 +26,17 @@ export function useAutoHideControls({
   elementRef,
 }: UseAutoHideControlsOptions): UseAutoHideControlsReturn {
   const [showControls, setShowControls] = useState(true)
-  const hideControlsTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const resetTimer = useCallback(() => {
+    if (hideControlsTimerRef.current) {
+      clearTimeout(hideControlsTimerRef.current)
+    }
+    setShowControls(true)
+    hideControlsTimerRef.current = setTimeout(() => {
+      setShowControls(false)
+    }, hideDelay)
+  }, [hideDelay])
 
   useEffect(() => {
     // If not enabled, always show controls
@@ -32,40 +45,30 @@ export function useAutoHideControls({
       return
     }
 
-    const resetHideTimer = () => {
-      // Clear existing timer
-      if (hideControlsTimerRef.current) {
-        clearTimeout(hideControlsTimerRef.current)
-      }
-
-      // Show controls
-      setShowControls(true)
-
-      // Set new timer to hide controls after specified delay
-      hideControlsTimerRef.current = setTimeout(() => {
-        setShowControls(false)
-      }, hideDelay)
-    }
-
     const handleMouseMove = () => {
-      resetHideTimer()
+      resetTimer()
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // Only reset timer on Tab key
       if (event.key === 'Tab') {
-        resetHideTimer()
+        resetTimer()
       }
     }
 
-    // Start initial timer
-    resetHideTimer()
+    const handleTouchStart = () => {
+      resetTimer()
+    }
 
-    // Add mouse move and keyboard listeners
+    // Start initial timer
+    resetTimer()
+
+    // Add mouse move, keyboard, and touch listeners
     const element = elementRef.current
     if (element) {
       element.addEventListener('mousemove', handleMouseMove)
       element.addEventListener('keydown', handleKeyDown)
+      element.addEventListener('touchstart', handleTouchStart, { passive: true })
     }
 
     // Cleanup
@@ -76,9 +79,10 @@ export function useAutoHideControls({
       if (element) {
         element.removeEventListener('mousemove', handleMouseMove)
         element.removeEventListener('keydown', handleKeyDown)
+        element.removeEventListener('touchstart', handleTouchStart)
       }
     }
-  }, [enabled, hideDelay, elementRef])
+  }, [enabled, resetTimer, elementRef])
 
-  return { showControls }
+  return { showControls, resetTimer }
 }

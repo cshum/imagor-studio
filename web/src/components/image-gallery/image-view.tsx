@@ -96,9 +96,9 @@ export function ImageView({
   const zoomGestureTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
 
-  // Auto-hide controls on desktop after inactivity
+  // Auto-hide controls after inactivity (desktop: mouse move resets; mobile: tap resets)
   const { showControls } = useAutoHideControls({
-    enabled: isDesktop,
+    enabled: true,
     hideDelay: 3000,
     elementRef: overlayRef,
   })
@@ -465,7 +465,7 @@ export function ImageView({
               <motion.div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 right-4 -translate-y-1/2' : 'bottom-4 left-20'}`}
                 initial={{ opacity: 1 }}
-                animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                animate={{ opacity: !showControls ? 0 : 1 }}
                 transition={{ duration: 0.3 }}
               >
                 <button
@@ -480,7 +480,7 @@ export function ImageView({
               <motion.div
                 className={`absolute z-10 ${isDesktop ? 'top-1/2 left-4 -translate-y-1/2' : 'bottom-4 left-8'}`}
                 initial={{ opacity: 1 }}
-                animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                animate={{ opacity: !showControls ? 0 : 1 }}
                 transition={{ duration: 0.3 }}
               >
                 <button
@@ -650,7 +650,7 @@ export function ImageView({
                     <motion.div
                       className='absolute right-6 bottom-4 z-10 flex space-x-4'
                       initial={{ opacity: 1 }}
-                      animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                      animate={{ opacity: !showControls ? 0 : 1 }}
                       transition={{ duration: 0.3 }}
                     >
                       {scale > 1 && (
@@ -677,7 +677,7 @@ export function ImageView({
               <motion.div
                 className='absolute top-4 right-6 z-60 flex space-x-2'
                 initial={{ opacity: 1 }}
-                animate={{ opacity: isDesktop && !showControls ? 0 : 1 }}
+                animate={{ opacity: !showControls ? 0 : 1 }}
                 transition={{ duration: 0.3 }}
               >
                 {(authState.state === 'authenticated' || authState.isEmbedded) &&
