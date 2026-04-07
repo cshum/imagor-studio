@@ -2,6 +2,7 @@ import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/regist
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
+import { ImageSource } from '@/hooks/use-progressive-image.ts'
 import { SortOption, SortOrder } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
@@ -272,14 +273,39 @@ export const imageLoader = async ({
     fileStat.thumbnailUrls.preview || fileStat.thumbnailUrls.full || '',
   )
   const fullViewSrc = getFullImageUrl(fileStat.thumbnailUrls.full || '')
+  const originalSrc = getFullImageUrl(fileStat.thumbnailUrls.original || '')
 
-  // Pick the right initial tier based on screen physical pixels at load time:
-  // desktop/Retina (physical px > 1200) starts at full (3840px) directly,
-  // mobile starts at preview (1200px) and upgrades on zoom.
-  const physicalPixels = window.innerWidth * (window.devicePixelRatio || 1)
-  const initialSrc = physicalPixels > 1200 && fullViewSrc ? fullViewSrc : previewSrc
+  // Build ordered resolution tiers (images only; videos use videoSrc separately)
+  const imageSources: ImageSource[] = !isVideo
+    ? [
+        { src: previewSrc, maxWidth: 1200 },
+        ...(fullViewSrc ? [{ src: fullViewSrc, maxWidth: 3840 }] : []),
+        ...(originalSrc ? [{ src: originalSrc, maxWidth: Infinity }] : []),
+      ]
+    : []
 
-  const imageElement = await preloadImage(initialSrc)
+  // Pick the appropriate initial tier based on the image's longest displayed edge × DPR:
+  // compute display dimensions from imageElement aspect ratio + screen size
+  const dpr = window.devicePixelRatio || 1
+  const previewEl = await preloadImage(previewSrc)
+  const imageAspect = previewEl.width / previewEl.height
+  const screenAspect = window.innerWidth / window.innerHeight
+  const displayWidth =
+    imageAspect > screenAspect ? window.innerWidth : window.innerHeight * imageAspect
+  const displayHeight =
+    imageAspect > screenAspect ? window.innerWidth / imageAspect : window.innerHeight
+  const longestEdge = Math.max(displayWidth, displayHeight)
+  const physicalPixels = longestEdge * dpr
+
+  // Find smallest tier whose maxWidth covers the current screen (no swap needed on first render)
+  const initialTier =
+    imageSources.find((s) => s.maxWidth >= physicalPixels) ??
+    imageSources[imageSources.length - 1] ??
+    { src: previewSrc, maxWidth: 1200 }
+
+  // Preload the chosen initial tier (if it's not already the preview we just fetched)
+  const imageElement =
+    initialTier.src === previewSrc ? previewEl : await preloadImage(initialTier.src)
 
   // Fetch real metadata from imagor meta API (works for both images and videos)
   let imageInfo = convertMetadataToImageInfo(null, fileStat.name, galleryKey)
@@ -294,10 +320,9 @@ export const imageLoader = async ({
 
   const image: GalleryImage = {
     imageKey: fileStat.name,
-    imageSrc: initialSrc,
-    // fullSrc only needed if we started at preview (mobile); desktop already at full tier
-    fullSrc: initialSrc === previewSrc ? fullViewSrc || undefined : undefined,
-    originalSrc: getFullImageUrl(fileStat.thumbnailUrls.original || ''),
+    imageSrc: initialTier.src,
+    imageSources: !isVideo ? imageSources : undefined,
+    videoSrc: isVideo ? originalSrc : undefined,
     imageName: fileStat.name,
     isVideo,
     imageInfo,

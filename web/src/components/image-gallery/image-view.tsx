@@ -20,7 +20,7 @@ import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { Sheet } from '@/components/ui/sheet'
 import { useAutoHideControls } from '@/hooks/use-auto-hide-controls'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
-import { useProgressiveImage } from '@/hooks/use-progressive-image'
+import { ImageSource, useProgressiveImage } from '@/hooks/use-progressive-image'
 import { useAuth } from '@/stores/auth-store'
 
 export interface GalleryImage {
@@ -29,8 +29,10 @@ export interface GalleryImage {
   imageKey: string
   isVideo?: boolean
   isTemplate?: boolean
-  originalSrc?: string
-  fullSrc?: string
+  /** Ordered resolution tiers for progressive loading (images only) */
+  imageSources?: ImageSource[]
+  /** Video stream URL (videos only) */
+  videoSrc?: string
   imageInfo?: ImageInfo
 }
 
@@ -99,13 +101,11 @@ export function ImageView({
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   const displaySrc = useProgressiveImage(
-    [
-      { src: image.imageSrc, threshold: 0 },
-      ...(image.fullSrc ? [{ src: image.fullSrc, threshold: 1200 }] : []),
-      ...(!image.isVideo && image.originalSrc ? [{ src: image.originalSrc, threshold: 3840 }] : []),
-    ],
+    image.imageSources ?? [],
     dimensions.width,
+    dimensions.height,
     scale,
+    image.imageSrc,
   )
 
   // Auto-hide controls on desktop after inactivity
@@ -498,7 +498,7 @@ export function ImageView({
                           <>
                             {overlayHandler}
                             <motion.video
-                              src={image.originalSrc}
+                              src={image.videoSrc}
                               poster={image.imageSrc}
                               controls
                               className='absolute z-2 max-h-full max-w-full object-contain'
@@ -566,7 +566,7 @@ export function ImageView({
                           <>
                             {overlayHandler}
                             <motion.video
-                              src={image.originalSrc}
+                              src={image.videoSrc}
                               poster={image.imageSrc}
                               controls
                               initial={false}
