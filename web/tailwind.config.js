@@ -89,8 +89,11 @@ module.exports = {
       // Desktop hover - only applies on devices with hover capability
       addVariant('hover-desktop', '@media (hover: hover) and (pointer: fine) { &:hover }')
 
-      // Mobile touch - only applies on touch devices
+      // Mobile touch - only applies on touch devices (active/pressed state)
       addVariant('touch-mobile', '@media (hover: none) and (pointer: coarse) { &:active }')
+
+      // Touch device - always applies on touch devices (not just active state)
+      addVariant('touch-device', '@media (hover: none) and (pointer: coarse) { & }')
 
       // Combined hover-touch variant - works on both desktop (hover) and mobile (active/touch)
       addVariant('hover-touch', [
