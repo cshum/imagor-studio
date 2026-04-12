@@ -86,7 +86,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 curl -X POST http://localhost:8000/api/graphql \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-token>" \
-  -d '{"query": "{ imagorStatus { configured mode } }"}'
+  -d '{"query": "{ imagorStatus { configured } }"}'
 ```
 
 ### JavaScript / Fetch Example
@@ -117,7 +117,7 @@ const response = await fetch('/api/graphql', {
 The GraphQL resolvers enforce three permission levels:
 
 - **`RequireEditPermission`** — requires `write` scope (`user` or `admin`). Used by `generateImagorUrl`, `generateImagorUrlFromTemplate`, `saveTemplate`, etc.
-- **`RequireAdminPermission`** — requires `admin` scope. Used by `configureEmbeddedImagor`, `configureExternalImagor`, user management, etc.
+- **`RequireAdminPermission`** — requires `admin` scope. Used by `configureImagor`, user management, etc.
 - **Read-only queries** — accessible to all authenticated users including guests.
 
 ---
