@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { EmbeddedImagorConfig } from '@/generated/graphql'
+import type { ImagorConfig } from '@/generated/graphql'
 
 const schema = z.object({
   secret: z.string(),
@@ -34,31 +34,30 @@ const schema = z.object({
   signerTruncate: z.number().int().min(0),
 })
 
-export type EmbeddedImagorFormData = z.infer<typeof schema>
+export type ImagorFormData = z.infer<typeof schema>
 
-export interface EmbeddedImagorFormRef {
+export interface ImagorFormRef {
   submit: () => void
 }
 
-interface EmbeddedImagorFormProps {
-  onSubmit: (data: EmbeddedImagorFormData) => void
+interface ImagorFormProps {
+  onSubmit: (data: ImagorFormData) => void
   disabled?: boolean
-  initialValues?: EmbeddedImagorConfig | null
+  initialValues?: ImagorConfig | null
 }
 
-export const EmbeddedImagorForm = forwardRef<EmbeddedImagorFormRef, EmbeddedImagorFormProps>(
+export const ImagorForm = forwardRef<ImagorFormRef, ImagorFormProps>(
   ({ onSubmit, disabled, initialValues }, ref) => {
     const { t } = useTranslation()
     const [advancedOpen, setAdvancedOpen] = useState(false)
 
-    const form = useForm<EmbeddedImagorFormData>({
+    const form = useForm<ImagorFormData>({
       resolver: zodResolver(schema),
       defaultValues: {
         secret: '',
         unsafe: initialValues?.unsafe ?? false,
         signerType:
-          (initialValues?.signerType as EmbeddedImagorFormData['signerType'] | undefined) ??
-          'SHA256',
+          (initialValues?.signerType as ImagorFormData['signerType'] | undefined) ?? 'SHA256',
         signerTruncate: initialValues?.signerTruncate ?? 32,
       },
     })
@@ -198,4 +197,4 @@ export const EmbeddedImagorForm = forwardRef<EmbeddedImagorFormRef, EmbeddedImag
   },
 )
 
-EmbeddedImagorForm.displayName = 'EmbeddedImagorForm'
+ImagorForm.displayName = 'ImagorForm'

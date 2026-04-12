@@ -26,20 +26,6 @@ type DimensionsInput struct {
 	Height int `json:"height"`
 }
 
-type EmbeddedImagorConfig struct {
-	HasSecret      bool             `json:"hasSecret"`
-	Unsafe         bool             `json:"unsafe"`
-	SignerType     ImagorSignerType `json:"signerType"`
-	SignerTruncate int              `json:"signerTruncate"`
-}
-
-type EmbeddedImagorInput struct {
-	Secret         *string           `json:"secret,omitempty"`
-	Unsafe         *bool             `json:"unsafe,omitempty"`
-	SignerType     *ImagorSignerType `json:"signerType,omitempty"`
-	SignerTruncate *int              `json:"signerTruncate,omitempty"`
-}
-
 type FileItem struct {
 	Name          string         `json:"name"`
 	Path          string         `json:"path"`
@@ -76,6 +62,13 @@ type FileStorageInput struct {
 	WritePermissions *string `json:"writePermissions,omitempty"`
 }
 
+type ImagorConfig struct {
+	HasSecret      bool             `json:"hasSecret"`
+	Unsafe         bool             `json:"unsafe"`
+	SignerType     ImagorSignerType `json:"signerType"`
+	SignerTruncate int              `json:"signerTruncate"`
+}
+
 type ImagorConfigResult struct {
 	Success   bool    `json:"success"`
 	Timestamp string  `json:"timestamp"`
@@ -85,6 +78,13 @@ type ImagorConfigResult struct {
 type ImagorFilterInput struct {
 	Name string `json:"name"`
 	Args string `json:"args"`
+}
+
+type ImagorInput struct {
+	Secret         *string           `json:"secret,omitempty"`
+	Unsafe         *bool             `json:"unsafe,omitempty"`
+	SignerType     *ImagorSignerType `json:"signerType,omitempty"`
+	SignerTruncate *int              `json:"signerTruncate,omitempty"`
 }
 
 type ImagorParamsInput struct {
@@ -112,10 +112,10 @@ type ImagorParamsInput struct {
 }
 
 type ImagorStatus struct {
-	Configured           bool                  `json:"configured"`
-	LastUpdated          *string               `json:"lastUpdated,omitempty"`
-	IsOverriddenByConfig bool                  `json:"isOverriddenByConfig"`
-	EmbeddedConfig       *EmbeddedImagorConfig `json:"embeddedConfig,omitempty"`
+	Configured           bool          `json:"configured"`
+	LastUpdated          *string       `json:"lastUpdated,omitempty"`
+	IsOverriddenByConfig bool          `json:"isOverriddenByConfig"`
+	Config               *ImagorConfig `json:"config,omitempty"`
 }
 
 type LicenseStatus struct {

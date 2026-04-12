@@ -7,7 +7,7 @@ export const IMAGOR_STATUS_QUERY = gql(`
       configured
       lastUpdated
       isOverriddenByConfig
-      embeddedConfig {
+      config {
         hasSecret
         unsafe
         signerType
@@ -17,10 +17,10 @@ export const IMAGOR_STATUS_QUERY = gql(`
   }
 `)
 
-// Mutation to configure imagor (always embedded)
-export const CONFIGURE_EMBEDDED_IMAGOR_MUTATION = gql(`
-  mutation ConfigureEmbeddedImagor($input: EmbeddedImagorInput!) {
-    configureEmbeddedImagor(input: $input) {
+// Mutation to configure imagor
+export const CONFIGURE_IMAGOR_MUTATION = gql(`
+  mutation ConfigureImagor($input: ImagorInput!) {
+    configureImagor(input: $input) {
       success
       timestamp
       message

@@ -405,7 +405,7 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 		Configured:           true,
 		LastUpdated:          lastUpdated,
 		IsOverriddenByConfig: r.isImagorConfigOverridden(ctx),
-		EmbeddedConfig:       r.getEmbeddedImagorConfig(imagorConfig),
+		Config:               r.getImagorConfig(imagorConfig),
 	}, nil
 }
 
@@ -426,8 +426,8 @@ func (r *queryResolver) isImagorConfigOverridden(ctx context.Context) bool {
 	return false
 }
 
-// getEmbeddedImagorConfig builds the EmbeddedImagorConfig GQL type from provider config
-func (r *queryResolver) getEmbeddedImagorConfig(imagorConfig *imagorprovider.ImagorConfig) *gql.EmbeddedImagorConfig {
+// getImagorConfig builds the ImagorConfig GQL type from provider config
+func (r *queryResolver) getImagorConfig(imagorConfig *imagorprovider.ImagorConfig) *gql.ImagorConfig {
 	var signerType gql.ImagorSignerType
 	switch strings.ToLower(imagorConfig.SignerType) {
 	case "sha256":
@@ -437,7 +437,7 @@ func (r *queryResolver) getEmbeddedImagorConfig(imagorConfig *imagorprovider.Ima
 	default:
 		signerType = gql.ImagorSignerTypeSha1
 	}
-	return &gql.EmbeddedImagorConfig{
+	return &gql.ImagorConfig{
 		HasSecret:      imagorConfig.Secret != "",
 		Unsafe:         imagorConfig.Unsafe,
 		SignerType:     signerType,
@@ -445,8 +445,8 @@ func (r *queryResolver) getEmbeddedImagorConfig(imagorConfig *imagorprovider.Ima
 	}
 }
 
-// ConfigureEmbeddedImagor is the resolver for the configureEmbeddedImagor mutation.
-func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context, input gql.EmbeddedImagorInput) (*gql.ImagorConfigResult, error) {
+// ConfigureImagor is the resolver for the configureImagor mutation.
+func (r *mutationResolver) ConfigureImagor(ctx context.Context, input gql.ImagorInput) (*gql.ImagorConfigResult, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}

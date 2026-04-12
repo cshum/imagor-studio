@@ -25,7 +25,7 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
     router.invalidate()
   }
 
-  const embeddedConfig = imagorStatus?.embeddedConfig
+  const config = imagorStatus?.config
 
   return (
     <>
@@ -36,7 +36,7 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
         </CardHeader>
         <CardContent className='space-y-4'>
           {/* Display embedded configuration details */}
-          {imagorStatus?.configured && embeddedConfig && (
+          {imagorStatus?.configured && config && (
             <div className='bg-muted/50 space-y-4 rounded-lg border p-4'>
               <div className='text-sm font-medium'>{t('pages.imagor.configurationDetails')}</div>
               <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
@@ -45,7 +45,7 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
                     {t('pages.imagor.hasSecret')}
                   </div>
                   <div className='font-mono text-sm'>
-                    {embeddedConfig.hasSecret ? t('common.status.yes') : t('common.status.no')}
+                    {config.hasSecret ? t('common.status.yes') : t('common.status.no')}
                   </div>
                 </div>
                 <div className='space-y-1'>
@@ -53,23 +53,21 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
                     {t('pages.imagor.unsafeMode')}
                   </div>
                   <div className='font-mono text-sm'>
-                    {embeddedConfig.unsafe
-                      ? t('common.status.enabled')
-                      : t('common.status.disabled')}
+                    {config.unsafe ? t('common.status.enabled') : t('common.status.disabled')}
                   </div>
                 </div>
                 <div className='space-y-1'>
                   <div className='text-muted-foreground text-xs font-medium'>
                     {t('pages.imagor.signerType')}
                   </div>
-                  <div className='font-mono text-sm'>{embeddedConfig.signerType}</div>
+                  <div className='font-mono text-sm'>{config.signerType}</div>
                 </div>
-                {embeddedConfig.signerTruncate > 0 && (
+                {config.signerTruncate > 0 && (
                   <div className='space-y-1'>
                     <div className='text-muted-foreground text-xs font-medium'>
                       {t('pages.imagor.signerTruncate')}
                     </div>
-                    <div className='font-mono text-sm'>{embeddedConfig.signerTruncate}</div>
+                    <div className='font-mono text-sm'>{config.signerTruncate}</div>
                   </div>
                 )}
               </div>

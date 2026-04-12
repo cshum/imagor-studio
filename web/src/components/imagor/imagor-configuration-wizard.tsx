@@ -2,16 +2,12 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { configureEmbeddedImagor } from '@/api/imagor-api'
+import { configureImagor } from '@/api/imagor-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import type { ImagorSignerType, ImagorStatusQuery } from '@/generated/graphql'
 
-import {
-  EmbeddedImagorForm,
-  type EmbeddedImagorFormData,
-  type EmbeddedImagorFormRef,
-} from './embedded-imagor-form'
+import { ImagorForm, type ImagorFormData, type ImagorFormRef } from './imagor-form'
 
 interface ImagorConfigurationWizardProps {
   onSuccess?: () => void
@@ -30,14 +26,14 @@ export function ImagorConfigurationWizard({
 }: ImagorConfigurationWizardProps) {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
-  const embeddedFormRef = useRef<EmbeddedImagorFormRef>(null)
+  const formRef = useRef<ImagorFormRef>(null)
 
   const isConfigOverridden = initialConfig?.isOverriddenByConfig || false
 
-  const handleSubmit = async (data: EmbeddedImagorFormData) => {
+  const handleSubmit = async (data: ImagorFormData) => {
     setIsLoading(true)
     try {
-      const result = await configureEmbeddedImagor({
+      const result = await configureImagor({
         input: {
           secret: data.secret.trim() !== '' ? data.secret : null,
           unsafe: data.unsafe,
@@ -73,11 +69,11 @@ export function ImagorConfigurationWizard({
       )}
 
       <div className='mt-2'>
-        <EmbeddedImagorForm
-          ref={embeddedFormRef}
+        <ImagorForm
+          ref={formRef}
           onSubmit={handleSubmit}
           disabled={isLoading || isConfigOverridden}
-          initialValues={initialConfig?.embeddedConfig ?? null}
+          initialValues={initialConfig?.config ?? null}
         />
       </div>
 
@@ -97,7 +93,7 @@ export function ImagorConfigurationWizard({
           type='submit'
           disabled={isConfigOverridden}
           isLoading={isLoading}
-          onClick={() => embeddedFormRef.current?.submit()}
+          onClick={() => formRef.current?.submit()}
         >
           {t('pages.imagor.configureImagor')}
         </ButtonWithLoading>
