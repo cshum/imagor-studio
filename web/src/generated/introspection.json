@@ -169,22 +169,10 @@
       },
       {
         "kind": "OBJECT",
-        "name": "ExternalImagorConfig",
+        "name": "EmbeddedImagorConfig",
         "description": null,
         "isOneOf": null,
         "fields": [
-          {
-            "name": "baseUrl",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
           {
             "name": "hasSecret",
             "description": null,
@@ -241,23 +229,11 @@
       },
       {
         "kind": "INPUT_OBJECT",
-        "name": "ExternalImagorInput",
+        "name": "EmbeddedImagorInput",
         "description": null,
         "isOneOf": false,
         "fields": null,
         "inputFields": [
-          {
-            "name": "baseUrl",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
           {
             "name": "secret",
             "description": null,
@@ -632,18 +608,6 @@
             "deprecationReason": null
           },
           {
-            "name": "restartRequired",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "SCALAR", "name": "Boolean", "ofType": null }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "success",
             "description": null,
             "args": [],
@@ -707,30 +671,6 @@
         ],
         "interfaces": null,
         "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "ENUM",
-        "name": "ImagorMode",
-        "description": null,
-        "isOneOf": null,
-        "fields": null,
-        "inputFields": null,
-        "interfaces": null,
-        "enumValues": [
-          {
-            "name": "EMBEDDED",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "EXTERNAL",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
         "possibleTypes": null
       },
       {
@@ -965,10 +905,10 @@
             "deprecationReason": null
           },
           {
-            "name": "externalConfig",
+            "name": "embeddedConfig",
             "description": null,
             "args": [],
-            "type": { "kind": "OBJECT", "name": "ExternalImagorConfig", "ofType": null },
+            "type": { "kind": "OBJECT", "name": "EmbeddedImagorConfig", "ofType": null },
             "isDeprecated": false,
             "deprecationReason": null
           },
@@ -989,26 +929,6 @@
             "description": null,
             "args": [],
             "type": { "kind": "SCALAR", "name": "String", "ofType": null },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "mode",
-            "description": null,
-            "args": [],
-            "type": { "kind": "ENUM", "name": "ImagorMode", "ofType": null },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "restartRequired",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "SCALAR", "name": "Boolean", "ofType": null }
-            },
             "isDeprecated": false,
             "deprecationReason": null
           }
@@ -1171,18 +1091,6 @@
           {
             "name": "configureEmbeddedImagor",
             "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": { "kind": "OBJECT", "name": "ImagorConfigResult", "ofType": null }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "configureExternalImagor",
-            "description": null,
             "args": [
               {
                 "name": "input",
@@ -1192,7 +1100,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "INPUT_OBJECT",
-                    "name": "ExternalImagorInput",
+                    "name": "EmbeddedImagorInput",
                     "ofType": null
                   }
                 },

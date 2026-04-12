@@ -233,7 +233,7 @@ func (m *MockImagorProvider) GetInstance() *imagor.Imagor {
 	return args.Get(0).(*imagor.Imagor)
 }
 
-func (m *MockImagorProvider) IsRestartRequired() bool {
+func (m *MockImagorProvider) _IsRestartRequired_removed() bool {
 	args := m.Called()
 	return args.Bool(0)
 }

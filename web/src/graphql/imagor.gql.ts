@@ -5,12 +5,9 @@ export const IMAGOR_STATUS_QUERY = gql(`
   query ImagorStatus {
     imagorStatus {
       configured
-      mode
-      restartRequired
       lastUpdated
       isOverriddenByConfig
-      externalConfig {
-        baseUrl
+      embeddedConfig {
         hasSecret
         unsafe
         signerType
@@ -20,24 +17,11 @@ export const IMAGOR_STATUS_QUERY = gql(`
   }
 `)
 
-// Mutation to configure embedded imagor
+// Mutation to configure imagor (always embedded)
 export const CONFIGURE_EMBEDDED_IMAGOR_MUTATION = gql(`
-  mutation ConfigureEmbeddedImagor {
-    configureEmbeddedImagor {
+  mutation ConfigureEmbeddedImagor($input: EmbeddedImagorInput!) {
+    configureEmbeddedImagor(input: $input) {
       success
-      restartRequired
-      timestamp
-      message
-    }
-  }
-`)
-
-// Mutation to configure external imagor
-export const CONFIGURE_EXTERNAL_IMAGOR_MUTATION = gql(`
-  mutation ConfigureExternalImagor($input: ExternalImagorInput!) {
-    configureExternalImagor(input: $input) {
-      success
-      restartRequired
       timestamp
       message
     }

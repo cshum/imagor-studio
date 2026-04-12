@@ -9,7 +9,6 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
-	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/migrator"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor/imagorpath"
@@ -32,8 +31,6 @@ func TestInitialize(t *testing.T) {
 		FileStorageBaseDir:          "/tmp/test-storage",
 		FileStorageMkdirPermissions: 0755,
 		FileStorageWritePermissions: 0644,
-		ImagorMode:                  "external",
-		ImagorBaseURL:               "http://localhost:8000",
 		ImagorSecret:                "",
 		ImagorUnsafe:                false,
 	}
@@ -71,7 +68,6 @@ func TestInitializeEmbeddedMode(t *testing.T) {
 		JWTExpiration:      168 * time.Hour,
 		StorageType:        "file",
 		FileStorageBaseDir: "/tmp/test-storage",
-		ImagorMode:         "embedded",
 	}
 
 	logger := zap.NewNop()
@@ -305,7 +301,6 @@ func TestImagorProviderIntegration(t *testing.T) {
 	cfg := &config.Config{
 		DatabaseURL:  "sqlite:" + tmpDB,
 		JWTSecret:    "test-jwt-secret",
-		ImagorMode:   "embedded", // Test embedded mode
 		ImagorSecret: "test-secret",
 		ImagorUnsafe: true, // Use unsafe mode for testing
 	}
@@ -314,7 +309,6 @@ func TestImagorProviderIntegration(t *testing.T) {
 	args := []string{
 		"--jwt-secret", "test-jwt-secret",
 		"--database-url", "sqlite:" + tmpDB,
-		"--imagor-mode", "embedded",
 		"--imagor-secret", "test-secret",
 		"--imagor-unsafe", "true",
 	}
@@ -327,8 +321,6 @@ func TestImagorProviderIntegration(t *testing.T) {
 	// Test that imagor provider has correct config
 	imagorConfig := services.ImagorProvider.GetConfig()
 	require.NotNil(t, imagorConfig)
-	assert.Equal(t, imagorprovider.ImagorModeEmbedded, imagorConfig.Mode)
-	assert.Equal(t, "", imagorConfig.BaseURL) // Updated to empty string for root path
 	assert.Equal(t, "test-secret", imagorConfig.Secret)
 	assert.True(t, imagorConfig.Unsafe)
 
