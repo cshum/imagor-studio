@@ -26,22 +26,6 @@ type DimensionsInput struct {
 	Height int `json:"height"`
 }
 
-type ExternalImagorConfig struct {
-	BaseURL        string           `json:"baseUrl"`
-	HasSecret      bool             `json:"hasSecret"`
-	Unsafe         bool             `json:"unsafe"`
-	SignerType     ImagorSignerType `json:"signerType"`
-	SignerTruncate int              `json:"signerTruncate"`
-}
-
-type ExternalImagorInput struct {
-	BaseURL        string            `json:"baseUrl"`
-	Secret         *string           `json:"secret,omitempty"`
-	Unsafe         *bool             `json:"unsafe,omitempty"`
-	SignerType     *ImagorSignerType `json:"signerType,omitempty"`
-	SignerTruncate *int              `json:"signerTruncate,omitempty"`
-}
-
 type FileItem struct {
 	Name          string         `json:"name"`
 	Path          string         `json:"path"`
@@ -78,16 +62,29 @@ type FileStorageInput struct {
 	WritePermissions *string `json:"writePermissions,omitempty"`
 }
 
+type ImagorConfig struct {
+	HasSecret      bool             `json:"hasSecret"`
+	Unsafe         bool             `json:"unsafe"`
+	SignerType     ImagorSignerType `json:"signerType"`
+	SignerTruncate int              `json:"signerTruncate"`
+}
+
 type ImagorConfigResult struct {
-	Success         bool    `json:"success"`
-	RestartRequired bool    `json:"restartRequired"`
-	Timestamp       string  `json:"timestamp"`
-	Message         *string `json:"message,omitempty"`
+	Success   bool    `json:"success"`
+	Timestamp string  `json:"timestamp"`
+	Message   *string `json:"message,omitempty"`
 }
 
 type ImagorFilterInput struct {
 	Name string `json:"name"`
 	Args string `json:"args"`
+}
+
+type ImagorInput struct {
+	Secret         *string           `json:"secret,omitempty"`
+	Unsafe         *bool             `json:"unsafe,omitempty"`
+	SignerType     *ImagorSignerType `json:"signerType,omitempty"`
+	SignerTruncate *int              `json:"signerTruncate,omitempty"`
 }
 
 type ImagorParamsInput struct {
@@ -115,12 +112,10 @@ type ImagorParamsInput struct {
 }
 
 type ImagorStatus struct {
-	Configured           bool                  `json:"configured"`
-	Mode                 *ImagorMode           `json:"mode,omitempty"`
-	RestartRequired      bool                  `json:"restartRequired"`
-	LastUpdated          *string               `json:"lastUpdated,omitempty"`
-	IsOverriddenByConfig bool                  `json:"isOverriddenByConfig"`
-	ExternalConfig       *ExternalImagorConfig `json:"externalConfig,omitempty"`
+	Configured           bool          `json:"configured"`
+	LastUpdated          *string       `json:"lastUpdated,omitempty"`
+	IsOverriddenByConfig bool          `json:"isOverriddenByConfig"`
+	Config               *ImagorConfig `json:"config,omitempty"`
 }
 
 type LicenseStatus struct {
@@ -302,61 +297,6 @@ func (e *DimensionMode) UnmarshalJSON(b []byte) error {
 }
 
 func (e DimensionMode) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type ImagorMode string
-
-const (
-	ImagorModeEmbedded ImagorMode = "EMBEDDED"
-	ImagorModeExternal ImagorMode = "EXTERNAL"
-)
-
-var AllImagorMode = []ImagorMode{
-	ImagorModeEmbedded,
-	ImagorModeExternal,
-}
-
-func (e ImagorMode) IsValid() bool {
-	switch e {
-	case ImagorModeEmbedded, ImagorModeExternal:
-		return true
-	}
-	return false
-}
-
-func (e ImagorMode) String() string {
-	return string(e)
-}
-
-func (e *ImagorMode) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ImagorMode(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ImagorMode", str)
-	}
-	return nil
-}
-
-func (e ImagorMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *ImagorMode) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e ImagorMode) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

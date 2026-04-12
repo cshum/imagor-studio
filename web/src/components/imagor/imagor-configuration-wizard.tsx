@@ -1,26 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { configureEmbeddedImagor, configureExternalImagor } from '@/api/imagor-api'
+import { configureImagor } from '@/api/imagor-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
-import type { ImagorStatusQuery } from '@/generated/graphql'
+import type { ImagorSignerType, ImagorStatusQuery } from '@/generated/graphql'
 
-import {
-  EmbeddedImagorForm,
-  type EmbeddedImagorFormData,
-  type EmbeddedImagorFormRef,
-} from './embedded-imagor-form'
-import {
-  ExternalImagorForm,
-  type ExternalImagorFormData,
-  type ExternalImagorFormRef,
-} from './external-imagor-form'
-import { ImagorTypeSelector, type ImagorType } from './imagor-type-selector'
+import { ImagorForm, type ImagorFormData, type ImagorFormRef } from './imagor-form'
 
 interface ImagorConfigurationWizardProps {
-  onSuccess?: (restartRequired: boolean) => void
+  onSuccess?: () => void
   onError?: (error: string) => void
   onCancel?: () => void
   showCancel?: boolean
@@ -35,78 +25,26 @@ export function ImagorConfigurationWizard({
   initialConfig,
 }: ImagorConfigurationWizardProps) {
   const { t } = useTranslation()
-  const [imagorType, setImagorType] = useState<ImagorType>('embedded')
   const [isLoading, setIsLoading] = useState(false)
+  const formRef = useRef<ImagorFormRef>(null)
 
-  // Refs to access form data
-  const embeddedFormRef = useRef<EmbeddedImagorFormRef>(null)
-  const externalFormRef = useRef<ExternalImagorFormRef>(null)
+  const isConfigOverridden = initialConfig?.isOverriddenByConfig || false
 
-  // Initialize form with existing configuration
-  useEffect(() => {
-    if (initialConfig?.configured && initialConfig.mode) {
-      const type = initialConfig.mode === 'EMBEDDED' ? 'embedded' : 'external'
-      setImagorType(type)
-    }
-  }, [initialConfig])
-
-  // Get initial values for embedded form
-  const getEmbeddedInitialValues = (): Partial<EmbeddedImagorFormData> | undefined => {
-    // Embedded mode has no configuration - return empty object
-    return {}
-  }
-
-  // Get initial values for external form
-  const getExternalInitialValues = (): Partial<ExternalImagorFormData> | undefined => {
-    if (!initialConfig?.externalConfig) return undefined
-    return {
-      baseUrl: initialConfig.externalConfig.baseUrl,
-      secret: '', // Don't pre-populate secret for security
-      unsafe: initialConfig.externalConfig.unsafe,
-      signerType: initialConfig.externalConfig.signerType,
-      signerTruncate: initialConfig.externalConfig.signerTruncate,
-    }
-  }
-
-  const handleEmbeddedSubmit = async () => {
+  const handleSubmit = async (data: ImagorFormData) => {
     setIsLoading(true)
     try {
-      const result = await configureEmbeddedImagor()
-
-      if (result.success) {
-        toast.success(result.message || t('pages.imagor.configurationSuccess'))
-        onSuccess?.(result.restartRequired)
-      } else {
-        const errorMessage = result.message || t('pages.imagor.configurationError')
-        toast.error(errorMessage)
-        onError?.(errorMessage)
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : t('pages.imagor.configurationError')
-      toast.error(errorMessage)
-      onError?.(errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleExternalSubmit = async (data: ExternalImagorFormData) => {
-    setIsLoading(true)
-    try {
-      const result = await configureExternalImagor({
+      const result = await configureImagor({
         input: {
-          baseUrl: data.baseUrl,
-          secret: data.secret || null,
-          unsafe: data.unsafe || null,
-          signerType: data.signerType || null,
-          signerTruncate: data.signerTruncate || null,
+          secret: data.secret.trim() !== '' ? data.secret : null,
+          unsafe: data.unsafe,
+          signerType: data.unsafe ? null : (data.signerType as ImagorSignerType),
+          signerTruncate: data.unsafe ? null : data.signerTruncate,
         },
       })
 
       if (result.success) {
         toast.success(result.message || t('pages.imagor.configurationSuccess'))
-        onSuccess?.(result.restartRequired)
+        onSuccess?.()
       } else {
         const errorMessage = result.message || t('pages.imagor.configurationError')
         toast.error(errorMessage)
@@ -121,9 +59,6 @@ export function ImagorConfigurationWizard({
       setIsLoading(false)
     }
   }
-
-  // Check if configuration is overridden by external config
-  const isConfigOverridden = initialConfig?.isOverriddenByConfig || false
 
   return (
     <div>
@@ -133,36 +68,13 @@ export function ImagorConfigurationWizard({
         </span>
       )}
 
-      <ImagorTypeSelector
-        value={imagorType}
-        onChange={setImagorType}
-        disabled={isLoading || isConfigOverridden}
-      />
-
-      <div className='mt-6'>
-        {imagorType === 'embedded' && (
-          <div className='space-y-4'>
-            <h4 className='font-medium'>{t('pages.imagor.embeddedConfiguration')}</h4>
-            <EmbeddedImagorForm
-              ref={embeddedFormRef}
-              onSubmit={handleEmbeddedSubmit}
-              disabled={isLoading || isConfigOverridden}
-              initialValues={getEmbeddedInitialValues()}
-            />
-          </div>
-        )}
-
-        {imagorType === 'external' && (
-          <div className='space-y-4'>
-            <h4 className='font-medium'>{t('pages.imagor.externalConfiguration')}</h4>
-            <ExternalImagorForm
-              ref={externalFormRef}
-              onSubmit={handleExternalSubmit}
-              disabled={isLoading || isConfigOverridden}
-              initialValues={getExternalInitialValues()}
-            />
-          </div>
-        )}
+      <div className='mt-2'>
+        <ImagorForm
+          ref={formRef}
+          onSubmit={handleSubmit}
+          disabled={isLoading || isConfigOverridden}
+          initialValues={initialConfig?.config ?? null}
+        />
       </div>
 
       <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end'>
@@ -181,17 +93,7 @@ export function ImagorConfigurationWizard({
           type='submit'
           disabled={isConfigOverridden}
           isLoading={isLoading}
-          onClick={() => {
-            // Trigger form submission based on imagor type
-            if (imagorType === 'embedded') {
-              embeddedFormRef.current?.submit()
-            } else {
-              const form = document.querySelector('form')
-              if (form) {
-                form.requestSubmit()
-              }
-            }
-          }}
+          onClick={() => formRef.current?.submit()}
         >
           {t('pages.imagor.configureImagor')}
         </ButtonWithLoading>

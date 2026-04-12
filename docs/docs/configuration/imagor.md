@@ -10,82 +10,14 @@ Configure image processing settings powered by [imagor](https://github.com/cshum
 
 imagor is a fast, secure image processing server and Go library that powers Imagor Studio's image transformations. It uses [libvips](https://github.com/libvips/libvips), one of the most efficient image processing libraries available, with [streaming](https://www.libvips.org/2019/11/29/True-streaming-for-libvips.html) support that facilitates parallel processing pipelines and achieves high network throughput.
 
-## Imagor Modes
-
-Imagor Studio supports two modes:
-
-- **Embedded Mode** (default) - Built-in imagor server
-- **External Mode** - Connect to external imagor service
-
 ## Configuration
 
-| Flag                       | Environment Variable     | Encrypted | Description              |
-| -------------------------- | ------------------------ | --------- | ------------------------ |
-| `--imagor-mode`            | `IMAGOR_MODE`            | No        | `embedded` or `external` |
-| `--imagor-base-url`        | `IMAGOR_BASE_URL`        | No        | External imagor URL      |
-| `--imagor-secret`          | `IMAGOR_SECRET`          | Yes       | Imagor signing secret    |
-| `--imagor-unsafe`          | `IMAGOR_UNSAFE`          | No        | Enable unsafe URLs       |
-| `--imagor-signer-type`     | `IMAGOR_SIGNER_TYPE`     | No        | Signature algorithm      |
-| `--imagor-signer-truncate` | `IMAGOR_SIGNER_TRUNCATE` | No        | Signature truncation     |
-
-## Embedded Mode (Default)
-
-The built-in imagor server processes images directly using libvips.
-
-```bash
-export IMAGOR_MODE=embedded
-export IMAGOR_SECRET=my-secret-key
-```
-
-**Features:**
-
-- Zero external dependencies
-- High-performance libvips processing
-- Automatic configuration
-- Perfect for most deployments
-
-## External Mode
-
-Connect to a separate imagor service for distributed processing.
-
-```bash
-export IMAGOR_MODE=external
-export IMAGOR_BASE_URL=http://imagor-service:8080
-export IMAGOR_SECRET=shared-secret-key
-```
-
-**Use Cases:**
-
-- Separate image processing workload
-- Multiple Imagor Studio instances sharing one imagor
-- Custom imagor configurations
-- Load balancing image processing
-
-### Docker Compose Example
-
-```yaml
-services:
-  imagor:
-    image: shumc/imagor:latest
-    environment:
-      - IMAGOR_SECRET=shared-secret-key
-      - PORT=8080
-    volumes:
-      - ~/Pictures:/mnt/images
-
-  imagor-studio:
-    image: shumc/imagor-studio:latest
-    environment:
-      - IMAGOR_MODE=external
-      - IMAGOR_BASE_URL=http://imagor:8080
-      - IMAGOR_SECRET=shared-secret-key
-      - STORAGE_TYPE=file
-      - FILE_BASE_DIR=/mnt/images
-    volumes:
-      - ~/Pictures:/mnt/images
-    depends_on:
-      - imagor
-```
+| Flag                       | Environment Variable     | Encrypted | Description          |
+| -------------------------- | ------------------------ | --------- | -------------------- |
+| `--imagor-secret`          | `IMAGOR_SECRET`          | Yes       | Imagor signing secret |
+| `--imagor-unsafe`          | `IMAGOR_UNSAFE`          | No        | Enable unsafe URLs   |
+| `--imagor-signer-type`     | `IMAGOR_SIGNER_TYPE`     | No        | Signature algorithm  |
+| `--imagor-signer-truncate` | `IMAGOR_SIGNER_TRUNCATE` | No        | Signature truncation |
 
 ## Image Processing Capabilities
 
@@ -276,14 +208,6 @@ Check imagor logs for processing errors:
 
 ```bash
 docker logs imagor-studio
-```
-
-### Connection Issues (External Mode)
-
-Verify external imagor is accessible:
-
-```bash
-curl http://imagor-service:8080/health
 ```
 
 ### Signature Mismatches

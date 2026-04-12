@@ -189,17 +189,10 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 			return nil, fmt.Errorf("failed to generate imagor URL: %w", err)
 		}
 
-		// Extract path from URL (remove base URL prefix)
-		cfg := r.imagorProvider.GetConfig()
-		if cfg == nil {
-			return nil, fmt.Errorf("imagor configuration not available")
-		}
-		path := strings.TrimPrefix(imagorURL, cfg.BaseURL)
-
-		r.logger.Debug("Calling ServeHTTP for preview", zap.String("path", path))
+		r.logger.Debug("Calling ServeHTTP for preview", zap.String("path", imagorURL))
 
 		// Create HTTP request and response recorder
-		req, err := http.NewRequestWithContext(ctx, "GET", path, nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", imagorURL, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create request: %w", err)
 		}

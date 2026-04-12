@@ -31,8 +31,6 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, "sqlite:./imagor-studio.db", cfg.DatabaseURL)
 	assert.Equal(t, "file", cfg.StorageType) // auto-detected default
 	assert.Equal(t, "/app/gallery", cfg.FileStorageBaseDir)
-	assert.Equal(t, "embedded", cfg.ImagorMode)
-	assert.Equal(t, "", cfg.ImagorBaseURL)
 	assert.Equal(t, 168*time.Hour, cfg.JWTExpiration)
 	assert.Equal(t, ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw", cfg.AppImageExtensions)
 	assert.Equal(t, ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", cfg.AppVideoExtensions)
@@ -47,7 +45,6 @@ func TestLoadWithArgs(t *testing.T) {
 		"--port", "9090",
 		"--storage-type", "s3",
 		"--s3-storage-bucket", "test-bucket",
-		"--imagor-mode", "disabled",
 		"--jwt-secret", "test-secret",
 	}
 
@@ -59,7 +56,6 @@ func TestLoadWithArgs(t *testing.T) {
 	assert.Equal(t, 9090, cfg.Port)
 	assert.Equal(t, "s3", cfg.StorageType)
 	assert.Equal(t, "test-bucket", cfg.S3StorageBucket)
-	assert.Equal(t, "disabled", cfg.ImagorMode)
 	assert.Equal(t, "first_frame", cfg.AppVideoThumbnailPosition)
 }
 
@@ -84,7 +80,6 @@ func TestLoadWithEnvVars(t *testing.T) {
 	assert.Equal(t, 7070, cfg.Port)
 	assert.Equal(t, "s3", cfg.StorageType)
 	assert.Equal(t, "env-bucket", cfg.S3StorageBucket)
-	assert.Equal(t, "embedded", cfg.ImagorMode)
 }
 
 func TestLoadWithRegistry(t *testing.T) {
@@ -113,7 +108,6 @@ func TestLoadWithRegistry(t *testing.T) {
 	// Verify registry values were applied
 	assert.Equal(t, "s3", cfg.StorageType)
 	assert.Equal(t, "registry-bucket", cfg.S3StorageBucket)
-	assert.Equal(t, "disabled", cfg.ImagorMode)
 }
 
 func TestConfigPriority(t *testing.T) {
@@ -667,7 +661,7 @@ func TestValueSourceTracking(t *testing.T) {
 	defer os.Unsetenv("STORAGE_TYPE")
 
 	// Load config
-	cfg, err := Load([]string{"--jwt-secret", "test-secret", "--imagor-mode", "disabled"}, registryStore)
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, registryStore)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
@@ -677,7 +671,6 @@ func TestValueSourceTracking(t *testing.T) {
 	// Verify actual config values
 	assert.Equal(t, "file", cfg.StorageType, "StorageType should be overridden by env")
 	assert.Equal(t, true, cfg.AllowGuestMode, "AllowGuestMode should come from registry")
-	assert.Equal(t, "disabled", cfg.ImagorMode, "ImagorMode should come from args")
 }
 
 // Test auto-population of storage type based on provided configuration

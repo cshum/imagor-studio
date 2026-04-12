@@ -121,7 +121,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 // fetchImageDimensions fetches the width and height of an image via the imagor meta URL.
 // It mirrors the frontend's fetchImageDimensions logic: call the imagor meta endpoint
 // and parse the JSON response for width/height.
-// Supports both embedded mode (in-process ServeHTTP) and external mode (HTTP GET).
+// Uses embedded mode (in-process ServeHTTP) when available, otherwise falls back to HTTP GET.
 func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath string) (imagortemplate.Dimensions, error) {
 	metaURL, err := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{Meta: true})
 	if err != nil {
@@ -131,13 +131,8 @@ func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath s
 	var body []byte
 
 	if imagorInstance := r.imagorProvider.GetInstance(); imagorInstance != nil {
-		// Embedded mode: call ServeHTTP in-process (no network overhead).
-		cfg := r.imagorProvider.GetConfig()
-		if cfg == nil {
-			return imagortemplate.Dimensions{}, fmt.Errorf("imagor configuration not available")
-		}
-		path := strings.TrimPrefix(metaURL, cfg.BaseURL)
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
+		// Embedded: call ServeHTTP in-process (no network overhead).
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, metaURL, nil)
 		if err != nil {
 			return imagortemplate.Dimensions{}, fmt.Errorf("failed to create meta request: %w", err)
 		}
@@ -148,7 +143,7 @@ func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath s
 		}
 		body = rec.Body.Bytes()
 	} else {
-		// External mode: plain HTTP GET.
+		// Fallback: plain HTTP GET (used in testing or if instance is not yet initialized).
 		resp, err := http.Get(metaURL) //nolint:noctx
 		if err != nil {
 			return imagortemplate.Dimensions{}, fmt.Errorf("failed to fetch meta URL: %w", err)
@@ -378,94 +373,50 @@ func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos str
 	}
 }
 
-// ImagorStatus is the resolver for the imagorStatus field.
+// ImagorStatus is the resolver for the imagorStatus query field.
 func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, error) {
-	// Use batch operation for better performance
-	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
-		"config.imagor_mode",
-		"config.imagor_config_updated_at")
-
-	// Create a map for easy lookup
-	resultMap := make(map[string]registryutil.EffectiveValueResult)
-	for _, result := range results {
-		resultMap[result.Key] = result
-	}
-
 	// Get current imagor configuration
 	imagorConfig := r.imagorProvider.GetConfig()
 	if imagorConfig == nil {
-		// Get JWT secret from config
+		// Build a sensible default from what's in config
 		jwtSecret := ""
 		if value, exists := r.config.GetByRegistryKey("config.jwt_secret"); exists {
 			jwtSecret = value
 		}
-
-		// Default to embedded mode if no config
 		imagorConfig = &imagorprovider.ImagorConfig{
-			Mode:           imagorprovider.ImagorModeEmbedded,
-			BaseURL:        "/imagor",
 			Secret:         jwtSecret,
 			Unsafe:         false,
 			SignerType:     "sha256",
-			SignerTruncate: 28,
+			SignerTruncate: 32,
 		}
 	}
 
-	// Check if restart is required
-	restartRequired := r.imagorProvider.IsRestartRequired()
+	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
+		"config.imagor_config_updated_at")
 
 	var lastUpdated *string
-	if timestampResult := resultMap["config.imagor_config_updated_at"]; timestampResult.Exists {
-		lastUpdated = &timestampResult.Value
+	for _, result := range results {
+		if result.Key == "config.imagor_config_updated_at" && result.Exists {
+			lastUpdated = &result.Value
+		}
 	}
 
-	// Check if any imagor config is overridden
-	isConfigOverridden := r.isImagorConfigOverridden(ctx, imagorConfig.Mode.String())
-
-	// Convert string mode to enum
-	var mode *gql.ImagorMode
-	switch imagorConfig.Mode {
-	case imagorprovider.ImagorModeEmbedded:
-		mode = &[]gql.ImagorMode{gql.ImagorModeEmbedded}[0]
-	case imagorprovider.ImagorModeExternal:
-		mode = &[]gql.ImagorMode{gql.ImagorModeExternal}[0]
-	}
-
-	status := &gql.ImagorStatus{
-		Configured:           true, // Always configured (defaults to embedded)
-		Mode:                 mode,
-		RestartRequired:      restartRequired,
+	return &gql.ImagorStatus{
+		Configured:           true,
 		LastUpdated:          lastUpdated,
-		IsOverriddenByConfig: isConfigOverridden,
-	}
-
-	// Add mode-specific configuration
-	if imagorConfig.Mode == imagorprovider.ImagorModeExternal {
-		status.ExternalConfig = r.getExternalImagorConfig(ctx, imagorConfig)
-	}
-
-	return status, nil
+		IsOverriddenByConfig: r.isImagorConfigOverridden(ctx),
+		Config:               r.getImagorConfig(imagorConfig),
+	}, nil
 }
 
-// Helper function to check if imagor config is overridden
-func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode string) bool {
-	var keys []string
-	if mode == "embedded" {
-		keys = []string{
-			"config.imagor_mode",
-			"config.imagor_secret",
-		}
-	} else {
-		keys = []string{
-			"config.imagor_mode",
-			"config.imagor_base_url",
-			"config.imagor_secret",
-			"config.imagor_unsafe",
-			"config.imagor_signer_type",
-			"config.imagor_signer_truncate",
-		}
+// isImagorConfigOverridden checks if any imagor configuration is overridden by external config (CLI/env)
+func (r *queryResolver) isImagorConfigOverridden(ctx context.Context) bool {
+	keys := []string{
+		"config.imagor_secret",
+		"config.imagor_unsafe",
+		"config.imagor_signer_type",
+		"config.imagor_signer_truncate",
 	}
-
 	results := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config, keys...)
 	for _, result := range results {
 		if result.IsOverriddenByConfig {
@@ -475,9 +426,8 @@ func (r *queryResolver) isImagorConfigOverridden(ctx context.Context, mode strin
 	return false
 }
 
-// Helper function to get external imagor configuration
-func (r *queryResolver) getExternalImagorConfig(ctx context.Context, imagorConfig *imagorprovider.ImagorConfig) *gql.ExternalImagorConfig {
-	// Convert signer type to GraphQL enum
+// getImagorConfig builds the ImagorConfig GQL type from provider config
+func (r *queryResolver) getImagorConfig(imagorConfig *imagorprovider.ImagorConfig) *gql.ImagorConfig {
 	var signerType gql.ImagorSignerType
 	switch strings.ToLower(imagorConfig.SignerType) {
 	case "sha256":
@@ -487,9 +437,7 @@ func (r *queryResolver) getExternalImagorConfig(ctx context.Context, imagorConfi
 	default:
 		signerType = gql.ImagorSignerTypeSha1
 	}
-
-	return &gql.ExternalImagorConfig{
-		BaseURL:        imagorConfig.BaseURL,
+	return &gql.ImagorConfig{
 		HasSecret:      imagorConfig.Secret != "",
 		Unsafe:         imagorConfig.Unsafe,
 		SignerType:     signerType,
@@ -497,108 +445,49 @@ func (r *queryResolver) getExternalImagorConfig(ctx context.Context, imagorConfi
 	}
 }
 
-// ConfigureEmbeddedImagor is the resolver for the configureEmbeddedImagor field.
-func (r *mutationResolver) ConfigureEmbeddedImagor(ctx context.Context) (*gql.ImagorConfigResult, error) {
-	// Check admin permissions
+// ConfigureImagor is the resolver for the configureImagor mutation.
+func (r *mutationResolver) ConfigureImagor(ctx context.Context, input gql.ImagorInput) (*gql.ImagorConfigResult, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
 
 	r.logger.Debug("Configuring embedded imagor")
 
-	// Set timestamp
 	timestamp := time.Now().UnixMilli()
 	timestampStr := fmt.Sprintf("%d", timestamp)
 
-	// delete from registry
+	// Clear existing imagor-specific config keys
 	if _, err := r.DeleteSystemRegistry(ctx, nil, []string{
 		"config.imagor_unsafe",
-		"config.imagor_base_url",
 		"config.imagor_secret",
 		"config.imagor_signer_type",
 		"config.imagor_signer_truncate",
 	}); err != nil {
-		r.logger.Error("Failed to save embedded imagor configuration", zap.Error(err))
+		r.logger.Error("Failed to clear imagor configuration", zap.Error(err))
 		return &gql.ImagorConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       timestampStr,
-			Message:         &[]string{"Failed to save configuration"}[0],
+			Success:   false,
+			Timestamp: timestampStr,
+			Message:   &[]string{"Failed to save configuration"}[0],
 		}, nil
 	}
 
-	// Save to registry
-	_, err := r.setSystemRegistryEntries(ctx, []gql.RegistryEntryInput{
-		{Key: "config.imagor_mode", Value: "embedded", IsEncrypted: false},
-		{Key: "config.imagor_config_updated_at", Value: timestampStr, IsEncrypted: false},
-	})
-	if err != nil {
-		r.logger.Error("Failed to save embedded imagor configuration", zap.Error(err))
-		return &gql.ImagorConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       timestampStr,
-			Message:         &[]string{"Failed to save configuration"}[0],
-		}, nil
-	}
-
-	// Reload imagor from registry to apply changes immediately
-	if err := r.imagorProvider.ReloadFromRegistry(); err != nil {
-		r.logger.Error("Failed to reload imagor from registry", zap.Error(err))
-		return &gql.ImagorConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       timestampStr,
-			Message:         &[]string{"Configuration saved but failed to apply"}[0],
-		}, nil
-	}
-
-	// Embedded mode typically doesn't require restart
-	restartRequired := r.imagorProvider.IsRestartRequired()
-
-	return &gql.ImagorConfigResult{
-		Success:         true,
-		RestartRequired: restartRequired,
-		Timestamp:       timestampStr,
-		Message:         &[]string{"Embedded imagor configured successfully"}[0],
-	}, nil
-}
-
-// ConfigureExternalImagor is the resolver for the configureExternalImagor field.
-func (r *mutationResolver) ConfigureExternalImagor(ctx context.Context, input gql.ExternalImagorInput) (*gql.ImagorConfigResult, error) {
-	// Check admin permissions
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
-
-	r.logger.Debug("Configuring external imagor", zap.String("baseUrl", input.BaseURL))
-
-	// Set timestamp
-	timestamp := time.Now().UnixMilli()
-	timestampStr := fmt.Sprintf("%d", timestamp)
-
-	// Prepare registry entries
+	// Build fresh entries
 	entries := []gql.RegistryEntryInput{
-		{Key: "config.imagor_mode", Value: "external", IsEncrypted: false},
-		{Key: "config.imagor_base_url", Value: input.BaseURL, IsEncrypted: false},
 		{Key: "config.imagor_config_updated_at", Value: timestampStr, IsEncrypted: false},
 	}
 
-	// Add optional secret
 	if input.Secret != nil && *input.Secret != "" {
 		entries = append(entries, gql.RegistryEntryInput{
 			Key: "config.imagor_secret", Value: *input.Secret, IsEncrypted: true,
 		})
 	}
 
-	// Add optional unsafe flag
 	if input.Unsafe != nil {
 		entries = append(entries, gql.RegistryEntryInput{
 			Key: "config.imagor_unsafe", Value: fmt.Sprintf("%t", *input.Unsafe), IsEncrypted: false,
 		})
 	}
 
-	// Add optional signer type
 	if input.SignerType != nil {
 		var signerTypeStr string
 		switch *input.SignerType {
@@ -614,35 +503,39 @@ func (r *mutationResolver) ConfigureExternalImagor(ctx context.Context, input gq
 		})
 	}
 
-	// Add optional signer truncate
 	if input.SignerTruncate != nil {
 		entries = append(entries, gql.RegistryEntryInput{
 			Key: "config.imagor_signer_truncate", Value: fmt.Sprintf("%d", *input.SignerTruncate), IsEncrypted: false,
 		})
 	}
 
-	// Save to registry
-	_, err := r.setSystemRegistryEntries(ctx, entries)
-	if err != nil {
-		r.logger.Error("Failed to save external imagor configuration", zap.Error(err))
+	if _, err := r.setSystemRegistryEntries(ctx, entries); err != nil {
+		r.logger.Error("Failed to save imagor configuration", zap.Error(err))
 		return &gql.ImagorConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       timestampStr,
-			Message:         &[]string{"Failed to save configuration"}[0],
+			Success:   false,
+			Timestamp: timestampStr,
+			Message:   &[]string{"Failed to save configuration"}[0],
 		}, nil
 	}
 
-	// External mode configuration doesn't require restart (no embedded handler to recreate)
+	// Reload imagor from registry to apply changes immediately (no restart needed)
+	if err := r.imagorProvider.ReloadFromRegistry(); err != nil {
+		r.logger.Error("Failed to reload imagor from registry", zap.Error(err))
+		return &gql.ImagorConfigResult{
+			Success:   false,
+			Timestamp: timestampStr,
+			Message:   &[]string{"Configuration saved but failed to apply"}[0],
+		}, nil
+	}
+
 	return &gql.ImagorConfigResult{
-		Success:         true,
-		RestartRequired: false,
-		Timestamp:       timestampStr,
-		Message:         &[]string{"External imagor configured successfully"}[0],
+		Success:   true,
+		Timestamp: timestampStr,
+		Message:   &[]string{"Imagor configured successfully"}[0],
 	}, nil
 }
 
-// Helper function to set system registry entries
+// setSystemRegistryEntries saves a batch of system registry entries
 func (r *mutationResolver) setSystemRegistryEntries(ctx context.Context, entries []gql.RegistryEntryInput) ([]*gql.SystemRegistry, error) {
 	// Check all entries for config conflicts first (same logic as SetSystemRegistry)
 	for _, entry := range entries {

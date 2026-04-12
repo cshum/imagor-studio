@@ -5,8 +5,7 @@ extend type Query {
 
 extend type Mutation {
   # Imagor Configuration APIs (admin only)
-  configureEmbeddedImagor: ImagorConfigResult!
-  configureExternalImagor(input: ExternalImagorInput!): ImagorConfigResult!
+  configureImagor(input: ImagorInput!): ImagorConfigResult!
 
   # Imagor URL Generation API
   generateImagorUrl(imagePath: String!, params: ImagorParamsInput!): String!
@@ -78,15 +77,12 @@ input DimensionsInput {
 # Imagor Configuration Types
 type ImagorStatus {
   configured: Boolean!
-  mode: ImagorMode
-  restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
-  externalConfig: ExternalImagorConfig
+  config: ImagorConfig
 }
 
-type ExternalImagorConfig {
-  baseUrl: String!
+type ImagorConfig {
   hasSecret: Boolean!
   unsafe: Boolean!
   signerType: ImagorSignerType!
@@ -95,26 +91,19 @@ type ExternalImagorConfig {
 
 type ImagorConfigResult {
   success: Boolean!
-  restartRequired: Boolean!
   timestamp: String!
   message: String
 }
 
-input ExternalImagorInput {
-  baseUrl: String!
+input ImagorInput {
   secret: String
   unsafe: Boolean
   signerType: ImagorSignerType # Optional, defaults to SHA1
-  signerTruncate: Int # Optional, defaults to 0
+  signerTruncate: Int          # Optional, defaults to 0
 }
 
 enum ImagorSignerType {
   SHA1
   SHA256
   SHA512
-}
-
-enum ImagorMode {
-  EMBEDDED
-  EXTERNAL
 }

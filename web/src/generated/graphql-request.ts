@@ -42,23 +42,6 @@ export type DimensionsInput = {
   width: Scalars['Int']['input']
 }
 
-export type ExternalImagorConfig = {
-  __typename?: 'ExternalImagorConfig'
-  baseUrl: Scalars['String']['output']
-  hasSecret: Scalars['Boolean']['output']
-  signerTruncate: Scalars['Int']['output']
-  signerType: ImagorSignerType
-  unsafe: Scalars['Boolean']['output']
-}
-
-export type ExternalImagorInput = {
-  baseUrl: Scalars['String']['input']
-  secret: InputMaybe<Scalars['String']['input']>
-  signerTruncate: InputMaybe<Scalars['Int']['input']>
-  signerType: InputMaybe<ImagorSignerType>
-  unsafe: InputMaybe<Scalars['Boolean']['input']>
-}
-
 export type FileItem = {
   __typename?: 'FileItem'
   isDirectory: Scalars['Boolean']['output']
@@ -99,10 +82,17 @@ export type FileStorageInput = {
   writePermissions: InputMaybe<Scalars['String']['input']>
 }
 
+export type ImagorConfig = {
+  __typename?: 'ImagorConfig'
+  hasSecret: Scalars['Boolean']['output']
+  signerTruncate: Scalars['Int']['output']
+  signerType: ImagorSignerType
+  unsafe: Scalars['Boolean']['output']
+}
+
 export type ImagorConfigResult = {
   __typename?: 'ImagorConfigResult'
   message: Maybe<Scalars['String']['output']>
-  restartRequired: Scalars['Boolean']['output']
   success: Scalars['Boolean']['output']
   timestamp: Scalars['String']['output']
 }
@@ -112,7 +102,12 @@ export type ImagorFilterInput = {
   name: Scalars['String']['input']
 }
 
-export type ImagorMode = 'EMBEDDED' | 'EXTERNAL'
+export type ImagorInput = {
+  secret: InputMaybe<Scalars['String']['input']>
+  signerTruncate: InputMaybe<Scalars['Int']['input']>
+  signerType: InputMaybe<ImagorSignerType>
+  unsafe: InputMaybe<Scalars['Boolean']['input']>
+}
 
 export type ImagorParamsInput = {
   cropBottom: InputMaybe<Scalars['Float']['input']>
@@ -142,12 +137,10 @@ export type ImagorSignerType = 'SHA1' | 'SHA256' | 'SHA512'
 
 export type ImagorStatus = {
   __typename?: 'ImagorStatus'
+  config: Maybe<ImagorConfig>
   configured: Scalars['Boolean']['output']
-  externalConfig: Maybe<ExternalImagorConfig>
   isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
-  mode: Maybe<ImagorMode>
-  restartRequired: Scalars['Boolean']['output']
 }
 
 export type LicenseStatus = {
@@ -165,9 +158,8 @@ export type LicenseStatus = {
 export type Mutation = {
   __typename?: 'Mutation'
   changePassword: Scalars['Boolean']['output']
-  configureEmbeddedImagor: ImagorConfigResult
-  configureExternalImagor: ImagorConfigResult
   configureFileStorage: StorageConfigResult
+  configureImagor: ImagorConfigResult
   configureS3Storage: StorageConfigResult
   copyFile: Scalars['Boolean']['output']
   createFolder: Scalars['Boolean']['output']
@@ -193,12 +185,12 @@ export type MutationChangePasswordArgs = {
   userId?: InputMaybe<Scalars['ID']['input']>
 }
 
-export type MutationConfigureExternalImagorArgs = {
-  input: ExternalImagorInput
-}
-
 export type MutationConfigureFileStorageArgs = {
   input: FileStorageInput
+}
+
+export type MutationConfigureImagorArgs = {
+  input: ImagorInput
 }
 
 export type MutationConfigureS3StorageArgs = {
@@ -486,13 +478,10 @@ export type ImagorStatusQuery = {
   imagorStatus: {
     __typename?: 'ImagorStatus'
     configured: boolean
-    mode: ImagorMode | null
-    restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
-    externalConfig: {
-      __typename?: 'ExternalImagorConfig'
-      baseUrl: string
+    config: {
+      __typename?: 'ImagorConfig'
       hasSecret: boolean
       unsafe: boolean
       signerType: ImagorSignerType
@@ -501,29 +490,15 @@ export type ImagorStatusQuery = {
   }
 }
 
-export type ConfigureEmbeddedImagorMutationVariables = Exact<{ [key: string]: never }>
-
-export type ConfigureEmbeddedImagorMutation = {
-  __typename?: 'Mutation'
-  configureEmbeddedImagor: {
-    __typename?: 'ImagorConfigResult'
-    success: boolean
-    restartRequired: boolean
-    timestamp: string
-    message: string | null
-  }
-}
-
-export type ConfigureExternalImagorMutationVariables = Exact<{
-  input: ExternalImagorInput
+export type ConfigureImagorMutationVariables = Exact<{
+  input: ImagorInput
 }>
 
-export type ConfigureExternalImagorMutation = {
+export type ConfigureImagorMutation = {
   __typename?: 'Mutation'
-  configureExternalImagor: {
+  configureImagor: {
     __typename?: 'ImagorConfigResult'
     success: boolean
-    restartRequired: boolean
     timestamp: string
     message: string | null
   }
@@ -1030,12 +1005,9 @@ export const ImagorStatusDocument = gql`
   query ImagorStatus {
     imagorStatus {
       configured
-      mode
-      restartRequired
       lastUpdated
       isOverriddenByConfig
-      externalConfig {
-        baseUrl
+      config {
         hasSecret
         unsafe
         signerType
@@ -1044,21 +1016,10 @@ export const ImagorStatusDocument = gql`
     }
   }
 `
-export const ConfigureEmbeddedImagorDocument = gql`
-  mutation ConfigureEmbeddedImagor {
-    configureEmbeddedImagor {
+export const ConfigureImagorDocument = gql`
+  mutation ConfigureImagor($input: ImagorInput!) {
+    configureImagor(input: $input) {
       success
-      restartRequired
-      timestamp
-      message
-    }
-  }
-`
-export const ConfigureExternalImagorDocument = gql`
-  mutation ConfigureExternalImagor($input: ExternalImagorInput!) {
-    configureExternalImagor(input: $input) {
-      success
-      restartRequired
       timestamp
       message
     }
@@ -1400,38 +1361,20 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
         variables,
       )
     },
-    ConfigureEmbeddedImagor(
-      variables?: ConfigureEmbeddedImagorMutationVariables,
+    ConfigureImagor(
+      variables: ConfigureImagorMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal'],
-    ): Promise<ConfigureEmbeddedImagorMutation> {
+    ): Promise<ConfigureImagorMutation> {
       return withWrapper(
         (wrappedRequestHeaders) =>
-          client.request<ConfigureEmbeddedImagorMutation>({
-            document: ConfigureEmbeddedImagorDocument,
+          client.request<ConfigureImagorMutation>({
+            document: ConfigureImagorDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'ConfigureEmbeddedImagor',
-        'mutation',
-        variables,
-      )
-    },
-    ConfigureExternalImagor(
-      variables: ConfigureExternalImagorMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal'],
-    ): Promise<ConfigureExternalImagorMutation> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<ConfigureExternalImagorMutation>({
-            document: ConfigureExternalImagorDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'ConfigureExternalImagor',
+        'ConfigureImagor',
         'mutation',
         variables,
       )

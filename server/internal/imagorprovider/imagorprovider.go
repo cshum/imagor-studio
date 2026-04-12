@@ -30,27 +30,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// ImagorMode represents the imagor operation mode
-type ImagorMode string
-
-const (
-	ImagorModeEmbedded ImagorMode = "embedded"
-	ImagorModeExternal ImagorMode = "external"
-)
-
-// String returns the string representation of the mode
-func (m ImagorMode) String() string {
-	return string(m)
-}
-
 // ImagorConfig holds imagor configuration
 type ImagorConfig struct {
-	Mode           ImagorMode // embedded or external
-	BaseURL        string     // External URL or "/imagor" for embedded
-	Secret         string     // Secret key for URL signing
-	Unsafe         bool       // Enable unsafe URLs for development
-	SignerType     string     // Hash algorithm: "sha1", "sha256", "sha512" (for external mode)
-	SignerTruncate int        // Signature truncation length (for external mode)
+	Secret         string // Secret key for URL signing
+	Unsafe         bool   // Enable unsafe URLs for development
+	SignerType     string // Hash algorithm: "sha1", "sha256", "sha512"
+	SignerTruncate int    // Signature truncation length
 }
 
 // Provider handles imagor configuration with state management
@@ -60,9 +45,8 @@ type Provider struct {
 	config          *config.Config
 	storageProvider *storageprovider.Provider
 	currentConfig   *ImagorConfig
-	imagorHandler   http.Handler   // For embedded mode
+	imagorHandler   http.Handler   // Embedded imagor HTTP handler
 	imagorInstance  *imagor.Imagor // For shutdown cleanup
-	configLoadedAt  int64          // Unix milliseconds when config was loaded
 	mutex           sync.RWMutex
 }
 
@@ -73,14 +57,12 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 		registryStore:   registryStore,
 		config:          cfg,
 		storageProvider: storageProvider,
-		configLoadedAt:  time.Now().UnixMilli(),
 		mutex:           sync.RWMutex{},
 	}
 }
 
-// buildConfig creates imagor configuration from registry, CLI, or defaults with proper priority
+// buildConfig creates imagor configuration from registry, CLI, or defaults
 func (p *Provider) buildConfig() (*ImagorConfig, error) {
-	// Single call handles CLI/ENV/Registry/Defaults automatically!
 	return p.buildConfigFromRegistry()
 }
 
@@ -91,18 +73,14 @@ func (p *Provider) GetConfig() *ImagorConfig {
 	return p.currentConfig
 }
 
-// GetHandler returns the HTTP handler for embedded mode (nil for external/disabled)
+// GetHandler returns the HTTP handler for the embedded imagor instance
 func (p *Provider) GetHandler() http.Handler {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
-
-	if p.currentConfig != nil && p.currentConfig.Mode == ImagorModeEmbedded {
-		return p.imagorHandler
-	}
-	return nil
+	return p.imagorHandler
 }
 
-// GetInstance returns the imagor instance for embedded mode (nil for external)
+// GetInstance returns the imagor instance (for in-process request handling)
 func (p *Provider) GetInstance() *imagor.Imagor {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
@@ -114,64 +92,24 @@ func (p *Provider) Initialize() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	// Build configuration using unified approach
 	imagorConfig, err := p.buildConfig()
 	if err != nil {
 		return fmt.Errorf("failed to build imagor configuration: %w", err)
 	}
 
-	// Set up handler and update state
 	return p.setupHandler(imagorConfig, "Imagor initialized")
 }
 
-// setupHandler creates embedded handler if needed and updates provider state
+// setupHandler creates the embedded handler and updates provider state
 func (p *Provider) setupHandler(imagorConfig *ImagorConfig, logMessage string) error {
-	// Create embedded handler if needed
-	if imagorConfig.Mode == ImagorModeEmbedded {
-		handler, err := p.createEmbeddedHandler(imagorConfig)
-		if err != nil {
-			return fmt.Errorf("failed to create embedded imagor handler: %w", err)
-		}
-		p.imagorHandler = handler
-	} else {
-		p.imagorHandler = nil
+	handler, err := p.createEmbeddedHandler(imagorConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create embedded imagor handler: %w", err)
 	}
-
+	p.imagorHandler = handler
 	p.currentConfig = imagorConfig
-	p.configLoadedAt = time.Now().UnixMilli()
-	p.logger.Info(logMessage, zap.String("mode", imagorConfig.Mode.String()))
-
+	p.logger.Info(logMessage)
 	return nil
-}
-
-// IsRestartRequired checks if a restart is required due to imagor configuration changes
-func (p *Provider) IsRestartRequired() bool {
-	p.mutex.RLock()
-	defer p.mutex.RUnlock()
-
-	ctx := context.Background()
-
-	// Check both imagor config changes and storage config changes
-	results := registryutil.GetEffectiveValues(ctx, p.registryStore, p.config,
-		"config.imagor_config_updated_at",
-		"config.storage_config_updated_at")
-
-	for _, result := range results {
-		if !result.Exists {
-			continue
-		}
-
-		configUpdatedAt, err := strconv.ParseInt(result.Value, 10, 64)
-		if err != nil {
-			continue
-		}
-
-		if configUpdatedAt > p.configLoadedAt {
-			return true
-		}
-	}
-
-	return false
 }
 
 // ReloadFromRegistry forces a reload of imagor configuration from registry
@@ -179,13 +117,11 @@ func (p *Provider) ReloadFromRegistry() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	// Build configuration using unified approach
 	imagorConfig, err := p.buildConfig()
 	if err != nil {
 		return fmt.Errorf("failed to build imagor configuration: %w", err)
 	}
 
-	// Set up handler and update state
 	return p.setupHandler(imagorConfig, "Imagor reloaded from registry")
 }
 
@@ -193,41 +129,18 @@ func (p *Provider) ReloadFromRegistry() error {
 func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 	ctx := context.Background()
 
-	// Get all imagor configuration keys in one batch call
 	results := registryutil.GetEffectiveValues(ctx, p.registryStore, p.config,
-		"config.imagor_mode",
-		"config.imagor_base_url",
 		"config.imagor_secret",
 		"config.imagor_unsafe",
 		"config.imagor_signer_type",
 		"config.imagor_signer_truncate")
 
-	// Create a map for easy lookup
 	resultMap := make(map[string]registryutil.EffectiveValueResult)
 	for _, result := range results {
 		resultMap[result.Key] = result
 	}
 
-	// Get imagor mode with sensible default
-	modeResult := resultMap["config.imagor_mode"]
-	mode := "embedded" // Sensible default
-	if modeResult.Exists {
-		mode = strings.ToLower(modeResult.Value)
-	}
-
-	imagorConfig := &ImagorConfig{
-		Mode: ImagorMode(mode),
-	}
-
-	if imagorConfig.Mode == ImagorModeEmbedded {
-		imagorConfig.BaseURL = ""
-	} else {
-		if baseURLResult := resultMap["config.imagor_base_url"]; baseURLResult.Exists {
-			imagorConfig.BaseURL = baseURLResult.Value
-		} else {
-			imagorConfig.BaseURL = "http://localhost:8000" // Default for external
-		}
-	}
+	imagorConfig := &ImagorConfig{}
 
 	if signerTypeResult := resultMap["config.imagor_signer_type"]; signerTypeResult.Exists {
 		imagorConfig.SignerType = signerTypeResult.Value
@@ -239,8 +152,6 @@ func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
 		if truncate, err := strconv.Atoi(signerTruncateResult.Value); err == nil {
 			imagorConfig.SignerTruncate = truncate
 		}
-	} else {
-		imagorConfig.SignerTruncate = 0
 	}
 
 	if unsafeResult := resultMap["config.imagor_unsafe"]; unsafeResult.Exists {
@@ -275,55 +186,33 @@ func getHashAlgorithm(signerType string) func() hash.Hash {
 
 // GenerateURL generates an imagor URL for the given image path and parameters
 func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
-	// Get current imagor configuration
 	cfg := p.GetConfig()
 	if cfg == nil {
 		return "", fmt.Errorf("imagor configuration not available")
 	}
 
-	// Set the image path in params
 	params.Image = imagePath
 
 	// Auto-enable base64 encoding if path contains spaces or special characters
-	// that would interfere with URL parsing (?, #, &, (, ))
 	if strings.Contains(imagePath, " ") ||
 		strings.ContainsAny(imagePath, "?#&()") {
 		params.Base64Image = true
 	}
 
-	// Generate path using imagorpath
-	var path string
-	var signer imagorpath.Signer
+	if cfg.Unsafe {
+		return fmt.Sprintf("/%s", imagorpath.GenerateUnsafe(params)), nil
+	}
 
-	if cfg.Mode == ImagorModeEmbedded {
-		// For embedded mode, use the configured signer settings
-		if cfg.Unsafe {
-			path = imagorpath.GenerateUnsafe(params)
-		} else {
-			hashAlg := getHashAlgorithm(cfg.SignerType)
-			signer = imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
-			path = imagorpath.Generate(params, signer)
-		}
-	} else if cfg.Unsafe {
-		path = imagorpath.GenerateUnsafe(params)
-	} else {
-		// Use configurable signer for external mode
-		hashAlg := getHashAlgorithm(cfg.SignerType)
-		signer = imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
-		path = imagorpath.Generate(params, signer)
-	}
-	if cfg.BaseURL == "" {
-		return fmt.Sprintf("/%s", path), nil
-	}
-	return fmt.Sprintf("%s/%s", cfg.BaseURL, path), nil
+	hashAlg := getHashAlgorithm(cfg.SignerType)
+	signer := imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
+	return fmt.Sprintf("/%s", imagorpath.Generate(params, signer)), nil
 }
 
 // createEmbeddedHandler creates an embedded imagor handler
 func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error) {
 	var options []imagor.Option
 
-	// Add processors in order: video processor first, then vips processor
-	// The video processor will handle video/audio files and forward others to vips
+	// Add processors: video processor first, then vips processor
 	options = append(options, imagor.WithProcessors(
 		imagorvideo.NewProcessor(
 			imagorvideo.WithLogger(p.logger),
@@ -335,7 +224,6 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 		),
 	))
 
-	// Use configurable signer settings for embedded mode
 	if !cfg.Unsafe {
 		hashAlg := getHashAlgorithm(cfg.SignerType)
 		signer := imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
@@ -345,7 +233,7 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 	}
 
 	// Configure storage based on current storage provider
-	if storageOptions := p.buildStorageOptions(cfg); len(storageOptions) > 0 {
+	if storageOptions := p.buildStorageOptions(); len(storageOptions) > 0 {
 		options = append(options, storageOptions...)
 	}
 
@@ -354,7 +242,6 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 	// Store the imagor instance for shutdown cleanup
 	p.imagorInstance = app
 
-	// Start the imagor instance
 	ctx := context.Background()
 	if err := app.Startup(ctx); err != nil {
 		return nil, fmt.Errorf("failed to start imagor: %w", err)
@@ -382,8 +269,7 @@ func (p *Provider) Shutdown(ctx context.Context) error {
 }
 
 // buildStorageOptions creates imagor storage options based on current storage provider configuration
-func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
-	// Get current storage configuration from storage provider
+func (p *Provider) buildStorageOptions() []imagor.Option {
 	storageConfig := p.getStorageConfig()
 	if storageConfig == nil {
 		p.logger.Warn("No storage configuration available for imagor")
@@ -394,28 +280,15 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 
 	switch storageConfig.StorageType {
 	case "file", "filesystem":
-		// Create imagor file storage as LOADER only with custom SafeChars for Unicode handling
-		fileStorageOptions := []filestorage.Option{
+		fileStorage := filestorage.New(
+			storageConfig.FileStorageBaseDir,
 			filestorage.WithMkdirPermission(storageConfig.FileStorageMkdirPermissions.String()),
 			filestorage.WithWritePermission(storageConfig.FileStorageWritePermissions.String()),
 			filestorage.WithSafeChars("--"),
-		}
-
-		// Use custom SafeChars for embedded mode to handle Unicode characters
-		if cfg.Mode == ImagorModeEmbedded {
-			fileStorageOptions = append(fileStorageOptions,
-				filestorage.WithSafeChars("--"), // Use no-op SafeChars to preserve Unicode
-			)
-		}
-
-		fileStorage := filestorage.New(
-			storageConfig.FileStorageBaseDir,
-			fileStorageOptions...,
 		)
 		options = append(options, imagor.WithLoaders(fileStorage))
 
 	case "s3":
-		// Create imagor S3 storage as LOADER only
 		awsConfig := p.buildAWSConfig(storageConfig)
 		if awsConfig == nil {
 			p.logger.Error("Failed to build AWS config for imagor S3 storage")
@@ -440,14 +313,11 @@ func (p *Provider) buildStorageOptions(cfg *ImagorConfig) []imagor.Option {
 
 // getStorageConfig gets the current storage configuration directly from registry
 func (p *Provider) getStorageConfig() *config.Config {
-	// Try to build from registry first
 	cfg, err := p.buildStorageConfigFromRegistry()
 	if err != nil || cfg.StorageType == "" {
-		// Fall back to original config if no valid storage type found
 		p.logger.Debug("No valid storage configuration found in registry, using original config", zap.Error(err))
 		return p.config
 	}
-
 	return cfg
 }
 
@@ -456,14 +326,11 @@ func (p *Provider) buildStorageConfigFromRegistry() (*config.Config, error) {
 	ctx := context.Background()
 	cfg := &config.Config{}
 
-	// Get all possible storage configuration keys in one batch call
 	results := registryutil.GetEffectiveValues(ctx, p.registryStore, p.config,
 		"config.storage_type",
-		// File storage keys
 		"config.file_storage_base_dir",
 		"config.file_storage_mkdir_permissions",
 		"config.file_storage_write_permissions",
-		// S3 storage keys
 		"config.s3_storage_bucket",
 		"config.s3_storage_region",
 		"config.s3_storage_endpoint",
@@ -473,20 +340,17 @@ func (p *Provider) buildStorageConfigFromRegistry() (*config.Config, error) {
 		"config.s3_storage_session_token",
 		"config.s3_storage_base_dir")
 
-	// Create a map for easy lookup
 	resultMap := make(map[string]registryutil.EffectiveValueResult)
 	for _, result := range results {
 		resultMap[result.Key] = result
 	}
 
-	// Get storage type
 	storageTypeResult := resultMap["config.storage_type"]
 	if !storageTypeResult.Exists {
-		return p.config, nil // Fall back to original config
+		return p.config, nil
 	}
 	cfg.StorageType = storageTypeResult.Value
 
-	// Load type-specific configuration
 	switch cfg.StorageType {
 	case "file", "filesystem":
 		p.loadFileConfigFromResults(resultMap, cfg)
@@ -502,7 +366,7 @@ func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.E
 	if result := resultMap["config.file_storage_base_dir"]; result.Exists {
 		cfg.FileStorageBaseDir = result.Value
 	} else {
-		cfg.FileStorageBaseDir = "/app/gallery" // Default
+		cfg.FileStorageBaseDir = "/app/gallery"
 	}
 
 	if result := resultMap["config.file_storage_mkdir_permissions"]; result.Exists {
@@ -510,7 +374,7 @@ func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.E
 			cfg.FileStorageMkdirPermissions = os.FileMode(perm)
 		}
 	} else {
-		cfg.FileStorageMkdirPermissions = 0755 // Default
+		cfg.FileStorageMkdirPermissions = 0755
 	}
 
 	if result := resultMap["config.file_storage_write_permissions"]; result.Exists {
@@ -518,7 +382,7 @@ func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.E
 			cfg.FileStorageWritePermissions = os.FileMode(perm)
 		}
 	} else {
-		cfg.FileStorageWritePermissions = 0644 // Default
+		cfg.FileStorageWritePermissions = 0644
 	}
 }
 
@@ -527,33 +391,26 @@ func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.Eff
 	if result := resultMap["config.s3_storage_bucket"]; result.Exists {
 		cfg.S3StorageBucket = result.Value
 	}
-
 	if result := resultMap["config.s3_storage_region"]; result.Exists {
 		cfg.AWSRegion = result.Value
 	}
-
 	if result := resultMap["config.s3_storage_endpoint"]; result.Exists {
 		cfg.S3Endpoint = result.Value
 	}
-
 	if result := resultMap["config.s3_storage_force_path_style"]; result.Exists {
 		if forcePathStyle, err := strconv.ParseBool(result.Value); err == nil {
 			cfg.S3ForcePathStyle = forcePathStyle
 		}
 	}
-
 	if result := resultMap["config.s3_storage_access_key_id"]; result.Exists {
 		cfg.AWSAccessKeyID = result.Value
 	}
-
 	if result := resultMap["config.s3_storage_secret_access_key"]; result.Exists {
 		cfg.AWSSecretAccessKey = result.Value
 	}
-
 	if result := resultMap["config.s3_storage_session_token"]; result.Exists {
 		cfg.AWSSessionToken = result.Value
 	}
-
 	if result := resultMap["config.s3_storage_base_dir"]; result.Exists {
 		cfg.S3StorageBaseDir = result.Value
 	}
@@ -563,19 +420,16 @@ func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.Eff
 func (p *Provider) buildAWSConfig(storageConfig *config.Config) *aws.Config {
 	ctx := context.Background()
 
-	// Start with default config
 	cfg, err := awsconfig.LoadDefaultConfig(ctx)
 	if err != nil {
 		p.logger.Error("Failed to load default AWS config", zap.Error(err))
 		return nil
 	}
 
-	// Set region if provided
 	if storageConfig.AWSRegion != "" {
 		cfg.Region = storageConfig.AWSRegion
 	}
 
-	// Set credentials if provided
 	if storageConfig.AWSAccessKeyID != "" && storageConfig.AWSSecretAccessKey != "" {
 		cfg.Credentials = credentials.NewStaticCredentialsProvider(
 			storageConfig.AWSAccessKeyID,
