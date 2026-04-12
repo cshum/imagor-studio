@@ -487,7 +487,7 @@
       "externalConfiguration": "Configurazione Imagor Esterna",
       "secret": "Chiave Segreta",
       "secretPlaceholder": "",
-      "secretDescription": "Chiave segreta opzionale per la firma degli URL delle immagini. Lascia vuoto per usare il segreto JWT.",
+      "secretDescription": "Lascia vuoto e genereremo automaticamente una chiave di firma sicura per te.",
       "externalSecretDescription": "Chiave segreta utilizzata dal servizio Imagor esterno per la firma degli URL.",
       "embeddedModeSimplified": "La modalità integrata utilizza una configurazione fissa con impostazioni predefinite sicure. Non è richiesta alcuna configurazione aggiuntiva.",
       "enableEmbeddedMode": "Abilita Modalità Integrata",

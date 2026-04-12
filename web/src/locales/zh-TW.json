@@ -56,7 +56,8 @@
     },
     "language": {
       "title": "語言"
-    }
+    },
+    "advancedSettings": "進階設定"
   },
   "auth": {
     "login": {
@@ -490,7 +491,7 @@
       "externalConfiguration": "外部 Imagor 配置",
       "secret": "金鑰",
       "secretPlaceholder": "",
-      "secretDescription": "用於簽名圖片 URL 的可選金鑰。留空以使用 JWT 金鑰。",
+      "secretDescription": "留空，我們將自動為您生成安全的簽名金鑰。",
       "externalSecretDescription": "外部 Imagor 服務用於 URL 簽名的金鑰。",
       "embeddedModeSimplified": "嵌入式模式使用具有安全預設值的固定配置。無需額外配置。",
       "enableEmbeddedMode": "啟用嵌入式模式",

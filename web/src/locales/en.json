@@ -492,7 +492,7 @@
       "externalConfiguration": "External Imagor Configuration",
       "secret": "Secret Key",
       "secretPlaceholder": "",
-      "secretDescription": "Optional secret key for signing image URLs. Leave empty to use the JWT secret.",
+      "secretDescription": "Leave empty and we'll generate a secure signing key for you automatically.",
       "externalSecretDescription": "Secret key used by the external Imagor service for URL signing.",
       "embeddedModeSimplified": "Embedded mode uses fixed configuration with secure defaults. No additional configuration required.",
       "enableEmbeddedMode": "Enable Embedded Mode",

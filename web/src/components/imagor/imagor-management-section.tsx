@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-import { Badge } from '@/components/ui/badge'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -26,12 +25,6 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
     router.invalidate()
   }
 
-  const getStatusBadge = () => {
-    if (!imagorStatus?.configured)
-      return <Badge variant='destructive'>{t('pages.imagor.notConfigured')}</Badge>
-    return <Badge variant='default'>{t('pages.imagor.active')}</Badge>
-  }
-
   const embeddedConfig = imagorStatus?.embeddedConfig
 
   return (
@@ -42,22 +35,6 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
           <CardDescription>{t('pages.imagor.imagorConfigurationDescription')}</CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <div className='text-muted-foreground text-sm font-medium'>
-                {t('pages.imagor.mode')}
-              </div>
-              <div className='text-base'>{t('pages.imagor.embeddedMode')}</div>
-            </div>
-
-            <div className='space-y-2'>
-              <div className='text-muted-foreground text-sm font-medium'>
-                {t('pages.imagor.status')}
-              </div>
-              <div>{getStatusBadge()}</div>
-            </div>
-          </div>
-
           {/* Display embedded configuration details */}
           {imagorStatus?.configured && embeddedConfig && (
             <div className='bg-muted/50 space-y-4 rounded-lg border p-4'>
