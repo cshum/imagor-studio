@@ -78,10 +78,9 @@ func TestRegistryStore_DeleteMulti_NonExistentKeys(t *testing.T) {
 
 	ownerID := "test-owner"
 
-	// Test deleting non-existent keys - should return error
+	// Deleting non-existent keys is a no-op — should succeed without error
 	err := store.DeleteMulti(ctx, ownerID, []string{"non-existent-key1", "non-existent-key2"})
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "no registry entries found")
+	assert.NoError(t, err)
 }
 
 func TestRegistryStore_DeleteMulti_MixedExistentAndNonExistent(t *testing.T) {
@@ -98,15 +97,16 @@ func TestRegistryStore_DeleteMulti_MixedExistentAndNonExistent(t *testing.T) {
 	_, err := store.Set(ctx, ownerID, "existing-key", "value", false)
 	require.NoError(t, err)
 
-	// Test deleting mix of existent and non-existent keys
+	// Deleting a mix of existent and non-existent keys should succeed;
+	// the existing key is deleted, unknown keys are silently ignored.
 	keysToDelete := []string{"existing-key", "non-existent-key"}
 	err = store.DeleteMulti(ctx, ownerID, keysToDelete)
-	assert.Error(t, err, "Should error when some keys don't exist")
+	assert.NoError(t, err)
 
-	// Verify the existing key was not deleted due to the error
+	// The existing key should now be gone
 	registry, err := store.Get(ctx, ownerID, "existing-key")
 	assert.NoError(t, err)
-	assert.NotNil(t, registry, "Existing key should still exist due to transaction rollback")
+	assert.Nil(t, registry, "Existing key should have been deleted")
 }
 
 func TestRegistryStore_DeleteMulti_OwnerIsolation(t *testing.T) {

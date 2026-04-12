@@ -266,54 +266,14 @@ func (s *store) DeleteMulti(ctx context.Context, ownerID string, keys []string) 
 		uniqueKeysList = append(uniqueKeysList, key)
 	}
 
-	// Use a transaction to ensure atomicity
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("error starting transaction: %w", err)
-	}
-	defer tx.Rollback()
-
-	// First, check if all keys exist
-	existingCount, err := tx.NewSelect().
-		Model((*model.Registry)(nil)).
-		Where("owner_id = ?", ownerID).
-		Where("key IN (?)", bun.In(uniqueKeysList)).
-		Count(ctx)
-	if err != nil {
-		return fmt.Errorf("error checking existing keys: %w", err)
-	}
-
-	expectedDeletes := len(uniqueKeysList)
-	if existingCount != expectedDeletes {
-		if existingCount == 0 {
-			return fmt.Errorf("no registry entries found for owner %s with provided keys", ownerID)
-		} else {
-			return fmt.Errorf("only %d of %d registry entries exist for owner %s - some keys may not exist", existingCount, expectedDeletes, ownerID)
-		}
-	}
-
-	// All keys exist, proceed with deletion
-	result, err := tx.NewDelete().
+	// Delete matching keys — no error if some/all keys don't exist (idempotent clear)
+	_, err := s.db.NewDelete().
 		Model((*model.Registry)(nil)).
 		Where("owner_id = ?", ownerID).
 		Where("key IN (?)", bun.In(uniqueKeysList)).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("error deleting multiple registry entries: %w", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("error getting rows affected: %w", err)
-	}
-
-	if rowsAffected != int64(expectedDeletes) {
-		return fmt.Errorf("expected to delete %d entries but deleted %d", expectedDeletes, rowsAffected)
-	}
-
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	return nil

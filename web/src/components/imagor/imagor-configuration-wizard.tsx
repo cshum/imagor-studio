@@ -5,10 +5,11 @@ import { toast } from 'sonner'
 import { configureEmbeddedImagor } from '@/api/imagor-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
-import type { ImagorStatusQuery } from '@/generated/graphql'
+import type { ImagorSignerType, ImagorStatusQuery } from '@/generated/graphql'
 
 import {
   EmbeddedImagorForm,
+  type EmbeddedImagorFormData,
   type EmbeddedImagorFormRef,
 } from './embedded-imagor-form'
 
@@ -33,11 +34,16 @@ export function ImagorConfigurationWizard({
 
   const isConfigOverridden = initialConfig?.isOverriddenByConfig || false
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (data: EmbeddedImagorFormData) => {
     setIsLoading(true)
     try {
       const result = await configureEmbeddedImagor({
-        input: { secret: null, unsafe: null, signerType: null, signerTruncate: null },
+        input: {
+          secret: data.secret.trim() !== '' ? data.secret : null,
+          unsafe: data.unsafe,
+          signerType: data.unsafe ? null : (data.signerType as ImagorSignerType),
+          signerTruncate: data.unsafe ? null : data.signerTruncate,
+        },
       })
 
       if (result.success) {
@@ -71,6 +77,7 @@ export function ImagorConfigurationWizard({
           ref={embeddedFormRef}
           onSubmit={handleSubmit}
           disabled={isLoading || isConfigOverridden}
+          initialValues={initialConfig?.embeddedConfig ?? null}
         />
       </div>
 
