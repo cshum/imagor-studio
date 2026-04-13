@@ -780,7 +780,7 @@ func TestGuestLogin(t *testing.T) {
 	}
 }
 
-// ── SaaS org integration tests ───────────────────────────────────────────────
+// ── Multi-tenant org integration tests ───────────────────────────────────────────────
 
 // newOrgTestDB creates an in-memory SQLite DB with org + org_members tables.
 func newOrgTestDB(t *testing.T) *bun.DB {
@@ -802,10 +802,10 @@ func newOrgTestDB(t *testing.T) *bun.DB {
 	return db
 }
 
-// TestRegister_SaaS_CreatesOrg verifies that registering with a wired orgStore:
+// TestRegister_MultiTenant_CreatesOrg verifies that registering with a wired orgStore:
 //   - Creates a personal org in the DB.
 //   - Embeds org_id in the returned JWT.
-func TestRegister_SaaS_CreatesOrg(t *testing.T) {
+func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
@@ -838,7 +838,7 @@ func TestRegister_SaaS_CreatesOrg(t *testing.T) {
 	// Verify JWT embeds org_id.
 	claims, err := tokenManager.ValidateToken(resp.Token)
 	require.NoError(t, err)
-	assert.NotEmpty(t, claims.OrgID, "JWT should carry org_id for SaaS signup")
+	assert.NotEmpty(t, claims.OrgID, "JWT should carry org_id for multi-tenant signup")
 
 	// Verify the org was persisted in the store.
 	org, err := os.GetByUserID(context.Background(), userID)
@@ -851,9 +851,9 @@ func TestRegister_SaaS_CreatesOrg(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
-// TestLogin_SaaS_EmbeddsOrgID verifies that logging in with a wired orgStore
+// TestLogin_MultiTenant_EmbeddsOrgID verifies that logging in with a wired orgStore
 // embeds the user's org_id in the returned JWT.
-func TestLogin_SaaS_EmbeddsOrgID(t *testing.T) {
+func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
@@ -894,9 +894,9 @@ func TestLogin_SaaS_EmbeddsOrgID(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
-// TestRegister_SaaS_OrgCreationFails — when the database is unavailable during
+// TestRegister_MultiTenant_OrgCreationFails — when the database is unavailable during
 // org creation the handler should return 500 and not leak a partial JWT.
-func TestRegister_SaaS_OrgCreationFails(t *testing.T) {
+func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
@@ -919,9 +919,9 @@ func TestRegister_SaaS_OrgCreationFails(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
-// TestRegister_SaaS_SelfHosted_NoOrgInJWT — when orgStore is nil (self-hosted
+// TestRegister_MultiTenant_SelfHosted_NoOrgInJWT — when orgStore is nil (self-hosted
 // deployment) the JWT must NOT carry an org_id.
-func TestRegister_SaaS_SelfHosted_NoOrgInJWT(t *testing.T) {
+func TestRegister_MultiTenant_SelfHosted_NoOrgInJWT(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
@@ -946,10 +946,10 @@ func TestRegister_SaaS_SelfHosted_NoOrgInJWT(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
-// TestLogin_SaaS_UserWithNoOrg — user successfully authenticates but has no
-// org row yet (e.g. created before SaaS migration). The login should succeed
+// TestLogin_MultiTenant_UserWithNoOrg — user successfully authenticates but has no
+// org row yet (e.g. created before multi-tenant migration). The login should succeed
 // and the JWT should carry an empty OrgID rather than failing.
-func TestLogin_SaaS_UserWithNoOrg(t *testing.T) {
+func TestLogin_MultiTenant_UserWithNoOrg(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
@@ -981,10 +981,10 @@ func TestLogin_SaaS_UserWithNoOrg(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
-// TestLogin_SaaS_OrgLookupError — org lookup returns an error (e.g. DB timeout).
+// TestLogin_MultiTenant_OrgLookupError — org lookup returns an error (e.g. DB timeout).
 // Login should still succeed (graceful degradation) and the JWT should carry
 // an empty OrgID; the error gets logged but is not surfaced to the client.
-func TestLogin_SaaS_OrgLookupError(t *testing.T) {
+func TestLogin_MultiTenant_OrgLookupError(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)

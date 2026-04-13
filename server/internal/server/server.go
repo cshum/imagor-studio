@@ -82,7 +82,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	gqlHandler.Use(extension.Introspection{})
 
 	// Create auth handler.  services.OrgStore is nil for self-hosted deployments
-	// and non-nil (wired by bootstrap) when InternalAPISecret is configured (SaaS).
+	// and non-nil (wired by bootstrap) when InternalAPISecret is configured (multi-tenant).
 	authHandler := httphandler.NewAuthHandler(
 		services.TokenManager,
 		services.UserStore,
@@ -123,7 +123,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	mux.Handle("/api/query", protectedHandler)
 
 	// Internal service-to-service endpoint (authenticated by Bearer token).
-	// Only mounted when InternalAPISecret is set (SaaS mode); self-hosted
+	// Only mounted when InternalAPISecret is set (multi-tenant mode); self-hosted
 	// deployments never set it so the route is never exposed.
 	if services.SpaceStore != nil {
 		spacesHandler := httphandler.NewSpacesDeltaHandler(services.SpaceStore, services.Config.InternalAPISecret, services.Logger)
@@ -164,7 +164,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	// Start background 30-second sync loop: pulls registry → imagor signer + storage.
 	syncCtx, syncCancel := context.WithCancel(context.Background())
 
-	// On SaaS processing nodes, perform the initial full sync of space configs
+	// On processing nodes, perform the initial full sync of space configs
 	// (blocking) then let the background poller run via syncCtx.
 	if services.SpaceConfigStore != nil {
 		if err := services.SpaceConfigStore.Start(syncCtx); err != nil {

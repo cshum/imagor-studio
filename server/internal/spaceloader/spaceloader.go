@@ -1,5 +1,5 @@
 // Package spaceloader implements an imagor.Loader that resolves per-space
-// image requests for the SaaS processing service.
+// image requests for the processing service.
 //
 // Given an HTTP request whose Host header is either:
 //   - a subdomain of the configured baseDomain (e.g. "acme.yoursaas.com")
@@ -39,7 +39,7 @@ type SpaceS3Loader struct {
 // New creates a SpaceS3Loader.
 //
 //   - store: the SpaceConfigStore to look up space credentials from
-//   - baseDomain: the SaaS platform domain suffix, including the leading dot
+//   - baseDomain: the platform domain suffix, including the leading dot
 //     (e.g. ".yoursaas.com"). Requests whose Host has this suffix are resolved
 //     by stripping the suffix to get the space key.
 func New(store *spaceconfigstore.SpaceConfigStore, baseDomain string) *SpaceS3Loader {

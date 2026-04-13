@@ -227,7 +227,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			h.logger.Warn("Failed to update last login", zap.Error(err), zap.String("userID", user.ID))
 		}
 
-		// SaaS mode: look up org so we can embed org_id in the token.
+		// multi-tenant mode: look up org so we can embed org_id in the token.
 		orgID := ""
 		if h.orgStore != nil {
 			org, err := h.orgStore.GetByUserID(r.Context(), user.ID)
@@ -441,7 +441,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
-	// SaaS mode: auto-create a personal org for the new user (14-day trial).
+	// multi-tenant mode: auto-create a personal org for the new user (14-day trial).
 	// Self-hosted: orgStore is nil — skip org creation.
 	orgID := ""
 	if h.orgStore != nil {
@@ -465,7 +465,7 @@ func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role, 
 		scopes = append(scopes, "admin")
 	}
 
-	// Use org-aware token when an org is known (SaaS mode).
+	// Use org-aware token when an org is known (multi-tenant mode).
 	var token string
 	var err error
 	if orgID != "" {

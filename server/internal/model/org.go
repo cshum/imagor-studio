@@ -56,7 +56,7 @@ func GetLimits(plan string) OrgLimits {
 
 // ---------- DB models --------------------------------------------------------
 
-// Organization is the database model for a SaaS organization (tenant).
+// Organization is the database model for a tenant organization.
 // Billing fields (stripe_*, billing_email, trial_ends_at) are nullable and
 // populated only when a Stripe subscription is created.
 type Organization struct {

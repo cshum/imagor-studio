@@ -6,7 +6,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// Space is the database model for a SaaS tenant space.
+// Space is the database model for a tenant space.
 // Sensitive credential fields (AccessKeyID, SecretKey, ImagorSecret) are stored
 // AES-GCM encrypted in the database and decrypted by spacestore before returning.
 // A soft-delete via DeletedAt allows the processing service to learn about

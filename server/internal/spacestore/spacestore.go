@@ -1,4 +1,4 @@
-// Package spacestore manages the SaaS tenant spaces table.
+// Package spacestore manages the tenant spaces table.
 //
 // Each Space holds the S3 credentials and imagor signing secret for one tenant.
 // Sensitive fields (AccessKeyID, SecretKey, ImagorSecret) are stored AES-GCM

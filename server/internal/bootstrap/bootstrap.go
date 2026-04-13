@@ -104,7 +104,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Initialize user store
 	userStore := userstore.New(db, logger)
 
-	// Initialize SaaS org + space stores when InternalAPISecret is configured.
+	// Initialize multi-tenant org + space stores when InternalAPISecret is configured.
 	// Self-hosted deployments leave both nil, which is the signal used by auth
 	// handlers and resolvers to skip org/space logic.
 	var orgStore orgstore.Store
@@ -112,11 +112,11 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	if enhancedCfg.InternalAPISecret != "" {
 		orgStore = orgstore.New(db)
 		spaceStore = spacestore.New(db, encryptionService)
-		logger.Info("SaaS mode: org and space stores initialized")
+		logger.Info("multi-tenant mode: org and space stores initialized")
 	}
 
 	// Choose the imagor loader once, here in bootstrap where we have full context.
-	//   - SaaS processing node (SpacesEndpoint set): SpaceS3Loader resolves by Host
+	//   - processing node (SpacesEndpoint set): SpaceS3Loader resolves by Host
 	//   - Self-hosted / management node: StorageLoader delegates to registry storage
 	var spaceConfigStore *spaceconfigstore.SpaceConfigStore
 	loader := imagorprovider.NewStorageLoader(storageProvider)
@@ -130,7 +130,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		if enhancedCfg.SpaceBaseDomain != "" {
 			loader = spaceloader.New(spaceConfigStore, enhancedCfg.SpaceBaseDomain)
 		}
-		logger.Info("SaaS processing mode: SpaceConfigStore created",
+		logger.Info("processing node mode: SpaceConfigStore created",
 			zap.String("spacesEndpoint", enhancedCfg.SpacesEndpoint),
 			zap.String("spaceBaseDomain", enhancedCfg.SpaceBaseDomain),
 		)

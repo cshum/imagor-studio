@@ -45,7 +45,7 @@ func (tm *TokenManager) GenerateToken(userID, role string, scopes []string, path
 }
 
 // GenerateTokenForUser creates a JWT token that includes an org_id claim.
-// Use this for SaaS users whose org is known at login/register time.
+// Use this when the user's org is known at login/register time.
 func (tm *TokenManager) GenerateTokenForUser(userID, role string, scopes []string, orgID string) (string, error) {
 	now := time.Now()
 	claims := Claims{

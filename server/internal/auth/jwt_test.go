@@ -176,7 +176,7 @@ func TestGenerateTokenForUser(t *testing.T) {
 	assert.Equal(t, "admin", claims.Role)
 	assert.Empty(t, claims.OrgID, "OrgID should be empty when not provided")
 
-	// With OrgID — SaaS path.
+	// With OrgID — multi-tenant path.
 	token2, err := tm.GenerateTokenForUser("user-xyz", "user", []string{"read"}, "org-99")
 	require.NoError(t, err)
 	claims2, err := tm.ValidateToken(token2)

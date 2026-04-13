@@ -49,7 +49,7 @@ func (l *StorageLoader) Get(r *http.Request, key string) (*imagor.Blob, error) {
 }
 
 // NewStorageLoader wraps a storageprovider.Provider as an imagor.Loader.
-// Use this for self-hosted deployments; on SaaS processing nodes pass
+// Use this for self-hosted deployments; on processing nodes pass
 // spaceloader.New(…) instead.
 func NewStorageLoader(p *storageprovider.Provider) imagor.Loader {
 	return &StorageLoader{source: p}
@@ -74,7 +74,7 @@ type Provider struct {
 
 	// loader is the single imagor.Loader wired at construction time.
 	// Self-hosted: NewStorageLoader(storageProvider)
-	// SaaS processing node: spaceloader.New(spaceConfigStore, baseDomain)
+	// processing node: spaceloader.New(spaceConfigStore, baseDomain)
 	loader imagor.Loader
 
 	// app is the running *imagor.Imagor instance. Set during Initialize().
@@ -94,7 +94,7 @@ type Provider struct {
 
 // New creates a new imagor provider.
 // loader is the single imagor.Loader to register: use NewStorageLoader for
-// self-hosted deployments and spaceloader.New for SaaS processing nodes.
+// self-hosted deployments and spaceloader.New for processing nodes.
 // Passing nil is valid when only URL signing/generation is needed (no image loading).
 func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Config, loader imagor.Loader) *Provider {
 	return &Provider{
@@ -158,7 +158,7 @@ func (p *Provider) createApp(cfg *ImagorConfig) error {
 
 	// Wire the single loader chosen by bootstrap:
 	//   - self-hosted: NewStorageLoader(storageProvider)
-	//   - SaaS processing node: spaceloader.New(spaceConfigStore, baseDomain)
+	//   - processing node: spaceloader.New(spaceConfigStore, baseDomain)
 	if p.loader != nil {
 		options = append(options, imagor.WithLoaders(p.loader))
 	}

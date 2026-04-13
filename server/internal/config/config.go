@@ -66,7 +66,7 @@ type Config struct {
 	AppDefaultSortOrder       string // Default file sorting order
 	AppVideoThumbnailPosition string // Video thumbnail extraction position
 
-	// SaaS processing service secret – shared between management service and Fly.io
+	// processing service secret – shared between management service and Fly.io
 	// processing cluster. Authenticates GET /internal/spaces/delta requests.
 	// Set via --internal-api-secret / INTERNAL_API_SECRET env var.
 	// An empty string disables authentication (development only).
@@ -77,7 +77,7 @@ type Config struct {
 	// Example: "https://studio.example.com"
 	SpacesEndpoint string
 
-	// SpaceBaseDomain is the SaaS platform domain suffix used by SpaceS3Loader
+	// SpaceBaseDomain is the platform domain suffix used by SpaceS3Loader
 	// to map subdomain requests to space keys.
 	// Must include the leading dot, e.g. ".imagor.cloud".
 	SpaceBaseDomain string
@@ -135,7 +135,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 		internalAPISecret = fs.String("internal-api-secret", "", "shared secret for /internal/spaces/delta (set via INTERNAL_API_SECRET env var)")
 		spacesEndpoint    = fs.String("spaces-endpoint", "", "management service base URL for /internal/spaces/delta polling (processing nodes only)")
-		spaceBaseDomain   = fs.String("space-base-domain", "", "SaaS subdomain suffix for space routing, e.g. .imagor.cloud (processing nodes only)")
+		spaceBaseDomain   = fs.String("space-base-domain", "", "platform subdomain suffix for space routing, e.g. .imagor.cloud (processing nodes only)")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")

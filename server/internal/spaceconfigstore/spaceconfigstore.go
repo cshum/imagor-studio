@@ -1,5 +1,5 @@
 // Package spaceconfigstore maintains an in-process snapshot of all space
-// configurations for the SaaS processing service.
+// configurations for the processing service.
 //
 // On startup, Start() performs a full sync (since=0) from the management
 // service's /internal/spaces/delta endpoint, blocking until complete.
