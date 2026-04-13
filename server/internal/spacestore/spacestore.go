@@ -14,6 +14,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/encryption"
@@ -80,6 +81,26 @@ type Store interface {
 	// Delta returns all spaces (active and deleted) whose updated_at > since.
 	// Pass the zero time to request a full sync.
 	Delta(ctx context.Context, since time.Time) (*DeltaResult, error)
+}
+
+// dnsLabelRE validates that a space key is a valid DNS label:
+// lowercase letters, digits, and hyphens only; starts and ends with
+// an alphanumeric character; maximum 63 characters.
+// This ensures the key works as a subdomain label (e.g. "acme" in "acme.imagor.app").
+var dnsLabelRE = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
+
+// validateSpaceKey returns an error if key is not a valid DNS label.
+func validateSpaceKey(key string) error {
+	if key == "" {
+		return fmt.Errorf("space key must not be empty")
+	}
+	if len(key) > 63 {
+		return fmt.Errorf("space key %q exceeds the 63-character DNS label limit", key)
+	}
+	if !dnsLabelRE.MatchString(key) {
+		return fmt.Errorf("space key %q must contain only lowercase letters, digits, and hyphens, and must start and end with an alphanumeric character", key)
+	}
+	return nil
 }
 
 type store struct {
@@ -153,6 +174,10 @@ func (s *store) modelToApp(row *model.Space) (*Space, error) {
 // ---------- Store implementation ---------------------------------------------
 
 func (s *store) Upsert(ctx context.Context, sp *Space) error {
+	if err := validateSpaceKey(sp.Key); err != nil {
+		return fmt.Errorf("invalid space key: %w", err)
+	}
+
 	encAccessKeyID, err := s.encrypt(sp.AccessKeyID)
 	if err != nil {
 		return fmt.Errorf("encrypt access_key_id: %w", err)
