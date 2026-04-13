@@ -496,7 +496,7 @@
       "configuredSuccess": "Imagor configured successfully",
       "configurationDetails": "Configuration Details",
       "hasSecret": "Has Secret",
-      "takingEffect": "Settings saved. Taking effect in {{seconds}}s."
+      "takingEffect": "Settings saved. Changes may take up to 1 minute to take effect."
     },
     "license": {
       "licenseManagement": "License Management",

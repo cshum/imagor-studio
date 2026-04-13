@@ -10,8 +10,8 @@ import type { ImagorStatusQuery } from '@/generated/graphql'
 
 import { ImagorConfigurationWizard } from './imagor-configuration-wizard'
 
-/** Sync loop interval in seconds — must match server/server.go startSyncLoop interval. */
-const SYNC_INTERVAL_S = 30
+/** Banner display window in seconds — worst-case propagation time across all replicas. */
+const SYNC_INTERVAL_S = 60
 
 /** Returns the number of seconds remaining until the 30-second sync loop is expected to
  *  have applied the last config change on all instances. Returns 0 when propagation is
@@ -115,7 +115,7 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
           {remainingSeconds > 0 && (
             <div className='flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300'>
               <span className='inline-block h-2 w-2 animate-pulse rounded-full bg-blue-500' />
-              {t('pages.imagor.takingEffect', { seconds: remainingSeconds })}
+              {t('pages.imagor.takingEffect')}
             </div>
           )}
 

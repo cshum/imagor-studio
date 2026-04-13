@@ -495,7 +495,7 @@
       "configuredSuccess": "Imagor 配置成功",
       "configurationDetails": "配置詳情",
       "hasSecret": "有金鑰",
-      "takingEffect": "設定已儲存，{{seconds}} 秒後生效。"
+      "takingEffect": "設定已儲存，最多 1 分鐘內生效。"
     },
     "license": {
       "licenseManagement": "許可證管理",

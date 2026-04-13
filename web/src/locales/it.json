@@ -491,7 +491,7 @@
       "configuredSuccess": "Imagor configurato correttamente",
       "configurationDetails": "Dettagli Configurazione",
       "hasSecret": "Ha Segreto",
-      "takingEffect": "Impostazioni salvate. Attive tra {{seconds}}s."
+      "takingEffect": "Impostazioni salvate. Le modifiche possono richiedere fino a 1 minuto."
     },
     "license": {
       "licenseManagement": "Gestione Licenza",
