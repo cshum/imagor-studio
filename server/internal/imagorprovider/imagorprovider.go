@@ -48,6 +48,13 @@ func (l *StorageLoader) Get(r *http.Request, key string) (*imagor.Blob, error) {
 	return blob, blob.Err()
 }
 
+// NewStorageLoader wraps a storageprovider.Provider as an imagor.Loader.
+// Use this for self-hosted deployments; on SaaS processing nodes pass
+// spaceloader.New(…) instead.
+func NewStorageLoader(p *storageprovider.Provider) imagor.Loader {
+	return &StorageLoader{source: p}
+}
+
 // Provider manages the imagor app lifecycle.
 //
 // The app is created once during Initialize() and never rebuilt.
@@ -61,10 +68,14 @@ func (l *StorageLoader) Get(r *http.Request, key string) (*imagor.Blob, error) {
 // Both are updated together so generated URLs and imagor's own verification
 // always use the same key.
 type Provider struct {
-	logger          *zap.Logger
-	registryStore   registrystore.Store
-	config          *config.Config
-	storageProvider *storageprovider.Provider
+	logger        *zap.Logger
+	registryStore registrystore.Store
+	config        *config.Config
+
+	// loader is the single imagor.Loader wired at construction time.
+	// Self-hosted: NewStorageLoader(storageProvider)
+	// SaaS processing node: spaceloader.New(spaceConfigStore, baseDomain)
+	loader imagor.Loader
 
 	// app is the running *imagor.Imagor instance. Set during Initialize().
 	app *imagor.Imagor
@@ -82,12 +93,15 @@ type Provider struct {
 }
 
 // New creates a new imagor provider.
-func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Config, storageProvider *storageprovider.Provider) *Provider {
+// loader is the single imagor.Loader to register: use NewStorageLoader for
+// self-hosted deployments and spaceloader.New for SaaS processing nodes.
+// Passing nil is valid when only URL signing/generation is needed (no image loading).
+func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Config, loader imagor.Loader) *Provider {
 	return &Provider{
-		logger:          logger,
-		registryStore:   registryStore,
-		config:          cfg,
-		storageProvider: storageProvider,
+		logger:        logger,
+		registryStore: registryStore,
+		config:        cfg,
+		loader:        loader,
 	}
 }
 
@@ -141,7 +155,13 @@ func (p *Provider) createApp(cfg *ImagorConfig) error {
 	))
 
 	options = append(options, imagor.WithSigner(p.dynSigner))
-	options = append(options, imagor.WithLoaders(&StorageLoader{source: p.storageProvider}))
+
+	// Wire the single loader chosen by bootstrap:
+	//   - self-hosted: NewStorageLoader(storageProvider)
+	//   - SaaS processing node: spaceloader.New(spaceConfigStore, baseDomain)
+	if p.loader != nil {
+		options = append(options, imagor.WithLoaders(p.loader))
+	}
 
 	app := imagor.New(options...)
 	if err := app.Startup(context.Background()); err != nil {

@@ -97,7 +97,7 @@ func setupTestProviderWithStorage(t *testing.T, cfg *config.Config) (*Provider, 
 	err := storageProvider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
-	return New(logger, registryStore, cfg, storageProvider), registryStore
+	return New(logger, registryStore, cfg, NewStorageLoader(storageProvider)), registryStore
 }
 
 func TestNew(t *testing.T) {
@@ -106,12 +106,12 @@ func TestNew(t *testing.T) {
 	cfg := &config.Config{}
 	sp := &storageprovider.Provider{}
 
-	provider := New(logger, store, cfg, sp)
+	provider := New(logger, store, cfg, NewStorageLoader(sp))
 	assert.NotNil(t, provider)
 	assert.NotNil(t, provider.logger)
 	assert.NotNil(t, provider.registryStore)
 	assert.NotNil(t, provider.config)
-	assert.NotNil(t, provider.storageProvider)
+	assert.NotNil(t, provider.loader)
 }
 
 func TestInitialize_EmbeddedMode(t *testing.T) {
@@ -267,9 +267,8 @@ func TestGenerateURL_NoConfig(t *testing.T) {
 	logger := zap.NewNop()
 	store := newMockRegistryStore()
 	cfg := &config.Config{}
-	sp := &storageprovider.Provider{}
 
-	provider := New(logger, store, cfg, sp)
+	provider := New(logger, store, cfg, nil)
 	// No currentConfig set
 
 	_, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{})
@@ -294,9 +293,8 @@ func TestGenerateURL_SignerVariants(t *testing.T) {
 			logger := zap.NewNop()
 			store := newMockRegistryStore()
 			cfg := &config.Config{}
-			sp := &storageprovider.Provider{}
 
-			provider := New(logger, store, cfg, sp)
+			provider := New(logger, store, cfg, nil)
 			provider.cfg = &ImagorConfig{
 				Secret:         tt.secret,
 				SignerType:     tt.signerType,
@@ -529,7 +527,7 @@ var _ interface {
 // Ensure mockReadStorage satisfies storage.Storage
 var _ storage.Storage = (*mockReadStorage)(nil)
 
-// Compile-time check that storageprovider.Provider satisfies storageSource.
+// Compile-time check: storageprovider.Provider satisfies storageSource (used by StorageLoader/NewStorageLoader).
 var _ storageSource = (*storageprovider.Provider)(nil)
 
 // Dummy to keep time import used across older test helpers.

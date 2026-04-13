@@ -72,6 +72,16 @@ type Config struct {
 	// An empty string disables authentication (development only).
 	InternalAPISecret string
 
+	// SpacesEndpoint is the base URL of the management service that exposes
+	// /internal/spaces/delta.  Set on processing nodes only.
+	// Example: "https://studio.example.com"
+	SpacesEndpoint string
+
+	// SpaceBaseDomain is the SaaS platform domain suffix used by SpaceS3Loader
+	// to map subdomain requests to space keys.
+	// Must include the leading dot, e.g. ".imagor.cloud".
+	SpaceBaseDomain string
+
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
 	flagSet         *flag.FlagSet // Private field to access flag values
@@ -124,6 +134,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		appVideoThumbnailPosition = fs.String("app-video-thumbnail-position", "first_frame", "video thumbnail extraction position: first_frame, seek_1s, seek_3s, seek_5s, seek_10pct, seek_25pct")
 
 		internalAPISecret = fs.String("internal-api-secret", "", "shared secret for /internal/spaces/delta (set via INTERNAL_API_SECRET env var)")
+		spacesEndpoint    = fs.String("spaces-endpoint", "", "management service base URL for /internal/spaces/delta polling (processing nodes only)")
+		spaceBaseDomain   = fs.String("space-base-domain", "", "SaaS subdomain suffix for space routing, e.g. .imagor.cloud (processing nodes only)")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -225,6 +237,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppDefaultSortOrder:         *appDefaultSortOrder,
 		AppVideoThumbnailPosition:   *appVideoThumbnailPosition,
 		InternalAPISecret:           *internalAPISecret,
+		SpacesEndpoint:              *spacesEndpoint,
+		SpaceBaseDomain:             *spaceBaseDomain,
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}

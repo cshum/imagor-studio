@@ -14,7 +14,11 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/migrator"
 	"github.com/cshum/imagor-studio/server/internal/noop"
+	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/spaceconfigstore"
+	"github.com/cshum/imagor-studio/server/internal/spaceloader"
+	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -24,17 +28,20 @@ import (
 
 // Services contains all initialized application services
 type Services struct {
-	DB              *bun.DB
-	TokenManager    *auth.TokenManager
-	Storage         storage.Storage
-	StorageProvider *storageprovider.Provider
-	ImagorProvider  *imagorprovider.Provider
-	RegistryStore   registrystore.Store
-	UserStore       userstore.Store
-	LicenseService  *license.Service
-	Encryption      *encryption.Service
-	Config          *config.Config
-	Logger          *zap.Logger
+	DB               *bun.DB
+	TokenManager     *auth.TokenManager
+	Storage          storage.Storage
+	StorageProvider  *storageprovider.Provider
+	ImagorProvider   *imagorprovider.Provider
+	RegistryStore    registrystore.Store
+	UserStore        userstore.Store
+	OrgStore         orgstore.Store                     // nil in self-hosted; set when InternalAPISecret != ""
+	SpaceStore       spacestore.Store                   // nil in self-hosted; set when InternalAPISecret != ""
+	SpaceConfigStore *spaceconfigstore.SpaceConfigStore // nil unless SpacesEndpoint set; Start() called by server
+	LicenseService   *license.Service
+	Encryption       *encryption.Service
+	Config           *config.Config
+	Logger           *zap.Logger
 }
 
 // Initialize sets up the database, runs migrations, and initializes all services
@@ -97,8 +104,40 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Initialize user store
 	userStore := userstore.New(db, logger)
 
-	// Initialize imagor provider with registry store, config, and storage provider
-	imagorProvider := imagorprovider.New(logger, registryStore, enhancedCfg, storageProvider)
+	// Initialize SaaS org + space stores when InternalAPISecret is configured.
+	// Self-hosted deployments leave both nil, which is the signal used by auth
+	// handlers and resolvers to skip org/space logic.
+	var orgStore orgstore.Store
+	var spaceStore spacestore.Store
+	if enhancedCfg.InternalAPISecret != "" {
+		orgStore = orgstore.New(db)
+		spaceStore = spacestore.New(db, encryptionService)
+		logger.Info("SaaS mode: org and space stores initialized")
+	}
+
+	// Choose the imagor loader once, here in bootstrap where we have full context.
+	//   - SaaS processing node (SpacesEndpoint set): SpaceS3Loader resolves by Host
+	//   - Self-hosted / management node: StorageLoader delegates to registry storage
+	var spaceConfigStore *spaceconfigstore.SpaceConfigStore
+	loader := imagorprovider.NewStorageLoader(storageProvider)
+
+	if enhancedCfg.SpacesEndpoint != "" {
+		spaceConfigStore = spaceconfigstore.New(
+			enhancedCfg.SpacesEndpoint,
+			enhancedCfg.InternalAPISecret,
+			logger,
+		)
+		if enhancedCfg.SpaceBaseDomain != "" {
+			loader = spaceloader.New(spaceConfigStore, enhancedCfg.SpaceBaseDomain)
+		}
+		logger.Info("SaaS processing mode: SpaceConfigStore created",
+			zap.String("spacesEndpoint", enhancedCfg.SpacesEndpoint),
+			zap.String("spaceBaseDomain", enhancedCfg.SpaceBaseDomain),
+		)
+	}
+
+	// Initialize imagor provider with the chosen loader.
+	imagorProvider := imagorprovider.New(logger, registryStore, enhancedCfg, loader)
 
 	// Initialize imagor with config (will use disabled if not configured)
 	err = imagorProvider.Initialize()
@@ -118,17 +157,20 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	)
 
 	return &Services{
-		DB:              db,
-		TokenManager:    tokenManager,
-		Storage:         stor,
-		StorageProvider: storageProvider,
-		ImagorProvider:  imagorProvider,
-		RegistryStore:   registryStore,
-		UserStore:       userStore,
-		LicenseService:  licenseService,
-		Encryption:      encryptionService,
-		Config:          enhancedCfg,
-		Logger:          logger,
+		DB:               db,
+		TokenManager:     tokenManager,
+		Storage:          stor,
+		StorageProvider:  storageProvider,
+		ImagorProvider:   imagorProvider,
+		RegistryStore:    registryStore,
+		UserStore:        userStore,
+		OrgStore:         orgStore,
+		SpaceStore:       spaceStore,
+		SpaceConfigStore: spaceConfigStore,
+		LicenseService:   licenseService,
+		Encryption:       encryptionService,
+		Config:           enhancedCfg,
+		Logger:           logger,
 	}, nil
 }
 
@@ -162,7 +204,7 @@ func initializeEmbeddedMode(cfg *config.Config, logger *zap.Logger) (*Services, 
 	stor := storageProvider.GetStorage()
 
 	// Initialize imagor provider with no-op registry store, config, and storage provider
-	imagorProvider := imagorprovider.New(logger, registryStore, cfg, storageProvider)
+	imagorProvider := imagorprovider.New(logger, registryStore, cfg, imagorprovider.NewStorageLoader(storageProvider))
 
 	// Initialize imagor with config (will use disabled if not configured)
 	err = imagorProvider.Initialize()
