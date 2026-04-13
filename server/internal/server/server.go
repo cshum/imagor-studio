@@ -16,6 +16,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/resolver"
+	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"go.uber.org/zap"
 )
 
@@ -119,6 +120,14 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	// Protected endpoints
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)
+
+	// Internal service-to-service endpoints (authenticated by Bearer token).
+	// Used by the Fly.io processing cluster to sync space configs.
+	if services.DB != nil {
+		spaceStore := spacestore.New(services.DB, services.Encryption)
+		spacesHandler := httphandler.NewSpacesDeltaHandler(spaceStore, services.Config.InternalAPISecret, services.Logger)
+		mux.HandleFunc("/internal/spaces/delta", spacesHandler.GetDelta())
+	}
 
 	// Pass the imagor instance directly — it is set once during Initialize() and never changes.
 	mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider.Imagor()))
