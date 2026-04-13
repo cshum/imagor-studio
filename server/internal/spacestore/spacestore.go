@@ -26,21 +26,33 @@ import (
 // All sensitive credential fields are plaintext; encryption/decryption is
 // handled internally by the store.
 type Space struct {
-	Key             string
-	Bucket          string
-	Prefix          string
-	Region          string
-	Endpoint        string
-	AccessKeyID     string
-	SecretKey       string
-	UsePathStyle    bool
-	CustomDomain    string
-	Suspended       bool
+	OrgID       string
+	Key         string
+	Name        string
+	StorageType string
+
+	// Storage config
+	Bucket       string
+	Prefix       string
+	Region       string
+	Endpoint     string
+	AccessKeyID  string
+	SecretKey    string
+	UsePathStyle bool
+
+	// Routing & status
+	CustomDomain         string
+	CustomDomainVerified bool
+	Suspended            bool
+	IsShared             bool
+
+	// Imagor signing
 	SignerAlgorithm string
 	SignerTruncate  int
 	ImagorSecret    string
-	UpdatedAt       time.Time
-	DeletedAt       *time.Time
+
+	UpdatedAt time.Time
+	DeletedAt *time.Time
 }
 
 // DeltaResult is the output of a delta query.
@@ -113,21 +125,26 @@ func (s *store) modelToApp(row *model.Space) (*Space, error) {
 		return nil, fmt.Errorf("decrypt imagor_secret for space %s: %w", row.Key, err)
 	}
 	return &Space{
-		Key:             row.Key,
-		Bucket:          row.Bucket,
-		Prefix:          row.Prefix,
-		Region:          row.Region,
-		Endpoint:        row.Endpoint,
-		AccessKeyID:     accessKeyID,
-		SecretKey:       secretKey,
-		UsePathStyle:    row.UsePathStyle,
-		CustomDomain:    row.CustomDomain,
-		Suspended:       row.Suspended,
-		SignerAlgorithm: row.SignerAlgorithm,
-		SignerTruncate:  row.SignerTruncate,
-		ImagorSecret:    imagorSecret,
-		UpdatedAt:       row.UpdatedAt,
-		DeletedAt:       row.DeletedAt,
+		OrgID:                row.OrgID,
+		Key:                  row.Key,
+		Name:                 row.Name,
+		StorageType:          row.StorageType,
+		Bucket:               row.Bucket,
+		Prefix:               row.Prefix,
+		Region:               row.Region,
+		Endpoint:             row.Endpoint,
+		AccessKeyID:          accessKeyID,
+		SecretKey:            secretKey,
+		UsePathStyle:         row.UsePathStyle,
+		CustomDomain:         row.CustomDomain,
+		CustomDomainVerified: row.CustomDomainVerified,
+		Suspended:            row.Suspended,
+		IsShared:             row.IsShared,
+		SignerAlgorithm:      row.SignerAlgorithm,
+		SignerTruncate:       row.SignerTruncate,
+		ImagorSecret:         imagorSecret,
+		UpdatedAt:            row.UpdatedAt,
+		DeletedAt:            row.DeletedAt,
 	}, nil
 }
 
@@ -149,32 +166,44 @@ func (s *store) Upsert(ctx context.Context, sp *Space) error {
 
 	signerAlg := sp.SignerAlgorithm
 	if signerAlg == "" {
-		signerAlg = "sha1"
+		signerAlg = "sha256"
+	}
+	storageType := sp.StorageType
+	if storageType == "" {
+		storageType = "s3"
 	}
 
 	now := time.Now().UTC()
 	row := &model.Space{
-		ID:              uuid.GenerateUUID(),
-		Key:             sp.Key,
-		Bucket:          sp.Bucket,
-		Prefix:          sp.Prefix,
-		Region:          sp.Region,
-		Endpoint:        sp.Endpoint,
-		AccessKeyID:     encAccessKeyID,
-		SecretKey:       encSecretKey,
-		UsePathStyle:    sp.UsePathStyle,
-		CustomDomain:    sp.CustomDomain,
-		Suspended:       sp.Suspended,
-		SignerAlgorithm: signerAlg,
-		SignerTruncate:  sp.SignerTruncate,
-		ImagorSecret:    encImagorSecret,
-		CreatedAt:       now,
-		UpdatedAt:       now,
+		ID:                   uuid.GenerateUUID(),
+		OrgID:                sp.OrgID,
+		Key:                  sp.Key,
+		Name:                 sp.Name,
+		StorageType:          storageType,
+		Bucket:               sp.Bucket,
+		Prefix:               sp.Prefix,
+		Region:               sp.Region,
+		Endpoint:             sp.Endpoint,
+		AccessKeyID:          encAccessKeyID,
+		SecretKey:            encSecretKey,
+		UsePathStyle:         sp.UsePathStyle,
+		CustomDomain:         sp.CustomDomain,
+		CustomDomainVerified: sp.CustomDomainVerified,
+		Suspended:            sp.Suspended,
+		IsShared:             sp.IsShared,
+		SignerAlgorithm:      signerAlg,
+		SignerTruncate:       sp.SignerTruncate,
+		ImagorSecret:         encImagorSecret,
+		CreatedAt:            now,
+		UpdatedAt:            now,
 	}
 
 	_, err = s.db.NewInsert().
 		Model(row).
 		On("CONFLICT (key) DO UPDATE").
+		Set("org_id = EXCLUDED.org_id").
+		Set("name = EXCLUDED.name").
+		Set("storage_type = EXCLUDED.storage_type").
 		Set("bucket = EXCLUDED.bucket").
 		Set("prefix = EXCLUDED.prefix").
 		Set("region = EXCLUDED.region").
@@ -183,7 +212,9 @@ func (s *store) Upsert(ctx context.Context, sp *Space) error {
 		Set("secret_key = EXCLUDED.secret_key").
 		Set("use_path_style = EXCLUDED.use_path_style").
 		Set("custom_domain = EXCLUDED.custom_domain").
+		Set("custom_domain_verified = EXCLUDED.custom_domain_verified").
 		Set("suspended = EXCLUDED.suspended").
+		Set("is_shared = EXCLUDED.is_shared").
 		Set("signer_algorithm = EXCLUDED.signer_algorithm").
 		Set("signer_truncate = EXCLUDED.signer_truncate").
 		Set("imagor_secret = EXCLUDED.imagor_secret").

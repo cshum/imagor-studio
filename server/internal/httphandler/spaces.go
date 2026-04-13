@@ -59,6 +59,7 @@ type spacesDeltaResponse struct {
 // spaceConfigPayload is the wire representation of a space, matching the
 // SpaceConfig struct in the spaceconfigstore package.
 type spaceConfigPayload struct {
+	OrgID           string `json:"org_id"`
 	Key             string `json:"key"`
 	Bucket          string `json:"bucket"`
 	Prefix          string `json:"prefix"`
@@ -140,9 +141,10 @@ func extractBearer(header string) (string, bool) {
 func spaceToPayload(sp *spacestore.Space) *spaceConfigPayload {
 	signerAlg := sp.SignerAlgorithm
 	if signerAlg == "" {
-		signerAlg = "sha1"
+		signerAlg = "sha256"
 	}
 	return &spaceConfigPayload{
+		OrgID:           sp.OrgID,
 		Key:             sp.Key,
 		Bucket:          sp.Bucket,
 		Prefix:          sp.Prefix,

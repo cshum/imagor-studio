@@ -248,7 +248,7 @@ func TestSpacesDelta_WrongMethod_Returns405(t *testing.T) {
 }
 
 func TestSpacesDelta_DefaultSignerAlgorithm(t *testing.T) {
-	// SignerAlgorithm="" should be normalised to "sha1" in the response.
+	// SignerAlgorithm="" should be normalised to "sha256" in the response.
 	st := &mockSpaceStore{deltaFunc: fixedDelta(&spacestore.DeltaResult{
 		Upserted:   []*spacestore.Space{{Key: "x", Bucket: "b", SignerAlgorithm: ""}},
 		ServerTime: time.Now(),
@@ -259,8 +259,8 @@ func TestSpacesDelta_DefaultSignerAlgorithm(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	r := parseDeltaResp(t, rr.Body.Bytes())
-	if r.Spaces[0].SignerAlgorithm != "sha1" {
-		t.Errorf("want sha1, got %q", r.Spaces[0].SignerAlgorithm)
+	if r.Spaces[0].SignerAlgorithm != "sha256" {
+		t.Errorf("want sha256, got %q", r.Spaces[0].SignerAlgorithm)
 	}
 }
 

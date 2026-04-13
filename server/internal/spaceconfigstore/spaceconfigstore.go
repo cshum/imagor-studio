@@ -29,6 +29,7 @@ import (
 // SpaceS3Loader (to fetch images) and by the WithGetSigner / WithGetResultKey
 // hooks wired into the imagor instance.
 type SpaceConfig struct {
+	OrgID           string `json:"org_id"` // owning org; used for stateless JWT auth (jwt.OrgID == space.OrgID)
 	Key             string `json:"key"`
 	Bucket          string `json:"bucket"`
 	Prefix          string `json:"prefix"` // "spaceKey/" managed tier, "" or "sub/" BYOB
