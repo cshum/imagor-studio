@@ -2,14 +2,9 @@ package imagorprovider
 
 import (
 	"context"
-	"crypto/sha1"
-	"crypto/sha256"
-	"crypto/sha512"
 	"fmt"
-	"hash"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -18,7 +13,6 @@ import (
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
-	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor/imagorpath"
@@ -26,14 +20,6 @@ import (
 	"github.com/cshum/imagorvideo"
 	"go.uber.org/zap"
 )
-
-// ImagorConfig holds imagor configuration
-type ImagorConfig struct {
-	Secret         string // Secret key for URL signing
-	Unsafe         bool   // Enable unsafe URLs for development
-	SignerType     string // Hash algorithm: "sha1", "sha256", "sha512"
-	SignerTruncate int    // Signature truncation length
-}
 
 // storageSource abstracts storageprovider.Provider for testability.
 // storageprovider.Provider satisfies this interface automatically.
@@ -63,31 +49,6 @@ func (l *StorageLoader) Get(r *http.Request, key string) (*imagor.Blob, error) {
 	return blob, blob.Err()
 }
 
-// dynamicSigner allows hot-swapping the imagorpath.Signer without restarting
-// the imagor instance. ReloadFromRegistry calls update() to apply secret or
-// algorithm changes with zero downtime.
-type dynamicSigner struct {
-	mu    sync.RWMutex
-	inner imagorpath.Signer // nil only when imagor is rebuilt (never during hot-swap)
-}
-
-// Sign implements imagorpath.Signer.
-func (d *dynamicSigner) Sign(path string) string {
-	d.mu.RLock()
-	s := d.inner
-	d.mu.RUnlock()
-	if s != nil {
-		return s.Sign(path)
-	}
-	return ""
-}
-
-func (d *dynamicSigner) update(s imagorpath.Signer) {
-	d.mu.Lock()
-	d.inner = s
-	d.mu.Unlock()
-}
-
 // Provider manages the imagor app lifecycle.
 type Provider struct {
 	logger          *zap.Logger
@@ -97,7 +58,7 @@ type Provider struct {
 
 	// app holds the running *imagor.Imagor. Set during Initialize(); replaced only
 	// when switching between signed and unsafe mode (a rare admin operation).
-	// Use atomic load/store so ServeHTTP never needs to acquire a lock.
+	// Atomic load/store means ServeHTTP never acquires a lock.
 	app atomic.Pointer[imagor.Imagor]
 
 	// dynSigner allows hot-swapping the HMAC signer without restarting imagor.
@@ -109,7 +70,7 @@ type Provider struct {
 	currentConfig *ImagorConfig
 }
 
-// New creates a new imagor provider
+// New creates a new imagor provider.
 func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Config, storageProvider *storageprovider.Provider) *Provider {
 	return &Provider{
 		logger:          logger,
@@ -127,13 +88,13 @@ func (p *Provider) Config() *ImagorConfig {
 }
 
 // Imagor returns the running *imagor.Imagor instance.
-// The returned pointer is safe to use concurrently; it is non-nil after Initialize().
+// Non-nil after Initialize(); safe to use concurrently.
 func (p *Provider) Imagor() *imagor.Imagor {
 	return p.app.Load()
 }
 
-// ServeHTTP implements http.Handler. It forwards requests to the current imagor
-// instance via an atomic pointer load (no mutex).
+// ServeHTTP implements http.Handler. Forwards requests to the current imagor
+// instance via an atomic pointer load — no mutex required.
 func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h := p.app.Load(); h != nil {
 		h.ServeHTTP(w, r)
@@ -144,7 +105,7 @@ func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Initialize starts the imagor instance for the first time using registry/config values.
 func (p *Provider) Initialize() error {
-	cfg, err := p.buildConfig()
+	cfg, err := buildConfigFromRegistry(p.registryStore, p.config)
 	if err != nil {
 		return fmt.Errorf("failed to build imagor configuration: %w", err)
 	}
@@ -164,7 +125,7 @@ func (p *Provider) Initialize() error {
 //
 // Storage changes are handled transparently by StorageLoader and never require a reload.
 func (p *Provider) ReloadFromRegistry() error {
-	newCfg, err := p.buildConfig()
+	newCfg, err := buildConfigFromRegistry(p.registryStore, p.config)
 	if err != nil {
 		return fmt.Errorf("failed to build imagor configuration: %w", err)
 	}
@@ -180,7 +141,7 @@ func (p *Provider) ReloadFromRegistry() error {
 		}
 		p.logger.Info("Imagor reloaded (mode change)", zap.Bool("unsafe", newCfg.Unsafe))
 	} else if !newCfg.Unsafe && p.dynSigner != nil {
-		// Common path: only the secret/algorithm changed. Hot-swap the signer.
+		// Common path: only the secret/algorithm changed — hot-swap the signer.
 		p.dynSigner.update(signerFromConfig(newCfg))
 		p.logger.Info("Imagor signer hot-swapped from registry")
 	}
@@ -236,78 +197,6 @@ func (p *Provider) rebuildApp(cfg *ImagorConfig) error {
 		}
 	}
 	return p.createApp(cfg)
-}
-
-// buildConfig creates imagor configuration from registry or defaults.
-func (p *Provider) buildConfig() (*ImagorConfig, error) {
-	return p.buildConfigFromRegistry()
-}
-
-// buildConfigFromRegistry fetches registry values and assembles an ImagorConfig.
-func (p *Provider) buildConfigFromRegistry() (*ImagorConfig, error) {
-	ctx := context.Background()
-
-	results := registryutil.GetEffectiveValues(ctx, p.registryStore, p.config,
-		"config.imagor_secret",
-		"config.imagor_unsafe",
-		"config.imagor_signer_type",
-		"config.imagor_signer_truncate")
-
-	resultMap := make(map[string]registryutil.EffectiveValueResult)
-	for _, result := range results {
-		resultMap[result.Key] = result
-	}
-
-	cfg := &ImagorConfig{}
-
-	if v := resultMap["config.imagor_signer_type"]; v.Exists {
-		cfg.SignerType = v.Value
-	} else {
-		cfg.SignerType = "sha1"
-	}
-
-	if v := resultMap["config.imagor_signer_truncate"]; v.Exists {
-		if n, err := strconv.Atoi(v.Value); err == nil {
-			cfg.SignerTruncate = n
-		}
-	}
-
-	if v := resultMap["config.imagor_unsafe"]; v.Exists {
-		if b, err := strconv.ParseBool(v.Value); err == nil {
-			cfg.Unsafe = b
-		}
-	}
-
-	if v := resultMap["config.imagor_secret"]; v.Exists {
-		cfg.Secret = v.Value
-	} else if !cfg.Unsafe {
-		// Default: use JWT secret with sha256/32 truncation
-		cfg.Secret = p.config.JWTSecret
-		cfg.SignerType = "sha256"
-		cfg.SignerTruncate = 32
-	}
-
-	return cfg, nil
-}
-
-// getHashAlgorithm returns the hash constructor for the given signer type.
-func getHashAlgorithm(signerType string) func() hash.Hash {
-	switch strings.ToLower(signerType) {
-	case "sha256":
-		return sha256.New
-	case "sha512":
-		return sha512.New
-	default:
-		return sha1.New
-	}
-}
-
-// signerFromConfig builds an imagorpath.Signer from config. Returns nil in unsafe mode.
-func signerFromConfig(cfg *ImagorConfig) imagorpath.Signer {
-	if cfg == nil || cfg.Unsafe {
-		return nil
-	}
-	return imagorpath.NewHMACSigner(getHashAlgorithm(cfg.SignerType), cfg.SignerTruncate, cfg.Secret)
 }
 
 // Signer returns the active imagorpath.Signer, or nil when in unsafe mode.

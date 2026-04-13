@@ -177,14 +177,10 @@ func TestInitialize_UnsafeMode(t *testing.T) {
 }
 
 func TestBuildConfigFromRegistry_Defaults(t *testing.T) {
-	logger := zap.NewNop()
 	store := newMockRegistryStore()
 	cfg := &config.Config{JWTSecret: "my-jwt"}
-	sp := &storageprovider.Provider{}
 
-	provider := New(logger, store, cfg, sp)
-
-	result, err := provider.buildConfigFromRegistry()
+	result, err := buildConfigFromRegistry(store, cfg)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -196,17 +192,13 @@ func TestBuildConfigFromRegistry_Defaults(t *testing.T) {
 }
 
 func TestBuildConfigFromRegistry_ExplicitSecret(t *testing.T) {
-	logger := zap.NewNop()
 	store := newMockRegistryStore()
 	cfg := &config.Config{JWTSecret: "my-jwt"}
-	sp := &storageprovider.Provider{}
 
 	ctx := context.Background()
 	store.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "explicit-secret", false)
 
-	provider := New(logger, store, cfg, sp)
-
-	result, err := provider.buildConfigFromRegistry()
+	result, err := buildConfigFromRegistry(store, cfg)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -217,17 +209,13 @@ func TestBuildConfigFromRegistry_ExplicitSecret(t *testing.T) {
 }
 
 func TestBuildConfigFromRegistry_UnsafeMode(t *testing.T) {
-	logger := zap.NewNop()
 	store := newMockRegistryStore()
 	cfg := &config.Config{JWTSecret: "my-jwt"}
-	sp := &storageprovider.Provider{}
 
 	ctx := context.Background()
 	store.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "true", false)
 
-	provider := New(logger, store, cfg, sp)
-
-	result, err := provider.buildConfigFromRegistry()
+	result, err := buildConfigFromRegistry(store, cfg)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -278,18 +266,15 @@ func TestBuildConfigFromRegistry_SignerOverrides(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			logger := zap.NewNop()
 			store := newMockRegistryStore()
 			cfg := &config.Config{JWTSecret: "jwt-fallback"}
-			sp := &storageprovider.Provider{}
 
 			ctx := context.Background()
 			for key, value := range tt.registryData {
 				store.Set(ctx, registrystore.SystemOwnerID, key, value, false)
 			}
 
-			provider := New(logger, store, cfg, sp)
-			result, err := provider.buildConfigFromRegistry()
+			result, err := buildConfigFromRegistry(store, cfg)
 			require.NoError(t, err, tt.description)
 
 			assert.Equal(t, tt.expectedType, result.SignerType, tt.description)
