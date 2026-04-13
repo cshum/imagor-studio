@@ -2,6 +2,8 @@ package storageprovider
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -40,21 +42,49 @@ type Provider struct {
 	mutex sync.RWMutex
 }
 
-// storageConfigKey returns a compact fingerprint for a storage config so that
-// ReloadFromRegistry can skip unchanged configs without rebuilding the instance.
+// storageConfigSnapshot contains all storage-relevant fields used to detect
+// config changes.  It is JSON-marshalled (struct field order is deterministic
+// in Go) and then SHA-256 hashed so that sensitive values (secrets, tokens)
+// are never stored in plaintext in the fingerprint.
+type storageConfigSnapshot struct {
+	// common
+	Type string
+	// file storage
+	BaseDir   string
+	MkdirPerm uint32
+	WritePerm uint32
+	// s3 storage
+	Bucket    string
+	Region    string
+	Endpoint  string
+	PathStyle bool
+	KeyID     string
+	Secret    string
+	Token     string
+	S3BaseDir string
+}
+
+// storageConfigKey returns a 16-char hex fingerprint of the storage config.
+// Any change to any field — including credentials — produces a different key.
+// The raw values of sensitive fields are never readable from the key itself.
 func storageConfigKey(cfg *config.Config) string {
-	switch cfg.StorageType {
-	case "file", "filesystem":
-		return "file:" + cfg.FileStorageBaseDir
-	case "s3":
-		return "s3:" + cfg.S3StorageBucket + "@" + cfg.AWSRegion +
-			"|endpoint=" + cfg.S3Endpoint +
-			"|baseDir=" + cfg.S3StorageBaseDir +
-			"|key=" + cfg.AWSAccessKeyID +
-			"|pathStyle=" + fmt.Sprintf("%v", cfg.S3ForcePathStyle)
-	default:
-		return "unknown:" + cfg.StorageType
+	snap := storageConfigSnapshot{
+		Type:      cfg.StorageType,
+		BaseDir:   cfg.FileStorageBaseDir,
+		MkdirPerm: uint32(cfg.FileStorageMkdirPermissions),
+		WritePerm: uint32(cfg.FileStorageWritePermissions),
+		Bucket:    cfg.S3StorageBucket,
+		Region:    cfg.AWSRegion,
+		Endpoint:  cfg.S3Endpoint,
+		PathStyle: cfg.S3ForcePathStyle,
+		KeyID:     cfg.AWSAccessKeyID,
+		Secret:    cfg.AWSSecretAccessKey,
+		Token:     cfg.AWSSessionToken,
+		S3BaseDir: cfg.S3StorageBaseDir,
 	}
+	b, _ := json.Marshal(snap)
+	sum := sha256.Sum256(b)
+	return fmt.Sprintf("%x", sum[:8]) // 16 hex chars
 }
 
 // New creates a new storage provider

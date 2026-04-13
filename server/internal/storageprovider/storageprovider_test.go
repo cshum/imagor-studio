@@ -413,47 +413,61 @@ func TestProvider_InitializeWithConfig_EnvOverridesRegistry(t *testing.T) {
 
 func TestStorageConfigKey_File(t *testing.T) {
 	cfg := &config.Config{
-		StorageType:        "file",
-		FileStorageBaseDir: "/srv/gallery",
-	}
-	key := storageConfigKey(cfg)
-	assert.Equal(t, "file:/srv/gallery", key)
-
-	// Changing unrelated fields must not change the key for file storage.
-	cfg2 := &config.Config{
 		StorageType:                 "file",
 		FileStorageBaseDir:          "/srv/gallery",
-		FileStorageMkdirPermissions: 0700,
+		FileStorageMkdirPermissions: 0755,
+		FileStorageWritePermissions: 0644,
 	}
-	assert.Equal(t, key, storageConfigKey(cfg2), "permission-only changes should not alter the file config key")
+	key := storageConfigKey(cfg)
+	assert.Len(t, key, 16, "fingerprint must be 16 hex chars")
 
 	// Changing baseDir must produce a different key.
-	cfg3 := &config.Config{StorageType: "file", FileStorageBaseDir: "/other"}
-	assert.NotEqual(t, key, storageConfigKey(cfg3))
+	cfg2 := *cfg
+	cfg2.FileStorageBaseDir = "/other"
+	assert.NotEqual(t, key, storageConfigKey(&cfg2), "baseDir change must change key")
+
+	// Changing mkdir permissions must produce a different key.
+	cfg3 := *cfg
+	cfg3.FileStorageMkdirPermissions = 0700
+	assert.NotEqual(t, key, storageConfigKey(&cfg3), "mkdir permission change must change key")
+
+	// Changing write permissions must produce a different key.
+	cfg4 := *cfg
+	cfg4.FileStorageWritePermissions = 0600
+	assert.NotEqual(t, key, storageConfigKey(&cfg4), "write permission change must change key")
 }
 
 func TestStorageConfigKey_S3(t *testing.T) {
 	cfg := &config.Config{
-		StorageType:      "s3",
-		S3StorageBucket:  "my-bucket",
-		AWSRegion:        "us-east-1",
-		AWSAccessKeyID:   "AKID",
-		S3ForcePathStyle: false,
+		StorageType:        "s3",
+		S3StorageBucket:    "my-bucket",
+		AWSRegion:          "us-east-1",
+		AWSAccessKeyID:     "AKID",
+		AWSSecretAccessKey: "secret",
+		S3ForcePathStyle:   false,
 	}
 	key := storageConfigKey(cfg)
-	assert.Contains(t, key, "s3:")
-	assert.Contains(t, key, "my-bucket")
-	assert.Contains(t, key, "us-east-1")
+	assert.Len(t, key, 16, "fingerprint must be 16 hex chars")
 
-	// Rotating the access key must change the key.
+	// Rotating the access key ID must change the key.
 	cfg2 := *cfg
 	cfg2.AWSAccessKeyID = "NEW_AKID"
-	assert.NotEqual(t, key, storageConfigKey(&cfg2))
+	assert.NotEqual(t, key, storageConfigKey(&cfg2), "access key ID rotation must change key")
+
+	// Rotating only the secret must change the key.
+	cfg3 := *cfg
+	cfg3.AWSSecretAccessKey = "new-secret"
+	assert.NotEqual(t, key, storageConfigKey(&cfg3), "secret rotation must change key")
 
 	// Enabling force-path-style must change the key.
-	cfg3 := *cfg
-	cfg3.S3ForcePathStyle = true
-	assert.NotEqual(t, key, storageConfigKey(&cfg3))
+	cfg4 := *cfg
+	cfg4.S3ForcePathStyle = true
+	assert.NotEqual(t, key, storageConfigKey(&cfg4), "pathStyle change must change key")
+
+	// Changing the session token must change the key.
+	cfg5 := *cfg
+	cfg5.AWSSessionToken = "new-token"
+	assert.NotEqual(t, key, storageConfigKey(&cfg5), "session token change must change key")
 }
 
 func TestStorageConfigKey_Deterministic(t *testing.T) {
@@ -505,7 +519,7 @@ func TestReloadFromRegistry_NoOpWhenUnchanged(t *testing.T) {
 	err := provider.ReloadFromRegistry()
 	assert.NoError(t, err)
 	assert.True(t, provider.configured)
-	assert.Equal(t, "file:/tmp/test-reload", provider.configKey)
+	assert.NotEmpty(t, provider.configKey, "configKey must be set after first reload")
 
 	firstStorage := provider.currentStorage
 
@@ -542,7 +556,8 @@ func TestReloadFromRegistry_ReloadsWhenChanged(t *testing.T) {
 
 	err := provider.ReloadFromRegistry()
 	assert.NoError(t, err)
-	assert.Equal(t, "file:/tmp/old-dir", provider.configKey)
+	assert.NotEmpty(t, provider.configKey)
+	firstKey := provider.configKey
 	firstStorage := provider.currentStorage
 
 	// Switch to a registry that returns a different base dir.
@@ -567,7 +582,8 @@ func TestReloadFromRegistry_ReloadsWhenChanged(t *testing.T) {
 
 	err = provider.ReloadFromRegistry()
 	assert.NoError(t, err)
-	assert.Equal(t, "file:/tmp/new-dir", provider.configKey)
+	assert.NotEmpty(t, provider.configKey)
+	assert.NotEqual(t, firstKey, provider.configKey, "fingerprint must change when config changes")
 	assert.NotSame(t, firstStorage, provider.currentStorage,
 		"storage instance must be replaced when config changes")
 }
