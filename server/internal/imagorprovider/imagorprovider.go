@@ -7,25 +7,21 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"hash"
+	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
+	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/cshum/imagor/processor/vipsprocessor"
-	"github.com/cshum/imagor/storage/filestorage"
-	"github.com/cshum/imagor/storage/s3storage"
 	"github.com/cshum/imagorvideo"
 	"go.uber.org/zap"
 )
@@ -36,6 +32,39 @@ type ImagorConfig struct {
 	Unsafe         bool   // Enable unsafe URLs for development
 	SignerType     string // Hash algorithm: "sha1", "sha256", "sha512"
 	SignerTruncate int    // Signature truncation length
+}
+
+// storageSource abstracts storageprovider.Provider for testability.
+// storageprovider.Provider satisfies this interface automatically.
+type storageSource interface {
+	GetStorage() storage.Storage
+}
+
+// StorageLoader adapts a storageSource to imagor.Loader.
+// It calls GetStorage() on every request so storage config changes
+// (lazy loading, reloads) are picked up automatically — the imagor
+// handler never needs to be rebuilt due to storage changes.
+type StorageLoader struct {
+	source storageSource
+}
+
+// Get implements imagor.Loader by delegating to the current storage.
+// The factory is called fresh on each blob read (sniff + actual read), matching
+// imagor's filestorage pattern. Errors from storage surface immediately via
+// blob.Err() so imagor can treat missing files as 4xx.
+func (l *StorageLoader) Get(r *http.Request, key string) (*imagor.Blob, error) {
+	ctx := r.Context()
+	source := l.source
+	blob := imagor.NewBlob(func() (io.ReadCloser, int64, error) {
+		rc, err := source.GetStorage().Get(ctx, key)
+		if err != nil {
+			return nil, -1, err
+		}
+		return rc, -1, nil
+	})
+	// Trigger doInit eagerly (matches filestorage: return blob, blob.Err()).
+	// This causes the sniff read to happen now so 404s are surfaced immediately.
+	return blob, blob.Err()
 }
 
 // Provider handles imagor configuration with state management
@@ -112,7 +141,9 @@ func (p *Provider) setupHandler(imagorConfig *ImagorConfig, logMessage string) e
 	return nil
 }
 
-// ReloadFromRegistry forces a reload of imagor configuration from registry
+// ReloadFromRegistry forces a reload of imagor configuration from registry.
+// Only rebuilds the imagor handler when signer configuration changes.
+// Storage changes are handled transparently by StorageLoader.
 func (p *Provider) ReloadFromRegistry() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -243,10 +274,9 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 		options = append(options, imagor.WithUnsafe(true))
 	}
 
-	// Configure storage based on current storage provider
-	if storageOptions := p.buildStorageOptions(); len(storageOptions) > 0 {
-		options = append(options, storageOptions...)
-	}
+	// StorageLoader delegates to storageprovider.GetStorage() on every request,
+	// so storage changes are picked up automatically without rebuilding this handler.
+	options = append(options, imagor.WithLoaders(&StorageLoader{source: p.storageProvider}))
 
 	app := imagor.New(options...)
 
@@ -277,177 +307,4 @@ func (p *Provider) Shutdown(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-// buildStorageOptions creates imagor storage options based on current storage provider configuration
-func (p *Provider) buildStorageOptions() []imagor.Option {
-	storageConfig := p.getStorageConfig()
-	if storageConfig == nil {
-		p.logger.Warn("No storage configuration available for imagor")
-		return nil
-	}
-
-	var options []imagor.Option
-
-	switch storageConfig.StorageType {
-	case "file", "filesystem":
-		fileStorage := filestorage.New(
-			storageConfig.FileStorageBaseDir,
-			filestorage.WithMkdirPermission(storageConfig.FileStorageMkdirPermissions.String()),
-			filestorage.WithWritePermission(storageConfig.FileStorageWritePermissions.String()),
-			filestorage.WithSafeChars("--"),
-		)
-		options = append(options, imagor.WithLoaders(fileStorage))
-
-	case "s3":
-		awsConfig := p.buildAWSConfig(storageConfig)
-		if awsConfig == nil {
-			p.logger.Error("Failed to build AWS config for imagor S3 storage")
-			return nil
-		}
-
-		s3Storage := s3storage.New(*awsConfig, storageConfig.S3StorageBucket,
-			s3storage.WithBaseDir(storageConfig.S3StorageBaseDir),
-			s3storage.WithEndpoint(storageConfig.S3Endpoint),
-			s3storage.WithForcePathStyle(storageConfig.S3ForcePathStyle),
-			s3storage.WithSafeChars("--"),
-		)
-		options = append(options, imagor.WithLoaders(s3Storage))
-
-	default:
-		p.logger.Warn("Unsupported storage type for imagor", zap.String("type", storageConfig.StorageType))
-		return nil
-	}
-
-	return options
-}
-
-// getStorageConfig gets the current storage configuration directly from registry
-func (p *Provider) getStorageConfig() *config.Config {
-	cfg, err := p.buildStorageConfigFromRegistry()
-	if err != nil || cfg.StorageType == "" {
-		p.logger.Debug("No valid storage configuration found in registry, using original config", zap.Error(err))
-		return p.config
-	}
-	return cfg
-}
-
-// buildStorageConfigFromRegistry builds storage configuration from registry
-func (p *Provider) buildStorageConfigFromRegistry() (*config.Config, error) {
-	ctx := context.Background()
-	cfg := &config.Config{}
-
-	results := registryutil.GetEffectiveValues(ctx, p.registryStore, p.config,
-		"config.storage_type",
-		"config.file_storage_base_dir",
-		"config.file_storage_mkdir_permissions",
-		"config.file_storage_write_permissions",
-		"config.s3_storage_bucket",
-		"config.s3_storage_region",
-		"config.s3_storage_endpoint",
-		"config.s3_storage_force_path_style",
-		"config.s3_storage_access_key_id",
-		"config.s3_storage_secret_access_key",
-		"config.s3_storage_session_token",
-		"config.s3_storage_base_dir")
-
-	resultMap := make(map[string]registryutil.EffectiveValueResult)
-	for _, result := range results {
-		resultMap[result.Key] = result
-	}
-
-	storageTypeResult := resultMap["config.storage_type"]
-	if !storageTypeResult.Exists {
-		return p.config, nil
-	}
-	cfg.StorageType = storageTypeResult.Value
-
-	switch cfg.StorageType {
-	case "file", "filesystem":
-		p.loadFileConfigFromResults(resultMap, cfg)
-	case "s3":
-		p.loadS3ConfigFromResults(resultMap, cfg)
-	}
-
-	return cfg, nil
-}
-
-// loadFileConfigFromResults loads file storage configuration from pre-fetched results
-func (p *Provider) loadFileConfigFromResults(resultMap map[string]registryutil.EffectiveValueResult, cfg *config.Config) {
-	if result := resultMap["config.file_storage_base_dir"]; result.Exists {
-		cfg.FileStorageBaseDir = result.Value
-	} else {
-		cfg.FileStorageBaseDir = "/app/gallery"
-	}
-
-	if result := resultMap["config.file_storage_mkdir_permissions"]; result.Exists {
-		if perm, err := strconv.ParseUint(result.Value, 8, 32); err == nil {
-			cfg.FileStorageMkdirPermissions = os.FileMode(perm)
-		}
-	} else {
-		cfg.FileStorageMkdirPermissions = 0755
-	}
-
-	if result := resultMap["config.file_storage_write_permissions"]; result.Exists {
-		if perm, err := strconv.ParseUint(result.Value, 8, 32); err == nil {
-			cfg.FileStorageWritePermissions = os.FileMode(perm)
-		}
-	} else {
-		cfg.FileStorageWritePermissions = 0644
-	}
-}
-
-// loadS3ConfigFromResults loads S3 storage configuration from pre-fetched results
-func (p *Provider) loadS3ConfigFromResults(resultMap map[string]registryutil.EffectiveValueResult, cfg *config.Config) {
-	if result := resultMap["config.s3_storage_bucket"]; result.Exists {
-		cfg.S3StorageBucket = result.Value
-	}
-	if result := resultMap["config.s3_storage_region"]; result.Exists {
-		cfg.AWSRegion = result.Value
-	}
-	if result := resultMap["config.s3_storage_endpoint"]; result.Exists {
-		cfg.S3Endpoint = result.Value
-	}
-	if result := resultMap["config.s3_storage_force_path_style"]; result.Exists {
-		if forcePathStyle, err := strconv.ParseBool(result.Value); err == nil {
-			cfg.S3ForcePathStyle = forcePathStyle
-		}
-	}
-	if result := resultMap["config.s3_storage_access_key_id"]; result.Exists {
-		cfg.AWSAccessKeyID = result.Value
-	}
-	if result := resultMap["config.s3_storage_secret_access_key"]; result.Exists {
-		cfg.AWSSecretAccessKey = result.Value
-	}
-	if result := resultMap["config.s3_storage_session_token"]; result.Exists {
-		cfg.AWSSessionToken = result.Value
-	}
-	if result := resultMap["config.s3_storage_base_dir"]; result.Exists {
-		cfg.S3StorageBaseDir = result.Value
-	}
-}
-
-// buildAWSConfig creates AWS configuration from storage settings
-func (p *Provider) buildAWSConfig(storageConfig *config.Config) *aws.Config {
-	ctx := context.Background()
-
-	cfg, err := awsconfig.LoadDefaultConfig(ctx)
-	if err != nil {
-		p.logger.Error("Failed to load default AWS config", zap.Error(err))
-		return nil
-	}
-
-	if storageConfig.AWSRegion != "" {
-		cfg.Region = storageConfig.AWSRegion
-	}
-
-	if storageConfig.AWSAccessKeyID != "" && storageConfig.AWSSecretAccessKey != "" {
-		cfg.Credentials = credentials.NewStaticCredentialsProvider(
-			storageConfig.AWSAccessKeyID,
-			storageConfig.AWSSecretAccessKey,
-			storageConfig.AWSSessionToken,
-		)
-	}
-
-	return &cfg
 }
