@@ -120,7 +120,7 @@ func TestInitialize_EmbeddedMode(t *testing.T) {
 	err := provider.Initialize()
 	require.NoError(t, err)
 
-	cfg := provider.GetConfig()
+	cfg := provider.Config()
 	require.NotNil(t, cfg)
 
 	// Should default to JWT-secret fallback with sha256/32
@@ -130,7 +130,7 @@ func TestInitialize_EmbeddedMode(t *testing.T) {
 	assert.False(t, cfg.Unsafe)
 
 	// Embedded mode always creates an imagor instance (Provider implements http.Handler)
-	assert.NotNil(t, provider.GetInstance())
+	assert.NotNil(t, provider.Imagor())
 }
 
 func TestInitialize_WithExplicitSecret(t *testing.T) {
@@ -147,7 +147,7 @@ func TestInitialize_WithExplicitSecret(t *testing.T) {
 	err := provider.Initialize()
 	require.NoError(t, err)
 
-	imagorCfg := provider.GetConfig()
+	imagorCfg := provider.Config()
 	require.NotNil(t, imagorCfg)
 	assert.Equal(t, "custom-imagor-secret", imagorCfg.Secret)
 	// When explicit secret is provided, default signer type is sha1
@@ -167,13 +167,13 @@ func TestInitialize_UnsafeMode(t *testing.T) {
 	err := provider.Initialize()
 	require.NoError(t, err)
 
-	imagorCfg := provider.GetConfig()
+	imagorCfg := provider.Config()
 	require.NotNil(t, imagorCfg)
 	assert.True(t, imagorCfg.Unsafe)
 	assert.Equal(t, "", imagorCfg.Secret)
 
 	// Provider always has an imagor instance after initialization
-	assert.NotNil(t, provider.GetInstance())
+	assert.NotNil(t, provider.Imagor())
 }
 
 func TestBuildConfigFromRegistry_Defaults(t *testing.T) {
@@ -427,7 +427,7 @@ func TestReloadFromRegistry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Initially uses JWT fallback
-	cfg := provider.GetConfig()
+	cfg := provider.Config()
 	assert.Equal(t, "initial-jwt", cfg.Secret)
 
 	// Update registry with a new explicit secret
@@ -438,7 +438,7 @@ func TestReloadFromRegistry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Should now use the new registry secret
-	cfg = provider.GetConfig()
+	cfg = provider.Config()
 	assert.Equal(t, "new-secret", cfg.Secret)
 	assert.Equal(t, "sha1", cfg.SignerType) // explicit secret → sha1 default
 }

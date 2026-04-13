@@ -130,7 +130,7 @@ func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath s
 
 	var body []byte
 
-	if imagorInstance := r.imagorProvider.GetInstance(); imagorInstance != nil {
+	if imagorInstance := r.imagorProvider.Imagor(); imagorInstance != nil {
 		// Embedded: call ServeHTTP in-process (no network overhead).
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, metaURL, nil)
 		if err != nil {
@@ -376,7 +376,7 @@ func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos str
 // ImagorStatus is the resolver for the imagorStatus query field.
 func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, error) {
 	// Get current imagor configuration
-	imagorConfig := r.imagorProvider.GetConfig()
+	imagorConfig := r.imagorProvider.Config()
 	if imagorConfig == nil {
 		// Build a sensible default from what's in config
 		jwtSecret := ""

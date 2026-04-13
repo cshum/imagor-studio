@@ -846,7 +846,7 @@ func TestGenerateImagorURLFromTemplate_ImagePathOverride(t *testing.T) {
 			mockStorageProvider := NewMockStorageProvider(mockStorage)
 			mockImagorProvider := new(MockImagorProvider)
 			// GetInstance returns nil → external mode → HTTP GET path
-			mockImagorProvider.On("GetInstance").Return((*imagor.Imagor)(nil))
+			mockImagorProvider.On("Imagor").Return((*imagor.Imagor)(nil))
 
 			// fetchImageDimensions calls GenerateURL with Meta:true to get the meta URL.
 			// We return the test server URL so the HTTP GET hits our fake server.

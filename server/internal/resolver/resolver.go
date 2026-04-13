@@ -29,8 +29,8 @@ type StorageProvider interface {
 
 // ImagorProvider interface for imagor operations
 type ImagorProvider interface {
-	GetConfig() *imagorprovider.ImagorConfig
-	GetInstance() *imagor.Imagor
+	Config() *imagorprovider.ImagorConfig
+	Imagor() *imagor.Imagor
 	ReloadFromRegistry() error
 	GenerateURL(imagePath string, params imagorpath.Params) (string, error)
 }

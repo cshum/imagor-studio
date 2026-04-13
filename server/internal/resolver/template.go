@@ -179,7 +179,7 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 	var imageData []byte
 
 	// Check if we're in embedded mode
-	if imagorInstance := r.imagorProvider.GetInstance(); imagorInstance != nil {
+	if imagorInstance := r.imagorProvider.Imagor(); imagorInstance != nil {
 		// EMBEDDED MODE: Use ServeHTTP directly for in-process handling
 		r.logger.Debug("Generating preview using embedded Imagor instance")
 

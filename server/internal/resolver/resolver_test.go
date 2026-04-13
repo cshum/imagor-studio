@@ -217,7 +217,7 @@ type MockImagorProvider struct {
 	mock.Mock
 }
 
-func (m *MockImagorProvider) GetConfig() *imagorprovider.ImagorConfig {
+func (m *MockImagorProvider) Config() *imagorprovider.ImagorConfig {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil
@@ -225,7 +225,7 @@ func (m *MockImagorProvider) GetConfig() *imagorprovider.ImagorConfig {
 	return args.Get(0).(*imagorprovider.ImagorConfig)
 }
 
-func (m *MockImagorProvider) GetInstance() *imagor.Imagor {
+func (m *MockImagorProvider) Imagor() *imagor.Imagor {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil

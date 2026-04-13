@@ -319,7 +319,7 @@ func TestImagorProviderIntegration(t *testing.T) {
 	require.NotNil(t, services.ImagorProvider)
 
 	// Test that imagor provider has correct config
-	imagorConfig := services.ImagorProvider.GetConfig()
+	imagorConfig := services.ImagorProvider.Config()
 	require.NotNil(t, imagorConfig)
 	assert.Equal(t, "test-secret", imagorConfig.Secret)
 	assert.True(t, imagorConfig.Unsafe)
