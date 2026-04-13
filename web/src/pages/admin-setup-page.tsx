@@ -239,7 +239,7 @@ function SystemSettingsStepContent({
 }
 
 interface StorageStepContentProps extends MultiStepFormNavigationProps {
-  onStorageConfigured: (restartRequired: boolean) => void
+  onStorageConfigured: () => void
 }
 
 function StorageStepContent({ onStorageConfigured }: StorageStepContentProps) {
@@ -392,12 +392,8 @@ export function AdminSetupPage() {
     return true
   }
 
-  const handleStorageConfigured = (restartRequired: boolean) => {
-    if (restartRequired) {
-      toast.success(t('pages.admin.storageConfiguredRestart'))
-    } else {
-      toast.success(t('pages.admin.storageConfiguredSuccess'))
-    }
+  const handleStorageConfigured = () => {
+    toast.success(t('pages.admin.storageConfiguredSuccess'))
     // Use the exposed next method instead of hard navigation
     multiStepFormRef.current?.next()
   }
