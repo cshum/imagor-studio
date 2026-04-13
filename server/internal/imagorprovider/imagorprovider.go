@@ -102,11 +102,18 @@ func (p *Provider) GetConfig() *ImagorConfig {
 	return p.currentConfig
 }
 
-// GetHandler returns the HTTP handler for the embedded imagor instance
-func (p *Provider) GetHandler() http.Handler {
+// ServeHTTP implements http.Handler by forwarding to the current imagor instance.
+// Dynamic dispatch happens per-request so signer config updates (via ReloadFromRegistry)
+// are picked up without re-registering the route.
+func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.mutex.RLock()
-	defer p.mutex.RUnlock()
-	return p.imagorHandler
+	h := p.imagorHandler
+	p.mutex.RUnlock()
+	if h != nil {
+		h.ServeHTTP(w, r)
+	} else {
+		http.NotFound(w, r)
+	}
 }
 
 // GetInstance returns the imagor instance (for in-process request handling)

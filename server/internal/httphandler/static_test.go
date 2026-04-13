@@ -12,15 +12,6 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
-// MockImagorProvider for testing
-type MockImagorProvider struct {
-	handler http.Handler
-}
-
-func (m *MockImagorProvider) GetHandler() http.Handler {
-	return m.handler
-}
-
 // MockFS for testing static files
 type MockFS struct {
 	files map[string]bool
@@ -114,14 +105,12 @@ func TestIsImagorPath(t *testing.T) {
 func TestSPAHandlerImagorRouting(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 
-	// Create mock imagor handler
+	// Pass the imagor handler directly — SPAHandler now takes http.Handler
 	imagorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Handler", "imagor")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("imagor response"))
 	})
-
-	mockProvider := &MockImagorProvider{handler: imagorHandler}
 
 	// Create mock filesystem with index.html
 	mockFS := MockFS{
@@ -130,7 +119,7 @@ func TestSPAHandlerImagorRouting(t *testing.T) {
 		},
 	}
 
-	handler := SPAHandler(mockFS, mockProvider, logger)
+	handler := SPAHandler(mockFS, imagorHandler, logger)
 
 	tests := []struct {
 		path           string
@@ -175,7 +164,7 @@ func TestSPAHandlerNoImagorProvider(t *testing.T) {
 		},
 	}
 
-	// Test with nil imagor provider
+	// Test with nil imagor handler
 	handler := SPAHandler(mockFS, nil, logger)
 
 	req := httptest.NewRequest("GET", "/unsafe/300x200/test.jpg", nil)
@@ -183,7 +172,7 @@ func TestSPAHandlerNoImagorProvider(t *testing.T) {
 
 	handler.ServeHTTP(w, req)
 
-	// Should return 404 when no imagor provider available
+	// Should return 404 when no imagor handler available
 	if w.Code != 404 {
 		t.Errorf("Expected status 404, got %d", w.Code)
 	}

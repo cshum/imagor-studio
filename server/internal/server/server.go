@@ -98,14 +98,8 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)
 
-	// Dynamic imagor handler wrapper
-	mux.Handle("/imagor/", http.StripPrefix("/imagor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if currentHandler := services.ImagorProvider.GetHandler(); currentHandler != nil {
-			currentHandler.ServeHTTP(w, r)
-		} else {
-			http.NotFound(w, r)
-		}
-	})))
+	// Provider implements http.Handler; dynamic dispatch to current imagor instance is inside.
+	mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider))
 
 	// Static file serving for web frontend using embedded assets
 	staticFS, err := fs.Sub(embedFS, "static")

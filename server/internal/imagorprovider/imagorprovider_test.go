@@ -129,11 +129,7 @@ func TestInitialize_EmbeddedMode(t *testing.T) {
 	assert.Equal(t, 32, cfg.SignerTruncate)
 	assert.False(t, cfg.Unsafe)
 
-	// Embedded mode always creates a handler
-	handler := provider.GetHandler()
-	assert.NotNil(t, handler)
-
-	// Instance must be non-nil
+	// Embedded mode always creates an imagor instance (Provider implements http.Handler)
 	assert.NotNil(t, provider.GetInstance())
 }
 
@@ -176,8 +172,8 @@ func TestInitialize_UnsafeMode(t *testing.T) {
 	assert.True(t, imagorCfg.Unsafe)
 	assert.Equal(t, "", imagorCfg.Secret)
 
-	handler := provider.GetHandler()
-	assert.NotNil(t, handler)
+	// Provider always has an imagor instance after initialization
+	assert.NotNil(t, provider.GetInstance())
 }
 
 func TestBuildConfigFromRegistry_Defaults(t *testing.T) {
@@ -447,14 +443,17 @@ func TestReloadFromRegistry(t *testing.T) {
 	assert.Equal(t, "sha1", cfg.SignerType) // explicit secret → sha1 default
 }
 
-func TestGetHandler_AlwaysPresent(t *testing.T) {
+func TestServeHTTP_AlwaysPresent(t *testing.T) {
 	provider, _ := setupTestProviderWithStorage(t, nil)
 
 	err := provider.Initialize()
 	require.NoError(t, err)
 
-	handler := provider.GetHandler()
-	assert.NotNil(t, handler, "Embedded provider should always have an HTTP handler")
+	// Provider implements http.Handler; must respond to requests after initialization
+	req := httptest.NewRequest("GET", "/unsafe/test.jpg", nil)
+	w := httptest.NewRecorder()
+	provider.ServeHTTP(w, req)
+	assert.NotEqual(t, 0, w.Code, "Provider should respond to HTTP requests")
 }
 
 // --- StorageLoader tests ---
@@ -589,6 +588,9 @@ var _ storage.Storage = (*mockReadStorage)(nil)
 
 // Compile-time check that storageprovider.Provider satisfies storageSource.
 var _ storageSource = (*storageprovider.Provider)(nil)
+
+// Compile-time check: Provider implements http.Handler.
+var _ http.Handler = (*Provider)(nil)
 
 // Dummy to keep time import used across older test helpers.
 var _ = time.Second
