@@ -23,6 +23,28 @@ type Server struct {
 	cfg        *config.Config
 	services   *bootstrap.Services
 	httpServer *http.Server
+	syncCancel context.CancelFunc // stops the background 30s sync loop
+}
+
+// startSyncLoop runs syncFuncs every interval in a background goroutine until
+// ctx is cancelled. Errors are logged as warnings but do not stop the loop.
+func startSyncLoop(ctx context.Context, interval time.Duration, logger *zap.Logger, syncFuncs ...func() error) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				for _, fn := range syncFuncs {
+					if err := fn(); err != nil {
+						logger.Warn("Provider sync failed", zap.Error(err))
+					}
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }
 
 func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (*Server, error) {
@@ -98,15 +120,15 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)
 
-	// Provider implements http.Handler; dynamic dispatch to current imagor instance is inside.
-	mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider))
+	// Pass the imagor instance directly — it is set once during Initialize() and never changes.
+	mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider.Imagor()))
 
 	// Static file serving for web frontend using embedded assets
 	staticFS, err := fs.Sub(embedFS, "static")
 	if err != nil {
 		return nil, err
 	}
-	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider, services.Logger))
+	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
 
 	// Configure CORS
 	corsConfig := middleware.DefaultCORSConfig()
@@ -129,10 +151,18 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		IdleTimeout:  60 * time.Second,
 	}
 
+	// Start background 30-second sync loop: pulls registry → imagor signer + storage.
+	syncCtx, syncCancel := context.WithCancel(context.Background())
+	startSyncLoop(syncCtx, 30*time.Second, services.Logger,
+		services.ImagorProvider.Sync,
+		services.StorageProvider.ReloadFromRegistry,
+	)
+
 	return &Server{
 		cfg:        cfg,
 		services:   services,
 		httpServer: httpServer,
+		syncCancel: syncCancel,
 	}, nil
 }
 
@@ -156,6 +186,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 func (s *Server) Close() error {
 	s.services.Logger.Debug("Closing server resources...")
+
+	// Stop background sync loop before shutting down providers.
+	if s.syncCancel != nil {
+		s.syncCancel()
+	}
 
 	// Shutdown imagor first (includes libvips cleanup)
 	ctx := context.Background()

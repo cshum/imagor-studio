@@ -24,8 +24,8 @@ type ImagorConfig struct {
 }
 
 // dynamicSigner wraps an imagorpath.Signer behind an RWMutex so the active
-// HMAC key can be hot-swapped via update() without restarting the imagor
-// instance. This is the common ReloadFromRegistry path (secret rotation).
+// HMAC key can be updated by Provider.Sync() (called every 30 seconds by the
+// background sync loop) without restarting the imagor instance.
 type dynamicSigner struct {
 	mu    sync.RWMutex
 	inner imagorpath.Signer

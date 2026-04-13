@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/cshum/imagor"
@@ -50,22 +49,36 @@ func (l *StorageLoader) Get(r *http.Request, key string) (*imagor.Blob, error) {
 }
 
 // Provider manages the imagor app lifecycle.
+//
+// The app is created once during Initialize() and never rebuilt.
+// Configuration (signer secret/type) is synced from the registry every 30 seconds
+// by the background sync loop (server.startSyncLoop), which calls Sync().
+//
+// Sync() updates:
+//   - cfg: used by GenerateURL / Config() / Signer()
+//   - dynSigner: wrapped inside the running imagor instance for URL verification
+//
+// Both are updated together so generated URLs and imagor's own verification
+// always use the same key.
 type Provider struct {
 	logger          *zap.Logger
 	registryStore   registrystore.Store
 	config          *config.Config
 	storageProvider *storageprovider.Provider
 
-	// app holds the running *imagor.Imagor. Set during Initialize().
-	// Atomic load/store means ServeHTTP never acquires a lock.
-	app atomic.Pointer[imagor.Imagor]
+	// app is the running *imagor.Imagor instance. Set during Initialize().
+	app *imagor.Imagor
 
-	// dynSigner allows hot-swapping the HMAC signer without restarting imagor.
+	// dynSigner is passed to imagor at startup; its inner signer is replaced by
+	// Sync() so imagor verifies requests with the current secret without restart.
 	dynSigner *dynamicSigner
 
-	// mu protects currentConfig (read by Config() / Signer() / GenerateURL).
-	mu            sync.RWMutex
-	currentConfig *ImagorConfig
+	// mu protects cfg.
+	mu sync.RWMutex
+
+	// cfg is the current imagor signing configuration. Written in Initialize()
+	// and updated by Sync(). Protected by mu.
+	cfg *ImagorConfig
 }
 
 // New creates a new imagor provider.
@@ -78,30 +91,21 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 	}
 }
 
-// Config returns the current imagor configuration.
+// Config returns the current imagor configuration (safe for concurrent use).
 func (p *Provider) Config() *ImagorConfig {
 	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.currentConfig
+	c := p.cfg
+	p.mu.RUnlock()
+	return c
 }
 
 // Imagor returns the running *imagor.Imagor instance.
-// Non-nil after Initialize(); safe to use concurrently.
+// Non-nil after Initialize().
 func (p *Provider) Imagor() *imagor.Imagor {
-	return p.app.Load()
+	return p.app
 }
 
-// ServeHTTP implements http.Handler. Forwards requests to the current imagor
-// instance via an atomic pointer load — no mutex required.
-func (p *Provider) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h := p.app.Load(); h != nil {
-		h.ServeHTTP(w, r)
-	} else {
-		http.NotFound(w, r)
-	}
-}
-
-// Initialize starts the imagor instance for the first time using registry/config values.
+// Initialize starts the imagor instance using registry/config values.
 func (p *Provider) Initialize() error {
 	cfg, err := buildConfigFromRegistry(p.registryStore, p.config)
 	if err != nil {
@@ -111,36 +115,18 @@ func (p *Provider) Initialize() error {
 		return err
 	}
 	p.mu.Lock()
-	p.currentConfig = cfg
+	p.cfg = cfg
 	p.mu.Unlock()
 	p.logger.Info("Imagor initialized")
 	return nil
 }
 
-// ReloadFromRegistry applies configuration changes from the registry.
-// Secret / algorithm changes hot-swap the dynamic signer only — no imagor restart needed.
-// Storage changes are handled transparently by StorageLoader and never require a reload.
-func (p *Provider) ReloadFromRegistry() error {
-	newCfg, err := buildConfigFromRegistry(p.registryStore, p.config)
-	if err != nil {
-		return fmt.Errorf("failed to build imagor configuration: %w", err)
-	}
-
-	if p.dynSigner != nil {
-		// Hot-swap the signer — no imagor restart needed.
-		p.dynSigner.update(signerFromConfig(newCfg))
-		p.logger.Info("Imagor signer hot-swapped from registry")
-	}
-
-	p.mu.Lock()
-	p.currentConfig = newCfg
-	p.mu.Unlock()
-	return nil
-}
-
-// createApp builds a new *imagor.Imagor and stores it atomically.
-// Called during Initialize(); does not shut down any previous instance.
+// createApp builds a new *imagor.Imagor, wires up the dynamicSigner, and stores it.
 func (p *Provider) createApp(cfg *ImagorConfig) error {
+	ds := &dynamicSigner{}
+	ds.update(signerFromConfig(cfg))
+	p.dynSigner = ds
+
 	var options []imagor.Option
 
 	options = append(options, imagor.WithProcessors(
@@ -154,30 +140,29 @@ func (p *Provider) createApp(cfg *ImagorConfig) error {
 		),
 	))
 
-	ds := &dynamicSigner{}
-	ds.update(signerFromConfig(cfg))
-	p.dynSigner = ds
-	options = append(options, imagor.WithSigner(ds))
-
+	options = append(options, imagor.WithSigner(p.dynSigner))
 	options = append(options, imagor.WithLoaders(&StorageLoader{source: p.storageProvider}))
 
 	app := imagor.New(options...)
 	if err := app.Startup(context.Background()); err != nil {
 		return fmt.Errorf("failed to start imagor: %w", err)
 	}
-	p.app.Store(app)
+	p.app = app
 	return nil
 }
 
-// Signer returns the active imagorpath.Signer.
+// Signer returns an imagorpath.Signer built from the current configuration.
+// Used by GenerateURL to produce signed URLs that match imagor's verification.
 func (p *Provider) Signer() imagorpath.Signer {
-	return signerFromConfig(p.Config())
+	p.mu.RLock()
+	c := p.cfg
+	p.mu.RUnlock()
+	return signerFromConfig(c)
 }
 
 // GenerateURL generates a signed imagor URL for the given image path and params.
 func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
-	cfg := p.Config()
-	if cfg == nil {
+	if p.Config() == nil {
 		return "", fmt.Errorf("imagor configuration not available")
 	}
 
@@ -191,15 +176,37 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 	return fmt.Sprintf("/%s", imagorpath.Generate(params, signer)), nil
 }
 
+// Sync reads the latest imagor configuration from the registry and applies it
+// without restarting the imagor instance. It is called periodically by the
+// background sync loop (every 30 seconds) so all replicas stay in sync.
+func (p *Provider) Sync() error {
+	newCfg, err := buildConfigFromRegistry(p.registryStore, p.config)
+	if err != nil {
+		return fmt.Errorf("imagor sync failed: %w", err)
+	}
+
+	// Update the dynamic signer first so imagor verifies with the new key
+	// before GenerateURL starts producing URLs signed with the new key.
+	if p.dynSigner != nil {
+		p.dynSigner.update(signerFromConfig(newCfg))
+	}
+
+	p.mu.Lock()
+	p.cfg = newCfg
+	p.mu.Unlock()
+
+	return nil
+}
+
 // Shutdown gracefully shuts down the imagor instance.
 func (p *Provider) Shutdown(ctx context.Context) error {
-	if app := p.app.Load(); app != nil {
+	if p.app != nil {
 		p.logger.Debug("Shutting down imagor instance...")
-		if err := app.Shutdown(ctx); err != nil {
+		if err := p.app.Shutdown(ctx); err != nil {
 			p.logger.Error("Error shutting down imagor", zap.Error(err))
 			return err
 		}
-		p.app.Store(nil)
+		p.app = nil
 		p.logger.Debug("Imagor shutdown completed")
 	}
 	return nil

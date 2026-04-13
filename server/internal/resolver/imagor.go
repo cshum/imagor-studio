@@ -508,20 +508,10 @@ func (r *mutationResolver) ConfigureImagor(ctx context.Context, input gql.Imagor
 		}, nil
 	}
 
-	// Reload imagor from registry to apply changes immediately (no restart needed)
-	if err := r.imagorProvider.ReloadFromRegistry(); err != nil {
-		r.logger.Error("Failed to reload imagor from registry", zap.Error(err))
-		return &gql.ImagorConfigResult{
-			Success:   false,
-			Timestamp: timestampStr,
-			Message:   &[]string{"Configuration saved but failed to apply"}[0],
-		}, nil
-	}
-
 	return &gql.ImagorConfigResult{
 		Success:   true,
 		Timestamp: timestampStr,
-		Message:   &[]string{"Imagor configured successfully"}[0],
+		Message:   &[]string{"Imagor configured successfully. Restart the server to apply changes."}[0],
 	}, nil
 }
 

@@ -31,7 +31,6 @@ type StorageProvider interface {
 type ImagorProvider interface {
 	Config() *imagorprovider.ImagorConfig
 	Imagor() *imagor.Imagor
-	ReloadFromRegistry() error
 	GenerateURL(imagePath string, params imagorpath.Params) (string, error)
 }
 

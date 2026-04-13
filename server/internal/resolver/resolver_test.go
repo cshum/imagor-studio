@@ -233,16 +233,6 @@ func (m *MockImagorProvider) Imagor() *imagor.Imagor {
 	return args.Get(0).(*imagor.Imagor)
 }
 
-func (m *MockImagorProvider) _IsRestartRequired_removed() bool {
-	args := m.Called()
-	return args.Bool(0)
-}
-
-func (m *MockImagorProvider) ReloadFromRegistry() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
 func (m *MockImagorProvider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
 	args := m.Called(imagePath, params)
 	return args.String(0), args.Error(1)

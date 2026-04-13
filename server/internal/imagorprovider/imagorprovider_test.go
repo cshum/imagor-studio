@@ -128,7 +128,7 @@ func TestInitialize_EmbeddedMode(t *testing.T) {
 	assert.Equal(t, "sha256", cfg.SignerType)
 	assert.Equal(t, 32, cfg.SignerTruncate)
 
-	// Embedded mode always creates an imagor instance (Provider implements http.Handler)
+	// Embedded mode always creates an imagor instance.
 	assert.NotNil(t, provider.Imagor())
 }
 
@@ -297,7 +297,7 @@ func TestGenerateURL_SignerVariants(t *testing.T) {
 			sp := &storageprovider.Provider{}
 
 			provider := New(logger, store, cfg, sp)
-			provider.currentConfig = &ImagorConfig{
+			provider.cfg = &ImagorConfig{
 				Secret:         tt.secret,
 				SignerType:     tt.signerType,
 				SignerTruncate: tt.signerTruncate,
@@ -342,7 +342,7 @@ func TestGetHashAlgorithm(t *testing.T) {
 	}
 }
 
-func TestReloadFromRegistry(t *testing.T) {
+func TestSync(t *testing.T) {
 	provider, registryStore := setupTestProviderWithStorage(t, &config.Config{
 		JWTSecret: "initial-jwt",
 	})
@@ -358,7 +358,7 @@ func TestReloadFromRegistry(t *testing.T) {
 	ctx := context.Background()
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "new-secret", false)
 
-	err = provider.ReloadFromRegistry()
+	err = provider.Sync()
 	require.NoError(t, err)
 
 	// Should now use the new registry secret
@@ -367,17 +367,36 @@ func TestReloadFromRegistry(t *testing.T) {
 	assert.Equal(t, "sha1", cfg.SignerType) // explicit secret → sha1 default
 }
 
-func TestServeHTTP_AlwaysPresent(t *testing.T) {
-	provider, _ := setupTestProviderWithStorage(t, nil)
+func TestSync_UpdatesDynSigner(t *testing.T) {
+	provider, registryStore := setupTestProviderWithStorage(t, &config.Config{
+		JWTSecret: "initial-jwt",
+	})
 
 	err := provider.Initialize()
 	require.NoError(t, err)
 
-	// Provider implements http.Handler; must respond to requests after initialization
-	req := httptest.NewRequest("GET", "/unsafe/test.jpg", nil)
-	w := httptest.NewRecorder()
-	provider.ServeHTTP(w, req)
-	assert.NotEqual(t, 0, w.Code, "Provider should respond to HTTP requests")
+	// Capture URL before sync
+	urlBefore, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{Width: 300, Height: 200})
+	require.NoError(t, err)
+
+	// Update registry with a different secret
+	ctx := context.Background()
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "rotated-secret", false)
+
+	err = provider.Sync()
+	require.NoError(t, err)
+
+	// URL after sync uses the new signer → different signature for same path
+	urlAfter, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{Width: 300, Height: 200})
+	require.NoError(t, err)
+
+	assert.NotEqual(t, urlBefore, urlAfter, "URL signature must change after signer rotation via Sync()")
+
+	// dynSigner was also updated — verify it now signs with the new key
+	require.NotNil(t, provider.dynSigner)
+	newSigner := signerFromConfig(&ImagorConfig{Secret: "rotated-secret", SignerType: "sha1"})
+	path := "300x200/test/image.jpg"
+	assert.Equal(t, newSigner.Sign(path), provider.dynSigner.Sign(path))
 }
 
 // --- StorageLoader tests ---
@@ -512,9 +531,6 @@ var _ storage.Storage = (*mockReadStorage)(nil)
 
 // Compile-time check that storageprovider.Provider satisfies storageSource.
 var _ storageSource = (*storageprovider.Provider)(nil)
-
-// Compile-time check: Provider implements http.Handler.
-var _ http.Handler = (*Provider)(nil)
 
 // Dummy to keep time import used across older test helpers.
 var _ = time.Second
