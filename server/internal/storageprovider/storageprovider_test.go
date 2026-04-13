@@ -409,6 +409,187 @@ func TestProvider_InitializeWithConfig_EnvOverridesRegistry(t *testing.T) {
 	mockRegistry.AssertNotCalled(t, "Get")
 }
 
+// ── storageConfigKey helper ───────────────────────────────────────────────────
+
+func TestStorageConfigKey_File(t *testing.T) {
+	cfg := &config.Config{
+		StorageType:        "file",
+		FileStorageBaseDir: "/srv/gallery",
+	}
+	key := storageConfigKey(cfg)
+	assert.Equal(t, "file:/srv/gallery", key)
+
+	// Changing unrelated fields must not change the key for file storage.
+	cfg2 := &config.Config{
+		StorageType:                 "file",
+		FileStorageBaseDir:          "/srv/gallery",
+		FileStorageMkdirPermissions: 0700,
+	}
+	assert.Equal(t, key, storageConfigKey(cfg2), "permission-only changes should not alter the file config key")
+
+	// Changing baseDir must produce a different key.
+	cfg3 := &config.Config{StorageType: "file", FileStorageBaseDir: "/other"}
+	assert.NotEqual(t, key, storageConfigKey(cfg3))
+}
+
+func TestStorageConfigKey_S3(t *testing.T) {
+	cfg := &config.Config{
+		StorageType:      "s3",
+		S3StorageBucket:  "my-bucket",
+		AWSRegion:        "us-east-1",
+		AWSAccessKeyID:   "AKID",
+		S3ForcePathStyle: false,
+	}
+	key := storageConfigKey(cfg)
+	assert.Contains(t, key, "s3:")
+	assert.Contains(t, key, "my-bucket")
+	assert.Contains(t, key, "us-east-1")
+
+	// Rotating the access key must change the key.
+	cfg2 := *cfg
+	cfg2.AWSAccessKeyID = "NEW_AKID"
+	assert.NotEqual(t, key, storageConfigKey(&cfg2))
+
+	// Enabling force-path-style must change the key.
+	cfg3 := *cfg
+	cfg3.S3ForcePathStyle = true
+	assert.NotEqual(t, key, storageConfigKey(&cfg3))
+}
+
+func TestStorageConfigKey_Deterministic(t *testing.T) {
+	cfg := &config.Config{
+		StorageType:        "file",
+		FileStorageBaseDir: "/deterministic",
+	}
+	assert.Equal(t, storageConfigKey(cfg), storageConfigKey(cfg), "key must be deterministic")
+}
+
+// ── ReloadFromRegistry no-op optimisation ────────────────────────────────────
+
+// buildFileRegistryMock returns a MockRegistryStore that serves a valid file
+// storage configuration (storage_configured=true, storage_type=file,
+// file_storage_base_dir=/tmp/test-reload).
+func buildFileRegistryMock() *MockRegistryStore {
+	mockRegistry := &MockRegistryStore{}
+
+	// isStorageConfiguredInRegistry — uses GetMulti with just ["config.storage_configured"]
+	mockRegistry.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+		[]string{"config.storage_configured"}).
+		Return([]*registrystore.Registry{{Key: "config.storage_configured", Value: "true"}}, nil)
+
+	// buildConfigFromRegistry — uses GetMulti with the full key list
+	mockRegistry.On("GetMulti", mock.Anything, registrystore.SystemOwnerID, mock.MatchedBy(func(keys []string) bool {
+		for _, k := range keys {
+			if k == "config.storage_type" {
+				return true
+			}
+		}
+		return false
+	})).Return([]*registrystore.Registry{
+		{Key: "config.storage_configured", Value: "true"},
+		{Key: "config.storage_type", Value: "file"},
+		{Key: "config.file_storage_base_dir", Value: "/tmp/test-reload"},
+	}, nil)
+
+	return mockRegistry
+}
+
+func TestReloadFromRegistry_NoOpWhenUnchanged(t *testing.T) {
+	logger := zap.NewNop()
+	mockRegistry := buildFileRegistryMock()
+
+	cfg := &config.Config{}
+	provider := New(logger, mockRegistry, cfg)
+
+	// First reload: loads from registry, sets configKey, creates storage.
+	err := provider.ReloadFromRegistry()
+	assert.NoError(t, err)
+	assert.True(t, provider.configured)
+	assert.Equal(t, "file:/tmp/test-reload", provider.configKey)
+
+	firstStorage := provider.currentStorage
+
+	// Second reload: configKey already matches → storage must NOT be replaced.
+	err = provider.ReloadFromRegistry()
+	assert.NoError(t, err)
+	assert.Same(t, firstStorage, provider.currentStorage,
+		"storage instance must not be replaced when config is unchanged")
+}
+
+func TestReloadFromRegistry_ReloadsWhenChanged(t *testing.T) {
+	logger := zap.NewNop()
+
+	// First registry answers: /tmp/old-dir
+	mockRegistry1 := &MockRegistryStore{}
+	mockRegistry1.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+		[]string{"config.storage_configured"}).
+		Return([]*registrystore.Registry{{Key: "config.storage_configured", Value: "true"}}, nil)
+	mockRegistry1.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+		mock.MatchedBy(func(keys []string) bool {
+			for _, k := range keys {
+				if k == "config.storage_type" {
+					return true
+				}
+			}
+			return false
+		})).Return([]*registrystore.Registry{
+		{Key: "config.storage_type", Value: "file"},
+		{Key: "config.file_storage_base_dir", Value: "/tmp/old-dir"},
+	}, nil)
+
+	cfg := &config.Config{}
+	provider := New(logger, mockRegistry1, cfg)
+
+	err := provider.ReloadFromRegistry()
+	assert.NoError(t, err)
+	assert.Equal(t, "file:/tmp/old-dir", provider.configKey)
+	firstStorage := provider.currentStorage
+
+	// Switch to a registry that returns a different base dir.
+	mockRegistry2 := &MockRegistryStore{}
+	mockRegistry2.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+		[]string{"config.storage_configured"}).
+		Return([]*registrystore.Registry{{Key: "config.storage_configured", Value: "true"}}, nil)
+	mockRegistry2.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+		mock.MatchedBy(func(keys []string) bool {
+			for _, k := range keys {
+				if k == "config.storage_type" {
+					return true
+				}
+			}
+			return false
+		})).Return([]*registrystore.Registry{
+		{Key: "config.storage_type", Value: "file"},
+		{Key: "config.file_storage_base_dir", Value: "/tmp/new-dir"},
+	}, nil)
+
+	provider.registryStore = mockRegistry2
+
+	err = provider.ReloadFromRegistry()
+	assert.NoError(t, err)
+	assert.Equal(t, "file:/tmp/new-dir", provider.configKey)
+	assert.NotSame(t, firstStorage, provider.currentStorage,
+		"storage instance must be replaced when config changes")
+}
+
+func TestReloadFromRegistry_NoOpNoLog_WhenNotConfigured(t *testing.T) {
+	logger := zap.NewNop()
+	mockRegistry := &MockRegistryStore{}
+	mockRegistry.On("GetMulti", mock.Anything, registrystore.SystemOwnerID,
+		[]string{"config.storage_configured"}).
+		Return([]*registrystore.Registry{}, nil) // not configured
+
+	provider := New(logger, mockRegistry, &config.Config{})
+
+	// Should return nil without touching storage.
+	err := provider.ReloadFromRegistry()
+	assert.NoError(t, err)
+	assert.False(t, provider.configured)
+	assert.Empty(t, provider.configKey)
+}
+
+// ── Existing test (unchanged) ─────────────────────────────────────────────────
+
 // Test that GetStorage still works with the new InitializeWithConfig logic
 func TestProvider_GetStorage_AfterEnvInitialization(t *testing.T) {
 	logger := zap.NewNop()

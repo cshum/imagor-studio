@@ -34,9 +34,27 @@ type Provider struct {
 	config        *config.Config
 
 	currentStorage storage.Storage
-	configured     bool // true once real (non-noop) storage is loaded
+	configured     bool   // true once real (non-noop) storage is loaded
+	configKey      string // fingerprint of the currently-loaded config; empty = noop/unconfigured
 
 	mutex sync.RWMutex
+}
+
+// storageConfigKey returns a compact fingerprint for a storage config so that
+// ReloadFromRegistry can skip unchanged configs without rebuilding the instance.
+func storageConfigKey(cfg *config.Config) string {
+	switch cfg.StorageType {
+	case "file", "filesystem":
+		return "file:" + cfg.FileStorageBaseDir
+	case "s3":
+		return "s3:" + cfg.S3StorageBucket + "@" + cfg.AWSRegion +
+			"|endpoint=" + cfg.S3Endpoint +
+			"|baseDir=" + cfg.S3StorageBaseDir +
+			"|key=" + cfg.AWSAccessKeyID +
+			"|pathStyle=" + fmt.Sprintf("%v", cfg.S3ForcePathStyle)
+	default:
+		return "unknown:" + cfg.StorageType
+	}
 }
 
 // New creates a new storage provider
@@ -63,7 +81,7 @@ func (p *Provider) NewStorageFromConfig(cfg *config.Config) (storage.Storage, er
 
 // NewFileStorage creates a file storage instance
 func (p *Provider) NewFileStorage(cfg *config.Config) (storage.Storage, error) {
-	p.logger.Info("Creating file storage",
+	p.logger.Debug("Creating file storage",
 		zap.String("baseDir", cfg.FileStorageBaseDir),
 		zap.String("mkdirPermissions", cfg.FileStorageMkdirPermissions.String()),
 		zap.String("writePermissions", cfg.FileStorageWritePermissions.String()),
@@ -82,7 +100,7 @@ func (p *Provider) NewS3Storage(cfg *config.Config) (storage.Storage, error) {
 		return nil, fmt.Errorf("s3-storage-bucket is required when storage-type is s3")
 	}
 
-	p.logger.Info("Creating S3 storage",
+	p.logger.Debug("Creating S3 storage",
 		zap.String("bucket", cfg.S3StorageBucket),
 		zap.String("region", cfg.AWSRegion),
 		zap.String("endpoint", cfg.S3Endpoint),
@@ -143,6 +161,7 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 		// Env/CLI config worked - use it immediately
 		p.currentStorage = s
 		p.configured = true
+		p.configKey = storageConfigKey(cfg)
 		p.logger.Info("Storage initialized successfully", zap.String("type", cfg.StorageType))
 		return nil
 	}
@@ -166,20 +185,33 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 // ReloadFromRegistry forces a reload of storage configuration from registry.
 // Called by the background sync loop every 30 seconds so all replicas pick up
 // admin-UI config changes without a restart.
+//
+// If the config fingerprint is identical to what is already loaded, the call
+// is a complete no-op (no log, no allocation) — so frequent polling is safe.
 func (p *Provider) ReloadFromRegistry() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
 	// Check if storage is configured in registry
 	if !p.isStorageConfiguredInRegistry() {
-		p.logger.Info("No storage configuration found in registry, keeping NoOp storage")
+		// Only log the first time we discover there's no config.
+		if p.configKey != "" {
+			p.logger.Info("No storage configuration found in registry, keeping NoOp storage")
+			p.configKey = ""
+		}
 		return nil
 	}
 
-	// Try to create storage from registry configuration
+	// Build the candidate config from the registry.
 	cfg, err := p.buildConfigFromRegistry()
 	if err != nil {
 		return fmt.Errorf("failed to build config from registry: %w", err)
+	}
+
+	// Skip if the config hasn't changed — common case during steady-state operation.
+	newKey := storageConfigKey(cfg)
+	if newKey == p.configKey {
+		return nil
 	}
 
 	s, err := p.NewStorageFromConfig(cfg)
@@ -189,6 +221,7 @@ func (p *Provider) ReloadFromRegistry() error {
 
 	p.currentStorage = s
 	p.configured = true
+	p.configKey = newKey
 	p.logger.Info("Storage reloaded from registry", zap.String("type", cfg.StorageType))
 
 	return nil
@@ -223,6 +256,7 @@ func (p *Provider) loadStorageFromRegistry() storage.Storage {
 
 	p.currentStorage = s
 	p.configured = true
+	p.configKey = storageConfigKey(cfg)
 	p.logger.Info("Storage configured from registry", zap.String("type", cfg.StorageType))
 
 	return p.currentStorage
