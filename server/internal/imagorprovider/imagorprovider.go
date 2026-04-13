@@ -184,6 +184,21 @@ func getHashAlgorithm(signerType string) func() hash.Hash {
 	}
 }
 
+// signerFromConfig builds an imagorpath.Signer from the given config.
+// Returns nil when unsafe mode is enabled.
+func signerFromConfig(cfg *ImagorConfig) imagorpath.Signer {
+	if cfg == nil || cfg.Unsafe {
+		return nil
+	}
+	return imagorpath.NewHMACSigner(getHashAlgorithm(cfg.SignerType), cfg.SignerTruncate, cfg.Secret)
+}
+
+// GetSigner returns the active imagorpath.Signer based on the current configuration.
+// Returns nil when operating in unsafe mode.
+func (p *Provider) GetSigner() imagorpath.Signer {
+	return signerFromConfig(p.GetConfig())
+}
+
 // GenerateURL generates an imagor URL for the given image path and parameters
 func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
 	cfg := p.GetConfig()
@@ -199,12 +214,10 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 		params.Base64Image = true
 	}
 
-	if cfg.Unsafe {
+	signer := p.GetSigner()
+	if signer == nil {
 		return fmt.Sprintf("/%s", imagorpath.GenerateUnsafe(params)), nil
 	}
-
-	hashAlg := getHashAlgorithm(cfg.SignerType)
-	signer := imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
 	return fmt.Sprintf("/%s", imagorpath.Generate(params, signer)), nil
 }
 
@@ -224,9 +237,7 @@ func (p *Provider) createEmbeddedHandler(cfg *ImagorConfig) (http.Handler, error
 		),
 	))
 
-	if !cfg.Unsafe {
-		hashAlg := getHashAlgorithm(cfg.SignerType)
-		signer := imagorpath.NewHMACSigner(hashAlg, cfg.SignerTruncate, cfg.Secret)
+	if signer := signerFromConfig(cfg); signer != nil {
 		options = append(options, imagor.WithSigner(signer))
 	} else {
 		options = append(options, imagor.WithUnsafe(true))
