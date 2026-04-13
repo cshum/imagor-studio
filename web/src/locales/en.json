@@ -484,8 +484,6 @@
       "imagorConfigurationDescription": "Configure image processing settings. Imagor handles image transformations and optimizations.",
       "secret": "Secret Key",
       "secretDescription": "Leave empty and we'll generate a secure signing key for you automatically.",
-      "unsafeMode": "Unsafe Mode",
-      "unsafeModeDescription": "Allow processing images without URL signing (not recommended for production)",
       "signerType": "Signer Type",
       "selectSignerType": "Select signer type",
       "signerTypeDescription": "Hash algorithm used for URL signing",

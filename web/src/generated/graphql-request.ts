@@ -87,7 +87,6 @@ export type ImagorConfig = {
   hasSecret: Scalars['Boolean']['output']
   signerTruncate: Scalars['Int']['output']
   signerType: ImagorSignerType
-  unsafe: Scalars['Boolean']['output']
 }
 
 export type ImagorConfigResult = {
@@ -106,7 +105,6 @@ export type ImagorInput = {
   secret: InputMaybe<Scalars['String']['input']>
   signerTruncate: InputMaybe<Scalars['Int']['input']>
   signerType: InputMaybe<ImagorSignerType>
-  unsafe: InputMaybe<Scalars['Boolean']['input']>
 }
 
 export type ImagorParamsInput = {
@@ -483,7 +481,6 @@ export type ImagorStatusQuery = {
     config: {
       __typename?: 'ImagorConfig'
       hasSecret: boolean
-      unsafe: boolean
       signerType: ImagorSignerType
       signerTruncate: number
     } | null
@@ -1009,7 +1006,6 @@ export const ImagorStatusDocument = gql`
       isOverriddenByConfig
       config {
         hasSecret
-        unsafe
         signerType
         signerTruncate
       }

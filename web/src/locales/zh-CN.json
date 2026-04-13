@@ -482,8 +482,6 @@
       "imagorConfigurationDescription": "配置图片处理设置。Imagor 处理图片转换和优化。",
       "secret": "密钥",
       "secretDescription": "留空，我们将自动为您生成安全的签名密钥。",
-      "unsafeMode": "非安全模式",
-      "unsafeModeDescription": "允许在不签名 URL 的情况下处理图片（不建议用于生产环境）",
       "signerType": "签名类型",
       "selectSignerType": "选择签名类型",
       "signerTypeDescription": "用于 URL 签名的哈希算法",

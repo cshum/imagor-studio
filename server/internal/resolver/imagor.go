@@ -385,7 +385,6 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 		}
 		imagorConfig = &imagorprovider.ImagorConfig{
 			Secret:         jwtSecret,
-			Unsafe:         false,
 			SignerType:     "sha256",
 			SignerTruncate: 32,
 		}
@@ -413,7 +412,6 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 func (r *queryResolver) isImagorConfigOverridden(ctx context.Context) bool {
 	keys := []string{
 		"config.imagor_secret",
-		"config.imagor_unsafe",
 		"config.imagor_signer_type",
 		"config.imagor_signer_truncate",
 	}
@@ -439,7 +437,6 @@ func (r *queryResolver) getImagorConfig(imagorConfig *imagorprovider.ImagorConfi
 	}
 	return &gql.ImagorConfig{
 		HasSecret:      imagorConfig.Secret != "",
-		Unsafe:         imagorConfig.Unsafe,
 		SignerType:     signerType,
 		SignerTruncate: imagorConfig.SignerTruncate,
 	}
@@ -458,7 +455,6 @@ func (r *mutationResolver) ConfigureImagor(ctx context.Context, input gql.Imagor
 
 	// Clear existing imagor-specific config keys
 	if _, err := r.DeleteSystemRegistry(ctx, nil, []string{
-		"config.imagor_unsafe",
 		"config.imagor_secret",
 		"config.imagor_signer_type",
 		"config.imagor_signer_truncate",
@@ -479,12 +475,6 @@ func (r *mutationResolver) ConfigureImagor(ctx context.Context, input gql.Imagor
 	if input.Secret != nil && *input.Secret != "" {
 		entries = append(entries, gql.RegistryEntryInput{
 			Key: "config.imagor_secret", Value: *input.Secret, IsEncrypted: true,
-		})
-	}
-
-	if input.Unsafe != nil {
-		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.imagor_unsafe", Value: fmt.Sprintf("%t", *input.Unsafe), IsEncrypted: false,
 		})
 	}
 

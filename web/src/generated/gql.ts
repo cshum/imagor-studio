@@ -15,7 +15,7 @@ import * as types from './graphql'
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-  '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      lastUpdated\n      isOverriddenByConfig\n      config {\n        hasSecret\n        unsafe\n        signerType\n        signerTruncate\n      }\n    }\n  }\n': typeof types.ImagorStatusDocument
+  '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      lastUpdated\n      isOverriddenByConfig\n      config {\n        hasSecret\n        signerType\n        signerTruncate\n      }\n    }\n  }\n': typeof types.ImagorStatusDocument
   '\n  mutation ConfigureImagor($input: ImagorInput!) {\n    configureImagor(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureImagorDocument
   '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      params: $params\n    )\n  }\n': typeof types.GenerateImagorUrlDocument
   '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n': typeof types.GenerateImagorUrlFromTemplateDocument
@@ -53,7 +53,7 @@ type Documents = {
   '\n  mutation CreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      ...UserInfo\n    }\n  }\n': typeof types.CreateUserDocument
 }
 const documents: Documents = {
-  '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      lastUpdated\n      isOverriddenByConfig\n      config {\n        hasSecret\n        unsafe\n        signerType\n        signerTruncate\n      }\n    }\n  }\n':
+  '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      lastUpdated\n      isOverriddenByConfig\n      config {\n        hasSecret\n        signerType\n        signerTruncate\n      }\n    }\n  }\n':
     types.ImagorStatusDocument,
   '\n  mutation ConfigureImagor($input: ImagorInput!) {\n    configureImagor(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n':
     types.ConfigureImagorDocument,
@@ -144,8 +144,8 @@ export function gql(source: string): unknown
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      lastUpdated\n      isOverriddenByConfig\n      config {\n        hasSecret\n        unsafe\n        signerType\n        signerTruncate\n      }\n    }\n  }\n',
-): (typeof documents)['\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      lastUpdated\n      isOverriddenByConfig\n      config {\n        hasSecret\n        unsafe\n        signerType\n        signerTruncate\n      }\n    }\n  }\n']
+  source: '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      lastUpdated\n      isOverriddenByConfig\n      config {\n        hasSecret\n        signerType\n        signerTruncate\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      lastUpdated\n      isOverriddenByConfig\n      config {\n        hasSecret\n        signerType\n        signerTruncate\n      }\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -50,14 +50,6 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
                 </div>
                 <div className='space-y-1'>
                   <div className='text-muted-foreground text-xs font-medium'>
-                    {t('pages.imagor.unsafeMode')}
-                  </div>
-                  <div className='font-mono text-sm'>
-                    {config.unsafe ? t('common.status.enabled') : t('common.status.disabled')}
-                  </div>
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-muted-foreground text-xs font-medium'>
                     {t('pages.imagor.signerType')}
                   </div>
                   <div className='font-mono text-sm'>{config.signerType}</div>

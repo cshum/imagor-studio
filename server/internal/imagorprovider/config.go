@@ -16,10 +16,9 @@ import (
 	"github.com/cshum/imagor/imagorpath"
 )
 
-// ImagorConfig holds imagor signing and mode configuration.
+// ImagorConfig holds imagor signing configuration.
 type ImagorConfig struct {
 	Secret         string // Secret key for HMAC URL signing
-	Unsafe         bool   // Accept unsigned (unsafe) URLs — development only
 	SignerType     string // Hash algorithm: "sha1", "sha256", "sha512"
 	SignerTruncate int    // Signature truncation length (0 = no truncation)
 }
@@ -63,9 +62,9 @@ func getHashAlgorithm(signerType string) func() hash.Hash {
 }
 
 // signerFromConfig builds an imagorpath.Signer from the given ImagorConfig.
-// Returns nil when unsafe mode is enabled (no signing needed).
+// Returns nil when cfg is nil.
 func signerFromConfig(cfg *ImagorConfig) imagorpath.Signer {
-	if cfg == nil || cfg.Unsafe {
+	if cfg == nil {
 		return nil
 	}
 	return imagorpath.NewHMACSigner(
@@ -82,7 +81,6 @@ func buildConfigFromRegistry(registryStore registrystore.Store, cfg *config.Conf
 
 	results := registryutil.GetEffectiveValues(ctx, registryStore, cfg,
 		"config.imagor_secret",
-		"config.imagor_unsafe",
 		"config.imagor_signer_type",
 		"config.imagor_signer_truncate",
 	)
@@ -106,15 +104,9 @@ func buildConfigFromRegistry(registryStore registrystore.Store, cfg *config.Conf
 		}
 	}
 
-	if v := resultMap["config.imagor_unsafe"]; v.Exists {
-		if b, err := strconv.ParseBool(v.Value); err == nil {
-			out.Unsafe = b
-		}
-	}
-
 	if v := resultMap["config.imagor_secret"]; v.Exists {
 		out.Secret = v.Value
-	} else if !out.Unsafe {
+	} else {
 		// Default: derive signing key from the JWT secret (sha256, truncated to 32 chars).
 		out.Secret = cfg.JWTSecret
 		out.SignerType = "sha256"

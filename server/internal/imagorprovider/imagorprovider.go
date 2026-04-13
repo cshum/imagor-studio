@@ -56,13 +56,11 @@ type Provider struct {
 	config          *config.Config
 	storageProvider *storageprovider.Provider
 
-	// app holds the running *imagor.Imagor. Set during Initialize(); replaced only
-	// when switching between signed and unsafe mode (a rare admin operation).
+	// app holds the running *imagor.Imagor. Set during Initialize().
 	// Atomic load/store means ServeHTTP never acquires a lock.
 	app atomic.Pointer[imagor.Imagor]
 
 	// dynSigner allows hot-swapping the HMAC signer without restarting imagor.
-	// nil when the current app was started in unsafe mode.
 	dynSigner *dynamicSigner
 
 	// mu protects currentConfig (read by Config() / Signer() / GenerateURL).
@@ -120,9 +118,7 @@ func (p *Provider) Initialize() error {
 }
 
 // ReloadFromRegistry applies configuration changes from the registry.
-//   - Secret / algorithm change (common): swaps the dynamic signer only — no imagor restart.
-//   - Unsafe ↔ signed mode switch (rare admin op): rebuilds the imagor instance.
-//
+// Secret / algorithm changes hot-swap the dynamic signer only — no imagor restart needed.
 // Storage changes are handled transparently by StorageLoader and never require a reload.
 func (p *Provider) ReloadFromRegistry() error {
 	newCfg, err := buildConfigFromRegistry(p.registryStore, p.config)
@@ -130,18 +126,8 @@ func (p *Provider) ReloadFromRegistry() error {
 		return fmt.Errorf("failed to build imagor configuration: %w", err)
 	}
 
-	oldCfg := p.Config()
-	unsafeModeChanged := oldCfg == nil || newCfg.Unsafe != oldCfg.Unsafe
-
-	if unsafeModeChanged {
-		// Unsafe ↔ signed mode changes the URL structure (/unsafe/ vs /<hash>/),
-		// so we must rebuild the imagor instance.
-		if err := p.rebuildApp(newCfg); err != nil {
-			return err
-		}
-		p.logger.Info("Imagor reloaded (mode change)", zap.Bool("unsafe", newCfg.Unsafe))
-	} else if !newCfg.Unsafe && p.dynSigner != nil {
-		// Common path: only the secret/algorithm changed — hot-swap the signer.
+	if p.dynSigner != nil {
+		// Hot-swap the signer — no imagor restart needed.
 		p.dynSigner.update(signerFromConfig(newCfg))
 		p.logger.Info("Imagor signer hot-swapped from registry")
 	}
@@ -168,15 +154,10 @@ func (p *Provider) createApp(cfg *ImagorConfig) error {
 		),
 	))
 
-	if cfg.Unsafe {
-		options = append(options, imagor.WithUnsafe(true))
-		p.dynSigner = nil
-	} else {
-		ds := &dynamicSigner{}
-		ds.update(signerFromConfig(cfg))
-		p.dynSigner = ds
-		options = append(options, imagor.WithSigner(ds))
-	}
+	ds := &dynamicSigner{}
+	ds.update(signerFromConfig(cfg))
+	p.dynSigner = ds
+	options = append(options, imagor.WithSigner(ds))
 
 	options = append(options, imagor.WithLoaders(&StorageLoader{source: p.storageProvider}))
 
@@ -188,23 +169,12 @@ func (p *Provider) createApp(cfg *ImagorConfig) error {
 	return nil
 }
 
-// rebuildApp shuts down the current imagor instance and creates a new one.
-// Used only for the unsafe ↔ signed mode switch.
-func (p *Provider) rebuildApp(cfg *ImagorConfig) error {
-	if old := p.app.Load(); old != nil {
-		if err := old.Shutdown(context.Background()); err != nil {
-			p.logger.Error("Error shutting down old imagor instance during rebuild", zap.Error(err))
-		}
-	}
-	return p.createApp(cfg)
-}
-
-// Signer returns the active imagorpath.Signer, or nil when in unsafe mode.
+// Signer returns the active imagorpath.Signer.
 func (p *Provider) Signer() imagorpath.Signer {
 	return signerFromConfig(p.Config())
 }
 
-// GenerateURL generates a signed (or unsafe) imagor URL for the given image path and params.
+// GenerateURL generates a signed imagor URL for the given image path and params.
 func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
 	cfg := p.Config()
 	if cfg == nil {
@@ -218,9 +188,6 @@ func (p *Provider) GenerateURL(imagePath string, params imagorpath.Params) (stri
 	}
 
 	signer := p.Signer()
-	if signer == nil {
-		return fmt.Sprintf("/%s", imagorpath.GenerateUnsafe(params)), nil
-	}
 	return fmt.Sprintf("/%s", imagorpath.Generate(params, signer)), nil
 }
 

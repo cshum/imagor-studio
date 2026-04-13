@@ -84,7 +84,6 @@ type ImagorStatus {
 
 type ImagorConfig {
   hasSecret: Boolean!
-  unsafe: Boolean!
   signerType: ImagorSignerType!
   signerTruncate: Int!
 }
@@ -97,7 +96,6 @@ type ImagorConfigResult {
 
 input ImagorInput {
   secret: String
-  unsafe: Boolean
   signerType: ImagorSignerType # Optional, defaults to SHA1
   signerTruncate: Int          # Optional, defaults to 0
 }

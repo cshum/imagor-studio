@@ -6,7 +6,6 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Form,
@@ -29,7 +28,6 @@ import type { ImagorConfig } from '@/generated/graphql'
 
 const schema = z.object({
   secret: z.string(),
-  unsafe: z.boolean(),
   signerType: z.enum(['SHA1', 'SHA256', 'SHA512']),
   signerTruncate: z.number().int().min(0),
 })
@@ -55,14 +53,11 @@ export const ImagorForm = forwardRef<ImagorFormRef, ImagorFormProps>(
       resolver: zodResolver(schema),
       defaultValues: {
         secret: '',
-        unsafe: initialValues?.unsafe ?? false,
         signerType:
           (initialValues?.signerType as ImagorFormData['signerType'] | undefined) ?? 'SHA256',
         signerTruncate: initialValues?.signerTruncate ?? 32,
       },
     })
-
-    const unsafe = form.watch('unsafe')
 
     useImperativeHandle(ref, () => ({
       submit: () => {
@@ -95,30 +90,8 @@ export const ImagorForm = forwardRef<ImagorFormRef, ImagorFormProps>(
             )}
           />
 
-          {/* Unsafe mode */}
-          <FormField
-            control={form.control}
-            name='unsafe'
-            render={({ field }) => (
-              <FormItem className='flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4'>
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={disabled}
-                  />
-                </FormControl>
-                <div className='space-y-1 leading-none'>
-                  <FormLabel>{t('pages.imagor.unsafeMode')}</FormLabel>
-                  <FormDescription>{t('pages.imagor.unsafeModeDescription')}</FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
-
           {/* Advanced settings (signer type + truncate) */}
-          {!unsafe && (
-            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
               <CollapsibleTrigger asChild>
                 <Button
                   variant='ghost'
@@ -190,7 +163,6 @@ export const ImagorForm = forwardRef<ImagorFormRef, ImagorFormProps>(
                 />
               </CollapsibleContent>
             </Collapsible>
-          )}
         </form>
       </Form>
     )

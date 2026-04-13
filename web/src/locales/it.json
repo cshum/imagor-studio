@@ -479,8 +479,6 @@
       "imagorConfigurationDescription": "Configura le impostazioni di elaborazione delle immagini. Imagor gestisce le trasformazioni e le ottimizzazioni delle immagini.",
       "secret": "Chiave Segreta",
       "secretDescription": "Lascia vuoto e genereremo automaticamente una chiave di firma sicura per te.",
-      "unsafeMode": "Modalità Non Sicura",
-      "unsafeModeDescription": "Consenti l'elaborazione delle immagini senza la firma degli URL (non raccomandato per la produzione)",
       "signerType": "Tipo di Firmatario",
       "selectSignerType": "Seleziona il tipo di firmatario",
       "signerTypeDescription": "Algoritmo hash utilizzato per la firma degli URL",

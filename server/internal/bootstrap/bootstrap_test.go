@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"context"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -32,7 +31,6 @@ func TestInitialize(t *testing.T) {
 		FileStorageMkdirPermissions: 0755,
 		FileStorageWritePermissions: 0644,
 		ImagorSecret:                "",
-		ImagorUnsafe:                false,
 	}
 
 	logger := zap.NewNop()
@@ -302,7 +300,6 @@ func TestImagorProviderIntegration(t *testing.T) {
 		DatabaseURL:  "sqlite:" + tmpDB,
 		JWTSecret:    "test-jwt-secret",
 		ImagorSecret: "test-secret",
-		ImagorUnsafe: true, // Use unsafe mode for testing
 	}
 
 	logger := zap.NewNop()
@@ -310,7 +307,6 @@ func TestImagorProviderIntegration(t *testing.T) {
 		"--jwt-secret", "test-jwt-secret",
 		"--database-url", "sqlite:" + tmpDB,
 		"--imagor-secret", "test-secret",
-		"--imagor-unsafe", "true",
 	}
 	services, err := Initialize(cfg, logger, args)
 
@@ -322,17 +318,17 @@ func TestImagorProviderIntegration(t *testing.T) {
 	imagorConfig := services.ImagorProvider.Config()
 	require.NotNil(t, imagorConfig)
 	assert.Equal(t, "test-secret", imagorConfig.Secret)
-	assert.True(t, imagorConfig.Unsafe)
 
-	// Test that imagor provider can generate URLs directly
+	// Test that imagor provider can generate signed URLs directly
 	url, err := services.ImagorProvider.GenerateURL("test/image.jpg", imagorpath.Params{
 		Width:  300,
 		Height: 200,
 	})
 	require.NoError(t, err)
 	assert.NotEmpty(t, url)
-	// URL should start with / (root path) instead of /imagor
-	assert.True(t, strings.HasPrefix(url, "/unsafe/") || strings.Contains(url, "/test/image.jpg"))
+	// URL should be a signed URL containing the image path
+	assert.Contains(t, url, "/test/image.jpg")
+	assert.NotContains(t, url, "/unsafe/")
 
 	// Clean up
 	services.DB.Close()

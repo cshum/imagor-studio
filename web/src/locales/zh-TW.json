@@ -483,8 +483,6 @@
       "imagorConfigurationDescription": "配置圖片處理設定。Imagor 處理圖片轉換和最佳化。",
       "secret": "金鑰",
       "secretDescription": "留空，我們將自動為您生成安全的簽名金鑰。",
-      "unsafeMode": "非安全模式",
-      "unsafeModeDescription": "允許在不簽名 URL 的情況下處理圖片（不建議用於生產環境）",
       "signerType": "簽名型別",
       "selectSignerType": "選擇簽名型別",
       "signerTypeDescription": "用於 URL 簽名的雜湊演算法",

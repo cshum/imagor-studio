@@ -127,7 +127,6 @@ func TestInitialize_EmbeddedMode(t *testing.T) {
 	assert.Equal(t, "test-jwt-secret", cfg.Secret)
 	assert.Equal(t, "sha256", cfg.SignerType)
 	assert.Equal(t, 32, cfg.SignerTruncate)
-	assert.False(t, cfg.Unsafe)
 
 	// Embedded mode always creates an imagor instance (Provider implements http.Handler)
 	assert.NotNil(t, provider.Imagor())
@@ -154,28 +153,6 @@ func TestInitialize_WithExplicitSecret(t *testing.T) {
 	assert.Equal(t, "sha1", imagorCfg.SignerType)
 }
 
-func TestInitialize_UnsafeMode(t *testing.T) {
-	cfg := &config.Config{
-		JWTSecret:    "jwt-secret",
-		ImagorUnsafe: true,
-	}
-	provider, registryStore := setupTestProviderWithStorage(t, cfg)
-
-	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "true", false)
-
-	err := provider.Initialize()
-	require.NoError(t, err)
-
-	imagorCfg := provider.Config()
-	require.NotNil(t, imagorCfg)
-	assert.True(t, imagorCfg.Unsafe)
-	assert.Equal(t, "", imagorCfg.Secret)
-
-	// Provider always has an imagor instance after initialization
-	assert.NotNil(t, provider.Imagor())
-}
-
 func TestBuildConfigFromRegistry_Defaults(t *testing.T) {
 	store := newMockRegistryStore()
 	cfg := &config.Config{JWTSecret: "my-jwt"}
@@ -188,7 +165,6 @@ func TestBuildConfigFromRegistry_Defaults(t *testing.T) {
 	assert.Equal(t, "my-jwt", result.Secret)
 	assert.Equal(t, "sha256", result.SignerType)
 	assert.Equal(t, 32, result.SignerTruncate)
-	assert.False(t, result.Unsafe)
 }
 
 func TestBuildConfigFromRegistry_ExplicitSecret(t *testing.T) {
@@ -205,22 +181,6 @@ func TestBuildConfigFromRegistry_ExplicitSecret(t *testing.T) {
 	assert.Equal(t, "explicit-secret", result.Secret)
 	assert.Equal(t, "sha1", result.SignerType) // default when explicit secret (no JWT fallback)
 	assert.Equal(t, 0, result.SignerTruncate)
-	assert.False(t, result.Unsafe)
-}
-
-func TestBuildConfigFromRegistry_UnsafeMode(t *testing.T) {
-	store := newMockRegistryStore()
-	cfg := &config.Config{JWTSecret: "my-jwt"}
-
-	ctx := context.Background()
-	store.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "true", false)
-
-	result, err := buildConfigFromRegistry(store, cfg)
-	require.NoError(t, err)
-	require.NotNil(t, result)
-
-	assert.True(t, result.Unsafe)
-	assert.Equal(t, "", result.Secret) // unsafe mode doesn't need secret
 }
 
 func TestBuildConfigFromRegistry_SignerOverrides(t *testing.T) {
@@ -303,26 +263,6 @@ func TestGenerateURL_Signed(t *testing.T) {
 	assert.NotContains(t, url, "/unsafe/")
 }
 
-func TestGenerateURL_Unsafe(t *testing.T) {
-	logger := zap.NewNop()
-	store := newMockRegistryStore()
-	cfg := &config.Config{}
-	sp := &storageprovider.Provider{}
-
-	provider := New(logger, store, cfg, sp)
-	provider.currentConfig = &ImagorConfig{Unsafe: true}
-
-	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
-		Width:  300,
-		Height: 200,
-	})
-
-	require.NoError(t, err)
-	assert.Contains(t, url, "/unsafe/")
-	assert.Contains(t, url, "300x200")
-	assert.Contains(t, url, "test/image.jpg")
-}
-
 func TestGenerateURL_NoConfig(t *testing.T) {
 	logger := zap.NewNop()
 	store := newMockRegistryStore()
@@ -359,7 +299,6 @@ func TestGenerateURL_SignerVariants(t *testing.T) {
 			provider := New(logger, store, cfg, sp)
 			provider.currentConfig = &ImagorConfig{
 				Secret:         tt.secret,
-				Unsafe:         false,
 				SignerType:     tt.signerType,
 				SignerTruncate: tt.signerTruncate,
 			}

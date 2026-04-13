@@ -64,7 +64,6 @@ type FileStorageInput struct {
 
 type ImagorConfig struct {
 	HasSecret      bool             `json:"hasSecret"`
-	Unsafe         bool             `json:"unsafe"`
 	SignerType     ImagorSignerType `json:"signerType"`
 	SignerTruncate int              `json:"signerTruncate"`
 }
@@ -82,7 +81,6 @@ type ImagorFilterInput struct {
 
 type ImagorInput struct {
 	Secret         *string           `json:"secret,omitempty"`
-	Unsafe         *bool             `json:"unsafe,omitempty"`
 	SignerType     *ImagorSignerType `json:"signerType,omitempty"`
 	SignerTruncate *int              `json:"signerTruncate,omitempty"`
 }
