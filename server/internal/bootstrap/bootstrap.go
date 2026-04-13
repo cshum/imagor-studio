@@ -59,6 +59,14 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
+	// Guard: close the DB connection if any subsequent step fails so we don't
+	// leak the connection pool on error return paths.
+	initOK := false
+	defer func() {
+		if !initOK {
+			_ = db.Close()
+		}
+	}()
 
 	// Run migrations based on database type and configuration
 	if err := runMigrationsIfNeeded(db, cfg, logger); err != nil {
@@ -145,6 +153,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		zap.String("storageType", enhancedCfg.StorageType),
 	)
 
+	initOK = true // all steps succeeded; db ownership transfers to Services
 	return &Services{
 		DB:               db,
 		TokenManager:     tokenManager,
