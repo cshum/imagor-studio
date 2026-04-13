@@ -1,12 +1,9 @@
-import { forwardRef, useImperativeHandle, useState } from 'react'
+import { forwardRef, useImperativeHandle } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import { z } from 'zod'
 
-import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Form,
   FormControl,
@@ -47,7 +44,6 @@ interface ImagorFormProps {
 export const ImagorForm = forwardRef<ImagorFormRef, ImagorFormProps>(
   ({ onSubmit, disabled, initialValues }, ref) => {
     const { t } = useTranslation()
-    const [advancedOpen, setAdvancedOpen] = useState(false)
 
     const form = useForm<ImagorFormData>({
       resolver: zodResolver(schema),
@@ -90,79 +86,53 @@ export const ImagorForm = forwardRef<ImagorFormRef, ImagorFormProps>(
             )}
           />
 
-          {/* Advanced settings (signer type + truncate) */}
-          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant='ghost'
-                  className='gap-2'
-                  size='sm'
-                  type='button'
-                  disabled={disabled}
-                >
-                  {advancedOpen ? (
-                    <ChevronDown className='h-4 w-4' />
-                  ) : (
-                    <ChevronRight className='h-4 w-4' />
-                  )}
-                  {t('pages.storage.advancedSettings')}
-                </Button>
-              </CollapsibleTrigger>
+          {/* Signer type */}
+          <FormField
+            control={form.control}
+            name='signerType'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('pages.imagor.signerType')}</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} disabled={disabled}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('pages.imagor.selectSignerType')} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='SHA1'>SHA1</SelectItem>
+                    <SelectItem value='SHA256'>SHA256</SelectItem>
+                    <SelectItem value='SHA512'>SHA512</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>{t('pages.imagor.signerTypeDescription')}</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <CollapsibleContent className='mt-3 space-y-4'>
-                <FormField
-                  control={form.control}
-                  name='signerType'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('pages.imagor.signerType')}</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={disabled}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('pages.imagor.selectSignerType')} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value='SHA1'>SHA1</SelectItem>
-                          <SelectItem value='SHA256'>SHA256</SelectItem>
-                          <SelectItem value='SHA512'>SHA512</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>{t('pages.imagor.signerTypeDescription')}</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='signerTruncate'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('pages.imagor.signerTruncate')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='number'
-                          min={0}
-                          {...field}
-                          value={field.value}
-                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
-                          disabled={disabled}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {t('pages.imagor.signerTruncateDescription')}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CollapsibleContent>
-            </Collapsible>
+          {/* Signer truncate */}
+          <FormField
+            control={form.control}
+            name='signerTruncate'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('pages.imagor.signerTruncate')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    min={0}
+                    {...field}
+                    value={field.value}
+                    onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
+                    disabled={disabled}
+                  />
+                </FormControl>
+                <FormDescription>{t('pages.imagor.signerTruncateDescription')}</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </form>
       </Form>
     )

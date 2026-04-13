@@ -51,7 +51,7 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
     if (initial <= 0) return
 
     const timer = setInterval(() => {
-      setRemainingSeconds(prev => {
+      setRemainingSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
           // Propagation window elapsed — refresh the displayed config.
