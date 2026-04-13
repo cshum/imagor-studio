@@ -30,6 +30,9 @@ func (m *mockSpaceStore) Get(ctx context.Context, key string) (*spacestore.Space
 func (m *mockSpaceStore) List(ctx context.Context) ([]*spacestore.Space, error) {
 	return nil, nil
 }
+func (m *mockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*spacestore.Space, error) {
+	return nil, nil
+}
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 

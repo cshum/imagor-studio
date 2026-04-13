@@ -3,6 +3,7 @@ package httphandler
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,11 +14,15 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/driver/sqliteshim"
 	"go.uber.org/zap"
 )
 
@@ -743,6 +748,120 @@ func TestGuestLogin(t *testing.T) {
 			mockRegistryStore.AssertExpectations(t)
 		})
 	}
+}
+
+// ── SaaS org integration tests ───────────────────────────────────────────────
+
+// newOrgTestDB creates an in-memory SQLite DB with org + org_members tables.
+func newOrgTestDB(t *testing.T) *bun.DB {
+	t.Helper()
+	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
+	if err != nil {
+		t.Fatalf("open in-memory sqlite: %v", err)
+	}
+	t.Cleanup(func() { _ = sqldb.Close() })
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+	if _, err := db.NewCreateTable().
+		Model((*model.Organization)(nil)).IfNotExists().Exec(context.Background()); err != nil {
+		t.Fatalf("create organizations table: %v", err)
+	}
+	if _, err := db.NewCreateTable().
+		Model((*model.OrgMember)(nil)).IfNotExists().Exec(context.Background()); err != nil {
+		t.Fatalf("create org_members table: %v", err)
+	}
+	return db
+}
+
+// TestRegister_SaaS_CreatesOrg verifies that registering with a wired orgStore:
+//   - Creates a personal org in the DB.
+//   - Embeds org_id in the returned JWT.
+func TestRegister_SaaS_CreatesOrg(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	os := orgstore.New(newOrgTestDB(t))
+	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false)
+
+	const userID = "saas-reg-user-1"
+	mockUserStore.On("Create", mock.Anything, "saasuser", "saasuser", mock.AnythingOfType("string"), "user").
+		Return(&userstore.User{
+			ID: userID, DisplayName: "saasuser", Username: "saasuser", Role: "user", IsActive: true,
+		}, nil)
+
+	body, err := json.Marshal(RegisterRequest{
+		DisplayName: "saasuser",
+		Username:    "saasuser",
+		Password:    "password123",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Register()(rr, req)
+
+	require.Equal(t, http.StatusCreated, rr.Code)
+
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	assert.NotEmpty(t, resp.Token)
+
+	// Verify JWT embeds org_id.
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.NotEmpty(t, claims.OrgID, "JWT should carry org_id for SaaS signup")
+
+	// Verify the org was persisted in the store.
+	org, err := os.GetByUserID(context.Background(), userID)
+	require.NoError(t, err)
+	require.NotNil(t, org, "org should have been created on signup")
+	assert.Equal(t, claims.OrgID, org.ID, "JWT org_id must match the created org")
+	assert.Equal(t, "saasuser", org.Slug)
+	assert.Equal(t, userID, org.OwnerID)
+
+	mockUserStore.AssertExpectations(t)
+}
+
+// TestLogin_SaaS_EmbeddsOrgID verifies that logging in with a wired orgStore
+// embeds the user's org_id in the returned JWT.
+func TestLogin_SaaS_EmbeddsOrgID(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	os := orgstore.New(newOrgTestDB(t))
+	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false)
+
+	const userID = "saas-login-user-1"
+
+	// Pre-create the org so login can look it up.
+	createdOrg, err := os.CreateWithMember(context.Background(), userID, "loginuser", "loginuser", nil)
+	require.NoError(t, err)
+
+	hashedPassword, err := auth.HashPassword("password123")
+	require.NoError(t, err)
+
+	mockUserStore.On("GetByUsername", mock.Anything, "loginuser").Return(&model.User{
+		ID: userID, DisplayName: "loginuser", Username: "loginuser",
+		HashedPassword: hashedPassword, Role: "user", IsActive: true,
+	}, nil)
+	mockUserStore.On("UpdateLastLogin", mock.Anything, userID).Return(nil)
+
+	body, err := json.Marshal(LoginRequest{Username: "loginuser", Password: "password123"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Login()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, createdOrg.ID, claims.OrgID, "login JWT should carry the user's org_id")
+
+	mockUserStore.AssertExpectations(t)
 }
 
 func TestCheckFirstRun(t *testing.T) {

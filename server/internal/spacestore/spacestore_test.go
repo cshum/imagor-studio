@@ -241,6 +241,101 @@ func TestDelta_SinceFilters(t *testing.T) {
 	}
 }
 
+func TestUpsert_WithOrgID(t *testing.T) {
+	st := spacestore.New(newTestDB(t), nil)
+	mustUpsert(t, st, &spacestore.Space{
+		Key:    "org-space",
+		OrgID:  "org-123",
+		Bucket: "org-bucket",
+	})
+
+	got, err := st.Get(context.Background(), "org-space")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got == nil {
+		t.Fatal("expected space, got nil")
+	}
+	if got.OrgID != "org-123" {
+		t.Errorf("OrgID: want org-123 got %q", got.OrgID)
+	}
+}
+
+func TestDelta_IncludesOrgID(t *testing.T) {
+	st := spacestore.New(newTestDB(t), nil)
+	mustUpsert(t, st, &spacestore.Space{Key: "d1", OrgID: "orgA"})
+	mustUpsert(t, st, &spacestore.Space{Key: "d2", OrgID: "orgB"})
+
+	delta, err := st.Delta(context.Background(), time.Time{})
+	if err != nil {
+		t.Fatalf("delta: %v", err)
+	}
+	if len(delta.Upserted) != 2 {
+		t.Fatalf("want 2 upserted, got %d", len(delta.Upserted))
+	}
+	orgIDs := map[string]string{}
+	for _, sp := range delta.Upserted {
+		orgIDs[sp.Key] = sp.OrgID
+	}
+	if orgIDs["d1"] != "orgA" {
+		t.Errorf("d1 OrgID: want orgA got %q", orgIDs["d1"])
+	}
+	if orgIDs["d2"] != "orgB" {
+		t.Errorf("d2 OrgID: want orgB got %q", orgIDs["d2"])
+	}
+}
+
+func TestListByOrgID(t *testing.T) {
+	st := spacestore.New(newTestDB(t), nil)
+	mustUpsert(t, st, &spacestore.Space{Key: "s1", OrgID: "org-x"})
+	mustUpsert(t, st, &spacestore.Space{Key: "s2", OrgID: "org-x"})
+	mustUpsert(t, st, &spacestore.Space{Key: "s3", OrgID: "org-y"})
+
+	list, err := st.ListByOrgID(context.Background(), "org-x")
+	if err != nil {
+		t.Fatalf("list by org: %v", err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("want 2 spaces for org-x, got %d", len(list))
+	}
+	for _, sp := range list {
+		if sp.OrgID != "org-x" {
+			t.Errorf("unexpected OrgID %q in result", sp.OrgID)
+		}
+	}
+}
+
+func TestListByOrgID_Empty(t *testing.T) {
+	st := spacestore.New(newTestDB(t), nil)
+	mustUpsert(t, st, &spacestore.Space{Key: "sx", OrgID: "org-z"})
+
+	list, err := st.ListByOrgID(context.Background(), "unknown-org")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(list) != 0 {
+		t.Errorf("want empty slice, got %d items", len(list))
+	}
+}
+
+func TestListByOrgID_ExcludesSoftDeleted(t *testing.T) {
+	st := spacestore.New(newTestDB(t), nil)
+	mustUpsert(t, st, &spacestore.Space{Key: "active-space", OrgID: "org-q"})
+	mustUpsert(t, st, &spacestore.Space{Key: "deleted-space", OrgID: "org-q"})
+	st.SoftDelete(context.Background(), "deleted-space") //nolint:errcheck
+
+	list, err := st.ListByOrgID(context.Background(), "org-q")
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(list) != 1 {
+		t.Fatalf("want 1 active space, got %d", len(list))
+	}
+	if list[0].Key != "active-space" {
+		t.Errorf("want active-space, got %q", list[0].Key)
+	}
+}
+
 func TestDelta_Empty_ReturnsNonNilSlices(t *testing.T) {
 	st := spacestore.New(newTestDB(t), nil)
 	delta, err := st.Delta(context.Background(), time.Time{})

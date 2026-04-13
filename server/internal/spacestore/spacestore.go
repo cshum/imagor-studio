@@ -75,6 +75,8 @@ type Store interface {
 	Get(ctx context.Context, key string) (*Space, error)
 	// List returns all active (non-deleted) spaces.
 	List(ctx context.Context) ([]*Space, error)
+	// ListByOrgID returns all active spaces belonging to the given org.
+	ListByOrgID(ctx context.Context, orgID string) ([]*Space, error)
 	// Delta returns all spaces (active and deleted) whose updated_at > since.
 	// Pass the zero time to request a full sync.
 	Delta(ctx context.Context, since time.Time) (*DeltaResult, error)
@@ -268,6 +270,26 @@ func (s *store) List(ctx context.Context) ([]*Space, error) {
 		OrderExpr("key ASC").
 		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("list spaces: %w", err)
+	}
+	result := make([]*Space, 0, len(rows))
+	for i := range rows {
+		sp, err := s.modelToApp(&rows[i])
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, sp)
+	}
+	return result, nil
+}
+
+func (s *store) ListByOrgID(ctx context.Context, orgID string) ([]*Space, error) {
+	var rows []model.Space
+	if err := s.db.NewSelect().
+		Model(&rows).
+		Where("org_id = ? AND deleted_at IS NULL", orgID).
+		OrderExpr("key ASC").
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("list spaces by org %s: %w", orgID, err)
 	}
 	result := make([]*Space, 0, len(rows))
 	for i := range rows {

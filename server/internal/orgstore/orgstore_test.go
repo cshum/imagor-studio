@@ -156,6 +156,71 @@ func TestCreateWithMember_MultipleOrgs_IsolatedLookups(t *testing.T) {
 	}
 }
 
+func TestCreateWithMember_NilTrialEndsAt(t *testing.T) {
+	st := orgstore.New(newTestDB(t))
+	ctx := context.Background()
+
+	got, err := st.CreateWithMember(ctx, "user-5", "Nil Trial Corp", "nil-trial", nil)
+	if err != nil {
+		t.Fatalf("CreateWithMember: %v", err)
+	}
+	if got.TrialEndsAt != nil {
+		t.Errorf("TrialEndsAt should be nil when not provided, got %v", got.TrialEndsAt)
+	}
+
+	// GetByUserID should also preserve nil TrialEndsAt.
+	org, err := st.GetByUserID(ctx, "user-5")
+	if err != nil {
+		t.Fatalf("GetByUserID: %v", err)
+	}
+	if org == nil {
+		t.Fatal("expected org, got nil")
+	}
+	if org.TrialEndsAt != nil {
+		t.Errorf("TrialEndsAt should be nil after round-trip, got %v", org.TrialEndsAt)
+	}
+	// Also verify Name round-trips correctly.
+	if org.Name != "Nil Trial Corp" {
+		t.Errorf("Name: want %q got %q", "Nil Trial Corp", org.Name)
+	}
+}
+
+func TestCreateWithMember_DuplicateSlug(t *testing.T) {
+	st := orgstore.New(newTestDB(t))
+	ctx := context.Background()
+
+	_, err := st.CreateWithMember(ctx, "user-20", "First", "dup-slug", nil)
+	if err != nil {
+		t.Fatalf("first CreateWithMember: %v", err)
+	}
+	// Second org with same slug should fail (UNIQUE constraint).
+	_, err = st.CreateWithMember(ctx, "user-21", "Second", "dup-slug", nil)
+	if err == nil {
+		t.Error("expected error for duplicate slug, got nil")
+	}
+}
+
+func TestCreateWithMember_VerifiesName(t *testing.T) {
+	st := orgstore.New(newTestDB(t))
+	ctx := context.Background()
+
+	_, err := st.CreateWithMember(ctx, "user-30", "Verified Name Corp", "verified-name", nil)
+	if err != nil {
+		t.Fatalf("CreateWithMember: %v", err)
+	}
+
+	org, err := st.GetByUserID(ctx, "user-30")
+	if err != nil {
+		t.Fatalf("GetByUserID: %v", err)
+	}
+	if org.Name != "Verified Name Corp" {
+		t.Errorf("Name: want %q got %q", "Verified Name Corp", org.Name)
+	}
+	if org.OwnerID != "user-30" {
+		t.Errorf("OwnerID: want user-30 got %q", org.OwnerID)
+	}
+}
+
 func TestPlanLimits(t *testing.T) {
 	tests := []struct {
 		plan      string

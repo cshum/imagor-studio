@@ -164,6 +164,54 @@ func TestRefreshToken(t *testing.T) {
 	assert.WithinDuration(t, time.Now(), refreshedIat, time.Second, "Token should be issued recently")
 }
 
+func TestGenerateTokenForUser(t *testing.T) {
+	tm := NewTokenManager("test-secret", time.Hour)
+
+	// Without OrgID — self-hosted path.
+	token, err := tm.GenerateTokenForUser("user-abc", "admin", nil, "")
+	require.NoError(t, err)
+	claims, err := tm.ValidateToken(token)
+	require.NoError(t, err)
+	assert.Equal(t, "user-abc", claims.UserID)
+	assert.Equal(t, "admin", claims.Role)
+	assert.Empty(t, claims.OrgID, "OrgID should be empty when not provided")
+
+	// With OrgID — SaaS path.
+	token2, err := tm.GenerateTokenForUser("user-xyz", "user", []string{"read"}, "org-99")
+	require.NoError(t, err)
+	claims2, err := tm.ValidateToken(token2)
+	require.NoError(t, err)
+	assert.Equal(t, "user-xyz", claims2.UserID)
+	assert.Equal(t, "org-99", claims2.OrgID)
+}
+
+func TestRefreshToken_PreservesOrgID(t *testing.T) {
+	tm := NewTokenManager("test-secret", time.Hour)
+
+	pastTime := time.Now().Add(-time.Minute)
+	originalClaims := &Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-saas",
+			ExpiresAt: jwt.NewNumericDate(pastTime.Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(pastTime),
+			ID:        "original-id",
+		},
+		UserID: "user-saas",
+		Role:   "user",
+		Scopes: []string{"read"},
+		OrgID:  "org-saas-42",
+	}
+
+	refreshed, err := tm.RefreshToken(originalClaims)
+	require.NoError(t, err)
+
+	refreshedClaims, err := tm.ValidateToken(refreshed)
+	require.NoError(t, err)
+	assert.Equal(t, "org-saas-42", refreshedClaims.OrgID, "OrgID must be preserved across token refresh")
+	assert.Equal(t, "user-saas", refreshedClaims.UserID)
+	assert.NotEqual(t, originalClaims.ID, refreshedClaims.ID, "token ID should be rotated")
+}
+
 func TestExtractTokenFromHeader(t *testing.T) {
 	tests := []struct {
 		name        string
