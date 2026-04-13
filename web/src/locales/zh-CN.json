@@ -493,7 +493,8 @@
       "configurationOverridden": "Imagor 配置由外部配置管理",
       "configuredSuccess": "Imagor 配置成功",
       "configurationDetails": "配置详情",
-      "hasSecret": "有密钥"
+      "hasSecret": "有密钥",
+      "takingEffect": "设置已保存，{{seconds}} 秒后生效。"
     },
     "license": {
       "licenseManagement": "许可证管理",

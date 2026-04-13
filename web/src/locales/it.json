@@ -490,7 +490,8 @@
       "configurationOverridden": "La configurazione di Imagor è gestita da una configurazione esterna",
       "configuredSuccess": "Imagor configurato correttamente",
       "configurationDetails": "Dettagli Configurazione",
-      "hasSecret": "Ha Segreto"
+      "hasSecret": "Ha Segreto",
+      "takingEffect": "Impostazioni salvate. Attive tra {{seconds}}s."
     },
     "license": {
       "licenseManagement": "Gestione Licenza",

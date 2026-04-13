@@ -511,7 +511,7 @@ func (r *mutationResolver) ConfigureImagor(ctx context.Context, input gql.Imagor
 	return &gql.ImagorConfigResult{
 		Success:   true,
 		Timestamp: timestampStr,
-		Message:   &[]string{"Imagor configured successfully. Restart the server to apply changes."}[0],
+		Message:   &[]string{"Imagor configured successfully."}[0],
 	}, nil
 }
 

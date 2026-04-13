@@ -495,7 +495,8 @@
       "configurationOverridden": "Imagor configuration is managed by external configuration",
       "configuredSuccess": "Imagor configured successfully",
       "configurationDetails": "Configuration Details",
-      "hasSecret": "Has Secret"
+      "hasSecret": "Has Secret",
+      "takingEffect": "Settings saved. Taking effect in {{seconds}}s."
     },
     "license": {
       "licenseManagement": "License Management",
