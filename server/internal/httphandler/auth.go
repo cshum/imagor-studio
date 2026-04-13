@@ -8,6 +8,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/internal/uuid"
@@ -18,15 +19,24 @@ import (
 type AuthHandler struct {
 	tokenManager  *auth.TokenManager
 	userStore     userstore.Store
+	orgStore      orgstore.Store // nil in self-hosted mode
 	registryStore registrystore.Store
 	logger        *zap.Logger
 	embeddedMode  bool
 }
 
-func NewAuthHandler(tokenManager *auth.TokenManager, userStore userstore.Store, registryStore registrystore.Store, logger *zap.Logger, embeddedMode bool) *AuthHandler {
+func NewAuthHandler(
+	tokenManager *auth.TokenManager,
+	userStore userstore.Store,
+	orgStore orgstore.Store, // pass nil for self-hosted deployments
+	registryStore registrystore.Store,
+	logger *zap.Logger,
+	embeddedMode bool,
+) *AuthHandler {
 	return &AuthHandler{
 		tokenManager:  tokenManager,
 		userStore:     userStore,
+		orgStore:      orgStore,
 		registryStore: registryStore,
 		logger:        logger,
 		embeddedMode:  embeddedMode,
@@ -217,7 +227,19 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			h.logger.Warn("Failed to update last login", zap.Error(err), zap.String("userID", user.ID))
 		}
 
-		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role)
+		// SaaS mode: look up org so we can embed org_id in the token.
+		orgID := ""
+		if h.orgStore != nil {
+			org, err := h.orgStore.GetByUserID(r.Context(), user.ID)
+			if err != nil {
+				h.logger.Warn("Failed to look up org for user on login",
+					zap.String("userID", user.ID), zap.Error(err))
+			} else if org != nil {
+				orgID = org.ID
+			}
+		}
+
+		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
 		if err != nil {
 			return err
 		}
@@ -298,7 +320,7 @@ func (h *AuthHandler) RefreshToken() http.HandlerFunc {
 			return apperror.Unauthorized("User not found or inactive")
 		}
 
-		// Generate new token
+		// Generate new token — RefreshToken propagates OrgID automatically
 		newToken, err := h.tokenManager.RefreshToken(claims)
 		if err != nil {
 			h.logger.Error("Failed to refresh token", zap.Error(err))
@@ -419,18 +441,38 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
-	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role)
+	// SaaS mode: auto-create a personal org for the new user (14-day trial).
+	// Self-hosted: orgStore is nil — skip org creation.
+	orgID := ""
+	if h.orgStore != nil {
+		trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
+		org, err := h.orgStore.CreateWithMember(ctx, user.ID, normalizedDisplayName, normalizedUsername, &trialEndsAt)
+		if err != nil {
+			h.logger.Error("Failed to create personal org for new user",
+				zap.String("userID", user.ID), zap.Error(err))
+			return nil, apperror.InternalServerError("Failed to initialize organization")
+		}
+		orgID = org.ID
+	}
+
+	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
 }
 
-func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role string) (*LoginResponse, error) {
+func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role, orgID string) (*LoginResponse, error) {
 	// Determine scopes based on role
 	scopes := []string{"read", "write"}
 	if role == "admin" {
 		scopes = append(scopes, "admin")
 	}
 
-	// Generate token
-	token, err := h.tokenManager.GenerateToken(userID, role, scopes, "")
+	// Use org-aware token when an org is known (SaaS mode).
+	var token string
+	var err error
+	if orgID != "" {
+		token, err = h.tokenManager.GenerateTokenForUser(userID, role, scopes, orgID)
+	} else {
+		token, err = h.tokenManager.GenerateToken(userID, role, scopes, "")
+	}
 	if err != nil {
 		h.logger.Error("Failed to generate token", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to generate token")

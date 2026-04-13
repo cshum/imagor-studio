@@ -86,6 +86,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	authHandler := httphandler.NewAuthHandler(
 		services.TokenManager,
 		services.UserStore,
+		nil, // orgStore — nil for self-hosted; wire to services.OrgStore in SaaS mode
 		services.RegistryStore,
 		services.Logger,
 		cfg.EmbeddedMode,

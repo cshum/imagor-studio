@@ -145,7 +145,7 @@ func TestRegister(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
 
 	tests := []struct {
 		name           string
@@ -335,7 +335,7 @@ func TestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
 
 	// Create a valid hashed password for testing
 	hashedPassword, err := auth.HashPassword("password123")
@@ -528,7 +528,7 @@ func TestRefreshToken(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
 
 	// Generate a valid token first
 	validToken, err := tokenManager.GenerateToken("user1", "user", []string{"read"}, "")
@@ -708,7 +708,7 @@ func TestGuestLogin(t *testing.T) {
 			mockRegistryStore.ExpectedCalls = nil
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, mockRegistryStore, logger, true)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, true)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/auth/guest", nil)
 			rr := httptest.NewRecorder()
@@ -749,7 +749,7 @@ func TestCheckFirstRun(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
 
 	tests := []struct {
 		name           string
@@ -1021,7 +1021,7 @@ func TestRegisterAdmin(t *testing.T) {
 			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.existingUsers, nil)
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, mockRegistryStore, logger, false)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, false)
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -1170,7 +1170,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewAuthHandler(tokenManager, mockUserStore, mockRegistryStore, logger, tt.embeddedMode)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, tt.embeddedMode)
 
 			req := httptest.NewRequest(tt.method, "/api/auth/embedded-guest", nil)
 			if tt.authHeader != "" {
