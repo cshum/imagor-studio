@@ -23,7 +23,6 @@ type ConfigProvider interface {
 // StorageProvider interface for getting storage dynamically
 type StorageProvider interface {
 	GetStorage() storage.Storage
-	IsRestartRequired() bool
 	ReloadFromRegistry() error
 }
 

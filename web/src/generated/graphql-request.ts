@@ -390,7 +390,6 @@ export type StorageConfigInput = {
 export type StorageConfigResult = {
   __typename?: 'StorageConfigResult'
   message: Maybe<Scalars['String']['output']>
-  restartRequired: Scalars['Boolean']['output']
   success: Scalars['Boolean']['output']
   timestamp: Scalars['String']['output']
 }
@@ -401,7 +400,6 @@ export type StorageStatus = {
   fileConfig: Maybe<FileStorageConfig>
   isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
-  restartRequired: Scalars['Boolean']['output']
   s3Config: Maybe<S3StorageConfig>
   type: Maybe<Scalars['String']['output']>
 }
@@ -766,7 +764,6 @@ export type StorageStatusQuery = {
     __typename?: 'StorageStatus'
     configured: boolean
     type: string | null
-    restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
     fileConfig: {
@@ -795,7 +792,6 @@ export type ConfigureFileStorageMutation = {
   configureFileStorage: {
     __typename?: 'StorageConfigResult'
     success: boolean
-    restartRequired: boolean
     timestamp: string
     message: string | null
   }
@@ -810,7 +806,6 @@ export type ConfigureS3StorageMutation = {
   configureS3Storage: {
     __typename?: 'StorageConfigResult'
     success: boolean
-    restartRequired: boolean
     timestamp: string
     message: string | null
   }
@@ -1211,7 +1206,6 @@ export const StorageStatusDocument = gql`
     storageStatus {
       configured
       type
-      restartRequired
       lastUpdated
       isOverriddenByConfig
       fileConfig {
@@ -1233,7 +1227,6 @@ export const ConfigureFileStorageDocument = gql`
   mutation ConfigureFileStorage($input: FileStorageInput!) {
     configureFileStorage(input: $input) {
       success
-      restartRequired
       timestamp
       message
     }
@@ -1243,7 +1236,6 @@ export const ConfigureS3StorageDocument = gql`
   mutation ConfigureS3Storage($input: S3StorageInput!) {
     configureS3Storage(input: $input) {
       success
-      restartRequired
       timestamp
       message
     }

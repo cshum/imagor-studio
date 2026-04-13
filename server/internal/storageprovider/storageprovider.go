@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
@@ -18,34 +17,35 @@ import (
 	"go.uber.org/zap"
 )
 
-// StorageState represents the current state of storage configuration
-type StorageState string
-
-const (
-	StorageStateNoop       StorageState = "noop"
-	StorageStateConfigured StorageState = "configured"
-)
-
-// Provider handles storage creation with state management
+// Provider handles storage creation with state management.
+//
+// The storage instance is built once (from env/CLI config or registry) and
+// cached. Configuration changes written via the admin UI are picked up by the
+// background sync loop (server.startSyncLoop), which calls ReloadFromRegistry()
+// every 30 seconds — no server restart required for any storage type.
+//
+// On first startup, if env/CLI config is valid, the instance is built
+// immediately. Otherwise the provider starts in a "not configured" state and
+// lazily builds the instance on the first GetStorage() call after registry
+// config becomes available.
 type Provider struct {
-	logger         *zap.Logger
-	registryStore  registrystore.Store
-	config         *config.Config
+	logger        *zap.Logger
+	registryStore registrystore.Store
+	config        *config.Config
+
 	currentStorage storage.Storage
-	storageState   StorageState
-	configLoadedAt int64 // Unix milliseconds when storage config was loaded
-	mutex          sync.RWMutex
+	configured     bool // true once real (non-noop) storage is loaded
+
+	mutex sync.RWMutex
 }
 
 // New creates a new storage provider
 func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Config) *Provider {
 	return &Provider{
-		logger:         logger,
-		registryStore:  registryStore,
-		config:         cfg,
-		storageState:   StorageStateNoop,
-		configLoadedAt: time.Now().UnixMilli(),
-		mutex:          sync.RWMutex{},
+		logger:        logger,
+		registryStore: registryStore,
+		config:        cfg,
+		mutex:         sync.RWMutex{},
 	}
 }
 
@@ -116,16 +116,19 @@ func (p *Provider) NewS3Storage(cfg *config.Config) (storage.Storage, error) {
 	return s3storage.New(cfg.S3StorageBucket, options...)
 }
 
-// GetStorage returns the current storage instance, checking registry if in NoOp state
+// GetStorage returns the current storage instance.
+// When not yet configured (e.g. a fresh install), it attempts a one-time lazy
+// load from the registry so new storage config takes effect on the next request
+// without waiting for the 30s sync tick.
 func (p *Provider) GetStorage() storage.Storage {
 	p.mutex.RLock()
-	if p.storageState == StorageStateConfigured {
+	if p.configured {
 		defer p.mutex.RUnlock()
 		return p.currentStorage
 	}
 	p.mutex.RUnlock()
 
-	// For NoOp state, check registry once and try to configure storage
+	// Not configured yet — try to load from registry (lazy init for first-time setup).
 	return p.loadStorageFromRegistry()
 }
 
@@ -139,8 +142,7 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 	if s != nil && err == nil {
 		// Env/CLI config worked - use it immediately
 		p.currentStorage = s
-		p.storageState = StorageStateConfigured
-		p.configLoadedAt = time.Now().UnixMilli()
+		p.configured = true
 		p.logger.Info("Storage initialized successfully", zap.String("type", cfg.StorageType))
 		return nil
 	}
@@ -149,42 +151,21 @@ func (p *Provider) InitializeWithConfig(cfg *config.Config) error {
 	if p.isStorageConfiguredInRegistry() {
 		// Registry has config - set up for lazy loading
 		p.currentStorage = noopstorage.New()
-		p.storageState = StorageStateNoop
+		p.configured = false
 		p.logger.Info("Storage will be lazy loaded from registry")
 	} else {
 		// No config anywhere - use NoOp
 		p.currentStorage = noopstorage.New()
-		p.storageState = StorageStateNoop
+		p.configured = false
 		p.logger.Info("No storage configuration found, using NoOp storage")
 	}
 
 	return nil
 }
 
-// IsRestartRequired checks if a restart is required due to storage configuration changes
-func (p *Provider) IsRestartRequired() bool {
-	p.mutex.RLock()
-	defer p.mutex.RUnlock()
-
-	if p.storageState == StorageStateNoop {
-		return false // No restart needed for first-time setup
-	}
-
-	ctx := context.Background()
-	result := registryutil.GetEffectiveValue(ctx, p.registryStore, p.config, "config.storage_config_updated_at")
-	if !result.Exists {
-		return false
-	}
-
-	configUpdatedAt, err := strconv.ParseInt(result.Value, 10, 64)
-	if err != nil {
-		return false
-	}
-
-	return configUpdatedAt > p.configLoadedAt
-}
-
-// ReloadFromRegistry forces a reload of storage configuration from registry
+// ReloadFromRegistry forces a reload of storage configuration from registry.
+// Called by the background sync loop every 30 seconds so all replicas pick up
+// admin-UI config changes without a restart.
 func (p *Provider) ReloadFromRegistry() error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -207,19 +188,18 @@ func (p *Provider) ReloadFromRegistry() error {
 	}
 
 	p.currentStorage = s
-	p.storageState = StorageStateConfigured
-	p.configLoadedAt = time.Now().UnixMilli()
+	p.configured = true
 	p.logger.Info("Storage reloaded from registry", zap.String("type", cfg.StorageType))
 
 	return nil
 }
 
-// loadStorageFromRegistry attempts to load storage configuration from registry
+// loadStorageFromRegistry attempts to load storage configuration from registry (lazy init)
 func (p *Provider) loadStorageFromRegistry() storage.Storage {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	if p.storageState == StorageStateConfigured {
+	if p.configured {
 		return p.currentStorage
 	}
 
@@ -242,8 +222,7 @@ func (p *Provider) loadStorageFromRegistry() storage.Storage {
 	}
 
 	p.currentStorage = s
-	p.storageState = StorageStateConfigured
-	p.configLoadedAt = time.Now().UnixMilli()
+	p.configured = true
 	p.logger.Info("Storage configured from registry", zap.String("type", cfg.StorageType))
 
 	return p.currentStorage

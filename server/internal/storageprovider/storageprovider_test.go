@@ -249,7 +249,7 @@ func TestProvider_InitializeWithConfig_ValidFileEnvConfig(t *testing.T) {
 	err := provider.InitializeWithConfig(cfg)
 
 	assert.NoError(t, err)
-	assert.Equal(t, StorageStateConfigured, provider.storageState)
+	assert.True(t, provider.configured)
 	assert.NotNil(t, provider.currentStorage)
 
 	// Verify it's file storage
@@ -278,7 +278,7 @@ func TestProvider_InitializeWithConfig_ValidS3EnvConfig(t *testing.T) {
 	err := provider.InitializeWithConfig(cfg)
 
 	assert.NoError(t, err)
-	assert.Equal(t, StorageStateConfigured, provider.storageState)
+	assert.True(t, provider.configured)
 	assert.NotNil(t, provider.currentStorage)
 
 	// Verify it's S3 storage
@@ -309,7 +309,7 @@ func TestProvider_InitializeWithConfig_InvalidEnvValidRegistry(t *testing.T) {
 	err := provider.InitializeWithConfig(cfg)
 
 	assert.NoError(t, err)
-	assert.Equal(t, StorageStateNoop, provider.storageState)
+	assert.False(t, provider.configured)
 	assert.NotNil(t, provider.currentStorage)
 
 	// Verify it's NoOp storage (for lazy loading)
@@ -340,7 +340,7 @@ func TestProvider_InitializeWithConfig_NoConfigAnywhere(t *testing.T) {
 	err := provider.InitializeWithConfig(cfg)
 
 	assert.NoError(t, err)
-	assert.Equal(t, StorageStateNoop, provider.storageState)
+	assert.False(t, provider.configured)
 	assert.NotNil(t, provider.currentStorage)
 
 	// Verify it's NoOp storage
@@ -369,7 +369,7 @@ func TestProvider_InitializeWithConfig_UnsupportedEnvType(t *testing.T) {
 	err := provider.InitializeWithConfig(cfg)
 
 	assert.NoError(t, err)
-	assert.Equal(t, StorageStateNoop, provider.storageState)
+	assert.False(t, provider.configured)
 	assert.NotNil(t, provider.currentStorage)
 
 	// Verify it's NoOp storage
@@ -398,7 +398,7 @@ func TestProvider_InitializeWithConfig_EnvOverridesRegistry(t *testing.T) {
 	err := provider.InitializeWithConfig(cfg)
 
 	assert.NoError(t, err)
-	assert.Equal(t, StorageStateConfigured, provider.storageState)
+	assert.True(t, provider.configured)
 	assert.NotNil(t, provider.currentStorage)
 
 	// Verify it's file storage from env config

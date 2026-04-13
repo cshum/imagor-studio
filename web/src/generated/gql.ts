@@ -37,9 +37,9 @@ type Documents = {
   '\n  mutation CreateFolder($path: String!) {\n    createFolder(path: $path)\n  }\n': typeof types.CreateFolderDocument
   '\n  mutation CopyFile($sourcePath: String!, $destPath: String!) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath)\n  }\n': typeof types.CopyFileDocument
   '\n  mutation MoveFile($sourcePath: String!, $destPath: String!) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath)\n  }\n': typeof types.MoveFileDocument
-  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n': typeof types.StorageStatusDocument
-  '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureFileStorageDocument
-  '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureS3StorageDocument
+  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n': typeof types.StorageStatusDocument
+  '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureFileStorageDocument
+  '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureS3StorageDocument
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n': typeof types.TestStorageConfigDocument
   '\n  mutation SaveTemplate($input: SaveTemplateInput!) {\n    saveTemplate(input: $input) {\n      success\n      templatePath\n      previewPath\n      message\n    }\n  }\n': typeof types.SaveTemplateDocument
   '\n  mutation RegenerateTemplatePreview($templatePath: String!) {\n    regenerateTemplatePreview(templatePath: $templatePath)\n  }\n': typeof types.RegenerateTemplatePreviewDocument
@@ -97,11 +97,11 @@ const documents: Documents = {
     types.CopyFileDocument,
   '\n  mutation MoveFile($sourcePath: String!, $destPath: String!) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath)\n  }\n':
     types.MoveFileDocument,
-  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n':
+  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n':
     types.StorageStatusDocument,
-  '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n':
+  '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n':
     types.ConfigureFileStorageDocument,
-  '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n':
+  '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n':
     types.ConfigureS3StorageDocument,
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n':
     types.TestStorageConfigDocument,
@@ -276,20 +276,20 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n',
-): (typeof documents)['\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      restartRequired\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n']
+  source: '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n',
-): (typeof documents)['\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n']
+  source: '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n',
+): (typeof documents)['\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n',
-): (typeof documents)['\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      restartRequired\n      timestamp\n      message\n    }\n  }\n']
+  source: '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n',
+): (typeof documents)['\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

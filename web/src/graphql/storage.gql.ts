@@ -97,7 +97,6 @@ export const STORAGE_STATUS = gql(`
     storageStatus {
       configured
       type
-      restartRequired
       lastUpdated
       isOverriddenByConfig
       fileConfig {
@@ -120,7 +119,6 @@ export const CONFIGURE_FILE_STORAGE = gql(`
   mutation ConfigureFileStorage($input: FileStorageInput!) {
     configureFileStorage(input: $input) {
       success
-      restartRequired
       timestamp
       message
     }
@@ -131,7 +129,6 @@ export const CONFIGURE_S3_STORAGE = gql(`
   mutation ConfigureS3Storage($input: S3StorageInput!) {
     configureS3Storage(input: $input) {
       success
-      restartRequired
       timestamp
       message
     }

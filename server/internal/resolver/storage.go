@@ -378,9 +378,6 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 	// Update override status based on type-specific checks
 	isConfigOverridden = isFileOverridden || isS3Overridden
 
-	// Check if restart is required
-	restartRequired := r.storageProvider.IsRestartRequired()
-
 	var lastUpdated *string
 	if timestampResult := resultMap["config.storage_config_updated_at"]; timestampResult.Exists {
 		lastUpdated = &timestampResult.Value
@@ -389,7 +386,6 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 	return &gql.StorageStatus{
 		Configured:           isConfigured,
 		Type:                 storageType,
-		RestartRequired:      restartRequired,
 		LastUpdated:          lastUpdated,
 		IsOverriddenByConfig: isConfigOverridden,
 		FileConfig:           fileConfig,
@@ -518,10 +514,9 @@ func (r *mutationResolver) ConfigureFileStorage(ctx context.Context, input gql.F
 	if !testResult.Success {
 		// Return the test error directly
 		return &gql.StorageConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       fmt.Sprintf("%d", time.Now().UnixMilli()),
-			Message:         &testResult.Message,
+			Success:   false,
+			Timestamp: fmt.Sprintf("%d", time.Now().UnixMilli()),
+			Message:   &testResult.Message,
 		}, nil
 	}
 
@@ -554,32 +549,16 @@ func (r *mutationResolver) ConfigureFileStorage(ctx context.Context, input gql.F
 	if err != nil {
 		r.logger.Error("Failed to save file storage configuration", zap.Error(err))
 		return &gql.StorageConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       timestampStr,
-			Message:         &[]string{"Failed to save configuration"}[0],
+			Success:   false,
+			Timestamp: timestampStr,
+			Message:   &[]string{"Failed to save configuration"}[0],
 		}, nil
 	}
-
-	// Reload storage from registry to apply changes immediately
-	if err := r.storageProvider.ReloadFromRegistry(); err != nil {
-		r.logger.Error("Failed to reload storage from registry", zap.Error(err))
-		return &gql.StorageConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       timestampStr,
-			Message:         &[]string{"Configuration saved but failed to apply"}[0],
-		}, nil
-	}
-
-	// Check if restart is required (should be false for file storage)
-	restartRequired := r.storageProvider.IsRestartRequired()
 
 	return &gql.StorageConfigResult{
-		Success:         true,
-		RestartRequired: restartRequired,
-		Timestamp:       timestampStr,
-		Message:         &[]string{"File storage configured successfully"}[0],
+		Success:   true,
+		Timestamp: timestampStr,
+		Message:   &[]string{"File storage configured successfully"}[0],
 	}, nil
 }
 
@@ -602,10 +581,9 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 	if !testResult.Success {
 		// Return the test error directly
 		return &gql.StorageConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       fmt.Sprintf("%d", time.Now().UnixMilli()),
-			Message:         &testResult.Message,
+			Success:   false,
+			Timestamp: fmt.Sprintf("%d", time.Now().UnixMilli()),
+			Message:   &testResult.Message,
 		}, nil
 	}
 
@@ -663,19 +641,16 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 	if err != nil {
 		r.logger.Error("Failed to save S3 storage configuration", zap.Error(err))
 		return &gql.StorageConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       timestampStr,
-			Message:         &[]string{"Failed to save configuration"}[0],
+			Success:   false,
+			Timestamp: timestampStr,
+			Message:   &[]string{"Failed to save configuration"}[0],
 		}, nil
 	}
 
-	// S3 configuration always requires restart
 	return &gql.StorageConfigResult{
-		Success:         true,
-		RestartRequired: true,
-		Timestamp:       timestampStr,
-		Message:         &[]string{"S3 storage configured successfully. Server restart required."}[0],
+		Success:   true,
+		Timestamp: timestampStr,
+		Message:   &[]string{"S3 storage configured successfully"}[0],
 	}, nil
 }
 
