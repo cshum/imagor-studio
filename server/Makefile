@@ -41,6 +41,25 @@ deps:
 tidy:
 	$(GOMOD) tidy
 
+# ── SaaS binary targets ───────────────────────────────────────────────────────
+# management binary: no CGO, no libvips — suitable for Fly.io management machines
+# (handles GraphQL, storage config, user/org/space CRUD, delta endpoint).
+BINARY_MANAGEMENT=imagor-studio-management
+
+build-management:
+	mkdir -p static
+	touch static/.placeholder
+	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(BINARY_MANAGEMENT) $(MAIN_PACKAGE)
+
+# processing binary: compiled with -tags vips — requires libvips + CGO.
+# Deployed on processing machines; routes image requests per space.
+BINARY_PROCESSING=imagor-studio-processing
+
+build-processing:
+	mkdir -p static
+	touch static/.placeholder
+	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_PROCESSING) $(MAIN_PACKAGE)
+
 # Cross compilation
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BINARY_UNIX) $(MAIN_PACKAGE)
@@ -60,7 +79,7 @@ gqlgen-init:
 gqlgen-update:
 	$(GQLGEN) --verbose --config gqlgen.yml
 
-.PHONY: all build test clean run deps tidy build-linux docker-build gqlgen gqlgen-init gqlgen-update
+.PHONY: all build test clean run deps tidy build-linux build-management build-processing docker-build gqlgen gqlgen-init gqlgen-update
 
 clean-db:
 	rm -f storage.db

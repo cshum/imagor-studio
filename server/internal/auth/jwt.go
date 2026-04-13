@@ -13,6 +13,7 @@ import (
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID     string   `json:"user_id"`
+	OrgID      string   `json:"org_id,omitempty"` // owning org; "" for self-hosted / guest tokens
 	Role       string   `json:"role"`
 	Scopes     []string `json:"scopes"`
 	PathPrefix string   `json:"path_prefix,omitempty"`
@@ -38,9 +39,30 @@ func NewTokenManager(secret string, tokenDuration time.Duration) *TokenManager {
 	}
 }
 
-// GenerateToken creates a new JWT token
+// GenerateToken creates a new JWT token (no org; backward-compatible with self-hosted / guest tokens).
 func (tm *TokenManager) GenerateToken(userID, role string, scopes []string, pathPrefix string) (string, error) {
 	return tm.GenerateTokenWithOptions(userID, role, scopes, false, pathPrefix)
+}
+
+// GenerateTokenForUser creates a JWT token that includes an org_id claim.
+// Use this when the user's org is known at login/register time.
+func (tm *TokenManager) GenerateTokenForUser(userID, role string, scopes []string, orgID string) (string, error) {
+	now := time.Now()
+	claims := Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userID,
+			ExpiresAt: jwt.NewNumericDate(now.Add(tm.tokenDuration)),
+			NotBefore: jwt.NewNumericDate(now),
+			IssuedAt:  jwt.NewNumericDate(now),
+			ID:        fmt.Sprintf("%d", now.UnixNano()),
+		},
+		UserID: userID,
+		OrgID:  orgID,
+		Role:   role,
+		Scopes: scopes,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(tm.secret)
 }
 
 // GenerateTokenWithOptions creates a new JWT token with embedded mode option
@@ -105,6 +127,7 @@ func (tm *TokenManager) RefreshToken(claims *Claims) (string, error) {
 			ID:        fmt.Sprintf("%d", now.UnixNano()),
 		},
 		UserID:     claims.UserID,
+		OrgID:      claims.OrgID, // propagate org_id on refresh (never changes in Phase 1)
 		Role:       claims.Role,
 		Scopes:     claims.Scopes,
 		PathPrefix: claims.PathPrefix,

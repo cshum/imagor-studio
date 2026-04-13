@@ -292,6 +292,82 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 	assert.Equal(t, "env-test-bucket", enhancedCfg.S3StorageBucket)
 }
 
+// ── Processing-mode tests ─────────────────────────────────────────────────────
+
+func TestInitializeProcessingMode_MissingJWT(t *testing.T) {
+	logger := zap.NewNop()
+	cfg := &config.Config{
+		SpacesEndpoint: "http://management.example.test",
+		// JWTSecret intentionally empty — must cause an error.
+	}
+	_, err := initializeProcessingMode(cfg, logger)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "IMAGOR_JWT_SECRET")
+}
+
+func TestInitializeProcessingMode_Success(t *testing.T) {
+	logger := zap.NewNop()
+	cfg := &config.Config{
+		SpacesEndpoint:    "http://management.example.test",
+		InternalAPISecret: "test-internal-secret",
+		JWTSecret:         "test-jwt-secret",
+		SpaceBaseDomain:   "imagor.test",
+		JWTExpiration:     24 * time.Hour,
+	}
+	svc, err := initializeProcessingMode(cfg, logger)
+	require.NoError(t, err)
+
+	// Processing nodes have no database.
+	assert.Nil(t, svc.DB, "processing mode should have no DB")
+	assert.Nil(t, svc.Storage, "processing mode has no management storage")
+	assert.Nil(t, svc.Encryption, "processing mode has no encryption service")
+
+	// SpaceConfigStore must be initialised (not started yet — Start() is called by the server).
+	assert.NotNil(t, svc.SpaceConfigStore)
+
+	// ImagorProvider must be ready to handle requests.
+	assert.NotNil(t, svc.ImagorProvider)
+	assert.NotNil(t, svc.TokenManager)
+	assert.NotNil(t, svc.LicenseService)
+
+	// All management stores are non-nil no-ops.
+	assert.NotNil(t, svc.OrgStore, "noop OrgStore should be set")
+	assert.NotNil(t, svc.SpaceStore, "noop SpaceStore should be set")
+	assert.NotNil(t, svc.RegistryStore, "noop RegistryStore should be set")
+	assert.NotNil(t, svc.UserStore, "noop UserStore should be set")
+}
+
+func TestInitialize_RoutesToProcessingMode(t *testing.T) {
+	logger := zap.NewNop()
+	cfg := &config.Config{
+		SpacesEndpoint:  "http://management.example.test",
+		JWTSecret:       "test-jwt-secret",
+		SpaceBaseDomain: "imagor.test",
+		JWTExpiration:   24 * time.Hour,
+	}
+	// Initialize with a SpacesEndpoint → must take the processing-mode branch (no DB).
+	svc, err := Initialize(cfg, logger, nil)
+	require.NoError(t, err)
+
+	assert.Nil(t, svc.DB, "Initialize with SpacesEndpoint should produce a no-DB processing-mode service")
+	assert.NotNil(t, svc.SpaceConfigStore)
+}
+
+func TestInitializeProcessingMode_LogsInfo(t *testing.T) {
+	// Smoke-test: ensure the function runs to completion without panicking even when
+	// logger is provided (not Nop) and all optional fields are empty strings.
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync() //nolint:errcheck
+	cfg := &config.Config{
+		SpacesEndpoint: "http://management.example.test",
+		JWTSecret:      "must-not-be-empty",
+		JWTExpiration:  time.Hour,
+	}
+	svc, err := initializeProcessingMode(cfg, logger)
+	require.NoError(t, err)
+	assert.NotNil(t, svc)
+}
+
 func TestImagorProviderIntegration(t *testing.T) {
 	tmpDB := "/tmp/test_imagor_provider.db"
 	defer os.Remove(tmpDB)

@@ -81,10 +81,12 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	// Add useful extensions
 	gqlHandler.Use(extension.Introspection{})
 
-	// Create auth handler
+	// Create auth handler.  services.OrgStore is nil for self-hosted deployments
+	// and non-nil (wired by bootstrap) when InternalAPISecret is configured (multi-tenant).
 	authHandler := httphandler.NewAuthHandler(
 		services.TokenManager,
 		services.UserStore,
+		services.OrgStore,
 		services.RegistryStore,
 		services.Logger,
 		cfg.EmbeddedMode,
@@ -120,6 +122,14 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)
 
+	// Internal service-to-service endpoint (authenticated by Bearer token).
+	// Only mounted when InternalAPISecret is set (multi-tenant mode); self-hosted
+	// deployments never set it so the route is never exposed.
+	if services.SpaceStore != nil {
+		spacesHandler := httphandler.NewSpacesDeltaHandler(services.SpaceStore, services.Config.InternalAPISecret, services.Logger)
+		mux.HandleFunc("/internal/spaces/delta", spacesHandler.GetDelta())
+	}
+
 	// Pass the imagor instance directly — it is set once during Initialize() and never changes.
 	mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider.Imagor()))
 
@@ -153,6 +163,16 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 
 	// Start background 30-second sync loop: pulls registry → imagor signer + storage.
 	syncCtx, syncCancel := context.WithCancel(context.Background())
+
+	// On processing nodes, perform the initial full sync of space configs
+	// (blocking) then let the background poller run via syncCtx.
+	if services.SpaceConfigStore != nil {
+		if err := services.SpaceConfigStore.Start(syncCtx); err != nil {
+			syncCancel()
+			return nil, fmt.Errorf("space config store initial sync failed: %w", err)
+		}
+	}
+
 	startSyncLoop(syncCtx, 30*time.Second, services.Logger,
 		services.ImagorProvider.Sync,
 		services.StorageProvider.ReloadFromRegistry,

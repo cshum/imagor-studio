@@ -13,6 +13,7 @@ import (
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/spaceconfigstore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor/imagorpath"
@@ -97,7 +98,7 @@ func setupTestProviderWithStorage(t *testing.T, cfg *config.Config) (*Provider, 
 	err := storageProvider.InitializeWithConfig(cfg)
 	require.NoError(t, err)
 
-	return New(logger, registryStore, cfg, storageProvider), registryStore
+	return New(logger, registryStore, cfg, NewStorageLoader(storageProvider)), registryStore
 }
 
 func TestNew(t *testing.T) {
@@ -106,12 +107,12 @@ func TestNew(t *testing.T) {
 	cfg := &config.Config{}
 	sp := &storageprovider.Provider{}
 
-	provider := New(logger, store, cfg, sp)
+	provider := New(logger, store, cfg, NewStorageLoader(sp))
 	assert.NotNil(t, provider)
 	assert.NotNil(t, provider.logger)
 	assert.NotNil(t, provider.registryStore)
 	assert.NotNil(t, provider.config)
-	assert.NotNil(t, provider.storageProvider)
+	assert.NotNil(t, provider.loader)
 }
 
 func TestInitialize_EmbeddedMode(t *testing.T) {
@@ -267,9 +268,8 @@ func TestGenerateURL_NoConfig(t *testing.T) {
 	logger := zap.NewNop()
 	store := newMockRegistryStore()
 	cfg := &config.Config{}
-	sp := &storageprovider.Provider{}
 
-	provider := New(logger, store, cfg, sp)
+	provider := New(logger, store, cfg, nil)
 	// No currentConfig set
 
 	_, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{})
@@ -294,9 +294,8 @@ func TestGenerateURL_SignerVariants(t *testing.T) {
 			logger := zap.NewNop()
 			store := newMockRegistryStore()
 			cfg := &config.Config{}
-			sp := &storageprovider.Provider{}
 
-			provider := New(logger, store, cfg, sp)
+			provider := New(logger, store, cfg, nil)
 			provider.cfg = &ImagorConfig{
 				Secret:         tt.secret,
 				SignerType:     tt.signerType,
@@ -529,8 +528,128 @@ var _ interface {
 // Ensure mockReadStorage satisfies storage.Storage
 var _ storage.Storage = (*mockReadStorage)(nil)
 
-// Compile-time check that storageprovider.Provider satisfies storageSource.
+// Compile-time check: storageprovider.Provider satisfies storageSource (used by StorageLoader/NewStorageLoader).
 var _ storageSource = (*storageprovider.Provider)(nil)
 
 // Dummy to keep time import used across older test helpers.
 var _ = time.Second
+
+// ── Processing-node (SpaceConfigStore) tests ──────────────────────────────────
+
+func TestSignerFromSpaceConfig_SHA256(t *testing.T) {
+	sc := &spaceconfigstore.SpaceConfig{
+		Key:             "acme",
+		ImagorSecret:    "secret256",
+		SignerAlgorithm: "sha256",
+		SignerTruncate:  0,
+	}
+	signer := signerFromSpaceConfig(sc)
+	require.NotNil(t, signer)
+
+	// Signing the same path twice must be deterministic
+	sig1 := signer.Sign("100x100/img.jpg")
+	sig2 := signer.Sign("100x100/img.jpg")
+	assert.NotEmpty(t, sig1)
+	assert.Equal(t, sig1, sig2, "signer must be deterministic")
+
+	// Different secret must produce a different signature
+	sc2 := &spaceconfigstore.SpaceConfig{
+		ImagorSecret:    "different-secret",
+		SignerAlgorithm: "sha256",
+	}
+	sig3 := signerFromSpaceConfig(sc2).Sign("100x100/img.jpg")
+	assert.NotEqual(t, sig1, sig3, "different secrets must produce different signatures")
+}
+
+func TestSignerFromSpaceConfig_SHA1(t *testing.T) {
+	sc := &spaceconfigstore.SpaceConfig{
+		ImagorSecret:    "sha1secret",
+		SignerAlgorithm: "sha1",
+	}
+	signer := signerFromSpaceConfig(sc)
+	require.NotNil(t, signer)
+	assert.NotEmpty(t, signer.Sign("200x200/photo.jpg"))
+}
+
+func TestSignerFromSpaceConfig_SHA512(t *testing.T) {
+	sc := &spaceconfigstore.SpaceConfig{
+		ImagorSecret:    "sha512secret",
+		SignerAlgorithm: "sha512",
+	}
+	signer := signerFromSpaceConfig(sc)
+	require.NotNil(t, signer)
+	assert.NotEmpty(t, signer.Sign("300x300/photo.jpg"))
+}
+
+func TestSignerFromSpaceConfig_UnknownAlgorithmDefaults(t *testing.T) {
+	// Unsupported algorithm string must not panic; expected to fall back gracefully.
+	sc := &spaceconfigstore.SpaceConfig{
+		ImagorSecret:    "mysecret",
+		SignerAlgorithm: "md5",
+	}
+	signer := signerFromSpaceConfig(sc)
+	require.NotNil(t, signer)
+	assert.NotEmpty(t, signer.Sign("100x100/img.jpg"))
+}
+
+func TestSignerFromSpaceConfig_Truncate(t *testing.T) {
+	sc := &spaceconfigstore.SpaceConfig{
+		ImagorSecret:    "truncsecret",
+		SignerAlgorithm: "sha256",
+		SignerTruncate:  28,
+	}
+	sig := signerFromSpaceConfig(sc).Sign("100x100/img.jpg")
+	// Base64url-encoded truncated signature + "=" padding → len should be ⌈28*4/3⌉ chars
+	assert.NotEmpty(t, sig)
+	assert.Less(t, len(sig), 50, "truncated signature should be shorter than full sha256")
+}
+
+func TestSyncIsNoOpInProcessingMode(t *testing.T) {
+	logger := zap.NewNop()
+	cfg := &config.Config{
+		JWTSecret:       "test-secret",
+		JWTExpiration:   time.Hour,
+		SpacesEndpoint:  "http://management.example.test",
+		SpaceBaseDomain: "example.test",
+	}
+	// New() does NOT start HTTP polling — Start() would; safe for unit tests.
+	scs := spaceconfigstore.New(cfg.SpacesEndpoint, "internal-secret", logger)
+	// Use &StorageLoader{source: ...} directly — NewStorageLoader only accepts *storageprovider.Provider.
+	loader := &StorageLoader{source: &mockStorageSource{stor: newMockReadStorage()}}
+
+	p := New(
+		logger,
+		newMockRegistryStore(),
+		cfg,
+		loader,
+		WithSpaceConfigStore(scs, cfg.SpaceBaseDomain),
+	)
+	require.NoError(t, p.Initialize())
+
+	// Sync must be a no-op (return nil without touching dynSigner) in processing mode.
+	assert.NoError(t, p.Sync(), "Sync should be a no-op in processing mode")
+}
+
+func TestProviderProcessingMode_Initialize(t *testing.T) {
+	logger := zap.NewNop()
+	cfg := &config.Config{
+		JWTSecret:       "processing-secret",
+		JWTExpiration:   time.Hour,
+		SpacesEndpoint:  "http://management.example.test",
+		SpaceBaseDomain: "imagor.test",
+	}
+	scs := spaceconfigstore.New(cfg.SpacesEndpoint, "secret", logger)
+	loader := &StorageLoader{source: &mockStorageSource{stor: newMockReadStorage()}}
+
+	p := New(
+		logger,
+		newMockRegistryStore(),
+		cfg,
+		loader,
+		WithSpaceConfigStore(scs, cfg.SpaceBaseDomain),
+	)
+
+	require.NoError(t, p.Initialize())
+	assert.NotNil(t, p.spaceConfigStore, "spaceConfigStore must be set in processing mode")
+	assert.Equal(t, "imagor.test", p.baseDomain)
+}

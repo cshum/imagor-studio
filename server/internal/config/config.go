@@ -66,6 +66,22 @@ type Config struct {
 	AppDefaultSortOrder       string // Default file sorting order
 	AppVideoThumbnailPosition string // Video thumbnail extraction position
 
+	// processing service secret – shared between management service and Fly.io
+	// processing cluster. Authenticates GET /internal/spaces/delta requests.
+	// Set via --internal-api-secret / INTERNAL_API_SECRET env var.
+	// An empty string disables authentication (development only).
+	InternalAPISecret string
+
+	// SpacesEndpoint is the base URL of the management service that exposes
+	// /internal/spaces/delta.  Set on processing nodes only.
+	// Example: "https://studio.example.com"
+	SpacesEndpoint string
+
+	// SpaceBaseDomain is the platform domain suffix used by SpaceS3Loader
+	// to map subdomain requests to space keys.
+	// Must include the leading dot, e.g. ".imagor.cloud".
+	SpaceBaseDomain string
+
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
 	flagSet         *flag.FlagSet // Private field to access flag values
@@ -116,6 +132,10 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		appDefaultSortBy          = fs.String("app-default-sort-by", "MODIFIED_TIME", "default file sorting option: NAME, MODIFIED_TIME, SIZE")
 		appDefaultSortOrder       = fs.String("app-default-sort-order", "DESC", "default file sorting order: ASC, DESC")
 		appVideoThumbnailPosition = fs.String("app-video-thumbnail-position", "first_frame", "video thumbnail extraction position: first_frame, seek_1s, seek_3s, seek_5s, seek_10pct, seek_25pct")
+
+		internalAPISecret = fs.String("internal-api-secret", "", "shared secret for /internal/spaces/delta (set via INTERNAL_API_SECRET env var)")
+		spacesEndpoint    = fs.String("spaces-endpoint", "", "management service base URL for /internal/spaces/delta polling (processing nodes only)")
+		spaceBaseDomain   = fs.String("space-base-domain", "", "platform subdomain suffix for space routing, e.g. .imagor.cloud (processing nodes only)")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -216,6 +236,9 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppDefaultSortBy:            *appDefaultSortBy,
 		AppDefaultSortOrder:         *appDefaultSortOrder,
 		AppVideoThumbnailPosition:   *appVideoThumbnailPosition,
+		InternalAPISecret:           *internalAPISecret,
+		SpacesEndpoint:              *spacesEndpoint,
+		SpaceBaseDomain:             *spaceBaseDomain,
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}

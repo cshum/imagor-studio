@@ -3,6 +3,7 @@ package httphandler
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,13 +14,47 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/driver/sqliteshim"
 	"go.uber.org/zap"
 )
+
+// ── failing orgStore stub ─────────────────────────────────────────────────────
+
+// errOrgStore implements orgstore.Store but returns an error on every call.
+// Used to verify failure paths without a real database.
+type errOrgStore struct{ msg string }
+
+func (e *errOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*orgstore.Org, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+func (e *errOrgStore) GetByUserID(_ context.Context, _ string) (*orgstore.Org, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+func (e *errOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+
+// nilOrgStore implements orgstore.Store but returns (nil, nil) on lookups —
+// simulates a user that exists but has no org yet.
+type nilOrgStore struct{}
+
+func (n *nilOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*orgstore.Org, error) {
+	return nil, nil
+}
+func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*orgstore.Org, error) {
+	return nil, nil // no org found
+}
+func (n *nilOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, error) {
+	return nil, nil
+}
 
 type MockUserStore struct {
 	mock.Mock
@@ -145,7 +180,7 @@ func TestRegister(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
 
 	tests := []struct {
 		name           string
@@ -335,7 +370,7 @@ func TestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
 
 	// Create a valid hashed password for testing
 	hashedPassword, err := auth.HashPassword("password123")
@@ -528,7 +563,7 @@ func TestRefreshToken(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
 
 	// Generate a valid token first
 	validToken, err := tokenManager.GenerateToken("user1", "user", []string{"read"}, "")
@@ -708,7 +743,7 @@ func TestGuestLogin(t *testing.T) {
 			mockRegistryStore.ExpectedCalls = nil
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, mockRegistryStore, logger, true)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, true)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/auth/guest", nil)
 			rr := httptest.NewRecorder()
@@ -745,11 +780,247 @@ func TestGuestLogin(t *testing.T) {
 	}
 }
 
+// ── Multi-tenant org integration tests ───────────────────────────────────────────────
+
+// newOrgTestDB creates an in-memory SQLite DB with org + org_members tables.
+func newOrgTestDB(t *testing.T) *bun.DB {
+	t.Helper()
+	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
+	if err != nil {
+		t.Fatalf("open in-memory sqlite: %v", err)
+	}
+	t.Cleanup(func() { _ = sqldb.Close() })
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+	if _, err := db.NewCreateTable().
+		Model((*model.Organization)(nil)).IfNotExists().Exec(context.Background()); err != nil {
+		t.Fatalf("create organizations table: %v", err)
+	}
+	if _, err := db.NewCreateTable().
+		Model((*model.OrgMember)(nil)).IfNotExists().Exec(context.Background()); err != nil {
+		t.Fatalf("create org_members table: %v", err)
+	}
+	return db
+}
+
+// TestRegister_MultiTenant_CreatesOrg verifies that registering with a wired orgStore:
+//   - Creates a personal org in the DB.
+//   - Embeds org_id in the returned JWT.
+func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	os := orgstore.New(newOrgTestDB(t))
+	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false)
+
+	const userID = "saas-reg-user-1"
+	mockUserStore.On("Create", mock.Anything, "saasuser", "saasuser", mock.AnythingOfType("string"), "user").
+		Return(&userstore.User{
+			ID: userID, DisplayName: "saasuser", Username: "saasuser", Role: "user", IsActive: true,
+		}, nil)
+
+	body, err := json.Marshal(RegisterRequest{
+		DisplayName: "saasuser",
+		Username:    "saasuser",
+		Password:    "password123",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Register()(rr, req)
+
+	require.Equal(t, http.StatusCreated, rr.Code)
+
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	assert.NotEmpty(t, resp.Token)
+
+	// Verify JWT embeds org_id.
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.NotEmpty(t, claims.OrgID, "JWT should carry org_id for multi-tenant signup")
+
+	// Verify the org was persisted in the store.
+	org, err := os.GetByUserID(context.Background(), userID)
+	require.NoError(t, err)
+	require.NotNil(t, org, "org should have been created on signup")
+	assert.Equal(t, claims.OrgID, org.ID, "JWT org_id must match the created org")
+	assert.Equal(t, "saasuser", org.Slug)
+	assert.Equal(t, userID, org.OwnerID)
+
+	mockUserStore.AssertExpectations(t)
+}
+
+// TestLogin_MultiTenant_EmbeddsOrgID verifies that logging in with a wired orgStore
+// embeds the user's org_id in the returned JWT.
+func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	os := orgstore.New(newOrgTestDB(t))
+	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false)
+
+	const userID = "saas-login-user-1"
+
+	// Pre-create the org so login can look it up.
+	createdOrg, err := os.CreateWithMember(context.Background(), userID, "loginuser", "loginuser", nil)
+	require.NoError(t, err)
+
+	hashedPassword, err := auth.HashPassword("password123")
+	require.NoError(t, err)
+
+	mockUserStore.On("GetByUsername", mock.Anything, "loginuser").Return(&model.User{
+		ID: userID, DisplayName: "loginuser", Username: "loginuser",
+		HashedPassword: hashedPassword, Role: "user", IsActive: true,
+	}, nil)
+	mockUserStore.On("UpdateLastLogin", mock.Anything, userID).Return(nil)
+
+	body, err := json.Marshal(LoginRequest{Username: "loginuser", Password: "password123"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Login()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, createdOrg.ID, claims.OrgID, "login JWT should carry the user's org_id")
+
+	mockUserStore.AssertExpectations(t)
+}
+
+// TestRegister_MultiTenant_OrgCreationFails — when the database is unavailable during
+// org creation the handler should return 500 and not leak a partial JWT.
+func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "DB connection refused"}, nil, logger, false)
+
+	const userID = "saas-fail-user-1"
+	mockUserStore.On("Create", mock.Anything, "failuser", "failuser", mock.AnythingOfType("string"), "user").
+		Return(&userstore.User{ID: userID, DisplayName: "failuser", Username: "failuser", Role: "user", IsActive: true}, nil)
+
+	body, _ := json.Marshal(RegisterRequest{DisplayName: "failuser", Username: "failuser", Password: "password123"})
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Register()(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	var errResp apperror.ErrorResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
+	assert.Equal(t, "INTERNAL_SERVER_ERROR", errResp.Code)
+
+	mockUserStore.AssertExpectations(t)
+}
+
+// TestRegister_MultiTenant_SelfHosted_NoOrgInJWT — when orgStore is nil (self-hosted
+// deployment) the JWT must NOT carry an org_id.
+func TestRegister_MultiTenant_SelfHosted_NoOrgInJWT(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil /* no orgStore */, nil, logger, false)
+
+	mockUserStore.On("Create", mock.Anything, "selfhosted", "selfhosted", mock.AnythingOfType("string"), "user").
+		Return(&userstore.User{ID: "sh-1", DisplayName: "selfhosted", Username: "selfhosted", Role: "user", IsActive: true}, nil)
+
+	body, _ := json.Marshal(RegisterRequest{DisplayName: "selfhosted", Username: "selfhosted", Password: "password123"})
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Register()(rr, req)
+
+	require.Equal(t, http.StatusCreated, rr.Code)
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Empty(t, claims.OrgID, "self-hosted JWT must not contain an org_id")
+
+	mockUserStore.AssertExpectations(t)
+}
+
+// TestLogin_MultiTenant_UserWithNoOrg — user successfully authenticates but has no
+// org row yet (e.g. created before multi-tenant migration). The login should succeed
+// and the JWT should carry an empty OrgID rather than failing.
+func TestLogin_MultiTenant_UserWithNoOrg(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, false)
+
+	const userID = "no-org-user-1"
+	hashedPassword, _ := auth.HashPassword("password123")
+
+	mockUserStore.On("GetByUsername", mock.Anything, "noorger").Return(&model.User{
+		ID: userID, DisplayName: "noorger", Username: "noorger",
+		HashedPassword: hashedPassword, Role: "user", IsActive: true,
+	}, nil)
+	mockUserStore.On("UpdateLastLogin", mock.Anything, userID).Return(nil)
+
+	body, _ := json.Marshal(LoginRequest{Username: "noorger", Password: "password123"})
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Login()(rr, req)
+
+	// Login must succeed even though there is no org.
+	require.Equal(t, http.StatusOK, rr.Code)
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Empty(t, claims.OrgID, "JWT should have empty org_id when user has no org")
+
+	mockUserStore.AssertExpectations(t)
+}
+
+// TestLogin_MultiTenant_OrgLookupError — org lookup returns an error (e.g. DB timeout).
+// Login should still succeed (graceful degradation) and the JWT should carry
+// an empty OrgID; the error gets logged but is not surfaced to the client.
+func TestLogin_MultiTenant_OrgLookupError(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "read timeout"}, nil, logger, false)
+
+	const userID = "org-err-user-1"
+	hashedPassword, _ := auth.HashPassword("password123")
+
+	mockUserStore.On("GetByUsername", mock.Anything, "orgfail").Return(&model.User{
+		ID: userID, DisplayName: "orgfail", Username: "orgfail",
+		HashedPassword: hashedPassword, Role: "user", IsActive: true,
+	}, nil)
+	mockUserStore.On("UpdateLastLogin", mock.Anything, userID).Return(nil)
+
+	body, _ := json.Marshal(LoginRequest{Username: "orgfail", Password: "password123"})
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Login()(rr, req)
+
+	// Login must not fail because of an org lookup error.
+	require.Equal(t, http.StatusOK, rr.Code)
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Empty(t, claims.OrgID, "JWT should degrade gracefully and carry empty org_id on lookup error")
+
+	mockUserStore.AssertExpectations(t)
+}
+
 func TestCheckFirstRun(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
 
 	tests := []struct {
 		name           string
@@ -1021,7 +1292,7 @@ func TestRegisterAdmin(t *testing.T) {
 			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.existingUsers, nil)
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, mockRegistryStore, logger, false)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, false)
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -1170,7 +1441,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewAuthHandler(tokenManager, mockUserStore, mockRegistryStore, logger, tt.embeddedMode)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, tt.embeddedMode)
 
 			req := httptest.NewRequest(tt.method, "/api/auth/embedded-guest", nil)
 			if tt.authHeader != "" {
