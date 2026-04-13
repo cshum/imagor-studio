@@ -63,6 +63,7 @@ imagor-studio-data/
 tsconfig.*.tsbuildinfo
 
 # Go build artifacts
+server/imagor-studio-server-vips
 server/imagor-studio-server
 server/imagor-studio
 server/server

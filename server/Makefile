@@ -6,6 +6,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 BINARY_NAME=imagor-studio-server
+BINARY_NAME_VIPS=$(BINARY_NAME)-vips
 BINARY_UNIX=$(BINARY_NAME)_unix
 
 # Main package path
@@ -19,10 +20,20 @@ GQLGEN=go run github.com/99designs/gqlgen generate
 
 all: test build
 
-build:
+# build produces both binaries:
+#   imagor-studio-server      — no CGO / no libvips  (management API, CI, docker base)
+#   imagor-studio-server-vips — compiled with -tags vips (full self-hosted deployment)
+build: build-novips build-vips
+
+build-novips:
 	mkdir -p static
 	touch static/.placeholder
 	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) $(MAIN_PACKAGE)
+
+build-vips:
+	mkdir -p static
+	touch static/.placeholder
+	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_NAME_VIPS) $(MAIN_PACKAGE)
 
 test:
 	$(GOTEST) -v ./...
@@ -30,10 +41,11 @@ test:
 clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
+	rm -f $(BINARY_NAME_VIPS)
 	rm -f $(BINARY_UNIX)
 
-run: build
-	./$(BINARY_NAME)
+run: build-vips
+	./$(BINARY_NAME_VIPS)
 
 deps:
 	$(GOGET) ./...
@@ -79,7 +91,7 @@ gqlgen-init:
 gqlgen-update:
 	$(GQLGEN) --verbose --config gqlgen.yml
 
-.PHONY: all build test clean run deps tidy build-linux build-management build-processing docker-build gqlgen gqlgen-init gqlgen-update
+.PHONY: all build build-novips build-vips test clean run deps tidy build-linux build-management build-processing docker-build gqlgen gqlgen-init gqlgen-update
 
 clean-db:
 	rm -f storage.db
