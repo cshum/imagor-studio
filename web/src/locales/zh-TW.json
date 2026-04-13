@@ -460,18 +460,15 @@
       "testPassed": "儲存配置測試透過",
       "testFailed": "儲存配置測試失敗",
       "testError": "測試儲存配置失敗",
-      "configurationSuccess": "{{storageType}} 儲存配置成功",
-      "configurationSuccessRestart": "儲存配置成功。請重啟伺服器以應用更改。",
+      "configurationSuccess": "儲存配置成功",
       "configurationError": "配置 {{storageType}} 儲存失敗",
       "configurationOverridden": "儲存配置由外部配置管理",
       "baseDirRequired": "基礎目錄是必需的",
       "notConfigured": "未配置",
-      "restartRequired": "需要重啟",
       "active": "活動",
       "s3Bucket": "S3 儲存桶",
       "endpoint": "端點",
-      "serverRestartRequired": "需要重啟伺服器：",
-      "serverRestartMessage": "儲存配置更改將在重啟伺服器後生效。",
+      "takingEffect": "更改可能需要最多 1 分鐘才能生效。",
       "testConfigFirst": "請先填寫 {{storageType}} 儲存配置"
     },
     "systemSettings": {
@@ -483,8 +480,6 @@
       "imagorConfigurationDescription": "配置圖片處理設定。Imagor 處理圖片轉換和最佳化。",
       "secret": "金鑰",
       "secretDescription": "留空，我們將自動為您生成安全的簽名金鑰。",
-      "unsafeMode": "非安全模式",
-      "unsafeModeDescription": "允許在不簽名 URL 的情況下處理圖片（不建議用於生產環境）",
       "signerType": "簽名型別",
       "selectSignerType": "選擇簽名型別",
       "signerTypeDescription": "用於 URL 簽名的雜湊演算法",
@@ -496,7 +491,8 @@
       "configurationOverridden": "Imagor 配置由外部配置管理",
       "configuredSuccess": "Imagor 配置成功",
       "configurationDetails": "配置詳情",
-      "hasSecret": "有金鑰"
+      "hasSecret": "有金鑰",
+      "takingEffect": "設定已儲存，最多 1 分鐘內生效。"
     },
     "license": {
       "licenseManagement": "許可證管理",

@@ -456,18 +456,15 @@
       "testPassed": "Test configurazione archiviazione superato",
       "testFailed": "Test configurazione archiviazione fallito",
       "testError": "Impossibile testare la configurazione di archiviazione",
-      "configurationSuccess": "Archiviazione {{storageType}} configurata correttamente",
-      "configurationSuccessRestart": "Archiviazione configurata correttamente. Riavviare il server per applicare le modifiche.",
+      "configurationSuccess": "Archiviazione configurata correttamente",
       "configurationError": "Impossibile configurare l'archiviazione {{storageType}}",
       "configurationOverridden": "La configurazione dell'archiviazione è gestita da una configurazione esterna",
       "baseDirRequired": "La directory base è obbligatoria",
       "notConfigured": "Non Configurato",
-      "restartRequired": "Riavvio Richiesto",
       "active": "Attivo",
       "s3Bucket": "Bucket S3",
       "endpoint": "Endpoint",
-      "serverRestartRequired": "Riavvio del server richiesto:",
-      "serverRestartMessage": "Le modifiche alla configurazione dell'archiviazione avranno effetto dopo il riavvio del server.",
+      "takingEffect": "Le modifiche potrebbero richiedere fino a 1 minuto per avere effetto.",
       "testConfigFirst": "Compila prima la configurazione di archiviazione {{storageType}}"
     },
     "systemSettings": {
@@ -479,8 +476,6 @@
       "imagorConfigurationDescription": "Configura le impostazioni di elaborazione delle immagini. Imagor gestisce le trasformazioni e le ottimizzazioni delle immagini.",
       "secret": "Chiave Segreta",
       "secretDescription": "Lascia vuoto e genereremo automaticamente una chiave di firma sicura per te.",
-      "unsafeMode": "Modalità Non Sicura",
-      "unsafeModeDescription": "Consenti l'elaborazione delle immagini senza la firma degli URL (non raccomandato per la produzione)",
       "signerType": "Tipo di Firmatario",
       "selectSignerType": "Seleziona il tipo di firmatario",
       "signerTypeDescription": "Algoritmo hash utilizzato per la firma degli URL",
@@ -492,7 +487,8 @@
       "configurationOverridden": "La configurazione di Imagor è gestita da una configurazione esterna",
       "configuredSuccess": "Imagor configurato correttamente",
       "configurationDetails": "Dettagli Configurazione",
-      "hasSecret": "Ha Segreto"
+      "hasSecret": "Ha Segreto",
+      "takingEffect": "Impostazioni salvate. Le modifiche possono richiedere fino a 1 minuto."
     },
     "license": {
       "licenseManagement": "Gestione Licenza",

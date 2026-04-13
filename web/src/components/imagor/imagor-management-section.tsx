@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -10,6 +10,20 @@ import type { ImagorStatusQuery } from '@/generated/graphql'
 
 import { ImagorConfigurationWizard } from './imagor-configuration-wizard'
 
+/** Banner display window in seconds — worst-case propagation time across all replicas. */
+const SYNC_INTERVAL_S = 60
+
+/** Returns the number of seconds remaining until the 30-second sync loop is expected to
+ *  have applied the last config change on all instances. Returns 0 when propagation is
+ *  complete (or if `lastUpdated` is absent / already past the window). */
+function calcRemaining(lastUpdated: string | null | undefined): number {
+  if (!lastUpdated) return 0
+  const updatedMs = parseInt(lastUpdated, 10)
+  if (isNaN(updatedMs)) return 0
+  const elapsed = Math.floor((Date.now() - updatedMs) / 1000)
+  return Math.max(0, SYNC_INTERVAL_S - elapsed)
+}
+
 interface ImagorManagementSectionProps {
   imagorStatus: ImagorStatusQuery['imagorStatus'] | null
 }
@@ -18,6 +32,37 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
   const { t } = useTranslation()
   const [showConfigDialog, setShowConfigDialog] = useState(false)
   const router = useRouter()
+
+  // Initialize the countdown from the server-supplied lastUpdated timestamp.
+  // This means the banner reappears even on a hard-refresh if the window hasn't elapsed yet.
+  const [remainingSeconds, setRemainingSeconds] = useState(() =>
+    calcRemaining(imagorStatus?.lastUpdated),
+  )
+
+  // Keep a stable ref so the interval callback can call router.invalidate() without
+  // capturing a stale closure.
+  const routerRef = useRef(router)
+  routerRef.current = router
+
+  useEffect(() => {
+    const initial = calcRemaining(imagorStatus?.lastUpdated)
+    setRemainingSeconds(initial)
+    if (initial <= 0) return
+
+    const timer = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          // Propagation window elapsed — refresh the displayed config.
+          routerRef.current.invalidate()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [imagorStatus?.lastUpdated])
 
   const handleImagorConfigured = () => {
     setShowConfigDialog(false)
@@ -50,14 +95,6 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
                 </div>
                 <div className='space-y-1'>
                   <div className='text-muted-foreground text-xs font-medium'>
-                    {t('pages.imagor.unsafeMode')}
-                  </div>
-                  <div className='font-mono text-sm'>
-                    {config.unsafe ? t('common.status.enabled') : t('common.status.disabled')}
-                  </div>
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-muted-foreground text-xs font-medium'>
                     {t('pages.imagor.signerType')}
                   </div>
                   <div className='font-mono text-sm'>{config.signerType}</div>
@@ -71,6 +108,14 @@ export function ImagorManagementSection({ imagorStatus }: ImagorManagementSectio
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Propagation countdown banner */}
+          {remainingSeconds > 0 && (
+            <div className='flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300'>
+              <span className='inline-block h-2 w-2 animate-pulse rounded-full bg-blue-500' />
+              {t('pages.imagor.takingEffect')}
             </div>
           )}
 

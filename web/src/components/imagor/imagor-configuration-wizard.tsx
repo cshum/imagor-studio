@@ -36,9 +36,8 @@ export function ImagorConfigurationWizard({
       const result = await configureImagor({
         input: {
           secret: data.secret.trim() !== '' ? data.secret : null,
-          unsafe: data.unsafe,
-          signerType: data.unsafe ? null : (data.signerType as ImagorSignerType),
-          signerTruncate: data.unsafe ? null : data.signerTruncate,
+          signerType: data.signerType as ImagorSignerType,
+          signerTruncate: data.signerTruncate,
         },
       })
 

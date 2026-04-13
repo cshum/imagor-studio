@@ -459,18 +459,15 @@
       "testPassed": "存储配置测试通过",
       "testFailed": "存储配置测试失败",
       "testError": "测试存储配置失败",
-      "configurationSuccess": "{{storageType}} 存储配置成功",
-      "configurationSuccessRestart": "存储配置成功。请重启服务器以应用更改。",
+      "configurationSuccess": "存储配置成功",
       "configurationError": "配置 {{storageType}} 存储失败",
       "configurationOverridden": "存储配置由外部配置管理",
       "baseDirRequired": "基础目录是必需的",
       "notConfigured": "未配置",
-      "restartRequired": "需要重启",
       "active": "活动",
       "s3Bucket": "S3 存储桶",
       "endpoint": "端点",
-      "serverRestartRequired": "需要重启服务器：",
-      "serverRestartMessage": "存储配置更改将在重启服务器后生效。",
+      "takingEffect": "更改可能需要最多 1 分钟才能生效。",
       "testConfigFirst": "请先填写 {{storageType}} 存储配置"
     },
     "systemSettings": {
@@ -482,8 +479,6 @@
       "imagorConfigurationDescription": "配置图片处理设置。Imagor 处理图片转换和优化。",
       "secret": "密钥",
       "secretDescription": "留空，我们将自动为您生成安全的签名密钥。",
-      "unsafeMode": "非安全模式",
-      "unsafeModeDescription": "允许在不签名 URL 的情况下处理图片（不建议用于生产环境）",
       "signerType": "签名类型",
       "selectSignerType": "选择签名类型",
       "signerTypeDescription": "用于 URL 签名的哈希算法",
@@ -495,7 +490,8 @@
       "configurationOverridden": "Imagor 配置由外部配置管理",
       "configuredSuccess": "Imagor 配置成功",
       "configurationDetails": "配置详情",
-      "hasSecret": "有密钥"
+      "hasSecret": "有密钥",
+      "takingEffect": "设置已保存，最多 1 分钟内生效。"
     },
     "license": {
       "licenseManagement": "许可证管理",

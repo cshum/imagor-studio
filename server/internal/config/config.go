@@ -52,7 +52,6 @@ type Config struct {
 
 	// Imagor Configuration
 	ImagorSecret         string // Imagor secret key
-	ImagorUnsafe         bool   // For development
 	ImagorSignerType     string // Signer algorithm: "sha1", "sha256", "sha512"
 	ImagorSignerTruncate int    // Signer truncation length
 
@@ -105,7 +104,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		s3StorageBaseDir   = fs.String("s3-storage-base-dir", "", "S3 base directory (optional)")
 
 		imagorSecret         = fs.String("imagor-secret", "", "secret key for imagor")
-		imagorUnsafe         = fs.Bool("imagor-unsafe", false, "enable unsafe imagor URLs for development")
 		imagorSignerType     = fs.String("imagor-signer-type", "sha1", "imagor signer algorithm: sha1, sha256, sha512")
 		imagorSignerTruncate = fs.Int("imagor-signer-truncate", 0, "imagor signer truncation length")
 
@@ -207,7 +205,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AWSSessionToken:             *awsSessionToken,
 		S3StorageBaseDir:            *s3StorageBaseDir,
 		ImagorSecret:                *imagorSecret,
-		ImagorUnsafe:                *imagorUnsafe,
 		ImagorSignerType:            *imagorSignerType,
 		ImagorSignerTruncate:        *imagorSignerTruncate,
 		AppTitle:                    *appTitle,

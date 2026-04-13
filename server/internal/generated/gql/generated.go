@@ -68,7 +68,6 @@ type ComplexityRoot struct {
 		HasSecret      func(childComplexity int) int
 		SignerTruncate func(childComplexity int) int
 		SignerType     func(childComplexity int) int
-		Unsafe         func(childComplexity int) int
 	}
 
 	ImagorConfigResult struct {
@@ -391,12 +390,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ImagorConfig.SignerType(childComplexity), true
-	case "ImagorConfig.unsafe":
-		if e.ComplexityRoot.ImagorConfig.Unsafe == nil {
-			break
-		}
-
-		return e.ComplexityRoot.ImagorConfig.Unsafe(childComplexity), true
 
 	case "ImagorConfigResult.message":
 		if e.ComplexityRoot.ImagorConfigResult.Message == nil {
@@ -1292,7 +1285,6 @@ type ImagorStatus {
 
 type ImagorConfig {
   hasSecret: Boolean!
-  unsafe: Boolean!
   signerType: ImagorSignerType!
   signerTruncate: Int!
 }
@@ -1305,7 +1297,6 @@ type ImagorConfigResult {
 
 input ImagorInput {
   secret: String
-  unsafe: Boolean
   signerType: ImagorSignerType # Optional, defaults to SHA1
   signerTruncate: Int          # Optional, defaults to 0
 }
@@ -2733,35 +2724,6 @@ func (ec *executionContext) fieldContext_ImagorConfig_hasSecret(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _ImagorConfig_unsafe(ctx context.Context, field graphql.CollectedField, obj *ImagorConfig) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ImagorConfig_unsafe,
-		func(ctx context.Context) (any, error) {
-			return obj.Unsafe, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ImagorConfig_unsafe(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ImagorConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ImagorConfig_signerType(ctx context.Context, field graphql.CollectedField, obj *ImagorConfig) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3020,8 +2982,6 @@ func (ec *executionContext) fieldContext_ImagorStatus_config(_ context.Context, 
 			switch field.Name {
 			case "hasSecret":
 				return ec.fieldContext_ImagorConfig_hasSecret(ctx, field)
-			case "unsafe":
-				return ec.fieldContext_ImagorConfig_unsafe(ctx, field)
 			case "signerType":
 				return ec.fieldContext_ImagorConfig_signerType(ctx, field)
 			case "signerTruncate":
@@ -7889,7 +7849,7 @@ func (ec *executionContext) unmarshalInputImagorInput(ctx context.Context, obj a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"secret", "unsafe", "signerType", "signerTruncate"}
+	fieldsInOrder := [...]string{"secret", "signerType", "signerTruncate"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7903,13 +7863,6 @@ func (ec *executionContext) unmarshalInputImagorInput(ctx context.Context, obj a
 				return it, err
 			}
 			it.Secret = data
-		case "unsafe":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unsafe"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Unsafe = data
 		case "signerType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signerType"))
 			data, err := ec.unmarshalOImagorSignerType2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorSignerType(ctx, v)
@@ -8613,11 +8566,6 @@ func (ec *executionContext) _ImagorConfig(ctx context.Context, sel ast.Selection
 			out.Values[i] = graphql.MarshalString("ImagorConfig")
 		case "hasSecret":
 			out.Values[i] = ec._ImagorConfig_hasSecret(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "unsafe":
-			out.Values[i] = ec._ImagorConfig_unsafe(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

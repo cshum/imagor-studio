@@ -6,7 +6,6 @@ import { configureFileStorage, configureS3Storage, testStorageConfig } from '@/a
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import type { StorageType as GraphQLStorageType, StorageStatusQuery } from '@/generated/graphql'
-import { loadRootFolders } from '@/stores/folder-tree-store'
 
 import {
   FileStorageForm,
@@ -17,7 +16,7 @@ import { S3StorageForm, type S3StorageFormData, type S3StorageFormRef } from './
 import { StorageTypeSelector, type StorageType } from './storage-type-selector'
 
 interface StorageConfigurationWizardProps {
-  onSuccess?: (restartRequired: boolean) => void
+  onSuccess?: () => void
   onError?: (error: string) => void
   onCancel?: () => void
   showCancel?: boolean
@@ -93,11 +92,7 @@ export function StorageConfigurationWizard({
       })
 
       if (result.success) {
-        // Load root folders if no restart is required
-        if (!result.restartRequired) {
-          await loadRootFolders()
-        }
-        onSuccess?.(result.restartRequired)
+        onSuccess?.()
       } else {
         const errorMessage = result.message || 'Failed to configure file storage'
         setError(errorMessage)
@@ -131,12 +126,7 @@ export function StorageConfigurationWizard({
       })
 
       if (result.success) {
-        toast.success(result.message || 'S3 storage configured successfully')
-        // Load root folders if no restart is required
-        if (!result.restartRequired) {
-          await loadRootFolders()
-        }
-        onSuccess?.(result.restartRequired)
+        onSuccess?.()
       } else {
         const errorMessage = result.message || 'Failed to configure S3 storage'
         setError(errorMessage)

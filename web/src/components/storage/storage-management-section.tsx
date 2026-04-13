@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -8,9 +8,22 @@ import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { StorageStatusQuery } from '@/generated/graphql'
-import { loadRootFolders } from '@/stores/folder-tree-store'
 
 import { StorageConfigurationWizard } from './storage-configuration-wizard'
+
+/** Banner display window in seconds — worst-case propagation time across all replicas. */
+const SYNC_INTERVAL_S = 60
+
+/** Returns the number of seconds remaining until the 30-second sync loop is expected to
+ *  have applied the last config change on all instances. Returns 0 when propagation is
+ *  complete (or if `lastUpdated` is absent / already past the window). */
+function calcRemaining(lastUpdated: string | null | undefined): number {
+  if (!lastUpdated) return 0
+  const updatedMs = parseInt(lastUpdated, 10)
+  if (isNaN(updatedMs)) return 0
+  const elapsed = Math.floor((Date.now() - updatedMs) / 1000)
+  return Math.max(0, SYNC_INTERVAL_S - elapsed)
+}
 
 interface StorageManagementSectionProps {
   storageStatus: StorageStatusQuery['storageStatus'] | null
@@ -21,16 +34,40 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
   const [showConfigDialog, setShowConfigDialog] = useState(false)
   const router = useRouter()
 
-  const handleStorageConfigured = async (restartRequired: boolean) => {
+  // Initialize the countdown from the server-supplied lastUpdated timestamp.
+  // This means the banner reappears even on a hard-refresh if the window hasn't elapsed yet.
+  const [remainingSeconds, setRemainingSeconds] = useState(() =>
+    calcRemaining(storageStatus?.lastUpdated),
+  )
+
+  // Keep a stable ref so the interval callback can call router.invalidate() without
+  // capturing a stale closure.
+  const routerRef = useRef(router)
+  routerRef.current = router
+
+  useEffect(() => {
+    const initial = calcRemaining(storageStatus?.lastUpdated)
+    setRemainingSeconds(initial)
+    if (initial <= 0) return
+
+    const timer = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          // Propagation window elapsed — refresh the displayed config.
+          routerRef.current.invalidate()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [storageStatus?.lastUpdated])
+
+  const handleStorageConfigured = () => {
     setShowConfigDialog(false)
-    if (restartRequired) {
-      toast.success(t('pages.storage.configurationSuccessRestart'))
-    } else {
-      toast.success(t('pages.storage.configurationSuccess', { storageType: '' }))
-      // Load root folders to refresh the folder tree with new storage configuration
-      await loadRootFolders()
-    }
-    // Invalidate the loader data to get fresh storage status
+    toast.success(t('pages.storage.configurationSuccess'))
     router.invalidate()
   }
 
@@ -44,8 +81,6 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
   const getStatusBadge = () => {
     if (!storageStatus?.configured)
       return <Badge variant='destructive'>{t('pages.storage.notConfigured')}</Badge>
-    if (storageStatus.restartRequired)
-      return <Badge variant='outline'>{t('pages.storage.restartRequired')}</Badge>
     return <Badge variant='default'>{t('pages.storage.active')}</Badge>
   }
 
@@ -144,12 +179,11 @@ export function StorageManagementSection({ storageStatus }: StorageManagementSec
             </div>
           )}
 
-          {storageStatus?.restartRequired && (
-            <div className='rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-950'>
-              <div className='text-sm text-orange-800 dark:text-orange-200'>
-                <strong>{t('pages.storage.serverRestartRequired')}</strong>{' '}
-                {t('pages.storage.serverRestartMessage')}
-              </div>
+          {/* Propagation countdown banner */}
+          {remainingSeconds > 0 && (
+            <div className='flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300'>
+              <span className='inline-block h-2 w-2 animate-pulse rounded-full bg-blue-500' />
+              {t('pages.storage.takingEffect')}
             </div>
           )}
 

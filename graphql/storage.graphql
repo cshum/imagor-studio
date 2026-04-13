@@ -84,7 +84,6 @@ scalar Upload
 type StorageStatus {
   configured: Boolean!
   type: String
-  restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
   fileConfig: FileStorageConfig
@@ -107,7 +106,6 @@ type S3StorageConfig {
 
 type StorageConfigResult {
   success: Boolean!
-  restartRequired: Boolean!
   timestamp: String!
   message: String
 }

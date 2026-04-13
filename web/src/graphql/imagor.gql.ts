@@ -9,7 +9,6 @@ export const IMAGOR_STATUS_QUERY = gql(`
       isOverriddenByConfig
       config {
         hasSecret
-        unsafe
         signerType
         signerTruncate
       }

@@ -86,7 +86,6 @@ export type ImagorConfig = {
   hasSecret: Scalars['Boolean']['output']
   signerTruncate: Scalars['Int']['output']
   signerType: ImagorSignerType
-  unsafe: Scalars['Boolean']['output']
 }
 
 export type ImagorConfigResult = {
@@ -105,7 +104,6 @@ export type ImagorInput = {
   secret: InputMaybe<Scalars['String']['input']>
   signerTruncate: InputMaybe<Scalars['Int']['input']>
   signerType: InputMaybe<ImagorSignerType>
-  unsafe: InputMaybe<Scalars['Boolean']['input']>
 }
 
 export type ImagorParamsInput = {
@@ -391,7 +389,6 @@ export type StorageConfigInput = {
 export type StorageConfigResult = {
   __typename?: 'StorageConfigResult'
   message: Maybe<Scalars['String']['output']>
-  restartRequired: Scalars['Boolean']['output']
   success: Scalars['Boolean']['output']
   timestamp: Scalars['String']['output']
 }
@@ -402,7 +399,6 @@ export type StorageStatus = {
   fileConfig: Maybe<FileStorageConfig>
   isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
-  restartRequired: Scalars['Boolean']['output']
   s3Config: Maybe<S3StorageConfig>
   type: Maybe<Scalars['String']['output']>
 }
@@ -482,7 +478,6 @@ export type ImagorStatusQuery = {
     config: {
       __typename?: 'ImagorConfig'
       hasSecret: boolean
-      unsafe: boolean
       signerType: ImagorSignerType
       signerTruncate: number
     } | null
@@ -768,7 +763,6 @@ export type StorageStatusQuery = {
     __typename?: 'StorageStatus'
     configured: boolean
     type: string | null
-    restartRequired: boolean
     lastUpdated: string | null
     isOverriddenByConfig: boolean
     fileConfig: {
@@ -797,7 +791,6 @@ export type ConfigureFileStorageMutation = {
   configureFileStorage: {
     __typename?: 'StorageConfigResult'
     success: boolean
-    restartRequired: boolean
     timestamp: string
     message: string | null
   }
@@ -812,7 +805,6 @@ export type ConfigureS3StorageMutation = {
   configureS3Storage: {
     __typename?: 'StorageConfigResult'
     success: boolean
-    restartRequired: boolean
     timestamp: string
     message: string | null
   }
@@ -1059,7 +1051,6 @@ export const ImagorStatusDocument = {
                     kind: 'SelectionSet',
                     selections: [
                       { kind: 'Field', name: { kind: 'Name', value: 'hasSecret' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'unsafe' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'signerType' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
                     ],
@@ -2238,7 +2229,6 @@ export const StorageStatusDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'configured' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'lastUpdated' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
                 {
@@ -2309,7 +2299,6 @@ export const ConfigureFileStorageDocument = {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'success' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'message' } },
               ],
@@ -2354,7 +2343,6 @@ export const ConfigureS3StorageDocument = {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'success' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'restartRequired' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'timestamp' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'message' } },
               ],

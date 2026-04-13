@@ -10,11 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// ImagorProvider interface for accessing imagor handler
-type ImagorProvider interface {
-	GetHandler() http.Handler
-}
-
 // imagorPathRegex matches imagor-style paths using the same logic as imagorpath package
 var imagorPathRegex = regexp.MustCompile(
 	"^/*" +
@@ -69,21 +64,20 @@ func isValidBase64URLHash(hash string) bool {
 	return true
 }
 
-// SPAHandler creates a handler for serving static files with SPA fallback and imagor routing
-func SPAHandler(staticFS fs.FS, imagorProvider ImagorProvider, logger *zap.Logger) http.Handler {
+// SPAHandler creates a handler for serving static files with SPA fallback and imagor routing.
+// imagorHandler is an http.Handler whose ServeHTTP is called for imagor-style paths;
+// pass nil when no imagor instance is available.
+func SPAHandler(staticFS fs.FS, imagorHandler http.Handler, logger *zap.Logger) http.Handler {
 	fileServer := http.FileServer(http.FS(staticFS))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 
 		// Check if this looks like an imagor request
 		if isImagorPath(path) {
-			// Try to get imagor handler
-			if imagorProvider != nil {
-				if imagorHandler := imagorProvider.GetHandler(); imagorHandler != nil {
-					logger.Debug("Routing to imagor handler", zap.String("path", path))
-					imagorHandler.ServeHTTP(w, r)
-					return
-				}
+			if imagorHandler != nil {
+				logger.Debug("Routing to imagor handler", zap.String("path", path))
+				imagorHandler.ServeHTTP(w, r)
+				return
 			}
 			// If no imagor handler available, fall through to 404
 			logger.Debug("Imagor handler not available for path", zap.String("path", path))

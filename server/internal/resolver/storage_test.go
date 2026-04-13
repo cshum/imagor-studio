@@ -100,20 +100,18 @@ func (r *mockedS3MutationResolver) ConfigureS3Storage(ctx context.Context, input
 	if !testResult.Success {
 		// Return the test error directly
 		return &gql.StorageConfigResult{
-			Success:         false,
-			RestartRequired: false,
-			Timestamp:       fmt.Sprintf("%d", time.Now().UnixMilli()),
-			Message:         &testResult.Message,
+			Success:   false,
+			Timestamp: fmt.Sprintf("%d", time.Now().UnixMilli()),
+			Message:   &testResult.Message,
 		}, nil
 	}
 
 	// If we got here, the mocked validation passed (which shouldn't happen in our current mock)
 	// but we'll handle it gracefully
 	return &gql.StorageConfigResult{
-		Success:         true,
-		RestartRequired: true,
-		Timestamp:       fmt.Sprintf("%d", time.Now().UnixMilli()),
-		Message:         stringPtr("S3 storage configured successfully (mocked). Server restart required."),
+		Success:   true,
+		Timestamp: fmt.Sprintf("%d", time.Now().UnixMilli()),
+		Message:   stringPtr("S3 storage configured successfully (mocked)."),
 	}, nil
 }
 
@@ -1413,15 +1411,11 @@ func TestConfigureFileStorage_AutoTestSuccess(t *testing.T) {
 	mockRegistryStore.On("SetMulti", ctx, "system:global", mock.MatchedBy(func(entries []*registrystore.Registry) bool {
 		return len(entries) >= 3 // At least 3 entries (type, configured, base_dir, timestamp)
 	})).Return([]*registrystore.Registry{resultRegistry}, nil)
-	mockStorageProvider.On("ReloadFromRegistry").Return(nil)
-	mockImagorProvider.On("ReloadFromRegistry").Return(nil)
-
 	result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.True(t, result.Success)
-	assert.False(t, result.RestartRequired)
 	assert.Contains(t, *result.Message, "File storage configured successfully")
 
 	mockRegistryStore.AssertExpectations(t)
@@ -1451,12 +1445,10 @@ func TestConfigureFileStorage_AutoTestFailure(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.False(t, result.Success)
-	assert.False(t, result.RestartRequired)
 	assert.Contains(t, *result.Message, "Failed to access storage directory")
 
 	// Verify no registry operations were attempted
 	mockRegistryStore.AssertNotCalled(t, "SetMultiple")
-	mockStorageProvider.AssertNotCalled(t, "ReloadFromRegistry")
 }
 
 func TestConfigureS3Storage_AutoTestSuccess(t *testing.T) {
@@ -1507,7 +1499,6 @@ func TestConfigureS3Storage_AutoTestFailure_MissingConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.False(t, result.Success)
-	assert.False(t, result.RestartRequired)
 	// Should fail during storage creation due to empty bucket
 	assert.Contains(t, *result.Message, "Failed to create storage instance")
 
@@ -1574,9 +1565,6 @@ func TestConfigureFileStorage_RequiresAdminPermission(t *testing.T) {
 				mockRegistryStore.On("SetMulti", ctx, "system:global", mock.MatchedBy(func(entries []*registrystore.Registry) bool {
 					return len(entries) >= 3 // At least 3 entries (type, configured, base_dir, timestamp)
 				})).Return([]*registrystore.Registry{resultRegistry}, nil)
-				mockStorageProvider.On("ReloadFromRegistry").Return(nil)
-				mockStorageProvider.On("IsRestartRequired").Return(false)
-				mockImagorProvider.On("ReloadFromRegistry").Return(nil)
 			}
 
 			result, err := resolver.Mutation().ConfigureFileStorage(ctx, input)
@@ -1691,12 +1679,10 @@ func TestConfigureFileStorage_ErrorMessageProxying(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
 			assert.False(t, result.Success)
-			assert.False(t, result.RestartRequired)
 			assert.Contains(t, *result.Message, tt.expectedMsg)
 
 			// Verify no registry operations were attempted
 			mockRegistryStore.AssertNotCalled(t, "SetMultiple")
-			mockStorageProvider.AssertNotCalled(t, "ReloadFromRegistry")
 		})
 	}
 }

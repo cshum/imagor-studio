@@ -217,7 +217,7 @@ type MockImagorProvider struct {
 	mock.Mock
 }
 
-func (m *MockImagorProvider) GetConfig() *imagorprovider.ImagorConfig {
+func (m *MockImagorProvider) Config() *imagorprovider.ImagorConfig {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil
@@ -225,22 +225,12 @@ func (m *MockImagorProvider) GetConfig() *imagorprovider.ImagorConfig {
 	return args.Get(0).(*imagorprovider.ImagorConfig)
 }
 
-func (m *MockImagorProvider) GetInstance() *imagor.Imagor {
+func (m *MockImagorProvider) Imagor() *imagor.Imagor {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil
 	}
 	return args.Get(0).(*imagor.Imagor)
-}
-
-func (m *MockImagorProvider) _IsRestartRequired_removed() bool {
-	args := m.Called()
-	return args.Bool(0)
-}
-
-func (m *MockImagorProvider) ReloadFromRegistry() error {
-	args := m.Called()
-	return args.Error(0)
 }
 
 func (m *MockImagorProvider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {

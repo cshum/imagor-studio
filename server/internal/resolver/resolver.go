@@ -23,15 +23,13 @@ type ConfigProvider interface {
 // StorageProvider interface for getting storage dynamically
 type StorageProvider interface {
 	GetStorage() storage.Storage
-	IsRestartRequired() bool
 	ReloadFromRegistry() error
 }
 
 // ImagorProvider interface for imagor operations
 type ImagorProvider interface {
-	GetConfig() *imagorprovider.ImagorConfig
-	GetInstance() *imagor.Imagor
-	ReloadFromRegistry() error
+	Config() *imagorprovider.ImagorConfig
+	Imagor() *imagor.Imagor
 	GenerateURL(imagePath string, params imagorpath.Params) (string, error)
 }
 

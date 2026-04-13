@@ -461,18 +461,15 @@
       "testPassed": "Storage configuration test passed",
       "testFailed": "Storage configuration test failed",
       "testError": "Failed to test storage configuration",
-      "configurationSuccess": "{{storageType}} storage configured successfully",
-      "configurationSuccessRestart": "Storage configured successfully. Please restart the server to apply changes.",
+      "configurationSuccess": "Storage configured successfully",
       "configurationError": "Failed to configure {{storageType}} storage",
       "configurationOverridden": "Storage configuration is managed by external configuration",
       "baseDirRequired": "Base directory is required",
       "notConfigured": "Not Configured",
-      "restartRequired": "Restart Required",
       "active": "Active",
       "s3Bucket": "S3 Bucket",
       "endpoint": "Endpoint",
-      "serverRestartRequired": "Server restart required:",
-      "serverRestartMessage": "Storage configuration changes will take effect after restarting the server.",
+      "takingEffect": "Changes may take up to 1 minute to take effect.",
       "testConfigFirst": "Please fill in the {{storageType}} storage configuration first"
     },
     "systemSettings": {
@@ -484,8 +481,6 @@
       "imagorConfigurationDescription": "Configure image processing settings. Imagor handles image transformations and optimizations.",
       "secret": "Secret Key",
       "secretDescription": "Leave empty and we'll generate a secure signing key for you automatically.",
-      "unsafeMode": "Unsafe Mode",
-      "unsafeModeDescription": "Allow processing images without URL signing (not recommended for production)",
       "signerType": "Signer Type",
       "selectSignerType": "Select signer type",
       "signerTypeDescription": "Hash algorithm used for URL signing",
@@ -497,7 +492,8 @@
       "configurationOverridden": "Imagor configuration is managed by external configuration",
       "configuredSuccess": "Imagor configured successfully",
       "configurationDetails": "Configuration Details",
-      "hasSecret": "Has Secret"
+      "hasSecret": "Has Secret",
+      "takingEffect": "Settings saved. Changes may take up to 1 minute to take effect."
     },
     "license": {
       "licenseManagement": "License Management",

@@ -1,11 +1,19 @@
 package imagorprovider
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
@@ -112,21 +120,16 @@ func TestInitialize_EmbeddedMode(t *testing.T) {
 	err := provider.Initialize()
 	require.NoError(t, err)
 
-	cfg := provider.GetConfig()
+	cfg := provider.Config()
 	require.NotNil(t, cfg)
 
 	// Should default to JWT-secret fallback with sha256/32
 	assert.Equal(t, "test-jwt-secret", cfg.Secret)
 	assert.Equal(t, "sha256", cfg.SignerType)
 	assert.Equal(t, 32, cfg.SignerTruncate)
-	assert.False(t, cfg.Unsafe)
 
-	// Embedded mode always creates a handler
-	handler := provider.GetHandler()
-	assert.NotNil(t, handler)
-
-	// Instance must be non-nil
-	assert.NotNil(t, provider.GetInstance())
+	// Embedded mode always creates an imagor instance.
+	assert.NotNil(t, provider.Imagor())
 }
 
 func TestInitialize_WithExplicitSecret(t *testing.T) {
@@ -143,44 +146,18 @@ func TestInitialize_WithExplicitSecret(t *testing.T) {
 	err := provider.Initialize()
 	require.NoError(t, err)
 
-	imagorCfg := provider.GetConfig()
+	imagorCfg := provider.Config()
 	require.NotNil(t, imagorCfg)
 	assert.Equal(t, "custom-imagor-secret", imagorCfg.Secret)
 	// When explicit secret is provided, default signer type is sha1
 	assert.Equal(t, "sha1", imagorCfg.SignerType)
 }
 
-func TestInitialize_UnsafeMode(t *testing.T) {
-	cfg := &config.Config{
-		JWTSecret:    "jwt-secret",
-		ImagorUnsafe: true,
-	}
-	provider, registryStore := setupTestProviderWithStorage(t, cfg)
-
-	ctx := context.Background()
-	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "true", false)
-
-	err := provider.Initialize()
-	require.NoError(t, err)
-
-	imagorCfg := provider.GetConfig()
-	require.NotNil(t, imagorCfg)
-	assert.True(t, imagorCfg.Unsafe)
-	assert.Equal(t, "", imagorCfg.Secret)
-
-	handler := provider.GetHandler()
-	assert.NotNil(t, handler)
-}
-
 func TestBuildConfigFromRegistry_Defaults(t *testing.T) {
-	logger := zap.NewNop()
 	store := newMockRegistryStore()
 	cfg := &config.Config{JWTSecret: "my-jwt"}
-	sp := &storageprovider.Provider{}
 
-	provider := New(logger, store, cfg, sp)
-
-	result, err := provider.buildConfigFromRegistry()
+	result, err := buildConfigFromRegistry(store, cfg)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -188,47 +165,22 @@ func TestBuildConfigFromRegistry_Defaults(t *testing.T) {
 	assert.Equal(t, "my-jwt", result.Secret)
 	assert.Equal(t, "sha256", result.SignerType)
 	assert.Equal(t, 32, result.SignerTruncate)
-	assert.False(t, result.Unsafe)
 }
 
 func TestBuildConfigFromRegistry_ExplicitSecret(t *testing.T) {
-	logger := zap.NewNop()
 	store := newMockRegistryStore()
 	cfg := &config.Config{JWTSecret: "my-jwt"}
-	sp := &storageprovider.Provider{}
 
 	ctx := context.Background()
 	store.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "explicit-secret", false)
 
-	provider := New(logger, store, cfg, sp)
-
-	result, err := provider.buildConfigFromRegistry()
+	result, err := buildConfigFromRegistry(store, cfg)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
 	assert.Equal(t, "explicit-secret", result.Secret)
 	assert.Equal(t, "sha1", result.SignerType) // default when explicit secret (no JWT fallback)
 	assert.Equal(t, 0, result.SignerTruncate)
-	assert.False(t, result.Unsafe)
-}
-
-func TestBuildConfigFromRegistry_UnsafeMode(t *testing.T) {
-	logger := zap.NewNop()
-	store := newMockRegistryStore()
-	cfg := &config.Config{JWTSecret: "my-jwt"}
-	sp := &storageprovider.Provider{}
-
-	ctx := context.Background()
-	store.Set(ctx, registrystore.SystemOwnerID, "config.imagor_unsafe", "true", false)
-
-	provider := New(logger, store, cfg, sp)
-
-	result, err := provider.buildConfigFromRegistry()
-	require.NoError(t, err)
-	require.NotNil(t, result)
-
-	assert.True(t, result.Unsafe)
-	assert.Equal(t, "", result.Secret) // unsafe mode doesn't need secret
 }
 
 func TestBuildConfigFromRegistry_SignerOverrides(t *testing.T) {
@@ -274,18 +226,15 @@ func TestBuildConfigFromRegistry_SignerOverrides(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			logger := zap.NewNop()
 			store := newMockRegistryStore()
 			cfg := &config.Config{JWTSecret: "jwt-fallback"}
-			sp := &storageprovider.Provider{}
 
 			ctx := context.Background()
 			for key, value := range tt.registryData {
 				store.Set(ctx, registrystore.SystemOwnerID, key, value, false)
 			}
 
-			provider := New(logger, store, cfg, sp)
-			result, err := provider.buildConfigFromRegistry()
+			result, err := buildConfigFromRegistry(store, cfg)
 			require.NoError(t, err, tt.description)
 
 			assert.Equal(t, tt.expectedType, result.SignerType, tt.description)
@@ -312,26 +261,6 @@ func TestGenerateURL_Signed(t *testing.T) {
 	// Signed URL: starts with /signature/
 	assert.Regexp(t, `^/[a-zA-Z0-9_=/-]+/`, url)
 	assert.NotContains(t, url, "/unsafe/")
-}
-
-func TestGenerateURL_Unsafe(t *testing.T) {
-	logger := zap.NewNop()
-	store := newMockRegistryStore()
-	cfg := &config.Config{}
-	sp := &storageprovider.Provider{}
-
-	provider := New(logger, store, cfg, sp)
-	provider.currentConfig = &ImagorConfig{Unsafe: true}
-
-	url, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{
-		Width:  300,
-		Height: 200,
-	})
-
-	require.NoError(t, err)
-	assert.Contains(t, url, "/unsafe/")
-	assert.Contains(t, url, "300x200")
-	assert.Contains(t, url, "test/image.jpg")
 }
 
 func TestGenerateURL_NoConfig(t *testing.T) {
@@ -368,9 +297,8 @@ func TestGenerateURL_SignerVariants(t *testing.T) {
 			sp := &storageprovider.Provider{}
 
 			provider := New(logger, store, cfg, sp)
-			provider.currentConfig = &ImagorConfig{
+			provider.cfg = &ImagorConfig{
 				Secret:         tt.secret,
-				Unsafe:         false,
 				SignerType:     tt.signerType,
 				SignerTruncate: tt.signerTruncate,
 			}
@@ -414,7 +342,7 @@ func TestGetHashAlgorithm(t *testing.T) {
 	}
 }
 
-func TestReloadFromRegistry(t *testing.T) {
+func TestSync(t *testing.T) {
 	provider, registryStore := setupTestProviderWithStorage(t, &config.Config{
 		JWTSecret: "initial-jwt",
 	})
@@ -423,28 +351,186 @@ func TestReloadFromRegistry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Initially uses JWT fallback
-	cfg := provider.GetConfig()
+	cfg := provider.Config()
 	assert.Equal(t, "initial-jwt", cfg.Secret)
 
 	// Update registry with a new explicit secret
 	ctx := context.Background()
 	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "new-secret", false)
 
-	err = provider.ReloadFromRegistry()
+	err = provider.Sync()
 	require.NoError(t, err)
 
 	// Should now use the new registry secret
-	cfg = provider.GetConfig()
+	cfg = provider.Config()
 	assert.Equal(t, "new-secret", cfg.Secret)
 	assert.Equal(t, "sha1", cfg.SignerType) // explicit secret → sha1 default
 }
 
-func TestGetHandler_AlwaysPresent(t *testing.T) {
-	provider, _ := setupTestProviderWithStorage(t, nil)
+func TestSync_UpdatesDynSigner(t *testing.T) {
+	provider, registryStore := setupTestProviderWithStorage(t, &config.Config{
+		JWTSecret: "initial-jwt",
+	})
 
 	err := provider.Initialize()
 	require.NoError(t, err)
 
-	handler := provider.GetHandler()
-	assert.NotNil(t, handler, "Embedded provider should always have an HTTP handler")
+	// Capture URL before sync
+	urlBefore, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{Width: 300, Height: 200})
+	require.NoError(t, err)
+
+	// Update registry with a different secret
+	ctx := context.Background()
+	registryStore.Set(ctx, registrystore.SystemOwnerID, "config.imagor_secret", "rotated-secret", false)
+
+	err = provider.Sync()
+	require.NoError(t, err)
+
+	// URL after sync uses the new signer → different signature for same path
+	urlAfter, err := provider.GenerateURL("test/image.jpg", imagorpath.Params{Width: 300, Height: 200})
+	require.NoError(t, err)
+
+	assert.NotEqual(t, urlBefore, urlAfter, "URL signature must change after signer rotation via Sync()")
+
+	// dynSigner was also updated — verify it now signs with the new key
+	require.NotNil(t, provider.dynSigner)
+	newSigner := signerFromConfig(&ImagorConfig{Secret: "rotated-secret", SignerType: "sha1"})
+	path := "300x200/test/image.jpg"
+	assert.Equal(t, newSigner.Sign(path), provider.dynSigner.Sign(path))
 }
+
+// --- StorageLoader tests ---
+
+// mockStorageSource implements storageSource for testing StorageLoader.
+type mockStorageSource struct {
+	stor storage.Storage
+}
+
+func (m *mockStorageSource) GetStorage() storage.Storage { return m.stor }
+
+// mockReadStorage is a minimal storage.Storage implementation for StorageLoader tests.
+// Only Get() is exercised; all other methods panic if called.
+type mockReadStorage struct {
+	data map[string][]byte
+	err  error // if set, Get always returns this error
+}
+
+func newMockReadStorage() *mockReadStorage {
+	return &mockReadStorage{data: make(map[string][]byte)}
+}
+
+func (m *mockReadStorage) Get(_ context.Context, key string) (io.ReadCloser, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	data, ok := m.data[key]
+	if !ok {
+		return nil, fmt.Errorf("not found: %s", key)
+	}
+	return io.NopCloser(bytes.NewReader(data)), nil
+}
+
+func (m *mockReadStorage) Put(_ context.Context, _ string, _ io.Reader) error { return nil }
+func (m *mockReadStorage) Delete(_ context.Context, _ string) error           { return nil }
+func (m *mockReadStorage) CreateFolder(_ context.Context, _ string) error     { return nil }
+func (m *mockReadStorage) Stat(_ context.Context, _ string) (storage.FileInfo, error) {
+	return storage.FileInfo{}, nil
+}
+func (m *mockReadStorage) Copy(_ context.Context, _, _ string) error { return nil }
+func (m *mockReadStorage) Move(_ context.Context, _, _ string) error { return nil }
+func (m *mockReadStorage) List(_ context.Context, _ string, _ storage.ListOptions) (storage.ListResult, error) {
+	return storage.ListResult{}, nil
+}
+
+func TestStorageLoader_Get_Success(t *testing.T) {
+	stor := newMockReadStorage()
+	stor.data["images/gopher.png"] = []byte("fake-png-data")
+
+	loader := &StorageLoader{source: &mockStorageSource{stor: stor}}
+
+	req := httptest.NewRequest("GET", "/", nil)
+	blob, err := loader.Get(req, "images/gopher.png")
+
+	require.NoError(t, err)
+	require.NotNil(t, blob)
+
+	// Verify the blob's content using ReadAll (handles imagor's internal fanout correctly)
+	data, err := blob.ReadAll()
+	require.NoError(t, err)
+	assert.Equal(t, []byte("fake-png-data"), data)
+}
+
+func TestStorageLoader_Get_NotFound(t *testing.T) {
+	stor := newMockReadStorage() // empty — no files
+
+	loader := &StorageLoader{source: &mockStorageSource{stor: stor}}
+
+	req := httptest.NewRequest("GET", "/", nil)
+	blob, err := loader.Get(req, "missing/image.jpg")
+
+	// Matches imagor's filestorage pattern: returns (blob, err) with err != nil.
+	// The error is surfaced immediately so imagor treats missing files as 4xx.
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "missing/image.jpg")
+	// blob is non-nil (same as filestorage) but its internal Err() is set
+	require.NotNil(t, blob)
+	assert.Error(t, blob.Err())
+}
+
+func TestStorageLoader_Get_DelegatesCurrentStorage(t *testing.T) {
+	// Start with empty storage
+	stor := newMockReadStorage()
+	source := &mockStorageSource{stor: stor}
+	loader := &StorageLoader{source: source}
+
+	req := httptest.NewRequest("GET", "/", nil)
+
+	// First call — file does not exist yet
+	_, err := loader.Get(req, "dynamic.jpg")
+	assert.Error(t, err, "expected not-found before file is added")
+
+	// Add the file to the (same) underlying storage
+	stor.data["dynamic.jpg"] = []byte("dynamic-content")
+
+	// Second call via the same loader — should now find it
+	blob, err := loader.Get(req, "dynamic.jpg")
+	require.NoError(t, err, "expected success after file is added")
+	assert.NotNil(t, blob)
+
+	data, err := blob.ReadAll()
+	require.NoError(t, err)
+	assert.Equal(t, []byte("dynamic-content"), data)
+}
+
+func TestStorageLoader_Get_StorageError(t *testing.T) {
+	stor := newMockReadStorage()
+	stor.err = fmt.Errorf("connection refused")
+
+	loader := &StorageLoader{source: &mockStorageSource{stor: stor}}
+
+	req := httptest.NewRequest("GET", "/", nil)
+	blob, err := loader.Get(req, "any/image.jpg")
+
+	// Matches imagor's filestorage pattern: returns (blob, err) with err != nil.
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "connection refused")
+	require.NotNil(t, blob)
+	assert.Error(t, blob.Err())
+}
+
+// Compile-time check: mockStorageSource satisfies the storageSource interface.
+var _ storageSource = (*mockStorageSource)(nil)
+
+// Compile-time check: StorageLoader satisfies imagor.Loader.
+var _ interface {
+	Get(*http.Request, string) (*imagor.Blob, error)
+} = (*StorageLoader)(nil)
+
+// Ensure mockReadStorage satisfies storage.Storage
+var _ storage.Storage = (*mockReadStorage)(nil)
+
+// Compile-time check that storageprovider.Provider satisfies storageSource.
+var _ storageSource = (*storageprovider.Provider)(nil)
+
+// Dummy to keep time import used across older test helpers.
+var _ = time.Second

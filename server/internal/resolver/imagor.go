@@ -130,7 +130,7 @@ func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath s
 
 	var body []byte
 
-	if imagorInstance := r.imagorProvider.GetInstance(); imagorInstance != nil {
+	if imagorInstance := r.imagorProvider.Imagor(); imagorInstance != nil {
 		// Embedded: call ServeHTTP in-process (no network overhead).
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, metaURL, nil)
 		if err != nil {
@@ -376,7 +376,7 @@ func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos str
 // ImagorStatus is the resolver for the imagorStatus query field.
 func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, error) {
 	// Get current imagor configuration
-	imagorConfig := r.imagorProvider.GetConfig()
+	imagorConfig := r.imagorProvider.Config()
 	if imagorConfig == nil {
 		// Build a sensible default from what's in config
 		jwtSecret := ""
@@ -385,7 +385,6 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 		}
 		imagorConfig = &imagorprovider.ImagorConfig{
 			Secret:         jwtSecret,
-			Unsafe:         false,
 			SignerType:     "sha256",
 			SignerTruncate: 32,
 		}
@@ -413,7 +412,6 @@ func (r *queryResolver) ImagorStatus(ctx context.Context) (*gql.ImagorStatus, er
 func (r *queryResolver) isImagorConfigOverridden(ctx context.Context) bool {
 	keys := []string{
 		"config.imagor_secret",
-		"config.imagor_unsafe",
 		"config.imagor_signer_type",
 		"config.imagor_signer_truncate",
 	}
@@ -439,7 +437,6 @@ func (r *queryResolver) getImagorConfig(imagorConfig *imagorprovider.ImagorConfi
 	}
 	return &gql.ImagorConfig{
 		HasSecret:      imagorConfig.Secret != "",
-		Unsafe:         imagorConfig.Unsafe,
 		SignerType:     signerType,
 		SignerTruncate: imagorConfig.SignerTruncate,
 	}
@@ -458,7 +455,6 @@ func (r *mutationResolver) ConfigureImagor(ctx context.Context, input gql.Imagor
 
 	// Clear existing imagor-specific config keys
 	if _, err := r.DeleteSystemRegistry(ctx, nil, []string{
-		"config.imagor_unsafe",
 		"config.imagor_secret",
 		"config.imagor_signer_type",
 		"config.imagor_signer_truncate",
@@ -479,12 +475,6 @@ func (r *mutationResolver) ConfigureImagor(ctx context.Context, input gql.Imagor
 	if input.Secret != nil && *input.Secret != "" {
 		entries = append(entries, gql.RegistryEntryInput{
 			Key: "config.imagor_secret", Value: *input.Secret, IsEncrypted: true,
-		})
-	}
-
-	if input.Unsafe != nil {
-		entries = append(entries, gql.RegistryEntryInput{
-			Key: "config.imagor_unsafe", Value: fmt.Sprintf("%t", *input.Unsafe), IsEncrypted: false,
 		})
 	}
 
@@ -518,20 +508,10 @@ func (r *mutationResolver) ConfigureImagor(ctx context.Context, input gql.Imagor
 		}, nil
 	}
 
-	// Reload imagor from registry to apply changes immediately (no restart needed)
-	if err := r.imagorProvider.ReloadFromRegistry(); err != nil {
-		r.logger.Error("Failed to reload imagor from registry", zap.Error(err))
-		return &gql.ImagorConfigResult{
-			Success:   false,
-			Timestamp: timestampStr,
-			Message:   &[]string{"Configuration saved but failed to apply"}[0],
-		}, nil
-	}
-
 	return &gql.ImagorConfigResult{
 		Success:   true,
 		Timestamp: timestampStr,
-		Message:   &[]string{"Imagor configured successfully"}[0],
+		Message:   &[]string{"Imagor configured successfully."}[0],
 	}, nil
 }
 
