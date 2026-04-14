@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { FolderInput, FolderOpen, Trash2, Type } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -41,6 +41,11 @@ interface UseFolderContextMenuProps {
    * Use this for dropdown menus (three-dots) instead of context menus (right-click).
    */
   useDropdownItems?: boolean
+  /**
+   * Space key for multi-tenant storage scoping.
+   * Pass from the page via useParams; omit for system-level operations (e.g. sidebar).
+   */
+  spaceKey?: string
 }
 
 /**
@@ -60,13 +65,13 @@ export function useFolderContextMenu({
   onDelete,
   onMove,
   useDropdownItems = false,
+  spaceKey,
 }: UseFolderContextMenuProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const router = useRouter()
   const [isRenaming, setIsRenaming] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const { spaceKey } = useParams({ strict: false })
 
   /**
    * Centralized rename logic - handles cache invalidation and redirect
