@@ -248,6 +248,49 @@ func TestCreateSpace_Success(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 }
 
+func TestCreateSpace_AutoCreatesOrg(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	// No org in JWT → falls back to DB, finds nothing
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
+	// Auto-create fires: slug = "org-" + "user-1" (6 chars < 8, uses full string)
+	newOrg := makeTestOrg("org-auto", "user-1")
+	orgStore.On("CreateWithMember", mock.Anything, "user-1", "My Organization", "org-user-1", (*time.Time)(nil)).Return(newOrg, nil)
+
+	created := makeTestSpace("acme", "org-auto")
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
+		return s.Key == "acme" && s.OrgID == "org-auto"
+	})).Return(nil)
+	spaceStore.On("Get", mock.Anything, "acme").Return(created, nil)
+
+	ctx := createAdminContext("user-1") // no org_id claim
+	input := gql.SpaceInput{Key: "acme", Name: "Acme"}
+	result, err := r.Mutation().CreateSpace(ctx, input)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "acme", result.Key)
+	assert.Equal(t, "org-auto", result.OrgID)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestCreateSpace_NoOrgAndNilOrgStore(t *testing.T) {
+	// spaceStore present but orgStore nil — no org in JWT claim either
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	spaceStore := &MockSpaceStore{}
+	r := NewResolver(sp, nil, nil, nil, nil, nil, logger, nil, spaceStore)
+
+	ctx := createAdminContext("user-1") // no org_id claim
+	input := gql.SpaceInput{Key: "acme", Name: "Acme"}
+	result, err := r.Mutation().CreateSpace(ctx, input)
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no organization found")
+}
+
 // ---------- UpdateSpace ------------------------------------------------------
 
 func TestUpdateSpace_RequiresAdmin(t *testing.T) {

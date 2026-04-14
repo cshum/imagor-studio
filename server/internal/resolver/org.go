@@ -205,7 +205,27 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 		return nil, err
 	}
 	if orgID == "" {
-		return nil, fmt.Errorf("no organization found for current user")
+		if r.orgStore == nil {
+			return nil, fmt.Errorf("no organization found for current user")
+		}
+		// Auto-provision a personal org for this admin on their first space creation.
+		// Uses the first 8 chars of the user UUID as a unique org slug.
+		claims, claimsErr := auth.GetClaimsFromContext(ctx)
+		if claimsErr != nil {
+			return nil, claimsErr
+		}
+		n := 8
+		if len(claims.UserID) < n {
+			n = len(claims.UserID)
+		}
+		orgSlug := "org-" + claims.UserID[:n]
+		newOrg, createErr := r.orgStore.CreateWithMember(ctx, claims.UserID, "My Organization", orgSlug, nil)
+		if createErr != nil {
+			r.logger.Error("CreateSpace: failed to auto-create org", zap.Error(createErr))
+			return nil, fmt.Errorf("failed to create organization: %w", createErr)
+		}
+		r.logger.Info("Auto-created org for user", zap.String("userID", claims.UserID), zap.String("orgID", newOrg.ID))
+		orgID = newOrg.ID
 	}
 
 	sp := &spacestore.Space{OrgID: orgID}
