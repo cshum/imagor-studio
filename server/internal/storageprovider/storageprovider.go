@@ -97,6 +97,38 @@ func New(logger *zap.Logger, registryStore registrystore.Store, cfg *config.Conf
 	}
 }
 
+// NewStorageFromSpaceConfig creates an S3-compatible storage instance directly
+// from per-space credentials (no registry round-trip).  All of "s3", "managed",
+// and "r2" storage types are S3-protocol-compatible and handled identically.
+func (p *Provider) NewStorageFromSpaceConfig(
+	storageType, bucket, prefix, region, endpoint, accessKeyID, secretKey string,
+	usePathStyle bool,
+) (storage.Storage, error) {
+	if bucket == "" {
+		return nil, fmt.Errorf("space bucket is required")
+	}
+
+	// All current space storage types (s3, managed, r2) use the S3 protocol.
+	cfg := &config.Config{
+		StorageType:        "s3",
+		S3StorageBucket:    bucket,
+		AWSRegion:          region,
+		S3Endpoint:         endpoint,
+		AWSAccessKeyID:     accessKeyID,
+		AWSSecretAccessKey: secretKey,
+		S3StorageBaseDir:   prefix,
+		S3ForcePathStyle:   usePathStyle,
+	}
+	p.logger.Debug("Creating space storage",
+		zap.String("storageType", storageType),
+		zap.String("bucket", bucket),
+		zap.String("prefix", prefix),
+		zap.String("region", region),
+		zap.String("endpoint", endpoint),
+	)
+	return p.NewS3Storage(cfg)
+}
+
 // NewStorageFromConfig creates storage based on configuration
 func (p *Provider) NewStorageFromConfig(cfg *config.Config) (storage.Storage, error) {
 	switch cfg.StorageType {

@@ -218,6 +218,85 @@ const galleryImageEditorRoute = createRoute({
   },
 })
 
+// ─── Space-scoped gallery routes: /spaces/$spaceKey/... ──────────────────────
+
+// /spaces/$spaceKey  →  root gallery for this space (galleryKey = '')
+const spaceRootRoute = createRoute({
+  getParentRoute: () => baseLayoutRoute,
+  path: '/spaces/$spaceKey',
+  component: () => {
+    const galleryLoaderData = spaceRootRoute.useLoaderData()
+    const { spaceKey } = spaceRootRoute.useParams()
+    return (
+      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>
+        <Outlet />
+      </GalleryPage>
+    )
+  },
+  loader: ({ params }) =>
+    galleryLoader({ params: { galleryKey: '', spaceKey: params.spaceKey } }),
+  shouldReload: false,
+})
+
+// /spaces/$spaceKey/$imageKey  →  image detail at the root of a space
+const spaceRootImagePage = createRoute({
+  getParentRoute: () => spaceRootRoute,
+  path: '/$imageKey',
+  loader: ({ params }) => imageLoader({ params: { ...params, galleryKey: '' } }),
+  component: () => {
+    const galleryLoaderData = spaceRootRoute.useLoaderData()
+    const imageLoaderData = spaceRootImagePage.useLoaderData()
+    const { imageKey } = spaceRootImagePage.useParams()
+    return (
+      <ImagePage
+        imageLoaderData={imageLoaderData}
+        galleryLoaderData={galleryLoaderData}
+        galleryKey=''
+        imageKey={imageKey}
+      />
+    )
+  },
+})
+
+// /spaces/$spaceKey/gallery/$galleryKey  →  nested folder inside a space
+const spaceGalleryRoute = createRoute({
+  getParentRoute: () => baseLayoutRoute,
+  path: '/spaces/$spaceKey/gallery/$galleryKey',
+  component: () => {
+    const galleryLoaderData = spaceGalleryRoute.useLoaderData()
+    const { galleryKey } = spaceGalleryRoute.useParams()
+    return (
+      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey={galleryKey}>
+        <Outlet />
+      </GalleryPage>
+    )
+  },
+  loader: ({ params }) => galleryLoader({ params }),
+  shouldReload: false,
+})
+
+// /spaces/$spaceKey/gallery/$galleryKey/$imageKey  →  image inside nested folder
+const spaceImagePage = createRoute({
+  getParentRoute: () => spaceGalleryRoute,
+  path: '/$imageKey',
+  loader: ({ params }) => imageLoader({ params }),
+  component: () => {
+    const galleryLoaderData = spaceGalleryRoute.useLoaderData()
+    const imageLoaderData = spaceImagePage.useLoaderData()
+    const { galleryKey, imageKey } = spaceImagePage.useParams()
+    return (
+      <ImagePage
+        imageLoaderData={imageLoaderData}
+        galleryLoaderData={galleryLoaderData}
+        galleryKey={galleryKey}
+        imageKey={imageKey}
+      />
+    )
+  },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const accountLayoutRoute = createRoute({
   getParentRoute: () => baseLayoutRoute,
   id: 'account-layout',
@@ -311,6 +390,8 @@ const routeTree = isEmbeddedMode
       baseLayoutRoute.addChildren([
         rootPath.addChildren([rootImagePage]),
         galleryRoute.addChildren([imagePage]),
+        spaceRootRoute.addChildren([spaceRootImagePage]),
+        spaceGalleryRoute.addChildren([spaceImagePage]),
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,

@@ -99,18 +99,18 @@ type ComplexityRoot struct {
 		ConfigureFileStorage          func(childComplexity int, input FileStorageInput) int
 		ConfigureImagor               func(childComplexity int, input ImagorInput) int
 		ConfigureS3Storage            func(childComplexity int, input S3StorageInput) int
-		CopyFile                      func(childComplexity int, sourcePath string, destPath string) int
-		CreateFolder                  func(childComplexity int, path string) int
+		CopyFile                      func(childComplexity int, sourcePath string, destPath string, spaceKey *string) int
+		CreateFolder                  func(childComplexity int, path string, spaceKey *string) int
 		CreateSpace                   func(childComplexity int, input SpaceInput) int
 		CreateUser                    func(childComplexity int, input CreateUserInput) int
 		DeactivateAccount             func(childComplexity int, userID *string) int
-		DeleteFile                    func(childComplexity int, path string) int
+		DeleteFile                    func(childComplexity int, path string, spaceKey *string) int
 		DeleteSpace                   func(childComplexity int, key string) int
 		DeleteSystemRegistry          func(childComplexity int, key *string, keys []string) int
 		DeleteUserRegistry            func(childComplexity int, key *string, keys []string, ownerID *string) int
 		GenerateImagorURL             func(childComplexity int, imagePath string, params ImagorParamsInput) int
 		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
-		MoveFile                      func(childComplexity int, sourcePath string, destPath string) int
+		MoveFile                      func(childComplexity int, sourcePath string, destPath string, spaceKey *string) int
 		RegenerateTemplatePreview     func(childComplexity int, templatePath string) int
 		SaveTemplate                  func(childComplexity int, input SaveTemplateInput) int
 		SetSystemRegistry             func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
@@ -118,7 +118,7 @@ type ComplexityRoot struct {
 		TestStorageConfig             func(childComplexity int, input StorageConfigInput) int
 		UpdateProfile                 func(childComplexity int, input UpdateProfileInput, userID *string) int
 		UpdateSpace                   func(childComplexity int, key string, input SpaceInput) int
-		UploadFile                    func(childComplexity int, path string, content graphql.Upload) int
+		UploadFile                    func(childComplexity int, path string, spaceKey *string, content graphql.Upload) int
 	}
 
 	Organization struct {
@@ -137,14 +137,14 @@ type ComplexityRoot struct {
 		GetUserRegistry    func(childComplexity int, key *string, keys []string, ownerID *string) int
 		ImagorStatus       func(childComplexity int) int
 		LicenseStatus      func(childComplexity int) int
-		ListFiles          func(childComplexity int, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *SortOption, sortOrder *SortOrder) int
+		ListFiles          func(childComplexity int, path string, spaceKey *string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *SortOption, sortOrder *SortOrder) int
 		ListSystemRegistry func(childComplexity int, prefix *string) int
 		ListUserRegistry   func(childComplexity int, prefix *string, ownerID *string) int
 		Me                 func(childComplexity int) int
 		MyOrganization     func(childComplexity int) int
 		Space              func(childComplexity int, key string) int
 		Spaces             func(childComplexity int) int
-		StatFile           func(childComplexity int, path string) int
+		StatFile           func(childComplexity int, path string, spaceKey *string) int
 		StorageStatus      func(childComplexity int) int
 		User               func(childComplexity int, id string) int
 		Users              func(childComplexity int, offset *int, limit *int) int
@@ -243,11 +243,11 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error)
-	DeleteFile(ctx context.Context, path string) (bool, error)
-	CreateFolder(ctx context.Context, path string) (bool, error)
-	CopyFile(ctx context.Context, sourcePath string, destPath string) (bool, error)
-	MoveFile(ctx context.Context, sourcePath string, destPath string) (bool, error)
+	UploadFile(ctx context.Context, path string, spaceKey *string, content graphql.Upload) (bool, error)
+	DeleteFile(ctx context.Context, path string, spaceKey *string) (bool, error)
+	CreateFolder(ctx context.Context, path string, spaceKey *string) (bool, error)
+	CopyFile(ctx context.Context, sourcePath string, destPath string, spaceKey *string) (bool, error)
+	MoveFile(ctx context.Context, sourcePath string, destPath string, spaceKey *string) (bool, error)
 	SaveTemplate(ctx context.Context, input SaveTemplateInput) (*TemplateResult, error)
 	RegenerateTemplatePreview(ctx context.Context, templatePath string) (bool, error)
 	ConfigureFileStorage(ctx context.Context, input FileStorageInput) (*StorageConfigResult, error)
@@ -269,8 +269,8 @@ type MutationResolver interface {
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
 type QueryResolver interface {
-	ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
-	StatFile(ctx context.Context, path string) (*FileStat, error)
+	ListFiles(ctx context.Context, path string, spaceKey *string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *SortOption, sortOrder *SortOrder) (*FileList, error)
+	StatFile(ctx context.Context, path string, spaceKey *string) (*FileStat, error)
 	StorageStatus(ctx context.Context) (*StorageStatus, error)
 	ImagorStatus(ctx context.Context) (*ImagorStatus, error)
 	MyOrganization(ctx context.Context) (*Organization, error)
@@ -578,7 +578,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.CopyFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string)), true
+		return e.ComplexityRoot.Mutation.CopyFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string), args["spaceKey"].(*string)), true
 	case "Mutation.createFolder":
 		if e.ComplexityRoot.Mutation.CreateFolder == nil {
 			break
@@ -589,7 +589,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.CreateFolder(childComplexity, args["path"].(string)), true
+		return e.ComplexityRoot.Mutation.CreateFolder(childComplexity, args["path"].(string), args["spaceKey"].(*string)), true
 	case "Mutation.createSpace":
 		if e.ComplexityRoot.Mutation.CreateSpace == nil {
 			break
@@ -633,7 +633,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.DeleteFile(childComplexity, args["path"].(string)), true
+		return e.ComplexityRoot.Mutation.DeleteFile(childComplexity, args["path"].(string), args["spaceKey"].(*string)), true
 	case "Mutation.deleteSpace":
 		if e.ComplexityRoot.Mutation.DeleteSpace == nil {
 			break
@@ -699,7 +699,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.MoveFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string)), true
+		return e.ComplexityRoot.Mutation.MoveFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string), args["spaceKey"].(*string)), true
 	case "Mutation.regenerateTemplatePreview":
 		if e.ComplexityRoot.Mutation.RegenerateTemplatePreview == nil {
 			break
@@ -787,7 +787,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.UploadFile(childComplexity, args["path"].(string), args["content"].(graphql.Upload)), true
+		return e.ComplexityRoot.Mutation.UploadFile(childComplexity, args["path"].(string), args["spaceKey"].(*string), args["content"].(graphql.Upload)), true
 
 	case "Organization.createdAt":
 		if e.ComplexityRoot.Organization.CreatedAt == nil {
@@ -883,7 +883,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.ListFiles(childComplexity, args["path"].(string), args["offset"].(*int), args["limit"].(*int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["extensions"].(*string), args["showHidden"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
+		return e.ComplexityRoot.Query.ListFiles(childComplexity, args["path"].(string), args["spaceKey"].(*string), args["offset"].(*int), args["limit"].(*int), args["onlyFiles"].(*bool), args["onlyFolders"].(*bool), args["extensions"].(*string), args["showHidden"].(*bool), args["sortBy"].(*SortOption), args["sortOrder"].(*SortOrder)), true
 	case "Query.listSystemRegistry":
 		if e.ComplexityRoot.Query.ListSystemRegistry == nil {
 			break
@@ -945,7 +945,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.StatFile(childComplexity, args["path"].(string)), true
+		return e.ComplexityRoot.Query.StatFile(childComplexity, args["path"].(string), args["spaceKey"].(*string)), true
 	case "Query.storageStatus":
 		if e.ComplexityRoot.Query.StorageStatus == nil {
 			break
@@ -1670,6 +1670,7 @@ type LicenseStatus {
 	{Name: "../../../../graphql/storage.graphql", Input: `type Query {
   listFiles(
     path: String!
+    spaceKey: String
     offset: Int
     limit: Int
     onlyFiles: Boolean
@@ -1680,7 +1681,7 @@ type LicenseStatus {
     sortOrder: SortOrder
   ): FileList!
 
-  statFile(path: String!): FileStat
+  statFile(path: String!, spaceKey: String): FileStat
 
   # Storage Configuration APIs
   storageStatus: StorageStatus!
@@ -1688,11 +1689,11 @@ type LicenseStatus {
 
 type Mutation {
   # write scope required
-  uploadFile(path: String!, content: Upload!): Boolean!
-  deleteFile(path: String!): Boolean!
-  createFolder(path: String!): Boolean!
-  copyFile(sourcePath: String!, destPath: String!): Boolean!
-  moveFile(sourcePath: String!, destPath: String!): Boolean!
+  uploadFile(path: String!, spaceKey: String, content: Upload!): Boolean!
+  deleteFile(path: String!, spaceKey: String): Boolean!
+  createFolder(path: String!, spaceKey: String): Boolean!
+  copyFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
+  moveFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
 
   # Template management (write scope required)
   saveTemplate(input: SaveTemplateInput!): TemplateResult!
@@ -1956,6 +1957,11 @@ func (ec *executionContext) field_Mutation_copyFile_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["destPath"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg2
 	return args, nil
 }
 
@@ -1967,6 +1973,11 @@ func (ec *executionContext) field_Mutation_createFolder_args(ctx context.Context
 		return nil, err
 	}
 	args["path"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg1
 	return args, nil
 }
 
@@ -2011,6 +2022,11 @@ func (ec *executionContext) field_Mutation_deleteFile_args(ctx context.Context, 
 		return nil, err
 	}
 	args["path"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg1
 	return args, nil
 }
 
@@ -2132,6 +2148,11 @@ func (ec *executionContext) field_Mutation_moveFile_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["destPath"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg2
 	return args, nil
 }
 
@@ -2245,11 +2266,16 @@ func (ec *executionContext) field_Mutation_uploadFile_args(ctx context.Context, 
 		return nil, err
 	}
 	args["path"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "content", ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["content"] = arg1
+	args["spaceKey"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "content", ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload)
+	if err != nil {
+		return nil, err
+	}
+	args["content"] = arg2
 	return args, nil
 }
 
@@ -2309,46 +2335,51 @@ func (ec *executionContext) field_Query_listFiles_args(ctx context.Context, rawA
 		return nil, err
 	}
 	args["path"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["offset"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint)
+	args["spaceKey"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint)
 	if err != nil {
 		return nil, err
 	}
-	args["limit"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "onlyFiles", ec.unmarshalOBoolean2ᚖbool)
+	args["offset"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint)
 	if err != nil {
 		return nil, err
 	}
-	args["onlyFiles"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "onlyFolders", ec.unmarshalOBoolean2ᚖbool)
+	args["limit"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "onlyFiles", ec.unmarshalOBoolean2ᚖbool)
 	if err != nil {
 		return nil, err
 	}
-	args["onlyFolders"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "extensions", ec.unmarshalOString2ᚖstring)
+	args["onlyFiles"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "onlyFolders", ec.unmarshalOBoolean2ᚖbool)
 	if err != nil {
 		return nil, err
 	}
-	args["extensions"] = arg5
-	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "showHidden", ec.unmarshalOBoolean2ᚖbool)
+	args["onlyFolders"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "extensions", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["showHidden"] = arg6
-	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOption)
+	args["extensions"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "showHidden", ec.unmarshalOBoolean2ᚖbool)
 	if err != nil {
 		return nil, err
 	}
-	args["sortBy"] = arg7
-	arg8, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOrder)
+	args["showHidden"] = arg7
+	arg8, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOSortOption2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOption)
 	if err != nil {
 		return nil, err
 	}
-	args["sortOrder"] = arg8
+	args["sortBy"] = arg8
+	arg9, err := graphql.ProcessArgField(ctx, rawArgs, "sortOrder", ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSortOrder)
+	if err != nil {
+		return nil, err
+	}
+	args["sortOrder"] = arg9
 	return args, nil
 }
 
@@ -2398,6 +2429,11 @@ func (ec *executionContext) field_Query_statFile_args(ctx context.Context, rawAr
 		return nil, err
 	}
 	args["path"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg1
 	return args, nil
 }
 
@@ -3578,7 +3614,7 @@ func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field grap
 		ec.fieldContext_Mutation_uploadFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().UploadFile(ctx, fc.Args["path"].(string), fc.Args["content"].(graphql.Upload))
+			return ec.Resolvers.Mutation().UploadFile(ctx, fc.Args["path"].(string), fc.Args["spaceKey"].(*string), fc.Args["content"].(graphql.Upload))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3619,7 +3655,7 @@ func (ec *executionContext) _Mutation_deleteFile(ctx context.Context, field grap
 		ec.fieldContext_Mutation_deleteFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().DeleteFile(ctx, fc.Args["path"].(string))
+			return ec.Resolvers.Mutation().DeleteFile(ctx, fc.Args["path"].(string), fc.Args["spaceKey"].(*string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3660,7 +3696,7 @@ func (ec *executionContext) _Mutation_createFolder(ctx context.Context, field gr
 		ec.fieldContext_Mutation_createFolder,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().CreateFolder(ctx, fc.Args["path"].(string))
+			return ec.Resolvers.Mutation().CreateFolder(ctx, fc.Args["path"].(string), fc.Args["spaceKey"].(*string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3701,7 +3737,7 @@ func (ec *executionContext) _Mutation_copyFile(ctx context.Context, field graphq
 		ec.fieldContext_Mutation_copyFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().CopyFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string))
+			return ec.Resolvers.Mutation().CopyFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string), fc.Args["spaceKey"].(*string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -3742,7 +3778,7 @@ func (ec *executionContext) _Mutation_moveFile(ctx context.Context, field graphq
 		ec.fieldContext_Mutation_moveFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().MoveFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string))
+			return ec.Resolvers.Mutation().MoveFile(ctx, fc.Args["sourcePath"].(string), fc.Args["destPath"].(string), fc.Args["spaceKey"].(*string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -4954,7 +4990,7 @@ func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.
 		ec.fieldContext_Query_listFiles,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().ListFiles(ctx, fc.Args["path"].(string), fc.Args["offset"].(*int), fc.Args["limit"].(*int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["extensions"].(*string), fc.Args["showHidden"].(*bool), fc.Args["sortBy"].(*SortOption), fc.Args["sortOrder"].(*SortOrder))
+			return ec.Resolvers.Query().ListFiles(ctx, fc.Args["path"].(string), fc.Args["spaceKey"].(*string), fc.Args["offset"].(*int), fc.Args["limit"].(*int), fc.Args["onlyFiles"].(*bool), fc.Args["onlyFolders"].(*bool), fc.Args["extensions"].(*string), fc.Args["showHidden"].(*bool), fc.Args["sortBy"].(*SortOption), fc.Args["sortOrder"].(*SortOrder))
 		},
 		nil,
 		ec.marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileList,
@@ -5001,7 +5037,7 @@ func (ec *executionContext) _Query_statFile(ctx context.Context, field graphql.C
 		ec.fieldContext_Query_statFile,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().StatFile(ctx, fc.Args["path"].(string))
+			return ec.Resolvers.Query().StatFile(ctx, fc.Args["path"].(string), fc.Args["spaceKey"].(*string))
 		},
 		nil,
 		ec.marshalOFileStat2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileStat,

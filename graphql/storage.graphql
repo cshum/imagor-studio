@@ -1,6 +1,7 @@
 type Query {
   listFiles(
     path: String!
+    spaceKey: String
     offset: Int
     limit: Int
     onlyFiles: Boolean
@@ -11,7 +12,7 @@ type Query {
     sortOrder: SortOrder
   ): FileList!
 
-  statFile(path: String!): FileStat
+  statFile(path: String!, spaceKey: String): FileStat
 
   # Storage Configuration APIs
   storageStatus: StorageStatus!
@@ -19,11 +20,11 @@ type Query {
 
 type Mutation {
   # write scope required
-  uploadFile(path: String!, content: Upload!): Boolean!
-  deleteFile(path: String!): Boolean!
-  createFolder(path: String!): Boolean!
-  copyFile(sourcePath: String!, destPath: String!): Boolean!
-  moveFile(sourcePath: String!, destPath: String!): Boolean!
+  uploadFile(path: String!, spaceKey: String, content: Upload!): Boolean!
+  deleteFile(path: String!, spaceKey: String): Boolean!
+  createFolder(path: String!, spaceKey: String): Boolean!
+  copyFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
+  moveFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
 
   # Template management (write scope required)
   saveTemplate(input: SaveTemplateInput!): TemplateResult!

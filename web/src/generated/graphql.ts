@@ -200,10 +200,12 @@ export type MutationConfigureS3StorageArgs = {
 export type MutationCopyFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationCreateFolderArgs = {
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationCreateSpaceArgs = {
@@ -220,6 +222,7 @@ export type MutationDeactivateAccountArgs = {
 
 export type MutationDeleteFileArgs = {
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationDeleteSpaceArgs = {
@@ -255,6 +258,7 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
 export type MutationMoveFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationRegenerateTemplatePreviewArgs = {
@@ -293,6 +297,7 @@ export type MutationUpdateSpaceArgs = {
 export type MutationUploadFileArgs = {
   content: Scalars['Upload']['input']
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type Organization = {
@@ -347,6 +352,7 @@ export type QueryListFilesArgs = {
   showHidden?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
   sortOrder?: InputMaybe<SortOrder>
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryListSystemRegistryArgs = {
@@ -364,6 +370,7 @@ export type QuerySpaceArgs = {
 
 export type QueryStatFileArgs = {
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryUserArgs = {
@@ -864,6 +871,7 @@ export type LicenseStatusQuery = {
 
 export type ListFilesQueryVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
@@ -900,6 +908,7 @@ export type ListFilesQuery = {
 
 export type StatFileQueryVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type StatFileQuery = {
@@ -925,6 +934,7 @@ export type StatFileQuery = {
 
 export type UploadFileMutationVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   content: Scalars['Upload']['input']
 }>
 
@@ -932,12 +942,14 @@ export type UploadFileMutation = { __typename?: 'Mutation'; uploadFile: boolean 
 
 export type DeleteFileMutationVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type DeleteFileMutation = { __typename?: 'Mutation'; deleteFile: boolean }
 
 export type CreateFolderMutationVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
@@ -945,6 +957,7 @@ export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: bool
 export type CopyFileMutationVariables = Exact<{
   sourcePath: Scalars['String']['input']
   destPath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type CopyFileMutation = { __typename?: 'Mutation'; copyFile: boolean }
@@ -952,6 +965,7 @@ export type CopyFileMutation = { __typename?: 'Mutation'; copyFile: boolean }
 export type MoveFileMutationVariables = Exact<{
   sourcePath: Scalars['String']['input']
   destPath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type MoveFileMutation = { __typename?: 'Mutation'; moveFile: boolean }
@@ -2290,6 +2304,11 @@ export const ListFilesDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'offset' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
         },
@@ -2340,6 +2359,11 @@ export const ListFilesDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'path' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'path' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
               {
                 kind: 'Argument',
@@ -2438,6 +2462,11 @@ export const StatFileDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -2450,6 +2479,11 @@ export const StatFileDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'path' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'path' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
             ],
             selectionSet: {
@@ -2501,6 +2535,11 @@ export const UploadFileDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
           type: {
             kind: 'NonNullType',
@@ -2519,6 +2558,11 @@ export const UploadFileDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'path' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'path' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
               {
                 kind: 'Argument',
@@ -2548,6 +2592,11 @@ export const DeleteFileDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -2560,6 +2609,11 @@ export const DeleteFileDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'path' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'path' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
             ],
           },
@@ -2584,6 +2638,11 @@ export const CreateFolderDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -2596,6 +2655,11 @@ export const CreateFolderDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'path' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'path' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
             ],
           },
@@ -2628,6 +2692,11 @@ export const CopyFileDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -2645,6 +2714,11 @@ export const CopyFileDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'destPath' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'destPath' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
             ],
           },
@@ -2677,6 +2751,11 @@ export const MoveFileDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -2694,6 +2773,11 @@ export const MoveFileDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'destPath' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'destPath' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
             ],
           },

@@ -20,6 +20,57 @@ import (
 	"go.uber.org/zap"
 )
 
+// getSpaceStorage returns the storage instance for the given optional spaceKey.
+//
+// When spaceKey is nil/empty or multi-tenancy is disabled (spaceStore == nil),
+// the call falls back transparently to the system storage so all existing
+// single-tenant code paths continue to work unchanged.
+//
+// When spaceKey is set the caller's org membership is verified (JWT claim or
+// DB fallback) and an ephemeral S3 storage instance is built from the space's
+// credentials (no registry round-trip).
+func (r *Resolver) getSpaceStorage(ctx context.Context, spaceKey *string) (storage.Storage, error) {
+	if spaceKey == nil || *spaceKey == "" || r.spaceStore == nil {
+		return r.getStorage(), nil
+	}
+
+	// Resolve caller's org ID so we can enforce ownership.
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the space (decrypts credentials transparently).
+	space, err := r.spaceStore.Get(ctx, *spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up space %q: %w", *spaceKey, err)
+	}
+	if space == nil {
+		return nil, &gqlerror.Error{
+			Message:    fmt.Sprintf("space %q not found", *spaceKey),
+			Extensions: map[string]interface{}{"code": "NOT_FOUND"},
+		}
+	}
+
+	// Authorization: the caller must belong to the space's org.
+	if orgID != "" && space.OrgID != orgID {
+		return nil, &gqlerror.Error{
+			Message:    "forbidden: space does not belong to your organization",
+			Extensions: map[string]interface{}{"code": "FORBIDDEN"},
+		}
+	}
+
+	// Build an ephemeral S3 storage from the space's credentials.
+	p := storageprovider.New(r.logger, nil, nil)
+	return p.NewStorageFromSpaceConfig(
+		space.StorageType,
+		space.Bucket, space.Prefix,
+		space.Region, space.Endpoint,
+		space.AccessKeyID, space.SecretKey,
+		space.UsePathStyle,
+	)
+}
+
 // getPreviewPath returns the preview image path for a template file.
 // Returns empty string if the path is not a template file.
 func getPreviewPath(templatePath string) string {
@@ -30,14 +81,18 @@ func getPreviewPath(templatePath string) string {
 }
 
 // UploadFile is the resolver for the uploadFile field.
-func (r *mutationResolver) UploadFile(ctx context.Context, path string, content graphql.Upload) (bool, error) {
+func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceKey *string, content graphql.Upload) (bool, error) {
 	// Check write permissions and path access
 	if err := RequireWritePermission(ctx, path); err != nil {
 		return false, err
 	}
+	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
+		return false, err
+	}
 	r.logger.Debug("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
 
-	if err := r.getStorage().Put(ctx, path, content.File); err != nil {
+	if err := stor.Put(ctx, path, content.File); err != nil {
 		r.logger.Error("Failed to upload file", zap.Error(err))
 		return false, fmt.Errorf("failed to upload file: %w", err)
 	}
@@ -46,16 +101,20 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, content 
 }
 
 // DeleteFile is the resolver for the deleteFile field.
-func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, error) {
+func (r *mutationResolver) DeleteFile(ctx context.Context, path string, spaceKey *string) (bool, error) {
 	// Check write permissions and path access
 	if err := RequireWritePermission(ctx, path); err != nil {
+		return false, err
+	}
+	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
 		return false, err
 	}
 
 	r.logger.Debug("Deleting file", zap.String("path", path))
 
 	// Delete the main file
-	if err := r.getStorage().Delete(ctx, path); err != nil {
+	if err := stor.Delete(ctx, path); err != nil {
 		r.logger.Error("Failed to delete file", zap.Error(err))
 		return false, fmt.Errorf("failed to delete file: %w", err)
 	}
@@ -63,9 +122,9 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, e
 	// If it's a template file, also delete the preview image
 	if previewPath := getPreviewPath(path); previewPath != "" {
 		// Check if preview exists before attempting to delete
-		if _, err := r.getStorage().Stat(ctx, previewPath); err == nil {
+		if _, err := stor.Stat(ctx, previewPath); err == nil {
 			r.logger.Debug("Deleting template preview", zap.String("path", previewPath))
-			if err := r.getStorage().Delete(ctx, previewPath); err != nil {
+			if err := stor.Delete(ctx, previewPath); err != nil {
 				// Log warning but don't fail the operation
 				r.logger.Warn("Failed to delete template preview", zap.String("path", previewPath), zap.Error(err))
 			}
@@ -76,15 +135,19 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string) (bool, e
 }
 
 // CreateFolder is the resolver for the createFolder field.
-func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool, error) {
+func (r *mutationResolver) CreateFolder(ctx context.Context, path string, spaceKey *string) (bool, error) {
 	// Check write permissions and path access
 	if err := RequireWritePermission(ctx, path); err != nil {
+		return false, err
+	}
+	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
 		return false, err
 	}
 
 	r.logger.Debug("Creating folder", zap.String("path", path))
 
-	if err := r.getStorage().CreateFolder(ctx, path); err != nil {
+	if err := stor.CreateFolder(ctx, path); err != nil {
 		r.logger.Error("Failed to create folder", zap.Error(err))
 		return false, fmt.Errorf("failed to create folder: %w", err)
 	}
@@ -93,7 +156,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string) (bool,
 }
 
 // CopyFile is the resolver for the copyFile field.
-func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, destPath string) (bool, error) {
+func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, destPath string, spaceKey *string) (bool, error) {
 	// Check write permissions for both source and destination paths
 	if err := RequireWritePermission(ctx, sourcePath); err != nil {
 		return false, err
@@ -101,10 +164,14 @@ func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, dest
 	if err := RequireWritePermission(ctx, destPath); err != nil {
 		return false, err
 	}
+	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
+		return false, err
+	}
 
 	r.logger.Debug("Copying file", zap.String("sourcePath", sourcePath), zap.String("destPath", destPath))
 
-	if err := r.getStorage().Copy(ctx, sourcePath, destPath); err != nil {
+	if err := stor.Copy(ctx, sourcePath, destPath); err != nil {
 		r.logger.Error("Failed to copy file", zap.Error(err))
 
 		// Check if error is due to file already existing
@@ -124,7 +191,7 @@ func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, dest
 }
 
 // MoveFile is the resolver for the moveFile field.
-func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, destPath string) (bool, error) {
+func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, destPath string, spaceKey *string) (bool, error) {
 	// Check write permissions for both source and destination paths
 	if err := RequireWritePermission(ctx, sourcePath); err != nil {
 		return false, err
@@ -132,11 +199,15 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 	if err := RequireWritePermission(ctx, destPath); err != nil {
 		return false, err
 	}
+	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
+		return false, err
+	}
 
 	r.logger.Debug("Moving file", zap.String("sourcePath", sourcePath), zap.String("destPath", destPath))
 
 	// Move the main file
-	if err := r.getStorage().Move(ctx, sourcePath, destPath); err != nil {
+	if err := stor.Move(ctx, sourcePath, destPath); err != nil {
 		r.logger.Error("Failed to move file", zap.Error(err))
 
 		// Check if error is due to file already existing
@@ -155,13 +226,13 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 	// If it's a template file, also move the preview image
 	if sourcePreviewPath := getPreviewPath(sourcePath); sourcePreviewPath != "" {
 		// Check if preview exists before attempting to move
-		if _, err := r.getStorage().Stat(ctx, sourcePreviewPath); err == nil {
+		if _, err := stor.Stat(ctx, sourcePreviewPath); err == nil {
 			destPreviewPath := getPreviewPath(destPath)
 			r.logger.Debug("Moving template preview",
 				zap.String("source", sourcePreviewPath),
 				zap.String("dest", destPreviewPath))
 
-			if err := r.getStorage().Move(ctx, sourcePreviewPath, destPreviewPath); err != nil {
+			if err := stor.Move(ctx, sourcePreviewPath, destPreviewPath); err != nil {
 				// Log warning but don't fail the operation
 				r.logger.Warn("Failed to move template preview",
 					zap.String("source", sourcePreviewPath),
@@ -175,9 +246,13 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceKey *string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
 	// Check read permissions and path access
 	if err := RequireReadPermission(ctx, path); err != nil {
+		return nil, err
+	}
+	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
 		return nil, err
 	}
 
@@ -234,7 +309,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 		}
 	}
 
-	result, err := r.getStorage().List(ctx, path, options)
+	result, err := stor.List(ctx, path, options)
 	if err != nil {
 		r.logger.Error("Failed to list files", zap.Error(err))
 		return nil, fmt.Errorf("failed to list files: %w", err)
@@ -275,15 +350,19 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, offset *int,
 }
 
 // StatFile is the resolver for the statFile field.
-func (r *queryResolver) StatFile(ctx context.Context, path string) (*gql.FileStat, error) {
+func (r *queryResolver) StatFile(ctx context.Context, path string, spaceKey *string) (*gql.FileStat, error) {
 	// Check read permissions and path access
 	if err := RequireReadPermission(ctx, path); err != nil {
+		return nil, err
+	}
+	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
 		return nil, err
 	}
 
 	r.logger.Debug("Getting file stats", zap.String("path", path))
 
-	fileInfo, err := r.getStorage().Stat(ctx, path)
+	fileInfo, err := stor.Stat(ctx, path)
 	if err != nil {
 		r.logger.Error("Failed to get file stats", zap.Error(err))
 		return nil, fmt.Errorf("failed to get file stats: %w", err)

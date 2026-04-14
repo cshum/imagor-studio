@@ -168,7 +168,7 @@ func TestUploadFile_RequiresWriteScope(t *testing.T) {
 				Filename: "test.txt",
 			}
 
-			result, err := resolver.Mutation().UploadFile(ctx, "test.txt", upload)
+			result, err := resolver.Mutation().UploadFile(ctx, "test.txt", nil, upload)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -232,7 +232,7 @@ func TestDeleteFile_RequiresWriteScope(t *testing.T) {
 				mockStorage.On("Delete", ctx, "test.txt").Return(nil)
 			}
 
-			result, err := resolver.Mutation().DeleteFile(ctx, "test.txt")
+			result, err := resolver.Mutation().DeleteFile(ctx, "test.txt", nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -296,7 +296,7 @@ func TestCreateFolder_RequiresWriteScope(t *testing.T) {
 				mockStorage.On("CreateFolder", ctx, "newfolder").Return(nil)
 			}
 
-			result, err := resolver.Mutation().CreateFolder(ctx, "newfolder")
+			result, err := resolver.Mutation().CreateFolder(ctx, "newfolder", nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -369,7 +369,7 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 				TotalCount: 2,
 			}, nil)
 
-			result, err := resolver.Query().ListFiles(ctx, path, &offset, &limit, onlyFiles, nil, nil, nil, &sortBy, &sortOrder)
+			result, err := resolver.Query().ListFiles(ctx, path, nil, &offset, &limit, onlyFiles, nil, nil, nil, &sortBy, &sortOrder)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
@@ -407,7 +407,7 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 		ETag:         "abc123",
 	}, nil)
 
-	result, err := resolver.Query().StatFile(ctx, path)
+	result, err := resolver.Query().StatFile(ctx, path, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -443,7 +443,7 @@ func TestDeleteFile_WithTemplatePreview(t *testing.T) {
 	// Mock successful deletion of preview file
 	mockStorage.On("Delete", ctx, previewPath).Return(nil)
 
-	result, err := resolver.Mutation().DeleteFile(ctx, templatePath)
+	result, err := resolver.Mutation().DeleteFile(ctx, templatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -474,7 +474,7 @@ func TestDeleteFile_TemplateWithoutPreview(t *testing.T) {
 	// Mock Stat to check if preview exists (it doesn't)
 	mockStorage.On("Stat", ctx, previewPath).Return(storage.FileInfo{}, assert.AnError)
 
-	result, err := resolver.Mutation().DeleteFile(ctx, templatePath)
+	result, err := resolver.Mutation().DeleteFile(ctx, templatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -511,7 +511,7 @@ func TestDeleteFile_TemplatePreviewDeletionFails(t *testing.T) {
 	// Mock failed deletion of preview file
 	mockStorage.On("Delete", ctx, previewPath).Return(assert.AnError)
 
-	result, err := resolver.Mutation().DeleteFile(ctx, templatePath)
+	result, err := resolver.Mutation().DeleteFile(ctx, templatePath, nil)
 
 	// Should still succeed even though preview deletion failed
 	assert.NoError(t, err)
@@ -538,7 +538,7 @@ func TestDeleteFile_NonTemplateFile(t *testing.T) {
 	// Mock successful deletion of image file
 	mockStorage.On("Delete", ctx, imagePath).Return(nil)
 
-	result, err := resolver.Mutation().DeleteFile(ctx, imagePath)
+	result, err := resolver.Mutation().DeleteFile(ctx, imagePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -577,7 +577,7 @@ func TestMoveFile_WithTemplatePreview(t *testing.T) {
 	// Mock successful move of preview file
 	mockStorage.On("Move", ctx, sourcePreviewPath, destPreviewPath).Return(nil)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -609,7 +609,7 @@ func TestMoveFile_TemplateWithoutPreview(t *testing.T) {
 	// Mock Stat to check if preview exists (it doesn't)
 	mockStorage.On("Stat", ctx, sourcePreviewPath).Return(storage.FileInfo{}, assert.AnError)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -648,7 +648,7 @@ func TestMoveFile_TemplatePreviewMoveFails(t *testing.T) {
 	// Mock failed move of preview file
 	mockStorage.On("Move", ctx, sourcePreviewPath, destPreviewPath).Return(assert.AnError)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath, nil)
 
 	// Should still succeed even though preview move failed
 	assert.NoError(t, err)
@@ -676,7 +676,7 @@ func TestMoveFile_NonTemplateFile(t *testing.T) {
 	// Mock successful move of image file
 	mockStorage.On("Move", ctx, sourceImagePath, destImagePath).Return(nil)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceImagePath, destImagePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceImagePath, destImagePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -716,7 +716,7 @@ func TestMoveFile_TemplateToDifferentFolder(t *testing.T) {
 	// Mock successful move of preview file
 	mockStorage.On("Move", ctx, sourcePreviewPath, destPreviewPath).Return(nil)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -742,7 +742,7 @@ func TestCopyFile(t *testing.T) {
 
 	mockStorage.On("Copy", ctx, sourcePath, destPath).Return(nil)
 
-	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -762,7 +762,7 @@ func TestCopyFile_NoWritePermission(t *testing.T) {
 	sourcePath := "/test/source.txt"
 	destPath := "/test/dest.txt"
 
-	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -785,7 +785,7 @@ func TestCopyFile_StorageError(t *testing.T) {
 
 	mockStorage.On("Copy", ctx, sourcePath, destPath).Return(assert.AnError)
 
-	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -808,7 +808,7 @@ func TestMoveFile(t *testing.T) {
 
 	mockStorage.On("Move", ctx, sourcePath, destPath).Return(nil)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -828,7 +828,7 @@ func TestMoveFile_NoWritePermission(t *testing.T) {
 	sourcePath := "/test/source.txt"
 	destPath := "/test/dest.txt"
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -851,7 +851,7 @@ func TestMoveFile_StorageError(t *testing.T) {
 
 	mockStorage.On("Move", ctx, sourcePath, destPath).Return(assert.AnError)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -874,7 +874,7 @@ func TestMoveFile_FileAlreadyExists(t *testing.T) {
 
 	mockStorage.On("Move", ctx, sourcePath, destPath).Return(os.ErrExist)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -897,7 +897,7 @@ func TestCopyFile_FileAlreadyExists(t *testing.T) {
 
 	mockStorage.On("Copy", ctx, sourcePath, destPath).Return(os.ErrExist)
 
-	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -1183,7 +1183,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 				Filename: "test.txt",
 			}
 
-			result, err := resolver.Mutation().UploadFile(ctx, "test.txt", upload)
+			result, err := resolver.Mutation().UploadFile(ctx, "test.txt", nil, upload)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1205,7 +1205,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 				mockStorage.On("Delete", ctx, "test.txt").Return(nil)
 			}
 
-			result, err := resolver.Mutation().DeleteFile(ctx, "test.txt")
+			result, err := resolver.Mutation().DeleteFile(ctx, "test.txt", nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1227,7 +1227,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 				mockStorage.On("CreateFolder", ctx, "newfolder").Return(nil)
 			}
 
-			result, err := resolver.Mutation().CreateFolder(ctx, "newfolder")
+			result, err := resolver.Mutation().CreateFolder(ctx, "newfolder", nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1272,7 +1272,7 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 					File:     strings.NewReader("test content"),
 					Filename: "test.txt",
 				}
-				return resolver.Mutation().UploadFile(ctx, "test.txt", upload)
+				return resolver.Mutation().UploadFile(ctx, "test.txt", nil, upload)
 			},
 			errorMsg: "failed to upload file",
 		},
@@ -1283,7 +1283,7 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 				mockStorage.On("Delete", ctx, "test.txt").Return(assert.AnError)
 			},
 			execute: func() (bool, error) {
-				return resolver.Mutation().DeleteFile(ctx, "test.txt")
+				return resolver.Mutation().DeleteFile(ctx, "test.txt", nil)
 			},
 			errorMsg: "failed to delete file",
 		},
@@ -1294,7 +1294,7 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 				mockStorage.On("CreateFolder", ctx, "newfolder").Return(assert.AnError)
 			},
 			execute: func() (bool, error) {
-				return resolver.Mutation().CreateFolder(ctx, "newfolder")
+				return resolver.Mutation().CreateFolder(ctx, "newfolder", nil)
 			},
 			errorMsg: "failed to create folder",
 		},
@@ -1347,7 +1347,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 			TotalCount: 1,
 		}, nil)
 
-		result, err := resolver.Query().ListFiles(ctx, path, &offset, &limit, nil, nil, nil, nil, &sortBy, &sortOrder)
+		result, err := resolver.Query().ListFiles(ctx, path, nil, &offset, &limit, nil, nil, nil, nil, &sortBy, &sortOrder)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -1375,7 +1375,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 			ETag:         "abc123",
 		}, nil)
 
-		result, err := resolver.Query().StatFile(ctx, path)
+		result, err := resolver.Query().StatFile(ctx, path, nil)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -1718,7 +1718,7 @@ func TestListFiles(t *testing.T) {
 		TotalCount: 2,
 	}, nil)
 
-	result, err := resolver.Query().ListFiles(ctx, path, &offset, &limit, onlyFiles, nil, nil, nil, &sortBy, &sortOrder)
+	result, err := resolver.Query().ListFiles(ctx, path, nil, &offset, &limit, onlyFiles, nil, nil, nil, &sortBy, &sortOrder)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -1759,7 +1759,7 @@ func TestStatFile(t *testing.T) {
 		ETag:         "abc123",
 	}, nil)
 
-	result, err := resolver.Query().StatFile(ctx, path)
+	result, err := resolver.Query().StatFile(ctx, path, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
