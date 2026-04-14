@@ -43,6 +43,7 @@ import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
+import { CreateSpacePage } from '@/pages/create-space-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
@@ -349,6 +350,14 @@ const spaceCanvasEditorRoute = createRoute({
   },
 })
 
+// /account/spaces/new  →  full-page create-space wizard (no sidebar)
+const createSpaceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/account/spaces/new',
+  beforeLoad: requireAdminAccountAuth,
+  component: CreateSpacePage,
+})
+
 // /spaces/$spaceKey/settings  →  dedicated settings page for a space
 const spaceSettingsRoute = createRoute({
   getParentRoute: () => baseLayoutRoute,
@@ -450,6 +459,7 @@ const routeTree = isEmbeddedMode
     rootRoute.addChildren([
       loginRoute,
       adminSetupRoute,
+      createSpaceRoute,
       canvasEditorRoute,
       galleryCanvasEditorRoute,
       rootImageEditorRoute,
