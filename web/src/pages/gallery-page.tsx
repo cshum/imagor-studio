@@ -625,6 +625,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
       setTimeout(() => handleMoveFromMenu(folderKey, folderName, 'folder'), 0)
     },
+    spaceKey,
   })
 
   const isNavigateToImage = !!(
@@ -800,6 +801,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     },
     onMove: (folderKey, folderName) => handleMoveFromMenu(folderKey, folderName, 'folder'),
     useDropdownItems: true,
+    spaceKey,
   })
 
   // Use the image context menu hook for context menus (right-click)
