@@ -2,6 +2,11 @@
   "layouts": {
     "account": {
       "title": "設定",
+      "backToApp": "返回應用程式",
+      "sections": {
+        "account": "帳戶",
+        "administration": "管理"
+      },
       "tabs": {
         "profile": "個人資料",
         "system": "系統",
@@ -297,7 +302,9 @@
       "profileInformation": "個人資料資訊",
       "profileInformationDescription": "更新您的賬戶個人資料資訊。",
       "displayName": "顯示名稱",
+      "displayNameDescription": "在整個應用程式中顯示的公開名稱。",
       "displayNamePlaceholder": "輸入您的顯示名稱",
+      "usernameDescription": "用於登入，可包含字母、數字、底線和連字號。",
       "usernamePlaceholder": "輸入您的使用者名稱",
       "updateProfile": "更新個人資料",
       "securitySettings": "安全設定",

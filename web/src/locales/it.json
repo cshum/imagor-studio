@@ -2,6 +2,11 @@
   "layouts": {
     "account": {
       "title": "Impostazioni",
+      "backToApp": "Torna all'app",
+      "sections": {
+        "account": "Account",
+        "administration": "Amministrazione"
+      },
       "tabs": {
         "profile": "Profilo",
         "system": "Sistema",
@@ -293,7 +298,9 @@
       "profileInformation": "Informazioni Profilo",
       "profileInformationDescription": "Aggiorna le informazioni del tuo account.",
       "displayName": "Nome Visualizzato",
+      "displayNameDescription": "Il nome pubblico visualizzato in tutta l'app.",
       "displayNamePlaceholder": "Inserisci il tuo nome visualizzato",
+      "usernameDescription": "Utilizzato per l'accesso. Può contenere lettere, numeri, trattini bassi e trattini.",
       "usernamePlaceholder": "Inserisci il tuo nome utente",
       "updateProfile": "Aggiorna Profilo",
       "securitySettings": "Impostazioni di Sicurezza",

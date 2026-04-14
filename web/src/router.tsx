@@ -15,6 +15,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
+import { SpaceSettingsLayout } from '@/layouts/space-settings-layout'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
@@ -358,23 +359,34 @@ const createSpaceRoute = createRoute({
   component: CreateSpacePage,
 })
 
-// /spaces/$spaceKey/settings  →  dedicated settings page for a space
+// /spaces/$spaceKey/settings  →  dedicated settings page for a space (no sidebar)
 const spaceSettingsRoute = createRoute({
-  getParentRoute: () => baseLayoutRoute,
+  getParentRoute: () => settingsLayoutRoute,
   path: '/spaces/$spaceKey/settings',
   beforeLoad: requireAdminAccountAuth,
   loader: ({ params }) => spaceSettingsLoader({ params }),
   shouldReload: false,
   component: () => {
     const loaderData = spaceSettingsRoute.useLoaderData()
-    return <SpaceSettingsPage loaderData={loaderData.space} />
+    return (
+      <SpaceSettingsLayout>
+        <SpaceSettingsPage loaderData={loaderData.space} />
+      </SpaceSettingsLayout>
+    )
   },
 })
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Settings layout (no folder-tree sidebar) ────────────────────────────────
+
+const settingsLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'settings-layout',
+  beforeLoad: requireAuth,
+  component: () => <Outlet />,
+})
 
 const accountLayoutRoute = createRoute({
-  getParentRoute: () => baseLayoutRoute,
+  getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
   beforeLoad: requireAccountAuth,
   loader: () => ({
@@ -467,19 +479,21 @@ const routeTree = isEmbeddedMode
       spaceImageEditorRoute,
       spaceGalleryImageEditorRoute,
       spaceCanvasEditorRoute,
-      baseLayoutRoute.addChildren([
-        rootPath.addChildren([rootImagePage]),
-        galleryRoute.addChildren([imagePage]),
-        spaceRootRoute.addChildren([spaceRootImagePage]),
-        spaceGalleryRoute.addChildren([spaceImagePage]),
+      settingsLayoutRoute.addChildren([
+        spaceSettingsRoute,
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
           accountAdminRoute,
           accountUsersRoute,
           accountSpacesRoute,
-          spaceSettingsRoute,
         ]),
+      ]),
+      baseLayoutRoute.addChildren([
+        rootPath.addChildren([rootImagePage]),
+        galleryRoute.addChildren([imagePage]),
+        spaceRootRoute.addChildren([spaceRootImagePage]),
+        spaceGalleryRoute.addChildren([spaceImagePage]),
       ]),
     ])
 

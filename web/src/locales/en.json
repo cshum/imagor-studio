@@ -2,6 +2,11 @@
   "layouts": {
     "account": {
       "title": "Settings",
+      "backToApp": "Back to App",
+      "sections": {
+        "account": "Account",
+        "administration": "Administration"
+      },
       "tabs": {
         "profile": "Profile",
         "system": "System",
@@ -299,7 +304,9 @@
       "profileInformation": "Profile Information",
       "profileInformationDescription": "Update your account profile information.",
       "displayName": "Display Name",
+      "displayNameDescription": "Your public display name shown throughout the app.",
       "displayNamePlaceholder": "Enter your display name",
+      "usernameDescription": "Used for login. Can contain letters, numbers, underscores, and hyphens.",
       "usernamePlaceholder": "Enter your username",
       "updateProfile": "Update Profile",
       "securitySettings": "Security Settings",
