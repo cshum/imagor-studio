@@ -18,6 +18,7 @@ export interface MoveItemsDialogProps {
   onOpenChange: (open: boolean) => void
   items: MoveItem[]
   currentPath: string
+  spaceKey?: string
   onMoveComplete?: () => void
   onCreateFolder?: (selectedPath: string | null) => void
 }
@@ -27,6 +28,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
   onOpenChange,
   items,
   currentPath,
+  spaceKey,
   onMoveComplete,
   onCreateFolder,
 }) => {
@@ -88,7 +90,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
             continue
           }
 
-          await moveFile(item.key, newPath)
+          await moveFile(item.key, newPath, spaceKey)
           successCount++
 
           // Invalidate folder tree cache for affected paths

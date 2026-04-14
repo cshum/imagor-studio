@@ -968,6 +968,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           existingFiles={images.map((img) => img.imageName)}
           imageExtensions={imageExtensions}
           videoExtensions={videoExtensions}
+          spaceKey={spaceKey}
           onFileSelect={handleFileSelectHandler}
           onUploadStateChange={setUploadState}
           className='min-h-screen'
@@ -1118,6 +1119,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={createFolderPath !== null ? createFolderPath : galleryKey}
+        spaceKey={spaceKey}
       />
 
       <NewCanvasDialog
@@ -1148,6 +1150,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         onOpenChange={handleMoveDialogClose}
         items={moveDialog.items}
         currentPath={galleryKey}
+        spaceKey={spaceKey}
         onMoveComplete={handleMoveComplete}
         onCreateFolder={(selectedPath) => {
           setCreateFolderPath(selectedPath !== null ? selectedPath : galleryKey)

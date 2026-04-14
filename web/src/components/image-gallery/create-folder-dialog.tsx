@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useParams, useRouter } from '@tanstack/react-router'
+import { useRouter } from '@tanstack/react-router'
 import { FolderPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
@@ -43,6 +43,7 @@ interface CreateFolderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   currentPath: string
+  spaceKey?: string
   onFolderCreated?: (folderPath: string) => void
 }
 
@@ -50,12 +51,12 @@ export function CreateFolderDialog({
   open,
   onOpenChange,
   currentPath,
+  spaceKey,
   onFolderCreated,
 }: CreateFolderDialogProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const [isCreating, setIsCreating] = useState(false)
-  const { spaceKey } = useParams({ strict: false })
 
   const form = useForm<CreateFolderFormData>({
     resolver: zodResolver(createFolderSchema),

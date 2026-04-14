@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect } from 'react'
-import { useParams } from '@tanstack/react-router'
 
 import { uploadFile } from '@/api/storage-api'
 import { DropZoneOverlay } from '@/components/upload/drop-zone-overlay.tsx'
@@ -13,6 +12,7 @@ export interface GalleryDropZoneProps {
   videoExtensions?: string
   className?: string
   children?: React.ReactNode
+  spaceKey?: string
   onFileSelect?: (handler: (fileList: FileList | null) => void) => void
   onUploadStateChange?: (uploadState: {
     files: DragDropFile[]
@@ -31,11 +31,11 @@ export function GalleryDropZone({
   videoExtensions,
   className,
   children,
+  spaceKey,
   onFileSelect,
   onUploadStateChange,
 }: GalleryDropZoneProps) {
   const { authState } = useAuth()
-  const { spaceKey } = useParams({ strict: false })
 
   const handleFileUpload = useCallback(
     async (file: File, path: string, signal?: AbortSignal): Promise<boolean> => {
