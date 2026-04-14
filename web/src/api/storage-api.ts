@@ -238,9 +238,10 @@ export async function saveTemplate(
  */
 export async function regenerateTemplatePreview(
   templatePath: string,
+  spaceKey?: string,
 ): Promise<RegenerateTemplatePreviewMutation['regenerateTemplatePreview']> {
   const sdk = getSdk(getGraphQLClient())
-  const variables: RegenerateTemplatePreviewMutationVariables = { templatePath }
+  const variables: RegenerateTemplatePreviewMutationVariables = { templatePath, spaceKey }
   const result = await sdk.RegenerateTemplatePreview(variables)
   return result.regenerateTemplatePreview
 }

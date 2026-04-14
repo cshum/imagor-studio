@@ -19,9 +19,14 @@ import (
 )
 
 // SaveTemplate is the resolver for the saveTemplate field.
-func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTemplateInput) (*gql.TemplateResult, error) {
+func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTemplateInput, spaceKey *string) (*gql.TemplateResult, error) {
 	// Check write permissions for the save path
 	if err := RequireWritePermission(ctx, input.SavePath); err != nil {
+		return nil, err
+	}
+
+	store, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
 		return nil, err
 	}
 
@@ -49,7 +54,7 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 	} else {
 		templateFilePath = fmt.Sprintf("%s/%s.imagor.json", input.SavePath, sanitizedName)
 	}
-	_, err := r.getStorage().Stat(ctx, templateFilePath)
+	_, err = store.Stat(ctx, templateFilePath)
 	if err == nil {
 		// File exists - check if overwrite is allowed
 		overwrite := input.Overwrite != nil && *input.Overwrite
@@ -89,7 +94,7 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 
 	// 4. Save template JSON to storage
 	jsonReader := strings.NewReader(input.TemplateJSON)
-	if err := r.getStorage().Put(ctx, templateFilePath, jsonReader); err != nil {
+	if err := store.Put(ctx, templateFilePath, jsonReader); err != nil {
 		r.logger.Error("Failed to save template JSON", zap.Error(err))
 		msg := fmt.Sprintf("Failed to save template: %v", err)
 		return &gql.TemplateResult{
@@ -110,7 +115,7 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 			previewPath = fmt.Sprintf("%s/%s.imagor.preview", input.SavePath, sanitizedName)
 		}
 		previewReader := bytes.NewReader(previewImage)
-		if err := r.getStorage().Put(ctx, previewPath, previewReader); err != nil {
+		if err := store.Put(ctx, previewPath, previewReader); err != nil {
 			r.logger.Warn("Failed to save preview image (continuing)", zap.Error(err))
 			// Don't fail the operation - template works without preview
 		} else {
@@ -244,8 +249,13 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 // It reads the template JSON from storage, derives preview params, generates the preview
 // via imagor, and writes the result back as a .imagor.preview file.
 // Returns true on success, false if the template JSON cannot be read or preview generation fails.
-func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templatePath string) (bool, error) {
+func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templatePath string, spaceKey *string) (bool, error) {
 	if err := RequireWritePermission(ctx, templatePath); err != nil {
+		return false, err
+	}
+
+	store, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
 		return false, err
 	}
 
@@ -257,7 +267,7 @@ func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templa
 	r.logger.Debug("Regenerating template preview", zap.String("templatePath", templatePath))
 
 	// Read the template JSON from storage
-	reader, err := r.getStorage().Get(ctx, templatePath)
+	reader, err := store.Get(ctx, templatePath)
 	if err != nil {
 		r.logger.Error("Failed to read template JSON", zap.Error(err), zap.String("templatePath", templatePath))
 		return false, nil
@@ -303,7 +313,7 @@ func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templa
 
 	// Write preview to storage
 	previewReader := bytes.NewReader(previewImage)
-	if err := r.getStorage().Put(ctx, previewPath, previewReader); err != nil {
+	if err := store.Put(ctx, previewPath, previewReader); err != nil {
 		r.logger.Error("Failed to save regenerated preview", zap.Error(err),
 			zap.String("previewPath", previewPath))
 		return false, nil

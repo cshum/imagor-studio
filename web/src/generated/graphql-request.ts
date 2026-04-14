@@ -263,11 +263,13 @@ export type MutationMoveFileArgs = {
 }
 
 export type MutationRegenerateTemplatePreviewArgs = {
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   templatePath: Scalars['String']['input']
 }
 
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -1042,6 +1044,7 @@ export type TestStorageConfigMutation = {
 
 export type SaveTemplateMutationVariables = Exact<{
   input: SaveTemplateInput
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type SaveTemplateMutation = {
@@ -1057,6 +1060,7 @@ export type SaveTemplateMutation = {
 
 export type RegenerateTemplatePreviewMutationVariables = Exact<{
   templatePath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type RegenerateTemplatePreviewMutation = {
@@ -1573,8 +1577,8 @@ export const TestStorageConfigDocument = gql`
   }
 `
 export const SaveTemplateDocument = gql`
-  mutation SaveTemplate($input: SaveTemplateInput!) {
-    saveTemplate(input: $input) {
+  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {
+    saveTemplate(input: $input, spaceKey: $spaceKey) {
       success
       templatePath
       previewPath
@@ -1583,8 +1587,8 @@ export const SaveTemplateDocument = gql`
   }
 `
 export const RegenerateTemplatePreviewDocument = gql`
-  mutation RegenerateTemplatePreview($templatePath: String!) {
-    regenerateTemplatePreview(templatePath: $templatePath)
+  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {
+    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)
   }
 `
 export const MeDocument = gql`

@@ -72,7 +72,7 @@ func TestSaveTemplate(t *testing.T) {
 		}
 
 		// Execute
-		result, err := resolver.Mutation().SaveTemplate(ctx, input)
+		result, err := resolver.Mutation().SaveTemplate(ctx, input, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -128,7 +128,7 @@ func TestSaveTemplate(t *testing.T) {
 			SavePath:        "my-folder",
 		}
 
-		result, err := resolver.Mutation().SaveTemplate(ctx, input)
+		result, err := resolver.Mutation().SaveTemplate(ctx, input, nil)
 
 		assert.NoError(t, err)
 		assert.True(t, result.Success)
@@ -155,7 +155,7 @@ func TestSaveTemplate(t *testing.T) {
 			SavePath:        "templates",
 		}
 
-		result, err := resolver.Mutation().SaveTemplate(ctx, input)
+		result, err := resolver.Mutation().SaveTemplate(ctx, input, nil)
 
 		assert.NoError(t, err)
 		assert.False(t, result.Success)
@@ -186,7 +186,7 @@ func TestSaveTemplate(t *testing.T) {
 			SavePath:        "templates",
 		}
 
-		result, err := resolver.Mutation().SaveTemplate(ctx, input)
+		result, err := resolver.Mutation().SaveTemplate(ctx, input, nil)
 
 		assert.NoError(t, err)
 		assert.False(t, result.Success)
@@ -213,7 +213,7 @@ func TestSaveTemplate(t *testing.T) {
 			SavePath:        "templates",
 		}
 
-		_, err := resolver.Mutation().SaveTemplate(ctx, input)
+		_, err := resolver.Mutation().SaveTemplate(ctx, input, nil)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "write access required")
@@ -245,7 +245,7 @@ func TestSaveTemplate(t *testing.T) {
 			Overwrite:       nil, // Default: no overwrite
 		}
 
-		_, err := resolver.Mutation().SaveTemplate(ctx, input)
+		_, err := resolver.Mutation().SaveTemplate(ctx, input, nil)
 
 		// Should return a conflict error
 		assert.Error(t, err)
@@ -297,7 +297,7 @@ func TestSaveTemplate(t *testing.T) {
 			Overwrite:       &overwriteTrue,
 		}
 
-		result, err := resolver.Mutation().SaveTemplate(ctx, input)
+		result, err := resolver.Mutation().SaveTemplate(ctx, input, nil)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)

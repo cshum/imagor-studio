@@ -148,8 +148,8 @@ export const TEST_STORAGE_CONFIG = gql(`
 `)
 
 export const SAVE_TEMPLATE = gql(`
-  mutation SaveTemplate($input: SaveTemplateInput!) {
-    saveTemplate(input: $input) {
+  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {
+    saveTemplate(input: $input, spaceKey: $spaceKey) {
       success
       templatePath
       previewPath
@@ -159,7 +159,7 @@ export const SAVE_TEMPLATE = gql(`
 `)
 
 export const REGENERATE_TEMPLATE_PREVIEW = gql(`
-  mutation RegenerateTemplatePreview($templatePath: String!) {
-    regenerateTemplatePreview(templatePath: $templatePath)
+  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {
+    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)
   }
 `)

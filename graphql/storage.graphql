@@ -27,8 +27,8 @@ type Mutation {
   moveFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
 
   # Template management (write scope required)
-  saveTemplate(input: SaveTemplateInput!): TemplateResult!
-  regenerateTemplatePreview(templatePath: String!): Boolean!
+  saveTemplate(input: SaveTemplateInput!, spaceKey: String): TemplateResult!
+  regenerateTemplatePreview(templatePath: String!, spaceKey: String): Boolean!
 
   # Storage Configuration APIs (admin only)
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!

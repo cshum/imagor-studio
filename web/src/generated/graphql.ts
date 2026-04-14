@@ -262,11 +262,13 @@ export type MutationMoveFileArgs = {
 }
 
 export type MutationRegenerateTemplatePreviewArgs = {
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   templatePath: Scalars['String']['input']
 }
 
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -1041,6 +1043,7 @@ export type TestStorageConfigMutation = {
 
 export type SaveTemplateMutationVariables = Exact<{
   input: SaveTemplateInput
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type SaveTemplateMutation = {
@@ -1056,6 +1059,7 @@ export type SaveTemplateMutation = {
 
 export type RegenerateTemplatePreviewMutationVariables = Exact<{
   templatePath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type RegenerateTemplatePreviewMutation = {
@@ -2988,6 +2992,11 @@ export const SaveTemplateDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'SaveTemplateInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -3000,6 +3009,11 @@ export const SaveTemplateDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'input' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
             ],
             selectionSet: {
@@ -3033,6 +3047,11 @@ export const RegenerateTemplatePreviewDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -3045,6 +3064,11 @@ export const RegenerateTemplatePreviewDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'templatePath' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'templatePath' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
             ],
           },

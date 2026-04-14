@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
 import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -55,6 +55,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
   const navigate = useNavigate()
   const router = useRouter()
   const { authState } = useAuth()
+  const { spaceKey } = useParams({ strict: false })
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
@@ -390,7 +391,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         galleryKey || '',
         true, // overwrite = true for direct save
       )
-      await saveTemplate({ input: saveInput })
+      await saveTemplate({ input: saveInput, spaceKey })
 
       // Mark as saved to skip unsaved changes warning
       isSavedRef.current = true
@@ -404,7 +405,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       console.error('Failed to save template:', error)
       toast.error(t('imageEditor.template.saveError'))
     }
-  }, [imageEditor, router, t, templateMetadata])
+  }, [imageEditor, router, t, templateMetadata, spaceKey])
 
   const handleApplyTemplate = async (selectedPaths: string[]) => {
     if (selectedPaths.length === 0) return
@@ -413,7 +414,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
     try {
       // Fetch file metadata first
-      const fileStat = await statFile(templatePath)
+      const fileStat = await statFile(templatePath, spaceKey)
 
       if (!fileStat || !fileStat.thumbnailUrls?.original) {
         throw new Error('Template file URL not available')
@@ -953,6 +954,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         imageEditor={imageEditor}
         templateMetadata={templateMetadata}
         galleryKey={propGalleryKey}
+        spaceKey={spaceKey}
         title={
           templateMetadata
             ? t('imageEditor.template.saveTemplateAs')

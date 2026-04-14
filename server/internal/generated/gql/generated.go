@@ -111,8 +111,8 @@ type ComplexityRoot struct {
 		GenerateImagorURL             func(childComplexity int, imagePath string, params ImagorParamsInput) int
 		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
 		MoveFile                      func(childComplexity int, sourcePath string, destPath string, spaceKey *string) int
-		RegenerateTemplatePreview     func(childComplexity int, templatePath string) int
-		SaveTemplate                  func(childComplexity int, input SaveTemplateInput) int
+		RegenerateTemplatePreview     func(childComplexity int, templatePath string, spaceKey *string) int
+		SaveTemplate                  func(childComplexity int, input SaveTemplateInput, spaceKey *string) int
 		SetSystemRegistry             func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
 		SetUserRegistry               func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		TestStorageConfig             func(childComplexity int, input StorageConfigInput) int
@@ -248,8 +248,8 @@ type MutationResolver interface {
 	CreateFolder(ctx context.Context, path string, spaceKey *string) (bool, error)
 	CopyFile(ctx context.Context, sourcePath string, destPath string, spaceKey *string) (bool, error)
 	MoveFile(ctx context.Context, sourcePath string, destPath string, spaceKey *string) (bool, error)
-	SaveTemplate(ctx context.Context, input SaveTemplateInput) (*TemplateResult, error)
-	RegenerateTemplatePreview(ctx context.Context, templatePath string) (bool, error)
+	SaveTemplate(ctx context.Context, input SaveTemplateInput, spaceKey *string) (*TemplateResult, error)
+	RegenerateTemplatePreview(ctx context.Context, templatePath string, spaceKey *string) (bool, error)
 	ConfigureFileStorage(ctx context.Context, input FileStorageInput) (*StorageConfigResult, error)
 	ConfigureS3Storage(ctx context.Context, input S3StorageInput) (*StorageConfigResult, error)
 	TestStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageTestResult, error)
@@ -710,7 +710,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.RegenerateTemplatePreview(childComplexity, args["templatePath"].(string)), true
+		return e.ComplexityRoot.Mutation.RegenerateTemplatePreview(childComplexity, args["templatePath"].(string), args["spaceKey"].(*string)), true
 	case "Mutation.saveTemplate":
 		if e.ComplexityRoot.Mutation.SaveTemplate == nil {
 			break
@@ -721,7 +721,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.SaveTemplate(childComplexity, args["input"].(SaveTemplateInput)), true
+		return e.ComplexityRoot.Mutation.SaveTemplate(childComplexity, args["input"].(SaveTemplateInput), args["spaceKey"].(*string)), true
 	case "Mutation.setSystemRegistry":
 		if e.ComplexityRoot.Mutation.SetSystemRegistry == nil {
 			break
@@ -1696,8 +1696,8 @@ type Mutation {
   moveFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
 
   # Template management (write scope required)
-  saveTemplate(input: SaveTemplateInput!): TemplateResult!
-  regenerateTemplatePreview(templatePath: String!): Boolean!
+  saveTemplate(input: SaveTemplateInput!, spaceKey: String): TemplateResult!
+  regenerateTemplatePreview(templatePath: String!, spaceKey: String): Boolean!
 
   # Storage Configuration APIs (admin only)
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!
@@ -2164,6 +2164,11 @@ func (ec *executionContext) field_Mutation_regenerateTemplatePreview_args(ctx co
 		return nil, err
 	}
 	args["templatePath"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg1
 	return args, nil
 }
 
@@ -2175,6 +2180,11 @@ func (ec *executionContext) field_Mutation_saveTemplate_args(ctx context.Context
 		return nil, err
 	}
 	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg1
 	return args, nil
 }
 
@@ -3819,7 +3829,7 @@ func (ec *executionContext) _Mutation_saveTemplate(ctx context.Context, field gr
 		ec.fieldContext_Mutation_saveTemplate,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().SaveTemplate(ctx, fc.Args["input"].(SaveTemplateInput))
+			return ec.Resolvers.Mutation().SaveTemplate(ctx, fc.Args["input"].(SaveTemplateInput), fc.Args["spaceKey"].(*string))
 		},
 		nil,
 		ec.marshalNTemplateResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐTemplateResult,
@@ -3870,7 +3880,7 @@ func (ec *executionContext) _Mutation_regenerateTemplatePreview(ctx context.Cont
 		ec.fieldContext_Mutation_regenerateTemplatePreview,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().RegenerateTemplatePreview(ctx, fc.Args["templatePath"].(string))
+			return ec.Resolvers.Mutation().RegenerateTemplatePreview(ctx, fc.Args["templatePath"].(string), fc.Args["spaceKey"].(*string))
 		},
 		nil,
 		ec.marshalNBoolean2bool,
