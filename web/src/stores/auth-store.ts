@@ -145,7 +145,21 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
     const currentAccessToken = accessToken || getToken()
 
     if (currentAccessToken) {
-      const profile = await getCurrentUser(currentAccessToken)
+      // Run token validation and first-run check in parallel — zero extra latency.
+      // checkFirstRun populates multiTenant regardless of which auth path we take.
+      const [profile, firstRunResponse] = await Promise.all([
+        getCurrentUser(currentAccessToken),
+        checkFirstRun().catch(() => null),
+      ])
+      if (firstRunResponse) {
+        authStore.dispatch({
+          type: 'SET_FIRST_RUN',
+          payload: {
+            isFirstRun: firstRunResponse.isFirstRun,
+            multiTenant: firstRunResponse.multiTenant,
+          },
+        })
+      }
       return authStore.dispatch({
         type: 'INIT',
         payload: { accessToken: currentAccessToken, profile },
@@ -192,7 +206,7 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
         }
         authStore.dispatch({
           type: 'SET_FIRST_RUN',
-          payload: { isFirstRun: true },
+          payload: { isFirstRun: true, multiTenant: firstRunResponse.multiTenant },
         })
         return authStore.dispatch({ type: 'LOGOUT' })
       }

@@ -5,6 +5,7 @@ import {
   createRouter,
   Navigate,
   Outlet,
+  redirect,
   RouterProvider,
 } from '@tanstack/react-router'
 
@@ -20,8 +21,8 @@ import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-co
 import {
   adminLoader,
   profileLoader,
-  spacesLoader,
   spaceSettingsLoader,
+  spacesLoader,
   usersLoader,
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
@@ -50,7 +51,7 @@ import { ProfilePage } from '@/pages/profile-page'
 import { SpaceSettingsPage } from '@/pages/space-settings-page'
 import { SpacesPage } from '@/pages/spaces-page'
 import { UsersPage } from '@/pages/users-page'
-import { initAuth, useAuthEffect } from '@/stores/auth-store.ts'
+import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import {
   initializeFolderTreeCache,
   loadHomeTitle,
@@ -109,6 +110,14 @@ const baseLayoutRoute = createRoute({
 const rootPath = createRoute({
   getParentRoute: () => baseLayoutRoute,
   path: '/',
+  // In multi-tenant (SaaS) mode there is no system-level root gallery.
+  // Redirect to the spaces list so the user picks a space.
+  beforeLoad: () => {
+    const auth = getAuth()
+    if (auth.multiTenant) {
+      throw redirect({ to: '/account/spaces' })
+    }
+  },
   component: () => {
     const galleryLoaderData = rootPath.useLoaderData()
     return (
@@ -487,7 +496,11 @@ export function AppRouter() {
         initializeTheme(userThemeStorage, 'class')
         initializeSidebar(userSidebarStorage)
       }
-      loadRootFolders()
+      // In multi-tenant (SaaS) mode there is no system-level root gallery,
+      // so skip the root-folder sidebar fetch — it would fail with NOT_AVAILABLE.
+      if (!authState.multiTenant) {
+        loadRootFolders()
+      }
       loadHomeTitle()
     } else if (action.type === 'LOGOUT') {
       initializeTheme(localThemeStorage, 'class')

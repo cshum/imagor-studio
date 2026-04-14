@@ -280,7 +280,11 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                   <FormItem>
                     <FormLabel>{t('pages.spaceSettings.general.customDomain')}</FormLabel>
                     <FormControl>
-                      <Input placeholder='images.example.com' {...field} disabled={isSavingGeneral} />
+                      <Input
+                        placeholder='images.example.com'
+                        {...field}
+                        disabled={isSavingGeneral}
+                      />
                     </FormControl>
                     <FormDescription>
                       {t('pages.spaceSettings.general.customDomainDescription')}
@@ -404,9 +408,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                         <Input
                           type='password'
                           placeholder={
-                            space.bucket
-                              ? t('pages.spaceSettings.placeholders.unchanged')
-                              : ''
+                            space.bucket ? t('pages.spaceSettings.placeholders.unchanged') : ''
                           }
                           {...field}
                           disabled={isSavingStorage}

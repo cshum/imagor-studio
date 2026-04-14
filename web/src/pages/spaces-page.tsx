@@ -97,7 +97,9 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
       // Navigate to the new space's settings page
       await navigate({ to: '/spaces/$spaceKey/settings', params: { spaceKey: values.key } })
     } catch (err) {
-      toast.error(`${t('pages.spaces.messages.createSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`)
+      toast.error(
+        `${t('pages.spaces.messages.createSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
+      )
     } finally {
       setIsSaving(false)
     }
@@ -113,7 +115,9 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
       setSelectedSpace(null)
       window.location.reload()
     } catch (err) {
-      toast.error(`${t('pages.spaces.messages.deleteSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`)
+      toast.error(
+        `${t('pages.spaces.messages.deleteSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
+      )
     } finally {
       setIsDeleting(false)
     }
@@ -222,7 +226,11 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                       </div>
                     </div>
                     <div className='flex gap-2'>
-                      <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }} className='flex-1'>
+                      <Link
+                        to='/spaces/$spaceKey'
+                        params={{ spaceKey: space.key }}
+                        className='flex-1'
+                      >
                         <Button variant='outline' size='sm' className='w-full'>
                           <FolderOpen className='mr-1 h-4 w-4' />
                           {t('pages.spaces.openGallery')}
@@ -360,4 +368,3 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
     </div>
   )
 }
-
