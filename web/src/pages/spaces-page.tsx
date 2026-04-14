@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { FolderOpen, Plus, Settings, Trash2 } from 'lucide-react'
+import { CheckCircle2, FolderOpen, Plus, Settings, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -35,14 +35,41 @@ interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']
 }
 
-const createSchema = z.object({
-  key: z
-    .string()
-    .min(1)
-    .max(64)
-    .regex(/^[a-z0-9-]+$/, 'Key must be lowercase letters, numbers or hyphens'),
-  name: z.string().min(1).max(255),
-})
+const createSchema = z
+  .object({
+    key: z
+      .string()
+      .min(1)
+      .max(64)
+      .regex(/^[a-z0-9-]+$/, 'Key must be lowercase letters, numbers or hyphens'),
+    name: z.string().min(1).max(255),
+    storageType: z.enum(['managed', 's3']),
+    // BYOB fields — only validated when storageType === 's3'
+    bucket: z.string().optional(),
+    region: z.string().optional(),
+    endpoint: z.string().optional(),
+    prefix: z.string().optional(),
+    accessKeyId: z.string().optional(),
+    secretKey: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.storageType === 's3') {
+      if (!data.bucket?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Bucket is required',
+          path: ['bucket'],
+        })
+      }
+      if (!data.region?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Region is required',
+          path: ['region'],
+        })
+      }
+    }
+  })
 type CreateFormData = z.infer<typeof createSchema>
 
 function slugify(value: string) {
@@ -66,23 +93,27 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
 
   const createForm = useForm<CreateFormData>({
     resolver: zodResolver(createSchema),
-    defaultValues: { key: '', name: '' },
+    defaultValues: { key: '', name: '', storageType: 'managed' },
   })
+
+  const selectedStorageType = useWatch({ control: createForm.control, name: 'storageType' })
+  const isByobCreate = selectedStorageType === 's3'
 
   const handleCreateSpace = async (values: CreateFormData) => {
     setIsSaving(true)
+    const isByob = values.storageType === 's3'
     try {
       await createSpace({
         input: {
           key: values.key,
           name: values.name,
-          storageType: 's3',
-          bucket: null,
-          region: null,
-          endpoint: null,
-          prefix: null,
-          accessKeyId: null,
-          secretKey: null,
+          storageType: values.storageType,
+          bucket: isByob ? (values.bucket ?? null) : null,
+          region: isByob ? (values.region ?? null) : null,
+          endpoint: isByob ? (values.endpoint ?? null) : null,
+          prefix: isByob ? (values.prefix ?? null) : null,
+          accessKeyId: isByob ? (values.accessKeyId ?? null) : null,
+          secretKey: isByob ? (values.secretKey ?? null) : null,
           usePathStyle: null,
           customDomain: null,
           isShared: null,
@@ -93,7 +124,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
       })
       toast.success(t('pages.spaces.messages.spaceCreatedSuccess'))
       setIsCreateDialogOpen(false)
-      createForm.reset({ key: '', name: '' })
+      createForm.reset({ key: '', name: '', storageType: 'managed' })
       // Navigate to the new space's settings page
       await navigate({ to: '/spaces/$spaceKey/settings', params: { spaceKey: values.key } })
     } catch (err) {
@@ -164,15 +195,11 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                     <div className='font-mono text-sm font-medium'>{space.key}</div>
                     <div>{space.name}</div>
                     <div>
-                      {space.bucket ? (
-                        <span className='bg-muted inline-flex items-center rounded px-2 py-0.5 text-xs font-medium'>
-                          S3
-                        </span>
-                      ) : (
-                        <span className='text-muted-foreground text-xs'>
-                          {t('pages.spaces.storageNotConfigured')}
-                        </span>
-                      )}
+                      <span className='bg-muted inline-flex items-center rounded px-2 py-0.5 text-xs font-medium'>
+                        {space.storageType === 's3'
+                          ? t('pages.spaces.storageType.s3')
+                          : t('pages.spaces.storageType.managed')}
+                      </span>
                     </div>
                     <div className='flex items-center gap-2'>
                       <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
@@ -321,6 +348,146 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                 </FormItem>
               )}
             />
+
+            {/* Storage type selector */}
+            <FormField
+              control={createForm.control}
+              name='storageType'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.spaces.storageTypeLabel')}</FormLabel>
+                  <div className='grid grid-cols-2 gap-3'>
+                    {(['managed', 's3'] as const).map((type) => {
+                      const isSelected = field.value === type
+                      return (
+                        <button
+                          key={type}
+                          type='button'
+                          disabled={isSaving}
+                          onClick={() => field.onChange(type)}
+                          className={[
+                            'relative rounded-lg border p-4 text-left transition-colors',
+                            isSelected
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:bg-muted/50',
+                          ].join(' ')}
+                        >
+                          {isSelected && (
+                            <CheckCircle2 className='text-primary absolute top-2 right-2 h-4 w-4' />
+                          )}
+                          <p className='text-sm font-medium'>
+                            {t(`pages.spaces.storageType.${type}`)}
+                          </p>
+                          <p className='text-muted-foreground mt-1 text-xs'>
+                            {t(`pages.spaces.storageTypeDesc.${type}`)}
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* BYOB S3 fields — shown only when storageType === 's3' */}
+            {isByobCreate && (
+              <>
+                <div className='grid grid-cols-2 gap-4'>
+                  <FormField
+                    control={createForm.control}
+                    name='bucket'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.spaceSettings.storage.bucket')} *</FormLabel>
+                        <FormControl>
+                          <Input placeholder='my-bucket' {...field} disabled={isSaving} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name='region'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.spaceSettings.storage.region')} *</FormLabel>
+                        <FormControl>
+                          <Input placeholder='us-east-1' {...field} disabled={isSaving} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={createForm.control}
+                  name='endpoint'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='https://s3.amazonaws.com'
+                          {...field}
+                          disabled={isSaving}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t('pages.spaceSettings.storage.endpointDescription')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name='prefix'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
+                      <FormControl>
+                        <Input placeholder='media/' {...field} disabled={isSaving} />
+                      </FormControl>
+                      <FormDescription>
+                        {t('pages.spaceSettings.storage.prefixDescription')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className='grid grid-cols-2 gap-4'>
+                  <FormField
+                    control={createForm.control}
+                    name='accessKeyId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.spaceSettings.storage.accessKeyId')}</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled={isSaving} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name='secretKey'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.spaceSettings.storage.secretKey')}</FormLabel>
+                        <FormControl>
+                          <Input type='password' {...field} disabled={isSaving} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </>
+            )}
+
             <ResponsiveDialogFooter>
               <Button
                 type='button'

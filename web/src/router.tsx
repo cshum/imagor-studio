@@ -462,13 +462,13 @@ const routeTree = isEmbeddedMode
         galleryRoute.addChildren([imagePage]),
         spaceRootRoute.addChildren([spaceRootImagePage]),
         spaceGalleryRoute.addChildren([spaceImagePage]),
-        spaceSettingsRoute,
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
           accountAdminRoute,
           accountUsersRoute,
           accountSpacesRoute,
+          spaceSettingsRoute,
         ]),
       ]),
     ])

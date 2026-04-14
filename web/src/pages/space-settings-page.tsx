@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
-import { AlertTriangle, ArrowLeft, FolderOpen, Settings } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Database, FolderOpen, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -28,6 +28,13 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import type { GetSpaceQuery } from '@/generated/graphql'
 
@@ -45,11 +52,9 @@ const generalSchema = z.object({
 })
 type GeneralFormData = z.infer<typeof generalSchema>
 
-// ── Storage section ──────────────────────────────────────────────────────────
+// ── BYOB Storage section (credentials rotation only) ─────────────────────────
 
 const storageSchema = z.object({
-  bucket: z.string().optional(),
-  region: z.string().optional(),
   endpoint: z.string().optional(),
   prefix: z.string().optional(),
   accessKeyId: z.string().optional(),
@@ -57,13 +62,14 @@ const storageSchema = z.object({
 })
 type StorageFormData = z.infer<typeof storageSchema>
 
-// ── Security section ─────────────────────────────────────────────────────────
+// ── Image Processing section ─────────────────────────────────────────────────
 
-const securitySchema = z.object({
+const imageProcessingSchema = z.object({
   imagorSecret: z.string().optional(),
   signerAlgorithm: z.enum(['sha1', 'sha256', 'sha512']).optional(),
+  signerTruncate: z.number().int().min(0).optional(),
 })
-type SecurityFormData = z.infer<typeof securitySchema>
+type ImageProcessingFormData = z.infer<typeof imageProcessingSchema>
 
 // ── Page component ───────────────────────────────────────────────────────────
 
@@ -73,6 +79,9 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
   const navigate = useNavigate()
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // BYOB = user provided their own S3 bucket at creation time
+  const isByob = space.storageType === 's3'
 
   // -- General form ----------------------------------------------------------
   const generalForm = useForm<GeneralFormData>({
@@ -116,12 +125,10 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
     }
   }
 
-  // -- Storage form ----------------------------------------------------------
+  // -- BYOB Storage form (credentials + endpoint + prefix rotation) ----------
   const storageForm = useForm<StorageFormData>({
     resolver: zodResolver(storageSchema),
     defaultValues: {
-      bucket: space.bucket ?? '',
-      region: space.region ?? '',
       endpoint: space.endpoint ?? '',
       prefix: space.prefix ?? '',
       accessKeyId: '',
@@ -138,9 +145,9 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
         input: {
           key: space.key,
           name: space.name,
-          storageType: 's3',
-          bucket: values.bucket ?? null,
-          region: values.region ?? null,
+          storageType: null,
+          bucket: null, // bucket is locked after creation
+          region: null, // region is locked after creation
           endpoint: values.endpoint ?? null,
           prefix: values.prefix ?? null,
           accessKeyId: values.accessKeyId ?? null,
@@ -164,18 +171,19 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
     }
   }
 
-  // -- Security form ---------------------------------------------------------
-  const securityForm = useForm<SecurityFormData>({
-    resolver: zodResolver(securitySchema),
+  // -- Image Processing form -------------------------------------------------
+  const imageProcessingForm = useForm<ImageProcessingFormData>({
+    resolver: zodResolver(imageProcessingSchema),
     defaultValues: {
       imagorSecret: '',
-      signerAlgorithm: (space.signerAlgorithm as 'sha1' | 'sha256' | 'sha512') ?? 'sha256',
+      signerAlgorithm: (space.signerAlgorithm as 'sha1' | 'sha256' | 'sha512') || 'sha256',
+      signerTruncate: space.signerTruncate ?? 0,
     },
   })
-  const [isSavingSecurity, setIsSavingSecurity] = useState(false)
+  const [isSavingImageProcessing, setIsSavingImageProcessing] = useState(false)
 
-  const handleSaveSecurity = async (values: SecurityFormData) => {
-    setIsSavingSecurity(true)
+  const handleSaveImageProcessing = async (values: ImageProcessingFormData) => {
+    setIsSavingImageProcessing(true)
     try {
       await updateSpace({
         key: space.key,
@@ -193,17 +201,17 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
           customDomain: null,
           isShared: null,
           signerAlgorithm: values.signerAlgorithm ?? null,
-          signerTruncate: null,
+          signerTruncate: values.signerTruncate ?? null,
           imagorSecret: values.imagorSecret || null, // blank = keep existing
         },
       })
-      toast.success(t('pages.spaceSettings.security.saved'))
-      securityForm.setValue('imagorSecret', '')
+      toast.success(t('pages.spaceSettings.imageProcessing.saved'))
+      imageProcessingForm.setValue('imagorSecret', '')
       await router.invalidate()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
     } finally {
-      setIsSavingSecurity(false)
+      setIsSavingImageProcessing(false)
     }
   }
 
@@ -310,179 +318,226 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
           <CardDescription>{t('pages.spaceSettings.storage.description')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...storageForm}>
-            <form onSubmit={storageForm.handleSubmit(handleSaveStorage)} className='space-y-4'>
-              <div className='grid grid-cols-2 gap-4'>
-                <FormField
-                  control={storageForm.control}
-                  name='bucket'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('pages.spaceSettings.storage.bucket')}</FormLabel>
-                      <FormControl>
-                        <Input placeholder='my-bucket' {...field} disabled={isSavingStorage} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={storageForm.control}
-                  name='region'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('pages.spaceSettings.storage.region')}</FormLabel>
-                      <FormControl>
-                        <Input placeholder='us-east-1' {...field} disabled={isSavingStorage} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {!isByob ? (
+            /* Platform-managed: read-only info */
+            <div className='bg-muted/50 flex items-start gap-3 rounded-lg border p-4'>
+              <Database className='text-muted-foreground mt-0.5 h-5 w-5 shrink-0' />
+              <div className='space-y-1'>
+                <p className='text-sm font-medium'>
+                  {t('pages.spaceSettings.storage.managedTitle')}
+                </p>
+                <p className='text-muted-foreground text-sm'>
+                  {t('pages.spaceSettings.storage.managedDescription')}
+                </p>
               </div>
-              <FormField
-                control={storageForm.control}
-                name='endpoint'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='https://s3.amazonaws.com (leave blank for AWS default)'
-                        {...field}
-                        disabled={isSavingStorage}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t('pages.spaceSettings.storage.endpointDescription')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={storageForm.control}
-                name='prefix'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder='media/' {...field} disabled={isSavingStorage} />
-                    </FormControl>
-                    <FormDescription>
-                      {t('pages.spaceSettings.storage.prefixDescription')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='grid grid-cols-2 gap-4'>
-                <FormField
-                  control={storageForm.control}
-                  name='accessKeyId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('pages.spaceSettings.storage.accessKeyId')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder={
-                            space.bucket
-                              ? t('pages.spaceSettings.placeholders.unchanged')
-                              : 'AKIAIOSFODNN7EXAMPLE'
-                          }
-                          {...field}
-                          disabled={isSavingStorage}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+            </div>
+          ) : (
+            /* BYOB: show bucket/region as locked, allow credential rotation */
+            <>
+              <div className='bg-muted/30 mb-4 rounded-lg border p-3'>
+                <p className='text-sm'>
+                  <span className='text-muted-foreground font-medium'>
+                    {t('pages.spaceSettings.storage.bucket')}:
+                  </span>{' '}
+                  <span className='font-mono text-sm'>{space.bucket}</span>
+                  {space.region && (
+                    <>
+                      <span className='text-muted-foreground mx-2'>·</span>
+                      <span className='text-muted-foreground font-medium'>
+                        {t('pages.spaceSettings.storage.region')}:
+                      </span>{' '}
+                      <span className='font-mono text-sm'>{space.region}</span>
+                    </>
                   )}
-                />
-                <FormField
-                  control={storageForm.control}
-                  name='secretKey'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('pages.spaceSettings.storage.secretKey')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='password'
-                          placeholder={
-                            space.bucket ? t('pages.spaceSettings.placeholders.unchanged') : ''
-                          }
-                          {...field}
-                          disabled={isSavingStorage}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                </p>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {t('pages.spaceSettings.storage.bucketLocked')}
+                </p>
               </div>
-              <div className='flex justify-end'>
-                <ButtonWithLoading type='submit' isLoading={isSavingStorage}>
-                  {t('common.buttons.save')}
-                </ButtonWithLoading>
-              </div>
-            </form>
-          </Form>
+              <Form {...storageForm}>
+                <form onSubmit={storageForm.handleSubmit(handleSaveStorage)} className='space-y-4'>
+                  <FormField
+                    control={storageForm.control}
+                    name='endpoint'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='https://s3.amazonaws.com'
+                            {...field}
+                            disabled={isSavingStorage}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t('pages.spaceSettings.storage.endpointDescription')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={storageForm.control}
+                    name='prefix'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder='media/' {...field} disabled={isSavingStorage} />
+                        </FormControl>
+                        <FormDescription>
+                          {t('pages.spaceSettings.storage.prefixDescription')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className='grid grid-cols-2 gap-4'>
+                    <FormField
+                      control={storageForm.control}
+                      name='accessKeyId'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('pages.spaceSettings.storage.accessKeyId')}</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder={t('pages.spaceSettings.placeholders.unchanged')}
+                              {...field}
+                              disabled={isSavingStorage}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={storageForm.control}
+                      name='secretKey'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('pages.spaceSettings.storage.secretKey')}</FormLabel>
+                          <FormControl>
+                            <Input
+                              type='password'
+                              placeholder={t('pages.spaceSettings.placeholders.unchanged')}
+                              {...field}
+                              disabled={isSavingStorage}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className='flex justify-end'>
+                    <ButtonWithLoading type='submit' isLoading={isSavingStorage}>
+                      {t('common.buttons.save')}
+                    </ButtonWithLoading>
+                  </div>
+                </form>
+              </Form>
+            </>
+          )}
         </CardContent>
       </Card>
 
       {/* ── Image Processing ────────────────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('pages.spaceSettings.sections.security')}</CardTitle>
-          <CardDescription>{t('pages.spaceSettings.security.description')}</CardDescription>
+          <CardTitle>{t('pages.spaceSettings.sections.imageProcessing')}</CardTitle>
+          <CardDescription>{t('pages.spaceSettings.imageProcessing.description')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...securityForm}>
-            <form onSubmit={securityForm.handleSubmit(handleSaveSecurity)} className='space-y-4'>
+          <Form {...imageProcessingForm}>
+            <form
+              onSubmit={imageProcessingForm.handleSubmit(handleSaveImageProcessing)}
+              className='space-y-4'
+            >
               <FormField
-                control={securityForm.control}
+                control={imageProcessingForm.control}
                 name='imagorSecret'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('pages.spaceSettings.security.imagorSecret')}</FormLabel>
+                    <FormLabel>{t('pages.spaceSettings.imageProcessing.imagorSecret')}</FormLabel>
                     <FormControl>
                       <Input
                         type='password'
                         placeholder={t('pages.spaceSettings.placeholders.unchanged')}
                         {...field}
-                        disabled={isSavingSecurity}
+                        disabled={isSavingImageProcessing}
                       />
                     </FormControl>
                     <FormDescription>
-                      {t('pages.spaceSettings.security.imagorSecretDescription')}
+                      {t('pages.spaceSettings.imageProcessing.imagorSecretDescription')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={securityForm.control}
-                name='signerAlgorithm'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.spaceSettings.security.signerAlgorithm')}</FormLabel>
-                    <FormControl>
-                      <select
-                        {...field}
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField
+                  control={imageProcessingForm.control}
+                  name='signerAlgorithm'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t('pages.spaceSettings.imageProcessing.signerAlgorithm')}
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
                         value={field.value ?? 'sha256'}
-                        disabled={isSavingSecurity}
-                        className='border-input bg-background w-full rounded-md border p-2'
+                        disabled={isSavingImageProcessing}
                       >
-                        <option value='sha1'>SHA-1</option>
-                        <option value='sha256'>SHA-256</option>
-                        <option value='sha512'>SHA-512</option>
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='sha1'>SHA-1</SelectItem>
+                          <SelectItem value='sha256'>SHA-256</SelectItem>
+                          <SelectItem value='sha512'>SHA-512</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={imageProcessingForm.control}
+                  name='signerTruncate'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {t('pages.spaceSettings.imageProcessing.signerTruncate')}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          min={0}
+                          placeholder='0'
+                          value={field.value ?? 0}
+                          onChange={(e) =>
+                            field.onChange(
+                              isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber,
+                            )
+                          }
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                          disabled={isSavingImageProcessing}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t('pages.spaceSettings.imageProcessing.signerTruncateDescription')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className='flex justify-end'>
-                <ButtonWithLoading type='submit' isLoading={isSavingSecurity}>
+                <ButtonWithLoading type='submit' isLoading={isSavingImageProcessing}>
                   {t('common.buttons.save')}
                 </ButtonWithLoading>
               </div>

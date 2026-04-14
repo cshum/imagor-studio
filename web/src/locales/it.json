@@ -597,6 +597,36 @@
         "enterPassword": "Inserisci la password",
         "confirmPassword": "Conferma password"
       }
+    },
+    "spaces": {
+      "storageTypeLabel": "Tipo di archiviazione",
+      "storageType": {
+        "managed": "Archiviazione piattaforma",
+        "s3": "S3 personalizzato (BYOB)"
+      },
+      "storageTypeDesc": {
+        "managed": "Gestita da Imagor Studio. Nessuna configurazione del bucket richiesta.",
+        "s3": "Collega il tuo bucket S3-compatibile."
+      }
+    },
+    "spaceSettings": {
+      "sections": {
+        "imageProcessing": "Elaborazione immagini"
+      },
+      "storage": {
+        "managedTitle": "Archiviazione gestita dalla piattaforma",
+        "managedDescription": "I file sono archiviati nello storage gestito di Imagor Studio. Il tipo di storage non può essere modificato dopo la creazione dello spazio.",
+        "bucketLocked": "Il bucket e la regione sono fissi al momento della creazione e non possono essere modificati."
+      },
+      "imageProcessing": {
+        "description": "Configurazione firma HMAC per la generazione sicura di URL imagor.",
+        "imagorSecret": "Chiave di firma HMAC",
+        "imagorSecretDescription": "Utilizzata per firmare gli URL di trasformazione imagor. Lascia vuoto per mantenere la chiave esistente.",
+        "signerAlgorithm": "Algoritmo di firma",
+        "signerTruncate": "Troncamento firma",
+        "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza completa).",
+        "saved": "Impostazioni elaborazione immagini salvate"
+      }
     }
   },
   "components": {

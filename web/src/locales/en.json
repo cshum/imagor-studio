@@ -620,6 +620,15 @@
       "spaceCount": "{{count}} space(s)",
       "openGallery": "Open Gallery",
       "storageNotConfigured": "Not configured",
+      "storageTypeLabel": "Storage Type",
+      "storageType": {
+        "managed": "Platform Storage",
+        "s3": "Custom S3 (BYOB)"
+      },
+      "storageTypeDesc": {
+        "managed": "Managed by Imagor Studio. No bucket setup required.",
+        "s3": "Connect your own S3-compatible bucket."
+      },
       "keyDescription": "Unique identifier used in URLs. Cannot be changed after creation.",
       "tableHeaders": {
         "key": "Key",
@@ -661,6 +670,7 @@
         "general": "General",
         "storage": "Storage",
         "security": "Image Processing",
+        "imageProcessing": "Image Processing",
         "dangerZone": "Danger Zone"
       },
       "general": {
@@ -671,9 +681,12 @@
         "saved": "General settings saved"
       },
       "storage": {
-        "description": "S3-compatible storage credentials for this space. Credentials are stored encrypted.",
+        "description": "Configure where this space stores its files.",
+        "managedTitle": "Platform-managed Storage",
+        "managedDescription": "Files are stored in Imagor Studio's managed storage. Storage type cannot be changed after the space is created.",
         "bucket": "Bucket",
         "region": "Region",
+        "bucketLocked": "Bucket and region are fixed at creation time and cannot be changed.",
         "endpoint": "Endpoint",
         "endpointDescription": "Custom S3-compatible endpoint URL. Leave blank for AWS S3.",
         "prefix": "Path Prefix",
@@ -681,6 +694,15 @@
         "accessKeyId": "Access Key ID",
         "secretKey": "Secret Key",
         "saved": "Storage settings saved"
+      },
+      "imageProcessing": {
+        "description": "HMAC signing configuration for secure imagor URL generation.",
+        "imagorSecret": "HMAC Signing Secret",
+        "imagorSecretDescription": "Used to sign imagor transformation URLs. Leave blank to keep the existing secret.",
+        "signerAlgorithm": "Signing Algorithm",
+        "signerTruncate": "Signature Truncation",
+        "signerTruncateDescription": "Truncate the HMAC signature to this many characters (0 = full length).",
+        "saved": "Image processing settings saved"
       },
       "security": {
         "description": "HMAC signing configuration for secure imagor URL generation.",

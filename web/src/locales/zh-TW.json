@@ -601,6 +601,36 @@
         "enterPassword": "輸入密碼",
         "confirmPassword": "確認密碼"
       }
+    },
+    "spaces": {
+      "storageTypeLabel": "儲存類型",
+      "storageType": {
+        "managed": "平台儲存",
+        "s3": "自訂 S3（BYOB）"
+      },
+      "storageTypeDesc": {
+        "managed": "由 Imagor Studio 管理，無需設定儲存桶。",
+        "s3": "連接您自己的 S3 相容儲存桶。"
+      }
+    },
+    "spaceSettings": {
+      "sections": {
+        "imageProcessing": "圖像處理"
+      },
+      "storage": {
+        "managedTitle": "平台託管儲存",
+        "managedDescription": "檔案儲存在 Imagor Studio 的託管儲存中，儲存類型在空間建立後無法更改。",
+        "bucketLocked": "儲存桶和區域在建立時固定，無法更改。"
+      },
+      "imageProcessing": {
+        "description": "用於安全 imagor URL 生成的 HMAC 簽名設定。",
+        "imagorSecret": "HMAC 簽名金鑰",
+        "imagorSecretDescription": "用於簽名 imagor 轉換 URL。留空則保留現有金鑰。",
+        "signerAlgorithm": "簽名演算法",
+        "signerTruncate": "簽名截斷",
+        "signerTruncateDescription": "將 HMAC 簽名截斷至此字元數（0 = 完整長度）。",
+        "saved": "圖像處理設定已儲存"
+      }
     }
   },
   "components": {
