@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
 import { FolderInput, FolderOpen, Trash2, Type } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -66,6 +66,7 @@ export function useFolderContextMenu({
   const router = useRouter()
   const [isRenaming, setIsRenaming] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const { spaceKey } = useParams({ strict: false })
 
   /**
    * Centralized rename logic - handles cache invalidation and redirect
@@ -77,7 +78,7 @@ export function useFolderContextMenu({
       pathParts[pathParts.length - 1] = newName
       const newPath = pathParts.join('/')
 
-      await moveFile(folderPath, newPath)
+      await moveFile(folderPath, newPath, spaceKey)
 
       // Invalidate parent folder cache
       const parentPath = folderPath.split('/').slice(0, -1).join('/')
@@ -118,7 +119,7 @@ export function useFolderContextMenu({
   const handleDelete = async (folderPath: string, folderName: string) => {
     setIsDeleting(true)
     try {
-      await deleteFile(folderPath)
+      await deleteFile(folderPath, spaceKey)
 
       // Invalidate parent folder cache
       const parentPath = folderPath.split('/').slice(0, -1).join('/')

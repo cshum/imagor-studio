@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
+import { useNavigate, useParams, useRouter, useRouterState } from '@tanstack/react-router'
 import {
   ArrowDown,
   ArrowUp,
@@ -85,6 +85,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const fileSelectHandlerRef = useRef<((fileList: FileList | null) => void) | null>(null)
   const { isLoading, pendingMatches, matches } = useRouterState()
   const { authState } = useAuth()
+  const { spaceKey } = useParams({ strict: false })
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
   const [isNewCanvasDialogOpen, setIsNewCanvasDialogOpen] = useState(false)
   const [createFolderPath, setCreateFolderPath] = useState<string | null>(null)
@@ -178,7 +179,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             continue
           }
 
-          await moveFile(item.key, newPath)
+          await moveFile(item.key, newPath, spaceKey)
           successCount++
         } catch (error: any) {
           const errorCode = error?.response?.errors?.[0]?.extensions?.code
@@ -460,7 +461,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           ? `${galleryKey}/${deleteItemDialog.itemKey}`
           : deleteItemDialog.itemKey
 
-        await deleteFile(itemPath)
+        await deleteFile(itemPath, spaceKey)
         await router.invalidate()
         toast.success(
           t('pages.gallery.deleteImage.success', { fileName: deleteItemDialog.itemName }),
@@ -523,7 +524,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         pathParts[pathParts.length - 1] = newName
         const newPath = pathParts.join('/')
 
-        await moveFile(renameDialog.itemPath, newPath)
+        await moveFile(renameDialog.itemPath, newPath, spaceKey)
         await router.invalidate()
         toast.success(t('pages.gallery.renameItem.success', { name: newName }))
       }
@@ -669,7 +670,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Delete all items sequentially
       for (const folderKey of folders) {
         try {
-          await deleteFile(folderKey)
+          await deleteFile(folderKey, spaceKey)
           successCount++
         } catch {
           failCount++
@@ -678,7 +679,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
       for (const imageKey of images) {
         try {
-          await deleteFile(imageKey)
+          await deleteFile(imageKey, spaceKey)
           successCount++
         } catch {
           failCount++

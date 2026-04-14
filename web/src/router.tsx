@@ -226,15 +226,13 @@ const spaceRootRoute = createRoute({
   path: '/spaces/$spaceKey',
   component: () => {
     const galleryLoaderData = spaceRootRoute.useLoaderData()
-    const { spaceKey } = spaceRootRoute.useParams()
     return (
       <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>
         <Outlet />
       </GalleryPage>
     )
   },
-  loader: ({ params }) =>
-    galleryLoader({ params: { galleryKey: '', spaceKey: params.spaceKey } }),
+  loader: ({ params }) => galleryLoader({ params: { galleryKey: '', spaceKey: params.spaceKey } }),
   shouldReload: false,
 })
 
