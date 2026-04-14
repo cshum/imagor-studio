@@ -71,7 +71,8 @@ function defaultValues(space?: SpaceItem | null): SpaceFormData {
     endpoint: space?.endpoint ?? '',
     prefix: space?.prefix ?? '',
     customDomain: space?.customDomain ?? '',
-    signerAlgorithm: (space?.signerAlgorithm as 'sha1' | 'sha256' | 'sha512' | undefined) ?? undefined,
+    signerAlgorithm:
+      (space?.signerAlgorithm as 'sha1' | 'sha256' | 'sha512' | undefined) ?? undefined,
     imagorSecret: '',
     accessKeyId: '',
     secretKey: '',
@@ -348,8 +349,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{t('pages.spaces.deleteSpace')}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            {t('pages.spaces.deleteSpaceDescription')}{' '}
-            <strong>{selectedSpace?.key}</strong>?
+            {t('pages.spaces.deleteSpaceDescription')} <strong>{selectedSpace?.key}</strong>?
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
@@ -406,7 +406,9 @@ function SpaceFormDialog({
           {isEdit ? t('pages.spaces.editSpace') : t('pages.spaces.createNewSpace')}
         </ResponsiveDialogTitle>
         <ResponsiveDialogDescription>
-          {isEdit ? t('pages.spaces.editSpaceDescription') : t('pages.spaces.createSpaceDescription')}
+          {isEdit
+            ? t('pages.spaces.editSpaceDescription')
+            : t('pages.spaces.createSpaceDescription')}
         </ResponsiveDialogDescription>
       </ResponsiveDialogHeader>
       <Form {...form}>
@@ -419,11 +421,7 @@ function SpaceFormDialog({
               <FormItem>
                 <FormLabel>{t('pages.spaces.formLabels.key')}</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder='my-space'
-                    {...field}
-                    disabled={isSaving || isEdit}
-                  />
+                  <Input placeholder='my-space' {...field} disabled={isSaving || isEdit} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -437,7 +435,11 @@ function SpaceFormDialog({
               <FormItem>
                 <FormLabel>{t('pages.spaces.formLabels.name')}</FormLabel>
                 <FormControl>
-                  <Input placeholder={t('pages.spaces.placeholders.name')} {...field} disabled={isSaving} />
+                  <Input
+                    placeholder={t('pages.spaces.placeholders.name')}
+                    {...field}
+                    disabled={isSaving}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

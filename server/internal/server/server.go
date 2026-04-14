@@ -93,6 +93,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.RegistryStore,
 		services.Logger,
 		cfg.EmbeddedMode,
+		cfg.InternalAPISecret != "", // multiTenant: true when InternalAPISecret is set
 	)
 
 	// Create middleware chain

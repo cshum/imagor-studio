@@ -13,6 +13,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
   const { authState } = useAuth()
   const location = useLocation()
   const isAdmin = authState.profile?.role == 'admin'
+  const isMultiTenant = authState.multiTenant
 
   useScrollHandler(location.pathname)
 
@@ -39,7 +40,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
       {/* Tab Navigation - Only show for admins */}
       {isAdmin && (
         <Tabs value={currentTab} className='w-full'>
-          <TabsList className='mb-4 grid w-full grid-cols-4'>
+          <TabsList className={`mb-4 grid w-full ${isMultiTenant ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger value='profile' asChild>
               <Link to='/account/profile'>{t('layouts.account.tabs.profile')}</Link>
             </TabsTrigger>
@@ -49,9 +50,11 @@ export function AccountLayout({ children }: PropsWithChildren) {
             <TabsTrigger value='users' asChild>
               <Link to='/account/users'>{t('layouts.account.tabs.users')}</Link>
             </TabsTrigger>
-            <TabsTrigger value='spaces' asChild>
-              <Link to='/account/spaces'>{t('layouts.account.tabs.spaces')}</Link>
-            </TabsTrigger>
+            {isMultiTenant && (
+              <TabsTrigger value='spaces' asChild>
+                <Link to='/account/spaces'>{t('layouts.account.tabs.spaces')}</Link>
+              </TabsTrigger>
+            )}
           </TabsList>
         </Tabs>
       )}

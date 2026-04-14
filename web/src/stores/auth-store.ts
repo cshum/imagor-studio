@@ -16,6 +16,7 @@ export interface Auth {
   accessToken: string | null
   profile: UserProfile | null
   isFirstRun: boolean | null
+  multiTenant: boolean
   error: string | null
   isEmbedded: boolean
   pathPrefix: string
@@ -26,6 +27,7 @@ const initialState: Auth = {
   accessToken: null,
   profile: null,
   isFirstRun: null,
+  multiTenant: false,
   error: null,
   isEmbedded: false,
   pathPrefix: '',
@@ -44,7 +46,7 @@ export type AuthAction =
   | { type: 'LOGOUT' }
   | { type: 'LOGOUT_WITH_ERROR'; payload: { error: string } }
   | { type: 'SET_ERROR'; payload: { error: string } }
-  | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean } }
+  | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean; multiTenant?: boolean } }
   | { type: 'CLEAR_ERROR' }
 
 function reducer(state: Auth, action: AuthAction): Auth {
@@ -105,6 +107,7 @@ function reducer(state: Auth, action: AuthAction): Auth {
       return {
         ...state,
         isFirstRun: action.payload.isFirstRun,
+        multiTenant: action.payload.multiTenant ?? state.multiTenant,
       }
 
     case 'CLEAR_ERROR':
@@ -156,7 +159,7 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
       isFirstRun = firstRunResponse.isFirstRun
       authStore.dispatch({
         type: 'SET_FIRST_RUN',
-        payload: { isFirstRun },
+        payload: { isFirstRun, multiTenant: firstRunResponse.multiTenant },
       })
     } catch {
       // Ignore first run check failures

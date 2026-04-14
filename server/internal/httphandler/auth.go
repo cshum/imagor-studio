@@ -23,6 +23,7 @@ type AuthHandler struct {
 	registryStore registrystore.Store
 	logger        *zap.Logger
 	embeddedMode  bool
+	multiTenant   bool // true when InternalAPISecret is set
 }
 
 func NewAuthHandler(
@@ -32,6 +33,7 @@ func NewAuthHandler(
 	registryStore registrystore.Store,
 	logger *zap.Logger,
 	embeddedMode bool,
+	multiTenant bool, // true when InternalAPISecret is set (multi-tenant mode)
 ) *AuthHandler {
 	return &AuthHandler{
 		tokenManager:  tokenManager,
@@ -40,6 +42,7 @@ func NewAuthHandler(
 		registryStore: registryStore,
 		logger:        logger,
 		embeddedMode:  embeddedMode,
+		multiTenant:   multiTenant,
 	}
 }
 
@@ -76,8 +79,9 @@ type UserResponse struct {
 }
 
 type FirstRunResponse struct {
-	IsFirstRun bool  `json:"isFirstRun"`
-	Timestamp  int64 `json:"timestamp"`
+	IsFirstRun  bool  `json:"isFirstRun"`
+	Timestamp   int64 `json:"timestamp"`
+	MultiTenant bool  `json:"multiTenant"`
 }
 
 type RefreshTokenRequest struct {
@@ -93,8 +97,9 @@ func (h *AuthHandler) CheckFirstRun() http.HandlerFunc {
 		}
 
 		return WriteSuccess(w, FirstRunResponse{
-			IsFirstRun: totalCount == 0,
-			Timestamp:  time.Now().UnixMilli(),
+			IsFirstRun:  totalCount == 0,
+			Timestamp:   time.Now().UnixMilli(),
+			MultiTenant: h.multiTenant,
 		})
 	})
 }
