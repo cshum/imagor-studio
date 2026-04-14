@@ -293,6 +293,46 @@ const spaceImagePage = createRoute({
   },
 })
 
+// /spaces/$spaceKey/$imageKey/editor  →  image editor at the root of a space
+const spaceImageEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/spaces/$spaceKey/$imageKey/editor',
+  beforeLoad: requireImageEditorAuth,
+  loader: ({ params }) => imageEditorLoader({ params: { ...params, galleryKey: '' } }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = spaceImageEditorRoute.useLoaderData()
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
+  },
+})
+
+// /spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor  →  image editor inside a space folder
+const spaceGalleryImageEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor',
+  beforeLoad: requireImageEditorAuth,
+  loader: ({ params }) => imageEditorLoader({ params }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = spaceGalleryImageEditorRoute.useLoaderData()
+    const { galleryKey } = spaceGalleryImageEditorRoute.useParams()
+    return <ImageEditorPage loaderData={loaderData} galleryKey={galleryKey} />
+  },
+})
+
+// /spaces/$spaceKey/editor/new  →  new canvas editor inside a space
+const spaceCanvasEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/spaces/$spaceKey/editor/new',
+  beforeLoad: requireImageEditorAuth,
+  loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = spaceCanvasEditorRoute.useLoaderData()
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
+  },
+})
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const accountLayoutRoute = createRoute({
@@ -385,6 +425,9 @@ const routeTree = isEmbeddedMode
       galleryCanvasEditorRoute,
       rootImageEditorRoute,
       galleryImageEditorRoute,
+      spaceImageEditorRoute,
+      spaceGalleryImageEditorRoute,
+      spaceCanvasEditorRoute,
       baseLayoutRoute.addChildren([
         rootPath.addChildren([rootImagePage]),
         galleryRoute.addChildren([imagePage]),
