@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -192,6 +193,101 @@ func TestDeleteFile_SpaceKeyForbidden(t *testing.T) {
 
 	gqlErr, isGql := err.(*gqlerror.Error)
 	assert.True(t, isGql)
+	assert.Equal(t, "FORBIDDEN", gqlErr.Extensions["code"])
+	mockSpaceStore.AssertExpectations(t)
+}
+
+// ─── SaveTemplate space-routing tests ────────────────────────────────────────
+
+// minimalTemplateInput is a valid SaveTemplateInput for routing tests that only
+// need to reach getSpaceStorage — the template JSON content and imagor provider
+// are never exercised because getSpaceStorage returns an error first.
+var minimalTemplateInput = gql.SaveTemplateInput{
+	Name:            "My Template",
+	DimensionMode:   gql.DimensionModeAdaptive,
+	TemplateJSON:    `{"version":"1.0","transformations":{}}`,
+	SourceImagePath: "test.jpg",
+	SavePath:        "",
+}
+
+// TestSaveTemplate_SpaceKeyNotFound: unknown space → NOT_FOUND gqlerror.
+func TestSaveTemplate_SpaceKeyNotFound(t *testing.T) {
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "missing").
+		Return((*spacestore.Space)(nil), nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	result, err := r.Mutation().SaveTemplate(ctx, minimalTemplateInput, ptrStr("missing"))
+	assert.Nil(t, result)
+	assert.Error(t, err)
+
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, "NOT_FOUND", gqlErr.Extensions["code"])
+	mockSpaceStore.AssertExpectations(t)
+}
+
+// TestSaveTemplate_SpaceKeyForbidden: cross-org space → FORBIDDEN gqlerror.
+func TestSaveTemplate_SpaceKeyForbidden(t *testing.T) {
+	space := &spacestore.Space{OrgID: "org-b", Bucket: "b"}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	result, err := r.Mutation().SaveTemplate(ctx, minimalTemplateInput, ptrStr("other-space"))
+	assert.Nil(t, result)
+	assert.Error(t, err)
+
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, "FORBIDDEN", gqlErr.Extensions["code"])
+	mockSpaceStore.AssertExpectations(t)
+}
+
+// ─── RegenerateTemplatePreview space-routing tests ───────────────────────────
+
+// TestRegenerateTemplatePreview_SpaceKeyNotFound: unknown space → NOT_FOUND.
+func TestRegenerateTemplatePreview_SpaceKeyNotFound(t *testing.T) {
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "missing").
+		Return((*spacestore.Space)(nil), nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	ok, err := r.Mutation().RegenerateTemplatePreview(
+		ctx, "templates/My Template.imagor.json", ptrStr("missing"),
+	)
+	assert.False(t, ok)
+	assert.Error(t, err)
+
+	gqlErr, isGql := err.(*gqlerror.Error)
+	assert.True(t, isGql, "expected *gqlerror.Error")
+	assert.Equal(t, "NOT_FOUND", gqlErr.Extensions["code"])
+	mockSpaceStore.AssertExpectations(t)
+}
+
+// TestRegenerateTemplatePreview_SpaceKeyForbidden: cross-org space → FORBIDDEN.
+func TestRegenerateTemplatePreview_SpaceKeyForbidden(t *testing.T) {
+	space := &spacestore.Space{OrgID: "org-b", Bucket: "b"}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	ok, err := r.Mutation().RegenerateTemplatePreview(
+		ctx, "templates/My Template.imagor.json", ptrStr("other-space"),
+	)
+	assert.False(t, ok)
+	assert.Error(t, err)
+
+	gqlErr, isGql := err.(*gqlerror.Error)
+	assert.True(t, isGql, "expected *gqlerror.Error")
 	assert.Equal(t, "FORBIDDEN", gqlErr.Extensions["code"])
 	mockSpaceStore.AssertExpectations(t)
 }
