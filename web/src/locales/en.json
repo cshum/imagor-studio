@@ -5,7 +5,8 @@
       "tabs": {
         "profile": "Profile",
         "system": "System",
-        "users": "Users"
+        "users": "Users",
+        "spaces": "Spaces"
       }
     }
   },
@@ -115,7 +116,8 @@
       "settings": "Settings",
       "users": "Users",
       "admin": "System",
-      "adminSetup": "Admin Setup"
+      "adminSetup": "Admin Setup",
+      "spaces": "Spaces"
     }
   },
   "pages": {
@@ -601,6 +603,53 @@
         "enterUsername": "Enter username",
         "enterPassword": "Enter password",
         "confirmPassword": "Confirm password"
+      }
+    },
+    "spaces": {
+      "title": "Spaces",
+      "createSpace": "Create Space",
+      "createNewSpace": "Create New Space",
+      "createSpaceDescription": "Add a new space to your organization. Each space has its own storage and imagor configuration.",
+      "editSpace": "Edit Space",
+      "editSpaceDescription": "Update space configuration. Changes will be applied immediately.",
+      "deleteSpace": "Delete Space",
+      "deleteSpaceDescription": "Are you sure you want to permanently delete space",
+      "createSpaceButton": "Create Space",
+      "updateSpaceButton": "Update Space",
+      "noSpacesFound": "No spaces found",
+      "spaceCount": "{{count}} space(s)",
+      "tableHeaders": {
+        "key": "Key",
+        "name": "Name",
+        "storageType": "Storage",
+        "customDomain": "Custom Domain",
+        "actions": "Actions"
+      },
+      "formLabels": {
+        "key": "Space Key",
+        "name": "Display Name",
+        "storageType": "Storage Type",
+        "bucket": "Bucket",
+        "region": "Region",
+        "endpoint": "Endpoint",
+        "prefix": "Prefix",
+        "accessKeyId": "Access Key ID",
+        "secretKey": "Secret Key",
+        "customDomain": "Custom Domain",
+        "imagorSecret": "Imagor Secret"
+      },
+      "placeholders": {
+        "name": "My Space",
+        "selectStorageType": "Select storage type",
+        "unchanged": "(unchanged)"
+      },
+      "messages": {
+        "spaceCreatedSuccess": "Space created successfully",
+        "spaceUpdatedSuccess": "Space updated successfully",
+        "spaceDeletedSuccess": "Space deleted successfully",
+        "createSpaceFailed": "Failed to create space",
+        "updateSpaceFailed": "Failed to update space",
+        "deleteSpaceFailed": "Failed to delete space"
       }
     }
   },

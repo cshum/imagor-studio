@@ -160,9 +160,11 @@ export type Mutation = {
   configureS3Storage: StorageConfigResult
   copyFile: Scalars['Boolean']['output']
   createFolder: Scalars['Boolean']['output']
+  createSpace: Space
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
   deleteFile: Scalars['Boolean']['output']
+  deleteSpace: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
@@ -174,6 +176,7 @@ export type Mutation = {
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
   updateProfile: User
+  updateSpace: Space
   uploadFile: Scalars['Boolean']['output']
 }
 
@@ -203,6 +206,10 @@ export type MutationCreateFolderArgs = {
   path: Scalars['String']['input']
 }
 
+export type MutationCreateSpaceArgs = {
+  input: SpaceInput
+}
+
 export type MutationCreateUserArgs = {
   input: CreateUserInput
 }
@@ -213,6 +220,10 @@ export type MutationDeactivateAccountArgs = {
 
 export type MutationDeleteFileArgs = {
   path: Scalars['String']['input']
+}
+
+export type MutationDeleteSpaceArgs = {
+  key: Scalars['String']['input']
 }
 
 export type MutationDeleteSystemRegistryArgs = {
@@ -274,9 +285,26 @@ export type MutationUpdateProfileArgs = {
   userId?: InputMaybe<Scalars['ID']['input']>
 }
 
+export type MutationUpdateSpaceArgs = {
+  input: SpaceInput
+  key: Scalars['String']['input']
+}
+
 export type MutationUploadFileArgs = {
   content: Scalars['Upload']['input']
   path: Scalars['String']['input']
+}
+
+export type Organization = {
+  __typename?: 'Organization'
+  createdAt: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
+  ownerUserId: Scalars['String']['output']
+  plan: Scalars['String']['output']
+  planStatus: Scalars['String']['output']
+  slug: Scalars['String']['output']
+  updatedAt: Scalars['String']['output']
 }
 
 export type Query = {
@@ -289,6 +317,9 @@ export type Query = {
   listSystemRegistry: Array<SystemRegistry>
   listUserRegistry: Array<UserRegistry>
   me: Maybe<User>
+  myOrganization: Maybe<Organization>
+  space: Maybe<Space>
+  spaces: Array<Space>
   statFile: Maybe<FileStat>
   storageStatus: StorageStatus
   user: Maybe<User>
@@ -325,6 +356,10 @@ export type QueryListSystemRegistryArgs = {
 export type QueryListUserRegistryArgs = {
   ownerID?: InputMaybe<Scalars['String']['input']>
   prefix?: InputMaybe<Scalars['String']['input']>
+}
+
+export type QuerySpaceArgs = {
+  key: Scalars['String']['input']
 }
 
 export type QueryStatFileArgs = {
@@ -379,6 +414,44 @@ export type SaveTemplateInput = {
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
+
+export type Space = {
+  __typename?: 'Space'
+  bucket: Scalars['String']['output']
+  customDomain: Scalars['String']['output']
+  customDomainVerified: Scalars['Boolean']['output']
+  endpoint: Scalars['String']['output']
+  isShared: Scalars['Boolean']['output']
+  key: Scalars['String']['output']
+  name: Scalars['String']['output']
+  orgId: Scalars['ID']['output']
+  prefix: Scalars['String']['output']
+  region: Scalars['String']['output']
+  signerAlgorithm: Scalars['String']['output']
+  signerTruncate: Scalars['Int']['output']
+  storageType: Scalars['String']['output']
+  suspended: Scalars['Boolean']['output']
+  updatedAt: Scalars['String']['output']
+  usePathStyle: Scalars['Boolean']['output']
+}
+
+export type SpaceInput = {
+  accessKeyId: InputMaybe<Scalars['String']['input']>
+  bucket: InputMaybe<Scalars['String']['input']>
+  customDomain: InputMaybe<Scalars['String']['input']>
+  endpoint: InputMaybe<Scalars['String']['input']>
+  imagorSecret: InputMaybe<Scalars['String']['input']>
+  isShared: InputMaybe<Scalars['Boolean']['input']>
+  key: Scalars['String']['input']
+  name: Scalars['String']['input']
+  prefix: InputMaybe<Scalars['String']['input']>
+  region: InputMaybe<Scalars['String']['input']>
+  secretKey: InputMaybe<Scalars['String']['input']>
+  signerAlgorithm: InputMaybe<Scalars['String']['input']>
+  signerTruncate: InputMaybe<Scalars['Int']['input']>
+  storageType: InputMaybe<Scalars['String']['input']>
+  usePathStyle: InputMaybe<Scalars['Boolean']['input']>
+}
 
 export type StorageConfigInput = {
   fileConfig: InputMaybe<FileStorageInput>
@@ -518,6 +591,134 @@ export type GenerateImagorUrlFromTemplateMutation = {
   __typename?: 'Mutation'
   generateImagorUrlFromTemplate: string
 }
+
+export type MyOrganizationQueryVariables = Exact<{ [key: string]: never }>
+
+export type MyOrganizationQuery = {
+  __typename?: 'Query'
+  myOrganization: {
+    __typename?: 'Organization'
+    id: string
+    name: string
+    slug: string
+    ownerUserId: string
+    plan: string
+    planStatus: string
+    createdAt: string
+    updatedAt: string
+  } | null
+}
+
+export type ListSpacesQueryVariables = Exact<{ [key: string]: never }>
+
+export type ListSpacesQuery = {
+  __typename?: 'Query'
+  spaces: Array<{
+    __typename?: 'Space'
+    orgId: string
+    key: string
+    name: string
+    storageType: string
+    bucket: string
+    prefix: string
+    region: string
+    endpoint: string
+    usePathStyle: boolean
+    customDomain: string
+    customDomainVerified: boolean
+    suspended: boolean
+    isShared: boolean
+    signerAlgorithm: string
+    signerTruncate: number
+    updatedAt: string
+  }>
+}
+
+export type GetSpaceQueryVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type GetSpaceQuery = {
+  __typename?: 'Query'
+  space: {
+    __typename?: 'Space'
+    orgId: string
+    key: string
+    name: string
+    storageType: string
+    bucket: string
+    prefix: string
+    region: string
+    endpoint: string
+    usePathStyle: boolean
+    customDomain: string
+    customDomainVerified: boolean
+    suspended: boolean
+    isShared: boolean
+    signerAlgorithm: string
+    signerTruncate: number
+    updatedAt: string
+  } | null
+}
+
+export type CreateSpaceMutationVariables = Exact<{
+  input: SpaceInput
+}>
+
+export type CreateSpaceMutation = {
+  __typename?: 'Mutation'
+  createSpace: {
+    __typename?: 'Space'
+    orgId: string
+    key: string
+    name: string
+    storageType: string
+    bucket: string
+    prefix: string
+    region: string
+    endpoint: string
+    usePathStyle: boolean
+    customDomain: string
+    suspended: boolean
+    isShared: boolean
+    signerAlgorithm: string
+    signerTruncate: number
+    updatedAt: string
+  }
+}
+
+export type UpdateSpaceMutationVariables = Exact<{
+  key: Scalars['String']['input']
+  input: SpaceInput
+}>
+
+export type UpdateSpaceMutation = {
+  __typename?: 'Mutation'
+  updateSpace: {
+    __typename?: 'Space'
+    orgId: string
+    key: string
+    name: string
+    storageType: string
+    bucket: string
+    prefix: string
+    region: string
+    endpoint: string
+    usePathStyle: boolean
+    customDomain: string
+    suspended: boolean
+    isShared: boolean
+    signerAlgorithm: string
+    signerTruncate: number
+    updatedAt: string
+  }
+}
+
+export type DeleteSpaceMutationVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type DeleteSpaceMutation = { __typename?: 'Mutation'; deleteSpace: boolean }
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -1258,6 +1459,296 @@ export const GenerateImagorUrlFromTemplateDocument = {
   GenerateImagorUrlFromTemplateMutation,
   GenerateImagorUrlFromTemplateMutationVariables
 >
+export const MyOrganizationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'MyOrganization' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'myOrganization' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'ownerUserId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plan' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'planStatus' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MyOrganizationQuery, MyOrganizationQueryVariables>
+export const ListSpacesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListSpaces' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'spaces' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'region' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'endpoint' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'usePathStyle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'customDomain' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'customDomainVerified' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'suspended' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ListSpacesQuery, ListSpacesQueryVariables>
+export const GetSpaceDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetSpace' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'space' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'region' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'endpoint' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'usePathStyle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'customDomain' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'customDomainVerified' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'suspended' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetSpaceQuery, GetSpaceQueryVariables>
+export const CreateSpaceDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateSpace' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SpaceInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createSpace' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'region' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'endpoint' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'usePathStyle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'customDomain' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'suspended' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateSpaceMutation, CreateSpaceMutationVariables>
+export const UpdateSpaceDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateSpace' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'SpaceInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateSpace' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'region' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'endpoint' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'usePathStyle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'customDomain' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'suspended' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateSpaceMutation, UpdateSpaceMutationVariables>
+export const DeleteSpaceDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteSpace' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteSpace' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteSpaceMutation, DeleteSpaceMutationVariables>
 export const ListUserRegistryDocument = {
   kind: 'Document',
   definitions: [

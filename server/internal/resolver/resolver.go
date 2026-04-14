@@ -7,7 +7,9 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
+	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor/imagorpath"
@@ -47,9 +49,24 @@ type Resolver struct {
 	config          ConfigProvider
 	licenseService  LicenseChecker
 	logger          *zap.Logger
+
+	// Multi-tenant stores — nil in self-hosted / embedded mode.
+	// Only set when InternalAPISecret is configured (multi-tenant deployment).
+	orgStore   orgstore.Store
+	spaceStore spacestore.Store
 }
 
-func NewResolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider ImagorProvider, cfg ConfigProvider, licenseService LicenseChecker, logger *zap.Logger) *Resolver {
+func NewResolver(
+	storageProvider StorageProvider,
+	registryStore registrystore.Store,
+	userStore userstore.Store,
+	imagorProvider ImagorProvider,
+	cfg ConfigProvider,
+	licenseService LicenseChecker,
+	logger *zap.Logger,
+	orgStore orgstore.Store,
+	spaceStore spacestore.Store,
+) *Resolver {
 	return &Resolver{
 		storageProvider: storageProvider,
 		registryStore:   registryStore,
@@ -58,6 +75,8 @@ func NewResolver(storageProvider StorageProvider, registryStore registrystore.St
 		config:          cfg,
 		licenseService:  licenseService,
 		logger:          logger,
+		orgStore:        orgStore,
+		spaceStore:      spaceStore,
 	}
 }
 

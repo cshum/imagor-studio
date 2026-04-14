@@ -62,7 +62,7 @@ func TestSetUserRegistry_SelfOperation(t *testing.T) {
 	mockUserStore := new(MockUserStore)
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -95,7 +95,7 @@ func TestSetUserRegistry_AdminForOtherUser(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	targetOwnerID := "target-user-id"
@@ -129,7 +129,7 @@ func TestSetUserRegistry_RegularUserCannotAccessOthers(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("regular-user-id")
 	targetOwnerID := "other-user-id"
@@ -153,7 +153,7 @@ func TestSetUserRegistry_GuestCannotSet(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createGuestContext("guest-id")
 	key := "test:key"
@@ -176,7 +176,7 @@ func TestGetUserRegistry_SelfOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:preference"
@@ -206,7 +206,7 @@ func TestGetUserRegistry_NotFound(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "non-existent"
@@ -228,7 +228,7 @@ func TestListUserRegistry_SelfOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	prefix := "app:"
@@ -258,7 +258,7 @@ func TestDeleteUserRegistry_SelfOperation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "user:setting-to-delete"
@@ -280,7 +280,7 @@ func TestSetSystemRegistry_AdminOnly(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -355,7 +355,7 @@ func TestGetSystemRegistry_OpenRead(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name    string
@@ -414,7 +414,7 @@ func TestListSystemRegistry_OpenRead(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("user-id")
 	prefix := "config:"
@@ -444,7 +444,7 @@ func TestDeleteSystemRegistry_AdminOnly(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -502,7 +502,7 @@ func TestUserRegistry_PermissionEdgeCases(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -575,7 +575,7 @@ func TestSetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "api_secret"
@@ -610,7 +610,7 @@ func TestGetUserRegistry_EncryptedValueHidden(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	key := "api_secret"
@@ -642,7 +642,7 @@ func TestListUserRegistry_EncryptedValueHidden(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -679,7 +679,7 @@ func TestSetSystemRegistry_EncryptedValueHidden(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	key := "config.jwt_secret"
@@ -774,7 +774,7 @@ func TestSetSystemRegistry_OverridePrevention(t *testing.T) {
 			}
 
 			mockStorageProvider := NewMockStorageProvider(mockStorage)
-			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
+			resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
 
 			ctx := createAdminContext("admin-user-id")
 
@@ -873,7 +873,7 @@ func TestGetSystemRegistry_OverrideDetection(t *testing.T) {
 			}
 
 			mockStorageProvider := NewMockStorageProvider(mockStorage)
-			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
+			resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
 
 			ctx := createReadWriteContext("user-id")
 
@@ -914,7 +914,7 @@ func TestListSystemRegistry_OverrideDetection(t *testing.T) {
 	}
 
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
 
 	ctx := createReadWriteContext("user-id")
 
@@ -1034,7 +1034,7 @@ func TestSetSystemRegistry_LicenseRequired_Unlicensed(t *testing.T) {
 			logger, _ := zap.NewDevelopment()
 			cfg := &config.Config{}
 			mockStorageProvider := NewMockStorageProvider(mockStorage)
-			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, mockLicense, logger)
+			resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, mockLicense, logger)
 
 			ctx := createAdminContext("admin-user-id")
 			mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: false}, nil)
@@ -1073,7 +1073,7 @@ func TestSetSystemRegistry_LicenseRequired_Licensed(t *testing.T) {
 			logger, _ := zap.NewDevelopment()
 			cfg := &config.Config{} // no config override
 			mockStorageProvider := NewMockStorageProvider(mockStorage)
-			resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, mockLicense, logger)
+			resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, mockLicense, logger)
 
 			ctx := createAdminContext("admin-user-id")
 			mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: true}, nil)
@@ -1106,7 +1106,7 @@ func TestSetSystemRegistry_LicenseRequired_CheckOnlyOnce(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, mockLicense, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, mockLicense, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	// Expect exactly ONE call regardless of how many license-required keys are in the batch
@@ -1133,7 +1133,7 @@ func TestSetSystemRegistry_NonLicenseRequired_NoLicenseCheck(t *testing.T) {
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	// nil licenseService — if the code wrongly calls it, a nil-pointer panic will fail the test
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	key := "config.app_home_title"
@@ -1162,7 +1162,7 @@ func TestGetSystemRegistry_LicenseRequired_OmittedWhenUnlicensed(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	mockConfig := &MockConfig{configExists: true, configValue: "Env Brand Title"}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: false}, nil)
@@ -1189,7 +1189,7 @@ func TestGetSystemRegistry_LicenseRequired_ShowConfigOverrideWhenLicensed(t *tes
 	logger, _ := zap.NewDevelopment()
 	mockConfig := &MockConfig{configExists: true, configValue: "Env Brand Title"}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: true}, nil)
@@ -1224,7 +1224,7 @@ func TestListSystemRegistry_LicenseRequired_OmittedWhenUnlicensed(t *testing.T) 
 		},
 	}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: false}, nil)
@@ -1266,7 +1266,7 @@ func TestGetSystemRegistry_LicenseRequired_EmbeddedMode_Unlicensed(t *testing.T)
 		},
 	}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: false}, nil)
@@ -1301,7 +1301,7 @@ func TestGetSystemRegistry_LicenseRequired_EmbeddedMode_Licensed(t *testing.T) {
 		},
 	}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, mockLicense, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	mockLicense.On("GetLicenseStatus", mock.Anything, false).Return(&license.LicenseStatus{IsLicensed: true}, nil)

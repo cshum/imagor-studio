@@ -101,9 +101,11 @@ type ComplexityRoot struct {
 		ConfigureS3Storage            func(childComplexity int, input S3StorageInput) int
 		CopyFile                      func(childComplexity int, sourcePath string, destPath string) int
 		CreateFolder                  func(childComplexity int, path string) int
+		CreateSpace                   func(childComplexity int, input SpaceInput) int
 		CreateUser                    func(childComplexity int, input CreateUserInput) int
 		DeactivateAccount             func(childComplexity int, userID *string) int
 		DeleteFile                    func(childComplexity int, path string) int
+		DeleteSpace                   func(childComplexity int, key string) int
 		DeleteSystemRegistry          func(childComplexity int, key *string, keys []string) int
 		DeleteUserRegistry            func(childComplexity int, key *string, keys []string, ownerID *string) int
 		GenerateImagorURL             func(childComplexity int, imagePath string, params ImagorParamsInput) int
@@ -115,7 +117,19 @@ type ComplexityRoot struct {
 		SetUserRegistry               func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		TestStorageConfig             func(childComplexity int, input StorageConfigInput) int
 		UpdateProfile                 func(childComplexity int, input UpdateProfileInput, userID *string) int
+		UpdateSpace                   func(childComplexity int, key string, input SpaceInput) int
 		UploadFile                    func(childComplexity int, path string, content graphql.Upload) int
+	}
+
+	Organization struct {
+		CreatedAt   func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		OwnerUserID func(childComplexity int) int
+		Plan        func(childComplexity int) int
+		PlanStatus  func(childComplexity int) int
+		Slug        func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
 	}
 
 	Query struct {
@@ -127,6 +141,9 @@ type ComplexityRoot struct {
 		ListSystemRegistry func(childComplexity int, prefix *string) int
 		ListUserRegistry   func(childComplexity int, prefix *string, ownerID *string) int
 		Me                 func(childComplexity int) int
+		MyOrganization     func(childComplexity int) int
+		Space              func(childComplexity int, key string) int
+		Spaces             func(childComplexity int) int
 		StatFile           func(childComplexity int, path string) int
 		StorageStatus      func(childComplexity int) int
 		User               func(childComplexity int, id string) int
@@ -141,11 +158,29 @@ type ComplexityRoot struct {
 		Region         func(childComplexity int) int
 	}
 
+	Space struct {
+		Bucket               func(childComplexity int) int
+		CustomDomain         func(childComplexity int) int
+		CustomDomainVerified func(childComplexity int) int
+		Endpoint             func(childComplexity int) int
+		IsShared             func(childComplexity int) int
+		Key                  func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		OrgID                func(childComplexity int) int
+		Prefix               func(childComplexity int) int
+		Region               func(childComplexity int) int
+		SignerAlgorithm      func(childComplexity int) int
+		SignerTruncate       func(childComplexity int) int
+		StorageType          func(childComplexity int) int
+		Suspended            func(childComplexity int) int
+		UpdatedAt            func(childComplexity int) int
+		UsePathStyle         func(childComplexity int) int
+	}
+
 	StorageConfigResult struct {
-		Message         func(childComplexity int) int
-		RestartRequired func(childComplexity int) int
-		Success         func(childComplexity int) int
-		Timestamp       func(childComplexity int) int
+		Message   func(childComplexity int) int
+		Success   func(childComplexity int) int
+		Timestamp func(childComplexity int) int
 	}
 
 	StorageStatus struct {
@@ -153,7 +188,6 @@ type ComplexityRoot struct {
 		FileConfig           func(childComplexity int) int
 		IsOverriddenByConfig func(childComplexity int) int
 		LastUpdated          func(childComplexity int) int
-		RestartRequired      func(childComplexity int) int
 		S3Config             func(childComplexity int) int
 		Type                 func(childComplexity int) int
 	}
@@ -222,6 +256,9 @@ type MutationResolver interface {
 	ConfigureImagor(ctx context.Context, input ImagorInput) (*ImagorConfigResult, error)
 	GenerateImagorURL(ctx context.Context, imagePath string, params ImagorParamsInput) (string, error)
 	GenerateImagorURLFromTemplate(ctx context.Context, templateJSON string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) (string, error)
+	CreateSpace(ctx context.Context, input SpaceInput) (*Space, error)
+	UpdateSpace(ctx context.Context, key string, input SpaceInput) (*Space, error)
+	DeleteSpace(ctx context.Context, key string) (bool, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
 	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
@@ -236,6 +273,9 @@ type QueryResolver interface {
 	StatFile(ctx context.Context, path string) (*FileStat, error)
 	StorageStatus(ctx context.Context) (*StorageStatus, error)
 	ImagorStatus(ctx context.Context) (*ImagorStatus, error)
+	MyOrganization(ctx context.Context) (*Organization, error)
+	Spaces(ctx context.Context) ([]*Space, error)
+	Space(ctx context.Context, key string) (*Space, error)
 	ListUserRegistry(ctx context.Context, prefix *string, ownerID *string) ([]*UserRegistry, error)
 	GetUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) ([]*UserRegistry, error)
 	ListSystemRegistry(ctx context.Context, prefix *string) ([]*SystemRegistry, error)
@@ -550,6 +590,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateFolder(childComplexity, args["path"].(string)), true
+	case "Mutation.createSpace":
+		if e.ComplexityRoot.Mutation.CreateSpace == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createSpace_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateSpace(childComplexity, args["input"].(SpaceInput)), true
 	case "Mutation.createUser":
 		if e.ComplexityRoot.Mutation.CreateUser == nil {
 			break
@@ -583,6 +634,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteFile(childComplexity, args["path"].(string)), true
+	case "Mutation.deleteSpace":
+		if e.ComplexityRoot.Mutation.DeleteSpace == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteSpace_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteSpace(childComplexity, args["key"].(string)), true
 	case "Mutation.deleteSystemRegistry":
 		if e.ComplexityRoot.Mutation.DeleteSystemRegistry == nil {
 			break
@@ -704,6 +766,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateProfile(childComplexity, args["input"].(UpdateProfileInput), args["userId"].(*string)), true
+	case "Mutation.updateSpace":
+		if e.ComplexityRoot.Mutation.UpdateSpace == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateSpace_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateSpace(childComplexity, args["key"].(string), args["input"].(SpaceInput)), true
 	case "Mutation.uploadFile":
 		if e.ComplexityRoot.Mutation.UploadFile == nil {
 			break
@@ -715,6 +788,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UploadFile(childComplexity, args["path"].(string), args["content"].(graphql.Upload)), true
+
+	case "Organization.createdAt":
+		if e.ComplexityRoot.Organization.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.CreatedAt(childComplexity), true
+	case "Organization.id":
+		if e.ComplexityRoot.Organization.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.ID(childComplexity), true
+	case "Organization.name":
+		if e.ComplexityRoot.Organization.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.Name(childComplexity), true
+	case "Organization.ownerUserId":
+		if e.ComplexityRoot.Organization.OwnerUserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.OwnerUserID(childComplexity), true
+	case "Organization.plan":
+		if e.ComplexityRoot.Organization.Plan == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.Plan(childComplexity), true
+	case "Organization.planStatus":
+		if e.ComplexityRoot.Organization.PlanStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.PlanStatus(childComplexity), true
+	case "Organization.slug":
+		if e.ComplexityRoot.Organization.Slug == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.Slug(childComplexity), true
+	case "Organization.updatedAt":
+		if e.ComplexityRoot.Organization.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.UpdatedAt(childComplexity), true
 
 	case "Query.getSystemRegistry":
 		if e.ComplexityRoot.Query.GetSystemRegistry == nil {
@@ -790,6 +912,29 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Me(childComplexity), true
+	case "Query.myOrganization":
+		if e.ComplexityRoot.Query.MyOrganization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.MyOrganization(childComplexity), true
+	case "Query.space":
+		if e.ComplexityRoot.Query.Space == nil {
+			break
+		}
+
+		args, err := ec.field_Query_space_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Space(childComplexity, args["key"].(string)), true
+	case "Query.spaces":
+		if e.ComplexityRoot.Query.Spaces == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.Spaces(childComplexity), true
 	case "Query.statFile":
 		if e.ComplexityRoot.Query.StatFile == nil {
 			break
@@ -861,18 +1006,109 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.S3StorageConfig.Region(childComplexity), true
 
+	case "Space.bucket":
+		if e.ComplexityRoot.Space.Bucket == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.Bucket(childComplexity), true
+	case "Space.customDomain":
+		if e.ComplexityRoot.Space.CustomDomain == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.CustomDomain(childComplexity), true
+	case "Space.customDomainVerified":
+		if e.ComplexityRoot.Space.CustomDomainVerified == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.CustomDomainVerified(childComplexity), true
+	case "Space.endpoint":
+		if e.ComplexityRoot.Space.Endpoint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.Endpoint(childComplexity), true
+	case "Space.isShared":
+		if e.ComplexityRoot.Space.IsShared == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.IsShared(childComplexity), true
+	case "Space.key":
+		if e.ComplexityRoot.Space.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.Key(childComplexity), true
+	case "Space.name":
+		if e.ComplexityRoot.Space.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.Name(childComplexity), true
+	case "Space.orgId":
+		if e.ComplexityRoot.Space.OrgID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.OrgID(childComplexity), true
+	case "Space.prefix":
+		if e.ComplexityRoot.Space.Prefix == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.Prefix(childComplexity), true
+	case "Space.region":
+		if e.ComplexityRoot.Space.Region == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.Region(childComplexity), true
+	case "Space.signerAlgorithm":
+		if e.ComplexityRoot.Space.SignerAlgorithm == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.SignerAlgorithm(childComplexity), true
+	case "Space.signerTruncate":
+		if e.ComplexityRoot.Space.SignerTruncate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.SignerTruncate(childComplexity), true
+	case "Space.storageType":
+		if e.ComplexityRoot.Space.StorageType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.StorageType(childComplexity), true
+	case "Space.suspended":
+		if e.ComplexityRoot.Space.Suspended == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.Suspended(childComplexity), true
+	case "Space.updatedAt":
+		if e.ComplexityRoot.Space.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.UpdatedAt(childComplexity), true
+	case "Space.usePathStyle":
+		if e.ComplexityRoot.Space.UsePathStyle == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.UsePathStyle(childComplexity), true
+
 	case "StorageConfigResult.message":
 		if e.ComplexityRoot.StorageConfigResult.Message == nil {
 			break
 		}
 
 		return e.ComplexityRoot.StorageConfigResult.Message(childComplexity), true
-	case "StorageConfigResult.restartRequired":
-		if e.ComplexityRoot.StorageConfigResult.RestartRequired == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StorageConfigResult.RestartRequired(childComplexity), true
 	case "StorageConfigResult.success":
 		if e.ComplexityRoot.StorageConfigResult.Success == nil {
 			break
@@ -910,12 +1146,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.StorageStatus.LastUpdated(childComplexity), true
-	case "StorageStatus.restartRequired":
-		if e.ComplexityRoot.StorageStatus.RestartRequired == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StorageStatus.RestartRequired(childComplexity), true
 	case "StorageStatus.s3Config":
 		if e.ComplexityRoot.StorageStatus.S3Config == nil {
 			break
@@ -1122,6 +1352,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRegistryEntryInput,
 		ec.unmarshalInputS3StorageInput,
 		ec.unmarshalInputSaveTemplateInput,
+		ec.unmarshalInputSpaceInput,
 		ec.unmarshalInputStorageConfigInput,
 		ec.unmarshalInputUpdateProfileInput,
 	)
@@ -1307,6 +1538,73 @@ enum ImagorSignerType {
   SHA512
 }
 `, BuiltIn: false},
+	{Name: "../../../../graphql/org.graphql", Input: `type Organization {
+  id: ID!
+  name: String!
+  slug: String!
+  ownerUserId: String!
+  plan: String!
+  planStatus: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+# Non-credential Space view — credentials (accessKeyId, secretKey, imagorSecret) are write-only
+type Space {
+  orgId: ID!
+  key: String!
+  name: String!
+  storageType: String!
+  bucket: String!
+  prefix: String!
+  region: String!
+  endpoint: String!
+  usePathStyle: Boolean!
+  customDomain: String!
+  customDomainVerified: Boolean!
+  suspended: Boolean!
+  isShared: Boolean!
+  signerAlgorithm: String!
+  signerTruncate: Int!
+  updatedAt: String!
+}
+
+input SpaceInput {
+  key: String!
+  name: String!
+  storageType: String
+  bucket: String
+  prefix: String
+  region: String
+  endpoint: String
+  accessKeyId: String
+  secretKey: String
+  usePathStyle: Boolean
+  customDomain: String
+  isShared: Boolean
+  signerAlgorithm: String
+  signerTruncate: Int
+  imagorSecret: String
+}
+
+extend type Query {
+  # Returns the organization for the currently authenticated user
+  myOrganization: Organization
+  # Lists all active spaces for the caller's organization
+  spaces: [Space!]!
+  # Returns a single space by key (must belong to caller's org)
+  space(key: String!): Space
+}
+
+extend type Mutation {
+  # Create a new space (admin only)
+  createSpace(input: SpaceInput!): Space!
+  # Update an existing space by key (admin only)
+  updateSpace(key: String!, input: SpaceInput!): Space!
+  # Soft-delete a space by key (admin only)
+  deleteSpace(key: String!): Boolean!
+}
+`, BuiltIn: false},
 	{Name: "../../../../graphql/registry.graphql", Input: `extend type Query {
   # Registry APIs
   listUserRegistry(prefix: String, ownerID: String): [UserRegistry!]!
@@ -1455,7 +1753,6 @@ scalar Upload
 type StorageStatus {
   configured: Boolean!
   type: String
-  restartRequired: Boolean!
   lastUpdated: String
   isOverriddenByConfig: Boolean!
   fileConfig: FileStorageConfig
@@ -1478,7 +1775,6 @@ type S3StorageConfig {
 
 type StorageConfigResult {
   success: Boolean!
-  restartRequired: Boolean!
   timestamp: String!
   message: String
 }
@@ -1674,6 +1970,17 @@ func (ec *executionContext) field_Mutation_createFolder_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createSpace_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSpaceInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1704,6 +2011,17 @@ func (ec *executionContext) field_Mutation_deleteFile_args(ctx context.Context, 
 		return nil, err
 	}
 	args["path"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteSpace_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
 	return args, nil
 }
 
@@ -1903,6 +2221,22 @@ func (ec *executionContext) field_Mutation_updateProfile_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateSpace_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSpaceInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_uploadFile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2042,6 +2376,17 @@ func (ec *executionContext) field_Query_listUserRegistry_args(ctx context.Contex
 		return nil, err
 	}
 	args["ownerID"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_space_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
 	return args, nil
 }
 
@@ -3549,8 +3894,6 @@ func (ec *executionContext) fieldContext_Mutation_configureFileStorage(ctx conte
 			switch field.Name {
 			case "success":
 				return ec.fieldContext_StorageConfigResult_success(ctx, field)
-			case "restartRequired":
-				return ec.fieldContext_StorageConfigResult_restartRequired(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_StorageConfigResult_timestamp(ctx, field)
 			case "message":
@@ -3600,8 +3943,6 @@ func (ec *executionContext) fieldContext_Mutation_configureS3Storage(ctx context
 			switch field.Name {
 			case "success":
 				return ec.fieldContext_StorageConfigResult_success(ctx, field)
-			case "restartRequired":
-				return ec.fieldContext_StorageConfigResult_restartRequired(ctx, field)
 			case "timestamp":
 				return ec.fieldContext_StorageConfigResult_timestamp(ctx, field)
 			case "message":
@@ -3798,6 +4139,197 @@ func (ec *executionContext) fieldContext_Mutation_generateImagorUrlFromTemplate(
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_generateImagorUrlFromTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createSpace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createSpace,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateSpace(ctx, fc.Args["input"].(SpaceInput))
+		},
+		nil,
+		ec.marshalNSpace2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpace,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createSpace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "orgId":
+				return ec.fieldContext_Space_orgId(ctx, field)
+			case "key":
+				return ec.fieldContext_Space_key(ctx, field)
+			case "name":
+				return ec.fieldContext_Space_name(ctx, field)
+			case "storageType":
+				return ec.fieldContext_Space_storageType(ctx, field)
+			case "bucket":
+				return ec.fieldContext_Space_bucket(ctx, field)
+			case "prefix":
+				return ec.fieldContext_Space_prefix(ctx, field)
+			case "region":
+				return ec.fieldContext_Space_region(ctx, field)
+			case "endpoint":
+				return ec.fieldContext_Space_endpoint(ctx, field)
+			case "usePathStyle":
+				return ec.fieldContext_Space_usePathStyle(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Space_customDomain(ctx, field)
+			case "customDomainVerified":
+				return ec.fieldContext_Space_customDomainVerified(ctx, field)
+			case "suspended":
+				return ec.fieldContext_Space_suspended(ctx, field)
+			case "isShared":
+				return ec.fieldContext_Space_isShared(ctx, field)
+			case "signerAlgorithm":
+				return ec.fieldContext_Space_signerAlgorithm(ctx, field)
+			case "signerTruncate":
+				return ec.fieldContext_Space_signerTruncate(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Space_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Space", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createSpace_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateSpace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateSpace,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateSpace(ctx, fc.Args["key"].(string), fc.Args["input"].(SpaceInput))
+		},
+		nil,
+		ec.marshalNSpace2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpace,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateSpace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "orgId":
+				return ec.fieldContext_Space_orgId(ctx, field)
+			case "key":
+				return ec.fieldContext_Space_key(ctx, field)
+			case "name":
+				return ec.fieldContext_Space_name(ctx, field)
+			case "storageType":
+				return ec.fieldContext_Space_storageType(ctx, field)
+			case "bucket":
+				return ec.fieldContext_Space_bucket(ctx, field)
+			case "prefix":
+				return ec.fieldContext_Space_prefix(ctx, field)
+			case "region":
+				return ec.fieldContext_Space_region(ctx, field)
+			case "endpoint":
+				return ec.fieldContext_Space_endpoint(ctx, field)
+			case "usePathStyle":
+				return ec.fieldContext_Space_usePathStyle(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Space_customDomain(ctx, field)
+			case "customDomainVerified":
+				return ec.fieldContext_Space_customDomainVerified(ctx, field)
+			case "suspended":
+				return ec.fieldContext_Space_suspended(ctx, field)
+			case "isShared":
+				return ec.fieldContext_Space_isShared(ctx, field)
+			case "signerAlgorithm":
+				return ec.fieldContext_Space_signerAlgorithm(ctx, field)
+			case "signerTruncate":
+				return ec.fieldContext_Space_signerTruncate(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Space_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Space", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateSpace_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteSpace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteSpace,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteSpace(ctx, fc.Args["key"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteSpace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteSpace_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4182,6 +4714,238 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_name(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_slug(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_slug,
+		func(ctx context.Context) (any, error) {
+			return obj.Slug, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_slug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_ownerUserId(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_ownerUserId,
+		func(ctx context.Context) (any, error) {
+			return obj.OwnerUserID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_ownerUserId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_plan(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_plan,
+		func(ctx context.Context) (any, error) {
+			return obj.Plan, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_plan(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_planStatus(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_planStatus,
+		func(ctx context.Context) (any, error) {
+			return obj.PlanStatus, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_planStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_createdAt(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4314,8 +5078,6 @@ func (ec *executionContext) fieldContext_Query_storageStatus(_ context.Context, 
 				return ec.fieldContext_StorageStatus_configured(ctx, field)
 			case "type":
 				return ec.fieldContext_StorageStatus_type(ctx, field)
-			case "restartRequired":
-				return ec.fieldContext_StorageStatus_restartRequired(ctx, field)
 			case "lastUpdated":
 				return ec.fieldContext_StorageStatus_lastUpdated(ctx, field)
 			case "isOverriddenByConfig":
@@ -4366,6 +5128,191 @@ func (ec *executionContext) fieldContext_Query_imagorStatus(_ context.Context, f
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ImagorStatus", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_myOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_myOrganization,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().MyOrganization(ctx)
+		},
+		nil,
+		ec.marshalOOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_myOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Organization_slug(ctx, field)
+			case "ownerUserId":
+				return ec.fieldContext_Organization_ownerUserId(ctx, field)
+			case "plan":
+				return ec.fieldContext_Organization_plan(ctx, field)
+			case "planStatus":
+				return ec.fieldContext_Organization_planStatus(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_spaces(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_spaces,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().Spaces(ctx)
+		},
+		nil,
+		ec.marshalNSpace2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "orgId":
+				return ec.fieldContext_Space_orgId(ctx, field)
+			case "key":
+				return ec.fieldContext_Space_key(ctx, field)
+			case "name":
+				return ec.fieldContext_Space_name(ctx, field)
+			case "storageType":
+				return ec.fieldContext_Space_storageType(ctx, field)
+			case "bucket":
+				return ec.fieldContext_Space_bucket(ctx, field)
+			case "prefix":
+				return ec.fieldContext_Space_prefix(ctx, field)
+			case "region":
+				return ec.fieldContext_Space_region(ctx, field)
+			case "endpoint":
+				return ec.fieldContext_Space_endpoint(ctx, field)
+			case "usePathStyle":
+				return ec.fieldContext_Space_usePathStyle(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Space_customDomain(ctx, field)
+			case "customDomainVerified":
+				return ec.fieldContext_Space_customDomainVerified(ctx, field)
+			case "suspended":
+				return ec.fieldContext_Space_suspended(ctx, field)
+			case "isShared":
+				return ec.fieldContext_Space_isShared(ctx, field)
+			case "signerAlgorithm":
+				return ec.fieldContext_Space_signerAlgorithm(ctx, field)
+			case "signerTruncate":
+				return ec.fieldContext_Space_signerTruncate(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Space_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Space", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_space(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_space,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Space(ctx, fc.Args["key"].(string))
+		},
+		nil,
+		ec.marshalOSpace2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpace,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "orgId":
+				return ec.fieldContext_Space_orgId(ctx, field)
+			case "key":
+				return ec.fieldContext_Space_key(ctx, field)
+			case "name":
+				return ec.fieldContext_Space_name(ctx, field)
+			case "storageType":
+				return ec.fieldContext_Space_storageType(ctx, field)
+			case "bucket":
+				return ec.fieldContext_Space_bucket(ctx, field)
+			case "prefix":
+				return ec.fieldContext_Space_prefix(ctx, field)
+			case "region":
+				return ec.fieldContext_Space_region(ctx, field)
+			case "endpoint":
+				return ec.fieldContext_Space_endpoint(ctx, field)
+			case "usePathStyle":
+				return ec.fieldContext_Space_usePathStyle(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Space_customDomain(ctx, field)
+			case "customDomainVerified":
+				return ec.fieldContext_Space_customDomainVerified(ctx, field)
+			case "suspended":
+				return ec.fieldContext_Space_suspended(ctx, field)
+			case "isShared":
+				return ec.fieldContext_Space_isShared(ctx, field)
+			case "signerAlgorithm":
+				return ec.fieldContext_Space_signerAlgorithm(ctx, field)
+			case "signerTruncate":
+				return ec.fieldContext_Space_signerTruncate(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Space_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Space", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_space_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -5019,6 +5966,470 @@ func (ec *executionContext) fieldContext_S3StorageConfig_baseDir(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Space_orgId(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_orgId,
+		func(ctx context.Context) (any, error) {
+			return obj.OrgID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_orgId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_key(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_key,
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_name(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_storageType(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_storageType,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageType, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_storageType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_bucket(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_bucket,
+		func(ctx context.Context) (any, error) {
+			return obj.Bucket, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_bucket(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_prefix(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_prefix,
+		func(ctx context.Context) (any, error) {
+			return obj.Prefix, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_prefix(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_region(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_region,
+		func(ctx context.Context) (any, error) {
+			return obj.Region, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_region(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_endpoint(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_endpoint,
+		func(ctx context.Context) (any, error) {
+			return obj.Endpoint, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_endpoint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_usePathStyle(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_usePathStyle,
+		func(ctx context.Context) (any, error) {
+			return obj.UsePathStyle, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_usePathStyle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_customDomain(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_customDomain,
+		func(ctx context.Context) (any, error) {
+			return obj.CustomDomain, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_customDomain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_customDomainVerified(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_customDomainVerified,
+		func(ctx context.Context) (any, error) {
+			return obj.CustomDomainVerified, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_customDomainVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_suspended(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_suspended,
+		func(ctx context.Context) (any, error) {
+			return obj.Suspended, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_suspended(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_isShared(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_isShared,
+		func(ctx context.Context) (any, error) {
+			return obj.IsShared, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_isShared(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_signerAlgorithm(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_signerAlgorithm,
+		func(ctx context.Context) (any, error) {
+			return obj.SignerAlgorithm, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_signerAlgorithm(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_signerTruncate(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_signerTruncate,
+		func(ctx context.Context) (any, error) {
+			return obj.SignerTruncate, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_signerTruncate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StorageConfigResult_success(ctx context.Context, field graphql.CollectedField, obj *StorageConfigResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5036,35 +6447,6 @@ func (ec *executionContext) _StorageConfigResult_success(ctx context.Context, fi
 }
 
 func (ec *executionContext) fieldContext_StorageConfigResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StorageConfigResult",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StorageConfigResult_restartRequired(ctx context.Context, field graphql.CollectedField, obj *StorageConfigResult) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StorageConfigResult_restartRequired,
-		func(ctx context.Context) (any, error) {
-			return obj.RestartRequired, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_StorageConfigResult_restartRequired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "StorageConfigResult",
 		Field:      field,
@@ -5188,35 +6570,6 @@ func (ec *executionContext) fieldContext_StorageStatus_type(_ context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StorageStatus_restartRequired(ctx context.Context, field graphql.CollectedField, obj *StorageStatus) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StorageStatus_restartRequired,
-		func(ctx context.Context) (any, error) {
-			return obj.RestartRequired, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_StorageStatus_restartRequired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StorageStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8247,6 +9600,134 @@ func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSpaceInput(ctx context.Context, obj any) (SpaceInput, error) {
+	var it SpaceInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"key", "name", "storageType", "bucket", "prefix", "region", "endpoint", "accessKeyId", "secretKey", "usePathStyle", "customDomain", "isShared", "signerAlgorithm", "signerTruncate", "imagorSecret"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Key = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "storageType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageType"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StorageType = data
+		case "bucket":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucket"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Bucket = data
+		case "prefix":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prefix"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Prefix = data
+		case "region":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Region = data
+		case "endpoint":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endpoint"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Endpoint = data
+		case "accessKeyId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessKeyId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessKeyID = data
+		case "secretKey":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretKey"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SecretKey = data
+		case "usePathStyle":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("usePathStyle"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UsePathStyle = data
+		case "customDomain":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customDomain"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomDomain = data
+		case "isShared":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isShared"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsShared = data
+		case "signerAlgorithm":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signerAlgorithm"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SignerAlgorithm = data
+		case "signerTruncate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signerTruncate"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SignerTruncate = data
+		case "imagorSecret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imagorSecret"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ImagorSecret = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputStorageConfigInput(ctx context.Context, obj any) (StorageConfigInput, error) {
 	var it StorageConfigInput
 	if obj == nil {
@@ -8871,6 +10352,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createSpace":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createSpace(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateSpace":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateSpace(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteSpace":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteSpace(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "setUserRegistry":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_setUserRegistry(ctx, field)
@@ -8924,6 +10426,80 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createUser(ctx, field)
 			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var organizationImplementors = []string{"Organization"}
+
+func (ec *executionContext) _Organization(ctx context.Context, sel ast.SelectionSet, obj *Organization) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, organizationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Organization")
+		case "id":
+			out.Values[i] = ec._Organization_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Organization_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._Organization_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ownerUserId":
+			out.Values[i] = ec._Organization_ownerUserId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "plan":
+			out.Values[i] = ec._Organization_plan(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "planStatus":
+			out.Values[i] = ec._Organization_planStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Organization_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Organization_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -9045,6 +10621,66 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "myOrganization":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_myOrganization(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "spaces":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_spaces(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "space":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_space(ctx, field)
 				return res
 			}
 
@@ -9302,6 +10938,120 @@ func (ec *executionContext) _S3StorageConfig(ctx context.Context, sel ast.Select
 	return out
 }
 
+var spaceImplementors = []string{"Space"}
+
+func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, obj *Space) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, spaceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Space")
+		case "orgId":
+			out.Values[i] = ec._Space_orgId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "key":
+			out.Values[i] = ec._Space_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Space_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "storageType":
+			out.Values[i] = ec._Space_storageType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bucket":
+			out.Values[i] = ec._Space_bucket(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "prefix":
+			out.Values[i] = ec._Space_prefix(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "region":
+			out.Values[i] = ec._Space_region(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "endpoint":
+			out.Values[i] = ec._Space_endpoint(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "usePathStyle":
+			out.Values[i] = ec._Space_usePathStyle(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customDomain":
+			out.Values[i] = ec._Space_customDomain(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customDomainVerified":
+			out.Values[i] = ec._Space_customDomainVerified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "suspended":
+			out.Values[i] = ec._Space_suspended(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isShared":
+			out.Values[i] = ec._Space_isShared(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "signerAlgorithm":
+			out.Values[i] = ec._Space_signerAlgorithm(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "signerTruncate":
+			out.Values[i] = ec._Space_signerTruncate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Space_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var storageConfigResultImplementors = []string{"StorageConfigResult"}
 
 func (ec *executionContext) _StorageConfigResult(ctx context.Context, sel ast.SelectionSet, obj *StorageConfigResult) graphql.Marshaler {
@@ -9315,11 +11065,6 @@ func (ec *executionContext) _StorageConfigResult(ctx context.Context, sel ast.Se
 			out.Values[i] = graphql.MarshalString("StorageConfigResult")
 		case "success":
 			out.Values[i] = ec._StorageConfigResult_success(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "restartRequired":
-			out.Values[i] = ec._StorageConfigResult_restartRequired(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -9371,11 +11116,6 @@ func (ec *executionContext) _StorageStatus(ctx context.Context, sel ast.Selectio
 			}
 		case "type":
 			out.Values[i] = ec._StorageStatus_type(ctx, field, obj)
-		case "restartRequired":
-			out.Values[i] = ec._StorageStatus_restartRequired(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "lastUpdated":
 			out.Values[i] = ec._StorageStatus_lastUpdated(ctx, field, obj)
 		case "isOverriddenByConfig":
@@ -10294,6 +12034,41 @@ func (ec *executionContext) unmarshalNSaveTemplateInput2githubᚗcomᚋcshumᚋi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNSpace2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpace(ctx context.Context, sel ast.SelectionSet, v Space) graphql.Marshaler {
+	return ec._Space(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSpace2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceᚄ(ctx context.Context, sel ast.SelectionSet, v []*Space) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSpace2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpace(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSpace2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpace(ctx context.Context, sel ast.SelectionSet, v *Space) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Space(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSpaceInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceInput(ctx context.Context, v any) (SpaceInput, error) {
+	res, err := ec.unmarshalInputSpaceInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigInput(ctx context.Context, v any) (StorageConfigInput, error) {
 	res, err := ec.unmarshalInputStorageConfigInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -10793,6 +12568,13 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
+func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *Organization) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Organization(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalORegistryEntryInput2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInputᚄ(ctx context.Context, v any) ([]*RegistryEntryInput, error) {
 	if v == nil {
 		return nil, nil
@@ -10864,6 +12646,13 @@ func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋcshumᚋimagor�
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) marshalOSpace2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpace(ctx context.Context, sel ast.SelectionSet, v *Space) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Space(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {

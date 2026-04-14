@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -63,6 +64,8 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.Config, // Use enhanced config from services
 		services.LicenseService,
 		services.Logger,
+		services.OrgStore,
+		services.SpaceStore,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
@@ -140,8 +143,16 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	}
 	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
 
-	// Configure CORS
+	// Configure CORS — if CORSOrigins is set, restrict to those specific origins.
+	// Empty string (default) keeps the open wildcard ("*") behaviour.
 	corsConfig := middleware.DefaultCORSConfig()
+	if cfg.CORSOrigins != "" {
+		allowedOrigins := strings.Split(cfg.CORSOrigins, ",")
+		for i, o := range allowedOrigins {
+			allowedOrigins[i] = strings.TrimSpace(o)
+		}
+		corsConfig.AllowedOrigins = allowedOrigins
+	}
 
 	// Apply global middleware to the entire mux
 	h := middleware.CORSMiddleware(corsConfig)(

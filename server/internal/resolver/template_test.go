@@ -22,7 +22,7 @@ func TestSaveTemplate(t *testing.T) {
 		logger, _ := zap.NewDevelopment()
 		cfg := &config.Config{}
 		mockStorageProvider := NewMockStorageProvider(mockStorage)
-		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+		resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 		ctx := createReadWriteContext("user1")
 
@@ -94,7 +94,7 @@ func TestSaveTemplate(t *testing.T) {
 		logger, _ := zap.NewDevelopment()
 		cfg := &config.Config{}
 		mockStorageProvider := NewMockStorageProvider(mockStorage)
-		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+		resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 		ctx := createReadWriteContext("user1")
 
@@ -143,7 +143,7 @@ func TestSaveTemplate(t *testing.T) {
 		logger, _ := zap.NewDevelopment()
 		cfg := &config.Config{}
 		mockStorageProvider := NewMockStorageProvider(mockStorage)
-		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+		resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 		ctx := createReadWriteContext("user1")
 
@@ -170,7 +170,7 @@ func TestSaveTemplate(t *testing.T) {
 		logger, _ := zap.NewDevelopment()
 		cfg := &config.Config{}
 		mockStorageProvider := NewMockStorageProvider(mockStorage)
-		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+		resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 		ctx := createReadWriteContext("user1")
 
@@ -201,7 +201,7 @@ func TestSaveTemplate(t *testing.T) {
 		logger, _ := zap.NewDevelopment()
 		cfg := &config.Config{}
 		mockStorageProvider := NewMockStorageProvider(mockStorage)
-		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+		resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 		ctx := createReadOnlyContext("user1") // Read-only user
 
@@ -227,7 +227,7 @@ func TestSaveTemplate(t *testing.T) {
 		logger, _ := zap.NewDevelopment()
 		cfg := &config.Config{}
 		mockStorageProvider := NewMockStorageProvider(mockStorage)
-		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+		resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 		ctx := createReadWriteContext("user1")
 
@@ -262,7 +262,7 @@ func TestSaveTemplate(t *testing.T) {
 		logger, _ := zap.NewDevelopment()
 		cfg := &config.Config{}
 		mockStorageProvider := NewMockStorageProvider(mockStorage)
-		resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+		resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 		ctx := createReadWriteContext("user1")
 

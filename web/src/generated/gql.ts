@@ -19,6 +19,12 @@ type Documents = {
   '\n  mutation ConfigureImagor($input: ImagorInput!) {\n    configureImagor(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureImagorDocument
   '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      params: $params\n    )\n  }\n': typeof types.GenerateImagorUrlDocument
   '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n': typeof types.GenerateImagorUrlFromTemplateDocument
+  '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n': typeof types.MyOrganizationDocument
+  '\n  query ListSpaces {\n    spaces {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n': typeof types.ListSpacesDocument
+  '\n  query GetSpace($key: String!) {\n    space(key: $key) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n': typeof types.GetSpaceDocument
+  '\n  mutation CreateSpace($input: SpaceInput!) {\n    createSpace(input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n': typeof types.CreateSpaceDocument
+  '\n  mutation UpdateSpace($key: String!, $input: SpaceInput!) {\n    updateSpace(key: $key, input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n': typeof types.UpdateSpaceDocument
+  '\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n': typeof types.DeleteSpaceDocument
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
@@ -61,6 +67,18 @@ const documents: Documents = {
     types.GenerateImagorUrlDocument,
   '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n':
     types.GenerateImagorUrlFromTemplateDocument,
+  '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n':
+    types.MyOrganizationDocument,
+  '\n  query ListSpaces {\n    spaces {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n':
+    types.ListSpacesDocument,
+  '\n  query GetSpace($key: String!) {\n    space(key: $key) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n':
+    types.GetSpaceDocument,
+  '\n  mutation CreateSpace($input: SpaceInput!) {\n    createSpace(input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n':
+    types.CreateSpaceDocument,
+  '\n  mutation UpdateSpace($key: String!, $input: SpaceInput!) {\n    updateSpace(key: $key, input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n':
+    types.UpdateSpaceDocument,
+  '\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n':
+    types.DeleteSpaceDocument,
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
     types.RegistryInfoFragmentDoc,
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n':
@@ -164,6 +182,42 @@ export function gql(
 export function gql(
   source: '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n',
 ): (typeof documents)['\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n',
+): (typeof documents)['\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query ListSpaces {\n    spaces {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n',
+): (typeof documents)['\n  query ListSpaces {\n    spaces {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query GetSpace($key: String!) {\n    space(key: $key) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n',
+): (typeof documents)['\n  query GetSpace($key: String!) {\n    space(key: $key) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation CreateSpace($input: SpaceInput!) {\n    createSpace(input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation CreateSpace($input: SpaceInput!) {\n    createSpace(input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation UpdateSpace($key: String!, $input: SpaceInput!) {\n    updateSpace(key: $key, input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation UpdateSpace($key: String!, $input: SpaceInput!) {\n    updateSpace(key: $key, input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n',
+): (typeof documents)['\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

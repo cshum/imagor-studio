@@ -82,6 +82,13 @@ type Config struct {
 	// Must include the leading dot, e.g. ".imagor.cloud".
 	SpaceBaseDomain string
 
+	// CORSOrigins is a comma-separated list of allowed CORS origins.
+	// Empty (default) means allow all origins ("*").
+	// Processing nodes should set this to the management app origin,
+	// e.g. "https://app.imagor.net".
+	// Set via --cors-origins / CORS_ORIGINS env var.
+	CORSOrigins string
+
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
 	flagSet         *flag.FlagSet // Private field to access flag values
@@ -136,6 +143,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		internalAPISecret = fs.String("internal-api-secret", "", "shared secret for /internal/spaces/delta (set via INTERNAL_API_SECRET env var)")
 		spacesEndpoint    = fs.String("spaces-endpoint", "", "management service base URL for /internal/spaces/delta polling (processing nodes only)")
 		spaceBaseDomain   = fs.String("space-base-domain", "", "platform subdomain suffix for space routing, e.g. .imagor.cloud (processing nodes only)")
+		corsOrigins       = fs.String("cors-origins", "", "comma-separated allowed CORS origins; empty = allow all (*). Example: https://app.imagor.net")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -239,6 +247,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		InternalAPISecret:           *internalAPISecret,
 		SpacesEndpoint:              *spacesEndpoint,
 		SpaceBaseDomain:             *spaceBaseDomain,
+		CORSOrigins:                 *corsOrigins,
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}

@@ -26,7 +26,9 @@ export function AccountLayout({ children }: PropsWithChildren) {
     ? 'admin'
     : location.pathname.includes('/users')
       ? 'users'
-      : 'profile'
+      : location.pathname.includes('/spaces')
+        ? 'spaces'
+        : 'profile'
 
   return (
     <ContentLayout title={t('layouts.account.title')} isBounded={true}>
@@ -37,7 +39,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
       {/* Tab Navigation - Only show for admins */}
       {isAdmin && (
         <Tabs value={currentTab} className='w-full'>
-          <TabsList className='mb-4 grid w-full grid-cols-3'>
+          <TabsList className='mb-4 grid w-full grid-cols-4'>
             <TabsTrigger value='profile' asChild>
               <Link to='/account/profile'>{t('layouts.account.tabs.profile')}</Link>
             </TabsTrigger>
@@ -46,6 +48,9 @@ export function AccountLayout({ children }: PropsWithChildren) {
             </TabsTrigger>
             <TabsTrigger value='users' asChild>
               <Link to='/account/users'>{t('layouts.account.tabs.users')}</Link>
+            </TabsTrigger>
+            <TabsTrigger value='spaces' asChild>
+              <Link to='/account/spaces'>{t('layouts.account.tabs.spaces')}</Link>
             </TabsTrigger>
           </TabsList>
         </Tabs>
