@@ -1,0 +1,66 @@
+type Organization {
+  id: ID!
+  name: String!
+  slug: String!
+  ownerUserId: String!
+  plan: String!
+  planStatus: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+# Non-credential Space view — credentials (accessKeyId, secretKey, imagorSecret) are write-only
+type Space {
+  orgId: ID!
+  key: String!
+  name: String!
+  storageType: String!
+  bucket: String!
+  prefix: String!
+  region: String!
+  endpoint: String!
+  usePathStyle: Boolean!
+  customDomain: String!
+  customDomainVerified: Boolean!
+  suspended: Boolean!
+  isShared: Boolean!
+  signerAlgorithm: String!
+  signerTruncate: Int!
+  updatedAt: String!
+}
+
+input SpaceInput {
+  key: String!
+  name: String!
+  storageType: String
+  bucket: String
+  prefix: String
+  region: String
+  endpoint: String
+  accessKeyId: String
+  secretKey: String
+  usePathStyle: Boolean
+  customDomain: String
+  isShared: Boolean
+  signerAlgorithm: String
+  signerTruncate: Int
+  imagorSecret: String
+}
+
+extend type Query {
+  # Returns the organization for the currently authenticated user
+  myOrganization: Organization
+  # Lists all active spaces for the caller's organization
+  spaces: [Space!]!
+  # Returns a single space by key (must belong to caller's org)
+  space(key: String!): Space
+}
+
+extend type Mutation {
+  # Create a new space (admin only)
+  createSpace(input: SpaceInput!): Space!
+  # Update an existing space by key (admin only)
+  updateSpace(key: String!, input: SpaceInput!): Space!
+  # Soft-delete a space by key (admin only)
+  deleteSpace(key: String!): Boolean!
+}
