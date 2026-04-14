@@ -607,6 +607,15 @@
       "storageTypeDesc": {
         "managed": "Gestita da Imagor Studio. Nessuna configurazione del bucket richiesta.",
         "s3": "Collega il tuo bucket S3-compatibile."
+      },
+      "description": "Gestisci gli spazi di lavoro della tua organizzazione.",
+      "emptyDescription": "Crea il tuo primo spazio per iniziare con un'area di lavoro dedicata.",
+      "settings": "Impostazioni",
+      "wizard": {
+        "stepIdentity": "Identità",
+        "stepStorage": "Archiviazione",
+        "next": "Avanti",
+        "back": "Indietro"
       }
     },
     "spaceSettings": {

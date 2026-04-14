@@ -616,7 +616,16 @@
       "deleteSpaceDescription": "Are you sure you want to permanently delete space",
       "createSpaceButton": "Create Space",
       "updateSpaceButton": "Update Space",
+      "wizard": {
+        "stepIdentity": "Identity",
+        "stepStorage": "Storage",
+        "next": "Next",
+        "back": "Back"
+      },
       "noSpacesFound": "No spaces found",
+      "description": "Manage workspaces for your organization.",
+      "emptyDescription": "Create your first space to get started with a dedicated workspace.",
+      "settings": "Settings",
       "spaceCount": "{{count}} space(s)",
       "openGallery": "Open Gallery",
       "storageNotConfigured": "Not configured",
