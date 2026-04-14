@@ -618,11 +618,13 @@
       "updateSpaceButton": "Update Space",
       "noSpacesFound": "No spaces found",
       "spaceCount": "{{count}} space(s)",
+      "openGallery": "Open Gallery",
+      "storageNotConfigured": "Not configured",
+      "keyDescription": "Unique identifier used in URLs. Cannot be changed after creation.",
       "tableHeaders": {
         "key": "Key",
         "name": "Name",
-        "storageType": "Storage",
-        "customDomain": "Custom Domain",
+        "storage": "Storage",
         "actions": "Actions"
       },
       "formLabels": {
@@ -650,6 +652,50 @@
         "createSpaceFailed": "Failed to create space",
         "updateSpaceFailed": "Failed to update space",
         "deleteSpaceFailed": "Failed to delete space"
+      }
+    },
+    "spaceSettings": {
+      "backToSpaces": "Back to Spaces",
+      "openGallery": "Open Gallery",
+      "sections": {
+        "general": "General",
+        "storage": "Storage",
+        "security": "Image Processing",
+        "dangerZone": "Danger Zone"
+      },
+      "general": {
+        "description": "Basic information about this space.",
+        "name": "Display Name",
+        "customDomain": "Custom Domain",
+        "customDomainDescription": "Optional custom domain for this space (e.g. images.example.com).",
+        "saved": "General settings saved"
+      },
+      "storage": {
+        "description": "S3-compatible storage credentials for this space. Credentials are stored encrypted.",
+        "bucket": "Bucket",
+        "region": "Region",
+        "endpoint": "Endpoint",
+        "endpointDescription": "Custom S3-compatible endpoint URL. Leave blank for AWS S3.",
+        "prefix": "Path Prefix",
+        "prefixDescription": "Optional path prefix inside the bucket (e.g. media/).",
+        "accessKeyId": "Access Key ID",
+        "secretKey": "Secret Key",
+        "saved": "Storage settings saved"
+      },
+      "security": {
+        "description": "HMAC signing configuration for secure imagor URL generation.",
+        "imagorSecret": "HMAC Signing Secret",
+        "imagorSecretDescription": "Used to sign imagor transformation URLs. Leave blank to keep the existing secret.",
+        "signerAlgorithm": "Signing Algorithm",
+        "saved": "Security settings saved"
+      },
+      "danger": {
+        "deleteTitle": "Delete this space",
+        "deleteDescription": "Once deleted, all configuration for this space is permanently removed. Files in your S3 bucket are not affected.",
+        "deleteButton": "Delete Space"
+      },
+      "placeholders": {
+        "unchanged": "(leave blank to keep existing)"
       }
     }
   },

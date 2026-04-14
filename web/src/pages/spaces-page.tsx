@@ -2,24 +2,19 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from '@tanstack/react-router'
-import { Edit, MoreHorizontal, Plus, Trash2 } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { FolderOpen, Plus, Settings, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { createSpace, deleteSpace, updateSpace, type SpaceItem } from '@/api/org-api'
+import { createSpace, deleteSpace, type SpaceItem } from '@/api/org-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -40,50 +35,28 @@ interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']
 }
 
-const spaceSchema = z.object({
+const createSchema = z.object({
   key: z
     .string()
     .min(1)
     .max(64)
     .regex(/^[a-z0-9-]+$/, 'Key must be lowercase letters, numbers or hyphens'),
   name: z.string().min(1).max(255),
-  storageType: z.enum(['file', 's3']).optional(),
-  bucket: z.string().optional(),
-  region: z.string().optional(),
-  endpoint: z.string().optional(),
-  accessKeyId: z.string().optional(),
-  secretKey: z.string().optional(),
-  prefix: z.string().optional(),
-  customDomain: z.string().optional(),
-  signerAlgorithm: z.enum(['sha1', 'sha256', 'sha512']).optional(),
-  imagorSecret: z.string().optional(),
 })
+type CreateFormData = z.infer<typeof createSchema>
 
-type SpaceFormData = z.infer<typeof spaceSchema>
-
-function defaultValues(space?: SpaceItem | null): SpaceFormData {
-  return {
-    key: space?.key ?? '',
-    name: space?.name ?? '',
-    storageType: (space?.storageType as 'file' | 's3' | undefined) ?? undefined,
-    bucket: space?.bucket ?? '',
-    region: space?.region ?? '',
-    endpoint: space?.endpoint ?? '',
-    prefix: space?.prefix ?? '',
-    customDomain: space?.customDomain ?? '',
-    signerAlgorithm:
-      (space?.signerAlgorithm as 'sha1' | 'sha256' | 'sha512' | undefined) ?? undefined,
-    imagorSecret: '',
-    accessKeyId: '',
-    secretKey: '',
-  }
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64)
 }
 
 export function SpacesPage({ loaderData }: SpacesPageProps) {
   const { t } = useTranslation()
-  const router = useRouter()
+  const navigate = useNavigate()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedSpace, setSelectedSpace] = useState<SpaceItem | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -91,82 +64,40 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
 
   const spaces = loaderData ?? []
 
-  const createForm = useForm<SpaceFormData>({
-    resolver: zodResolver(spaceSchema),
-    defaultValues: defaultValues(),
+  const createForm = useForm<CreateFormData>({
+    resolver: zodResolver(createSchema),
+    defaultValues: { key: '', name: '' },
   })
 
-  const editForm = useForm<SpaceFormData>({
-    resolver: zodResolver(spaceSchema),
-    defaultValues: defaultValues(),
-  })
-
-  const handleCreateSpace = async (values: SpaceFormData) => {
+  const handleCreateSpace = async (values: CreateFormData) => {
     setIsSaving(true)
     try {
       await createSpace({
         input: {
           key: values.key,
           name: values.name,
-          storageType: values.storageType ?? null,
-          bucket: values.bucket ?? null,
-          region: values.region ?? null,
-          endpoint: values.endpoint ?? null,
-          prefix: values.prefix ?? null,
-          accessKeyId: values.accessKeyId ?? null,
-          secretKey: values.secretKey ?? null,
+          storageType: 's3',
+          bucket: null,
+          region: null,
+          endpoint: null,
+          prefix: null,
+          accessKeyId: null,
+          secretKey: null,
           usePathStyle: null,
-          customDomain: values.customDomain ?? null,
+          customDomain: null,
           isShared: null,
-          signerAlgorithm: values.signerAlgorithm ?? null,
+          signerAlgorithm: null,
           signerTruncate: null,
-          imagorSecret: values.imagorSecret ?? null,
+          imagorSecret: null,
         },
       })
       toast.success(t('pages.spaces.messages.spaceCreatedSuccess'))
       setIsCreateDialogOpen(false)
-      createForm.reset(defaultValues())
-      await router.invalidate()
+      createForm.reset({ key: '', name: '' })
+      // Navigate to the new space's settings page
+      await navigate({ to: '/spaces/$spaceKey/settings', params: { spaceKey: values.key } })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error(`${t('pages.spaces.messages.createSpaceFailed')}: ${msg}`)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleUpdateSpace = async (values: SpaceFormData) => {
-    if (!selectedSpace) return
-    setIsSaving(true)
-    try {
-      await updateSpace({
-        key: selectedSpace.key,
-        input: {
-          key: values.key,
-          name: values.name,
-          storageType: values.storageType ?? null,
-          bucket: values.bucket ?? null,
-          region: values.region ?? null,
-          endpoint: values.endpoint ?? null,
-          prefix: values.prefix ?? null,
-          accessKeyId: values.accessKeyId ?? null,
-          // Only send secretKey if the user typed a new one
-          secretKey: values.secretKey ? values.secretKey : null,
-          usePathStyle: null,
-          customDomain: values.customDomain ?? null,
-          isShared: null,
-          signerAlgorithm: values.signerAlgorithm ?? null,
-          signerTruncate: null,
-          imagorSecret: values.imagorSecret ? values.imagorSecret : null,
-        },
-      })
-      toast.success(t('pages.spaces.messages.spaceUpdatedSuccess'))
-      setIsEditDialogOpen(false)
-      setSelectedSpace(null)
-      await router.invalidate()
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error(`${t('pages.spaces.messages.updateSpaceFailed')}: ${msg}`)
+      toast.error(`${t('pages.spaces.messages.createSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setIsSaving(false)
     }
@@ -180,24 +111,12 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
       toast.success(t('pages.spaces.messages.spaceDeletedSuccess'))
       setIsDeleteDialogOpen(false)
       setSelectedSpace(null)
-      await router.invalidate()
+      window.location.reload()
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error'
-      toast.error(`${t('pages.spaces.messages.deleteSpaceFailed')}: ${msg}`)
+      toast.error(`${t('pages.spaces.messages.deleteSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setIsDeleting(false)
     }
-  }
-
-  const openEditDialog = (space: SpaceItem) => {
-    setSelectedSpace(space)
-    editForm.reset(defaultValues(space))
-    setIsEditDialogOpen(true)
-  }
-
-  const openDeleteDialog = (space: SpaceItem) => {
-    setSelectedSpace(space)
-    setIsDeleteDialogOpen(true)
   }
 
   return (
@@ -214,20 +133,19 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            {/* Spaces Table — Desktop */}
+            {/* Desktop table */}
             <div className='hidden rounded-lg border md:block'>
-              <div className='bg-muted/50 grid grid-cols-5 gap-4 border-b p-4 font-medium'>
+              <div className='bg-muted/50 grid grid-cols-4 gap-4 border-b p-4 font-medium'>
                 <div>{t('pages.spaces.tableHeaders.key')}</div>
                 <div>{t('pages.spaces.tableHeaders.name')}</div>
-                <div>{t('pages.spaces.tableHeaders.storageType')}</div>
-                <div>{t('pages.spaces.tableHeaders.customDomain')}</div>
+                <div>{t('pages.spaces.tableHeaders.storage')}</div>
                 <div>{t('pages.spaces.tableHeaders.actions')}</div>
               </div>
 
               {!loaderData ? (
                 Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className='grid grid-cols-5 gap-4 border-b p-4'>
-                    {Array.from({ length: 5 }).map((_, j) => (
+                  <div key={i} className='grid grid-cols-4 gap-4 border-b p-4'>
+                    {Array.from({ length: 4 }).map((_, j) => (
                       <Skeleton key={j} className='h-4 w-full' />
                     ))}
                   </div>
@@ -238,45 +156,50 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                 </div>
               ) : (
                 spaces.map((space) => (
-                  <div key={space.key} className='grid grid-cols-5 items-center gap-4 border-b p-4'>
+                  <div key={space.key} className='grid grid-cols-4 items-center gap-4 border-b p-4'>
                     <div className='font-mono text-sm font-medium'>{space.key}</div>
                     <div>{space.name}</div>
                     <div>
-                      <span className='bg-muted inline-flex items-center rounded px-2 py-0.5 text-xs font-medium'>
-                        {space.storageType}
-                      </span>
+                      {space.bucket ? (
+                        <span className='bg-muted inline-flex items-center rounded px-2 py-0.5 text-xs font-medium'>
+                          S3
+                        </span>
+                      ) : (
+                        <span className='text-muted-foreground text-xs'>
+                          {t('pages.spaces.storageNotConfigured')}
+                        </span>
+                      )}
                     </div>
-                    <div className='text-muted-foreground truncate text-sm'>
-                      {space.customDomain || '—'}
-                    </div>
-                    <div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='sm'>
-                            <MoreHorizontal className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem onClick={() => openEditDialog(space)}>
-                            <Edit className='mr-2 h-4 w-4' />
-                            {t('common.buttons.edit')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className='text-destructive'
-                            onClick={() => openDeleteDialog(space)}
-                          >
-                            <Trash2 className='mr-2 h-4 w-4' />
-                            {t('common.buttons.delete')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    <div className='flex items-center gap-2'>
+                      <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
+                        <Button variant='outline' size='sm'>
+                          <FolderOpen className='mr-1 h-4 w-4' />
+                          {t('pages.spaces.openGallery')}
+                        </Button>
+                      </Link>
+                      <Link to='/spaces/$spaceKey/settings' params={{ spaceKey: space.key }}>
+                        <Button variant='outline' size='sm'>
+                          <Settings className='h-4 w-4' />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='text-destructive'
+                        onClick={() => {
+                          setSelectedSpace(space)
+                          setIsDeleteDialogOpen(true)
+                        }}
+                      >
+                        <Trash2 className='h-4 w-4' />
+                      </Button>
                     </div>
                   </div>
                 ))
               )}
             </div>
 
-            {/* Spaces Cards — Mobile */}
+            {/* Mobile cards */}
             <div className='space-y-4 md:hidden'>
               {!loaderData ? (
                 Array.from({ length: 3 }).map((_, i) => (
@@ -291,29 +214,37 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                 </div>
               ) : (
                 spaces.map((space) => (
-                  <div key={space.key} className='space-y-2 rounded-lg border p-4'>
+                  <div key={space.key} className='space-y-3 rounded-lg border p-4'>
                     <div className='flex items-start justify-between'>
                       <div>
                         <h3 className='font-mono text-sm font-medium'>{space.key}</h3>
                         <p className='text-muted-foreground text-sm'>{space.name}</p>
                       </div>
-                      <div className='flex gap-2'>
-                        <Button variant='outline' size='sm' onClick={() => openEditDialog(space)}>
-                          <Edit className='h-4 w-4' />
-                        </Button>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          className='text-destructive'
-                          onClick={() => openDeleteDialog(space)}
-                        >
-                          <Trash2 className='h-4 w-4' />
-                        </Button>
-                      </div>
                     </div>
-                    {space.customDomain && (
-                      <p className='text-muted-foreground text-xs'>{space.customDomain}</p>
-                    )}
+                    <div className='flex gap-2'>
+                      <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }} className='flex-1'>
+                        <Button variant='outline' size='sm' className='w-full'>
+                          <FolderOpen className='mr-1 h-4 w-4' />
+                          {t('pages.spaces.openGallery')}
+                        </Button>
+                      </Link>
+                      <Link to='/spaces/$spaceKey/settings' params={{ spaceKey: space.key }}>
+                        <Button variant='outline' size='sm'>
+                          <Settings className='h-4 w-4' />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='text-destructive'
+                        onClick={() => {
+                          setSelectedSpace(space)
+                          setIsDeleteDialogOpen(true)
+                        }}
+                      >
+                        <Trash2 className='h-4 w-4' />
+                      </Button>
+                    </div>
                   </div>
                 ))
               )}
@@ -326,25 +257,80 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         </CardContent>
       </Card>
 
-      {/* Create / Edit Space Form — shared component */}
-      <SpaceFormDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        form={createForm}
-        onSubmit={handleCreateSpace}
-        isSaving={isSaving}
-        isEdit={false}
-      />
-      <SpaceFormDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        form={editForm}
-        onSubmit={handleUpdateSpace}
-        isSaving={isSaving}
-        isEdit={true}
-      />
+      {/* Create Space dialog — name + key only */}
+      <ResponsiveDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.spaces.createNewSpace')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.spaces.createSpaceDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <Form {...createForm}>
+          <form onSubmit={createForm.handleSubmit(handleCreateSpace)} className='space-y-4'>
+            <FormField
+              control={createForm.control}
+              name='name'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.spaces.formLabels.name')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('pages.spaces.placeholders.name')}
+                      {...field}
+                      disabled={isSaving}
+                      onChange={(e) => {
+                        field.onChange(e)
+                        // Auto-populate key from name if user hasn't typed in key
+                        const keyValue = createForm.getValues('key')
+                        if (!keyValue || keyValue === slugify(field.value)) {
+                          createForm.setValue('key', slugify(e.target.value), {
+                            shouldValidate: true,
+                          })
+                        }
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={createForm.control}
+              name='key'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.spaces.formLabels.key')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder='my-space'
+                      {...field}
+                      disabled={isSaving}
+                      className='font-mono'
+                    />
+                  </FormControl>
+                  <FormDescription>{t('pages.spaces.keyDescription')}</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <ResponsiveDialogFooter>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setIsCreateDialogOpen(false)}
+                disabled={isSaving}
+              >
+                {t('common.buttons.cancel')}
+              </Button>
+              <ButtonWithLoading type='submit' isLoading={isSaving}>
+                {t('pages.spaces.createSpaceButton')}
+              </ButtonWithLoading>
+            </ResponsiveDialogFooter>
+          </form>
+        </Form>
+      </ResponsiveDialog>
 
-      {/* Delete confirmation */}
+      {/* Delete confirmation dialog */}
       <ResponsiveDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{t('pages.spaces.deleteSpace')}</ResponsiveDialogTitle>
@@ -375,243 +361,3 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Shared space form dialog used for both create and edit
-// ---------------------------------------------------------------------------
-
-interface SpaceFormDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form: ReturnType<typeof useForm<SpaceFormData>>
-  onSubmit: (values: SpaceFormData) => Promise<void>
-  isSaving: boolean
-  isEdit: boolean
-}
-
-function SpaceFormDialog({
-  open,
-  onOpenChange,
-  form,
-  onSubmit,
-  isSaving,
-  isEdit,
-}: SpaceFormDialogProps) {
-  const { t } = useTranslation()
-
-  return (
-    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogHeader>
-        <ResponsiveDialogTitle>
-          {isEdit ? t('pages.spaces.editSpace') : t('pages.spaces.createNewSpace')}
-        </ResponsiveDialogTitle>
-        <ResponsiveDialogDescription>
-          {isEdit
-            ? t('pages.spaces.editSpaceDescription')
-            : t('pages.spaces.createSpaceDescription')}
-        </ResponsiveDialogDescription>
-      </ResponsiveDialogHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-          {/* Key — only editable on create */}
-          <FormField
-            control={form.control}
-            name='key'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.spaces.formLabels.key')}</FormLabel>
-                <FormControl>
-                  <Input placeholder='my-space' {...field} disabled={isSaving || isEdit} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='name'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.spaces.formLabels.name')}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t('pages.spaces.placeholders.name')}
-                    {...field}
-                    disabled={isSaving}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='storageType'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.spaces.formLabels.storageType')}</FormLabel>
-                <FormControl>
-                  <select
-                    {...field}
-                    value={field.value ?? ''}
-                    disabled={isSaving}
-                    className='border-input bg-background w-full rounded-md border p-2'
-                  >
-                    <option value=''>{t('pages.spaces.placeholders.selectStorageType')}</option>
-                    <option value='file'>file</option>
-                    <option value='s3'>s3</option>
-                  </select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className='grid grid-cols-2 gap-4'>
-            <FormField
-              control={form.control}
-              name='bucket'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('pages.spaces.formLabels.bucket')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder='my-bucket' {...field} disabled={isSaving} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='region'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('pages.spaces.formLabels.region')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder='us-east-1' {...field} disabled={isSaving} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name='endpoint'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.spaces.formLabels.endpoint')}</FormLabel>
-                <FormControl>
-                  <Input placeholder='https://…' {...field} disabled={isSaving} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='prefix'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.spaces.formLabels.prefix')}</FormLabel>
-                <FormControl>
-                  <Input placeholder='gallery/' {...field} disabled={isSaving} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className='grid grid-cols-2 gap-4'>
-            <FormField
-              control={form.control}
-              name='accessKeyId'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('pages.spaces.formLabels.accessKeyId')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={isEdit ? t('pages.spaces.placeholders.unchanged') : ''}
-                      {...field}
-                      disabled={isSaving}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='secretKey'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('pages.spaces.formLabels.secretKey')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='password'
-                      placeholder={isEdit ? t('pages.spaces.placeholders.unchanged') : ''}
-                      {...field}
-                      disabled={isSaving}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name='customDomain'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.spaces.formLabels.customDomain')}</FormLabel>
-                <FormControl>
-                  <Input placeholder='space.example.com' {...field} disabled={isSaving} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='imagorSecret'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.spaces.formLabels.imagorSecret')}</FormLabel>
-                <FormControl>
-                  <Input
-                    type='password'
-                    placeholder={isEdit ? t('pages.spaces.placeholders.unchanged') : ''}
-                    {...field}
-                    disabled={isSaving}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <ResponsiveDialogFooter>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => onOpenChange(false)}
-              disabled={isSaving}
-            >
-              {t('common.buttons.cancel')}
-            </Button>
-            <ButtonWithLoading type='submit' isLoading={isSaving}>
-              {isEdit ? t('pages.spaces.updateSpaceButton') : t('pages.spaces.createSpaceButton')}
-            </ButtonWithLoading>
-          </ResponsiveDialogFooter>
-        </form>
-      </Form>
-    </ResponsiveDialog>
-  )
-}

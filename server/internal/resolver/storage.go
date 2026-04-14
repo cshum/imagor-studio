@@ -30,6 +30,14 @@ import (
 // DB fallback) and an ephemeral S3 storage instance is built from the space's
 // credentials (no registry round-trip).
 func (r *Resolver) getSpaceStorage(ctx context.Context, spaceKey *string) (storage.Storage, error) {
+	// In multi-tenant mode (spaceStore active) the root gallery has no system-level
+	// storage — all file operations must target a named space via spaceKey.
+	if r.spaceStore != nil && (spaceKey == nil || *spaceKey == "") {
+		return nil, &gqlerror.Error{
+			Message:    "a spaceKey is required in multi-tenant mode",
+			Extensions: map[string]interface{}{"code": "NOT_AVAILABLE"},
+		}
+	}
 	if spaceKey == nil || *spaceKey == "" || r.spaceStore == nil {
 		return r.getStorage(), nil
 	}

@@ -17,7 +17,13 @@ import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
-import { adminLoader, profileLoader, spacesLoader, usersLoader } from '@/loaders/account-loader.ts'
+import {
+  adminLoader,
+  profileLoader,
+  spacesLoader,
+  spaceSettingsLoader,
+  usersLoader,
+} from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import {
   requireAccountAuth,
@@ -41,6 +47,7 @@ import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
+import { SpaceSettingsPage } from '@/pages/space-settings-page'
 import { SpacesPage } from '@/pages/spaces-page'
 import { UsersPage } from '@/pages/users-page'
 import { initAuth, useAuthEffect } from '@/stores/auth-store.ts'
@@ -333,6 +340,19 @@ const spaceCanvasEditorRoute = createRoute({
   },
 })
 
+// /spaces/$spaceKey/settings  →  dedicated settings page for a space
+const spaceSettingsRoute = createRoute({
+  getParentRoute: () => baseLayoutRoute,
+  path: '/spaces/$spaceKey/settings',
+  beforeLoad: requireAdminAccountAuth,
+  loader: ({ params }) => spaceSettingsLoader({ params }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = spaceSettingsRoute.useLoaderData()
+    return <SpaceSettingsPage loaderData={loaderData.space} />
+  },
+})
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const accountLayoutRoute = createRoute({
@@ -433,6 +453,7 @@ const routeTree = isEmbeddedMode
         galleryRoute.addChildren([imagePage]),
         spaceRootRoute.addChildren([spaceRootImagePage]),
         spaceGalleryRoute.addChildren([spaceImagePage]),
+        spaceSettingsRoute,
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,

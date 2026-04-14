@@ -57,10 +57,11 @@ dev:
 
 # SaaS: management node — GraphQL + admin UI + org/space CRUD.
 # No CGO, no libvips. Enables InternalAPISecret so OrgStore/SpaceStore are active.
+# No --file-storage-base-dir: management node has no system-level storage in SaaS mode.
+# File listing and imagor URL generation are handled by the processing node.
 run-management:
 	CGO_ENABLED=0 $(GOCMD) run $(MAIN_PACKAGE) \
 		--port=8080 \
-		--file-storage-base-dir=$(LOCAL_GALLERY) \
 		--internal-api-secret=$(LOCAL_SECRET)
 
 # SaaS: processing node — imagor image proxy, no DB.

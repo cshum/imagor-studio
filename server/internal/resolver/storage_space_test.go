@@ -27,25 +27,33 @@ func newSpaceTestResolver(spaceStore spacestore.Store) *Resolver {
 
 // ─── getSpaceStorage unit tests ───────────────────────────────────────────────
 
-// TestGetSpaceStorage_NilSpaceKey: nil key → transparent fallback to system storage.
+// TestGetSpaceStorage_NilSpaceKey: nil key with active spaceStore → NOT_AVAILABLE error.
+// In multi-tenant mode the root gallery has no system storage; callers must provide
+// a spaceKey.  spaceStore.Get must never be called.
 func TestGetSpaceStorage_NilSpaceKey(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
 	r := newSpaceTestResolver(mockSpaceStore)
 
 	stor, err := r.getSpaceStorage(context.Background(), nil)
-	assert.NoError(t, err)
-	assert.NotNil(t, stor)
+	assert.Error(t, err)
+	assert.Nil(t, stor)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected a gqlerror.Error")
+	assert.Equal(t, "NOT_AVAILABLE", gqlErr.Extensions["code"])
 	mockSpaceStore.AssertNotCalled(t, "Get")
 }
 
-// TestGetSpaceStorage_EmptySpaceKey: empty-string key → transparent fallback.
+// TestGetSpaceStorage_EmptySpaceKey: empty-string key with active spaceStore → NOT_AVAILABLE error.
 func TestGetSpaceStorage_EmptySpaceKey(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
 	r := newSpaceTestResolver(mockSpaceStore)
 
 	stor, err := r.getSpaceStorage(context.Background(), ptrStr(""))
-	assert.NoError(t, err)
-	assert.NotNil(t, stor)
+	assert.Error(t, err)
+	assert.Nil(t, stor)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected a gqlerror.Error")
+	assert.Equal(t, "NOT_AVAILABLE", gqlErr.Extensions["code"])
 	mockSpaceStore.AssertNotCalled(t, "Get")
 }
 

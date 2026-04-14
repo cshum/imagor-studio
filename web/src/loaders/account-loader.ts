@@ -1,10 +1,11 @@
 import { getImagorStatus } from '@/api/imagor-api'
 import { getLicenseStatus, type LicenseStatus } from '@/api/license-api'
-import { listSpaces } from '@/api/org-api'
+import { getSpace, listSpaces } from '@/api/org-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
 import type {
+  GetSpaceQuery,
   ImagorStatusQuery,
   ListSpacesQuery,
   ListSystemRegistryQuery,
@@ -111,6 +112,31 @@ export const spacesLoader = async (): Promise<SpacesLoaderData> => {
     spaces,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.spaces',
+    },
+  }
+}
+
+export interface SpaceSettingsLoaderData {
+  space: NonNullable<GetSpaceQuery['space']>
+  breadcrumb: BreadcrumbItem
+}
+
+/**
+ * Load a single space for the space settings page
+ */
+export const spaceSettingsLoader = async ({
+  params,
+}: {
+  params: { spaceKey: string }
+}): Promise<SpaceSettingsLoaderData> => {
+  const space = await getSpace(params.spaceKey)
+  if (!space) {
+    throw new Error(`Space "${params.spaceKey}" not found`)
+  }
+  return {
+    space,
+    breadcrumb: {
+      label: space.name,
     },
   }
 }

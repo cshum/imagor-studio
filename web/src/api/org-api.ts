@@ -3,6 +3,7 @@ import type {
   CreateSpaceMutationVariables,
   DeleteSpaceMutation,
   DeleteSpaceMutationVariables,
+  GetSpaceQuery,
   ListSpacesQuery,
   UpdateSpaceMutation,
   UpdateSpaceMutationVariables,
@@ -35,6 +36,13 @@ export async function updateSpace(
   const sdk = getSdk(client)
   const result = await sdk.UpdateSpace(variables)
   return result.updateSpace
+}
+
+export async function getSpace(key: string): Promise<GetSpaceQuery['space']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.GetSpace({ key })
+  return result.space
 }
 
 export async function deleteSpace(
