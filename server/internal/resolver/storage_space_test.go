@@ -1,0 +1,197 @@
+package resolver
+
+import (
+	"context"
+	"testing"
+
+	"github.com/cshum/imagor-studio/server/internal/spacestore"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.uber.org/zap"
+)
+
+// ptrStr is a local helper for taking the address of a string literal.
+func ptrStr(s string) *string { return &s }
+
+// newSpaceTestResolver builds a Resolver backed by a MockStorage / MockStorageProvider
+// and the provided spaceStore.  All other dependencies (registry, users, imagor,
+// config, license, org) are left nil — they are not exercised by the space-storage
+// tests.
+func newSpaceTestResolver(spaceStore spacestore.Store) *Resolver {
+	mockStor := &MockStorage{}
+	sp := NewMockStorageProvider(mockStor)
+	return NewResolver(sp, nil, nil, nil, nil, nil, zap.NewNop(), nil, spaceStore)
+}
+
+// ─── getSpaceStorage unit tests ───────────────────────────────────────────────
+
+// TestGetSpaceStorage_NilSpaceKey: nil key → transparent fallback to system storage.
+func TestGetSpaceStorage_NilSpaceKey(t *testing.T) {
+	mockSpaceStore := &MockSpaceStore{}
+	r := newSpaceTestResolver(mockSpaceStore)
+
+	stor, err := r.getSpaceStorage(context.Background(), nil)
+	assert.NoError(t, err)
+	assert.NotNil(t, stor)
+	mockSpaceStore.AssertNotCalled(t, "Get")
+}
+
+// TestGetSpaceStorage_EmptySpaceKey: empty-string key → transparent fallback.
+func TestGetSpaceStorage_EmptySpaceKey(t *testing.T) {
+	mockSpaceStore := &MockSpaceStore{}
+	r := newSpaceTestResolver(mockSpaceStore)
+
+	stor, err := r.getSpaceStorage(context.Background(), ptrStr(""))
+	assert.NoError(t, err)
+	assert.NotNil(t, stor)
+	mockSpaceStore.AssertNotCalled(t, "Get")
+}
+
+// TestGetSpaceStorage_SpaceStoreNil: multi-tenancy disabled (spaceStore == nil)
+// → transparent fallback even when a non-empty key is supplied.
+func TestGetSpaceStorage_SpaceStoreNil(t *testing.T) {
+	r := newSpaceTestResolver(nil)
+
+	stor, err := r.getSpaceStorage(context.Background(), ptrStr("space-1"))
+	assert.NoError(t, err)
+	assert.NotNil(t, stor)
+}
+
+// TestGetSpaceStorage_NotFound: spaceStore returns (nil, nil) → NOT_FOUND gqlerror.
+func TestGetSpaceStorage_NotFound(t *testing.T) {
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "space-1").
+		Return((*spacestore.Space)(nil), nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	assert.Nil(t, stor)
+	assert.Error(t, err)
+
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected a *gqlerror.Error")
+	assert.Equal(t, "NOT_FOUND", gqlErr.Extensions["code"])
+	mockSpaceStore.AssertExpectations(t)
+}
+
+// TestGetSpaceStorage_OrgMismatch: space belongs to a different org → FORBIDDEN.
+func TestGetSpaceStorage_OrgMismatch(t *testing.T) {
+	space := &spacestore.Space{
+		OrgID:  "org-b", // caller is in org-a
+		Bucket: "the-bucket",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "space-1").Return(space, nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	assert.Nil(t, stor)
+	assert.Error(t, err)
+
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected a *gqlerror.Error")
+	assert.Equal(t, "FORBIDDEN", gqlErr.Extensions["code"])
+	mockSpaceStore.AssertExpectations(t)
+}
+
+// TestGetSpaceStorage_Valid: matching org + valid bucket → non-nil S3 storage
+// is constructed without any network call.
+func TestGetSpaceStorage_Valid(t *testing.T) {
+	space := &spacestore.Space{
+		OrgID:       "org-a",
+		StorageType: "s3",
+		Bucket:      "my-bucket",
+		Region:      "us-east-1",
+		Endpoint:    "https://s3.example.com",
+		AccessKeyID: "AKIATEST",
+		SecretKey:   "test-secret",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "space-1").Return(space, nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	assert.NoError(t, err)
+	assert.NotNil(t, stor) // S3 client built without network calls
+	mockSpaceStore.AssertExpectations(t)
+}
+
+// ─── ListFiles integration: auth error paths ─────────────────────────────────
+
+// TestListFiles_SpaceKeyNotFound: passing a spaceKey that doesn't exist in the
+// store propagates NOT_FOUND through the resolver.
+func TestListFiles_SpaceKeyNotFound(t *testing.T) {
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "missing-space").
+		Return((*spacestore.Space)(nil), nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	result, err := r.Query().ListFiles(
+		ctx, "some/path", ptrStr("missing-space"),
+		nil, nil, nil, nil, nil, nil, nil, nil,
+	)
+	assert.Nil(t, result)
+	assert.Error(t, err)
+
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok)
+	assert.Equal(t, "NOT_FOUND", gqlErr.Extensions["code"])
+	mockSpaceStore.AssertExpectations(t)
+}
+
+// TestListFiles_SpaceKeyForbidden: passing a spaceKey whose org doesn't match the
+// caller's JWT org returns FORBIDDEN.
+func TestListFiles_SpaceKeyForbidden(t *testing.T) {
+	space := &spacestore.Space{
+		OrgID:  "org-b", // caller is in org-a
+		Bucket: "b",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	result, err := r.Query().ListFiles(
+		ctx, "some/path", ptrStr("other-space"),
+		nil, nil, nil, nil, nil, nil, nil, nil,
+	)
+	assert.Nil(t, result)
+	assert.Error(t, err)
+
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok)
+	assert.Equal(t, "FORBIDDEN", gqlErr.Extensions["code"])
+	mockSpaceStore.AssertExpectations(t)
+}
+
+// TestDeleteFile_SpaceKeyForbidden: delete on a cross-org space also returns FORBIDDEN.
+func TestDeleteFile_SpaceKeyForbidden(t *testing.T) {
+	space := &spacestore.Space{
+		OrgID:  "org-b",
+		Bucket: "b",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	ok, err := r.Mutation().DeleteFile(ctx, "file.jpg", ptrStr("other-space"))
+	assert.False(t, ok)
+	assert.Error(t, err)
+
+	gqlErr, isGql := err.(*gqlerror.Error)
+	assert.True(t, isGql)
+	assert.Equal(t, "FORBIDDEN", gqlErr.Extensions["code"])
+	mockSpaceStore.AssertExpectations(t)
+}

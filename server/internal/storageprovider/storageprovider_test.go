@@ -635,3 +635,58 @@ func TestProvider_GetStorage_AfterEnvInitialization(t *testing.T) {
 	// Should be the same instance
 	assert.Equal(t, provider.currentStorage, storage)
 }
+
+// ─── TestNewStorageFromSpaceConfig ────────────────────────────────────────────
+
+// TestNewStorageFromSpaceConfig_EmptyBucket: bucket is required — empty string
+// must return a descriptive error and nil storage.
+func TestNewStorageFromSpaceConfig_EmptyBucket(t *testing.T) {
+	logger := zap.NewNop()
+	p := New(logger, nil, nil)
+
+	stor, err := p.NewStorageFromSpaceConfig(
+		"s3", "", "prefix", "us-east-1", "", "key", "secret", false,
+	)
+	assert.Error(t, err)
+	assert.Nil(t, stor)
+	assert.Contains(t, err.Error(), "bucket is required")
+}
+
+// TestNewStorageFromSpaceConfig_Valid: a non-empty bucket with any credentials
+// builds an S3 storage client without making network calls.
+func TestNewStorageFromSpaceConfig_Valid(t *testing.T) {
+	logger := zap.NewNop()
+	p := New(logger, nil, nil)
+
+	stor, err := p.NewStorageFromSpaceConfig(
+		"s3", "my-bucket", "assets/",
+		"us-east-1", "https://s3.example.com",
+		"AKIATEST", "supersecret",
+		false,
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, stor)
+
+	// Verify the returned type is an S3 storage instance (not file or noop).
+	_, isS3 := stor.(*s3storage.S3Storage)
+	assert.True(t, isS3, "expected *s3storage.S3Storage")
+}
+
+// TestNewStorageFromSpaceConfig_R2Type: "r2" and "managed" storage types are
+// also S3-protocol-compatible and should produce a valid S3 storage.
+func TestNewStorageFromSpaceConfig_R2Type(t *testing.T) {
+	logger := zap.NewNop()
+	p := New(logger, nil, nil)
+
+	stor, err := p.NewStorageFromSpaceConfig(
+		"r2", "cf-bucket", "",
+		"auto", "https://xxxx.r2.cloudflarestorage.com",
+		"token-id", "token-secret",
+		true,
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, stor)
+
+	_, isS3 := stor.(*s3storage.S3Storage)
+	assert.True(t, isS3, "expected *s3storage.S3Storage for r2 type")
+}
