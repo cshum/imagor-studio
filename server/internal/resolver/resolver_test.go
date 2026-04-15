@@ -126,8 +126,8 @@ func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) e
 	return args.Error(0)
 }
 
-func (m *MockUserStore) List(ctx context.Context, offset, limit int) ([]*userstore.User, int, error) {
-	args := m.Called(ctx, offset, limit)
+func (m *MockUserStore) List(ctx context.Context, offset, limit int, search string) ([]*userstore.User, int, error) {
+	args := m.Called(ctx, offset, limit, search)
 	return args.Get(0).([]*userstore.User), args.Get(1).(int), args.Error(2)
 }
 

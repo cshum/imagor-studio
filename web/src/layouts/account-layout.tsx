@@ -43,7 +43,7 @@ interface NavItem {
 
 const NAV_GROUPS = (
   t: (key: string) => string,
-): Array<{ heading: string; adminOnly?: boolean; items: NavItem[] }> => [
+): Array<{ heading: string; adminOnly?: boolean; selfHostedOnly?: boolean; items: NavItem[] }> => [
   {
     heading: t('layouts.account.sections.account'),
     items: [
@@ -58,6 +58,7 @@ const NAV_GROUPS = (
   {
     heading: t('layouts.account.sections.administration'),
     adminOnly: true,
+    selfHostedOnly: true,
     items: [
       {
         id: 'admin',
@@ -96,7 +97,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
 
   const groups = NAV_GROUPS(t)
   const visibleGroups = groups
-    .filter((g) => !g.adminOnly || isAdmin)
+    .filter((g) => (!g.adminOnly || isAdmin) && (!g.selfHostedOnly || !isMultiTenant))
     .map((g) => ({
       ...g,
       items: g.items.filter(

@@ -54,6 +54,6 @@ func (n *UserStore) SetActive(ctx context.Context, id string, active bool) error
 	return ErrEmbeddedMode
 }
 
-func (n *UserStore) List(ctx context.Context, offset, limit int) ([]*userstore.User, int, error) {
+func (n *UserStore) List(ctx context.Context, offset, limit int, search string) ([]*userstore.User, int, error) {
 	return nil, 0, ErrEmbeddedMode
 }

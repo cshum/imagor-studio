@@ -632,9 +632,9 @@
     },
     "spaceSettings": {
       "sections": {
-        "imageProcessing": "圖像處理",
         "gallery": "圖庫",
-        "members": "成員"
+        "members": "成員",
+        "storage": "儲存與安全"
       },
       "gallery": {
         "description": "自訂此空間的圖庫顯示和行為。空間層級的設定會覆蓋平台預設值。"
@@ -646,16 +646,20 @@
       "storage": {
         "managedTitle": "平台託管儲存",
         "managedDescription": "檔案儲存在 Imagor Studio 的託管儲存中，儲存類型在空間建立後無法更改。",
-        "bucketLocked": "儲存桶和區域在建立時固定，無法更改。"
-      },
-      "imageProcessing": {
-        "description": "用於安全 imagor URL 生成的 HMAC 簽名設定。",
-        "imagorSecret": "HMAC 簽名金鑰",
+        "bucketLocked": "儲存桶和區域在建立時固定，無法更改。",
+        "description": "設定此空間的檔案儲存憑証和 URL 簽名。",
+        "accessKeyIdDescription": "留空以保留現有憑証。",
+        "secretKey": "私密存取金鑰",
+        "secretKeyDescription": "留空以保留現有憑証。",
+        "urlSigning": "URL 簽名",
+        "urlSigningDescription": "用於安全 imagor 轉換 URL 生成的 HMAC 簽名。",
+        "imagorSecret": "簽名金鑰",
         "imagorSecretDescription": "用於簽名 imagor 轉換 URL。留空則保留現有金鑰。",
         "signerAlgorithm": "簽名演算法",
+        "signerAlgorithmDescription": "用於簽名轉換 URL 的 HMAC 演算法。",
         "signerTruncate": "簽名截斷",
         "signerTruncateDescription": "將 HMAC 簽名截斷至此字元數（0 = 完整長度）。",
-        "saved": "圖像處理設定已儲存"
+        "saved": "儲存與安全設定已儲存"
       },
       "members": {
         "description": "管理有權存取此組織的成員。",

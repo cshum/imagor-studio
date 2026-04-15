@@ -17,8 +17,9 @@ export function AdminPage({ loaderData }: AdminPageProps) {
   const { authState } = useAuth()
   const isMultiTenant = authState.multiTenant
 
-  // Gallery-level settings that move to each space in multi-tenant mode.
-  // Also includes branding + language settings since those become per-space in SaaS.
+  // In multi-tenant mode, branding + language + all gallery/UX settings move to each
+  // space's Settings pages (Branding card + Gallery section). The platform admin shows
+  // only the settings that are genuinely platform-wide.
   const GALLERY_SETTING_KEYS = new Set([
     'config.app_title',
     'config.app_url',
@@ -167,7 +168,9 @@ export function AdminPage({ loaderData }: AdminPageProps) {
         <ImagorManagementSection imagorStatus={loaderData?.imagorStatus || null} />
       )}
 
-      <LicenseManagementSection licenseStatus={loaderData?.licenseStatus || null} />
+      {!isMultiTenant && (
+        <LicenseManagementSection licenseStatus={loaderData?.licenseStatus || null} />
+      )}
     </div>
   )
 }

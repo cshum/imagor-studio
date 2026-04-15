@@ -13,7 +13,6 @@ import {
   LogOut,
   MoreVertical,
   Settings,
-  ShieldCheck,
   Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -31,6 +30,7 @@ import {
   type OrgMemberItem,
 } from '@/api/org-api'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
+import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -66,6 +66,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SettingRow } from '@/components/ui/setting-row'
 import {
   Sidebar,
   SidebarContent,
@@ -80,10 +81,9 @@ import {
   SidebarTrigger,
   SidebarWrapper,
 } from '@/components/ui/sidebar'
-import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import type { GetSpaceQuery } from '@/generated/graphql'
-import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import { useBrand } from '@/hooks/use-brand'
+import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import { useAuth } from '@/stores/auth-store'
 
 export type SpaceSettingsData = NonNullable<GetSpaceQuery['space']>
@@ -100,20 +100,17 @@ const generalSchema = z.object({
 })
 type GeneralFormData = z.infer<typeof generalSchema>
 
-const storageSchema = z.object({
+// Merged storage + URL-signing config form
+const configSchema = z.object({
   endpoint: z.string().optional(),
   prefix: z.string().optional(),
   accessKeyId: z.string().optional(),
   secretKey: z.string().optional(),
-})
-type StorageFormData = z.infer<typeof storageSchema>
-
-const imageProcessingSchema = z.object({
   imagorSecret: z.string().optional(),
   signerAlgorithm: z.enum(['sha1', 'sha256', 'sha512']).optional(),
   signerTruncate: z.number().int().min(0).optional(),
 })
-type ImageProcessingFormData = z.infer<typeof imageProcessingSchema>
+type ConfigFormData = z.infer<typeof configSchema>
 
 // ── Avatar helpers ────────────────────────────────────────────────────────────
 
@@ -142,7 +139,7 @@ function spaceInitials(name: string): string {
 
 // ── Section types ─────────────────────────────────────────────────────────────
 
-type SectionId = 'general' | 'storage' | 'imageProcessing' | 'gallery' | 'members' | 'dangerZone'
+type SectionId = 'general' | 'storage' | 'gallery' | 'members' | 'dangerZone'
 
 // ── Page component ────────────────────────────────────────────────────────────
 
@@ -225,20 +222,23 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
     }
   }
 
-  // -- BYOB Storage form -----------------------------------------------------
-  const storageForm = useForm<StorageFormData>({
-    resolver: zodResolver(storageSchema),
+  // -- Storage & Security config form ----------------------------------------
+  const configForm = useForm<ConfigFormData>({
+    resolver: zodResolver(configSchema),
     defaultValues: {
       endpoint: space.endpoint ?? '',
       prefix: space.prefix ?? '',
       accessKeyId: '',
       secretKey: '',
+      imagorSecret: '',
+      signerAlgorithm: (space.signerAlgorithm as 'sha1' | 'sha256' | 'sha512') || 'sha256',
+      signerTruncate: space.signerTruncate ?? 0,
     },
   })
-  const [isSavingStorage, setIsSavingStorage] = useState(false)
+  const [isSavingConfig, setIsSavingConfig] = useState(false)
 
-  const handleSaveStorage = async (values: StorageFormData) => {
-    setIsSavingStorage(true)
+  const handleSaveConfig = async (values: ConfigFormData) => {
+    setIsSavingConfig(true)
     try {
       await updateSpace({
         key: space.key,
@@ -255,63 +255,20 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
           usePathStyle: null,
           customDomain: null,
           isShared: null,
-          signerAlgorithm: null,
-          signerTruncate: null,
-          imagorSecret: null,
-        },
-      })
-      toast.success(t('pages.spaceSettings.storage.saved'))
-      storageForm.setValue('accessKeyId', '')
-      storageForm.setValue('secretKey', '')
-      await router.invalidate()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
-    } finally {
-      setIsSavingStorage(false)
-    }
-  }
-
-  // -- Image Processing form -------------------------------------------------
-  const imageProcessingForm = useForm<ImageProcessingFormData>({
-    resolver: zodResolver(imageProcessingSchema),
-    defaultValues: {
-      imagorSecret: '',
-      signerAlgorithm: (space.signerAlgorithm as 'sha1' | 'sha256' | 'sha512') || 'sha256',
-      signerTruncate: space.signerTruncate ?? 0,
-    },
-  })
-  const [isSavingImageProcessing, setIsSavingImageProcessing] = useState(false)
-
-  const handleSaveImageProcessing = async (values: ImageProcessingFormData) => {
-    setIsSavingImageProcessing(true)
-    try {
-      await updateSpace({
-        key: space.key,
-        input: {
-          key: space.key,
-          name: space.name,
-          storageType: null,
-          bucket: null,
-          region: null,
-          endpoint: null,
-          prefix: null,
-          accessKeyId: null,
-          secretKey: null,
-          usePathStyle: null,
-          customDomain: null,
-          isShared: null,
           signerAlgorithm: values.signerAlgorithm ?? null,
           signerTruncate: values.signerTruncate ?? null,
           imagorSecret: values.imagorSecret || null,
         },
       })
-      toast.success(t('pages.spaceSettings.imageProcessing.saved'))
-      imageProcessingForm.setValue('imagorSecret', '')
+      toast.success(t('pages.spaceSettings.storage.saved'))
+      configForm.setValue('accessKeyId', '')
+      configForm.setValue('secretKey', '')
+      configForm.setValue('imagorSecret', '')
       await router.invalidate()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
     } finally {
-      setIsSavingImageProcessing(false)
+      setIsSavingConfig(false)
     }
   }
 
@@ -347,11 +304,6 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
       id: 'storage',
       icon: <Database className='h-4 w-4' />,
       label: t('pages.spaceSettings.sections.storage'),
-    },
-    {
-      id: 'imageProcessing',
-      icon: <ShieldCheck className='h-4 w-4' />,
-      label: t('pages.spaceSettings.sections.imageProcessing'),
     },
     {
       id: 'gallery',
@@ -507,20 +459,18 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                 </CardHeader>
                 <CardContent>
                   <Form {...generalForm}>
-                    <form
-                      onSubmit={generalForm.handleSubmit(handleSaveGeneral)}
-                      className='space-y-4'
-                    >
+                    <form onSubmit={generalForm.handleSubmit(handleSaveGeneral)}>
                       <FormField
                         control={generalForm.control}
                         name='name'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('pages.spaceSettings.general.name')}</FormLabel>
-                            <FormControl>
-                              <Input {...field} disabled={isSavingGeneral} />
-                            </FormControl>
-                            <FormMessage />
+                            <SettingRow label={t('pages.spaceSettings.general.name')}>
+                              <FormControl>
+                                <Input {...field} disabled={isSavingGeneral} />
+                              </FormControl>
+                              <FormMessage className='mt-1.5' />
+                            </SettingRow>
                           </FormItem>
                         )}
                       />
@@ -529,22 +479,24 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                         name='customDomain'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t('pages.spaceSettings.general.customDomain')}</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder='images.example.com'
-                                {...field}
-                                disabled={isSavingGeneral}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              {t('pages.spaceSettings.general.customDomainDescription')}
-                            </FormDescription>
-                            <FormMessage />
+                            <SettingRow
+                              label={t('pages.spaceSettings.general.customDomain')}
+                              description={t('pages.spaceSettings.general.customDomainDescription')}
+                              last
+                            >
+                              <FormControl>
+                                <Input
+                                  placeholder='images.example.com'
+                                  {...field}
+                                  disabled={isSavingGeneral}
+                                />
+                              </FormControl>
+                              <FormMessage className='mt-1.5' />
+                            </SettingRow>
                           </FormItem>
                         )}
                       />
-                      <div className='flex justify-end'>
+                      <div className='mt-2 flex justify-end pt-2'>
                         <ButtonWithLoading type='submit' isLoading={isSavingGeneral}>
                           {t('common.buttons.save')}
                         </ButtonWithLoading>
@@ -560,7 +512,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
               </div>
             )}
 
-            {/* ── Storage ───────────────────────────────────────────────── */}
+            {/* ── Storage & Security ────────────────────────────────────── */}
             {activeSection === 'storage' && (
               <Card>
                 <CardHeader>
@@ -568,8 +520,9 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                   <CardDescription>{t('pages.spaceSettings.storage.description')}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {!isByob ? (
-                    <div className='bg-muted/50 flex items-start gap-3 rounded-lg border p-4'>
+                  {/* Managed storage info banner */}
+                  {!isByob && (
+                    <div className='bg-muted/50 mb-4 flex items-start gap-3 rounded-lg border p-4'>
                       <Database className='text-muted-foreground mt-0.5 h-5 w-5 shrink-0' />
                       <div className='space-y-1'>
                         <p className='text-sm font-medium'>
@@ -580,178 +533,174 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                         </p>
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <div className='bg-muted/30 mb-4 rounded-lg border p-3'>
-                        <p className='text-sm'>
-                          <span className='text-muted-foreground font-medium'>
-                            {t('pages.spaceSettings.storage.bucket')}:
-                          </span>{' '}
-                          <span className='font-mono text-sm'>{space.bucket}</span>
-                          {space.region && (
-                            <>
-                              <span className='text-muted-foreground mx-2'>·</span>
-                              <span className='text-muted-foreground font-medium'>
-                                {t('pages.spaceSettings.storage.region')}:
-                              </span>{' '}
-                              <span className='font-mono text-sm'>{space.region}</span>
-                            </>
-                          )}
-                        </p>
-                        <p className='text-muted-foreground mt-1 text-xs'>
-                          {t('pages.spaceSettings.storage.bucketLocked')}
-                        </p>
-                      </div>
-                      <Form {...storageForm}>
-                        <form
-                          onSubmit={storageForm.handleSubmit(handleSaveStorage)}
-                          className='space-y-4'
-                        >
+                  )}
+
+                  {/* BYOB: bucket/region readonly banner */}
+                  {isByob && (
+                    <div className='bg-muted/30 mb-4 rounded-lg border p-3'>
+                      <p className='text-sm'>
+                        <span className='text-muted-foreground font-medium'>
+                          {t('pages.spaceSettings.storage.bucket')}:
+                        </span>{' '}
+                        <span className='font-mono text-sm'>{space.bucket}</span>
+                        {space.region && (
+                          <>
+                            <span className='text-muted-foreground mx-2'>·</span>
+                            <span className='text-muted-foreground font-medium'>
+                              {t('pages.spaceSettings.storage.region')}:
+                            </span>{' '}
+                            <span className='font-mono text-sm'>{space.region}</span>
+                          </>
+                        )}
+                      </p>
+                      <p className='text-muted-foreground mt-1 text-xs'>
+                        {t('pages.spaceSettings.storage.bucketLocked')}
+                      </p>
+                    </div>
+                  )}
+
+                  <Form {...configForm}>
+                    <form onSubmit={configForm.handleSubmit(handleSaveConfig)}>
+                      {/* BYOB-only: storage credentials */}
+                      {isByob && (
+                        <>
                           <FormField
-                            control={storageForm.control}
-                            name='endpoint'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder='https://s3.amazonaws.com'
-                                    {...field}
-                                    disabled={isSavingStorage}
-                                  />
-                                </FormControl>
-                                <FormDescription>
-                                  {t('pages.spaceSettings.storage.endpointDescription')}
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={storageForm.control}
+                            control={configForm.control}
                             name='prefix'
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder='media/'
-                                    {...field}
-                                    disabled={isSavingStorage}
-                                  />
-                                </FormControl>
-                                <FormDescription>
-                                  {t('pages.spaceSettings.storage.prefixDescription')}
-                                </FormDescription>
-                                <FormMessage />
+                                <SettingRow
+                                  label={t('pages.spaceSettings.storage.prefix')}
+                                  description={t('pages.spaceSettings.storage.prefixDescription')}
+                                >
+                                  <FormControl>
+                                    <Input
+                                      placeholder='media/'
+                                      {...field}
+                                      disabled={isSavingConfig}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className='mt-1.5' />
+                                </SettingRow>
                               </FormItem>
                             )}
                           />
-                          <div className='grid grid-cols-2 gap-4'>
-                            <FormField
-                              control={storageForm.control}
-                              name='accessKeyId'
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>
-                                    {t('pages.spaceSettings.storage.accessKeyId')}
-                                  </FormLabel>
+                          <FormField
+                            control={configForm.control}
+                            name='endpoint'
+                            render={({ field }) => (
+                              <FormItem>
+                                <SettingRow
+                                  label={t('pages.spaceSettings.storage.endpoint')}
+                                  description={t('pages.spaceSettings.storage.endpointDescription')}
+                                >
+                                  <FormControl>
+                                    <Input
+                                      placeholder='https://s3.amazonaws.com'
+                                      {...field}
+                                      disabled={isSavingConfig}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className='mt-1.5' />
+                                </SettingRow>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={configForm.control}
+                            name='accessKeyId'
+                            render={({ field }) => (
+                              <FormItem>
+                                <SettingRow
+                                  label={t('pages.spaceSettings.storage.accessKeyId')}
+                                  description={t(
+                                    'pages.spaceSettings.storage.accessKeyIdDescription',
+                                  )}
+                                >
                                   <FormControl>
                                     <Input
                                       placeholder={t('pages.spaceSettings.placeholders.unchanged')}
                                       {...field}
-                                      disabled={isSavingStorage}
+                                      disabled={isSavingConfig}
                                     />
                                   </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={storageForm.control}
-                              name='secretKey'
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>
-                                    {t('pages.spaceSettings.storage.secretKey')}
-                                  </FormLabel>
+                                  <FormMessage className='mt-1.5' />
+                                </SettingRow>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={configForm.control}
+                            name='secretKey'
+                            render={({ field }) => (
+                              <FormItem>
+                                <SettingRow
+                                  label={t('pages.spaceSettings.storage.secretKey')}
+                                  description={t('pages.spaceSettings.storage.secretKeyDescription')}
+                                >
                                   <FormControl>
                                     <Input
                                       type='password'
                                       placeholder={t('pages.spaceSettings.placeholders.unchanged')}
                                       {...field}
-                                      disabled={isSavingStorage}
+                                      disabled={isSavingConfig}
                                     />
                                   </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          <div className='flex justify-end'>
-                            <ButtonWithLoading type='submit' isLoading={isSavingStorage}>
-                              {t('common.buttons.save')}
-                            </ButtonWithLoading>
-                          </div>
-                        </form>
-                      </Form>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                                  <FormMessage className='mt-1.5' />
+                                </SettingRow>
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
 
-            {/* ── Image Processing ──────────────────────────────────────── */}
-            {activeSection === 'imageProcessing' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('pages.spaceSettings.sections.imageProcessing')}</CardTitle>
-                  <CardDescription>
-                    {t('pages.spaceSettings.imageProcessing.description')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...imageProcessingForm}>
-                    <form
-                      onSubmit={imageProcessingForm.handleSubmit(handleSaveImageProcessing)}
-                      className='space-y-4'
-                    >
+                      {/* URL Signing sub-section */}
+                      <div className={isByob ? 'mb-1 border-t pt-5' : 'mb-1'}>
+                        <p className='text-muted-foreground text-xs font-semibold uppercase tracking-wide'>
+                          {t('pages.spaceSettings.storage.urlSigning')}
+                        </p>
+                        <p className='text-muted-foreground mt-1 text-sm'>
+                          {t('pages.spaceSettings.storage.urlSigningDescription')}
+                        </p>
+                      </div>
+
                       <FormField
-                        control={imageProcessingForm.control}
+                        control={configForm.control}
                         name='imagorSecret'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>
-                              {t('pages.spaceSettings.imageProcessing.imagorSecret')}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type='password'
-                                placeholder={t('pages.spaceSettings.placeholders.unchanged')}
-                                {...field}
-                                disabled={isSavingImageProcessing}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              {t('pages.spaceSettings.imageProcessing.imagorSecretDescription')}
-                            </FormDescription>
-                            <FormMessage />
+                            <SettingRow
+                              label={t('pages.spaceSettings.storage.imagorSecret')}
+                              description={t('pages.spaceSettings.storage.imagorSecretDescription')}
+                            >
+                              <FormControl>
+                                <Input
+                                  type='password'
+                                  placeholder={t('pages.spaceSettings.placeholders.unchanged')}
+                                  {...field}
+                                  disabled={isSavingConfig}
+                                />
+                              </FormControl>
+                              <FormMessage className='mt-1.5' />
+                            </SettingRow>
                           </FormItem>
                         )}
                       />
-                      <div className='grid grid-cols-2 gap-4'>
-                        <FormField
-                          control={imageProcessingForm.control}
-                          name='signerAlgorithm'
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                {t('pages.spaceSettings.imageProcessing.signerAlgorithm')}
-                              </FormLabel>
+                      <FormField
+                        control={configForm.control}
+                        name='signerAlgorithm'
+                        render={({ field }) => (
+                          <FormItem>
+                            <SettingRow
+                              label={t('pages.spaceSettings.storage.signerAlgorithm')}
+                              description={t(
+                                'pages.spaceSettings.storage.signerAlgorithmDescription',
+                              )}
+                            >
                               <Select
                                 onValueChange={field.onChange}
                                 value={field.value ?? 'sha256'}
-                                disabled={isSavingImageProcessing}
+                                disabled={isSavingConfig}
                               >
                                 <FormControl>
                                   <SelectTrigger>
@@ -764,18 +713,23 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                                   <SelectItem value='sha512'>SHA-512</SelectItem>
                                 </SelectContent>
                               </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={imageProcessingForm.control}
-                          name='signerTruncate'
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                {t('pages.spaceSettings.imageProcessing.signerTruncate')}
-                              </FormLabel>
+                              <FormMessage className='mt-1.5' />
+                            </SettingRow>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={configForm.control}
+                        name='signerTruncate'
+                        render={({ field }) => (
+                          <FormItem>
+                            <SettingRow
+                              label={t('pages.spaceSettings.storage.signerTruncate')}
+                              description={t(
+                                'pages.spaceSettings.storage.signerTruncateDescription',
+                              )}
+                              last
+                            >
                               <FormControl>
                                 <Input
                                   type='number'
@@ -790,19 +744,17 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                                   onBlur={field.onBlur}
                                   name={field.name}
                                   ref={field.ref}
-                                  disabled={isSavingImageProcessing}
+                                  disabled={isSavingConfig}
                                 />
                               </FormControl>
-                              <FormDescription>
-                                {t('pages.spaceSettings.imageProcessing.signerTruncateDescription')}
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className='flex justify-end'>
-                        <ButtonWithLoading type='submit' isLoading={isSavingImageProcessing}>
+                              <FormMessage className='mt-1.5' />
+                            </SettingRow>
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className='mt-2 flex justify-end pt-2'>
+                        <ButtonWithLoading type='submit' isLoading={isSavingConfig}>
                           {t('common.buttons.save')}
                         </ButtonWithLoading>
                       </div>
@@ -971,12 +923,8 @@ function GallerySettingsSection({ spaceKey, initialValues }: GallerySettingsSect
         seek_1s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek1s'),
         seek_3s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek3s'),
         seek_5s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek5s'),
-        seek_10pct: t(
-          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek10pct',
-        ),
-        seek_25pct: t(
-          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct',
-        ),
+        seek_10pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek10pct'),
+        seek_25pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct'),
       },
     },
     {
@@ -1155,7 +1103,11 @@ function MembersSection() {
                 </SelectContent>
               </Select>
             </div>
-            <ButtonWithLoading onClick={handleAdd} isLoading={isAdding} disabled={!addUsername.trim()}>
+            <ButtonWithLoading
+              onClick={handleAdd}
+              isLoading={isAdding}
+              disabled={!addUsername.trim()}
+            >
               {t('pages.spaceSettings.members.addButton')}
             </ButtonWithLoading>
           </div>
@@ -1164,7 +1116,9 @@ function MembersSection() {
           {isLoading ? (
             <p className='text-muted-foreground text-sm'>{t('common.status.loading')}</p>
           ) : members.length === 0 ? (
-            <p className='text-muted-foreground text-sm'>{t('pages.spaceSettings.members.empty')}</p>
+            <p className='text-muted-foreground text-sm'>
+              {t('pages.spaceSettings.members.empty')}
+            </p>
           ) : (
             <div className='divide-y rounded-lg border'>
               {members.map((member) => (
@@ -1208,7 +1162,9 @@ function MembersSection() {
         onOpenChange={(open) => !open && setPendingRemoveId(null)}
       >
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{t('pages.spaceSettings.members.removeTitle')}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>
+            {t('pages.spaceSettings.members.removeTitle')}
+          </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             {t('pages.spaceSettings.members.removeDescription')}{' '}
             <strong className='text-foreground'>{pendingMember?.username}</strong>?

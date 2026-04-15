@@ -34,7 +34,7 @@ type Store interface {
 	UpdateDisplayName(ctx context.Context, id string, displayName string) error
 	UpdateUsername(ctx context.Context, id string, username string) error
 	SetActive(ctx context.Context, id string, active bool) error
-	List(ctx context.Context, offset, limit int) ([]*User, int, error)
+	List(ctx context.Context, offset, limit int, search string) ([]*User, int, error)
 }
 
 type store struct {
@@ -237,40 +237,39 @@ func (s *store) UpdateUsername(ctx context.Context, id string, username string) 
 	return nil
 }
 
-func (s *store) List(ctx context.Context, offset, limit int) ([]*User, int, error) {
+func (s *store) List(ctx context.Context, offset, limit int, search string) ([]*User, int, error) {
 	var users []model.User
+	search = strings.TrimSpace(search)
+	like := "%" + strings.ToLower(search) + "%"
 
-	// Get total count
-	totalCount, err := s.db.NewSelect().
-		Model((*model.User)(nil)).
-		Where("is_active = true").
-		Count(ctx)
+	// Build count query
+	countQ := s.db.NewSelect().Model((*model.User)(nil))
+	if search != "" {
+		countQ = countQ.Where("LOWER(display_name) LIKE ? OR LOWER(username) LIKE ?", like, like)
+	}
+	totalCount, err := countQ.Count(ctx)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error counting users: %w", err)
 	}
 
-	// Get paginated results
-	query := s.db.NewSelect().
+	// Build data query
+	dataQ := s.db.NewSelect().
 		Model(&users).
-		Where("is_active = true").
 		OrderExpr("created_at DESC")
+	if search != "" {
+		dataQ = dataQ.Where("LOWER(display_name) LIKE ? OR LOWER(username) LIKE ?", like, like)
+	}
 
-	// Apply offset and limit
 	if offset > 0 {
-		query = query.Offset(offset)
+		dataQ = dataQ.Offset(offset)
 	}
-
-	// Only apply limit if it's greater than 0 (0 means no limit)
-	// Note: SQLite requires LIMIT when using OFFSET, so we use a large number when limit=0 and offset>0
 	if limit > 0 {
-		query = query.Limit(limit)
+		dataQ = dataQ.Limit(limit)
 	} else if offset > 0 {
-		// Use a very large limit when we have offset but no limit
-		query = query.Limit(1000000)
+		dataQ = dataQ.Limit(1000000)
 	}
 
-	err = query.Scan(ctx)
-	if err != nil {
+	if err = dataQ.Scan(ctx); err != nil {
 		return nil, 0, fmt.Errorf("error listing users: %w", err)
 	}
 

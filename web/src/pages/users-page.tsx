@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { Edit, MoreHorizontal, Plus, Search, UserCheck, UserX } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
@@ -39,12 +39,27 @@ import { useFormErrors } from '@/hooks/use-form-errors'
 
 interface UsersPageProps {
   loaderData?: ListUsersQuery['users']
+  searchQuery?: string
 }
 
-export function UsersPage({ loaderData }: UsersPageProps) {
+export function UsersPage({ loaderData, searchQuery = '' }: UsersPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState(searchQuery)
+  const navigate = useNavigate()
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchTerm(value)
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
+      searchTimerRef.current = setTimeout(() => {
+        void navigate({ to: '/account/users', search: { q: value }, replace: true })
+      }, 300)
+    },
+    [navigate],
+  )
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
@@ -100,7 +115,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
   const { handleFormError: handleCreateError } = useFormErrors<CreateUserFormData>()
   const { handleFormError: handleEditError } = useFormErrors<EditUserFormData>()
 
-  // Use loader data directly
+  // Use loader data directly (server-side filtered)
   const users = loaderData?.items || []
   const totalCount = loaderData?.totalCount || 0
 
@@ -218,12 +233,6 @@ export function UsersPage({ loaderData }: UsersPageProps) {
     }, 0)
   }
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
   return (
     <div className='space-y-6'>
       <Card>
@@ -244,7 +253,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
               <Input
                 placeholder={t('pages.users.searchPlaceholder')}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className='pl-10'
               />
             </div>
@@ -269,12 +278,12 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                     <Skeleton className='h-4 w-8' />
                   </div>
                 ))
-              ) : filteredUsers.length === 0 ? (
+              ) : users.length === 0 ? (
                 <div className='text-muted-foreground p-8 text-center'>
                   {t('pages.users.noUsersFound')}
                 </div>
               ) : (
-                filteredUsers.map((user) => (
+                users.map((user) => (
                   <div key={user.id} className='grid grid-cols-5 items-center gap-4 border-b p-4'>
                     <div className='font-medium'>{user.displayName}</div>
                     <div className='text-muted-foreground'>{user.username}</div>
@@ -341,12 +350,12 @@ export function UsersPage({ loaderData }: UsersPageProps) {
                     </div>
                   </div>
                 ))
-              ) : filteredUsers.length === 0 ? (
+              ) : users.length === 0 ? (
                 <div className='text-muted-foreground rounded-lg border p-8 text-center'>
                   {t('pages.users.noUsersFound')}
                 </div>
               ) : (
-                filteredUsers.map((user) => (
+                users.map((user) => (
                   <div key={user.id} className='space-y-3 rounded-lg border p-4'>
                     {/* Header: Name and Status */}
                     <div className='flex items-start justify-between'>
@@ -399,7 +408,7 @@ export function UsersPage({ loaderData }: UsersPageProps) {
 
             {/* Pagination Info */}
             <div className='text-muted-foreground text-sm'>
-              {t('pages.users.showingUsers', { filtered: filteredUsers.length, total: totalCount })}
+              {t('pages.users.showingUsers', { filtered: users.length, total: totalCount })}
             </div>
           </div>
         </CardContent>

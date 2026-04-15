@@ -161,7 +161,7 @@ type ComplexityRoot struct {
 		StatFile           func(childComplexity int, path string, spaceKey *string) int
 		StorageStatus      func(childComplexity int) int
 		User               func(childComplexity int, id string) int
-		Users              func(childComplexity int, offset *int, limit *int) int
+		Users              func(childComplexity int, offset *int, limit *int, search *string) int
 	}
 
 	S3StorageConfig struct {
@@ -304,7 +304,7 @@ type QueryResolver interface {
 	LicenseStatus(ctx context.Context) (*LicenseStatus, error)
 	Me(ctx context.Context) (*User, error)
 	User(ctx context.Context, id string) (*User, error)
-	Users(ctx context.Context, offset *int, limit *int) (*UserList, error)
+	Users(ctx context.Context, offset *int, limit *int, search *string) (*UserList, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -1091,7 +1091,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.Users(childComplexity, args["offset"].(*int), args["limit"].(*int)), true
+		return e.ComplexityRoot.Query.Users(childComplexity, args["offset"].(*int), args["limit"].(*int), args["search"].(*string)), true
 
 	case "S3StorageConfig.baseDir":
 		if e.ComplexityRoot.S3StorageConfig.BaseDir == nil {
@@ -1984,7 +1984,7 @@ type TemplateResult {
 
   # admin only operations
   user(id: ID!): User
-  users(offset: Int = 0, limit: Int = 0): UserList!
+  users(offset: Int = 0, limit: Int = 0, search: String): UserList!
 }
 
 extend type Mutation {
@@ -2703,6 +2703,11 @@ func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["limit"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "search", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["search"] = arg2
 	return args, nil
 }
 
@@ -6389,7 +6394,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 		ec.fieldContext_Query_users,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().Users(ctx, fc.Args["offset"].(*int), fc.Args["limit"].(*int))
+			return ec.Resolvers.Query().Users(ctx, fc.Args["offset"].(*int), fc.Args["limit"].(*int), fc.Args["search"].(*string))
 		},
 		nil,
 		ec.marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserList,

@@ -141,8 +141,8 @@ func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) e
 	return args.Error(0)
 }
 
-func (m *MockUserStore) List(ctx context.Context, offset, limit int) ([]*userstore.User, int, error) {
-	args := m.Called(ctx, offset, limit)
+func (m *MockUserStore) List(ctx context.Context, offset, limit int, search string) ([]*userstore.User, int, error) {
+	args := m.Called(ctx, offset, limit, search)
 	if args.Get(0) == nil {
 		return nil, args.Get(1).(int), args.Error(2)
 	}
@@ -1094,7 +1094,7 @@ func TestCheckFirstRun(t *testing.T) {
 			mockUserStore := new(MockUserStore)
 			handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, tt.multiTenant)
 
-			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.userCount, nil)
+			mockUserStore.On("List", mock.Anything, 0, 1, "").Return([]*userstore.User{}, tt.userCount, nil)
 
 			req := httptest.NewRequest(http.MethodGet, "/api/auth/first-run", nil)
 			rr := httptest.NewRecorder()
@@ -1350,7 +1350,7 @@ func TestRegisterAdmin(t *testing.T) {
 			mockUserStore.ExpectedCalls = nil
 			mockRegistryStore.ExpectedCalls = nil
 
-			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.existingUsers, nil)
+			mockUserStore.On("List", mock.Anything, 0, 1, "").Return([]*userstore.User{}, tt.existingUsers, nil)
 			tt.setupMocks()
 
 			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, false, false)

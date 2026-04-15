@@ -425,10 +425,15 @@ const accountUsersRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/users',
   beforeLoad: requireAdminAccountAuth,
-  loader: usersLoader,
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: (search.q as string) ?? '',
+  }),
+  loaderDeps: ({ search: { q } }) => ({ q }),
+  loader: ({ deps }) => usersLoader({ search: deps.q }),
   component: () => {
     const loaderData = accountUsersRoute.useLoaderData()
-    return <UsersPage loaderData={loaderData.users} />
+    const { q } = accountUsersRoute.useSearch()
+    return <UsersPage loaderData={loaderData.users} searchQuery={q} />
   },
 })
 

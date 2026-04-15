@@ -683,15 +683,13 @@
     "spaceSettings": {
       "backToSpaces": "Back to Spaces",
       "openGallery": "Open Gallery",
-      "sections": {
-        "general": "General",
-        "storage": "Storage",
-        "security": "Image Processing",
-        "imageProcessing": "Image Processing",
-        "gallery": "Gallery",
-        "dangerZone": "Danger Zone",
-        "members": "Members"
-      },
+    "sections": {
+      "general": "General",
+      "storage": "Storage & Security",
+      "gallery": "Gallery",
+      "dangerZone": "Danger Zone",
+      "members": "Members"
+    },
       "gallery": {
         "description": "Customize gallery display and behaviour for this space. Space-level settings override the platform defaults."
       },
@@ -706,37 +704,31 @@
         "customDomainDescription": "Optional custom domain for this space (e.g. images.example.com).",
         "saved": "General settings saved"
       },
-      "storage": {
-        "description": "Configure where this space stores its files.",
-        "managedTitle": "Platform-managed Storage",
-        "managedDescription": "Files are stored in Imagor Studio's managed storage. Storage type cannot be changed after the space is created.",
-        "bucket": "Bucket",
-        "region": "Region",
-        "bucketLocked": "Bucket and region are fixed at creation time and cannot be changed.",
-        "endpoint": "Endpoint",
-        "endpointDescription": "Custom S3-compatible endpoint URL. Leave blank for AWS S3.",
-        "prefix": "Path Prefix",
-        "prefixDescription": "Optional path prefix inside the bucket (e.g. media/).",
-        "accessKeyId": "Access Key ID",
-        "secretKey": "Secret Key",
-        "saved": "Storage settings saved"
-      },
-      "imageProcessing": {
-        "description": "HMAC signing configuration for secure imagor URL generation.",
-        "imagorSecret": "HMAC Signing Secret",
-        "imagorSecretDescription": "Used to sign imagor transformation URLs. Leave blank to keep the existing secret.",
-        "signerAlgorithm": "Signing Algorithm",
-        "signerTruncate": "Signature Truncation",
-        "signerTruncateDescription": "Truncate the HMAC signature to this many characters (0 = full length).",
-        "saved": "Image processing settings saved"
-      },
-      "security": {
-        "description": "HMAC signing configuration for secure imagor URL generation.",
-        "imagorSecret": "HMAC Signing Secret",
-        "imagorSecretDescription": "Used to sign imagor transformation URLs. Leave blank to keep the existing secret.",
-        "signerAlgorithm": "Signing Algorithm",
-        "saved": "Security settings saved"
-      },
+    "storage": {
+      "description": "Configure file storage credentials and URL signing for this space.",
+      "managedTitle": "Platform-managed Storage",
+      "managedDescription": "Files are stored in Imagor Studio's managed storage. Storage type cannot be changed after the space is created.",
+      "bucket": "Bucket",
+      "region": "Region",
+      "bucketLocked": "Bucket and region are fixed at creation time and cannot be changed.",
+      "endpoint": "Endpoint",
+      "endpointDescription": "Custom S3-compatible endpoint URL. Leave blank for AWS S3.",
+      "prefix": "Path Prefix",
+      "prefixDescription": "Optional path prefix inside the bucket (e.g. media/).",
+      "accessKeyId": "Access Key ID",
+      "accessKeyIdDescription": "Leave blank to keep existing credentials.",
+      "secretKey": "Secret Access Key",
+      "secretKeyDescription": "Leave blank to keep existing credentials.",
+      "urlSigning": "URL Signing",
+      "urlSigningDescription": "HMAC signing for secure imagor transformation URL generation.",
+      "imagorSecret": "Signing Secret",
+      "imagorSecretDescription": "Used to sign imagor transformation URLs. Leave blank to keep the existing secret.",
+      "signerAlgorithm": "Signing Algorithm",
+      "signerAlgorithmDescription": "HMAC algorithm used to sign transformation URLs.",
+      "signerTruncate": "Signature Truncation",
+      "signerTruncateDescription": "Truncate the HMAC signature to this many characters (0 = full length).",
+      "saved": "Storage & security settings saved"
+    },
       "danger": {
         "deleteTitle": "Delete this space",
         "deleteDescription": "Once deleted, all configuration for this space is permanently removed. Files in your S3 bucket are not affected.",

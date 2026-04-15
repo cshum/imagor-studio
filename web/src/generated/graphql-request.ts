@@ -427,6 +427,7 @@ export type QueryUserArgs = {
 export type QueryUsersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
 }
 
 export type RegistryEntryInput = {
@@ -1248,6 +1249,7 @@ export type GetUserQuery = {
 export type ListUsersQueryVariables = Exact<{
   offset?: InputMaybe<Scalars['Int']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type ListUsersQuery = {
@@ -1798,8 +1800,8 @@ export const GetUserDocument = gql`
   ${UserInfoFragmentDoc}
 `
 export const ListUsersDocument = gql`
-  query ListUsers($offset: Int = 0, $limit: Int = 0) {
-    users(offset: $offset, limit: $limit) {
+  query ListUsers($offset: Int = 0, $limit: Int = 0, $search: String) {
+    users(offset: $offset, limit: $limit, search: $search) {
       items {
         ...UserInfo
       }

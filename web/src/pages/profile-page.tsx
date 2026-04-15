@@ -16,42 +16,13 @@ import {
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
 } from '@/components/ui/responsive-dialog'
+import { SettingRow } from '@/components/ui/setting-row'
 import { useFormErrors } from '@/hooks/use-form-errors'
 import type { ProfileLoaderData } from '@/loaders/account-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
 interface ProfilePageProps {
   loaderData?: ProfileLoaderData
-}
-
-// ── Shared row layout ─────────────────────────────────────────────────────────
-// Mirrors the SystemSettingsForm horizontal pattern: label+desc on the left,
-// control on the right. On small screens the two sides stack vertically.
-
-function SettingRow({
-  label,
-  description,
-  children,
-  last,
-}: {
-  label: string
-  description?: string
-  children: React.ReactNode
-  last?: boolean
-}) {
-  return (
-    <div
-      className={`flex flex-col gap-3 py-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8${last ? '' : 'border-b'}`}
-    >
-      <div className='min-w-0 sm:w-2/5'>
-        <p className='text-sm leading-none font-medium'>{label}</p>
-        {description && (
-          <p className='text-muted-foreground mt-1.5 text-sm leading-snug'>{description}</p>
-        )}
-      </div>
-      <div className='sm:w-3/5 sm:max-w-xs'>{children}</div>
-    </div>
-  )
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────

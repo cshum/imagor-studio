@@ -426,6 +426,7 @@ export type QueryUserArgs = {
 export type QueryUsersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
 }
 
 export type RegistryEntryInput = {
@@ -1247,6 +1248,7 @@ export type GetUserQuery = {
 export type ListUsersQueryVariables = Exact<{
   offset?: InputMaybe<Scalars['Int']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type ListUsersQuery = {
@@ -3684,6 +3686,11 @@ export const ListUsersDocument = {
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
           defaultValue: { kind: 'IntValue', value: '0' },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'search' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -3701,6 +3708,11 @@ export const ListUsersDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'limit' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'search' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'search' } },
               },
             ],
             selectionSet: {

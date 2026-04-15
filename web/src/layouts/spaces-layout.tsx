@@ -41,10 +41,7 @@ export function SpacesLayout() {
           <div className='flex h-10 items-center justify-between'>
             {/* Left: app title + separator + section label */}
             <div className='flex items-center space-x-1 sm:space-x-2'>
-              <Link
-                to='/'
-                className='text-base font-semibold transition-opacity hover:opacity-80'
-              >
+              <Link to='/' className='text-base font-semibold transition-opacity hover:opacity-80'>
                 {appTitle}
               </Link>
               <span className='text-muted-foreground mx-2 hidden sm:block'>|</span>

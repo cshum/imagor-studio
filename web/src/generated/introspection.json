@@ -2784,6 +2784,14 @@
                 "defaultValue": "0",
                 "isDeprecated": false,
                 "deprecationReason": null
+              },
+              {
+                "name": "search",
+                "description": null,
+                "type": { "kind": "SCALAR", "name": "String", "ofType": null },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
               }
             ],
             "type": {

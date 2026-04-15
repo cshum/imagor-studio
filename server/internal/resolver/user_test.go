@@ -784,10 +784,10 @@ func TestUsers_AdminOnly(t *testing.T) {
 					expectedLimit = *tt.limit
 				}
 
-				mockUserStore.On("List", ctx, expectedOffset, expectedLimit).Return(users, 1, nil)
+				mockUserStore.On("List", ctx, expectedOffset, expectedLimit, mock.Anything).Return(users, 1, nil)
 			}
 
-			result, err := resolver.Query().Users(ctx, tt.offset, tt.limit)
+			result, err := resolver.Query().Users(ctx, tt.offset, tt.limit, nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -883,9 +883,9 @@ func TestUsers_LimitValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockUserStore.ExpectedCalls = nil
-			mockUserStore.On("List", ctx, tt.expectedOffset, tt.expectedLimit).Return(users, 1, nil)
+			mockUserStore.On("List", ctx, tt.expectedOffset, tt.expectedLimit, mock.Anything).Return(users, 1, nil)
 
-			result, err := resolver.Query().Users(ctx, tt.offset, tt.limit)
+			result, err := resolver.Query().Users(ctx, tt.offset, tt.limit, nil)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)

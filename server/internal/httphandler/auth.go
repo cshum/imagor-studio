@@ -90,7 +90,7 @@ type RefreshTokenRequest struct {
 
 func (h *AuthHandler) CheckFirstRun() http.HandlerFunc {
 	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
-		_, totalCount, err := h.userStore.List(r.Context(), 0, 1)
+		_, totalCount, err := h.userStore.List(r.Context(), 0, 1, "")
 		if err != nil {
 			h.logger.Error("Failed to check existing users", zap.Error(err))
 			return apperror.InternalServerError("Failed to check system status")
@@ -112,7 +112,7 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		}
 
 		// Check if this is truly the first run
-		_, totalCount, err := h.userStore.List(r.Context(), 0, 1)
+		_, totalCount, err := h.userStore.List(r.Context(), 0, 1, "")
 		if err != nil {
 			h.logger.Error("Failed to check existing users", zap.Error(err))
 			return apperror.InternalServerError("Failed to check system status")

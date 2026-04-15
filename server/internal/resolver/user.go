@@ -84,7 +84,7 @@ func (r *queryResolver) User(ctx context.Context, id string) (*gql.User, error) 
 }
 
 // Users returns a list of users (admin only)
-func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gql.UserList, error) {
+func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int, search *string) (*gql.UserList, error) {
 	// Check admin permissions
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
@@ -101,6 +101,11 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gq
 		limitVal = *limit
 	}
 
+	searchVal := ""
+	if search != nil {
+		searchVal = *search
+	}
+
 	// Validate parameters
 	if offsetVal < 0 {
 		offsetVal = 0
@@ -109,7 +114,7 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int) (*gq
 		limitVal = 0 // 0 means no limit
 	}
 
-	users, totalCount, err := r.userStore.List(ctx, offsetVal, limitVal)
+	users, totalCount, err := r.userStore.List(ctx, offsetVal, limitVal, searchVal)
 	if err != nil {
 		r.logger.Error("Failed to list users", zap.Error(err))
 		return nil, fmt.Errorf("failed to list users")
