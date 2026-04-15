@@ -2,7 +2,7 @@ import { PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
 
-import { AppShellHeader } from '@/components/app-shell-header'
+import { AppHeader } from '@/components/app-header.tsx'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -41,7 +41,7 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
 
   return (
     <div>
-      <AppShellHeader
+      <AppHeader
         profileLabel={getUserDisplayName()}
         roleLabel={authState.profile?.role}
         onLogout={handleLogout}

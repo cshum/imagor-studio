@@ -52,7 +52,7 @@ interface AppShellHeaderProps {
   moreText?: string
 }
 
-export function AppShellHeader({
+export function AppHeader({
   leftSlot,
   mobileTitle,
   profileLabel,

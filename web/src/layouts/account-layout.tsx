@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { Settings, Users } from 'lucide-react'
 
-import { AppShellHeader } from '@/components/app-shell-header'
+import { AppHeader } from '@/components/app-header.tsx'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -139,7 +139,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
 
       {/* ── Main area ────────────────────────────────────────────────── */}
       <SidebarInset>
-        <AppShellHeader
+        <AppHeader
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
           onLogout={handleLogout}

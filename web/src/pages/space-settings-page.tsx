@@ -27,7 +27,7 @@ import {
   updateSpace,
   type OrgMemberItem,
 } from '@/api/org-api'
-import { AppShellHeader } from '@/components/app-shell-header'
+import { AppHeader } from '@/components/app-header.tsx'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import {
   Breadcrumb,
@@ -72,8 +72,8 @@ import {
   SidebarWrapper,
 } from '@/components/ui/sidebar'
 import type { GetSpaceQuery } from '@/generated/graphql'
-import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import { useBrand } from '@/hooks/use-brand'
+import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import { useAuth } from '@/stores/auth-store'
 
 export type SpaceSettingsData = NonNullable<GetSpaceQuery['space']>
@@ -388,7 +388,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
       {/* ── Main area ────────────────────────────────────────────────── */}
       <SidebarInset>
-        <AppShellHeader
+        <AppHeader
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
           onLogout={handleLogout}
