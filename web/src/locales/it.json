@@ -10,7 +10,8 @@
       "tabs": {
         "profile": "Profilo",
         "system": "Sistema",
-        "users": "Utenti"
+        "users": "Utenti",
+        "spaces": "Spazi"
       }
     }
   },
@@ -117,7 +118,8 @@
       "settings": "Impostazioni",
       "users": "Utenti",
       "admin": "Sistema",
-      "adminSetup": "Configurazione Amministratore"
+      "adminSetup": "Configurazione Amministratore",
+      "spaces": "Spazi"
     }
   },
   "pages": {
@@ -607,6 +609,23 @@
       }
     },
     "spaces": {
+      "title": "Spazi",
+      "createSpace": "Crea Spazio",
+      "createNewSpace": "Crea Nuovo Spazio",
+      "createSpaceDescription": "Aggiungi un nuovo spazio alla tua organizzazione. Ogni spazio ha la propria archiviazione e configurazione imagor.",
+      "editSpace": "Modifica Spazio",
+      "editSpaceDescription": "Aggiorna la configurazione dello spazio. Le modifiche verranno applicate immediatamente.",
+      "deleteSpace": "Elimina Spazio",
+      "deleteSpaceDescription": "Sei sicuro di voler eliminare definitivamente lo spazio",
+      "createSpaceButton": "Crea Spazio",
+      "updateSpaceButton": "Aggiorna Spazio",
+      "noSpacesFound": "Nessuno spazio trovato",
+      "description": "Gestisci gli spazi di lavoro della tua organizzazione.",
+      "emptyDescription": "Crea il tuo primo spazio per iniziare con un'area di lavoro dedicata.",
+      "settings": "Impostazioni",
+      "spaceCount": "{{count}} spazio/i",
+      "openGallery": "Apri Galleria",
+      "storageNotConfigured": "Non configurato",
       "storageTypeLabel": "Tipo di archiviazione",
       "storageType": {
         "managed": "Archiviazione piattaforma",
@@ -616,20 +635,54 @@
         "managed": "Gestita da Imagor Studio. Nessuna configurazione del bucket richiesta.",
         "s3": "Collega il tuo bucket S3-compatibile."
       },
-      "description": "Gestisci gli spazi di lavoro della tua organizzazione.",
-      "emptyDescription": "Crea il tuo primo spazio per iniziare con un'area di lavoro dedicata.",
-      "settings": "Impostazioni",
+      "keyDescription": "Identificatore univoco utilizzato negli URL. Non può essere modificato dopo la creazione.",
+      "tableHeaders": {
+        "key": "Chiave",
+        "name": "Nome",
+        "storage": "Archiviazione",
+        "actions": "Azioni"
+      },
+      "formLabels": {
+        "key": "Chiave Spazio",
+        "name": "Nome Visualizzato",
+        "storageType": "Tipo di Archiviazione",
+        "bucket": "Bucket",
+        "region": "Regione",
+        "endpoint": "Endpoint",
+        "prefix": "Prefisso",
+        "accessKeyId": "ID Chiave di Accesso",
+        "secretKey": "Chiave Segreta",
+        "customDomain": "Dominio Personalizzato",
+        "imagorSecret": "Segreto Imagor"
+      },
+      "placeholders": {
+        "name": "Il Mio Spazio",
+        "selectStorageType": "Seleziona tipo di archiviazione",
+        "unchanged": "(invariato)"
+      },
       "wizard": {
         "stepIdentity": "Identità",
         "stepStorage": "Archiviazione",
         "next": "Avanti",
         "back": "Indietro"
+      },
+      "messages": {
+        "spaceCreatedSuccess": "Spazio creato correttamente",
+        "spaceUpdatedSuccess": "Spazio aggiornato correttamente",
+        "spaceDeletedSuccess": "Spazio eliminato correttamente",
+        "createSpaceFailed": "Impossibile creare lo spazio",
+        "updateSpaceFailed": "Impossibile aggiornare lo spazio",
+        "deleteSpaceFailed": "Impossibile eliminare lo spazio"
       }
     },
     "spaceSettings": {
+      "backToSpaces": "Torna agli Spazi",
+      "openGallery": "Apri Galleria",
       "sections": {
-        "imageProcessing": "Elaborazione immagini",
+        "general": "Generali",
+        "storage": "Archiviazione e Sicurezza",
         "gallery": "Galleria",
+        "dangerZone": "Zona Pericolosa",
         "members": "Membri"
       },
       "gallery": {
@@ -639,19 +692,42 @@
         "title": "Branding",
         "description": "Branding personalizzato per questo spazio. Sostituisce i valori predefiniti della piattaforma."
       },
+      "general": {
+        "description": "Informazioni di base su questo spazio.",
+        "name": "Nome Visualizzato",
+        "customDomain": "Dominio Personalizzato",
+        "customDomainDescription": "Dominio personalizzato opzionale per questo spazio (es. images.example.com).",
+        "saved": "Impostazioni generali salvate"
+      },
       "storage": {
+        "description": "Configura le credenziali di archiviazione e la firma URL per questo spazio.",
         "managedTitle": "Archiviazione gestita dalla piattaforma",
         "managedDescription": "I file sono archiviati nello storage gestito di Imagor Studio. Il tipo di storage non può essere modificato dopo la creazione dello spazio.",
-        "bucketLocked": "Il bucket e la regione sono fissi al momento della creazione e non possono essere modificati."
-      },
-      "imageProcessing": {
-        "description": "Configurazione firma HMAC per la generazione sicura di URL imagor.",
-        "imagorSecret": "Chiave di firma HMAC",
-        "imagorSecretDescription": "Utilizzata per firmare gli URL di trasformazione imagor. Lascia vuoto per mantenere la chiave esistente.",
-        "signerAlgorithm": "Algoritmo di firma",
-        "signerTruncate": "Troncamento firma",
+        "bucket": "Bucket",
+        "region": "Regione",
+        "bucketLocked": "Il bucket e la regione sono fissi al momento della creazione e non possono essere modificati.",
+        "endpoint": "Endpoint",
+        "endpointDescription": "URL endpoint S3-compatibile personalizzato. Lascia vuoto per AWS S3.",
+        "prefix": "Prefisso Percorso",
+        "prefixDescription": "Prefisso percorso opzionale all'interno del bucket (es. media/).",
+        "accessKeyId": "ID Chiave di Accesso",
+        "accessKeyIdDescription": "Lascia vuoto per mantenere le credenziali esistenti.",
+        "secretKey": "Chiave di Accesso Segreta",
+        "secretKeyDescription": "Lascia vuoto per mantenere le credenziali esistenti.",
+        "urlSigning": "Firma URL",
+        "urlSigningDescription": "Firma HMAC per la generazione sicura di URL di trasformazione imagor.",
+        "imagorSecret": "Segreto di Firma",
+        "imagorSecretDescription": "Utilizzato per firmare gli URL di trasformazione imagor. Lascia vuoto per mantenere il segreto esistente.",
+        "signerAlgorithm": "Algoritmo di Firma",
+        "signerAlgorithmDescription": "Algoritmo HMAC utilizzato per firmare gli URL di trasformazione.",
+        "signerTruncate": "Troncamento Firma",
         "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza completa).",
-        "saved": "Impostazioni elaborazione immagini salvate"
+        "saved": "Impostazioni archiviazione e sicurezza salvate"
+      },
+      "danger": {
+        "deleteTitle": "Elimina questo spazio",
+        "deleteDescription": "Una volta eliminato, tutta la configurazione di questo spazio viene rimossa definitivamente. I file nel tuo bucket S3 non vengono interessati.",
+        "deleteButton": "Elimina Spazio"
       },
       "members": {
         "description": "Gestisci chi ha accesso a questa organizzazione.",
@@ -659,6 +735,13 @@
         "usernamePlaceholder": "Nome utente",
         "roleLabel": "Ruolo",
         "addButton": "Aggiungi",
+        "tableHeaders": {
+          "member": "Membro",
+          "role": "Ruolo",
+          "action": "Azione"
+        },
+        "inviteDescription": "Invita un collega e assegnagli un ruolo per questo spazio.",
+        "emptyDescription": "Aggiungi il primo membro per collaborare all'interno di questo spazio.",
         "addSuccess": "Membro aggiunto con successo.",
         "roleUpdated": "Ruolo aggiornato.",
         "removeSuccess": "Membro rimosso.",
@@ -670,6 +753,9 @@
           "admin": "Amministratore",
           "member": "Membro"
         }
+      },
+      "placeholders": {
+        "unchanged": "(lascia vuoto per mantenere il valore esistente)"
       }
     }
   },

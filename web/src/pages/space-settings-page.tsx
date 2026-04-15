@@ -9,7 +9,6 @@ import {
   Database,
   FolderOpen,
   Images,
-  Plus,
   Settings,
   UserRound,
   Users,
@@ -1059,15 +1058,15 @@ function MembersSection() {
     <div className='rounded-lg border border-dashed p-6 text-center'>
       <p className='font-medium'>{t('pages.spaceSettings.members.empty')}</p>
       <p className='text-muted-foreground mt-1 text-sm'>
-        Add your first member to collaborate inside this space.
+        {t('pages.spaceSettings.members.emptyDescription')}
       </p>
     </div>
   ) : (
     <div className='overflow-hidden rounded-lg border'>
       <div className='bg-muted/40 hidden grid-cols-[minmax(0,1fr)_140px_96px] gap-4 border-b px-4 py-3 text-xs font-medium tracking-wide uppercase md:grid'>
-        <span>Member</span>
-        <span>Role</span>
-        <span className='text-right'>Action</span>
+        <span>{t('pages.spaceSettings.members.tableHeaders.member')}</span>
+        <span>{t('pages.spaceSettings.members.tableHeaders.role')}</span>
+        <span className='text-right'>{t('pages.spaceSettings.members.tableHeaders.action')}</span>
       </div>
       <div className='divide-y'>
         {members.map((member) => (
@@ -1087,7 +1086,9 @@ function MembersSection() {
               </div>
             </div>
             <div className='space-y-1 md:space-y-0'>
-              <p className='text-muted-foreground text-xs font-medium uppercase md:hidden'>Role</p>
+              <p className='text-muted-foreground text-xs font-medium uppercase md:hidden'>
+                {t('pages.spaceSettings.members.tableHeaders.role')}
+              </p>
               <Select value={member.role} onValueChange={(role) => handleRoleChange(member.userId, role)}>
                 <SelectTrigger className='h-9'>
                   <SelectValue />
@@ -1124,25 +1125,21 @@ function MembersSection() {
         description={t('pages.spaceSettings.members.description')}
         contentClassName='space-y-4'
       >
-        <div className='grid gap-3 border-b pb-4 md:grid-cols-[minmax(0,1fr)_160px_auto] md:items-end'>
-          <div>
-            <label className='mb-1.5 block text-sm font-medium'>
-              {t('pages.spaceSettings.members.addLabel')}
-            </label>
+        <div className='space-y-2 border-b pb-4'>
+          <p className='text-muted-foreground text-sm'>
+            {t('pages.spaceSettings.members.inviteDescription')}
+          </p>
+          <div className='flex flex-wrap gap-2 sm:flex-nowrap'>
             <Input
+              className='min-w-0 flex-1'
               placeholder={t('pages.spaceSettings.members.usernamePlaceholder')}
               value={addUsername}
               onChange={(e) => setAddUsername(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               disabled={isAdding}
             />
-          </div>
-          <div>
-            <label className='mb-1.5 block text-sm font-medium'>
-              {t('pages.spaceSettings.members.roleLabel')}
-            </label>
             <Select value={addRole} onValueChange={setAddRole} disabled={isAdding}>
-              <SelectTrigger>
+              <SelectTrigger className='w-32 shrink-0'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1153,16 +1150,15 @@ function MembersSection() {
                 ))}
               </SelectContent>
             </Select>
+            <ButtonWithLoading
+              onClick={handleAdd}
+              isLoading={isAdding}
+              disabled={!addUsername.trim()}
+              className='shrink-0'
+            >
+              {t('pages.spaceSettings.members.addButton')}
+            </ButtonWithLoading>
           </div>
-          <ButtonWithLoading
-            onClick={handleAdd}
-            isLoading={isAdding}
-            disabled={!addUsername.trim()}
-            className='w-full whitespace-nowrap md:w-auto'
-          >
-            <Plus className='mr-2 h-4 w-4' />
-            {t('pages.spaceSettings.members.addButton')}
-          </ButtonWithLoading>
         </div>
 
         {membersContent}
