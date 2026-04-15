@@ -45,17 +45,6 @@ const NAV_GROUPS = (
   t: (key: string) => string,
 ): Array<{ heading: string; adminOnly?: boolean; selfHostedOnly?: boolean; items: NavItem[] }> => [
   {
-    heading: t('layouts.account.sections.account'),
-    items: [
-      {
-        id: 'profile',
-        path: '/account/profile',
-        icon: <User className='h-4 w-4' />,
-        label: t('layouts.account.tabs.profile'),
-      },
-    ],
-  },
-  {
     heading: t('layouts.account.sections.administration'),
     adminOnly: true,
     selfHostedOnly: true,
@@ -192,6 +181,12 @@ export function AccountLayout({ children }: PropsWithChildren) {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to='/account/profile'>
+                        <User className='text-muted-foreground mr-3 h-4 w-4' />
+                        {t('layouts.account.tabs.profile')}
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to={isMultiTenant ? '/account/spaces' : '/'}>
                         <LayoutGrid className='text-muted-foreground mr-3 h-4 w-4' />
