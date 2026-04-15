@@ -435,7 +435,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
               <Button
                 variant='ghost'
                 size='icon'
-                className='h-9 w-9 shrink-0 lg:hidden [&_svg]:size-5'
+                className='-my-0.5 h-11 w-11 shrink-0 lg:hidden [&_svg]:size-5'
                 onClick={() => setMobileOpen(true)}
               >
                 <PanelLeft />
@@ -472,7 +472,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
               <Button
                 variant='ghost'
                 size='icon'
-                className='h-9 w-9 shrink-0 [&_svg]:size-5'
+                className='-my-0.5 h-11 w-11 shrink-0 [&_svg]:size-5'
                 onClick={() => setMobileOpen(true)}
               >
                 <PanelLeft />
@@ -749,7 +749,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                             )}
                           />
                           {/* AES-256 encryption notice */}
-                          <div className='bg-muted/50 mx-4 mb-2 flex items-start gap-2 rounded-md px-3 py-2.5 text-xs text-muted-foreground'>
+                          <div className='bg-muted/50 text-muted-foreground mx-4 mb-2 flex items-start gap-2 rounded-md px-3 py-2.5 text-xs'>
                             <Lock className='mt-0.5 h-3.5 w-3.5 shrink-0' />
                             <span>{t('pages.spaces.credentialsEncrypted')}</span>
                           </div>
