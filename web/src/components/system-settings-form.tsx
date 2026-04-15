@@ -15,8 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { SettingsSection } from '@/components/ui/settings-section'
 import { SettingRow } from '@/components/ui/setting-row'
+import { SettingsSection } from '@/components/ui/settings-section'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { setHomeTitle } from '@/stores/folder-tree-store'
 import { licenseStore, setBrand } from '@/stores/license-store'

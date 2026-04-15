@@ -139,7 +139,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         </div>
       ) : spaces.length === 0 ? (
         /* Empty state */
-          <div className='flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center'>
+        <div className='flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center'>
           <div className='bg-muted flex h-14 w-14 items-center justify-center rounded-full'>
             <LayoutGrid className='text-muted-foreground h-7 w-7' />
           </div>
@@ -147,10 +147,10 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
           <p className='text-muted-foreground mt-1.5 max-w-xs text-sm'>
             {t('pages.spaces.emptyDescription')}
           </p>
-            <p className='text-muted-foreground mt-2 max-w-sm text-sm'>
-              Start with a managed space for the fastest setup, then customize storage, delivery,
-              and branding as your workspace grows.
-            </p>
+          <p className='text-muted-foreground mt-2 max-w-sm text-sm'>
+            Start with a managed space for the fastest setup, then customize storage, delivery, and
+            branding as your workspace grows.
+          </p>
           <Button asChild className='mt-6'>
             <Link to='/account/spaces/new'>
               <Plus className='mr-2 h-4 w-4' />
@@ -247,7 +247,10 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                     </Link>
                   </Button>
                   <Button variant='outline' size='sm' className='flex-1' asChild>
-                    <Link to='/spaces/$spaceKey/settings/$section' params={{ spaceKey: space.key, section: 'general' }}>
+                    <Link
+                      to='/spaces/$spaceKey/settings/$section'
+                      params={{ spaceKey: space.key, section: 'general' }}
+                    >
                       <Settings className='mr-1.5 h-4 w-4' />
                       Configure
                     </Link>

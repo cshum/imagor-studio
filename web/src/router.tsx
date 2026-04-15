@@ -9,6 +9,7 @@ import {
   redirect,
   RouterProvider,
 } from '@tanstack/react-router'
+import { Plus } from 'lucide-react'
 
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { Button } from '@/components/ui/button'
@@ -55,7 +56,6 @@ import { ProfilePage } from '@/pages/profile-page'
 import { SpaceSettingsPage } from '@/pages/space-settings-page'
 import { SpacesPage } from '@/pages/spaces-page'
 import { UsersPage } from '@/pages/users-page'
-import { Plus } from 'lucide-react'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import {
   initializeFolderTreeCache,

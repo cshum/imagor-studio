@@ -4,7 +4,12 @@ import { Link, Outlet, useNavigate } from '@tanstack/react-router'
 import { LayoutGrid } from 'lucide-react'
 
 import { AppShellHeader } from '@/components/app-shell-header'
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@/components/ui/breadcrumb'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb'
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 
@@ -43,7 +48,10 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
         moreText={t('common.buttons.more')}
         leftSlot={
           <div className='flex min-w-0 items-center gap-2'>
-            <Link to='/' className='hidden text-base font-semibold transition-opacity hover:opacity-80 sm:block'>
+            <Link
+              to='/'
+              className='hidden text-base font-semibold transition-opacity hover:opacity-80 sm:block'
+            >
               {appTitle}
             </Link>
             <div className='hidden sm:block'>
