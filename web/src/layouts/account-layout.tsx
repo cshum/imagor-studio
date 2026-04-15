@@ -152,6 +152,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
           signOutText={t('common.navigation.signOut')}
           profileText={t('layouts.account.tabs.profile')}
           moreText={t('common.buttons.more')}
+          mobileTitle={<span className='text-sm font-medium'>{t('layouts.account.title')}</span>}
         />
 
         {/* Content area — pt-14 clears the fixed header */}

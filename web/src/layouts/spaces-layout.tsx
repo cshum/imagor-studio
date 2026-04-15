@@ -38,6 +38,9 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
         profileLabel={getUserDisplayName()}
         roleLabel={authState.profile?.role}
         onLogout={handleLogout}
+        profileText={t('layouts.account.tabs.profile')}
+        signOutText={t('common.navigation.signOut')}
+        moreText={t('common.buttons.more')}
         leftSlot={
           <div className='flex min-w-0 items-center gap-2'>
             <Link to='/' className='hidden text-base font-semibold transition-opacity hover:opacity-80 sm:block'>
@@ -58,6 +61,14 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
               </div>
               <span className='text-sm font-medium'>{t('layouts.account.tabs.spaces')}</span>
             </div>
+          </div>
+        }
+        mobileTitle={
+          <div className='flex items-center gap-2'>
+            <div className='bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-md'>
+              <LayoutGrid className='h-4 w-4' />
+            </div>
+            <span className='text-sm font-medium'>{title || t('layouts.account.tabs.spaces')}</span>
           </div>
         }
       />
