@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouter } from '@tanstack/react-router'
 import {
   Cloud,
   Database,
@@ -67,11 +67,18 @@ function spaceInitials(name: string): string {
 
 export function SpacesPage({ loaderData }: SpacesPageProps) {
   const { t } = useTranslation()
+  const router = useRouter()
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedSpace, setSelectedSpace] = useState<SpaceItem | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const spaces = loaderData ?? []
+  const hasSpaces = spaces.length > 0
+  const managedCount = useMemo(
+    () => spaces.filter((space) => space.storageType === 'managed').length,
+    [spaces],
+  )
+  const s3Count = spaces.length - managedCount
 
   const handleDeleteSpace = async () => {
     if (!selectedSpace) return
@@ -81,7 +88,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
       toast.success(t('pages.spaces.messages.spaceDeletedSuccess'))
       setIsDeleteOpen(false)
       setSelectedSpace(null)
-      window.location.reload()
+      await router.invalidate()
     } catch (err) {
       toast.error(
         `${t('pages.spaces.messages.deleteSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
@@ -93,19 +100,22 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
 
   return (
     <div className='space-y-6'>
-      {/* Page header */}
-      <div className='flex items-start justify-between gap-4'>
-        <div>
-          <h2 className='text-2xl font-semibold tracking-tight'>{t('pages.spaces.title')}</h2>
-          <p className='text-muted-foreground mt-1 text-sm'>{t('pages.spaces.description')}</p>
+      {hasSpaces && (
+        <div className='grid gap-3 sm:grid-cols-3'>
+          <div className='bg-card rounded-xl border p-4'>
+            <p className='text-muted-foreground text-xs font-medium uppercase'>Total spaces</p>
+            <p className='mt-2 text-2xl font-semibold'>{spaces.length}</p>
+          </div>
+          <div className='bg-card rounded-xl border p-4'>
+            <p className='text-muted-foreground text-xs font-medium uppercase'>Managed storage</p>
+            <p className='mt-2 text-2xl font-semibold'>{managedCount}</p>
+          </div>
+          <div className='bg-card rounded-xl border p-4'>
+            <p className='text-muted-foreground text-xs font-medium uppercase'>External storage</p>
+            <p className='mt-2 text-2xl font-semibold'>{s3Count}</p>
+          </div>
         </div>
-        <Button asChild className='shrink-0'>
-          <Link to='/account/spaces/new'>
-            <Plus className='mr-2 h-4 w-4' />
-            {t('pages.spaces.createSpace')}
-          </Link>
-        </Button>
-      </div>
+      )}
 
       {/* Loading skeleton */}
       {!loaderData ? (
@@ -129,7 +139,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         </div>
       ) : spaces.length === 0 ? (
         /* Empty state */
-        <div className='flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center'>
+          <div className='flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center'>
           <div className='bg-muted flex h-14 w-14 items-center justify-center rounded-full'>
             <LayoutGrid className='text-muted-foreground h-7 w-7' />
           </div>
@@ -137,6 +147,10 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
           <p className='text-muted-foreground mt-1.5 max-w-xs text-sm'>
             {t('pages.spaces.emptyDescription')}
           </p>
+            <p className='text-muted-foreground mt-2 max-w-sm text-sm'>
+              Start with a managed space for the fastest setup, then customize storage, delivery,
+              and branding as your workspace grows.
+            </p>
           <Button asChild className='mt-6'>
             <Link to='/account/spaces/new'>
               <Plus className='mr-2 h-4 w-4' />
@@ -230,6 +244,12 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                     <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
                       <FolderOpen className='mr-1.5 h-4 w-4' />
                       {t('pages.spaces.openGallery')}
+                    </Link>
+                  </Button>
+                  <Button variant='outline' size='sm' className='flex-1' asChild>
+                    <Link to='/spaces/$spaceKey/settings/$section' params={{ spaceKey: space.key, section: 'general' }}>
+                      <Settings className='mr-1.5 h-4 w-4' />
+                      Configure
                     </Link>
                   </Button>
                   <Button variant='outline' size='sm' asChild title={t('pages.spaces.settings')}>

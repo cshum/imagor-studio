@@ -3,6 +3,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  Link,
   Navigate,
   Outlet,
   redirect,
@@ -10,6 +11,7 @@ import {
 } from '@tanstack/react-router'
 
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
+import { Button } from '@/components/ui/button'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
@@ -53,6 +55,7 @@ import { ProfilePage } from '@/pages/profile-page'
 import { SpaceSettingsPage } from '@/pages/space-settings-page'
 import { SpacesPage } from '@/pages/spaces-page'
 import { UsersPage } from '@/pages/users-page'
+import { Plus } from 'lucide-react'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import {
   initializeFolderTreeCache,
@@ -415,7 +418,14 @@ const accountProfileRoute = createRoute({
   loader: profileLoader,
   component: () => {
     const loaderData = accountProfileRoute.useLoaderData()
-    return <ProfilePage loaderData={loaderData} />
+    return (
+      <SpacesLayout
+        title='Profile'
+        description='Manage your personal account information and security settings.'
+      >
+        <ProfilePage loaderData={loaderData} />
+      </SpacesLayout>
+    )
   },
 })
 
@@ -472,9 +482,26 @@ const accountSpacesRoute = createRoute({
   loader: spacesLoader,
   component: () => {
     const loaderData = accountSpacesRoute.useLoaderData()
-    return <SpacesPage loaderData={loaderData.spaces} />
+    return (
+      <SpacesLayout
+        title='Spaces'
+        description='Manage workspaces, jump into galleries, and configure space-specific settings.'
+        primaryAction={<CreateSpacePageTrigger />}
+      >
+        <SpacesPage loaderData={loaderData.spaces} />
+      </SpacesLayout>
+    )
   },
 })
+
+const CreateSpacePageTrigger = () => (
+  <Link to='/account/spaces/new'>
+    <Button>
+      <Plus className='mr-2 h-4 w-4' />
+      Create Space
+    </Button>
+  </Link>
+)
 
 // Check if embedded mode is enabled via environment variable
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
