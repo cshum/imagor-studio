@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 interface SettingsSectionProps {
-  title: string
+  title?: string
   description?: string
   children: React.ReactNode
   className?: string
@@ -17,10 +17,12 @@ export function SettingsSection({
 }: SettingsSectionProps) {
   return (
     <section className={cn('', className)}>
-      <div className='mb-4 space-y-1'>
-        <h3 className='text-lg font-semibold'>{title}</h3>
-        {description ? <p className='text-muted-foreground text-sm'>{description}</p> : null}
-      </div>
+      {(title || description) && (
+        <div className='mb-4 space-y-1'>
+          {title && <h3 className='text-lg font-semibold'>{title}</h3>}
+          {description && <p className='text-muted-foreground text-sm'>{description}</p>}
+        </div>
+      )}
       <div className={cn('border-t', contentClassName)}>{children}</div>
     </section>
   )

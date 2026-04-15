@@ -283,6 +283,13 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
   // ── Nav items ──────────────────────────────────────────────────────────────
 
+  const sectionDescriptions: Partial<Record<SectionId, string>> = {
+    general: t('pages.spaceSettings.general.description'),
+    storage: t('pages.spaceSettings.storage.description'),
+    gallery: t('pages.spaceSettings.gallery.description'),
+    members: t('pages.spaceSettings.members.description'),
+  }
+
   const navItems: Array<{ id: SectionId; icon: React.ReactNode; label: string }> = [
     {
       id: 'general',
@@ -433,14 +440,16 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
               <h1 className='text-2xl font-semibold tracking-tight'>
                 {navItems.find((item) => item.id === activeSection)?.label}
               </h1>
+              {sectionDescriptions[activeSection] && (
+                <p className='text-muted-foreground mt-1 text-sm'>
+                  {sectionDescriptions[activeSection]}
+                </p>
+              )}
             </div>
 
             {/* ── General ───────────────────────────────────────────────── */}
             {activeSection === 'general' && (
-              <SettingsSection
-                title={t('pages.spaceSettings.sections.general')}
-                description={t('pages.spaceSettings.general.description')}
-              >
+              <SettingsSection>
                 <Form {...generalForm}>
                   <form onSubmit={generalForm.handleSubmit(handleSaveGeneral)}>
                     <FormField
@@ -520,10 +529,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
             {/* ── Storage & Security ────────────────────────────────────── */}
             {activeSection === 'storage' && (
-              <SettingsSection
-                title={t('pages.spaceSettings.sections.storage')}
-                description={t('pages.spaceSettings.storage.description')}
-              >
+              <SettingsSection>
                 {/* Storage callout — inline, no card-in-card */}
                 {!isByob && (
                   <div className='bg-muted/40 mb-4 flex items-center gap-2 rounded-md px-3 py-2 text-sm'>
@@ -904,8 +910,6 @@ function GallerySettingsSection({ spaceKey, initialValues }: GallerySettingsSect
 
   return (
     <SystemSettingsForm
-      title={t('pages.spaceSettings.sections.gallery')}
-      description={t('pages.spaceSettings.gallery.description')}
       settings={GALLERY_SETTINGS}
       initialValues={initialValues}
       saveCallback={handleSave}
@@ -1099,11 +1103,7 @@ function MembersSection() {
 
   return (
     <>
-      <SettingsSection
-        title={t('pages.spaceSettings.sections.members')}
-        description={t('pages.spaceSettings.members.description')}
-        contentClassName='space-y-4'
-      >
+      <SettingsSection contentClassName='space-y-4'>
         <div className='space-y-2 border-b pb-4'>
           <p className='text-muted-foreground text-sm'>
             {t('pages.spaceSettings.members.inviteDescription')}
