@@ -142,7 +142,6 @@ export function AccountLayout({ children }: PropsWithChildren) {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive(item.path)}
-                    tooltip={item.label}
                     className='data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
                   >
                     <Link to={item.path}>

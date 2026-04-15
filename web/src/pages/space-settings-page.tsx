@@ -355,7 +355,6 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                   <SidebarMenuButton
                     asChild
                     isActive={activeSection === item.id}
-                    tooltip={item.label}
                     className='data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
                   >
                     <Link
@@ -377,7 +376,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
       <SidebarFooter className='border-t py-2'>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.backToSpaces')}>
+            <SidebarMenuButton asChild>
               <Link to='/account/spaces'>
                 <ArrowLeft className='h-4 w-4' />
                 <span>{t('pages.spaceSettings.backToSpaces')}</span>
@@ -385,7 +384,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.openGallery')}>
+            <SidebarMenuButton asChild>
               <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
                 <FolderOpen className='h-4 w-4' />
                 <span>{t('pages.spaceSettings.openGallery')}</span>
