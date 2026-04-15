@@ -1051,6 +1051,72 @@ function MembersSection() {
 
   const pendingMember = members.find((m) => m.userId === pendingRemoveId)
 
+  const membersContent = isLoading ? (
+    <div className='rounded-lg border p-4'>
+      <p className='text-muted-foreground text-sm'>{t('common.status.loading')}</p>
+    </div>
+  ) : members.length === 0 ? (
+    <div className='rounded-lg border border-dashed p-6 text-center'>
+      <p className='font-medium'>{t('pages.spaceSettings.members.empty')}</p>
+      <p className='text-muted-foreground mt-1 text-sm'>
+        Add your first member to collaborate inside this space.
+      </p>
+    </div>
+  ) : (
+    <div className='overflow-hidden rounded-lg border'>
+      <div className='bg-muted/40 hidden grid-cols-[minmax(0,1fr)_140px_96px] gap-4 border-b px-4 py-3 text-xs font-medium tracking-wide uppercase md:grid'>
+        <span>Member</span>
+        <span>Role</span>
+        <span className='text-right'>Action</span>
+      </div>
+      <div className='divide-y'>
+        {members.map((member) => (
+          <div
+            key={member.userId}
+            className='grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,1fr)_140px_96px] md:items-center md:gap-4'
+          >
+            <div className='flex min-w-0 items-center gap-3'>
+              <div className='bg-muted text-muted-foreground flex h-9 w-9 items-center justify-center rounded-full'>
+                <UserRound className='h-4 w-4' />
+              </div>
+              <div className='min-w-0'>
+                <p className='truncate text-sm font-medium'>
+                  {member.displayName || member.username}
+                </p>
+                <p className='text-muted-foreground truncate text-xs'>@{member.username}</p>
+              </div>
+            </div>
+            <div className='space-y-1 md:space-y-0'>
+              <p className='text-muted-foreground text-xs font-medium uppercase md:hidden'>Role</p>
+              <Select value={member.role} onValueChange={(role) => handleRoleChange(member.userId, role)}>
+                <SelectTrigger className='h-9'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {t(`pages.spaceSettings.members.roles.${r}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='flex justify-end'>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='text-destructive hover:text-destructive h-9 px-3'
+                onClick={() => setPendingRemoveId(member.userId)}
+              >
+                {t('common.buttons.remove')}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
   return (
     <>
       <SettingsSection
@@ -1110,71 +1176,7 @@ function MembersSection() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className='rounded-lg border p-4'>
-            <p className='text-muted-foreground text-sm'>{t('common.status.loading')}</p>
-          </div>
-        ) : members.length === 0 ? (
-          <div className='rounded-lg border border-dashed p-6 text-center'>
-            <p className='font-medium'>{t('pages.spaceSettings.members.empty')}</p>
-            <p className='text-muted-foreground mt-1 text-sm'>
-              Add your first member to collaborate inside this space.
-            </p>
-          </div>
-        ) : (
-          <div className='overflow-hidden rounded-lg border'>
-            <div className='bg-muted/40 grid grid-cols-[minmax(0,1fr)_140px_96px] gap-4 border-b px-4 py-3 text-xs font-medium tracking-wide uppercase'>
-              <span>Member</span>
-              <span>Role</span>
-              <span className='text-right'>Action</span>
-            </div>
-            <div className='divide-y'>
-              {members.map((member) => (
-                <div
-                  key={member.userId}
-                  className='grid grid-cols-[minmax(0,1fr)_140px_96px] items-center gap-4 px-4 py-3'
-                >
-                  <div className='flex min-w-0 items-center gap-3'>
-                    <div className='bg-muted text-muted-foreground flex h-9 w-9 items-center justify-center rounded-full'>
-                      <UserRound className='h-4 w-4' />
-                    </div>
-                    <div className='min-w-0'>
-                      <p className='truncate text-sm font-medium'>
-                        {member.displayName || member.username}
-                      </p>
-                      <p className='text-muted-foreground truncate text-xs'>@{member.username}</p>
-                    </div>
-                  </div>
-                  <Select
-                    value={member.role}
-                    onValueChange={(role) => handleRoleChange(member.userId, role)}
-                  >
-                    <SelectTrigger className='h-9'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROLE_OPTIONS.map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {t(`pages.spaceSettings.members.roles.${r}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className='flex justify-end'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      className='text-destructive hover:text-destructive h-9 px-3'
-                      onClick={() => setPendingRemoveId(member.userId)}
-                    >
-                      {t('common.buttons.remove')}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {membersContent}
       </SettingsSection>
 
       {/* Remove confirmation dialog */}
