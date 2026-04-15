@@ -36,9 +36,9 @@ func newTestDB(t *testing.T) *bun.DB {
 		Exec(context.Background()); err != nil {
 		t.Fatalf("create org_members table: %v", err)
 	}
-	// Minimal users table for JOIN in ListMembers.
+	// Minimal users table for JOIN in ListMembers (includes display_name for the COALESCE fallback).
 	if _, err := db.ExecContext(context.Background(),
-		`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT NOT NULL)`); err != nil {
+		`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT NOT NULL, display_name TEXT)`); err != nil {
 		t.Fatalf("create users table: %v", err)
 	}
 	return db

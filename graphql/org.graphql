@@ -48,10 +48,11 @@ input SpaceInput {
 }
 
 # OrgMember represents a user's membership in an organization.
-# The username is denormalised from the users table for display purposes.
+# The username and displayName are denormalised from the users table for display purposes.
 type OrgMember {
   userId: ID!
   username: String!
+  displayName: String!
   role: String!
   createdAt: String!
 }

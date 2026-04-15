@@ -88,10 +88,6 @@ import { useAuth } from '@/stores/auth-store'
 
 export type SpaceSettingsData = NonNullable<GetSpaceQuery['space']>
 
-interface SpaceSettingsPageProps {
-  loaderData: SpaceSettingsData
-}
-
 // ── Form schemas ─────────────────────────────────────────────────────────────
 
 const generalSchema = z.object({
@@ -139,17 +135,26 @@ function spaceInitials(name: string): string {
 
 // ── Section types ─────────────────────────────────────────────────────────────
 
-type SectionId = 'general' | 'storage' | 'gallery' | 'members' | 'dangerZone'
+type SectionId = 'general' | 'storage' | 'gallery' | 'members' | 'danger'
+
+const VALID_SECTIONS: SectionId[] = ['general', 'storage', 'gallery', 'members', 'danger']
 
 // ── Page component ────────────────────────────────────────────────────────────
 
-export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps) {
+interface SpaceSettingsPageProps {
+  loaderData: SpaceSettingsData
+  section: string
+}
+
+export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const navigate = useNavigate()
   const { title: appTitle } = useBrand()
   const { authState, logout } = useAuth()
-  const [activeSection, setActiveSection] = useState<SectionId>('general')
+  const activeSection: SectionId = VALID_SECTIONS.includes(section as SectionId)
+    ? (section as SectionId)
+    : 'general'
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [galleryRegistry, setGalleryRegistry] = useState<Record<string, string>>({})
@@ -316,7 +321,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
       label: t('pages.spaceSettings.sections.members'),
     },
     {
-      id: 'dangerZone',
+      id: 'danger',
       icon: <AlertTriangle className='h-4 w-4' />,
       label: t('pages.spaceSettings.sections.dangerZone'),
       danger: true,
@@ -350,8 +355,8 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                 {navItems.map((item) => (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
+                      asChild
                       isActive={activeSection === item.id}
-                      onClick={() => setActiveSection(item.id)}
                       tooltip={item.label}
                       className={
                         item.danger
@@ -359,8 +364,13 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                           : 'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
                       }
                     >
-                      {item.icon}
-                      <span>{item.label}</span>
+                      <Link
+                        to='/spaces/$spaceKey/settings/$section'
+                        params={{ spaceKey: space.key, section: item.id }}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -636,7 +646,9 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                               <FormItem>
                                 <SettingRow
                                   label={t('pages.spaceSettings.storage.secretKey')}
-                                  description={t('pages.spaceSettings.storage.secretKeyDescription')}
+                                  description={t(
+                                    'pages.spaceSettings.storage.secretKeyDescription',
+                                  )}
                                 >
                                   <FormControl>
                                     <Input
@@ -656,7 +668,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
 
                       {/* URL Signing sub-section */}
                       <div className={isByob ? 'mb-1 border-t pt-5' : 'mb-1'}>
-                        <p className='text-muted-foreground text-xs font-semibold uppercase tracking-wide'>
+                        <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                           {t('pages.spaceSettings.storage.urlSigning')}
                         </p>
                         <p className='text-muted-foreground mt-1 text-sm'>
@@ -773,7 +785,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
             {activeSection === 'members' && <MembersSection />}
 
             {/* ── Danger Zone ───────────────────────────────────────────── */}
-            {activeSection === 'dangerZone' && (
+            {activeSection === 'danger' && (
               <Card className='border-destructive/50'>
                 <CardHeader>
                   <CardTitle className='text-destructive flex items-center gap-2'>
@@ -1123,7 +1135,12 @@ function MembersSection() {
             <div className='divide-y rounded-lg border'>
               {members.map((member) => (
                 <div key={member.userId} className='flex items-center justify-between px-4 py-3'>
-                  <span className='text-sm font-medium'>{member.username}</span>
+                  <div className='flex flex-col'>
+                    <span className='text-sm font-medium'>{member.displayName}</span>
+                    {member.displayName !== member.username && (
+                      <span className='text-muted-foreground text-xs'>@{member.username}</span>
+                    )}
+                  </div>
                   <div className='flex items-center gap-2'>
                     <Select
                       value={member.role}
@@ -1167,7 +1184,10 @@ function MembersSection() {
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             {t('pages.spaceSettings.members.removeDescription')}{' '}
-            <strong className='text-foreground'>{pendingMember?.username}</strong>?
+            <strong className='text-foreground'>
+              {pendingMember?.displayName || pendingMember?.username}
+            </strong>
+            ?
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>

@@ -325,10 +325,11 @@ func (r *mutationResolver) DeleteSpace(ctx context.Context, key string) (bool, e
 // mapMemberToGQL converts an OrgMemberView to the GraphQL OrgMember type.
 func mapMemberToGQL(m *orgstore.OrgMemberView) *gql.OrgMember {
 	return &gql.OrgMember{
-		UserID:    m.UserID,
-		Username:  m.Username,
-		Role:      m.Role,
-		CreatedAt: m.CreatedAt.UTC().Format(time.RFC3339),
+		UserID:      m.UserID,
+		Username:    m.Username,
+		DisplayName: m.DisplayName,
+		Role:        m.Role,
+		CreatedAt:   m.CreatedAt.UTC().Format(time.RFC3339),
 	}
 }
 

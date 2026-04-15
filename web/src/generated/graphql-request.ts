@@ -335,6 +335,7 @@ export type MutationUploadFileArgs = {
 export type OrgMember = {
   __typename?: 'OrgMember'
   createdAt: Scalars['String']['output']
+  displayName: Scalars['String']['output']
   role: Scalars['String']['output']
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
@@ -820,6 +821,7 @@ export type ListOrgMembersQuery = {
     __typename?: 'OrgMember'
     userId: string
     username: string
+    displayName: string
     role: string
     createdAt: string
   }>
@@ -836,6 +838,7 @@ export type AddOrgMemberMutation = {
     __typename?: 'OrgMember'
     userId: string
     username: string
+    displayName: string
     role: string
     createdAt: string
   }
@@ -858,6 +861,7 @@ export type UpdateOrgMemberRoleMutation = {
     __typename?: 'OrgMember'
     userId: string
     username: string
+    displayName: string
     role: string
     createdAt: string
   }
@@ -1526,6 +1530,7 @@ export const ListOrgMembersDocument = gql`
     orgMembers {
       userId
       username
+      displayName
       role
       createdAt
     }
@@ -1536,6 +1541,7 @@ export const AddOrgMemberDocument = gql`
     addOrgMember(username: $username, role: $role) {
       userId
       username
+      displayName
       role
       createdAt
     }
@@ -1551,6 +1557,7 @@ export const UpdateOrgMemberRoleDocument = gql`
     updateOrgMemberRole(userId: $userId, role: $role) {
       userId
       username
+      displayName
       role
       createdAt
     }

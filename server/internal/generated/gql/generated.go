@@ -127,10 +127,11 @@ type ComplexityRoot struct {
 	}
 
 	OrgMember struct {
-		CreatedAt func(childComplexity int) int
-		Role      func(childComplexity int) int
-		UserID    func(childComplexity int) int
-		Username  func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		DisplayName func(childComplexity int) int
+		Role        func(childComplexity int) int
+		UserID      func(childComplexity int) int
+		Username    func(childComplexity int) int
 	}
 
 	Organization struct {
@@ -871,6 +872,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.OrgMember.CreatedAt(childComplexity), true
+	case "OrgMember.displayName":
+		if e.ComplexityRoot.OrgMember.DisplayName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgMember.DisplayName(childComplexity), true
 	case "OrgMember.role":
 		if e.ComplexityRoot.OrgMember.Role == nil {
 			break
@@ -1706,10 +1713,11 @@ input SpaceInput {
 }
 
 # OrgMember represents a user's membership in an organization.
-# The username is denormalised from the users table for display purposes.
+# The username and displayName are denormalised from the users table for display purposes.
 type OrgMember {
   userId: ID!
   username: String!
+  displayName: String!
   role: String!
   createdAt: String!
 }
@@ -4738,6 +4746,8 @@ func (ec *executionContext) fieldContext_Mutation_addOrgMember(ctx context.Conte
 				return ec.fieldContext_OrgMember_userId(ctx, field)
 			case "username":
 				return ec.fieldContext_OrgMember_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_OrgMember_displayName(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -4830,6 +4840,8 @@ func (ec *executionContext) fieldContext_Mutation_updateOrgMemberRole(ctx contex
 				return ec.fieldContext_OrgMember_userId(ctx, field)
 			case "username":
 				return ec.fieldContext_OrgMember_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_OrgMember_displayName(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -5276,6 +5288,35 @@ func (ec *executionContext) _OrgMember_username(ctx context.Context, field graph
 }
 
 func (ec *executionContext) fieldContext_OrgMember_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgMember_displayName(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgMember_displayName,
+		func(ctx context.Context) (any, error) {
+			return obj.DisplayName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgMember_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OrgMember",
 		Field:      field,
@@ -6026,6 +6067,8 @@ func (ec *executionContext) fieldContext_Query_orgMembers(_ context.Context, fie
 				return ec.fieldContext_OrgMember_userId(ctx, field)
 			case "username":
 				return ec.fieldContext_OrgMember_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_OrgMember_displayName(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -11225,6 +11268,11 @@ func (ec *executionContext) _OrgMember(ctx context.Context, sel ast.SelectionSet
 			}
 		case "username":
 			out.Values[i] = ec._OrgMember_username(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "displayName":
+			out.Values[i] = ec._OrgMember_displayName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -28,10 +28,10 @@ type Documents = {
   '\n  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {\n    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n': typeof types.GetSpaceRegistryDocument
   '\n  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n': typeof types.SetSpaceRegistryDocument
   '\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n': typeof types.DeleteSpaceRegistryDocument
-  '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n': typeof types.ListOrgMembersDocument
-  '\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n': typeof types.AddOrgMemberDocument
+  '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.ListOrgMembersDocument
+  '\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddOrgMemberDocument
   '\n  mutation RemoveOrgMember($userId: ID!) {\n    removeOrgMember(userId: $userId)\n  }\n': typeof types.RemoveOrgMemberDocument
-  '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateOrgMemberRoleDocument
+  '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateOrgMemberRoleDocument
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
@@ -92,13 +92,13 @@ const documents: Documents = {
     types.SetSpaceRegistryDocument,
   '\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n':
     types.DeleteSpaceRegistryDocument,
-  '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n':
+  '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.ListOrgMembersDocument,
-  '\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n':
+  '\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.AddOrgMemberDocument,
   '\n  mutation RemoveOrgMember($userId: ID!) {\n    removeOrgMember(userId: $userId)\n  }\n':
     types.RemoveOrgMemberDocument,
-  '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n':
+  '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.UpdateOrgMemberRoleDocument,
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
     types.RegistryInfoFragmentDoc,
@@ -261,14 +261,14 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n',
-): (typeof documents)['\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n']
+  source: '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
+): (typeof documents)['\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n',
-): (typeof documents)['\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n']
+  source: '\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -279,8 +279,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n',
-): (typeof documents)['\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      role\n      createdAt\n    }\n  }\n']
+  source: '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

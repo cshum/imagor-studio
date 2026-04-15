@@ -334,6 +334,7 @@ export type MutationUploadFileArgs = {
 export type OrgMember = {
   __typename?: 'OrgMember'
   createdAt: Scalars['String']['output']
+  displayName: Scalars['String']['output']
   role: Scalars['String']['output']
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
@@ -819,6 +820,7 @@ export type ListOrgMembersQuery = {
     __typename?: 'OrgMember'
     userId: string
     username: string
+    displayName: string
     role: string
     createdAt: string
   }>
@@ -835,6 +837,7 @@ export type AddOrgMemberMutation = {
     __typename?: 'OrgMember'
     userId: string
     username: string
+    displayName: string
     role: string
     createdAt: string
   }
@@ -857,6 +860,7 @@ export type UpdateOrgMemberRoleMutation = {
     __typename?: 'OrgMember'
     userId: string
     username: string
+    displayName: string
     role: string
     createdAt: string
   }
@@ -2094,6 +2098,7 @@ export const ListOrgMembersDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'role' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
               ],
@@ -2152,6 +2157,7 @@ export const AddOrgMemberDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'role' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
               ],
@@ -2246,6 +2252,7 @@ export const UpdateOrgMemberRoleDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'role' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
               ],

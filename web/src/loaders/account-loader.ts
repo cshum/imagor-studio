@@ -88,7 +88,9 @@ export const adminLoader = async (): Promise<AdminLoaderData> => {
 /**
  * Load users data for the users management page
  */
-export const usersLoader = async ({ search = '' }: { search?: string } = {}): Promise<UsersLoaderData> => {
+export const usersLoader = async ({
+  search = '',
+}: { search?: string } = {}): Promise<UsersLoaderData> => {
   const users = await listUsers(undefined, undefined, search || undefined)
   return {
     users,

@@ -39,13 +39,14 @@ type Org struct {
 }
 
 // OrgMemberView is the application-level view of an org_member row,
-// augmented with the member's username (joined from the users table).
+// augmented with the member's username and display name (joined from the users table).
 type OrgMemberView struct {
-	OrgID     string
-	UserID    string
-	Username  string
-	Role      string
-	CreatedAt time.Time
+	OrgID       string
+	UserID      string
+	Username    string
+	DisplayName string
+	Role        string
+	CreatedAt   time.Time
 }
 
 // Store exposes org management operations to other packages.
@@ -199,16 +200,19 @@ func (s *store) GetBySlug(ctx context.Context, slug string) (*Org, error) {
 
 func (s *store) ListMembers(ctx context.Context, orgID string) ([]*OrgMemberView, error) {
 	type memberRow struct {
-		OrgID     string    `bun:"org_id"`
-		UserID    string    `bun:"user_id"`
-		Role      string    `bun:"role"`
-		CreatedAt time.Time `bun:"created_at"`
-		Username  string    `bun:"username"`
+		OrgID       string    `bun:"org_id"`
+		UserID      string    `bun:"user_id"`
+		Role        string    `bun:"role"`
+		CreatedAt   time.Time `bun:"created_at"`
+		Username    string    `bun:"username"`
+		DisplayName string    `bun:"display_name"`
 	}
 	var rows []memberRow
 	err := s.db.NewSelect().
 		TableExpr("org_members AS om").
-		ColumnExpr("om.org_id, om.user_id, om.role, om.created_at, COALESCE(u.username, om.user_id) AS username").
+		ColumnExpr("om.org_id, om.user_id, om.role, om.created_at").
+		ColumnExpr("COALESCE(u.username, om.user_id) AS username").
+		ColumnExpr("COALESCE(NULLIF(u.display_name, ''), COALESCE(u.username, om.user_id)) AS display_name").
 		Join("LEFT JOIN users AS u ON u.id = om.user_id").
 		Where("om.org_id = ?", orgID).
 		OrderExpr("om.created_at ASC").
@@ -219,11 +223,12 @@ func (s *store) ListMembers(ctx context.Context, orgID string) ([]*OrgMemberView
 	result := make([]*OrgMemberView, 0, len(rows))
 	for _, r := range rows {
 		result = append(result, &OrgMemberView{
-			OrgID:     r.OrgID,
-			UserID:    r.UserID,
-			Username:  r.Username,
-			Role:      r.Role,
-			CreatedAt: r.CreatedAt,
+			OrgID:       r.OrgID,
+			UserID:      r.UserID,
+			Username:    r.Username,
+			DisplayName: r.DisplayName,
+			Role:        r.Role,
+			CreatedAt:   r.CreatedAt,
 		})
 	}
 	return result, nil

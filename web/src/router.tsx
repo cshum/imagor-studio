@@ -359,16 +359,29 @@ const createSpaceRoute = createRoute({
   component: CreateSpacePage,
 })
 
-// /spaces/$spaceKey/settings  →  dedicated settings page for a space (with its own sidebar)
-const spaceSettingsRoute = createRoute({
+// /spaces/$spaceKey/settings  →  redirect to /general section
+const spaceSettingsIndexRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   path: '/spaces/$spaceKey/settings',
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/spaces/$spaceKey/settings/$section',
+      params: { spaceKey: params.spaceKey, section: 'general' },
+    })
+  },
+})
+
+// /spaces/$spaceKey/settings/$section  →  dedicated settings page for a space (with its own sidebar)
+const spaceSettingsRoute = createRoute({
+  getParentRoute: () => settingsLayoutRoute,
+  path: '/spaces/$spaceKey/settings/$section',
   beforeLoad: requireAdminAccountAuth,
-  loader: ({ params }) => spaceSettingsLoader({ params }),
+  loader: ({ params: { spaceKey } }) => spaceSettingsLoader({ params: { spaceKey } }),
   shouldReload: false,
   component: () => {
     const loaderData = spaceSettingsRoute.useLoaderData()
-    return <SpaceSettingsPage loaderData={loaderData.space} />
+    const { section } = spaceSettingsRoute.useParams()
+    return <SpaceSettingsPage loaderData={loaderData.space} section={section} />
   },
 })
 
@@ -496,6 +509,7 @@ const routeTree = isEmbeddedMode
       spaceGalleryImageEditorRoute,
       spaceCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
+        spaceSettingsIndexRoute,
         spaceSettingsRoute,
         profileLayoutRoute.addChildren([accountRedirectRoute, accountProfileRoute]),
         spacesLayoutRoute.addChildren([accountSpacesRoute]),

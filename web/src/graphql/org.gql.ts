@@ -142,6 +142,7 @@ export const LIST_ORG_MEMBERS = gql(`
     orgMembers {
       userId
       username
+      displayName
       role
       createdAt
     }
@@ -153,6 +154,7 @@ export const ADD_ORG_MEMBER = gql(`
     addOrgMember(username: $username, role: $role) {
       userId
       username
+      displayName
       role
       createdAt
     }
@@ -170,6 +172,7 @@ export const UPDATE_ORG_MEMBER_ROLE = gql(`
     updateOrgMemberRole(userId: $userId, role: $role) {
       userId
       username
+      displayName
       role
       createdAt
     }
