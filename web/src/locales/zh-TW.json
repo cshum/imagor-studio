@@ -20,6 +20,7 @@
       "save": "儲存",
       "cancel": "取消",
       "delete": "刪除",
+      "remove": "移除",
       "edit": "編輯",
       "create": "建立",
       "update": "更新",
@@ -632,7 +633,8 @@
     "spaceSettings": {
       "sections": {
         "imageProcessing": "圖像處理",
-        "gallery": "圖庫"
+        "gallery": "圖庫",
+        "members": "成員"
       },
       "gallery": {
         "description": "自訂此空間的圖庫顯示和行為。空間層級的設定會覆蓋平台預設值。"
@@ -654,6 +656,24 @@
         "signerTruncate": "簽名截斷",
         "signerTruncateDescription": "將 HMAC 簽名截斷至此字元數（0 = 完整長度）。",
         "saved": "圖像處理設定已儲存"
+      },
+      "members": {
+        "description": "管理有權存取此組織的成員。",
+        "addLabel": "邀請成員",
+        "usernamePlaceholder": "使用者名稱",
+        "roleLabel": "角色",
+        "addButton": "新增",
+        "addSuccess": "成員新增成功。",
+        "roleUpdated": "角色已更新。",
+        "removeSuccess": "成員已移除。",
+        "empty": "尚無成員。",
+        "removeTitle": "移除成員",
+        "removeDescription": "確定要移除",
+        "roles": {
+          "owner": "擁有者",
+          "admin": "管理員",
+          "member": "成員"
+        }
       }
     }
   },

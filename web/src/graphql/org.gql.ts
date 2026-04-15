@@ -136,3 +136,42 @@ export const DELETE_SPACE_REGISTRY = gql(`
     deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)
   }
 `)
+
+export const LIST_ORG_MEMBERS = gql(`
+  query ListOrgMembers {
+    orgMembers {
+      userId
+      username
+      role
+      createdAt
+    }
+  }
+`)
+
+export const ADD_ORG_MEMBER = gql(`
+  mutation AddOrgMember($username: String!, $role: String!) {
+    addOrgMember(username: $username, role: $role) {
+      userId
+      username
+      role
+      createdAt
+    }
+  }
+`)
+
+export const REMOVE_ORG_MEMBER = gql(`
+  mutation RemoveOrgMember($userId: ID!) {
+    removeOrgMember(userId: $userId)
+  }
+`)
+
+export const UPDATE_ORG_MEMBER_ROLE = gql(`
+  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {
+    updateOrgMemberRole(userId: $userId, role: $role) {
+      userId
+      username
+      role
+      createdAt
+    }
+  }
+`)

@@ -21,6 +21,7 @@
       "save": "Save",
       "cancel": "Cancel",
       "delete": "Delete",
+      "remove": "Remove",
       "edit": "Edit",
       "create": "Create",
       "update": "Update",
@@ -688,7 +689,8 @@
         "security": "Image Processing",
         "imageProcessing": "Image Processing",
         "gallery": "Gallery",
-        "dangerZone": "Danger Zone"
+        "dangerZone": "Danger Zone",
+        "members": "Members"
       },
       "gallery": {
         "description": "Customize gallery display and behaviour for this space. Space-level settings override the platform defaults."
@@ -739,6 +741,24 @@
         "deleteTitle": "Delete this space",
         "deleteDescription": "Once deleted, all configuration for this space is permanently removed. Files in your S3 bucket are not affected.",
         "deleteButton": "Delete Space"
+      },
+      "members": {
+        "description": "Manage who has access to this organisation.",
+        "addLabel": "Invite member",
+        "usernamePlaceholder": "Username",
+        "roleLabel": "Role",
+        "addButton": "Add",
+        "addSuccess": "Member added successfully.",
+        "roleUpdated": "Role updated.",
+        "removeSuccess": "Member removed.",
+        "empty": "No members yet.",
+        "removeTitle": "Remove Member",
+        "removeDescription": "Are you sure you want to remove",
+        "roles": {
+          "owner": "Owner",
+          "admin": "Admin",
+          "member": "Member"
+        }
       },
       "placeholders": {
         "unchanged": "(leave blank to keep existing)"

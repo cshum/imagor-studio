@@ -42,6 +42,22 @@ func (e *errOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, err
 	return nil, fmt.Errorf("%s", e.msg)
 }
 
+func (e *errOrgStore) ListMembers(_ context.Context, _ string) ([]*orgstore.OrgMemberView, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) AddMember(_ context.Context, _, _, _ string) error {
+	return fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) RemoveMember(_ context.Context, _, _ string) error {
+	return fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return fmt.Errorf("%s", e.msg)
+}
+
 // nilOrgStore implements orgstore.Store but returns (nil, nil) on lookups —
 // simulates a user that exists but has no org yet.
 type nilOrgStore struct{}
@@ -54,6 +70,22 @@ func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*orgstore.Org, e
 }
 func (n *nilOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, error) {
 	return nil, nil
+}
+
+func (n *nilOrgStore) ListMembers(_ context.Context, _ string) ([]*orgstore.OrgMemberView, error) {
+	return nil, nil
+}
+
+func (n *nilOrgStore) AddMember(_ context.Context, _, _, _ string) error {
+	return nil
+}
+
+func (n *nilOrgStore) RemoveMember(_ context.Context, _, _ string) error {
+	return nil
+}
+
+func (n *nilOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return nil
 }
 
 type MockUserStore struct {

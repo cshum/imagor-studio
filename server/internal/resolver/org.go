@@ -7,6 +7,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"go.uber.org/zap"
@@ -317,4 +318,160 @@ func (r *mutationResolver) DeleteSpace(ctx context.Context, key string) (bool, e
 	}
 	r.logger.Info("Space deleted", zap.String("key", key))
 	return true, nil
+}
+
+// ---------- Member management resolvers -------------------------------------
+
+// mapMemberToGQL converts an OrgMemberView to the GraphQL OrgMember type.
+func mapMemberToGQL(m *orgstore.OrgMemberView) *gql.OrgMember {
+	return &gql.OrgMember{
+		UserID:    m.UserID,
+		Username:  m.Username,
+		Role:      m.Role,
+		CreatedAt: m.CreatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+// OrgMembers lists all members of the caller's organization (admin only).
+func (r *queryResolver) OrgMembers(ctx context.Context) ([]*gql.OrgMember, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if r.orgStore == nil {
+		return []*gql.OrgMember{}, nil
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil || orgID == "" {
+		return []*gql.OrgMember{}, err
+	}
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		r.logger.Error("OrgMembers: failed to list members", zap.String("orgID", orgID), zap.Error(err))
+		return nil, fmt.Errorf("failed to list org members: %w", err)
+	}
+	result := make([]*gql.OrgMember, 0, len(members))
+	for _, m := range members {
+		result = append(result, mapMemberToGQL(m))
+	}
+	return result, nil
+}
+
+// AddOrgMember adds a user (found by username) to the caller's org (admin only).
+// Enforces the plan's MaxMembers limit before inserting.
+func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, role string) (*gql.OrgMember, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if r.orgStore == nil || r.userStore == nil {
+		return nil, fmt.Errorf("member management is not available in this deployment")
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil || orgID == "" {
+		return nil, fmt.Errorf("no organization found")
+	}
+
+	// Look up user by username.
+	user, err := r.userStore.GetByUsername(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up user: %w", err)
+	}
+	if user == nil {
+		return nil, fmt.Errorf("user %q not found", username)
+	}
+
+	// Enforce plan member limit.
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	org, err := r.orgStore.GetByUserID(ctx, claims.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve organization: %w", err)
+	}
+	if org != nil {
+		limits := model.GetLimits(org.Plan)
+		if limits.MaxMembers != -1 {
+			members, err := r.orgStore.ListMembers(ctx, orgID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to check member count: %w", err)
+			}
+			if len(members) >= limits.MaxMembers {
+				return nil, fmt.Errorf("member limit (%d) reached for plan %q", limits.MaxMembers, org.Plan)
+			}
+		}
+	}
+
+	if err := r.orgStore.AddMember(ctx, orgID, user.ID, role); err != nil {
+		r.logger.Error("AddOrgMember: failed", zap.String("orgID", orgID), zap.String("userID", user.ID), zap.Error(err))
+		return nil, fmt.Errorf("failed to add member: %w", err)
+	}
+	r.logger.Info("OrgMember added", zap.String("orgID", orgID), zap.String("username", username), zap.String("role", role))
+
+	// Reload to get joined username.
+	memberList, err := r.orgStore.ListMembers(ctx, orgID)
+	if err == nil {
+		for _, m := range memberList {
+			if m.UserID == user.ID {
+				return mapMemberToGQL(m), nil
+			}
+		}
+	}
+	// Fallback if list fails.
+	return &gql.OrgMember{
+		UserID:   user.ID,
+		Username: user.Username,
+		Role:     role,
+	}, nil
+}
+
+// RemoveOrgMember removes a member from the caller's org (admin only).
+func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (bool, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return false, err
+	}
+	if r.orgStore == nil {
+		return false, fmt.Errorf("member management is not available in this deployment")
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil || orgID == "" {
+		return false, fmt.Errorf("no organization found")
+	}
+
+	if err := r.orgStore.RemoveMember(ctx, orgID, userID); err != nil {
+		r.logger.Error("RemoveOrgMember: failed", zap.String("orgID", orgID), zap.String("userID", userID), zap.Error(err))
+		return false, fmt.Errorf("failed to remove member: %w", err)
+	}
+	r.logger.Info("OrgMember removed", zap.String("orgID", orgID), zap.String("userID", userID))
+	return true, nil
+}
+
+// UpdateOrgMemberRole changes a member's role within the caller's org (admin only).
+func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID string, role string) (*gql.OrgMember, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if r.orgStore == nil {
+		return nil, fmt.Errorf("member management is not available in this deployment")
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil || orgID == "" {
+		return nil, fmt.Errorf("no organization found")
+	}
+
+	if err := r.orgStore.UpdateMemberRole(ctx, orgID, userID, role); err != nil {
+		r.logger.Error("UpdateOrgMemberRole: failed", zap.String("orgID", orgID), zap.String("userID", userID), zap.Error(err))
+		return nil, fmt.Errorf("failed to update member role: %w", err)
+	}
+	r.logger.Info("OrgMember role updated", zap.String("orgID", orgID), zap.String("userID", userID), zap.String("role", role))
+
+	// Reload to return updated member.
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err == nil {
+		for _, m := range members {
+			if m.UserID == userID {
+				return mapMemberToGQL(m), nil
+			}
+		}
+	}
+	return &gql.OrgMember{UserID: userID, Role: role}, nil
 }

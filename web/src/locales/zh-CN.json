@@ -20,6 +20,7 @@
       "save": "保存",
       "cancel": "取消",
       "delete": "删除",
+      "remove": "移除",
       "edit": "编辑",
       "create": "创建",
       "update": "更新",
@@ -631,7 +632,8 @@
     "spaceSettings": {
       "sections": {
         "imageProcessing": "图像处理",
-        "gallery": "图库"
+        "gallery": "图库",
+        "members": "成员"
       },
       "gallery": {
         "description": "自定义此空间的图库显示和行为。空间级别的设置会覆盖平台默认值。"
@@ -653,6 +655,24 @@
         "signerTruncate": "签名截断",
         "signerTruncateDescription": "将 HMAC 签名截断至此字符数（0 = 完整长度）。",
         "saved": "图像处理设置已保存"
+      },
+      "members": {
+        "description": "管理有权访问此组织的成员。",
+        "addLabel": "邀请成员",
+        "usernamePlaceholder": "用户名",
+        "roleLabel": "角色",
+        "addButton": "添加",
+        "addSuccess": "成员添加成功。",
+        "roleUpdated": "角色已更新。",
+        "removeSuccess": "成员已移除。",
+        "empty": "暂无成员。",
+        "removeTitle": "移除成员",
+        "removeDescription": "确定要移除",
+        "roles": {
+          "owner": "所有者",
+          "admin": "管理员",
+          "member": "成员"
+        }
       }
     }
   },

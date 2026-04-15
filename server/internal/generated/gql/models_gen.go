@@ -130,6 +130,13 @@ type LicenseStatus struct {
 type Mutation struct {
 }
 
+type OrgMember struct {
+	UserID    string `json:"userId"`
+	Username  string `json:"username"`
+	Role      string `json:"role"`
+	CreatedAt string `json:"createdAt"`
+}
+
 type Organization struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`

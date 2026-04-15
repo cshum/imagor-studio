@@ -154,6 +154,7 @@ export type LicenseStatus = {
 
 export type Mutation = {
   __typename?: 'Mutation'
+  addOrgMember: OrgMember
   changePassword: Scalars['Boolean']['output']
   configureFileStorage: StorageConfigResult
   configureImagor: ImagorConfigResult
@@ -172,14 +173,21 @@ export type Mutation = {
   generateImagorUrlFromTemplate: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
+  removeOrgMember: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSpaceRegistry: Array<UserRegistry>
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
+  updateOrgMemberRole: OrgMember
   updateProfile: User
   updateSpace: Space
   uploadFile: Scalars['Boolean']['output']
+}
+
+export type MutationAddOrgMemberArgs = {
+  role: Scalars['String']['input']
+  username: Scalars['String']['input']
 }
 
 export type MutationChangePasswordArgs = {
@@ -273,6 +281,10 @@ export type MutationRegenerateTemplatePreviewArgs = {
   templatePath: Scalars['String']['input']
 }
 
+export type MutationRemoveOrgMemberArgs = {
+  userId: Scalars['ID']['input']
+}
+
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
   spaceKey?: InputMaybe<Scalars['String']['input']>
@@ -298,6 +310,11 @@ export type MutationTestStorageConfigArgs = {
   input: StorageConfigInput
 }
 
+export type MutationUpdateOrgMemberRoleArgs = {
+  role: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+}
+
 export type MutationUpdateProfileArgs = {
   input: UpdateProfileInput
   userId?: InputMaybe<Scalars['ID']['input']>
@@ -312,6 +329,14 @@ export type MutationUploadFileArgs = {
   content: Scalars['Upload']['input']
   path: Scalars['String']['input']
   spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type OrgMember = {
+  __typename?: 'OrgMember'
+  createdAt: Scalars['String']['output']
+  role: Scalars['String']['output']
+  userId: Scalars['ID']['output']
+  username: Scalars['String']['output']
 }
 
 export type Organization = {
@@ -337,6 +362,7 @@ export type Query = {
   listUserRegistry: Array<UserRegistry>
   me: Maybe<User>
   myOrganization: Maybe<Organization>
+  orgMembers: Array<OrgMember>
   space: Maybe<Space>
   spaceRegistry: Array<UserRegistry>
   spaces: Array<Space>
@@ -783,6 +809,57 @@ export type DeleteSpaceRegistryMutationVariables = Exact<{
 }>
 
 export type DeleteSpaceRegistryMutation = { __typename?: 'Mutation'; deleteSpaceRegistry: boolean }
+
+export type ListOrgMembersQueryVariables = Exact<{ [key: string]: never }>
+
+export type ListOrgMembersQuery = {
+  __typename?: 'Query'
+  orgMembers: Array<{
+    __typename?: 'OrgMember'
+    userId: string
+    username: string
+    role: string
+    createdAt: string
+  }>
+}
+
+export type AddOrgMemberMutationVariables = Exact<{
+  username: Scalars['String']['input']
+  role: Scalars['String']['input']
+}>
+
+export type AddOrgMemberMutation = {
+  __typename?: 'Mutation'
+  addOrgMember: {
+    __typename?: 'OrgMember'
+    userId: string
+    username: string
+    role: string
+    createdAt: string
+  }
+}
+
+export type RemoveOrgMemberMutationVariables = Exact<{
+  userId: Scalars['ID']['input']
+}>
+
+export type RemoveOrgMemberMutation = { __typename?: 'Mutation'; removeOrgMember: boolean }
+
+export type UpdateOrgMemberRoleMutationVariables = Exact<{
+  userId: Scalars['ID']['input']
+  role: Scalars['String']['input']
+}>
+
+export type UpdateOrgMemberRoleMutation = {
+  __typename?: 'Mutation'
+  updateOrgMemberRole: {
+    __typename?: 'OrgMember'
+    userId: string
+    username: string
+    role: string
+    createdAt: string
+  }
+}
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -1997,6 +2074,186 @@ export const DeleteSpaceRegistryDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteSpaceRegistryMutation, DeleteSpaceRegistryMutationVariables>
+export const ListOrgMembersDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListOrgMembers' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'orgMembers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ListOrgMembersQuery, ListOrgMembersQueryVariables>
+export const AddOrgMemberDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'AddOrgMember' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'username' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addOrgMember' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'username' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'username' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'role' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddOrgMemberMutation, AddOrgMemberMutationVariables>
+export const RemoveOrgMemberDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RemoveOrgMember' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'removeOrgMember' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RemoveOrgMemberMutation, RemoveOrgMemberMutationVariables>
+export const UpdateOrgMemberRoleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateOrgMemberRole' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateOrgMemberRole' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'role' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateOrgMemberRoleMutation, UpdateOrgMemberRoleMutationVariables>
 export const ListUserRegistryDocument = {
   kind: 'Document',
   definitions: [

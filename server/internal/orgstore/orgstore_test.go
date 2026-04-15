@@ -13,7 +13,7 @@ import (
 	"github.com/uptrace/bun/driver/sqliteshim"
 )
 
-// newTestDB creates an in-memory SQLite DB with the organizations + org_members tables.
+// newTestDB creates an in-memory SQLite DB with the organizations + org_members + users tables.
 func newTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
@@ -36,7 +36,21 @@ func newTestDB(t *testing.T) *bun.DB {
 		Exec(context.Background()); err != nil {
 		t.Fatalf("create org_members table: %v", err)
 	}
+	// Minimal users table for JOIN in ListMembers.
+	if _, err := db.ExecContext(context.Background(),
+		`CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT NOT NULL)`); err != nil {
+		t.Fatalf("create users table: %v", err)
+	}
 	return db
+}
+
+// insertTestUser inserts a minimal user row so ListMembers JOIN succeeds.
+func insertTestUser(t *testing.T, db *bun.DB, id, username string) {
+	t.Helper()
+	if _, err := db.ExecContext(context.Background(),
+		`INSERT INTO users (id, username) VALUES (?, ?)`, id, username); err != nil {
+		t.Fatalf("insert test user %s: %v", id, err)
+	}
 }
 
 func trialEnd(d time.Duration) *time.Time {

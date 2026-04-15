@@ -297,6 +297,29 @@ func (m *MockOrgStore) GetBySlug(ctx context.Context, slug string) (*orgstore.Or
 	return args.Get(0).(*orgstore.Org), args.Error(1)
 }
 
+func (m *MockOrgStore) ListMembers(ctx context.Context, orgID string) ([]*orgstore.OrgMemberView, error) {
+	args := m.Called(ctx, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*orgstore.OrgMemberView), args.Error(1)
+}
+
+func (m *MockOrgStore) AddMember(ctx context.Context, orgID, userID, role string) error {
+	args := m.Called(ctx, orgID, userID, role)
+	return args.Error(0)
+}
+
+func (m *MockOrgStore) RemoveMember(ctx context.Context, orgID, userID string) error {
+	args := m.Called(ctx, orgID, userID)
+	return args.Error(0)
+}
+
+func (m *MockOrgStore) UpdateMemberRole(ctx context.Context, orgID, userID, role string) error {
+	args := m.Called(ctx, orgID, userID, role)
+	return args.Error(0)
+}
+
 var _ orgstore.Store = (*MockOrgStore)(nil)
 
 // MockSpaceStore mocks the spacestore.Store interface.

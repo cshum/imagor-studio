@@ -14,11 +14,22 @@ import {
   MoreVertical,
   Settings,
   ShieldCheck,
+  Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { deleteSpace, getSpaceRegistry, setSpaceRegistryObject, updateSpace } from '@/api/org-api'
+import {
+  addOrgMember,
+  deleteSpace,
+  getSpaceRegistry,
+  listOrgMembers,
+  removeOrgMember,
+  setSpaceRegistryObject,
+  updateOrgMemberRole,
+  updateSpace,
+  type OrgMemberItem,
+} from '@/api/org-api'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -131,7 +142,7 @@ function spaceInitials(name: string): string {
 
 // ── Section types ─────────────────────────────────────────────────────────────
 
-type SectionId = 'general' | 'storage' | 'imageProcessing' | 'gallery' | 'dangerZone'
+type SectionId = 'general' | 'storage' | 'imageProcessing' | 'gallery' | 'members' | 'dangerZone'
 
 // ── Page component ────────────────────────────────────────────────────────────
 
@@ -346,6 +357,11 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
       id: 'gallery',
       icon: <Images className='h-4 w-4' />,
       label: t('pages.spaceSettings.sections.gallery'),
+    },
+    {
+      id: 'members',
+      icon: <Users className='h-4 w-4' />,
+      label: t('pages.spaceSettings.sections.members'),
     },
     {
       id: 'dangerZone',
@@ -801,6 +817,9 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
               <GallerySettingsSection spaceKey={space.key} initialValues={galleryRegistry} />
             )}
 
+            {/* ── Members ───────────────────────────────────────────────── */}
+            {activeSection === 'members' && <MembersSection />}
+
             {/* ── Danger Zone ───────────────────────────────────────────── */}
             {activeSection === 'dangerZone' && (
               <Card className='border-destructive/50'>
@@ -1023,5 +1042,197 @@ function BrandingSettingsSection({ spaceKey, initialValues }: BrandingSettingsSe
       initialValues={initialValues}
       saveCallback={handleSave}
     />
+  )
+}
+
+// ── Members section sub-component ────────────────────────────────────────────
+
+const ROLE_OPTIONS = ['owner', 'admin', 'member'] as const
+
+function MembersSection() {
+  const { t } = useTranslation()
+  const [members, setMembers] = useState<OrgMemberItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [addUsername, setAddUsername] = useState('')
+  const [addRole, setAddRole] = useState<string>('member')
+  const [isAdding, setIsAdding] = useState(false)
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
+  const [isRemoving, setIsRemoving] = useState(false)
+
+  const load = async () => {
+    setIsLoading(true)
+    try {
+      setMembers(await listOrgMembers())
+    } catch {
+      // ignore
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void load()
+  }, [])
+
+  const handleAdd = async () => {
+    if (!addUsername.trim()) return
+    setIsAdding(true)
+    try {
+      await addOrgMember({ username: addUsername.trim(), role: addRole })
+      toast.success(t('pages.spaceSettings.members.addSuccess'))
+      setAddUsername('')
+      await load()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err))
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  const handleRoleChange = async (userId: string, role: string) => {
+    try {
+      await updateOrgMemberRole({ userId, role })
+      toast.success(t('pages.spaceSettings.members.roleUpdated'))
+      await load()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  const handleRemove = async () => {
+    if (!pendingRemoveId) return
+    setIsRemoving(true)
+    try {
+      await removeOrgMember({ userId: pendingRemoveId })
+      toast.success(t('pages.spaceSettings.members.removeSuccess'))
+      setPendingRemoveId(null)
+      await load()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err))
+    } finally {
+      setIsRemoving(false)
+    }
+  }
+
+  const pendingMember = members.find((m) => m.userId === pendingRemoveId)
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('pages.spaceSettings.sections.members')}</CardTitle>
+          <CardDescription>{t('pages.spaceSettings.members.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-6'>
+          {/* Add member row */}
+          <div className='flex items-end gap-3'>
+            <div className='flex-1'>
+              <label className='mb-1 block text-sm font-medium'>
+                {t('pages.spaceSettings.members.addLabel')}
+              </label>
+              <Input
+                placeholder={t('pages.spaceSettings.members.usernamePlaceholder')}
+                value={addUsername}
+                onChange={(e) => setAddUsername(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+                disabled={isAdding}
+              />
+            </div>
+            <div className='w-36'>
+              <label className='mb-1 block text-sm font-medium'>
+                {t('pages.spaceSettings.members.roleLabel')}
+              </label>
+              <Select value={addRole} onValueChange={setAddRole} disabled={isAdding}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {t(`pages.spaceSettings.members.roles.${r}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <ButtonWithLoading onClick={handleAdd} isLoading={isAdding} disabled={!addUsername.trim()}>
+              {t('pages.spaceSettings.members.addButton')}
+            </ButtonWithLoading>
+          </div>
+
+          {/* Member list */}
+          {isLoading ? (
+            <p className='text-muted-foreground text-sm'>{t('common.status.loading')}</p>
+          ) : members.length === 0 ? (
+            <p className='text-muted-foreground text-sm'>{t('pages.spaceSettings.members.empty')}</p>
+          ) : (
+            <div className='divide-y rounded-lg border'>
+              {members.map((member) => (
+                <div key={member.userId} className='flex items-center justify-between px-4 py-3'>
+                  <span className='text-sm font-medium'>{member.username}</span>
+                  <div className='flex items-center gap-2'>
+                    <Select
+                      value={member.role}
+                      onValueChange={(role) => handleRoleChange(member.userId, role)}
+                    >
+                      <SelectTrigger className='h-8 w-28 text-xs'>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ROLE_OPTIONS.map((r) => (
+                          <SelectItem key={r} value={r} className='text-xs'>
+                            {t(`pages.spaceSettings.members.roles.${r}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='text-destructive hover:text-destructive h-8 px-2'
+                      onClick={() => setPendingRemoveId(member.userId)}
+                    >
+                      {t('common.buttons.remove')}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Remove confirmation dialog */}
+      <ResponsiveDialog
+        open={pendingRemoveId !== null}
+        onOpenChange={(open) => !open && setPendingRemoveId(null)}
+      >
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.spaceSettings.members.removeTitle')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.spaceSettings.members.removeDescription')}{' '}
+            <strong className='text-foreground'>{pendingMember?.username}</strong>?
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+          <Button
+            variant='outline'
+            onClick={() => setPendingRemoveId(null)}
+            disabled={isRemoving}
+            className='w-full sm:w-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+          <ButtonWithLoading
+            variant='destructive'
+            onClick={handleRemove}
+            isLoading={isRemoving}
+            className='w-full sm:w-auto'
+          >
+            {t('common.buttons.remove')}
+          </ButtonWithLoading>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialog>
+    </>
   )
 }

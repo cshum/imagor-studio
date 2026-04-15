@@ -20,6 +20,7 @@
       "save": "Salva",
       "cancel": "Annulla",
       "delete": "Elimina",
+      "remove": "Rimuovi",
       "edit": "Modifica",
       "create": "Crea",
       "update": "Aggiorna",
@@ -628,7 +629,8 @@
     "spaceSettings": {
       "sections": {
         "imageProcessing": "Elaborazione immagini",
-        "gallery": "Galleria"
+        "gallery": "Galleria",
+        "members": "Membri"
       },
       "gallery": {
         "description": "Personalizza la visualizzazione e il comportamento della galleria per questo spazio. Le impostazioni a livello di spazio sostituiscono i valori predefiniti della piattaforma."
@@ -650,6 +652,24 @@
         "signerTruncate": "Troncamento firma",
         "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza completa).",
         "saved": "Impostazioni elaborazione immagini salvate"
+      },
+      "members": {
+        "description": "Gestisci chi ha accesso a questa organizzazione.",
+        "addLabel": "Invita membro",
+        "usernamePlaceholder": "Nome utente",
+        "roleLabel": "Ruolo",
+        "addButton": "Aggiungi",
+        "addSuccess": "Membro aggiunto con successo.",
+        "roleUpdated": "Ruolo aggiornato.",
+        "removeSuccess": "Membro rimosso.",
+        "empty": "Nessun membro ancora.",
+        "removeTitle": "Rimuovi Membro",
+        "removeDescription": "Sei sicuro di voler rimuovere",
+        "roles": {
+          "owner": "Proprietario",
+          "admin": "Amministratore",
+          "member": "Membro"
+        }
       }
     }
   },

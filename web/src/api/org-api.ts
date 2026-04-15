@@ -1,4 +1,6 @@
 import type {
+  AddOrgMemberMutation,
+  AddOrgMemberMutationVariables,
   CreateSpaceMutation,
   CreateSpaceMutationVariables,
   DeleteSpaceMutation,
@@ -7,9 +9,14 @@ import type {
   DeleteSpaceRegistryMutationVariables,
   GetSpaceQuery,
   GetSpaceRegistryQuery,
+  ListOrgMembersQuery,
   ListSpacesQuery,
+  RemoveOrgMemberMutation,
+  RemoveOrgMemberMutationVariables,
   SetSpaceRegistryMutation,
   SetSpaceRegistryMutationVariables,
+  UpdateOrgMemberRoleMutation,
+  UpdateOrgMemberRoleMutationVariables,
   UpdateSpaceMutation,
   UpdateSpaceMutationVariables,
 } from '@/generated/graphql'
@@ -99,4 +106,42 @@ export async function setSpaceRegistryObject(
   }))
   if (entries.length === 0) return
   await setSpaceRegistry({ spaceKey, entries })
+}
+
+// ── Org member management ────────────────────────────────────────────────────
+
+export type OrgMemberItem = ListOrgMembersQuery['orgMembers'][number]
+
+export async function listOrgMembers(): Promise<ListOrgMembersQuery['orgMembers']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.ListOrgMembers()
+  return result.orgMembers
+}
+
+export async function addOrgMember(
+  variables: AddOrgMemberMutationVariables,
+): Promise<AddOrgMemberMutation['addOrgMember']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.AddOrgMember(variables)
+  return result.addOrgMember
+}
+
+export async function removeOrgMember(
+  variables: RemoveOrgMemberMutationVariables,
+): Promise<RemoveOrgMemberMutation['removeOrgMember']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.RemoveOrgMember(variables)
+  return result.removeOrgMember
+}
+
+export async function updateOrgMemberRole(
+  variables: UpdateOrgMemberRoleMutationVariables,
+): Promise<UpdateOrgMemberRoleMutation['updateOrgMemberRole']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.UpdateOrgMemberRole(variables)
+  return result.updateOrgMemberRole
 }

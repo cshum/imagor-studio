@@ -47,6 +47,15 @@ input SpaceInput {
   imagorSecret: String
 }
 
+# OrgMember represents a user's membership in an organization.
+# The username is denormalised from the users table for display purposes.
+type OrgMember {
+  userId: ID!
+  username: String!
+  role: String!
+  createdAt: String!
+}
+
 extend type Query {
   # Returns the organization for the currently authenticated user
   myOrganization: Organization
@@ -56,6 +65,8 @@ extend type Query {
   space(key: String!): Space
   # Returns space-scoped registry entries, falling back to system:global defaults for unset keys (admin only)
   spaceRegistry(spaceKey: String!, keys: [String!]): [UserRegistry!]!
+  # Lists all members of the caller's organization (admin only)
+  orgMembers: [OrgMember!]!
 }
 
 extend type Mutation {
@@ -69,4 +80,10 @@ extend type Mutation {
   setSpaceRegistry(spaceKey: String!, entries: [RegistryEntryInput!]): [UserRegistry!]!
   # Delete space-scoped registry keys, reverting to system:global defaults (admin only)
   deleteSpaceRegistry(spaceKey: String!, keys: [String!]): Boolean!
+  # Add a user to the caller's organization by username (admin only)
+  addOrgMember(username: String!, role: String!): OrgMember!
+  # Remove a member from the organization by userId (admin only)
+  removeOrgMember(userId: ID!): Boolean!
+  # Change a member's role within the organization (admin only)
+  updateOrgMemberRole(userId: ID!, role: String!): OrgMember!
 }
