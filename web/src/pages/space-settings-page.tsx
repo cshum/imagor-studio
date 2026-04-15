@@ -88,6 +88,7 @@ import {
   SidebarTrigger,
   SidebarWrapper,
 } from '@/components/ui/sidebar'
+import { AppShellHeader } from '@/components/app-shell-header'
 import type { GetSpaceQuery } from '@/generated/graphql'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import { useAuth } from '@/stores/auth-store'
@@ -403,83 +404,65 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
       {/* ── Main area ────────────────────────────────────────────────── */}
       <SidebarInset>
-        {/* Fixed full-width header */}
-        <header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 fixed top-0 left-0 z-50 w-full border-b backdrop-blur'>
-          <div className='mx-auto px-4 py-2'>
-            <div className='flex h-10 items-center justify-between'>
-              {/* Left: trigger + breadcrumb */}
-              <div className='flex min-w-0 items-center space-x-1 sm:space-x-2'>
-                <SidebarTrigger className='-ml-2 h-10 w-10 shrink-0' />
-                <div className='hidden sm:block'>
-                  <Breadcrumb>
-                    <BreadcrumbList>
-                      <BreadcrumbItem>
-                        <BreadcrumbLink asChild>
-                          <Link to='/account/spaces'>{t('layouts.account.tabs.spaces')}</Link>
-                        </BreadcrumbLink>
-                      </BreadcrumbItem>
-                      <BreadcrumbSeparator />
-                      <BreadcrumbItem>
-                        <BreadcrumbLink asChild>
-                          <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
-                            {space.name}
-                          </Link>
-                        </BreadcrumbLink>
-                      </BreadcrumbItem>
-                      <BreadcrumbSeparator />
-                      <BreadcrumbItem>
-                        <BreadcrumbLink asChild>
-                          <Link
-                            to='/spaces/$spaceKey/settings/$section'
-                            params={{ spaceKey: space.key, section: 'general' }}
-                          >
-                            Settings
-                          </Link>
-                        </BreadcrumbLink>
-                      </BreadcrumbItem>
-                      <BreadcrumbSeparator />
-                      <BreadcrumbItem>
-                        <BreadcrumbPage>
-                          {navItems.find((item) => item.id === activeSection)?.label}
-                        </BreadcrumbPage>
-                      </BreadcrumbItem>
-                    </BreadcrumbList>
-                  </Breadcrumb>
-                </div>
-              </div>
-
-              {/* Right: mode toggle + user menu */}
-              <div className='flex shrink-0 items-center space-x-1'>
-                <ModeToggle />
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='ghost' size='icon' className='h-10 w-10'>
-                      <MoreVertical className='h-4 w-4' />
-                      <span className='sr-only'>{t('common.buttons.more')}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='w-56'>
-                    <DropdownMenuLabel className='font-normal'>
-                      <div className='flex flex-col space-y-1'>
-                        <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>
-                        {authState.profile?.role && (
-                          <p className='text-muted-foreground text-xs leading-none capitalize'>
-                            {authState.profile.role}
-                          </p>
-                        )}
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className='cursor-pointer'>
-                      <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
-                      {t('common.navigation.signOut')}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+        <AppShellHeader
+          profileLabel={getUserDisplayName()}
+          roleLabel={authState.profile?.role}
+          onLogout={handleLogout}
+          signOutText={t('common.navigation.signOut')}
+          moreText={t('common.buttons.more')}
+          leftSlot={
+            <div className='flex min-w-0 items-center gap-2'>
+              <SidebarTrigger className='-ml-2 h-10 w-10 shrink-0' />
+              <div className='hidden sm:block'>
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to='/account/spaces'>{t('layouts.account.tabs.spaces')}</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
+                          {space.name}
+                        </Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link
+                          to='/spaces/$spaceKey/settings/$section'
+                          params={{ spaceKey: space.key, section: 'general' }}
+                        >
+                          Settings
+                        </Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>
+                        {navItems.find((item) => item.id === activeSection)?.label}
+                      </BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
               </div>
             </div>
-          </div>
-        </header>
+          }
+          mobileTitle={
+            <div className='flex min-w-0 items-center gap-2'>
+              <SidebarTrigger className='-ml-2 h-10 w-10 shrink-0' />
+              <div className='min-w-0'>
+                <p className='truncate text-sm font-medium'>{space.name}</p>
+                <p className='text-muted-foreground truncate text-xs'>
+                  {navItems.find((item) => item.id === activeSection)?.label}
+                </p>
+              </div>
+            </div>
+          }
+        />
 
         {/* Content area */}
         <main className='relative min-h-screen pt-14'>
