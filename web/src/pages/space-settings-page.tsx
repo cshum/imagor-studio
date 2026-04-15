@@ -3,15 +3,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
-import {
-  ArrowLeft,
-  Database,
-  FolderOpen,
-  Images,
-  Settings,
-  UserRound,
-  Users,
-} from 'lucide-react'
+import { ArrowLeft, Database, FolderOpen, Images, Settings, UserRound, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -361,19 +353,25 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
         </SidebarContent>
 
         {/* Footer: back + open gallery */}
-        <SidebarFooter className='space-y-1 border-t p-3'>
-          <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.backToSpaces')}>
-            <Link to='/account/spaces'>
-              <ArrowLeft className='h-4 w-4' />
-              <span>{t('pages.spaceSettings.backToSpaces')}</span>
-            </Link>
-          </SidebarMenuButton>
-          <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.openGallery')}>
-            <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
-              <FolderOpen className='h-4 w-4' />
-              <span>{t('pages.spaceSettings.openGallery')}</span>
-            </Link>
-          </SidebarMenuButton>
+        <SidebarFooter className='border-t py-2'>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.backToSpaces')}>
+                <Link to='/account/spaces'>
+                  <ArrowLeft className='h-4 w-4' />
+                  <span>{t('pages.spaceSettings.backToSpaces')}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.openGallery')}>
+                <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
+                  <FolderOpen className='h-4 w-4' />
+                  <span>{t('pages.spaceSettings.openGallery')}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
 
@@ -387,13 +385,14 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
           moreText={t('common.buttons.more')}
           leftSlot={
             <div className='flex min-w-0 items-center gap-1'>
+              <SidebarTrigger className='h-9 w-9 shrink-0 [&_svg]:size-5' />
               <BreadcrumbLink asChild>
                 <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
                 </Link>
               </BreadcrumbLink>
-              <SidebarTrigger className='h-8 w-8 shrink-0' />
-              <div className='hidden min-w-0 sm:block'>
+              <div className='hidden min-w-0 sm:flex sm:items-center'>
+                <span className='text-border mx-2 shrink-0 select-none'>|</span>
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem>
@@ -415,25 +414,43 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
             </div>
           }
           mobileTitle={
-            <div className='flex min-w-0 items-center gap-1'>
+            <div className='flex min-w-0 items-center gap-1.5'>
+              <SidebarTrigger className='h-9 w-9 shrink-0 [&_svg]:size-5' />
               <BreadcrumbLink asChild>
                 <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
                 </Link>
               </BreadcrumbLink>
-              <SidebarTrigger className='h-8 w-8 shrink-0' />
-              <div className='min-w-0'>
-                <p className='truncate text-sm font-medium'>{space.name}</p>
-                <p className='text-muted-foreground truncate text-xs'>
-                  {navItems.find((item) => item.id === activeSection)?.label}
-                </p>
-              </div>
+              <span className='text-border mx-2 shrink-0 select-none'>|</span>
+              <span className='min-w-0 truncate text-sm font-medium'>{space.name}</span>
             </div>
           }
         />
 
         {/* Content area */}
         <main className='relative min-h-screen pt-14'>
+          {/* ── Mobile section tab strip (md+ uses sidebar instead) ───── */}
+          <div className='bg-background border-b md:hidden'>
+            <div className='flex overflow-x-auto px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+              {navItems.map((item) => (
+                <Link
+                  key={item.id}
+                  to='/spaces/$spaceKey/settings/$section'
+                  params={{ spaceKey: space.key, section: item.id }}
+                  className={[
+                    '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors',
+                    activeSection === item.id
+                      ? 'border-primary text-foreground'
+                      : 'text-muted-foreground hover:text-foreground border-transparent',
+                  ].join(' ')}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
           <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>
             {/* ── Page heading ──────────────────────────────────────────── */}
             <div className='mb-8'>
@@ -534,23 +551,33 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                 {!isByob && (
                   <div className='bg-muted/40 mb-4 flex items-center gap-2 rounded-md px-3 py-2 text-sm'>
                     <Database className='text-muted-foreground h-4 w-4 shrink-0' />
-                    <span className='font-medium'>{t('pages.spaceSettings.storage.managedTitle')}</span>
-                    <span className='text-muted-foreground'>— {t('pages.spaceSettings.storage.managedDescription')}</span>
+                    <span className='font-medium'>
+                      {t('pages.spaceSettings.storage.managedTitle')}
+                    </span>
+                    <span className='text-muted-foreground'>
+                      — {t('pages.spaceSettings.storage.managedDescription')}
+                    </span>
                   </div>
                 )}
                 {isByob && (
                   <div className='bg-muted/40 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md px-3 py-2 text-sm'>
                     <span>
-                      <span className='text-muted-foreground'>{t('pages.spaceSettings.storage.bucket')}: </span>
+                      <span className='text-muted-foreground'>
+                        {t('pages.spaceSettings.storage.bucket')}:{' '}
+                      </span>
                       <code className='font-mono font-medium'>{space.bucket}</code>
                     </span>
                     {space.region && (
                       <span>
-                        <span className='text-muted-foreground'>{t('pages.spaceSettings.storage.region')}: </span>
+                        <span className='text-muted-foreground'>
+                          {t('pages.spaceSettings.storage.region')}:{' '}
+                        </span>
                         <code className='font-mono font-medium'>{space.region}</code>
                       </span>
                     )}
-                    <span className='text-muted-foreground text-xs'>{t('pages.spaceSettings.storage.bucketLocked')}</span>
+                    <span className='text-muted-foreground text-xs'>
+                      {t('pages.spaceSettings.storage.bucketLocked')}
+                    </span>
                   </div>
                 )}
 
@@ -763,7 +790,6 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
             {/* ── Members ───────────────────────────────────────────────── */}
             {activeSection === 'members' && <MembersSection />}
-
           </div>
         </main>
       </SidebarInset>

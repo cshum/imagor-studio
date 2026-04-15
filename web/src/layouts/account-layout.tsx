@@ -10,7 +10,6 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import {
   Sidebar,
@@ -148,13 +147,14 @@ export function AccountLayout({ children }: PropsWithChildren) {
           moreText={t('common.buttons.more')}
           leftSlot={
             <div className='flex min-w-0 items-center gap-1'>
+              <SidebarTrigger className='h-9 w-9 shrink-0 [&_svg]:size-5' />
               <BreadcrumbLink asChild>
                 <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
                 </Link>
               </BreadcrumbLink>
-              <SidebarTrigger className='h-8 w-8 shrink-0' />
-              <div className='hidden min-w-0 sm:block'>
+              <div className='hidden min-w-0 sm:flex sm:items-center'>
+                <span className='text-border mx-2 shrink-0 select-none'>|</span>
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem>
@@ -167,15 +167,18 @@ export function AccountLayout({ children }: PropsWithChildren) {
           }
           mobileTitle={
             <div className='flex min-w-0 items-center gap-1'>
+              <SidebarTrigger className='h-9 w-9 shrink-0 [&_svg]:size-5' />
               <BreadcrumbLink asChild>
                 <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
                 </Link>
               </BreadcrumbLink>
-              <SidebarTrigger className='h-8 w-8 shrink-0' />
-              <span className='min-w-0 truncate text-sm font-medium'>
-                {t('layouts.account.title')}
-              </span>
+              <div className='flex min-w-0 items-center'>
+                <span className='text-border mx-2 shrink-0 select-none'>|</span>
+                <span className='min-w-0 truncate text-sm font-medium'>
+                  {t('layouts.account.title')}
+                </span>
+              </div>
             </div>
           }
         />
