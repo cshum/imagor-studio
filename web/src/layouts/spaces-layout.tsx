@@ -54,7 +54,7 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to='/' className='text-sm font-semibold'>
+                    <Link to='/' className='text-xl font-bold'>
                       {appTitle}
                     </Link>
                   </BreadcrumbLink>

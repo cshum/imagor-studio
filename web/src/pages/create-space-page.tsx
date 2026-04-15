@@ -2,13 +2,21 @@ import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { CheckCircle2, Cloud, Database } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { createSpace } from '@/api/org-api'
-import { BrandBar } from '@/components/brand-bar'
+import { AppHeader } from '@/components/app-header'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -26,8 +34,9 @@ import {
   type MultiStepFormNavigationProps,
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
-import { ModeToggle } from '@/components/mode-toggle'
 import { Separator } from '@/components/ui/separator'
+import { useBrand } from '@/hooks/use-brand'
+import { useAuth } from '@/stores/auth-store'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -320,8 +329,18 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
 export function CreateSpacePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { authState, logout } = useAuth()
+  const { title: appTitle } = useBrand()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSaving, setIsSaving] = useState(false)
+
+  const getUserDisplayName = () =>
+    authState.profile?.displayName || authState.profile?.username || t('common.status.user')
+
+  const handleLogout = async () => {
+    await logout()
+    navigate({ to: '/login' })
+  }
 
   const form = useForm<CreateFormData>({
     resolver: zodResolver(createSchema),
@@ -389,10 +408,45 @@ export function CreateSpacePage() {
 
   return (
     <div className='min-h-screen-safe flex flex-col'>
-      <BrandBar rightSlot={<ModeToggle />} />
+      <AppHeader
+        profileLabel={getUserDisplayName()}
+        roleLabel={authState.profile?.role}
+        onLogout={handleLogout}
+        profileText={t('layouts.account.tabs.profile')}
+        signOutText={t('common.navigation.signOut')}
+        moreText={t('common.buttons.more')}
+        leftSlot={
+          <div className='flex min-w-0 items-center'>
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to='/' className='text-xl font-bold'>
+                      {appTitle}
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to='/account/spaces'>{t('navigation.breadcrumbs.spaces')}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{t('pages.spaces.createNewSpace')}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        }
+        mobileTitle={
+          <span className='truncate text-sm font-medium'>{t('pages.spaces.createNewSpace')}</span>
+        }
+      />
 
-      {/* Wizard */}
-      <div className='bg-background flex flex-1 items-start justify-center px-4 py-4 sm:px-6 sm:py-6 md:items-center'>
+      {/* Wizard — pt-14 clears fixed header */}
+      <div className='bg-background flex flex-1 items-start justify-center px-4 py-4 pt-18 sm:px-6 sm:py-6 md:items-center'>
         <Form {...form}>
           <MultiStepForm
             steps={steps}

@@ -397,7 +397,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
           leftSlot={
             <div className='flex min-w-0 items-center gap-1'>
               <BreadcrumbLink asChild>
-                <Link to='/' className='shrink-0 text-sm font-semibold'>
+                <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
                 </Link>
               </BreadcrumbLink>
@@ -426,7 +426,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
           mobileTitle={
             <div className='flex min-w-0 items-center gap-1'>
               <BreadcrumbLink asChild>
-                <Link to='/' className='shrink-0 text-sm font-semibold'>
+                <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
                 </Link>
               </BreadcrumbLink>

@@ -149,7 +149,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
           leftSlot={
             <div className='flex min-w-0 items-center gap-1'>
               <BreadcrumbLink asChild>
-                <Link to='/' className='shrink-0 text-sm font-semibold'>
+                <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
                 </Link>
               </BreadcrumbLink>
@@ -168,7 +168,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
           mobileTitle={
             <div className='flex min-w-0 items-center gap-1'>
               <BreadcrumbLink asChild>
-                <Link to='/' className='shrink-0 text-sm font-semibold'>
+                <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
                 </Link>
               </BreadcrumbLink>
