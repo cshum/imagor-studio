@@ -31,6 +31,14 @@ import {
 } from '@/api/org-api'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -64,6 +72,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SettingsSection } from '@/components/ui/settings-section'
 import { SettingRow } from '@/components/ui/setting-row'
 import {
   Sidebar,
@@ -417,8 +426,28 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                   {t('layouts.account.title')}
                 </Link>
                 <ChevronRight className='text-muted-foreground hidden h-3.5 w-3.5 shrink-0 sm:block' />
-                <span className='hidden max-w-[180px] truncate text-sm font-medium sm:block'>
-                  {space.name}
+                <span className='hidden sm:block'>
+                  <Breadcrumb>
+                    <BreadcrumbList>
+                      <BreadcrumbItem>
+                        <BreadcrumbLink asChild>
+                          <Link to='/account/spaces'>{t('layouts.account.tabs.spaces')}</Link>
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator />
+                      <BreadcrumbItem>
+                        <BreadcrumbLink asChild>
+                          <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
+                            {space.name}
+                          </Link>
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator />
+                      <BreadcrumbItem>
+                        <BreadcrumbPage>{navItems.find((item) => item.id === activeSection)?.label}</BreadcrumbPage>
+                      </BreadcrumbItem>
+                    </BreadcrumbList>
+                  </Breadcrumb>
                 </span>
               </div>
 
@@ -460,12 +489,10 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
           <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>
             {/* ── General ───────────────────────────────────────────────── */}
             {activeSection === 'general' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('pages.spaceSettings.sections.general')}</CardTitle>
-                  <CardDescription>{t('pages.spaceSettings.general.description')}</CardDescription>
-                </CardHeader>
-                <CardContent>
+              <SettingsSection
+                title={t('pages.spaceSettings.sections.general')}
+                description={t('pages.spaceSettings.general.description')}
+              >
                   <Form {...generalForm}>
                     <form onSubmit={generalForm.handleSubmit(handleSaveGeneral)}>
                       <FormField
@@ -511,8 +538,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                       </div>
                     </form>
                   </Form>
-                </CardContent>
-              </Card>
+              </SettingsSection>
             )}
             {activeSection === 'general' && (
               <div className='mt-4'>
@@ -522,12 +548,10 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
             {/* ── Storage & Security ────────────────────────────────────── */}
             {activeSection === 'storage' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('pages.spaceSettings.sections.storage')}</CardTitle>
-                  <CardDescription>{t('pages.spaceSettings.storage.description')}</CardDescription>
-                </CardHeader>
-                <CardContent>
+              <SettingsSection
+                title={t('pages.spaceSettings.sections.storage')}
+                description={t('pages.spaceSettings.storage.description')}
+              >
                   {/* Managed storage info banner */}
                   {!isByob && (
                     <div className='bg-muted/50 mb-4 flex items-start gap-3 rounded-lg border p-4'>
@@ -770,8 +794,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                       </div>
                     </form>
                   </Form>
-                </CardContent>
-              </Card>
+              </SettingsSection>
             )}
 
             {/* ── Gallery settings ──────────────────────────────────────── */}
@@ -784,14 +807,10 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
             {/* ── Danger Zone ───────────────────────────────────────────── */}
             {activeSection === 'danger' && (
-              <Card className='border-destructive/50'>
-                <CardHeader>
-                  <CardTitle className='text-destructive flex items-center gap-2'>
-                    <AlertTriangle className='h-5 w-5' />
-                    {t('pages.spaceSettings.sections.dangerZone')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+              <SettingsSection
+                title={t('pages.spaceSettings.sections.dangerZone')}
+                className='border-destructive/50'
+              >
                   <div className='flex items-center justify-between rounded-lg border p-4'>
                     <div>
                       <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
@@ -803,8 +822,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                       {t('pages.spaceSettings.danger.deleteButton')}
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+              </SettingsSection>
             )}
           </div>
         </main>

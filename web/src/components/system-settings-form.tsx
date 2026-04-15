@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 
 import { setSystemRegistryObject } from '@/api/registry-api'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SettingsSection } from '@/components/ui/settings-section'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { setHomeTitle } from '@/stores/folder-tree-store'
 import { licenseStore, setBrand } from '@/stores/license-store'
@@ -498,12 +498,8 @@ export function SystemSettingsForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>{content}</CardContent>
-    </Card>
+    <SettingsSection title={title} description={description} contentClassName='space-y-4'>
+      {content}
+    </SettingsSection>
   )
 }

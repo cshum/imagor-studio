@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { ChevronRight, MoreHorizontal } from 'lucide-react'
-import { Slot as SlotPrimitive } from 'radix-ui'
+import { Slot } from '@radix-ui/react-slot'
 
 import { cn } from '@/lib/utils'
 
@@ -39,12 +39,12 @@ const BreadcrumbLink = React.forwardRef<
     asChild?: boolean
   }
 >(({ asChild, className, ...props }, ref) => {
-  const Comp = asChild ? SlotPrimitive.Slot : 'a'
+  const Comp = asChild ? Slot : 'a'
 
   return (
     <Comp
       ref={ref}
-      className={cn('hover-touch:text-foreground transition-colors', className)}
+      className={cn('hover:text-foreground transition-colors', className)}
       {...props}
     />
   )
@@ -88,7 +88,7 @@ const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<'span'
     <span className='sr-only'>More</span>
   </span>
 )
-BreadcrumbEllipsis.displayName = 'BreadcrumbElipssis'
+BreadcrumbEllipsis.displayName = 'BreadcrumbEllipsis'
 
 export {
   Breadcrumb,
