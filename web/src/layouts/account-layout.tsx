@@ -179,7 +179,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
       {showSidebar && (
         <Sidebar
           collapsible='none'
-          className='fixed top-14 bottom-0 left-0 z-10 hidden overflow-y-auto border-r lg:flex'
+          className='fixed top-14 bottom-0 left-0 z-10 hidden h-auto border-r lg:flex'
         >
           {navContent}
         </Sidebar>
@@ -252,21 +252,23 @@ export function AccountLayout({ children }: PropsWithChildren) {
           {showSidebar && (
             <div className='bg-background border-b lg:hidden'>
               <div className='flex overflow-x-auto px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-                {visibleGroups.flatMap((g) => g.items).map((item) => (
-                  <Link
-                    key={item.id}
-                    to={item.path}
-                    className={[
-                      '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors',
-                      isActive(item.path)
-                        ? 'border-primary text-foreground'
-                        : 'text-muted-foreground hover:text-foreground border-transparent',
-                    ].join(' ')}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
+                {visibleGroups
+                  .flatMap((g) => g.items)
+                  .map((item) => (
+                    <Link
+                      key={item.id}
+                      to={item.path}
+                      className={[
+                        '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors',
+                        isActive(item.path)
+                          ? 'border-primary text-foreground'
+                          : 'text-muted-foreground hover:text-foreground border-transparent',
+                      ].join(' ')}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
               </div>
             </div>
           )}

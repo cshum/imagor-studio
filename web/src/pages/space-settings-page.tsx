@@ -401,7 +401,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
       {/* ── Desktop settings sidebar — fixed, bypasses global store ─────────── */}
       <Sidebar
         collapsible='none'
-        className='fixed top-14 bottom-0 left-0 z-10 hidden overflow-y-auto border-r lg:flex'
+        className='fixed top-14 bottom-0 left-0 z-10 hidden h-auto border-r lg:flex'
       >
         {sidebarContent}
       </Sidebar>
@@ -605,241 +605,247 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
             {/* ── Storage & Security ────────────────────────────────────── */}
             {activeSection === 'storage' && (
-              <SettingsSection>
-                {/* Storage callout — inline, no card-in-card */}
+              <>
+                {/* Platform-managed callout — standalone, outside the form card */}
                 {!isByob && (
-                  <div className='bg-muted/40 mb-4 flex items-center gap-2 rounded-md px-3 py-2 text-sm'>
-                    <Database className='text-muted-foreground h-4 w-4 shrink-0' />
-                    <span className='font-medium'>
-                      {t('pages.spaceSettings.storage.managedTitle')}
-                    </span>
-                    <span className='text-muted-foreground'>
-                      — {t('pages.spaceSettings.storage.managedDescription')}
-                    </span>
+                  <div className='bg-muted/50 mb-6 flex gap-3 rounded-lg p-4 text-sm'>
+                    <Database className='text-muted-foreground mt-0.5 h-4 w-4 shrink-0' />
+                    <div>
+                      <p className='font-medium'>{t('pages.spaceSettings.storage.managedTitle')}</p>
+                      <p className='text-muted-foreground mt-0.5'>
+                        {t('pages.spaceSettings.storage.managedDescription')}
+                      </p>
+                    </div>
                   </div>
                 )}
-                {isByob && (
-                  <div className='bg-muted/40 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md px-3 py-2 text-sm'>
-                    <span>
-                      <span className='text-muted-foreground'>
-                        {t('pages.spaceSettings.storage.bucket')}:{' '}
-                      </span>
-                      <code className='font-mono font-medium'>{space.bucket}</code>
-                    </span>
-                    {space.region && (
+                <SettingsSection>
+                  {isByob && (
+                    <div className='bg-muted/40 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md px-3 py-2 text-sm'>
                       <span>
                         <span className='text-muted-foreground'>
-                          {t('pages.spaceSettings.storage.region')}:{' '}
+                          {t('pages.spaceSettings.storage.bucket')}:{' '}
                         </span>
-                        <code className='font-mono font-medium'>{space.region}</code>
+                        <code className='font-mono font-medium'>{space.bucket}</code>
                       </span>
-                    )}
-                    <span className='text-muted-foreground text-xs'>
-                      {t('pages.spaceSettings.storage.bucketLocked')}
-                    </span>
-                  </div>
-                )}
-
-                <Form {...configForm}>
-                  <form onSubmit={configForm.handleSubmit(handleSaveConfig)}>
-                    {/* BYOB-only: storage credentials */}
-                    {isByob && (
-                      <>
-                        <FormField
-                          control={configForm.control}
-                          name='prefix'
-                          render={({ field }) => (
-                            <FormItem>
-                              <SettingRow
-                                label={t('pages.spaceSettings.storage.prefix')}
-                                description={t('pages.spaceSettings.storage.prefixDescription')}
-                              >
-                                <FormControl>
-                                  <Input
-                                    placeholder='media/'
-                                    {...field}
-                                    disabled={isSavingConfig}
-                                  />
-                                </FormControl>
-                                <FormMessage className='mt-1.5' />
-                              </SettingRow>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={configForm.control}
-                          name='endpoint'
-                          render={({ field }) => (
-                            <FormItem>
-                              <SettingRow
-                                label={t('pages.spaceSettings.storage.endpoint')}
-                                description={t('pages.spaceSettings.storage.endpointDescription')}
-                              >
-                                <FormControl>
-                                  <Input
-                                    placeholder='https://s3.amazonaws.com'
-                                    {...field}
-                                    disabled={isSavingConfig}
-                                  />
-                                </FormControl>
-                                <FormMessage className='mt-1.5' />
-                              </SettingRow>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={configForm.control}
-                          name='accessKeyId'
-                          render={({ field }) => (
-                            <FormItem>
-                              <SettingRow
-                                label={t('pages.spaceSettings.storage.accessKeyId')}
-                                description={t(
-                                  'pages.spaceSettings.storage.accessKeyIdDescription',
-                                )}
-                              >
-                                <FormControl>
-                                  <Input
-                                    placeholder={t('pages.spaceSettings.placeholders.unchanged')}
-                                    {...field}
-                                    disabled={isSavingConfig}
-                                  />
-                                </FormControl>
-                                <FormMessage className='mt-1.5' />
-                              </SettingRow>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={configForm.control}
-                          name='secretKey'
-                          render={({ field }) => (
-                            <FormItem>
-                              <SettingRow
-                                label={t('pages.spaceSettings.storage.secretKey')}
-                                description={t('pages.spaceSettings.storage.secretKeyDescription')}
-                              >
-                                <FormControl>
-                                  <Input
-                                    type='password'
-                                    placeholder={t('pages.spaceSettings.placeholders.unchanged')}
-                                    {...field}
-                                    disabled={isSavingConfig}
-                                  />
-                                </FormControl>
-                                <FormMessage className='mt-1.5' />
-                              </SettingRow>
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
-
-                    {/* URL Signing sub-section */}
-                    <div className={isByob ? 'mb-1 border-t pt-5' : 'mb-1'}>
-                      <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
-                        {t('pages.spaceSettings.storage.urlSigning')}
-                      </p>
-                      <p className='text-muted-foreground mt-1 text-sm'>
-                        {t('pages.spaceSettings.storage.urlSigningDescription')}
-                      </p>
-                    </div>
-
-                    <FormField
-                      control={configForm.control}
-                      name='imagorSecret'
-                      render={({ field }) => (
-                        <FormItem>
-                          <SettingRow
-                            label={t('pages.spaceSettings.storage.imagorSecret')}
-                            description={t('pages.spaceSettings.storage.imagorSecretDescription')}
-                          >
-                            <FormControl>
-                              <Input
-                                type='password'
-                                placeholder={t('pages.spaceSettings.placeholders.unchanged')}
-                                {...field}
-                                disabled={isSavingConfig}
-                              />
-                            </FormControl>
-                            <FormMessage className='mt-1.5' />
-                          </SettingRow>
-                        </FormItem>
+                      {space.region && (
+                        <span>
+                          <span className='text-muted-foreground'>
+                            {t('pages.spaceSettings.storage.region')}:{' '}
+                          </span>
+                          <code className='font-mono font-medium'>{space.region}</code>
+                        </span>
                       )}
-                    />
-                    <FormField
-                      control={configForm.control}
-                      name='signerAlgorithm'
-                      render={({ field }) => (
-                        <FormItem>
-                          <SettingRow
-                            label={t('pages.spaceSettings.storage.signerAlgorithm')}
-                            description={t(
-                              'pages.spaceSettings.storage.signerAlgorithmDescription',
+                      <span className='text-muted-foreground text-xs'>
+                        {t('pages.spaceSettings.storage.bucketLocked')}
+                      </span>
+                    </div>
+                  )}
+
+                  <Form {...configForm}>
+                    <form onSubmit={configForm.handleSubmit(handleSaveConfig)}>
+                      {/* BYOB-only: storage credentials */}
+                      {isByob && (
+                        <>
+                          <FormField
+                            control={configForm.control}
+                            name='prefix'
+                            render={({ field }) => (
+                              <FormItem>
+                                <SettingRow
+                                  label={t('pages.spaceSettings.storage.prefix')}
+                                  description={t('pages.spaceSettings.storage.prefixDescription')}
+                                >
+                                  <FormControl>
+                                    <Input
+                                      placeholder='media/'
+                                      {...field}
+                                      disabled={isSavingConfig}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className='mt-1.5' />
+                                </SettingRow>
+                              </FormItem>
                             )}
-                          >
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value ?? 'sha256'}
-                              disabled={isSavingConfig}
+                          />
+                          <FormField
+                            control={configForm.control}
+                            name='endpoint'
+                            render={({ field }) => (
+                              <FormItem>
+                                <SettingRow
+                                  label={t('pages.spaceSettings.storage.endpoint')}
+                                  description={t('pages.spaceSettings.storage.endpointDescription')}
+                                >
+                                  <FormControl>
+                                    <Input
+                                      placeholder='https://s3.amazonaws.com'
+                                      {...field}
+                                      disabled={isSavingConfig}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className='mt-1.5' />
+                                </SettingRow>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={configForm.control}
+                            name='accessKeyId'
+                            render={({ field }) => (
+                              <FormItem>
+                                <SettingRow
+                                  label={t('pages.spaceSettings.storage.accessKeyId')}
+                                  description={t(
+                                    'pages.spaceSettings.storage.accessKeyIdDescription',
+                                  )}
+                                >
+                                  <FormControl>
+                                    <Input
+                                      placeholder={t('pages.spaceSettings.placeholders.unchanged')}
+                                      {...field}
+                                      disabled={isSavingConfig}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className='mt-1.5' />
+                                </SettingRow>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={configForm.control}
+                            name='secretKey'
+                            render={({ field }) => (
+                              <FormItem>
+                                <SettingRow
+                                  label={t('pages.spaceSettings.storage.secretKey')}
+                                  description={t(
+                                    'pages.spaceSettings.storage.secretKeyDescription',
+                                  )}
+                                >
+                                  <FormControl>
+                                    <Input
+                                      type='password'
+                                      placeholder={t('pages.spaceSettings.placeholders.unchanged')}
+                                      {...field}
+                                      disabled={isSavingConfig}
+                                    />
+                                  </FormControl>
+                                  <FormMessage className='mt-1.5' />
+                                </SettingRow>
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
+
+                      {/* URL Signing sub-section */}
+                      <div className={isByob ? 'mb-1 border-t pt-5' : 'mb-1'}>
+                        <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                          {t('pages.spaceSettings.storage.urlSigning')}
+                        </p>
+                        <p className='text-muted-foreground mt-1 text-sm'>
+                          {t('pages.spaceSettings.storage.urlSigningDescription')}
+                        </p>
+                      </div>
+
+                      <FormField
+                        control={configForm.control}
+                        name='imagorSecret'
+                        render={({ field }) => (
+                          <FormItem>
+                            <SettingRow
+                              label={t('pages.spaceSettings.storage.imagorSecret')}
+                              description={t('pages.spaceSettings.storage.imagorSecretDescription')}
                             >
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
+                                <Input
+                                  type='password'
+                                  placeholder={t('pages.spaceSettings.placeholders.unchanged')}
+                                  {...field}
+                                  disabled={isSavingConfig}
+                                />
                               </FormControl>
-                              <SelectContent>
-                                <SelectItem value='sha1'>SHA-1</SelectItem>
-                                <SelectItem value='sha256'>SHA-256</SelectItem>
-                                <SelectItem value='sha512'>SHA-512</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage className='mt-1.5' />
-                          </SettingRow>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={configForm.control}
-                      name='signerTruncate'
-                      render={({ field }) => (
-                        <FormItem>
-                          <SettingRow
-                            label={t('pages.spaceSettings.storage.signerTruncate')}
-                            description={t('pages.spaceSettings.storage.signerTruncateDescription')}
-                            last
-                          >
-                            <FormControl>
-                              <Input
-                                type='number'
-                                min={0}
-                                placeholder='0'
-                                value={field.value ?? 0}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber,
-                                  )
-                                }
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
+                              <FormMessage className='mt-1.5' />
+                            </SettingRow>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={configForm.control}
+                        name='signerAlgorithm'
+                        render={({ field }) => (
+                          <FormItem>
+                            <SettingRow
+                              label={t('pages.spaceSettings.storage.signerAlgorithm')}
+                              description={t(
+                                'pages.spaceSettings.storage.signerAlgorithmDescription',
+                              )}
+                            >
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value ?? 'sha256'}
                                 disabled={isSavingConfig}
-                              />
-                            </FormControl>
-                            <FormMessage className='mt-1.5' />
-                          </SettingRow>
-                        </FormItem>
-                      )}
-                    />
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value='sha1'>SHA-1</SelectItem>
+                                  <SelectItem value='sha256'>SHA-256</SelectItem>
+                                  <SelectItem value='sha512'>SHA-512</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage className='mt-1.5' />
+                            </SettingRow>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={configForm.control}
+                        name='signerTruncate'
+                        render={({ field }) => (
+                          <FormItem>
+                            <SettingRow
+                              label={t('pages.spaceSettings.storage.signerTruncate')}
+                              description={t(
+                                'pages.spaceSettings.storage.signerTruncateDescription',
+                              )}
+                              last
+                            >
+                              <FormControl>
+                                <Input
+                                  type='number'
+                                  min={0}
+                                  placeholder='0'
+                                  value={field.value ?? 0}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber,
+                                    )
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  disabled={isSavingConfig}
+                                />
+                              </FormControl>
+                              <FormMessage className='mt-1.5' />
+                            </SettingRow>
+                          </FormItem>
+                        )}
+                      />
 
-                    <div className='mt-2 flex justify-end pt-2'>
-                      <ButtonWithLoading type='submit' isLoading={isSavingConfig}>
-                        {t('common.buttons.save')}
-                      </ButtonWithLoading>
-                    </div>
-                  </form>
-                </Form>
-              </SettingsSection>
+                      <div className='mt-2 flex justify-end pt-2'>
+                        <ButtonWithLoading type='submit' isLoading={isSavingConfig}>
+                          {t('common.buttons.save')}
+                        </ButtonWithLoading>
+                      </div>
+                    </form>
+                  </Form>
+                </SettingsSection>
+              </>
             )}
 
             {/* ── Gallery settings ──────────────────────────────────────── */}
@@ -1188,8 +1194,8 @@ function MembersSection() {
 
   return (
     <>
-      <SettingsSection contentClassName='space-y-4'>
-        <div className='space-y-2 border-b pb-4'>
+      <div className='space-y-4'>
+        <div className='space-y-2'>
           <p className='text-muted-foreground text-sm'>
             {t('pages.spaceSettings.members.inviteDescription')}
           </p>
@@ -1226,7 +1232,7 @@ function MembersSection() {
         </div>
 
         {membersContent}
-      </SettingsSection>
+      </div>
 
       {/* Remove confirmation dialog */}
       <ResponsiveDialog
