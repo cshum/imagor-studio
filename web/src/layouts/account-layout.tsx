@@ -92,6 +92,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
   const { title: appTitle } = useBrand()
   const isAdmin = authState.profile?.role === 'admin'
   const isMultiTenant = authState.multiTenant
+  const showSidebar = !isMultiTenant
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useScrollHandler(location.pathname)
@@ -160,7 +161,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
 
   // ── Shared trigger button (tablet + mobile) ───────────────────────────────
 
-  const triggerButton = (
+  const triggerButton = showSidebar ? (
     <Button
       variant='ghost'
       size='icon'
@@ -170,35 +171,39 @@ export function AccountLayout({ children }: PropsWithChildren) {
     >
       <PanelLeft />
     </Button>
-  )
+  ) : null
 
   return (
     <SidebarWrapper>
-      {/* ── Desktop sidebar — fixed, bypasses global store entirely ─────────── */}
-      <Sidebar
-        collapsible='none'
-        className='fixed top-14 bottom-0 left-0 z-10 hidden overflow-y-auto border-r lg:flex'
-      >
-        {navContent}
-      </Sidebar>
-
-      {/* ── Mobile / tablet sidebar sheet (local state, no global store) ────── */}
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent
-          side='left'
-          className='bg-sidebar text-sidebar-foreground w-[var(--sidebar-width)] p-0 [&>button]:hidden'
-          style={{ '--sidebar-width': '16rem' } as React.CSSProperties}
+      {/* ── Desktop sidebar — self-hosted only ──────────────────────────────── */}
+      {showSidebar && (
+        <Sidebar
+          collapsible='none'
+          className='fixed top-14 bottom-0 left-0 z-10 hidden overflow-y-auto border-r lg:flex'
         >
-          <SheetHeader className='sr-only'>
-            <SheetTitle>{t('layouts.account.title')}</SheetTitle>
-            <SheetDescription>{t('layouts.account.title')}</SheetDescription>
-          </SheetHeader>
-          <div className='flex h-full flex-col'>{navContent}</div>
-        </SheetContent>
-      </Sheet>
+          {navContent}
+        </Sidebar>
+      )}
+
+      {/* ── Mobile / tablet sidebar sheet — self-hosted only ────────────────── */}
+      {showSidebar && (
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetContent
+            side='left'
+            className='bg-sidebar text-sidebar-foreground w-[var(--sidebar-width)] p-0 [&>button]:hidden'
+            style={{ '--sidebar-width': '16rem' } as React.CSSProperties}
+          >
+            <SheetHeader className='sr-only'>
+              <SheetTitle>{t('layouts.account.title')}</SheetTitle>
+              <SheetDescription>{t('layouts.account.title')}</SheetDescription>
+            </SheetHeader>
+            <div className='flex h-full flex-col'>{navContent}</div>
+          </SheetContent>
+        </Sheet>
+      )}
 
       {/* ── Main area ────────────────────────────────────────────────────────── */}
-      <SidebarInset className='lg:pl-[var(--sidebar-width)]'>
+      <SidebarInset className={showSidebar ? 'lg:pl-[var(--sidebar-width)]' : undefined}>
         <AppHeader
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
@@ -243,6 +248,28 @@ export function AccountLayout({ children }: PropsWithChildren) {
         />
 
         <main className='relative min-h-screen pt-14'>
+          {/* ── Tab strip for mobile/tablet in self-hosted mode ─────────────── */}
+          {showSidebar && (
+            <div className='bg-background border-b lg:hidden'>
+              <div className='flex overflow-x-auto px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+                {visibleGroups.flatMap((g) => g.items).map((item) => (
+                  <Link
+                    key={item.id}
+                    to={item.path}
+                    className={[
+                      '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors',
+                      isActive(item.path)
+                        ? 'border-primary text-foreground'
+                        : 'text-muted-foreground hover:text-foreground border-transparent',
+                    ].join(' ')}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
           <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>
             {children || <Outlet />}
           </div>

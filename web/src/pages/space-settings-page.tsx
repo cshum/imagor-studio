@@ -155,6 +155,11 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
   const [galleryRegistry, setGalleryRegistry] = useState<Record<string, string>>({})
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  // Close sheet when navigating between sections
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [activeSection])
+
   useEffect(() => {
     getSpaceRegistry(space.key)
       .then((entries) => {
@@ -484,7 +489,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
         <main className='relative min-h-screen pt-14'>
           {/* ── Mobile section tab strip (md+ uses sidebar instead) ───── */}
-          <div className='bg-background border-b md:hidden'>
+          <div className='bg-background border-b lg:hidden'>
             <div className='flex overflow-x-auto px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
               {navItems.map((item) => (
                 <Link
