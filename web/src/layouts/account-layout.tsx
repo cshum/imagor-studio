@@ -1,16 +1,23 @@
-import { PropsWithChildren, useEffect } from 'react'
+import { PropsWithChildren, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
-import { Settings, Users } from 'lucide-react'
+import { PanelLeft, Settings, UserRound, Users } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb'
+import { Button } from '@/components/ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import {
   Sidebar,
   SidebarContent,
@@ -21,7 +28,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   SidebarWrapper,
 } from '@/components/ui/sidebar'
 import { useBrand } from '@/hooks/use-brand'
@@ -42,6 +48,17 @@ interface NavItem {
 const NAV_GROUPS = (
   t: (key: string) => string,
 ): Array<{ heading: string; adminOnly?: boolean; selfHostedOnly?: boolean; items: NavItem[] }> => [
+  {
+    heading: t('layouts.account.sections.account'),
+    items: [
+      {
+        id: 'profile',
+        path: '/account/profile',
+        icon: <UserRound className='h-4 w-4' />,
+        label: t('layouts.account.tabs.profile'),
+      },
+    ],
+  },
   {
     heading: t('layouts.account.sections.administration'),
     adminOnly: true,
@@ -75,11 +92,17 @@ export function AccountLayout({ children }: PropsWithChildren) {
   const { title: appTitle } = useBrand()
   const isAdmin = authState.profile?.role === 'admin'
   const isMultiTenant = authState.multiTenant
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   useScrollHandler(location.pathname)
 
   useEffect(() => {
     requestAnimationFrame(() => restoreScrollPosition(location.pathname))
+  }, [location.pathname])
+
+  // Close mobile sheet on navigation
+  useEffect(() => {
+    setMobileOpen(false)
   }, [location.pathname])
 
   const groups = NAV_GROUPS(t)
@@ -104,40 +127,78 @@ export function AccountLayout({ children }: PropsWithChildren) {
     navigate({ to: '/login' })
   }
 
+  // ── Shared nav content (rendered in both desktop sidebar & mobile Sheet) ──
+
+  const navContent = (
+    <SidebarContent>
+      {visibleGroups.map((group, gi) => (
+        <SidebarGroup key={gi}>
+          <SidebarGroupLabel>{group.heading}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {group.items.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.path)}
+                    tooltip={item.label}
+                    className='data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
+                  >
+                    <Link to={item.path}>
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      ))}
+    </SidebarContent>
+  )
+
+  // ── Shared trigger button (tablet + mobile) ───────────────────────────────
+
+  const triggerButton = (
+    <Button
+      variant='ghost'
+      size='icon'
+      className='h-9 w-9 shrink-0 lg:hidden [&_svg]:size-5'
+      onClick={() => setMobileOpen(true)}
+      aria-label={t('layouts.account.title')}
+    >
+      <PanelLeft />
+    </Button>
+  )
+
   return (
     <SidebarWrapper>
-      {/* ── Settings sidebar ─────────────────────────────────────────── */}
-      <Sidebar collapsible='offcanvas' className='top-14'>
-        <SidebarContent>
-          {visibleGroups.map((group, gi) => (
-            <SidebarGroup key={gi}>
-              <SidebarGroupLabel>{group.heading}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive(item.path)}
-                        tooltip={item.label}
-                        className='data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
-                      >
-                        <Link to={item.path}>
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
-        </SidebarContent>
+      {/* ── Desktop sidebar — fixed, bypasses global store entirely ─────────── */}
+      <Sidebar
+        collapsible='none'
+        className='fixed top-14 bottom-0 left-0 z-10 hidden overflow-y-auto border-r lg:flex'
+      >
+        {navContent}
       </Sidebar>
 
-      {/* ── Main area ────────────────────────────────────────────────── */}
-      <SidebarInset>
+      {/* ── Mobile / tablet sidebar sheet (local state, no global store) ────── */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent
+          side='left'
+          className='bg-sidebar text-sidebar-foreground w-[var(--sidebar-width)] p-0 [&>button]:hidden'
+          style={{ '--sidebar-width': '16rem' } as React.CSSProperties}
+        >
+          <SheetHeader className='sr-only'>
+            <SheetTitle>{t('layouts.account.title')}</SheetTitle>
+            <SheetDescription>{t('layouts.account.title')}</SheetDescription>
+          </SheetHeader>
+          <div className='flex h-full flex-col'>{navContent}</div>
+        </SheetContent>
+      </Sheet>
+
+      {/* ── Main area ────────────────────────────────────────────────────────── */}
+      <SidebarInset className='lg:pl-[var(--sidebar-width)]'>
         <AppHeader
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
@@ -147,12 +208,11 @@ export function AccountLayout({ children }: PropsWithChildren) {
           moreText={t('common.buttons.more')}
           leftSlot={
             <div className='flex min-w-0 items-center gap-1'>
-              <SidebarTrigger className='h-9 w-9 shrink-0 [&_svg]:size-5' />
-              <BreadcrumbLink asChild>
-                <Link to='/' className='shrink-0 text-xl font-bold'>
-                  {appTitle}
-                </Link>
-              </BreadcrumbLink>
+              {/* Trigger only on tablet (sm–lg) */}
+              {triggerButton}
+              <Link to='/' className='shrink-0 text-xl font-bold'>
+                {appTitle}
+              </Link>
               <div className='hidden min-w-0 sm:flex sm:items-center'>
                 <span className='text-border mx-2 shrink-0 select-none'>|</span>
                 <Breadcrumb>
@@ -167,12 +227,11 @@ export function AccountLayout({ children }: PropsWithChildren) {
           }
           mobileTitle={
             <div className='flex min-w-0 items-center gap-1'>
-              <SidebarTrigger className='h-9 w-9 shrink-0 [&_svg]:size-5' />
-              <BreadcrumbLink asChild>
-                <Link to='/' className='shrink-0 text-xl font-bold'>
-                  {appTitle}
-                </Link>
-              </BreadcrumbLink>
+              {/* Trigger on mobile */}
+              {triggerButton}
+              <Link to='/' className='shrink-0 text-xl font-bold'>
+                {appTitle}
+              </Link>
               <div className='flex min-w-0 items-center'>
                 <span className='text-border mx-2 shrink-0 select-none'>|</span>
                 <span className='min-w-0 truncate text-sm font-medium'>
@@ -183,7 +242,6 @@ export function AccountLayout({ children }: PropsWithChildren) {
           }
         />
 
-        {/* Content area — pt-14 clears the fixed header */}
         <main className='relative min-h-screen pt-14'>
           <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>
             {children || <Outlet />}

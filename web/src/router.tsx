@@ -398,35 +398,30 @@ const settingsLayoutRoute = createRoute({
   component: () => <Outlet />,
 })
 
-// /account/profile + /account redirect → each child provides its own SpacesLayout
-const profileLayoutRoute = createRoute({
-  getParentRoute: () => settingsLayoutRoute,
-  id: 'profile-layout',
-  beforeLoad: requireAccountAuth,
-  component: () => <Outlet />,
-})
-
 // Redirect /account to /account/profile
 const accountRedirectRoute = createRoute({
-  getParentRoute: () => profileLayoutRoute,
+  getParentRoute: () => accountLayoutRoute,
   path: '/account',
   component: () => <Navigate to='/account/profile' replace />,
 })
 
 const accountProfileRoute = createRoute({
-  getParentRoute: () => profileLayoutRoute,
+  getParentRoute: () => accountLayoutRoute,
   path: '/account/profile',
   loader: profileLoader,
   component: () => {
     const { t } = useTranslation()
     const loaderData = accountProfileRoute.useLoaderData()
     return (
-      <SpacesLayout
-        title={t('pages.profile.title')}
-        description={t('pages.profile.titleDescription')}
-      >
+      <>
+        <div className='mb-8'>
+          <h1 className='text-2xl font-semibold tracking-tight'>{t('pages.profile.title')}</h1>
+          <p className='text-muted-foreground mt-1 text-sm'>
+            {t('pages.profile.titleDescription')}
+          </p>
+        </div>
         <ProfilePage loaderData={loaderData} />
-      </SpacesLayout>
+      </>
     )
   },
 })
@@ -434,12 +429,7 @@ const accountProfileRoute = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
-  beforeLoad: requireAdminAccountAuth,
-  loader: () => ({
-    breadcrumb: {
-      translationKey: 'navigation.breadcrumbs.settings',
-    },
-  }),
+  beforeLoad: requireAccountAuth,
   component: () => <AccountLayout />,
 })
 
@@ -544,9 +534,13 @@ const routeTree = isEmbeddedMode
       settingsLayoutRoute.addChildren([
         spaceSettingsIndexRoute,
         spaceSettingsRoute,
-        profileLayoutRoute.addChildren([accountRedirectRoute, accountProfileRoute]),
         spacesLayoutRoute.addChildren([accountSpacesRoute]),
-        accountLayoutRoute.addChildren([accountAdminRoute, accountUsersRoute]),
+        accountLayoutRoute.addChildren([
+          accountRedirectRoute,
+          accountProfileRoute,
+          accountAdminRoute,
+          accountUsersRoute,
+        ]),
       ]),
       baseLayoutRoute.addChildren([
         rootPath.addChildren([rootImagePage]),

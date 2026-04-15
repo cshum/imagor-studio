@@ -3,7 +3,16 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
-import { ArrowLeft, Database, FolderOpen, Images, Settings, UserRound, Users } from 'lucide-react'
+import {
+  ArrowLeft,
+  Database,
+  FolderOpen,
+  Images,
+  PanelLeft,
+  Settings,
+  UserRound,
+  Users,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -49,6 +58,13 @@ import {
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -59,7 +75,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   SidebarWrapper,
 } from '@/components/ui/sidebar'
 import type { GetSpaceQuery } from '@/generated/graphql'
@@ -138,6 +153,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [galleryRegistry, setGalleryRegistry] = useState<Record<string, string>>({})
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     getSpaceRegistry(space.key)
@@ -305,78 +321,103 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
     },
   ]
 
+  // ── Shared sidebar content ────────────────────────────────────────────────
+  const sidebarContent = (
+    <>
+      {/* Space identity */}
+      <SidebarHeader className='border-b px-4 py-3'>
+        <div className='flex items-center gap-3'>
+          <div
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${color}`}
+          >
+            {initials}
+          </div>
+          <div className='min-w-0'>
+            <p className='truncate text-sm leading-tight font-semibold'>{space.name}</p>
+            <p className='text-muted-foreground truncate font-mono text-xs'>{space.key}</p>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      {/* Nav */}
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={activeSection === item.id}
+                    tooltip={item.label}
+                    className='data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
+                  >
+                    <Link
+                      to='/spaces/$spaceKey/settings/$section'
+                      params={{ spaceKey: space.key, section: item.id }}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      {/* Footer: back + open gallery */}
+      <SidebarFooter className='border-t py-2'>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.backToSpaces')}>
+              <Link to='/account/spaces'>
+                <ArrowLeft className='h-4 w-4' />
+                <span>{t('pages.spaceSettings.backToSpaces')}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.openGallery')}>
+              <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
+                <FolderOpen className='h-4 w-4' />
+                <span>{t('pages.spaceSettings.openGallery')}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </>
+  )
+
   return (
     <SidebarWrapper>
-      {/* ── Space settings sidebar ────────────────────────────────────── */}
-      <Sidebar collapsible='offcanvas' className='top-14 h-[calc(100svh-3.5rem)]'>
-        {/* Space identity */}
-        <SidebarHeader className='border-b px-4 py-3'>
-          <div className='flex items-center gap-3'>
-            <div
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${color}`}
-            >
-              {initials}
-            </div>
-            <div className='min-w-0'>
-              <p className='truncate text-sm leading-tight font-semibold'>{space.name}</p>
-              <p className='text-muted-foreground truncate font-mono text-xs'>{space.key}</p>
-            </div>
-          </div>
-        </SidebarHeader>
-
-        {/* Nav */}
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={activeSection === item.id}
-                      tooltip={item.label}
-                      className='data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
-                    >
-                      <Link
-                        to='/spaces/$spaceKey/settings/$section'
-                        params={{ spaceKey: space.key, section: item.id }}
-                      >
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-
-        {/* Footer: back + open gallery */}
-        <SidebarFooter className='border-t py-2'>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.backToSpaces')}>
-                <Link to='/account/spaces'>
-                  <ArrowLeft className='h-4 w-4' />
-                  <span>{t('pages.spaceSettings.backToSpaces')}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.openGallery')}>
-                <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
-                  <FolderOpen className='h-4 w-4' />
-                  <span>{t('pages.spaceSettings.openGallery')}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
+      {/* ── Desktop settings sidebar — fixed, bypasses global store ─────────── */}
+      <Sidebar
+        collapsible='none'
+        className='fixed top-14 bottom-0 left-0 z-10 hidden overflow-y-auto border-r lg:flex'
+      >
+        {sidebarContent}
       </Sidebar>
 
+      {/* ── Mobile / tablet sidebar sheet (local state) ──────────────────────── */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent
+          side='left'
+          className='bg-sidebar text-sidebar-foreground w-[var(--sidebar-width)] p-0 [&>button]:hidden'
+          style={{ '--sidebar-width': '16rem' } as React.CSSProperties}
+        >
+          <SheetHeader className='sr-only'>
+            <SheetTitle>{space.name}</SheetTitle>
+            <SheetDescription>{space.key}</SheetDescription>
+          </SheetHeader>
+          <div className='flex h-full flex-col'>{sidebarContent}</div>
+        </SheetContent>
+      </Sheet>
+
       {/* ── Main area ────────────────────────────────────────────────── */}
-      <SidebarInset>
+      <SidebarInset className='lg:pl-[var(--sidebar-width)]'>
         <AppHeader
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
@@ -385,7 +426,14 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
           moreText={t('common.buttons.more')}
           leftSlot={
             <div className='flex min-w-0 items-center gap-1'>
-              <SidebarTrigger className='h-9 w-9 shrink-0 [&_svg]:size-5' />
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-9 w-9 shrink-0 lg:hidden [&_svg]:size-5'
+                onClick={() => setMobileOpen(true)}
+              >
+                <PanelLeft />
+              </Button>
               <BreadcrumbLink asChild>
                 <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
@@ -414,8 +462,15 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
             </div>
           }
           mobileTitle={
-            <div className='flex min-w-0 items-center gap-1.5'>
-              <SidebarTrigger className='h-9 w-9 shrink-0 [&_svg]:size-5' />
+            <div className='flex min-w-0 items-center gap-1'>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-9 w-9 shrink-0 [&_svg]:size-5'
+                onClick={() => setMobileOpen(true)}
+              >
+                <PanelLeft />
+              </Button>
               <BreadcrumbLink asChild>
                 <Link to='/' className='shrink-0 text-xl font-bold'>
                   {appTitle}
@@ -427,7 +482,6 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
           }
         />
 
-        {/* Content area */}
         <main className='relative min-h-screen pt-14'>
           {/* ── Mobile section tab strip (md+ uses sidebar instead) ───── */}
           <div className='bg-background border-b md:hidden'>
