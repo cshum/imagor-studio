@@ -102,15 +102,15 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
     <div className='space-y-6'>
       {hasSpaces && (
         <div className='grid gap-3 sm:grid-cols-3'>
-          <div className='bg-card rounded-xl border p-4'>
+          <div className='bg-muted/30 rounded-xl p-4'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>Total spaces</p>
             <p className='mt-2 text-2xl font-semibold'>{spaces.length}</p>
           </div>
-          <div className='bg-card rounded-xl border p-4'>
+          <div className='bg-muted/30 rounded-xl p-4'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>Managed storage</p>
             <p className='mt-2 text-2xl font-semibold'>{managedCount}</p>
           </div>
-          <div className='bg-card rounded-xl border p-4'>
+          <div className='bg-muted/30 rounded-xl p-4'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>External storage</p>
             <p className='mt-2 text-2xl font-semibold'>{s3Count}</p>
           </div>
