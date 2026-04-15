@@ -640,6 +640,7 @@
       "openGallery": "Open Gallery",
       "storageNotConfigured": "Not configured",
       "storageTypeLabel": "Storage Type",
+      "credentialsEncrypted": "Credentials are encrypted at rest using AES-256 and never exposed after saving.",
       "storageType": {
         "managed": "Platform Storage",
         "s3": "Custom S3 (BYOB)"

@@ -3,7 +3,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { CheckCircle2, Cloud, Database } from 'lucide-react'
+import { CheckCircle2, Cloud, Database, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -308,6 +308,11 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 </FormItem>
               )}
             />
+          </div>
+          {/* AES-256 encryption notice */}
+          <div className='bg-muted/50 flex items-start gap-2 rounded-md px-3 py-2.5 text-xs text-muted-foreground'>
+            <Lock className='mt-0.5 h-3.5 w-3.5 shrink-0' />
+            <span>{t('pages.spaces.credentialsEncrypted')}</span>
           </div>
         </>
       )}

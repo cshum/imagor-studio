@@ -615,6 +615,7 @@
     },
     "spaces": {
       "storageTypeLabel": "儲存類型",
+      "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
         "managed": "平台儲存",
         "s3": "自訂 S3（BYOB）"

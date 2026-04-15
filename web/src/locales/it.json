@@ -629,6 +629,7 @@
       "openGallery": "Apri Galleria",
       "storageNotConfigured": "Non configurato",
       "storageTypeLabel": "Tipo di archiviazione",
+      "credentialsEncrypted": "Le credenziali sono crittografate con AES-256 e non vengono mai esposte dopo il salvataggio.",
       "storageType": {
         "managed": "Archiviazione piattaforma",
         "s3": "S3 personalizzato (BYOB)"
