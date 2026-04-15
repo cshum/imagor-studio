@@ -27,9 +27,7 @@ export function SpaceSettingsLayout({ children }: PropsWithChildren) {
   const { title: appTitle } = useBrand()
 
   const getUserDisplayName = () =>
-    authState.profile?.displayName ||
-    authState.profile?.username ||
-    t('common.status.user')
+    authState.profile?.displayName || authState.profile?.username || t('common.status.user')
 
   const handleLogout = async () => {
     await logout()
@@ -69,7 +67,7 @@ export function SpaceSettingsLayout({ children }: PropsWithChildren) {
                 <DropdownMenuContent align='end' className='w-56'>
                   <DropdownMenuLabel className='font-normal'>
                     <div className='flex flex-col space-y-1'>
-                      <p className='text-sm font-medium leading-none'>{getUserDisplayName()}</p>
+                      <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>
                       {authState.profile?.role && (
                         <p className='text-muted-foreground text-xs leading-none capitalize'>
                           {authState.profile.role}
@@ -98,9 +96,7 @@ export function SpaceSettingsLayout({ children }: PropsWithChildren) {
 
       {/* Content area — pt-14 clears the fixed header */}
       <main className='relative min-h-screen pt-14'>
-        <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>
-          {children || <Outlet />}
-        </div>
+        <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>{children || <Outlet />}</div>
       </main>
     </div>
   )

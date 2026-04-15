@@ -181,7 +181,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                     className={[
                       'relative rounded-lg border p-4 text-left transition-colors',
                       isSelected
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                        ? 'border-primary bg-primary/5 ring-primary ring-1'
                         : 'border-border hover:bg-muted/50',
                     ].join(' ')}
                   >
@@ -246,11 +246,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder='https://s3.amazonaws.com'
-                    {...field}
-                    disabled={isSaving}
-                  />
+                  <Input placeholder='https://s3.amazonaws.com' {...field} disabled={isSaving} />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.endpointDescription')}

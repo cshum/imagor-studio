@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import {
   AlertTriangle,
+  ArrowLeft,
   ChevronRight,
   Database,
   FolderOpen,
@@ -67,9 +68,9 @@ import {
   SidebarTrigger,
   SidebarWrapper,
 } from '@/components/ui/sidebar'
+import type { GetSpaceQuery } from '@/generated/graphql'
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
-import type { GetSpaceQuery } from '@/generated/graphql'
 
 export type SpaceSettingsData = NonNullable<GetSpaceQuery['space']>
 
@@ -146,9 +147,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
   const initials = spaceInitials(space.name)
 
   const getUserDisplayName = () =>
-    authState.profile?.displayName ||
-    authState.profile?.username ||
-    t('common.status.user')
+    authState.profile?.displayName || authState.profile?.username || t('common.status.user')
 
   const handleLogout = async () => {
     await logout()
@@ -346,7 +345,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
               {initials}
             </div>
             <div className='min-w-0'>
-              <p className='truncate text-sm font-semibold leading-tight'>{space.name}</p>
+              <p className='truncate text-sm leading-tight font-semibold'>{space.name}</p>
               <p className='text-muted-foreground truncate font-mono text-xs'>{space.key}</p>
             </div>
           </div>
@@ -379,8 +378,14 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
           </SidebarGroup>
         </SidebarContent>
 
-        {/* Footer: open gallery link */}
-        <SidebarFooter className='border-t p-3'>
+        {/* Footer: back + open gallery */}
+        <SidebarFooter className='space-y-1 border-t p-3'>
+          <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.backToSpaces')}>
+            <Link to='/account/spaces'>
+              <ArrowLeft className='h-4 w-4' />
+              <span>{t('pages.spaceSettings.backToSpaces')}</span>
+            </Link>
+          </SidebarMenuButton>
           <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.openGallery')}>
             <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
               <FolderOpen className='h-4 w-4' />
@@ -431,7 +436,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                   <DropdownMenuContent align='end' className='w-56'>
                     <DropdownMenuLabel className='font-normal'>
                       <div className='flex flex-col space-y-1'>
-                        <p className='text-sm font-medium leading-none'>{getUserDisplayName()}</p>
+                        <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>
                         {authState.profile?.role && (
                           <p className='text-muted-foreground text-xs leading-none capitalize'>
                             {authState.profile.role}
@@ -459,9 +464,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
               <Card>
                 <CardHeader>
                   <CardTitle>{t('pages.spaceSettings.sections.general')}</CardTitle>
-                  <CardDescription>
-                    {t('pages.spaceSettings.general.description')}
-                  </CardDescription>
+                  <CardDescription>{t('pages.spaceSettings.general.description')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...generalForm}>
@@ -487,9 +490,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                         name='customDomain'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>
-                              {t('pages.spaceSettings.general.customDomain')}
-                            </FormLabel>
+                            <FormLabel>{t('pages.spaceSettings.general.customDomain')}</FormLabel>
                             <FormControl>
                               <Input
                                 placeholder='images.example.com'
@@ -520,9 +521,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
               <Card>
                 <CardHeader>
                   <CardTitle>{t('pages.spaceSettings.sections.storage')}</CardTitle>
-                  <CardDescription>
-                    {t('pages.spaceSettings.storage.description')}
-                  </CardDescription>
+                  <CardDescription>{t('pages.spaceSettings.storage.description')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {!isByob ? (
@@ -569,9 +568,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                             name='endpoint'
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>
-                                  {t('pages.spaceSettings.storage.endpoint')}
-                                </FormLabel>
+                                <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
                                 <FormControl>
                                   <Input
                                     placeholder='https://s3.amazonaws.com'
@@ -591,9 +588,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                             name='prefix'
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>
-                                  {t('pages.spaceSettings.storage.prefix')}
-                                </FormLabel>
+                                <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
                                 <FormControl>
                                   <Input
                                     placeholder='media/'
@@ -619,9 +614,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                                   </FormLabel>
                                   <FormControl>
                                     <Input
-                                      placeholder={t(
-                                        'pages.spaceSettings.placeholders.unchanged',
-                                      )}
+                                      placeholder={t('pages.spaceSettings.placeholders.unchanged')}
                                       {...field}
                                       disabled={isSavingStorage}
                                     />
@@ -641,9 +634,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                                   <FormControl>
                                     <Input
                                       type='password'
-                                      placeholder={t(
-                                        'pages.spaceSettings.placeholders.unchanged',
-                                      )}
+                                      placeholder={t('pages.spaceSettings.placeholders.unchanged')}
                                       {...field}
                                       disabled={isSavingStorage}
                                     />
@@ -698,9 +689,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                               />
                             </FormControl>
                             <FormDescription>
-                              {t(
-                                'pages.spaceSettings.imageProcessing.imagorSecretDescription',
-                              )}
+                              {t('pages.spaceSettings.imageProcessing.imagorSecretDescription')}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -751,9 +740,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                                   value={field.value ?? 0}
                                   onChange={(e) =>
                                     field.onChange(
-                                      isNaN(e.target.valueAsNumber)
-                                        ? 0
-                                        : e.target.valueAsNumber,
+                                      isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber,
                                     )
                                   }
                                   onBlur={field.onBlur}
@@ -763,9 +750,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                                 />
                               </FormControl>
                               <FormDescription>
-                                {t(
-                                  'pages.spaceSettings.imageProcessing.signerTruncateDescription',
-                                )}
+                                {t('pages.spaceSettings.imageProcessing.signerTruncateDescription')}
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -795,9 +780,7 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                 <CardContent>
                   <div className='flex items-center justify-between rounded-lg border p-4'>
                     <div>
-                      <p className='font-medium'>
-                        {t('pages.spaceSettings.danger.deleteTitle')}
-                      </p>
+                      <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
                       <p className='text-muted-foreground text-sm'>
                         {t('pages.spaceSettings.danger.deleteDescription')}
                       </p>

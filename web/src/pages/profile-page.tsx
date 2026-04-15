@@ -9,13 +9,7 @@ import { changePassword, updateProfile } from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '@/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
   ResponsiveDialog,
@@ -47,10 +41,10 @@ function SettingRow({
 }) {
   return (
     <div
-      className={`flex flex-col gap-3 py-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8${last ? '' : ' border-b'}`}
+      className={`flex flex-col gap-3 py-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8${last ? '' : 'border-b'}`}
     >
       <div className='min-w-0 sm:w-2/5'>
-        <p className='text-sm font-medium leading-none'>{label}</p>
+        <p className='text-sm leading-none font-medium'>{label}</p>
         {description && (
           <p className='text-muted-foreground mt-1.5 text-sm leading-snug'>{description}</p>
         )}

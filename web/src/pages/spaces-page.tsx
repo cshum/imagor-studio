@@ -109,7 +109,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
 
       {/* Loading skeleton */}
       {!loaderData ? (
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className='space-y-4 rounded-xl border p-5'>
               <div className='flex items-center gap-3'>
@@ -146,14 +146,14 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         </div>
       ) : (
         /* Card grid */
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {spaces.map((space) => {
             const color = avatarColor(space.key)
             const initials = spaceInitials(space.name)
             return (
               <div
                 key={space.key}
-                className='group relative flex flex-col rounded-xl border bg-card p-5 transition-shadow hover:shadow-md'
+                className='group bg-card relative flex flex-col rounded-xl border p-5 transition-shadow hover:shadow-md'
               >
                 {/* Card header row */}
                 <div className='flex items-start justify-between gap-2'>
@@ -164,7 +164,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                       {initials}
                     </div>
                     <div className='min-w-0'>
-                      <p className='truncate font-semibold leading-tight'>{space.name}</p>
+                      <p className='truncate leading-tight font-semibold'>{space.name}</p>
                       <p className='text-muted-foreground truncate font-mono text-xs'>
                         {space.key}
                       </p>

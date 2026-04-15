@@ -26,8 +26,8 @@ import {
   SidebarTrigger,
   SidebarWrapper,
 } from '@/components/ui/sidebar'
-import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useBrand } from '@/hooks/use-brand'
+import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useAuth } from '@/stores/auth-store'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -108,8 +108,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
     .map((g) => ({
       ...g,
       items: g.items.filter(
-        (item) =>
-          (!item.adminOnly || isAdmin) && (!item.multiTenantOnly || isMultiTenant),
+        (item) => (!item.adminOnly || isAdmin) && (!item.multiTenantOnly || isMultiTenant),
       ),
     }))
     .filter((g) => g.items.length > 0)
@@ -118,9 +117,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
     location.pathname === path || location.pathname.startsWith(path + '/')
 
   const getUserDisplayName = () =>
-    authState.profile?.displayName ||
-    authState.profile?.username ||
-    t('common.status.user')
+    authState.profile?.displayName || authState.profile?.username || t('common.status.user')
 
   const handleLogout = async () => {
     await logout()
@@ -193,7 +190,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
                   <DropdownMenuContent align='end' className='w-56'>
                     <DropdownMenuLabel className='font-normal'>
                       <div className='flex flex-col space-y-1'>
-                        <p className='text-sm font-medium leading-none'>{getUserDisplayName()}</p>
+                        <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>
                         {authState.profile?.role && (
                           <p className='text-muted-foreground text-xs leading-none capitalize'>
                             {authState.profile.role}
@@ -202,7 +199,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                     <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild>
                       <Link to='/'>
                         <LayoutGrid className='text-muted-foreground mr-3 h-4 w-4' />
                         {t('layouts.account.backToApp')}
