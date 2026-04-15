@@ -446,7 +446,7 @@ export function CreateSpacePage() {
       />
 
       {/* Wizard — pt-14 clears fixed header */}
-      <div className='bg-background flex flex-1 items-start justify-center px-4 py-4 pt-18 sm:px-6 sm:py-6 md:items-center'>
+      <div className='bg-background flex flex-1 items-start justify-center px-4 py-6 pt-20 sm:px-6 md:items-center'>
         <Form {...form}>
           <MultiStepForm
             steps={steps}
