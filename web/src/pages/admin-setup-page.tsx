@@ -8,6 +8,7 @@ import * as z from 'zod'
 
 import { registerAdmin } from '@/api/auth-api'
 import { setSystemRegistryObject } from '@/api/registry-api'
+import { BrandBar } from '@/components/brand-bar'
 import { LanguageSelector } from '@/components/language-selector'
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { StorageConfigurationWizard } from '@/components/storage/storage-configuration-wizard'
@@ -29,7 +30,6 @@ import {
   type MultiStepFormRef,
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
-import { useBrand } from '@/hooks/use-brand'
 import { useFormErrors } from '@/hooks/use-form-errors'
 import type { AdminSetupLoaderData } from '@/loaders/admin-setup-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
@@ -263,7 +263,6 @@ export function AdminSetupPage() {
   const navigate = useNavigate()
   const router = useRouter()
   const { authState } = useAuth()
-  const { title: appTitle, url: appUrl } = useBrand()
   const multiStepFormRef = useRef<MultiStepFormRef>(null)
 
   // Initialize form error handler
@@ -452,21 +451,14 @@ export function AdminSetupPage() {
 
   return (
     <div className='min-h-screen-safe flex flex-col'>
-      <div className='flex items-center gap-2 border-b px-3 py-2 sm:px-6 sm:py-3'>
-        <div className='flex flex-1'>
-          <a
-            href={appUrl}
-            target='_blank'
-            className='text-foreground hover:text-foreground/80 text-base font-bold transition-colors sm:text-lg md:text-xl'
-          >
-            {appTitle}
-          </a>
-        </div>
-        <div className='ml-auto flex items-center gap-1 sm:gap-2'>
-          <LanguageSelector onLanguageChange={setSelectedLanguage} />
-          <ModeToggle />
-        </div>
-      </div>
+      <BrandBar
+        rightSlot={
+          <>
+            <LanguageSelector onLanguageChange={setSelectedLanguage} />
+            <ModeToggle />
+          </>
+        }
+      />
       <div className='bg-background flex flex-1 items-start justify-center px-4 py-4 sm:px-6 sm:py-6 md:items-center'>
         <MultiStepForm
           ref={multiStepFormRef}

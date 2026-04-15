@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, CheckCircle2, Cloud, Database } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { CheckCircle2, Cloud, Database } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { createSpace } from '@/api/org-api'
+import { BrandBar } from '@/components/brand-bar'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -25,8 +26,8 @@ import {
   type MultiStepFormNavigationProps,
   type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
+import { ModeToggle } from '@/components/mode-toggle'
 import { Separator } from '@/components/ui/separator'
-import { useBrand } from '@/hooks/use-brand'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -321,7 +322,6 @@ export function CreateSpacePage() {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSaving, setIsSaving] = useState(false)
-  const { title: appTitle, url: appUrl } = useBrand()
 
   const form = useForm<CreateFormData>({
     resolver: zodResolver(createSchema),
@@ -389,24 +389,7 @@ export function CreateSpacePage() {
 
   return (
     <div className='min-h-screen-safe flex flex-col'>
-      {/* Top bar */}
-      <div className='flex items-center gap-2 border-b px-3 py-2 sm:px-6 sm:py-3'>
-        <div className='flex flex-1'>
-          <a
-            href={appUrl}
-            target='_blank'
-            className='text-foreground hover:text-foreground/80 text-base font-bold transition-colors sm:text-lg md:text-xl'
-          >
-            {appTitle}
-          </a>
-        </div>
-        <Link to='/account/spaces'>
-          <Button variant='ghost' size='sm'>
-            <ArrowLeft className='mr-1.5 h-4 w-4' />
-            {t('pages.spaceSettings.backToSpaces')}
-          </Button>
-        </Link>
-      </div>
+      <BrandBar rightSlot={<ModeToggle />} />
 
       {/* Wizard */}
       <div className='bg-background flex flex-1 items-start justify-center px-4 py-4 sm:px-6 sm:py-6 md:items-center'>

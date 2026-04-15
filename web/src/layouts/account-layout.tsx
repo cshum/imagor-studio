@@ -147,19 +147,16 @@ export function AccountLayout({ children }: PropsWithChildren) {
           signOutText={t('common.navigation.signOut')}
           moreText={t('common.buttons.more')}
           leftSlot={
-            <div className='flex min-w-0 items-center gap-2'>
-              <SidebarTrigger className='-ml-2 h-10 w-10 shrink-0' />
-              <div className='hidden sm:block'>
+            <div className='flex min-w-0 items-center gap-1'>
+              <BreadcrumbLink asChild>
+                <Link to='/' className='shrink-0 text-sm font-semibold'>
+                  {appTitle}
+                </Link>
+              </BreadcrumbLink>
+              <SidebarTrigger className='h-8 w-8 shrink-0' />
+              <div className='hidden min-w-0 sm:block'>
                 <Breadcrumb>
                   <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link to='/' className='text-sm font-semibold'>
-                          {appTitle}
-                        </Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
                     <BreadcrumbItem>
                       <BreadcrumbPage>{t('layouts.account.title')}</BreadcrumbPage>
                     </BreadcrumbItem>
@@ -168,7 +165,19 @@ export function AccountLayout({ children }: PropsWithChildren) {
               </div>
             </div>
           }
-          mobileTitle={<span className='text-sm font-medium'>{t('layouts.account.title')}</span>}
+          mobileTitle={
+            <div className='flex min-w-0 items-center gap-1'>
+              <BreadcrumbLink asChild>
+                <Link to='/' className='shrink-0 text-sm font-semibold'>
+                  {appTitle}
+                </Link>
+              </BreadcrumbLink>
+              <SidebarTrigger className='h-8 w-8 shrink-0' />
+              <span className='min-w-0 truncate text-sm font-medium'>
+                {t('layouts.account.title')}
+              </span>
+            </div>
+          }
         />
 
         {/* Content area — pt-14 clears the fixed header */}

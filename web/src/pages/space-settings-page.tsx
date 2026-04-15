@@ -73,6 +73,7 @@ import {
 } from '@/components/ui/sidebar'
 import type { GetSpaceQuery } from '@/generated/graphql'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
+import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 
 export type SpaceSettingsData = NonNullable<GetSpaceQuery['space']>
@@ -161,6 +162,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
       })
   }, [space.key])
 
+  const { title: appTitle } = useBrand()
   const isByob = space.storageType === 's3'
   const color = avatarColor(space.key)
   const initials = spaceInitials(space.name)
@@ -393,26 +395,20 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
           signOutText={t('common.navigation.signOut')}
           moreText={t('common.buttons.more')}
           leftSlot={
-            <div className='flex min-w-0 items-center gap-2'>
-              <SidebarTrigger className='-ml-2 h-10 w-10 shrink-0' />
-              <div className='hidden sm:block'>
+            <div className='flex min-w-0 items-center gap-1'>
+              <BreadcrumbLink asChild>
+                <Link to='/' className='shrink-0 text-sm font-semibold'>
+                  {appTitle}
+                </Link>
+              </BreadcrumbLink>
+              <SidebarTrigger className='h-8 w-8 shrink-0' />
+              <div className='hidden min-w-0 sm:block'>
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem>
                       <BreadcrumbLink asChild>
                         <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
                           {space.name}
-                        </Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link
-                          to='/spaces/$spaceKey/settings/$section'
-                          params={{ spaceKey: space.key, section: 'general' }}
-                        >
-                          {t('navigation.breadcrumbs.spaceSettings')}
                         </Link>
                       </BreadcrumbLink>
                     </BreadcrumbItem>
@@ -428,8 +424,13 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
             </div>
           }
           mobileTitle={
-            <div className='flex min-w-0 items-center gap-2'>
-              <SidebarTrigger className='-ml-2 h-10 w-10 shrink-0' />
+            <div className='flex min-w-0 items-center gap-1'>
+              <BreadcrumbLink asChild>
+                <Link to='/' className='shrink-0 text-sm font-semibold'>
+                  {appTitle}
+                </Link>
+              </BreadcrumbLink>
+              <SidebarTrigger className='h-8 w-8 shrink-0' />
               <div className='min-w-0'>
                 <p className='truncate text-sm font-medium'>{space.name}</p>
                 <p className='text-muted-foreground truncate text-xs'>
