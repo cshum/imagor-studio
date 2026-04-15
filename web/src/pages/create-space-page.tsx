@@ -310,7 +310,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
             />
           </div>
           {/* AES-256 encryption notice */}
-          <div className='bg-muted/50 flex items-start gap-2 rounded-md px-3 py-2.5 text-xs text-muted-foreground'>
+          <div className='bg-muted/50 text-muted-foreground flex items-start gap-2 rounded-md px-3 py-2.5 text-xs'>
             <Lock className='mt-0.5 h-3.5 w-3.5 shrink-0' />
             <span>{t('pages.spaces.credentialsEncrypted')}</span>
           </div>

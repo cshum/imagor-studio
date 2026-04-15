@@ -165,7 +165,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
     <Button
       variant='ghost'
       size='icon'
-      className='-my-0.5 h-11 w-11 shrink-0 lg:hidden [&_svg]:size-5'
+      className='-my-0.5 -ml-2 h-11 w-11 shrink-0 lg:hidden [&_svg]:size-5'
       onClick={() => setMobileOpen(true)}
       aria-label={t('layouts.account.title')}
     >

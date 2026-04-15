@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next'
 import { Link, type LinkComponentProps } from '@tanstack/react-router'
-import { LogOut, User } from 'lucide-react'
+import { Check, Languages, LogOut, User } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { Button } from '@/components/ui/button'
@@ -8,9 +9,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { availableLanguages } from '@/i18n'
+import { setLocale } from '@/stores/locale-store'
 
 // ── Avatar helpers ───────────────────────────────────────────────────────────
 
@@ -63,19 +70,20 @@ export function AppHeader({
   signOutText = 'Sign Out',
   moreText = 'More',
 }: AppShellHeaderProps) {
+  const { t, i18n } = useTranslation()
   const initials = getInitials(profileLabel)
   const bgColor = avatarBg(profileLabel)
 
   return (
     <header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 fixed top-0 left-0 z-50 w-full border-b backdrop-blur'>
-      <div className='mx-auto px-1 py-1 lg:px-4'>
+      <div className='mx-auto px-4 py-1'>
         <div className='flex min-h-10 items-center justify-between gap-3'>
           <div className='min-w-0 flex-1'>
             <div className='hidden sm:block'>{leftSlot}</div>
             {mobileTitle ? <div className='sm:hidden'>{mobileTitle}</div> : null}
           </div>
 
-          <div className='flex shrink-0 items-center space-x-1'>
+          <div className='-mr-2 flex shrink-0 items-center space-x-1'>
             <ModeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -110,6 +118,29 @@ export function AppHeader({
                     {profileText}
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Languages className='text-muted-foreground mr-3 h-4 w-4' />
+                    {t('common.language.title')}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {availableLanguages.map((lang) => (
+                        <DropdownMenuItem
+                          key={lang.code}
+                          className='hover:cursor-pointer'
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            setLocale(lang.code)
+                          }}
+                        >
+                          {lang.name}
+                          {i18n.language === lang.code && <Check className='ml-auto h-4 w-4' />}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onLogout} className='cursor-pointer'>
                   <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
