@@ -15,7 +15,6 @@ import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
-import { SpaceSettingsLayout } from '@/layouts/space-settings-layout'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
@@ -359,7 +358,7 @@ const createSpaceRoute = createRoute({
   component: CreateSpacePage,
 })
 
-// /spaces/$spaceKey/settings  →  dedicated settings page for a space (no sidebar)
+// /spaces/$spaceKey/settings  →  dedicated settings page for a space (with its own sidebar)
 const spaceSettingsRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   path: '/spaces/$spaceKey/settings',
@@ -368,11 +367,7 @@ const spaceSettingsRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceSettingsRoute.useLoaderData()
-    return (
-      <SpaceSettingsLayout>
-        <SpaceSettingsPage loaderData={loaderData.space} />
-      </SpaceSettingsLayout>
-    )
+    return <SpaceSettingsPage loaderData={loaderData.space} />
   },
 })
 

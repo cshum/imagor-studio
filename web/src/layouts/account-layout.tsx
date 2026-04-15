@@ -23,7 +23,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
   SidebarTrigger,
   SidebarWrapper,
 } from '@/components/ui/sidebar'
@@ -131,7 +130,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
   return (
     <SidebarWrapper>
       {/* ── Settings sidebar ─────────────────────────────────────────── */}
-      <Sidebar collapsible='icon' className='top-14'>
+      <Sidebar collapsible='offcanvas' className='top-14'>
         <SidebarContent>
           {visibleGroups.map((group, gi) => (
             <SidebarGroup key={gi}>
@@ -158,7 +157,6 @@ export function AccountLayout({ children }: PropsWithChildren) {
             </SidebarGroup>
           ))}
         </SidebarContent>
-        <SidebarRail />
       </Sidebar>
 
       {/* ── Main area ────────────────────────────────────────────────── */}
@@ -204,9 +202,9 @@ export function AccountLayout({ children }: PropsWithChildren) {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
+                     <DropdownMenuItem asChild>
                       <Link to='/'>
-                        <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
+                        <LayoutGrid className='text-muted-foreground mr-3 h-4 w-4' />
                         {t('layouts.account.backToApp')}
                       </Link>
                     </DropdownMenuItem>

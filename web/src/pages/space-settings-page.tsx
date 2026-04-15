@@ -5,9 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import {
   AlertTriangle,
-  ArrowLeft,
+  ChevronRight,
   Database,
   FolderOpen,
+  LogOut,
+  MoreVertical,
   Settings,
   ShieldCheck,
 } from 'lucide-react'
@@ -15,9 +17,18 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { deleteSpace, updateSpace } from '@/api/org-api'
+import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Form,
   FormControl,
@@ -42,6 +53,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  SidebarWrapper,
+} from '@/components/ui/sidebar'
+import { useBrand } from '@/hooks/use-brand'
+import { useAuth } from '@/stores/auth-store'
 import type { GetSpaceQuery } from '@/generated/graphql'
 
 export type SpaceSettingsData = NonNullable<GetSpaceQuery['space']>
@@ -108,6 +135,8 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
   const { t } = useTranslation()
   const router = useRouter()
   const navigate = useNavigate()
+  const { title: appTitle } = useBrand()
+  const { authState, logout } = useAuth()
   const [activeSection, setActiveSection] = useState<SectionId>('general')
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -115,6 +144,16 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
   const isByob = space.storageType === 's3'
   const color = avatarColor(space.key)
   const initials = spaceInitials(space.name)
+
+  const getUserDisplayName = () =>
+    authState.profile?.displayName ||
+    authState.profile?.username ||
+    t('common.status.user')
+
+  const handleLogout = async () => {
+    await logout()
+    navigate({ to: '/login' })
+  }
 
   // -- General form ----------------------------------------------------------
   const generalForm = useForm<GeneralFormData>({
@@ -295,401 +334,484 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
   ]
 
   return (
-    <div className='space-y-6'>
-      {/* Top bar — back + open gallery */}
-      <div className='flex items-center justify-between'>
-        <Link to='/account/spaces'>
-          <Button variant='ghost' size='sm'>
-            <ArrowLeft className='mr-1.5 h-4 w-4' />
-            {t('pages.spaceSettings.backToSpaces')}
-          </Button>
-        </Link>
-        <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
-          <Button variant='ghost' size='sm'>
-            <FolderOpen className='mr-1.5 h-4 w-4' />
-            {t('pages.spaceSettings.openGallery')}
-          </Button>
-        </Link>
-      </div>
+    <SidebarWrapper>
+      {/* ── Space settings sidebar ────────────────────────────────────── */}
+      <Sidebar collapsible='offcanvas' className='top-14'>
+        {/* Space identity */}
+        <SidebarHeader className='border-b px-4 py-3'>
+          <div className='flex items-center gap-3'>
+            <div
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${color}`}
+            >
+              {initials}
+            </div>
+            <div className='min-w-0'>
+              <p className='truncate text-sm font-semibold leading-tight'>{space.name}</p>
+              <p className='text-muted-foreground truncate font-mono text-xs'>{space.key}</p>
+            </div>
+          </div>
+        </SidebarHeader>
 
-      {/* Space identity */}
-      <div className='flex items-center gap-4'>
-        <div
-          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-bold text-white ${color}`}
-        >
-          {initials}
-        </div>
-        <div>
-          <h1 className='text-2xl font-semibold leading-tight'>{space.name}</h1>
-          <p className='text-muted-foreground font-mono text-sm'>{space.key}</p>
-        </div>
-      </div>
+        {/* Nav */}
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navItems.map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      isActive={activeSection === item.id}
+                      onClick={() => setActiveSection(item.id)}
+                      tooltip={item.label}
+                      className={
+                        item.danger
+                          ? 'text-destructive/80 hover:bg-destructive/10 hover:text-destructive data-[active=true]:bg-destructive/10 data-[active=true]:text-destructive data-[active=true]:hover:bg-destructive/10 data-[active=true]:hover:text-destructive'
+                          : 'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
+                      }
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-      {/* Sidebar + content */}
-      <div className='flex flex-col gap-6 lg:flex-row lg:gap-8'>
-        {/* Nav — horizontal pill row on mobile, vertical sidebar on lg+ */}
-        <nav className='flex flex-row flex-wrap gap-1 lg:w-44 lg:flex-col lg:shrink-0'>
-          {navItems.map((item) => {
-            const isActive = activeSection === item.id
-            return (
-              <button
-                key={item.id}
-                type='button'
-                onClick={() => setActiveSection(item.id)}
-                className={[
-                  'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
-                  'text-left font-medium',
-                  isActive
-                    ? item.danger
-                      ? 'bg-destructive/10 text-destructive'
-                      : 'bg-muted text-foreground'
-                    : item.danger
-                      ? 'text-destructive/70 hover:bg-destructive/10 hover:text-destructive'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                ].join(' ')}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            )
-          })}
-        </nav>
+        {/* Footer: open gallery link */}
+        <SidebarFooter className='border-t p-3'>
+          <SidebarMenuButton asChild tooltip={t('pages.spaceSettings.openGallery')}>
+            <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
+              <FolderOpen className='h-4 w-4' />
+              <span>{t('pages.spaceSettings.openGallery')}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarFooter>
+      </Sidebar>
 
-        {/* Section content */}
-        <div className='min-w-0 flex-1'>
-          {/* ── General ───────────────────────────────────────────────── */}
-          {activeSection === 'general' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('pages.spaceSettings.sections.general')}</CardTitle>
-                <CardDescription>{t('pages.spaceSettings.general.description')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...generalForm}>
-                  <form
-                    onSubmit={generalForm.handleSubmit(handleSaveGeneral)}
-                    className='space-y-4'
-                  >
-                    <FormField
-                      control={generalForm.control}
-                      name='name'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.spaceSettings.general.name')}</FormLabel>
-                          <FormControl>
-                            <Input {...field} disabled={isSavingGeneral} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={generalForm.control}
-                      name='customDomain'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t('pages.spaceSettings.general.customDomain')}</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder='images.example.com'
-                              {...field}
-                              disabled={isSavingGeneral}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            {t('pages.spaceSettings.general.customDomainDescription')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className='flex justify-end'>
-                      <ButtonWithLoading type='submit' isLoading={isSavingGeneral}>
-                        {t('common.buttons.save')}
-                      </ButtonWithLoading>
-                    </div>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          )}
+      {/* ── Main area ────────────────────────────────────────────────── */}
+      <SidebarInset>
+        {/* Fixed full-width header */}
+        <header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 fixed top-0 left-0 z-50 w-full border-b backdrop-blur'>
+          <div className='mx-auto px-4 py-2'>
+            <div className='flex h-10 items-center justify-between'>
+              {/* Left: trigger + breadcrumb */}
+              <div className='flex min-w-0 items-center space-x-1 sm:space-x-2'>
+                <SidebarTrigger className='-ml-2 h-10 w-10 shrink-0' />
+                <Link
+                  to='/'
+                  className='hidden text-base font-semibold transition-opacity hover:opacity-80 sm:block'
+                >
+                  {appTitle}
+                </Link>
+                <span className='text-muted-foreground mx-1 hidden sm:block'>|</span>
+                <Link
+                  to='/account/spaces'
+                  className='text-muted-foreground hover:text-foreground hidden text-sm transition-colors sm:block'
+                >
+                  {t('layouts.account.title')}
+                </Link>
+                <ChevronRight className='text-muted-foreground hidden h-3.5 w-3.5 shrink-0 sm:block' />
+                <span className='hidden max-w-[180px] truncate text-sm font-medium sm:block'>
+                  {space.name}
+                </span>
+              </div>
 
-          {/* ── Storage ───────────────────────────────────────────────── */}
-          {activeSection === 'storage' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('pages.spaceSettings.sections.storage')}</CardTitle>
-                <CardDescription>{t('pages.spaceSettings.storage.description')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!isByob ? (
-                  <div className='bg-muted/50 flex items-start gap-3 rounded-lg border p-4'>
-                    <Database className='text-muted-foreground mt-0.5 h-5 w-5 shrink-0' />
-                    <div className='space-y-1'>
-                      <p className='text-sm font-medium'>
-                        {t('pages.spaceSettings.storage.managedTitle')}
-                      </p>
-                      <p className='text-muted-foreground text-sm'>
-                        {t('pages.spaceSettings.storage.managedDescription')}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className='bg-muted/30 mb-4 rounded-lg border p-3'>
-                      <p className='text-sm'>
-                        <span className='text-muted-foreground font-medium'>
-                          {t('pages.spaceSettings.storage.bucket')}:
-                        </span>{' '}
-                        <span className='font-mono text-sm'>{space.bucket}</span>
-                        {space.region && (
-                          <>
-                            <span className='text-muted-foreground mx-2'>·</span>
-                            <span className='text-muted-foreground font-medium'>
-                              {t('pages.spaceSettings.storage.region')}:
-                            </span>{' '}
-                            <span className='font-mono text-sm'>{space.region}</span>
-                          </>
+              {/* Right: mode toggle + user menu */}
+              <div className='flex shrink-0 items-center space-x-1'>
+                <ModeToggle />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='ghost' size='icon' className='h-10 w-10'>
+                      <MoreVertical className='h-4 w-4' />
+                      <span className='sr-only'>{t('common.buttons.more')}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='w-56'>
+                    <DropdownMenuLabel className='font-normal'>
+                      <div className='flex flex-col space-y-1'>
+                        <p className='text-sm font-medium leading-none'>{getUserDisplayName()}</p>
+                        {authState.profile?.role && (
+                          <p className='text-muted-foreground text-xs leading-none capitalize'>
+                            {authState.profile.role}
+                          </p>
                         )}
-                      </p>
-                      <p className='text-muted-foreground mt-1 text-xs'>
-                        {t('pages.spaceSettings.storage.bucketLocked')}
-                      </p>
-                    </div>
-                    <Form {...storageForm}>
-                      <form
-                        onSubmit={storageForm.handleSubmit(handleSaveStorage)}
-                        className='space-y-4'
-                      >
-                        <FormField
-                          control={storageForm.control}
-                          name='endpoint'
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder='https://s3.amazonaws.com'
-                                  {...field}
-                                  disabled={isSavingStorage}
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                {t('pages.spaceSettings.storage.endpointDescription')}
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={storageForm.control}
-                          name='prefix'
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder='media/'
-                                  {...field}
-                                  disabled={isSavingStorage}
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                {t('pages.spaceSettings.storage.prefixDescription')}
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <div className='grid grid-cols-2 gap-4'>
-                          <FormField
-                            control={storageForm.control}
-                            name='accessKeyId'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t('pages.spaceSettings.storage.accessKeyId')}
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder={t('pages.spaceSettings.placeholders.unchanged')}
-                                    {...field}
-                                    disabled={isSavingStorage}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={storageForm.control}
-                            name='secretKey'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t('pages.spaceSettings.storage.secretKey')}</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type='password'
-                                    placeholder={t('pages.spaceSettings.placeholders.unchanged')}
-                                    {...field}
-                                    disabled={isSavingStorage}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <div className='flex justify-end'>
-                          <ButtonWithLoading type='submit' isLoading={isSavingStorage}>
-                            {t('common.buttons.save')}
-                          </ButtonWithLoading>
-                        </div>
-                      </form>
-                    </Form>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className='cursor-pointer'>
+                      <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
+                      {t('common.navigation.signOut')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </div>
+        </header>
 
-          {/* ── Image Processing ──────────────────────────────────────── */}
-          {activeSection === 'imageProcessing' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('pages.spaceSettings.sections.imageProcessing')}</CardTitle>
-                <CardDescription>
-                  {t('pages.spaceSettings.imageProcessing.description')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...imageProcessingForm}>
-                  <form
-                    onSubmit={imageProcessingForm.handleSubmit(handleSaveImageProcessing)}
-                    className='space-y-4'
-                  >
-                    <FormField
-                      control={imageProcessingForm.control}
-                      name='imagorSecret'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {t('pages.spaceSettings.imageProcessing.imagorSecret')}
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type='password'
-                              placeholder={t('pages.spaceSettings.placeholders.unchanged')}
-                              {...field}
-                              disabled={isSavingImageProcessing}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            {t('pages.spaceSettings.imageProcessing.imagorSecretDescription')}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className='grid grid-cols-2 gap-4'>
+        {/* Content area */}
+        <main className='relative min-h-screen pt-14'>
+          <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>
+            {/* ── General ───────────────────────────────────────────────── */}
+            {activeSection === 'general' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('pages.spaceSettings.sections.general')}</CardTitle>
+                  <CardDescription>
+                    {t('pages.spaceSettings.general.description')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...generalForm}>
+                    <form
+                      onSubmit={generalForm.handleSubmit(handleSaveGeneral)}
+                      className='space-y-4'
+                    >
                       <FormField
-                        control={imageProcessingForm.control}
-                        name='signerAlgorithm'
+                        control={generalForm.control}
+                        name='name'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>
-                              {t('pages.spaceSettings.imageProcessing.signerAlgorithm')}
-                            </FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value ?? 'sha256'}
-                              disabled={isSavingImageProcessing}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value='sha1'>SHA-1</SelectItem>
-                                <SelectItem value='sha256'>SHA-256</SelectItem>
-                                <SelectItem value='sha512'>SHA-512</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>{t('pages.spaceSettings.general.name')}</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled={isSavingGeneral} />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       <FormField
-                        control={imageProcessingForm.control}
-                        name='signerTruncate'
+                        control={generalForm.control}
+                        name='customDomain'
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
-                              {t('pages.spaceSettings.imageProcessing.signerTruncate')}
+                              {t('pages.spaceSettings.general.customDomain')}
                             </FormLabel>
                             <FormControl>
                               <Input
-                                type='number'
-                                min={0}
-                                placeholder='0'
-                                value={field.value ?? 0}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber,
-                                  )
-                                }
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                                disabled={isSavingImageProcessing}
+                                placeholder='images.example.com'
+                                {...field}
+                                disabled={isSavingGeneral}
                               />
                             </FormControl>
                             <FormDescription>
-                              {t('pages.spaceSettings.imageProcessing.signerTruncateDescription')}
+                              {t('pages.spaceSettings.general.customDomainDescription')}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                    </div>
-                    <div className='flex justify-end'>
-                      <ButtonWithLoading type='submit' isLoading={isSavingImageProcessing}>
-                        {t('common.buttons.save')}
-                      </ButtonWithLoading>
-                    </div>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          )}
+                      <div className='flex justify-end'>
+                        <ButtonWithLoading type='submit' isLoading={isSavingGeneral}>
+                          {t('common.buttons.save')}
+                        </ButtonWithLoading>
+                      </div>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            )}
 
-          {/* ── Danger Zone ───────────────────────────────────────────── */}
-          {activeSection === 'dangerZone' && (
-            <Card className='border-destructive/50'>
-              <CardHeader>
-                <CardTitle className='text-destructive flex items-center gap-2'>
-                  <AlertTriangle className='h-5 w-5' />
-                  {t('pages.spaceSettings.sections.dangerZone')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='flex items-center justify-between rounded-lg border p-4'>
-                  <div>
-                    <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
-                    <p className='text-muted-foreground text-sm'>
-                      {t('pages.spaceSettings.danger.deleteDescription')}
-                    </p>
+            {/* ── Storage ───────────────────────────────────────────────── */}
+            {activeSection === 'storage' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('pages.spaceSettings.sections.storage')}</CardTitle>
+                  <CardDescription>
+                    {t('pages.spaceSettings.storage.description')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!isByob ? (
+                    <div className='bg-muted/50 flex items-start gap-3 rounded-lg border p-4'>
+                      <Database className='text-muted-foreground mt-0.5 h-5 w-5 shrink-0' />
+                      <div className='space-y-1'>
+                        <p className='text-sm font-medium'>
+                          {t('pages.spaceSettings.storage.managedTitle')}
+                        </p>
+                        <p className='text-muted-foreground text-sm'>
+                          {t('pages.spaceSettings.storage.managedDescription')}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className='bg-muted/30 mb-4 rounded-lg border p-3'>
+                        <p className='text-sm'>
+                          <span className='text-muted-foreground font-medium'>
+                            {t('pages.spaceSettings.storage.bucket')}:
+                          </span>{' '}
+                          <span className='font-mono text-sm'>{space.bucket}</span>
+                          {space.region && (
+                            <>
+                              <span className='text-muted-foreground mx-2'>·</span>
+                              <span className='text-muted-foreground font-medium'>
+                                {t('pages.spaceSettings.storage.region')}:
+                              </span>{' '}
+                              <span className='font-mono text-sm'>{space.region}</span>
+                            </>
+                          )}
+                        </p>
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          {t('pages.spaceSettings.storage.bucketLocked')}
+                        </p>
+                      </div>
+                      <Form {...storageForm}>
+                        <form
+                          onSubmit={storageForm.handleSubmit(handleSaveStorage)}
+                          className='space-y-4'
+                        >
+                          <FormField
+                            control={storageForm.control}
+                            name='endpoint'
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  {t('pages.spaceSettings.storage.endpoint')}
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder='https://s3.amazonaws.com'
+                                    {...field}
+                                    disabled={isSavingStorage}
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  {t('pages.spaceSettings.storage.endpointDescription')}
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={storageForm.control}
+                            name='prefix'
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  {t('pages.spaceSettings.storage.prefix')}
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder='media/'
+                                    {...field}
+                                    disabled={isSavingStorage}
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  {t('pages.spaceSettings.storage.prefixDescription')}
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className='grid grid-cols-2 gap-4'>
+                            <FormField
+                              control={storageForm.control}
+                              name='accessKeyId'
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    {t('pages.spaceSettings.storage.accessKeyId')}
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder={t(
+                                        'pages.spaceSettings.placeholders.unchanged',
+                                      )}
+                                      {...field}
+                                      disabled={isSavingStorage}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={storageForm.control}
+                              name='secretKey'
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    {t('pages.spaceSettings.storage.secretKey')}
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type='password'
+                                      placeholder={t(
+                                        'pages.spaceSettings.placeholders.unchanged',
+                                      )}
+                                      {...field}
+                                      disabled={isSavingStorage}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className='flex justify-end'>
+                            <ButtonWithLoading type='submit' isLoading={isSavingStorage}>
+                              {t('common.buttons.save')}
+                            </ButtonWithLoading>
+                          </div>
+                        </form>
+                      </Form>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ── Image Processing ──────────────────────────────────────── */}
+            {activeSection === 'imageProcessing' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('pages.spaceSettings.sections.imageProcessing')}</CardTitle>
+                  <CardDescription>
+                    {t('pages.spaceSettings.imageProcessing.description')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...imageProcessingForm}>
+                    <form
+                      onSubmit={imageProcessingForm.handleSubmit(handleSaveImageProcessing)}
+                      className='space-y-4'
+                    >
+                      <FormField
+                        control={imageProcessingForm.control}
+                        name='imagorSecret'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {t('pages.spaceSettings.imageProcessing.imagorSecret')}
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type='password'
+                                placeholder={t('pages.spaceSettings.placeholders.unchanged')}
+                                {...field}
+                                disabled={isSavingImageProcessing}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              {t(
+                                'pages.spaceSettings.imageProcessing.imagorSecretDescription',
+                              )}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className='grid grid-cols-2 gap-4'>
+                        <FormField
+                          control={imageProcessingForm.control}
+                          name='signerAlgorithm'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('pages.spaceSettings.imageProcessing.signerAlgorithm')}
+                              </FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value ?? 'sha256'}
+                                disabled={isSavingImageProcessing}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value='sha1'>SHA-1</SelectItem>
+                                  <SelectItem value='sha256'>SHA-256</SelectItem>
+                                  <SelectItem value='sha512'>SHA-512</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={imageProcessingForm.control}
+                          name='signerTruncate'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {t('pages.spaceSettings.imageProcessing.signerTruncate')}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type='number'
+                                  min={0}
+                                  placeholder='0'
+                                  value={field.value ?? 0}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      isNaN(e.target.valueAsNumber)
+                                        ? 0
+                                        : e.target.valueAsNumber,
+                                    )
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  disabled={isSavingImageProcessing}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                {t(
+                                  'pages.spaceSettings.imageProcessing.signerTruncateDescription',
+                                )}
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className='flex justify-end'>
+                        <ButtonWithLoading type='submit' isLoading={isSavingImageProcessing}>
+                          {t('common.buttons.save')}
+                        </ButtonWithLoading>
+                      </div>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ── Danger Zone ───────────────────────────────────────────── */}
+            {activeSection === 'dangerZone' && (
+              <Card className='border-destructive/50'>
+                <CardHeader>
+                  <CardTitle className='text-destructive flex items-center gap-2'>
+                    <AlertTriangle className='h-5 w-5' />
+                    {t('pages.spaceSettings.sections.dangerZone')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className='flex items-center justify-between rounded-lg border p-4'>
+                    <div>
+                      <p className='font-medium'>
+                        {t('pages.spaceSettings.danger.deleteTitle')}
+                      </p>
+                      <p className='text-muted-foreground text-sm'>
+                        {t('pages.spaceSettings.danger.deleteDescription')}
+                      </p>
+                    </div>
+                    <Button variant='destructive' onClick={() => setIsDeleteDialogOpen(true)}>
+                      {t('pages.spaceSettings.danger.deleteButton')}
+                    </Button>
                   </div>
-                  <Button variant='destructive' onClick={() => setIsDeleteDialogOpen(true)}>
-                    {t('pages.spaceSettings.danger.deleteButton')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </main>
+      </SidebarInset>
 
       {/* Delete confirmation dialog */}
       <ResponsiveDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -719,6 +841,6 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
           </ButtonWithLoading>
         </ResponsiveDialogFooter>
       </ResponsiveDialog>
-    </div>
+    </SidebarWrapper>
   )
 }
