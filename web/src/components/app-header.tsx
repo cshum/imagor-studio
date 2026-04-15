@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link, type LinkComponentProps } from '@tanstack/react-router'
-import { Check, Languages, LogOut, User } from 'lucide-react'
+import { Check, Languages, LogOut, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { Button } from '@/components/ui/button'
@@ -112,12 +112,6 @@ export function AppHeader({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={profileLink}>
-                    <User className='text-muted-foreground mr-3 h-4 w-4' />
-                    {profileText}
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Languages className='text-muted-foreground mr-3 h-4 w-4' />
@@ -141,6 +135,13 @@ export function AppHeader({
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to={profileLink}>
+                    <Settings className='text-muted-foreground mr-3 h-4 w-4' />
+                    {profileText}
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onLogout} className='cursor-pointer'>
                   <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
