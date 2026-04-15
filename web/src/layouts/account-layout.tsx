@@ -73,14 +73,6 @@ const NAV_GROUPS = (
         label: t('layouts.account.tabs.users'),
         adminOnly: true,
       },
-      {
-        id: 'spaces',
-        path: '/account/spaces',
-        icon: <LayoutGrid className='h-4 w-4' />,
-        label: t('layouts.account.tabs.spaces'),
-        adminOnly: true,
-        multiTenantOnly: true,
-      },
     ],
   },
 ]

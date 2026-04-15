@@ -71,6 +71,7 @@ import {
 } from '@/components/ui/sidebar'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import type { GetSpaceQuery } from '@/generated/graphql'
+import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 
@@ -537,6 +538,11 @@ export function SpaceSettingsPage({ loaderData: space }: SpaceSettingsPageProps)
                 </CardContent>
               </Card>
             )}
+            {activeSection === 'general' && (
+              <div className='mt-4'>
+                <BrandingSettingsSection spaceKey={space.key} initialValues={galleryRegistry} />
+              </div>
+            )}
 
             {/* ── Storage ───────────────────────────────────────────────── */}
             {activeSection === 'storage' && (
@@ -867,6 +873,15 @@ function GallerySettingsSection({ spaceKey, initialValues }: GallerySettingsSect
 
   const GALLERY_SETTINGS: SystemSetting[] = [
     {
+      key: 'config.app_default_language',
+      type: 'select',
+      label: t('pages.admin.systemSettings.fields.defaultLanguage.label'),
+      description: t('pages.admin.systemSettings.fields.defaultLanguage.description'),
+      defaultValue: 'en',
+      options: getLanguageCodes(),
+      optionLabels: getLanguageLabels(),
+    },
+    {
       key: 'config.app_home_title',
       type: 'text',
       label: t('pages.admin.systemSettings.fields.homeTitle.label'),
@@ -963,6 +978,48 @@ function GallerySettingsSection({ spaceKey, initialValues }: GallerySettingsSect
       title={t('pages.spaceSettings.sections.gallery')}
       description={t('pages.spaceSettings.gallery.description')}
       settings={GALLERY_SETTINGS}
+      initialValues={initialValues}
+      saveCallback={handleSave}
+    />
+  )
+}
+
+// ── Branding settings sub-component ──────────────────────────────────────────
+
+interface BrandingSettingsSectionProps {
+  spaceKey: string
+  initialValues: Record<string, string>
+}
+
+function BrandingSettingsSection({ spaceKey, initialValues }: BrandingSettingsSectionProps) {
+  const { t } = useTranslation()
+
+  const BRANDING_SETTINGS: SystemSetting[] = [
+    {
+      key: 'config.app_title',
+      type: 'text',
+      label: t('pages.admin.systemSettings.fields.appTitle.label'),
+      description: t('pages.admin.systemSettings.fields.appTitle.description'),
+      defaultValue: 'Imagor Studio',
+    },
+    {
+      key: 'config.app_url',
+      type: 'text',
+      label: t('pages.admin.systemSettings.fields.appUrl.label'),
+      description: t('pages.admin.systemSettings.fields.appUrl.description'),
+      defaultValue: 'https://imagor.net',
+    },
+  ]
+
+  const handleSave = async (changedValues: Record<string, string>) => {
+    await setSpaceRegistryObject(spaceKey, changedValues)
+  }
+
+  return (
+    <SystemSettingsForm
+      title={t('pages.spaceSettings.branding.title')}
+      description={t('pages.spaceSettings.branding.description')}
+      settings={BRANDING_SETTINGS}
       initialValues={initialValues}
       saveCallback={handleSave}
     />

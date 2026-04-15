@@ -17,8 +17,12 @@ export function AdminPage({ loaderData }: AdminPageProps) {
   const { authState } = useAuth()
   const isMultiTenant = authState.multiTenant
 
-  // Gallery-level settings that move to each space in multi-tenant mode
+  // Gallery-level settings that move to each space in multi-tenant mode.
+  // Also includes branding + language settings since those become per-space in SaaS.
   const GALLERY_SETTING_KEYS = new Set([
+    'config.app_title',
+    'config.app_url',
+    'config.app_default_language',
     'config.app_home_title',
     'config.allow_guest_mode',
     'config.app_default_sort_by',

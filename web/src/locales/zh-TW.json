@@ -637,6 +637,10 @@
       "gallery": {
         "description": "自訂此空間的圖庫顯示和行為。空間層級的設定會覆蓋平台預設值。"
       },
+      "branding": {
+        "title": "品牌設定",
+        "description": "此空間的自訂品牌設定，將覆蓋平台預設值。"
+      },
       "storage": {
         "managedTitle": "平台託管儲存",
         "managedDescription": "檔案儲存在 Imagor Studio 的託管儲存中，儲存類型在空間建立後無法更改。",

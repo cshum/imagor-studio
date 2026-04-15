@@ -15,6 +15,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
+import { SpacesLayout } from '@/layouts/spaces-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
@@ -431,8 +432,15 @@ const accountUsersRoute = createRoute({
   },
 })
 
+// /account/spaces  →  standalone spaces list (no AccountLayout sidebar)
+const spacesLayoutRoute = createRoute({
+  getParentRoute: () => settingsLayoutRoute,
+  id: 'spaces-layout',
+  component: () => <SpacesLayout />,
+})
+
 const accountSpacesRoute = createRoute({
-  getParentRoute: () => accountLayoutRoute,
+  getParentRoute: () => spacesLayoutRoute,
   path: '/account/spaces',
   beforeLoad: requireAdminAccountAuth,
   loader: spacesLoader,
@@ -476,12 +484,12 @@ const routeTree = isEmbeddedMode
       spaceCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
         spaceSettingsRoute,
+        spacesLayoutRoute.addChildren([accountSpacesRoute]),
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
           accountAdminRoute,
           accountUsersRoute,
-          accountSpacesRoute,
         ]),
       ]),
       baseLayoutRoute.addChildren([

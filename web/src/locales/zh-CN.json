@@ -636,6 +636,10 @@
       "gallery": {
         "description": "自定义此空间的图库显示和行为。空间级别的设置会覆盖平台默认值。"
       },
+      "branding": {
+        "title": "品牌设置",
+        "description": "此空间的自定义品牌设置，将覆盖平台默认值。"
+      },
       "storage": {
         "managedTitle": "平台托管存储",
         "managedDescription": "文件存储在 Imagor Studio 的托管存储中，存储类型在空间创建后无法更改。",

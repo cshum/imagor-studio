@@ -633,6 +633,10 @@
       "gallery": {
         "description": "Personalizza la visualizzazione e il comportamento della galleria per questo spazio. Le impostazioni a livello di spazio sostituiscono i valori predefiniti della piattaforma."
       },
+      "branding": {
+        "title": "Branding",
+        "description": "Branding personalizzato per questo spazio. Sostituisce i valori predefiniti della piattaforma."
+      },
       "storage": {
         "managedTitle": "Archiviazione gestita dalla piattaforma",
         "managedDescription": "I file sono archiviati nello storage gestito di Imagor Studio. Il tipo di storage non può essere modificato dopo la creazione dello spazio.",

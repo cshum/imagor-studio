@@ -693,6 +693,10 @@
       "gallery": {
         "description": "Customize gallery display and behaviour for this space. Space-level settings override the platform defaults."
       },
+      "branding": {
+        "title": "Branding",
+        "description": "Custom branding for this space. Overrides the platform defaults."
+      },
       "general": {
         "description": "Basic information about this space.",
         "name": "Display Name",
