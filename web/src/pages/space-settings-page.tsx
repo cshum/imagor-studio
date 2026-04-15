@@ -400,12 +400,6 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                   <BreadcrumbList>
                     <BreadcrumbItem>
                       <BreadcrumbLink asChild>
-                        <Link to='/account/spaces'>{t('layouts.account.tabs.spaces')}</Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
                         <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
                           {space.name}
                         </Link>
@@ -418,7 +412,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                           to='/spaces/$spaceKey/settings/$section'
                           params={{ spaceKey: space.key, section: 'general' }}
                         >
-                          Settings
+                          {t('navigation.breadcrumbs.spaceSettings')}
                         </Link>
                       </BreadcrumbLink>
                     </BreadcrumbItem>
@@ -1089,7 +1083,10 @@ function MembersSection() {
               <p className='text-muted-foreground text-xs font-medium uppercase md:hidden'>
                 {t('pages.spaceSettings.members.tableHeaders.role')}
               </p>
-              <Select value={member.role} onValueChange={(role) => handleRoleChange(member.userId, role)}>
+              <Select
+                value={member.role}
+                onValueChange={(role) => handleRoleChange(member.userId, role)}
+              >
                 <SelectTrigger className='h-9'>
                   <SelectValue />
                 </SelectTrigger>

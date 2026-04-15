@@ -119,7 +119,8 @@
       "users": "Utenti",
       "admin": "Sistema",
       "adminSetup": "Configurazione Amministratore",
-      "spaces": "Spazi"
+      "spaces": "Spazi",
+      "spaceSettings": "Impostazioni"
     }
   },
   "pages": {
@@ -325,7 +326,8 @@
       "updateProfileFailed": "Impossibile aggiornare il profilo",
       "updatePasswordFailed": "Impossibile aggiornare la password",
       "usernameAlreadyInUse": "Questo nome utente è già in uso",
-      "currentPasswordIncorrect": "La password attuale non è corretta"
+      "currentPasswordIncorrect": "La password attuale non è corretta",
+      "titleDescription": "Gestisci le informazioni del tuo account personale e le impostazioni di sicurezza."
     },
     "admin": {
       "title": "Amministrazione",
@@ -673,7 +675,14 @@
         "createSpaceFailed": "Impossibile creare lo spazio",
         "updateSpaceFailed": "Impossibile aggiornare lo spazio",
         "deleteSpaceFailed": "Impossibile eliminare lo spazio"
-      }
+      },
+      "stats": {
+        "totalSpaces": "Spazi totali",
+        "managedStorage": "Archiviazione gestita",
+        "externalStorage": "Archiviazione esterna"
+      },
+      "configure": "Configura",
+      "startDescription": "Inizia con uno spazio gestito per la configurazione più rapida, poi personalizza l'archiviazione, la consegna e il branding man mano che il tuo workspace cresce."
     },
     "spaceSettings": {
       "backToSpaces": "Torna agli Spazi",

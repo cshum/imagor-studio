@@ -1,5 +1,5 @@
 import { Link, type LinkComponentProps } from '@tanstack/react-router'
-import { LogOut, MoreVertical, User } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,34 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+
+// ── Avatar helpers ───────────────────────────────────────────────────────────
+
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean)
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+  if (!name) return '?'
+  return name.slice(0, 2).toUpperCase()
+}
+
+const AVATAR_BG = [
+  'bg-blue-500',
+  'bg-violet-500',
+  'bg-emerald-500',
+  'bg-amber-500',
+  'bg-rose-500',
+  'bg-cyan-500',
+  'bg-indigo-500',
+  'bg-fuchsia-500',
+] as const
+
+function avatarBg(name: string): string {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
+  return AVATAR_BG[h % AVATAR_BG.length]
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 interface AppShellHeaderProps {
   leftSlot?: React.ReactNode
@@ -35,6 +63,9 @@ export function AppShellHeader({
   signOutText = 'Sign Out',
   moreText = 'More',
 }: AppShellHeaderProps) {
+  const initials = getInitials(profileLabel)
+  const bgColor = avatarBg(profileLabel)
+
   return (
     <header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 fixed top-0 left-0 z-50 w-full border-b backdrop-blur'>
       <div className='mx-auto px-4 py-2'>
@@ -48,9 +79,17 @@ export function AppShellHeader({
             <ModeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='icon' className='h-10 w-10'>
-                  <MoreVertical className='h-4 w-4' />
-                  <span className='sr-only'>{moreText}</span>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='h-9 w-9 rounded-full p-0 focus-visible:ring-2'
+                  aria-label={moreText}
+                >
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white ${bgColor}`}
+                  >
+                    {initials}
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='w-56'>

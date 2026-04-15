@@ -123,7 +123,8 @@
       "users": "Users",
       "admin": "System",
       "adminSetup": "Admin Setup",
-      "spaces": "Spaces"
+      "spaces": "Spaces",
+      "spaceSettings": "Settings"
     }
   },
   "pages": {
@@ -329,7 +330,8 @@
       "updateProfileFailed": "Failed to update profile",
       "updatePasswordFailed": "Failed to update password",
       "usernameAlreadyInUse": "This username is already in use",
-      "currentPasswordIncorrect": "Current password is incorrect"
+      "currentPasswordIncorrect": "Current password is incorrect",
+      "titleDescription": "Manage your personal account information and security settings."
     },
     "admin": {
       "title": "Admin",
@@ -678,7 +680,14 @@
         "createSpaceFailed": "Failed to create space",
         "updateSpaceFailed": "Failed to update space",
         "deleteSpaceFailed": "Failed to delete space"
-      }
+      },
+      "stats": {
+        "totalSpaces": "Total Spaces",
+        "managedStorage": "Managed Storage",
+        "externalStorage": "External Storage"
+      },
+      "configure": "Configure",
+      "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows."
     },
     "spaceSettings": {
       "backToSpaces": "Back to Spaces",

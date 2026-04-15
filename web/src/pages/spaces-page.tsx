@@ -103,15 +103,21 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
       {hasSpaces && (
         <div className='grid gap-3 sm:grid-cols-3'>
           <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>Total spaces</p>
+            <p className='text-muted-foreground text-xs font-medium uppercase'>
+              {t('pages.spaces.stats.totalSpaces')}
+            </p>
             <p className='mt-2 text-2xl font-semibold'>{spaces.length}</p>
           </div>
           <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>Managed storage</p>
+            <p className='text-muted-foreground text-xs font-medium uppercase'>
+              {t('pages.spaces.stats.managedStorage')}
+            </p>
             <p className='mt-2 text-2xl font-semibold'>{managedCount}</p>
           </div>
           <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>External storage</p>
+            <p className='text-muted-foreground text-xs font-medium uppercase'>
+              {t('pages.spaces.stats.externalStorage')}
+            </p>
             <p className='mt-2 text-2xl font-semibold'>{s3Count}</p>
           </div>
         </div>
@@ -148,8 +154,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
             {t('pages.spaces.emptyDescription')}
           </p>
           <p className='text-muted-foreground mt-2 max-w-sm text-sm'>
-            Start with a managed space for the fastest setup, then customize storage, delivery, and
-            branding as your workspace grows.
+            {t('pages.spaces.startDescription')}
           </p>
           <Button asChild className='mt-6'>
             <Link to='/account/spaces/new'>
@@ -252,12 +257,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                       params={{ spaceKey: space.key, section: 'general' }}
                     >
                       <Settings className='mr-1.5 h-4 w-4' />
-                      Configure
-                    </Link>
-                  </Button>
-                  <Button variant='outline' size='sm' asChild title={t('pages.spaces.settings')}>
-                    <Link to='/spaces/$spaceKey/settings' params={{ spaceKey: space.key }}>
-                      <Settings className='h-4 w-4' />
+                      {t('pages.spaces.configure')}
                     </Link>
                   </Button>
                 </div>

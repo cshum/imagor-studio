@@ -121,7 +121,9 @@
       "settings": "設定",
       "users": "使用者",
       "admin": "系統",
-      "adminSetup": "管理員設定"
+      "adminSetup": "管理員設定",
+      "spaces": "空間",
+      "spaceSettings": "設定"
     }
   },
   "pages": {
@@ -327,7 +329,8 @@
       "updateProfileFailed": "更新個人資料失敗",
       "updatePasswordFailed": "更新密碼失敗",
       "usernameAlreadyInUse": "此使用者名稱已被使用",
-      "currentPasswordIncorrect": "當前密碼不正確"
+      "currentPasswordIncorrect": "當前密碼不正確",
+      "titleDescription": "管理您的個人帳戶資訊與安全設定。"
     },
     "admin": {
       "title": "管理",

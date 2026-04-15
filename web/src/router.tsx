@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   createRootRoute,
   createRoute,
@@ -397,12 +398,12 @@ const settingsLayoutRoute = createRoute({
   component: () => <Outlet />,
 })
 
-// /account/profile + /account redirect → SpacesLayout (no sidebar)
+// /account/profile + /account redirect → each child provides its own SpacesLayout
 const profileLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'profile-layout',
   beforeLoad: requireAccountAuth,
-  component: () => <SpacesLayout />,
+  component: () => <Outlet />,
 })
 
 // Redirect /account to /account/profile
@@ -417,11 +418,12 @@ const accountProfileRoute = createRoute({
   path: '/account/profile',
   loader: profileLoader,
   component: () => {
+    const { t } = useTranslation()
     const loaderData = accountProfileRoute.useLoaderData()
     return (
       <SpacesLayout
-        title='Profile'
-        description='Manage your personal account information and security settings.'
+        title={t('pages.profile.title')}
+        description={t('pages.profile.titleDescription')}
       >
         <ProfilePage loaderData={loaderData} />
       </SpacesLayout>
@@ -468,11 +470,11 @@ const accountUsersRoute = createRoute({
   },
 })
 
-// /account/spaces  →  standalone spaces list (no AccountLayout sidebar)
+// /account/spaces  →  each child provides its own SpacesLayout
 const spacesLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'spaces-layout',
-  component: () => <SpacesLayout />,
+  component: () => <Outlet />,
 })
 
 const accountSpacesRoute = createRoute({
@@ -481,11 +483,12 @@ const accountSpacesRoute = createRoute({
   beforeLoad: requireAdminAccountAuth,
   loader: spacesLoader,
   component: () => {
+    const { t } = useTranslation()
     const loaderData = accountSpacesRoute.useLoaderData()
     return (
       <SpacesLayout
-        title='Spaces'
-        description='Manage workspaces, jump into galleries, and configure space-specific settings.'
+        title={t('pages.spaces.title')}
+        description={t('pages.spaces.description')}
         primaryAction={<CreateSpacePageTrigger />}
       >
         <SpacesPage loaderData={loaderData.spaces} />
@@ -494,14 +497,17 @@ const accountSpacesRoute = createRoute({
   },
 })
 
-const CreateSpacePageTrigger = () => (
-  <Link to='/account/spaces/new'>
-    <Button>
-      <Plus className='mr-2 h-4 w-4' />
-      Create Space
-    </Button>
-  </Link>
-)
+const CreateSpacePageTrigger = () => {
+  const { t } = useTranslation()
+  return (
+    <Link to='/account/spaces/new'>
+      <Button>
+        <Plus className='mr-2 h-4 w-4' />
+        {t('pages.spaces.createSpace')}
+      </Button>
+    </Link>
+  )
+}
 
 // Check if embedded mode is enabled via environment variable
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'

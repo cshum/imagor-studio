@@ -120,7 +120,9 @@
       "settings": "设置",
       "users": "用户",
       "admin": "系统",
-      "adminSetup": "管理员设置"
+      "adminSetup": "管理员设置",
+      "spaces": "空间",
+      "spaceSettings": "设置"
     }
   },
   "pages": {
@@ -326,7 +328,8 @@
       "updateProfileFailed": "更新个人资料失败",
       "updatePasswordFailed": "更新密码失败",
       "usernameAlreadyInUse": "此用户名已被使用",
-      "currentPasswordIncorrect": "当前密码不正确"
+      "currentPasswordIncorrect": "当前密码不正确",
+      "titleDescription": "管理您的个人账户信息和安全设置。"
     },
     "admin": {
       "title": "管理",

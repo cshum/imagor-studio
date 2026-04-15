@@ -1,21 +1,23 @@
 import { PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
-import { LayoutGrid } from 'lucide-react'
 
 import { AppShellHeader } from '@/components/app-shell-header'
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
+  BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 
-// ── Standalone layout for the Spaces list page ────────────────────────────────
-// Used in multi-tenant (SaaS) mode where the spaces list is the primary
-// landing page for admin users, not a nested section under AccountLayout.
+// ── Layout ────────────────────────────────────────────────────────────────────
+// Generic page-shell layout (no collapsible sidebar) used for flat account
+// pages such as Spaces, Profile, etc.  `title` drives both the page heading
+// and the breadcrumb segment shown after the app logo.
 
 interface SpacesLayoutProps extends PropsWithChildren {
   title?: string
@@ -47,37 +49,34 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
         signOutText={t('common.navigation.signOut')}
         moreText={t('common.buttons.more')}
         leftSlot={
-          <div className='flex min-w-0 items-center gap-2'>
-            <Link
-              to='/'
-              className='hidden text-base font-semibold transition-opacity hover:opacity-80 sm:block'
-            >
-              {appTitle}
-            </Link>
-            <div className='hidden sm:block'>
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>{t('layouts.account.tabs.spaces')}</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-            <div className='flex items-center gap-2 sm:hidden'>
-              <div className='bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-md'>
-                <LayoutGrid className='h-4 w-4' />
-              </div>
-              <span className='text-sm font-medium'>{t('layouts.account.tabs.spaces')}</span>
-            </div>
+          <div className='flex min-w-0 items-center'>
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to='/' className='text-sm font-semibold'>
+                      {appTitle}
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                {title && (
+                  <>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{title}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </>
+                )}
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
         }
         mobileTitle={
-          <div className='flex items-center gap-2'>
-            <div className='bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-md'>
-              <LayoutGrid className='h-4 w-4' />
-            </div>
-            <span className='text-sm font-medium'>{title || t('layouts.account.tabs.spaces')}</span>
-          </div>
+          title ? (
+            <span className='truncate text-sm font-medium'>{title}</span>
+          ) : (
+            <span className='text-sm font-semibold'>{appTitle}</span>
+          )
         }
       />
 

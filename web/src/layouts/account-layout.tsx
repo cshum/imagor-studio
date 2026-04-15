@@ -5,6 +5,14 @@ import { Settings, Users } from 'lucide-react'
 
 import { AppShellHeader } from '@/components/app-shell-header'
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
+import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -135,23 +143,31 @@ export function AccountLayout({ children }: PropsWithChildren) {
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
           onLogout={handleLogout}
+          profileText={t('layouts.account.tabs.profile')}
+          signOutText={t('common.navigation.signOut')}
+          moreText={t('common.buttons.more')}
           leftSlot={
             <div className='flex min-w-0 items-center gap-2'>
               <SidebarTrigger className='-ml-2 h-10 w-10 shrink-0' />
-              <Link
-                to='/'
-                className='hidden text-base font-semibold transition-opacity hover:opacity-80 sm:block'
-              >
-                {appTitle}
-              </Link>
-              <span className='text-muted-foreground hidden text-sm sm:block'>
-                {t('layouts.account.title')}
-              </span>
+              <div className='hidden sm:block'>
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to='/' className='text-sm font-semibold'>
+                          {appTitle}
+                        </Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{t('layouts.account.title')}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </div>
             </div>
           }
-          signOutText={t('common.navigation.signOut')}
-          profileText={t('layouts.account.tabs.profile')}
-          moreText={t('common.buttons.more')}
           mobileTitle={<span className='text-sm font-medium'>{t('layouts.account.title')}</span>}
         />
 
