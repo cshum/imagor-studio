@@ -12,9 +12,17 @@ interface SettingRowProps {
   children: React.ReactNode
   last?: boolean
   className?: string
+  contentClassName?: string
 }
 
-export function SettingRow({ label, description, children, last, className }: SettingRowProps) {
+export function SettingRow({
+  label,
+  description,
+  children,
+  last,
+  className,
+  contentClassName,
+}: SettingRowProps) {
   return (
     <div
       className={cn(
@@ -26,10 +34,12 @@ export function SettingRow({ label, description, children, last, className }: Se
       <div className='min-w-0 sm:w-2/5'>
         <p className='text-sm leading-none font-medium'>{label}</p>
         {description && (
-          <p className='text-muted-foreground mt-1.5 text-sm leading-snug'>{description}</p>
+          <div className='text-muted-foreground mt-1.5 space-y-1 text-sm leading-snug whitespace-pre-line'>
+            {description}
+          </div>
         )}
       </div>
-      <div className='sm:w-3/5 sm:max-w-xs'>{children}</div>
+      <div className={cn('sm:w-3/5 sm:max-w-xs', contentClassName)}>{children}</div>
     </div>
   )
 }

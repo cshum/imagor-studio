@@ -6,13 +6,14 @@ import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import {
   AlertTriangle,
   ArrowLeft,
-  ChevronRight,
   Database,
   FolderOpen,
   Images,
   LogOut,
   MoreVertical,
+  Plus,
   Settings,
+  UserRound,
   Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -41,7 +42,6 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,7 +89,6 @@ import {
   SidebarWrapper,
 } from '@/components/ui/sidebar'
 import type { GetSpaceQuery } from '@/generated/graphql'
-import { useBrand } from '@/hooks/use-brand'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import { useAuth } from '@/stores/auth-store'
 
@@ -157,7 +156,6 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
   const { t } = useTranslation()
   const router = useRouter()
   const navigate = useNavigate()
-  const { title: appTitle } = useBrand()
   const { authState, logout } = useAuth()
   const activeSection: SectionId = VALID_SECTIONS.includes(section as SectionId)
     ? (section as SectionId)
@@ -412,21 +410,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
               {/* Left: trigger + breadcrumb */}
               <div className='flex min-w-0 items-center space-x-1 sm:space-x-2'>
                 <SidebarTrigger className='-ml-2 h-10 w-10 shrink-0' />
-                <Link
-                  to='/'
-                  className='hidden text-base font-semibold transition-opacity hover:opacity-80 sm:block'
-                >
-                  {appTitle}
-                </Link>
-                <span className='text-muted-foreground mx-1 hidden sm:block'>|</span>
-                <Link
-                  to='/account/spaces'
-                  className='text-muted-foreground hover:text-foreground hidden text-sm transition-colors sm:block'
-                >
-                  {t('layouts.account.title')}
-                </Link>
-                <ChevronRight className='text-muted-foreground hidden h-3.5 w-3.5 shrink-0 sm:block' />
-                <span className='hidden sm:block'>
+                <div className='hidden sm:block'>
                   <Breadcrumb>
                     <BreadcrumbList>
                       <BreadcrumbItem>
@@ -444,11 +428,24 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                       </BreadcrumbItem>
                       <BreadcrumbSeparator />
                       <BreadcrumbItem>
-                        <BreadcrumbPage>{navItems.find((item) => item.id === activeSection)?.label}</BreadcrumbPage>
+                        <BreadcrumbLink asChild>
+                          <Link
+                            to='/spaces/$spaceKey/settings/$section'
+                            params={{ spaceKey: space.key, section: 'general' }}
+                          >
+                            Settings
+                          </Link>
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator />
+                      <BreadcrumbItem>
+                        <BreadcrumbPage>
+                          {navItems.find((item) => item.id === activeSection)?.label}
+                        </BreadcrumbPage>
                       </BreadcrumbItem>
                     </BreadcrumbList>
                   </Breadcrumb>
-                </span>
+                </div>
               </div>
 
               {/* Right: mode toggle + user menu */}
@@ -1094,16 +1091,25 @@ function MembersSection() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('pages.spaceSettings.sections.members')}</CardTitle>
-          <CardDescription>{t('pages.spaceSettings.members.description')}</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          {/* Add member row */}
-          <div className='flex items-end gap-3'>
-            <div className='flex-1'>
-              <label className='mb-1 block text-sm font-medium'>
+      <SettingsSection
+        title={t('pages.spaceSettings.sections.members')}
+        description={t('pages.spaceSettings.members.description')}
+      >
+        <div className='rounded-lg border p-4'>
+          <div className='mb-4 flex items-center gap-2'>
+            <div className='bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-md'>
+              <Plus className='h-4 w-4' />
+            </div>
+            <div>
+              <p className='text-sm font-medium'>{t('pages.spaceSettings.members.addButton')}</p>
+              <p className='text-muted-foreground text-sm'>
+                Invite a teammate and assign their role for this space.
+              </p>
+            </div>
+          </div>
+          <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_auto] md:items-end'>
+            <div>
+              <label className='mb-1.5 block text-sm font-medium'>
                 {t('pages.spaceSettings.members.addLabel')}
               </label>
               <Input
@@ -1114,8 +1120,8 @@ function MembersSection() {
                 disabled={isAdding}
               />
             </div>
-            <div className='w-36'>
-              <label className='mb-1 block text-sm font-medium'>
+            <div>
+              <label className='mb-1.5 block text-sm font-medium'>
                 {t('pages.spaceSettings.members.roleLabel')}
               </label>
               <Select value={addRole} onValueChange={setAddRole} disabled={isAdding}>
@@ -1135,48 +1141,68 @@ function MembersSection() {
               onClick={handleAdd}
               isLoading={isAdding}
               disabled={!addUsername.trim()}
+              className='w-full md:w-auto'
             >
               {t('pages.spaceSettings.members.addButton')}
             </ButtonWithLoading>
           </div>
+        </div>
 
-          {/* Member list */}
-          {isLoading ? (
+        {isLoading ? (
+          <div className='rounded-lg border p-4'>
             <p className='text-muted-foreground text-sm'>{t('common.status.loading')}</p>
-          ) : members.length === 0 ? (
-            <p className='text-muted-foreground text-sm'>
-              {t('pages.spaceSettings.members.empty')}
+          </div>
+        ) : members.length === 0 ? (
+          <div className='rounded-lg border border-dashed p-6 text-center'>
+            <p className='font-medium'>{t('pages.spaceSettings.members.empty')}</p>
+            <p className='text-muted-foreground mt-1 text-sm'>
+              Add your first member to collaborate inside this space.
             </p>
-          ) : (
-            <div className='divide-y rounded-lg border'>
+          </div>
+        ) : (
+          <div className='overflow-hidden rounded-lg border'>
+            <div className='bg-muted/40 grid grid-cols-[minmax(0,1fr)_140px_96px] gap-4 border-b px-4 py-3 text-xs font-medium tracking-wide uppercase'>
+              <span>Member</span>
+              <span>Role</span>
+              <span className='text-right'>Action</span>
+            </div>
+            <div className='divide-y'>
               {members.map((member) => (
-                <div key={member.userId} className='flex items-center justify-between px-4 py-3'>
-                  <div className='flex flex-col'>
-                    <span className='text-sm font-medium'>{member.displayName}</span>
-                    {member.displayName !== member.username && (
-                      <span className='text-muted-foreground text-xs'>@{member.username}</span>
-                    )}
+                <div
+                  key={member.userId}
+                  className='grid grid-cols-[minmax(0,1fr)_140px_96px] gap-4 px-4 py-3 items-center'
+                >
+                  <div className='flex items-center gap-3 min-w-0'>
+                    <div className='bg-muted text-muted-foreground flex h-9 w-9 items-center justify-center rounded-full'>
+                      <UserRound className='h-4 w-4' />
+                    </div>
+                    <div className='min-w-0'>
+                      <p className='truncate text-sm font-medium'>
+                        {member.displayName || member.username}
+                      </p>
+                      <p className='text-muted-foreground truncate text-xs'>@{member.username}</p>
+                    </div>
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <Select
-                      value={member.role}
-                      onValueChange={(role) => handleRoleChange(member.userId, role)}
-                    >
-                      <SelectTrigger className='h-8 w-28 text-xs'>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ROLE_OPTIONS.map((r) => (
-                          <SelectItem key={r} value={r} className='text-xs'>
-                            {t(`pages.spaceSettings.members.roles.${r}`)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <Select
+                    value={member.role}
+                    onValueChange={(role) => handleRoleChange(member.userId, role)}
+                  >
+                    <SelectTrigger className='h-9'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLE_OPTIONS.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {t(`pages.spaceSettings.members.roles.${r}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className='flex justify-end'>
                     <Button
                       variant='ghost'
                       size='sm'
-                      className='text-destructive hover:text-destructive h-8 px-2'
+                      className='text-destructive hover:text-destructive h-9 px-3'
                       onClick={() => setPendingRemoveId(member.userId)}
                     >
                       {t('common.buttons.remove')}
@@ -1185,9 +1211,9 @@ function MembersSection() {
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </SettingsSection>
 
       {/* Remove confirmation dialog */}
       <ResponsiveDialog
