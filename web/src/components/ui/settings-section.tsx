@@ -1,4 +1,3 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 interface SettingsSectionProps {
@@ -17,12 +16,12 @@ export function SettingsSection({
   contentClassName,
 }: SettingsSectionProps) {
   return (
-    <Card className={cn('shadow-sm', className)}>
-      <CardHeader className='space-y-1 pb-4'>
-        <CardTitle className='text-base font-semibold'>{title}</CardTitle>
-        {description ? <CardDescription>{description}</CardDescription> : null}
-      </CardHeader>
-      <CardContent className={cn('space-y-0', contentClassName)}>{children}</CardContent>
-    </Card>
+    <section className={cn('', className)}>
+      <div className='mb-4 space-y-1'>
+        <h3 className='text-lg font-semibold'>{title}</h3>
+        {description ? <p className='text-muted-foreground text-sm'>{description}</p> : null}
+      </div>
+      <div className={cn('border-t', contentClassName)}>{children}</div>
+    </section>
   )
 }

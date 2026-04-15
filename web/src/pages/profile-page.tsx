@@ -8,7 +8,6 @@ import * as z from 'zod'
 import { changePassword, updateProfile } from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
@@ -17,6 +16,7 @@ import {
   ResponsiveDialogHeader,
 } from '@/components/ui/responsive-dialog'
 import { SettingRow } from '@/components/ui/setting-row'
+import { SettingsSection } from '@/components/ui/settings-section'
 import { useFormErrors } from '@/hooks/use-form-errors'
 import type { ProfileLoaderData } from '@/loaders/account-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
@@ -126,93 +126,81 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-10'>
       {/* ── Profile information ─────────────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('pages.profile.profileInformation')}</CardTitle>
-          <CardDescription>{t('pages.profile.profileInformationDescription')}</CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <Form {...profileForm}>
-            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
-              {/* Display Name row */}
-              <FormField
-                control={profileForm.control}
-                name='displayName'
-                render={({ field }) => (
-                  <FormItem>
-                    <SettingRow
-                      label={t('pages.profile.displayName')}
-                      description={t('pages.profile.displayNameDescription')}
-                    >
-                      <FormControl>
-                        <Input
-                          placeholder={t('pages.profile.displayNamePlaceholder')}
-                          {...field}
-                          disabled={isUpdatingProfile}
-                        />
-                      </FormControl>
-                      <FormMessage className='mt-1.5' />
-                    </SettingRow>
-                  </FormItem>
-                )}
-              />
-
-              {/* Username row */}
-              <FormField
-                control={profileForm.control}
-                name='username'
-                render={({ field }) => (
-                  <FormItem>
-                    <SettingRow
-                      label={t('common.labels.username')}
-                      description={t('pages.profile.usernameDescription')}
-                      last
-                    >
-                      <FormControl>
-                        <Input
-                          placeholder={t('pages.profile.usernamePlaceholder')}
-                          {...field}
-                          disabled={isUpdatingProfile}
-                        />
-                      </FormControl>
-                      <FormMessage className='mt-1.5' />
-                    </SettingRow>
-                  </FormItem>
-                )}
-              />
-
-              {/* Save button */}
-              <div className='mt-2 flex justify-end pt-2'>
-                <ButtonWithLoading type='submit' isLoading={isUpdatingProfile}>
-                  {t('pages.profile.updateProfile')}
-                </ButtonWithLoading>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      <SettingsSection
+        title={t('pages.profile.profileInformation')}
+        description={t('pages.profile.profileInformationDescription')}
+      >
+        <Form {...profileForm}>
+          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
+            <FormField
+              control={profileForm.control}
+              name='displayName'
+              render={({ field }) => (
+                <FormItem>
+                  <SettingRow
+                    label={t('pages.profile.displayName')}
+                    description={t('pages.profile.displayNameDescription')}
+                  >
+                    <FormControl>
+                      <Input
+                        placeholder={t('pages.profile.displayNamePlaceholder')}
+                        {...field}
+                        disabled={isUpdatingProfile}
+                      />
+                    </FormControl>
+                    <FormMessage className='mt-1.5' />
+                  </SettingRow>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={profileForm.control}
+              name='username'
+              render={({ field }) => (
+                <FormItem>
+                  <SettingRow
+                    label={t('common.labels.username')}
+                    description={t('pages.profile.usernameDescription')}
+                    last
+                  >
+                    <FormControl>
+                      <Input
+                        placeholder={t('pages.profile.usernamePlaceholder')}
+                        {...field}
+                        disabled={isUpdatingProfile}
+                      />
+                    </FormControl>
+                    <FormMessage className='mt-1.5' />
+                  </SettingRow>
+                </FormItem>
+              )}
+            />
+            <div className='mt-2 flex justify-end pt-2'>
+              <ButtonWithLoading type='submit' isLoading={isUpdatingProfile}>
+                {t('pages.profile.updateProfile')}
+              </ButtonWithLoading>
+            </div>
+          </form>
+        </Form>
+      </SettingsSection>
 
       {/* ── Security ────────────────────────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('pages.profile.securitySettings')}</CardTitle>
-          <CardDescription>{t('pages.profile.securitySettingsDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SettingRow
-            label={t('pages.profile.password')}
-            description={t('pages.profile.passwordDescription')}
-            last
-          >
-            <Button variant='outline' onClick={() => setPasswordDialogOpen(true)}>
-              {t('pages.profile.changePassword')}
-            </Button>
-          </SettingRow>
-        </CardContent>
-      </Card>
+      <SettingsSection
+        title={t('pages.profile.securitySettings')}
+        description={t('pages.profile.securitySettingsDescription')}
+      >
+        <SettingRow
+          label={t('pages.profile.password')}
+          description={t('pages.profile.passwordDescription')}
+          last
+        >
+          <Button variant='outline' onClick={() => setPasswordDialogOpen(true)}>
+            {t('pages.profile.changePassword')}
+          </Button>
+        </SettingRow>
+      </SettingsSection>
 
       {/* ── Change password dialog ───────────────────────────────────── */}
       <ResponsiveDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>

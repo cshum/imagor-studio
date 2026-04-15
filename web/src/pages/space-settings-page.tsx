@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import {
-  AlertTriangle,
   ArrowLeft,
   Database,
   FolderOpen,
@@ -125,9 +124,9 @@ function spaceInitials(name: string): string {
 
 // ── Section types ─────────────────────────────────────────────────────────────
 
-type SectionId = 'general' | 'storage' | 'gallery' | 'members' | 'danger'
+type SectionId = 'general' | 'storage' | 'gallery' | 'members'
 
-const VALID_SECTIONS: SectionId[] = ['general', 'storage', 'gallery', 'members', 'danger']
+const VALID_SECTIONS: SectionId[] = ['general', 'storage', 'gallery', 'members']
 
 // ── Page component ────────────────────────────────────────────────────────────
 
@@ -284,12 +283,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
 
   // ── Nav items ──────────────────────────────────────────────────────────────
 
-  const navItems: Array<{
-    id: SectionId
-    icon: React.ReactNode
-    label: string
-    danger?: boolean
-  }> = [
+  const navItems: Array<{ id: SectionId; icon: React.ReactNode; label: string }> = [
     {
       id: 'general',
       icon: <Settings className='h-4 w-4' />,
@@ -309,12 +303,6 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
       id: 'members',
       icon: <Users className='h-4 w-4' />,
       label: t('pages.spaceSettings.sections.members'),
-    },
-    {
-      id: 'danger',
-      icon: <AlertTriangle className='h-4 w-4' />,
-      label: t('pages.spaceSettings.sections.dangerZone'),
-      danger: true,
     },
   ]
 
@@ -348,11 +336,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                       asChild
                       isActive={activeSection === item.id}
                       tooltip={item.label}
-                      className={
-                        item.danger
-                          ? 'text-destructive/80 hover:bg-destructive/10 hover:text-destructive data-[active=true]:bg-destructive/10 data-[active=true]:text-destructive data-[active=true]:hover:bg-destructive/10 data-[active=true]:hover:text-destructive'
-                          : 'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
-                      }
+                      className='data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
                     >
                       <Link
                         to='/spaces/$spaceKey/settings/$section'
@@ -444,6 +428,13 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
         {/* Content area */}
         <main className='relative min-h-screen pt-14'>
           <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>
+            {/* ── Page heading ──────────────────────────────────────────── */}
+            <div className='mb-8'>
+              <h1 className='text-2xl font-semibold tracking-tight'>
+                {navItems.find((item) => item.id === activeSection)?.label}
+              </h1>
+            </div>
+
             {/* ── General ───────────────────────────────────────────────── */}
             {activeSection === 'general' && (
               <SettingsSection
@@ -498,8 +489,32 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
               </SettingsSection>
             )}
             {activeSection === 'general' && (
-              <div className='mt-4'>
+              <div className='mt-8'>
                 <BrandingSettingsSection spaceKey={space.key} initialValues={galleryRegistry} />
+              </div>
+            )}
+
+            {/* ── Danger Zone (bottom of General) ──────────────────────── */}
+            {activeSection === 'general' && (
+              <div className='border-destructive/20 mt-10 border-t pt-6'>
+                <h3 className='text-destructive text-base font-semibold'>
+                  {t('pages.spaceSettings.sections.dangerZone')}
+                </h3>
+                <div className='mt-4 flex items-start justify-between gap-4'>
+                  <div className='min-w-0'>
+                    <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
+                    <p className='text-muted-foreground mt-1 text-sm'>
+                      {t('pages.spaceSettings.danger.deleteDescription')}
+                    </p>
+                  </div>
+                  <Button
+                    variant='destructive'
+                    className='shrink-0'
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                  >
+                    {t('pages.spaceSettings.danger.deleteButton')}
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -509,42 +524,27 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                 title={t('pages.spaceSettings.sections.storage')}
                 description={t('pages.spaceSettings.storage.description')}
               >
-                {/* Managed storage info banner */}
+                {/* Storage callout — inline, no card-in-card */}
                 {!isByob && (
-                  <div className='bg-muted/50 mb-4 flex items-start gap-3 rounded-lg border p-4'>
-                    <Database className='text-muted-foreground mt-0.5 h-5 w-5 shrink-0' />
-                    <div className='space-y-1'>
-                      <p className='text-sm font-medium'>
-                        {t('pages.spaceSettings.storage.managedTitle')}
-                      </p>
-                      <p className='text-muted-foreground text-sm'>
-                        {t('pages.spaceSettings.storage.managedDescription')}
-                      </p>
-                    </div>
+                  <div className='bg-muted/40 mb-4 flex items-center gap-2 rounded-md px-3 py-2 text-sm'>
+                    <Database className='text-muted-foreground h-4 w-4 shrink-0' />
+                    <span className='font-medium'>{t('pages.spaceSettings.storage.managedTitle')}</span>
+                    <span className='text-muted-foreground'>— {t('pages.spaceSettings.storage.managedDescription')}</span>
                   </div>
                 )}
-
-                {/* BYOB: bucket/region readonly banner */}
                 {isByob && (
-                  <div className='bg-muted/30 mb-4 rounded-lg border p-3'>
-                    <p className='text-sm'>
-                      <span className='text-muted-foreground font-medium'>
-                        {t('pages.spaceSettings.storage.bucket')}:
-                      </span>{' '}
-                      <span className='font-mono text-sm'>{space.bucket}</span>
-                      {space.region && (
-                        <>
-                          <span className='text-muted-foreground mx-2'>·</span>
-                          <span className='text-muted-foreground font-medium'>
-                            {t('pages.spaceSettings.storage.region')}:
-                          </span>{' '}
-                          <span className='font-mono text-sm'>{space.region}</span>
-                        </>
-                      )}
-                    </p>
-                    <p className='text-muted-foreground mt-1 text-xs'>
-                      {t('pages.spaceSettings.storage.bucketLocked')}
-                    </p>
+                  <div className='bg-muted/40 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md px-3 py-2 text-sm'>
+                    <span>
+                      <span className='text-muted-foreground'>{t('pages.spaceSettings.storage.bucket')}: </span>
+                      <code className='font-mono font-medium'>{space.bucket}</code>
+                    </span>
+                    {space.region && (
+                      <span>
+                        <span className='text-muted-foreground'>{t('pages.spaceSettings.storage.region')}: </span>
+                        <code className='font-mono font-medium'>{space.region}</code>
+                      </span>
+                    )}
+                    <span className='text-muted-foreground text-xs'>{t('pages.spaceSettings.storage.bucketLocked')}</span>
                   </div>
                 )}
 
@@ -758,25 +758,6 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
             {/* ── Members ───────────────────────────────────────────────── */}
             {activeSection === 'members' && <MembersSection />}
 
-            {/* ── Danger Zone ───────────────────────────────────────────── */}
-            {activeSection === 'danger' && (
-              <SettingsSection
-                title={t('pages.spaceSettings.sections.dangerZone')}
-                className='border-destructive/50'
-              >
-                <div className='flex items-center justify-between rounded-lg border p-4'>
-                  <div>
-                    <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
-                    <p className='text-muted-foreground text-sm'>
-                      {t('pages.spaceSettings.danger.deleteDescription')}
-                    </p>
-                  </div>
-                  <Button variant='destructive' onClick={() => setIsDeleteDialogOpen(true)}>
-                    {t('pages.spaceSettings.danger.deleteButton')}
-                  </Button>
-                </div>
-              </SettingsSection>
-            )}
           </div>
         </main>
       </SidebarInset>
