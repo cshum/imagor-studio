@@ -54,6 +54,8 @@ extend type Query {
   spaces: [Space!]!
   # Returns a single space by key (must belong to caller's org)
   space(key: String!): Space
+  # Returns space-scoped registry entries, falling back to system:global defaults for unset keys (admin only)
+  spaceRegistry(spaceKey: String!, keys: [String!]): [UserRegistry!]!
 }
 
 extend type Mutation {
@@ -63,4 +65,8 @@ extend type Mutation {
   updateSpace(key: String!, input: SpaceInput!): Space!
   # Soft-delete a space by key (admin only)
   deleteSpace(key: String!): Boolean!
+  # Write space-scoped registry entries (admin only)
+  setSpaceRegistry(spaceKey: String!, entries: [RegistryEntryInput!]): [UserRegistry!]!
+  # Delete space-scoped registry keys, reverting to system:global defaults (admin only)
+  deleteSpaceRegistry(spaceKey: String!, keys: [String!]): Boolean!
 }

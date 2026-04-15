@@ -17,8 +17,20 @@ export function AdminPage({ loaderData }: AdminPageProps) {
   const { authState } = useAuth()
   const isMultiTenant = authState.multiTenant
 
+  // Gallery-level settings that move to each space in multi-tenant mode
+  const GALLERY_SETTING_KEYS = new Set([
+    'config.app_home_title',
+    'config.allow_guest_mode',
+    'config.app_default_sort_by',
+    'config.app_show_file_names',
+    'config.app_image_extensions',
+    'config.app_video_extensions',
+    'config.app_video_thumbnail_position',
+    'config.app_show_hidden',
+  ])
+
   // Define system settings configuration with translations
-  const SYSTEM_SETTINGS: SystemSetting[] = [
+  const ALL_SYSTEM_SETTINGS: SystemSetting[] = [
     {
       key: 'config.app_home_title',
       type: 'text',
@@ -127,6 +139,11 @@ export function AdminPage({ loaderData }: AdminPageProps) {
       defaultValue: false,
     },
   ]
+
+  // In multi-tenant mode, gallery-level settings are managed per-space
+  const SYSTEM_SETTINGS = isMultiTenant
+    ? ALL_SYSTEM_SETTINGS.filter((s) => !GALLERY_SETTING_KEYS.has(s.key))
+    : ALL_SYSTEM_SETTINGS
 
   return (
     <div className='space-y-6'>

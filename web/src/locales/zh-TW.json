@@ -631,7 +631,11 @@
     },
     "spaceSettings": {
       "sections": {
-        "imageProcessing": "圖像處理"
+        "imageProcessing": "圖像處理",
+        "gallery": "圖庫"
+      },
+      "gallery": {
+        "description": "自訂此空間的圖庫顯示和行為。空間層級的設定會覆蓋平台預設值。"
       },
       "storage": {
         "managedTitle": "平台託管儲存",

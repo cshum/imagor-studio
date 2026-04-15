@@ -627,7 +627,11 @@
     },
     "spaceSettings": {
       "sections": {
-        "imageProcessing": "Elaborazione immagini"
+        "imageProcessing": "Elaborazione immagini",
+        "gallery": "Galleria"
+      },
+      "gallery": {
+        "description": "Personalizza la visualizzazione e il comportamento della galleria per questo spazio. Le impostazioni a livello di spazio sostituiscono i valori predefiniti della piattaforma."
       },
       "storage": {
         "managedTitle": "Archiviazione gestita dalla piattaforma",

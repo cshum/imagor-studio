@@ -166,6 +166,7 @@ export type Mutation = {
   deactivateAccount: Scalars['Boolean']['output']
   deleteFile: Scalars['Boolean']['output']
   deleteSpace: Scalars['Boolean']['output']
+  deleteSpaceRegistry: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
@@ -173,6 +174,7 @@ export type Mutation = {
   moveFile: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
+  setSpaceRegistry: Array<UserRegistry>
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
@@ -230,6 +232,11 @@ export type MutationDeleteSpaceArgs = {
   key: Scalars['String']['input']
 }
 
+export type MutationDeleteSpaceRegistryArgs = {
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
+  spaceKey: Scalars['String']['input']
+}
+
 export type MutationDeleteSystemRegistryArgs = {
   key?: InputMaybe<Scalars['String']['input']>
   keys?: InputMaybe<Array<Scalars['String']['input']>>
@@ -270,6 +277,11 @@ export type MutationRegenerateTemplatePreviewArgs = {
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
   spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationSetSpaceRegistryArgs = {
+  entries?: InputMaybe<Array<RegistryEntryInput>>
+  spaceKey: Scalars['String']['input']
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -327,6 +339,7 @@ export type Query = {
   me: Maybe<User>
   myOrganization: Maybe<Organization>
   space: Maybe<Space>
+  spaceRegistry: Array<UserRegistry>
   spaces: Array<Space>
   statFile: Maybe<FileStat>
   storageStatus: StorageStatus
@@ -369,6 +382,11 @@ export type QueryListUserRegistryArgs = {
 
 export type QuerySpaceArgs = {
   key: Scalars['String']['input']
+}
+
+export type QuerySpaceRegistryArgs = {
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
+  spaceKey: Scalars['String']['input']
 }
 
 export type QueryStatFileArgs = {
@@ -729,6 +747,43 @@ export type DeleteSpaceMutationVariables = Exact<{
 }>
 
 export type DeleteSpaceMutation = { __typename?: 'Mutation'; deleteSpace: boolean }
+
+export type GetSpaceRegistryQueryVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  keys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
+}>
+
+export type GetSpaceRegistryQuery = {
+  __typename?: 'Query'
+  spaceRegistry: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+}
+
+export type SetSpaceRegistryMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
+}>
+
+export type SetSpaceRegistryMutation = {
+  __typename?: 'Mutation'
+  setSpaceRegistry: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+}
+
+export type DeleteSpaceRegistryMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  keys: Array<Scalars['String']['input']> | Scalars['String']['input']
+}>
+
+export type DeleteSpaceRegistryMutation = { __typename?: 'Mutation'; deleteSpaceRegistry: boolean }
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -1364,6 +1419,29 @@ export const DeleteSpaceDocument = gql`
     deleteSpace(key: $key)
   }
 `
+export const GetSpaceRegistryDocument = gql`
+  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {
+    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {
+      key
+      value
+      isEncrypted
+    }
+  }
+`
+export const SetSpaceRegistryDocument = gql`
+  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {
+    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {
+      key
+      value
+      isEncrypted
+    }
+  }
+`
+export const DeleteSpaceRegistryDocument = gql`
+  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {
+    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)
+  }
+`
 export const ListUserRegistryDocument = gql`
   query ListUserRegistry($prefix: String, $ownerID: String) {
     listUserRegistry(prefix: $prefix, ownerID: $ownerID) {
@@ -1833,6 +1911,60 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'DeleteSpace',
+        'mutation',
+        variables,
+      )
+    },
+    GetSpaceRegistry(
+      variables: GetSpaceRegistryQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<GetSpaceRegistryQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<GetSpaceRegistryQuery>({
+            document: GetSpaceRegistryDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'GetSpaceRegistry',
+        'query',
+        variables,
+      )
+    },
+    SetSpaceRegistry(
+      variables: SetSpaceRegistryMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<SetSpaceRegistryMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<SetSpaceRegistryMutation>({
+            document: SetSpaceRegistryDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'SetSpaceRegistry',
+        'mutation',
+        variables,
+      )
+    },
+    DeleteSpaceRegistry(
+      variables: DeleteSpaceRegistryMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<DeleteSpaceRegistryMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<DeleteSpaceRegistryMutation>({
+            document: DeleteSpaceRegistryDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'DeleteSpaceRegistry',
         'mutation',
         variables,
       )

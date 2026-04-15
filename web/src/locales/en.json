@@ -687,7 +687,11 @@
         "storage": "Storage",
         "security": "Image Processing",
         "imageProcessing": "Image Processing",
+        "gallery": "Gallery",
         "dangerZone": "Danger Zone"
+      },
+      "gallery": {
+        "description": "Customize gallery display and behaviour for this space. Space-level settings override the platform defaults."
       },
       "general": {
         "description": "Basic information about this space.",

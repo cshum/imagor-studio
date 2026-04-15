@@ -165,6 +165,7 @@ export type Mutation = {
   deactivateAccount: Scalars['Boolean']['output']
   deleteFile: Scalars['Boolean']['output']
   deleteSpace: Scalars['Boolean']['output']
+  deleteSpaceRegistry: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
@@ -172,6 +173,7 @@ export type Mutation = {
   moveFile: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
+  setSpaceRegistry: Array<UserRegistry>
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
@@ -229,6 +231,11 @@ export type MutationDeleteSpaceArgs = {
   key: Scalars['String']['input']
 }
 
+export type MutationDeleteSpaceRegistryArgs = {
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
+  spaceKey: Scalars['String']['input']
+}
+
 export type MutationDeleteSystemRegistryArgs = {
   key?: InputMaybe<Scalars['String']['input']>
   keys?: InputMaybe<Array<Scalars['String']['input']>>
@@ -269,6 +276,11 @@ export type MutationRegenerateTemplatePreviewArgs = {
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
   spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationSetSpaceRegistryArgs = {
+  entries?: InputMaybe<Array<RegistryEntryInput>>
+  spaceKey: Scalars['String']['input']
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -326,6 +338,7 @@ export type Query = {
   me: Maybe<User>
   myOrganization: Maybe<Organization>
   space: Maybe<Space>
+  spaceRegistry: Array<UserRegistry>
   spaces: Array<Space>
   statFile: Maybe<FileStat>
   storageStatus: StorageStatus
@@ -368,6 +381,11 @@ export type QueryListUserRegistryArgs = {
 
 export type QuerySpaceArgs = {
   key: Scalars['String']['input']
+}
+
+export type QuerySpaceRegistryArgs = {
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
+  spaceKey: Scalars['String']['input']
 }
 
 export type QueryStatFileArgs = {
@@ -728,6 +746,43 @@ export type DeleteSpaceMutationVariables = Exact<{
 }>
 
 export type DeleteSpaceMutation = { __typename?: 'Mutation'; deleteSpace: boolean }
+
+export type GetSpaceRegistryQueryVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  keys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
+}>
+
+export type GetSpaceRegistryQuery = {
+  __typename?: 'Query'
+  spaceRegistry: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+}
+
+export type SetSpaceRegistryMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
+}>
+
+export type SetSpaceRegistryMutation = {
+  __typename?: 'Mutation'
+  setSpaceRegistry: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+}
+
+export type DeleteSpaceRegistryMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  keys: Array<Scalars['String']['input']> | Scalars['String']['input']
+}>
+
+export type DeleteSpaceRegistryMutation = { __typename?: 'Mutation'; deleteSpaceRegistry: boolean }
 
 export type RegistryInfoFragment = {
   __typename?: 'UserRegistry'
@@ -1767,6 +1822,181 @@ export const DeleteSpaceDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteSpaceMutation, DeleteSpaceMutationVariables>
+export const GetSpaceRegistryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetSpaceRegistry' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'keys' } },
+          type: {
+            kind: 'ListType',
+            type: {
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'spaceRegistry' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'keys' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'keys' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetSpaceRegistryQuery, GetSpaceRegistryQueryVariables>
+export const SetSpaceRegistryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SetSpaceRegistry' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'entries' } },
+          type: {
+            kind: 'ListType',
+            type: {
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'RegistryEntryInput' } },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'setSpaceRegistry' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'entries' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'entries' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetSpaceRegistryMutation, SetSpaceRegistryMutationVariables>
+export const DeleteSpaceRegistryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteSpaceRegistry' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'keys' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'deleteSpaceRegistry' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'keys' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'keys' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteSpaceRegistryMutation, DeleteSpaceRegistryMutationVariables>
 export const ListUserRegistryDocument = {
   kind: 'Document',
   definitions: [

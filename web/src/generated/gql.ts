@@ -25,6 +25,9 @@ type Documents = {
   '\n  mutation CreateSpace($input: SpaceInput!) {\n    createSpace(input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n': typeof types.CreateSpaceDocument
   '\n  mutation UpdateSpace($key: String!, $input: SpaceInput!) {\n    updateSpace(key: $key, input: $input) {\n      orgId\n      key\n      name\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      updatedAt\n    }\n  }\n': typeof types.UpdateSpaceDocument
   '\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n': typeof types.DeleteSpaceDocument
+  '\n  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {\n    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n': typeof types.GetSpaceRegistryDocument
+  '\n  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n': typeof types.SetSpaceRegistryDocument
+  '\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n': typeof types.DeleteSpaceRegistryDocument
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
@@ -79,6 +82,12 @@ const documents: Documents = {
     types.UpdateSpaceDocument,
   '\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n':
     types.DeleteSpaceDocument,
+  '\n  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {\n    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n':
+    types.GetSpaceRegistryDocument,
+  '\n  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n':
+    types.SetSpaceRegistryDocument,
+  '\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n':
+    types.DeleteSpaceRegistryDocument,
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
     types.RegistryInfoFragmentDoc,
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n':
@@ -218,6 +227,24 @@ export function gql(
 export function gql(
   source: '\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n',
 ): (typeof documents)['\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {\n    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n',
+): (typeof documents)['\n  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {\n    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n',
+): (typeof documents)['\n  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n',
+): (typeof documents)['\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

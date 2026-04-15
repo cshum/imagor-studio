@@ -424,6 +424,152 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 	return result, nil
 }
 
+// SpaceRegistry gets space-scoped registry entries, falling back to system:global for unset keys (admin only)
+func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceKey string, keys []string) ([]*gql.UserRegistry, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, fmt.Errorf("admin permission required for space registry: %w", err)
+	}
+
+	ownerID := registrystore.SpaceOwnerID(spaceKey)
+
+	if len(keys) == 0 {
+		// No keys requested — list all space-scoped entries (no fallback for list)
+		spaceEntries, err := r.registryStore.List(ctx, ownerID, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list space registry: %w", err)
+		}
+		result := make([]*gql.UserRegistry, 0, len(spaceEntries))
+		for _, reg := range spaceEntries {
+			value := reg.Value
+			if reg.IsEncrypted {
+				value = ""
+			}
+			result = append(result, &gql.UserRegistry{
+				Key:         reg.Key,
+				Value:       value,
+				IsEncrypted: reg.IsEncrypted,
+			})
+		}
+		return result, nil
+	}
+
+	// Get space-specific entries
+	spaceEntries, err := r.registryStore.GetMulti(ctx, ownerID, keys)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get space registry: %w", err)
+	}
+
+	// Build map of space-level keys found
+	spaceMap := make(map[string]*registrystore.Registry, len(spaceEntries))
+	for _, reg := range spaceEntries {
+		spaceMap[reg.Key] = reg
+	}
+
+	// Find keys not set at space level → fall back to system:global
+	var fallbackKeys []string
+	for _, k := range keys {
+		if _, found := spaceMap[k]; !found {
+			fallbackKeys = append(fallbackKeys, k)
+		}
+	}
+
+	// Get global defaults for unset keys
+	globalMap := make(map[string]*registrystore.Registry)
+	if len(fallbackKeys) > 0 {
+		globalEntries, err := r.registryStore.GetMulti(ctx, registrystore.SystemOwnerID, fallbackKeys)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get global registry fallback: %w", err)
+		}
+		for _, reg := range globalEntries {
+			globalMap[reg.Key] = reg
+		}
+	}
+
+	// Build result in requested key order: space-level wins over global default
+	var result []*gql.UserRegistry
+	for _, k := range keys {
+		reg, found := spaceMap[k]
+		if !found {
+			reg = globalMap[k]
+		}
+		if reg == nil {
+			continue // key not found in either scope
+		}
+		value := reg.Value
+		if reg.IsEncrypted {
+			value = ""
+		}
+		result = append(result, &gql.UserRegistry{
+			Key:         reg.Key,
+			Value:       value,
+			IsEncrypted: reg.IsEncrypted,
+		})
+	}
+
+	return result, nil
+}
+
+// SetSpaceRegistry sets space-scoped registry entries (admin only)
+func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceKey string, entries []*gql.RegistryEntryInput) ([]*gql.UserRegistry, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, fmt.Errorf("admin permission required for space registry write: %w", err)
+	}
+
+	if len(entries) == 0 {
+		return nil, fmt.Errorf("entries must not be empty")
+	}
+
+	ownerID := registrystore.SpaceOwnerID(spaceKey)
+
+	registryEntries := make([]*registrystore.Registry, 0, len(entries))
+	for _, e := range entries {
+		registryEntries = append(registryEntries, &registrystore.Registry{
+			Key:         e.Key,
+			Value:       e.Value,
+			IsEncrypted: e.IsEncrypted,
+		})
+	}
+
+	results, err := r.registryStore.SetMulti(ctx, ownerID, registryEntries)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set space registry: %w", err)
+	}
+
+	result := make([]*gql.UserRegistry, 0, len(results))
+	for _, reg := range results {
+		value := reg.Value
+		if reg.IsEncrypted {
+			value = ""
+		}
+		result = append(result, &gql.UserRegistry{
+			Key:         reg.Key,
+			Value:       value,
+			IsEncrypted: reg.IsEncrypted,
+		})
+	}
+
+	return result, nil
+}
+
+// DeleteSpaceRegistry deletes space-scoped registry entries, reverting to system:global defaults (admin only)
+func (r *mutationResolver) DeleteSpaceRegistry(ctx context.Context, spaceKey string, keys []string) (bool, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return false, fmt.Errorf("admin permission required for space registry delete: %w", err)
+	}
+
+	if len(keys) == 0 {
+		return false, fmt.Errorf("keys must not be empty")
+	}
+
+	ownerID := registrystore.SpaceOwnerID(spaceKey)
+
+	if err := r.registryStore.DeleteMulti(ctx, ownerID, keys); err != nil {
+		return false, fmt.Errorf("failed to delete space registry: %w", err)
+	}
+
+	return true, nil
+}
+
 // GetSystemRegistry gets specific system registry (unified flexible API)
 func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys []string) ([]*gql.SystemRegistry, error) {
 	// Validate input: exactly one of key or keys must be provided

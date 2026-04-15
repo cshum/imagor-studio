@@ -110,3 +110,29 @@ export const DELETE_SPACE = gql(`
     deleteSpace(key: $key)
   }
 `)
+
+export const GET_SPACE_REGISTRY = gql(`
+  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {
+    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {
+      key
+      value
+      isEncrypted
+    }
+  }
+`)
+
+export const SET_SPACE_REGISTRY = gql(`
+  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {
+    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {
+      key
+      value
+      isEncrypted
+    }
+  }
+`)
+
+export const DELETE_SPACE_REGISTRY = gql(`
+  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {
+    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)
+  }
+`)

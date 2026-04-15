@@ -53,6 +53,9 @@ export interface SystemSettingsFormProps {
   showCard?: boolean
   hideUpdateButton?: boolean
   compact?: boolean
+  /** When provided, replaces the default system registry save with a custom handler.
+   *  Receives only the changed values and skips global brand/title side-effects. */
+  saveCallback?: (changedValues: Record<string, string>) => Promise<void>
 }
 
 export function SystemSettingsForm({
@@ -66,6 +69,7 @@ export function SystemSettingsForm({
   showCard = true,
   hideUpdateButton = false,
   compact = false,
+  saveCallback,
 }: SystemSettingsFormProps) {
   const router = useRouter()
   const { t } = useTranslation()
@@ -162,7 +166,11 @@ export function SystemSettingsForm({
       })
 
       if (Object.keys(changedValues).length > 0) {
-        await setSystemRegistryObject(changedValues)
+        if (saveCallback) {
+          await saveCallback(changedValues)
+        } else {
+          await setSystemRegistryObject(changedValues)
+        }
 
         // Update the store immediately if home title was changed
         if (changedValues['config.app_home_title']) {

@@ -3,8 +3,13 @@ import type {
   CreateSpaceMutationVariables,
   DeleteSpaceMutation,
   DeleteSpaceMutationVariables,
+  DeleteSpaceRegistryMutation,
+  DeleteSpaceRegistryMutationVariables,
   GetSpaceQuery,
+  GetSpaceRegistryQuery,
   ListSpacesQuery,
+  SetSpaceRegistryMutation,
+  SetSpaceRegistryMutationVariables,
   UpdateSpaceMutation,
   UpdateSpaceMutationVariables,
 } from '@/generated/graphql'
@@ -52,4 +57,46 @@ export async function deleteSpace(
   const sdk = getSdk(client)
   const result = await sdk.DeleteSpace(variables)
   return result.deleteSpace
+}
+
+export async function getSpaceRegistry(
+  spaceKey: string,
+  keys?: string[],
+): Promise<GetSpaceRegistryQuery['spaceRegistry']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.GetSpaceRegistry({ spaceKey, keys })
+  return result.spaceRegistry
+}
+
+export async function setSpaceRegistry(
+  variables: SetSpaceRegistryMutationVariables,
+): Promise<SetSpaceRegistryMutation['setSpaceRegistry']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.SetSpaceRegistry(variables)
+  return result.setSpaceRegistry
+}
+
+export async function deleteSpaceRegistry(
+  variables: DeleteSpaceRegistryMutationVariables,
+): Promise<DeleteSpaceRegistryMutation['deleteSpaceRegistry']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.DeleteSpaceRegistry(variables)
+  return result.deleteSpaceRegistry
+}
+
+/** Convenience: save a map of {key → value} to the space-scoped registry */
+export async function setSpaceRegistryObject(
+  spaceKey: string,
+  values: Record<string, string>,
+): Promise<void> {
+  const entries = Object.entries(values).map(([key, value]) => ({
+    key,
+    value,
+    isEncrypted: false,
+  }))
+  if (entries.length === 0) return
+  await setSpaceRegistry({ spaceKey, entries })
 }

@@ -13,6 +13,15 @@ func TestUserOwnerID(t *testing.T) {
 	}
 }
 
+func TestSpaceOwnerID(t *testing.T) {
+	spaceKey := "my-space"
+	expected := "space:my-space"
+	actual := SpaceOwnerID(spaceKey)
+	if actual != expected {
+		t.Errorf("SpaceOwnerID(%q) = %q, want %q", spaceKey, actual, expected)
+	}
+}
+
 func TestParseOwnerID(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -33,6 +42,13 @@ func TestParseOwnerID(t *testing.T) {
 			ownerID: "user:123e4567-e89b-12d3-a456-426614174000",
 			wantNS:  "user",
 			wantID:  "123e4567-e89b-12d3-a456-426614174000",
+			wantErr: false,
+		},
+		{
+			name:    "space owner ID",
+			ownerID: "space:my-space",
+			wantNS:  "space",
+			wantID:  "my-space",
 			wantErr: false,
 		},
 		{
@@ -85,6 +101,11 @@ func TestValidateOwnerID(t *testing.T) {
 		{
 			name:    "valid user owner ID",
 			ownerID: "user:123e4567-e89b-12d3-a456-426614174000",
+			wantErr: false,
+		},
+		{
+			name:    "valid space owner ID",
+			ownerID: "space:my-space",
 			wantErr: false,
 		},
 		{
@@ -165,6 +186,83 @@ func TestIsUserOwnerID(t *testing.T) {
 			got := IsUserOwnerID(tt.ownerID)
 			if got != tt.want {
 				t.Errorf("IsUserOwnerID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsSpaceOwnerID(t *testing.T) {
+	tests := []struct {
+		name    string
+		ownerID string
+		want    bool
+	}{
+		{
+			name:    "space owner ID",
+			ownerID: "space:my-space",
+			want:    true,
+		},
+		{
+			name:    "system owner ID",
+			ownerID: "system:global",
+			want:    false,
+		},
+		{
+			name:    "user owner ID",
+			ownerID: "user:123e4567-e89b-12d3-a456-426614174000",
+			want:    false,
+		},
+		{
+			name:    "invalid owner ID",
+			ownerID: "invalid",
+			want:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := IsSpaceOwnerID(tt.ownerID)
+			if got != tt.want {
+				t.Errorf("IsSpaceOwnerID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetSpaceKeyFromOwnerID(t *testing.T) {
+	tests := []struct {
+		name    string
+		ownerID string
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "valid space owner ID",
+			ownerID: "space:my-space",
+			want:    "my-space",
+			wantErr: false,
+		},
+		{
+			name:    "system owner ID",
+			ownerID: "system:global",
+			wantErr: true,
+		},
+		{
+			name:    "invalid owner ID",
+			ownerID: "invalid",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetSpaceKeyFromOwnerID(tt.ownerID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetSpaceKeyFromOwnerID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && got != tt.want {
+				t.Errorf("GetSpaceKeyFromOwnerID() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -106,6 +106,7 @@ type ComplexityRoot struct {
 		DeactivateAccount             func(childComplexity int, userID *string) int
 		DeleteFile                    func(childComplexity int, path string, spaceKey *string) int
 		DeleteSpace                   func(childComplexity int, key string) int
+		DeleteSpaceRegistry           func(childComplexity int, spaceKey string, keys []string) int
 		DeleteSystemRegistry          func(childComplexity int, key *string, keys []string) int
 		DeleteUserRegistry            func(childComplexity int, key *string, keys []string, ownerID *string) int
 		GenerateImagorURL             func(childComplexity int, imagePath string, params ImagorParamsInput) int
@@ -113,6 +114,7 @@ type ComplexityRoot struct {
 		MoveFile                      func(childComplexity int, sourcePath string, destPath string, spaceKey *string) int
 		RegenerateTemplatePreview     func(childComplexity int, templatePath string, spaceKey *string) int
 		SaveTemplate                  func(childComplexity int, input SaveTemplateInput, spaceKey *string) int
+		SetSpaceRegistry              func(childComplexity int, spaceKey string, entries []*RegistryEntryInput) int
 		SetSystemRegistry             func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
 		SetUserRegistry               func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		TestStorageConfig             func(childComplexity int, input StorageConfigInput) int
@@ -143,6 +145,7 @@ type ComplexityRoot struct {
 		Me                 func(childComplexity int) int
 		MyOrganization     func(childComplexity int) int
 		Space              func(childComplexity int, key string) int
+		SpaceRegistry      func(childComplexity int, spaceKey string, keys []string) int
 		Spaces             func(childComplexity int) int
 		StatFile           func(childComplexity int, path string, spaceKey *string) int
 		StorageStatus      func(childComplexity int) int
@@ -259,6 +262,8 @@ type MutationResolver interface {
 	CreateSpace(ctx context.Context, input SpaceInput) (*Space, error)
 	UpdateSpace(ctx context.Context, key string, input SpaceInput) (*Space, error)
 	DeleteSpace(ctx context.Context, key string) (bool, error)
+	SetSpaceRegistry(ctx context.Context, spaceKey string, entries []*RegistryEntryInput) ([]*UserRegistry, error)
+	DeleteSpaceRegistry(ctx context.Context, spaceKey string, keys []string) (bool, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
 	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
@@ -276,6 +281,7 @@ type QueryResolver interface {
 	MyOrganization(ctx context.Context) (*Organization, error)
 	Spaces(ctx context.Context) ([]*Space, error)
 	Space(ctx context.Context, key string) (*Space, error)
+	SpaceRegistry(ctx context.Context, spaceKey string, keys []string) ([]*UserRegistry, error)
 	ListUserRegistry(ctx context.Context, prefix *string, ownerID *string) ([]*UserRegistry, error)
 	GetUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) ([]*UserRegistry, error)
 	ListSystemRegistry(ctx context.Context, prefix *string) ([]*SystemRegistry, error)
@@ -645,6 +651,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteSpace(childComplexity, args["key"].(string)), true
+	case "Mutation.deleteSpaceRegistry":
+		if e.ComplexityRoot.Mutation.DeleteSpaceRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteSpaceRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteSpaceRegistry(childComplexity, args["spaceKey"].(string), args["keys"].([]string)), true
 	case "Mutation.deleteSystemRegistry":
 		if e.ComplexityRoot.Mutation.DeleteSystemRegistry == nil {
 			break
@@ -722,6 +739,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SaveTemplate(childComplexity, args["input"].(SaveTemplateInput), args["spaceKey"].(*string)), true
+	case "Mutation.setSpaceRegistry":
+		if e.ComplexityRoot.Mutation.SetSpaceRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setSpaceRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetSpaceRegistry(childComplexity, args["spaceKey"].(string), args["entries"].([]*RegistryEntryInput)), true
 	case "Mutation.setSystemRegistry":
 		if e.ComplexityRoot.Mutation.SetSystemRegistry == nil {
 			break
@@ -929,6 +957,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Space(childComplexity, args["key"].(string)), true
+	case "Query.spaceRegistry":
+		if e.ComplexityRoot.Query.SpaceRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Query_spaceRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.SpaceRegistry(childComplexity, args["spaceKey"].(string), args["keys"].([]string)), true
 	case "Query.spaces":
 		if e.ComplexityRoot.Query.Spaces == nil {
 			break
@@ -1594,6 +1633,8 @@ extend type Query {
   spaces: [Space!]!
   # Returns a single space by key (must belong to caller's org)
   space(key: String!): Space
+  # Returns space-scoped registry entries, falling back to system:global defaults for unset keys (admin only)
+  spaceRegistry(spaceKey: String!, keys: [String!]): [UserRegistry!]!
 }
 
 extend type Mutation {
@@ -1603,6 +1644,10 @@ extend type Mutation {
   updateSpace(key: String!, input: SpaceInput!): Space!
   # Soft-delete a space by key (admin only)
   deleteSpace(key: String!): Boolean!
+  # Write space-scoped registry entries (admin only)
+  setSpaceRegistry(spaceKey: String!, entries: [RegistryEntryInput!]): [UserRegistry!]!
+  # Delete space-scoped registry keys, reverting to system:global defaults (admin only)
+  deleteSpaceRegistry(spaceKey: String!, keys: [String!]): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../../../../graphql/registry.graphql", Input: `extend type Query {
@@ -2030,6 +2075,22 @@ func (ec *executionContext) field_Mutation_deleteFile_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteSpaceRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "keys", ec.unmarshalOString2ᚕstringᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["keys"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteSpace_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2185,6 +2246,22 @@ func (ec *executionContext) field_Mutation_saveTemplate_args(ctx context.Context
 		return nil, err
 	}
 	args["spaceKey"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setSpaceRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "entries", ec.unmarshalORegistryEntryInput2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInputᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["entries"] = arg1
 	return args, nil
 }
 
@@ -2417,6 +2494,22 @@ func (ec *executionContext) field_Query_listUserRegistry_args(ctx context.Contex
 		return nil, err
 	}
 	args["ownerID"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_spaceRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "keys", ec.unmarshalOString2ᚕstringᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["keys"] = arg1
 	return args, nil
 }
 
@@ -4382,6 +4475,96 @@ func (ec *executionContext) fieldContext_Mutation_deleteSpace(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_setSpaceRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_setSpaceRegistry,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetSpaceRegistry(ctx, fc.Args["spaceKey"].(string), fc.Args["entries"].([]*RegistryEntryInput))
+		},
+		nil,
+		ec.marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setSpaceRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_UserRegistry_key(ctx, field)
+			case "value":
+				return ec.fieldContext_UserRegistry_value(ctx, field)
+			case "isEncrypted":
+				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserRegistry", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setSpaceRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteSpaceRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteSpaceRegistry,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteSpaceRegistry(ctx, fc.Args["spaceKey"].(string), fc.Args["keys"].([]string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteSpaceRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteSpaceRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_setUserRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5357,6 +5540,55 @@ func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_space_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_spaceRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_spaceRegistry,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().SpaceRegistry(ctx, fc.Args["spaceKey"].(string), fc.Args["keys"].([]string))
+		},
+		nil,
+		ec.marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistryᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_spaceRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_UserRegistry_key(ctx, field)
+			case "value":
+				return ec.fieldContext_UserRegistry_value(ctx, field)
+			case "isEncrypted":
+				return ec.fieldContext_UserRegistry_isEncrypted(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserRegistry", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_spaceRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10419,6 +10651,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "setSpaceRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setSpaceRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteSpaceRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteSpaceRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "setUserRegistry":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_setUserRegistry(ctx, field)
@@ -10727,6 +10973,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_space(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "spaceRegistry":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_spaceRegistry(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
