@@ -9,8 +9,6 @@ import {
   Database,
   FolderOpen,
   Images,
-  LogOut,
-  MoreVertical,
   Plus,
   Settings,
   UserRound,
@@ -31,7 +29,6 @@ import {
   type OrgMemberItem,
 } from '@/api/org-api'
 import { AppShellHeader } from '@/components/app-shell-header'
-import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import {
   Breadcrumb,
@@ -43,14 +40,6 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
