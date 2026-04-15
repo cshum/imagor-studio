@@ -200,9 +200,11 @@ export function AccountLayout({ children }: PropsWithChildren) {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to='/'>
+                      <Link to={isMultiTenant ? '/account/spaces' : '/'}>
                         <LayoutGrid className='text-muted-foreground mr-3 h-4 w-4' />
-                        {t('layouts.account.backToApp')}
+                        {isMultiTenant
+                          ? t('layouts.account.tabs.spaces')
+                          : t('layouts.account.backToApp')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

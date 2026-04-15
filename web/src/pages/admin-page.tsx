@@ -6,6 +6,7 @@ import { StorageManagementSection } from '@/components/storage/storage-managemen
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import type { AdminLoaderData } from '@/loaders/account-loader'
+import { useAuth } from '@/stores/auth-store'
 
 interface AdminPageProps {
   loaderData?: AdminLoaderData
@@ -13,6 +14,8 @@ interface AdminPageProps {
 
 export function AdminPage({ loaderData }: AdminPageProps) {
   const { t } = useTranslation()
+  const { authState } = useAuth()
+  const isMultiTenant = authState.multiTenant
 
   // Define system settings configuration with translations
   const SYSTEM_SETTINGS: SystemSetting[] = [
@@ -135,9 +138,13 @@ export function AdminPage({ loaderData }: AdminPageProps) {
         systemRegistryList={loaderData?.systemRegistryList || []}
       />
 
-      <StorageManagementSection storageStatus={loaderData?.storageStatus || null} />
+      {!isMultiTenant && (
+        <StorageManagementSection storageStatus={loaderData?.storageStatus || null} />
+      )}
 
-      <ImagorManagementSection imagorStatus={loaderData?.imagorStatus || null} />
+      {!isMultiTenant && (
+        <ImagorManagementSection imagorStatus={loaderData?.imagorStatus || null} />
+      )}
 
       <LicenseManagementSection licenseStatus={loaderData?.licenseStatus || null} />
     </div>
