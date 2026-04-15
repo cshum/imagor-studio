@@ -308,7 +308,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
   return (
     <SidebarWrapper>
       {/* ── Space settings sidebar ────────────────────────────────────── */}
-      <Sidebar collapsible='offcanvas' className='top-14'>
+      <Sidebar collapsible='offcanvas' className='top-14 h-[calc(100svh-3.5rem)]'>
         {/* Space identity */}
         <SidebarHeader className='border-b px-4 py-3'>
           <div className='flex items-center gap-3'>

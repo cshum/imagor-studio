@@ -3,14 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
 
 import { AppHeader } from '@/components/app-header.tsx'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 
@@ -49,34 +41,32 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
         signOutText={t('common.navigation.signOut')}
         moreText={t('common.buttons.more')}
         leftSlot={
-          <div className='flex min-w-0 items-center'>
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to='/' className='text-xl font-bold'>
-                      {appTitle}
-                    </Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                {title && (
-                  <>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>{title}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </>
-                )}
-              </BreadcrumbList>
-            </Breadcrumb>
+          <div className='flex min-w-0 items-center gap-1'>
+            <Link to='/' className='shrink-0 text-xl font-bold'>
+              {appTitle}
+            </Link>
+            {title && (
+              <div className='hidden min-w-0 sm:flex sm:items-center'>
+                <span className='text-border mx-2 shrink-0 select-none'>|</span>
+                <span className='text-muted-foreground min-w-0 truncate text-sm font-medium'>
+                  {title}
+                </span>
+              </div>
+            )}
           </div>
         }
         mobileTitle={
-          title ? (
-            <span className='truncate text-sm font-medium'>{title}</span>
-          ) : (
-            <span className='text-sm font-semibold'>{appTitle}</span>
-          )
+          <div className='flex min-w-0 items-center gap-1'>
+            <Link to='/' className='shrink-0 text-xl font-bold'>
+              {appTitle}
+            </Link>
+            {title && (
+              <div className='flex min-w-0 items-center'>
+                <span className='text-border mx-2 shrink-0 select-none'>|</span>
+                <span className='min-w-0 truncate text-sm font-medium'>{title}</span>
+              </div>
+            )}
+          </div>
         }
       />
 
