@@ -740,6 +740,13 @@
         "usernamePlaceholder": "Username",
         "roleLabel": "Role",
         "addButton": "Add",
+        "tableHeaders": {
+          "member": "Member",
+          "role": "Role",
+          "action": "Action"
+        },
+        "inviteDescription": "Invite a teammate and assign their role for this space.",
+        "emptyDescription": "Add your first member to collaborate inside this space.",
         "addSuccess": "Member added successfully.",
         "roleUpdated": "Role updated.",
         "removeSuccess": "Member removed.",

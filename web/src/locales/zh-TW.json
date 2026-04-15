@@ -667,6 +667,13 @@
         "usernamePlaceholder": "使用者名稱",
         "roleLabel": "角色",
         "addButton": "新增",
+        "tableHeaders": {
+          "member": "成員",
+          "role": "角色",
+          "action": "操作"
+        },
+        "inviteDescription": "邀請隊友並為其指派此空間的角色。",
+        "emptyDescription": "新增您的第一位成員以在此空間中協作。",
         "addSuccess": "成員新增成功。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成員已移除。",

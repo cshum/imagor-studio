@@ -1122,58 +1122,47 @@ function MembersSection() {
       <SettingsSection
         title={t('pages.spaceSettings.sections.members')}
         description={t('pages.spaceSettings.members.description')}
+        contentClassName='space-y-4'
       >
-        <div className='rounded-lg border p-4'>
-          <div className='mb-4 flex items-center gap-2'>
-            <div className='bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-md'>
-              <Plus className='h-4 w-4' />
-            </div>
-            <div>
-              <p className='text-sm font-medium'>{t('pages.spaceSettings.members.addButton')}</p>
-              <p className='text-muted-foreground text-sm'>
-                Invite a teammate and assign their role for this space.
-              </p>
-            </div>
+        <div className='grid gap-3 border-b pb-4 md:grid-cols-[minmax(0,1fr)_160px_auto] md:items-end'>
+          <div>
+            <label className='mb-1.5 block text-sm font-medium'>
+              {t('pages.spaceSettings.members.addLabel')}
+            </label>
+            <Input
+              placeholder={t('pages.spaceSettings.members.usernamePlaceholder')}
+              value={addUsername}
+              onChange={(e) => setAddUsername(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              disabled={isAdding}
+            />
           </div>
-          <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_auto] md:items-end'>
-            <div>
-              <label className='mb-1.5 block text-sm font-medium'>
-                {t('pages.spaceSettings.members.addLabel')}
-              </label>
-              <Input
-                placeholder={t('pages.spaceSettings.members.usernamePlaceholder')}
-                value={addUsername}
-                onChange={(e) => setAddUsername(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-                disabled={isAdding}
-              />
-            </div>
-            <div>
-              <label className='mb-1.5 block text-sm font-medium'>
-                {t('pages.spaceSettings.members.roleLabel')}
-              </label>
-              <Select value={addRole} onValueChange={setAddRole} disabled={isAdding}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLE_OPTIONS.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {t(`pages.spaceSettings.members.roles.${r}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <ButtonWithLoading
-              onClick={handleAdd}
-              isLoading={isAdding}
-              disabled={!addUsername.trim()}
-              className='w-full md:w-auto'
-            >
-              {t('pages.spaceSettings.members.addButton')}
-            </ButtonWithLoading>
+          <div>
+            <label className='mb-1.5 block text-sm font-medium'>
+              {t('pages.spaceSettings.members.roleLabel')}
+            </label>
+            <Select value={addRole} onValueChange={setAddRole} disabled={isAdding}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_OPTIONS.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {t(`pages.spaceSettings.members.roles.${r}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          <ButtonWithLoading
+            onClick={handleAdd}
+            isLoading={isAdding}
+            disabled={!addUsername.trim()}
+            className='w-full whitespace-nowrap md:w-auto'
+          >
+            <Plus className='mr-2 h-4 w-4' />
+            {t('pages.spaceSettings.members.addButton')}
+          </ButtonWithLoading>
         </div>
 
         {membersContent}
