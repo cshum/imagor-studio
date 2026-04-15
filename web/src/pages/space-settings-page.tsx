@@ -618,6 +618,18 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                     </div>
                   </div>
                 )}
+                {/* URL Signing subtitle — outside card for non-BYOB */}
+                {!isByob && (
+                  <div className='mb-4'>
+                    <h3 className='text-base font-semibold'>
+                      {t('pages.spaceSettings.storage.urlSigning')}
+                    </h3>
+                    <p className='text-muted-foreground mt-1 text-sm'>
+                      {t('pages.spaceSettings.storage.urlSigningDescription')}
+                    </p>
+                  </div>
+                )}
+
                 <SettingsSection>
                   {isByob && (
                     <div className='bg-muted/40 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md px-3 py-2 text-sm'>
@@ -738,15 +750,17 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                         </>
                       )}
 
-                      {/* URL Signing sub-section */}
-                      <div className={isByob ? 'mb-1 border-t pt-5' : 'mb-1'}>
-                        <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
-                          {t('pages.spaceSettings.storage.urlSigning')}
-                        </p>
-                        <p className='text-muted-foreground mt-1 text-sm'>
-                          {t('pages.spaceSettings.storage.urlSigningDescription')}
-                        </p>
-                      </div>
+                      {/* URL Signing sub-heading — inside card only for BYOB */}
+                      {isByob && (
+                        <div className='mb-1 border-t pt-5'>
+                          <p className='text-sm font-semibold'>
+                            {t('pages.spaceSettings.storage.urlSigning')}
+                          </p>
+                          <p className='text-muted-foreground mt-0.5 text-sm'>
+                            {t('pages.spaceSettings.storage.urlSigningDescription')}
+                          </p>
+                        </div>
+                      )}
 
                       <FormField
                         control={configForm.control}
