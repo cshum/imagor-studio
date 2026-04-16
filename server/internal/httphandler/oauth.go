@@ -1,6 +1,7 @@
 package httphandler
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -8,23 +9,26 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"go.uber.org/zap"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 // OAuthHandler handles Google OAuth 2.0 flows.
 type OAuthHandler struct {
-	tokenManager       *auth.TokenManager
-	userStore          userstore.Store
-	orgStore           orgstore.Store // nil in self-hosted mode
-	logger             *zap.Logger
-	googleClientID     string
-	googleClientSecret string
-	appBaseURL         string
+	tokenManager *auth.TokenManager
+	userStore    userstore.Store
+	orgStore     orgstore.Store // nil in self-hosted mode
+	logger       *zap.Logger
+	googleConfig *oauth2.Config
+	appBaseURL   string
 }
 
 // NewOAuthHandler creates a new OAuthHandler.
@@ -37,25 +41,39 @@ func NewOAuthHandler(
 	googleClientSecret string,
 	appBaseURL string,
 ) *OAuthHandler {
-	return &OAuthHandler{
-		tokenManager:       tokenManager,
-		userStore:          userStore,
-		orgStore:           orgStore,
-		logger:             logger,
-		googleClientID:     googleClientID,
-		googleClientSecret: googleClientSecret,
-		appBaseURL:         appBaseURL,
+	var googleConfig *oauth2.Config
+	if googleClientID != "" {
+		googleConfig = &oauth2.Config{
+			ClientID:     googleClientID,
+			ClientSecret: googleClientSecret,
+			RedirectURL:  appBaseURL + "/api/auth/google/callback",
+			Scopes:       []string{"openid", "email", "profile"},
+			Endpoint:     google.Endpoint,
+		}
 	}
+	return &OAuthHandler{
+		tokenManager: tokenManager,
+		userStore:    userStore,
+		orgStore:     orgStore,
+		logger:       logger,
+		googleConfig: googleConfig,
+		appBaseURL:   appBaseURL,
+	}
+}
+
+// AuthProvidersResponse is the typed response for the providers endpoint.
+type AuthProvidersResponse struct {
+	Providers []string `json:"providers"`
 }
 
 // GoogleAuthProviders returns a JSON list of configured OAuth providers.
 // GET /api/auth/providers
 func (h *OAuthHandler) GoogleAuthProviders() http.HandlerFunc {
 	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
-		if h.googleClientID != "" {
-			return WriteSuccess(w, map[string]interface{}{"providers": []string{"google"}})
+		if h.googleConfig != nil {
+			return WriteSuccess(w, AuthProvidersResponse{Providers: []string{"google"}})
 		}
-		return WriteSuccess(w, map[string]interface{}{"providers": []string{}})
+		return WriteSuccess(w, AuthProvidersResponse{Providers: []string{}})
 	})
 }
 
@@ -63,6 +81,10 @@ func (h *OAuthHandler) GoogleAuthProviders() http.HandlerFunc {
 // GET /api/auth/google/login
 func (h *OAuthHandler) GoogleLogin() http.HandlerFunc {
 	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
+		if h.googleConfig == nil {
+			return apperror.NotFound("OAuth not configured")
+		}
+
 		// Generate a random state nonce.
 		state := generateRandomState()
 
@@ -72,21 +94,13 @@ func (h *OAuthHandler) GoogleLogin() http.HandlerFunc {
 			Value:    state,
 			Path:     "/",
 			HttpOnly: true,
+			Secure:   strings.HasPrefix(h.appBaseURL, "https://"),
 			SameSite: http.SameSiteLaxMode,
 			MaxAge:   int((10 * time.Minute).Seconds()),
 			Expires:  time.Now().Add(10 * time.Minute),
 		})
 
-		redirectURI := h.appBaseURL + "/api/auth/google/callback"
-
-		params := url.Values{}
-		params.Set("client_id", h.googleClientID)
-		params.Set("redirect_uri", redirectURI)
-		params.Set("response_type", "code")
-		params.Set("scope", "openid email profile")
-		params.Set("state", state)
-
-		authURL := "https://accounts.google.com/o/oauth2/auth?" + params.Encode()
+		authURL := h.googleConfig.AuthCodeURL(state, oauth2.AccessTypeOnline)
 		http.Redirect(w, r, authURL, http.StatusFound)
 		return nil
 	})
@@ -97,6 +111,11 @@ func (h *OAuthHandler) GoogleLogin() http.HandlerFunc {
 func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
+		if h.googleConfig == nil {
+			http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("oauth_not_configured"), http.StatusFound)
+			return
+		}
 
 		// Validate state cookie.
 		stateCookie, err := r.Cookie("oauth_state")
@@ -137,17 +156,16 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 			return
 		}
 
-		// Exchange authorization code for tokens.
-		redirectURI := h.appBaseURL + "/api/auth/google/callback"
-		tokenResp, err := h.exchangeGoogleCode(code, redirectURI)
+		// Exchange authorization code for tokens using the oauth2 library.
+		token, err := h.googleConfig.Exchange(ctx, code)
 		if err != nil {
 			h.logger.Error("OAuth callback: failed to exchange code", zap.Error(err))
 			http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("oauth_failed"), http.StatusFound)
 			return
 		}
 
-		// Fetch userinfo from Google.
-		userInfo, err := h.fetchGoogleUserInfo(tokenResp.AccessToken)
+		// Fetch userinfo using the oauth2 HTTP client.
+		userInfo, err := h.fetchGoogleUserInfo(ctx, token)
 		if err != nil {
 			h.logger.Error("OAuth callback: failed to fetch userinfo", zap.Error(err))
 			http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("oauth_failed"), http.StatusFound)
@@ -190,11 +208,11 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 			scopes = append(scopes, "admin")
 		}
 
-		var token string
+		var jwtToken string
 		if orgID != "" {
-			token, err = h.tokenManager.GenerateTokenForUser(user.ID, user.Role, scopes, orgID)
+			jwtToken, err = h.tokenManager.GenerateTokenForUser(user.ID, user.Role, scopes, orgID)
 		} else {
-			token, err = h.tokenManager.GenerateToken(user.ID, user.Role, scopes, "")
+			jwtToken, err = h.tokenManager.GenerateToken(user.ID, user.Role, scopes, "")
 		}
 		if err != nil {
 			h.logger.Error("OAuth callback: failed to generate token", zap.Error(err))
@@ -205,19 +223,10 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 		expiresIn := h.tokenManager.TokenDuration().Milliseconds() / 1000
 
 		// Redirect to frontend with token.
-		frontendURL := h.appBaseURL + "/auth/callback?token=" + url.QueryEscape(token) +
+		frontendURL := h.appBaseURL + "/auth/callback?token=" + url.QueryEscape(jwtToken) +
 			"&expires_in=" + strconv.FormatInt(expiresIn, 10)
 		http.Redirect(w, r, frontendURL, http.StatusFound)
 	}
-}
-
-// googleTokenResponse is the response from Google's token endpoint.
-type googleTokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token"`
-	IDToken      string `json:"id_token"`
 }
 
 // googleUserInfo is the response from Google's userinfo endpoint.
@@ -232,47 +241,11 @@ type googleUserInfo struct {
 	Locale        string `json:"locale"`
 }
 
-// exchangeGoogleCode exchanges an authorization code for access/id tokens.
-func (h *OAuthHandler) exchangeGoogleCode(code, redirectURI string) (*googleTokenResponse, error) {
-	formData := url.Values{}
-	formData.Set("code", code)
-	formData.Set("client_id", h.googleClientID)
-	formData.Set("client_secret", h.googleClientSecret)
-	formData.Set("redirect_uri", redirectURI)
-	formData.Set("grant_type", "authorization_code")
-
-	resp, err := http.PostForm("https://oauth2.googleapis.com/token", formData)
-	if err != nil {
-		return nil, fmt.Errorf("token exchange request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read token response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("token exchange returned %d: %s", resp.StatusCode, string(body))
-	}
-
-	var tokenResp googleTokenResponse
-	if err := json.Unmarshal(body, &tokenResp); err != nil {
-		return nil, fmt.Errorf("failed to decode token response: %w", err)
-	}
-	return &tokenResp, nil
-}
-
-// fetchGoogleUserInfo fetches user profile from Google's userinfo endpoint.
-func (h *OAuthHandler) fetchGoogleUserInfo(accessToken string) (*googleUserInfo, error) {
-	req, err := http.NewRequest(http.MethodGet, "https://www.googleapis.com/oauth2/v2/userinfo", nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create userinfo request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+// fetchGoogleUserInfo fetches user profile from Google's userinfo endpoint
+// using the oauth2-authenticated HTTP client.
+func (h *OAuthHandler) fetchGoogleUserInfo(ctx context.Context, token *oauth2.Token) (*googleUserInfo, error) {
+	client := h.googleConfig.Client(ctx, token)
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
 		return nil, fmt.Errorf("userinfo request failed: %w", err)
 	}
