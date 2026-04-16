@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { configureFileStorage, configureS3Storage, testStorageConfig } from '@/api/storage-api'
+import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
@@ -232,7 +233,9 @@ export function AdminStorageSection({ storageStatus }: AdminStorageSectionProps)
       const result = await testStorageConfig({ input: testInput })
       setTestResult({
         success: result.success,
-        message: result.message ?? (result.success ? t('pages.storage.testPassed') : t('pages.storage.testFailed')),
+        message:
+          result.message ??
+          (result.success ? t('pages.storage.testPassed') : t('pages.storage.testFailed')),
       })
     } catch (err) {
       setTestResult({
@@ -314,19 +317,21 @@ export function AdminStorageSection({ storageStatus }: AdminStorageSectionProps)
                 />
               </SettingsSection>
 
-              <button
+              <Button
                 type='button'
-                className='text-muted-foreground hover:text-foreground flex items-center gap-1 py-1 text-sm'
+                variant='ghost'
+                size='sm'
+                className='-ml-2'
                 onClick={() => setShowFileAdvanced((v) => !v)}
                 disabled={isDisabled}
               >
                 {showFileAdvanced ? (
-                  <ChevronDown className='h-3.5 w-3.5' />
+                  <ChevronDown className='mr-2 h-3.5 w-3.5' />
                 ) : (
-                  <ChevronRight className='h-3.5 w-3.5' />
+                  <ChevronRight className='mr-2 h-3.5 w-3.5' />
                 )}
                 {t('pages.storage.advancedSettings')}
-              </button>
+              </Button>
 
               {showFileAdvanced && (
                 <SettingsSection>
@@ -456,9 +461,11 @@ export function AdminStorageSection({ storageStatus }: AdminStorageSectionProps)
                 />
               </SettingsSection>
 
-              <button
+              <Button
                 type='button'
-                className='text-muted-foreground hover:text-foreground flex items-center gap-1 py-1 text-sm'
+                variant='ghost'
+                size='sm'
+                className='-ml-2'
                 onClick={() => setShowS3Advanced((v) => !v)}
                 disabled={isDisabled}
               >
@@ -468,7 +475,7 @@ export function AdminStorageSection({ storageStatus }: AdminStorageSectionProps)
                   <ChevronRight className='h-3.5 w-3.5' />
                 )}
                 {t('pages.storage.advancedSettings')}
-              </button>
+              </Button>
 
               {showS3Advanced && (
                 <SettingsSection>
