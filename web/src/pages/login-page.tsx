@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate, useNavigate, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 
-import { getAuthProviders, login } from '@/api/auth-api'
+import { getAuthProviders, getGoogleLoginUrl, login } from '@/api/auth-api'
 import { BrandBar } from '@/components/brand-bar'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
@@ -153,7 +153,7 @@ export function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = '/api/auth/google/login'
+    window.location.href = getGoogleLoginUrl()
   }
 
   return (

@@ -168,6 +168,15 @@ export interface AuthProvidersResponse {
 }
 
 /**
+ * Returns the URL to redirect the browser to for Google OAuth login.
+ * Uses the configured API base URL so it works correctly in dev (VITE_API_BASE_URL=http://localhost:8080)
+ * and in production (same-host, empty base URL → relative /api/... path).
+ */
+export function getGoogleLoginUrl(): string {
+  return `${BASE_URL}/api/auth/google/login`
+}
+
+/**
  * Get available auth providers (e.g. google, github)
  */
 export async function getAuthProviders(): Promise<AuthProvidersResponse> {
