@@ -897,3 +897,53 @@ func TestUserStore_InputValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestUserStore_GetByIDAdmin(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	// Create an active user
+	activeUser, err := store.Create(ctx, "Active User", "activeuser", "hashedpassword", "user")
+	require.NoError(t, err)
+	require.NotNil(t, activeUser)
+
+	// Create and then deactivate a user
+	inactiveUser, err := store.Create(ctx, "Inactive User", "inactiveuser", "hashedpassword", "user")
+	require.NoError(t, err)
+	require.NotNil(t, inactiveUser)
+
+	err = store.SetActive(ctx, inactiveUser.ID, false)
+	require.NoError(t, err)
+
+	t.Run("GetByIDAdmin finds active user", func(t *testing.T) {
+		found, err := store.GetByIDAdmin(ctx, activeUser.ID)
+		require.NoError(t, err)
+		require.NotNil(t, found)
+		assert.Equal(t, activeUser.ID, found.ID)
+		assert.True(t, found.IsActive)
+	})
+
+	t.Run("GetByIDAdmin finds inactive user", func(t *testing.T) {
+		found, err := store.GetByIDAdmin(ctx, inactiveUser.ID)
+		require.NoError(t, err)
+		require.NotNil(t, found, "GetByIDAdmin should return inactive users")
+		assert.Equal(t, inactiveUser.ID, found.ID)
+		assert.False(t, found.IsActive)
+	})
+
+	t.Run("GetByID does NOT find inactive user", func(t *testing.T) {
+		found, err := store.GetByID(ctx, inactiveUser.ID)
+		require.NoError(t, err)
+		assert.Nil(t, found, "GetByID should filter out inactive users")
+	})
+
+	t.Run("GetByIDAdmin returns nil for non-existent user", func(t *testing.T) {
+		found, err := store.GetByIDAdmin(ctx, "non-existent-id")
+		require.NoError(t, err)
+		assert.Nil(t, found)
+	})
+}

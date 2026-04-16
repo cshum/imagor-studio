@@ -120,6 +120,59 @@ func TestUser_AdminOnly(t *testing.T) {
 	}
 }
 
+func TestReactivateAccount_AdminOperation(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createAdminContext("admin-user-id")
+
+	now := time.Now()
+	inactiveUser := &userstore.User{
+		ID:          "target-user-id",
+		DisplayName: "targetuser",
+		Username:    "targetuser",
+		Role:        "user",
+		IsActive:    false, // user is currently inactive
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	mockUserStore.On("GetByIDAdmin", ctx, "target-user-id").Return(inactiveUser, nil)
+	mockUserStore.On("SetActive", ctx, "target-user-id", true).Return(nil)
+
+	result, err := resolver.Mutation().ReactivateAccount(ctx, "target-user-id")
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+
+	mockUserStore.AssertExpectations(t)
+}
+
+func TestReactivateAccount_NonAdminForbidden(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("regular-user-id")
+
+	result, err := resolver.Mutation().ReactivateAccount(ctx, "target-user-id")
+
+	assert.Error(t, err)
+	assert.False(t, result)
+	assert.Contains(t, err.Error(), "insufficient permission")
+
+	mockUserStore.AssertExpectations(t)
+}
+
 func TestUpdateProfile_SelfOperation(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockRegistryStore := new(MockRegistryStore)
@@ -614,7 +667,7 @@ func TestDeactivateAccount_SelfOperation(t *testing.T) {
 		UpdatedAt:   now,
 	}
 
-	mockUserStore.On("GetByID", ctx, "test-user-id").Return(targetUser, nil)
+	mockUserStore.On("GetByIDAdmin", ctx, "test-user-id").Return(targetUser, nil)
 	mockUserStore.On("SetActive", ctx, "test-user-id", false).Return(nil)
 
 	result, err := resolver.Mutation().DeactivateAccount(ctx, nil)
@@ -649,7 +702,7 @@ func TestDeactivateAccount_AdminOperation(t *testing.T) {
 
 	targetUserID := "target-user-id"
 
-	mockUserStore.On("GetByID", ctx, "target-user-id").Return(targetUser, nil)
+	mockUserStore.On("GetByIDAdmin", ctx, "target-user-id").Return(targetUser, nil)
 	mockUserStore.On("SetActive", ctx, "target-user-id", false).Return(nil)
 
 	result, err := resolver.Mutation().DeactivateAccount(ctx, &targetUserID)
@@ -964,11 +1017,24 @@ func TestUserOperations_UserNotFound(t *testing.T) {
 				return createAdminContext("admin-user")
 			},
 			setupMock: func(ctx context.Context) {
-				mockUserStore.On("GetByID", ctx, "non-existent-user").Return(nil, nil)
+				mockUserStore.On("GetByIDAdmin", ctx, "non-existent-user").Return(nil, nil)
 			},
 			execute: func(ctx context.Context) (interface{}, error) {
 				targetID := "non-existent-user"
 				return resolver.Mutation().DeactivateAccount(ctx, &targetID)
+			},
+		},
+		{
+			name:      "ReactivateAccount - target user not found",
+			operation: "reactivateAccount",
+			setupCtx: func() context.Context {
+				return createAdminContext("admin-user")
+			},
+			setupMock: func(ctx context.Context) {
+				mockUserStore.On("GetByIDAdmin", ctx, "non-existent-user").Return(nil, nil)
+			},
+			execute: func(ctx context.Context) (interface{}, error) {
+				return resolver.Mutation().ReactivateAccount(ctx, "non-existent-user")
 			},
 		},
 	}

@@ -61,6 +61,12 @@ export const DeactivateAccountMutation = gql(`
   }
 `)
 
+export const ReactivateAccountMutation = gql(`
+  mutation ReactivateAccount($userId: ID!) {
+    reactivateAccount(userId: $userId)
+  }
+`)
+
 export const CreateUserMutation = gql(`
   mutation CreateUser($input: CreateUserInput!) {
     createUser(input: $input) {

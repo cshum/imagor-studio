@@ -271,8 +271,8 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string
 		return false, fmt.Errorf("use self-deactivation (no userID parameter) to deactivate your own account")
 	}
 
-	// Check if target user exists
-	targetUser, err := r.userStore.GetByID(ctx, targetUserID)
+	// Check if target user exists (use GetByIDAdmin to find users regardless of active status)
+	targetUser, err := r.userStore.GetByIDAdmin(ctx, targetUserID)
 	if err != nil {
 		return false, fmt.Errorf("failed to get target user: %w", err)
 	}
@@ -288,6 +288,38 @@ func (r *mutationResolver) DeactivateAccount(ctx context.Context, userID *string
 		zap.String("targetUserID", targetUserID),
 		zap.String("deactivatedByUserID", currentUserID),
 		zap.Bool("isAdminOperation", userID != nil))
+
+	return true, nil
+}
+
+// ReactivateAccount reactivates a deactivated user's account (admin only)
+func (r *mutationResolver) ReactivateAccount(ctx context.Context, userID string) (bool, error) {
+	// Only admins can reactivate accounts
+	if err := RequireAdminPermission(ctx); err != nil {
+		return false, err
+	}
+
+	currentUserID, err := GetUserIDFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get current user ID: %w", err)
+	}
+
+	// Check if target user exists (including inactive users)
+	targetUser, err := r.userStore.GetByIDAdmin(ctx, userID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get target user: %w", err)
+	}
+	if targetUser == nil {
+		return false, fmt.Errorf("target user not found")
+	}
+
+	if err := r.userStore.SetActive(ctx, userID, true); err != nil {
+		return false, fmt.Errorf("failed to reactivate account: %w", err)
+	}
+
+	r.logger.Info("Account reactivated",
+		zap.String("targetUserID", userID),
+		zap.String("reactivatedByUserID", currentUserID))
 
 	return true, nil
 }

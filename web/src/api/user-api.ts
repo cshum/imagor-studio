@@ -12,6 +12,8 @@ import type {
   ListUsersQuery,
   ListUsersQueryVariables,
   MeQuery,
+  ReactivateAccountMutation,
+  ReactivateAccountMutationVariables,
   UpdateProfileMutation,
   UpdateProfileMutationVariables,
 } from '../generated/graphql'
@@ -101,6 +103,18 @@ export async function deactivateAccount(
   }
   const result = await sdk.DeactivateAccount(variables)
   return result.deactivateAccount
+}
+
+/**
+ * Reactivate a deactivated account (admin only)
+ */
+export async function reactivateAccount(
+  userId: string,
+): Promise<ReactivateAccountMutation['reactivateAccount']> {
+  const sdk = getSdk(getGraphQLClient())
+  const variables: ReactivateAccountMutationVariables = { userId }
+  const result = await sdk.ReactivateAccount(variables)
+  return result.reactivateAccount
 }
 
 /**

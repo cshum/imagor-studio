@@ -113,6 +113,7 @@ type ComplexityRoot struct {
 		GenerateImagorURL             func(childComplexity int, imagePath string, params ImagorParamsInput) int
 		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
 		MoveFile                      func(childComplexity int, sourcePath string, destPath string, spaceKey *string) int
+		ReactivateAccount             func(childComplexity int, userID string) int
 		RegenerateTemplatePreview     func(childComplexity int, templatePath string, spaceKey *string) int
 		RemoveOrgMember               func(childComplexity int, userID string) int
 		SaveTemplate                  func(childComplexity int, input SaveTemplateInput, spaceKey *string) int
@@ -287,6 +288,7 @@ type MutationResolver interface {
 	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
 	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
 	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
+	ReactivateAccount(ctx context.Context, userID string) (bool, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
 type QueryResolver interface {
@@ -746,6 +748,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.MoveFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string), args["spaceKey"].(*string)), true
+	case "Mutation.reactivateAccount":
+		if e.ComplexityRoot.Mutation.ReactivateAccount == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_reactivateAccount_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ReactivateAccount(childComplexity, args["userId"].(string)), true
 	case "Mutation.regenerateTemplatePreview":
 		if e.ComplexityRoot.Mutation.RegenerateTemplatePreview == nil {
 			break
@@ -2015,6 +2028,7 @@ extend type Mutation {
   updateProfile(input: UpdateProfileInput!, userId: ID): User!
   changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
   deactivateAccount(userId: ID): Boolean!
+  reactivateAccount(userId: ID!): Boolean!
 
   # admin only operations
   createUser(input: CreateUserInput!): User!
@@ -2349,6 +2363,17 @@ func (ec *executionContext) field_Mutation_moveFile_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["spaceKey"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_reactivateAccount_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
 	return args, nil
 }
 
@@ -5205,6 +5230,47 @@ func (ec *executionContext) fieldContext_Mutation_deactivateAccount(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deactivateAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_reactivateAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_reactivateAccount,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ReactivateAccount(ctx, fc.Args["userId"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_reactivateAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_reactivateAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11283,6 +11349,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deactivateAccount":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deactivateAccount(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reactivateAccount":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_reactivateAccount(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

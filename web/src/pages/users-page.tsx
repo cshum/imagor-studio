@@ -7,7 +7,7 @@ import { Edit, MoreHorizontal, Plus, Search, UserCheck, UserX } from 'lucide-rea
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { createUser, deactivateAccount, updateProfile } from '@/api/user-api'
+import { createUser, deactivateAccount, reactivateAccount, updateProfile } from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -200,7 +200,11 @@ export function UsersPage({ loaderData, searchQuery = '' }: UsersPageProps) {
   const handleDeactivateUser = async (userId: string, isActive: boolean) => {
     setIsDeactivating(userId)
     try {
-      await deactivateAccount(userId)
+      if (isActive) {
+        await deactivateAccount(userId)
+      } else {
+        await reactivateAccount(userId)
+      }
       const successMessage = isActive
         ? t('pages.users.messages.userDeactivatedSuccess')
         : t('pages.users.messages.userReactivatedSuccess')

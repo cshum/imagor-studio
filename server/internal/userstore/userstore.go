@@ -27,6 +27,7 @@ type User struct {
 type Store interface {
 	Create(ctx context.Context, displayName, username, hashedPassword, role string) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
+	GetByIDAdmin(ctx context.Context, id string) (*User, error)
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	GetByIDWithPassword(ctx context.Context, id string) (*model.User, error)
 	UpdateLastLogin(ctx context.Context, id string) error
@@ -109,6 +110,30 @@ func (s *store) GetByID(ctx context.Context, id string) (*User, error) {
 	err := s.db.NewSelect().
 		Model(&user).
 		Where("id = ? AND is_active = true", id).
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error getting user by ID: %w", err)
+	}
+
+	return &User{
+		ID:          user.ID,
+		DisplayName: user.DisplayName,
+		Username:    user.Username,
+		Role:        user.Role,
+		IsActive:    user.IsActive,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
+	}, nil
+}
+
+func (s *store) GetByIDAdmin(ctx context.Context, id string) (*User, error) {
+	var user model.User
+	err := s.db.NewSelect().
+		Model(&user).
+		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

@@ -173,6 +173,7 @@ export type Mutation = {
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
+  reactivateAccount: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
   removeOrgMember: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
@@ -275,6 +276,10 @@ export type MutationMoveFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
   spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationReactivateAccountArgs = {
+  userId: Scalars['ID']['input']
 }
 
 export type MutationRegenerateTemplatePreviewArgs = {
@@ -1317,6 +1322,12 @@ export type DeactivateAccountMutationVariables = Exact<{
 
 export type DeactivateAccountMutation = { __typename?: 'Mutation'; deactivateAccount: boolean }
 
+export type ReactivateAccountMutationVariables = Exact<{
+  userId: Scalars['ID']['input']
+}>
+
+export type ReactivateAccountMutation = { __typename?: 'Mutation'; reactivateAccount: boolean }
+
 export type CreateUserMutationVariables = Exact<{
   input: CreateUserInput
 }>
@@ -1849,6 +1860,11 @@ export const ChangePasswordDocument = gql`
 export const DeactivateAccountDocument = gql`
   mutation DeactivateAccount($userId: ID) {
     deactivateAccount(userId: $userId)
+  }
+`
+export const ReactivateAccountDocument = gql`
+  mutation ReactivateAccount($userId: ID!) {
+    reactivateAccount(userId: $userId)
   }
 `
 export const CreateUserDocument = gql`
@@ -2696,6 +2712,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'DeactivateAccount',
+        'mutation',
+        variables,
+      )
+    },
+    ReactivateAccount(
+      variables: ReactivateAccountMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ReactivateAccountMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ReactivateAccountMutation>({
+            document: ReactivateAccountDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ReactivateAccount',
         'mutation',
         variables,
       )

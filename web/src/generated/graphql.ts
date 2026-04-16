@@ -172,6 +172,7 @@ export type Mutation = {
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
+  reactivateAccount: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
   removeOrgMember: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
@@ -274,6 +275,10 @@ export type MutationMoveFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
   spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationReactivateAccountArgs = {
+  userId: Scalars['ID']['input']
 }
 
 export type MutationRegenerateTemplatePreviewArgs = {
@@ -1315,6 +1320,12 @@ export type DeactivateAccountMutationVariables = Exact<{
 }>
 
 export type DeactivateAccountMutation = { __typename?: 'Mutation'; deactivateAccount: boolean }
+
+export type ReactivateAccountMutationVariables = Exact<{
+  userId: Scalars['ID']['input']
+}>
+
+export type ReactivateAccountMutation = { __typename?: 'Mutation'; reactivateAccount: boolean }
 
 export type CreateUserMutationVariables = Exact<{
   input: CreateUserInput
@@ -3954,6 +3965,42 @@ export const DeactivateAccountDocument = {
     },
   ],
 } as unknown as DocumentNode<DeactivateAccountMutation, DeactivateAccountMutationVariables>
+export const ReactivateAccountDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ReactivateAccount' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reactivateAccount' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReactivateAccountMutation, ReactivateAccountMutationVariables>
 export const CreateUserDocument = {
   kind: 'Document',
   definitions: [
