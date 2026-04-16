@@ -3,12 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   ArrowLeft,
-  Database,
+  Cpu,
   FolderOpen,
-  Images,
+  HardDrive,
+  LayoutDashboard,
   PanelLeft,
-  Settings,
-  ShieldCheck,
   Users,
 } from 'lucide-react'
 
@@ -41,7 +40,7 @@ import { avatarColor, spaceInitials, type SpaceSettingsData } from './shared'
 
 // ── Section ids ────────────────────────────────────────────────────────────
 
-export type SectionId = 'general' | 'storage' | 'imagor' | 'gallery' | 'members'
+export type SectionId = 'general' | 'storage' | 'imagor' | 'members'
 
 // ── Layout component ───────────────────────────────────────────────────────
 
@@ -85,7 +84,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
     {
       id: 'general',
       to: '/spaces/$spaceKey/settings/general',
-      icon: <Settings className='h-4 w-4' />,
+      icon: <LayoutDashboard className='h-4 w-4' />,
       label: t('pages.spaceSettings.sections.general'),
     },
     ...(isByob
@@ -93,7 +92,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
           {
             id: 'storage' as SectionId,
             to: '/spaces/$spaceKey/settings/storage',
-            icon: <Database className='h-4 w-4' />,
+            icon: <HardDrive className='h-4 w-4' />,
             label: t('pages.spaceSettings.sections.storage'),
           },
         ]
@@ -101,14 +100,8 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
     {
       id: 'imagor',
       to: '/spaces/$spaceKey/settings/imagor',
-      icon: <ShieldCheck className='h-4 w-4' />,
+      icon: <Cpu className='h-4 w-4' />,
       label: t('pages.spaceSettings.sections.imagor'),
-    },
-    {
-      id: 'gallery',
-      to: '/spaces/$spaceKey/settings/gallery',
-      icon: <Images className='h-4 w-4' />,
-      label: t('pages.spaceSettings.sections.gallery'),
     },
     {
       id: 'members',
@@ -122,7 +115,6 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
     general: t('pages.spaceSettings.general.description'),
     storage: t('pages.spaceSettings.storage.description'),
     imagor: t('pages.spaceSettings.imagor.description'),
-    gallery: t('pages.spaceSettings.gallery.description'),
     members: t('pages.spaceSettings.members.description'),
   }
 

@@ -62,7 +62,6 @@ import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
-import { GallerySection } from '@/pages/space-settings/gallery'
 import { GeneralSection } from '@/pages/space-settings/general'
 import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
 import { MembersSection } from '@/pages/space-settings/members'
@@ -447,27 +446,12 @@ const securitySectionRoute = createRoute({
   },
 })
 
-// /spaces/$spaceKey/settings/gallery
-const gallerySectionRoute = createRoute({
+// /spaces/$spaceKey/settings/gallery → redirect to general
+const galleryRedirectRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/gallery',
-  loader: async ({ params: { spaceKey } }) => {
-    try {
-      const entries = await getSpaceRegistry(spaceKey)
-      const map: Record<string, string> = {}
-      entries.forEach((e) => {
-        map[e.key] = e.value
-      })
-      return map
-    } catch {
-      return {} as Record<string, string>
-    }
-  },
-  shouldReload: false,
-  component: () => {
-    const { space } = spaceSettingsLayoutRoute.useLoaderData()
-    const initialValues = gallerySectionRoute.useLoaderData()
-    return <GallerySection spaceKey={space.key} initialValues={initialValues} />
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/spaces/$spaceKey/settings/general', params })
   },
 })
 
@@ -687,7 +671,7 @@ const routeTree = isEmbeddedMode
           generalSectionRoute,
           storageSectionRoute,
           securitySectionRoute,
-          gallerySectionRoute,
+          galleryRedirectRoute,
           membersSectionRoute,
         ]),
         spacesLayoutRoute.addChildren([accountSpacesRoute]),

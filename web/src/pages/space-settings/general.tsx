@@ -22,6 +22,7 @@ import {
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
 
+import { GallerySection } from './gallery'
 import type { SpaceSettingsData } from './shared'
 
 // ── Schema ─────────────────────────────────────────────────────────────────
@@ -193,6 +194,11 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
       {/* Branding */}
       <div className='mt-8'>
         <BrandingSettingsSection spaceKey={space.key} initialValues={initialValues} />
+      </div>
+
+      {/* Gallery settings */}
+      <div className='mt-8'>
+        <GallerySection spaceKey={space.key} initialValues={initialValues} />
       </div>
 
       {/* Danger Zone */}

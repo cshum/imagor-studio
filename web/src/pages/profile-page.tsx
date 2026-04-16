@@ -8,7 +8,14 @@ import * as z from 'zod'
 import { changePassword, updateProfile } from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
   ResponsiveDialog,
@@ -212,23 +219,22 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <Form {...passwordForm}>
-          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-4'>
+          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-3'>
             <FormField
               control={passwordForm.control}
               name='currentPassword'
               render={({ field }) => (
                 <FormItem>
-                  <SettingRow label={t('pages.profile.currentPassword')} last>
-                    <FormControl>
-                      <Input
-                        type='password'
-                        placeholder={t('pages.profile.currentPasswordPlaceholder')}
-                        {...field}
-                        disabled={isUpdatingPassword}
-                      />
-                    </FormControl>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
+                  <FormLabel>{t('pages.profile.currentPassword')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('pages.profile.currentPasswordPlaceholder')}
+                      {...field}
+                      disabled={isUpdatingPassword}
+                    />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -237,17 +243,16 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
               name='newPassword'
               render={({ field }) => (
                 <FormItem>
-                  <SettingRow label={t('pages.profile.newPassword')} last>
-                    <FormControl>
-                      <Input
-                        type='password'
-                        placeholder={t('pages.profile.newPasswordPlaceholder')}
-                        {...field}
-                        disabled={isUpdatingPassword}
-                      />
-                    </FormControl>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
+                  <FormLabel>{t('pages.profile.newPassword')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('pages.profile.newPasswordPlaceholder')}
+                      {...field}
+                      disabled={isUpdatingPassword}
+                    />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -256,17 +261,16 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
               name='confirmPassword'
               render={({ field }) => (
                 <FormItem>
-                  <SettingRow label={t('pages.profile.confirmPassword')} last>
-                    <FormControl>
-                      <Input
-                        type='password'
-                        placeholder={t('pages.profile.confirmPasswordPlaceholder')}
-                        {...field}
-                        disabled={isUpdatingPassword}
-                      />
-                    </FormControl>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
+                  <FormLabel>{t('pages.profile.confirmPassword')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='password'
+                      placeholder={t('pages.profile.confirmPasswordPlaceholder')}
+                      {...field}
+                      disabled={isUpdatingPassword}
+                    />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
