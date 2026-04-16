@@ -431,7 +431,13 @@
       "failedToSaveSettings": "Failed to save settings",
       "settingsUpdatedSuccess": "Settings updated successfully",
       "storageConfiguredSuccess": "Storage configured successfully",
-      "storageConfiguredRestart": "Storage configured successfully Please restart the server to apply changes."
+      "storageConfiguredRestart": "Storage configured successfully Please restart the server to apply changes.",
+      "sections": {
+        "general": "General",
+        "storage": "Storage",
+        "imagor": "Imagor",
+        "license": "License"
+      }
     },
     "storage": {
       "configureStorage": "Configure Storage",
@@ -481,8 +487,9 @@
       "active": "Active",
       "s3Bucket": "S3 Bucket",
       "endpoint": "Endpoint",
-      "takingEffect": "Changes may take up to 1 minute to take effect.",
-      "testConfigFirst": "Please fill in the {{storageType}} storage configuration first"
+      "takingEffect": "Settings saved. Changes may take up to 1 minute to take effect.",
+      "testConfigFirst": "Please fill in the {{storageType}} storage configuration first",
+      "storageTypeDescription": "Select where images and files will be stored"
     },
     "systemSettings": {
       "settingOverridden": "This setting is overridden by configuration file or environment variable",
@@ -505,7 +512,10 @@
       "configuredSuccess": "Imagor configured successfully",
       "configurationDetails": "Configuration Details",
       "hasSecret": "Has Secret",
-      "takingEffect": "Settings saved. Changes may take up to 1 minute to take effect."
+      "takingEffect": "Settings saved. Changes may take up to 1 minute to take effect.",
+      "algorithmSha1": "SHA-1 — Legacy, fastest",
+      "algorithmSha256": "SHA-256 — Recommended",
+      "algorithmSha512": "SHA-512 — Maximum security"
     },
     "license": {
       "licenseManagement": "License Management",

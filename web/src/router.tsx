@@ -25,7 +25,10 @@ import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import {
-  adminLoader,
+  adminGeneralLoader,
+  adminImagorLoader,
+  adminLicenseLoader,
+  adminStorageLoader,
   profileLoader,
   spaceSettingsLoader,
   spacesLoader,
@@ -47,7 +50,11 @@ import {
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
-import { AdminPage } from '@/pages/admin-page'
+import { AdminGeneralSection } from '@/pages/admin/general'
+import { AdminImagorSection } from '@/pages/admin/imagor'
+import { AdminLayout } from '@/pages/admin/layout'
+import { AdminLicenseSection } from '@/pages/admin/license'
+import { AdminStorageSection } from '@/pages/admin/storage'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { CreateSpacePage } from '@/pages/create-space-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
@@ -526,14 +533,64 @@ const accountLayoutRoute = createRoute({
   component: () => <AccountLayout />,
 })
 
-const accountAdminRoute = createRoute({
+// ─── Admin: layout route + per-section child routes ─────────────────────────
+
+const accountAdminLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/admin',
   beforeLoad: requireAdminAccountAuth,
-  loader: adminLoader,
+  component: () => <AdminLayout />,
+})
+
+const accountAdminIndexRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/account/admin/general' })
+  },
+})
+
+const accountAdminGeneralRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/general',
+  loader: adminGeneralLoader,
+  shouldReload: false,
   component: () => {
-    const loaderData = accountAdminRoute.useLoaderData()
-    return <AdminPage loaderData={loaderData} />
+    const loaderData = accountAdminGeneralRoute.useLoaderData()
+    return <AdminGeneralSection loaderData={loaderData} />
+  },
+})
+
+const accountAdminStorageRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/storage',
+  loader: adminStorageLoader,
+  shouldReload: false,
+  component: () => {
+    const { storageStatus } = accountAdminStorageRoute.useLoaderData()
+    return <AdminStorageSection storageStatus={storageStatus} />
+  },
+})
+
+const accountAdminImagorRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/imagor',
+  loader: adminImagorLoader,
+  shouldReload: false,
+  component: () => {
+    const { imagorStatus } = accountAdminImagorRoute.useLoaderData()
+    return <AdminImagorSection imagorStatus={imagorStatus} />
+  },
+})
+
+const accountAdminLicenseRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/license',
+  loader: adminLicenseLoader,
+  shouldReload: false,
+  component: () => {
+    const { licenseStatus } = accountAdminLicenseRoute.useLoaderData()
+    return <AdminLicenseSection licenseStatus={licenseStatus} />
   },
 })
 
@@ -637,7 +694,13 @@ const routeTree = isEmbeddedMode
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
-          accountAdminRoute,
+          accountAdminLayoutRoute.addChildren([
+            accountAdminIndexRoute,
+            accountAdminGeneralRoute,
+            accountAdminStorageRoute,
+            accountAdminImagorRoute,
+            accountAdminLicenseRoute,
+          ]),
           accountUsersRoute,
         ]),
       ]),

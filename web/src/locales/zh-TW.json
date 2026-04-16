@@ -429,7 +429,13 @@
       "failedToCreateAccount": "建立管理員賬戶失敗",
       "failedToSaveSettings": "儲存設定失敗",
       "storageConfiguredSuccess": "儲存配置成功",
-      "storageConfiguredRestart": "儲存配置成功。請重啟伺服器以應用更改。"
+      "storageConfiguredRestart": "儲存配置成功。請重啟伺服器以應用更改。",
+      "sections": {
+        "general": "一般",
+        "storage": "储存",
+        "imagor": "Imagor",
+        "license": "授权"
+      }
     },
     "storage": {
       "configureStorage": "配置儲存",
@@ -479,8 +485,9 @@
       "active": "活動",
       "s3Bucket": "S3 儲存桶",
       "endpoint": "端點",
-      "takingEffect": "更改可能需要最多 1 分鐘才能生效。",
-      "testConfigFirst": "請先填寫 {{storageType}} 儲存配置"
+      "takingEffect": "设定已储存。变更最多可能需要 1 分钟才能生效。",
+      "testConfigFirst": "請先填寫 {{storageType}} 儲存配置",
+      "storageTypeDescription": "选择储存图片和档案的位置"
     },
     "systemSettings": {
       "settingOverridden": "此設定被配置檔案或環境變數覆蓋",
@@ -503,7 +510,10 @@
       "configuredSuccess": "Imagor 配置成功",
       "configurationDetails": "配置詳情",
       "hasSecret": "有金鑰",
-      "takingEffect": "設定已儲存，最多 1 分鐘內生效。"
+      "takingEffect": "設定已儲存，最多 1 分鐘內生效。",
+      "algorithmSha1": "SHA-1 - 旧版，最快",
+      "algorithmSha256": "SHA-256 - 推荐",
+      "algorithmSha512": "SHA-512 - 最高安全性"
     },
     "license": {
       "licenseManagement": "許可證管理",

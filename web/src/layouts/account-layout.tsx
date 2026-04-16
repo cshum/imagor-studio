@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
-import { PanelLeft, Settings, UserRound, Users } from 'lucide-react'
+import { Database, HardDrive, LayoutDashboard, PanelLeft, ShieldCheck, UserRound, Users } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
 import { Button } from '@/components/ui/button'
@@ -59,10 +59,31 @@ const NAV_GROUPS = (
     selfHostedOnly: true,
     items: [
       {
-        id: 'admin',
-        path: '/account/admin',
-        icon: <Settings className='h-4 w-4' />,
-        label: t('layouts.account.tabs.system'),
+        id: 'admin-general',
+        path: '/account/admin/general',
+        icon: <LayoutDashboard className='h-4 w-4' />,
+        label: t('pages.admin.sections.general'),
+        adminOnly: true,
+      },
+      {
+        id: 'admin-storage',
+        path: '/account/admin/storage',
+        icon: <HardDrive className='h-4 w-4' />,
+        label: t('pages.admin.sections.storage'),
+        adminOnly: true,
+      },
+      {
+        id: 'admin-imagor',
+        path: '/account/admin/imagor',
+        icon: <ShieldCheck className='h-4 w-4' />,
+        label: t('pages.admin.sections.imagor'),
+        adminOnly: true,
+      },
+      {
+        id: 'admin-license',
+        path: '/account/admin/license',
+        icon: <Database className='h-4 w-4' />,
+        label: t('pages.admin.sections.license'),
         adminOnly: true,
       },
       {

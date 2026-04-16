@@ -1,25 +1,21 @@
 import { useTranslation } from 'react-i18next'
 
-import { ImagorManagementSection } from '@/components/imagor/imagor-management-section.tsx'
-import { LicenseManagementSection } from '@/components/license/license-management-section'
-import { StorageManagementSection } from '@/components/storage/storage-management-section.tsx'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
-import type { AdminLoaderData } from '@/loaders/account-loader'
+import type { AdminGeneralLoaderData } from '@/loaders/account-loader'
 import { useAuth } from '@/stores/auth-store'
 
-interface AdminPageProps {
-  loaderData?: AdminLoaderData
+interface AdminGeneralSectionProps {
+  loaderData: AdminGeneralLoaderData
 }
 
-export function AdminPage({ loaderData }: AdminPageProps) {
+export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
   const { t } = useTranslation()
   const { authState } = useAuth()
   const isMultiTenant = authState.multiTenant
 
-  // In multi-tenant mode, branding + language + all gallery/UX settings move to each
-  // space's Settings pages (Branding card + Gallery section). The platform admin shows
-  // only the settings that are genuinely platform-wide.
+  // In multi-tenant mode, gallery/branding/UX settings move to per-space Settings.
+  // Platform admin only shows settings that are genuinely platform-wide.
   const GALLERY_SETTING_KEYS = new Set([
     'config.app_title',
     'config.app_url',
@@ -34,7 +30,6 @@ export function AdminPage({ loaderData }: AdminPageProps) {
     'config.app_show_hidden',
   ])
 
-  // Define system settings configuration with translations
   const ALL_SYSTEM_SETTINGS: SystemSetting[] = [
     {
       key: 'config.app_home_title',
@@ -132,8 +127,12 @@ export function AdminPage({ loaderData }: AdminPageProps) {
         seek_1s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek1s'),
         seek_3s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek3s'),
         seek_5s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek5s'),
-        seek_10pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek10pct'),
-        seek_25pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct'),
+        seek_10pct: t(
+          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek10pct',
+        ),
+        seek_25pct: t(
+          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct',
+        ),
       },
     },
     {
@@ -145,32 +144,17 @@ export function AdminPage({ loaderData }: AdminPageProps) {
     },
   ]
 
-  // In multi-tenant mode, gallery-level settings are managed per-space
   const SYSTEM_SETTINGS = isMultiTenant
     ? ALL_SYSTEM_SETTINGS.filter((s) => !GALLERY_SETTING_KEYS.has(s.key))
     : ALL_SYSTEM_SETTINGS
 
   return (
-    <div className='space-y-6'>
-      <SystemSettingsForm
-        title={t('pages.admin.systemSettings.title')}
-        description={t('pages.admin.systemSettings.description')}
-        settings={SYSTEM_SETTINGS}
-        initialValues={loaderData?.registry || {}}
-        systemRegistryList={loaderData?.systemRegistryList || []}
-      />
-
-      {!isMultiTenant && (
-        <StorageManagementSection storageStatus={loaderData?.storageStatus || null} />
-      )}
-
-      {!isMultiTenant && (
-        <ImagorManagementSection imagorStatus={loaderData?.imagorStatus || null} />
-      )}
-
-      {!isMultiTenant && (
-        <LicenseManagementSection licenseStatus={loaderData?.licenseStatus || null} />
-      )}
-    </div>
+    <SystemSettingsForm
+      title={t('pages.admin.systemSettings.title')}
+      description={t('pages.admin.systemSettings.description')}
+      settings={SYSTEM_SETTINGS}
+      initialValues={loaderData.registry}
+      systemRegistryList={loaderData.systemRegistryList}
+    />
   )
 }

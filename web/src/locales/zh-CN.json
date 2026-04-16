@@ -428,7 +428,13 @@
       "failedToCreateAccount": "创建管理员账户失败",
       "failedToSaveSettings": "保存设置失败",
       "storageConfiguredSuccess": "存储配置成功",
-      "storageConfiguredRestart": "存储配置成功。请重启服务器以应用更改。"
+      "storageConfiguredRestart": "存储配置成功。请重启服务器以应用更改。",
+      "sections": {
+        "general": "常规",
+        "storage": "存储",
+        "imagor": "Imagor",
+        "license": "许可证"
+      }
     },
     "storage": {
       "configureStorage": "配置存储",
@@ -478,8 +484,9 @@
       "active": "活动",
       "s3Bucket": "S3 存储桶",
       "endpoint": "端点",
-      "takingEffect": "更改可能需要最多 1 分钟才能生效。",
-      "testConfigFirst": "请先填写 {{storageType}} 存储配置"
+      "takingEffect": "设置已保存。更改可能需要最多 1 分钟才能生效。",
+      "testConfigFirst": "请先填写 {{storageType}} 存储配置",
+      "storageTypeDescription": "选择存储图片和文件的位置"
     },
     "systemSettings": {
       "settingOverridden": "此设置被配置文件或环境变量覆盖",
@@ -502,7 +509,10 @@
       "configuredSuccess": "Imagor 配置成功",
       "configurationDetails": "配置详情",
       "hasSecret": "有密钥",
-      "takingEffect": "设置已保存，最多 1 分钟内生效。"
+      "takingEffect": "设置已保存，最多 1 分钟内生效。",
+      "algorithmSha1": "SHA-1 - 旧版，最快",
+      "algorithmSha256": "SHA-256 - 推荐",
+      "algorithmSha512": "SHA-512 - 最高安全性"
     },
     "license": {
       "licenseManagement": "许可证管理",

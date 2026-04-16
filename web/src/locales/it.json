@@ -426,7 +426,13 @@
       "failedToCreateAccount": "Impossibile creare l'account amministratore",
       "failedToSaveSettings": "Impossibile salvare le impostazioni",
       "storageConfiguredSuccess": "Archiviazione configurata correttamente",
-      "storageConfiguredRestart": "Archiviazione configurata correttamente. Riavvia il server per applicare le modifiche."
+      "storageConfiguredRestart": "Archiviazione configurata correttamente. Riavvia il server per applicare le modifiche.",
+      "sections": {
+        "general": "Generale",
+        "storage": "Archiviazione",
+        "imagor": "Imagor",
+        "license": "Licenza"
+      }
     },
     "storage": {
       "configureStorage": "Configura Archiviazione",
@@ -476,8 +482,9 @@
       "active": "Attivo",
       "s3Bucket": "Bucket S3",
       "endpoint": "Endpoint",
-      "takingEffect": "Le modifiche potrebbero richiedere fino a 1 minuto per avere effetto.",
-      "testConfigFirst": "Compila prima la configurazione di archiviazione {{storageType}}"
+      "takingEffect": "Impostazioni salvate. Le modifiche potrebbero richiedere fino a 1 minuto per avere effetto.",
+      "testConfigFirst": "Compila prima la configurazione di archiviazione {{storageType}}",
+      "storageTypeDescription": "Seleziona dove verranno archiviati le immagini e i file"
     },
     "systemSettings": {
       "settingOverridden": "Questa impostazione è sovrascritta dal file di configurazione o dalla variabile d'ambiente",
@@ -500,7 +507,10 @@
       "configuredSuccess": "Imagor configurato correttamente",
       "configurationDetails": "Dettagli Configurazione",
       "hasSecret": "Ha Segreto",
-      "takingEffect": "Impostazioni salvate. Le modifiche possono richiedere fino a 1 minuto."
+      "takingEffect": "Impostazioni salvate. Le modifiche possono richiedere fino a 1 minuto.",
+      "algorithmSha1": "SHA-1 — Legacy, piu veloce",
+      "algorithmSha256": "SHA-256 — Raccomandato",
+      "algorithmSha512": "SHA-512 — Massima sicurezza"
     },
     "license": {
       "licenseManagement": "Gestione Licenza",
