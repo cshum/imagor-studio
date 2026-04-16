@@ -1,8 +1,16 @@
 import { useTranslation } from 'react-i18next'
-import { Link, type LinkComponentProps } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import { Check, Languages, LogOut, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -45,23 +53,45 @@ function avatarBg(name: string): string {
   return AVATAR_BG[h % AVATAR_BG.length]
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────────────
 
-interface AppShellHeaderProps {
-  leftSlot?: React.ReactNode
-  mobileTitle?: React.ReactNode
+export interface AppHeaderBreadcrumb {
+  label: string
+  /** When provided the segment renders as a Link; omit for plain text (last segment). */
+  href?: string
+}
+
+interface AppHeaderProps {
+  // ── Left side ─────────────────────────────────────────────────────────────
+  /** Bold app logo text */
+  appTitle?: string
+  /** href for the app logo link — defaults to "/" */
+  appHref?: string
+  /**
+   * Breadcrumb segments rendered after the logo with a "|" separator.
+   * Each item with `href` is a link; the last item without `href` is plain text.
+   */
+  breadcrumbs?: AppHeaderBreadcrumb[]
+  /** Optional sidebar-open trigger rendered before the logo (mobile/tablet) */
+  mobileTrigger?: React.ReactNode
+
+  // ── Right side ────────────────────────────────────────────────────────────
   profileLabel: string
   roleLabel?: string
   onLogout: () => void | Promise<void>
-  profileLink?: LinkComponentProps['to']
+  profileLink?: string
   profileText?: string
   signOutText?: string
   moreText?: string
 }
 
+// ── Component ────────────────────────────────────────────────────────────────
+
 export function AppHeader({
-  leftSlot,
-  mobileTitle,
+  appTitle,
+  appHref = '/',
+  breadcrumbs,
+  mobileTrigger,
   profileLabel,
   roleLabel,
   onLogout,
@@ -69,19 +99,67 @@ export function AppHeader({
   profileText = 'Profile',
   signOutText = 'Sign Out',
   moreText = 'More',
-}: AppShellHeaderProps) {
+}: AppHeaderProps) {
   const { t, i18n } = useTranslation()
   const initials = getInitials(profileLabel)
   const bgColor = avatarBg(profileLabel)
 
+  // ── Left-side content ────────────────────────────────────────────────────
+  const hasBreadcrumbs = breadcrumbs && breadcrumbs.length > 0
+
+  // On mobile we show: trigger + logo + "|" + last breadcrumb label (truncated)
+  const lastCrumb = hasBreadcrumbs ? breadcrumbs[breadcrumbs.length - 1] : null
+
+  const leftContent = (
+    <div className='flex min-w-0 items-center gap-1'>
+      {mobileTrigger}
+      {appTitle && (
+        <Link to={appHref} className='shrink-0 text-xl font-bold'>
+          {appTitle}
+        </Link>
+      )}
+      {hasBreadcrumbs && (
+        <>
+          {/* Desktop: full breadcrumb trail using shadcn Breadcrumb */}
+          <div className='hidden min-w-0 sm:flex sm:items-center'>
+            <span className='text-border mx-2 shrink-0 select-none'>|</span>
+            <Breadcrumb>
+              <BreadcrumbList className='flex-nowrap'>
+                {breadcrumbs.map((crumb, i) => (
+                  <span key={i} className='flex min-w-0 items-center gap-1.5'>
+                    {i > 0 && <BreadcrumbSeparator />}
+                    <BreadcrumbItem className='min-w-0'>
+                      {crumb.href ? (
+                        <BreadcrumbLink asChild className='min-w-0 truncate'>
+                          <Link to={crumb.href}>{crumb.label}</Link>
+                        </BreadcrumbLink>
+                      ) : (
+                        <BreadcrumbPage className='min-w-0 truncate'>{crumb.label}</BreadcrumbPage>
+                      )}
+                    </BreadcrumbItem>
+                  </span>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+
+          {/* Mobile: only the last segment, truncated */}
+          {lastCrumb && (
+            <div className='flex min-w-0 items-center sm:hidden'>
+              <span className='text-border mx-2 shrink-0 select-none'>|</span>
+              <span className='min-w-0 truncate text-sm font-medium'>{lastCrumb.label}</span>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+
   return (
     <header className='bg-background/95 supports-[backdrop-filter]:bg-background/60 fixed top-0 left-0 z-50 w-full border-b backdrop-blur'>
-      <div className='mx-auto px-4 py-1'>
+      <div className='mx-auto px-4 py-2'>
         <div className='flex min-h-10 items-center justify-between gap-3'>
-          <div className='min-w-0 flex-1'>
-            <div className='hidden sm:block'>{leftSlot}</div>
-            {mobileTitle ? <div className='sm:hidden'>{mobileTitle}</div> : null}
-          </div>
+          <div className='min-w-0 flex-1'>{leftContent}</div>
 
           <div className='-mr-1 flex shrink-0 items-center space-x-1'>
             <ModeToggle />

@@ -30,14 +30,6 @@ import {
 } from '@/api/org-api'
 import { AppHeader } from '@/components/app-header.tsx'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
@@ -427,64 +419,23 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
           onLogout={handleLogout}
+          appTitle={appTitle}
+          breadcrumbs={[
+            { label: space.name, href: `/spaces/${space.key}` },
+            { label: navItems.find((item) => item.id === activeSection)?.label ?? '' },
+          ]}
+          mobileTrigger={
+            <Button
+              variant='ghost'
+              size='icon'
+              className='-my-0.5 -ml-2 h-11 w-11 shrink-0 lg:hidden [&_svg]:size-5'
+              onClick={() => setMobileOpen(true)}
+            >
+              <PanelLeft />
+            </Button>
+          }
           signOutText={t('common.navigation.signOut')}
           moreText={t('common.buttons.more')}
-          leftSlot={
-            <div className='flex min-w-0 items-center gap-1'>
-              <Button
-                variant='ghost'
-                size='icon'
-                className='-my-0.5 -ml-2 h-11 w-11 shrink-0 lg:hidden [&_svg]:size-5'
-                onClick={() => setMobileOpen(true)}
-              >
-                <PanelLeft />
-              </Button>
-              <BreadcrumbLink asChild>
-                <Link to='/' className='shrink-0 text-xl font-bold'>
-                  {appTitle}
-                </Link>
-              </BreadcrumbLink>
-              <div className='hidden min-w-0 sm:flex sm:items-center'>
-                <span className='text-border mx-2 shrink-0 select-none'>|</span>
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
-                          {space.name}
-                        </Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>
-                        {navItems.find((item) => item.id === activeSection)?.label}
-                      </BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
-            </div>
-          }
-          mobileTitle={
-            <div className='flex min-w-0 items-center gap-1'>
-              <Button
-                variant='ghost'
-                size='icon'
-                className='-my-0.5 -ml-2 h-11 w-11 shrink-0 [&_svg]:size-5'
-                onClick={() => setMobileOpen(true)}
-              >
-                <PanelLeft />
-              </Button>
-              <BreadcrumbLink asChild>
-                <Link to='/' className='shrink-0 text-xl font-bold'>
-                  {appTitle}
-                </Link>
-              </BreadcrumbLink>
-              <span className='text-border mx-2 shrink-0 select-none'>|</span>
-              <span className='min-w-0 truncate text-sm font-medium'>{space.name}</span>
-            </div>
-          }
         />
 
         <main className='relative min-h-screen pt-14'>

@@ -2,21 +2,13 @@ import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { CheckCircle2, Cloud, Database, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { checkSpaceKey, createSpace } from '@/api/org-api'
 import { AppHeader } from '@/components/app-header'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -443,37 +435,14 @@ export function CreateSpacePage() {
         profileLabel={getUserDisplayName()}
         roleLabel={authState.profile?.role}
         onLogout={handleLogout}
+        appTitle={appTitle}
+        breadcrumbs={[
+          { label: t('navigation.breadcrumbs.spaces'), href: '/account/spaces' },
+          { label: t('pages.spaces.createNewSpace') },
+        ]}
         profileText={t('layouts.account.tabs.profile')}
         signOutText={t('common.navigation.signOut')}
         moreText={t('common.buttons.more')}
-        leftSlot={
-          <div className='flex min-w-0 items-center'>
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to='/' className='text-xl font-bold'>
-                      {appTitle}
-                    </Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to='/account/spaces'>{t('navigation.breadcrumbs.spaces')}</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{t('pages.spaces.createNewSpace')}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        }
-        mobileTitle={
-          <span className='truncate text-sm font-medium'>{t('pages.spaces.createNewSpace')}</span>
-        }
       />
 
       {/* Wizard — pt-14 clears fixed header */}

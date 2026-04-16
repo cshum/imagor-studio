@@ -4,12 +4,6 @@ import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import { PanelLeft, Settings, UserRound, Users } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -207,43 +201,12 @@ export function AccountLayout({ children }: PropsWithChildren) {
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
           onLogout={handleLogout}
+          appTitle={appTitle}
+          breadcrumbs={[{ label: t('layouts.account.title') }]}
+          mobileTrigger={triggerButton}
           profileText={t('layouts.account.tabs.profile')}
           signOutText={t('common.navigation.signOut')}
           moreText={t('common.buttons.more')}
-          leftSlot={
-            <div className='flex min-w-0 items-center gap-1'>
-              {/* Trigger only on tablet (sm–lg) */}
-              {triggerButton}
-              <Link to='/' className='shrink-0 text-xl font-bold'>
-                {appTitle}
-              </Link>
-              <div className='hidden min-w-0 sm:flex sm:items-center'>
-                <span className='text-border mx-2 shrink-0 select-none'>|</span>
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>{t('layouts.account.title')}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
-            </div>
-          }
-          mobileTitle={
-            <div className='flex min-w-0 items-center gap-1'>
-              {/* Trigger on mobile */}
-              {triggerButton}
-              <Link to='/' className='shrink-0 text-xl font-bold'>
-                {appTitle}
-              </Link>
-              <div className='flex min-w-0 items-center'>
-                <span className='text-border mx-2 shrink-0 select-none'>|</span>
-                <span className='min-w-0 truncate text-sm font-medium'>
-                  {t('layouts.account.title')}
-                </span>
-              </div>
-            </div>
-          }
         />
 
         <main className='relative min-h-screen pt-14'>

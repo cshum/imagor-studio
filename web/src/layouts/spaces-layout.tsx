@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Outlet, useNavigate } from '@tanstack/react-router'
+import { Outlet, useNavigate } from '@tanstack/react-router'
 
 import { AppHeader } from '@/components/app-header.tsx'
 import { useBrand } from '@/hooks/use-brand'
@@ -37,37 +37,11 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
         profileLabel={getUserDisplayName()}
         roleLabel={authState.profile?.role}
         onLogout={handleLogout}
+        appTitle={appTitle}
+        breadcrumbs={title ? [{ label: title }] : undefined}
         profileText={t('layouts.account.tabs.profile')}
         signOutText={t('common.navigation.signOut')}
         moreText={t('common.buttons.more')}
-        leftSlot={
-          <div className='flex min-w-0 items-center gap-1'>
-            <Link to='/' className='shrink-0 text-xl font-bold'>
-              {appTitle}
-            </Link>
-            {title && (
-              <div className='hidden min-w-0 sm:flex sm:items-center'>
-                <span className='text-border mx-2 shrink-0 select-none'>|</span>
-                <span className='text-muted-foreground min-w-0 truncate text-sm font-medium'>
-                  {title}
-                </span>
-              </div>
-            )}
-          </div>
-        }
-        mobileTitle={
-          <div className='flex min-w-0 items-center gap-1'>
-            <Link to='/' className='shrink-0 text-xl font-bold'>
-              {appTitle}
-            </Link>
-            {title && (
-              <div className='flex min-w-0 items-center'>
-                <span className='text-border mx-2 shrink-0 select-none'>|</span>
-                <span className='min-w-0 truncate text-sm font-medium'>{title}</span>
-              </div>
-            )}
-          </div>
-        }
       />
 
       {/* Content area — pt-14 clears the fixed header */}
