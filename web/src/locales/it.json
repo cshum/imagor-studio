@@ -694,10 +694,11 @@
       "openGallery": "Apri Galleria",
       "sections": {
         "general": "Generali",
-        "storage": "Archiviazione e Sicurezza",
+        "storage": "Storage",
         "gallery": "Galleria",
         "dangerZone": "Zona Pericolosa",
-        "members": "Membri"
+        "members": "Membri",
+        "security": "Sicurezza"
       },
       "gallery": {
         "description": "Personalizza la visualizzazione e il comportamento della galleria per questo spazio. Le impostazioni a livello di spazio sostituiscono i valori predefiniti della piattaforma."
@@ -770,6 +771,21 @@
       },
       "placeholders": {
         "unchanged": "(lascia vuoto per mantenere il valore esistente)"
+      },
+      "security": {
+        "description": "Configura la firma degli URL e le impostazioni di sicurezza per questo spazio.",
+        "urlSigning": "Firma URL",
+        "urlSigningDescription": "Firma HMAC per la generazione sicura di URL di trasformazione imagor.",
+        "imagorSecret": "Segreto di firma",
+        "imagorSecretDescription": "Utilizzato per firmare gli URL di trasformazione imagor.",
+        "signerAlgorithm": "Algoritmo di firma",
+        "signerAlgorithmDescription": "Algoritmo HMAC utilizzato per firmare gli URL di trasformazione.",
+        "algorithmSha1": "SHA-1 — Legacy, più veloce",
+        "algorithmSha256": "SHA-256 — Consigliato",
+        "algorithmSha512": "SHA-512 — Massima sicurezza",
+        "signerTruncate": "Troncamento firma",
+        "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza intera).",
+        "saved": "Impostazioni di sicurezza salvate"
       }
     }
   },

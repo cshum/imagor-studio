@@ -46,6 +46,8 @@ import {
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
+import { getSpaceRegistry } from '@/api/org-api'
+import { listOrgMembers } from '@/api/org-api'
 import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { CreateSpacePage } from '@/pages/create-space-page'
@@ -54,7 +56,12 @@ import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
-import { SpaceSettingsPage } from '@/pages/space-settings-page'
+import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
+import { GeneralSection } from '@/pages/space-settings/general'
+import { StorageSection } from '@/pages/space-settings/storage'
+import { SecuritySection } from '@/pages/space-settings/security'
+import { GallerySection } from '@/pages/space-settings/gallery'
+import { MembersSection } from '@/pages/space-settings/members'
 import { SpacesPage } from '@/pages/spaces-page'
 import { UsersPage } from '@/pages/users-page'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
@@ -363,29 +370,112 @@ const createSpaceRoute = createRoute({
   component: CreateSpacePage,
 })
 
-// /spaces/$spaceKey/settings  →  redirect to /general section
-const spaceSettingsIndexRoute = createRoute({
+// ─── Space settings: layout route + per-section child routes ────────────────
+
+// Layout: renders sidebar shell + <Outlet /> for section content
+const spaceSettingsLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   path: '/spaces/$spaceKey/settings',
-  beforeLoad: ({ params }) => {
-    throw redirect({
-      to: '/spaces/$spaceKey/settings/$section',
-      params: { spaceKey: params.spaceKey, section: 'general' },
-    })
-  },
-})
-
-// /spaces/$spaceKey/settings/$section  →  dedicated settings page for a space (with its own sidebar)
-const spaceSettingsRoute = createRoute({
-  getParentRoute: () => settingsLayoutRoute,
-  path: '/spaces/$spaceKey/settings/$section',
   beforeLoad: requireAdminAccountAuth,
   loader: ({ params: { spaceKey } }) => spaceSettingsLoader({ params: { spaceKey } }),
   shouldReload: false,
   component: () => {
-    const loaderData = spaceSettingsRoute.useLoaderData()
-    const { section } = spaceSettingsRoute.useParams()
-    return <SpaceSettingsPage loaderData={loaderData.space} section={section} />
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    return <SpaceSettingsLayout space={space} />
+  },
+})
+
+// Index: /spaces/$spaceKey/settings  →  redirect to /general
+const spaceSettingsIndexRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/',
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/spaces/$spaceKey/settings/general',
+      params: { spaceKey: params.spaceKey },
+    })
+  },
+})
+
+// /spaces/$spaceKey/settings/general
+const generalSectionRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/general',
+  loader: async ({ params: { spaceKey } }) => {
+    try {
+      const entries = await getSpaceRegistry(spaceKey)
+      const map: Record<string, string> = {}
+      entries.forEach((e) => { map[e.key] = e.value })
+      return map
+    } catch {
+      return {} as Record<string, string>
+    }
+  },
+  shouldReload: false,
+  component: () => {
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    const initialValues = generalSectionRoute.useLoaderData()
+    return <GeneralSection space={space} initialValues={initialValues} />
+  },
+})
+
+// /spaces/$spaceKey/settings/storage  (BYOB only — component redirects non-BYOB)
+const storageSectionRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/storage',
+  component: () => {
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    return <StorageSection space={space} />
+  },
+})
+
+// /spaces/$spaceKey/settings/security
+const securitySectionRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/security',
+  component: () => {
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    return <SecuritySection space={space} />
+  },
+})
+
+// /spaces/$spaceKey/settings/gallery
+const gallerySectionRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/gallery',
+  loader: async ({ params: { spaceKey } }) => {
+    try {
+      const entries = await getSpaceRegistry(spaceKey)
+      const map: Record<string, string> = {}
+      entries.forEach((e) => { map[e.key] = e.value })
+      return map
+    } catch {
+      return {} as Record<string, string>
+    }
+  },
+  shouldReload: false,
+  component: () => {
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    const initialValues = gallerySectionRoute.useLoaderData()
+    return <GallerySection spaceKey={space.key} initialValues={initialValues} />
+  },
+})
+
+// /spaces/$spaceKey/settings/members
+const membersSectionRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/members',
+  loader: async () => {
+    try {
+      return await listOrgMembers()
+    } catch {
+      return []
+    }
+  },
+  shouldReload: false,
+  component: () => {
+    const initialMembers = membersSectionRoute.useLoaderData()
+    return <MembersSection initialMembers={initialMembers} />
   },
 })
 
@@ -532,8 +622,14 @@ const routeTree = isEmbeddedMode
       spaceGalleryImageEditorRoute,
       spaceCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
-        spaceSettingsIndexRoute,
-        spaceSettingsRoute,
+        spaceSettingsLayoutRoute.addChildren([
+          spaceSettingsIndexRoute,
+          generalSectionRoute,
+          storageSectionRoute,
+          securitySectionRoute,
+          gallerySectionRoute,
+          membersSectionRoute,
+        ]),
         spacesLayoutRoute.addChildren([accountSpacesRoute]),
         accountLayoutRoute.addChildren([
           accountRedirectRoute,

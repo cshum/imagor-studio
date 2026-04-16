@@ -699,10 +699,11 @@
       "openGallery": "Open Gallery",
       "sections": {
         "general": "General",
-        "storage": "Storage & Security",
+        "storage": "Storage",
         "gallery": "Gallery",
         "dangerZone": "Danger Zone",
-        "members": "Members"
+        "members": "Members",
+        "security": "Security"
       },
       "gallery": {
         "description": "Customize gallery display and behaviour for this space. Space-level settings override the platform defaults."
@@ -719,7 +720,7 @@
         "saved": "General settings saved"
       },
       "storage": {
-        "description": "Configure file storage credentials and URL signing for this space.",
+        "description": "Configure S3 storage credentials for this space.",
         "managedTitle": "Platform-managed Storage",
         "managedDescription": "Files are stored in Imagor Studio's managed storage. Storage type cannot be changed after the space is created.",
         "bucket": "Bucket",
@@ -741,7 +742,7 @@
         "signerAlgorithmDescription": "HMAC algorithm used to sign transformation URLs.",
         "signerTruncate": "Signature Truncation",
         "signerTruncateDescription": "Truncate the HMAC signature to this many characters (0 = full length).",
-        "saved": "Storage & security settings saved"
+        "saved": "Storage credentials saved"
       },
       "danger": {
         "deleteTitle": "Delete this space",
@@ -775,6 +776,21 @@
       },
       "placeholders": {
         "unchanged": "(leave blank to keep existing)"
+      },
+      "security": {
+        "description": "Configure URL signing and security settings for this space.",
+        "urlSigning": "URL Signing",
+        "urlSigningDescription": "HMAC signing for secure imagor transformation URL generation.",
+        "imagorSecret": "Signing Secret",
+        "imagorSecretDescription": "Used to sign imagor transformation URLs.",
+        "signerAlgorithm": "Signing Algorithm",
+        "signerAlgorithmDescription": "HMAC algorithm used to sign transformation URLs.",
+        "algorithmSha1": "SHA-1 — Legacy, fastest",
+        "algorithmSha256": "SHA-256 — Recommended",
+        "algorithmSha512": "SHA-512 — Maximum security",
+        "signerTruncate": "Signature Truncation",
+        "signerTruncateDescription": "Truncate the HMAC signature to this many characters (0 = full length).",
+        "saved": "Security settings saved"
       }
     }
   },

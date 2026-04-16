@@ -649,7 +649,8 @@
       "sections": {
         "gallery": "图库",
         "members": "成员",
-        "storage": "存储与安全"
+        "storage": "Storage",
+        "security": "安全"
       },
       "gallery": {
         "description": "自定义此空间的图库显示和行为。空间级别的设置会覆盖平台默认值。"
@@ -700,6 +701,21 @@
           "admin": "管理员",
           "member": "成员"
         }
+      },
+      "security": {
+        "description": "为此空间配置 URL 签名和安全设置。",
+        "urlSigning": "URL 签名",
+        "urlSigningDescription": "HMAC 签名，用于安全生成 imagor 变换 URL。",
+        "imagorSecret": "签名密鑰",
+        "imagorSecretDescription": "用于签署 imagor 变换 URL。",
+        "signerAlgorithm": "签名算法",
+        "signerAlgorithmDescription": "用于签署变换 URL 的 HMAC 算法。",
+        "algorithmSha1": "SHA-1 — 旧版，速度最快",
+        "algorithmSha256": "SHA-256 — 推荐",
+        "algorithmSha512": "SHA-512 — 最高安全性",
+        "signerTruncate": "签名截断",
+        "signerTruncateDescription": "将 HMAC 签名截断为此字符数（0 = 完整长度）。",
+        "saved": "安全设置已保存"
       }
     }
   },

@@ -650,7 +650,8 @@
       "sections": {
         "gallery": "圖庫",
         "members": "成員",
-        "storage": "儲存與安全"
+        "storage": "Storage",
+        "security": "安全"
       },
       "gallery": {
         "description": "自訂此空間的圖庫顯示和行為。空間層級的設定會覆蓋平台預設值。"
@@ -701,6 +702,21 @@
           "admin": "管理員",
           "member": "成員"
         }
+      },
+      "security": {
+        "description": "為此空間設定 URL 簽名和安全設定。",
+        "urlSigning": "URL 簽名",
+        "urlSigningDescription": "HMAC 簽名，用於安全生成 imagor 變換 URL。",
+        "imagorSecret": "簽名金鑰",
+        "imagorSecretDescription": "用於簽署 imagor 變換 URL。",
+        "signerAlgorithm": "簽名演算法",
+        "signerAlgorithmDescription": "用於簽署變換 URL 的 HMAC 演算法。",
+        "algorithmSha1": "SHA-1 — 舊版，速度最快",
+        "algorithmSha256": "SHA-256 — 建議使用",
+        "algorithmSha512": "SHA-512 — 最高安全性",
+        "signerTruncate": "簽名截斷",
+        "signerTruncateDescription": "將 HMAC 簽名截斷為此字元數（0 = 完整長度）。",
+        "saved": "安全設定已儲存"
       }
     }
   },
