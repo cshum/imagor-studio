@@ -18,7 +18,7 @@ export function BrandBar({ rightSlot }: BrandBarProps) {
         <a
           href={appUrl}
           target='_blank'
-          className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
+          className='text-foreground hover:text-foreground/80 text-xl font-bold'
         >
           {appTitle}
         </a>

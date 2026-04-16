@@ -448,7 +448,7 @@ export function SpaceSettingsPage({ loaderData: space, section }: SpaceSettingsP
                   to='/spaces/$spaceKey/settings/$section'
                   params={{ spaceKey: space.key, section: item.id }}
                   className={[
-                    '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors',
+                    '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap',
                     activeSection === item.id
                       ? 'border-primary text-foreground'
                       : 'text-muted-foreground hover:text-foreground border-transparent',

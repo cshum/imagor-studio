@@ -187,7 +187,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                     disabled={isSaving}
                     onClick={() => field.onChange(type)}
                     className={[
-                      'relative rounded-lg border p-4 text-left transition-colors',
+                      'relative rounded-lg border p-4 text-left',
                       isSelected
                         ? 'border-primary bg-primary/5 ring-primary ring-1'
                         : 'border-border hover:bg-muted/50',
