@@ -29,6 +29,7 @@ type OAuthHandler struct {
 	logger       *zap.Logger
 	googleConfig *oauth2.Config
 	appBaseURL   string
+	userinfoURL  string
 }
 
 // NewOAuthHandler creates a new OAuthHandler.
@@ -58,6 +59,29 @@ func NewOAuthHandler(
 		logger:       logger,
 		googleConfig: googleConfig,
 		appBaseURL:   appBaseURL,
+		userinfoURL:  "https://www.googleapis.com/oauth2/v2/userinfo",
+	}
+}
+
+// newOAuthHandlerWithConfig constructs an OAuthHandler directly from a pre-built
+// *oauth2.Config.  It is intended for use in tests only (package-private).
+func newOAuthHandlerWithConfig(
+	tokenManager *auth.TokenManager,
+	userStore userstore.Store,
+	orgStore orgstore.Store,
+	logger *zap.Logger,
+	googleConfig *oauth2.Config,
+	appBaseURL string,
+	userinfoURL string,
+) *OAuthHandler {
+	return &OAuthHandler{
+		tokenManager: tokenManager,
+		userStore:    userStore,
+		orgStore:     orgStore,
+		logger:       logger,
+		googleConfig: googleConfig,
+		appBaseURL:   appBaseURL,
+		userinfoURL:  userinfoURL,
 	}
 }
 
@@ -245,7 +269,7 @@ type googleUserInfo struct {
 // using the oauth2-authenticated HTTP client.
 func (h *OAuthHandler) fetchGoogleUserInfo(ctx context.Context, token *oauth2.Token) (*googleUserInfo, error) {
 	client := h.googleConfig.Client(ctx, token)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	resp, err := client.Get(h.userinfoURL)
 	if err != nil {
 		return nil, fmt.Errorf("userinfo request failed: %w", err)
 	}
