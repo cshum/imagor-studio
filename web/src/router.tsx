@@ -35,6 +35,7 @@ import {
   usersLoader,
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
+import { authCallbackLoader } from '@/loaders/auth-callback-loader.ts'
 import {
   requireAccountAuth,
   requireAdminAccountAuth,
@@ -56,11 +57,11 @@ import { AdminImagorSection } from '@/pages/admin/imagor'
 import { AdminLayout } from '@/pages/admin/layout'
 import { AdminLicenseSection } from '@/pages/admin/license'
 import { AdminStorageSection } from '@/pages/admin/storage'
+import { AuthCallbackPage } from '@/pages/auth-callback-page.tsx'
 import { CreateSpacePage } from '@/pages/create-space-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
-import { AuthCallbackPage } from '@/pages/auth-callback-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
 import { GeneralSection } from '@/pages/space-settings/general'
@@ -111,7 +112,11 @@ const loginRoute = createRoute({
 const authCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/auth/callback',
-  component: AuthCallbackPage,
+  loader: ({ location }) => authCallbackLoader(location.searchStr),
+  component: () => {
+    const loaderData = authCallbackRoute.useLoaderData()
+    return <AuthCallbackPage loaderData={loaderData} />
+  },
 })
 
 const adminSetupRoute = createRoute({

@@ -47,7 +47,6 @@ interface HeaderBarProps {
   }
 }
 
-
 interface UserAvatarProps {
   displayName: string
   avatarUrl: string | null
@@ -55,13 +54,7 @@ interface UserAvatarProps {
 
 const UserAvatar: React.FC<UserAvatarProps> = ({ displayName, avatarUrl }) => {
   if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={displayName}
-        className='h-8 w-8 rounded-full object-cover'
-      />
-    )
+    return <img src={avatarUrl} alt={displayName} className='h-8 w-8 rounded-full object-cover' />
   }
 
   const initials = displayName
