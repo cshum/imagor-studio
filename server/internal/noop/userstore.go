@@ -65,3 +65,7 @@ func (n *UserStore) List(ctx context.Context, offset, limit int, search string) 
 func (n *UserStore) UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*userstore.User, error) {
 	return nil, ErrEmbeddedMode
 }
+
+func (n *UserStore) UpdateRole(ctx context.Context, id string, role string) error {
+	return ErrEmbeddedMode
+}

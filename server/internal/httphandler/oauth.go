@@ -220,6 +220,13 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 						zap.String("userID", user.ID), zap.Error(createErr))
 				} else {
 					orgID = newOrg.ID
+					// The org creator is the owner — promote them to admin.
+					if roleErr := h.userStore.UpdateRole(ctx, user.ID, "admin"); roleErr != nil {
+						h.logger.Warn("OAuth callback: failed to set admin role for org owner",
+							zap.String("userID", user.ID), zap.Error(roleErr))
+					} else {
+						user.Role = "admin"
+					}
 				}
 			} else {
 				orgID = org.ID

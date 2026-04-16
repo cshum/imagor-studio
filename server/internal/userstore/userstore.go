@@ -39,6 +39,7 @@ type Store interface {
 	SetActive(ctx context.Context, id string, active bool) error
 	List(ctx context.Context, offset, limit int, search string) ([]*User, int, error)
 	UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*User, error)
+	UpdateRole(ctx context.Context, id string, role string) error
 }
 
 // oauthIdentity is the DB model for the oauth_identities table.
@@ -62,6 +63,23 @@ func New(db *bun.DB, logger *zap.Logger) Store {
 		db:     db,
 		logger: logger,
 	}
+}
+
+func (s *store) UpdateRole(ctx context.Context, id string, role string) error {
+	role = strings.TrimSpace(role)
+	if role == "" {
+		return fmt.Errorf("role cannot be empty")
+	}
+	_, err := s.db.NewUpdate().
+		Model((*model.User)(nil)).
+		Set("role = ?", role).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error updating role: %w", err)
+	}
+	return nil
 }
 
 func modelUserToStore(user model.User) *User {

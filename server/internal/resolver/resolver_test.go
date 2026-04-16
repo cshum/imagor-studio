@@ -155,6 +155,11 @@ func (m *MockUserStore) UpsertOAuth(ctx context.Context, provider, providerID, e
 	return args.Get(0).(*userstore.User), args.Error(1)
 }
 
+func (m *MockUserStore) UpdateRole(ctx context.Context, id string, role string) error {
+	args := m.Called(ctx, id, role)
+	return args.Error(0)
+}
+
 type MockStorage struct {
 	mock.Mock
 }

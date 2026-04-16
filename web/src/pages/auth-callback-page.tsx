@@ -19,7 +19,7 @@ export function AuthCallbackPage() {
 
     initAuth(token)
       .then(() => {
-        navigate({ to: '/account/spaces', replace: true })
+        navigate({ to: '/', replace: true })
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Authentication failed.')
