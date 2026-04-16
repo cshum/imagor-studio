@@ -41,7 +41,7 @@ import { avatarColor, spaceInitials, type SpaceSettingsData } from './shared'
 
 // ── Section ids ────────────────────────────────────────────────────────────
 
-export type SectionId = 'general' | 'storage' | 'security' | 'gallery' | 'members'
+export type SectionId = 'general' | 'storage' | 'imagor' | 'gallery' | 'members'
 
 // ── Layout component ───────────────────────────────────────────────────────
 
@@ -99,10 +99,10 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
         ]
       : []),
     {
-      id: 'security',
-      to: '/spaces/$spaceKey/settings/security',
+      id: 'imagor',
+      to: '/spaces/$spaceKey/settings/imagor',
       icon: <ShieldCheck className='h-4 w-4' />,
-      label: t('pages.spaceSettings.sections.security'),
+      label: t('pages.spaceSettings.sections.imagor'),
     },
     {
       id: 'gallery',
@@ -121,7 +121,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   const sectionDescriptions: Partial<Record<SectionId, string>> = {
     general: t('pages.spaceSettings.general.description'),
     storage: t('pages.spaceSettings.storage.description'),
-    security: t('pages.spaceSettings.security.description'),
+    imagor: t('pages.spaceSettings.imagor.description'),
     gallery: t('pages.spaceSettings.gallery.description'),
     members: t('pages.spaceSettings.members.description'),
   }

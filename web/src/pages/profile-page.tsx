@@ -195,6 +195,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
           label={t('pages.profile.password')}
           description={t('pages.profile.passwordDescription')}
           last
+          contentClassName='flex justify-end sm:max-w-xs'
         >
           <Button variant='outline' onClick={() => setPasswordDialogOpen(true)}>
             {t('pages.profile.changePassword')}

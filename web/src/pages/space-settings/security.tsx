@@ -38,7 +38,7 @@ export function SecuritySection({ space }: SecuritySectionProps) {
         imagorSecret: values.secret || null,
       },
     })
-    toast.success(t('pages.spaceSettings.security.saved'))
+    toast.success(t('pages.spaceSettings.imagor.saved'))
     await router.invalidate()
   }
 
@@ -47,10 +47,10 @@ export function SecuritySection({ space }: SecuritySectionProps) {
       {/* URL Signing sub-heading */}
       <div className='mb-4'>
         <h3 className='text-base font-semibold'>
-          {t('pages.spaceSettings.security.urlSigning')}
+          {t('pages.spaceSettings.imagor.urlSigning')}
         </h3>
         <p className='text-muted-foreground mt-1 text-sm'>
-          {t('pages.spaceSettings.security.urlSigningDescription')}
+          {t('pages.spaceSettings.imagor.urlSigningDescription')}
         </p>
       </div>
 

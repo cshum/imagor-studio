@@ -437,6 +437,12 @@
         "storage": "Storage",
         "imagor": "Imagor",
         "license": "License"
+      },
+      "sectionDescriptions": {
+        "general": "Configure platform-wide settings. These options are only available to administrators.",
+        "storage": "Configure the default storage backend for platform-managed spaces.",
+        "imagor": "Configure imagor image processing and URL signing defaults for the platform.",
+        "license": ""
       }
     },
     "storage": {
@@ -713,7 +719,7 @@
         "gallery": "Gallery",
         "dangerZone": "Danger Zone",
         "members": "Members",
-        "security": "Security"
+        "imagor": "Imagor"
       },
       "gallery": {
         "description": "Customize gallery display and behaviour for this space. Space-level settings override the platform defaults."
@@ -787,8 +793,8 @@
       "placeholders": {
         "unchanged": "(leave blank to keep existing)"
       },
-      "security": {
-        "description": "Configure URL signing and security settings for this space.",
+      "imagor": {
+        "description": "Configure imagor URL signing settings for this space.",
         "urlSigning": "URL Signing",
         "urlSigningDescription": "HMAC signing for secure imagor transformation URL generation.",
         "imagorSecret": "Signing Secret",

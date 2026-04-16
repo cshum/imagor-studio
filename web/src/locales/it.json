@@ -432,6 +432,12 @@
         "storage": "Archiviazione",
         "imagor": "Imagor",
         "license": "Licenza"
+      },
+      "sectionDescriptions": {
+        "general": "Configura le impostazioni generali della piattaforma. Queste opzioni sono disponibili solo per gli amministratori.",
+        "storage": "Configura il backend di archiviazione predefinito per gli spazi gestiti dalla piattaforma.",
+        "imagor": "Configura le impostazioni predefinite di elaborazione immagini e firma URL di imagor per la piattaforma.",
+        "license": ""
       }
     },
     "storage": {
@@ -708,7 +714,7 @@
         "gallery": "Galleria",
         "dangerZone": "Zona Pericolosa",
         "members": "Membri",
-        "security": "Sicurezza"
+        "imagor": "Imagor"
       },
       "gallery": {
         "description": "Personalizza la visualizzazione e il comportamento della galleria per questo spazio. Le impostazioni a livello di spazio sostituiscono i valori predefiniti della piattaforma."
@@ -782,8 +788,8 @@
       "placeholders": {
         "unchanged": "(lascia vuoto per mantenere il valore esistente)"
       },
-      "security": {
-        "description": "Configura la firma degli URL e le impostazioni di sicurezza per questo spazio.",
+      "imagor": {
+        "description": "Configura le impostazioni di firma URL di imagor per questo spazio.",
         "urlSigning": "Firma URL",
         "urlSigningDescription": "Firma HMAC per la generazione sicura di URL di trasformazione imagor.",
         "imagorSecret": "Segreto di firma",

@@ -150,8 +150,8 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
 
   return (
     <SystemSettingsForm
-      title={t('pages.admin.systemSettings.title')}
-      description={t('pages.admin.systemSettings.description')}
+      title=''
+      description=''
       settings={SYSTEM_SETTINGS}
       initialValues={loaderData.registry}
       systemRegistryList={loaderData.systemRegistryList}

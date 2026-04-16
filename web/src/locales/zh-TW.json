@@ -435,6 +435,12 @@
         "storage": "储存",
         "imagor": "Imagor",
         "license": "授权"
+      },
+      "sectionDescriptions": {
+        "general": "配置平台通用設定。這些選項僅限管理員使用。",
+        "storage": "配置平台管理空間的預設儲存後端。",
+        "imagor": "配置平台的 imagor 圖像處理和 URL 簽名預設設定。",
+        "license": ""
       }
     },
     "storage": {
@@ -661,7 +667,7 @@
         "gallery": "圖庫",
         "members": "成員",
         "storage": "Storage",
-        "security": "安全"
+        "imagor": "Imagor"
       },
       "gallery": {
         "description": "自訂此空間的圖庫顯示和行為。空間層級的設定會覆蓋平台預設值。"
@@ -713,8 +719,8 @@
           "member": "成員"
         }
       },
-      "security": {
-        "description": "為此空間設定 URL 簽名和安全設定。",
+      "imagor": {
+        "description": "為此空間設定 imagor URL 簽名設定。",
         "urlSigning": "URL 簽名",
         "urlSigningDescription": "HMAC 簽名，用於安全生成 imagor 變換 URL。",
         "imagorSecret": "簽名金鑰",

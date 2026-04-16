@@ -437,10 +437,10 @@ const storageSectionRoute = createRoute({
   },
 })
 
-// /spaces/$spaceKey/settings/security
+// /spaces/$spaceKey/settings/imagor
 const securitySectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
-  path: '/security',
+  path: '/imagor',
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useLoaderData()
     return <SecuritySection space={space} />
