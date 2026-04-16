@@ -165,6 +165,14 @@ func (m *MockUserStore) GetByIDWithPassword(ctx context.Context, id string) (*mo
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
+func (m *MockUserStore) UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*userstore.User, error) {
+	args := m.Called(ctx, provider, providerID, email, displayName, avatarURL)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
 type MockRegistryStore struct {
 	mock.Mock
 }

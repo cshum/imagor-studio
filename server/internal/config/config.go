@@ -95,6 +95,10 @@ type Config struct {
 	// Default 8 (= dedicated vCPUs on a Fly.io performance-4x machine).
 	SpaceMaxConcurrency int
 
+	// OAuth Configuration (SaaS mode only)
+	GoogleClientID     string
+	GoogleClientSecret string
+
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
 	flagSet         *flag.FlagSet // Private field to access flag values
@@ -151,6 +155,9 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		spaceBaseDomain     = fs.String("space-base-domain", "", "platform subdomain suffix for space routing, e.g. .imagor.cloud (processing nodes only)")
 		corsOrigins         = fs.String("cors-origins", "", "comma-separated allowed CORS origins; empty = allow all (*). Example: https://app.imagor.net")
 		spaceMaxConcurrency = fs.Int("space-max-concurrency", 8, "max concurrent imagor requests per space on processing nodes (0 = disabled)")
+
+		googleClientID     = fs.String("google-client-id", "", "Google OAuth client ID (SaaS mode)")
+		googleClientSecret = fs.String("google-client-secret", "", "Google OAuth client secret (SaaS mode)")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -256,6 +263,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		SpaceBaseDomain:             *spaceBaseDomain,
 		CORSOrigins:                 *corsOrigins,
 		SpaceMaxConcurrency:         *spaceMaxConcurrency,
+		GoogleClientID:              *googleClientID,
+		GoogleClientSecret:          *googleClientSecret,
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}

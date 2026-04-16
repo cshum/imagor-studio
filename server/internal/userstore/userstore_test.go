@@ -38,8 +38,24 @@ func setupTestDB(t *testing.T) (*bun.DB, func()) {
 			hashed_password TEXT NOT NULL,
 			role TEXT NOT NULL DEFAULT 'user',
 			is_active BOOLEAN NOT NULL DEFAULT TRUE,
+			email TEXT,
+			avatar_url TEXT,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	require.NoError(t, err)
+
+	// Create oauth_identities table
+	_, err = db.ExecContext(ctx, `
+		CREATE TABLE IF NOT EXISTS oauth_identities (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			provider TEXT NOT NULL,
+			provider_id TEXT NOT NULL,
+			email TEXT,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(provider, provider_id)
 		)
 	`)
 	require.NoError(t, err)

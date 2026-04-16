@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
+import { Check, Languages, LogOut, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -45,6 +45,37 @@ interface HeaderBarProps {
     handleDragLeave: (e: React.DragEvent, folderKey: string) => void
     handleDrop: (e: React.DragEvent, folderKey: string) => void
   }
+}
+
+
+interface UserAvatarProps {
+  displayName: string
+  avatarUrl: string | null
+}
+
+const UserAvatar: React.FC<UserAvatarProps> = ({ displayName, avatarUrl }) => {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={displayName}
+        className='h-8 w-8 rounded-full object-cover'
+      />
+    )
+  }
+
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0].toUpperCase())
+    .join('')
+
+  return (
+    <div className='bg-muted text-muted-foreground flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium'>
+      {initials || '?'}
+    </div>
+  )
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -200,7 +231,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant='ghost' size='icon' className='h-12 w-12 sm:h-10 sm:w-10'>
-                      <MoreVertical className='h-4 w-4' />
+                      <UserAvatar
+                        displayName={getUserDisplayName()}
+                        avatarUrl={
+                          authState.state === 'authenticated'
+                            ? (authState.profile?.avatarUrl ?? null)
+                            : null
+                        }
+                      />
                       <span className='sr-only'>{t('common.buttons.more')}</span>
                     </Button>
                   </DropdownMenuTrigger>

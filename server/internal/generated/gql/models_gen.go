@@ -279,13 +279,15 @@ type UpdateProfileInput struct {
 }
 
 type User struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"displayName"`
-	Username    string `json:"username"`
-	Role        string `json:"role"`
-	IsActive    bool   `json:"isActive"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID          string  `json:"id"`
+	DisplayName string  `json:"displayName"`
+	Username    string  `json:"username"`
+	Role        string  `json:"role"`
+	IsActive    bool    `json:"isActive"`
+	CreatedAt   string  `json:"createdAt"`
+	UpdatedAt   string  `json:"updatedAt"`
+	Email       *string `json:"email,omitempty"`
+	AvatarURL   *string `json:"avatarUrl,omitempty"`
 }
 
 type UserList struct {

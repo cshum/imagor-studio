@@ -9,6 +9,8 @@ export const UserFragment = gql(`
     isActive
     createdAt
     updatedAt
+    email
+    avatarUrl
   }
 `)
 

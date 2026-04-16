@@ -117,6 +117,27 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	mux.HandleFunc("/api/auth/first-run", authHandler.CheckFirstRun())
 	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
 
+	// Google OAuth endpoints (only mounted when Google OAuth is configured)
+	if cfg.GoogleClientID != "" {
+		oauthHandler := httphandler.NewOAuthHandler(
+			services.TokenManager,
+			services.UserStore,
+			services.OrgStore,
+			services.Logger,
+			cfg.GoogleClientID,
+			cfg.GoogleClientSecret,
+			cfg.AppUrl,
+		)
+		mux.HandleFunc("/api/auth/providers", oauthHandler.GoogleAuthProviders())
+		mux.HandleFunc("/api/auth/google/login", oauthHandler.GoogleLogin())
+		mux.HandleFunc("/api/auth/google/callback", oauthHandler.GoogleCallback())
+	} else {
+		mux.HandleFunc("/api/auth/providers", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{"providers":[]}`))
+		})
+	}
+
 	// License endpoints (public - no auth required)
 	licenseHandler := httphandler.NewLicenseHandler(services.LicenseService, services.RegistryStore, services.Logger)
 	mux.HandleFunc("/api/public/license-status", licenseHandler.GetPublicStatus())

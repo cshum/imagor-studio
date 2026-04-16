@@ -583,8 +583,10 @@ export type UpdateProfileInput = {
 
 export type User = {
   __typename?: 'User'
+  avatarUrl: Maybe<Scalars['String']['output']>
   createdAt: Scalars['String']['output']
   displayName: Scalars['String']['output']
+  email: Maybe<Scalars['String']['output']>
   id: Scalars['ID']['output']
   isActive: Scalars['Boolean']['output']
   role: Scalars['String']['output']
@@ -1230,6 +1232,8 @@ export type UserInfoFragment = {
   isActive: boolean
   createdAt: string
   updatedAt: string
+  email: string | null
+  avatarUrl: string | null
 }
 
 export type MeQueryVariables = Exact<{ [key: string]: never }>
@@ -1245,6 +1249,8 @@ export type MeQuery = {
     isActive: boolean
     createdAt: string
     updatedAt: string
+    email: string | null
+    avatarUrl: string | null
   } | null
 }
 
@@ -1263,6 +1269,8 @@ export type GetUserQuery = {
     isActive: boolean
     createdAt: string
     updatedAt: string
+    email: string | null
+    avatarUrl: string | null
   } | null
 }
 
@@ -1286,6 +1294,8 @@ export type ListUsersQuery = {
       isActive: boolean
       createdAt: string
       updatedAt: string
+      email: string | null
+      avatarUrl: string | null
     }>
   }
 }
@@ -1306,6 +1316,8 @@ export type UpdateProfileMutation = {
     isActive: boolean
     createdAt: string
     updatedAt: string
+    email: string | null
+    avatarUrl: string | null
   }
 }
 
@@ -1343,6 +1355,8 @@ export type CreateUserMutation = {
     isActive: boolean
     createdAt: string
     updatedAt: string
+    email: string | null
+    avatarUrl: string | null
   }
 }
 
@@ -1370,6 +1384,8 @@ export const UserInfoFragmentDoc = gql`
     isActive
     createdAt
     updatedAt
+    email
+    avatarUrl
   }
 `
 export const ImagorStatusDocument = gql`

@@ -20,6 +20,8 @@ type User struct {
 	Username    string    `json:"username"`
 	Role        string    `json:"role"`
 	IsActive    bool      `json:"isActive"`
+	Email       *string   `json:"email,omitempty"`
+	AvatarUrl   *string   `json:"avatarUrl,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -36,6 +38,18 @@ type Store interface {
 	UpdateUsername(ctx context.Context, id string, username string) error
 	SetActive(ctx context.Context, id string, active bool) error
 	List(ctx context.Context, offset, limit int, search string) ([]*User, int, error)
+	UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*User, error)
+}
+
+// oauthIdentity is the DB model for the oauth_identities table.
+type oauthIdentity struct {
+	bun.BaseModel `bun:"table:oauth_identities,alias:oi"`
+	ID            string    `bun:"id,pk,type:text"`
+	UserID        string    `bun:"user_id,notnull,type:text"`
+	Provider      string    `bun:"provider,notnull,type:text"`
+	ProviderID    string    `bun:"provider_id,notnull,type:text"`
+	Email         string    `bun:"email,type:text"`
+	CreatedAt     time.Time `bun:"created_at,notnull,default:current_timestamp"`
 }
 
 type store struct {
@@ -47,6 +61,20 @@ func New(db *bun.DB, logger *zap.Logger) Store {
 	return &store{
 		db:     db,
 		logger: logger,
+	}
+}
+
+func modelUserToStore(user model.User) *User {
+	return &User{
+		ID:          user.ID,
+		DisplayName: user.DisplayName,
+		Username:    user.Username,
+		Role:        user.Role,
+		IsActive:    user.IsActive,
+		Email:       user.Email,
+		AvatarUrl:   user.AvatarUrl,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
 	}
 }
 
@@ -94,15 +122,7 @@ func (s *store) Create(ctx context.Context, displayName, username, hashedPasswor
 		return nil, fmt.Errorf("error creating user: %w", err)
 	}
 
-	return &User{
-		ID:          entry.ID,
-		DisplayName: entry.DisplayName,
-		Username:    entry.Username,
-		Role:        entry.Role,
-		IsActive:    entry.IsActive,
-		CreatedAt:   entry.CreatedAt,
-		UpdatedAt:   entry.UpdatedAt,
-	}, nil
+	return modelUserToStore(*entry), nil
 }
 
 func (s *store) GetByID(ctx context.Context, id string) (*User, error) {
@@ -118,15 +138,7 @@ func (s *store) GetByID(ctx context.Context, id string) (*User, error) {
 		return nil, fmt.Errorf("error getting user by ID: %w", err)
 	}
 
-	return &User{
-		ID:          user.ID,
-		DisplayName: user.DisplayName,
-		Username:    user.Username,
-		Role:        user.Role,
-		IsActive:    user.IsActive,
-		CreatedAt:   user.CreatedAt,
-		UpdatedAt:   user.UpdatedAt,
-	}, nil
+	return modelUserToStore(user), nil
 }
 
 func (s *store) GetByIDAdmin(ctx context.Context, id string) (*User, error) {
@@ -142,15 +154,7 @@ func (s *store) GetByIDAdmin(ctx context.Context, id string) (*User, error) {
 		return nil, fmt.Errorf("error getting user by ID: %w", err)
 	}
 
-	return &User{
-		ID:          user.ID,
-		DisplayName: user.DisplayName,
-		Username:    user.Username,
-		Role:        user.Role,
-		IsActive:    user.IsActive,
-		CreatedAt:   user.CreatedAt,
-		UpdatedAt:   user.UpdatedAt,
-	}, nil
+	return modelUserToStore(user), nil
 }
 
 func (s *store) GetByUsername(ctx context.Context, username string) (*model.User, error) {
@@ -300,16 +304,162 @@ func (s *store) List(ctx context.Context, offset, limit int, search string) ([]*
 
 	result := make([]*User, len(users))
 	for i, user := range users {
-		result[i] = &User{
-			ID:          user.ID,
-			DisplayName: user.DisplayName,
-			Username:    user.Username,
-			Role:        user.Role,
-			IsActive:    user.IsActive,
-			CreatedAt:   user.CreatedAt,
-			UpdatedAt:   user.UpdatedAt,
-		}
+		result[i] = modelUserToStore(user)
 	}
 
 	return result, totalCount, nil
+}
+
+// UpsertOAuth finds or creates a user for a given OAuth provider identity.
+//
+// Logic:
+//  1. Look up existing oauth_identity by (provider, providerID).
+//  2. If found: update avatar_url on the user row, return user.
+//  3. If not found: find existing user by email, or create a new one.
+//  4. Insert a new oauth_identity row.
+//  5. Return the user.
+func (s *store) UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*User, error) {
+	now := time.Now()
+
+	// 1. Look up existing oauth_identity.
+	var identity oauthIdentity
+	err := s.db.NewSelect().
+		Model(&identity).
+		Where("provider = ? AND provider_id = ?", provider, providerID).
+		Scan(ctx)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("error looking up oauth identity: %w", err)
+	}
+
+	if err == nil {
+		// 2. Identity found — update avatar_url and return user.
+		var avatarPtr *string
+		if avatarURL != "" {
+			avatarPtr = &avatarURL
+		}
+		_, updateErr := s.db.NewUpdate().
+			Model((*model.User)(nil)).
+			Set("avatar_url = ?", avatarPtr).
+			Set("updated_at = ?", now).
+			Where("id = ?", identity.UserID).
+			Exec(ctx)
+		if updateErr != nil {
+			s.logger.Warn("Failed to update avatar_url for existing OAuth user",
+				zap.String("userID", identity.UserID), zap.Error(updateErr))
+		}
+
+		var user model.User
+		if scanErr := s.db.NewSelect().
+			Model(&user).
+			Where("id = ?", identity.UserID).
+			Scan(ctx); scanErr != nil {
+			return nil, fmt.Errorf("error loading OAuth user: %w", scanErr)
+		}
+		return modelUserToStore(user), nil
+	}
+
+	// 3. No existing identity — find user by email or create new user.
+	var userEntry model.User
+	userFound := false
+
+	if email != "" {
+		findErr := s.db.NewSelect().
+			Model(&userEntry).
+			Where("email = ?", email).
+			Scan(ctx)
+		if findErr != nil && !errors.Is(findErr, sql.ErrNoRows) {
+			return nil, fmt.Errorf("error looking up user by email: %w", findErr)
+		}
+		if findErr == nil {
+			userFound = true
+		}
+	}
+
+	if !userFound {
+		// Generate a username from the email local part, falling back to a UUID prefix.
+		baseUsername := "user"
+		if email != "" {
+			parts := strings.Split(email, "@")
+			if parts[0] != "" {
+				baseUsername = parts[0]
+			}
+		}
+		// Sanitize: keep only alphanumeric and hyphens/underscores.
+		var sanitized strings.Builder
+		for _, r := range baseUsername {
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+				sanitized.WriteRune(r)
+			}
+		}
+		baseUsername = strings.ToLower(sanitized.String())
+		if baseUsername == "" {
+			baseUsername = "user"
+		}
+
+		// Ensure uniqueness — append a random suffix if the username exists.
+		username := baseUsername
+		for {
+			var existing model.User
+			checkErr := s.db.NewSelect().
+				Model(&existing).
+				Where("username = ?", username).
+				Scan(ctx)
+			if errors.Is(checkErr, sql.ErrNoRows) {
+				break // username is free
+			}
+			if checkErr != nil {
+				return nil, fmt.Errorf("error checking username uniqueness: %w", checkErr)
+			}
+			// Collision — append random suffix.
+			suffix := uuid.GenerateUUID()[:8]
+			username = baseUsername + "-" + suffix
+		}
+
+		if displayName == "" {
+			displayName = username
+		}
+
+		var avatarPtr *string
+		if avatarURL != "" {
+			avatarPtr = &avatarURL
+		}
+		var emailPtr *string
+		if email != "" {
+			emailPtr = &email
+		}
+
+		userEntry = model.User{
+			ID:             uuid.GenerateUUID(),
+			DisplayName:    displayName,
+			Username:       username,
+			HashedPassword: "oauth",
+			Role:           "user",
+			IsActive:       true,
+			Email:          emailPtr,
+			AvatarUrl:      avatarPtr,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+
+		if _, insertErr := s.db.NewInsert().Model(&userEntry).Exec(ctx); insertErr != nil {
+			return nil, fmt.Errorf("error creating OAuth user: %w", insertErr)
+		}
+	}
+
+	// 4. Insert oauth_identity row.
+	newIdentity := &oauthIdentity{
+		ID:         uuid.GenerateUUID(),
+		UserID:     userEntry.ID,
+		Provider:   provider,
+		ProviderID: providerID,
+		Email:      email,
+		CreatedAt:  now,
+	}
+	if _, insertErr := s.db.NewInsert().Model(newIdentity).Exec(ctx); insertErr != nil {
+		return nil, fmt.Errorf("error inserting oauth identity: %w", insertErr)
+	}
+
+	// 5. Return user.
+	return modelUserToStore(userEntry), nil
 }

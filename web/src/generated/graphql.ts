@@ -582,8 +582,10 @@ export type UpdateProfileInput = {
 
 export type User = {
   __typename?: 'User'
+  avatarUrl: Maybe<Scalars['String']['output']>
   createdAt: Scalars['String']['output']
   displayName: Scalars['String']['output']
+  email: Maybe<Scalars['String']['output']>
   id: Scalars['ID']['output']
   isActive: Scalars['Boolean']['output']
   role: Scalars['String']['output']
@@ -1229,6 +1231,8 @@ export type UserInfoFragment = {
   isActive: boolean
   createdAt: string
   updatedAt: string
+  email: string | null
+  avatarUrl: string | null
 }
 
 export type MeQueryVariables = Exact<{ [key: string]: never }>
@@ -1244,6 +1248,8 @@ export type MeQuery = {
     isActive: boolean
     createdAt: string
     updatedAt: string
+    email: string | null
+    avatarUrl: string | null
   } | null
 }
 
@@ -1262,6 +1268,8 @@ export type GetUserQuery = {
     isActive: boolean
     createdAt: string
     updatedAt: string
+    email: string | null
+    avatarUrl: string | null
   } | null
 }
 
@@ -1285,6 +1293,8 @@ export type ListUsersQuery = {
       isActive: boolean
       createdAt: string
       updatedAt: string
+      email: string | null
+      avatarUrl: string | null
     }>
   }
 }
@@ -1305,6 +1315,8 @@ export type UpdateProfileMutation = {
     isActive: boolean
     createdAt: string
     updatedAt: string
+    email: string | null
+    avatarUrl: string | null
   }
 }
 
@@ -1342,6 +1354,8 @@ export type CreateUserMutation = {
     isActive: boolean
     createdAt: string
     updatedAt: string
+    email: string | null
+    avatarUrl: string | null
   }
 }
 
@@ -1399,6 +1413,8 @@ export const UserInfoFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
         ],
       },
     },
@@ -3669,6 +3685,8 @@ export const MeDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
         ],
       },
     },
@@ -3726,6 +3744,8 @@ export const GetUserDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
         ],
       },
     },
@@ -3814,6 +3834,8 @@ export const ListUsersDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
         ],
       },
     },
@@ -3881,6 +3903,8 @@ export const UpdateProfileDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
         ],
       },
     },
@@ -4053,6 +4077,8 @@ export const CreateUserDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'isActive' } },
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
         ],
       },
     },

@@ -162,3 +162,19 @@ export async function embeddedGuestLogin(jwtToken: string): Promise<LoginRespons
 
   return response.json()
 }
+
+export interface AuthProvidersResponse {
+  providers: string[]
+}
+
+/**
+ * Get available auth providers (e.g. google, github)
+ */
+export async function getAuthProviders(): Promise<AuthProvidersResponse> {
+  const response = await fetch(`${BASE_URL}/api/auth/providers`)
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+  }
+  return response.json()
+}

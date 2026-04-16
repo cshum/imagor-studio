@@ -38,33 +38,6 @@ interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']
 }
 
-const AVATAR_COLORS = [
-  'bg-blue-500',
-  'bg-violet-500',
-  'bg-emerald-500',
-  'bg-amber-500',
-  'bg-rose-500',
-  'bg-cyan-500',
-  'bg-indigo-500',
-  'bg-fuchsia-500',
-] as const
-
-function avatarColor(slug: string): string {
-  let hash = 0
-  for (let i = 0; i < slug.length; i++) {
-    hash = (hash * 31 + slug.charCodeAt(i)) >>> 0
-  }
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length]
-}
-
-function spaceInitials(name: string): string {
-  const words = name.split(/\s+/).filter(Boolean)
-  if (words.length >= 2) {
-    return (words[0][0] + words[1][0]).toUpperCase()
-  }
-  return name.slice(0, 2).toUpperCase()
-}
-
 export function SpacesPage({ loaderData }: SpacesPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
@@ -167,8 +140,6 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         /* Card grid */
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {spaces.map((space) => {
-            const color = avatarColor(space.key)
-            const initials = spaceInitials(space.name)
             return (
               <div
                 key={space.key}
@@ -177,10 +148,12 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                 {/* Card header row */}
                 <div className='flex items-start justify-between gap-2'>
                   <div className='flex min-w-0 items-center gap-3'>
-                    <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${color}`}
-                    >
-                      {initials}
+                    <div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
+                      {space.storageType === 'managed' ? (
+                        <Cloud className='text-muted-foreground h-5 w-5' />
+                      ) : (
+                        <Database className='text-muted-foreground h-5 w-5' />
+                      )}
                     </div>
                     <div className='min-w-0'>
                       <p className='truncate leading-tight font-semibold'>{space.name}</p>
