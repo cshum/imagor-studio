@@ -353,31 +353,44 @@ func (s *store) UpsertOAuth(ctx context.Context, provider, providerID, email, di
 		}
 
 		if err == nil {
-			// 2. Identity found — update avatar_url and return user.
-			var avatarPtr *string
-			if avatarURL != "" {
-				avatarPtr = &avatarURL
-			}
-			_, updateErr := tx.NewUpdate().
-				Model((*model.User)(nil)).
-				Set("avatar_url = ?", avatarPtr).
-				Set("updated_at = ?", now).
-				Where("id = ?", identity.UserID).
-				Exec(ctx)
-			if updateErr != nil {
-				s.logger.Warn("Failed to update avatar_url for existing OAuth user",
-					zap.String("userID", identity.UserID), zap.Error(updateErr))
-			}
-
+			// 2. Identity found — load the user.
 			var user model.User
-			if scanErr := tx.NewSelect().
+			scanErr := tx.NewSelect().
 				Model(&user).
 				Where("id = ?", identity.UserID).
-				Scan(ctx); scanErr != nil {
-				return fmt.Errorf("error loading OAuth user: %w", scanErr)
+				Scan(ctx)
+			if scanErr != nil {
+				if !errors.Is(scanErr, sql.ErrNoRows) {
+					return fmt.Errorf("error loading OAuth user: %w", scanErr)
+				}
+				// The user row was deleted without removing the oauth_identity
+				// (orphaned identity).  Remove the stale row so that we fall
+				// through and create a fresh user + new identity below.
+				if _, delErr := tx.NewDelete().
+					Model((*oauthIdentity)(nil)).
+					Where("id = ?", identity.ID).
+					Exec(ctx); delErr != nil {
+					return fmt.Errorf("error removing orphaned oauth identity: %w", delErr)
+				}
+				// Fall through to step 3 ↓
+			} else {
+				// User exists: refresh avatar and return.
+				var avatarPtr *string
+				if avatarURL != "" {
+					avatarPtr = &avatarURL
+				}
+				if _, updateErr := tx.NewUpdate().
+					Model((*model.User)(nil)).
+					Set("avatar_url = ?", avatarPtr).
+					Set("updated_at = ?", now).
+					Where("id = ?", identity.UserID).
+					Exec(ctx); updateErr != nil {
+					s.logger.Warn("Failed to update avatar_url for existing OAuth user",
+						zap.String("userID", identity.UserID), zap.Error(updateErr))
+				}
+				result = modelUserToStore(user)
+				return nil
 			}
-			result = modelUserToStore(user)
-			return nil
 		}
 
 		// 3. No existing identity — find user by email or create new user.
