@@ -122,7 +122,7 @@ export function AppHeader({
         <>
           {/* Desktop: full breadcrumb trail using shadcn Breadcrumb */}
           <div className='hidden min-w-0 sm:flex sm:items-center'>
-            <span className='text-border mx-2 shrink-0 select-none'>|</span>
+            <span className='text-border mx-3 shrink-0 select-none'>|</span>
             <Breadcrumb>
               <BreadcrumbList className='flex-nowrap'>
                 {breadcrumbs.map((crumb, i) => (
@@ -146,7 +146,7 @@ export function AppHeader({
           {/* Mobile: only the last segment, truncated */}
           {lastCrumb && (
             <div className='flex min-w-0 items-center sm:hidden'>
-              <span className='text-border mx-2 shrink-0 select-none'>|</span>
+              <span className='text-border mx-3 shrink-0 select-none'>|</span>
               <span className='min-w-0 truncate text-sm font-medium'>{lastCrumb.label}</span>
             </div>
           )}
