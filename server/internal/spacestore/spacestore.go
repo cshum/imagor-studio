@@ -87,6 +87,9 @@ type Store interface {
 	// Delta returns all spaces (active and deleted) whose updated_at > since.
 	// Pass the zero time to request a full sync.
 	Delta(ctx context.Context, since time.Time) (*DeltaResult, error)
+	// KeyExists reports whether any row (active or soft-deleted) with the given key
+	// exists in the database.  Used for a fast availability check before create.
+	KeyExists(ctx context.Context, key string) (bool, error)
 }
 
 // dnsLabelRE validates that a space key is a valid DNS label:
@@ -403,6 +406,21 @@ func (s *store) ListByOrgID(ctx context.Context, orgID string) ([]*Space, error)
 		result = append(result, sp)
 	}
 	return result, nil
+}
+
+// KeyExists reports whether any row — active or soft-deleted — with the given
+// key exists.  This is intentionally inclusive of soft-deleted rows because
+// the UNIQUE constraint covers all rows regardless of deleted_at, so a
+// soft-deleted key would still cause a Create conflict.
+func (s *store) KeyExists(ctx context.Context, key string) (bool, error) {
+	exists, err := s.db.NewSelect().
+		Model((*model.Space)(nil)).
+		Where("key = ?", key).
+		Exists(ctx)
+	if err != nil {
+		return false, fmt.Errorf("check space key existence: %w", err)
+	}
+	return exists, nil
 }
 
 // Delta returns all spaces whose updated_at is strictly after since.

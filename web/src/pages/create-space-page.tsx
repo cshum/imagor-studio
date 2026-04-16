@@ -7,7 +7,7 @@ import { CheckCircle2, Cloud, Database, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { createSpace } from '@/api/org-api'
+import { checkSpaceKey, createSpace } from '@/api/org-api'
 import { AppHeader } from '@/components/app-header'
 import { extractErrorInfo } from '@/lib/error-utils'
 import {
@@ -354,7 +354,20 @@ export function CreateSpacePage() {
   })
 
   const handleIdentityNext = async (): Promise<boolean> => {
-    return form.trigger(['name', 'key'])
+    const valid = await form.trigger(['name', 'key'])
+    if (!valid) return false
+    const key = form.getValues('key')
+    try {
+      const exists = await checkSpaceKey(key)
+      if (exists) {
+        form.setError('key', { message: t('pages.spaces.messages.keyAlreadyTaken') })
+        return false
+      }
+    } catch {
+      // If the availability check fails (e.g. network error), allow proceeding;
+      // the Create mutation will catch any duplicate at submission time.
+    }
+    return true
   }
 
   const handleCreateSpace = async () => {

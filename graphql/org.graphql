@@ -68,6 +68,8 @@ extend type Query {
   spaceRegistry(spaceKey: String!, keys: [String!]): [UserRegistry!]!
   # Lists all members of the caller's organization (admin only)
   orgMembers: [OrgMember!]!
+  # Returns true when the space key is already taken (globally unique, admin only)
+  spaceKeyExists(key: String!): Boolean!
 }
 
 extend type Mutation {

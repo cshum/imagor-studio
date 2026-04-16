@@ -19,6 +19,7 @@ import type {
   UpdateOrgMemberRoleMutationVariables,
   UpdateSpaceMutation,
   UpdateSpaceMutationVariables,
+  SpaceKeyExistsQuery,
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'
 import { getGraphQLClient } from '@/lib/graphql-client'
@@ -106,6 +107,14 @@ export async function setSpaceRegistryObject(
   }))
   if (entries.length === 0) return
   await setSpaceRegistry({ spaceKey, entries })
+}
+
+/** Returns true when the given space key is already taken (globally unique). */
+export async function checkSpaceKey(key: string): Promise<SpaceKeyExistsQuery['spaceKeyExists']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.SpaceKeyExists({ key })
+  return result.spaceKeyExists
 }
 
 // ── Org member management ────────────────────────────────────────────────────

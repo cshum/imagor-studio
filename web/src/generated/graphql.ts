@@ -365,6 +365,7 @@ export type Query = {
   myOrganization: Maybe<Organization>
   orgMembers: Array<OrgMember>
   space: Maybe<Space>
+  spaceKeyExists: Scalars['Boolean']['output']
   spaceRegistry: Array<UserRegistry>
   spaces: Array<Space>
   statFile: Maybe<FileStat>
@@ -407,6 +408,10 @@ export type QueryListUserRegistryArgs = {
 }
 
 export type QuerySpaceArgs = {
+  key: Scalars['String']['input']
+}
+
+export type QuerySpaceKeyExistsArgs = {
   key: Scalars['String']['input']
 }
 
@@ -811,6 +816,12 @@ export type DeleteSpaceRegistryMutationVariables = Exact<{
 }>
 
 export type DeleteSpaceRegistryMutation = { __typename?: 'Mutation'; deleteSpaceRegistry: boolean }
+
+export type SpaceKeyExistsQueryVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type SpaceKeyExistsQuery = { __typename?: 'Query'; spaceKeyExists: boolean }
 
 export type ListOrgMembersQueryVariables = Exact<{ [key: string]: never }>
 
@@ -2080,6 +2091,42 @@ export const DeleteSpaceRegistryDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteSpaceRegistryMutation, DeleteSpaceRegistryMutationVariables>
+export const SpaceKeyExistsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'SpaceKeyExists' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'spaceKeyExists' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'key' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'key' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SpaceKeyExistsQuery, SpaceKeyExistsQueryVariables>
 export const ListOrgMembersDocument = {
   kind: 'Document',
   definitions: [

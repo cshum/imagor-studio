@@ -137,6 +137,12 @@ export const DELETE_SPACE_REGISTRY = gql(`
   }
 `)
 
+export const SPACE_KEY_EXISTS = gql(`
+  query SpaceKeyExists($key: String!) {
+    spaceKeyExists(key: $key)
+  }
+`)
+
 export const LIST_ORG_MEMBERS = gql(`
   query ListOrgMembers {
     orgMembers {

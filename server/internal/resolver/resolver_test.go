@@ -368,6 +368,11 @@ func (m *MockSpaceStore) Delta(ctx context.Context, since time.Time) (*spacestor
 	return args.Get(0).(*spacestore.DeltaResult), args.Error(1)
 }
 
+func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error) {
+	args := m.Called(ctx, key)
+	return args.Bool(0), args.Error(1)
+}
+
 var _ spacestore.Store = (*MockSpaceStore)(nil)
 
 // MockRegistryStore mocks the registrystore.Store interface for tests that need it.

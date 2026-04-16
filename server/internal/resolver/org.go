@@ -166,6 +166,17 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 	return result, nil
 }
 
+// SpaceKeyExists reports whether the given key is already taken (admin only).
+func (r *queryResolver) SpaceKeyExists(ctx context.Context, key string) (bool, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return false, err
+	}
+	if r.spaceStore == nil {
+		return false, nil
+	}
+	return r.spaceStore.KeyExists(ctx, key)
+}
+
 // Space returns a single space by key, scoped to the authenticated user's org.
 func (r *queryResolver) Space(ctx context.Context, key string) (*gql.Space, error) {
 	if r.spaceStore == nil {

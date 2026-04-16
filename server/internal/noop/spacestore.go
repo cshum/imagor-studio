@@ -44,3 +44,7 @@ func (n *SpaceStore) ListByOrgID(_ context.Context, _ string) ([]*spacestore.Spa
 func (n *SpaceStore) Delta(_ context.Context, _ time.Time) (*spacestore.DeltaResult, error) {
 	return nil, ErrEmbeddedMode
 }
+
+func (n *SpaceStore) KeyExists(_ context.Context, _ string) (bool, error) {
+	return false, ErrEmbeddedMode
+}

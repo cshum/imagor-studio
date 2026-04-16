@@ -366,6 +366,7 @@ export type Query = {
   myOrganization: Maybe<Organization>
   orgMembers: Array<OrgMember>
   space: Maybe<Space>
+  spaceKeyExists: Scalars['Boolean']['output']
   spaceRegistry: Array<UserRegistry>
   spaces: Array<Space>
   statFile: Maybe<FileStat>
@@ -408,6 +409,10 @@ export type QueryListUserRegistryArgs = {
 }
 
 export type QuerySpaceArgs = {
+  key: Scalars['String']['input']
+}
+
+export type QuerySpaceKeyExistsArgs = {
   key: Scalars['String']['input']
 }
 
@@ -812,6 +817,12 @@ export type DeleteSpaceRegistryMutationVariables = Exact<{
 }>
 
 export type DeleteSpaceRegistryMutation = { __typename?: 'Mutation'; deleteSpaceRegistry: boolean }
+
+export type SpaceKeyExistsQueryVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type SpaceKeyExistsQuery = { __typename?: 'Query'; spaceKeyExists: boolean }
 
 export type ListOrgMembersQueryVariables = Exact<{ [key: string]: never }>
 
@@ -1525,6 +1536,11 @@ export const DeleteSpaceRegistryDocument = gql`
     deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)
   }
 `
+export const SpaceKeyExistsDocument = gql`
+  query SpaceKeyExists($key: String!) {
+    spaceKeyExists(key: $key)
+  }
+`
 export const ListOrgMembersDocument = gql`
   query ListOrgMembers {
     orgMembers {
@@ -2087,6 +2103,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
           }),
         'DeleteSpaceRegistry',
         'mutation',
+        variables,
+      )
+    },
+    SpaceKeyExists(
+      variables: SpaceKeyExistsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<SpaceKeyExistsQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<SpaceKeyExistsQuery>({
+            document: SpaceKeyExistsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'SpaceKeyExists',
+        'query',
         variables,
       )
     },

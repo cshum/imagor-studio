@@ -157,6 +157,7 @@ type ComplexityRoot struct {
 		MyOrganization     func(childComplexity int) int
 		OrgMembers         func(childComplexity int) int
 		Space              func(childComplexity int, key string) int
+		SpaceKeyExists     func(childComplexity int, key string) int
 		SpaceRegistry      func(childComplexity int, spaceKey string, keys []string) int
 		Spaces             func(childComplexity int) int
 		StatFile           func(childComplexity int, path string, spaceKey *string) int
@@ -298,6 +299,7 @@ type QueryResolver interface {
 	Space(ctx context.Context, key string) (*Space, error)
 	SpaceRegistry(ctx context.Context, spaceKey string, keys []string) ([]*UserRegistry, error)
 	OrgMembers(ctx context.Context) ([]*OrgMember, error)
+	SpaceKeyExists(ctx context.Context, key string) (bool, error)
 	ListUserRegistry(ctx context.Context, prefix *string, ownerID *string) ([]*UserRegistry, error)
 	GetUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) ([]*UserRegistry, error)
 	ListSystemRegistry(ctx context.Context, prefix *string) ([]*SystemRegistry, error)
@@ -1043,6 +1045,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Space(childComplexity, args["key"].(string)), true
+	case "Query.spaceKeyExists":
+		if e.ComplexityRoot.Query.SpaceKeyExists == nil {
+			break
+		}
+
+		args, err := ec.field_Query_spaceKeyExists_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.SpaceKeyExists(childComplexity, args["key"].(string)), true
 	case "Query.spaceRegistry":
 		if e.ComplexityRoot.Query.SpaceRegistry == nil {
 			break
@@ -1733,6 +1746,8 @@ extend type Query {
   spaceRegistry(spaceKey: String!, keys: [String!]): [UserRegistry!]!
   # Lists all members of the caller's organization (admin only)
   orgMembers: [OrgMember!]!
+  # Returns true when the space key is already taken (globally unique, admin only)
+  spaceKeyExists(key: String!): Boolean!
 }
 
 extend type Mutation {
@@ -2641,6 +2656,17 @@ func (ec *executionContext) field_Query_listUserRegistry_args(ctx context.Contex
 		return nil, err
 	}
 	args["ownerID"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_spaceKeyExists_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
 	return args, nil
 }
 
@@ -6076,6 +6102,47 @@ func (ec *executionContext) fieldContext_Query_orgMembers(_ context.Context, fie
 			}
 			return nil, fmt.Errorf("no field named %q was found under type OrgMember", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_spaceKeyExists(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_spaceKeyExists,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().SpaceKeyExists(ctx, fc.Args["key"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_spaceKeyExists(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_spaceKeyExists_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11579,6 +11646,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_orgMembers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "spaceKeyExists":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_spaceKeyExists(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
