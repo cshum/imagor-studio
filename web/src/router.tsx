@@ -12,7 +12,7 @@ import {
 } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 
-import { getSpace, getSpaceRegistry, listOrgMembers } from '@/api/org-api'
+import { getSpaceRegistry, listOrgMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { Button } from '@/components/ui/button'
 import { ErrorPage } from '@/components/ui/error-page'
@@ -266,10 +266,7 @@ const spaceRootRoute = createRoute({
       </GalleryPage>
     )
   },
-  loader: async ({ params }) => {
-    const space = await getSpace(params.spaceKey).catch(() => null)
-    return galleryLoader({ params: { galleryKey: '', spaceKey: params.spaceKey }, spaceName: space?.name ?? undefined })
-  },
+  loader: ({ params }) => galleryLoader({ params: { galleryKey: '', spaceKey: params.spaceKey } }),
   shouldReload: false,
 })
 
@@ -306,10 +303,7 @@ const spaceGalleryRoute = createRoute({
       </GalleryPage>
     )
   },
-  loader: async ({ params }) => {
-    const space = await getSpace(params.spaceKey).catch(() => null)
-    return galleryLoader({ params, spaceName: space?.name ?? undefined })
-  },
+  loader: ({ params }) => galleryLoader({ params }),
   shouldReload: false,
 })
 

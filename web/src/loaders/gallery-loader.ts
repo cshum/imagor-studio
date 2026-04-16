@@ -1,3 +1,4 @@
+import { getSpace } from '@/api/org-api'
 import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
@@ -40,10 +41,8 @@ export const TEMPLATE_EXTENSION = '.imagor.json'
  */
 export const galleryLoader = async ({
   params: { galleryKey, spaceKey },
-  spaceName,
 }: {
   params: { galleryKey: string; spaceKey?: string }
-  spaceName?: string
 }): Promise<GalleryLoaderData> => {
   // Use galleryKey as the path for storage API
   const path = galleryKey
@@ -200,6 +199,11 @@ export const galleryLoader = async ({
 
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
+  const spaceName = spaceKey
+    ? await getSpace(spaceKey)
+        .then((s) => s?.name ?? null)
+        .catch(() => null)
+    : null
   const homeTitle = spaceName || folderTreeState.homeTitle
 
   // Use the actual folder name, or custom home title for root
