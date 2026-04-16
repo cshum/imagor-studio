@@ -12,6 +12,7 @@ import {
 } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 
+import { getSpaceRegistry, listOrgMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { Button } from '@/components/ui/button'
 import { ErrorPage } from '@/components/ui/error-page'
@@ -46,8 +47,6 @@ import {
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
-import { getSpaceRegistry } from '@/api/org-api'
-import { listOrgMembers } from '@/api/org-api'
 import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { CreateSpacePage } from '@/pages/create-space-page'
@@ -56,12 +55,12 @@ import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
-import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
-import { GeneralSection } from '@/pages/space-settings/general'
-import { StorageSection } from '@/pages/space-settings/storage'
-import { SecuritySection } from '@/pages/space-settings/security'
 import { GallerySection } from '@/pages/space-settings/gallery'
+import { GeneralSection } from '@/pages/space-settings/general'
+import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
 import { MembersSection } from '@/pages/space-settings/members'
+import { SecuritySection } from '@/pages/space-settings/security'
+import { StorageSection } from '@/pages/space-settings/storage'
 import { SpacesPage } from '@/pages/spaces-page'
 import { UsersPage } from '@/pages/users-page'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
@@ -405,7 +404,9 @@ const generalSectionRoute = createRoute({
     try {
       const entries = await getSpaceRegistry(spaceKey)
       const map: Record<string, string> = {}
-      entries.forEach((e) => { map[e.key] = e.value })
+      entries.forEach((e) => {
+        map[e.key] = e.value
+      })
       return map
     } catch {
       return {} as Record<string, string>
@@ -447,7 +448,9 @@ const gallerySectionRoute = createRoute({
     try {
       const entries = await getSpaceRegistry(spaceKey)
       const map: Record<string, string> = {}
-      entries.forEach((e) => { map[e.key] = e.value })
+      entries.forEach((e) => {
+        map[e.key] = e.value
+      })
       return map
     } catch {
       return {} as Record<string, string>

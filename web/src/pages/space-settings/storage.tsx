@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Input } from '@/components/ui/input'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
+
 import { SecretField, type SpaceSettingsData } from './shared'
 
 // ── Schema ─────────────────────────────────────────────────────────────────
@@ -100,9 +101,7 @@ export function StorageSection({ space }: StorageSectionProps) {
       {/* Read-only bucket / region badge */}
       <div className='bg-muted/40 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md px-3 py-2 text-sm'>
         <span>
-          <span className='text-muted-foreground'>
-            {t('pages.spaceSettings.storage.bucket')}:{' '}
-          </span>
+          <span className='text-muted-foreground'>{t('pages.spaceSettings.storage.bucket')}: </span>
           <code className='font-mono font-medium'>{space.bucket}</code>
         </span>
         {space.region && (
@@ -147,11 +146,7 @@ export function StorageSection({ space }: StorageSectionProps) {
                   description={t('pages.spaceSettings.storage.endpointDescription')}
                 >
                   <FormControl>
-                    <Input
-                      placeholder='https://s3.amazonaws.com'
-                      {...field}
-                      disabled={isSaving}
-                    />
+                    <Input placeholder='https://s3.amazonaws.com' {...field} disabled={isSaving} />
                   </FormControl>
                   <FormMessage className='mt-1.5' />
                 </SettingRow>
@@ -199,12 +194,7 @@ export function StorageSection({ space }: StorageSectionProps) {
                     cancelLabel={t('common.buttons.cancel')}
                     disabled={isSaving}
                     renderInput={() => (
-                      <Input
-                        type='password'
-                        autoFocus
-                        {...field}
-                        disabled={isSaving}
-                      />
+                      <Input type='password' autoFocus {...field} disabled={isSaving} />
                     )}
                   />
                   <FormMessage className='mt-1.5' />

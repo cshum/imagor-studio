@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/sidebar'
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
+
 import { avatarColor, spaceInitials, type SpaceSettingsData } from './shared'
 
 // ── Section ids ────────────────────────────────────────────────────────────

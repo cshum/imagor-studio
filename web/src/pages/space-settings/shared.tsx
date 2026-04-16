@@ -1,5 +1,5 @@
-import type { GetSpaceQuery } from '@/generated/graphql'
 import { Button } from '@/components/ui/button'
+import type { GetSpaceQuery } from '@/generated/graphql'
 
 export type SpaceSettingsData = NonNullable<GetSpaceQuery['space']>
 
