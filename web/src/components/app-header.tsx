@@ -168,11 +168,11 @@ export function AppHeader({
                 <Button
                   variant='ghost'
                   size='icon'
-                  className='h-9 w-9 rounded-full p-0 focus-visible:ring-2'
+                  className='rounded-full p-0 focus-visible:ring-2'
                   aria-label={moreText}
                 >
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white ${bgColor}`}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white lg:h-8 lg:w-8 ${bgColor}`}
                   >
                     {initials}
                   </div>
