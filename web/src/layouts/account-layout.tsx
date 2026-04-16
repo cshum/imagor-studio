@@ -1,7 +1,15 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
-import { Cpu, HardDrive, KeyRound, LayoutDashboard, PanelLeft, UserRound, Users } from 'lucide-react'
+import {
+  Cpu,
+  HardDrive,
+  KeyRound,
+  LayoutDashboard,
+  PanelLeft,
+  UserRound,
+  Users,
+} from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
 import { Button } from '@/components/ui/button'

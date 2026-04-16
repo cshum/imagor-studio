@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 
 import { updateSpace } from '@/api/org-api'
 import { ImagorConfigForm, type ImagorConfigValues } from '@/components/imagor/imagor-config-form'
+
 import type { SpaceSettingsData } from './shared'
 
 // ── Security section ───────────────────────────────────────────────────────
@@ -46,9 +47,7 @@ export function SecuritySection({ space }: SecuritySectionProps) {
     <>
       {/* URL Signing sub-heading */}
       <div className='mb-4'>
-        <h3 className='text-base font-semibold'>
-          {t('pages.spaceSettings.imagor.urlSigning')}
-        </h3>
+        <h3 className='text-base font-semibold'>{t('pages.spaceSettings.imagor.urlSigning')}</h3>
         <p className='text-muted-foreground mt-1 text-sm'>
           {t('pages.spaceSettings.imagor.urlSigningDescription')}
         </p>

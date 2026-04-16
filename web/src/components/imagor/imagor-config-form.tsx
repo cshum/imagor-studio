@@ -121,12 +121,7 @@ export function ImagorConfigForm({ initialValues, onSave, disabled }: ImagorConf
                     cancelLabel={t('common.buttons.cancel')}
                     disabled={isDisabled}
                     renderInput={() => (
-                      <Input
-                        type='password'
-                        autoFocus
-                        {...field}
-                        disabled={isDisabled}
-                      />
+                      <Input type='password' autoFocus {...field} disabled={isDisabled} />
                     )}
                   />
                   <FormMessage className='mt-1.5' />
@@ -145,26 +140,16 @@ export function ImagorConfigForm({ initialValues, onSave, disabled }: ImagorConf
                   label={t('pages.imagor.signerType')}
                   description={t('pages.imagor.signerTypeDescription')}
                 >
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={isDisabled}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isDisabled}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value='SHA1'>
-                        {t('pages.imagor.algorithmSha1')}
-                      </SelectItem>
-                      <SelectItem value='SHA256'>
-                        {t('pages.imagor.algorithmSha256')}
-                      </SelectItem>
-                      <SelectItem value='SHA512'>
-                        {t('pages.imagor.algorithmSha512')}
-                      </SelectItem>
+                      <SelectItem value='SHA1'>{t('pages.imagor.algorithmSha1')}</SelectItem>
+                      <SelectItem value='SHA256'>{t('pages.imagor.algorithmSha256')}</SelectItem>
+                      <SelectItem value='SHA512'>{t('pages.imagor.algorithmSha512')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className='mt-1.5' />

@@ -127,12 +127,8 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
         seek_1s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek1s'),
         seek_3s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek3s'),
         seek_5s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek5s'),
-        seek_10pct: t(
-          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek10pct',
-        ),
-        seek_25pct: t(
-          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct',
-        ),
+        seek_10pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek10pct'),
+        seek_25pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct'),
       },
     },
     {

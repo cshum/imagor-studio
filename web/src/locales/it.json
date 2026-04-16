@@ -437,7 +437,7 @@
         "general": "Configura le impostazioni generali della piattaforma. Queste opzioni sono disponibili solo per gli amministratori.",
         "storage": "Configura il backend di archiviazione predefinito per gli spazi gestiti dalla piattaforma.",
         "imagor": "Configura le impostazioni predefinite di elaborazione immagini e firma URL di imagor per la piattaforma.",
-        "license": ""
+        "license": "Gestisci la tua chiave di licenza e visualizza il piano attuale."
       }
     },
     "storage": {

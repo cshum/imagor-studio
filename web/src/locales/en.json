@@ -442,7 +442,7 @@
         "general": "Configure platform-wide settings. These options are only available to administrators.",
         "storage": "Configure the default storage backend for platform-managed spaces.",
         "imagor": "Configure imagor image processing and URL signing defaults for the platform.",
-        "license": ""
+        "license": "Manage your license key and view your current plan."
       }
     },
     "storage": {

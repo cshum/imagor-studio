@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 
 import type { LicenseStatus } from '@/api/license-api'
-import { Badge } from '@/components/ui/badge'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
@@ -32,13 +31,6 @@ export function LicenseManagementSection({ licenseStatus }: LicenseManagementSec
     return t(typeKey, { defaultValue: licenseType.charAt(0).toUpperCase() + licenseType.slice(1) })
   }
 
-  const getStatusBadge = () => {
-    if (!licenseStatus?.isLicensed) {
-      return <Badge variant='destructive'>{t('pages.license.notLicensed')}</Badge>
-    }
-    return <Badge variant='default'>{t('pages.license.licensed')}</Badge>
-  }
-
   if (!licenseStatus) {
     return (
       <SettingsSection>
@@ -57,13 +49,15 @@ export function LicenseManagementSection({ licenseStatus }: LicenseManagementSec
       <SettingsSection>
         <SettingRow
           label={t('pages.license.licenseType')}
-          description={t('pages.license.licenseManagementDescription')}
-          contentClassName='flex items-center justify-end gap-2'
+          contentClassName='flex items-center justify-end'
         >
-          {isLicensed && (
-            <p className='text-sm'>{getLicenseTypeDisplay(licenseStatus.licenseType)}</p>
+          {isLicensed ? (
+            <p className='text-sm font-medium'>
+              {getLicenseTypeDisplay(licenseStatus.licenseType)}
+            </p>
+          ) : (
+            <p className='text-muted-foreground text-sm'>{t('pages.license.notLicensed')}</p>
           )}
-          {getStatusBadge()}
         </SettingRow>
 
         {isLicensed && licenseStatus.email && (
@@ -104,7 +98,9 @@ export function LicenseManagementSection({ licenseStatus }: LicenseManagementSec
           {!isLicensed && (
             <ButtonWithLoading
               variant='outline'
-              onClick={() => { window.open('https://imagor.net/buy/early-bird/', '_blank') }}
+              onClick={() => {
+                window.open('https://imagor.net/buy/early-bird/', '_blank')
+              }}
               isLoading={false}
             >
               {t('pages.license.purchaseLicense')}
