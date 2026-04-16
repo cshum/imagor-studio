@@ -3,6 +3,7 @@ import { gql } from '@/generated/gql'
 export const LIST_FILES = gql(`
   query ListFiles(
     $path: String!
+    $spaceKey: String
     $offset: Int
     $limit: Int
     $onlyFiles: Boolean
@@ -14,6 +15,7 @@ export const LIST_FILES = gql(`
   ) {
     listFiles(
       path: $path
+      spaceKey: $spaceKey
       offset: $offset
       limit: $limit
       onlyFiles: $onlyFiles
@@ -43,8 +45,8 @@ export const LIST_FILES = gql(`
 `)
 
 export const STAT_FILE = gql(`
-  query StatFile($path: String!) {
-    statFile(path: $path) {
+  query StatFile($path: String!, $spaceKey: String) {
+    statFile(path: $path, spaceKey: $spaceKey) {
       name
       path
       size
@@ -63,32 +65,32 @@ export const STAT_FILE = gql(`
 `)
 
 export const UploadFileMutation = gql(`
-  mutation UploadFile($path: String!, $content: Upload!) {
-    uploadFile(path: $path, content: $content)
+  mutation UploadFile($path: String!, $spaceKey: String, $content: Upload!) {
+    uploadFile(path: $path, spaceKey: $spaceKey, content: $content)
   }
 `)
 
 export const DELETE_FILE = gql(`
-  mutation DeleteFile($path: String!) {
-    deleteFile(path: $path)
+  mutation DeleteFile($path: String!, $spaceKey: String) {
+    deleteFile(path: $path, spaceKey: $spaceKey)
   }
 `)
 
 export const CREATE_FOLDER = gql(`
-  mutation CreateFolder($path: String!) {
-    createFolder(path: $path)
+  mutation CreateFolder($path: String!, $spaceKey: String) {
+    createFolder(path: $path, spaceKey: $spaceKey)
   }
 `)
 
 export const COPY_FILE = gql(`
-  mutation CopyFile($sourcePath: String!, $destPath: String!) {
-    copyFile(sourcePath: $sourcePath, destPath: $destPath)
+  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {
+    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)
   }
 `)
 
 export const MOVE_FILE = gql(`
-  mutation MoveFile($sourcePath: String!, $destPath: String!) {
-    moveFile(sourcePath: $sourcePath, destPath: $destPath)
+  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {
+    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)
   }
 `)
 
@@ -146,8 +148,8 @@ export const TEST_STORAGE_CONFIG = gql(`
 `)
 
 export const SAVE_TEMPLATE = gql(`
-  mutation SaveTemplate($input: SaveTemplateInput!) {
-    saveTemplate(input: $input) {
+  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {
+    saveTemplate(input: $input, spaceKey: $spaceKey) {
       success
       templatePath
       previewPath
@@ -157,7 +159,7 @@ export const SAVE_TEMPLATE = gql(`
 `)
 
 export const REGENERATE_TEMPLATE_PREVIEW = gql(`
-  mutation RegenerateTemplatePreview($templatePath: String!) {
-    regenerateTemplatePreview(templatePath: $templatePath)
+  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {
+    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)
   }
 `)

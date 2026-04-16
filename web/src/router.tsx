@@ -1,23 +1,39 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   createRootRoute,
   createRoute,
   createRouter,
+  Link,
   Navigate,
   Outlet,
+  redirect,
   RouterProvider,
 } from '@tanstack/react-router'
+import { Plus } from 'lucide-react'
 
+import { getSpaceRegistry, listOrgMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
+import { Button } from '@/components/ui/button'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
+import { SpacesLayout } from '@/layouts/spaces-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
-import { adminLoader, profileLoader, usersLoader } from '@/loaders/account-loader.ts'
+import {
+  adminGeneralLoader,
+  adminImagorLoader,
+  adminLicenseLoader,
+  adminStorageLoader,
+  profileLoader,
+  spaceSettingsLoader,
+  spacesLoader,
+  usersLoader,
+} from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import {
   requireAccountAuth,
@@ -34,15 +50,26 @@ import {
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
-import { AdminPage } from '@/pages/admin-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
+import { AdminGeneralSection } from '@/pages/admin/general'
+import { AdminImagorSection } from '@/pages/admin/imagor'
+import { AdminLayout } from '@/pages/admin/layout'
+import { AdminLicenseSection } from '@/pages/admin/license'
+import { AdminStorageSection } from '@/pages/admin/storage'
+import { CreateSpacePage } from '@/pages/create-space-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
+import { GeneralSection } from '@/pages/space-settings/general'
+import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
+import { MembersSection } from '@/pages/space-settings/members'
+import { SecuritySection } from '@/pages/space-settings/security'
+import { StorageSection } from '@/pages/space-settings/storage'
+import { SpacesPage } from '@/pages/spaces-page'
 import { UsersPage } from '@/pages/users-page'
-import { initAuth, useAuthEffect } from '@/stores/auth-store.ts'
+import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import {
   initializeFolderTreeCache,
   loadHomeTitle,
@@ -101,6 +128,14 @@ const baseLayoutRoute = createRoute({
 const rootPath = createRoute({
   getParentRoute: () => baseLayoutRoute,
   path: '/',
+  // In multi-tenant (SaaS) mode there is no system-level root gallery.
+  // Redirect to the spaces list so the user picks a space.
+  beforeLoad: () => {
+    const auth = getAuth()
+    if (auth.multiTenant) {
+      throw redirect({ to: '/account/spaces' })
+    }
+  },
   component: () => {
     const galleryLoaderData = rootPath.useLoaderData()
     return (
@@ -217,16 +252,234 @@ const galleryImageEditorRoute = createRoute({
   },
 })
 
-const accountLayoutRoute = createRoute({
+// ─── Space-scoped gallery routes: /spaces/$spaceKey/... ──────────────────────
+
+// /spaces/$spaceKey  →  root gallery for this space (galleryKey = '')
+const spaceRootRoute = createRoute({
   getParentRoute: () => baseLayoutRoute,
-  id: 'account-layout',
-  beforeLoad: requireAccountAuth,
-  loader: () => ({
-    breadcrumb: {
-      translationKey: 'navigation.breadcrumbs.settings',
-    },
-  }),
-  component: () => <AccountLayout />,
+  path: '/spaces/$spaceKey',
+  component: () => {
+    const galleryLoaderData = spaceRootRoute.useLoaderData()
+    return (
+      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>
+        <Outlet />
+      </GalleryPage>
+    )
+  },
+  loader: ({ params }) => galleryLoader({ params: { galleryKey: '', spaceKey: params.spaceKey } }),
+  shouldReload: false,
+})
+
+// /spaces/$spaceKey/$imageKey  →  image detail at the root of a space
+const spaceRootImagePage = createRoute({
+  getParentRoute: () => spaceRootRoute,
+  path: '/$imageKey',
+  loader: ({ params }) => imageLoader({ params: { ...params, galleryKey: '' } }),
+  component: () => {
+    const galleryLoaderData = spaceRootRoute.useLoaderData()
+    const imageLoaderData = spaceRootImagePage.useLoaderData()
+    const { imageKey } = spaceRootImagePage.useParams()
+    return (
+      <ImagePage
+        imageLoaderData={imageLoaderData}
+        galleryLoaderData={galleryLoaderData}
+        galleryKey=''
+        imageKey={imageKey}
+      />
+    )
+  },
+})
+
+// /spaces/$spaceKey/gallery/$galleryKey  →  nested folder inside a space
+const spaceGalleryRoute = createRoute({
+  getParentRoute: () => baseLayoutRoute,
+  path: '/spaces/$spaceKey/gallery/$galleryKey',
+  component: () => {
+    const galleryLoaderData = spaceGalleryRoute.useLoaderData()
+    const { galleryKey } = spaceGalleryRoute.useParams()
+    return (
+      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey={galleryKey}>
+        <Outlet />
+      </GalleryPage>
+    )
+  },
+  loader: ({ params }) => galleryLoader({ params }),
+  shouldReload: false,
+})
+
+// /spaces/$spaceKey/gallery/$galleryKey/$imageKey  →  image inside nested folder
+const spaceImagePage = createRoute({
+  getParentRoute: () => spaceGalleryRoute,
+  path: '/$imageKey',
+  loader: ({ params }) => imageLoader({ params }),
+  component: () => {
+    const galleryLoaderData = spaceGalleryRoute.useLoaderData()
+    const imageLoaderData = spaceImagePage.useLoaderData()
+    const { galleryKey, imageKey } = spaceImagePage.useParams()
+    return (
+      <ImagePage
+        imageLoaderData={imageLoaderData}
+        galleryLoaderData={galleryLoaderData}
+        galleryKey={galleryKey}
+        imageKey={imageKey}
+      />
+    )
+  },
+})
+
+// /spaces/$spaceKey/$imageKey/editor  →  image editor at the root of a space
+const spaceImageEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/spaces/$spaceKey/$imageKey/editor',
+  beforeLoad: requireImageEditorAuth,
+  loader: ({ params }) => imageEditorLoader({ params: { ...params, galleryKey: '' } }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = spaceImageEditorRoute.useLoaderData()
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
+  },
+})
+
+// /spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor  →  image editor inside a space folder
+const spaceGalleryImageEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor',
+  beforeLoad: requireImageEditorAuth,
+  loader: ({ params }) => imageEditorLoader({ params }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = spaceGalleryImageEditorRoute.useLoaderData()
+    const { galleryKey } = spaceGalleryImageEditorRoute.useParams()
+    return <ImageEditorPage loaderData={loaderData} galleryKey={galleryKey} />
+  },
+})
+
+// /spaces/$spaceKey/editor/new  →  new canvas editor inside a space
+const spaceCanvasEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/spaces/$spaceKey/editor/new',
+  beforeLoad: requireImageEditorAuth,
+  loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
+  shouldReload: false,
+  component: () => {
+    const loaderData = spaceCanvasEditorRoute.useLoaderData()
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
+  },
+})
+
+// /account/spaces/new  →  full-page create-space wizard (no sidebar)
+const createSpaceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/account/spaces/new',
+  beforeLoad: requireAdminAccountAuth,
+  component: CreateSpacePage,
+})
+
+// ─── Space settings: layout route + per-section child routes ────────────────
+
+// Layout: renders sidebar shell + <Outlet /> for section content
+const spaceSettingsLayoutRoute = createRoute({
+  getParentRoute: () => settingsLayoutRoute,
+  path: '/spaces/$spaceKey/settings',
+  beforeLoad: requireAdminAccountAuth,
+  loader: ({ params: { spaceKey } }) => spaceSettingsLoader({ params: { spaceKey } }),
+  shouldReload: false,
+  component: () => {
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    return <SpaceSettingsLayout space={space} />
+  },
+})
+
+// Index: /spaces/$spaceKey/settings  →  redirect to /general
+const spaceSettingsIndexRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/',
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/spaces/$spaceKey/settings/general',
+      params: { spaceKey: params.spaceKey },
+    })
+  },
+})
+
+// /spaces/$spaceKey/settings/general
+const generalSectionRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/general',
+  loader: async ({ params: { spaceKey } }) => {
+    try {
+      const entries = await getSpaceRegistry(spaceKey)
+      const map: Record<string, string> = {}
+      entries.forEach((e) => {
+        map[e.key] = e.value
+      })
+      return map
+    } catch {
+      return {} as Record<string, string>
+    }
+  },
+  shouldReload: false,
+  component: () => {
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    const initialValues = generalSectionRoute.useLoaderData()
+    return <GeneralSection space={space} initialValues={initialValues} />
+  },
+})
+
+// /spaces/$spaceKey/settings/storage  (BYOB only — component redirects non-BYOB)
+const storageSectionRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/storage',
+  component: () => {
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    return <StorageSection space={space} />
+  },
+})
+
+// /spaces/$spaceKey/settings/imagor
+const securitySectionRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/imagor',
+  component: () => {
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    return <SecuritySection space={space} />
+  },
+})
+
+// /spaces/$spaceKey/settings/gallery → redirect to general
+const galleryRedirectRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/gallery',
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/spaces/$spaceKey/settings/general', params })
+  },
+})
+
+// /spaces/$spaceKey/settings/members
+const membersSectionRoute = createRoute({
+  getParentRoute: () => spaceSettingsLayoutRoute,
+  path: '/members',
+  loader: async () => {
+    try {
+      return await listOrgMembers()
+    } catch {
+      return []
+    }
+  },
+  shouldReload: false,
+  component: () => {
+    const initialMembers = membersSectionRoute.useLoaderData()
+    return <MembersSection initialMembers={initialMembers} />
+  },
+})
+
+// ─── Settings layout (no folder-tree sidebar) ────────────────────────────────
+
+const settingsLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'settings-layout',
+  beforeLoad: requireAuth,
+  component: () => <Outlet />,
 })
 
 // Redirect /account to /account/profile
@@ -241,19 +494,87 @@ const accountProfileRoute = createRoute({
   path: '/account/profile',
   loader: profileLoader,
   component: () => {
+    const { t } = useTranslation()
     const loaderData = accountProfileRoute.useLoaderData()
-    return <ProfilePage loaderData={loaderData} />
+    return (
+      <>
+        <div className='mb-8'>
+          <h1 className='text-2xl font-semibold tracking-tight'>{t('pages.profile.title')}</h1>
+          <p className='text-muted-foreground mt-1 text-sm'>
+            {t('pages.profile.titleDescription')}
+          </p>
+        </div>
+        <ProfilePage loaderData={loaderData} />
+      </>
+    )
   },
 })
 
-const accountAdminRoute = createRoute({
+const accountLayoutRoute = createRoute({
+  getParentRoute: () => settingsLayoutRoute,
+  id: 'account-layout',
+  beforeLoad: requireAccountAuth,
+  component: () => <AccountLayout />,
+})
+
+// ─── Admin: layout route + per-section child routes ─────────────────────────
+
+const accountAdminLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/admin',
   beforeLoad: requireAdminAccountAuth,
-  loader: adminLoader,
+  component: () => <AdminLayout />,
+})
+
+const accountAdminIndexRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/account/admin/general' })
+  },
+})
+
+const accountAdminGeneralRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/general',
+  loader: adminGeneralLoader,
+  shouldReload: false,
   component: () => {
-    const loaderData = accountAdminRoute.useLoaderData()
-    return <AdminPage loaderData={loaderData} />
+    const loaderData = accountAdminGeneralRoute.useLoaderData()
+    return <AdminGeneralSection loaderData={loaderData} />
+  },
+})
+
+const accountAdminStorageRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/storage',
+  loader: adminStorageLoader,
+  shouldReload: false,
+  component: () => {
+    const { storageStatus } = accountAdminStorageRoute.useLoaderData()
+    return <AdminStorageSection storageStatus={storageStatus} />
+  },
+})
+
+const accountAdminImagorRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/imagor',
+  loader: adminImagorLoader,
+  shouldReload: false,
+  component: () => {
+    const { imagorStatus } = accountAdminImagorRoute.useLoaderData()
+    return <AdminImagorSection imagorStatus={imagorStatus} />
+  },
+})
+
+const accountAdminLicenseRoute = createRoute({
+  getParentRoute: () => accountAdminLayoutRoute,
+  path: '/license',
+  loader: adminLicenseLoader,
+  shouldReload: false,
+  component: () => {
+    const { licenseStatus } = accountAdminLicenseRoute.useLoaderData()
+    return <AdminLicenseSection licenseStatus={licenseStatus} />
   },
 })
 
@@ -261,12 +582,56 @@ const accountUsersRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/users',
   beforeLoad: requireAdminAccountAuth,
-  loader: usersLoader,
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: (search.q as string) ?? '',
+  }),
+  loaderDeps: ({ search: { q } }) => ({ q }),
+  loader: ({ deps }) => usersLoader({ search: deps.q }),
   component: () => {
     const loaderData = accountUsersRoute.useLoaderData()
-    return <UsersPage loaderData={loaderData.users} />
+    const { q } = accountUsersRoute.useSearch()
+    return <UsersPage loaderData={loaderData.users} searchQuery={q} />
   },
 })
+
+// /account/spaces  →  each child provides its own SpacesLayout
+const spacesLayoutRoute = createRoute({
+  getParentRoute: () => settingsLayoutRoute,
+  id: 'spaces-layout',
+  component: () => <Outlet />,
+})
+
+const accountSpacesRoute = createRoute({
+  getParentRoute: () => spacesLayoutRoute,
+  path: '/account/spaces',
+  beforeLoad: requireAdminAccountAuth,
+  loader: spacesLoader,
+  component: () => {
+    const { t } = useTranslation()
+    const loaderData = accountSpacesRoute.useLoaderData()
+    return (
+      <SpacesLayout
+        title={t('pages.spaces.title')}
+        description={t('pages.spaces.description')}
+        primaryAction={<CreateSpacePageTrigger />}
+      >
+        <SpacesPage loaderData={loaderData.spaces} />
+      </SpacesLayout>
+    )
+  },
+})
+
+const CreateSpacePageTrigger = () => {
+  const { t } = useTranslation()
+  return (
+    <Link to='/account/spaces/new'>
+      <Button>
+        <Plus className='mr-2 h-4 w-4' />
+        {t('pages.spaces.createSpace')}
+      </Button>
+    </Link>
+  )
+}
 
 // Check if embedded mode is enabled via environment variable
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
@@ -292,19 +657,42 @@ const routeTree = isEmbeddedMode
     rootRoute.addChildren([
       loginRoute,
       adminSetupRoute,
+      createSpaceRoute,
       canvasEditorRoute,
       galleryCanvasEditorRoute,
       rootImageEditorRoute,
       galleryImageEditorRoute,
-      baseLayoutRoute.addChildren([
-        rootPath.addChildren([rootImagePage]),
-        galleryRoute.addChildren([imagePage]),
+      spaceImageEditorRoute,
+      spaceGalleryImageEditorRoute,
+      spaceCanvasEditorRoute,
+      settingsLayoutRoute.addChildren([
+        spaceSettingsLayoutRoute.addChildren([
+          spaceSettingsIndexRoute,
+          generalSectionRoute,
+          storageSectionRoute,
+          securitySectionRoute,
+          galleryRedirectRoute,
+          membersSectionRoute,
+        ]),
+        spacesLayoutRoute.addChildren([accountSpacesRoute]),
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
-          accountAdminRoute,
+          accountAdminLayoutRoute.addChildren([
+            accountAdminIndexRoute,
+            accountAdminGeneralRoute,
+            accountAdminStorageRoute,
+            accountAdminImagorRoute,
+            accountAdminLicenseRoute,
+          ]),
           accountUsersRoute,
         ]),
+      ]),
+      baseLayoutRoute.addChildren([
+        rootPath.addChildren([rootImagePage]),
+        galleryRoute.addChildren([imagePage]),
+        spaceRootRoute.addChildren([spaceRootImagePage]),
+        spaceGalleryRoute.addChildren([spaceImagePage]),
       ]),
     ])
 
@@ -331,7 +719,11 @@ export function AppRouter() {
         initializeTheme(userThemeStorage, 'class')
         initializeSidebar(userSidebarStorage)
       }
-      loadRootFolders()
+      // In multi-tenant (SaaS) mode there is no system-level root gallery,
+      // so skip the root-folder sidebar fetch — it would fail with NOT_AVAILABLE.
+      if (!authState.multiTenant) {
+        loadRootFolders()
+      }
       loadHomeTitle()
     } else if (action.type === 'LOGOUT') {
       initializeTheme(localThemeStorage, 'class')

@@ -23,6 +23,7 @@ type AuthHandler struct {
 	registryStore registrystore.Store
 	logger        *zap.Logger
 	embeddedMode  bool
+	multiTenant   bool // true when InternalAPISecret is set
 }
 
 func NewAuthHandler(
@@ -32,6 +33,7 @@ func NewAuthHandler(
 	registryStore registrystore.Store,
 	logger *zap.Logger,
 	embeddedMode bool,
+	multiTenant bool, // true when InternalAPISecret is set (multi-tenant mode)
 ) *AuthHandler {
 	return &AuthHandler{
 		tokenManager:  tokenManager,
@@ -40,6 +42,7 @@ func NewAuthHandler(
 		registryStore: registryStore,
 		logger:        logger,
 		embeddedMode:  embeddedMode,
+		multiTenant:   multiTenant,
 	}
 }
 
@@ -76,8 +79,9 @@ type UserResponse struct {
 }
 
 type FirstRunResponse struct {
-	IsFirstRun bool  `json:"isFirstRun"`
-	Timestamp  int64 `json:"timestamp"`
+	IsFirstRun  bool  `json:"isFirstRun"`
+	Timestamp   int64 `json:"timestamp"`
+	MultiTenant bool  `json:"multiTenant"`
 }
 
 type RefreshTokenRequest struct {
@@ -86,15 +90,16 @@ type RefreshTokenRequest struct {
 
 func (h *AuthHandler) CheckFirstRun() http.HandlerFunc {
 	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
-		_, totalCount, err := h.userStore.List(r.Context(), 0, 1)
+		_, totalCount, err := h.userStore.List(r.Context(), 0, 1, "")
 		if err != nil {
 			h.logger.Error("Failed to check existing users", zap.Error(err))
 			return apperror.InternalServerError("Failed to check system status")
 		}
 
 		return WriteSuccess(w, FirstRunResponse{
-			IsFirstRun: totalCount == 0,
-			Timestamp:  time.Now().UnixMilli(),
+			IsFirstRun:  totalCount == 0,
+			Timestamp:   time.Now().UnixMilli(),
+			MultiTenant: h.multiTenant,
 		})
 	})
 }
@@ -107,7 +112,7 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		}
 
 		// Check if this is truly the first run
-		_, totalCount, err := h.userStore.List(r.Context(), 0, 1)
+		_, totalCount, err := h.userStore.List(r.Context(), 0, 1, "")
 		if err != nil {
 			h.logger.Error("Failed to check existing users", zap.Error(err))
 			return apperror.InternalServerError("Failed to check system status")

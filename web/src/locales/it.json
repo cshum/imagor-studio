@@ -2,10 +2,16 @@
   "layouts": {
     "account": {
       "title": "Impostazioni",
+      "backToApp": "Torna all'app",
+      "sections": {
+        "account": "Account",
+        "administration": "Amministrazione"
+      },
       "tabs": {
         "profile": "Profilo",
         "system": "Sistema",
-        "users": "Utenti"
+        "users": "Utenti",
+        "spaces": "Spazi"
       }
     }
   },
@@ -15,10 +21,11 @@
       "save": "Salva",
       "cancel": "Annulla",
       "delete": "Elimina",
+      "remove": "Rimuovi",
       "edit": "Modifica",
       "create": "Crea",
       "update": "Aggiorna",
-      "updateSettings": "Aggiorna Impostazioni",
+      "updateSettings": "Salva",
       "close": "Chiudi",
       "more": "Altro",
       "switchTheme": "Cambia Tema",
@@ -111,7 +118,9 @@
       "settings": "Impostazioni",
       "users": "Utenti",
       "admin": "Sistema",
-      "adminSetup": "Configurazione Amministratore"
+      "adminSetup": "Configurazione Amministratore",
+      "spaces": "Spazi",
+      "spaceSettings": "Impostazioni"
     }
   },
   "pages": {
@@ -293,7 +302,9 @@
       "profileInformation": "Informazioni Profilo",
       "profileInformationDescription": "Aggiorna le informazioni del tuo account.",
       "displayName": "Nome Visualizzato",
+      "displayNameDescription": "Il nome pubblico visualizzato in tutta l'app.",
       "displayNamePlaceholder": "Inserisci il tuo nome visualizzato",
+      "usernameDescription": "Utilizzato per l'accesso. Può contenere lettere, numeri, trattini bassi e trattini.",
       "usernamePlaceholder": "Inserisci il tuo nome utente",
       "updateProfile": "Aggiorna Profilo",
       "securitySettings": "Impostazioni di Sicurezza",
@@ -315,7 +326,8 @@
       "updateProfileFailed": "Impossibile aggiornare il profilo",
       "updatePasswordFailed": "Impossibile aggiornare la password",
       "usernameAlreadyInUse": "Questo nome utente è già in uso",
-      "currentPasswordIncorrect": "La password attuale non è corretta"
+      "currentPasswordIncorrect": "La password attuale non è corretta",
+      "titleDescription": "Gestisci le informazioni del tuo account personale e le impostazioni di sicurezza."
     },
     "admin": {
       "title": "Amministrazione",
@@ -414,7 +426,19 @@
       "failedToCreateAccount": "Impossibile creare l'account amministratore",
       "failedToSaveSettings": "Impossibile salvare le impostazioni",
       "storageConfiguredSuccess": "Archiviazione configurata correttamente",
-      "storageConfiguredRestart": "Archiviazione configurata correttamente. Riavvia il server per applicare le modifiche."
+      "storageConfiguredRestart": "Archiviazione configurata correttamente. Riavvia il server per applicare le modifiche.",
+      "sections": {
+        "general": "Generale",
+        "storage": "Archiviazione",
+        "imagor": "Imagor",
+        "license": "Licenza"
+      },
+      "sectionDescriptions": {
+        "general": "Configura le impostazioni generali della piattaforma. Queste opzioni sono disponibili solo per gli amministratori.",
+        "storage": "Configura il backend di archiviazione predefinito per gli spazi gestiti dalla piattaforma.",
+        "imagor": "Configura le impostazioni predefinite di elaborazione immagini e firma URL di imagor per la piattaforma.",
+        "license": "Gestisci la tua chiave di licenza e visualizza il piano attuale."
+      }
     },
     "storage": {
       "configureStorage": "Configura Archiviazione",
@@ -464,8 +488,9 @@
       "active": "Attivo",
       "s3Bucket": "Bucket S3",
       "endpoint": "Endpoint",
-      "takingEffect": "Le modifiche potrebbero richiedere fino a 1 minuto per avere effetto.",
-      "testConfigFirst": "Compila prima la configurazione di archiviazione {{storageType}}"
+      "takingEffect": "Impostazioni salvate. Le modifiche potrebbero richiedere fino a 1 minuto per avere effetto.",
+      "testConfigFirst": "Compila prima la configurazione di archiviazione {{storageType}}",
+      "storageTypeDescription": "Seleziona dove verranno archiviati le immagini e i file"
     },
     "systemSettings": {
       "settingOverridden": "Questa impostazione è sovrascritta dal file di configurazione o dalla variabile d'ambiente",
@@ -488,7 +513,10 @@
       "configuredSuccess": "Imagor configurato correttamente",
       "configurationDetails": "Dettagli Configurazione",
       "hasSecret": "Ha Segreto",
-      "takingEffect": "Impostazioni salvate. Le modifiche possono richiedere fino a 1 minuto."
+      "takingEffect": "Impostazioni salvate. Le modifiche possono richiedere fino a 1 minuto.",
+      "algorithmSha1": "SHA-1 — Legacy, piu veloce",
+      "algorithmSha256": "SHA-256 — Raccomandato",
+      "algorithmSha512": "SHA-512 — Massima sicurezza"
     },
     "license": {
       "licenseManagement": "Gestione Licenza",
@@ -538,6 +566,7 @@
     },
     "users": {
       "title": "Utenti",
+      "description": "Gestisci gli account utente e i ruoli.",
       "createUser": "Crea Utente",
       "createNewUser": "Crea Nuovo Utente",
       "createUserDescription": "Aggiungi un nuovo utente al sistema. Potrà accedere con le credenziali fornite.",
@@ -596,6 +625,188 @@
         "enterUsername": "Inserisci il nome utente",
         "enterPassword": "Inserisci la password",
         "confirmPassword": "Conferma password"
+      }
+    },
+    "spaces": {
+      "title": "Spazi",
+      "createSpace": "Crea Spazio",
+      "createNewSpace": "Crea Nuovo Spazio",
+      "createSpaceDescription": "Aggiungi un nuovo spazio alla tua organizzazione. Ogni spazio ha la propria archiviazione e configurazione imagor.",
+      "editSpace": "Modifica Spazio",
+      "editSpaceDescription": "Aggiorna la configurazione dello spazio. Le modifiche verranno applicate immediatamente.",
+      "deleteSpace": "Elimina Spazio",
+      "deleteSpaceDescription": "Sei sicuro di voler eliminare definitivamente lo spazio",
+      "createSpaceButton": "Crea Spazio",
+      "updateSpaceButton": "Aggiorna Spazio",
+      "noSpacesFound": "Nessuno spazio trovato",
+      "description": "Gestisci gli spazi di lavoro della tua organizzazione.",
+      "emptyDescription": "Crea il tuo primo spazio per iniziare con un'area di lavoro dedicata.",
+      "settings": "Impostazioni",
+      "spaceCount": "{{count}} spazio/i",
+      "openGallery": "Apri Galleria",
+      "storageNotConfigured": "Non configurato",
+      "storageTypeLabel": "Tipo di archiviazione",
+      "credentialsEncrypted": "Le credenziali sono crittografate con AES-256 e non vengono mai esposte dopo il salvataggio.",
+      "storageType": {
+        "managed": "Archiviazione piattaforma",
+        "s3": "S3 personalizzato (BYOB)"
+      },
+      "storageTypeDesc": {
+        "managed": "Gestita da Imagor Studio. Nessuna configurazione del bucket richiesta.",
+        "s3": "Collega il tuo bucket S3-compatibile."
+      },
+      "keyDescription": "Identificatore univoco utilizzato negli URL. Non può essere modificato dopo la creazione.",
+      "tableHeaders": {
+        "key": "Chiave",
+        "name": "Nome",
+        "storage": "Archiviazione",
+        "actions": "Azioni"
+      },
+      "formLabels": {
+        "key": "Chiave Spazio",
+        "name": "Nome Visualizzato",
+        "storageType": "Tipo di Archiviazione",
+        "bucket": "Bucket",
+        "region": "Regione",
+        "endpoint": "Endpoint",
+        "prefix": "Prefisso",
+        "accessKeyId": "ID Chiave di Accesso",
+        "secretKey": "Chiave Segreta",
+        "customDomain": "Dominio Personalizzato",
+        "imagorSecret": "Segreto Imagor"
+      },
+      "placeholders": {
+        "name": "Il Mio Spazio",
+        "selectStorageType": "Seleziona tipo di archiviazione",
+        "unchanged": "(invariato)"
+      },
+      "wizard": {
+        "stepIdentity": "Identità",
+        "stepStorage": "Archiviazione",
+        "next": "Avanti",
+        "back": "Indietro"
+      },
+      "messages": {
+        "spaceCreatedSuccess": "Spazio creato correttamente",
+        "spaceUpdatedSuccess": "Spazio aggiornato correttamente",
+        "spaceDeletedSuccess": "Spazio eliminato correttamente",
+        "createSpaceFailed": "Impossibile creare lo spazio",
+        "keyAlreadyTaken": "La chiave spazio è già in uso",
+        "updateSpaceFailed": "Impossibile aggiornare lo spazio",
+        "deleteSpaceFailed": "Impossibile eliminare lo spazio"
+      },
+      "validation": {
+        "keyFormat": "La chiave può contenere solo lettere minuscole, numeri e trattini"
+      },
+      "stats": {
+        "totalSpaces": "Spazi totali",
+        "managedStorage": "Archiviazione gestita",
+        "externalStorage": "Archiviazione esterna"
+      },
+      "configure": "Configura",
+      "startDescription": "Inizia con uno spazio gestito per la configurazione più rapida, poi personalizza l'archiviazione, la consegna e il branding man mano che il tuo workspace cresce."
+    },
+    "spaceSettings": {
+      "backToSpaces": "Torna agli Spazi",
+      "openGallery": "Apri Galleria",
+      "sections": {
+        "general": "Generali",
+        "storage": "Storage",
+        "dangerZone": "Zona Pericolosa",
+        "members": "Membri",
+        "imagor": "Imagor"
+      },
+      "gallery": {
+        "description": "Personalizza la visualizzazione e il comportamento della galleria per questo spazio. Le impostazioni a livello di spazio sostituiscono i valori predefiniti della piattaforma."
+      },
+      "branding": {
+        "title": "Branding",
+        "description": "Titolo e link dell'app mostrati nell'editor per questo spazio. Sovrascrive il valore predefinito della piattaforma (richiede licenza).",
+        "appTitle": "Titolo App Editor",
+        "appTitleDescription": "Titolo app personalizzato mostrato nella barra di navigazione durante la navigazione di questo spazio. Sovrascrive il valore predefinito della piattaforma (richiede licenza).",
+        "appUrl": "URL App Editor",
+        "appUrlDescription": "URL aperto quando si clicca sul titolo dell'app durante la navigazione di questo spazio."
+      },
+      "general": {
+        "description": "Informazioni di base su questo spazio.",
+        "name": "Nome Visualizzato",
+        "nameDescription": "Il nome mostrato nella navigazione e nell'elenco degli spazi.",
+        "customDomain": "Dominio Personalizzato",
+        "customDomainDescription": "Dominio personalizzato per questo spazio. Se vuoto, il servizio sarà su {{spaceKey}}.imagor.app.",
+        "saved": "Impostazioni generali salvate"
+      },
+      "storage": {
+        "description": "Configura le credenziali di archiviazione e la firma URL per questo spazio.",
+        "managedTitle": "Archiviazione gestita dalla piattaforma",
+        "managedDescription": "I file sono archiviati nello storage gestito di Imagor Studio. Il tipo di storage non può essere modificato dopo la creazione dello spazio.",
+        "bucket": "Bucket",
+        "region": "Regione",
+        "bucketLocked": "Il bucket e la regione sono fissi al momento della creazione e non possono essere modificati.",
+        "endpoint": "Endpoint",
+        "endpointDescription": "URL endpoint S3-compatibile personalizzato. Lascia vuoto per AWS S3.",
+        "prefix": "Prefisso Percorso",
+        "prefixDescription": "Prefisso percorso opzionale all'interno del bucket (es. media/).",
+        "accessKeyId": "ID Chiave di Accesso",
+        "accessKeyIdDescription": "Lascia vuoto per mantenere le credenziali esistenti.",
+        "secretKey": "Chiave di Accesso Segreta",
+        "secretKeyDescription": "Lascia vuoto per mantenere le credenziali esistenti.",
+        "urlSigning": "Firma URL",
+        "urlSigningDescription": "Firma HMAC per la generazione sicura di URL di trasformazione imagor.",
+        "imagorSecret": "Segreto di Firma",
+        "imagorSecretDescription": "Utilizzato per firmare gli URL di trasformazione imagor. Lascia vuoto per mantenere il segreto esistente.",
+        "signerAlgorithm": "Algoritmo di Firma",
+        "signerAlgorithmDescription": "Algoritmo HMAC utilizzato per firmare gli URL di trasformazione.",
+        "signerTruncate": "Troncamento Firma",
+        "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza completa).",
+        "saved": "Impostazioni archiviazione e sicurezza salvate"
+      },
+      "danger": {
+        "deleteTitle": "Elimina questo spazio",
+        "deleteDescription": "Una volta eliminato, tutta la configurazione di questo spazio viene rimossa definitivamente. I file nel tuo bucket S3 non vengono interessati.",
+        "deleteButton": "Elimina Spazio"
+      },
+      "members": {
+        "description": "Gestisci chi ha accesso a questa organizzazione.",
+        "addLabel": "Invita membro",
+        "usernamePlaceholder": "Nome utente",
+        "roleLabel": "Ruolo",
+        "addButton": "Aggiungi",
+        "tableHeaders": {
+          "member": "Membro",
+          "role": "Ruolo",
+          "action": "Azione"
+        },
+        "inviteDescription": "Invita un collega e assegnagli un ruolo per questo spazio.",
+        "emptyDescription": "Aggiungi il primo membro per collaborare all'interno di questo spazio.",
+        "addSuccess": "Membro aggiunto con successo.",
+        "roleUpdated": "Ruolo aggiornato.",
+        "removeSuccess": "Membro rimosso.",
+        "empty": "Nessun membro ancora.",
+        "removeTitle": "Rimuovi Membro",
+        "removeDescription": "Sei sicuro di voler rimuovere",
+        "roles": {
+          "owner": "Proprietario",
+          "admin": "Amministratore",
+          "member": "Membro"
+        }
+      },
+      "placeholders": {
+        "unchanged": "(lascia vuoto per mantenere il valore esistente)"
+      },
+      "imagor": {
+        "description": "Configura le impostazioni di firma URL di imagor per questo spazio.",
+        "urlSigning": "Firma URL",
+        "urlSigningDescription": "Firma HMAC per la generazione sicura di URL di trasformazione imagor.",
+        "imagorSecret": "Segreto di firma",
+        "imagorSecretDescription": "Utilizzato per firmare gli URL di trasformazione imagor.",
+        "signerAlgorithm": "Algoritmo di firma",
+        "signerAlgorithmDescription": "Algoritmo HMAC utilizzato per firmare gli URL di trasformazione.",
+        "algorithmSha1": "SHA-1 — Legacy, più veloce",
+        "algorithmSha256": "SHA-256 — Consigliato",
+        "algorithmSha512": "SHA-512 — Massima sicurezza",
+        "signerTruncate": "Troncamento firma",
+        "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza intera).",
+        "saved": "Impostazioni di sicurezza salvate"
       }
     }
   },

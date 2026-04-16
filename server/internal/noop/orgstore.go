@@ -26,3 +26,19 @@ func (n *OrgStore) GetByUserID(_ context.Context, _ string) (*orgstore.Org, erro
 func (n *OrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, error) {
 	return nil, ErrEmbeddedMode
 }
+
+func (n *OrgStore) ListMembers(_ context.Context, _ string) ([]*orgstore.OrgMemberView, error) {
+	return nil, ErrEmbeddedMode
+}
+
+func (n *OrgStore) AddMember(_ context.Context, _, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
+func (n *OrgStore) RemoveMember(_ context.Context, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
+func (n *OrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return ErrEmbeddedMode
+}

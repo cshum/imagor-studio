@@ -82,6 +82,19 @@ type Config struct {
 	// Must include the leading dot, e.g. ".imagor.cloud".
 	SpaceBaseDomain string
 
+	// CORSOrigins is a comma-separated list of allowed CORS origins.
+	// Empty (default) means allow all origins ("*").
+	// Processing nodes should set this to the management app origin,
+	// e.g. "https://app.imagor.net".
+	// Set via --cors-origins / CORS_ORIGINS env var.
+	CORSOrigins string
+
+	// SpaceMaxConcurrency is the maximum number of concurrent imagor requests
+	// allowed per space on a processing node. 0 disables the limit.
+	// Maps to --space-max-concurrency / SPACE_MAX_CONCURRENCY env var.
+	// Default 8 (= dedicated vCPUs on a Fly.io performance-4x machine).
+	SpaceMaxConcurrency int
+
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
 	flagSet         *flag.FlagSet // Private field to access flag values
@@ -133,9 +146,11 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		appDefaultSortOrder       = fs.String("app-default-sort-order", "DESC", "default file sorting order: ASC, DESC")
 		appVideoThumbnailPosition = fs.String("app-video-thumbnail-position", "first_frame", "video thumbnail extraction position: first_frame, seek_1s, seek_3s, seek_5s, seek_10pct, seek_25pct")
 
-		internalAPISecret = fs.String("internal-api-secret", "", "shared secret for /internal/spaces/delta (set via INTERNAL_API_SECRET env var)")
-		spacesEndpoint    = fs.String("spaces-endpoint", "", "management service base URL for /internal/spaces/delta polling (processing nodes only)")
-		spaceBaseDomain   = fs.String("space-base-domain", "", "platform subdomain suffix for space routing, e.g. .imagor.cloud (processing nodes only)")
+		internalAPISecret   = fs.String("internal-api-secret", "", "shared secret for /internal/spaces/delta (set via INTERNAL_API_SECRET env var)")
+		spacesEndpoint      = fs.String("spaces-endpoint", "", "management service base URL for /internal/spaces/delta polling (processing nodes only)")
+		spaceBaseDomain     = fs.String("space-base-domain", "", "platform subdomain suffix for space routing, e.g. .imagor.cloud (processing nodes only)")
+		corsOrigins         = fs.String("cors-origins", "", "comma-separated allowed CORS origins; empty = allow all (*). Example: https://app.imagor.net")
+		spaceMaxConcurrency = fs.Int("space-max-concurrency", 8, "max concurrent imagor requests per space on processing nodes (0 = disabled)")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -239,6 +254,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		InternalAPISecret:           *internalAPISecret,
 		SpacesEndpoint:              *spacesEndpoint,
 		SpaceBaseDomain:             *spaceBaseDomain,
+		CORSOrigins:                 *corsOrigins,
+		SpaceMaxConcurrency:         *spaceMaxConcurrency,
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}

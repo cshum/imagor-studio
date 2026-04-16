@@ -1,44 +1,20 @@
 import { useTranslation } from 'react-i18next'
 
-import { ImagorManagementSection } from '@/components/imagor/imagor-management-section.tsx'
-import { LicenseManagementSection } from '@/components/license/license-management-section'
-import { StorageManagementSection } from '@/components/storage/storage-management-section.tsx'
+import { setSpaceRegistryObject } from '@/api/org-api'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
-import type { AdminLoaderData } from '@/loaders/account-loader'
 
-interface AdminPageProps {
-  loaderData?: AdminLoaderData
+// ── Gallery section ────────────────────────────────────────────────────────
+
+interface GallerySectionProps {
+  spaceKey: string
+  initialValues: Record<string, string>
 }
 
-export function AdminPage({ loaderData }: AdminPageProps) {
+export function GallerySection({ spaceKey, initialValues }: GallerySectionProps) {
   const { t } = useTranslation()
 
-  // Define system settings configuration with translations
-  const SYSTEM_SETTINGS: SystemSetting[] = [
-    {
-      key: 'config.app_home_title',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.homeTitle.label'),
-      description: t('pages.admin.systemSettings.fields.homeTitle.description'),
-      defaultValue: 'Home',
-    },
-    {
-      key: 'config.app_title',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.appTitle.label'),
-      description: t('pages.admin.systemSettings.fields.appTitle.description'),
-      defaultValue: 'Imagor Studio',
-      requiresLicense: true,
-    },
-    {
-      key: 'config.app_url',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.appUrl.label'),
-      description: t('pages.admin.systemSettings.fields.appUrl.description'),
-      defaultValue: 'https://imagor.net',
-      requiresLicense: true,
-    },
+  const GALLERY_SETTINGS: SystemSetting[] = [
     {
       key: 'config.app_default_language',
       type: 'select',
@@ -125,21 +101,17 @@ export function AdminPage({ loaderData }: AdminPageProps) {
     },
   ]
 
+  const handleSave = async (changedValues: Record<string, string>) => {
+    await setSpaceRegistryObject(spaceKey, changedValues)
+  }
+
   return (
-    <div className='space-y-6'>
-      <SystemSettingsForm
-        title={t('pages.admin.systemSettings.title')}
-        description={t('pages.admin.systemSettings.description')}
-        settings={SYSTEM_SETTINGS}
-        initialValues={loaderData?.registry || {}}
-        systemRegistryList={loaderData?.systemRegistryList || []}
-      />
-
-      <StorageManagementSection storageStatus={loaderData?.storageStatus || null} />
-
-      <ImagorManagementSection imagorStatus={loaderData?.imagorStatus || null} />
-
-      <LicenseManagementSection licenseStatus={loaderData?.licenseStatus || null} />
-    </div>
+    <SystemSettingsForm
+      title=''
+      description=''
+      settings={GALLERY_SETTINGS}
+      initialValues={initialValues}
+      saveCallback={handleSave}
+    />
   )
 }

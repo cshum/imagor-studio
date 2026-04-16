@@ -2,6 +2,11 @@
   "layouts": {
     "account": {
       "title": "設定",
+      "backToApp": "返回應用程式",
+      "sections": {
+        "account": "帳戶",
+        "administration": "管理"
+      },
       "tabs": {
         "profile": "個人資料",
         "system": "系統",
@@ -15,10 +20,11 @@
       "save": "儲存",
       "cancel": "取消",
       "delete": "刪除",
+      "remove": "移除",
       "edit": "編輯",
       "create": "建立",
       "update": "更新",
-      "updateSettings": "更新設定",
+      "updateSettings": "儲存",
       "close": "關閉",
       "more": "更多",
       "switchTheme": "切換主題",
@@ -115,7 +121,9 @@
       "settings": "設定",
       "users": "使用者",
       "admin": "系統",
-      "adminSetup": "管理員設定"
+      "adminSetup": "管理員設定",
+      "spaces": "空間",
+      "spaceSettings": "設定"
     }
   },
   "pages": {
@@ -297,7 +305,9 @@
       "profileInformation": "個人資料資訊",
       "profileInformationDescription": "更新您的賬戶個人資料資訊。",
       "displayName": "顯示名稱",
+      "displayNameDescription": "在整個應用程式中顯示的公開名稱。",
       "displayNamePlaceholder": "輸入您的顯示名稱",
+      "usernameDescription": "用於登入，可包含字母、數字、底線和連字號。",
       "usernamePlaceholder": "輸入您的使用者名稱",
       "updateProfile": "更新個人資料",
       "securitySettings": "安全設定",
@@ -319,7 +329,8 @@
       "updateProfileFailed": "更新個人資料失敗",
       "updatePasswordFailed": "更新密碼失敗",
       "usernameAlreadyInUse": "此使用者名稱已被使用",
-      "currentPasswordIncorrect": "當前密碼不正確"
+      "currentPasswordIncorrect": "當前密碼不正確",
+      "titleDescription": "管理您的個人帳戶資訊與安全設定。"
     },
     "admin": {
       "title": "管理",
@@ -418,7 +429,19 @@
       "failedToCreateAccount": "建立管理員賬戶失敗",
       "failedToSaveSettings": "儲存設定失敗",
       "storageConfiguredSuccess": "儲存配置成功",
-      "storageConfiguredRestart": "儲存配置成功。請重啟伺服器以應用更改。"
+      "storageConfiguredRestart": "儲存配置成功。請重啟伺服器以應用更改。",
+      "sections": {
+        "general": "一般",
+        "storage": "储存",
+        "imagor": "Imagor",
+        "license": "授权"
+      },
+      "sectionDescriptions": {
+        "general": "配置平台通用設定。這些選項僅限管理員使用。",
+        "storage": "配置平台管理空間的預設儲存後端。",
+        "imagor": "配置平台的 imagor 圖像處理和 URL 簽名預設設定。",
+        "license": "管理您的授權金鑰並查看目前方案。"
+      }
     },
     "storage": {
       "configureStorage": "配置儲存",
@@ -468,8 +491,9 @@
       "active": "活動",
       "s3Bucket": "S3 儲存桶",
       "endpoint": "端點",
-      "takingEffect": "更改可能需要最多 1 分鐘才能生效。",
-      "testConfigFirst": "請先填寫 {{storageType}} 儲存配置"
+      "takingEffect": "设定已储存。变更最多可能需要 1 分钟才能生效。",
+      "testConfigFirst": "請先填寫 {{storageType}} 儲存配置",
+      "storageTypeDescription": "选择储存图片和档案的位置"
     },
     "systemSettings": {
       "settingOverridden": "此設定被配置檔案或環境變數覆蓋",
@@ -492,7 +516,10 @@
       "configuredSuccess": "Imagor 配置成功",
       "configurationDetails": "配置詳情",
       "hasSecret": "有金鑰",
-      "takingEffect": "設定已儲存，最多 1 分鐘內生效。"
+      "takingEffect": "設定已儲存，最多 1 分鐘內生效。",
+      "algorithmSha1": "SHA-1 - 旧版，最快",
+      "algorithmSha256": "SHA-256 - 推荐",
+      "algorithmSha512": "SHA-512 - 最高安全性"
     },
     "license": {
       "licenseManagement": "許可證管理",
@@ -542,7 +569,7 @@
     },
     "users": {
       "title": "使用者",
-      "createUser": "建立使用者",
+      "description": "管理使用者帳號和角色。",
       "createNewUser": "建立新使用者",
       "createUserDescription": "向系統新增新使用者。他們將能夠使用提供的憑據登入。",
       "formLabels": {
@@ -600,6 +627,123 @@
         "enterUsername": "輸入使用者名稱",
         "enterPassword": "輸入密碼",
         "confirmPassword": "確認密碼"
+      }
+    },
+    "spaces": {
+      "storageTypeLabel": "儲存類型",
+      "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
+      "storageType": {
+        "managed": "平台儲存",
+        "s3": "自訂 S3（BYOB）"
+      },
+      "storageTypeDesc": {
+        "managed": "由 Imagor Studio 管理，無需設定儲存桶。",
+        "s3": "連接您自己的 S3 相容儲存桶。"
+      },
+      "description": "管理您組織的工作空間。",
+      "emptyDescription": "建立您的第一個空間，開始使用專屬工作區。",
+      "settings": "設定",
+      "wizard": {
+        "stepIdentity": "基本資訊",
+        "stepStorage": "儲存",
+        "next": "下一步",
+        "back": "上一步"
+      },
+      "messages": {
+        "spaceCreatedSuccess": "空間建立成功",
+        "spaceUpdatedSuccess": "空間更新成功",
+        "spaceDeletedSuccess": "空間刪除成功",
+        "createSpaceFailed": "建立空間失敗",
+        "keyAlreadyTaken": "空間鍵已被使用",
+        "updateSpaceFailed": "更新空間失敗",
+        "deleteSpaceFailed": "刪除空間失敗"
+      },
+      "validation": {
+        "keyFormat": "鍵只能包含小寫字母、數字和連字號"
+      }
+    },
+    "spaceSettings": {
+      "sections": {
+        "members": "成員",
+        "storage": "Storage",
+        "imagor": "Imagor"
+      },
+      "gallery": {
+        "description": "自訂此空間的圖庫顯示和行為。空間層級的設定會覆蓋平台預設值。"
+      },
+      "branding": {
+        "title": "品牌設定",
+        "description": "此空間編輯器中顯示的應用標題和連結，將覆蓋平台預設值（需要授權）。",
+        "appTitle": "編輯器應用標題",
+        "appTitleDescription": "瀏覽此空間時導覽列中顯示的自訂應用標題。將覆蓋平台預設值（需要授權）。",
+        "appUrl": "編輯器應用 URL",
+        "appUrlDescription": "瀏覽此空間時點擊應用標題所開啟的 URL。"
+      },
+      "general": {
+        "description": "此空間的基本資訊。",
+        "name": "顯示名稱",
+        "nameDescription": "導覽列中和空間清單中顯示的名稱。",
+        "customDomain": "自訂網域",
+        "customDomainDescription": "此空間的自訂網域。如果留空，將使用 {{spaceKey}}.imagor.app。",
+        "saved": "一般設定已儲存"
+      },
+      "storage": {
+        "managedTitle": "平台託管儲存",
+        "managedDescription": "檔案儲存在 Imagor Studio 的託管儲存中，儲存類型在空間建立後無法更改。",
+        "bucketLocked": "儲存桶和區域在建立時固定，無法更改。",
+        "description": "設定此空間的檔案儲存憑証和 URL 簽名。",
+        "accessKeyIdDescription": "留空以保留現有憑証。",
+        "secretKey": "私密存取金鑰",
+        "secretKeyDescription": "留空以保留現有憑証。",
+        "urlSigning": "URL 簽名",
+        "urlSigningDescription": "用於安全 imagor 轉換 URL 生成的 HMAC 簽名。",
+        "imagorSecret": "簽名金鑰",
+        "imagorSecretDescription": "用於簽名 imagor 轉換 URL。留空則保留現有金鑰。",
+        "signerAlgorithm": "簽名演算法",
+        "signerAlgorithmDescription": "用於簽名轉換 URL 的 HMAC 演算法。",
+        "signerTruncate": "簽名截斷",
+        "signerTruncateDescription": "將 HMAC 簽名截斷至此字元數（0 = 完整長度）。",
+        "saved": "儲存與安全設定已儲存"
+      },
+      "members": {
+        "description": "管理有權存取此組織的成員。",
+        "addLabel": "邀請成員",
+        "usernamePlaceholder": "使用者名稱",
+        "roleLabel": "角色",
+        "addButton": "新增",
+        "tableHeaders": {
+          "member": "成員",
+          "role": "角色",
+          "action": "操作"
+        },
+        "inviteDescription": "邀請隊友並為其指派此空間的角色。",
+        "emptyDescription": "新增您的第一位成員以在此空間中協作。",
+        "addSuccess": "成員新增成功。",
+        "roleUpdated": "角色已更新。",
+        "removeSuccess": "成員已移除。",
+        "empty": "尚無成員。",
+        "removeTitle": "移除成員",
+        "removeDescription": "確定要移除",
+        "roles": {
+          "owner": "擁有者",
+          "admin": "管理員",
+          "member": "成員"
+        }
+      },
+      "imagor": {
+        "description": "為此空間設定 imagor URL 簽名設定。",
+        "urlSigning": "URL 簽名",
+        "urlSigningDescription": "HMAC 簽名，用於安全生成 imagor 變換 URL。",
+        "imagorSecret": "簽名金鑰",
+        "imagorSecretDescription": "用於簽署 imagor 變換 URL。",
+        "signerAlgorithm": "簽名演算法",
+        "signerAlgorithmDescription": "用於簽署變換 URL 的 HMAC 演算法。",
+        "algorithmSha1": "SHA-1 — 舊版，速度最快",
+        "algorithmSha256": "SHA-256 — 建議使用",
+        "algorithmSha512": "SHA-512 — 最高安全性",
+        "signerTruncate": "簽名截斷",
+        "signerTruncateDescription": "將 HMAC 簽名截斷為此字元數（0 = 完整長度）。",
+        "saved": "安全設定已儲存"
       }
     }
   },

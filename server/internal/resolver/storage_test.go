@@ -26,7 +26,7 @@ type MockedS3Resolver struct {
 
 // NewMockedS3Resolver creates a resolver that mocks S3 storage validation
 func NewMockedS3Resolver(storageProvider StorageProvider, registryStore registrystore.Store, userStore userstore.Store, imagorProvider ImagorProvider, cfg ConfigProvider, logger *zap.Logger) *MockedS3Resolver {
-	baseResolver := NewResolver(storageProvider, registryStore, userStore, imagorProvider, cfg, nil, logger)
+	baseResolver := newTestResolver(storageProvider, registryStore, userStore, imagorProvider, cfg, nil, logger)
 	return &MockedS3Resolver{Resolver: baseResolver}
 }
 
@@ -122,7 +122,7 @@ func TestUploadFile_RequiresWriteScope(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -168,7 +168,7 @@ func TestUploadFile_RequiresWriteScope(t *testing.T) {
 				Filename: "test.txt",
 			}
 
-			result, err := resolver.Mutation().UploadFile(ctx, "test.txt", upload)
+			result, err := resolver.Mutation().UploadFile(ctx, "test.txt", nil, upload)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -191,7 +191,7 @@ func TestDeleteFile_RequiresWriteScope(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -232,7 +232,7 @@ func TestDeleteFile_RequiresWriteScope(t *testing.T) {
 				mockStorage.On("Delete", ctx, "test.txt").Return(nil)
 			}
 
-			result, err := resolver.Mutation().DeleteFile(ctx, "test.txt")
+			result, err := resolver.Mutation().DeleteFile(ctx, "test.txt", nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -255,7 +255,7 @@ func TestCreateFolder_RequiresWriteScope(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -296,7 +296,7 @@ func TestCreateFolder_RequiresWriteScope(t *testing.T) {
 				mockStorage.On("CreateFolder", ctx, "newfolder").Return(nil)
 			}
 
-			result, err := resolver.Mutation().CreateFolder(ctx, "newfolder")
+			result, err := resolver.Mutation().CreateFolder(ctx, "newfolder", nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -320,7 +320,7 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name    string
@@ -369,7 +369,7 @@ func TestListFiles_OnlyRequiresReadScope(t *testing.T) {
 				TotalCount: 2,
 			}, nil)
 
-			result, err := resolver.Query().ListFiles(ctx, path, &offset, &limit, onlyFiles, nil, nil, nil, &sortBy, &sortOrder)
+			result, err := resolver.Query().ListFiles(ctx, path, nil, &offset, &limit, onlyFiles, nil, nil, nil, &sortBy, &sortOrder)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
@@ -389,7 +389,7 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadOnlyContext("test-user-id")
 	path := "/test/file1.txt"
@@ -407,7 +407,7 @@ func TestStatFile_OnlyRequiresReadScope(t *testing.T) {
 		ETag:         "abc123",
 	}, nil)
 
-	result, err := resolver.Query().StatFile(ctx, path)
+	result, err := resolver.Query().StatFile(ctx, path, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -425,7 +425,7 @@ func TestDeleteFile_WithTemplatePreview(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	templatePath := "templates/my-template.imagor.json"
@@ -443,7 +443,7 @@ func TestDeleteFile_WithTemplatePreview(t *testing.T) {
 	// Mock successful deletion of preview file
 	mockStorage.On("Delete", ctx, previewPath).Return(nil)
 
-	result, err := resolver.Mutation().DeleteFile(ctx, templatePath)
+	result, err := resolver.Mutation().DeleteFile(ctx, templatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -462,7 +462,7 @@ func TestDeleteFile_TemplateWithoutPreview(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	templatePath := "templates/my-template.imagor.json"
@@ -474,7 +474,7 @@ func TestDeleteFile_TemplateWithoutPreview(t *testing.T) {
 	// Mock Stat to check if preview exists (it doesn't)
 	mockStorage.On("Stat", ctx, previewPath).Return(storage.FileInfo{}, assert.AnError)
 
-	result, err := resolver.Mutation().DeleteFile(ctx, templatePath)
+	result, err := resolver.Mutation().DeleteFile(ctx, templatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -493,7 +493,7 @@ func TestDeleteFile_TemplatePreviewDeletionFails(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	templatePath := "templates/my-template.imagor.json"
@@ -511,7 +511,7 @@ func TestDeleteFile_TemplatePreviewDeletionFails(t *testing.T) {
 	// Mock failed deletion of preview file
 	mockStorage.On("Delete", ctx, previewPath).Return(assert.AnError)
 
-	result, err := resolver.Mutation().DeleteFile(ctx, templatePath)
+	result, err := resolver.Mutation().DeleteFile(ctx, templatePath, nil)
 
 	// Should still succeed even though preview deletion failed
 	assert.NoError(t, err)
@@ -530,7 +530,7 @@ func TestDeleteFile_NonTemplateFile(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	imagePath := "images/photo.jpg"
@@ -538,7 +538,7 @@ func TestDeleteFile_NonTemplateFile(t *testing.T) {
 	// Mock successful deletion of image file
 	mockStorage.On("Delete", ctx, imagePath).Return(nil)
 
-	result, err := resolver.Mutation().DeleteFile(ctx, imagePath)
+	result, err := resolver.Mutation().DeleteFile(ctx, imagePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -557,7 +557,7 @@ func TestMoveFile_WithTemplatePreview(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	sourceTemplatePath := "templates/old-name.imagor.json"
@@ -577,7 +577,7 @@ func TestMoveFile_WithTemplatePreview(t *testing.T) {
 	// Mock successful move of preview file
 	mockStorage.On("Move", ctx, sourcePreviewPath, destPreviewPath).Return(nil)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -596,7 +596,7 @@ func TestMoveFile_TemplateWithoutPreview(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	sourceTemplatePath := "templates/old-name.imagor.json"
@@ -609,7 +609,7 @@ func TestMoveFile_TemplateWithoutPreview(t *testing.T) {
 	// Mock Stat to check if preview exists (it doesn't)
 	mockStorage.On("Stat", ctx, sourcePreviewPath).Return(storage.FileInfo{}, assert.AnError)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -628,7 +628,7 @@ func TestMoveFile_TemplatePreviewMoveFails(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	sourceTemplatePath := "templates/old-name.imagor.json"
@@ -648,7 +648,7 @@ func TestMoveFile_TemplatePreviewMoveFails(t *testing.T) {
 	// Mock failed move of preview file
 	mockStorage.On("Move", ctx, sourcePreviewPath, destPreviewPath).Return(assert.AnError)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath, nil)
 
 	// Should still succeed even though preview move failed
 	assert.NoError(t, err)
@@ -667,7 +667,7 @@ func TestMoveFile_NonTemplateFile(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	sourceImagePath := "images/old-photo.jpg"
@@ -676,7 +676,7 @@ func TestMoveFile_NonTemplateFile(t *testing.T) {
 	// Mock successful move of image file
 	mockStorage.On("Move", ctx, sourceImagePath, destImagePath).Return(nil)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceImagePath, destImagePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceImagePath, destImagePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -696,7 +696,7 @@ func TestMoveFile_TemplateToDifferentFolder(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 	sourceTemplatePath := "folder1/my-template.imagor.json"
@@ -716,7 +716,7 @@ func TestMoveFile_TemplateToDifferentFolder(t *testing.T) {
 	// Mock successful move of preview file
 	mockStorage.On("Move", ctx, sourcePreviewPath, destPreviewPath).Return(nil)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourceTemplatePath, destTemplatePath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -734,7 +734,7 @@ func TestCopyFile(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-owner-id")
 	sourcePath := "/test/source.txt"
@@ -742,7 +742,7 @@ func TestCopyFile(t *testing.T) {
 
 	mockStorage.On("Copy", ctx, sourcePath, destPath).Return(nil)
 
-	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -756,13 +756,13 @@ func TestCopyFile_NoWritePermission(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadOnlyContext("test-owner-id")
 	sourcePath := "/test/source.txt"
 	destPath := "/test/dest.txt"
 
-	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -777,7 +777,7 @@ func TestCopyFile_StorageError(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-owner-id")
 	sourcePath := "/test/source.txt"
@@ -785,7 +785,7 @@ func TestCopyFile_StorageError(t *testing.T) {
 
 	mockStorage.On("Copy", ctx, sourcePath, destPath).Return(assert.AnError)
 
-	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -800,7 +800,7 @@ func TestMoveFile(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-owner-id")
 	sourcePath := "/test/source.txt"
@@ -808,7 +808,7 @@ func TestMoveFile(t *testing.T) {
 
 	mockStorage.On("Move", ctx, sourcePath, destPath).Return(nil)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath, nil)
 
 	assert.NoError(t, err)
 	assert.True(t, result)
@@ -822,13 +822,13 @@ func TestMoveFile_NoWritePermission(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadOnlyContext("test-owner-id")
 	sourcePath := "/test/source.txt"
 	destPath := "/test/dest.txt"
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -843,7 +843,7 @@ func TestMoveFile_StorageError(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-owner-id")
 	sourcePath := "/test/source.txt"
@@ -851,7 +851,7 @@ func TestMoveFile_StorageError(t *testing.T) {
 
 	mockStorage.On("Move", ctx, sourcePath, destPath).Return(assert.AnError)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -866,7 +866,7 @@ func TestMoveFile_FileAlreadyExists(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-owner-id")
 	sourcePath := "/test/source.txt"
@@ -874,7 +874,7 @@ func TestMoveFile_FileAlreadyExists(t *testing.T) {
 
 	mockStorage.On("Move", ctx, sourcePath, destPath).Return(os.ErrExist)
 
-	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().MoveFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -889,7 +889,7 @@ func TestCopyFile_FileAlreadyExists(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-owner-id")
 	sourcePath := "/test/source.txt"
@@ -897,7 +897,7 @@ func TestCopyFile_FileAlreadyExists(t *testing.T) {
 
 	mockStorage.On("Copy", ctx, sourcePath, destPath).Return(os.ErrExist)
 
-	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath)
+	result, err := resolver.Mutation().CopyFile(ctx, sourcePath, destPath, nil)
 
 	assert.Error(t, err)
 	assert.False(t, result)
@@ -912,7 +912,7 @@ func TestTestStorageConfig_RequiresAdminPermission(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -981,7 +981,7 @@ func TestTestStorageConfig_FileStorage(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1098,7 +1098,7 @@ func TestTestStorageConfig_ListOperationFirst(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1130,7 +1130,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -1183,7 +1183,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 				Filename: "test.txt",
 			}
 
-			result, err := resolver.Mutation().UploadFile(ctx, "test.txt", upload)
+			result, err := resolver.Mutation().UploadFile(ctx, "test.txt", nil, upload)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1205,7 +1205,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 				mockStorage.On("Delete", ctx, "test.txt").Return(nil)
 			}
 
-			result, err := resolver.Mutation().DeleteFile(ctx, "test.txt")
+			result, err := resolver.Mutation().DeleteFile(ctx, "test.txt", nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1227,7 +1227,7 @@ func TestWriteOperations_ScopeValidation(t *testing.T) {
 				mockStorage.On("CreateFolder", ctx, "newfolder").Return(nil)
 			}
 
-			result, err := resolver.Mutation().CreateFolder(ctx, "newfolder")
+			result, err := resolver.Mutation().CreateFolder(ctx, "newfolder", nil)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1250,7 +1250,7 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadWriteContext("test-user-id")
 
@@ -1272,7 +1272,7 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 					File:     strings.NewReader("test content"),
 					Filename: "test.txt",
 				}
-				return resolver.Mutation().UploadFile(ctx, "test.txt", upload)
+				return resolver.Mutation().UploadFile(ctx, "test.txt", nil, upload)
 			},
 			errorMsg: "failed to upload file",
 		},
@@ -1283,7 +1283,7 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 				mockStorage.On("Delete", ctx, "test.txt").Return(assert.AnError)
 			},
 			execute: func() (bool, error) {
-				return resolver.Mutation().DeleteFile(ctx, "test.txt")
+				return resolver.Mutation().DeleteFile(ctx, "test.txt", nil)
 			},
 			errorMsg: "failed to delete file",
 		},
@@ -1294,7 +1294,7 @@ func TestStorageOperations_StorageErrors(t *testing.T) {
 				mockStorage.On("CreateFolder", ctx, "newfolder").Return(assert.AnError)
 			},
 			execute: func() (bool, error) {
-				return resolver.Mutation().CreateFolder(ctx, "newfolder")
+				return resolver.Mutation().CreateFolder(ctx, "newfolder", nil)
 			},
 			errorMsg: "failed to create folder",
 		},
@@ -1324,7 +1324,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	// Test with read-only context
 	ctx := createReadOnlyContext("test-user-id")
@@ -1347,7 +1347,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 			TotalCount: 1,
 		}, nil)
 
-		result, err := resolver.Query().ListFiles(ctx, path, &offset, &limit, nil, nil, nil, nil, &sortBy, &sortOrder)
+		result, err := resolver.Query().ListFiles(ctx, path, nil, &offset, &limit, nil, nil, nil, nil, &sortBy, &sortOrder)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -1375,7 +1375,7 @@ func TestReadOperations_StillWork(t *testing.T) {
 			ETag:         "abc123",
 		}, nil)
 
-		result, err := resolver.Query().StatFile(ctx, path)
+		result, err := resolver.Query().StatFile(ctx, path, nil)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -1394,7 +1394,7 @@ func TestConfigureFileStorage_AutoTestSuccess(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 	tempDir := t.TempDir()
@@ -1429,7 +1429,7 @@ func TestConfigureFileStorage_AutoTestFailure(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1485,7 +1485,7 @@ func TestConfigureS3Storage_AutoTestFailure_MissingConfig(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1514,7 +1514,7 @@ func TestConfigureFileStorage_RequiresAdminPermission(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
 
 	tests := []struct {
 		name        string
@@ -1652,7 +1652,7 @@ func TestConfigureFileStorage_ErrorMessageProxying(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createAdminContext("admin-user-id")
 
@@ -1694,7 +1694,7 @@ func TestListFiles(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	// Create context with proper authentication
 	ctx := createReadOnlyContext("test-owner-id")
@@ -1718,7 +1718,7 @@ func TestListFiles(t *testing.T) {
 		TotalCount: 2,
 	}, nil)
 
-	result, err := resolver.Query().ListFiles(ctx, path, &offset, &limit, onlyFiles, nil, nil, nil, &sortBy, &sortOrder)
+	result, err := resolver.Query().ListFiles(ctx, path, nil, &offset, &limit, onlyFiles, nil, nil, nil, &sortBy, &sortOrder)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -1741,7 +1741,7 @@ func TestStatFile(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
 
 	ctx := createReadOnlyContext("test-owner-id")
 	path := "/test/file1.txt"
@@ -1759,7 +1759,7 @@ func TestStatFile(t *testing.T) {
 		ETag:         "abc123",
 	}, nil)
 
-	result, err := resolver.Query().StatFile(ctx, path)
+	result, err := resolver.Query().StatFile(ctx, path, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

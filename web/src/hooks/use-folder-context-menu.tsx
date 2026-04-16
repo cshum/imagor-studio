@@ -41,6 +41,11 @@ interface UseFolderContextMenuProps {
    * Use this for dropdown menus (three-dots) instead of context menus (right-click).
    */
   useDropdownItems?: boolean
+  /**
+   * Space key for multi-tenant storage scoping.
+   * Pass from the page via useParams; omit for system-level operations (e.g. sidebar).
+   */
+  spaceKey?: string
 }
 
 /**
@@ -60,6 +65,7 @@ export function useFolderContextMenu({
   onDelete,
   onMove,
   useDropdownItems = false,
+  spaceKey,
 }: UseFolderContextMenuProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -77,7 +83,7 @@ export function useFolderContextMenu({
       pathParts[pathParts.length - 1] = newName
       const newPath = pathParts.join('/')
 
-      await moveFile(folderPath, newPath)
+      await moveFile(folderPath, newPath, spaceKey)
 
       // Invalidate parent folder cache
       const parentPath = folderPath.split('/').slice(0, -1).join('/')
@@ -118,7 +124,7 @@ export function useFolderContextMenu({
   const handleDelete = async (folderPath: string, folderName: string) => {
     setIsDeleting(true)
     try {
-      await deleteFile(folderPath)
+      await deleteFile(folderPath, spaceKey)
 
       // Invalidate parent folder cache
       const parentPath = folderPath.split('/').slice(0, -1).join('/')

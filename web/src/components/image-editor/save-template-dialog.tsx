@@ -73,6 +73,8 @@ interface SaveTemplateDialogProps {
   title?: string // Custom dialog title
   /** Fallback gallery key for save location when image path has no gallery (e.g. canvas/color images) */
   galleryKey?: string
+  /** Space key for multi-tenant storage scoping. */
+  spaceKey?: string
 }
 
 export function SaveTemplateDialog({
@@ -83,6 +85,7 @@ export function SaveTemplateDialog({
   onSaveSuccess,
   title,
   galleryKey: propGalleryKey,
+  spaceKey,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const { homeTitle } = useFolderTree()
@@ -154,7 +157,7 @@ export function SaveTemplateDialog({
         overwrite,
       )
 
-      const result = await saveTemplate({ input: saveInput })
+      const result = await saveTemplate({ input: saveInput, spaceKey })
 
       // Backend already returns the complete path with savePath included
       const templatePath = result.templatePath

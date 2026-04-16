@@ -16,6 +16,7 @@ export interface Auth {
   accessToken: string | null
   profile: UserProfile | null
   isFirstRun: boolean | null
+  multiTenant: boolean
   error: string | null
   isEmbedded: boolean
   pathPrefix: string
@@ -26,6 +27,7 @@ const initialState: Auth = {
   accessToken: null,
   profile: null,
   isFirstRun: null,
+  multiTenant: false,
   error: null,
   isEmbedded: false,
   pathPrefix: '',
@@ -44,7 +46,7 @@ export type AuthAction =
   | { type: 'LOGOUT' }
   | { type: 'LOGOUT_WITH_ERROR'; payload: { error: string } }
   | { type: 'SET_ERROR'; payload: { error: string } }
-  | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean } }
+  | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean; multiTenant?: boolean } }
   | { type: 'CLEAR_ERROR' }
 
 function reducer(state: Auth, action: AuthAction): Auth {
@@ -105,6 +107,7 @@ function reducer(state: Auth, action: AuthAction): Auth {
       return {
         ...state,
         isFirstRun: action.payload.isFirstRun,
+        multiTenant: action.payload.multiTenant ?? state.multiTenant,
       }
 
     case 'CLEAR_ERROR':
@@ -142,7 +145,21 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
     const currentAccessToken = accessToken || getToken()
 
     if (currentAccessToken) {
-      const profile = await getCurrentUser(currentAccessToken)
+      // Run token validation and first-run check in parallel — zero extra latency.
+      // checkFirstRun populates multiTenant regardless of which auth path we take.
+      const [profile, firstRunResponse] = await Promise.all([
+        getCurrentUser(currentAccessToken),
+        checkFirstRun().catch(() => null),
+      ])
+      if (firstRunResponse) {
+        authStore.dispatch({
+          type: 'SET_FIRST_RUN',
+          payload: {
+            isFirstRun: firstRunResponse.isFirstRun,
+            multiTenant: firstRunResponse.multiTenant,
+          },
+        })
+      }
       return authStore.dispatch({
         type: 'INIT',
         payload: { accessToken: currentAccessToken, profile },
@@ -156,7 +173,7 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
       isFirstRun = firstRunResponse.isFirstRun
       authStore.dispatch({
         type: 'SET_FIRST_RUN',
-        payload: { isFirstRun },
+        payload: { isFirstRun, multiTenant: firstRunResponse.multiTenant },
       })
     } catch {
       // Ignore first run check failures
@@ -189,7 +206,7 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
         }
         authStore.dispatch({
           type: 'SET_FIRST_RUN',
-          payload: { isFirstRun: true },
+          payload: { isFirstRun: true, multiTenant: firstRunResponse.multiTenant },
         })
         return authStore.dispatch({ type: 'LOGOUT' })
       }

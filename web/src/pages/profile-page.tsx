@@ -8,7 +8,6 @@ import * as z from 'zod'
 import { changePassword, updateProfile } from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -22,8 +21,9 @@ import {
   ResponsiveDialog,
   ResponsiveDialogDescription,
   ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
+import { SettingRow } from '@/components/ui/setting-row'
+import { SettingsSection } from '@/components/ui/settings-section'
 import { useFormErrors } from '@/hooks/use-form-errors'
 import type { ProfileLoaderData } from '@/loaders/account-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
@@ -32,6 +32,8 @@ interface ProfilePageProps {
   loaderData?: ProfileLoaderData
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export function ProfilePage({ loaderData }: ProfilePageProps) {
   const { t } = useTranslation()
   const { authState } = useAuth()
@@ -39,11 +41,9 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
 
-  // Initialize form error handlers
   const { handleFormError } = useFormErrors<ProfileForm>()
   const { handleFormError: handlePasswordError } = useFormErrors<PasswordForm>()
 
-  // Create translation-aware validation schemas
   const profileSchema = z.object({
     displayName: z
       .string()
@@ -73,7 +73,6 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   type ProfileForm = z.infer<typeof profileSchema>
   type PasswordForm = z.infer<typeof passwordSchema>
 
-  // Use loader data if available, fallback to auth state
   const profileData = loaderData?.profile || {
     displayName: authState.profile?.displayName || '',
     username: authState.profile?.username || '',
@@ -98,24 +97,15 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
 
   const onProfileSubmit = async (values: ProfileForm) => {
     setIsUpdatingProfile(true)
-
     try {
-      await updateProfile({
-        displayName: values.displayName,
-        username: values.username,
-      })
+      await updateProfile({ displayName: values.displayName, username: values.username })
       await initAuth()
       toast.success(t('pages.profile.profileUpdatedSuccess'))
     } catch (err) {
-      // Use the hook for simplified error handling
       handleFormError(
         err,
         profileForm.setError,
-        {
-          username: {
-            ALREADY_EXISTS: 'pages.profile.usernameAlreadyInUse',
-          },
-        },
+        { username: { ALREADY_EXISTS: 'pages.profile.usernameAlreadyInUse' } },
         t('pages.profile.updateProfileFailed'),
       )
     } finally {
@@ -125,23 +115,16 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
 
   const onPasswordSubmit = async (values: PasswordForm) => {
     setIsUpdatingPassword(true)
-
     try {
       await changePassword(values.currentPassword, values.newPassword)
       toast.success(t('pages.profile.passwordUpdatedSuccess'))
       passwordForm.reset()
       setPasswordDialogOpen(false)
     } catch (err) {
-      // Use the hook for simplified error handling
       handlePasswordError(
         err,
         passwordForm.setError,
-        {
-          currentPassword: {
-            // Map any error on currentPassword to the translated message
-            '*': 'pages.profile.currentPasswordIncorrect',
-          },
-        },
+        { currentPassword: { '*': 'pages.profile.currentPasswordIncorrect' } },
         t('pages.profile.updatePasswordFailed'),
       )
     } finally {
@@ -150,21 +133,23 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   }
 
   return (
-    <div className='space-y-6'>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('pages.profile.profileInformation')}</CardTitle>
-          <CardDescription>{t('pages.profile.profileInformationDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...profileForm}>
-            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className='space-y-4'>
-              <FormField
-                control={profileForm.control}
-                name='displayName'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('pages.profile.displayName')}</FormLabel>
+    <div className='space-y-10'>
+      {/* ── Profile information ─────────────────────────────────────── */}
+      <SettingsSection
+        title={t('pages.profile.profileInformation')}
+        description={t('pages.profile.profileInformationDescription')}
+      >
+        <Form {...profileForm}>
+          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
+            <FormField
+              control={profileForm.control}
+              name='displayName'
+              render={({ field }) => (
+                <FormItem>
+                  <SettingRow
+                    label={t('pages.profile.displayName')}
+                    description={t('pages.profile.displayNameDescription')}
+                  >
                     <FormControl>
                       <Input
                         placeholder={t('pages.profile.displayNamePlaceholder')}
@@ -172,17 +157,21 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                         disabled={isUpdatingProfile}
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={profileForm.control}
-                name='username'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('common.labels.username')}</FormLabel>
+                    <FormMessage className='mt-1.5' />
+                  </SettingRow>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={profileForm.control}
+              name='username'
+              render={({ field }) => (
+                <FormItem>
+                  <SettingRow
+                    label={t('common.labels.username')}
+                    description={t('pages.profile.usernameDescription')}
+                    last
+                  >
                     <FormControl>
                       <Input
                         placeholder={t('pages.profile.usernamePlaceholder')}
@@ -190,54 +179,47 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                         disabled={isUpdatingProfile}
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className='flex justify-end pt-2'>
-                <ButtonWithLoading type='submit' isLoading={isUpdatingProfile}>
-                  {t('pages.profile.updateProfile')}
-                </ButtonWithLoading>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('pages.profile.securitySettings')}</CardTitle>
-          <CardDescription>{t('pages.profile.securitySettingsDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-0'>
-            <div className='space-y-0.5'>
-              <div className='text-base font-medium'>{t('pages.profile.password')}</div>
-              <div className='text-muted-foreground text-sm'>
-                {t('pages.profile.passwordDescription')}
-              </div>
+                    <FormMessage className='mt-1.5' />
+                  </SettingRow>
+                </FormItem>
+              )}
+            />
+            <div className='mt-2 flex justify-end pt-2'>
+              <ButtonWithLoading type='submit' isLoading={isUpdatingProfile}>
+                {t('pages.profile.updateProfile')}
+              </ButtonWithLoading>
             </div>
-            <Button
-              variant='outline'
-              className='sm:ml-4'
-              onClick={() => setPasswordDialogOpen(true)}
-            >
-              {t('pages.profile.changePassword')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </form>
+        </Form>
+      </SettingsSection>
 
+      {/* ── Security ────────────────────────────────────────────────── */}
+      <SettingsSection
+        title={t('pages.profile.securitySettings')}
+        description={t('pages.profile.securitySettingsDescription')}
+      >
+        <SettingRow
+          label={t('pages.profile.password')}
+          description={t('pages.profile.passwordDescription')}
+          last
+          contentClassName='flex justify-end sm:max-w-xs'
+        >
+          <Button variant='outline' onClick={() => setPasswordDialogOpen(true)}>
+            {t('pages.profile.changePassword')}
+          </Button>
+        </SettingRow>
+      </SettingsSection>
+
+      {/* ── Change password dialog ───────────────────────────────────── */}
       <ResponsiveDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{t('pages.profile.changePasswordTitle')}</ResponsiveDialogTitle>
+          <div className='text-lg font-semibold'>{t('pages.profile.changePasswordTitle')}</div>
           <ResponsiveDialogDescription>
             {t('pages.profile.changePasswordDescription')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <Form {...passwordForm}>
-          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-4'>
+          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-3'>
             <FormField
               control={passwordForm.control}
               name='currentPassword'
@@ -256,7 +238,6 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 </FormItem>
               )}
             />
-
             <FormField
               control={passwordForm.control}
               name='newPassword'
@@ -275,7 +256,6 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 </FormItem>
               )}
             />
-
             <FormField
               control={passwordForm.control}
               name='confirmPassword'
@@ -294,7 +274,6 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 </FormItem>
               )}
             />
-
             <div className='flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3'>
               <Button
                 type='button'

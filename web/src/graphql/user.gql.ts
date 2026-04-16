@@ -30,8 +30,8 @@ export const GetUserQuery = gql(`
 `)
 
 export const ListUsersQuery = gql(`
-  query ListUsers($offset: Int = 0, $limit: Int = 0) {
-    users(offset: $offset, limit: $limit) {
+  query ListUsers($offset: Int = 0, $limit: Int = 0, $search: String) {
+    users(offset: $offset, limit: $limit, search: $search) {
       items {
         ...UserInfo
       }
@@ -58,6 +58,12 @@ export const ChangePasswordMutation = gql(`
 export const DeactivateAccountMutation = gql(`
   mutation DeactivateAccount($userId: ID) {
     deactivateAccount(userId: $userId)
+  }
+`)
+
+export const ReactivateAccountMutation = gql(`
+  mutation ReactivateAccount($userId: ID!) {
+    reactivateAccount(userId: $userId)
   }
 `)
 

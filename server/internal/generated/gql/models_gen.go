@@ -130,6 +130,25 @@ type LicenseStatus struct {
 type Mutation struct {
 }
 
+type OrgMember struct {
+	UserID      string `json:"userId"`
+	Username    string `json:"username"`
+	DisplayName string `json:"displayName"`
+	Role        string `json:"role"`
+	CreatedAt   string `json:"createdAt"`
+}
+
+type Organization struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	OwnerUserID string `json:"ownerUserId"`
+	Plan        string `json:"plan"`
+	PlanStatus  string `json:"planStatus"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
+}
+
 type Query struct {
 }
 
@@ -168,6 +187,43 @@ type SaveTemplateInput struct {
 	Overwrite       *bool         `json:"overwrite,omitempty"`
 }
 
+type Space struct {
+	OrgID                string `json:"orgId"`
+	Key                  string `json:"key"`
+	Name                 string `json:"name"`
+	StorageType          string `json:"storageType"`
+	Bucket               string `json:"bucket"`
+	Prefix               string `json:"prefix"`
+	Region               string `json:"region"`
+	Endpoint             string `json:"endpoint"`
+	UsePathStyle         bool   `json:"usePathStyle"`
+	CustomDomain         string `json:"customDomain"`
+	CustomDomainVerified bool   `json:"customDomainVerified"`
+	Suspended            bool   `json:"suspended"`
+	IsShared             bool   `json:"isShared"`
+	SignerAlgorithm      string `json:"signerAlgorithm"`
+	SignerTruncate       int    `json:"signerTruncate"`
+	UpdatedAt            string `json:"updatedAt"`
+}
+
+type SpaceInput struct {
+	Key             string  `json:"key"`
+	Name            string  `json:"name"`
+	StorageType     *string `json:"storageType,omitempty"`
+	Bucket          *string `json:"bucket,omitempty"`
+	Prefix          *string `json:"prefix,omitempty"`
+	Region          *string `json:"region,omitempty"`
+	Endpoint        *string `json:"endpoint,omitempty"`
+	AccessKeyID     *string `json:"accessKeyId,omitempty"`
+	SecretKey       *string `json:"secretKey,omitempty"`
+	UsePathStyle    *bool   `json:"usePathStyle,omitempty"`
+	CustomDomain    *string `json:"customDomain,omitempty"`
+	IsShared        *bool   `json:"isShared,omitempty"`
+	SignerAlgorithm *string `json:"signerAlgorithm,omitempty"`
+	SignerTruncate  *int    `json:"signerTruncate,omitempty"`
+	ImagorSecret    *string `json:"imagorSecret,omitempty"`
+}
+
 type StorageConfigInput struct {
 	Type       StorageType       `json:"type"`
 	FileConfig *FileStorageInput `json:"fileConfig,omitempty"`
@@ -175,16 +231,14 @@ type StorageConfigInput struct {
 }
 
 type StorageConfigResult struct {
-	Success         bool    `json:"success"`
-	RestartRequired bool    `json:"restartRequired"`
-	Timestamp       string  `json:"timestamp"`
-	Message         *string `json:"message,omitempty"`
+	Success   bool    `json:"success"`
+	Timestamp string  `json:"timestamp"`
+	Message   *string `json:"message,omitempty"`
 }
 
 type StorageStatus struct {
 	Configured           bool               `json:"configured"`
 	Type                 *string            `json:"type,omitempty"`
-	RestartRequired      bool               `json:"restartRequired"`
 	LastUpdated          *string            `json:"lastUpdated,omitempty"`
 	IsOverriddenByConfig bool               `json:"isOverriddenByConfig"`
 	FileConfig           *FileStorageConfig `json:"fileConfig,omitempty"`

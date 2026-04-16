@@ -1,0 +1,92 @@
+type Organization {
+  id: ID!
+  name: String!
+  slug: String!
+  ownerUserId: String!
+  plan: String!
+  planStatus: String!
+  createdAt: String!
+  updatedAt: String!
+}
+
+# Non-credential Space view — credentials (accessKeyId, secretKey, imagorSecret) are write-only
+type Space {
+  orgId: ID!
+  key: String!
+  name: String!
+  storageType: String!
+  bucket: String!
+  prefix: String!
+  region: String!
+  endpoint: String!
+  usePathStyle: Boolean!
+  customDomain: String!
+  customDomainVerified: Boolean!
+  suspended: Boolean!
+  isShared: Boolean!
+  signerAlgorithm: String!
+  signerTruncate: Int!
+  updatedAt: String!
+}
+
+input SpaceInput {
+  key: String!
+  name: String!
+  storageType: String
+  bucket: String
+  prefix: String
+  region: String
+  endpoint: String
+  accessKeyId: String
+  secretKey: String
+  usePathStyle: Boolean
+  customDomain: String
+  isShared: Boolean
+  signerAlgorithm: String
+  signerTruncate: Int
+  imagorSecret: String
+}
+
+# OrgMember represents a user's membership in an organization.
+# The username and displayName are denormalised from the users table for display purposes.
+type OrgMember {
+  userId: ID!
+  username: String!
+  displayName: String!
+  role: String!
+  createdAt: String!
+}
+
+extend type Query {
+  # Returns the organization for the currently authenticated user
+  myOrganization: Organization
+  # Lists all active spaces for the caller's organization
+  spaces: [Space!]!
+  # Returns a single space by key (must belong to caller's org)
+  space(key: String!): Space
+  # Returns space-scoped registry entries, falling back to system:global defaults for unset keys (admin only)
+  spaceRegistry(spaceKey: String!, keys: [String!]): [UserRegistry!]!
+  # Lists all members of the caller's organization (admin only)
+  orgMembers: [OrgMember!]!
+  # Returns true when the space key is already taken (globally unique, admin only)
+  spaceKeyExists(key: String!): Boolean!
+}
+
+extend type Mutation {
+  # Create a new space (admin only)
+  createSpace(input: SpaceInput!): Space!
+  # Update an existing space by key (admin only)
+  updateSpace(key: String!, input: SpaceInput!): Space!
+  # Soft-delete a space by key (admin only)
+  deleteSpace(key: String!): Boolean!
+  # Write space-scoped registry entries (admin only)
+  setSpaceRegistry(spaceKey: String!, entries: [RegistryEntryInput!]): [UserRegistry!]!
+  # Delete space-scoped registry keys, reverting to system:global defaults (admin only)
+  deleteSpaceRegistry(spaceKey: String!, keys: [String!]): Boolean!
+  # Add a user to the caller's organization by username (admin only)
+  addOrgMember(username: String!, role: String!): OrgMember!
+  # Remove a member from the organization by userId (admin only)
+  removeOrgMember(userId: ID!): Boolean!
+  # Change a member's role within the organization (admin only)
+  updateOrgMemberRole(userId: ID!, role: String!): OrgMember!
+}

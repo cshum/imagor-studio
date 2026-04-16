@@ -3,7 +3,7 @@ extend type Query {
 
   # admin only operations
   user(id: ID!): User
-  users(offset: Int = 0, limit: Int = 0): UserList!
+  users(offset: Int = 0, limit: Int = 0, search: String): UserList!
 }
 
 extend type Mutation {
@@ -11,6 +11,7 @@ extend type Mutation {
   updateProfile(input: UpdateProfileInput!, userId: ID): User!
   changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
   deactivateAccount(userId: ID): Boolean!
+  reactivateAccount(userId: ID!): Boolean!
 
   # admin only operations
   createUser(input: CreateUserInput!): User!

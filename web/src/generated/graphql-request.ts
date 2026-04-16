@@ -155,27 +155,41 @@ export type LicenseStatus = {
 
 export type Mutation = {
   __typename?: 'Mutation'
+  addOrgMember: OrgMember
   changePassword: Scalars['Boolean']['output']
   configureFileStorage: StorageConfigResult
   configureImagor: ImagorConfigResult
   configureS3Storage: StorageConfigResult
   copyFile: Scalars['Boolean']['output']
   createFolder: Scalars['Boolean']['output']
+  createSpace: Space
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
   deleteFile: Scalars['Boolean']['output']
+  deleteSpace: Scalars['Boolean']['output']
+  deleteSpaceRegistry: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
   moveFile: Scalars['Boolean']['output']
+  reactivateAccount: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
+  removeOrgMember: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
+  setSpaceRegistry: Array<UserRegistry>
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
+  updateOrgMemberRole: OrgMember
   updateProfile: User
+  updateSpace: Space
   uploadFile: Scalars['Boolean']['output']
+}
+
+export type MutationAddOrgMemberArgs = {
+  role: Scalars['String']['input']
+  username: Scalars['String']['input']
 }
 
 export type MutationChangePasswordArgs = {
@@ -198,10 +212,16 @@ export type MutationConfigureS3StorageArgs = {
 export type MutationCopyFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationCreateFolderArgs = {
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationCreateSpaceArgs = {
+  input: SpaceInput
 }
 
 export type MutationCreateUserArgs = {
@@ -214,6 +234,16 @@ export type MutationDeactivateAccountArgs = {
 
 export type MutationDeleteFileArgs = {
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationDeleteSpaceArgs = {
+  key: Scalars['String']['input']
+}
+
+export type MutationDeleteSpaceRegistryArgs = {
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
+  spaceKey: Scalars['String']['input']
 }
 
 export type MutationDeleteSystemRegistryArgs = {
@@ -245,14 +275,30 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
 export type MutationMoveFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationReactivateAccountArgs = {
+  userId: Scalars['ID']['input']
 }
 
 export type MutationRegenerateTemplatePreviewArgs = {
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   templatePath: Scalars['String']['input']
+}
+
+export type MutationRemoveOrgMemberArgs = {
+  userId: Scalars['ID']['input']
 }
 
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
+  spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationSetSpaceRegistryArgs = {
+  entries?: InputMaybe<Array<RegistryEntryInput>>
+  spaceKey: Scalars['String']['input']
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -270,14 +316,46 @@ export type MutationTestStorageConfigArgs = {
   input: StorageConfigInput
 }
 
+export type MutationUpdateOrgMemberRoleArgs = {
+  role: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+}
+
 export type MutationUpdateProfileArgs = {
   input: UpdateProfileInput
   userId?: InputMaybe<Scalars['ID']['input']>
 }
 
+export type MutationUpdateSpaceArgs = {
+  input: SpaceInput
+  key: Scalars['String']['input']
+}
+
 export type MutationUploadFileArgs = {
   content: Scalars['Upload']['input']
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
+export type OrgMember = {
+  __typename?: 'OrgMember'
+  createdAt: Scalars['String']['output']
+  displayName: Scalars['String']['output']
+  role: Scalars['String']['output']
+  userId: Scalars['ID']['output']
+  username: Scalars['String']['output']
+}
+
+export type Organization = {
+  __typename?: 'Organization'
+  createdAt: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  name: Scalars['String']['output']
+  ownerUserId: Scalars['String']['output']
+  plan: Scalars['String']['output']
+  planStatus: Scalars['String']['output']
+  slug: Scalars['String']['output']
+  updatedAt: Scalars['String']['output']
 }
 
 export type Query = {
@@ -290,6 +368,12 @@ export type Query = {
   listSystemRegistry: Array<SystemRegistry>
   listUserRegistry: Array<UserRegistry>
   me: Maybe<User>
+  myOrganization: Maybe<Organization>
+  orgMembers: Array<OrgMember>
+  space: Maybe<Space>
+  spaceKeyExists: Scalars['Boolean']['output']
+  spaceRegistry: Array<UserRegistry>
+  spaces: Array<Space>
   statFile: Maybe<FileStat>
   storageStatus: StorageStatus
   user: Maybe<User>
@@ -317,6 +401,7 @@ export type QueryListFilesArgs = {
   showHidden?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
   sortOrder?: InputMaybe<SortOrder>
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryListSystemRegistryArgs = {
@@ -328,8 +413,22 @@ export type QueryListUserRegistryArgs = {
   prefix?: InputMaybe<Scalars['String']['input']>
 }
 
+export type QuerySpaceArgs = {
+  key: Scalars['String']['input']
+}
+
+export type QuerySpaceKeyExistsArgs = {
+  key: Scalars['String']['input']
+}
+
+export type QuerySpaceRegistryArgs = {
+  keys?: InputMaybe<Array<Scalars['String']['input']>>
+  spaceKey: Scalars['String']['input']
+}
+
 export type QueryStatFileArgs = {
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryUserArgs = {
@@ -339,6 +438,7 @@ export type QueryUserArgs = {
 export type QueryUsersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
 }
 
 export type RegistryEntryInput = {
@@ -380,6 +480,44 @@ export type SaveTemplateInput = {
 export type SortOption = 'MODIFIED_TIME' | 'NAME' | 'SIZE'
 
 export type SortOrder = 'ASC' | 'DESC'
+
+export type Space = {
+  __typename?: 'Space'
+  bucket: Scalars['String']['output']
+  customDomain: Scalars['String']['output']
+  customDomainVerified: Scalars['Boolean']['output']
+  endpoint: Scalars['String']['output']
+  isShared: Scalars['Boolean']['output']
+  key: Scalars['String']['output']
+  name: Scalars['String']['output']
+  orgId: Scalars['ID']['output']
+  prefix: Scalars['String']['output']
+  region: Scalars['String']['output']
+  signerAlgorithm: Scalars['String']['output']
+  signerTruncate: Scalars['Int']['output']
+  storageType: Scalars['String']['output']
+  suspended: Scalars['Boolean']['output']
+  updatedAt: Scalars['String']['output']
+  usePathStyle: Scalars['Boolean']['output']
+}
+
+export type SpaceInput = {
+  accessKeyId: InputMaybe<Scalars['String']['input']>
+  bucket: InputMaybe<Scalars['String']['input']>
+  customDomain: InputMaybe<Scalars['String']['input']>
+  endpoint: InputMaybe<Scalars['String']['input']>
+  imagorSecret: InputMaybe<Scalars['String']['input']>
+  isShared: InputMaybe<Scalars['Boolean']['input']>
+  key: Scalars['String']['input']
+  name: Scalars['String']['input']
+  prefix: InputMaybe<Scalars['String']['input']>
+  region: InputMaybe<Scalars['String']['input']>
+  secretKey: InputMaybe<Scalars['String']['input']>
+  signerAlgorithm: InputMaybe<Scalars['String']['input']>
+  signerTruncate: InputMaybe<Scalars['Int']['input']>
+  storageType: InputMaybe<Scalars['String']['input']>
+  usePathStyle: InputMaybe<Scalars['Boolean']['input']>
+}
 
 export type StorageConfigInput = {
   fileConfig: InputMaybe<FileStorageInput>
@@ -518,6 +656,231 @@ export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
 export type GenerateImagorUrlFromTemplateMutation = {
   __typename?: 'Mutation'
   generateImagorUrlFromTemplate: string
+}
+
+export type MyOrganizationQueryVariables = Exact<{ [key: string]: never }>
+
+export type MyOrganizationQuery = {
+  __typename?: 'Query'
+  myOrganization: {
+    __typename?: 'Organization'
+    id: string
+    name: string
+    slug: string
+    ownerUserId: string
+    plan: string
+    planStatus: string
+    createdAt: string
+    updatedAt: string
+  } | null
+}
+
+export type ListSpacesQueryVariables = Exact<{ [key: string]: never }>
+
+export type ListSpacesQuery = {
+  __typename?: 'Query'
+  spaces: Array<{
+    __typename?: 'Space'
+    orgId: string
+    key: string
+    name: string
+    storageType: string
+    bucket: string
+    prefix: string
+    region: string
+    endpoint: string
+    usePathStyle: boolean
+    customDomain: string
+    customDomainVerified: boolean
+    suspended: boolean
+    isShared: boolean
+    signerAlgorithm: string
+    signerTruncate: number
+    updatedAt: string
+  }>
+}
+
+export type GetSpaceQueryVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type GetSpaceQuery = {
+  __typename?: 'Query'
+  space: {
+    __typename?: 'Space'
+    orgId: string
+    key: string
+    name: string
+    storageType: string
+    bucket: string
+    prefix: string
+    region: string
+    endpoint: string
+    usePathStyle: boolean
+    customDomain: string
+    customDomainVerified: boolean
+    suspended: boolean
+    isShared: boolean
+    signerAlgorithm: string
+    signerTruncate: number
+    updatedAt: string
+  } | null
+}
+
+export type CreateSpaceMutationVariables = Exact<{
+  input: SpaceInput
+}>
+
+export type CreateSpaceMutation = {
+  __typename?: 'Mutation'
+  createSpace: {
+    __typename?: 'Space'
+    orgId: string
+    key: string
+    name: string
+    storageType: string
+    bucket: string
+    prefix: string
+    region: string
+    endpoint: string
+    usePathStyle: boolean
+    customDomain: string
+    suspended: boolean
+    isShared: boolean
+    signerAlgorithm: string
+    signerTruncate: number
+    updatedAt: string
+  }
+}
+
+export type UpdateSpaceMutationVariables = Exact<{
+  key: Scalars['String']['input']
+  input: SpaceInput
+}>
+
+export type UpdateSpaceMutation = {
+  __typename?: 'Mutation'
+  updateSpace: {
+    __typename?: 'Space'
+    orgId: string
+    key: string
+    name: string
+    storageType: string
+    bucket: string
+    prefix: string
+    region: string
+    endpoint: string
+    usePathStyle: boolean
+    customDomain: string
+    suspended: boolean
+    isShared: boolean
+    signerAlgorithm: string
+    signerTruncate: number
+    updatedAt: string
+  }
+}
+
+export type DeleteSpaceMutationVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type DeleteSpaceMutation = { __typename?: 'Mutation'; deleteSpace: boolean }
+
+export type GetSpaceRegistryQueryVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  keys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
+}>
+
+export type GetSpaceRegistryQuery = {
+  __typename?: 'Query'
+  spaceRegistry: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+}
+
+export type SetSpaceRegistryMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
+}>
+
+export type SetSpaceRegistryMutation = {
+  __typename?: 'Mutation'
+  setSpaceRegistry: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+}
+
+export type DeleteSpaceRegistryMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  keys: Array<Scalars['String']['input']> | Scalars['String']['input']
+}>
+
+export type DeleteSpaceRegistryMutation = { __typename?: 'Mutation'; deleteSpaceRegistry: boolean }
+
+export type SpaceKeyExistsQueryVariables = Exact<{
+  key: Scalars['String']['input']
+}>
+
+export type SpaceKeyExistsQuery = { __typename?: 'Query'; spaceKeyExists: boolean }
+
+export type ListOrgMembersQueryVariables = Exact<{ [key: string]: never }>
+
+export type ListOrgMembersQuery = {
+  __typename?: 'Query'
+  orgMembers: Array<{
+    __typename?: 'OrgMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }>
+}
+
+export type AddOrgMemberMutationVariables = Exact<{
+  username: Scalars['String']['input']
+  role: Scalars['String']['input']
+}>
+
+export type AddOrgMemberMutation = {
+  __typename?: 'Mutation'
+  addOrgMember: {
+    __typename?: 'OrgMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }
+}
+
+export type RemoveOrgMemberMutationVariables = Exact<{
+  userId: Scalars['ID']['input']
+}>
+
+export type RemoveOrgMemberMutation = { __typename?: 'Mutation'; removeOrgMember: boolean }
+
+export type UpdateOrgMemberRoleMutationVariables = Exact<{
+  userId: Scalars['ID']['input']
+  role: Scalars['String']['input']
+}>
+
+export type UpdateOrgMemberRoleMutation = {
+  __typename?: 'Mutation'
+  updateOrgMemberRole: {
+    __typename?: 'OrgMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }
 }
 
 export type RegistryInfoFragment = {
@@ -664,6 +1027,7 @@ export type LicenseStatusQuery = {
 
 export type ListFilesQueryVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
@@ -700,6 +1064,7 @@ export type ListFilesQuery = {
 
 export type StatFileQueryVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type StatFileQuery = {
@@ -725,6 +1090,7 @@ export type StatFileQuery = {
 
 export type UploadFileMutationVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   content: Scalars['Upload']['input']
 }>
 
@@ -732,12 +1098,14 @@ export type UploadFileMutation = { __typename?: 'Mutation'; uploadFile: boolean 
 
 export type DeleteFileMutationVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type DeleteFileMutation = { __typename?: 'Mutation'; deleteFile: boolean }
 
 export type CreateFolderMutationVariables = Exact<{
   path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
@@ -745,6 +1113,7 @@ export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: bool
 export type CopyFileMutationVariables = Exact<{
   sourcePath: Scalars['String']['input']
   destPath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type CopyFileMutation = { __typename?: 'Mutation'; copyFile: boolean }
@@ -752,6 +1121,7 @@ export type CopyFileMutation = { __typename?: 'Mutation'; copyFile: boolean }
 export type MoveFileMutationVariables = Exact<{
   sourcePath: Scalars['String']['input']
   destPath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type MoveFileMutation = { __typename?: 'Mutation'; moveFile: boolean }
@@ -827,6 +1197,7 @@ export type TestStorageConfigMutation = {
 
 export type SaveTemplateMutationVariables = Exact<{
   input: SaveTemplateInput
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type SaveTemplateMutation = {
@@ -842,6 +1213,7 @@ export type SaveTemplateMutation = {
 
 export type RegenerateTemplatePreviewMutationVariables = Exact<{
   templatePath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type RegenerateTemplatePreviewMutation = {
@@ -897,6 +1269,7 @@ export type GetUserQuery = {
 export type ListUsersQueryVariables = Exact<{
   offset?: InputMaybe<Scalars['Int']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
+  search?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type ListUsersQuery = {
@@ -948,6 +1321,12 @@ export type DeactivateAccountMutationVariables = Exact<{
 }>
 
 export type DeactivateAccountMutation = { __typename?: 'Mutation'; deactivateAccount: boolean }
+
+export type ReactivateAccountMutationVariables = Exact<{
+  userId: Scalars['ID']['input']
+}>
+
+export type ReactivateAccountMutation = { __typename?: 'Mutation'; reactivateAccount: boolean }
 
 export type CreateUserMutationVariables = Exact<{
   input: CreateUserInput
@@ -1040,6 +1419,177 @@ export const GenerateImagorUrlFromTemplateDocument = gql`
     )
   }
 `
+export const MyOrganizationDocument = gql`
+  query MyOrganization {
+    myOrganization {
+      id
+      name
+      slug
+      ownerUserId
+      plan
+      planStatus
+      createdAt
+      updatedAt
+    }
+  }
+`
+export const ListSpacesDocument = gql`
+  query ListSpaces {
+    spaces {
+      orgId
+      key
+      name
+      storageType
+      bucket
+      prefix
+      region
+      endpoint
+      usePathStyle
+      customDomain
+      customDomainVerified
+      suspended
+      isShared
+      signerAlgorithm
+      signerTruncate
+      updatedAt
+    }
+  }
+`
+export const GetSpaceDocument = gql`
+  query GetSpace($key: String!) {
+    space(key: $key) {
+      orgId
+      key
+      name
+      storageType
+      bucket
+      prefix
+      region
+      endpoint
+      usePathStyle
+      customDomain
+      customDomainVerified
+      suspended
+      isShared
+      signerAlgorithm
+      signerTruncate
+      updatedAt
+    }
+  }
+`
+export const CreateSpaceDocument = gql`
+  mutation CreateSpace($input: SpaceInput!) {
+    createSpace(input: $input) {
+      orgId
+      key
+      name
+      storageType
+      bucket
+      prefix
+      region
+      endpoint
+      usePathStyle
+      customDomain
+      suspended
+      isShared
+      signerAlgorithm
+      signerTruncate
+      updatedAt
+    }
+  }
+`
+export const UpdateSpaceDocument = gql`
+  mutation UpdateSpace($key: String!, $input: SpaceInput!) {
+    updateSpace(key: $key, input: $input) {
+      orgId
+      key
+      name
+      storageType
+      bucket
+      prefix
+      region
+      endpoint
+      usePathStyle
+      customDomain
+      suspended
+      isShared
+      signerAlgorithm
+      signerTruncate
+      updatedAt
+    }
+  }
+`
+export const DeleteSpaceDocument = gql`
+  mutation DeleteSpace($key: String!) {
+    deleteSpace(key: $key)
+  }
+`
+export const GetSpaceRegistryDocument = gql`
+  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {
+    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {
+      key
+      value
+      isEncrypted
+    }
+  }
+`
+export const SetSpaceRegistryDocument = gql`
+  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {
+    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {
+      key
+      value
+      isEncrypted
+    }
+  }
+`
+export const DeleteSpaceRegistryDocument = gql`
+  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {
+    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)
+  }
+`
+export const SpaceKeyExistsDocument = gql`
+  query SpaceKeyExists($key: String!) {
+    spaceKeyExists(key: $key)
+  }
+`
+export const ListOrgMembersDocument = gql`
+  query ListOrgMembers {
+    orgMembers {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`
+export const AddOrgMemberDocument = gql`
+  mutation AddOrgMember($username: String!, $role: String!) {
+    addOrgMember(username: $username, role: $role) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`
+export const RemoveOrgMemberDocument = gql`
+  mutation RemoveOrgMember($userId: ID!) {
+    removeOrgMember(userId: $userId)
+  }
+`
+export const UpdateOrgMemberRoleDocument = gql`
+  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {
+    updateOrgMemberRole(userId: $userId, role: $role) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`
 export const ListUserRegistryDocument = gql`
   query ListUserRegistry($prefix: String, $ownerID: String) {
     listUserRegistry(prefix: $prefix, ownerID: $ownerID) {
@@ -1119,6 +1669,7 @@ export const LicenseStatusDocument = gql`
 export const ListFilesDocument = gql`
   query ListFiles(
     $path: String!
+    $spaceKey: String
     $offset: Int
     $limit: Int
     $onlyFiles: Boolean
@@ -1130,6 +1681,7 @@ export const ListFilesDocument = gql`
   ) {
     listFiles(
       path: $path
+      spaceKey: $spaceKey
       offset: $offset
       limit: $limit
       onlyFiles: $onlyFiles
@@ -1158,8 +1710,8 @@ export const ListFilesDocument = gql`
   }
 `
 export const StatFileDocument = gql`
-  query StatFile($path: String!) {
-    statFile(path: $path) {
+  query StatFile($path: String!, $spaceKey: String) {
+    statFile(path: $path, spaceKey: $spaceKey) {
       name
       path
       size
@@ -1177,28 +1729,28 @@ export const StatFileDocument = gql`
   }
 `
 export const UploadFileDocument = gql`
-  mutation UploadFile($path: String!, $content: Upload!) {
-    uploadFile(path: $path, content: $content)
+  mutation UploadFile($path: String!, $spaceKey: String, $content: Upload!) {
+    uploadFile(path: $path, spaceKey: $spaceKey, content: $content)
   }
 `
 export const DeleteFileDocument = gql`
-  mutation DeleteFile($path: String!) {
-    deleteFile(path: $path)
+  mutation DeleteFile($path: String!, $spaceKey: String) {
+    deleteFile(path: $path, spaceKey: $spaceKey)
   }
 `
 export const CreateFolderDocument = gql`
-  mutation CreateFolder($path: String!) {
-    createFolder(path: $path)
+  mutation CreateFolder($path: String!, $spaceKey: String) {
+    createFolder(path: $path, spaceKey: $spaceKey)
   }
 `
 export const CopyFileDocument = gql`
-  mutation CopyFile($sourcePath: String!, $destPath: String!) {
-    copyFile(sourcePath: $sourcePath, destPath: $destPath)
+  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {
+    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)
   }
 `
 export const MoveFileDocument = gql`
-  mutation MoveFile($sourcePath: String!, $destPath: String!) {
-    moveFile(sourcePath: $sourcePath, destPath: $destPath)
+  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {
+    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)
   }
 `
 export const StorageStatusDocument = gql`
@@ -1251,8 +1803,8 @@ export const TestStorageConfigDocument = gql`
   }
 `
 export const SaveTemplateDocument = gql`
-  mutation SaveTemplate($input: SaveTemplateInput!) {
-    saveTemplate(input: $input) {
+  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {
+    saveTemplate(input: $input, spaceKey: $spaceKey) {
       success
       templatePath
       previewPath
@@ -1261,8 +1813,8 @@ export const SaveTemplateDocument = gql`
   }
 `
 export const RegenerateTemplatePreviewDocument = gql`
-  mutation RegenerateTemplatePreview($templatePath: String!) {
-    regenerateTemplatePreview(templatePath: $templatePath)
+  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {
+    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)
   }
 `
 export const MeDocument = gql`
@@ -1282,8 +1834,8 @@ export const GetUserDocument = gql`
   ${UserInfoFragmentDoc}
 `
 export const ListUsersDocument = gql`
-  query ListUsers($offset: Int = 0, $limit: Int = 0) {
-    users(offset: $offset, limit: $limit) {
+  query ListUsers($offset: Int = 0, $limit: Int = 0, $search: String) {
+    users(offset: $offset, limit: $limit, search: $search) {
       items {
         ...UserInfo
       }
@@ -1308,6 +1860,11 @@ export const ChangePasswordDocument = gql`
 export const DeactivateAccountDocument = gql`
   mutation DeactivateAccount($userId: ID) {
     deactivateAccount(userId: $userId)
+  }
+`
+export const ReactivateAccountDocument = gql`
+  mutation ReactivateAccount($userId: ID!) {
+    reactivateAccount(userId: $userId)
   }
 `
 export const CreateUserDocument = gql`
@@ -1399,6 +1956,258 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'GenerateImagorUrlFromTemplate',
+        'mutation',
+        variables,
+      )
+    },
+    MyOrganization(
+      variables?: MyOrganizationQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<MyOrganizationQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<MyOrganizationQuery>({
+            document: MyOrganizationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'MyOrganization',
+        'query',
+        variables,
+      )
+    },
+    ListSpaces(
+      variables?: ListSpacesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ListSpacesQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ListSpacesQuery>({
+            document: ListSpacesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ListSpaces',
+        'query',
+        variables,
+      )
+    },
+    GetSpace(
+      variables: GetSpaceQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<GetSpaceQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<GetSpaceQuery>({
+            document: GetSpaceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'GetSpace',
+        'query',
+        variables,
+      )
+    },
+    CreateSpace(
+      variables: CreateSpaceMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<CreateSpaceMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<CreateSpaceMutation>({
+            document: CreateSpaceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'CreateSpace',
+        'mutation',
+        variables,
+      )
+    },
+    UpdateSpace(
+      variables: UpdateSpaceMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<UpdateSpaceMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<UpdateSpaceMutation>({
+            document: UpdateSpaceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'UpdateSpace',
+        'mutation',
+        variables,
+      )
+    },
+    DeleteSpace(
+      variables: DeleteSpaceMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<DeleteSpaceMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<DeleteSpaceMutation>({
+            document: DeleteSpaceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'DeleteSpace',
+        'mutation',
+        variables,
+      )
+    },
+    GetSpaceRegistry(
+      variables: GetSpaceRegistryQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<GetSpaceRegistryQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<GetSpaceRegistryQuery>({
+            document: GetSpaceRegistryDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'GetSpaceRegistry',
+        'query',
+        variables,
+      )
+    },
+    SetSpaceRegistry(
+      variables: SetSpaceRegistryMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<SetSpaceRegistryMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<SetSpaceRegistryMutation>({
+            document: SetSpaceRegistryDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'SetSpaceRegistry',
+        'mutation',
+        variables,
+      )
+    },
+    DeleteSpaceRegistry(
+      variables: DeleteSpaceRegistryMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<DeleteSpaceRegistryMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<DeleteSpaceRegistryMutation>({
+            document: DeleteSpaceRegistryDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'DeleteSpaceRegistry',
+        'mutation',
+        variables,
+      )
+    },
+    SpaceKeyExists(
+      variables: SpaceKeyExistsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<SpaceKeyExistsQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<SpaceKeyExistsQuery>({
+            document: SpaceKeyExistsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'SpaceKeyExists',
+        'query',
+        variables,
+      )
+    },
+    ListOrgMembers(
+      variables?: ListOrgMembersQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ListOrgMembersQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ListOrgMembersQuery>({
+            document: ListOrgMembersDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ListOrgMembers',
+        'query',
+        variables,
+      )
+    },
+    AddOrgMember(
+      variables: AddOrgMemberMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<AddOrgMemberMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<AddOrgMemberMutation>({
+            document: AddOrgMemberDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'AddOrgMember',
+        'mutation',
+        variables,
+      )
+    },
+    RemoveOrgMember(
+      variables: RemoveOrgMemberMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<RemoveOrgMemberMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<RemoveOrgMemberMutation>({
+            document: RemoveOrgMemberDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'RemoveOrgMember',
+        'mutation',
+        variables,
+      )
+    },
+    UpdateOrgMemberRole(
+      variables: UpdateOrgMemberRoleMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<UpdateOrgMemberRoleMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<UpdateOrgMemberRoleMutation>({
+            document: UpdateOrgMemberRoleDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'UpdateOrgMemberRole',
         'mutation',
         variables,
       )
@@ -1903,6 +2712,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'DeactivateAccount',
+        'mutation',
+        variables,
+      )
+    },
+    ReactivateAccount(
+      variables: ReactivateAccountMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ReactivateAccountMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ReactivateAccountMutation>({
+            document: ReactivateAccountDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ReactivateAccount',
         'mutation',
         variables,
       )

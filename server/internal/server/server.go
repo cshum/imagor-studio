@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -63,6 +64,8 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.Config, // Use enhanced config from services
 		services.LicenseService,
 		services.Logger,
+		services.OrgStore,
+		services.SpaceStore,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
@@ -90,6 +93,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.RegistryStore,
 		services.Logger,
 		cfg.EmbeddedMode,
+		cfg.InternalAPISecret != "", // multiTenant: true when InternalAPISecret is set
 	)
 
 	// Create middleware chain
@@ -130,18 +134,49 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		mux.HandleFunc("/internal/spaces/delta", spacesHandler.GetDelta())
 	}
 
-	// Pass the imagor instance directly — it is set once during Initialize() and never changes.
-	mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider.Imagor()))
+	// Processing nodes: imagor handles ALL requests (no SPA, no /imagor/ prefix).
+	// Requests arrive as: /{hmac}/{transforms}/image.jpg
+	// with the Host header identifying the space (e.g. acme.yoursaas.com).
+	//
+	// Management / self-hosted nodes: imagor is mounted at /imagor/ and the SPA
+	// is served at / — both share the same port.
+	if services.SpaceConfigStore != nil {
+		// Processing mode — wrap with per-space concurrency limiter then imagor.
+		baseDomain := cfg.SpaceBaseDomain
+		// SpaceBaseDomain in config has leading dot (e.g. ".imagor.cloud");
+		// SpaceConcurrencyMiddleware expects it without the leading dot.
+		if len(baseDomain) > 0 && baseDomain[0] == '.' {
+			baseDomain = baseDomain[1:]
+		}
+		imagorHandler := middleware.SpaceConcurrencyMiddleware(
+			services.SpaceConfigStore,
+			baseDomain,
+			int64(cfg.SpaceMaxConcurrency),
+		)(services.ImagorProvider.Imagor())
+		mux.Handle("/", imagorHandler)
+	} else {
+		// Management / self-hosted mode.
+		// Pass the imagor instance directly — it is set once during Initialize().
+		mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider.Imagor()))
 
-	// Static file serving for web frontend using embedded assets
-	staticFS, err := fs.Sub(embedFS, "static")
-	if err != nil {
-		return nil, err
+		// Static file serving for web frontend using embedded assets.
+		staticFS, err := fs.Sub(embedFS, "static")
+		if err != nil {
+			return nil, err
+		}
+		mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
 	}
-	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
 
-	// Configure CORS
+	// Configure CORS — if CORSOrigins is set, restrict to those specific origins.
+	// Empty string (default) keeps the open wildcard ("*") behaviour.
 	corsConfig := middleware.DefaultCORSConfig()
+	if cfg.CORSOrigins != "" {
+		allowedOrigins := strings.Split(cfg.CORSOrigins, ",")
+		for i, o := range allowedOrigins {
+			allowedOrigins[i] = strings.TrimSpace(o)
+		}
+		corsConfig.AllowedOrigins = allowedOrigins
+	}
 
 	// Apply global middleware to the entire mux
 	h := middleware.CORSMiddleware(corsConfig)(
@@ -173,10 +208,13 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		}
 	}
 
-	startSyncLoop(syncCtx, 30*time.Second, services.Logger,
-		services.ImagorProvider.Sync,
-		services.StorageProvider.ReloadFromRegistry,
-	)
+	// Build the sync functions list. StorageProvider is nil in processing mode
+	// (no management storage on processing nodes), so guard against nil.
+	syncFuncs := []func() error{services.ImagorProvider.Sync}
+	if services.StorageProvider != nil {
+		syncFuncs = append(syncFuncs, services.StorageProvider.ReloadFromRegistry)
+	}
+	startSyncLoop(syncCtx, 30*time.Second, services.Logger, syncFuncs...)
 
 	return &Server{
 		cfg:        cfg,

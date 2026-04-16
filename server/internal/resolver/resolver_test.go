@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	"io"
+	"time"
 
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/auth"
@@ -10,10 +11,14 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/mock"
+	"go.uber.org/zap"
 )
 
 // Helper function to create user context
@@ -88,6 +93,14 @@ func (m *MockUserStore) GetByID(ctx context.Context, id string) (*userstore.User
 	return args.Get(0).(*userstore.User), args.Error(1)
 }
 
+func (m *MockUserStore) GetByIDAdmin(ctx context.Context, id string) (*userstore.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
 func (m *MockUserStore) GetByUsername(ctx context.Context, username string) (*model.User, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
@@ -121,8 +134,8 @@ func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) e
 	return args.Error(0)
 }
 
-func (m *MockUserStore) List(ctx context.Context, offset, limit int) ([]*userstore.User, int, error) {
-	args := m.Called(ctx, offset, limit)
+func (m *MockUserStore) List(ctx context.Context, offset, limit int, search string) ([]*userstore.User, int, error) {
+	args := m.Called(ctx, offset, limit, search)
 	return args.Get(0).([]*userstore.User), args.Get(1).(int), args.Error(2)
 }
 
@@ -259,4 +272,156 @@ func (m *MockLicenseChecker) GetLicenseStatus(ctx context.Context, includeDetail
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*license.LicenseStatus), args.Error(1)
+}
+
+// ---------- Multi-tenant mocks -----------------------------------------------
+
+// MockOrgStore mocks the orgstore.Store interface.
+type MockOrgStore struct {
+	mock.Mock
+}
+
+func (m *MockOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*orgstore.Org, error) {
+	args := m.Called(ctx, ownerID, name, slug, trialEndsAt)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*orgstore.Org), args.Error(1)
+}
+
+func (m *MockOrgStore) GetByUserID(ctx context.Context, userID string) (*orgstore.Org, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*orgstore.Org), args.Error(1)
+}
+
+func (m *MockOrgStore) GetBySlug(ctx context.Context, slug string) (*orgstore.Org, error) {
+	args := m.Called(ctx, slug)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*orgstore.Org), args.Error(1)
+}
+
+func (m *MockOrgStore) ListMembers(ctx context.Context, orgID string) ([]*orgstore.OrgMemberView, error) {
+	args := m.Called(ctx, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*orgstore.OrgMemberView), args.Error(1)
+}
+
+func (m *MockOrgStore) AddMember(ctx context.Context, orgID, userID, role string) error {
+	args := m.Called(ctx, orgID, userID, role)
+	return args.Error(0)
+}
+
+func (m *MockOrgStore) RemoveMember(ctx context.Context, orgID, userID string) error {
+	args := m.Called(ctx, orgID, userID)
+	return args.Error(0)
+}
+
+func (m *MockOrgStore) UpdateMemberRole(ctx context.Context, orgID, userID, role string) error {
+	args := m.Called(ctx, orgID, userID, role)
+	return args.Error(0)
+}
+
+var _ orgstore.Store = (*MockOrgStore)(nil)
+
+// MockSpaceStore mocks the spacestore.Store interface.
+type MockSpaceStore struct {
+	mock.Mock
+}
+
+func (m *MockSpaceStore) Create(ctx context.Context, s *spacestore.Space) error {
+	args := m.Called(ctx, s)
+	return args.Error(0)
+}
+
+func (m *MockSpaceStore) Upsert(ctx context.Context, s *spacestore.Space) error {
+	args := m.Called(ctx, s)
+	return args.Error(0)
+}
+
+func (m *MockSpaceStore) SoftDelete(ctx context.Context, key string) error {
+	args := m.Called(ctx, key)
+	return args.Error(0)
+}
+
+func (m *MockSpaceStore) Get(ctx context.Context, key string) (*spacestore.Space, error) {
+	args := m.Called(ctx, key)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*spacestore.Space), args.Error(1)
+}
+
+func (m *MockSpaceStore) List(ctx context.Context) ([]*spacestore.Space, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]*spacestore.Space), args.Error(1)
+}
+
+func (m *MockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*spacestore.Space, error) {
+	args := m.Called(ctx, orgID)
+	return args.Get(0).([]*spacestore.Space), args.Error(1)
+}
+
+func (m *MockSpaceStore) Delta(ctx context.Context, since time.Time) (*spacestore.DeltaResult, error) {
+	args := m.Called(ctx, since)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*spacestore.DeltaResult), args.Error(1)
+}
+
+func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error) {
+	args := m.Called(ctx, key)
+	return args.Bool(0), args.Error(1)
+}
+
+var _ spacestore.Store = (*MockSpaceStore)(nil)
+
+// MockRegistryStore mocks the registrystore.Store interface for tests that need it.
+// (Only defined here if not already defined by registry_test.go in this package.)
+
+// ---------- Test resolver helper ---------------------------------------------
+
+// newTestResolver creates a Resolver with nil org/space stores — for tests that
+// pre-date multi-tenancy and don't need those stores.
+func newTestResolver(
+	sp StorageProvider,
+	rs registrystore.Store,
+	us userstore.Store,
+	ip ImagorProvider,
+	cfg ConfigProvider,
+	lc LicenseChecker,
+	logger *zap.Logger,
+) *Resolver {
+	return NewResolver(sp, rs, us, ip, cfg, lc, logger, nil, nil)
+}
+
+// createAdminContextWithOrg creates an admin context that carries an OrgID claim.
+func createAdminContextWithOrg(userID, orgID string) context.Context {
+	claims := &auth.Claims{
+		UserID: userID,
+		OrgID:  orgID,
+		Role:   "admin",
+		Scopes: []string{"read", "write", "admin"},
+	}
+	ctx := auth.SetClaimsInContext(context.Background(), claims)
+	return context.WithValue(ctx, UserIDContextKey, userID)
+}
+
+// createReadWriteContextWithOrg creates an authenticated (non-admin) context with OrgID.
+func createReadWriteContextWithOrg(userID, orgID string) context.Context {
+	claims := &auth.Claims{
+		UserID: userID,
+		OrgID:  orgID,
+		Role:   "user",
+		Scopes: []string{"read", "write"},
+	}
+	ctx := auth.SetClaimsInContext(context.Background(), claims)
+	return context.WithValue(ctx, UserIDContextKey, userID)
 }

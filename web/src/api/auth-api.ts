@@ -32,6 +32,7 @@ export interface LoginResponse {
 
 export interface FirstRunResponse {
   isFirstRun: boolean
+  multiTenant: boolean
   timestamp: number
 }
 

@@ -43,6 +43,40 @@ deps:
 tidy:
 	$(GOMOD) tidy
 
+# ── Local development run targets ────────────────────────────────────────────
+# Shared secret for local SaaS simulation (overridable: make run-management LOCAL_SECRET=mysecret)
+LOCAL_SECRET ?= dev-secret
+LOCAL_GALLERY ?= ./gallery
+
+# Self-hosted dev run: no CGO, SQLite, no libvips — fast iteration.
+# All-in-one: GraphQL + admin UI + imagor at /imagor/.
+dev:
+	CGO_ENABLED=0 $(GOCMD) run $(MAIN_PACKAGE) \
+		--port=8080 \
+		--file-storage-base-dir=$(LOCAL_GALLERY)
+
+# SaaS: management node — GraphQL + admin UI + org/space CRUD.
+# No CGO, no libvips. Enables InternalAPISecret so OrgStore/SpaceStore are active.
+# No --file-storage-base-dir: management node has no system-level storage in SaaS mode.
+# File listing and imagor URL generation are handled by the processing node.
+run-management:
+	CGO_ENABLED=0 $(GOCMD) run $(MAIN_PACKAGE) \
+		--port=8080 \
+		--internal-api-secret=$(LOCAL_SECRET)
+
+# SaaS: processing node — imagor image proxy, no DB.
+# Requires libvips (CGO). Polls management on :8080 for space configs.
+# After startup, space config is served from in-memory SpaceConfigStore.
+run-processing:
+	$(GOCMD) run -tags vips $(MAIN_PACKAGE) \
+		--port=8081 \
+		--jwt-secret=$(LOCAL_SECRET) \
+		--spaces-endpoint=http://localhost:8080 \
+		--internal-api-secret=$(LOCAL_SECRET) \
+		--space-max-concurrency=4
+
+.PHONY: dev run-management run-processing
+
 # ── SaaS binary targets ───────────────────────────────────────────────────────
 # management binary: no CGO, no libvips — suitable for Fly.io management machines
 # (handles GraphQL, storage config, user/org/space CRUD, delta endpoint).

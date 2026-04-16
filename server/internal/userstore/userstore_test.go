@@ -586,50 +586,50 @@ func TestUserStore_List(t *testing.T) {
 		expectedUserIDs []string
 	}{
 		{
-			name:            "List all users (limit=0)",
+			name:            "List all users (limit=0) includes inactive",
 			offset:          0,
 			limit:           0,
-			expectedCount:   2, // Only active users
-			expectedTotal:   2,
-			expectedUserIDs: []string{user2.ID, user1.ID}, // Ordered by created_at DESC
+			expectedCount:   3, // All users including inactive
+			expectedTotal:   3,
+			expectedUserIDs: []string{user3.ID, user2.ID, user1.ID}, // Ordered by created_at DESC
 		},
 		{
 			name:            "List with limit=1",
 			offset:          0,
 			limit:           1,
 			expectedCount:   1,
-			expectedTotal:   2,
-			expectedUserIDs: []string{user2.ID}, // Most recent first
+			expectedTotal:   3,
+			expectedUserIDs: []string{user3.ID}, // Most recent first
 		},
 		{
 			name:            "List with offset=1, limit=1",
 			offset:          1,
 			limit:           1,
 			expectedCount:   1,
-			expectedTotal:   2,
-			expectedUserIDs: []string{user1.ID}, // Second user
+			expectedTotal:   3,
+			expectedUserIDs: []string{user2.ID}, // Second user
 		},
 		{
 			name:            "List with offset=1, limit=0 (no limit)",
 			offset:          1,
 			limit:           0,
-			expectedCount:   1,
-			expectedTotal:   2,
-			expectedUserIDs: []string{user1.ID}, // All users from offset 1
+			expectedCount:   2,
+			expectedTotal:   3,
+			expectedUserIDs: []string{user2.ID, user1.ID}, // All users from offset 1
 		},
 		{
 			name:            "List with high offset",
 			offset:          10,
 			limit:           5,
 			expectedCount:   0,
-			expectedTotal:   2,
+			expectedTotal:   3,
 			expectedUserIDs: []string{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			users, totalCount, err := store.List(ctx, tt.offset, tt.limit)
+			users, totalCount, err := store.List(ctx, tt.offset, tt.limit, "")
 
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedCount, len(users))
@@ -641,11 +641,6 @@ func TestUserStore_List(t *testing.T) {
 				actualUserIDs[i] = user.ID
 			}
 			assert.Equal(t, tt.expectedUserIDs, actualUserIDs)
-
-			// Verify all returned users are active
-			for _, user := range users {
-				assert.True(t, user.IsActive)
-			}
 		})
 	}
 }
@@ -658,11 +653,167 @@ func TestUserStore_List_EmptyDatabase(t *testing.T) {
 	store := New(db, logger)
 	ctx := context.Background()
 
-	users, totalCount, err := store.List(ctx, 0, 0)
+	users, totalCount, err := store.List(ctx, 0, 0, "")
 
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(users))
 	assert.Equal(t, 0, totalCount)
+}
+
+func TestUserStore_List_Search(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	// Create test users
+	_, err := store.Create(ctx, "Alice Smith", "alice", "hashed1", "user")
+	require.NoError(t, err)
+	_, err = store.Create(ctx, "Bob Jones", "bobjones", "hashed2", "user")
+	require.NoError(t, err)
+	_, err = store.Create(ctx, "Charlie Admin", "charlie", "hashed3", "admin")
+	require.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		search        string
+		expectedCount int
+		expectedTotal int
+	}{
+		{
+			name:          "Empty search returns all users",
+			search:        "",
+			expectedCount: 3,
+			expectedTotal: 3,
+		},
+		{
+			name:          "Search by display name matches alice",
+			search:        "alice",
+			expectedCount: 1,
+			expectedTotal: 1,
+		},
+		{
+			name:          "Case-insensitive search by display name",
+			search:        "ALICE",
+			expectedCount: 1,
+			expectedTotal: 1,
+		},
+		{
+			name:          "Search by username matches bobjones",
+			search:        "bob",
+			expectedCount: 1,
+			expectedTotal: 1,
+		},
+		{
+			name:          "Search matches display name partial",
+			search:        "smith",
+			expectedCount: 1,
+			expectedTotal: 1,
+		},
+		{
+			name:          "Search with whitespace is trimmed",
+			search:        "  charlie  ",
+			expectedCount: 1,
+			expectedTotal: 1,
+		},
+		{
+			name:          "Search with no match returns empty",
+			search:        "zzznomatch",
+			expectedCount: 0,
+			expectedTotal: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			users, totalCount, err := store.List(ctx, 0, 0, tt.search)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedCount, len(users))
+			assert.Equal(t, tt.expectedTotal, totalCount)
+		})
+	}
+}
+
+func TestUserStore_List_IncludesInactiveUsers(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	// Create two users, deactivate one
+	user1, err := store.Create(ctx, "Active User", "activeuser", "hashed1", "user")
+	require.NoError(t, err)
+	user2, err := store.Create(ctx, "Inactive User", "inactiveuser", "hashed2", "user")
+	require.NoError(t, err)
+
+	err = store.SetActive(ctx, user2.ID, false)
+	require.NoError(t, err)
+
+	// List should include both active and inactive users
+	users, totalCount, err := store.List(ctx, 0, 0, "")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(users))
+	assert.Equal(t, 2, totalCount)
+
+	// Find both users in results
+	foundActive, foundInactive := false, false
+	for _, u := range users {
+		if u.ID == user1.ID {
+			foundActive = true
+			assert.True(t, u.IsActive)
+		}
+		if u.ID == user2.ID {
+			foundInactive = true
+			assert.False(t, u.IsActive)
+		}
+	}
+	assert.True(t, foundActive, "active user should be in list")
+	assert.True(t, foundInactive, "inactive user should be in list for reactivation")
+}
+
+func TestUserStore_List_SearchWithPagination(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	// Create 3 users whose names all contain "user"
+	_, err := store.Create(ctx, "User Alpha", "useralpha", "h1", "user")
+	require.NoError(t, err)
+	_, err = store.Create(ctx, "User Beta", "userbeta", "h2", "user")
+	require.NoError(t, err)
+	_, err = store.Create(ctx, "User Gamma", "usergamma", "h3", "admin")
+	require.NoError(t, err)
+	// One that won't match the search
+	_, err = store.Create(ctx, "Other Person", "other", "h4", "user")
+	require.NoError(t, err)
+
+	// All 3 "user*" results
+	users, total, err := store.List(ctx, 0, 0, "user")
+	assert.NoError(t, err)
+	assert.Equal(t, 3, total)
+	assert.Equal(t, 3, len(users))
+
+	// First page: offset=0, limit=2
+	page1, total1, err := store.List(ctx, 0, 2, "user")
+	assert.NoError(t, err)
+	assert.Equal(t, 3, total1)
+	assert.Equal(t, 2, len(page1))
+
+	// Second page: offset=2, limit=2
+	page2, total2, err := store.List(ctx, 2, 2, "user")
+	assert.NoError(t, err)
+	assert.Equal(t, 3, total2)
+	assert.Equal(t, 1, len(page2))
+
+	// Pages should not overlap
+	assert.NotEqual(t, page1[0].ID, page2[0].ID)
 }
 
 func TestUserStore_InputValidation(t *testing.T) {
@@ -745,4 +896,54 @@ func TestUserStore_InputValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUserStore_GetByIDAdmin(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	// Create an active user
+	activeUser, err := store.Create(ctx, "Active User", "activeuser", "hashedpassword", "user")
+	require.NoError(t, err)
+	require.NotNil(t, activeUser)
+
+	// Create and then deactivate a user
+	inactiveUser, err := store.Create(ctx, "Inactive User", "inactiveuser", "hashedpassword", "user")
+	require.NoError(t, err)
+	require.NotNil(t, inactiveUser)
+
+	err = store.SetActive(ctx, inactiveUser.ID, false)
+	require.NoError(t, err)
+
+	t.Run("GetByIDAdmin finds active user", func(t *testing.T) {
+		found, err := store.GetByIDAdmin(ctx, activeUser.ID)
+		require.NoError(t, err)
+		require.NotNil(t, found)
+		assert.Equal(t, activeUser.ID, found.ID)
+		assert.True(t, found.IsActive)
+	})
+
+	t.Run("GetByIDAdmin finds inactive user", func(t *testing.T) {
+		found, err := store.GetByIDAdmin(ctx, inactiveUser.ID)
+		require.NoError(t, err)
+		require.NotNil(t, found, "GetByIDAdmin should return inactive users")
+		assert.Equal(t, inactiveUser.ID, found.ID)
+		assert.False(t, found.IsActive)
+	})
+
+	t.Run("GetByID does NOT find inactive user", func(t *testing.T) {
+		found, err := store.GetByID(ctx, inactiveUser.ID)
+		require.NoError(t, err)
+		assert.Nil(t, found, "GetByID should filter out inactive users")
+	})
+
+	t.Run("GetByIDAdmin returns nil for non-existent user", func(t *testing.T) {
+		found, err := store.GetByIDAdmin(ctx, "non-existent-id")
+		require.NoError(t, err)
+		assert.Nil(t, found)
+	})
 }

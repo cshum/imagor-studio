@@ -2,10 +2,16 @@
   "layouts": {
     "account": {
       "title": "Settings",
+      "backToApp": "Back to App",
+      "sections": {
+        "account": "Account",
+        "administration": "Administration"
+      },
       "tabs": {
         "profile": "Profile",
         "system": "System",
-        "users": "Users"
+        "users": "Users",
+        "spaces": "Spaces"
       }
     }
   },
@@ -15,10 +21,11 @@
       "save": "Save",
       "cancel": "Cancel",
       "delete": "Delete",
+      "remove": "Remove",
       "edit": "Edit",
       "create": "Create",
       "update": "Update",
-      "updateSettings": "Update Settings",
+      "updateSettings": "Save",
       "close": "Close",
       "more": "More",
       "switchTheme": "Switch Theme",
@@ -115,7 +122,9 @@
       "settings": "Settings",
       "users": "Users",
       "admin": "System",
-      "adminSetup": "Admin Setup"
+      "adminSetup": "Admin Setup",
+      "spaces": "Spaces",
+      "spaceSettings": "Settings"
     }
   },
   "pages": {
@@ -297,7 +306,9 @@
       "profileInformation": "Profile Information",
       "profileInformationDescription": "Update your account profile information.",
       "displayName": "Display Name",
+      "displayNameDescription": "Your public display name shown throughout the app.",
       "displayNamePlaceholder": "Enter your display name",
+      "usernameDescription": "Used for login. Can contain letters, numbers, underscores, and hyphens.",
       "usernamePlaceholder": "Enter your username",
       "updateProfile": "Update Profile",
       "securitySettings": "Security Settings",
@@ -319,7 +330,8 @@
       "updateProfileFailed": "Failed to update profile",
       "updatePasswordFailed": "Failed to update password",
       "usernameAlreadyInUse": "This username is already in use",
-      "currentPasswordIncorrect": "Current password is incorrect"
+      "currentPasswordIncorrect": "Current password is incorrect",
+      "titleDescription": "Manage your personal account information and security settings."
     },
     "admin": {
       "title": "Admin",
@@ -419,7 +431,19 @@
       "failedToSaveSettings": "Failed to save settings",
       "settingsUpdatedSuccess": "Settings updated successfully",
       "storageConfiguredSuccess": "Storage configured successfully",
-      "storageConfiguredRestart": "Storage configured successfully Please restart the server to apply changes."
+      "storageConfiguredRestart": "Storage configured successfully Please restart the server to apply changes.",
+      "sections": {
+        "general": "General",
+        "storage": "Storage",
+        "imagor": "Imagor",
+        "license": "License"
+      },
+      "sectionDescriptions": {
+        "general": "Configure platform-wide settings. These options are only available to administrators.",
+        "storage": "Configure the default storage backend for platform-managed spaces.",
+        "imagor": "Configure imagor image processing and URL signing defaults for the platform.",
+        "license": "Manage your license key and view your current plan."
+      }
     },
     "storage": {
       "configureStorage": "Configure Storage",
@@ -469,8 +493,9 @@
       "active": "Active",
       "s3Bucket": "S3 Bucket",
       "endpoint": "Endpoint",
-      "takingEffect": "Changes may take up to 1 minute to take effect.",
-      "testConfigFirst": "Please fill in the {{storageType}} storage configuration first"
+      "takingEffect": "Settings saved. Changes may take up to 1 minute to take effect.",
+      "testConfigFirst": "Please fill in the {{storageType}} storage configuration first",
+      "storageTypeDescription": "Select where images and files will be stored"
     },
     "systemSettings": {
       "settingOverridden": "This setting is overridden by configuration file or environment variable",
@@ -493,7 +518,10 @@
       "configuredSuccess": "Imagor configured successfully",
       "configurationDetails": "Configuration Details",
       "hasSecret": "Has Secret",
-      "takingEffect": "Settings saved. Changes may take up to 1 minute to take effect."
+      "takingEffect": "Settings saved. Changes may take up to 1 minute to take effect.",
+      "algorithmSha1": "SHA-1 — Legacy, fastest",
+      "algorithmSha256": "SHA-256 — Recommended",
+      "algorithmSha512": "SHA-512 — Maximum security"
     },
     "license": {
       "licenseManagement": "License Management",
@@ -543,6 +571,7 @@
     },
     "users": {
       "title": "Users",
+      "description": "Manage user accounts and roles.",
       "createUser": "Create User",
       "createNewUser": "Create New User",
       "createUserDescription": "Add a new user to the system. They will be able to log in with the provided credentials.",
@@ -601,6 +630,188 @@
         "enterUsername": "Enter username",
         "enterPassword": "Enter password",
         "confirmPassword": "Confirm password"
+      }
+    },
+    "spaces": {
+      "title": "Spaces",
+      "createSpace": "Create Space",
+      "createNewSpace": "Create New Space",
+      "createSpaceDescription": "Add a new space to your organization. Each space has its own storage and imagor configuration.",
+      "editSpace": "Edit Space",
+      "editSpaceDescription": "Update space configuration. Changes will be applied immediately.",
+      "deleteSpace": "Delete Space",
+      "deleteSpaceDescription": "Are you sure you want to permanently delete space",
+      "createSpaceButton": "Create Space",
+      "updateSpaceButton": "Update Space",
+      "wizard": {
+        "stepIdentity": "Identity",
+        "stepStorage": "Storage",
+        "next": "Next",
+        "back": "Back"
+      },
+      "noSpacesFound": "No spaces found",
+      "description": "Manage workspaces for your organization.",
+      "emptyDescription": "Create your first space to get started with a dedicated workspace.",
+      "settings": "Settings",
+      "spaceCount": "{{count}} space(s)",
+      "openGallery": "Open Gallery",
+      "storageNotConfigured": "Not configured",
+      "storageTypeLabel": "Storage Type",
+      "credentialsEncrypted": "Credentials are encrypted at rest using AES-256 and never exposed after saving.",
+      "storageType": {
+        "managed": "Platform Storage",
+        "s3": "Custom S3 (BYOB)"
+      },
+      "storageTypeDesc": {
+        "managed": "Managed by Imagor Studio. No bucket setup required.",
+        "s3": "Connect your own S3-compatible bucket."
+      },
+      "keyDescription": "Unique identifier used in URLs. Cannot be changed after creation.",
+      "tableHeaders": {
+        "key": "Key",
+        "name": "Name",
+        "storage": "Storage",
+        "actions": "Actions"
+      },
+      "formLabels": {
+        "key": "Space Key",
+        "name": "Display Name",
+        "storageType": "Storage Type",
+        "bucket": "Bucket",
+        "region": "Region",
+        "endpoint": "Endpoint",
+        "prefix": "Prefix",
+        "accessKeyId": "Access Key ID",
+        "secretKey": "Secret Key",
+        "customDomain": "Custom Domain",
+        "imagorSecret": "Imagor Secret"
+      },
+      "placeholders": {
+        "name": "My Space",
+        "selectStorageType": "Select storage type",
+        "unchanged": "(unchanged)"
+      },
+      "messages": {
+        "spaceCreatedSuccess": "Space created successfully",
+        "spaceUpdatedSuccess": "Space updated successfully",
+        "spaceDeletedSuccess": "Space deleted successfully",
+        "createSpaceFailed": "Failed to create space",
+        "keyAlreadyTaken": "Space key is already taken",
+        "updateSpaceFailed": "Failed to update space",
+        "deleteSpaceFailed": "Failed to delete space"
+      },
+      "validation": {
+        "keyFormat": "Key must contain only lowercase letters, numbers, and hyphens"
+      },
+      "stats": {
+        "totalSpaces": "Total Spaces",
+        "managedStorage": "Managed Storage",
+        "externalStorage": "External Storage"
+      },
+      "configure": "Configure",
+      "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows."
+    },
+    "spaceSettings": {
+      "backToSpaces": "Back to Spaces",
+      "openGallery": "Open Gallery",
+      "sections": {
+        "general": "General",
+        "storage": "Storage",
+        "dangerZone": "Danger Zone",
+        "members": "Members",
+        "imagor": "Imagor"
+      },
+      "gallery": {
+        "description": "Customize gallery display and behaviour for this space. Space-level settings override the platform defaults."
+      },
+      "branding": {
+        "title": "Branding",
+        "description": "App title and link shown in the editor for this space. Overrides the platform default (requires license).",
+        "appTitle": "Editor App Title",
+        "appTitleDescription": "Custom app title shown in the navigation bar when browsing this space. Overrides the platform default (requires license).",
+        "appUrl": "Editor App URL",
+        "appUrlDescription": "URL opened when the app title is clicked while browsing this space."
+      },
+      "general": {
+        "description": "Basic information about this space.",
+        "name": "Display Name",
+        "nameDescription": "The name shown in the navigation and spaces list.",
+        "customDomain": "Custom Domain",
+        "customDomainDescription": "Custom domain for this space. If left empty, served at {{spaceKey}}.imagor.app.",
+        "saved": "General settings saved"
+      },
+      "storage": {
+        "description": "Configure S3 storage credentials for this space.",
+        "managedTitle": "Platform-managed Storage",
+        "managedDescription": "Files are stored in Imagor Studio's managed storage. Storage type cannot be changed after the space is created.",
+        "bucket": "Bucket",
+        "region": "Region",
+        "bucketLocked": "Bucket and region are fixed at creation time and cannot be changed.",
+        "endpoint": "Endpoint",
+        "endpointDescription": "Custom S3-compatible endpoint URL. Leave blank for AWS S3.",
+        "prefix": "Path Prefix",
+        "prefixDescription": "Optional path prefix inside the bucket (e.g. media/).",
+        "accessKeyId": "Access Key ID",
+        "accessKeyIdDescription": "Leave blank to keep existing credentials.",
+        "secretKey": "Secret Access Key",
+        "secretKeyDescription": "Leave blank to keep existing credentials.",
+        "urlSigning": "URL Signing",
+        "urlSigningDescription": "HMAC signing for secure imagor transformation URL generation.",
+        "imagorSecret": "Signing Secret",
+        "imagorSecretDescription": "Used to sign imagor transformation URLs. Leave blank to keep the existing secret.",
+        "signerAlgorithm": "Signing Algorithm",
+        "signerAlgorithmDescription": "HMAC algorithm used to sign transformation URLs.",
+        "signerTruncate": "Signature Truncation",
+        "signerTruncateDescription": "Truncate the HMAC signature to this many characters (0 = full length).",
+        "saved": "Storage credentials saved"
+      },
+      "danger": {
+        "deleteTitle": "Delete this space",
+        "deleteDescription": "Once deleted, all configuration for this space is permanently removed. Files in your S3 bucket are not affected.",
+        "deleteButton": "Delete Space"
+      },
+      "members": {
+        "description": "Manage who has access to this organisation.",
+        "addLabel": "Invite member",
+        "usernamePlaceholder": "Username",
+        "roleLabel": "Role",
+        "addButton": "Add",
+        "tableHeaders": {
+          "member": "Member",
+          "role": "Role",
+          "action": "Action"
+        },
+        "inviteDescription": "Invite a teammate and assign their role for this space.",
+        "emptyDescription": "Add your first member to collaborate inside this space.",
+        "addSuccess": "Member added successfully.",
+        "roleUpdated": "Role updated.",
+        "removeSuccess": "Member removed.",
+        "empty": "No members yet.",
+        "removeTitle": "Remove Member",
+        "removeDescription": "Are you sure you want to remove",
+        "roles": {
+          "owner": "Owner",
+          "admin": "Admin",
+          "member": "Member"
+        }
+      },
+      "placeholders": {
+        "unchanged": "(leave blank to keep existing)"
+      },
+      "imagor": {
+        "description": "Configure imagor URL signing settings for this space.",
+        "urlSigning": "URL Signing",
+        "urlSigningDescription": "HMAC signing for secure imagor transformation URL generation.",
+        "imagorSecret": "Signing Secret",
+        "imagorSecretDescription": "Used to sign imagor transformation URLs.",
+        "signerAlgorithm": "Signing Algorithm",
+        "signerAlgorithmDescription": "HMAC algorithm used to sign transformation URLs.",
+        "algorithmSha1": "SHA-1 — Legacy, fastest",
+        "algorithmSha256": "SHA-256 — Recommended",
+        "algorithmSha512": "SHA-512 — Maximum security",
+        "signerTruncate": "Signature Truncation",
+        "signerTruncateDescription": "Truncate the HMAC signature to this many characters (0 = full length).",
+        "saved": "Security settings saved"
       }
     }
   },

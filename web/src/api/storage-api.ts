@@ -44,10 +44,13 @@ export async function listFiles(
 /**
  * Get file/folder statistics
  */
-export async function statFile(path: string): Promise<StatFileQuery['statFile']> {
+export async function statFile(
+  path: string,
+  spaceKey?: string,
+): Promise<StatFileQuery['statFile']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const variables: StatFileQueryVariables = { path }
+  const variables: StatFileQueryVariables = { path, spaceKey }
   const result = await sdk.StatFile(variables)
   return result.statFile
 }
@@ -59,6 +62,7 @@ export async function uploadFile(
   path: string,
   file: File,
   signal?: AbortSignal,
+  spaceKey?: string,
 ): Promise<UploadFileMutation['uploadFile']> {
   const { UploadFileMutation } = await import('@/graphql/storage.gql')
   const { uploadSingleFile } = await import('@/lib/graphql-upload')
@@ -69,7 +73,7 @@ export async function uploadFile(
 
   const result = await uploadSingleFile<UploadFileResult>(
     UploadFileMutation,
-    { path, content: file },
+    { path, spaceKey, content: file },
     'content',
     file,
     signal,
@@ -81,10 +85,13 @@ export async function uploadFile(
 /**
  * Delete a file or folder
  */
-export async function deleteFile(path: string): Promise<DeleteFileMutation['deleteFile']> {
+export async function deleteFile(
+  path: string,
+  spaceKey?: string,
+): Promise<DeleteFileMutation['deleteFile']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const variables: DeleteFileMutationVariables = { path }
+  const variables: DeleteFileMutationVariables = { path, spaceKey }
   const result = await sdk.DeleteFile(variables)
   return result.deleteFile
 }
@@ -92,10 +99,13 @@ export async function deleteFile(path: string): Promise<DeleteFileMutation['dele
 /**
  * Create a new folder
  */
-export async function createFolder(path: string): Promise<CreateFolderMutation['createFolder']> {
+export async function createFolder(
+  path: string,
+  spaceKey?: string,
+): Promise<CreateFolderMutation['createFolder']> {
   const sdk = getSdk(getGraphQLClient())
 
-  const variables: CreateFolderMutationVariables = { path }
+  const variables: CreateFolderMutationVariables = { path, spaceKey }
   const result = await sdk.CreateFolder(variables)
   return result.createFolder
 }
@@ -105,6 +115,7 @@ export async function createFolder(path: string): Promise<CreateFolderMutation['
  */
 export async function listFilesPaginated(params: {
   path: string
+  spaceKey?: string
   page?: number
   pageSize?: number
   onlyFiles?: boolean
@@ -118,6 +129,7 @@ export async function listFilesPaginated(params: {
 
   const result = await listFiles({
     path: params.path,
+    spaceKey: params.spaceKey,
     offset,
     limit: pageSize,
     onlyFiles: params.onlyFiles,
@@ -185,9 +197,10 @@ export async function testStorageConfig(
 export async function copyFile(
   sourcePath: string,
   destPath: string,
+  spaceKey?: string,
 ): Promise<CopyFileMutation['copyFile']> {
   const sdk = getSdk(getGraphQLClient())
-  const variables: CopyFileMutationVariables = { sourcePath, destPath }
+  const variables: CopyFileMutationVariables = { sourcePath, destPath, spaceKey }
   const result = await sdk.CopyFile(variables)
   return result.copyFile
 }
@@ -198,9 +211,10 @@ export async function copyFile(
 export async function moveFile(
   sourcePath: string,
   destPath: string,
+  spaceKey?: string,
 ): Promise<MoveFileMutation['moveFile']> {
   const sdk = getSdk(getGraphQLClient())
-  const variables: MoveFileMutationVariables = { sourcePath, destPath }
+  const variables: MoveFileMutationVariables = { sourcePath, destPath, spaceKey }
   const result = await sdk.MoveFile(variables)
   return result.moveFile
 }
@@ -224,9 +238,10 @@ export async function saveTemplate(
  */
 export async function regenerateTemplatePreview(
   templatePath: string,
+  spaceKey?: string,
 ): Promise<RegenerateTemplatePreviewMutation['regenerateTemplatePreview']> {
   const sdk = getSdk(getGraphQLClient())
-  const variables: RegenerateTemplatePreviewMutationVariables = { templatePath }
+  const variables: RegenerateTemplatePreviewMutationVariables = { templatePath, spaceKey }
   const result = await sdk.RegenerateTemplatePreview(variables)
   return result.regenerateTemplatePreview
 }

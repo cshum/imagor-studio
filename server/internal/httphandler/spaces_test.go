@@ -22,6 +22,7 @@ type mockSpaceStore struct {
 func (m *mockSpaceStore) Delta(ctx context.Context, since time.Time) (*spacestore.DeltaResult, error) {
 	return m.deltaFunc(ctx, since)
 }
+func (m *mockSpaceStore) Create(ctx context.Context, s *spacestore.Space) error { return nil }
 func (m *mockSpaceStore) Upsert(ctx context.Context, s *spacestore.Space) error { return nil }
 func (m *mockSpaceStore) SoftDelete(ctx context.Context, key string) error      { return nil }
 func (m *mockSpaceStore) Get(ctx context.Context, key string) (*spacestore.Space, error) {
@@ -33,6 +34,7 @@ func (m *mockSpaceStore) List(ctx context.Context) ([]*spacestore.Space, error) 
 func (m *mockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*spacestore.Space, error) {
 	return nil, nil
 }
+func (m *mockSpaceStore) KeyExists(_ context.Context, _ string) (bool, error) { return false, nil }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 

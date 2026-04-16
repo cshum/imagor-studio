@@ -12,6 +12,7 @@ export interface GalleryDropZoneProps {
   videoExtensions?: string
   className?: string
   children?: React.ReactNode
+  spaceKey?: string
   onFileSelect?: (handler: (fileList: FileList | null) => void) => void
   onUploadStateChange?: (uploadState: {
     files: DragDropFile[]
@@ -30,6 +31,7 @@ export function GalleryDropZone({
   videoExtensions,
   className,
   children,
+  spaceKey,
   onFileSelect,
   onUploadStateChange,
 }: GalleryDropZoneProps) {
@@ -38,12 +40,12 @@ export function GalleryDropZone({
   const handleFileUpload = useCallback(
     async (file: File, path: string, signal?: AbortSignal): Promise<boolean> => {
       try {
-        return await uploadFile(path, file, signal)
+        return await uploadFile(path, file, signal, spaceKey)
       } catch {
         return false
       }
     },
-    [],
+    [spaceKey],
   )
 
   const {

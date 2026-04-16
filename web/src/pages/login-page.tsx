@@ -5,6 +5,7 @@ import { Navigate, useNavigate, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 
 import { login } from '@/api/auth-api'
+import { BrandBar } from '@/components/brand-bar'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -18,7 +19,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { useBrand } from '@/hooks/use-brand'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { initializeLocale } from '@/stores/locale-store'
 
@@ -32,8 +32,6 @@ export function LoginPage() {
   const { authState } = useAuth()
   const navigate = useNavigate()
   const search = useSearch({ from: '/login' })
-  const { title: appTitle, url: appUrl } = useBrand()
-
   // Helper function to validate redirect URL for security
   const isValidRedirectUrl = (url: string): boolean => {
     // Only allow relative URLs that start with /
@@ -116,20 +114,7 @@ export function LoginPage() {
 
   return (
     <div className='min-h-screen-safe flex flex-col'>
-      <div className='flex items-center gap-2 border-b px-6 py-3'>
-        <div className='flex flex-1'>
-          <a
-            href={appUrl}
-            target='_blank'
-            className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
-          >
-            {appTitle}
-          </a>
-        </div>
-        <div className='ml-auto'>
-          <ModeToggle />
-        </div>
-      </div>
+      <BrandBar rightSlot={<ModeToggle />} />
 
       {/* Content */}
       <div className='relative flex flex-1 items-start justify-center py-6 md:items-center'>

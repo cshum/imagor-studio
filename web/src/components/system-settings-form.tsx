@@ -1,12 +1,10 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
-import { Lock } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { setSystemRegistryObject } from '@/api/registry-api'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SettingRow } from '@/components/ui/setting-row'
+import { SettingsSection } from '@/components/ui/settings-section'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { setHomeTitle } from '@/stores/folder-tree-store'
 import { licenseStore, setBrand } from '@/stores/license-store'
@@ -53,6 +53,9 @@ export interface SystemSettingsFormProps {
   showCard?: boolean
   hideUpdateButton?: boolean
   compact?: boolean
+  /** When provided, replaces the default system registry save with a custom handler.
+   *  Receives only the changed values and skips global brand/title side-effects. */
+  saveCallback?: (changedValues: Record<string, string>) => Promise<void>
 }
 
 export function SystemSettingsForm({
@@ -65,12 +68,27 @@ export function SystemSettingsForm({
   onFormChange,
   showCard = true,
   hideUpdateButton = false,
-  compact = false,
+  compact: _compact = false,
+  saveCallback,
 }: SystemSettingsFormProps) {
   const router = useRouter()
   const { t } = useTranslation()
   const { isLicensed } = licenseStore.useStore()
   const [isUpdating, setIsUpdating] = useState(false)
+
+  const formatDescription = (
+    description: string,
+    options?: { overridden?: boolean; licenseRequired?: boolean },
+  ) => {
+    const lines = [description]
+    if (options?.overridden) {
+      lines.push(t('pages.systemSettings.settingOverridden'))
+    }
+    if (options?.licenseRequired) {
+      lines.push(t('pages.systemSettings.licenseRequired'))
+    }
+    return lines.join('\n')
+  }
 
   // Current form state - map of registry keys to string values
   const [formValues, setFormValues] = useState<Record<string, string>>(() => {
@@ -162,7 +180,11 @@ export function SystemSettingsForm({
       })
 
       if (Object.keys(changedValues).length > 0) {
-        await setSystemRegistryObject(changedValues)
+        if (saveCallback) {
+          await saveCallback(changedValues)
+        } else {
+          await setSystemRegistryObject(changedValues)
+        }
 
         // Update the store immediately if home title was changed
         if (changedValues['config.app_home_title']) {
@@ -223,72 +245,38 @@ export function SystemSettingsForm({
       const checkboxId = `${setting.key}-checkbox`
 
       return (
-        <div
-          key={setting.key}
-          className='flex flex-row items-center justify-between gap-4 px-4 py-3'
-        >
-          <div className='min-w-0 flex-1 space-y-0.5'>
-            <label htmlFor={checkboxId} className='cursor-pointer text-sm font-medium'>
-              {setting.label}
-            </label>
-            <div className='text-muted-foreground text-sm'>
-              {setting.description}
-              {isOverridden && (
-                <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                  {t('pages.systemSettings.settingOverridden')}
-                </span>
-              )}
+        <Fragment key={setting.key}>
+          <SettingRow
+            label={setting.label}
+            description={formatDescription(setting.description, { overridden: isOverridden })}
+          >
+            <div className='flex justify-start sm:justify-end'>
+              <Checkbox
+                id={checkboxId}
+                checked={boolValue}
+                onCheckedChange={(checked) => {
+                  if (!isOverridden) {
+                    updateSetting(setting.key, checked ? 'true' : 'false')
+                  }
+                }}
+                disabled={isUpdating || isOverridden}
+              />
             </div>
-          </div>
-          <Checkbox
-            id={checkboxId}
-            checked={boolValue}
-            onCheckedChange={(checked) => {
-              if (!isOverridden) {
-                updateSetting(setting.key, checked ? 'true' : 'false')
-              }
-            }}
-            disabled={isUpdating || isOverridden}
-          />
-        </div>
+          </SettingRow>
+        </Fragment>
       )
     }
 
     if (setting.type === 'text') {
       return (
-        <div
-          key={setting.key}
-          className={
-            compact
-              ? 'flex flex-col gap-2 px-4 py-3'
-              : 'flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
-          }
-        >
-          <div className='min-w-0 flex-1 space-y-0.5'>
-            <Label htmlFor={setting.key} className='text-sm font-medium'>
-              {setting.label}
-            </Label>
-            <div className='text-muted-foreground text-sm'>
-              {setting.description}
-              {isOverridden && (
-                <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                  {t('pages.systemSettings.settingOverridden')}
-                </span>
-              )}
-              {isLicenseRequired && (
-                <a
-                  href='https://imagor.net/buy/early-bird/'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='mt-1 flex items-center gap-1 text-orange-600 transition-colors hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300'
-                >
-                  <Lock className='h-3 w-3' />
-                  {t('pages.systemSettings.licenseRequired')}
-                </a>
-              )}
-            </div>
-          </div>
-          <div className={compact ? 'w-full' : 'w-full shrink-0 sm:w-72 lg:w-100'}>
+        <Fragment key={setting.key}>
+          <SettingRow
+            label={setting.label}
+            description={formatDescription(setting.description, {
+              overridden: isOverridden,
+              licenseRequired: isLicenseRequired,
+            })}
+          >
             <Input
               id={setting.key}
               value={isLicenseRequired ? '' : effectiveValue}
@@ -300,35 +288,18 @@ export function SystemSettingsForm({
               disabled={isDisabled}
               placeholder={setting.defaultValue.toString()}
             />
-          </div>
-        </div>
+          </SettingRow>
+        </Fragment>
       )
     }
 
     if (setting.type === 'select') {
       return (
-        <div
-          key={setting.key}
-          className={
-            compact
-              ? 'flex flex-col gap-2 px-4 py-3'
-              : 'flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
-          }
-        >
-          <div className='min-w-0 flex-1 space-y-0.5'>
-            <Label htmlFor={setting.key} className='text-sm font-medium'>
-              {setting.label}
-            </Label>
-            <div className='text-muted-foreground text-sm'>
-              {setting.description}
-              {isOverridden && (
-                <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                  {t('pages.systemSettings.settingOverridden')}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className={compact ? 'w-full' : 'w-full shrink-0 sm:w-72 lg:w-100'}>
+        <Fragment key={setting.key}>
+          <SettingRow
+            label={setting.label}
+            description={formatDescription(setting.description, { overridden: isOverridden })}
+          >
             <Select
               value={effectiveValue}
               onValueChange={(value: string) => {
@@ -350,8 +321,8 @@ export function SystemSettingsForm({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        </div>
+          </SettingRow>
+        </Fragment>
       )
     }
 
@@ -387,80 +358,73 @@ export function SystemSettingsForm({
       }
 
       return (
-        <div
-          key={setting.key}
-          className='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'
-        >
-          <div className='min-w-0 flex-1 space-y-0.5'>
-            <Label className='text-sm font-medium'>{setting.label}</Label>
-            <div className='text-muted-foreground text-sm'>
-              {setting.description}
-              {(isOverridden || isSecondaryOverridden) && (
-                <span className='mt-1 block text-orange-600 dark:text-orange-400'>
-                  {t('pages.systemSettings.settingOverridden')}
-                </span>
-              )}
+        <Fragment key={setting.key}>
+          <SettingRow
+            label={setting.label}
+            description={formatDescription(setting.description, {
+              overridden: isOverridden || isSecondaryOverridden,
+            })}
+          >
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+              <div>
+                <Label
+                  htmlFor={setting.key}
+                  className='text-muted-foreground pb-1 text-xs font-medium'
+                >
+                  {setting.primaryLabel || 'Primary'}
+                </Label>
+                <Select
+                  value={effectiveValue}
+                  onValueChange={(value: string) => {
+                    if (!isOverridden) {
+                      updateSetting(setting.key, value)
+                    }
+                  }}
+                  disabled={isUpdating || isOverridden}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select sort by' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {setting.options?.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {getOptionLabel(option)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label
+                  htmlFor={setting.secondaryKey}
+                  className='text-muted-foreground pb-1 text-xs font-medium'
+                >
+                  {setting.secondaryLabel || 'Secondary'}
+                </Label>
+                <Select
+                  value={secondaryEffectiveValue}
+                  onValueChange={(value: string) => {
+                    if (!isSecondaryOverridden) {
+                      updateSetting(setting.secondaryKey!, value)
+                    }
+                  }}
+                  disabled={isUpdating || isSecondaryOverridden}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select order' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {setting.secondaryOptions?.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {getOptionLabel(option, true)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-          <div className='grid w-full shrink-0 grid-cols-2 gap-2 sm:w-72 lg:w-100'>
-            <div>
-              <Label
-                htmlFor={setting.key}
-                className='text-muted-foreground pb-1 text-xs font-medium'
-              >
-                {setting.primaryLabel || 'Primary'}
-              </Label>
-              <Select
-                value={effectiveValue}
-                onValueChange={(value: string) => {
-                  if (!isOverridden) {
-                    updateSetting(setting.key, value)
-                  }
-                }}
-                disabled={isUpdating || isOverridden}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select sort by' />
-                </SelectTrigger>
-                <SelectContent>
-                  {setting.options?.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {getOptionLabel(option)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label
-                htmlFor={setting.secondaryKey}
-                className='text-muted-foreground pb-1 text-xs font-medium'
-              >
-                {setting.secondaryLabel || 'Secondary'}
-              </Label>
-              <Select
-                value={secondaryEffectiveValue}
-                onValueChange={(value: string) => {
-                  if (!isSecondaryOverridden) {
-                    updateSetting(setting.secondaryKey!, value)
-                  }
-                }}
-                disabled={isUpdating || isSecondaryOverridden}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Select order' />
-                </SelectTrigger>
-                <SelectContent>
-                  {setting.secondaryOptions?.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {getOptionLabel(option, true)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
+          </SettingRow>
+        </Fragment>
       )
     }
 
@@ -469,7 +433,7 @@ export function SystemSettingsForm({
 
   const content = (
     <div className='space-y-4'>
-      <div className='divide-y rounded-lg border'>{settings.map(renderSetting)}</div>
+      <div>{settings.map(renderSetting)}</div>
 
       {!hideUpdateButton && (
         <div className='flex justify-end pt-2'>
@@ -490,12 +454,8 @@ export function SystemSettingsForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>{content}</CardContent>
-    </Card>
+    <SettingsSection title={title} description={description} contentClassName='space-y-4'>
+      {content}
+    </SettingsSection>
   )
 }

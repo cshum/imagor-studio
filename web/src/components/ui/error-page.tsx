@@ -1,8 +1,8 @@
 import { AlertTriangle, Home } from 'lucide-react'
 
+import { BrandBar } from '@/components/brand-bar'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
-import { useBrand } from '@/hooks/use-brand'
 
 import { Button } from './button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card'
@@ -20,8 +20,6 @@ export function ErrorPage({
   title = 'Something went wrong',
   description = 'There was an error loading the page. Please try going back to the home page.',
 }: ErrorPageProps) {
-  const { title: appTitle, url: appUrl } = useBrand()
-
   const handleGoHome = () => {
     window.location.href = '/'
   }
@@ -30,20 +28,7 @@ export function ErrorPage({
 
   return (
     <div className='min-h-screen-safe flex flex-col'>
-      <div className='flex items-center gap-2 border-b px-6 py-3'>
-        <div className='flex flex-1'>
-          <a
-            href={appUrl}
-            target='_blank'
-            className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
-          >
-            {appTitle}
-          </a>
-        </div>
-        <div className='ml-auto'>
-          <ModeToggle />
-        </div>
-      </div>
+      <BrandBar rightSlot={<ModeToggle />} />
 
       {/* Content */}
       <div className='relative flex flex-1 items-start justify-center py-6 md:items-center'>
@@ -57,7 +42,7 @@ export function ErrorPage({
             <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent className='space-y-4'>
-            {errorMessage && process.env.NODE_ENV === 'development' && (
+            {errorMessage && import.meta.env.DEV && (
               <div className='rounded-md bg-red-50 p-3'>
                 <p className='text-sm font-medium text-red-800'>Error Details:</p>
                 <p className='mt-1 font-mono text-xs text-red-700'>{errorMessage}</p>

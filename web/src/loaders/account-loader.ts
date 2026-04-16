@@ -1,10 +1,13 @@
 import { getImagorStatus } from '@/api/imagor-api'
 import { getLicenseStatus, type LicenseStatus } from '@/api/license-api'
+import { getSpace, listSpaces } from '@/api/org-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
 import type {
+  GetSpaceQuery,
   ImagorStatusQuery,
+  ListSpacesQuery,
   ListSystemRegistryQuery,
   ListUsersQuery,
   StorageStatusQuery,
@@ -25,6 +28,28 @@ export interface AdminLoaderData {
   systemRegistryList: ListSystemRegistryQuery['listSystemRegistry']
   storageStatus: StorageStatusQuery['storageStatus']
   imagorStatus: ImagorStatusQuery['imagorStatus']
+  licenseStatus: LicenseStatus
+  breadcrumb: BreadcrumbItem
+}
+
+// Per-section loader data types for admin sub-routes
+export interface AdminGeneralLoaderData {
+  registry: Record<string, string>
+  systemRegistryList: ListSystemRegistryQuery['listSystemRegistry']
+  breadcrumb: BreadcrumbItem
+}
+
+export interface AdminStorageLoaderData {
+  storageStatus: StorageStatusQuery['storageStatus']
+  breadcrumb: BreadcrumbItem
+}
+
+export interface AdminImagorLoaderData {
+  imagorStatus: ImagorStatusQuery['imagorStatus']
+  breadcrumb: BreadcrumbItem
+}
+
+export interface AdminLicenseLoaderData {
   licenseStatus: LicenseStatus
   breadcrumb: BreadcrumbItem
 }
@@ -82,15 +107,97 @@ export const adminLoader = async (): Promise<AdminLoaderData> => {
   }
 }
 
+/** Load general settings for the admin general sub-route */
+export const adminGeneralLoader = async (): Promise<AdminGeneralLoaderData> => {
+  const [registry, systemRegistryList] = await Promise.all([
+    getSystemRegistryObject(),
+    listSystemRegistry(),
+  ])
+  return {
+    registry,
+    systemRegistryList,
+    breadcrumb: { translationKey: 'pages.admin.sections.general' },
+  }
+}
+
+/** Load storage status for the admin storage sub-route */
+export const adminStorageLoader = async (): Promise<AdminStorageLoaderData> => {
+  return {
+    storageStatus: await getStorageStatus(),
+    breadcrumb: { translationKey: 'pages.admin.sections.storage' },
+  }
+}
+
+/** Load imagor status for the admin imagor sub-route */
+export const adminImagorLoader = async (): Promise<AdminImagorLoaderData> => {
+  return {
+    imagorStatus: await getImagorStatus(),
+    breadcrumb: { translationKey: 'pages.admin.sections.imagor' },
+  }
+}
+
+/** Load license status for the admin license sub-route */
+export const adminLicenseLoader = async (): Promise<AdminLicenseLoaderData> => {
+  return {
+    licenseStatus: await getLicenseStatus(),
+    breadcrumb: { translationKey: 'pages.admin.sections.license' },
+  }
+}
+
 /**
  * Load users data for the users management page
  */
-export const usersLoader = async (): Promise<UsersLoaderData> => {
-  const users = await listUsers()
+export const usersLoader = async ({
+  search = '',
+}: { search?: string } = {}): Promise<UsersLoaderData> => {
+  const users = await listUsers(undefined, undefined, search || undefined)
   return {
     users,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.users',
+    },
+  }
+}
+
+export interface SpacesLoaderData {
+  spaces: ListSpacesQuery['spaces']
+  breadcrumb: BreadcrumbItem
+}
+
+/**
+ * Load spaces data for the spaces management page
+ */
+export const spacesLoader = async (): Promise<SpacesLoaderData> => {
+  const spaces = await listSpaces()
+  return {
+    spaces,
+    breadcrumb: {
+      translationKey: 'navigation.breadcrumbs.spaces',
+    },
+  }
+}
+
+export interface SpaceSettingsLoaderData {
+  space: NonNullable<GetSpaceQuery['space']>
+  breadcrumb: BreadcrumbItem
+}
+
+/**
+ * Load a single space for the space settings page
+ */
+export const spaceSettingsLoader = async ({
+  params,
+}: {
+  params: { spaceKey: string }
+}): Promise<SpaceSettingsLoaderData> => {
+  const space = await getSpace(params.spaceKey)
+  if (!space) {
+    throw new Error(`Space "${params.spaceKey}" not found`)
+  }
+  return {
+    space,
+    breadcrumb: {
+      label: space.name,
     },
   }
 }

@@ -42,6 +42,22 @@ func (e *errOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, err
 	return nil, fmt.Errorf("%s", e.msg)
 }
 
+func (e *errOrgStore) ListMembers(_ context.Context, _ string) ([]*orgstore.OrgMemberView, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) AddMember(_ context.Context, _, _, _ string) error {
+	return fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) RemoveMember(_ context.Context, _, _ string) error {
+	return fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return fmt.Errorf("%s", e.msg)
+}
+
 // nilOrgStore implements orgstore.Store but returns (nil, nil) on lookups —
 // simulates a user that exists but has no org yet.
 type nilOrgStore struct{}
@@ -54,6 +70,22 @@ func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*orgstore.Org, e
 }
 func (n *nilOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, error) {
 	return nil, nil
+}
+
+func (n *nilOrgStore) ListMembers(_ context.Context, _ string) ([]*orgstore.OrgMemberView, error) {
+	return nil, nil
+}
+
+func (n *nilOrgStore) AddMember(_ context.Context, _, _, _ string) error {
+	return nil
+}
+
+func (n *nilOrgStore) RemoveMember(_ context.Context, _, _ string) error {
+	return nil
+}
+
+func (n *nilOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return nil
 }
 
 type MockUserStore struct {
@@ -69,6 +101,14 @@ func (m *MockUserStore) Create(ctx context.Context, displayName, username, hashe
 }
 
 func (m *MockUserStore) GetByID(ctx context.Context, id string) (*userstore.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
+func (m *MockUserStore) GetByIDAdmin(ctx context.Context, id string) (*userstore.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -109,8 +149,8 @@ func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) e
 	return args.Error(0)
 }
 
-func (m *MockUserStore) List(ctx context.Context, offset, limit int) ([]*userstore.User, int, error) {
-	args := m.Called(ctx, offset, limit)
+func (m *MockUserStore) List(ctx context.Context, offset, limit int, search string) ([]*userstore.User, int, error) {
+	args := m.Called(ctx, offset, limit, search)
 	if args.Get(0) == nil {
 		return nil, args.Get(1).(int), args.Error(2)
 	}
@@ -180,7 +220,7 @@ func TestRegister(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, false)
 
 	tests := []struct {
 		name           string
@@ -370,7 +410,7 @@ func TestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, false)
 
 	// Create a valid hashed password for testing
 	hashedPassword, err := auth.HashPassword("password123")
@@ -563,7 +603,7 @@ func TestRefreshToken(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, false)
 
 	// Generate a valid token first
 	validToken, err := tokenManager.GenerateToken("user1", "user", []string{"read"}, "")
@@ -743,7 +783,7 @@ func TestGuestLogin(t *testing.T) {
 			mockRegistryStore.ExpectedCalls = nil
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, true)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, true, false)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/auth/guest", nil)
 			rr := httptest.NewRecorder()
@@ -810,7 +850,7 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	os := orgstore.New(newOrgTestDB(t))
-	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
 
 	const userID = "saas-reg-user-1"
 	mockUserStore.On("Create", mock.Anything, "saasuser", "saasuser", mock.AnythingOfType("string"), "user").
@@ -858,7 +898,7 @@ func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	os := orgstore.New(newOrgTestDB(t))
-	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
 
 	const userID = "saas-login-user-1"
 
@@ -900,7 +940,7 @@ func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "DB connection refused"}, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "DB connection refused"}, nil, logger, false, false)
 
 	const userID = "saas-fail-user-1"
 	mockUserStore.On("Create", mock.Anything, "failuser", "failuser", mock.AnythingOfType("string"), "user").
@@ -925,7 +965,7 @@ func TestRegister_MultiTenant_SelfHosted_NoOrgInJWT(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil /* no orgStore */, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil /* no orgStore */, nil, logger, false, false)
 
 	mockUserStore.On("Create", mock.Anything, "selfhosted", "selfhosted", mock.AnythingOfType("string"), "user").
 		Return(&userstore.User{ID: "sh-1", DisplayName: "selfhosted", Username: "selfhosted", Role: "user", IsActive: true}, nil)
@@ -953,7 +993,7 @@ func TestLogin_MultiTenant_UserWithNoOrg(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, false, false)
 
 	const userID = "no-org-user-1"
 	hashedPassword, _ := auth.HashPassword("password123")
@@ -988,7 +1028,7 @@ func TestLogin_MultiTenant_OrgLookupError(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "read timeout"}, nil, logger, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "read timeout"}, nil, logger, false, false)
 
 	const userID = "org-err-user-1"
 	hashedPassword, _ := auth.HashPassword("password123")
@@ -1019,22 +1059,50 @@ func TestLogin_MultiTenant_OrgLookupError(t *testing.T) {
 func TestCheckFirstRun(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
-	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false)
 
 	tests := []struct {
-		name           string
-		userCount      int
-		expectFirstRun bool
+		name              string
+		userCount         int
+		multiTenant       bool
+		expectFirstRun    bool
+		expectMultiTenant bool
 	}{
-		{"No users - first run", 0, true},
-		{"Users exist - not first run", 5, false},
+		{
+			name:              "No users - first run, self-hosted",
+			userCount:         0,
+			multiTenant:       false,
+			expectFirstRun:    true,
+			expectMultiTenant: false,
+		},
+		{
+			name:              "Users exist - not first run, self-hosted",
+			userCount:         5,
+			multiTenant:       false,
+			expectFirstRun:    false,
+			expectMultiTenant: false,
+		},
+		{
+			name:              "No users - first run, multi-tenant",
+			userCount:         0,
+			multiTenant:       true,
+			expectFirstRun:    true,
+			expectMultiTenant: true,
+		},
+		{
+			name:              "Users exist - not first run, multi-tenant",
+			userCount:         3,
+			multiTenant:       true,
+			expectFirstRun:    false,
+			expectMultiTenant: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockUserStore.ExpectedCalls = nil
-			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.userCount, nil)
+			mockUserStore := new(MockUserStore)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, tt.multiTenant)
+
+			mockUserStore.On("List", mock.Anything, 0, 1, "").Return([]*userstore.User{}, tt.userCount, nil)
 
 			req := httptest.NewRequest(http.MethodGet, "/api/auth/first-run", nil)
 			rr := httptest.NewRecorder()
@@ -1043,11 +1111,12 @@ func TestCheckFirstRun(t *testing.T) {
 
 			assert.Equal(t, http.StatusOK, rr.Code)
 
-			var response map[string]interface{}
+			var response FirstRunResponse
 			err := json.Unmarshal(rr.Body.Bytes(), &response)
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.expectFirstRun, response["isFirstRun"])
+			assert.Equal(t, tt.expectFirstRun, response.IsFirstRun, "isFirstRun mismatch")
+			assert.Equal(t, tt.expectMultiTenant, response.MultiTenant, "multiTenant mismatch")
 
 			mockUserStore.AssertExpectations(t)
 		})
@@ -1289,10 +1358,10 @@ func TestRegisterAdmin(t *testing.T) {
 			mockUserStore.ExpectedCalls = nil
 			mockRegistryStore.ExpectedCalls = nil
 
-			mockUserStore.On("List", mock.Anything, 0, 1).Return([]*userstore.User{}, tt.existingUsers, nil)
+			mockUserStore.On("List", mock.Anything, 0, 1, "").Return([]*userstore.User{}, tt.existingUsers, nil)
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, false)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, false, false)
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -1441,7 +1510,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, tt.embeddedMode)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, tt.embeddedMode, false)
 
 			req := httptest.NewRequest(tt.method, "/api/auth/embedded-guest", nil)
 			if tt.authHeader != "" {

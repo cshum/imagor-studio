@@ -1,3 +1,4 @@
+import { getSpace } from '@/api/org-api'
 import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
@@ -39,9 +40,9 @@ export const TEMPLATE_EXTENSION = '.imagor.json'
  * Loads images and folders from storage API with imagor-generated thumbnails
  */
 export const galleryLoader = async ({
-  params: { galleryKey },
+  params: { galleryKey, spaceKey },
 }: {
-  params: { galleryKey: string }
+  params: { galleryKey: string; spaceKey?: string }
 }): Promise<GalleryLoaderData> => {
   // Use galleryKey as the path for storage API
   const path = galleryKey
@@ -148,6 +149,7 @@ export const galleryLoader = async ({
   // Fetch files from storage API with registry settings
   const result = await listFiles({
     path,
+    spaceKey,
     extensions: extensionsString,
     showHidden,
     sortBy,
@@ -197,7 +199,12 @@ export const galleryLoader = async ({
 
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
-  const homeTitle = folderTreeState.homeTitle
+  const spaceName = spaceKey
+    ? await getSpace(spaceKey)
+        .then((s) => s?.name ?? null)
+        .catch(() => null)
+    : null
+  const homeTitle = spaceName || folderTreeState.homeTitle
 
   // Use the actual folder name, or custom home title for root
   const galleryName = galleryKey === '' ? homeTitle : galleryKey.split('/').pop() || galleryKey
@@ -210,10 +217,13 @@ export const galleryLoader = async ({
     // Add breadcrumbs for nested paths
     const segments = galleryKey.split('/')
 
+    // Base path for breadcrumb hrefs — space-scoped vs system gallery
+    const galleryBase = spaceKey ? `/spaces/${spaceKey}/gallery` : `/gallery`
+
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i]
       const segmentPath = segments.slice(0, i + 1).join('/')
-      const segmentHref = `/gallery/${encodeURIComponent(segmentPath)}`
+      const segmentHref = `${galleryBase}/${encodeURIComponent(segmentPath)}`
 
       // Last segment should not have href (it's the current page)
       const isLastSegment = i === segments.length - 1
@@ -244,14 +254,14 @@ export const galleryLoader = async ({
  * Loads real image data from storage API and preloads the selected image
  */
 export const imageLoader = async ({
-  params: { imageKey, galleryKey },
+  params: { imageKey, galleryKey, spaceKey },
 }: {
-  params: { imageKey: string; galleryKey: string }
+  params: { imageKey: string; galleryKey: string; spaceKey?: string }
 }): Promise<ImageLoaderData> => {
   // Use galleryKey as the path for storage API, then append the image name
   const basePath = galleryKey
   const imagePath = basePath ? `${basePath}/${imageKey}` : imageKey
-  const fileStat = await statFile(imagePath)
+  const fileStat = await statFile(imagePath, spaceKey)
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found')

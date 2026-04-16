@@ -15,8 +15,10 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/uuid"
@@ -68,6 +70,10 @@ type DeltaResult struct {
 
 // Store is the interface exposed to other packages.
 type Store interface {
+	// Create inserts a brand-new space. Returns a Conflict error if the key already exists
+	// (regardless of which org owns it), so that duplicate-key attempts surface as a proper
+	// field-level error rather than a silent overwrite.
+	Create(ctx context.Context, s *Space) error
 	// Upsert creates or fully replaces a space by key.
 	Upsert(ctx context.Context, s *Space) error
 	// SoftDelete marks a space as deleted without removing the row.
@@ -81,6 +87,9 @@ type Store interface {
 	// Delta returns all spaces (active and deleted) whose updated_at > since.
 	// Pass the zero time to request a full sync.
 	Delta(ctx context.Context, since time.Time) (*DeltaResult, error)
+	// KeyExists reports whether any row (active or soft-deleted) with the given key
+	// exists in the database.  Used for a fast availability check before create.
+	KeyExists(ctx context.Context, key string) (bool, error)
 }
 
 // dnsLabelRE validates that a space key is a valid DNS label:
@@ -171,7 +180,79 @@ func (s *store) modelToApp(row *model.Space) (*Space, error) {
 	}, nil
 }
 
+// isDuplicateKeyError reports whether err came from a unique-constraint violation
+// on the key column (works for both SQLite and PostgreSQL).
+func isDuplicateKeyError(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "UNIQUE constraint failed") || // SQLite
+		strings.Contains(msg, "duplicate key value violates unique constraint") // PostgreSQL
+}
+
 // ---------- Store implementation ---------------------------------------------
+
+// Create inserts a brand-new space. If the key already exists (active or
+// soft-deleted, same org or different org) it returns apperror.Conflict with
+// field="key" so the caller can surface a field-level error to the user.
+func (s *store) Create(ctx context.Context, sp *Space) error {
+	if err := validateSpaceKey(sp.Key); err != nil {
+		return fmt.Errorf("invalid space key: %w", err)
+	}
+
+	encAccessKeyID, err := s.encrypt(sp.AccessKeyID)
+	if err != nil {
+		return fmt.Errorf("encrypt access_key_id: %w", err)
+	}
+	encSecretKey, err := s.encrypt(sp.SecretKey)
+	if err != nil {
+		return fmt.Errorf("encrypt secret_key: %w", err)
+	}
+	encImagorSecret, err := s.encrypt(sp.ImagorSecret)
+	if err != nil {
+		return fmt.Errorf("encrypt imagor_secret: %w", err)
+	}
+
+	signerAlg := sp.SignerAlgorithm
+	if signerAlg == "" {
+		signerAlg = "sha256"
+	}
+	storageType := sp.StorageType
+	if storageType == "" {
+		storageType = "s3"
+	}
+
+	now := time.Now().UTC()
+	row := &model.Space{
+		ID:                   uuid.GenerateUUID(),
+		OrgID:                sp.OrgID,
+		Key:                  sp.Key,
+		Name:                 sp.Name,
+		StorageType:          storageType,
+		Bucket:               sp.Bucket,
+		Prefix:               sp.Prefix,
+		Region:               sp.Region,
+		Endpoint:             sp.Endpoint,
+		AccessKeyID:          encAccessKeyID,
+		SecretKey:            encSecretKey,
+		UsePathStyle:         sp.UsePathStyle,
+		CustomDomain:         sp.CustomDomain,
+		CustomDomainVerified: sp.CustomDomainVerified,
+		Suspended:            sp.Suspended,
+		IsShared:             sp.IsShared,
+		SignerAlgorithm:      signerAlg,
+		SignerTruncate:       sp.SignerTruncate,
+		ImagorSecret:         encImagorSecret,
+		CreatedAt:            now,
+		UpdatedAt:            now,
+	}
+
+	if _, err = s.db.NewInsert().Model(row).Exec(ctx); err != nil {
+		if isDuplicateKeyError(err) {
+			return apperror.Conflict(fmt.Sprintf("space key %q is already taken", sp.Key), "key")
+		}
+		return fmt.Errorf("create space: %w", err)
+	}
+	return nil
+}
 
 func (s *store) Upsert(ctx context.Context, sp *Space) error {
 	if err := validateSpaceKey(sp.Key); err != nil {
@@ -325,6 +406,21 @@ func (s *store) ListByOrgID(ctx context.Context, orgID string) ([]*Space, error)
 		result = append(result, sp)
 	}
 	return result, nil
+}
+
+// KeyExists reports whether any row — active or soft-deleted — with the given
+// key exists.  This is intentionally inclusive of soft-deleted rows because
+// the UNIQUE constraint covers all rows regardless of deleted_at, so a
+// soft-deleted key would still cause a Create conflict.
+func (s *store) KeyExists(ctx context.Context, key string) (bool, error) {
+	exists, err := s.db.NewSelect().
+		Model((*model.Space)(nil)).
+		Where("key = ?", key).
+		Exists(ctx)
+	if err != nil {
+		return false, fmt.Errorf("check space key existence: %w", err)
+	}
+	return exists, nil
 }
 
 // Delta returns all spaces whose updated_at is strictly after since.

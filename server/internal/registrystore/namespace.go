@@ -10,6 +10,8 @@ const (
 	SystemNamespace = "system"
 	// UserNamespace represents user-specific settings
 	UserNamespace = "user"
+	// SpaceNamespace represents space-specific settings
+	SpaceNamespace = "space"
 	// SystemOwnerID the owner ID for system-wide settings
 	SystemOwnerID = "system:global"
 )
@@ -31,10 +33,10 @@ func ParseOwnerID(ownerID string) (namespace, id string, err error) {
 
 	// Validate namespace
 	switch namespace {
-	case SystemNamespace, UserNamespace:
+	case SystemNamespace, UserNamespace, SpaceNamespace:
 		// Valid namespaces
 	default:
-		return "", "", fmt.Errorf("invalid namespace '%s': must be one of [%s, %s]", namespace, SystemNamespace, UserNamespace)
+		return "", "", fmt.Errorf("invalid namespace '%s': must be one of [%s, %s, %s]", namespace, SystemNamespace, UserNamespace, SpaceNamespace)
 	}
 
 	// Validate ID is not empty
@@ -71,6 +73,31 @@ func GetUserIDFromOwnerID(ownerID string) (string, error) {
 
 	if namespace != UserNamespace {
 		return "", fmt.Errorf("owner ID '%s' is not a user owner ID", ownerID)
+	}
+
+	return id, nil
+}
+
+// SpaceOwnerID creates a namespaced owner ID for a space
+func SpaceOwnerID(spaceKey string) string {
+	return fmt.Sprintf("space:%s", spaceKey)
+}
+
+// IsSpaceOwnerID checks if the owner ID represents space settings
+func IsSpaceOwnerID(ownerID string) bool {
+	namespace, _, err := ParseOwnerID(ownerID)
+	return err == nil && namespace == SpaceNamespace
+}
+
+// GetSpaceKeyFromOwnerID extracts the space key from a space owner ID
+func GetSpaceKeyFromOwnerID(ownerID string) (string, error) {
+	namespace, id, err := ParseOwnerID(ownerID)
+	if err != nil {
+		return "", err
+	}
+
+	if namespace != SpaceNamespace {
+		return "", fmt.Errorf("owner ID '%s' is not a space owner ID", ownerID)
 	}
 
 	return id, nil
