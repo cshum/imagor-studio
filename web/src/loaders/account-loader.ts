@@ -113,22 +113,35 @@ export const adminGeneralLoader = async (): Promise<AdminGeneralLoaderData> => {
     getSystemRegistryObject(),
     listSystemRegistry(),
   ])
-  return { registry, systemRegistryList, breadcrumb: { translationKey: 'pages.admin.sections.general' } }
+  return {
+    registry,
+    systemRegistryList,
+    breadcrumb: { translationKey: 'pages.admin.sections.general' },
+  }
 }
 
 /** Load storage status for the admin storage sub-route */
 export const adminStorageLoader = async (): Promise<AdminStorageLoaderData> => {
-  return { storageStatus: await getStorageStatus(), breadcrumb: { translationKey: 'pages.admin.sections.storage' } }
+  return {
+    storageStatus: await getStorageStatus(),
+    breadcrumb: { translationKey: 'pages.admin.sections.storage' },
+  }
 }
 
 /** Load imagor status for the admin imagor sub-route */
 export const adminImagorLoader = async (): Promise<AdminImagorLoaderData> => {
-  return { imagorStatus: await getImagorStatus(), breadcrumb: { translationKey: 'pages.admin.sections.imagor' } }
+  return {
+    imagorStatus: await getImagorStatus(),
+    breadcrumb: { translationKey: 'pages.admin.sections.imagor' },
+  }
 }
 
 /** Load license status for the admin license sub-route */
 export const adminLicenseLoader = async (): Promise<AdminLicenseLoaderData> => {
-  return { licenseStatus: await getLicenseStatus(), breadcrumb: { translationKey: 'pages.admin.sections.license' } }
+  return {
+    licenseStatus: await getLicenseStatus(),
+    breadcrumb: { translationKey: 'pages.admin.sections.license' },
+  }
 }
 
 /**
