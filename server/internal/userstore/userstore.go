@@ -398,44 +398,10 @@ func (s *store) UpsertOAuth(ctx context.Context, provider, providerID, email, di
 		}
 
 		if !userFound {
-			// Generate a username from the email local part, falling back to a UUID prefix.
-			baseUsername := "user"
-			if email != "" {
-				parts := strings.Split(email, "@")
-				if parts[0] != "" {
-					baseUsername = parts[0]
-				}
-			}
-			// Sanitize: keep only alphanumeric and hyphens/underscores.
-			var sanitized strings.Builder
-			for _, r := range baseUsername {
-				if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
-					sanitized.WriteRune(r)
-				}
-			}
-			baseUsername = strings.ToLower(sanitized.String())
-			if baseUsername == "" {
-				baseUsername = "user"
-			}
-
-			// Ensure uniqueness — append a random suffix if the username exists.
-			username := baseUsername
-			for {
-				var existing model.User
-				checkErr := tx.NewSelect().
-					Model(&existing).
-					Where("username = ?", username).
-					Scan(ctx)
-				if errors.Is(checkErr, sql.ErrNoRows) {
-					break // username is free
-				}
-				if checkErr != nil {
-					return fmt.Errorf("error checking username uniqueness: %w", checkErr)
-				}
-				// Collision — append random suffix.
-				suffix := uuid.GenerateUUID()[:8]
-				username = baseUsername + "-" + suffix
-			}
+			// OAuth users never log in by username — generate a guaranteed-unique slug
+			// derived from a UUID so there are no collisions and no awkward short usernames
+			// (e.g. "me" from me@example.com).
+			username := "u-" + uuid.GenerateUUID()[:12]
 
 			if displayName == "" {
 				displayName = username

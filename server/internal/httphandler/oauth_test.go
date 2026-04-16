@@ -272,6 +272,8 @@ func TestGoogleCallback_FullFlow_MultiTenant(t *testing.T) {
 		mock.Anything,
 		"google", "google-uid-123", "test@example.com", "Test User", "https://example.com/pic.jpg",
 	).Return(upsertedUser, nil)
+	// The org was just created, so the new owner is promoted to admin.
+	ms.On("UpdateRole", mock.Anything, upsertedUser.ID, "admin").Return(nil)
 
 	// Use a real in-memory orgStore (same helper used by auth_test.go).
 	os := orgstore.New(newOrgTestDB(t))
@@ -302,9 +304,11 @@ func TestGoogleCallback_FullFlow_MultiTenant(t *testing.T) {
 	claims, err := tm.ValidateToken(rawToken)
 	require.NoError(t, err)
 	assert.Equal(t, upsertedUser.ID, claims.UserID)
-	assert.Equal(t, "user", claims.Role)
+	// The user was the first member of a new org, so they are promoted to admin.
+	assert.Equal(t, "admin", claims.Role)
 	assert.Contains(t, claims.Scopes, "read")
 	assert.Contains(t, claims.Scopes, "write")
+	assert.Contains(t, claims.Scopes, "admin")
 	assert.NotEmpty(t, claims.OrgID, "multi-tenant token must carry org_id")
 
 	// Confirm the org was persisted.
