@@ -78,6 +78,8 @@ interface AppHeaderProps {
   // ── Right side ────────────────────────────────────────────────────────────
   profileLabel: string
   roleLabel?: string
+  /** Optional avatar image URL (e.g. from Google OAuth). Falls back to initials. */
+  avatarUrl?: string | null
   onLogout: () => void | Promise<void>
   profileLink?: string
   profileText?: string
@@ -94,6 +96,7 @@ export function AppHeader({
   mobileTrigger,
   profileLabel,
   roleLabel,
+  avatarUrl,
   onLogout,
   profileLink = '/account/profile',
   profileText = 'Profile',
@@ -171,11 +174,20 @@ export function AppHeader({
                   className='rounded-full p-0 focus-visible:ring-2'
                   aria-label={moreText}
                 >
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white lg:h-8 lg:w-8 ${bgColor}`}
-                  >
-                    {initials}
-                  </div>
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={profileLabel}
+                      referrerPolicy='no-referrer'
+                      className='h-9 w-9 rounded-full object-cover lg:h-8 lg:w-8'
+                    />
+                  ) : (
+                    <div
+                      className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white lg:h-8 lg:w-8 ${bgColor}`}
+                    >
+                      {initials}
+                    </div>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='w-56'>

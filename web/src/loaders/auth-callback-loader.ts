@@ -1,4 +1,4 @@
-import { setToken } from '@/lib/token'
+import { login } from '@/stores/auth-store'
 
 export interface AuthCallbackLoaderResult {
   error?: string
@@ -33,10 +33,10 @@ export function authCallbackLoader(searchStr: string): AuthCallbackLoaderResult 
     return { error: 'Authentication failed: no token received.' }
   }
 
-  // Store the token then immediately leave this route via a full-page reload.
-  // The loader return value below is never reached because the browser navigates
-  // away, but it satisfies TypeScript's return-type requirement.
-  setToken(token)
-  window.location.replace('/')
+  // Persist the token and navigate away via a full-page reload.
+  // login() calls setToken() then window.location.replace('/') so the
+  // module-level initAuth() restarts cleanly with the token in localStorage.
+  // The return value below is never reached but satisfies TypeScript.
+  login(token)
   return {}
 }

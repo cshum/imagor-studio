@@ -286,6 +286,19 @@ export const initEmbeddedAuth = async (): Promise<Auth> => {
   }
 }
 
+/**
+ * Persist a freshly-received JWT and do a full-page reload to "/".
+ *
+ * A hard reload (not a SPA navigation) is used here so that the single
+ * module-level initAuth() call restarts with the token already in
+ * localStorage, avoiding the race condition where the no-token initAuth()
+ * path dispatches LOGOUT after we've already stored the credential.
+ */
+export const login = (token: string): void => {
+  setToken(token)
+  window.location.replace('/')
+}
+
 export const useAuthEffect = authStore.useStoreEffect
 
 export const useAuth = () => {
