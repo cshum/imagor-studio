@@ -679,6 +679,7 @@
         "spaceUpdatedSuccess": "Space updated successfully",
         "spaceDeletedSuccess": "Space deleted successfully",
         "createSpaceFailed": "Failed to create space",
+        "keyAlreadyTaken": "Space key is already taken",
         "updateSpaceFailed": "Failed to update space",
         "deleteSpaceFailed": "Failed to delete space"
       },

@@ -9,6 +9,7 @@ import * as z from 'zod'
 
 import { createSpace } from '@/api/org-api'
 import { AppHeader } from '@/components/app-header'
+import { extractErrorInfo } from '@/lib/error-utils'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -386,9 +387,16 @@ export function CreateSpacePage() {
       toast.success(t('pages.spaces.messages.spaceCreatedSuccess'))
       await navigate({ to: '/spaces/$spaceKey/settings', params: { spaceKey: values.key } })
     } catch (err) {
-      toast.error(
-        `${t('pages.spaces.messages.createSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
-      )
+      const errorInfo = extractErrorInfo(err)
+      if (errorInfo.field === 'key') {
+        // Duplicate key — navigate back to step 1 and show field error
+        form.setError('key', { message: t('pages.spaces.messages.keyAlreadyTaken') })
+        setCurrentStep(1)
+      } else {
+        toast.error(
+          `${t('pages.spaces.messages.createSpaceFailed')}: ${errorInfo.message}`,
+        )
+      }
     } finally {
       setIsSaving(false)
     }

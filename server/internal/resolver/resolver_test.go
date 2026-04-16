@@ -327,6 +327,11 @@ type MockSpaceStore struct {
 	mock.Mock
 }
 
+func (m *MockSpaceStore) Create(ctx context.Context, s *spacestore.Space) error {
+	args := m.Called(ctx, s)
+	return args.Error(0)
+}
+
 func (m *MockSpaceStore) Upsert(ctx context.Context, s *spacestore.Space) error {
 	args := m.Called(ctx, s)
 	return args.Error(0)

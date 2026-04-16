@@ -631,6 +631,15 @@
         "stepStorage": "存储",
         "next": "下一步",
         "back": "上一步"
+      },
+      "messages": {
+        "spaceCreatedSuccess": "空间创建成功",
+        "spaceUpdatedSuccess": "空间更新成功",
+        "spaceDeletedSuccess": "空间删除成功",
+        "createSpaceFailed": "创建空间失败",
+        "keyAlreadyTaken": "空间键已被使用",
+        "updateSpaceFailed": "更新空间失败",
+        "deleteSpaceFailed": "删除空间失败"
       }
     },
     "spaceSettings": {

@@ -232,9 +232,9 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 	sp := &spacestore.Space{OrgID: orgID}
 	applySpaceInput(sp, input)
 
-	if err := r.spaceStore.Upsert(ctx, sp); err != nil {
-		r.logger.Error("CreateSpace: failed to upsert", zap.String("key", input.Key), zap.Error(err))
-		return nil, fmt.Errorf("failed to create space: %w", err)
+	if err := r.spaceStore.Create(ctx, sp); err != nil {
+		r.logger.Error("CreateSpace: failed to create", zap.String("key", input.Key), zap.Error(err))
+		return nil, err
 	}
 
 	created, err := r.spaceStore.Get(ctx, input.Key)

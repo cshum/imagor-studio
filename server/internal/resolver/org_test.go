@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
@@ -233,7 +234,7 @@ func TestCreateSpace_Success(t *testing.T) {
 	r := newOrgResolver(orgStore, spaceStore)
 
 	created := makeTestSpace("acme", "org-1")
-	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
+	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
 		return s.Key == "acme" && s.OrgID == "org-1" && s.Name == "Acme"
 	})).Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(created, nil)
@@ -245,6 +246,24 @@ func TestCreateSpace_Success(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "acme", result.Key)
 	assert.Equal(t, "org-1", result.OrgID)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestCreateSpace_DuplicateKey(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
+		return s.Key == "acme"
+	})).Return(apperror.Conflict(`space key "acme" is already taken`, "key"))
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	input := gql.SpaceInput{Key: "acme", Name: "Acme"}
+	result, err := r.Mutation().CreateSpace(ctx, input)
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already taken")
 	spaceStore.AssertExpectations(t)
 }
 
@@ -260,7 +279,7 @@ func TestCreateSpace_AutoCreatesOrg(t *testing.T) {
 	orgStore.On("CreateWithMember", mock.Anything, "user-1", "My Organization", "org-user-1", (*time.Time)(nil)).Return(newOrg, nil)
 
 	created := makeTestSpace("acme", "org-auto")
-	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
+	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
 		return s.Key == "acme" && s.OrgID == "org-auto"
 	})).Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(created, nil)

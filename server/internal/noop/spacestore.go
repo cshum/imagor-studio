@@ -17,6 +17,10 @@ var _ spacestore.Store = (*SpaceStore)(nil)
 // NewSpaceStore creates a new no-op space store.
 func NewSpaceStore() *SpaceStore { return &SpaceStore{} }
 
+func (n *SpaceStore) Create(_ context.Context, _ *spacestore.Space) error {
+	return ErrEmbeddedMode
+}
+
 func (n *SpaceStore) Upsert(_ context.Context, _ *spacestore.Space) error {
 	return ErrEmbeddedMode
 }

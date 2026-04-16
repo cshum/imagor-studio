@@ -674,6 +674,7 @@
         "spaceUpdatedSuccess": "Spazio aggiornato correttamente",
         "spaceDeletedSuccess": "Spazio eliminato correttamente",
         "createSpaceFailed": "Impossibile creare lo spazio",
+        "keyAlreadyTaken": "La chiave spazio è già in uso",
         "updateSpaceFailed": "Impossibile aggiornare lo spazio",
         "deleteSpaceFailed": "Impossibile eliminare lo spazio"
       },
