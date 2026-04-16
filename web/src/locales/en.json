@@ -571,6 +571,7 @@
     },
     "users": {
       "title": "Users",
+      "description": "Manage user accounts and roles.",
       "createUser": "Create User",
       "createNewUser": "Create New User",
       "createUserDescription": "Add a new user to the system. They will be able to log in with the provided credentials.",

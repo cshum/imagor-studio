@@ -569,7 +569,7 @@
     },
     "users": {
       "title": "使用者",
-      "createUser": "建立使用者",
+      "description": "管理使用者帳號和角色。",
       "createNewUser": "建立新使用者",
       "createUserDescription": "向系統新增新使用者。他們將能夠使用提供的憑據登入。",
       "formLabels": {

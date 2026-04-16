@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
-import { Database, HardDrive, LayoutDashboard, PanelLeft, ShieldCheck, UserRound, Users } from 'lucide-react'
+import { Cpu, HardDrive, KeyRound, LayoutDashboard, PanelLeft, UserRound, Users } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
 import { Button } from '@/components/ui/button'
@@ -75,14 +75,14 @@ const NAV_GROUPS = (
       {
         id: 'admin-imagor',
         path: '/account/admin/imagor',
-        icon: <ShieldCheck className='h-4 w-4' />,
+        icon: <Cpu className='h-4 w-4' />,
         label: t('pages.admin.sections.imagor'),
         adminOnly: true,
       },
       {
         id: 'admin-license',
         path: '/account/admin/license',
-        icon: <Database className='h-4 w-4' />,
+        icon: <KeyRound className='h-4 w-4' />,
         label: t('pages.admin.sections.license'),
         adminOnly: true,
       },

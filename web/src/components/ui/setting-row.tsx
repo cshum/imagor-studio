@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 // Mirrors the SystemSettingsForm row pattern for visual consistency.
 
 interface SettingRowProps {
-  label: string
+  label?: string
   description?: string
   children: React.ReactNode
   last?: boolean
@@ -32,7 +32,7 @@ export function SettingRow({
       )}
     >
       <div className='min-w-0 sm:w-2/5'>
-        <p className='text-sm leading-none font-medium'>{label}</p>
+        {label && <p className='text-sm leading-none font-medium'>{label}</p>}
         {description && (
           <div className='text-muted-foreground mt-1.5 space-y-1 text-sm leading-snug whitespace-pre-line'>
             {description}

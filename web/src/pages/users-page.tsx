@@ -10,7 +10,6 @@ import * as z from 'zod'
 import { createUser, deactivateAccount, updateProfile } from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -235,184 +234,173 @@ export function UsersPage({ loaderData, searchQuery = '' }: UsersPageProps) {
 
   return (
     <div className='space-y-6'>
-      <Card>
-        <CardHeader>
-          <div className='flex items-center justify-between'>
-            <CardTitle>{t('pages.users.title')}</CardTitle>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className='mr-2 h-4 w-4' />
-              {t('pages.users.createUser')}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className='space-y-4'>
-            {/* Search */}
-            <div className='relative'>
-              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-              <Input
-                placeholder={t('pages.users.searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className='pl-10'
-              />
-            </div>
+      {/* Page heading */}
+      <div>
+        <h1 className='text-2xl font-semibold tracking-tight'>{t('pages.users.title')}</h1>
+        <p className='text-muted-foreground mt-1.5 text-sm'>{t('pages.users.description')}</p>
+      </div>
 
-            {/* Users Table - Desktop */}
-            <div className='hidden rounded-lg border md:block'>
-              <div className='bg-muted/50 grid grid-cols-5 gap-4 border-b p-4 font-medium'>
-                <div>{t('pages.users.tableHeaders.name')}</div>
-                <div>{t('pages.users.tableHeaders.username')}</div>
-                <div>{t('pages.users.tableHeaders.role')}</div>
-                <div>{t('pages.users.tableHeaders.status')}</div>
-                <div>{t('pages.users.tableHeaders.actions')}</div>
+      <div className='space-y-4'>
+      {/* Toolbar: search + create */}
+      <div className='flex items-center gap-3'>
+        <div className='relative flex-1'>
+          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
+          <Input
+            placeholder={t('pages.users.searchPlaceholder')}
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className='pl-10'
+          />
+        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className='mr-2 h-4 w-4' />
+          {t('pages.users.createUser')}
+        </Button>
+      </div>
+
+      {/* Users Table - Desktop */}
+      <div className='hidden rounded-lg border md:block'>
+        <div className='bg-muted/50 grid grid-cols-5 gap-4 border-b p-4 font-medium'>
+          <div>{t('pages.users.tableHeaders.name')}</div>
+          <div>{t('pages.users.tableHeaders.username')}</div>
+          <div>{t('pages.users.tableHeaders.role')}</div>
+          <div>{t('pages.users.tableHeaders.status')}</div>
+          <div>{t('pages.users.tableHeaders.actions')}</div>
+        </div>
+
+        {!loaderData ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className='grid grid-cols-5 gap-4 border-b p-4'>
+              <Skeleton className='h-4 w-full' />
+              <Skeleton className='h-4 w-full' />
+              <Skeleton className='h-4 w-16' />
+              <Skeleton className='h-4 w-16' />
+              <Skeleton className='h-4 w-8' />
+            </div>
+          ))
+        ) : users.length === 0 ? (
+          <div className='text-muted-foreground p-8 text-center'>
+            {t('pages.users.noUsersFound')}
+          </div>
+        ) : (
+          users.map((user) => (
+            <div key={user.id} className='grid grid-cols-5 items-center gap-4 border-b p-4'>
+              <div className='font-medium'>{user.displayName}</div>
+              <div className='text-muted-foreground'>{user.username}</div>
+              <div>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                    user.role === 'admin'
+                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                  }`}
+                >
+                  {t(`pages.users.roles.${user.role}`)}
+                </span>
               </div>
+              <div>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                    user.isActive
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                  }`}
+                >
+                  {user.isActive
+                    ? t('pages.users.status.active')
+                    : t('pages.users.status.inactive')}
+                </span>
+              </div>
+              <div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='ghost' size='sm'>
+                      <MoreHorizontal className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end'>
+                    <DropdownMenuItem onClick={() => openEditDialog(user)}>
+                      <Edit className='mr-2 h-4 w-4' />
+                      {t('pages.users.actions.edit')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
-              {!loaderData ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className='grid grid-cols-5 gap-4 border-b p-4'>
-                    <Skeleton className='h-4 w-full' />
-                    <Skeleton className='h-4 w-full' />
-                    <Skeleton className='h-4 w-16' />
-                    <Skeleton className='h-4 w-16' />
-                    <Skeleton className='h-4 w-8' />
-                  </div>
-                ))
-              ) : users.length === 0 ? (
-                <div className='text-muted-foreground p-8 text-center'>
-                  {t('pages.users.noUsersFound')}
+      {/* Users Cards - Mobile */}
+      <div className='space-y-4 md:hidden'>
+        {!loaderData ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className='space-y-3 rounded-lg border p-4'>
+              <div className='flex items-start justify-between'>
+                <Skeleton className='h-5 w-32' />
+                <Skeleton className='h-5 w-16' />
+              </div>
+              <Skeleton className='h-4 w-48' />
+              <div className='flex items-center justify-between'>
+                <Skeleton className='h-5 w-12' />
+                <div className='flex gap-2'>
+                  <Skeleton className='h-8 w-16' />
+                  <Skeleton className='h-8 w-20' />
                 </div>
-              ) : (
-                users.map((user) => (
-                  <div key={user.id} className='grid grid-cols-5 items-center gap-4 border-b p-4'>
-                    <div className='font-medium'>{user.displayName}</div>
-                    <div className='text-muted-foreground'>{user.username}</div>
-                    <div>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          user.role === 'admin'
-                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                        }`}
-                      >
-                        {t(`pages.users.roles.${user.role}`)}
-                      </span>
-                    </div>
-                    <div>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          user.isActive
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                        }`}
-                      >
-                        {user.isActive
-                          ? t('pages.users.status.active')
-                          : t('pages.users.status.inactive')}
-                      </span>
-                    </div>
-                    <div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='sm'>
-                            <MoreHorizontal className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                            <Edit className='mr-2 h-4 w-4' />
-                            {t('pages.users.actions.edit')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                ))
-              )}
+              </div>
             </div>
-
-            {/* Users Cards - Mobile */}
-            <div className='space-y-4 md:hidden'>
-              {!loaderData ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className='space-y-3 rounded-lg border p-4'>
-                    <div className='flex items-start justify-between'>
-                      <Skeleton className='h-5 w-32' />
-                      <Skeleton className='h-5 w-16' />
-                    </div>
-                    <Skeleton className='h-4 w-48' />
-                    <div className='flex items-center justify-between'>
-                      <Skeleton className='h-5 w-12' />
-                      <div className='flex gap-2'>
-                        <Skeleton className='h-8 w-16' />
-                        <Skeleton className='h-8 w-20' />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : users.length === 0 ? (
-                <div className='text-muted-foreground rounded-lg border p-8 text-center'>
-                  {t('pages.users.noUsersFound')}
-                </div>
-              ) : (
-                users.map((user) => (
-                  <div key={user.id} className='space-y-3 rounded-lg border p-4'>
-                    {/* Header: Name and Status */}
-                    <div className='flex items-start justify-between'>
-                      <h3 className='text-lg font-medium'>{user.displayName}</h3>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          user.isActive
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                        }`}
-                      >
-                        {user.isActive
-                          ? t('pages.users.status.active')
-                          : t('pages.users.status.inactive')}
-                      </span>
-                    </div>
-
-                    {/* Username */}
-                    <div className='text-muted-foreground'>{user.username}</div>
-
-                    {/* Role and Actions */}
-                    <div className='flex items-center justify-between pt-2'>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          user.role === 'admin'
-                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                        }`}
-                      >
-                        {t(`pages.users.roles.${user.role}`)}
-                      </span>
-
-                      {/* Mobile Action Buttons */}
-                      <div className='flex gap-2'>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => openEditDialog(user)}
-                          className='px-3 py-2'
-                        >
-                          <Edit className='mr-1 h-4 w-4' />
-                          {t('pages.users.actions.edit')}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Pagination Info */}
-            <div className='text-muted-foreground text-sm'>
-              {t('pages.users.showingUsers', { filtered: users.length, total: totalCount })}
-            </div>
+          ))
+        ) : users.length === 0 ? (
+          <div className='text-muted-foreground rounded-lg border p-8 text-center'>
+            {t('pages.users.noUsersFound')}
           </div>
-        </CardContent>
-      </Card>
+        ) : (
+          users.map((user) => (
+            <div key={user.id} className='space-y-3 rounded-lg border p-4'>
+              <div className='flex items-start justify-between'>
+                <h3 className='text-lg font-medium'>{user.displayName}</h3>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                    user.isActive
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                  }`}
+                >
+                  {user.isActive
+                    ? t('pages.users.status.active')
+                    : t('pages.users.status.inactive')}
+                </span>
+              </div>
+              <div className='text-muted-foreground'>{user.username}</div>
+              <div className='flex items-center justify-between pt-2'>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                    user.role === 'admin'
+                      ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                  }`}
+                >
+                  {t(`pages.users.roles.${user.role}`)}
+                </span>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => openEditDialog(user)}
+                  className='px-3 py-2'
+                >
+                  <Edit className='mr-1 h-4 w-4' />
+                  {t('pages.users.actions.edit')}
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Pagination Info */}
+      <div className='text-muted-foreground text-sm'>
+        {t('pages.users.showingUsers', { filtered: users.length, total: totalCount })}
+      </div>
 
       {/* Create User Dialog */}
       <ResponsiveDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -702,6 +690,7 @@ export function UsersPage({ loaderData, searchQuery = '' }: UsersPageProps) {
           </ButtonWithLoading>
         </ResponsiveDialogFooter>
       </ResponsiveDialog>
+      </div>
     </div>
   )
 }

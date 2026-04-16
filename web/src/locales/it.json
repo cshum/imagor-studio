@@ -566,6 +566,7 @@
     },
     "users": {
       "title": "Utenti",
+      "description": "Gestisci gli account utente e i ruoli.",
       "createUser": "Crea Utente",
       "createNewUser": "Crea Nuovo Utente",
       "createUserDescription": "Aggiungi un nuovo utente al sistema. Potrà accedere con le credenziali fornite.",

@@ -568,6 +568,7 @@
     },
     "users": {
       "title": "用户",
+      "description": "管理用户账户和角色。",
       "createUser": "创建用户",
       "createNewUser": "创建新用户",
       "createUserDescription": "向系统添加新用户。他们将能够使用提供的凭据登录。",
