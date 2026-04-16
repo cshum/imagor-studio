@@ -51,20 +51,18 @@ func NewOAuthHandler(
 // GoogleAuthProviders returns a JSON list of configured OAuth providers.
 // GET /api/auth/providers
 func (h *OAuthHandler) GoogleAuthProviders() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
 		if h.googleClientID != "" {
-			w.Write([]byte(`{"providers":["google"]}`))
-		} else {
-			w.Write([]byte(`{"providers":[]}`))
+			return WriteSuccess(w, map[string]interface{}{"providers": []string{"google"}})
 		}
-	}
+		return WriteSuccess(w, map[string]interface{}{"providers": []string{}})
+	})
 }
 
 // GoogleLogin redirects the user to the Google OAuth consent screen.
 // GET /api/auth/google/login
 func (h *OAuthHandler) GoogleLogin() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return Handle(http.MethodGet, func(w http.ResponseWriter, r *http.Request) error {
 		// Generate a random state nonce.
 		state := generateRandomState()
 
@@ -90,7 +88,8 @@ func (h *OAuthHandler) GoogleLogin() http.HandlerFunc {
 
 		authURL := "https://accounts.google.com/o/oauth2/auth?" + params.Encode()
 		http.Redirect(w, r, authURL, http.StatusFound)
-	}
+		return nil
+	})
 }
 
 // GoogleCallback handles the OAuth callback from Google.
@@ -143,7 +142,7 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 		tokenResp, err := h.exchangeGoogleCode(code, redirectURI)
 		if err != nil {
 			h.logger.Error("OAuth callback: failed to exchange code", zap.Error(err))
-			http.Error(w, "Failed to exchange authorization code", http.StatusInternalServerError)
+			http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("oauth_failed"), http.StatusFound)
 			return
 		}
 
@@ -151,7 +150,7 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 		userInfo, err := h.fetchGoogleUserInfo(tokenResp.AccessToken)
 		if err != nil {
 			h.logger.Error("OAuth callback: failed to fetch userinfo", zap.Error(err))
-			http.Error(w, "Failed to fetch user info", http.StatusInternalServerError)
+			http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("oauth_failed"), http.StatusFound)
 			return
 		}
 
@@ -159,7 +158,7 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 		user, err := h.userStore.UpsertOAuth(ctx, "google", userInfo.ID, userInfo.Email, userInfo.Name, userInfo.Picture)
 		if err != nil {
 			h.logger.Error("OAuth callback: failed to upsert user", zap.Error(err))
-			http.Error(w, "Failed to create or update user", http.StatusInternalServerError)
+			http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("oauth_failed"), http.StatusFound)
 			return
 		}
 
@@ -199,7 +198,7 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 		}
 		if err != nil {
 			h.logger.Error("OAuth callback: failed to generate token", zap.Error(err))
-			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+			http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("oauth_failed"), http.StatusFound)
 			return
 		}
 
