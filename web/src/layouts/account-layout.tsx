@@ -35,9 +35,9 @@ import {
   SidebarWrapper,
 } from '@/components/ui/sidebar'
 import { useBrand } from '@/hooks/use-brand'
+import { useBreadcrumb } from '@/hooks/use-breadcrumb'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useAuth } from '@/stores/auth-store'
-import { useFolderTree } from '@/stores/folder-tree-store'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -116,7 +116,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
   const location = useLocation()
   const navigate = useNavigate()
   const { title: appTitle } = useBrand()
-  const { homeTitle } = useFolderTree()
+  const breadcrumbs = useBreadcrumb()
   const isAdmin = authState.profile?.role === 'admin'
   const isMultiTenant = authState.multiTenant
   const showSidebar = !isMultiTenant
@@ -249,12 +249,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
           roleLabel={authState.profile?.role}
           onLogout={handleLogout}
           appTitle={appTitle}
-          breadcrumbs={[
-            isMultiTenant
-              ? { label: t('navigation.breadcrumbs.spaces'), href: '/account/spaces' }
-              : { label: homeTitle, href: '/' },
-            { label: t('layouts.account.title') },
-          ]}
+          breadcrumbs={breadcrumbs.map((c) => ({ label: c.label ?? '', href: c.href }))}
           mobileTrigger={triggerButton}
           profileText={t('layouts.account.tabs.profile')}
           signOutText={t('common.navigation.signOut')}

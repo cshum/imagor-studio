@@ -22,9 +22,18 @@ export const rootLoader = async (): Promise<RootLoaderData> => {
   if (!getAuth().accessToken) {
     return {}
   }
+  const auth = getAuth()
+  await licenseStore.waitFor((state) => state.isBrandLoaded)
+  if (auth.multiTenant) {
+    return {
+      breadcrumb: {
+        translationKey: 'navigation.breadcrumbs.spaces',
+        href: '/account/spaces',
+      },
+    }
+  }
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
-  await licenseStore.waitFor((state) => state.isBrandLoaded)
   const homeTitle = folderTreeState.homeTitle
   const breadcrumb: BreadcrumbItem = {
     label: homeTitle,

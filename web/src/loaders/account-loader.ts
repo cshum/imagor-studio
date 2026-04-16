@@ -36,18 +36,22 @@ export interface AdminLoaderData {
 export interface AdminGeneralLoaderData {
   registry: Record<string, string>
   systemRegistryList: ListSystemRegistryQuery['listSystemRegistry']
+  breadcrumb: BreadcrumbItem
 }
 
 export interface AdminStorageLoaderData {
   storageStatus: StorageStatusQuery['storageStatus']
+  breadcrumb: BreadcrumbItem
 }
 
 export interface AdminImagorLoaderData {
   imagorStatus: ImagorStatusQuery['imagorStatus']
+  breadcrumb: BreadcrumbItem
 }
 
 export interface AdminLicenseLoaderData {
   licenseStatus: LicenseStatus
+  breadcrumb: BreadcrumbItem
 }
 
 export interface UsersLoaderData {
@@ -109,22 +113,22 @@ export const adminGeneralLoader = async (): Promise<AdminGeneralLoaderData> => {
     getSystemRegistryObject(),
     listSystemRegistry(),
   ])
-  return { registry, systemRegistryList }
+  return { registry, systemRegistryList, breadcrumb: { translationKey: 'pages.admin.sections.general' } }
 }
 
 /** Load storage status for the admin storage sub-route */
 export const adminStorageLoader = async (): Promise<AdminStorageLoaderData> => {
-  return { storageStatus: await getStorageStatus() }
+  return { storageStatus: await getStorageStatus(), breadcrumb: { translationKey: 'pages.admin.sections.storage' } }
 }
 
 /** Load imagor status for the admin imagor sub-route */
 export const adminImagorLoader = async (): Promise<AdminImagorLoaderData> => {
-  return { imagorStatus: await getImagorStatus() }
+  return { imagorStatus: await getImagorStatus(), breadcrumb: { translationKey: 'pages.admin.sections.imagor' } }
 }
 
 /** Load license status for the admin license sub-route */
 export const adminLicenseLoader = async (): Promise<AdminLicenseLoaderData> => {
-  return { licenseStatus: await getLicenseStatus() }
+  return { licenseStatus: await getLicenseStatus(), breadcrumb: { translationKey: 'pages.admin.sections.license' } }
 }
 
 /**
