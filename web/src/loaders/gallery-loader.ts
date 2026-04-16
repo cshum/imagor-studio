@@ -40,8 +40,10 @@ export const TEMPLATE_EXTENSION = '.imagor.json'
  */
 export const galleryLoader = async ({
   params: { galleryKey, spaceKey },
+  spaceName,
 }: {
   params: { galleryKey: string; spaceKey?: string }
+  spaceName?: string
 }): Promise<GalleryLoaderData> => {
   // Use galleryKey as the path for storage API
   const path = galleryKey
@@ -198,7 +200,7 @@ export const galleryLoader = async ({
 
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
-  const homeTitle = folderTreeState.homeTitle
+  const homeTitle = spaceName || folderTreeState.homeTitle
 
   // Use the actual folder name, or custom home title for root
   const galleryName = galleryKey === '' ? homeTitle : galleryKey.split('/').pop() || galleryKey

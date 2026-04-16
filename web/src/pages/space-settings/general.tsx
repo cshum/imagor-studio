@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { deleteSpace, setSpaceRegistryObject, updateSpace } from '@/api/org-api'
-import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
@@ -30,50 +29,10 @@ import type { SpaceSettingsData } from './shared'
 const generalSchema = z.object({
   name: z.string().min(1).max(255),
   customDomain: z.string().optional(),
+  appTitle: z.string().optional(),
+  appUrl: z.string().optional(),
 })
 type GeneralFormData = z.infer<typeof generalSchema>
-
-// ── Branding sub-section ───────────────────────────────────────────────────
-
-interface BrandingSettingsSectionProps {
-  spaceKey: string
-  initialValues: Record<string, string>
-}
-
-function BrandingSettingsSection({ spaceKey, initialValues }: BrandingSettingsSectionProps) {
-  const { t } = useTranslation()
-
-  const BRANDING_SETTINGS: SystemSetting[] = [
-    {
-      key: 'config.app_title',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.appTitle.label'),
-      description: t('pages.admin.systemSettings.fields.appTitle.description'),
-      defaultValue: 'Imagor Studio',
-    },
-    {
-      key: 'config.app_url',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.appUrl.label'),
-      description: t('pages.admin.systemSettings.fields.appUrl.description'),
-      defaultValue: 'https://imagor.net',
-    },
-  ]
-
-  const handleSave = async (changedValues: Record<string, string>) => {
-    await setSpaceRegistryObject(spaceKey, changedValues)
-  }
-
-  return (
-    <SystemSettingsForm
-      title={t('pages.spaceSettings.branding.title')}
-      description={t('pages.spaceSettings.branding.description')}
-      settings={BRANDING_SETTINGS}
-      initialValues={initialValues}
-      saveCallback={handleSave}
-    />
-  )
-}
 
 // ── General section ────────────────────────────────────────────────────────
 
@@ -94,6 +53,8 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     defaultValues: {
       name: space.name ?? '',
       customDomain: space.customDomain ?? '',
+      appTitle: initialValues['config.app_title'] ?? '',
+      appUrl: initialValues['config.app_url'] ?? '',
     },
   })
   const [isSaving, setIsSaving] = useState(false)
@@ -121,6 +82,16 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
           imagorSecret: null,
         },
       })
+      const brandingChanges: Record<string, string> = {}
+      if ((values.appTitle ?? '') !== (initialValues['config.app_title'] ?? '')) {
+        brandingChanges['config.app_title'] = values.appTitle ?? ''
+      }
+      if ((values.appUrl ?? '') !== (initialValues['config.app_url'] ?? '')) {
+        brandingChanges['config.app_url'] = values.appUrl ?? ''
+      }
+      if (Object.keys(brandingChanges).length > 0) {
+        await setSpaceRegistryObject(space.key, brandingChanges)
+      }
       toast.success(t('pages.spaceSettings.general.saved'))
       await router.invalidate()
     } catch (err) {
@@ -146,10 +117,11 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
 
   return (
     <>
-      {/* General form */}
+      {/* General + Branding form */}
       <SettingsSection>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSave)}>
+            {/* Display Name */}
             <FormField
               control={form.control}
               name='name'
@@ -164,6 +136,14 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
                 </FormItem>
               )}
             />
+            {/* Space Key — read-only */}
+            <SettingRow
+              label={t('pages.spaces.formLabels.key')}
+              description={t('pages.spaces.keyDescription')}
+            >
+              <Input value={space.key} disabled className='font-mono' />
+            </SettingRow>
+            {/* Custom Domain */}
             <FormField
               control={form.control}
               name='customDomain'
@@ -171,11 +151,53 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
                 <FormItem>
                   <SettingRow
                     label={t('pages.spaceSettings.general.customDomain')}
-                    description={t('pages.spaceSettings.general.customDomainDescription')}
+                    description={t('pages.spaceSettings.general.customDomainDescription', {
+                      spaceKey: space.key,
+                    })}
+                  >
+                    <FormControl>
+                      <Input
+                        placeholder={`${space.key}.imagor.app`}
+                        {...field}
+                        disabled={isSaving}
+                      />
+                    </FormControl>
+                    <FormMessage className='mt-1.5' />
+                  </SettingRow>
+                </FormItem>
+              )}
+            />
+            {/* App Title */}
+            <FormField
+              control={form.control}
+              name='appTitle'
+              render={({ field }) => (
+                <FormItem>
+                  <SettingRow
+                    label={t('pages.spaceSettings.branding.appTitle')}
+                    description={t('pages.spaceSettings.branding.appTitleDescription')}
+                  >
+                    <FormControl>
+                      <Input {...field} disabled={isSaving} />
+                    </FormControl>
+                    <FormMessage className='mt-1.5' />
+                  </SettingRow>
+                </FormItem>
+              )}
+            />
+            {/* App URL */}
+            <FormField
+              control={form.control}
+              name='appUrl'
+              render={({ field }) => (
+                <FormItem>
+                  <SettingRow
+                    label={t('pages.spaceSettings.branding.appUrl')}
+                    description={t('pages.spaceSettings.branding.appUrlDescription')}
                     last
                   >
                     <FormControl>
-                      <Input placeholder='images.example.com' {...field} disabled={isSaving} />
+                      <Input {...field} disabled={isSaving} />
                     </FormControl>
                     <FormMessage className='mt-1.5' />
                   </SettingRow>
@@ -190,11 +212,6 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
           </form>
         </Form>
       </SettingsSection>
-
-      {/* Branding */}
-      <div className='mt-8'>
-        <BrandingSettingsSection spaceKey={space.key} initialValues={initialValues} />
-      </div>
 
       {/* Gallery settings */}
       <div className='mt-8'>

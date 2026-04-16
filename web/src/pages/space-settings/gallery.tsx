@@ -25,13 +25,6 @@ export function GallerySection({ spaceKey, initialValues }: GallerySectionProps)
       optionLabels: getLanguageLabels(),
     },
     {
-      key: 'config.app_home_title',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.homeTitle.label'),
-      description: t('pages.admin.systemSettings.fields.homeTitle.description'),
-      defaultValue: 'Home',
-    },
-    {
       key: 'config.allow_guest_mode',
       type: 'boolean',
       label: t('pages.admin.systemSettings.fields.guestMode.label'),
@@ -114,6 +107,8 @@ export function GallerySection({ spaceKey, initialValues }: GallerySectionProps)
 
   return (
     <SystemSettingsForm
+      title=''
+      description=''
       settings={GALLERY_SETTINGS}
       initialValues={initialValues}
       saveCallback={handleSave}

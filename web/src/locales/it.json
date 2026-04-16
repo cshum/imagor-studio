@@ -721,13 +721,17 @@
       },
       "branding": {
         "title": "Branding",
-        "description": "Branding personalizzato per questo spazio. Sostituisce i valori predefiniti della piattaforma."
+        "description": "Titolo e link dell'app mostrati nell'editor per questo spazio. Sovrascrive il valore predefinito della piattaforma (richiede licenza).",
+        "appTitle": "Titolo App Editor",
+        "appTitleDescription": "Titolo app personalizzato mostrato nella barra di navigazione durante la navigazione di questo spazio. Sovrascrive il valore predefinito della piattaforma (richiede licenza).",
+        "appUrl": "URL App Editor",
+        "appUrlDescription": "URL aperto quando si clicca sul titolo dell'app durante la navigazione di questo spazio."
       },
       "general": {
         "description": "Informazioni di base su questo spazio.",
         "name": "Nome Visualizzato",
         "customDomain": "Dominio Personalizzato",
-        "customDomainDescription": "Dominio personalizzato opzionale per questo spazio (es. images.example.com).",
+        "customDomainDescription": "Dominio personalizzato per questo spazio. Se vuoto, il servizio sarà su {{spaceKey}}.imagor.app.",
         "saved": "Impostazioni generali salvate"
       },
       "storage": {

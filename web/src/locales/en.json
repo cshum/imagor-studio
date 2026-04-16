@@ -726,13 +726,17 @@
       },
       "branding": {
         "title": "Branding",
-        "description": "Custom branding for this space. Overrides the platform defaults."
+        "description": "App title and link shown in the editor for this space. Overrides the platform default (requires license).",
+        "appTitle": "Editor App Title",
+        "appTitleDescription": "Custom app title shown in the navigation bar when browsing this space. Overrides the platform default (requires license).",
+        "appUrl": "Editor App URL",
+        "appUrlDescription": "URL opened when the app title is clicked while browsing this space."
       },
       "general": {
         "description": "Basic information about this space.",
         "name": "Display Name",
         "customDomain": "Custom Domain",
-        "customDomainDescription": "Optional custom domain for this space (e.g. images.example.com).",
+        "customDomainDescription": "Custom domain for this space. If left empty, served at {{spaceKey}}.imagor.app.",
         "saved": "General settings saved"
       },
       "storage": {

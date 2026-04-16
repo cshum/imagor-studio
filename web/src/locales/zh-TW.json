@@ -673,7 +673,18 @@
       },
       "branding": {
         "title": "品牌設定",
-        "description": "此空間的自訂品牌設定，將覆蓋平台預設值。"
+        "description": "此空間編輯器中顯示的應用標題和連結，將覆蓋平台預設值（需要授權）。",
+        "appTitle": "編輯器應用標題",
+        "appTitleDescription": "瀏覽此空間時導覽列中顯示的自訂應用標題。將覆蓋平台預設值（需要授權）。",
+        "appUrl": "編輯器應用 URL",
+        "appUrlDescription": "瀏覽此空間時點擊應用標題所開啟的 URL。"
+      },
+      "general": {
+        "description": "此空間的基本資訊。",
+        "name": "顯示名稱",
+        "customDomain": "自訂網域",
+        "customDomainDescription": "此空間的自訂網域。如果留空，將使用 {{spaceKey}}.imagor.app。",
+        "saved": "一般設定已儲存"
       },
       "storage": {
         "managedTitle": "平台託管儲存",

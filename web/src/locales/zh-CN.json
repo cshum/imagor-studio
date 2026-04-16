@@ -673,7 +673,18 @@
       },
       "branding": {
         "title": "品牌设置",
-        "description": "此空间的自定义品牌设置，将覆盖平台默认值。"
+        "description": "此空间编辑器中显示的应用标题和链接，将覆盖平台默认值（需要许可证）。",
+        "appTitle": "编辑器应用标题",
+        "appTitleDescription": "浏览此空间时导航栏中显示的自定义应用标题。将覆盖平台默认值（需要许可证）。",
+        "appUrl": "编辑器应用 URL",
+        "appUrlDescription": "浏览此空间时点击应用标题所打开的 URL。"
+      },
+      "general": {
+        "description": "此空间的基本信息。",
+        "name": "显示名称",
+        "customDomain": "自定义域名",
+        "customDomainDescription": "此空间的自定义域名。如果留空，将使用 {{spaceKey}}.imagor.app。",
+        "saved": "常规设置已保存"
       },
       "storage": {
         "managedTitle": "平台托管存储",
