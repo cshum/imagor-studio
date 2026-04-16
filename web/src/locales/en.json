@@ -25,7 +25,7 @@
       "edit": "Edit",
       "create": "Create",
       "update": "Update",
-      "updateSettings": "Update Settings",
+      "updateSettings": "Save",
       "close": "Close",
       "more": "More",
       "switchTheme": "Switch Theme",
@@ -735,6 +735,7 @@
       "general": {
         "description": "Basic information about this space.",
         "name": "Display Name",
+        "nameDescription": "The name shown in the navigation and spaces list.",
         "customDomain": "Custom Domain",
         "customDomainDescription": "Custom domain for this space. If left empty, served at {{spaceKey}}.imagor.app.",
         "saved": "General settings saved"

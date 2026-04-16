@@ -2,6 +2,7 @@ import { PropsWithChildren, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import {
+  ArrowLeft,
   Cpu,
   HardDrive,
   KeyRound,
@@ -23,6 +24,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -154,31 +156,45 @@ export function AccountLayout({ children }: PropsWithChildren) {
   // ── Shared nav content (rendered in both desktop sidebar & mobile Sheet) ──
 
   const navContent = (
-    <SidebarContent>
-      {visibleGroups.map((group, gi) => (
-        <SidebarGroup key={gi}>
-          <SidebarGroupLabel>{group.heading}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {group.items.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.path)}
-                    className='data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
-                  >
-                    <Link to={item.path}>
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      ))}
-    </SidebarContent>
+    <>
+      <SidebarContent>
+        {visibleGroups.map((group, gi) => (
+          <SidebarGroup key={gi}>
+            <SidebarGroupLabel>{group.heading}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.path)}
+                      className='data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:hover:bg-primary data-[active=true]:hover:text-primary-foreground'
+                    >
+                      <Link to={item.path}>
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+      <SidebarFooter className='border-t py-2'>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link to='/'>
+                <ArrowLeft className='h-4 w-4' />
+                <span>{t('pages.spaceSettings.openGallery')}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </>
   )
 
   // ── Shared trigger button (tablet + mobile) ───────────────────────────────

@@ -127,7 +127,10 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
               name='name'
               render={({ field }) => (
                 <FormItem>
-                  <SettingRow label={t('pages.spaceSettings.general.name')}>
+                  <SettingRow
+                    label={t('pages.spaceSettings.general.name')}
+                    description={t('pages.spaceSettings.general.nameDescription')}
+                  >
                     <FormControl>
                       <Input {...field} disabled={isSaving} />
                     </FormControl>

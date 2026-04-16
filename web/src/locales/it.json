@@ -25,7 +25,7 @@
       "edit": "Modifica",
       "create": "Crea",
       "update": "Aggiorna",
-      "updateSettings": "Aggiorna Impostazioni",
+      "updateSettings": "Salva",
       "close": "Chiudi",
       "more": "Altro",
       "switchTheme": "Cambia Tema",
@@ -730,6 +730,7 @@
       "general": {
         "description": "Informazioni di base su questo spazio.",
         "name": "Nome Visualizzato",
+        "nameDescription": "Il nome mostrato nella navigazione e nell'elenco degli spazi.",
         "customDomain": "Dominio Personalizzato",
         "customDomainDescription": "Dominio personalizzato per questo spazio. Se vuoto, il servizio sarà su {{spaceKey}}.imagor.app.",
         "saved": "Impostazioni generali salvate"

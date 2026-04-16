@@ -24,7 +24,7 @@
       "edit": "编辑",
       "create": "创建",
       "update": "更新",
-      "updateSettings": "更新设置",
+      "updateSettings": "保存",
       "close": "关闭",
       "more": "更多",
       "switchTheme": "切换主题",
@@ -682,6 +682,7 @@
       "general": {
         "description": "此空间的基本信息。",
         "name": "显示名称",
+        "nameDescription": "导航栏和空间列表中显示的名称。",
         "customDomain": "自定义域名",
         "customDomainDescription": "此空间的自定义域名。如果留空，将使用 {{spaceKey}}.imagor.app。",
         "saved": "常规设置已保存"

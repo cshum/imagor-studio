@@ -24,7 +24,7 @@
       "edit": "編輯",
       "create": "建立",
       "update": "更新",
-      "updateSettings": "更新設定",
+      "updateSettings": "儲存",
       "close": "關閉",
       "more": "更多",
       "switchTheme": "切換主題",
@@ -682,6 +682,7 @@
       "general": {
         "description": "此空間的基本資訊。",
         "name": "顯示名稱",
+        "nameDescription": "導覽列中和空間清單中顯示的名稱。",
         "customDomain": "自訂網域",
         "customDomainDescription": "此空間的自訂網域。如果留空，將使用 {{spaceKey}}.imagor.app。",
         "saved": "一般設定已儲存"
