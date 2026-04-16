@@ -641,6 +641,9 @@
         "keyAlreadyTaken": "空間鍵已被使用",
         "updateSpaceFailed": "更新空間失敗",
         "deleteSpaceFailed": "刪除空間失敗"
+      },
+      "validation": {
+        "keyFormat": "鍵只能包含小寫字母、數字和連字號"
       }
     },
     "spaceSettings": {

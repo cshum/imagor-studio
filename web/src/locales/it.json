@@ -678,6 +678,9 @@
         "updateSpaceFailed": "Impossibile aggiornare lo spazio",
         "deleteSpaceFailed": "Impossibile eliminare lo spazio"
       },
+      "validation": {
+        "keyFormat": "La chiave può contenere solo lettere minuscole, numeri e trattini"
+      },
       "stats": {
         "totalSpaces": "Spazi totali",
         "managedStorage": "Archiviazione gestita",

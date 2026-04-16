@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,7 +9,6 @@ import * as z from 'zod'
 
 import { checkSpaceKey, createSpace } from '@/api/org-api'
 import { AppHeader } from '@/components/app-header'
-import { extractErrorInfo } from '@/lib/error-utils'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -37,46 +36,51 @@ import {
 } from '@/components/ui/multi-step-form'
 import { Separator } from '@/components/ui/separator'
 import { useBrand } from '@/hooks/use-brand'
+import { extractErrorInfo } from '@/lib/error-utils'
 import { useAuth } from '@/stores/auth-store'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
-const createSchema = z
-  .object({
-    key: z
-      .string()
-      .min(1)
-      .max(64)
-      .regex(/^[a-z0-9-]+$/, 'Key must be lowercase letters, numbers or hyphens'),
-    name: z.string().min(1).max(255),
-    storageType: z.enum(['managed', 's3']),
-    bucket: z.string().optional(),
-    region: z.string().optional(),
-    endpoint: z.string().optional(),
-    prefix: z.string().optional(),
-    accessKeyId: z.string().optional(),
-    secretKey: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.storageType === 's3') {
-      if (!data.bucket?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Bucket is required',
-          path: ['bucket'],
-        })
+function makeCreateSchema(t: (key: string) => string) {
+  return z
+    .object({
+      key: z
+        .string()
+        .min(1, t('forms.validation.required'))
+        .max(64)
+        .regex(/^[a-z0-9-]+$/, t('pages.spaces.validation.keyFormat')),
+      name: z.string().min(1, t('forms.validation.required')).max(255),
+      storageType: z.enum(['managed', 's3']),
+      bucket: z.string().optional(),
+      region: z.string().optional(),
+      endpoint: z.string().optional(),
+      prefix: z.string().optional(),
+      accessKeyId: z.string().optional(),
+      secretKey: z.string().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (data.storageType === 's3') {
+        if (!data.bucket?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('forms.validation.required'),
+            path: ['bucket'],
+          })
+        }
+        if (!data.region?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('forms.validation.required'),
+            path: ['region'],
+          })
+        }
       }
-      if (!data.region?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Region is required',
-          path: ['region'],
-        })
-      }
-    }
-  })
+    })
+}
 
-type CreateFormData = z.infer<typeof createSchema>
+// Derive the stable TS type from a no-t version for type annotations.
+const _schemaShape = makeCreateSchema((k) => k)
+type CreateFormData = z.infer<typeof _schemaShape>
 
 function slugify(value: string) {
   return value
@@ -93,8 +97,9 @@ interface IdentityStepProps extends MultiStepFormNavigationProps {
   onNext: () => Promise<boolean>
 }
 
-function IdentityStep({ form, onNext, next, back }: IdentityStepProps) {
+function IdentityStep({ form, onNext, next }: IdentityStepProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleNext = async () => {
@@ -148,7 +153,7 @@ function IdentityStep({ form, onNext, next, back }: IdentityStepProps) {
         )}
       />
       <div className='mt-6 flex items-center justify-between border-t pt-6'>
-        <Button type='button' variant='outline' onClick={back}>
+        <Button type='button' variant='outline' onClick={() => navigate({ to: '/account/spaces' })}>
           {t('common.buttons.cancel')}
         </Button>
         <ButtonWithLoading type='button' onClick={handleNext} isLoading={isLoading}>
@@ -348,8 +353,10 @@ export function CreateSpacePage() {
     navigate({ to: '/login' })
   }
 
+  const schema = useMemo(() => makeCreateSchema(t), [t])
+
   const form = useForm<CreateFormData>({
-    resolver: zodResolver(createSchema),
+    resolver: zodResolver(schema),
     defaultValues: { key: '', name: '', storageType: 'managed' },
   })
 
@@ -406,9 +413,7 @@ export function CreateSpacePage() {
         form.setError('key', { message: t('pages.spaces.messages.keyAlreadyTaken') })
         setCurrentStep(1)
       } else {
-        toast.error(
-          `${t('pages.spaces.messages.createSpaceFailed')}: ${errorInfo.message}`,
-        )
+        toast.error(`${t('pages.spaces.messages.createSpaceFailed')}: ${errorInfo.message}`)
       }
     } finally {
       setIsSaving(false)

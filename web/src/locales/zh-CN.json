@@ -640,6 +640,9 @@
         "keyAlreadyTaken": "空间键已被使用",
         "updateSpaceFailed": "更新空间失败",
         "deleteSpaceFailed": "删除空间失败"
+      },
+      "validation": {
+        "keyFormat": "键只能包含小写字母、数字和连字符"
       }
     },
     "spaceSettings": {

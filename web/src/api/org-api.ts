@@ -15,11 +15,11 @@ import type {
   RemoveOrgMemberMutationVariables,
   SetSpaceRegistryMutation,
   SetSpaceRegistryMutationVariables,
+  SpaceKeyExistsQuery,
   UpdateOrgMemberRoleMutation,
   UpdateOrgMemberRoleMutationVariables,
   UpdateSpaceMutation,
   UpdateSpaceMutationVariables,
-  SpaceKeyExistsQuery,
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'
 import { getGraphQLClient } from '@/lib/graphql-client'
