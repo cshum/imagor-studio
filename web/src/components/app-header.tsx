@@ -83,7 +83,7 @@ export function AppHeader({
             {mobileTitle ? <div className='sm:hidden'>{mobileTitle}</div> : null}
           </div>
 
-          <div className='-mr-2 flex shrink-0 items-center space-x-1'>
+          <div className='-mr-1 flex shrink-0 items-center space-x-1'>
             <ModeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
