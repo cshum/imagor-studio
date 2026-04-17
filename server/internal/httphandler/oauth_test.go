@@ -2,6 +2,7 @@ package httphandler
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,11 +12,17 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
+	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/driver/sqliteshim"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 )
@@ -194,6 +201,30 @@ func oauthCallbackRequest(mockGoogle *httptest.Server, state string) *http.Reque
 	// Inject the test server's HTTP client so oauth2 uses the mock for ALL requests.
 	ctx := context.WithValue(req.Context(), oauth2.HTTPClient, mockGoogle.Client())
 	return req.WithContext(ctx)
+}
+
+func newOAuthInviteTestDB(t *testing.T) *bun.DB {
+	t.Helper()
+	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
+	if err != nil {
+		t.Fatalf("open in-memory sqlite: %v", err)
+	}
+	t.Cleanup(func() { _ = sqldb.Close() })
+	db := bun.NewDB(sqldb, sqlitedialect.New())
+	models := []interface{}{
+		(*model.User)(nil),
+		(*model.Organization)(nil),
+		(*model.OrgMember)(nil),
+		(*model.Space)(nil),
+		(*model.SpaceMember)(nil),
+		(*model.SpaceInvitation)(nil),
+	}
+	for _, tableModel := range models {
+		if _, err := db.NewCreateTable().Model(tableModel).IfNotExists().Exec(context.Background()); err != nil {
+			t.Fatalf("create table for %T: %v", tableModel, err)
+		}
+	}
+	return db
 }
 
 // TestGoogleCallback_FullFlow_SelfHosted verifies the happy-path callback in
@@ -432,6 +463,88 @@ func TestGoogleCallback_FullFlow_UpsertFails(t *testing.T) {
 	location := rr.Header().Get("Location")
 	assert.Contains(t, location, "error=oauth_failed")
 	assert.NotContains(t, location, "token=")
+
+	ms.AssertExpectations(t)
+}
+
+func TestGoogleCallback_AcceptsPendingSpaceInvitation(t *testing.T) {
+	mockGoogle := mockGoogleServer(t)
+	defer mockGoogle.Close()
+
+	db := newOAuthInviteTestDB(t)
+	os := orgstore.New(db)
+	ss := spacestore.New(db, nil)
+	is := spaceinvite.NewStore(db)
+
+	ctx := context.Background()
+	org, err := os.CreateWithMember(ctx, "owner-1", "Acme Org", "acme-org", nil)
+	require.NoError(t, err)
+	require.NotNil(t, org)
+	require.NoError(t, ss.Create(ctx, &spacestore.Space{
+		OrgID:           org.ID,
+		Key:             "acme-space",
+		Name:            "Acme Space",
+		StorageType:     "s3",
+		Bucket:          "bucket",
+		Region:          "us-east-1",
+		SignerAlgorithm: "sha256",
+	}))
+	invite, err := is.CreateOrRefreshPending(ctx, org.ID, "acme-space", "test@example.com", "member", "owner-1", time.Now().UTC().Add(7*24*time.Hour))
+	require.NoError(t, err)
+
+	tm := auth.NewTokenManager("test-secret", 24*time.Hour)
+	upsertedUser := &userstore.User{
+		ID:          "invited-user-1",
+		DisplayName: "Test User",
+		Username:    "testuser",
+		Role:        "user",
+		IsActive:    true,
+	}
+	ms := new(MockUserStore)
+	ms.On(
+		"UpsertOAuth",
+		mock.Anything,
+		"google", "google-uid-123", "test@example.com", "Test User", "https://example.com/pic.jpg",
+	).Return(upsertedUser, nil)
+
+	handler := newOAuthHandlerWithConfig(
+		tm, ms, os, ss, is, zap.NewNop(),
+		buildTestOAuthConfig(mockGoogle.URL),
+		"http://localhost",
+		mockGoogle.URL+"/userinfo",
+	)
+
+	req := oauthCallbackRequest(mockGoogle, "test-state-invite")
+	req.AddCookie(&http.Cookie{Name: "oauth_invite_token", Value: invite.Token})
+	rr := httptest.NewRecorder()
+	handler.GoogleCallback()(rr, req)
+
+	require.Equal(t, http.StatusFound, rr.Code)
+	location := rr.Header().Get("Location")
+	parsed, err := url.ParseRequestURI(location)
+	require.NoError(t, err)
+	rawToken, err := url.QueryUnescape(parsed.Query().Get("token"))
+	require.NoError(t, err)
+	claims, err := tm.ValidateToken(rawToken)
+	require.NoError(t, err)
+	assert.Equal(t, upsertedUser.ID, claims.UserID)
+	assert.Equal(t, org.ID, claims.OrgID)
+
+	members, err := os.ListMembers(ctx, org.ID)
+	require.NoError(t, err)
+	memberIDs := make([]string, 0, len(members))
+	for _, member := range members {
+		memberIDs = append(memberIDs, member.UserID)
+	}
+	assert.Contains(t, memberIDs, upsertedUser.ID)
+
+	hasSpaceAccess, err := ss.HasMember(ctx, "acme-space", upsertedUser.ID)
+	require.NoError(t, err)
+	assert.True(t, hasSpaceAccess)
+
+	pendingInvite, err := is.GetPendingByToken(ctx, invite.Token)
+	require.NoError(t, err)
+	assert.Nil(t, pendingInvite)
 
 	ms.AssertExpectations(t)
 }

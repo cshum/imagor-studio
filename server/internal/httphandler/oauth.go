@@ -241,35 +241,6 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 			return
 		}
 
-		// Resolve org (multi-tenant mode only).
-		orgID := ""
-		if h.orgStore != nil {
-			org, orgErr := h.orgStore.GetByUserID(ctx, user.ID)
-			if orgErr != nil {
-				h.logger.Warn("OAuth callback: failed to get org for user",
-					zap.String("userID", user.ID), zap.Error(orgErr))
-			} else if org == nil {
-				// Auto-create a personal org for new OAuth users.
-				trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
-				newOrg, createErr := h.orgStore.CreateWithMember(ctx, user.ID, user.DisplayName, user.Username, &trialEndsAt)
-				if createErr != nil {
-					h.logger.Warn("OAuth callback: failed to create org for user",
-						zap.String("userID", user.ID), zap.Error(createErr))
-				} else {
-					orgID = newOrg.ID
-					// The org creator is the owner — promote them to admin.
-					if roleErr := h.userStore.UpdateRole(ctx, user.ID, "admin"); roleErr != nil {
-						h.logger.Warn("OAuth callback: failed to set admin role for org owner",
-							zap.String("userID", user.ID), zap.Error(roleErr))
-					} else {
-						user.Role = "admin"
-					}
-				}
-			} else {
-				orgID = org.ID
-			}
-		}
-
 		inviteToken := ""
 		if inviteCookie, cookieErr := r.Cookie("oauth_invite_token"); cookieErr == nil {
 			inviteToken = strings.TrimSpace(inviteCookie.Value)
@@ -282,6 +253,7 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 			MaxAge:   -1,
 		})
 
+		var pendingInvite *spaceinvite.Invitation
 		if inviteToken != "" && h.inviteStore != nil && h.orgStore != nil && h.spaceStore != nil {
 			invite, inviteErr := h.inviteStore.GetPendingByToken(ctx, inviteToken)
 			if inviteErr != nil {
@@ -289,13 +261,47 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 				http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("invite_failed"), http.StatusFound)
 				return
 			}
-			if invite != nil {
-				if acceptErr := h.acceptInvitation(ctx, user.ID, invite); acceptErr != nil {
-					h.logger.Error("OAuth callback: failed to accept invitation", zap.Error(acceptErr))
-					http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("invite_failed"), http.StatusFound)
-					return
+			pendingInvite = invite
+		}
+
+		// Resolve org (multi-tenant mode only).
+		orgID := ""
+		if h.orgStore != nil {
+			if pendingInvite != nil {
+				orgID = pendingInvite.OrgID
+			} else {
+				org, orgErr := h.orgStore.GetByUserID(ctx, user.ID)
+				if orgErr != nil {
+					h.logger.Warn("OAuth callback: failed to get org for user",
+						zap.String("userID", user.ID), zap.Error(orgErr))
+				} else if org == nil {
+					// Auto-create a personal org for new OAuth users.
+					trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
+					newOrg, createErr := h.orgStore.CreateWithMember(ctx, user.ID, user.DisplayName, user.Username, &trialEndsAt)
+					if createErr != nil {
+						h.logger.Warn("OAuth callback: failed to create org for user",
+							zap.String("userID", user.ID), zap.Error(createErr))
+					} else {
+						orgID = newOrg.ID
+						// The org creator is the owner — promote them to admin.
+						if roleErr := h.userStore.UpdateRole(ctx, user.ID, "admin"); roleErr != nil {
+							h.logger.Warn("OAuth callback: failed to set admin role for org owner",
+								zap.String("userID", user.ID), zap.Error(roleErr))
+						} else {
+							user.Role = "admin"
+						}
+					}
+				} else {
+					orgID = org.ID
 				}
-				orgID = invite.OrgID
+			}
+		}
+
+		if pendingInvite != nil {
+			if acceptErr := h.acceptInvitation(ctx, user.ID, pendingInvite); acceptErr != nil {
+				h.logger.Error("OAuth callback: failed to accept invitation", zap.Error(acceptErr))
+				http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("invite_failed"), http.StatusFound)
+				return
 			}
 		}
 

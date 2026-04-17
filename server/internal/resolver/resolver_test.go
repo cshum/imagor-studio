@@ -13,6 +13,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -431,6 +432,52 @@ func (m *MockSpaceStore) HasMember(ctx context.Context, spaceKey, userID string)
 }
 
 var _ spacestore.Store = (*MockSpaceStore)(nil)
+
+type MockSpaceInviteStore struct {
+	mock.Mock
+}
+
+func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*spaceinvite.Invitation, error) {
+	args := m.Called(ctx, orgID, spaceKey, email, role, invitedByUserID, expiresAt)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*spaceinvite.Invitation), args.Error(1)
+}
+
+func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*spaceinvite.Invitation, error) {
+	args := m.Called(ctx, orgID, spaceKey)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*spaceinvite.Invitation), args.Error(1)
+}
+
+func (m *MockSpaceInviteStore) GetPendingByToken(ctx context.Context, token string) (*spaceinvite.Invitation, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*spaceinvite.Invitation), args.Error(1)
+}
+
+func (m *MockSpaceInviteStore) MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error {
+	args := m.Called(ctx, id, acceptedAt)
+	return args.Error(0)
+}
+
+var _ spaceinvite.Store = (*MockSpaceInviteStore)(nil)
+
+type MockInviteSender struct {
+	mock.Mock
+}
+
+func (m *MockInviteSender) SendSpaceInvitation(ctx context.Context, params spaceinvite.EmailParams) error {
+	args := m.Called(ctx, params)
+	return args.Error(0)
+}
+
+var _ spaceinvite.EmailSender = (*MockInviteSender)(nil)
 
 // MockRegistryStore mocks the registrystore.Store interface for tests that need it.
 // (Only defined here if not already defined by registry_test.go in this package.)

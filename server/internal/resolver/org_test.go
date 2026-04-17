@@ -7,7 +7,9 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -427,4 +429,107 @@ func TestDeleteSpace_WrongOrg(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
 	spaceStore.AssertNotCalled(t, "SoftDelete")
+}
+
+func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	userStore := &MockUserStore{}
+	logger, _ := zap.NewDevelopment()
+	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
+
+	space := makeTestSpace("acme", "org-1")
+	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+	userStore.On("GetByEmail", mock.Anything, "bob@example.com").Return(&userstore.User{
+		ID:          "user-2",
+		Username:    "bob",
+		DisplayName: "Bob",
+	}, nil)
+	spaceStore.On("HasMember", mock.Anything, "acme", "user-2").Return(false, nil)
+	spaceStore.On("AddMember", mock.Anything, "acme", "user-2", "member").Return(nil)
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*spacestore.SpaceMemberView{{
+		SpaceID:     "space-1",
+		UserID:      "user-2",
+		Username:    "bob",
+		DisplayName: "Bob",
+		Role:        "member",
+		CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	}}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().InviteSpaceMember(ctx, "acme", "Bob@Example.com", "member")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "added", result.Status)
+	require.NotNil(t, result.Member)
+	assert.Equal(t, "user-2", result.Member.UserID)
+	assert.Nil(t, result.Invitation)
+
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+}
+
+func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	userStore := &MockUserStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	sender := &MockInviteSender{}
+	logger, _ := zap.NewDevelopment()
+	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, inviteStore, sender)
+
+	space := makeTestSpace("acme", "org-1")
+	org := makeTestOrg("org-1", "user-1")
+	org.Name = "Acme Org"
+	invitation := &spaceinvite.Invitation{
+		ID:        "invite-1",
+		OrgID:     "org-1",
+		SpaceKey:  "acme",
+		Email:     "new@example.com",
+		Role:      "member",
+		Token:     "tok-123",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		ExpiresAt: time.Date(2026, 1, 8, 0, 0, 0, 0, time.UTC),
+	}
+
+	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+	}, nil)
+	userStore.On("GetByEmail", mock.Anything, "new@example.com").Return((*userstore.User)(nil), nil)
+	inviteStore.On(
+		"CreateOrRefreshPending",
+		mock.Anything,
+		"org-1",
+		"acme",
+		"new@example.com",
+		"member",
+		"user-1",
+		mock.AnythingOfType("time.Time"),
+	).Return(invitation, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(org, nil)
+	sender.On("SendSpaceInvitation", mock.Anything, mock.MatchedBy(func(params spaceinvite.EmailParams) bool {
+		return params.ToEmail == "new@example.com" && params.OrgName == "Acme Org" && params.SpaceName == "Test Space" && params.InviteToken == "tok-123"
+	})).Return(nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().InviteSpaceMember(ctx, "acme", "new@example.com", "member")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "invited", result.Status)
+	assert.Nil(t, result.Member)
+	require.NotNil(t, result.Invitation)
+	assert.Equal(t, "invite-1", result.Invitation.ID)
+	assert.Equal(t, "new@example.com", result.Invitation.Email)
+
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+	sender.AssertExpectations(t)
 }
