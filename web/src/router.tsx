@@ -10,11 +10,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import {
-  getSpaceRegistry,
-  listSpaceInvitations,
-  listSpaceMembers,
-} from '@/api/org-api'
+import { getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'

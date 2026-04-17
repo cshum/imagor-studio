@@ -1,13 +1,28 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useRouter } from '@tanstack/react-router'
-import { Cloud, Database, FolderOpen, LayoutGrid, LogOut, Plus, Settings } from 'lucide-react'
+import {
+  Cloud,
+  Database,
+  FolderOpen,
+  LayoutGrid,
+  LogOut,
+  MoreHorizontal,
+  Plus,
+  Settings,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteSpace, leaveSpace, type SpaceItem } from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   ResponsiveDialog,
   ResponsiveDialogDescription,
@@ -28,11 +43,10 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
   const { t } = useTranslation()
   const router = useRouter()
   const { authState } = useAuth()
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [selectedSpace, setSelectedSpace] = useState<SpaceItem | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
   const [leaveSpaceItem, setLeaveSpaceItem] = useState<SpaceItem | null>(null)
   const [isLeaving, setIsLeaving] = useState(false)
+  const [openMenuSpaceKey, setOpenMenuSpaceKey] = useState<string | null>(null)
+  const leaveDialogTimerRef = useRef<number | null>(null)
 
   const spaces = loaderData ?? []
   const hasSpaces = spaces.length > 0
@@ -51,24 +65,6 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
     [currentOrganizationId, spaces],
   )
 
-  const handleDeleteSpace = async () => {
-    if (!selectedSpace) return
-    setIsDeleting(true)
-    try {
-      await deleteSpace({ key: selectedSpace.key })
-      toast.success(t('pages.spaces.messages.spaceDeletedSuccess'))
-      setIsDeleteOpen(false)
-      setSelectedSpace(null)
-      await router.invalidate()
-    } catch (err) {
-      toast.error(
-        `${t('pages.spaces.messages.deleteSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
-      )
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
   const handleLeaveSpace = async () => {
     if (!leaveSpaceItem) return
 
@@ -85,6 +81,17 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
     } finally {
       setIsLeaving(false)
     }
+  }
+
+  const requestLeaveSpace = (space: SpaceItem) => {
+    setOpenMenuSpaceKey(null)
+    if (leaveDialogTimerRef.current !== null) {
+      window.clearTimeout(leaveDialogTimerRef.current)
+    }
+    leaveDialogTimerRef.current = window.setTimeout(() => {
+      setLeaveSpaceItem(space)
+      leaveDialogTimerRef.current = null
+    }, 0)
   }
 
   return (
@@ -156,7 +163,8 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
         /* Card grid */
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {spaces.map((space) => {
-            const canManageSpace = currentOrganizationId !== null && space.orgId === currentOrganizationId
+            const canManageSpace =
+              currentOrganizationId !== null && space.orgId === currentOrganizationId
             const isSharedSpace = !canManageSpace
             return (
               <div
@@ -222,17 +230,35 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       </Link>
                     </Button>
                   )}
-                  {isSharedSpace && authState.profile?.id && (
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      className='flex-1'
-                      onClick={() => setLeaveSpaceItem(space)}
+                  {isSharedSpace && authState.profile?.id ? (
+                    <DropdownMenu
+                      open={openMenuSpaceKey === space.key}
+                      onOpenChange={(open) => setOpenMenuSpaceKey(open ? space.key : null)}
                     >
-                      <LogOut className='mr-1.5 h-4 w-4' />
-                      {t('pages.spaces.leaveSpace')}
-                    </Button>
-                  )}
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          className='h-9 w-9 shrink-0'
+                          aria-label={t('common.buttons.more')}
+                        >
+                          <MoreHorizontal className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem
+                          onSelect={(event) => {
+                            event.preventDefault()
+                            requestLeaveSpace(space)
+                          }}
+                          className='text-destructive focus:text-destructive'
+                        >
+                          <LogOut className='mr-2 h-4 w-4' />
+                          {t('pages.spaces.leaveSpace')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </div>
               </div>
             )
@@ -247,36 +273,10 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
         </p>
       )}
 
-      {/* Delete confirmation dialog */}
-      <ResponsiveDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{t('pages.spaces.deleteSpace')}</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            {t('pages.spaces.deleteSpaceDescription')}{' '}
-            <strong className='text-foreground'>{selectedSpace?.key}</strong>?
-          </ResponsiveDialogDescription>
-        </ResponsiveDialogHeader>
-        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
-          <Button
-            variant='outline'
-            onClick={() => setIsDeleteOpen(false)}
-            disabled={isDeleting}
-            className='w-full sm:w-auto'
-          >
-            {t('common.buttons.cancel')}
-          </Button>
-          <ButtonWithLoading
-            variant='destructive'
-            onClick={handleDeleteSpace}
-            isLoading={isDeleting}
-            className='w-full sm:w-auto'
-          >
-            {t('common.buttons.delete')}
-          </ButtonWithLoading>
-        </ResponsiveDialogFooter>
-      </ResponsiveDialog>
-
-      <ResponsiveDialog open={leaveSpaceItem !== null} onOpenChange={(open) => !open && setLeaveSpaceItem(null)}>
+      <ResponsiveDialog
+        open={leaveSpaceItem !== null}
+        onOpenChange={(open) => !open && setLeaveSpaceItem(null)}
+      >
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{t('pages.spaces.leaveSpace')}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>

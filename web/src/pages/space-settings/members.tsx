@@ -321,7 +321,7 @@ export function MembersSection({
         {isShared ? (
           <div className='text-muted-foreground rounded-lg border px-4 py-3 text-sm leading-6'>
             <span className='text-foreground font-medium'>
-              {t('pages.spaceSettings.members.sharedTitle')}: 
+              {t('pages.spaceSettings.members.sharedTitle')}:
             </span>
             {t('pages.spaceSettings.members.sharedDescription')}
           </div>
@@ -343,11 +343,7 @@ export function MembersSection({
               type='email'
               aria-invalid={inviteFieldError ? 'true' : 'false'}
             />
-            <Select
-              value={inviteRole}
-              onValueChange={setInviteRole}
-              disabled={isInviting}
-            >
+            <Select value={inviteRole} onValueChange={setInviteRole} disabled={isInviting}>
               <SelectTrigger className='h-10 w-full lg:w-32'>
                 <SelectValue />
               </SelectTrigger>

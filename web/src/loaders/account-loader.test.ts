@@ -1,4 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { getMyOrganization, getSpace, listSpaces } from '@/api/org-api'
+import { spaceSettingsLoader, spacesLoader } from '@/loaders/account-loader'
 
 vi.mock('@/api/imagor-api', () => ({
   getImagorStatus: vi.fn(),
@@ -30,9 +33,6 @@ vi.mock('@/api/user-api', () => ({
 vi.mock('@/stores/auth-store', () => ({
   getAuth: vi.fn(),
 }))
-
-import { spaceSettingsLoader, spacesLoader } from '@/loaders/account-loader'
-import { getMyOrganization, getSpace, listSpaces } from '@/api/org-api'
 
 describe('account-loader', () => {
   beforeEach(() => {
