@@ -532,6 +532,9 @@ export type SortOrder = 'ASC' | 'DESC'
 export type Space = {
   __typename?: 'Space'
   bucket: Scalars['String']['output']
+  canDelete: Scalars['Boolean']['output']
+  canLeave: Scalars['Boolean']['output']
+  canManage: Scalars['Boolean']['output']
   customDomain: Scalars['String']['output']
   customDomainVerified: Scalars['Boolean']['output']
   endpoint: Scalars['String']['output']
@@ -773,6 +776,9 @@ export type ListSpacesQuery = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    canManage: boolean
+    canDelete: boolean
+    canLeave: boolean
     updatedAt: string
   }>
 }
@@ -800,6 +806,9 @@ export type GetSpaceQuery = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    canManage: boolean
+    canDelete: boolean
+    canLeave: boolean
     updatedAt: string
   } | null
 }
@@ -826,6 +835,9 @@ export type CreateSpaceMutation = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    canManage: boolean
+    canDelete: boolean
+    canLeave: boolean
     updatedAt: string
   }
 }
@@ -853,6 +865,9 @@ export type UpdateSpaceMutation = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    canManage: boolean
+    canDelete: boolean
+    canLeave: boolean
     updatedAt: string
   }
 }
@@ -1672,6 +1687,9 @@ export const ListSpacesDocument = gql`
       isShared
       signerAlgorithm
       signerTruncate
+      canManage
+      canDelete
+      canLeave
       updatedAt
     }
   }
@@ -1694,6 +1712,9 @@ export const GetSpaceDocument = gql`
       isShared
       signerAlgorithm
       signerTruncate
+      canManage
+      canDelete
+      canLeave
       updatedAt
     }
   }
@@ -1715,6 +1736,9 @@ export const CreateSpaceDocument = gql`
       isShared
       signerAlgorithm
       signerTruncate
+      canManage
+      canDelete
+      canLeave
       updatedAt
     }
   }
@@ -1736,6 +1760,9 @@ export const UpdateSpaceDocument = gql`
       isShared
       signerAlgorithm
       signerTruncate
+      canManage
+      canDelete
+      canLeave
       updatedAt
     }
   }

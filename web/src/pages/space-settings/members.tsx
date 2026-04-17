@@ -8,6 +8,7 @@ import {
   listSpaceInvitations,
   listSpaceMembers,
   removeSpaceMember,
+  updateSpaceMemberRole,
   type SpaceInvitationItem,
   type SpaceInviteResultItem,
   type SpaceMemberItem,
@@ -70,6 +71,7 @@ export function MembersSection({
   const [isInviting, setIsInviting] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState(false)
+  const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null)
   const [openMenuMemberId, setOpenMenuMemberId] = useState<string | null>(null)
   const removeDialogTimerRef = useRef<number | null>(null)
 
@@ -200,6 +202,20 @@ export function MembersSection({
     }
   }
 
+  const handleRoleChange = async (userId: string, role: 'admin' | 'member') => {
+    setOpenMenuMemberId(null)
+    setUpdatingRoleUserId(userId)
+    try {
+      await updateSpaceMemberRole({ spaceKey, userId, role })
+      toast.success(t('pages.spaceSettings.members.roleUpdated'))
+      await reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err))
+    } finally {
+      setUpdatingRoleUserId(null)
+    }
+  }
+
   const requestRemoveMember = (menuId: string, userId: string) => {
     setOpenMenuMemberId((current) => (current === menuId ? null : current))
     if (removeDialogTimerRef.current !== null) {
@@ -221,6 +237,9 @@ export function MembersSection({
                 <div className='min-w-0'>
                   <p className='truncate text-sm font-medium'>{invitation.email}</p>
                   <div className='text-muted-foreground mt-1 flex items-center gap-2 text-xs'>
+                    <Badge variant='outline' className='h-5 px-2 text-[11px] font-medium'>
+                      {t(`pages.spaceSettings.members.roles.${invitation.role}`)}
+                    </Badge>
                     <Clock3 className='h-3.5 w-3.5' />
                     <span>{new Date(invitation.expiresAt).toLocaleDateString()}</span>
                   </div>
@@ -230,6 +249,9 @@ export function MembersSection({
                 <div className='min-w-0'>
                   <p className='truncate text-sm font-medium'>{invitation.email}</p>
                   <div className='text-muted-foreground mt-1 flex items-center gap-2 text-xs'>
+                    <Badge variant='outline' className='h-5 px-2 text-[11px] font-medium'>
+                      {t(`pages.spaceSettings.members.roles.${invitation.role}`)}
+                    </Badge>
                     <Clock3 className='h-3.5 w-3.5' />
                     <span>{new Date(invitation.expiresAt).toLocaleDateString()}</span>
                   </div>
@@ -283,6 +305,11 @@ export function MembersSection({
                     <div className='min-w-0'>
                       <div className='flex items-center gap-2'>
                         <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                        {member.role === 'admin' ? (
+                          <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
+                            {t('pages.spaceSettings.members.roles.admin')}
+                          </Badge>
+                        ) : null}
                         {isCurrentUser ? (
                           <Badge
                             variant='outline'
@@ -317,6 +344,20 @@ export function MembersSection({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align='end'>
                             <DropdownMenuItem
+                              disabled={updatingRoleUserId === member.userId}
+                              onClick={() =>
+                                handleRoleChange(
+                                  member.userId,
+                                  member.role === 'admin' ? 'member' : 'admin',
+                                )
+                              }
+                            >
+                              {member.role === 'admin'
+                                ? t('pages.spaceSettings.members.changeToMember')
+                                : t('pages.spaceSettings.members.promoteToManager')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={updatingRoleUserId === member.userId}
                               className='text-destructive focus:text-destructive'
                               onClick={() => requestRemoveMember(desktopMenuId, member.userId)}
                             >
@@ -339,6 +380,11 @@ export function MembersSection({
                     <div className='min-w-0 flex-1'>
                       <div className='flex items-center gap-2'>
                         <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                        {member.role === 'admin' ? (
+                          <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
+                            {t('pages.spaceSettings.members.roles.admin')}
+                          </Badge>
+                        ) : null}
                         {isCurrentUser ? (
                           <Badge
                             variant='outline'
@@ -370,6 +416,20 @@ export function MembersSection({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align='end'>
                           <DropdownMenuItem
+                            disabled={updatingRoleUserId === member.userId}
+                            onClick={() =>
+                              handleRoleChange(
+                                member.userId,
+                                member.role === 'admin' ? 'member' : 'admin',
+                              )
+                            }
+                          >
+                            {member.role === 'admin'
+                              ? t('pages.spaceSettings.members.changeToMember')
+                              : t('pages.spaceSettings.members.promoteToManager')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={updatingRoleUserId === member.userId}
                             className='text-destructive focus:text-destructive'
                             onClick={() => requestRemoveMember(mobileMenuId, member.userId)}
                           >

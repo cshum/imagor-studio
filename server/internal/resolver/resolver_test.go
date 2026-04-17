@@ -414,11 +414,16 @@ func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error
 }
 
 func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*spacestore.SpaceMemberView, error) {
-	args := m.Called(ctx, spaceKey)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "ListMembers" {
+			args := m.Called(ctx, spaceKey)
+			if args.Get(0) == nil {
+				return nil, args.Error(1)
+			}
+			return args.Get(0).([]*spacestore.SpaceMemberView), args.Error(1)
+		}
 	}
-	return args.Get(0).([]*spacestore.SpaceMemberView), args.Error(1)
+	return []*spacestore.SpaceMemberView{}, nil
 }
 
 func (m *MockSpaceStore) AddMember(ctx context.Context, spaceKey, userID, role string) error {

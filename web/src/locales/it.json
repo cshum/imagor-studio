@@ -847,8 +847,10 @@
       },
       "removeTitle": "Rimuovi Membro",
       "removeDescription": "Sei sicuro di voler rimuovere",
+      "promoteToManager": "Promuovi a manager",
+      "changeToMember": "Imposta come membro",
       "roles": {
-        "admin": "Amministratore",
+        "admin": "Manager",
         "member": "Membro"
       }
     },

@@ -194,11 +194,11 @@ export const spaceSettingsLoader = async ({
 }: {
   params: { spaceKey: string }
 }): Promise<SpaceSettingsLoaderData> => {
-  const [space, organization] = await Promise.all([getSpace(params.spaceKey), getMyOrganization()])
+  const space = await getSpace(params.spaceKey)
   if (!space) {
     throw new Error(`Space "${params.spaceKey}" not found`)
   }
-  if (!organization || space.orgId !== organization.id) {
+  if (!space.canManage) {
     throw redirect({ to: '/spaces/$spaceKey', params: { spaceKey: params.spaceKey } })
   }
   return {

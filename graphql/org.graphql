@@ -26,6 +26,9 @@ type Space {
   isShared: Boolean!
   signerAlgorithm: String!
   signerTruncate: Int!
+  canManage: Boolean!
+  canDelete: Boolean!
+  canLeave: Boolean!
   updatedAt: String!
 }
 

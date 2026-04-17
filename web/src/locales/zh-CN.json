@@ -773,6 +773,8 @@
         },
         "removeTitle": "移除成员",
         "removeDescription": "确定要移除",
+        "promoteToManager": "设为管理员",
+        "changeToMember": "改为成员",
         "roles": {
           "admin": "管理员",
           "member": "成员"

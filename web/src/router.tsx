@@ -383,7 +383,7 @@ const createSpaceRoute = createRoute({
 const spaceSettingsLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   path: '/spaces/$spaceKey/settings',
-  beforeLoad: requireAdminAccountAuth,
+  beforeLoad: requireAccountAuth,
   loader: ({ params: { spaceKey } }) => spaceSettingsLoader({ params: { spaceKey } }),
   shouldReload: false,
   component: () => {

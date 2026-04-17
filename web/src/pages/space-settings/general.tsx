@@ -221,27 +221,28 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
         <GallerySection spaceKey={space.key} initialValues={initialValues} />
       </div>
 
-      {/* Danger Zone */}
-      <div className='border-destructive/20 mt-10 border-t pt-6'>
-        <h3 className='text-destructive text-base font-semibold'>
-          {t('pages.spaceSettings.sections.dangerZone')}
-        </h3>
-        <div className='mt-4 flex items-start justify-between gap-4'>
-          <div className='min-w-0'>
-            <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
-            <p className='text-muted-foreground mt-1 text-sm'>
-              {t('pages.spaceSettings.danger.deleteDescription')}
-            </p>
+      {space.canDelete ? (
+        <div className='border-destructive/20 mt-10 border-t pt-6'>
+          <h3 className='text-destructive text-base font-semibold'>
+            {t('pages.spaceSettings.sections.dangerZone')}
+          </h3>
+          <div className='mt-4 flex items-start justify-between gap-4'>
+            <div className='min-w-0'>
+              <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
+              <p className='text-muted-foreground mt-1 text-sm'>
+                {t('pages.spaceSettings.danger.deleteDescription')}
+              </p>
+            </div>
+            <Button
+              variant='destructive'
+              className='shrink-0'
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              {t('pages.spaceSettings.danger.deleteButton')}
+            </Button>
           </div>
-          <Button
-            variant='destructive'
-            className='shrink-0'
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
-            {t('pages.spaceSettings.danger.deleteButton')}
-          </Button>
         </div>
-      </div>
+      ) : null}
 
       {/* Delete confirmation dialog */}
       <ResponsiveDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

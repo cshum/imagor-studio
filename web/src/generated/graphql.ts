@@ -531,6 +531,9 @@ export type SortOrder = 'ASC' | 'DESC'
 export type Space = {
   __typename?: 'Space'
   bucket: Scalars['String']['output']
+  canDelete: Scalars['Boolean']['output']
+  canLeave: Scalars['Boolean']['output']
+  canManage: Scalars['Boolean']['output']
   customDomain: Scalars['String']['output']
   customDomainVerified: Scalars['Boolean']['output']
   endpoint: Scalars['String']['output']
@@ -772,6 +775,9 @@ export type ListSpacesQuery = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    canManage: boolean
+    canDelete: boolean
+    canLeave: boolean
     updatedAt: string
   }>
 }
@@ -799,6 +805,9 @@ export type GetSpaceQuery = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    canManage: boolean
+    canDelete: boolean
+    canLeave: boolean
     updatedAt: string
   } | null
 }
@@ -825,6 +834,9 @@ export type CreateSpaceMutation = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    canManage: boolean
+    canDelete: boolean
+    canLeave: boolean
     updatedAt: string
   }
 }
@@ -852,6 +864,9 @@ export type UpdateSpaceMutation = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    canManage: boolean
+    canDelete: boolean
+    canLeave: boolean
     updatedAt: string
   }
 }
@@ -1921,6 +1936,9 @@ export const ListSpacesDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canManage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canDelete' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canLeave' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
               ],
             },
@@ -1978,6 +1996,9 @@ export const GetSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canManage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canDelete' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canLeave' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
               ],
             },
@@ -2034,6 +2055,9 @@ export const CreateSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canManage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canDelete' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canLeave' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
               ],
             },
@@ -2103,6 +2127,9 @@ export const UpdateSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canManage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canDelete' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canLeave' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
               ],
             },

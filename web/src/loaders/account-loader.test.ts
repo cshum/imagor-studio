@@ -58,6 +58,9 @@ describe('account-loader', () => {
         isShared: false,
         signerAlgorithm: 'sha256',
         signerTruncate: 32,
+        canManage: true,
+        canDelete: true,
+        canLeave: false,
         updatedAt: '2026-04-18T00:00:00Z',
       },
     ])
@@ -97,6 +100,9 @@ describe('account-loader', () => {
       isShared: false,
       signerAlgorithm: 'sha256',
       signerTruncate: 32,
+      canManage: true,
+      canDelete: true,
+      canLeave: false,
       updatedAt: '2026-04-18T00:00:00Z',
     })
     vi.mocked(getMyOrganization).mockResolvedValue({
@@ -117,7 +123,7 @@ describe('account-loader', () => {
     expect(result.breadcrumb.label).toBe('Acme')
   })
 
-  it('redirects guest users away from settings for spaces owned by another organization', async () => {
+  it('allows shared managers into space settings', async () => {
     vi.mocked(getSpace).mockResolvedValue({
       __typename: 'Space',
       orgId: 'org-host',
@@ -135,17 +141,38 @@ describe('account-loader', () => {
       isShared: false,
       signerAlgorithm: 'sha256',
       signerTruncate: 32,
+      canManage: true,
+      canDelete: false,
+      canLeave: true,
       updatedAt: '2026-04-18T00:00:00Z',
     })
-    vi.mocked(getMyOrganization).mockResolvedValue({
-      __typename: 'Organization',
-      id: 'org-guest',
-      name: 'Guest Org',
-      slug: 'guest-org',
-      ownerUserId: 'user-2',
-      plan: 'trial',
-      planStatus: 'active',
-      createdAt: '2026-04-18T00:00:00Z',
+
+    const result = await spaceSettingsLoader({ params: { spaceKey: 'shared' } })
+
+    expect(result.space.key).toBe('shared')
+  })
+
+  it('redirects shared members away from settings when they cannot manage', async () => {
+    vi.mocked(getSpace).mockResolvedValue({
+      __typename: 'Space',
+      orgId: 'org-host',
+      key: 'shared',
+      name: 'Shared Space',
+      storageType: 'managed',
+      bucket: '',
+      prefix: '',
+      region: '',
+      endpoint: '',
+      usePathStyle: false,
+      customDomain: '',
+      customDomainVerified: false,
+      suspended: false,
+      isShared: false,
+      signerAlgorithm: 'sha256',
+      signerTruncate: 32,
+      canManage: false,
+      canDelete: false,
+      canLeave: true,
       updatedAt: '2026-04-18T00:00:00Z',
     })
 

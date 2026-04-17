@@ -185,6 +185,9 @@ type ComplexityRoot struct {
 
 	Space struct {
 		Bucket               func(childComplexity int) int
+		CanDelete            func(childComplexity int) int
+		CanLeave             func(childComplexity int) int
+		CanManage            func(childComplexity int) int
 		CustomDomain         func(childComplexity int) int
 		CustomDomainVerified func(childComplexity int) int
 		Endpoint             func(childComplexity int) int
@@ -1293,6 +1296,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Space.Bucket(childComplexity), true
+	case "Space.canDelete":
+		if e.ComplexityRoot.Space.CanDelete == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.CanDelete(childComplexity), true
+	case "Space.canLeave":
+		if e.ComplexityRoot.Space.CanLeave == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.CanLeave(childComplexity), true
+	case "Space.canManage":
+		if e.ComplexityRoot.Space.CanManage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.CanManage(childComplexity), true
 	case "Space.customDomain":
 		if e.ComplexityRoot.Space.CustomDomain == nil {
 			break
@@ -1952,6 +1973,9 @@ type Space {
   isShared: Boolean!
   signerAlgorithm: String!
   signerTruncate: Int!
+  canManage: Boolean!
+  canDelete: Boolean!
+  canLeave: Boolean!
   updatedAt: String!
 }
 
@@ -4947,6 +4971,12 @@ func (ec *executionContext) fieldContext_Mutation_createSpace(ctx context.Contex
 				return ec.fieldContext_Space_signerAlgorithm(ctx, field)
 			case "signerTruncate":
 				return ec.fieldContext_Space_signerTruncate(ctx, field)
+			case "canManage":
+				return ec.fieldContext_Space_canManage(ctx, field)
+			case "canDelete":
+				return ec.fieldContext_Space_canDelete(ctx, field)
+			case "canLeave":
+				return ec.fieldContext_Space_canLeave(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Space_updatedAt(ctx, field)
 			}
@@ -5022,6 +5052,12 @@ func (ec *executionContext) fieldContext_Mutation_updateSpace(ctx context.Contex
 				return ec.fieldContext_Space_signerAlgorithm(ctx, field)
 			case "signerTruncate":
 				return ec.fieldContext_Space_signerTruncate(ctx, field)
+			case "canManage":
+				return ec.fieldContext_Space_canManage(ctx, field)
+			case "canDelete":
+				return ec.fieldContext_Space_canDelete(ctx, field)
+			case "canLeave":
+				return ec.fieldContext_Space_canLeave(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Space_updatedAt(ctx, field)
 			}
@@ -6709,6 +6745,12 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 				return ec.fieldContext_Space_signerAlgorithm(ctx, field)
 			case "signerTruncate":
 				return ec.fieldContext_Space_signerTruncate(ctx, field)
+			case "canManage":
+				return ec.fieldContext_Space_canManage(ctx, field)
+			case "canDelete":
+				return ec.fieldContext_Space_canDelete(ctx, field)
+			case "canLeave":
+				return ec.fieldContext_Space_canLeave(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Space_updatedAt(ctx, field)
 			}
@@ -6773,6 +6815,12 @@ func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field 
 				return ec.fieldContext_Space_signerAlgorithm(ctx, field)
 			case "signerTruncate":
 				return ec.fieldContext_Space_signerTruncate(ctx, field)
+			case "canManage":
+				return ec.fieldContext_Space_canManage(ctx, field)
+			case "canDelete":
+				return ec.fieldContext_Space_canDelete(ctx, field)
+			case "canLeave":
+				return ec.fieldContext_Space_canLeave(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Space_updatedAt(ctx, field)
 			}
@@ -8121,6 +8169,93 @@ func (ec *executionContext) fieldContext_Space_signerTruncate(_ context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_canManage(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_canManage,
+		func(ctx context.Context) (any, error) {
+			return obj.CanManage, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_canManage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_canDelete(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_canDelete,
+		func(ctx context.Context) (any, error) {
+			return obj.CanDelete, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_canDelete(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_canLeave(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_canLeave,
+		func(ctx context.Context) (any, error) {
+			return obj.CanLeave, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_canLeave(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13524,6 +13659,21 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "signerTruncate":
 			out.Values[i] = ec._Space_signerTruncate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canManage":
+			out.Values[i] = ec._Space_canManage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canDelete":
+			out.Values[i] = ec._Space_canDelete(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canLeave":
+			out.Values[i] = ec._Space_canLeave(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -164,8 +164,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
         /* Card grid */
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {spaces.map((space) => {
-            const canManageSpace =
-              currentOrganizationId !== null && space.orgId === currentOrganizationId
+            const canManageSpace = space.canManage
             const isSharedSpace = !canManageSpace
             return (
               <div
@@ -220,7 +219,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       {t('pages.spaces.openGallery')}
                     </Link>
                   </Button>
-                  {canManageSpace ? (
+                  {canManageSpace && !space.canLeave ? (
                     <TooltipProvider delayDuration={0}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -243,7 +242,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       </Tooltip>
                     </TooltipProvider>
                   ) : null}
-                  {isSharedSpace && authState.profile?.id ? (
+                  {space.canLeave && authState.profile?.id ? (
                     <DropdownMenu
                       open={openMenuSpaceKey === space.key}
                       onOpenChange={(open) => setOpenMenuSpaceKey(open ? space.key : null)}
@@ -259,6 +258,17 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end'>
+                        {canManageSpace ? (
+                          <DropdownMenuItem asChild>
+                            <Link
+                              to='/spaces/$spaceKey/settings/$section'
+                              params={{ spaceKey: space.key, section: 'general' }}
+                            >
+                              <Settings className='mr-2 h-4 w-4' />
+                              {t('pages.spaces.configure')}
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : null}
                         <DropdownMenuItem
                           onSelect={(event) => {
                             event.preventDefault()

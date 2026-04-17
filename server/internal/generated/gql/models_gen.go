@@ -203,6 +203,9 @@ type Space struct {
 	IsShared             bool   `json:"isShared"`
 	SignerAlgorithm      string `json:"signerAlgorithm"`
 	SignerTruncate       int    `json:"signerTruncate"`
+	CanManage            bool   `json:"canManage"`
+	CanDelete            bool   `json:"canDelete"`
+	CanLeave             bool   `json:"canLeave"`
 	UpdatedAt            string `json:"updatedAt"`
 }
 

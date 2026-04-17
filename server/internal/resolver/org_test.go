@@ -148,6 +148,13 @@ func TestSpaces_IncludesGuestAccessibleSpaces(t *testing.T) {
 	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*spacestore.Space{ownSpace}, nil)
 	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*spacestore.Space{guestSpace}, nil)
 	spaceStore.On("HasMember", mock.Anything, "shared", "user-1").Return(true, nil)
+	spaceStore.On("ListMembers", mock.Anything, "shared").Return([]*spacestore.SpaceMemberView{{
+		SpaceID:   "space-2",
+		UserID:    "user-1",
+		Username:  "alice",
+		Role:      "member",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	}}, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().Spaces(ctx)
@@ -155,6 +162,8 @@ func TestSpaces_IncludesGuestAccessibleSpaces(t *testing.T) {
 	require.Len(t, result, 2)
 	assert.Equal(t, "acme", result[0].Key)
 	assert.Equal(t, "shared", result[1].Key)
+	assert.False(t, result[1].CanManage)
+	assert.True(t, result[1].CanLeave)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -233,6 +242,13 @@ func TestSpace_ReturnsGuestAccessibleSpace(t *testing.T) {
 	s := makeTestSpace("acme", "org-2")
 	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
 	spaceStore.On("HasMember", mock.Anything, "acme", "user-1").Return(true, nil)
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*spacestore.SpaceMemberView{{
+		SpaceID:   "space-2",
+		UserID:    "user-1",
+		Username:  "alice",
+		Role:      "admin",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	}}, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().Space(ctx, "acme")
@@ -240,6 +256,9 @@ func TestSpace_ReturnsGuestAccessibleSpace(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "acme", result.Key)
 	assert.Equal(t, "org-2", result.OrgID)
+	assert.True(t, result.CanManage)
+	assert.False(t, result.CanDelete)
+	assert.True(t, result.CanLeave)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -360,15 +379,18 @@ func TestCreateSpace_NoOrgAndNilOrgStore(t *testing.T) {
 
 // ---------- UpdateSpace ------------------------------------------------------
 
-func TestUpdateSpace_RequiresAdmin(t *testing.T) {
-	r := newOrgResolver(&MockOrgStore{}, &MockSpaceStore{})
+func TestUpdateSpace_RequiresManagePermission(t *testing.T) {
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(&MockOrgStore{}, spaceStore)
+
+	spaceStore.On("Get", mock.Anything, "acme").Return(makeTestSpace("acme", "org-1"), nil)
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	input := gql.SpaceInput{Key: "acme", Name: "New Name"}
 	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
 	assert.Nil(t, result)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "permission")
+	assert.Contains(t, err.Error(), "space manager")
 }
 
 func TestUpdateSpace_NotFound(t *testing.T) {
@@ -410,16 +432,58 @@ func TestUpdateSpace_Success(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 }
 
+func TestUpdateSpace_AllowsGuestManager(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	existing := makeTestSpace("acme", "org-host")
+	updated := makeTestSpace("acme", "org-host")
+	updated.Name = "New Name"
+
+	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*spacestore.SpaceMemberView{{
+		SpaceID:   "space-1",
+		UserID:    "user-1",
+		Username:  "alice",
+		Role:      "admin",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	}}, nil).Once()
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
+		return s.Key == "acme" && s.Name == "New Name"
+	})).Return(nil)
+	spaceStore.On("Get", mock.Anything, "acme").Return(updated, nil).Once()
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*spacestore.SpaceMemberView{{
+		SpaceID:   "space-1",
+		UserID:    "user-1",
+		Username:  "alice",
+		Role:      "admin",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	}}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-guest")
+	input := gql.SpaceInput{Key: "acme", Name: "New Name"}
+	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.True(t, result.CanManage)
+	assert.False(t, result.CanDelete)
+	spaceStore.AssertExpectations(t)
+}
+
 // ---------- DeleteSpace ------------------------------------------------------
 
-func TestDeleteSpace_RequiresAdmin(t *testing.T) {
-	r := newOrgResolver(&MockOrgStore{}, &MockSpaceStore{})
+func TestDeleteSpace_RequiresDeletePermission(t *testing.T) {
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(&MockOrgStore{}, spaceStore)
+
+	spaceStore.On("Get", mock.Anything, "acme").Return(makeTestSpace("acme", "org-1"), nil)
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	ok, err := r.Mutation().DeleteSpace(ctx, "acme")
 	assert.False(t, ok)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "permission")
+	assert.Contains(t, err.Error(), "owning organization admins")
 }
 
 func TestDeleteSpace_NotFound(t *testing.T) {
@@ -465,7 +529,30 @@ func TestDeleteSpace_WrongOrg(t *testing.T) {
 	ok, err := r.Mutation().DeleteSpace(ctx, "acme")
 	assert.False(t, ok)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "not found")
+	assert.Contains(t, err.Error(), "owning organization admins")
+	spaceStore.AssertNotCalled(t, "SoftDelete")
+}
+
+func TestDeleteSpace_DeniesGuestManager(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	space := makeTestSpace("acme", "org-host")
+	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*spacestore.SpaceMemberView{{
+		SpaceID:   "space-1",
+		UserID:    "user-1",
+		Username:  "alice",
+		Role:      "admin",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	}}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-guest")
+	ok, err := r.Mutation().DeleteSpace(ctx, "acme")
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "owning organization admins")
 	spaceStore.AssertNotCalled(t, "SoftDelete")
 }
 
