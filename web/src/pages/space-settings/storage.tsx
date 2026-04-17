@@ -13,8 +13,9 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Input } from '@/components/ui/input'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
+import { SecretField, SpaceSettingsData } from '@/pages/space-settings/shared.tsx'
 
-import { SecretField, type SpaceSettingsData } from './shared'
+export { SecretField } from '@/components/ui/secret-field'
 
 // ── Schema ─────────────────────────────────────────────────────────────────
 

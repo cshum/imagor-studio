@@ -36,7 +36,7 @@ import {
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 
-import { avatarColor, spaceInitials, type SpaceSettingsData } from './shared'
+import { type SpaceSettingsData } from './shared'
 
 // ── Section ids ────────────────────────────────────────────────────────────
 
@@ -57,8 +57,6 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   const { location } = useRouterState()
 
   const isByob = space.storageType === 's3'
-  const color = avatarColor(space.key)
-  const initials = spaceInitials(space.name)
 
   // Extract active section from the last URL segment
   const pathSegments = location.pathname.split('/')
@@ -125,16 +123,9 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   const sidebarContent = (
     <>
       <SidebarHeader className='border-b px-4 py-3'>
-        <div className='flex items-center gap-3'>
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${color}`}
-          >
-            {initials}
-          </div>
-          <div className='min-w-0'>
-            <p className='truncate text-sm leading-tight font-semibold'>{space.name}</p>
-            <p className='text-muted-foreground truncate font-mono text-xs'>{space.key}</p>
-          </div>
+        <div className='min-w-0'>
+          <p className='truncate text-sm leading-tight font-semibold'>{space.name}</p>
+          <p className='text-muted-foreground truncate font-mono text-xs'>{space.key}</p>
         </div>
       </SidebarHeader>
 
