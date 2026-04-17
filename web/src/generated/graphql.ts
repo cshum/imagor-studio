@@ -22,6 +22,13 @@ export type Scalars = {
   Upload: { input: File; output: File }
 }
 
+export type AuthProvider = {
+  __typename?: 'AuthProvider'
+  email: Maybe<Scalars['String']['output']>
+  linkedAt: Scalars['String']['output']
+  provider: Scalars['String']['output']
+}
+
 export type ChangePasswordInput = {
   currentPassword: InputMaybe<Scalars['String']['input']>
   newPassword: Scalars['String']['input']
@@ -39,6 +46,12 @@ export type DimensionMode = 'ADAPTIVE' | 'PREDEFINED'
 export type DimensionsInput = {
   height: Scalars['Int']['input']
   width: Scalars['Int']['input']
+}
+
+export type EmailChangeRequestResult = {
+  __typename?: 'EmailChangeRequestResult'
+  email: Scalars['String']['output']
+  verificationRequired: Scalars['Boolean']['output']
 }
 
 export type FileItem = {
@@ -180,11 +193,13 @@ export type Mutation = {
   regenerateTemplatePreview: Scalars['Boolean']['output']
   removeOrgMember: Scalars['Boolean']['output']
   removeSpaceMember: Scalars['Boolean']['output']
+  requestEmailChange: EmailChangeRequestResult
   saveTemplate: TemplateResult
   setSpaceRegistry: Array<UserRegistry>
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
+  unlinkAuthProvider: Scalars['Boolean']['output']
   updateOrgMemberRole: OrgMember
   updateProfile: User
   updateSpace: Space
@@ -322,6 +337,11 @@ export type MutationRemoveSpaceMemberArgs = {
   userId: Scalars['ID']['input']
 }
 
+export type MutationRequestEmailChangeArgs = {
+  email: Scalars['String']['input']
+  userId?: InputMaybe<Scalars['ID']['input']>
+}
+
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
   spaceKey?: InputMaybe<Scalars['String']['input']>
@@ -345,6 +365,11 @@ export type MutationSetUserRegistryArgs = {
 
 export type MutationTestStorageConfigArgs = {
   input: StorageConfigInput
+}
+
+export type MutationUnlinkAuthProviderArgs = {
+  provider: Scalars['String']['input']
+  userId?: InputMaybe<Scalars['ID']['input']>
 }
 
 export type MutationUpdateOrgMemberRoleArgs = {
@@ -663,12 +688,15 @@ export type UpdateProfileInput = {
 
 export type User = {
   __typename?: 'User'
+  authProviders: Array<AuthProvider>
   avatarUrl: Maybe<Scalars['String']['output']>
   createdAt: Scalars['String']['output']
   displayName: Scalars['String']['output']
   email: Maybe<Scalars['String']['output']>
+  emailVerified: Scalars['Boolean']['output']
   id: Scalars['ID']['output']
   isActive: Scalars['Boolean']['output']
+  pendingEmail: Maybe<Scalars['String']['output']>
   role: Scalars['String']['output']
   updatedAt: Scalars['String']['output']
   username: Scalars['String']['output']
@@ -1457,7 +1485,15 @@ export type UserInfoFragment = {
   createdAt: string
   updatedAt: string
   email: string | null
+  pendingEmail: string | null
+  emailVerified: boolean
   avatarUrl: string | null
+  authProviders: Array<{
+    __typename?: 'AuthProvider'
+    provider: string
+    email: string | null
+    linkedAt: string
+  }>
 }
 
 export type MeQueryVariables = Exact<{ [key: string]: never }>
@@ -1474,7 +1510,15 @@ export type MeQuery = {
     createdAt: string
     updatedAt: string
     email: string | null
+    pendingEmail: string | null
+    emailVerified: boolean
     avatarUrl: string | null
+    authProviders: Array<{
+      __typename?: 'AuthProvider'
+      provider: string
+      email: string | null
+      linkedAt: string
+    }>
   } | null
 }
 
@@ -1494,7 +1538,15 @@ export type GetUserQuery = {
     createdAt: string
     updatedAt: string
     email: string | null
+    pendingEmail: string | null
+    emailVerified: boolean
     avatarUrl: string | null
+    authProviders: Array<{
+      __typename?: 'AuthProvider'
+      provider: string
+      email: string | null
+      linkedAt: string
+    }>
   } | null
 }
 
@@ -1519,7 +1571,15 @@ export type ListUsersQuery = {
       createdAt: string
       updatedAt: string
       email: string | null
+      pendingEmail: string | null
+      emailVerified: boolean
       avatarUrl: string | null
+      authProviders: Array<{
+        __typename?: 'AuthProvider'
+        provider: string
+        email: string | null
+        linkedAt: string
+      }>
     }>
   }
 }
@@ -1541,7 +1601,15 @@ export type UpdateProfileMutation = {
     createdAt: string
     updatedAt: string
     email: string | null
+    pendingEmail: string | null
+    emailVerified: boolean
     avatarUrl: string | null
+    authProviders: Array<{
+      __typename?: 'AuthProvider'
+      provider: string
+      email: string | null
+      linkedAt: string
+    }>
   }
 }
 
@@ -1551,6 +1619,27 @@ export type ChangePasswordMutationVariables = Exact<{
 }>
 
 export type ChangePasswordMutation = { __typename?: 'Mutation'; changePassword: boolean }
+
+export type RequestEmailChangeMutationVariables = Exact<{
+  email: Scalars['String']['input']
+  userId?: InputMaybe<Scalars['ID']['input']>
+}>
+
+export type RequestEmailChangeMutation = {
+  __typename?: 'Mutation'
+  requestEmailChange: {
+    __typename?: 'EmailChangeRequestResult'
+    email: string
+    verificationRequired: boolean
+  }
+}
+
+export type UnlinkAuthProviderMutationVariables = Exact<{
+  provider: Scalars['String']['input']
+  userId?: InputMaybe<Scalars['ID']['input']>
+}>
+
+export type UnlinkAuthProviderMutation = { __typename?: 'Mutation'; unlinkAuthProvider: boolean }
 
 export type DeactivateAccountMutationVariables = Exact<{
   userId?: InputMaybe<Scalars['ID']['input']>
@@ -1580,7 +1669,15 @@ export type CreateUserMutation = {
     createdAt: string
     updatedAt: string
     email: string | null
+    pendingEmail: string | null
+    emailVerified: boolean
     avatarUrl: string | null
+    authProviders: Array<{
+      __typename?: 'AuthProvider'
+      provider: string
+      email: string | null
+      linkedAt: string
+    }>
   }
 }
 
@@ -1639,7 +1736,21 @@ export const UserInfoFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'authProviders' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'linkedAt' } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -4403,7 +4514,21 @@ export const MeDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'authProviders' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'linkedAt' } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -4462,7 +4587,21 @@ export const GetUserDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'authProviders' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'linkedAt' } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -4552,7 +4691,21 @@ export const ListUsersDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'authProviders' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'linkedAt' } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -4621,7 +4774,21 @@ export const UpdateProfileDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'authProviders' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'linkedAt' } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -4673,6 +4840,105 @@ export const ChangePasswordDocument = {
     },
   ],
 } as unknown as DocumentNode<ChangePasswordMutation, ChangePasswordMutationVariables>
+export const RequestEmailChangeDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RequestEmailChange' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'email' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'requestEmailChange' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'email' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'email' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'verificationRequired' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RequestEmailChangeMutation, RequestEmailChangeMutationVariables>
+export const UnlinkAuthProviderDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UnlinkAuthProvider' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'provider' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'unlinkAuthProvider' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'provider' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'provider' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UnlinkAuthProviderMutation, UnlinkAuthProviderMutationVariables>
 export const DeactivateAccountDocument = {
   kind: 'Document',
   definitions: [
@@ -4795,7 +5061,21 @@ export const CreateUserDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'authProviders' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'linkedAt' } },
+              ],
+            },
+          },
         ],
       },
     },

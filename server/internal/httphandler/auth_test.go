@@ -152,6 +152,27 @@ func (m *MockUserStore) UpdateUsername(ctx context.Context, id string, username 
 	return args.Error(0)
 }
 
+func (m *MockUserStore) RequestEmailChange(ctx context.Context, id string, email string) (*userstore.User, error) {
+	args := m.Called(ctx, id, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
+func (m *MockUserStore) ListAuthProviders(ctx context.Context, id string) ([]*userstore.AuthProvider, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return []*userstore.AuthProvider{}, args.Error(1)
+	}
+	return args.Get(0).([]*userstore.AuthProvider), args.Error(1)
+}
+
+func (m *MockUserStore) UnlinkAuthProvider(ctx context.Context, id string, provider string) error {
+	args := m.Called(ctx, id, provider)
+	return args.Error(0)
+}
+
 func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) error {
 	args := m.Called(ctx, id, active)
 	return args.Error(0)

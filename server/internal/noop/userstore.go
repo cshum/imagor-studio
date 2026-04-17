@@ -58,6 +58,18 @@ func (n *UserStore) UpdateUsername(ctx context.Context, id string, username stri
 	return ErrEmbeddedMode
 }
 
+func (n *UserStore) RequestEmailChange(ctx context.Context, id string, email string) (*userstore.User, error) {
+	return nil, ErrEmbeddedMode
+}
+
+func (n *UserStore) ListAuthProviders(ctx context.Context, id string) ([]*userstore.AuthProvider, error) {
+	return nil, ErrEmbeddedMode
+}
+
+func (n *UserStore) UnlinkAuthProvider(ctx context.Context, id string, provider string) error {
+	return ErrEmbeddedMode
+}
+
 func (n *UserStore) SetActive(ctx context.Context, id string, active bool) error {
 	return ErrEmbeddedMode
 }

@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { changePassword, updateProfile } from '@/api/user-api'
+import { changePassword, requestEmailChange, unlinkAuthProvider, updateProfile } from '@/api/user-api'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -40,10 +40,13 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const { authState } = useAuth()
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false)
+  const [unlinkingProvider, setUnlinkingProvider] = useState<string | null>(null)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
 
   const { handleFormError } = useFormErrors<ProfileForm>()
   const { handleFormError: handlePasswordError } = useFormErrors<PasswordForm>()
+  const { handleFormError: handleEmailError } = useFormErrors<EmailForm>()
 
   const profileSchema = z.object({
     displayName: z
@@ -71,18 +74,29 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       path: ['confirmPassword'],
     })
 
+  const emailSchema = z.object({
+    email: z.string().email(t('pages.profile.invalidEmail')),
+  })
+
   type ProfileForm = z.infer<typeof profileSchema>
   type PasswordForm = z.infer<typeof passwordSchema>
+  type EmailForm = z.infer<typeof emailSchema>
 
   const profileData = loaderData?.profile || {
     displayName: authState.profile?.displayName || '',
     username: authState.profile?.username || '',
     email: authState.profile?.email || null,
+    pendingEmail: authState.profile?.pendingEmail || null,
+    emailVerified: authState.profile?.emailVerified || false,
     avatarUrl: authState.profile?.avatarUrl || null,
+    authProviders: authState.profile?.authProviders || [],
   }
 
   const avatarUrl = profileData.avatarUrl
   const email = profileData.email
+  const pendingEmail = profileData.pendingEmail
+  const emailVerified = profileData.emailVerified
+  const authProviders = profileData.authProviders
   const hasProviderAvatar = authState.multiTenant && Boolean(avatarUrl)
   const displayName = profileData.displayName || profileData.username || ''
   const initials = (() => {
@@ -105,6 +119,13 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
+    },
+  })
+
+  const emailForm = useForm<EmailForm>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: {
+      email: pendingEmail || email || '',
     },
   })
 
@@ -143,6 +164,38 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
     } finally {
       setIsUpdatingPassword(false)
     }
+  }
+
+  const onEmailSubmit = async (values: EmailForm) => {
+  setIsUpdatingEmail(true)
+  try {
+    const result = await requestEmailChange(values.email)
+    await initAuth()
+    emailForm.reset({ email: result.email })
+    toast.success(t('pages.profile.emailChangeRequestedSuccess'))
+  } catch (err) {
+    handleEmailError(
+      err,
+      emailForm.setError,
+      { email: { ALREADY_EXISTS: 'pages.profile.emailAlreadyInUse' } },
+      t('pages.profile.emailChangeRequestFailed'),
+    )
+  } finally {
+    setIsUpdatingEmail(false)
+  }
+  }
+
+  const handleUnlinkProvider = async (provider: string) => {
+  setUnlinkingProvider(provider)
+  try {
+    await unlinkAuthProvider(provider)
+    await initAuth()
+    toast.success(t('pages.profile.providerUnlinkedSuccess'))
+  } catch (err) {
+    handleFormError(err, profileForm.setError, undefined, t('pages.profile.providerUnlinkFailed'))
+  } finally {
+    setUnlinkingProvider(null)
+  }
   }
 
   return (
@@ -184,12 +237,34 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
             label={t('pages.profile.email')}
             description={t('pages.profile.emailDescription')}
           >
-            <div className='space-y-1 text-right sm:max-w-none'>
-              <div className='text-sm font-medium break-all'>{email || t('pages.profile.noEmail')}</div>
-              <div className='text-muted-foreground text-xs'>
-                {t('pages.profile.emailChangeManaged')}
-              </div>
-            </div>
+            <Form {...emailForm}>
+              <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className='space-y-3'>
+                <FormField
+                  control={emailForm.control}
+                  name='email'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} disabled={isUpdatingEmail} />
+                      </FormControl>
+                      <FormMessage className='mt-1.5 text-left' />
+                    </FormItem>
+                  )}
+                />
+                <div className='text-muted-foreground text-right text-xs'>
+                  {pendingEmail
+                    ? t('pages.profile.pendingEmailNotice', { email: pendingEmail })
+                    : emailVerified
+                      ? t('pages.profile.emailVerified')
+                      : t('pages.profile.emailVerificationRequired')}
+                </div>
+                <div className='flex justify-end'>
+                  <ButtonWithLoading type='submit' isLoading={isUpdatingEmail}>
+                    {t('pages.profile.requestEmailChange')}
+                  </ButtonWithLoading>
+                </div>
+              </form>
+            </Form>
           </SettingRow>
         )}
 
@@ -257,10 +332,44 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
             label={t('pages.profile.signInMethod')}
             description={t('pages.profile.signInMethodDescription')}
           >
-            <div className='space-y-1 text-right sm:max-w-none'>
-              <div className='text-sm font-medium'>{t('pages.profile.googleSignIn')}</div>
-              <div className='text-muted-foreground text-xs'>
-                {t('pages.profile.unlinkNotAvailable')}
+            <div className='space-y-3 sm:max-w-none'>
+              {authProviders.length > 0 ? (
+                authProviders.map((provider) => {
+                  const providerKey = provider.provider.toLowerCase()
+                  const isUnlinking = unlinkingProvider === provider.provider
+
+                  return (
+                    <div
+                      key={`${provider.provider}-${provider.linkedAt}`}
+                      className='flex items-center justify-between gap-4 rounded-md border px-3 py-2'
+                    >
+                      <div className='min-w-0 text-left'>
+                        <div className='text-sm font-medium'>
+                          {t(`pages.profile.providers.${providerKey}`, { defaultValue: provider.provider })}
+                        </div>
+                        <div className='text-muted-foreground truncate text-xs'>
+                          {provider.email || t('pages.profile.noProviderEmail')}
+                        </div>
+                      </div>
+                      <ButtonWithLoading
+                        type='button'
+                        variant='outline'
+                        isLoading={isUnlinking}
+                        disabled={authProviders.length <= 1 || isUnlinking}
+                        onClick={() => handleUnlinkProvider(provider.provider)}
+                      >
+                        {t('pages.profile.unlink')}
+                      </ButtonWithLoading>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className='text-muted-foreground text-sm'>{t('pages.profile.noAuthProviders')}</div>
+              )}
+              <div className='text-muted-foreground text-right text-xs'>
+                {authProviders.length <= 1
+                  ? t('pages.profile.unlinkLastProviderWarning')
+                  : t('pages.profile.unlinkProviderDescription')}
               </div>
             </div>
           </SettingRow>

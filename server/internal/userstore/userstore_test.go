@@ -39,6 +39,8 @@ func setupTestDB(t *testing.T) (*bun.DB, func()) {
 			role TEXT NOT NULL DEFAULT 'user',
 			is_active BOOLEAN NOT NULL DEFAULT TRUE,
 			email TEXT,
+			pending_email TEXT,
+			email_verified BOOLEAN NOT NULL DEFAULT FALSE,
 			avatar_url TEXT,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

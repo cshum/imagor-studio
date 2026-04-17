@@ -34,6 +34,17 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AuthProvider struct {
+		Email    func(childComplexity int) int
+		LinkedAt func(childComplexity int) int
+		Provider func(childComplexity int) int
+	}
+
+	EmailChangeRequestResult struct {
+		Email                func(childComplexity int) int
+		VerificationRequired func(childComplexity int) int
+	}
+
 	FileItem struct {
 		IsDirectory   func(childComplexity int) int
 		ModifiedTime  func(childComplexity int) int
@@ -121,11 +132,13 @@ type ComplexityRoot struct {
 		RegenerateTemplatePreview     func(childComplexity int, templatePath string, spaceKey *string) int
 		RemoveOrgMember               func(childComplexity int, userID string) int
 		RemoveSpaceMember             func(childComplexity int, spaceKey string, userID string) int
+		RequestEmailChange            func(childComplexity int, email string, userID *string) int
 		SaveTemplate                  func(childComplexity int, input SaveTemplateInput, spaceKey *string) int
 		SetSpaceRegistry              func(childComplexity int, spaceKey string, entries []*RegistryEntryInput) int
 		SetSystemRegistry             func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
 		SetUserRegistry               func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		TestStorageConfig             func(childComplexity int, input StorageConfigInput) int
+		UnlinkAuthProvider            func(childComplexity int, provider string, userID *string) int
 		UpdateOrgMemberRole           func(childComplexity int, userID string, role string) int
 		UpdateProfile                 func(childComplexity int, input UpdateProfileInput, userID *string) int
 		UpdateSpace                   func(childComplexity int, key string, input SpaceInput) int
@@ -276,15 +289,18 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AvatarURL   func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		DisplayName func(childComplexity int) int
-		Email       func(childComplexity int) int
-		ID          func(childComplexity int) int
-		IsActive    func(childComplexity int) int
-		Role        func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
-		Username    func(childComplexity int) int
+		AuthProviders func(childComplexity int) int
+		AvatarURL     func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		DisplayName   func(childComplexity int) int
+		Email         func(childComplexity int) int
+		EmailVerified func(childComplexity int) int
+		ID            func(childComplexity int) int
+		IsActive      func(childComplexity int) int
+		PendingEmail  func(childComplexity int) int
+		Role          func(childComplexity int) int
+		UpdatedAt     func(childComplexity int) int
+		Username      func(childComplexity int) int
 	}
 
 	UserList struct {
@@ -332,9 +348,11 @@ type MutationResolver interface {
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
 	DeleteSystemRegistry(ctx context.Context, key *string, keys []string) (bool, error)
 	UpdateProfile(ctx context.Context, input UpdateProfileInput, userID *string) (*User, error)
+	RequestEmailChange(ctx context.Context, email string, userID *string) (*EmailChangeRequestResult, error)
 	ChangePassword(ctx context.Context, input ChangePasswordInput, userID *string) (bool, error)
 	DeactivateAccount(ctx context.Context, userID *string) (bool, error)
 	ReactivateAccount(ctx context.Context, userID string) (bool, error)
+	UnlinkAuthProvider(ctx context.Context, provider string, userID *string) (bool, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (*User, error)
 }
 type QueryResolver interface {
@@ -373,6 +391,38 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AuthProvider.email":
+		if e.ComplexityRoot.AuthProvider.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AuthProvider.Email(childComplexity), true
+	case "AuthProvider.linkedAt":
+		if e.ComplexityRoot.AuthProvider.LinkedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AuthProvider.LinkedAt(childComplexity), true
+	case "AuthProvider.provider":
+		if e.ComplexityRoot.AuthProvider.Provider == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AuthProvider.Provider(childComplexity), true
+
+	case "EmailChangeRequestResult.email":
+		if e.ComplexityRoot.EmailChangeRequestResult.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EmailChangeRequestResult.Email(childComplexity), true
+	case "EmailChangeRequestResult.verificationRequired":
+		if e.ComplexityRoot.EmailChangeRequestResult.VerificationRequired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EmailChangeRequestResult.VerificationRequired(childComplexity), true
 
 	case "FileItem.isDirectory":
 		if e.ComplexityRoot.FileItem.IsDirectory == nil {
@@ -884,6 +934,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RemoveSpaceMember(childComplexity, args["spaceKey"].(string), args["userId"].(string)), true
+	case "Mutation.requestEmailChange":
+		if e.ComplexityRoot.Mutation.RequestEmailChange == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_requestEmailChange_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RequestEmailChange(childComplexity, args["email"].(string), args["userId"].(*string)), true
 	case "Mutation.saveTemplate":
 		if e.ComplexityRoot.Mutation.SaveTemplate == nil {
 			break
@@ -939,6 +1000,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.TestStorageConfig(childComplexity, args["input"].(StorageConfigInput)), true
+	case "Mutation.unlinkAuthProvider":
+		if e.ComplexityRoot.Mutation.UnlinkAuthProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unlinkAuthProvider_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UnlinkAuthProvider(childComplexity, args["provider"].(string), args["userId"].(*string)), true
 	case "Mutation.updateOrgMemberRole":
 		if e.ComplexityRoot.Mutation.UpdateOrgMemberRole == nil {
 			break
@@ -1675,6 +1747,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ThumbnailUrls.Preview(childComplexity), true
 
+	case "User.authProviders":
+		if e.ComplexityRoot.User.AuthProviders == nil {
+			break
+		}
+
+		return e.ComplexityRoot.User.AuthProviders(childComplexity), true
 	case "User.avatarUrl":
 		if e.ComplexityRoot.User.AvatarURL == nil {
 			break
@@ -1699,6 +1777,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.Email(childComplexity), true
+	case "User.emailVerified":
+		if e.ComplexityRoot.User.EmailVerified == nil {
+			break
+		}
+
+		return e.ComplexityRoot.User.EmailVerified(childComplexity), true
 	case "User.id":
 		if e.ComplexityRoot.User.ID == nil {
 			break
@@ -1711,6 +1795,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.IsActive(childComplexity), true
+	case "User.pendingEmail":
+		if e.ComplexityRoot.User.PendingEmail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.User.PendingEmail(childComplexity), true
 	case "User.role":
 		if e.ComplexityRoot.User.Role == nil {
 			break
@@ -2349,9 +2439,11 @@ type TemplateResult {
 extend type Mutation {
   # self operations, or admin scope with userId
   updateProfile(input: UpdateProfileInput!, userId: ID): User!
+  requestEmailChange(email: String!, userId: ID): EmailChangeRequestResult!
   changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
   deactivateAccount(userId: ID): Boolean!
   reactivateAccount(userId: ID!): Boolean!
+  unlinkAuthProvider(provider: String!, userId: ID): Boolean!
 
   # admin only operations
   createUser(input: CreateUserInput!): User!
@@ -2366,7 +2458,21 @@ type User {
   createdAt: String!
   updatedAt: String!
   email: String
+  pendingEmail: String
+  emailVerified: Boolean!
   avatarUrl: String
+  authProviders: [AuthProvider!]!
+}
+
+type AuthProvider {
+  provider: String!
+  email: String
+  linkedAt: String!
+}
+
+type EmailChangeRequestResult {
+  email: String!
+  verificationRequired: Boolean!
 }
 
 type UserList {
@@ -2814,6 +2920,22 @@ func (ec *executionContext) field_Mutation_removeSpaceMember_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_requestEmailChange_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "email", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_saveTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2891,6 +3013,22 @@ func (ec *executionContext) field_Mutation_testStorageConfig_args(ctx context.Co
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unlinkAuthProvider_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "provider", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["provider"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg1
 	return args, nil
 }
 
@@ -3274,6 +3412,151 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AuthProvider_provider(ctx context.Context, field graphql.CollectedField, obj *AuthProvider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AuthProvider_provider,
+		func(ctx context.Context) (any, error) {
+			return obj.Provider, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AuthProvider_provider(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuthProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AuthProvider_email(ctx context.Context, field graphql.CollectedField, obj *AuthProvider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AuthProvider_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AuthProvider_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuthProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AuthProvider_linkedAt(ctx context.Context, field graphql.CollectedField, obj *AuthProvider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AuthProvider_linkedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.LinkedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AuthProvider_linkedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuthProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EmailChangeRequestResult_email(ctx context.Context, field graphql.CollectedField, obj *EmailChangeRequestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_EmailChangeRequestResult_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_EmailChangeRequestResult_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EmailChangeRequestResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EmailChangeRequestResult_verificationRequired(ctx context.Context, field graphql.CollectedField, obj *EmailChangeRequestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_EmailChangeRequestResult_verificationRequired,
+		func(ctx context.Context) (any, error) {
+			return obj.VerificationRequired, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_EmailChangeRequestResult_verificationRequired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EmailChangeRequestResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _FileItem_name(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -5913,8 +6196,14 @@ func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Cont
 				return ec.fieldContext_User_updatedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "pendingEmail":
+				return ec.fieldContext_User_pendingEmail(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
+			case "authProviders":
+				return ec.fieldContext_User_authProviders(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -5927,6 +6216,53 @@ func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateProfile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_requestEmailChange(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_requestEmailChange,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RequestEmailChange(ctx, fc.Args["email"].(string), fc.Args["userId"].(*string))
+		},
+		nil,
+		ec.marshalNEmailChangeRequestResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmailChangeRequestResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_requestEmailChange(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "email":
+				return ec.fieldContext_EmailChangeRequestResult_email(ctx, field)
+			case "verificationRequired":
+				return ec.fieldContext_EmailChangeRequestResult_verificationRequired(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type EmailChangeRequestResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_requestEmailChange_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6056,6 +6392,47 @@ func (ec *executionContext) fieldContext_Mutation_reactivateAccount(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_unlinkAuthProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_unlinkAuthProvider,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UnlinkAuthProvider(ctx, fc.Args["provider"].(string), fc.Args["userId"].(*string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_unlinkAuthProvider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unlinkAuthProvider_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6097,8 +6474,14 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_updatedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "pendingEmail":
+				return ec.fieldContext_User_pendingEmail(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
+			case "authProviders":
+				return ec.fieldContext_User_authProviders(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -7413,8 +7796,14 @@ func (ec *executionContext) fieldContext_Query_me(_ context.Context, field graph
 				return ec.fieldContext_User_updatedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "pendingEmail":
+				return ec.fieldContext_User_pendingEmail(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
+			case "authProviders":
+				return ec.fieldContext_User_authProviders(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -7463,8 +7852,14 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_updatedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "pendingEmail":
+				return ec.fieldContext_User_pendingEmail(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
+			case "authProviders":
+				return ec.fieldContext_User_authProviders(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -9865,6 +10260,64 @@ func (ec *executionContext) fieldContext_User_email(_ context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _User_pendingEmail(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_pendingEmail,
+		func(ctx context.Context) (any, error) {
+			return obj.PendingEmail, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_pendingEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_emailVerified(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_emailVerified,
+		func(ctx context.Context) (any, error) {
+			return obj.EmailVerified, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_emailVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9889,6 +10342,43 @@ func (ec *executionContext) fieldContext_User_avatarUrl(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_authProviders(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_authProviders,
+		func(ctx context.Context) (any, error) {
+			return obj.AuthProviders, nil
+		},
+		nil,
+		ec.marshalNAuthProvider2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐAuthProviderᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_authProviders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "provider":
+				return ec.fieldContext_AuthProvider_provider(ctx, field)
+			case "email":
+				return ec.fieldContext_AuthProvider_email(ctx, field)
+			case "linkedAt":
+				return ec.fieldContext_AuthProvider_linkedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AuthProvider", field.Name)
 		},
 	}
 	return fc, nil
@@ -9934,8 +10424,14 @@ func (ec *executionContext) fieldContext_UserList_items(_ context.Context, field
 				return ec.fieldContext_User_updatedAt(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "pendingEmail":
+				return ec.fieldContext_User_pendingEmail(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
+			case "authProviders":
+				return ec.fieldContext_User_authProviders(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -12337,6 +12833,96 @@ func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context
 
 // region    **************************** object.gotpl ****************************
 
+var authProviderImplementors = []string{"AuthProvider"}
+
+func (ec *executionContext) _AuthProvider(ctx context.Context, sel ast.SelectionSet, obj *AuthProvider) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, authProviderImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuthProvider")
+		case "provider":
+			out.Values[i] = ec._AuthProvider_provider(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._AuthProvider_email(ctx, field, obj)
+		case "linkedAt":
+			out.Values[i] = ec._AuthProvider_linkedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var emailChangeRequestResultImplementors = []string{"EmailChangeRequestResult"}
+
+func (ec *executionContext) _EmailChangeRequestResult(ctx context.Context, sel ast.SelectionSet, obj *EmailChangeRequestResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, emailChangeRequestResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EmailChangeRequestResult")
+		case "email":
+			out.Values[i] = ec._EmailChangeRequestResult_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "verificationRequired":
+			out.Values[i] = ec._EmailChangeRequestResult_verificationRequired(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var fileItemImplementors = []string{"FileItem"}
 
 func (ec *executionContext) _FileItem(ctx context.Context, sel ast.SelectionSet, obj *FileItem) graphql.Marshaler {
@@ -13005,6 +13591,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "requestEmailChange":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_requestEmailChange(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "changePassword":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_changePassword(ctx, field)
@@ -13022,6 +13615,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "reactivateAccount":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_reactivateAccount(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unlinkAuthProvider":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unlinkAuthProvider(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -14358,8 +14958,20 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
+		case "pendingEmail":
+			out.Values[i] = ec._User_pendingEmail(ctx, field, obj)
+		case "emailVerified":
+			out.Values[i] = ec._User_emailVerified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "avatarUrl":
 			out.Values[i] = ec._User_avatarUrl(ctx, field, obj)
+		case "authProviders":
+			out.Values[i] = ec._User_authProviders(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14811,6 +15423,32 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAuthProvider2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐAuthProviderᚄ(ctx context.Context, sel ast.SelectionSet, v []*AuthProvider) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAuthProvider2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐAuthProvider(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAuthProvider2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐAuthProvider(ctx context.Context, sel ast.SelectionSet, v *AuthProvider) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AuthProvider(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -14845,6 +15483,20 @@ func (ec *executionContext) unmarshalNDimensionMode2githubᚗcomᚋcshumᚋimago
 
 func (ec *executionContext) marshalNDimensionMode2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionMode(ctx context.Context, sel ast.SelectionSet, v DimensionMode) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNEmailChangeRequestResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmailChangeRequestResult(ctx context.Context, sel ast.SelectionSet, v EmailChangeRequestResult) graphql.Marshaler {
+	return ec._EmailChangeRequestResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEmailChangeRequestResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmailChangeRequestResult(ctx context.Context, sel ast.SelectionSet, v *EmailChangeRequestResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EmailChangeRequestResult(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*FileItem) graphql.Marshaler {
