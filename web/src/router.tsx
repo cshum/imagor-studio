@@ -482,6 +482,7 @@ const membersSectionRoute = createRoute({
         initialMembers={spaceMembers}
         initialInvitations={invitations}
         isShared={space.isShared}
+        canLeave={space.canLeave}
       />
     )
   },

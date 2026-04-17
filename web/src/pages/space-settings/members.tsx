@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import {
   inviteSpaceMember,
+  leaveSpace,
   listSpaceInvitations,
   listSpaceMembers,
   removeSpaceMember,
@@ -81,6 +82,7 @@ interface MembersSectionProps {
   initialMembers: SpaceMemberItem[]
   initialInvitations: SpaceInvitationItem[]
   isShared: boolean
+  canLeave?: boolean
 }
 
 export function MembersSection({
@@ -88,6 +90,7 @@ export function MembersSection({
   initialMembers,
   initialInvitations,
   isShared,
+  canLeave = false,
 }: MembersSectionProps) {
   const { t } = useTranslation()
   const { authState } = useAuth()
@@ -101,6 +104,8 @@ export function MembersSection({
   const [isRemoving, setIsRemoving] = useState(false)
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null)
   const [openMenuMemberId, setOpenMenuMemberId] = useState<string | null>(null)
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
+  const [isLeaving, setIsLeaving] = useState(false)
   const removeDialogTimerRef = useRef<number | null>(null)
 
   const currentUserId = authState.profile?.id ?? null
@@ -244,6 +249,24 @@ export function MembersSection({
     }
   }
 
+  const canLeaveSpace = Boolean(authState.profile?.id && canLeave)
+
+  const handleLeaveSpace = async () => {
+    setIsLeaving(true)
+    try {
+      await leaveSpace({ spaceKey })
+      toast.success(t('pages.spaces.messages.leaveSpaceSuccess'))
+      window.location.href = '/spaces'
+    } catch (err) {
+      toast.error(
+        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
+      )
+    } finally {
+      setIsLeaving(false)
+      setLeaveDialogOpen(false)
+    }
+  }
+
   const requestRemoveMember = (menuId: string, userId: string) => {
     setOpenMenuMemberId((current) => (current === menuId ? null : current))
     if (removeDialogTimerRef.current !== null) {
@@ -256,8 +279,10 @@ export function MembersSection({
   }
 
   const renderMemberActions = (member: SpaceMemberItem, menuId: string) => {
+    const isCurrentUser = member.userId === currentUserId
     const canShowRoleSection = member.canChangeRole
     const canShowRemove = member.canRemove
+    const canShowLeave = isCurrentUser && canLeaveSpace
 
     return (
       <DropdownMenuContent align='end'>
@@ -290,7 +315,9 @@ export function MembersSection({
             </DropdownMenuItem>
           </>
         ) : null}
-        {canShowRoleSection && canShowRemove ? <DropdownMenuSeparator /> : null}
+        {(canShowRoleSection && canShowRemove) || (canShowRoleSection && canShowLeave) ? (
+          <DropdownMenuSeparator />
+        ) : null}
         {canShowRemove ? (
           <DropdownMenuItem
             disabled={updatingRoleUserId === member.userId}
@@ -299,6 +326,15 @@ export function MembersSection({
           >
             <UserX className='mr-2 h-4 w-4' />
             <span>{t('common.buttons.remove')}</span>
+          </DropdownMenuItem>
+        ) : null}
+        {canShowLeave ? (
+          <DropdownMenuItem
+            className='text-destructive focus:text-destructive'
+            onClick={() => setLeaveDialogOpen(true)}
+          >
+            <UserX className='mr-2 h-4 w-4' />
+            <span>{t('pages.spaces.leaveSpace')}</span>
           </DropdownMenuItem>
         ) : null}
       </DropdownMenuContent>
@@ -410,7 +446,7 @@ export function MembersSection({
                     </div>
                   </div>
                   <div>
-                    {isCurrentUser || !hasRowActions ? null : (
+                    {!hasRowActions && !canLeaveSpace ? null : (
                       <div className='flex justify-end'>
                         <DropdownMenu
                           open={openMenuMemberId === desktopMenuId}
@@ -467,7 +503,7 @@ export function MembersSection({
                         </p>
                       ) : null}
                     </div>
-                    {isCurrentUser || !hasRowActions ? null : (
+                    {!hasRowActions && !canLeaveSpace ? null : (
                       <DropdownMenu
                         open={openMenuMemberId === mobileMenuId}
                         onOpenChange={(open) => setOpenMenuMemberId(open ? mobileMenuId : null)}
@@ -550,6 +586,7 @@ export function MembersSection({
             {invitationsContent}
           </div>
         ) : null}
+
       </div>
 
       <ResponsiveDialog
@@ -584,6 +621,34 @@ export function MembersSection({
             className='w-full sm:w-auto'
           >
             {t('common.buttons.remove')}
+          </ButtonWithLoading>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.spaces.leaveSpace')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.spaces.leaveSpaceDescription')} <strong className='text-foreground'>{spaceKey}</strong>
+            ?
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+          <Button
+            variant='outline'
+            onClick={() => setLeaveDialogOpen(false)}
+            disabled={isLeaving}
+            className='w-full sm:w-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+          <ButtonWithLoading
+            variant='destructive'
+            onClick={handleLeaveSpace}
+            isLoading={isLeaving}
+            className='w-full sm:w-auto'
+          >
+            {t('pages.spaces.leaveSpace')}
           </ButtonWithLoading>
         </ResponsiveDialogFooter>
       </ResponsiveDialog>
