@@ -135,25 +135,48 @@ const baseLayoutRoute = createRoute({
 })
 
 const rootPath = createRoute({
-  getParentRoute: () => baseLayoutRoute,
+  getParentRoute: () => settingsLayoutRoute,
   path: '/',
-  // In multi-tenant (SaaS) mode there is no system-level root gallery.
-  // Redirect to the spaces list so the user picks a space.
-  beforeLoad: () => {
+  // In multi-tenant (SaaS) mode, render the spaces list at the base path (no sidebar).
+  // In self-hosted mode, render the root gallery wrapped in SidebarLayout.
+  beforeLoad: async (context) => {
     const auth = getAuth()
     if (auth.multiTenant) {
-      throw redirect({ to: '/account/spaces' })
+      // Spaces list requires admin in multi-tenant mode
+      return requireAdminAccountAuth(context)
     }
   },
   component: () => {
-    const galleryLoaderData = rootPath.useLoaderData()
+    const { t } = useTranslation()
+    const auth = getAuth()
+    if (auth.multiTenant) {
+      const loaderData = rootPath.useLoaderData() as Awaited<ReturnType<typeof spacesLoader>>
+      return (
+        <SpacesLayout
+          title={t('pages.spaces.title')}
+          description={t('pages.spaces.description')}
+          primaryAction={<CreateSpacePageTrigger />}
+        >
+          <SpacesPage loaderData={loaderData.spaces} />
+        </SpacesLayout>
+      )
+    }
+    const galleryLoaderData = rootPath.useLoaderData() as Awaited<ReturnType<typeof galleryLoader>>
     return (
-      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>
-        <Outlet />
-      </GalleryPage>
+      <SidebarLayout>
+        <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>
+          <Outlet />
+        </GalleryPage>
+      </SidebarLayout>
     )
   },
-  loader: () => galleryLoader({ params: { galleryKey: '' } }),
+  loader: () => {
+    const auth = getAuth()
+    if (auth.multiTenant) {
+      return spacesLoader()
+    }
+    return galleryLoader({ params: { galleryKey: '' } })
+  },
   shouldReload: false,
 })
 
@@ -603,33 +626,6 @@ const accountUsersRoute = createRoute({
   },
 })
 
-// /account/spaces  →  each child provides its own SpacesLayout
-const spacesLayoutRoute = createRoute({
-  getParentRoute: () => settingsLayoutRoute,
-  id: 'spaces-layout',
-  component: () => <Outlet />,
-})
-
-const accountSpacesRoute = createRoute({
-  getParentRoute: () => spacesLayoutRoute,
-  path: '/account/spaces',
-  beforeLoad: requireAdminAccountAuth,
-  loader: spacesLoader,
-  component: () => {
-    const { t } = useTranslation()
-    const loaderData = accountSpacesRoute.useLoaderData()
-    return (
-      <SpacesLayout
-        title={t('pages.spaces.title')}
-        description={t('pages.spaces.description')}
-        primaryAction={<CreateSpacePageTrigger />}
-      >
-        <SpacesPage loaderData={loaderData.spaces} />
-      </SpacesLayout>
-    )
-  },
-})
-
 const CreateSpacePageTrigger = () => {
   const { t } = useTranslation()
   return (
@@ -676,6 +672,7 @@ const routeTree = isEmbeddedMode
       spaceGalleryImageEditorRoute,
       spaceCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
+        rootPath.addChildren([rootImagePage]),
         spaceSettingsLayoutRoute.addChildren([
           spaceSettingsIndexRoute,
           generalSectionRoute,
@@ -684,7 +681,6 @@ const routeTree = isEmbeddedMode
           galleryRedirectRoute,
           membersSectionRoute,
         ]),
-        spacesLayoutRoute.addChildren([accountSpacesRoute]),
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
@@ -699,7 +695,6 @@ const routeTree = isEmbeddedMode
         ]),
       ]),
       baseLayoutRoute.addChildren([
-        rootPath.addChildren([rootImagePage]),
         galleryRoute.addChildren([imagePage]),
         spaceRootRoute.addChildren([spaceRootImagePage]),
         spaceGalleryRoute.addChildren([spaceImagePage]),

@@ -106,7 +106,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     try {
       await deleteSpace({ key: space.key })
       toast.success(t('pages.spaces.messages.spaceDeletedSuccess'))
-      await navigate({ to: '/account/spaces' })
+      await navigate({ to: '/' })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
     } finally {

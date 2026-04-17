@@ -12,6 +12,6 @@ import { getAuth } from '@/stores/auth-store'
 export function authCallbackLoader(): void {
   const auth = getAuth()
   if (auth.state === 'authenticated') {
-    throw redirect({ to: auth.multiTenant ? '/account/spaces' : '/' })
+    throw redirect({ to: '/' })
   }
 }

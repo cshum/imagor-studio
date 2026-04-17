@@ -145,7 +145,7 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
         )}
       />
       <div className='mt-6 flex items-center justify-between border-t pt-6'>
-        <Button type='button' variant='outline' onClick={() => navigate({ to: '/account/spaces' })}>
+        <Button type='button' variant='outline' onClick={() => navigate({ to: '/' })}>
           {t('common.buttons.cancel')}
         </Button>
         <ButtonWithLoading type='button' onClick={handleNext} isLoading={isLoading}>
@@ -438,7 +438,7 @@ export function CreateSpacePage() {
         onLogout={handleLogout}
         appTitle={appTitle}
         breadcrumbs={[
-          { label: t('navigation.breadcrumbs.spaces'), href: '/account/spaces' },
+          { label: t('navigation.breadcrumbs.spaces'), href: '/' },
           { label: t('pages.spaces.createNewSpace') },
         ]}
         profileText={t('layouts.account.tabs.profile')}
@@ -453,7 +453,7 @@ export function CreateSpacePage() {
             steps={steps}
             currentStep={currentStep}
             onStepChange={setCurrentStep}
-            onComplete={() => navigate({ to: '/account/spaces' })}
+            onComplete={() => navigate({ to: '/' })}
             title={t('pages.spaces.createNewSpace')}
             description={t('pages.spaces.createSpaceDescription')}
             className='w-full max-w-2xl'

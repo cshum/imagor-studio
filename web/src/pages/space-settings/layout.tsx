@@ -178,7 +178,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link to='/account/spaces'>
+              <Link to='/'>
                 <ArrowLeft className='h-4 w-4' />
                 <span>{t('pages.spaceSettings.backToSpaces')}</span>
               </Link>
