@@ -12,7 +12,6 @@ import {
 
 import {
   getSpaceRegistry,
-  listOrgMembers,
   listSpaceInvitations,
   listSpaceMembers,
 } from '@/api/org-api'
@@ -468,25 +467,23 @@ const membersSectionRoute = createRoute({
   path: '/members',
   loader: async ({ params }) => {
     try {
-      const [spaceMembers, orgMembers, invitations] = await Promise.all([
+      const [spaceMembers, invitations] = await Promise.all([
         listSpaceMembers(params.spaceKey),
-        listOrgMembers(),
         listSpaceInvitations(params.spaceKey),
       ])
-      return { spaceMembers, orgMembers, invitations }
+      return { spaceMembers, invitations }
     } catch {
-      return { spaceMembers: [], orgMembers: [], invitations: [] }
+      return { spaceMembers: [], invitations: [] }
     }
   },
   shouldReload: false,
   component: () => {
-    const { spaceMembers, orgMembers, invitations } = membersSectionRoute.useLoaderData()
+    const { spaceMembers, invitations } = membersSectionRoute.useLoaderData()
     const { space } = spaceSettingsLayoutRoute.useLoaderData()
     return (
       <MembersSection
         spaceKey={space.key}
         initialMembers={spaceMembers}
-        initialOrgMembers={orgMembers}
         initialInvitations={invitations}
         isShared={space.isShared}
       />
