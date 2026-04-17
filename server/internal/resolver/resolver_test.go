@@ -362,6 +362,11 @@ func (m *MockSpaceStore) Create(ctx context.Context, s *spacestore.Space) error 
 	return args.Error(0)
 }
 
+func (m *MockSpaceStore) RenameKey(ctx context.Context, oldKey, newKey string) error {
+	args := m.Called(ctx, oldKey, newKey)
+	return args.Error(0)
+}
+
 func (m *MockSpaceStore) Upsert(ctx context.Context, s *spacestore.Space) error {
 	args := m.Called(ctx, s)
 	return args.Error(0)
@@ -483,6 +488,11 @@ func (m *MockSpaceInviteStore) GetPendingByToken(ctx context.Context, token stri
 
 func (m *MockSpaceInviteStore) MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error {
 	args := m.Called(ctx, id, acceptedAt)
+	return args.Error(0)
+}
+
+func (m *MockSpaceInviteStore) RenameSpaceKey(ctx context.Context, orgID, oldSpaceKey, newSpaceKey string) error {
+	args := m.Called(ctx, orgID, oldSpaceKey, newSpaceKey)
 	return args.Error(0)
 }
 

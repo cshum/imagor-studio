@@ -34,6 +34,7 @@ type Store interface {
 	ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*Invitation, error)
 	GetPendingByToken(ctx context.Context, token string) (*Invitation, error)
 	MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error
+	RenameSpaceKey(ctx context.Context, orgID, oldSpaceKey, newSpaceKey string) error
 }
 
 type store struct {
@@ -185,6 +186,25 @@ func (s *store) MarkAccepted(ctx context.Context, id string, acceptedAt time.Tim
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("mark invitation accepted: %w", err)
+	}
+	return nil
+}
+
+func (s *store) RenameSpaceKey(ctx context.Context, orgID, oldSpaceKey, newSpaceKey string) error {
+	oldSpaceKey = strings.TrimSpace(oldSpaceKey)
+	newSpaceKey = strings.TrimSpace(newSpaceKey)
+	if oldSpaceKey == newSpaceKey {
+		return nil
+	}
+	_, err := s.db.NewUpdate().
+		Model((*model.SpaceInvitation)(nil)).
+		Set("space_key = ?", newSpaceKey).
+		Set("updated_at = ?", time.Now().UTC()).
+		Where("org_id = ?", orgID).
+		Where("space_key = ?", oldSpaceKey).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("rename invitation space key %s -> %s: %w", oldSpaceKey, newSpaceKey, err)
 	}
 	return nil
 }

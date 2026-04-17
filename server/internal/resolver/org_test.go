@@ -7,6 +7,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -469,6 +470,46 @@ func TestUpdateSpace_AllowsGuestManager(t *testing.T) {
 	assert.True(t, result.CanManage)
 	assert.False(t, result.CanDelete)
 	spaceStore.AssertExpectations(t)
+}
+
+func TestUpdateSpace_RenamesKeyAndMigratesDependencies(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	registryStore := &MockRegistryStore{}
+	logger, _ := zap.NewDevelopment()
+	r := NewResolver(NewMockStorageProvider(nil), registryStore, nil, nil, nil, nil, logger, orgStore, spaceStore, inviteStore, nil)
+
+	existing := makeTestSpace("acme", "org-1")
+	updated := makeTestSpace("acme-renamed", "org-1")
+	updated.Name = "Renamed Space"
+
+	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
+	registryStore.On("List", mock.Anything, registrystore.SpaceOwnerID("acme"), (*string)(nil)).Return([]*registrystore.Registry{{
+		Key:   "config.app_title",
+		Value: "Acme",
+	}}, nil).Once()
+	registryStore.On("SetMulti", mock.Anything, registrystore.SpaceOwnerID("acme-renamed"), mock.MatchedBy(func(entries []*registrystore.Registry) bool {
+		return len(entries) == 1 && entries[0].Key == "config.app_title" && entries[0].Value == "Acme"
+	})).Return([]*registrystore.Registry{{Key: "config.app_title", Value: "Acme"}}, nil).Once()
+	registryStore.On("DeleteMulti", mock.Anything, registrystore.SpaceOwnerID("acme"), []string{"config.app_title"}).Return(nil).Once()
+	inviteStore.On("RenameSpaceKey", mock.Anything, "org-1", "acme", "acme-renamed").Return(nil).Once()
+	spaceStore.On("RenameKey", mock.Anything, "acme", "acme-renamed").Return(nil).Once()
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
+		return s.Key == "acme-renamed" && s.Name == "Renamed Space"
+	})).Return(nil).Once()
+	spaceStore.On("Get", mock.Anything, "acme-renamed").Return(updated, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	input := gql.SpaceInput{Key: "acme-renamed", Name: "Renamed Space"}
+	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "acme-renamed", result.Key)
+	assert.Equal(t, "Renamed Space", result.Name)
+	spaceStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+	registryStore.AssertExpectations(t)
 }
 
 // ---------- DeleteSpace ------------------------------------------------------

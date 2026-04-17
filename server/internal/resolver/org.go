@@ -11,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"go.uber.org/zap"
@@ -298,6 +299,44 @@ func applySpaceInput(sp *spacestore.Space, input gql.SpaceInput) {
 	}
 }
 
+func (r *Resolver) copySpaceRegistryNamespace(ctx context.Context, oldKey, newKey string) error {
+	if r.registryStore == nil || oldKey == newKey {
+		return nil
+	}
+	oldOwnerID := registrystore.SpaceOwnerID(oldKey)
+	newOwnerID := registrystore.SpaceOwnerID(newKey)
+	entries, err := r.registryStore.List(ctx, oldOwnerID, nil)
+	if err != nil {
+		return fmt.Errorf("failed to list space registry entries for rename: %w", err)
+	}
+	if len(entries) == 0 {
+		return nil
+	}
+	cloned := make([]*registrystore.Registry, 0, len(entries))
+	for _, entry := range entries {
+		cloned = append(cloned, &registrystore.Registry{
+			Key:         entry.Key,
+			Value:       entry.Value,
+			IsEncrypted: entry.IsEncrypted,
+		})
+	}
+	if _, err := r.registryStore.SetMulti(ctx, newOwnerID, cloned); err != nil {
+		return fmt.Errorf("failed to copy space registry entries during rename: %w", err)
+	}
+	keys := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		keys = append(keys, entry.Key)
+	}
+	if err := r.registryStore.DeleteMulti(ctx, oldOwnerID, keys); err != nil {
+		r.logger.Warn("UpdateSpace: failed to delete old space registry namespace after rename",
+			zap.String("oldKey", oldKey),
+			zap.String("newKey", newKey),
+			zap.Error(err),
+		)
+	}
+	return nil
+}
+
 // ---------- Query resolvers --------------------------------------------------
 
 // MyOrganization returns the organization for the currently authenticated user.
@@ -506,6 +545,31 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 	}
 	if !permissions.CanManage {
 		return nil, fmt.Errorf("forbidden: space manager access required")
+	}
+	oldKey := existing.Key
+	newKey := strings.TrimSpace(input.Key)
+	keyChanged := newKey != "" && newKey != oldKey
+	if keyChanged {
+		if err := r.copySpaceRegistryNamespace(ctx, oldKey, newKey); err != nil {
+			return nil, err
+		}
+		if r.spaceInviteStore != nil {
+			if err := r.spaceInviteStore.RenameSpaceKey(ctx, existing.OrgID, oldKey, newKey); err != nil {
+				return nil, fmt.Errorf("failed to update pending invitations for renamed space: %w", err)
+			}
+		}
+		if err := r.spaceStore.RenameKey(ctx, oldKey, newKey); err != nil {
+			if r.spaceInviteStore != nil {
+				if rollbackErr := r.spaceInviteStore.RenameSpaceKey(ctx, existing.OrgID, newKey, oldKey); rollbackErr != nil {
+					r.logger.Warn("UpdateSpace: failed to roll back invitation space key rename",
+						zap.String("oldKey", oldKey),
+						zap.String("newKey", newKey),
+						zap.Error(rollbackErr),
+					)
+				}
+			}
+			return nil, err
+		}
 	}
 
 	applySpaceInput(existing, input)

@@ -87,6 +87,8 @@ type Store interface {
 	// (regardless of which org owns it), so that duplicate-key attempts surface as a proper
 	// field-level error rather than a silent overwrite.
 	Create(ctx context.Context, s *Space) error
+	// RenameKey changes the unique URL key for an existing active space while preserving its ID.
+	RenameKey(ctx context.Context, oldKey, newKey string) error
 	// Upsert creates or fully replaces a space by key.
 	Upsert(ctx context.Context, s *Space) error
 	// SoftDelete marks a space as deleted without removing the row.
@@ -292,6 +294,38 @@ func (s *store) Create(ctx context.Context, sp *Space) error {
 			return apperror.Conflict(fmt.Sprintf("space key %q is already taken", sp.Key), "key")
 		}
 		return fmt.Errorf("create space: %w", err)
+	}
+	return nil
+}
+
+func (s *store) RenameKey(ctx context.Context, oldKey, newKey string) error {
+	oldKey = strings.TrimSpace(oldKey)
+	newKey = strings.TrimSpace(newKey)
+	if oldKey == newKey {
+		return nil
+	}
+	if err := validateSpaceKey(newKey); err != nil {
+		return fmt.Errorf("invalid space key: %w", err)
+	}
+	now := time.Now().UTC()
+	res, err := s.db.NewUpdate().
+		Model((*model.Space)(nil)).
+		Set("key = ?", newKey).
+		Set("updated_at = ?", now).
+		Where("key = ? AND deleted_at IS NULL", oldKey).
+		Exec(ctx)
+	if err != nil {
+		if isDuplicateKeyError(err) {
+			return apperror.Conflict(fmt.Sprintf("space key %q is already taken", newKey), "key")
+		}
+		return fmt.Errorf("rename space key %s -> %s: %w", oldKey, newKey, err)
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rename space key rows affected: %w", err)
+	}
+	if affected == 0 {
+		return fmt.Errorf("space %q not found", oldKey)
 	}
 	return nil
 }
