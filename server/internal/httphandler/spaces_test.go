@@ -35,6 +35,15 @@ func (m *mockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*spac
 	return nil, nil
 }
 func (m *mockSpaceStore) KeyExists(_ context.Context, _ string) (bool, error) { return false, nil }
+func (m *mockSpaceStore) ListMembers(_ context.Context, _ string) ([]*spacestore.SpaceMemberView, error) {
+	return nil, nil
+}
+func (m *mockSpaceStore) AddMember(_ context.Context, _, _, _ string) error { return nil }
+func (m *mockSpaceStore) RemoveMember(_ context.Context, _, _ string) error { return nil }
+func (m *mockSpaceStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return nil
+}
+func (m *mockSpaceStore) HasMember(_ context.Context, _, _ string) (bool, error) { return false, nil }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 

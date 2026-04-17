@@ -155,6 +155,7 @@ export type LicenseStatus = {
 export type Mutation = {
   __typename?: 'Mutation'
   addOrgMember: OrgMember
+  addSpaceMember: SpaceMember
   changePassword: Scalars['Boolean']['output']
   configureFileStorage: StorageConfigResult
   configureImagor: ImagorConfigResult
@@ -175,6 +176,7 @@ export type Mutation = {
   reactivateAccount: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
   removeOrgMember: Scalars['Boolean']['output']
+  removeSpaceMember: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSpaceRegistry: Array<UserRegistry>
   setSystemRegistry: Array<SystemRegistry>
@@ -183,12 +185,19 @@ export type Mutation = {
   updateOrgMemberRole: OrgMember
   updateProfile: User
   updateSpace: Space
+  updateSpaceMemberRole: SpaceMember
   uploadFile: Scalars['Boolean']['output']
 }
 
 export type MutationAddOrgMemberArgs = {
   role: Scalars['String']['input']
   username: Scalars['String']['input']
+}
+
+export type MutationAddSpaceMemberArgs = {
+  role: Scalars['String']['input']
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
 }
 
 export type MutationChangePasswordArgs = {
@@ -290,6 +299,11 @@ export type MutationRemoveOrgMemberArgs = {
   userId: Scalars['ID']['input']
 }
 
+export type MutationRemoveSpaceMemberArgs = {
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+}
+
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
   spaceKey?: InputMaybe<Scalars['String']['input']>
@@ -328,6 +342,12 @@ export type MutationUpdateProfileArgs = {
 export type MutationUpdateSpaceArgs = {
   input: SpaceInput
   key: Scalars['String']['input']
+}
+
+export type MutationUpdateSpaceMemberRoleArgs = {
+  role: Scalars['String']['input']
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
 }
 
 export type MutationUploadFileArgs = {
@@ -371,6 +391,7 @@ export type Query = {
   orgMembers: Array<OrgMember>
   space: Maybe<Space>
   spaceKeyExists: Scalars['Boolean']['output']
+  spaceMembers: Array<SpaceMember>
   spaceRegistry: Array<UserRegistry>
   spaces: Array<Space>
   statFile: Maybe<FileStat>
@@ -418,6 +439,10 @@ export type QuerySpaceArgs = {
 
 export type QuerySpaceKeyExistsArgs = {
   key: Scalars['String']['input']
+}
+
+export type QuerySpaceMembersArgs = {
+  spaceKey: Scalars['String']['input']
 }
 
 export type QuerySpaceRegistryArgs = {
@@ -516,6 +541,15 @@ export type SpaceInput = {
   signerTruncate: InputMaybe<Scalars['Int']['input']>
   storageType: InputMaybe<Scalars['String']['input']>
   usePathStyle: InputMaybe<Scalars['Boolean']['input']>
+}
+
+export type SpaceMember = {
+  __typename?: 'SpaceMember'
+  createdAt: Scalars['String']['output']
+  displayName: Scalars['String']['output']
+  role: Scalars['String']['output']
+  userId: Scalars['ID']['output']
+  username: Scalars['String']['output']
 }
 
 export type StorageConfigInput = {
@@ -844,6 +878,22 @@ export type ListOrgMembersQuery = {
   }>
 }
 
+export type ListSpaceMembersQueryVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+}>
+
+export type ListSpaceMembersQuery = {
+  __typename?: 'Query'
+  spaceMembers: Array<{
+    __typename?: 'SpaceMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }>
+}
+
 export type AddOrgMemberMutationVariables = Exact<{
   username: Scalars['String']['input']
   role: Scalars['String']['input']
@@ -861,11 +911,36 @@ export type AddOrgMemberMutation = {
   }
 }
 
+export type AddSpaceMemberMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+  role: Scalars['String']['input']
+}>
+
+export type AddSpaceMemberMutation = {
+  __typename?: 'Mutation'
+  addSpaceMember: {
+    __typename?: 'SpaceMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }
+}
+
 export type RemoveOrgMemberMutationVariables = Exact<{
   userId: Scalars['ID']['input']
 }>
 
 export type RemoveOrgMemberMutation = { __typename?: 'Mutation'; removeOrgMember: boolean }
+
+export type RemoveSpaceMemberMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+}>
+
+export type RemoveSpaceMemberMutation = { __typename?: 'Mutation'; removeSpaceMember: boolean }
 
 export type UpdateOrgMemberRoleMutationVariables = Exact<{
   userId: Scalars['ID']['input']
@@ -876,6 +951,24 @@ export type UpdateOrgMemberRoleMutation = {
   __typename?: 'Mutation'
   updateOrgMemberRole: {
     __typename?: 'OrgMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }
+}
+
+export type UpdateSpaceMemberRoleMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+  role: Scalars['String']['input']
+}>
+
+export type UpdateSpaceMemberRoleMutation = {
+  __typename?: 'Mutation'
+  updateSpaceMemberRole: {
+    __typename?: 'SpaceMember'
     userId: string
     username: string
     displayName: string
@@ -2183,6 +2276,52 @@ export const ListOrgMembersDocument = {
     },
   ],
 } as unknown as DocumentNode<ListOrgMembersQuery, ListOrgMembersQueryVariables>
+export const ListSpaceMembersDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListSpaceMembers' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'spaceMembers' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ListSpaceMembersQuery, ListSpaceMembersQueryVariables>
 export const AddOrgMemberDocument = {
   kind: 'Document',
   definitions: [
@@ -2242,6 +2381,78 @@ export const AddOrgMemberDocument = {
     },
   ],
 } as unknown as DocumentNode<AddOrgMemberMutation, AddOrgMemberMutationVariables>
+export const AddSpaceMemberDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'AddSpaceMember' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addSpaceMember' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'role' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddSpaceMemberMutation, AddSpaceMemberMutationVariables>
 export const RemoveOrgMemberDocument = {
   kind: 'Document',
   definitions: [
@@ -2278,6 +2489,55 @@ export const RemoveOrgMemberDocument = {
     },
   ],
 } as unknown as DocumentNode<RemoveOrgMemberMutation, RemoveOrgMemberMutationVariables>
+export const RemoveSpaceMemberDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RemoveSpaceMember' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'removeSpaceMember' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RemoveSpaceMemberMutation, RemoveSpaceMemberMutationVariables>
 export const UpdateOrgMemberRoleDocument = {
   kind: 'Document',
   definitions: [
@@ -2337,6 +2597,78 @@ export const UpdateOrgMemberRoleDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateOrgMemberRoleMutation, UpdateOrgMemberRoleMutationVariables>
+export const UpdateSpaceMemberRoleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateSpaceMemberRole' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateSpaceMemberRole' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'role' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateSpaceMemberRoleMutation, UpdateSpaceMemberRoleMutationVariables>
 export const ListUserRegistryDocument = {
   kind: 'Document',
   definitions: [

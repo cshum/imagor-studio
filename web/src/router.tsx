@@ -10,7 +10,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import { getSpaceRegistry, listOrgMembers } from '@/api/org-api'
+import { getSpaceRegistry, listOrgMembers, listSpaceMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
@@ -461,17 +461,29 @@ const galleryRedirectRoute = createRoute({
 const membersSectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/members',
-  loader: async () => {
+  loader: async ({ params }) => {
     try {
-      return await listOrgMembers()
+      const [spaceMembers, orgMembers] = await Promise.all([
+        listSpaceMembers(params.spaceKey),
+        listOrgMembers(),
+      ])
+      return { spaceMembers, orgMembers }
     } catch {
-      return []
+      return { spaceMembers: [], orgMembers: [] }
     }
   },
   shouldReload: false,
   component: () => {
-    const initialMembers = membersSectionRoute.useLoaderData()
-    return <MembersSection initialMembers={initialMembers} />
+    const { spaceMembers, orgMembers } = membersSectionRoute.useLoaderData()
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    return (
+      <MembersSection
+        spaceKey={space.key}
+        initialMembers={spaceMembers}
+        initialOrgMembers={orgMembers}
+        isShared={space.isShared}
+      />
+    )
   },
 })
 

@@ -237,6 +237,10 @@ func TestCreateSpace_Success(t *testing.T) {
 	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
 		return s.Key == "acme" && s.OrgID == "org-1" && s.Name == "Acme"
 	})).Return(nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+	}, nil)
+	spaceStore.On("AddMember", mock.Anything, "acme", "user-1", "admin").Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(created, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
@@ -282,6 +286,10 @@ func TestCreateSpace_AutoCreatesOrg(t *testing.T) {
 	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *spacestore.Space) bool {
 		return s.Key == "acme" && s.OrgID == "org-auto"
 	})).Return(nil)
+	orgStore.On("ListMembers", mock.Anything, "org-auto").Return([]*orgstore.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+	}, nil)
+	spaceStore.On("AddMember", mock.Anything, "acme", "user-1", "admin").Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(created, nil)
 
 	ctx := createAdminContext("user-1") // no org_id claim

@@ -156,6 +156,7 @@ export type LicenseStatus = {
 export type Mutation = {
   __typename?: 'Mutation'
   addOrgMember: OrgMember
+  addSpaceMember: SpaceMember
   changePassword: Scalars['Boolean']['output']
   configureFileStorage: StorageConfigResult
   configureImagor: ImagorConfigResult
@@ -176,6 +177,7 @@ export type Mutation = {
   reactivateAccount: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
   removeOrgMember: Scalars['Boolean']['output']
+  removeSpaceMember: Scalars['Boolean']['output']
   saveTemplate: TemplateResult
   setSpaceRegistry: Array<UserRegistry>
   setSystemRegistry: Array<SystemRegistry>
@@ -184,12 +186,19 @@ export type Mutation = {
   updateOrgMemberRole: OrgMember
   updateProfile: User
   updateSpace: Space
+  updateSpaceMemberRole: SpaceMember
   uploadFile: Scalars['Boolean']['output']
 }
 
 export type MutationAddOrgMemberArgs = {
   role: Scalars['String']['input']
   username: Scalars['String']['input']
+}
+
+export type MutationAddSpaceMemberArgs = {
+  role: Scalars['String']['input']
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
 }
 
 export type MutationChangePasswordArgs = {
@@ -291,6 +300,11 @@ export type MutationRemoveOrgMemberArgs = {
   userId: Scalars['ID']['input']
 }
 
+export type MutationRemoveSpaceMemberArgs = {
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+}
+
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
   spaceKey?: InputMaybe<Scalars['String']['input']>
@@ -329,6 +343,12 @@ export type MutationUpdateProfileArgs = {
 export type MutationUpdateSpaceArgs = {
   input: SpaceInput
   key: Scalars['String']['input']
+}
+
+export type MutationUpdateSpaceMemberRoleArgs = {
+  role: Scalars['String']['input']
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
 }
 
 export type MutationUploadFileArgs = {
@@ -372,6 +392,7 @@ export type Query = {
   orgMembers: Array<OrgMember>
   space: Maybe<Space>
   spaceKeyExists: Scalars['Boolean']['output']
+  spaceMembers: Array<SpaceMember>
   spaceRegistry: Array<UserRegistry>
   spaces: Array<Space>
   statFile: Maybe<FileStat>
@@ -419,6 +440,10 @@ export type QuerySpaceArgs = {
 
 export type QuerySpaceKeyExistsArgs = {
   key: Scalars['String']['input']
+}
+
+export type QuerySpaceMembersArgs = {
+  spaceKey: Scalars['String']['input']
 }
 
 export type QuerySpaceRegistryArgs = {
@@ -517,6 +542,15 @@ export type SpaceInput = {
   signerTruncate: InputMaybe<Scalars['Int']['input']>
   storageType: InputMaybe<Scalars['String']['input']>
   usePathStyle: InputMaybe<Scalars['Boolean']['input']>
+}
+
+export type SpaceMember = {
+  __typename?: 'SpaceMember'
+  createdAt: Scalars['String']['output']
+  displayName: Scalars['String']['output']
+  role: Scalars['String']['output']
+  userId: Scalars['ID']['output']
+  username: Scalars['String']['output']
 }
 
 export type StorageConfigInput = {
@@ -845,6 +879,22 @@ export type ListOrgMembersQuery = {
   }>
 }
 
+export type ListSpaceMembersQueryVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+}>
+
+export type ListSpaceMembersQuery = {
+  __typename?: 'Query'
+  spaceMembers: Array<{
+    __typename?: 'SpaceMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }>
+}
+
 export type AddOrgMemberMutationVariables = Exact<{
   username: Scalars['String']['input']
   role: Scalars['String']['input']
@@ -862,11 +912,36 @@ export type AddOrgMemberMutation = {
   }
 }
 
+export type AddSpaceMemberMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+  role: Scalars['String']['input']
+}>
+
+export type AddSpaceMemberMutation = {
+  __typename?: 'Mutation'
+  addSpaceMember: {
+    __typename?: 'SpaceMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }
+}
+
 export type RemoveOrgMemberMutationVariables = Exact<{
   userId: Scalars['ID']['input']
 }>
 
 export type RemoveOrgMemberMutation = { __typename?: 'Mutation'; removeOrgMember: boolean }
+
+export type RemoveSpaceMemberMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+}>
+
+export type RemoveSpaceMemberMutation = { __typename?: 'Mutation'; removeSpaceMember: boolean }
 
 export type UpdateOrgMemberRoleMutationVariables = Exact<{
   userId: Scalars['ID']['input']
@@ -877,6 +952,24 @@ export type UpdateOrgMemberRoleMutation = {
   __typename?: 'Mutation'
   updateOrgMemberRole: {
     __typename?: 'OrgMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }
+}
+
+export type UpdateSpaceMemberRoleMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  userId: Scalars['ID']['input']
+  role: Scalars['String']['input']
+}>
+
+export type UpdateSpaceMemberRoleMutation = {
+  __typename?: 'Mutation'
+  updateSpaceMemberRole: {
+    __typename?: 'SpaceMember'
     userId: string
     username: string
     displayName: string
@@ -1579,9 +1672,31 @@ export const ListOrgMembersDocument = gql`
     }
   }
 `
+export const ListSpaceMembersDocument = gql`
+  query ListSpaceMembers($spaceKey: String!) {
+    spaceMembers(spaceKey: $spaceKey) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`
 export const AddOrgMemberDocument = gql`
   mutation AddOrgMember($username: String!, $role: String!) {
     addOrgMember(username: $username, role: $role) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`
+export const AddSpaceMemberDocument = gql`
+  mutation AddSpaceMember($spaceKey: String!, $userId: ID!, $role: String!) {
+    addSpaceMember(spaceKey: $spaceKey, userId: $userId, role: $role) {
       userId
       username
       displayName
@@ -1595,9 +1710,25 @@ export const RemoveOrgMemberDocument = gql`
     removeOrgMember(userId: $userId)
   }
 `
+export const RemoveSpaceMemberDocument = gql`
+  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {
+    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)
+  }
+`
 export const UpdateOrgMemberRoleDocument = gql`
   mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {
     updateOrgMemberRole(userId: $userId, role: $role) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`
+export const UpdateSpaceMemberRoleDocument = gql`
+  mutation UpdateSpaceMemberRole($spaceKey: String!, $userId: ID!, $role: String!) {
+    updateSpaceMemberRole(spaceKey: $spaceKey, userId: $userId, role: $role) {
       userId
       username
       displayName
@@ -2174,6 +2305,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
         variables,
       )
     },
+    ListSpaceMembers(
+      variables: ListSpaceMembersQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ListSpaceMembersQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ListSpaceMembersQuery>({
+            document: ListSpaceMembersDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ListSpaceMembers',
+        'query',
+        variables,
+      )
+    },
     AddOrgMember(
       variables: AddOrgMemberMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -2188,6 +2337,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'AddOrgMember',
+        'mutation',
+        variables,
+      )
+    },
+    AddSpaceMember(
+      variables: AddSpaceMemberMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<AddSpaceMemberMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<AddSpaceMemberMutation>({
+            document: AddSpaceMemberDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'AddSpaceMember',
         'mutation',
         variables,
       )
@@ -2210,6 +2377,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
         variables,
       )
     },
+    RemoveSpaceMember(
+      variables: RemoveSpaceMemberMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<RemoveSpaceMemberMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<RemoveSpaceMemberMutation>({
+            document: RemoveSpaceMemberDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'RemoveSpaceMember',
+        'mutation',
+        variables,
+      )
+    },
     UpdateOrgMemberRole(
       variables: UpdateOrgMemberRoleMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -2224,6 +2409,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'UpdateOrgMemberRole',
+        'mutation',
+        variables,
+      )
+    },
+    UpdateSpaceMemberRole(
+      variables: UpdateSpaceMemberRoleMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<UpdateSpaceMemberRoleMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<UpdateSpaceMemberRoleMutation>({
+            document: UpdateSpaceMemberRoleDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'UpdateSpaceMemberRole',
         'mutation',
         variables,
       )

@@ -57,6 +57,14 @@ type OrgMember {
   createdAt: String!
 }
 
+type SpaceMember {
+  userId: ID!
+  username: String!
+  displayName: String!
+  role: String!
+  createdAt: String!
+}
+
 extend type Query {
   # Returns the organization for the currently authenticated user
   myOrganization: Organization
@@ -68,6 +76,8 @@ extend type Query {
   spaceRegistry(spaceKey: String!, keys: [String!]): [UserRegistry!]!
   # Lists all members of the caller's organization (admin only)
   orgMembers: [OrgMember!]!
+  # Lists all members who currently have access to a specific space (admin only)
+  spaceMembers(spaceKey: String!): [SpaceMember!]!
   # Returns true when the space key is already taken (globally unique, admin only)
   spaceKeyExists(key: String!): Boolean!
 }
@@ -85,8 +95,14 @@ extend type Mutation {
   deleteSpaceRegistry(spaceKey: String!, keys: [String!]): Boolean!
   # Add a user to the caller's organization by username (admin only)
   addOrgMember(username: String!, role: String!): OrgMember!
+  # Add an existing org member to a specific space (admin only)
+  addSpaceMember(spaceKey: String!, userId: ID!, role: String!): SpaceMember!
   # Remove a member from the organization by userId (admin only)
   removeOrgMember(userId: ID!): Boolean!
+  # Remove a member from a specific space by userId (admin only)
+  removeSpaceMember(spaceKey: String!, userId: ID!): Boolean!
   # Change a member's role within the organization (admin only)
   updateOrgMemberRole(userId: ID!, role: String!): OrgMember!
+  # Change a member's role within a specific space (admin only)
+  updateSpaceMemberRole(spaceKey: String!, userId: ID!, role: String!): SpaceMember!
 }

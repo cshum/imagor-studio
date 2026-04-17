@@ -780,8 +780,8 @@
         "deleteButton": "Delete Space"
       },
       "members": {
-        "description": "Manage who has access to this organisation.",
-        "addLabel": "Invite member",
+        "description": "Manage who has access to this space.",
+        "addLabel": "Add member",
         "usernamePlaceholder": "Username",
         "roleLabel": "Role",
         "addButton": "Add",
@@ -790,8 +790,12 @@
           "role": "Role",
           "action": "Action"
         },
-        "inviteDescription": "Invite a teammate and assign their role for this space.",
-        "emptyDescription": "Add your first member to collaborate inside this space.",
+        "inviteDescription": "Grant access to existing organisation members for this space.",
+        "memberPlaceholder": "Select an organisation member",
+        "memberPlaceholderEmpty": "All organisation members already have access",
+        "sharedTitle": "Shared space",
+        "sharedDescription": "All organisation members can browse and copy files from this space. The list below controls explicit admins and collaborators.",
+        "emptyDescription": "Only org admins currently have access. Add explicit members to collaborate inside this space.",
         "addSuccess": "Member added successfully.",
         "roleUpdated": "Role updated.",
         "removeSuccess": "Member removed.",
@@ -799,7 +803,6 @@
         "removeTitle": "Remove Member",
         "removeDescription": "Are you sure you want to remove",
         "roles": {
-          "owner": "Owner",
           "admin": "Admin",
           "member": "Member"
         }

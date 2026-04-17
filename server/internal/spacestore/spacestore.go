@@ -68,6 +68,17 @@ type DeltaResult struct {
 	ServerTime time.Time
 }
 
+// SpaceMemberView is the application-level view of a space membership row,
+// augmented with the member's username and display name.
+type SpaceMemberView struct {
+	SpaceID     string
+	UserID      string
+	Username    string
+	DisplayName string
+	Role        string
+	CreatedAt   time.Time
+}
+
 // Store is the interface exposed to other packages.
 type Store interface {
 	// Create inserts a brand-new space. Returns a Conflict error if the key already exists
@@ -90,6 +101,16 @@ type Store interface {
 	// KeyExists reports whether any row (active or soft-deleted) with the given key
 	// exists in the database.  Used for a fast availability check before create.
 	KeyExists(ctx context.Context, key string) (bool, error)
+	// ListMembers returns all explicit members of a space with their usernames.
+	ListMembers(ctx context.Context, spaceKey string) ([]*SpaceMemberView, error)
+	// AddMember grants a user access to a space.
+	AddMember(ctx context.Context, spaceKey, userID, role string) error
+	// RemoveMember revokes a user's explicit access to a space.
+	RemoveMember(ctx context.Context, spaceKey, userID string) error
+	// UpdateMemberRole changes the user's explicit role within the space.
+	UpdateMemberRole(ctx context.Context, spaceKey, userID, role string) error
+	// HasMember reports whether a user has explicit membership in a space.
+	HasMember(ctx context.Context, spaceKey, userID string) (bool, error)
 }
 
 // dnsLabelRE validates that a space key is a valid DNS label:
@@ -178,6 +199,23 @@ func (s *store) modelToApp(row *model.Space) (*Space, error) {
 		UpdatedAt:            row.UpdatedAt,
 		DeletedAt:            row.DeletedAt,
 	}, nil
+}
+
+func (s *store) getSpaceRowByKey(ctx context.Context, key string) (*model.Space, error) {
+	var row model.Space
+	err := s.db.NewSelect().
+		Model(&row).
+		Where("key = ?", key).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get space by key %s: %w", key, err)
+	}
+	return &row, nil
 }
 
 // isDuplicateKeyError reports whether err came from a unique-constraint violation
@@ -421,6 +459,137 @@ func (s *store) KeyExists(ctx context.Context, key string) (bool, error) {
 		return false, fmt.Errorf("check space key existence: %w", err)
 	}
 	return exists, nil
+}
+
+func (s *store) ListMembers(ctx context.Context, spaceKey string) ([]*SpaceMemberView, error) {
+	spaceRow, err := s.getSpaceRowByKey(ctx, spaceKey)
+	if err != nil {
+		return nil, err
+	}
+	if spaceRow == nil {
+		return []*SpaceMemberView{}, nil
+	}
+
+	type memberRow struct {
+		SpaceID     string    `bun:"space_id"`
+		UserID      string    `bun:"user_id"`
+		Role        string    `bun:"role"`
+		CreatedAt   time.Time `bun:"created_at"`
+		Username    string    `bun:"username"`
+		DisplayName string    `bun:"display_name"`
+	}
+
+	var rows []memberRow
+	err = s.db.NewSelect().
+		TableExpr("space_members AS sm").
+		ColumnExpr("sm.space_id, sm.user_id, sm.role, sm.created_at").
+		ColumnExpr("COALESCE(u.username, sm.user_id) AS username").
+		ColumnExpr("COALESCE(NULLIF(u.display_name, ''), COALESCE(u.username, sm.user_id)) AS display_name").
+		Join("LEFT JOIN users AS u ON u.id = sm.user_id").
+		Where("sm.space_id = ?", spaceRow.ID).
+		OrderExpr("sm.created_at ASC").
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, fmt.Errorf("list space members: %w", err)
+	}
+
+	result := make([]*SpaceMemberView, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, &SpaceMemberView{
+			SpaceID:     row.SpaceID,
+			UserID:      row.UserID,
+			Username:    row.Username,
+			DisplayName: row.DisplayName,
+			Role:        row.Role,
+			CreatedAt:   row.CreatedAt,
+		})
+	}
+	return result, nil
+}
+
+func (s *store) AddMember(ctx context.Context, spaceKey, userID, role string) error {
+	spaceRow, err := s.getSpaceRowByKey(ctx, spaceKey)
+	if err != nil {
+		return err
+	}
+	if spaceRow == nil {
+		return fmt.Errorf("space %q not found", spaceKey)
+	}
+
+	member := &model.SpaceMember{
+		SpaceID:   spaceRow.ID,
+		UserID:    userID,
+		Role:      role,
+		CreatedAt: time.Now().UTC(),
+	}
+	if _, err := s.db.NewInsert().Model(member).Exec(ctx); err != nil {
+		return fmt.Errorf("add space member: %w", err)
+	}
+	return nil
+}
+
+func (s *store) RemoveMember(ctx context.Context, spaceKey, userID string) error {
+	spaceRow, err := s.getSpaceRowByKey(ctx, spaceKey)
+	if err != nil {
+		return err
+	}
+	if spaceRow == nil {
+		return fmt.Errorf("space %q not found", spaceKey)
+	}
+
+	result, err := s.db.NewDelete().
+		Model((*model.SpaceMember)(nil)).
+		Where("space_id = ? AND user_id = ?", spaceRow.ID, userID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("remove space member: %w", err)
+	}
+	if affected, _ := result.RowsAffected(); affected == 0 {
+		return fmt.Errorf("space member not found")
+	}
+	return nil
+}
+
+func (s *store) UpdateMemberRole(ctx context.Context, spaceKey, userID, role string) error {
+	spaceRow, err := s.getSpaceRowByKey(ctx, spaceKey)
+	if err != nil {
+		return err
+	}
+	if spaceRow == nil {
+		return fmt.Errorf("space %q not found", spaceKey)
+	}
+
+	result, err := s.db.NewUpdate().
+		Model((*model.SpaceMember)(nil)).
+		Set("role = ?", role).
+		Where("space_id = ? AND user_id = ?", spaceRow.ID, userID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("update space member role: %w", err)
+	}
+	if affected, _ := result.RowsAffected(); affected == 0 {
+		return fmt.Errorf("space member not found")
+	}
+	return nil
+}
+
+func (s *store) HasMember(ctx context.Context, spaceKey, userID string) (bool, error) {
+	spaceRow, err := s.getSpaceRowByKey(ctx, spaceKey)
+	if err != nil {
+		return false, err
+	}
+	if spaceRow == nil {
+		return false, nil
+	}
+
+	count, err := s.db.NewSelect().
+		Model((*model.SpaceMember)(nil)).
+		Where("space_id = ? AND user_id = ?", spaceRow.ID, userID).
+		Count(ctx)
+	if err != nil {
+		return false, fmt.Errorf("check space member: %w", err)
+	}
+	return count > 0, nil
 }
 
 // Delta returns all spaces whose updated_at is strictly after since.

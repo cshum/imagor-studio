@@ -715,8 +715,8 @@
         "saved": "儲存與安全設定已儲存"
       },
       "members": {
-        "description": "管理有權存取此組織的成員。",
-        "addLabel": "邀請成員",
+        "description": "管理誰可以存取此空間。",
+        "addLabel": "新增成員",
         "usernamePlaceholder": "使用者名稱",
         "roleLabel": "角色",
         "addButton": "新增",
@@ -725,8 +725,12 @@
           "role": "角色",
           "action": "操作"
         },
-        "inviteDescription": "邀請隊友並為其指派此空間的角色。",
-        "emptyDescription": "新增您的第一位成員以在此空間中協作。",
+        "inviteDescription": "將此空間的存取權授予現有組織成員。",
+        "memberPlaceholder": "選擇組織成員",
+        "memberPlaceholderEmpty": "所有組織成員都已具有存取權",
+        "sharedTitle": "共享空間",
+        "sharedDescription": "所有組織成員都可以瀏覽並複製此空間中的檔案。下方清單控制明確加入的管理員與協作者。",
+        "emptyDescription": "目前只有組織管理員具有存取權。新增明確成員以在此空間中協作。",
         "addSuccess": "成員新增成功。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成員已移除。",
@@ -734,7 +738,6 @@
         "removeTitle": "移除成員",
         "removeDescription": "確定要移除",
         "roles": {
-          "owner": "擁有者",
           "admin": "管理員",
           "member": "成員"
         }

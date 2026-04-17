@@ -48,3 +48,23 @@ func (n *SpaceStore) Delta(_ context.Context, _ time.Time) (*spacestore.DeltaRes
 func (n *SpaceStore) KeyExists(_ context.Context, _ string) (bool, error) {
 	return false, ErrEmbeddedMode
 }
+
+func (n *SpaceStore) ListMembers(_ context.Context, _ string) ([]*spacestore.SpaceMemberView, error) {
+	return nil, ErrEmbeddedMode
+}
+
+func (n *SpaceStore) AddMember(_ context.Context, _, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
+func (n *SpaceStore) RemoveMember(_ context.Context, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
+func (n *SpaceStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
+func (n *SpaceStore) HasMember(_ context.Context, _, _ string) (bool, error) {
+	return false, ErrEmbeddedMode
+}

@@ -44,3 +44,15 @@ type Space struct {
 	UpdatedAt time.Time  `bun:"updated_at,notnull,default:current_timestamp"`
 	DeletedAt *time.Time `bun:"deleted_at,nullzero"` // NULL = active; non-NULL = soft-deleted
 }
+
+// SpaceMember is the database model for a user-to-space access grant.
+// Composite PK: (space_id, user_id).
+// Role values: "admin" | "member"
+type SpaceMember struct {
+	bun.BaseModel `bun:"table:space_members,alias:sm"`
+
+	SpaceID   string    `bun:"space_id,pk,type:text"`
+	UserID    string    `bun:"user_id,pk,type:text"`
+	Role      string    `bun:"role,notnull,default:'member'"`
+	CreatedAt time.Time `bun:"created_at,notnull,default:current_timestamp"`
+}

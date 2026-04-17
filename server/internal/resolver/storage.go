@@ -67,6 +67,16 @@ func (r *Resolver) getSpaceStorage(ctx context.Context, spaceKey *string) (stora
 			Extensions: map[string]interface{}{"code": "FORBIDDEN"},
 		}
 	}
+	allowed, err := r.canReadSpace(ctx, space)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, &gqlerror.Error{
+			Message:    "forbidden: you do not have access to this space",
+			Extensions: map[string]interface{}{"code": "FORBIDDEN"},
+		}
+	}
 
 	// Build an ephemeral S3 storage from the space's credentials.
 	p := storageprovider.New(r.logger, nil, nil)

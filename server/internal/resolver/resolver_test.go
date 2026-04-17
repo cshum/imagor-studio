@@ -394,6 +394,34 @@ func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*spacestore.SpaceMemberView, error) {
+	args := m.Called(ctx, spaceKey)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*spacestore.SpaceMemberView), args.Error(1)
+}
+
+func (m *MockSpaceStore) AddMember(ctx context.Context, spaceKey, userID, role string) error {
+	args := m.Called(ctx, spaceKey, userID, role)
+	return args.Error(0)
+}
+
+func (m *MockSpaceStore) RemoveMember(ctx context.Context, spaceKey, userID string) error {
+	args := m.Called(ctx, spaceKey, userID)
+	return args.Error(0)
+}
+
+func (m *MockSpaceStore) UpdateMemberRole(ctx context.Context, spaceKey, userID, role string) error {
+	args := m.Called(ctx, spaceKey, userID, role)
+	return args.Error(0)
+}
+
+func (m *MockSpaceStore) HasMember(ctx context.Context, spaceKey, userID string) (bool, error) {
+	args := m.Called(ctx, spaceKey, userID)
+	return args.Bool(0), args.Error(1)
+}
+
 var _ spacestore.Store = (*MockSpaceStore)(nil)
 
 // MockRegistryStore mocks the registrystore.Store interface for tests that need it.

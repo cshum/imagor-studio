@@ -49,6 +49,16 @@ func mapSpaceToGQL(s *spacestore.Space) *gql.Space {
 	}
 }
 
+func mapSpaceMemberToGQL(m *spacestore.SpaceMemberView) *gql.SpaceMember {
+	return &gql.SpaceMember{
+		UserID:      m.UserID,
+		Username:    m.Username,
+		DisplayName: m.DisplayName,
+		Role:        m.Role,
+		CreatedAt:   m.CreatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // getUserOrgID returns the org ID for the authenticated user.
 // It prefers the OrgID embedded in the JWT claims (no DB round-trip);
 // falls back to a DB lookup via orgStore when the claim is absent.
@@ -72,6 +82,30 @@ func (r *Resolver) getUserOrgID(ctx context.Context) (string, error) {
 		return "", nil
 	}
 	return org.ID, nil
+}
+
+func (r *Resolver) canReadSpace(ctx context.Context, space *spacestore.Space) (bool, error) {
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil {
+		return false, err
+	}
+	if orgID != "" && space.OrgID != orgID {
+		return false, nil
+	}
+	if RequireAdminPermission(ctx) == nil {
+		return true, nil
+	}
+	if space.IsShared {
+		return true, nil
+	}
+	if r.spaceStore == nil {
+		return false, nil
+	}
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.spaceStore.HasMember(ctx, space.Key, claims.UserID)
 }
 
 // applySpaceInput applies a SpaceInput onto a Space struct.
@@ -161,6 +195,13 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 	}
 	result := make([]*gql.Space, 0, len(spaces))
 	for _, s := range spaces {
+		allowed, allowErr := r.canReadSpace(ctx, s)
+		if allowErr != nil {
+			return nil, allowErr
+		}
+		if !allowed {
+			continue
+		}
 		result = append(result, mapSpaceToGQL(s))
 	}
 	return result, nil
@@ -194,9 +235,15 @@ func (r *queryResolver) Space(ctx context.Context, key string) (*gql.Space, erro
 	if s == nil {
 		return nil, nil
 	}
-	// Ensure the space belongs to the caller's org.
 	if orgID != "" && s.OrgID != orgID {
 		r.logger.Warn("Space: org mismatch", zap.String("key", key), zap.String("spaceOrgID", s.OrgID), zap.String("callerOrgID", orgID))
+		return nil, nil
+	}
+	allowed, allowErr := r.canReadSpace(ctx, s)
+	if allowErr != nil {
+		return nil, allowErr
+	}
+	if !allowed {
 		return nil, nil
 	}
 	return mapSpaceToGQL(s), nil
@@ -246,6 +293,27 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 	if err := r.spaceStore.Create(ctx, sp); err != nil {
 		r.logger.Error("CreateSpace: failed to create", zap.String("key", input.Key), zap.Error(err))
 		return nil, err
+	}
+
+	claims, claimsErr := auth.GetClaimsFromContext(ctx)
+	if claimsErr == nil {
+		memberRoles := map[string]string{claims.UserID: "admin"}
+		if r.orgStore != nil {
+			members, listErr := r.orgStore.ListMembers(ctx, orgID)
+			if listErr != nil {
+				return nil, fmt.Errorf("space created but failed to seed members: %w", listErr)
+			}
+			for _, member := range members {
+				if member.Role == "owner" || member.Role == "admin" {
+					memberRoles[member.UserID] = "admin"
+				}
+			}
+		}
+		for userID, role := range memberRoles {
+			if err := r.spaceStore.AddMember(ctx, input.Key, userID, role); err != nil {
+				return nil, fmt.Errorf("space created but failed to seed members: %w", err)
+			}
+		}
 	}
 
 	created, err := r.spaceStore.Get(ctx, input.Key)
@@ -342,6 +410,39 @@ func mapMemberToGQL(m *orgstore.OrgMemberView) *gql.OrgMember {
 		Role:        m.Role,
 		CreatedAt:   m.CreatedAt.UTC().Format(time.RFC3339),
 	}
+}
+
+// SpaceMembers lists all explicit members of a space (admin only).
+func (r *queryResolver) SpaceMembers(ctx context.Context, spaceKey string) ([]*gql.SpaceMember, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if r.spaceStore == nil {
+		return []*gql.SpaceMember{}, nil
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	if space == nil {
+		return []*gql.SpaceMember{}, nil
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if orgID != "" && space.OrgID != orgID {
+		return []*gql.SpaceMember{}, nil
+	}
+	members, err := r.spaceStore.ListMembers(ctx, spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list space members: %w", err)
+	}
+	result := make([]*gql.SpaceMember, 0, len(members))
+	for _, member := range members {
+		result = append(result, mapSpaceMemberToGQL(member))
+	}
+	return result, nil
 }
 
 // OrgMembers lists all members of the caller's organization (admin only).
@@ -457,6 +558,78 @@ func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (
 	return true, nil
 }
 
+// AddSpaceMember adds an existing org member to a space (admin only).
+func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceKey string, userID string, role string) (*gql.SpaceMember, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if r.spaceStore == nil || r.orgStore == nil {
+		return nil, fmt.Errorf("space member management is not available in this deployment")
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil || orgID == "" {
+		return nil, fmt.Errorf("no organization found")
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	if space == nil || space.OrgID != orgID {
+		return nil, fmt.Errorf("space %q not found", spaceKey)
+	}
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify org membership: %w", err)
+	}
+	var matched *orgstore.OrgMemberView
+	for _, member := range members {
+		if member.UserID == userID {
+			matched = member
+			break
+		}
+	}
+	if matched == nil {
+		return nil, fmt.Errorf("user is not a member of this organization")
+	}
+	if err := r.spaceStore.AddMember(ctx, spaceKey, userID, role); err != nil {
+		return nil, fmt.Errorf("failed to add space member: %w", err)
+	}
+	spaceMembers, err := r.spaceStore.ListMembers(ctx, spaceKey)
+	if err == nil {
+		for _, member := range spaceMembers {
+			if member.UserID == userID {
+				return mapSpaceMemberToGQL(member), nil
+			}
+		}
+	}
+	return &gql.SpaceMember{UserID: userID, Username: matched.Username, DisplayName: matched.DisplayName, Role: role}, nil
+}
+
+// RemoveSpaceMember removes an explicit member from a space (admin only).
+func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceKey string, userID string) (bool, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return false, err
+	}
+	if r.spaceStore == nil {
+		return false, fmt.Errorf("space member management is not available in this deployment")
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	orgID, orgErr := r.getUserOrgID(ctx)
+	if orgErr != nil {
+		return false, orgErr
+	}
+	if space == nil || (orgID != "" && space.OrgID != orgID) {
+		return false, fmt.Errorf("space %q not found", spaceKey)
+	}
+	if err := r.spaceStore.RemoveMember(ctx, spaceKey, userID); err != nil {
+		return false, fmt.Errorf("failed to remove space member: %w", err)
+	}
+	return true, nil
+}
+
 // UpdateOrgMemberRole changes a member's role within the caller's org (admin only).
 func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID string, role string) (*gql.OrgMember, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
@@ -486,4 +659,37 @@ func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID strin
 		}
 	}
 	return &gql.OrgMember{UserID: userID, Role: role}, nil
+}
+
+// UpdateSpaceMemberRole changes a member's explicit role within a space (admin only).
+func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceKey string, userID string, role string) (*gql.SpaceMember, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if r.spaceStore == nil {
+		return nil, fmt.Errorf("space member management is not available in this deployment")
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	orgID, orgErr := r.getUserOrgID(ctx)
+	if orgErr != nil {
+		return nil, orgErr
+	}
+	if space == nil || (orgID != "" && space.OrgID != orgID) {
+		return nil, fmt.Errorf("space %q not found", spaceKey)
+	}
+	if err := r.spaceStore.UpdateMemberRole(ctx, spaceKey, userID, role); err != nil {
+		return nil, fmt.Errorf("failed to update space member role: %w", err)
+	}
+	members, err := r.spaceStore.ListMembers(ctx, spaceKey)
+	if err == nil {
+		for _, member := range members {
+			if member.UserID == userID {
+				return mapSpaceMemberToGQL(member), nil
+			}
+		}
+	}
+	return &gql.SpaceMember{UserID: userID, Role: role}, nil
 }

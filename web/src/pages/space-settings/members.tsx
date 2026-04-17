@@ -4,15 +4,16 @@ import { UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
-  addOrgMember,
+  addSpaceMember,
   listOrgMembers,
-  removeOrgMember,
-  updateOrgMemberRole,
+  listSpaceMembers,
+  removeSpaceMember,
+  updateSpaceMemberRole,
   type OrgMemberItem,
+  type SpaceMemberItem,
 } from '@/api/org-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Input } from '@/components/ui/input'
 import {
   ResponsiveDialog,
   ResponsiveDialogDescription,
@@ -28,19 +29,28 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const ROLE_OPTIONS = ['owner', 'admin', 'member'] as const
+const ROLE_OPTIONS = ['admin', 'member'] as const
 
 // ── Members section ────────────────────────────────────────────────────────
 
 interface MembersSectionProps {
-  initialMembers: OrgMemberItem[]
+  spaceKey: string
+  initialMembers: SpaceMemberItem[]
+  initialOrgMembers: OrgMemberItem[]
+  isShared: boolean
 }
 
-export function MembersSection({ initialMembers }: MembersSectionProps) {
+export function MembersSection({
+  spaceKey,
+  initialMembers,
+  initialOrgMembers,
+  isShared,
+}: MembersSectionProps) {
   const { t } = useTranslation()
-  const [members, setMembers] = useState<OrgMemberItem[]>(initialMembers)
+  const [members, setMembers] = useState<SpaceMemberItem[]>(initialMembers)
+  const [orgMembers, setOrgMembers] = useState<OrgMemberItem[]>(initialOrgMembers)
   const [isLoading, setIsLoading] = useState(false)
-  const [addUsername, setAddUsername] = useState('')
+  const [addUserId, setAddUserId] = useState('')
   const [addRole, setAddRole] = useState<string>('member')
   const [isAdding, setIsAdding] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
@@ -49,7 +59,12 @@ export function MembersSection({ initialMembers }: MembersSectionProps) {
   const reload = async () => {
     setIsLoading(true)
     try {
-      setMembers(await listOrgMembers())
+      const [spaceMembers, allOrgMembers] = await Promise.all([
+        listSpaceMembers(spaceKey),
+        listOrgMembers(),
+      ])
+      setMembers(spaceMembers)
+      setOrgMembers(allOrgMembers)
     } catch {
       // ignore
     } finally {
@@ -58,12 +73,12 @@ export function MembersSection({ initialMembers }: MembersSectionProps) {
   }
 
   const handleAdd = async () => {
-    if (!addUsername.trim()) return
+    if (!addUserId) return
     setIsAdding(true)
     try {
-      await addOrgMember({ username: addUsername.trim(), role: addRole })
+      await addSpaceMember({ spaceKey, userId: addUserId, role: addRole })
       toast.success(t('pages.spaceSettings.members.addSuccess'))
-      setAddUsername('')
+      setAddUserId('')
       await reload()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
@@ -74,7 +89,7 @@ export function MembersSection({ initialMembers }: MembersSectionProps) {
 
   const handleRoleChange = async (userId: string, role: string) => {
     try {
-      await updateOrgMemberRole({ userId, role })
+      await updateSpaceMemberRole({ spaceKey, userId, role })
       toast.success(t('pages.spaceSettings.members.roleUpdated'))
       await reload()
     } catch (err) {
@@ -86,7 +101,7 @@ export function MembersSection({ initialMembers }: MembersSectionProps) {
     if (!pendingRemoveId) return
     setIsRemoving(true)
     try {
-      await removeOrgMember({ userId: pendingRemoveId })
+      await removeSpaceMember({ spaceKey, userId: pendingRemoveId })
       toast.success(t('pages.spaceSettings.members.removeSuccess'))
       setPendingRemoveId(null)
       await reload()
@@ -98,6 +113,9 @@ export function MembersSection({ initialMembers }: MembersSectionProps) {
   }
 
   const pendingMember = members.find((m) => m.userId === pendingRemoveId)
+  const availableOrgMembers = orgMembers.filter(
+    (member) => !members.some((spaceMember) => spaceMember.userId === member.userId),
+  )
 
   const membersContent = isLoading ? (
     <div className='rounded-lg border p-4'>
@@ -170,22 +188,43 @@ export function MembersSection({ initialMembers }: MembersSectionProps) {
     </div>
   )
 
+  const selectedCandidate = availableOrgMembers.find((member) => member.userId === addUserId)
+
   return (
     <>
       <div className='space-y-4'>
+        {isShared ? (
+          <div className='rounded-lg border border-dashed px-4 py-3 text-sm'>
+            <p className='font-medium'>{t('pages.spaceSettings.members.sharedTitle')}</p>
+            <p className='text-muted-foreground mt-1'>
+              {t('pages.spaceSettings.members.sharedDescription')}
+            </p>
+          </div>
+        ) : null}
+
         <div className='space-y-2'>
           <p className='text-muted-foreground text-sm'>
             {t('pages.spaceSettings.members.inviteDescription')}
           </p>
           <div className='flex flex-wrap gap-2 sm:flex-nowrap'>
-            <Input
-              className='min-w-0 flex-1'
-              placeholder={t('pages.spaceSettings.members.usernamePlaceholder')}
-              value={addUsername}
-              onChange={(e) => setAddUsername(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-              disabled={isAdding}
-            />
+            <Select value={addUserId} onValueChange={setAddUserId} disabled={isAdding || availableOrgMembers.length === 0}>
+              <SelectTrigger className='min-w-0 flex-1'>
+                <SelectValue
+                  placeholder={
+                    availableOrgMembers.length === 0
+                      ? t('pages.spaceSettings.members.memberPlaceholderEmpty')
+                      : t('pages.spaceSettings.members.memberPlaceholder')
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {availableOrgMembers.map((member) => (
+                  <SelectItem key={member.userId} value={member.userId}>
+                    {member.displayName || member.username} (@{member.username})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={addRole} onValueChange={setAddRole} disabled={isAdding}>
               <SelectTrigger className='w-32 shrink-0'>
                 <SelectValue />
@@ -201,12 +240,17 @@ export function MembersSection({ initialMembers }: MembersSectionProps) {
             <ButtonWithLoading
               onClick={handleAdd}
               isLoading={isAdding}
-              disabled={!addUsername.trim()}
+              disabled={!addUserId}
               className='shrink-0'
             >
               {t('pages.spaceSettings.members.addButton')}
             </ButtonWithLoading>
           </div>
+          {selectedCandidate ? (
+            <p className='text-muted-foreground text-xs'>
+              @{selectedCandidate.username}
+            </p>
+          ) : null}
         </div>
 
         {membersContent}

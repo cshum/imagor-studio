@@ -224,6 +224,14 @@ type SpaceInput struct {
 	ImagorSecret    *string `json:"imagorSecret,omitempty"`
 }
 
+type SpaceMember struct {
+	UserID      string `json:"userId"`
+	Username    string `json:"username"`
+	DisplayName string `json:"displayName"`
+	Role        string `json:"role"`
+	CreatedAt   string `json:"createdAt"`
+}
+
 type StorageConfigInput struct {
 	Type       StorageType       `json:"type"`
 	FileConfig *FileStorageInput `json:"fileConfig,omitempty"`

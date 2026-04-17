@@ -155,9 +155,33 @@ export const LIST_ORG_MEMBERS = gql(`
   }
 `)
 
+export const LIST_SPACE_MEMBERS = gql(`
+  query ListSpaceMembers($spaceKey: String!) {
+    spaceMembers(spaceKey: $spaceKey) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`)
+
 export const ADD_ORG_MEMBER = gql(`
   mutation AddOrgMember($username: String!, $role: String!) {
     addOrgMember(username: $username, role: $role) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`)
+
+export const ADD_SPACE_MEMBER = gql(`
+  mutation AddSpaceMember($spaceKey: String!, $userId: ID!, $role: String!) {
+    addSpaceMember(spaceKey: $spaceKey, userId: $userId, role: $role) {
       userId
       username
       displayName
@@ -173,9 +197,27 @@ export const REMOVE_ORG_MEMBER = gql(`
   }
 `)
 
+export const REMOVE_SPACE_MEMBER = gql(`
+  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {
+    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)
+  }
+`)
+
 export const UPDATE_ORG_MEMBER_ROLE = gql(`
   mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {
     updateOrgMemberRole(userId: $userId, role: $role) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`)
+
+export const UPDATE_SPACE_MEMBER_ROLE = gql(`
+  mutation UpdateSpaceMemberRole($spaceKey: String!, $userId: ID!, $role: String!) {
+    updateSpaceMemberRole(spaceKey: $spaceKey, userId: $userId, role: $role) {
       userId
       username
       displayName
