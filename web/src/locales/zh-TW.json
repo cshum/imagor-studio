@@ -731,6 +731,14 @@
         "emailPlaceholder": "name@example.com",
         "sendInviteButton": "分享",
         "inviteHelp": "現有隊友會立即加入。新使用者則需要先使用 Google 登入，之後才會加入此組織與空間。",
+        "inviteErrors": {
+          "required": "請輸入電子郵件地址。",
+          "invalidEmail": "請輸入有效的電子郵件地址。",
+          "alreadyHasAccess": "此人已可存取這個空間。",
+          "notConfigured": "尚未設定電子郵件邀請。",
+          "unavailable": "此部署目前無法使用分享功能。",
+          "default": "目前無法分享這個空間，請稍後再試。"
+        },
         "memberPlaceholder": "選擇隊友",
         "memberPlaceholderEmpty": "您的組織成員都已具有明確存取權",
         "sharedTitle": "組織層級存取權",

@@ -803,6 +803,14 @@
         "emailPlaceholder": "name@example.com",
         "sendInviteButton": "Condividi",
         "inviteHelp": "I compagni di team esistenti vengono aggiunti subito. Le nuove persone dovranno accedere con Google per entrare in questa organizzazione e in questo spazio.",
+        "inviteErrors": {
+          "required": "Inserisci un indirizzo email.",
+          "invalidEmail": "Inserisci un indirizzo email valido.",
+          "alreadyHasAccess": "Questa persona ha gia accesso a questo spazio.",
+          "notConfigured": "Gli inviti email non sono ancora configurati.",
+          "unavailable": "La condivisione non e disponibile in questa distribuzione.",
+          "default": "Impossibile condividere questo spazio adesso. Riprova."
+        },
         "memberPlaceholder": "Scegli un collega",
         "memberPlaceholderEmpty": "Tutti i membri della tua organizzazione hanno già accesso esplicito",
         "sharedTitle": "Accesso a livello organizzazione",

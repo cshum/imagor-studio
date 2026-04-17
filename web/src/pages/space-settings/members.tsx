@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { extractErrorMessage } from '@/lib/error-utils'
 
 const ROLE_OPTIONS = ['admin', 'member'] as const
 
@@ -47,8 +48,6 @@ function getInitials(value: string) {
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
 }
-
-// ── Members section ────────────────────────────────────────────────────────
 
 interface MembersSectionProps {
   spaceKey: string
@@ -69,6 +68,7 @@ export function MembersSection({
   const [isLoading, setIsLoading] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<string>('member')
+  const [inviteFieldError, setInviteFieldError] = useState<string | null>(null)
   const [isInviting, setIsInviting] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState(false)
@@ -83,30 +83,89 @@ export function MembersSection({
       setMembers(spaceMembers)
       setInvitations(pendingInvitations)
     } catch {
-      // ignore
+      // ignore refresh failures in the settings view
     } finally {
       setIsLoading(false)
     }
   }
 
+  const mapInviteError = (message: string) => {
+    const normalized = message.toLowerCase()
+
+    if (normalized.includes('email is required')) {
+      return {
+        kind: 'field' as const,
+        message: t('pages.spaceSettings.members.inviteErrors.required'),
+      }
+    }
+
+    if (normalized.includes('already has access')) {
+      return {
+        kind: 'field' as const,
+        message: t('pages.spaceSettings.members.inviteErrors.alreadyHasAccess'),
+      }
+    }
+
+    if (normalized.includes('email invitations are not configured')) {
+      return {
+        kind: 'toast' as const,
+        message: t('pages.spaceSettings.members.inviteErrors.notConfigured'),
+      }
+    }
+
+    if (normalized.includes('space member management is not available')) {
+      return {
+        kind: 'toast' as const,
+        message: t('pages.spaceSettings.members.inviteErrors.unavailable'),
+      }
+    }
+
+    return {
+      kind: 'toast' as const,
+      message: t('pages.spaceSettings.members.inviteErrors.default'),
+    }
+  }
+
   const handleInvite = async () => {
-    if (!inviteEmail.trim()) return
+    const normalizedEmail = inviteEmail.trim()
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+
+    setInviteFieldError(null)
+
+    if (!normalizedEmail) {
+      setInviteFieldError(t('pages.spaceSettings.members.inviteErrors.required'))
+      return
+    }
+
+    if (!isValidEmail) {
+      setInviteFieldError(t('pages.spaceSettings.members.inviteErrors.invalidEmail'))
+      return
+    }
+
     setIsInviting(true)
     try {
       const result: SpaceInviteResultItem = await inviteSpaceMember({
         spaceKey,
-        email: inviteEmail.trim(),
+        email: normalizedEmail,
         role: inviteRole,
       })
+
       if (result.status === 'added') {
         toast.success(t('pages.spaceSettings.members.addSuccess'))
       } else {
         toast.success(t('pages.spaceSettings.members.inviteSent'))
       }
+
       setInviteEmail('')
+      setInviteFieldError(null)
       await reload()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      const mappedError = mapInviteError(extractErrorMessage(err))
+      if (mappedError.kind === 'field') {
+        setInviteFieldError(mappedError.message)
+      } else {
+        toast.error(mappedError.message)
+      }
     } finally {
       setIsInviting(false)
     }
@@ -124,6 +183,7 @@ export function MembersSection({
 
   const handleRemove = async () => {
     if (!pendingRemoveId) return
+
     setIsRemoving(true)
     try {
       await removeSpaceMember({ spaceKey, userId: pendingRemoveId })
@@ -137,7 +197,7 @@ export function MembersSection({
     }
   }
 
-  const pendingMember = members.find((m) => m.userId === pendingRemoveId)
+  const pendingMember = members.find((member) => member.userId === pendingRemoveId)
   const sectionTitle = t('pages.spaceSettings.sections.members')
 
   const invitationsContent =
@@ -155,9 +215,7 @@ export function MembersSection({
                   <span>{t(`pages.spaceSettings.members.roles.${invitation.role}`)}</span>
                   <span>•</span>
                   <Clock3 className='h-3.5 w-3.5' />
-                  <span>
-                    {new Date(invitation.expiresAt).toLocaleDateString()}
-                  </span>
+                  <span>{new Date(invitation.expiresAt).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
@@ -214,9 +272,9 @@ export function MembersSection({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {ROLE_OPTIONS.map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {t(`pages.spaceSettings.members.roles.${r}`)}
+                      {ROLE_OPTIONS.map((roleOption) => (
+                        <SelectItem key={roleOption} value={roleOption}>
+                          {t(`pages.spaceSettings.members.roles.${roleOption}`)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -250,39 +308,53 @@ export function MembersSection({
           </div>
         ) : null}
 
-        <div className='rounded-lg border p-4 sm:p-5'>
-          <div className='space-y-4'>
-            <div className='flex flex-col gap-3 lg:flex-row'>
-              <Input
-                value={inviteEmail}
-                onChange={(event) => setInviteEmail(event.target.value)}
-                placeholder={t('pages.spaceSettings.members.emailPlaceholder')}
-                disabled={isInviting}
-                className='h-10 min-w-0 flex-1'
-                type='email'
-              />
-              <Select value={inviteRole} onValueChange={setInviteRole} disabled={isInviting}>
-                <SelectTrigger className='h-10 w-full lg:w-36'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLE_OPTIONS.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {t(`pages.spaceSettings.members.roles.${r}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <ButtonWithLoading
-                onClick={handleInvite}
-                isLoading={isInviting}
-                disabled={!inviteEmail.trim()}
-                className='h-10 w-full lg:w-auto'
-              >
-                {t('pages.spaceSettings.members.sendInviteButton')}
-              </ButtonWithLoading>
-            </div>
+        <div className='space-y-2'>
+          <div className='flex flex-col gap-2 lg:flex-row'>
+            <Input
+              value={inviteEmail}
+              onChange={(event) => {
+                setInviteEmail(event.target.value)
+                if (inviteFieldError) {
+                  setInviteFieldError(null)
+                }
+              }}
+              placeholder={t('pages.spaceSettings.members.emailPlaceholder')}
+              disabled={isInviting}
+              className='h-10 min-w-0 flex-1'
+              type='email'
+              aria-invalid={inviteFieldError ? 'true' : 'false'}
+            />
+            <Select value={inviteRole} onValueChange={setInviteRole} disabled={isInviting}>
+              <SelectTrigger className='h-10 w-full lg:w-32'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_OPTIONS.map((roleOption) => (
+                  <SelectItem key={roleOption} value={roleOption}>
+                    {t(`pages.spaceSettings.members.roles.${roleOption}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <ButtonWithLoading
+              onClick={handleInvite}
+              isLoading={isInviting}
+              disabled={!inviteEmail.trim()}
+              className='h-10 w-full lg:w-auto'
+            >
+              {t('pages.spaceSettings.members.sendInviteButton')}
+            </ButtonWithLoading>
           </div>
+          {inviteFieldError ? (
+            <p className='text-destructive text-sm'>{inviteFieldError}</p>
+          ) : null}
+        </div>
+
+        <div className='space-y-2'>
+          <h3 className='text-base font-semibold'>
+            {sectionTitle} ({members.length})
+          </h3>
+          {membersContent}
         </div>
 
         {invitationsContent ? (
@@ -293,16 +365,8 @@ export function MembersSection({
             {invitationsContent}
           </div>
         ) : null}
-
-        <div className='space-y-2'>
-          <h3 className='text-base font-semibold'>
-            {sectionTitle} ({members.length})
-          </h3>
-          {membersContent}
-        </div>
       </div>
 
-      {/* Remove confirmation dialog */}
       <ResponsiveDialog
         open={pendingRemoveId !== null}
         onOpenChange={(open) => !open && setPendingRemoveId(null)}

@@ -709,6 +709,14 @@
         "emailPlaceholder": "name@example.com",
         "sendInviteButton": "分享",
         "inviteHelp": "现有队友会立即加入。新用户需要先使用 Google 登录，然后才会加入此组织和空间。",
+        "inviteErrors": {
+          "required": "请输入电子邮件地址。",
+          "invalidEmail": "请输入有效的电子邮件地址。",
+          "alreadyHasAccess": "此人已经可以访问这个空间。",
+          "notConfigured": "电子邮件邀请尚未配置。",
+          "unavailable": "当前部署暂不支持分享功能。",
+          "default": "目前无法分享此空间，请稍后再试。"
+        },
         "memberPlaceholder": "选择队友",
         "memberPlaceholderEmpty": "您组织中的成员都已经拥有明确访问权限",
         "sharedTitle": "组织范围访问",

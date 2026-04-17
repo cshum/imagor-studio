@@ -795,6 +795,14 @@
         "emailPlaceholder": "name@example.com",
         "sendInviteButton": "Share",
         "inviteHelp": "We add existing teammates immediately. New people will be asked to sign in with Google to join this organisation and space.",
+        "inviteErrors": {
+          "required": "Enter an email address.",
+          "invalidEmail": "Enter a valid email address.",
+          "alreadyHasAccess": "This person already has access to this space.",
+          "notConfigured": "Email invitations are not configured yet.",
+          "unavailable": "Sharing is not available in this deployment.",
+          "default": "Could not share this space right now. Please try again."
+        },
         "memberPlaceholder": "Choose a teammate",
         "memberPlaceholderEmpty": "Everyone in your organisation already has explicit access",
         "sharedTitle": "Organisation-wide access",
