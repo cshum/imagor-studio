@@ -661,6 +661,26 @@
         "managed": "由 Imagor Studio 管理，無需設定儲存桶。",
         "s3": "連接您自己的 S3 相容儲存桶。"
       },
+      "keyDescription": "用於連結中的唯一 URL Slug。建立後無法變更。",
+      "tableHeaders": {
+        "key": "URL Slug",
+        "name": "名稱",
+        "storage": "儲存",
+        "actions": "操作"
+      },
+      "formLabels": {
+        "key": "URL Slug",
+        "name": "顯示名稱",
+        "storageType": "儲存類型",
+        "bucket": "儲存桶",
+        "region": "區域",
+        "endpoint": "端點",
+        "prefix": "前綴",
+        "accessKeyId": "Access Key ID",
+        "secretKey": "Secret Key",
+        "customDomain": "自訂網域",
+        "imagorSecret": "Imagor Secret"
+      },
       "description": "管理您組織的工作空間。",
       "emptyDescription": "建立您的第一個空間，開始使用專屬工作區。",
       "settings": "設定",
@@ -678,13 +698,13 @@
         "spaceDeletedSuccess": "空間刪除成功",
         "leftSpaceSuccess": "您已離開共享空間。",
         "createSpaceFailed": "建立空間失敗",
-        "keyAlreadyTaken": "空間鍵已被使用",
+        "keyAlreadyTaken": "URL Slug 已被使用",
         "updateSpaceFailed": "更新空間失敗",
         "deleteSpaceFailed": "刪除空間失敗",
         "leaveSpaceFailed": "離開共享空間失敗"
       },
       "validation": {
-        "keyFormat": "鍵只能包含小寫字母、數字和連字號"
+        "keyFormat": "URL Slug 只能包含小寫字母、數字和連字號"
       },
       "stats": {
         "totalSpaces": "空間總數",

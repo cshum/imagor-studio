@@ -677,15 +677,15 @@
       "managed": "Gestita da Imagor Studio. Nessuna configurazione del bucket richiesta.",
       "s3": "Collega il tuo bucket S3-compatibile."
     },
-    "keyDescription": "Identificatore univoco utilizzato negli URL. Non può essere modificato dopo la creazione.",
+    "keyDescription": "Slug URL univoco usato nei link. Non può essere modificato dopo la creazione.",
     "tableHeaders": {
-      "key": "Chiave",
+      "key": "Slug URL",
       "name": "Nome",
       "storage": "Archiviazione",
       "actions": "Azioni"
     },
     "formLabels": {
-      "key": "Chiave Spazio",
+      "key": "Slug URL",
       "name": "Nome Visualizzato",
       "storageType": "Tipo di Archiviazione",
       "bucket": "Bucket",
@@ -714,13 +714,13 @@
       "spaceDeletedSuccess": "Spazio eliminato correttamente",
       "leftSpaceSuccess": "Hai lasciato lo spazio condiviso.",
       "createSpaceFailed": "Impossibile creare lo spazio",
-      "keyAlreadyTaken": "La chiave spazio è già in uso",
+      "keyAlreadyTaken": "Lo slug URL è già in uso",
       "updateSpaceFailed": "Impossibile aggiornare lo spazio",
       "deleteSpaceFailed": "Impossibile eliminare lo spazio",
       "leaveSpaceFailed": "Impossibile lasciare lo spazio condiviso"
     },
     "validation": {
-      "keyFormat": "La chiave può contenere solo lettere minuscole, numeri e trattini"
+      "keyFormat": "Lo slug URL può contenere solo lettere minuscole, numeri e trattini"
     },
     "stats": {
       "totalSpaces": "Spazi totali",

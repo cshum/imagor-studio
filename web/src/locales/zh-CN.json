@@ -639,6 +639,26 @@
         "managed": "由 Imagor Studio 管理，无需配置存储桶。",
         "s3": "连接您自己的 S3 兼容存储桶。"
       },
+      "keyDescription": "用于链接中的唯一 URL Slug。创建后无法更改。",
+      "tableHeaders": {
+        "key": "URL Slug",
+        "name": "名称",
+        "storage": "存储",
+        "actions": "操作"
+      },
+      "formLabels": {
+        "key": "URL Slug",
+        "name": "显示名称",
+        "storageType": "存储类型",
+        "bucket": "存储桶",
+        "region": "区域",
+        "endpoint": "端点",
+        "prefix": "前缀",
+        "accessKeyId": "Access Key ID",
+        "secretKey": "Secret Key",
+        "customDomain": "自定义域名",
+        "imagorSecret": "Imagor Secret"
+      },
       "description": "管理您组织的工作空间。",
       "emptyDescription": "创建您的第一个空间，开始使用专属工作区。",
       "settings": "设置",
@@ -656,13 +676,13 @@
         "spaceDeletedSuccess": "空间删除成功",
         "leftSpaceSuccess": "你已离开共享空间。",
         "createSpaceFailed": "创建空间失败",
-        "keyAlreadyTaken": "空间键已被使用",
+        "keyAlreadyTaken": "URL Slug 已被使用",
         "updateSpaceFailed": "更新空间失败",
         "deleteSpaceFailed": "删除空间失败",
         "leaveSpaceFailed": "离开共享空间失败"
       },
       "validation": {
-        "keyFormat": "键只能包含小写字母、数字和连字符"
+        "keyFormat": "URL Slug 只能包含小写字母、数字和连字符"
       },
       "stats": {
         "totalSpaces": "空间总数",
