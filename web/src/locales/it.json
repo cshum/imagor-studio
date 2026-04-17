@@ -831,7 +831,6 @@
         "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza intera).",
         "saved": "Impostazioni di sicurezza salvate"
       }
-    }
   },
   "components": {
     "folderTree": {
