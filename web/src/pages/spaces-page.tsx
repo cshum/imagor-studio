@@ -32,11 +32,20 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
 
   const spaces = loaderData ?? []
   const hasSpaces = spaces.length > 0
-  const managedCount = useMemo(
-    () => spaces.filter((space) => space.storageType === 'managed').length,
-    [spaces],
+  const ownedCount = useMemo(
+    () =>
+      currentOrganizationId === null
+        ? spaces.length
+        : spaces.filter((space) => space.orgId === currentOrganizationId).length,
+    [currentOrganizationId, spaces],
   )
-  const s3Count = spaces.length - managedCount
+  const sharedCount = useMemo(
+    () =>
+      currentOrganizationId === null
+        ? 0
+        : spaces.filter((space) => space.orgId !== currentOrganizationId).length,
+    [currentOrganizationId, spaces],
+  )
 
   const handleDeleteSpace = async () => {
     if (!selectedSpace) return
@@ -68,15 +77,15 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
           </div>
           <div className='bg-muted/30 rounded-xl p-4'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.managedStorage')}
+              {t('pages.spaces.stats.yourSpaces')}
             </p>
-            <p className='mt-2 text-2xl font-semibold'>{managedCount}</p>
+            <p className='mt-2 text-2xl font-semibold'>{ownedCount}</p>
           </div>
           <div className='bg-muted/30 rounded-xl p-4'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.externalStorage')}
+              {t('pages.spaces.stats.sharedWithYou')}
             </p>
-            <p className='mt-2 text-2xl font-semibold'>{s3Count}</p>
+            <p className='mt-2 text-2xl font-semibold'>{sharedCount}</p>
           </div>
         </div>
       )}
@@ -126,6 +135,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {spaces.map((space) => {
             const canManageSpace = currentOrganizationId !== null && space.orgId === currentOrganizationId
+            const isSharedSpace = !canManageSpace
             return (
               <div
                 key={space.key}
@@ -146,11 +156,26 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       <p className='text-muted-foreground truncate font-mono text-xs'>
                         {space.customDomain || `${space.key}.imagor.app`}
                       </p>
+                      {isSharedSpace && (
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          {t('pages.spaces.sharedHint')}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   {/* Badge */}
                   <div className='mt-1 flex shrink-0 items-center gap-1'>
+                    <Badge
+                      variant={isSharedSpace ? 'outline' : 'secondary'}
+                      className={
+                        isSharedSpace ? 'border-sky-500/40 text-sky-700 dark:text-sky-300' : ''
+                      }
+                    >
+                      {isSharedSpace
+                        ? t('pages.spaces.access.sharedWithYou')
+                        : t('pages.spaces.access.ownedByYou')}
+                    </Badge>
                     <Badge
                       variant={space.storageType === 's3' ? 'outline' : 'secondary'}
                       className={
@@ -184,6 +209,11 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                     </Button>
                   )}
                 </div>
+                {isSharedSpace && (
+                  <p className='text-muted-foreground mt-3 text-xs'>
+                    {t('pages.spaces.configureUnavailable')}
+                  </p>
+                )}
               </div>
             )
           })}

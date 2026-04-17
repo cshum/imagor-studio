@@ -715,10 +715,18 @@
       "stats": {
         "totalSpaces": "Total Spaces",
         "managedStorage": "Managed Storage",
-        "externalStorage": "External Storage"
+        "externalStorage": "External Storage",
+        "yourSpaces": "Your Spaces",
+        "sharedWithYou": "Shared With You"
       },
       "configure": "Configure",
-      "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows."
+      "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows.",
+      "sharedHint": "Shared by another organization. You can open the gallery here, but only the owning organization can manage settings.",
+      "configureUnavailable": "Settings are managed by the organization that owns this space.",
+      "access": {
+        "ownedByYou": "Owned by you",
+        "sharedWithYou": "Shared with you"
+      }
     },
     "spaceSettings": {
       "backToSpaces": "Back to Spaces",

@@ -723,10 +723,18 @@
       "stats": {
         "totalSpaces": "Spazi totali",
         "managedStorage": "Archiviazione gestita",
-        "externalStorage": "Archiviazione esterna"
+        "externalStorage": "Archiviazione esterna",
+        "yourSpaces": "I tuoi spazi",
+        "sharedWithYou": "Condivisi con te"
       },
       "configure": "Configura",
-      "startDescription": "Inizia con uno spazio gestito per la configurazione più rapida, poi personalizza l'archiviazione, la consegna e il branding man mano che il tuo workspace cresce."
+      "startDescription": "Inizia con uno spazio gestito per la configurazione più rapida, poi personalizza l'archiviazione, la consegna e il branding man mano che il tuo workspace cresce.",
+      "sharedHint": "Condiviso da un'altra organizzazione. Puoi aprire qui la galleria, ma solo l'organizzazione proprietaria può gestire le impostazioni.",
+      "configureUnavailable": "Le impostazioni sono gestite dall'organizzazione che possiede questo spazio.",
+      "access": {
+        "ownedByYou": "Di tua proprieta",
+        "sharedWithYou": "Condiviso con te"
+      }
     },
     "spaceSettings": {
       "backToSpaces": "Torna agli Spazi",

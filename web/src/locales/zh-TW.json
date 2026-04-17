@@ -640,6 +640,17 @@
       }
     },
     "spaces": {
+      "title": "空間",
+      "createSpace": "建立空間",
+      "createNewSpace": "建立新空間",
+      "createSpaceDescription": "將新空間加入您的組織。每個空間都有自己的儲存與 imagor 設定。",
+      "editSpace": "編輯空間",
+      "editSpaceDescription": "更新空間設定。變更會立即套用。",
+      "deleteSpace": "刪除空間",
+      "deleteSpaceDescription": "您確定要永久刪除空間",
+      "createSpaceButton": "建立空間",
+      "updateSpaceButton": "更新空間",
+      "noSpacesFound": "找不到空間",
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
@@ -653,6 +664,8 @@
       "description": "管理您組織的工作空間。",
       "emptyDescription": "建立您的第一個空間，開始使用專屬工作區。",
       "settings": "設定",
+      "spaceCount": "{{count}} 個空間",
+      "openGallery": "開啟相簿",
       "wizard": {
         "stepIdentity": "基本資訊",
         "stepStorage": "儲存",
@@ -670,6 +683,21 @@
       },
       "validation": {
         "keyFormat": "鍵只能包含小寫字母、數字和連字號"
+      },
+      "stats": {
+        "totalSpaces": "空間總數",
+        "managedStorage": "託管儲存",
+        "externalStorage": "外部儲存",
+        "yourSpaces": "您的空間",
+        "sharedWithYou": "與您共享"
+      },
+      "configure": "設定",
+      "startDescription": "先使用託管空間完成最快速的設定，之後再隨著工作區成長自訂儲存、交付與品牌。",
+      "sharedHint": "此空間由另一個組織分享給您。您可以在這裡開啟相簿，但只有擁有此空間的組織可以管理設定。",
+      "configureUnavailable": "此空間的設定由擁有它的組織管理。",
+      "access": {
+        "ownedByYou": "由您擁有",
+        "sharedWithYou": "與您共享"
       }
     },
     "spaceSettings": {

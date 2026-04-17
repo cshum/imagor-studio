@@ -618,6 +618,17 @@
       }
     },
     "spaces": {
+      "title": "空间",
+      "createSpace": "创建空间",
+      "createNewSpace": "创建新空间",
+      "createSpaceDescription": "向你的组织添加一个新空间。每个空间都有自己的存储和 imagor 配置。",
+      "editSpace": "编辑空间",
+      "editSpaceDescription": "更新空间配置。更改会立即生效。",
+      "deleteSpace": "删除空间",
+      "deleteSpaceDescription": "您确定要永久删除空间",
+      "createSpaceButton": "创建空间",
+      "updateSpaceButton": "更新空间",
+      "noSpacesFound": "未找到空间",
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
@@ -631,6 +642,8 @@
       "description": "管理您组织的工作空间。",
       "emptyDescription": "创建您的第一个空间，开始使用专属工作区。",
       "settings": "设置",
+      "spaceCount": "{{count}} 个空间",
+      "openGallery": "打开图库",
       "wizard": {
         "stepIdentity": "基本信息",
         "stepStorage": "存储",
@@ -648,6 +661,21 @@
       },
       "validation": {
         "keyFormat": "键只能包含小写字母、数字和连字符"
+      },
+      "stats": {
+        "totalSpaces": "空间总数",
+        "managedStorage": "平台存储",
+        "externalStorage": "外部存储",
+        "yourSpaces": "你的空间",
+        "sharedWithYou": "与你共享"
+      },
+      "configure": "配置",
+      "startDescription": "先从托管空间开始，最快完成配置，然后再随着工作区成长自定义存储、交付和品牌。",
+      "sharedHint": "该空间由另一个组织共享给你。你可以在这里打开图库，但只有拥有该空间的组织可以管理设置。",
+      "configureUnavailable": "该空间的设置由拥有它的组织管理。",
+      "access": {
+        "ownedByYou": "由你拥有",
+        "sharedWithYou": "与你共享"
       }
     },
     "spaceSettings": {
