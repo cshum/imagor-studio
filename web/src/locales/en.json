@@ -817,8 +817,11 @@
         "memberPlaceholder": "Choose a teammate",
         "memberPlaceholderEmpty": "Everyone in your organisation already has explicit access",
         "sharedTitle": "Organisation-wide access",
-        "sharedDescription": "Everyone in this organisation can view and copy this space. Use the list below to manage explicit collaborators and admins.",
+        "sharedDescription": "Everyone in this organisation can view and copy this space. The list below shows people who were added directly to this space, while organisation admins still manage settings and sharing.",
         "emptyDescription": "No one has been added directly to this space yet. Organisation admins still have inherited access.",
+        "accessLabel": "Shared access",
+        "directAccessLabel": "Direct access",
+        "pendingAccessLabel": "Pending invite",
         "addSuccess": "Member added successfully.",
         "inviteSent": "Invitation email sent.",
         "roleUpdated": "Role updated.",
@@ -827,6 +830,11 @@
         "removeSelfNotAllowed": "You cannot remove yourself from this space.",
         "empty": "No direct space members yet.",
         "pendingTitle": "Pending invitations",
+        "listHeaders": {
+          "member": "Member",
+          "status": "Status",
+          "action": "Action"
+        },
         "pendingHeaders": {
           "email": "Email",
           "role": "Role",

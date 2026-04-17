@@ -825,7 +825,7 @@
       "memberPlaceholder": "Scegli un collega",
       "memberPlaceholderEmpty": "Tutti i membri della tua organizzazione hanno già accesso esplicito",
       "sharedTitle": "Accesso a livello organizzazione",
-      "sharedDescription": "Tutti i membri di questa organizzazione possono visualizzare e copiare questo spazio. Usa l'elenco qui sotto per gestire collaboratori e amministratori espliciti.",
+      "sharedDescription": "Tutti i membri di questa organizzazione possono visualizzare e copiare questo spazio. L'elenco qui sotto mostra le persone aggiunte direttamente a questo spazio, mentre gli amministratori dell'organizzazione continuano a gestire impostazioni e condivisione.",
       "emptyDescription": "Nessuno e stato ancora aggiunto direttamente a questo spazio. Gli amministratori dell'organizzazione mantengono comunque l'accesso ereditato.",
       "addSuccess": "Membro aggiunto con successo.",
       "inviteSent": "Email di invito inviata.",
@@ -834,7 +834,15 @@
       "removeSelfDisabled": "Tu",
       "removeSelfNotAllowed": "Non puoi rimuoverti da questo spazio.",
       "empty": "Nessun membro diretto dello spazio.",
+      "accessLabel": "Accesso condiviso",
+      "directAccessLabel": "Accesso diretto",
+      "pendingAccessLabel": "Invito in attesa",
       "pendingTitle": "Inviti in attesa",
+      "listHeaders": {
+        "member": "Membro",
+        "status": "Stato",
+        "action": "Azione"
+      },
       "pendingHeaders": {
         "email": "Email",
         "role": "Ruolo",

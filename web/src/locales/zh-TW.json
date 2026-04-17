@@ -773,7 +773,7 @@
         "memberPlaceholder": "選擇隊友",
         "memberPlaceholderEmpty": "您的組織成員都已具有明確存取權",
         "sharedTitle": "組織層級存取權",
-        "sharedDescription": "此組織中的所有成員都可以檢視並複製這個空間。使用下方清單管理明確加入的協作者與管理員。",
+        "sharedDescription": "此組織中的所有成員都可以檢視並複製這個空間。下方清單顯示的是被直接加入這個空間的人員，而組織管理員仍負責設定與分享管理。",
         "emptyDescription": "目前還沒有人被直接加入這個空間。組織管理員仍保有繼承而來的存取權。",
         "addSuccess": "成員新增成功。",
         "inviteSent": "邀請郵件已送出。",
@@ -782,7 +782,15 @@
         "removeSelfDisabled": "您",
         "removeSelfNotAllowed": "您不能將自己從這個空間移除。",
         "empty": "這個空間尚無直接成員。",
+        "accessLabel": "共享存取",
+        "directAccessLabel": "直接存取",
+        "pendingAccessLabel": "待接受邀請",
         "pendingTitle": "待接受的邀請",
+        "listHeaders": {
+          "member": "成員",
+          "status": "狀態",
+          "action": "操作"
+        },
         "pendingHeaders": {
           "email": "電子郵件",
           "role": "角色",

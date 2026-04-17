@@ -8,12 +8,12 @@ import {
   listSpaceInvitations,
   listSpaceMembers,
   removeSpaceMember,
-  updateSpaceMemberRole,
   type SpaceInvitationItem,
   type SpaceInviteResultItem,
   type SpaceMemberItem,
 } from '@/api/org-api'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent } from '@/components/ui/card'
@@ -25,17 +25,8 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { useAuth } from '@/stores/auth-store'
-
-const ROLE_OPTIONS = ['admin', 'member'] as const
 
 function getMemberLabel(member: Pick<SpaceMemberItem, 'displayName' | 'username'>) {
   return member.displayName || member.username
@@ -69,7 +60,6 @@ export function MembersSection({
   const [invitations, setInvitations] = useState<SpaceInvitationItem[]>(initialInvitations)
   const [isLoading, setIsLoading] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<string>('member')
   const [inviteFieldError, setInviteFieldError] = useState<string | null>(null)
   const [isInviting, setIsInviting] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
@@ -136,7 +126,7 @@ export function MembersSection({
     const result: SpaceInviteResultItem = await inviteSpaceMember({
       spaceKey,
       email,
-      role: inviteRole,
+      role: 'member',
     })
 
     if (result.status === 'added') {
@@ -181,16 +171,6 @@ export function MembersSection({
     }
   }
 
-  const handleRoleChange = async (userId: string, role: string) => {
-    try {
-      await updateSpaceMemberRole({ spaceKey, userId, role })
-      toast.success(t('pages.spaceSettings.members.roleUpdated'))
-      await reload()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
-    }
-  }
-
   const handleRemove = async () => {
     if (!pendingRemoveId) return
 
@@ -215,22 +195,43 @@ export function MembersSection({
   const invitationsContent =
     invitations.length === 0 ? null : (
       <div className='overflow-hidden rounded-lg border'>
+        <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_160px] gap-4 border-b px-4 py-3 text-xs font-medium md:grid'>
+          <div>{t('pages.spaceSettings.members.listHeaders.member')}</div>
+          <div>{t('pages.spaceSettings.members.listHeaders.status')}</div>
+        </div>
         <div className='divide-y'>
           {invitations.map((invitation) => (
-            <div
-              key={invitation.id}
-              className='flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
-            >
-              <div className='min-w-0'>
-                <p className='truncate text-sm font-medium'>{invitation.email}</p>
-                <div className='text-muted-foreground mt-1 flex items-center gap-2 text-xs'>
-                  <span>{t(`pages.spaceSettings.members.roles.${invitation.role}`)}</span>
-                  <span>•</span>
-                  <Clock3 className='h-3.5 w-3.5' />
-                  <span>{new Date(invitation.expiresAt).toLocaleDateString()}</span>
+            <>
+              <div
+                key={`${invitation.id}-desktop`}
+                className='hidden grid-cols-[minmax(0,1fr)_160px] items-center gap-4 px-4 py-4 md:grid'
+              >
+                <div className='min-w-0'>
+                  <p className='truncate text-sm font-medium'>{invitation.email}</p>
+                  <div className='text-muted-foreground mt-1 flex items-center gap-2 text-xs'>
+                    <Clock3 className='h-3.5 w-3.5' />
+                    <span>{new Date(invitation.expiresAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div>
+                  <Badge variant='outline' className='justify-center px-3 py-1'>
+                    {t('pages.spaceSettings.members.pendingAccessLabel')}
+                  </Badge>
                 </div>
               </div>
-            </div>
+              <div key={`${invitation.id}-mobile`} className='space-y-3 px-4 py-4 md:hidden'>
+                <div className='min-w-0'>
+                  <p className='truncate text-sm font-medium'>{invitation.email}</p>
+                  <div className='text-muted-foreground mt-1 flex items-center gap-2 text-xs'>
+                    <Clock3 className='h-3.5 w-3.5' />
+                    <span>{new Date(invitation.expiresAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <Badge variant='outline' className='w-fit px-3 py-1'>
+                  {t('pages.spaceSettings.members.pendingAccessLabel')}
+                </Badge>
+              </div>
+            </>
           ))}
         </div>
       </div>
@@ -254,60 +255,88 @@ export function MembersSection({
   ) : (
     <Card>
       <CardContent className='p-0'>
+        <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_160px_104px] gap-4 border-b px-4 py-3 text-xs font-medium md:grid'>
+          <div>{t('pages.spaceSettings.members.listHeaders.member')}</div>
+          <div>{t('pages.spaceSettings.members.listHeaders.status')}</div>
+          <div>{t('pages.spaceSettings.members.listHeaders.action')}</div>
+        </div>
         <div className='divide-y'>
           {members.map((member) => {
             const memberLabel = getMemberLabel(member)
             const isCurrentUser = member.userId === currentUserId
 
             return (
-              <div
-                key={member.userId}
-                className='flex flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between'
-              >
-                <div className='flex min-w-0 items-center gap-3'>
-                  <Avatar className='h-10 w-10'>
-                    <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
-                    <AvatarFallback className='text-sm font-semibold'>
-                      {getInitials(memberLabel)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className='min-w-0'>
-                    <p className='truncate text-sm font-medium'>{memberLabel}</p>
-                    <p className='text-muted-foreground truncate text-xs'>
-                      {member.email || `@${member.username}`}
-                    </p>
+              <>
+                <div
+                  key={`${member.userId}-desktop`}
+                  className='hidden grid-cols-[minmax(0,1fr)_160px_104px] items-center gap-4 px-4 py-4 md:grid'
+                >
+                  <div className='flex min-w-0 items-center gap-3'>
+                    <Avatar className='h-10 w-10'>
+                      <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
+                      <AvatarFallback className='text-sm font-semibold'>
+                        {getInitials(memberLabel)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className='min-w-0'>
+                      <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                      <p className='text-muted-foreground truncate text-xs'>
+                        {member.email || `@${member.username}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <Badge variant='secondary' className='justify-center px-3 py-1'>
+                      {t('pages.spaceSettings.members.directAccessLabel')}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='text-destructive hover:text-destructive h-9 w-[104px] justify-center px-3'
+                      disabled={isCurrentUser}
+                      onClick={() => setPendingRemoveId(member.userId)}
+                    >
+                      {isCurrentUser
+                        ? t('pages.spaceSettings.members.removeSelfDisabled')
+                        : t('common.buttons.remove')}
+                    </Button>
                   </div>
                 </div>
-
-                <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
-                  <Select
-                    value={member.role}
-                    onValueChange={(role) => handleRoleChange(member.userId, role)}
-                  >
-                    <SelectTrigger className='w-full sm:w-36'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROLE_OPTIONS.map((roleOption) => (
-                        <SelectItem key={roleOption} value={roleOption}>
-                          {t(`pages.spaceSettings.members.roles.${roleOption}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    className='text-destructive hover:text-destructive h-9 px-3'
-                    disabled={isCurrentUser}
-                    onClick={() => setPendingRemoveId(member.userId)}
-                  >
-                    {isCurrentUser
-                      ? t('pages.spaceSettings.members.removeSelfDisabled')
-                      : t('common.buttons.remove')}
-                  </Button>
+                <div key={`${member.userId}-mobile`} className='space-y-3 px-4 py-4 md:hidden'>
+                  <div className='flex min-w-0 items-center gap-3'>
+                    <Avatar className='h-10 w-10'>
+                      <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
+                      <AvatarFallback className='text-sm font-semibold'>
+                        {getInitials(memberLabel)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className='min-w-0'>
+                      <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                      <p className='text-muted-foreground truncate text-xs'>
+                        {member.email || `@${member.username}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className='flex items-center justify-between gap-3'>
+                    <Badge variant='secondary' className='px-3 py-1'>
+                      {t('pages.spaceSettings.members.directAccessLabel')}
+                    </Badge>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='text-destructive hover:text-destructive h-9 px-3'
+                      disabled={isCurrentUser}
+                      onClick={() => setPendingRemoveId(member.userId)}
+                    >
+                      {isCurrentUser
+                        ? t('pages.spaceSettings.members.removeSelfDisabled')
+                        : t('common.buttons.remove')}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </>
             )
           })}
         </div>
@@ -343,18 +372,6 @@ export function MembersSection({
               type='email'
               aria-invalid={inviteFieldError ? 'true' : 'false'}
             />
-            <Select value={inviteRole} onValueChange={setInviteRole} disabled={isInviting}>
-              <SelectTrigger className='h-10 w-full lg:w-32'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLE_OPTIONS.map((roleOption) => (
-                  <SelectItem key={roleOption} value={roleOption}>
-                    {t(`pages.spaceSettings.members.roles.${roleOption}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <ButtonWithLoading
               onClick={handleInvite}
               isLoading={isInviting}
