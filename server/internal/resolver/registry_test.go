@@ -1303,9 +1303,10 @@ func TestSpaceRegistry_SpaceOverridesGlobal(t *testing.T) {
 	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
 	keys := []string{"config.app_home_title", "config.allow_guest_mode"}
+	space := makeTestSpace(spaceKey, "org-1")
 
-	spaceOwnerID := "space:my-space"
-	spaceStore.On("Get", ctx, spaceKey).Return(makeTestSpace(spaceKey, "org-1"), nil)
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	// Space has an override for home title
 	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
@@ -1345,9 +1346,10 @@ func TestSpaceRegistry_AllKeysFromGlobal(t *testing.T) {
 	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
 	keys := []string{"config.app_home_title"}
+	space := makeTestSpace(spaceKey, "org-1")
 
-	spaceOwnerID := "space:my-space"
-	spaceStore.On("Get", ctx, spaceKey).Return(makeTestSpace(spaceKey, "org-1"), nil)
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	// No space-level override
 	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
@@ -1398,8 +1400,9 @@ func TestSpaceRegistry_ListAll(t *testing.T) {
 
 	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
-	spaceOwnerID := "space:my-space"
-	spaceStore.On("Get", ctx, spaceKey).Return(makeTestSpace(spaceKey, "org-1"), nil)
+	space := makeTestSpace(spaceKey, "org-1")
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	// List all space-level entries (no fallback when keys is nil/empty)
 	mockRegistryStore.On("List", ctx, spaceOwnerID, (*string)(nil)).
@@ -1428,10 +1431,11 @@ func TestSetSpaceRegistry_AdminSetsEntries(t *testing.T) {
 
 	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
-	spaceOwnerID := "space:my-space"
+	space := makeTestSpace(spaceKey, "org-1")
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
 	key := "config.app_home_title"
 	value := "My Custom Space"
-	spaceStore.On("Get", ctx, spaceKey).Return(makeTestSpace(spaceKey, "org-1"), nil)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	expectedEntries := []*registrystore.Registry{{Key: key, Value: value, IsEncrypted: false}}
 	mockRegistryStore.On("SetMulti", ctx, spaceOwnerID, expectedEntries).
@@ -1497,9 +1501,10 @@ func TestDeleteSpaceRegistry_AdminDeletes(t *testing.T) {
 
 	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
-	spaceOwnerID := "space:my-space"
+	space := makeTestSpace(spaceKey, "org-1")
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
 	keys := []string{"config.app_home_title", "config.allow_guest_mode"}
-	spaceStore.On("Get", ctx, spaceKey).Return(makeTestSpace(spaceKey, "org-1"), nil)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	mockRegistryStore.On("DeleteMulti", ctx, spaceOwnerID, keys).Return(nil)
 

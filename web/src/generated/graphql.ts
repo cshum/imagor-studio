@@ -537,6 +537,7 @@ export type Space = {
   customDomain: Scalars['String']['output']
   customDomainVerified: Scalars['Boolean']['output']
   endpoint: Scalars['String']['output']
+  id: Scalars['ID']['output']
   isShared: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   name: Scalars['String']['output']

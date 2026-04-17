@@ -11,6 +11,7 @@ type Organization {
 
 # Non-credential Space view — credentials (accessKeyId, secretKey, imagorSecret) are write-only
 type Space {
+  id: ID!
   orgId: ID!
   key: String!
   name: String!

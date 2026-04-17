@@ -29,6 +29,7 @@ import (
 // All sensitive credential fields are plaintext; encryption/decryption is
 // handled internally by the store.
 type Space struct {
+	ID          string
 	OrgID       string
 	Key         string
 	Name        string
@@ -184,6 +185,7 @@ func (s *store) modelToApp(row *model.Space) (*Space, error) {
 		return nil, fmt.Errorf("decrypt imagor_secret for space %s: %w", row.Key, err)
 	}
 	return &Space{
+		ID:                   row.ID,
 		OrgID:                row.OrgID,
 		Key:                  row.Key,
 		Name:                 row.Name,

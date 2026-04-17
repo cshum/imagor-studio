@@ -25,6 +25,10 @@ func (n *SpaceStore) Upsert(_ context.Context, _ *spacestore.Space) error {
 	return ErrEmbeddedMode
 }
 
+func (n *SpaceStore) RenameKey(_ context.Context, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
 func (n *SpaceStore) SoftDelete(_ context.Context, _ string) error {
 	return ErrEmbeddedMode
 }

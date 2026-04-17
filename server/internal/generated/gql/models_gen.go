@@ -188,6 +188,7 @@ type SaveTemplateInput struct {
 }
 
 type Space struct {
+	ID                   string `json:"id"`
 	OrgID                string `json:"orgId"`
 	Key                  string `json:"key"`
 	Name                 string `json:"name"`

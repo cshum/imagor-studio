@@ -191,6 +191,7 @@ type ComplexityRoot struct {
 		CustomDomain         func(childComplexity int) int
 		CustomDomainVerified func(childComplexity int) int
 		Endpoint             func(childComplexity int) int
+		ID                   func(childComplexity int) int
 		IsShared             func(childComplexity int) int
 		Key                  func(childComplexity int) int
 		Name                 func(childComplexity int) int
@@ -1334,6 +1335,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Space.Endpoint(childComplexity), true
+	case "Space.id":
+		if e.ComplexityRoot.Space.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.ID(childComplexity), true
 	case "Space.isShared":
 		if e.ComplexityRoot.Space.IsShared == nil {
 			break
@@ -1972,6 +1979,7 @@ enum ImagorSignerType {
 
 # Non-credential Space view — credentials (accessKeyId, secretKey, imagorSecret) are write-only
 type Space {
+  id: ID!
   orgId: ID!
   key: String!
   name: String!
@@ -4957,6 +4965,8 @@ func (ec *executionContext) fieldContext_Mutation_createSpace(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Space_id(ctx, field)
 			case "orgId":
 				return ec.fieldContext_Space_orgId(ctx, field)
 			case "key":
@@ -5038,6 +5048,8 @@ func (ec *executionContext) fieldContext_Mutation_updateSpace(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Space_id(ctx, field)
 			case "orgId":
 				return ec.fieldContext_Space_orgId(ctx, field)
 			case "key":
@@ -6739,6 +6751,8 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Space_id(ctx, field)
 			case "orgId":
 				return ec.fieldContext_Space_orgId(ctx, field)
 			case "key":
@@ -6809,6 +6823,8 @@ func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Space_id(ctx, field)
 			case "orgId":
 				return ec.fieldContext_Space_orgId(ctx, field)
 			case "key":
@@ -7762,6 +7778,35 @@ func (ec *executionContext) fieldContext_S3StorageConfig_baseDir(_ context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_id(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13677,6 +13722,11 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Space")
+		case "id":
+			out.Values[i] = ec._Space_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "orgId":
 			out.Values[i] = ec._Space_orgId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

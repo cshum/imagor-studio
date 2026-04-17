@@ -444,7 +444,7 @@ func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceKey string, keys
 		return nil, fmt.Errorf("space manager permission required for space registry: forbidden")
 	}
 
-	ownerID := registrystore.SpaceOwnerID(spaceKey)
+	ownerID := registrystore.SpaceOwnerID(space.ID)
 
 	if len(keys) == 0 {
 		// No keys requested — list all space-scoped entries (no fallback for list)
@@ -547,7 +547,7 @@ func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceKey string
 		return nil, fmt.Errorf("entries must not be empty")
 	}
 
-	ownerID := registrystore.SpaceOwnerID(spaceKey)
+	ownerID := registrystore.SpaceOwnerID(space.ID)
 
 	registryEntries := make([]*registrystore.Registry, 0, len(entries))
 	for _, e := range entries {
@@ -603,7 +603,7 @@ func (r *mutationResolver) DeleteSpaceRegistry(ctx context.Context, spaceKey str
 		return false, fmt.Errorf("keys must not be empty")
 	}
 
-	ownerID := registrystore.SpaceOwnerID(spaceKey)
+	ownerID := registrystore.SpaceOwnerID(space.ID)
 
 	if err := r.registryStore.DeleteMulti(ctx, ownerID, keys); err != nil {
 		return false, fmt.Errorf("failed to delete space registry: %w", err)
