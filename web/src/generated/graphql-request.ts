@@ -695,6 +695,7 @@ export type User = {
   displayName: Scalars['String']['output']
   email: Maybe<Scalars['String']['output']>
   emailVerified: Scalars['Boolean']['output']
+  hasPassword: Scalars['Boolean']['output']
   id: Scalars['ID']['output']
   isActive: Scalars['Boolean']['output']
   pendingEmail: Maybe<Scalars['String']['output']>
@@ -1488,6 +1489,7 @@ export type UserInfoFragment = {
   email: string | null
   pendingEmail: string | null
   emailVerified: boolean
+  hasPassword: boolean
   avatarUrl: string | null
   authProviders: Array<{
     __typename?: 'AuthProvider'
@@ -1513,6 +1515,7 @@ export type MeQuery = {
     email: string | null
     pendingEmail: string | null
     emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
     authProviders: Array<{
       __typename?: 'AuthProvider'
@@ -1541,6 +1544,7 @@ export type GetUserQuery = {
     email: string | null
     pendingEmail: string | null
     emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
     authProviders: Array<{
       __typename?: 'AuthProvider'
@@ -1574,6 +1578,7 @@ export type ListUsersQuery = {
       email: string | null
       pendingEmail: string | null
       emailVerified: boolean
+      hasPassword: boolean
       avatarUrl: string | null
       authProviders: Array<{
         __typename?: 'AuthProvider'
@@ -1604,6 +1609,7 @@ export type UpdateProfileMutation = {
     email: string | null
     pendingEmail: string | null
     emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
     authProviders: Array<{
       __typename?: 'AuthProvider'
@@ -1672,6 +1678,7 @@ export type CreateUserMutation = {
     email: string | null
     pendingEmail: string | null
     emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
     authProviders: Array<{
       __typename?: 'AuthProvider'
@@ -1709,6 +1716,7 @@ export const UserInfoFragmentDoc = gql`
     email
     pendingEmail
     emailVerified
+    hasPassword
     avatarUrl
     authProviders {
       provider

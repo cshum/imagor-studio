@@ -632,6 +632,25 @@ func TestChangePassword_ValidationErrors(t *testing.T) {
 			expectError: true,
 			errorMsg:    "current password is required",
 		},
+		{
+			name: "OAuth-only user can set password without current password",
+			input: gql.ChangePasswordInput{
+				CurrentPassword: nil,
+				NewPassword:     "newpassword123",
+			},
+			setupMocks: func() {
+				mockUserStore.On("GetByIDWithPassword", ctx, "test-user-id").Return(&model.User{
+					ID:             "test-user-id",
+					DisplayName:    "testuser",
+					Username:       "testuser",
+					HashedPassword: "oauth",
+					Role:           "user",
+					IsActive:       true,
+				}, nil)
+				mockUserStore.On("UpdatePassword", ctx, "test-user-id", mock.AnythingOfType("string")).Return(nil)
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -641,10 +660,15 @@ func TestChangePassword_ValidationErrors(t *testing.T) {
 
 			result, err := resolver.Mutation().ChangePassword(ctx, tt.input, nil)
 
-			assert.Error(t, err)
-			assert.False(t, result)
-			if tt.errorMsg != "" {
-				assert.Contains(t, err.Error(), tt.errorMsg)
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.False(t, result)
+				if tt.errorMsg != "" {
+					assert.Contains(t, err.Error(), tt.errorMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.True(t, result)
 			}
 
 			mockUserStore.AssertExpectations(t)

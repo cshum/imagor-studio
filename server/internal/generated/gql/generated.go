@@ -295,6 +295,7 @@ type ComplexityRoot struct {
 		DisplayName   func(childComplexity int) int
 		Email         func(childComplexity int) int
 		EmailVerified func(childComplexity int) int
+		HasPassword   func(childComplexity int) int
 		ID            func(childComplexity int) int
 		IsActive      func(childComplexity int) int
 		PendingEmail  func(childComplexity int) int
@@ -1783,6 +1784,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.User.EmailVerified(childComplexity), true
+	case "User.hasPassword":
+		if e.ComplexityRoot.User.HasPassword == nil {
+			break
+		}
+
+		return e.ComplexityRoot.User.HasPassword(childComplexity), true
 	case "User.id":
 		if e.ComplexityRoot.User.ID == nil {
 			break
@@ -2460,6 +2467,7 @@ type User {
   email: String
   pendingEmail: String
   emailVerified: Boolean!
+  hasPassword: Boolean!
   avatarUrl: String
   authProviders: [AuthProvider!]!
 }
@@ -6200,6 +6208,8 @@ func (ec *executionContext) fieldContext_Mutation_updateProfile(ctx context.Cont
 				return ec.fieldContext_User_pendingEmail(ctx, field)
 			case "emailVerified":
 				return ec.fieldContext_User_emailVerified(ctx, field)
+			case "hasPassword":
+				return ec.fieldContext_User_hasPassword(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
 			case "authProviders":
@@ -6478,6 +6488,8 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_pendingEmail(ctx, field)
 			case "emailVerified":
 				return ec.fieldContext_User_emailVerified(ctx, field)
+			case "hasPassword":
+				return ec.fieldContext_User_hasPassword(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
 			case "authProviders":
@@ -7800,6 +7812,8 @@ func (ec *executionContext) fieldContext_Query_me(_ context.Context, field graph
 				return ec.fieldContext_User_pendingEmail(ctx, field)
 			case "emailVerified":
 				return ec.fieldContext_User_emailVerified(ctx, field)
+			case "hasPassword":
+				return ec.fieldContext_User_hasPassword(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
 			case "authProviders":
@@ -7856,6 +7870,8 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_pendingEmail(ctx, field)
 			case "emailVerified":
 				return ec.fieldContext_User_emailVerified(ctx, field)
+			case "hasPassword":
+				return ec.fieldContext_User_hasPassword(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
 			case "authProviders":
@@ -10318,6 +10334,35 @@ func (ec *executionContext) fieldContext_User_emailVerified(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _User_hasPassword(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_hasPassword,
+		func(ctx context.Context) (any, error) {
+			return obj.HasPassword, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_hasPassword(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10428,6 +10473,8 @@ func (ec *executionContext) fieldContext_UserList_items(_ context.Context, field
 				return ec.fieldContext_User_pendingEmail(ctx, field)
 			case "emailVerified":
 				return ec.fieldContext_User_emailVerified(ctx, field)
+			case "hasPassword":
+				return ec.fieldContext_User_hasPassword(ctx, field)
 			case "avatarUrl":
 				return ec.fieldContext_User_avatarUrl(ctx, field)
 			case "authProviders":
@@ -14962,6 +15009,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._User_pendingEmail(ctx, field, obj)
 		case "emailVerified":
 			out.Values[i] = ec._User_emailVerified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasPassword":
+			out.Values[i] = ec._User_hasPassword(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

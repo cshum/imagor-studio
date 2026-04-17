@@ -65,7 +65,7 @@ type Documents = {
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n': typeof types.TestStorageConfigDocument
   '\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {\n    saveTemplate(input: $input, spaceKey: $spaceKey) {\n      success\n      templatePath\n      previewPath\n      message\n    }\n  }\n': typeof types.SaveTemplateDocument
   '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)\n  }\n': typeof types.RegenerateTemplatePreviewDocument
-  '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n': typeof types.UserInfoFragmentDoc
+  '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    hasPassword\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n': typeof types.UserInfoFragmentDoc
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': typeof types.MeDocument
   '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n': typeof types.GetUserDocument
   '\n  query ListUsers($offset: Int = 0, $limit: Int = 0, $search: String) {\n    users(offset: $offset, limit: $limit, search: $search) {\n      items {\n        ...UserInfo\n      }\n      totalCount\n    }\n  }\n': typeof types.ListUsersDocument
@@ -178,7 +178,7 @@ const documents: Documents = {
     types.SaveTemplateDocument,
   '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)\n  }\n':
     types.RegenerateTemplatePreviewDocument,
-  '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n':
+  '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    hasPassword\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n':
     types.UserInfoFragmentDoc,
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': types.MeDocument,
   '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n':
@@ -519,8 +519,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n',
-): (typeof documents)['\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n']
+  source: '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    hasPassword\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n',
+): (typeof documents)['\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    hasPassword\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -23,6 +23,7 @@ type User struct {
 	Email         *string   `json:"email,omitempty"`
 	PendingEmail  *string   `json:"pendingEmail,omitempty"`
 	EmailVerified bool      `json:"emailVerified"`
+	HasPassword   bool      `json:"hasPassword"`
 	AvatarUrl     *string   `json:"avatarUrl,omitempty"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
@@ -104,6 +105,7 @@ func modelUserToStore(user model.User) *User {
 		Email:         user.Email,
 		PendingEmail:  user.PendingEmail,
 		EmailVerified: user.EmailVerified,
+		HasPassword:   user.HashedPassword != "" && user.HashedPassword != "oauth",
 		AvatarUrl:     user.AvatarUrl,
 		CreatedAt:     user.CreatedAt,
 		UpdatedAt:     user.UpdatedAt,

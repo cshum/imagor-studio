@@ -24,6 +24,7 @@ export interface ProfileLoaderData {
     email: string | null
     pendingEmail: string | null
     emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
     authProviders: Array<{ provider: string; email: string | null; linkedAt: string }>
   } | null
@@ -79,6 +80,7 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
           email: auth.profile.email ?? null,
           pendingEmail: auth.profile.pendingEmail ?? null,
           emailVerified: auth.profile.emailVerified ?? false,
+          hasPassword: auth.profile.hasPassword ?? false,
           avatarUrl: auth.profile.avatarUrl ?? null,
           authProviders: auth.profile.authProviders ?? [],
         }

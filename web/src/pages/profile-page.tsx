@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -62,26 +62,16 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       .regex(/^[a-zA-Z0-9_-]+$/, t('forms.validation.usernamePattern')),
   })
 
-  const passwordSchema = z
-    .object({
-      currentPassword: z.string().min(1, t('forms.validation.currentPasswordRequired')),
-      newPassword: z
-        .string()
-        .min(8, t('forms.validation.passwordMinLength'))
-        .max(72, t('forms.validation.passwordMaxLength')),
-      confirmPassword: z.string(),
-    })
-    .refine((data) => data.newPassword === data.confirmPassword, {
-      message: t('forms.validation.passwordsDoNotMatch'),
-      path: ['confirmPassword'],
-    })
-
   const emailSchema = z.object({
     email: z.string().email(t('pages.profile.invalidEmail')),
   })
 
   type ProfileForm = z.infer<typeof profileSchema>
-  type PasswordForm = z.infer<typeof passwordSchema>
+  type PasswordForm = {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+  }
   type EmailForm = z.infer<typeof emailSchema>
 
   const profileData = loaderData?.profile || {
@@ -90,6 +80,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
     email: authState.profile?.email || null,
     pendingEmail: authState.profile?.pendingEmail || null,
     emailVerified: authState.profile?.emailVerified || false,
+    hasPassword: authState.profile?.hasPassword || false,
     avatarUrl: authState.profile?.avatarUrl || null,
     authProviders: authState.profile?.authProviders || [],
   }
@@ -98,8 +89,8 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const email = profileData.email
   const pendingEmail = profileData.pendingEmail
   const emailVerified = profileData.emailVerified
+  const hasPassword = profileData.hasPassword
   const authProviders = profileData.authProviders
-  const hasProviderAvatar = authState.multiTenant && Boolean(avatarUrl)
   const primaryProvider = authProviders[0] || null
   const displayName = profileData.displayName || profileData.username || ''
   const initials = (() => {
@@ -107,6 +98,26 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
     if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
     return displayName.slice(0, 2).toUpperCase() || '?'
   })()
+
+  const passwordSchema = useMemo(
+    () =>
+      z
+        .object({
+          currentPassword: hasPassword
+            ? z.string().min(1, t('forms.validation.currentPasswordRequired'))
+            : z.string(),
+          newPassword: z
+            .string()
+            .min(8, t('forms.validation.passwordMinLength'))
+            .max(72, t('forms.validation.passwordMaxLength')),
+          confirmPassword: z.string(),
+        })
+        .refine((data) => data.newPassword === data.confirmPassword, {
+          message: t('forms.validation.passwordsDoNotMatch'),
+          path: ['confirmPassword'],
+        }),
+    [hasPassword, t],
+  )
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -333,12 +344,16 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
 
         <SettingRow
           label={t('pages.profile.password')}
-          description={t('pages.profile.passwordDescription')}
+          description={
+            hasPassword
+              ? t('pages.profile.passwordDescription')
+              : t('pages.profile.passwordNotSetDescription')
+          }
           last
           contentClassName='flex justify-end sm:max-w-xs'
         >
           <Button variant='outline' onClick={() => setPasswordDialogOpen(true)}>
-            {t('pages.profile.changePassword')}
+            {hasPassword ? t('pages.profile.changePassword') : t('pages.profile.setPassword')}
           </Button>
         </SettingRow>
       </SettingsSection>
@@ -346,31 +361,39 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       {/* ── Change password dialog ───────────────────────────────────── */}
       <ResponsiveDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <ResponsiveDialogHeader>
-          <div className='text-lg font-semibold'>{t('pages.profile.changePasswordTitle')}</div>
+          <div className='text-lg font-semibold'>
+            {hasPassword
+              ? t('pages.profile.changePasswordTitle')
+              : t('pages.profile.setPasswordTitle')}
+          </div>
           <ResponsiveDialogDescription>
-            {t('pages.profile.changePasswordDescription')}
+            {hasPassword
+              ? t('pages.profile.changePasswordDescription')
+              : t('pages.profile.setPasswordDescription')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <Form {...passwordForm}>
           <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-3'>
-            <FormField
-              control={passwordForm.control}
-              name='currentPassword'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('pages.profile.currentPassword')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='password'
-                      placeholder={t('pages.profile.currentPasswordPlaceholder')}
-                      {...field}
-                      disabled={isUpdatingPassword}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {hasPassword && (
+              <FormField
+                control={passwordForm.control}
+                name='currentPassword'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('pages.profile.currentPassword')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='password'
+                        placeholder={t('pages.profile.currentPasswordPlaceholder')}
+                        {...field}
+                        disabled={isUpdatingPassword}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={passwordForm.control}
               name='newPassword'
@@ -417,7 +440,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 {t('common.buttons.cancel')}
               </Button>
               <ButtonWithLoading type='submit' isLoading={isUpdatingPassword}>
-                {t('pages.profile.updatePassword')}
+                {hasPassword ? t('pages.profile.updatePassword') : t('pages.profile.setPassword')}
               </ButtonWithLoading>
             </div>
           </form>

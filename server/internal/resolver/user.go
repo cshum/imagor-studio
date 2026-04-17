@@ -56,6 +56,7 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
 		Email:         user.Email,
 		PendingEmail:  user.PendingEmail,
 		EmailVerified: user.EmailVerified,
+		HasPassword:   user.HasPassword,
 		AvatarURL:     user.AvatarUrl,
 		AuthProviders: toGQLAuthProviders(r.userStore, r.logger, ctx, user.ID),
 	}, nil
@@ -89,6 +90,7 @@ func (r *queryResolver) User(ctx context.Context, id string) (*gql.User, error) 
 		Email:         user.Email,
 		PendingEmail:  user.PendingEmail,
 		EmailVerified: user.EmailVerified,
+		HasPassword:   user.HasPassword,
 		AvatarURL:     user.AvatarUrl,
 		AuthProviders: toGQLAuthProviders(r.userStore, r.logger, ctx, user.ID),
 	}, nil
@@ -144,6 +146,7 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int, sear
 			Email:         user.Email,
 			PendingEmail:  user.PendingEmail,
 			EmailVerified: user.EmailVerified,
+			HasPassword:   user.HasPassword,
 			AvatarURL:     user.AvatarUrl,
 			AuthProviders: toGQLAuthProviders(r.userStore, r.logger, ctx, user.ID),
 		}
@@ -224,6 +227,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 		Email:         updatedUser.Email,
 		PendingEmail:  updatedUser.PendingEmail,
 		EmailVerified: updatedUser.EmailVerified,
+		HasPassword:   updatedUser.HasPassword,
 		AvatarURL:     updatedUser.AvatarUrl,
 		AuthProviders: toGQLAuthProviders(r.userStore, r.logger, ctx, updatedUser.ID),
 	}, nil
@@ -325,11 +329,14 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 
 	// Verify current password (only required for self-operation)
 	if !isAdminOperation {
-		if input.CurrentPassword == nil || *input.CurrentPassword == "" {
-			return false, fmt.Errorf("current password is required")
-		}
-		if err := auth.CheckPassword(currentUser.HashedPassword, *input.CurrentPassword); err != nil {
-			return false, fmt.Errorf("current password is incorrect")
+		hasPassword := currentUser.HashedPassword != "" && currentUser.HashedPassword != "oauth"
+		if hasPassword {
+			if input.CurrentPassword == nil || *input.CurrentPassword == "" {
+				return false, fmt.Errorf("current password is required")
+			}
+			if err := auth.CheckPassword(currentUser.HashedPassword, *input.CurrentPassword); err != nil {
+				return false, fmt.Errorf("current password is incorrect")
+			}
 		}
 	}
 

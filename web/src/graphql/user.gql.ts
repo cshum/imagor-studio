@@ -12,6 +12,7 @@ export const UserFragment = gql(`
     email
     pendingEmail
     emailVerified
+    hasPassword
     avatarUrl
     authProviders {
       provider

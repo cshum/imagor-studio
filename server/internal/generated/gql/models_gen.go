@@ -330,6 +330,7 @@ type User struct {
 	Email         *string         `json:"email,omitempty"`
 	PendingEmail  *string         `json:"pendingEmail,omitempty"`
 	EmailVerified bool            `json:"emailVerified"`
+	HasPassword   bool            `json:"hasPassword"`
 	AvatarURL     *string         `json:"avatarUrl,omitempty"`
 	AuthProviders []*AuthProvider `json:"authProviders"`
 }

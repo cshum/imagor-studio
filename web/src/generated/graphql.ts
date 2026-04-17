@@ -694,6 +694,7 @@ export type User = {
   displayName: Scalars['String']['output']
   email: Maybe<Scalars['String']['output']>
   emailVerified: Scalars['Boolean']['output']
+  hasPassword: Scalars['Boolean']['output']
   id: Scalars['ID']['output']
   isActive: Scalars['Boolean']['output']
   pendingEmail: Maybe<Scalars['String']['output']>
@@ -1487,6 +1488,7 @@ export type UserInfoFragment = {
   email: string | null
   pendingEmail: string | null
   emailVerified: boolean
+  hasPassword: boolean
   avatarUrl: string | null
   authProviders: Array<{
     __typename?: 'AuthProvider'
@@ -1512,6 +1514,7 @@ export type MeQuery = {
     email: string | null
     pendingEmail: string | null
     emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
     authProviders: Array<{
       __typename?: 'AuthProvider'
@@ -1540,6 +1543,7 @@ export type GetUserQuery = {
     email: string | null
     pendingEmail: string | null
     emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
     authProviders: Array<{
       __typename?: 'AuthProvider'
@@ -1573,6 +1577,7 @@ export type ListUsersQuery = {
       email: string | null
       pendingEmail: string | null
       emailVerified: boolean
+      hasPassword: boolean
       avatarUrl: string | null
       authProviders: Array<{
         __typename?: 'AuthProvider'
@@ -1603,6 +1608,7 @@ export type UpdateProfileMutation = {
     email: string | null
     pendingEmail: string | null
     emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
     authProviders: Array<{
       __typename?: 'AuthProvider'
@@ -1671,6 +1677,7 @@ export type CreateUserMutation = {
     email: string | null
     pendingEmail: string | null
     emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
     authProviders: Array<{
       __typename?: 'AuthProvider'
@@ -1738,6 +1745,7 @@ export const UserInfoFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
           { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasPassword' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
           {
             kind: 'Field',
@@ -4516,6 +4524,7 @@ export const MeDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
           { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasPassword' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
           {
             kind: 'Field',
@@ -4589,6 +4598,7 @@ export const GetUserDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
           { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasPassword' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
           {
             kind: 'Field',
@@ -4693,6 +4703,7 @@ export const ListUsersDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
           { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasPassword' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
           {
             kind: 'Field',
@@ -4776,6 +4787,7 @@ export const UpdateProfileDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
           { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasPassword' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
           {
             kind: 'Field',
@@ -5063,6 +5075,7 @@ export const CreateUserDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'email' } },
           { kind: 'Field', name: { kind: 'Name', value: 'pendingEmail' } },
           { kind: 'Field', name: { kind: 'Name', value: 'emailVerified' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasPassword' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
           {
             kind: 'Field',
