@@ -807,6 +807,7 @@
           "required": "Inserisci un indirizzo email.",
           "invalidEmail": "Inserisci un indirizzo email valido.",
           "alreadyHasAccess": "Questa persona ha gia accesso a questo spazio.",
+          "outsideOrganization": "Questo utente ha gia un account ma non fa parte della tua organizzazione. Invitalo prima nella tua organizzazione.",
           "notConfigured": "Gli inviti email non sono ancora configurati.",
           "unavailable": "La condivisione non e disponibile in questa distribuzione.",
           "default": "Impossibile condividere questo spazio adesso. Riprova."
@@ -820,6 +821,8 @@
         "inviteSent": "Email di invito inviata.",
         "roleUpdated": "Ruolo aggiornato.",
         "removeSuccess": "Membro rimosso.",
+        "removeSelfDisabled": "Tu",
+        "removeSelfNotAllowed": "Non puoi rimuoverti da questo spazio.",
         "empty": "Nessun membro diretto dello spazio.",
         "pendingTitle": "Inviti in attesa",
         "pendingHeaders": {

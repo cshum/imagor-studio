@@ -735,6 +735,7 @@
           "required": "請輸入電子郵件地址。",
           "invalidEmail": "請輸入有效的電子郵件地址。",
           "alreadyHasAccess": "此人已可存取這個空間。",
+          "outsideOrganization": "這位使用者已經有帳號，但不在您的組織內。請先將對方邀請進入您的組織。",
           "notConfigured": "尚未設定電子郵件邀請。",
           "unavailable": "此部署目前無法使用分享功能。",
           "default": "目前無法分享這個空間，請稍後再試。"
@@ -748,6 +749,8 @@
         "inviteSent": "邀請郵件已送出。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成員已移除。",
+        "removeSelfDisabled": "您",
+        "removeSelfNotAllowed": "您不能將自己從這個空間移除。",
         "empty": "這個空間尚無直接成員。",
         "pendingTitle": "待接受的邀請",
         "pendingHeaders": {

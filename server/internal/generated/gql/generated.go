@@ -215,8 +215,10 @@ type ComplexityRoot struct {
 	}
 
 	SpaceMember struct {
+		AvatarURL   func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
 		DisplayName func(childComplexity int) int
+		Email       func(childComplexity int) int
 		Role        func(childComplexity int) int
 		UserID      func(childComplexity int) int
 		Username    func(childComplexity int) int
@@ -1406,6 +1408,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.SpaceInviteResult.Status(childComplexity), true
 
+	case "SpaceMember.avatarUrl":
+		if e.ComplexityRoot.SpaceMember.AvatarURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceMember.AvatarURL(childComplexity), true
 	case "SpaceMember.createdAt":
 		if e.ComplexityRoot.SpaceMember.CreatedAt == nil {
 			break
@@ -1418,6 +1426,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SpaceMember.DisplayName(childComplexity), true
+	case "SpaceMember.email":
+		if e.ComplexityRoot.SpaceMember.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceMember.Email(childComplexity), true
 	case "SpaceMember.role":
 		if e.ComplexityRoot.SpaceMember.Role == nil {
 			break
@@ -1947,6 +1961,8 @@ type SpaceMember {
   userId: ID!
   username: String!
   displayName: String!
+  email: String
+  avatarUrl: String
   role: String!
   createdAt: String!
 }
@@ -5184,6 +5200,10 @@ func (ec *executionContext) fieldContext_Mutation_addSpaceMember(ctx context.Con
 				return ec.fieldContext_SpaceMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_SpaceMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_SpaceMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
 			case "createdAt":
@@ -5421,6 +5441,10 @@ func (ec *executionContext) fieldContext_Mutation_updateSpaceMemberRole(ctx cont
 				return ec.fieldContext_SpaceMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_SpaceMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_SpaceMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
 			case "createdAt":
@@ -6739,6 +6763,10 @@ func (ec *executionContext) fieldContext_Query_spaceMembers(ctx context.Context,
 				return ec.fieldContext_SpaceMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_SpaceMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_SpaceMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
 			case "createdAt":
@@ -8180,6 +8208,10 @@ func (ec *executionContext) fieldContext_SpaceInviteResult_member(_ context.Cont
 				return ec.fieldContext_SpaceMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_SpaceMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_SpaceMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
 			case "createdAt":
@@ -8307,6 +8339,64 @@ func (ec *executionContext) _SpaceMember_displayName(ctx context.Context, field 
 }
 
 func (ec *executionContext) fieldContext_SpaceMember_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceMember_email(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceMember_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceMember_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceMember_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceMember_avatarUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.AvatarURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceMember_avatarUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SpaceMember",
 		Field:      field,
@@ -13428,6 +13518,10 @@ func (ec *executionContext) _SpaceMember(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "email":
+			out.Values[i] = ec._SpaceMember_email(ctx, field, obj)
+		case "avatarUrl":
+			out.Values[i] = ec._SpaceMember_avatarUrl(ctx, field, obj)
 		case "role":
 			out.Values[i] = ec._SpaceMember_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

@@ -13,7 +13,7 @@ import {
   type SpaceInviteResultItem,
   type SpaceMemberItem,
 } from '@/api/org-api'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent } from '@/components/ui/card'
@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { extractErrorMessage } from '@/lib/error-utils'
+import { useAuth } from '@/stores/auth-store'
 
 const ROLE_OPTIONS = ['admin', 'member'] as const
 
@@ -63,6 +64,7 @@ export function MembersSection({
   isShared,
 }: MembersSectionProps) {
   const { t } = useTranslation()
+  const { authState } = useAuth()
   const [members, setMembers] = useState<SpaceMemberItem[]>(initialMembers)
   const [invitations, setInvitations] = useState<SpaceInvitationItem[]>(initialInvitations)
   const [isLoading, setIsLoading] = useState(false)
@@ -72,6 +74,10 @@ export function MembersSection({
   const [isInviting, setIsInviting] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState(false)
+
+  const currentUserId = authState.profile?.id ?? null
+  const pendingMember = members.find((member) => member.userId === pendingRemoveId)
+  const sectionTitle = t('pages.spaceSettings.sections.members')
 
   const reload = async () => {
     setIsLoading(true)
@@ -103,6 +109,13 @@ export function MembersSection({
       return {
         kind: 'field' as const,
         message: t('pages.spaceSettings.members.inviteErrors.alreadyHasAccess'),
+      }
+    }
+
+    if (normalized.includes('outside your organization')) {
+      return {
+        kind: 'field' as const,
+        message: t('pages.spaceSettings.members.inviteErrors.outsideOrganization'),
       }
     }
 
@@ -184,6 +197,11 @@ export function MembersSection({
   const handleRemove = async () => {
     if (!pendingRemoveId) return
 
+    if (pendingRemoveId === currentUserId) {
+      toast.error(t('pages.spaceSettings.members.removeSelfNotAllowed'))
+      return
+    }
+
     setIsRemoving(true)
     try {
       await removeSpaceMember({ spaceKey, userId: pendingRemoveId })
@@ -196,9 +214,6 @@ export function MembersSection({
       setIsRemoving(false)
     }
   }
-
-  const pendingMember = members.find((member) => member.userId === pendingRemoveId)
-  const sectionTitle = t('pages.spaceSettings.sections.members')
 
   const invitationsContent =
     invitations.length === 0 ? null : (
@@ -245,6 +260,7 @@ export function MembersSection({
         <div className='divide-y'>
           {members.map((member) => {
             const memberLabel = getMemberLabel(member)
+            const isCurrentUser = member.userId === currentUserId
 
             return (
               <div
@@ -253,13 +269,16 @@ export function MembersSection({
               >
                 <div className='flex min-w-0 items-center gap-3'>
                   <Avatar className='h-10 w-10'>
+                    <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
                     <AvatarFallback className='text-sm font-semibold'>
                       {getInitials(memberLabel)}
                     </AvatarFallback>
                   </Avatar>
                   <div className='min-w-0'>
                     <p className='truncate text-sm font-medium'>{memberLabel}</p>
-                    <p className='text-muted-foreground truncate text-xs'>@{member.username}</p>
+                    <p className='text-muted-foreground truncate text-xs'>
+                      {member.email || `@${member.username}`}
+                    </p>
                   </div>
                 </div>
 
@@ -283,9 +302,12 @@ export function MembersSection({
                     variant='ghost'
                     size='sm'
                     className='text-destructive hover:text-destructive h-9 px-3'
+                    disabled={isCurrentUser}
                     onClick={() => setPendingRemoveId(member.userId)}
                   >
-                    {t('common.buttons.remove')}
+                    {isCurrentUser
+                      ? t('pages.spaceSettings.members.removeSelfDisabled')
+                      : t('common.buttons.remove')}
                   </Button>
                 </div>
               </div>

@@ -574,8 +574,10 @@ export type SpaceInviteResult = {
 
 export type SpaceMember = {
   __typename?: 'SpaceMember'
+  avatarUrl: Maybe<Scalars['String']['output']>
   createdAt: Scalars['String']['output']
   displayName: Scalars['String']['output']
+  email: Maybe<Scalars['String']['output']>
   role: Scalars['String']['output']
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
@@ -918,6 +920,8 @@ export type ListSpaceMembersQuery = {
     userId: string
     username: string
     displayName: string
+    email: string | null
+    avatarUrl: string | null
     role: string
     createdAt: string
   }>
@@ -1752,6 +1756,8 @@ export const ListSpaceMembersDocument = gql`
       userId
       username
       displayName
+      email
+      avatarUrl
       role
       createdAt
     }

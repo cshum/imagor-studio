@@ -713,6 +713,7 @@
           "required": "请输入电子邮件地址。",
           "invalidEmail": "请输入有效的电子邮件地址。",
           "alreadyHasAccess": "此人已经可以访问这个空间。",
+          "outsideOrganization": "该用户已经有账号，但不在你的组织内。请先将对方邀请进入你的组织。",
           "notConfigured": "电子邮件邀请尚未配置。",
           "unavailable": "当前部署暂不支持分享功能。",
           "default": "目前无法分享此空间，请稍后再试。"
@@ -726,6 +727,8 @@
         "inviteSent": "邀请邮件已发送。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成员已移除。",
+        "removeSelfDisabled": "你",
+        "removeSelfNotAllowed": "你不能将自己从这个空间移除。",
         "empty": "这个空间还没有直接成员。",
         "pendingTitle": "待处理邀请",
         "pendingHeaders": {

@@ -56,6 +56,8 @@ func mapSpaceMemberToGQL(m *spacestore.SpaceMemberView) *gql.SpaceMember {
 		UserID:      m.UserID,
 		Username:    m.Username,
 		DisplayName: m.DisplayName,
+		Email:       m.Email,
+		AvatarURL:   m.AvatarURL,
 		Role:        m.Role,
 		CreatedAt:   m.CreatedAt.UTC().Format(time.RFC3339),
 	}
@@ -683,10 +685,12 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 		return nil, fmt.Errorf("failed to look up user by email: %w", err)
 	}
 	if existingUser != nil {
+		isOrgMember := false
 		for _, member := range orgMembers {
 			if member.UserID != existingUser.ID {
 				continue
 			}
+			isOrgMember = true
 			hasAccess, hasAccessErr := r.spaceStore.HasMember(ctx, spaceKey, existingUser.ID)
 			if hasAccessErr != nil {
 				return nil, fmt.Errorf("failed to check space membership: %w", hasAccessErr)
@@ -705,7 +709,10 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 					}
 				}
 			}
-			return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: member.Username, DisplayName: member.DisplayName, Role: role}}, nil
+			return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: member.Username, DisplayName: member.DisplayName, Email: existingUser.Email, AvatarURL: existingUser.AvatarUrl, Role: role}}, nil
+		}
+		if !isOrgMember {
+			return nil, fmt.Errorf("user exists but is outside your organization")
 		}
 	}
 
@@ -744,6 +751,13 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceKey string, userID string) (bool, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
 		return false, err
+	}
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if claims.UserID == userID {
+		return false, fmt.Errorf("you cannot remove yourself from this space")
 	}
 	if r.spaceStore == nil {
 		return false, fmt.Errorf("space member management is not available in this deployment")

@@ -799,6 +799,7 @@
           "required": "Enter an email address.",
           "invalidEmail": "Enter a valid email address.",
           "alreadyHasAccess": "This person already has access to this space.",
+          "outsideOrganization": "This user already has an account but is outside your organisation. Invite them into your organisation first.",
           "notConfigured": "Email invitations are not configured yet.",
           "unavailable": "Sharing is not available in this deployment.",
           "default": "Could not share this space right now. Please try again."
@@ -812,6 +813,8 @@
         "inviteSent": "Invitation email sent.",
         "roleUpdated": "Role updated.",
         "removeSuccess": "Member removed.",
+        "removeSelfDisabled": "You",
+        "removeSelfNotAllowed": "You cannot remove yourself from this space.",
         "empty": "No direct space members yet.",
         "pendingTitle": "Pending invitations",
         "pendingHeaders": {

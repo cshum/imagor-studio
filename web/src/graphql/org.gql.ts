@@ -161,6 +161,8 @@ export const LIST_SPACE_MEMBERS = gql(`
       userId
       username
       displayName
+      email
+      avatarUrl
       role
       createdAt
     }

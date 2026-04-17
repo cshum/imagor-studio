@@ -75,6 +75,8 @@ type SpaceMemberView struct {
 	UserID      string
 	Username    string
 	DisplayName string
+	Email       *string
+	AvatarURL   *string
 	Role        string
 	CreatedAt   time.Time
 }
@@ -477,6 +479,8 @@ func (s *store) ListMembers(ctx context.Context, spaceKey string) ([]*SpaceMembe
 		CreatedAt   time.Time `bun:"created_at"`
 		Username    string    `bun:"username"`
 		DisplayName string    `bun:"display_name"`
+		Email       *string   `bun:"email"`
+		AvatarURL   *string   `bun:"avatar_url"`
 	}
 
 	var rows []memberRow
@@ -485,6 +489,8 @@ func (s *store) ListMembers(ctx context.Context, spaceKey string) ([]*SpaceMembe
 		ColumnExpr("sm.space_id, sm.user_id, sm.role, sm.created_at").
 		ColumnExpr("COALESCE(u.username, sm.user_id) AS username").
 		ColumnExpr("COALESCE(NULLIF(u.display_name, ''), COALESCE(u.username, sm.user_id)) AS display_name").
+		ColumnExpr("u.email AS email").
+		ColumnExpr("u.avatar_url AS avatar_url").
 		Join("LEFT JOIN users AS u ON u.id = sm.user_id").
 		Where("sm.space_id = ?", spaceRow.ID).
 		OrderExpr("sm.created_at ASC").
@@ -500,6 +506,8 @@ func (s *store) ListMembers(ctx context.Context, spaceKey string) ([]*SpaceMembe
 			UserID:      row.UserID,
 			Username:    row.Username,
 			DisplayName: row.DisplayName,
+			Email:       row.Email,
+			AvatarURL:   row.AvatarURL,
 			Role:        row.Role,
 			CreatedAt:   row.CreatedAt,
 		})
