@@ -10,7 +10,8 @@
       "tabs": {
         "profile": "个人资料",
         "system": "系统",
-        "users": "用户"
+        "users": "用户",
+        "spaces": "空间"
       }
     }
   },
@@ -22,16 +23,30 @@
       "delete": "删除",
       "remove": "移除",
       "edit": "编辑",
-      "create": "创建",
-      "update": "更新",
+          "inviteDescription": "通过电子邮件分享。现有组织成员会立即获得访问权限，其他人则会收到电子邮件邀请。",
+          "addExistingDescription": "或快速添加已经在组织中的成员。",
+          "emailPlaceholder": "name@example.com",
+          "sendInviteButton": "分享",
+          "inviteHelp": "现有队友会立即加入。新用户需要先使用 Google 登录，然后才会加入此组织和空间。",
+          "memberPlaceholder": "选择队友",
+          "memberPlaceholderEmpty": "您组织中的成员都已经拥有明确访问权限",
+          "sharedTitle": "组织范围访问",
+          "sharedDescription": "此组织中的所有成员都可以查看和复制此空间。使用下方列表管理明确加入的协作者和管理员。",
+          "emptyDescription": "目前还没有明确加入的协作者。组织管理员仍然具有访问权限。",
       "updateSettings": "保存",
+          "inviteSent": "邀请邮件已发送。",
       "close": "关闭",
       "more": "更多",
-      "switchTheme": "切换主题",
+          "empty": "暂无明确成员。",
+          "pendingTitle": "待处理邀请",
+          "pendingHeaders": {
+            "email": "电子邮件",
+            "role": "角色",
+            "expires": "到期时间"
+          },
       "select": "选择",
       "back": "返回"
     },
-    "navigation": {
       "title": "Imagor Studio",
       "home": "首页",
       "account": "账户",

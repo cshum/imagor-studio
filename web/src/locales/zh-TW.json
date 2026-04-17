@@ -10,7 +10,8 @@
       "tabs": {
         "profile": "個人資料",
         "system": "系統",
-        "users": "使用者"
+        "users": "使用者",
+        "spaces": "空間"
       }
     }
   },
@@ -20,32 +21,36 @@
       "save": "儲存",
       "cancel": "取消",
       "delete": "刪除",
-      "remove": "移除",
       "edit": "編輯",
+        "sendInviteButton": "分享",
+        "inviteHelp": "現有隊友會立即加入。新使用者則需要先使用 Google 登入，之後才會加入此組織與空間。",
+        "memberPlaceholder": "選擇隊友",
+        "memberPlaceholderEmpty": "您的組織成員都已具有明確存取權",
+        "sharedTitle": "組織層級存取權",
+        "sharedDescription": "此組織中的所有成員都可以檢視並複製這個空間。使用下方清單管理明確加入的協作者與管理員。",
+        "emptyDescription": "目前還沒有明確加入的協作者。組織管理員仍然具有存取權。",
       "create": "建立",
       "update": "更新",
       "updateSettings": "儲存",
       "close": "關閉",
-      "more": "更多",
-      "switchTheme": "切換主題",
+        "empty": "尚無明確成員。",
+        "pendingTitle": "待接受的邀請",
       "select": "選擇",
       "back": "返回"
     },
     "navigation": {
       "title": "Imagor Studio",
       "home": "首頁",
-      "account": "賬戶",
+      "account": "帳戶",
       "profile": "個人資料",
       "dashboard": "儀表板",
       "users": "使用者",
-      "signOut": "退出登入",
+      "signOut": "登出",
       "login": "登入",
       "settings": "設定"
     },
     "status": {
       "loading": "載入中...",
-      "error": "錯誤",
-      "success": "成功",
       "guest": "訪客",
       "user": "使用者",
       "yes": "是",

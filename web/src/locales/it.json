@@ -203,8 +203,8 @@
       "contextMenu": {
         "open": "Apri",
         "edit": "Modifica",
-        "copyUrl": "Copia URL",
-        "copyUrlSuccess": "URL copiato negli appunti",
+        "description": "Gestisci l'accesso a questo spazio.",
+        "addLabel": "Aggiungi membro",
         "download": "Scarica",
         "rename": "Rinomina",
         "move": "Sposta",
@@ -213,16 +213,30 @@
         "downloadError": "Impossibile scaricare"
       },
       "copyUrlDialog": {
-        "title": "Copia URL",
-        "description": "Copia l'URL qui sotto. Abbiamo provato a copiarlo automaticamente, ma potresti doverlo copiare manualmente.",
+        "inviteDescription": "Condividi via email. I membri esistenti dell'organizzazione ottengono subito l'accesso; tutti gli altri ricevono un invito via email.",
+        "addExistingDescription": "Oppure aggiungi rapidamente qualcuno che fa già parte della tua organizzazione.",
+        "emailPlaceholder": "name@example.com",
+        "sendInviteButton": "Condividi",
+        "inviteHelp": "I compagni di team esistenti vengono aggiunti subito. Le nuove persone dovranno accedere con Google per entrare in questa organizzazione e in questo spazio.",
+        "memberPlaceholder": "Scegli un collega",
+        "memberPlaceholderEmpty": "Tutti i membri della tua organizzazione hanno già accesso esplicito",
+        "sharedTitle": "Accesso a livello organizzazione",
+        "sharedDescription": "Tutti i membri di questa organizzazione possono visualizzare e copiare questo spazio. Usa l'elenco qui sotto per gestire collaboratori e amministratori espliciti.",
+        "emptyDescription": "Non ci sono ancora collaboratori espliciti. Gli amministratori dell'organizzazione hanno comunque accesso.",
         "closeButton": "Chiudi",
+        "inviteSent": "Email di invito inviata.",
         "copyButton": "Seleziona e Copia"
       },
-      "deleteImage": {
+        "empty": "Nessun membro esplicito ancora.",
+        "pendingTitle": "Inviti in attesa",
+        "pendingHeaders": {
+          "email": "Email",
+          "role": "Ruolo",
+          "expires": "Scade"
+        },
         "title": "Elimina Immagine",
         "description": "Sei sicuro di voler eliminare questa immagine?",
         "warning": "Questa azione non può essere annullata.",
-        "success": "\"{{fileName}}\" eliminata correttamente",
         "error": "Impossibile eliminare l'immagine"
       },
       "folderContextMenu": {
