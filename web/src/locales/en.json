@@ -128,6 +128,12 @@
     }
   },
   "pages": {
+    "authCallback": {
+      "failed": "Authentication failed",
+      "errorOAuth": "Authentication failed: {{error}}",
+      "errorNoToken": "No authentication token received",
+      "backToLogin": "Back to login"
+    },
     "gallery": {
       "title": "Gallery",
       "selectFolder": "Select Folder",

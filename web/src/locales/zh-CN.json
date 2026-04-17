@@ -126,6 +126,12 @@
     }
   },
   "pages": {
+    "authCallback": {
+      "failed": "认证失败",
+      "errorOAuth": "认证失败：{{error}}",
+      "errorNoToken": "未收到认证令牌",
+      "backToLogin": "返回登录"
+    },
     "gallery": {
       "title": "图库",
       "noImages": "未找到图片",
