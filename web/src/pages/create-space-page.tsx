@@ -434,6 +434,7 @@ export function CreateSpacePage() {
       <AppHeader
         profileLabel={getUserDisplayName()}
         roleLabel={authState.profile?.role}
+        avatarUrl={authState.profile?.avatarUrl}
         onLogout={handleLogout}
         appTitle={appTitle}
         breadcrumbs={[
