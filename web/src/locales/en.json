@@ -839,6 +839,7 @@
         },
         "removeTitle": "Remove Member",
         "removeDescription": "Are you sure you want to remove",
+        "roleSectionLabel": "Change role",
         "promoteToManager": "Promote to manager",
         "changeToMember": "Change to member",
         "roles": {

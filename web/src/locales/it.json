@@ -847,6 +847,7 @@
       },
       "removeTitle": "Rimuovi Membro",
       "removeDescription": "Sei sicuro di voler rimuovere",
+      "roleSectionLabel": "Cambia ruolo",
       "promoteToManager": "Promuovi a manager",
       "changeToMember": "Imposta come membro",
       "roles": {

@@ -795,6 +795,7 @@
         },
         "removeTitle": "移除成員",
         "removeDescription": "確定要移除",
+        "roleSectionLabel": "變更角色",
         "promoteToManager": "設為管理者",
         "changeToMember": "改為成員",
         "roles": {

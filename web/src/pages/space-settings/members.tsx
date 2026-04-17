@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Clock3, MoreHorizontal, UserRound } from 'lucide-react'
+import { Check, Clock3, MoreHorizontal, UserRound, UserX } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -22,6 +22,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
@@ -227,6 +229,56 @@ export function MembersSection({
     }, 0)
   }
 
+  const renderMemberActions = (member: SpaceMemberItem, menuId: string) => {
+    const canShowRoleSection = member.canChangeRole
+    const canShowRemove = member.canRemove
+
+    return (
+      <DropdownMenuContent align='end'>
+        {canShowRoleSection ? (
+          <>
+            <DropdownMenuLabel className='text-muted-foreground px-2 py-1.5 text-xs font-normal'>
+              {t('pages.spaceSettings.members.roleSectionLabel')}
+            </DropdownMenuLabel>
+            <DropdownMenuItem
+              disabled={updatingRoleUserId === member.userId || member.role === 'admin'}
+              onClick={() => handleRoleChange(member.userId, 'admin')}
+            >
+              {member.role === 'admin' ? (
+                <Check className='text-muted-foreground mr-3 h-4 w-4' />
+              ) : (
+                <span className='mr-3 h-4 w-4' />
+              )}
+              <span>{t('pages.spaceSettings.members.roles.admin')}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              disabled={updatingRoleUserId === member.userId || member.role === 'member'}
+              onClick={() => handleRoleChange(member.userId, 'member')}
+            >
+              {member.role === 'member' ? (
+                <Check className='text-muted-foreground mr-3 h-4 w-4' />
+              ) : (
+                <span className='mr-3 h-4 w-4' />
+              )}
+              <span>{t('pages.spaceSettings.members.roles.member')}</span>
+            </DropdownMenuItem>
+          </>
+        ) : null}
+        {canShowRoleSection && canShowRemove ? <DropdownMenuSeparator /> : null}
+        {canShowRemove ? (
+          <DropdownMenuItem
+            disabled={updatingRoleUserId === member.userId}
+            className='text-destructive focus:text-destructive'
+            onClick={() => requestRemoveMember(menuId, member.userId)}
+          >
+            <UserX className='mr-2 h-4 w-4' />
+            <span>{t('common.buttons.remove')}</span>
+          </DropdownMenuItem>
+        ) : null}
+      </DropdownMenuContent>
+    )
+  }
+
   const invitationsContent =
     invitations.length === 0 ? null : (
       <div className='overflow-hidden rounded-lg border'>
@@ -343,32 +395,7 @@ export function MembersSection({
                               <MoreHorizontal className='h-4 w-4' />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            {member.canChangeRole ? (
-                              <DropdownMenuItem
-                                disabled={updatingRoleUserId === member.userId}
-                                onClick={() =>
-                                  handleRoleChange(
-                                    member.userId,
-                                    member.role === 'admin' ? 'member' : 'admin',
-                                  )
-                                }
-                              >
-                                {member.role === 'admin'
-                                  ? t('pages.spaceSettings.members.changeToMember')
-                                  : t('pages.spaceSettings.members.promoteToManager')}
-                              </DropdownMenuItem>
-                            ) : null}
-                            {member.canRemove ? (
-                              <DropdownMenuItem
-                                disabled={updatingRoleUserId === member.userId}
-                                className='text-destructive focus:text-destructive'
-                                onClick={() => requestRemoveMember(desktopMenuId, member.userId)}
-                              >
-                                {t('common.buttons.remove')}
-                              </DropdownMenuItem>
-                            ) : null}
-                          </DropdownMenuContent>
+                          {renderMemberActions(member, desktopMenuId)}
                         </DropdownMenu>
                       </div>
                     )}
@@ -419,32 +446,7 @@ export function MembersSection({
                             <MoreHorizontal className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          {member.canChangeRole ? (
-                            <DropdownMenuItem
-                              disabled={updatingRoleUserId === member.userId}
-                              onClick={() =>
-                                handleRoleChange(
-                                  member.userId,
-                                  member.role === 'admin' ? 'member' : 'admin',
-                                )
-                              }
-                            >
-                              {member.role === 'admin'
-                                ? t('pages.spaceSettings.members.changeToMember')
-                                : t('pages.spaceSettings.members.promoteToManager')}
-                            </DropdownMenuItem>
-                          ) : null}
-                          {member.canRemove ? (
-                            <DropdownMenuItem
-                              disabled={updatingRoleUserId === member.userId}
-                              className='text-destructive focus:text-destructive'
-                              onClick={() => requestRemoveMember(mobileMenuId, member.userId)}
-                            >
-                              {t('common.buttons.remove')}
-                            </DropdownMenuItem>
-                          ) : null}
-                        </DropdownMenuContent>
+                        {renderMemberActions(member, mobileMenuId)}
                       </DropdownMenu>
                     )}
                   </div>
