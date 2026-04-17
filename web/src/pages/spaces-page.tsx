@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useRouter } from '@tanstack/react-router'
-import { Cloud, Database, FolderOpen, LayoutGrid, Plus, Settings } from 'lucide-react'
+import { Cloud, Database, FolderOpen, LayoutGrid, LogOut, Plus, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { deleteSpace, type SpaceItem } from '@/api/org-api'
+import { deleteSpace, leaveSpace, type SpaceItem } from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ListSpacesQuery } from '@/generated/graphql'
+import { useAuth } from '@/stores/auth-store'
 
 interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']
@@ -26,9 +27,12 @@ interface SpacesPageProps {
 export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
+  const { authState } = useAuth()
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedSpace, setSelectedSpace] = useState<SpaceItem | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [leaveSpaceItem, setLeaveSpaceItem] = useState<SpaceItem | null>(null)
+  const [isLeaving, setIsLeaving] = useState(false)
 
   const spaces = loaderData ?? []
   const hasSpaces = spaces.length > 0
@@ -62,6 +66,24 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
       )
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleLeaveSpace = async () => {
+    if (!leaveSpaceItem) return
+
+    setIsLeaving(true)
+    try {
+      await leaveSpace({ spaceKey: leaveSpaceItem.key })
+      toast.success(t('pages.spaces.messages.leftSpaceSuccess'))
+      setLeaveSpaceItem(null)
+      await router.invalidate()
+    } catch (err) {
+      toast.error(
+        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
+      )
+    } finally {
+      setIsLeaving(false)
     }
   }
 
@@ -152,30 +174,22 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       )}
                     </div>
                     <div className='min-w-0'>
-                      <p className='truncate leading-tight font-semibold'>{space.name}</p>
+                      <div className='flex min-w-0 items-center gap-2'>
+                        <p className='truncate leading-tight font-semibold'>{space.name}</p>
+                        {isSharedSpace && (
+                          <span className='text-muted-foreground shrink-0 text-xs'>
+                            {t('pages.spaces.sharedLabel')}
+                          </span>
+                        )}
+                      </div>
                       <p className='text-muted-foreground truncate font-mono text-xs'>
                         {space.customDomain || `${space.key}.imagor.app`}
                       </p>
-                      {isSharedSpace && (
-                        <p className='text-muted-foreground mt-1 text-xs'>
-                          {t('pages.spaces.sharedHint')}
-                        </p>
-                      )}
                     </div>
                   </div>
 
                   {/* Badge */}
                   <div className='mt-1 flex shrink-0 items-center gap-1'>
-                    <Badge
-                      variant={isSharedSpace ? 'outline' : 'secondary'}
-                      className={
-                        isSharedSpace ? 'border-sky-500/40 text-sky-700 dark:text-sky-300' : ''
-                      }
-                    >
-                      {isSharedSpace
-                        ? t('pages.spaces.access.sharedWithYou')
-                        : t('pages.spaces.access.ownedByYou')}
-                    </Badge>
                     <Badge
                       variant={space.storageType === 's3' ? 'outline' : 'secondary'}
                       className={
@@ -208,12 +222,18 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       </Link>
                     </Button>
                   )}
+                  {isSharedSpace && authState.profile?.id && (
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className='flex-1'
+                      onClick={() => setLeaveSpaceItem(space)}
+                    >
+                      <LogOut className='mr-1.5 h-4 w-4' />
+                      {t('pages.spaces.leaveSpace')}
+                    </Button>
+                  )}
                 </div>
-                {isSharedSpace && (
-                  <p className='text-muted-foreground mt-3 text-xs'>
-                    {t('pages.spaces.configureUnavailable')}
-                  </p>
-                )}
               </div>
             )
           })}
@@ -252,6 +272,34 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
             className='w-full sm:w-auto'
           >
             {t('common.buttons.delete')}
+          </ButtonWithLoading>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog open={leaveSpaceItem !== null} onOpenChange={(open) => !open && setLeaveSpaceItem(null)}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.spaces.leaveSpace')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.spaces.leaveSpaceDescription')}{' '}
+            <strong className='text-foreground'>{leaveSpaceItem?.key}</strong>?
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+          <Button
+            variant='outline'
+            onClick={() => setLeaveSpaceItem(null)}
+            disabled={isLeaving}
+            className='w-full sm:w-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+          <ButtonWithLoading
+            variant='destructive'
+            onClick={handleLeaveSpace}
+            isLoading={isLeaving}
+            className='w-full sm:w-auto'
+          >
+            {t('pages.spaces.leaveSpace')}
           </ButtonWithLoading>
         </ResponsiveDialogFooter>
       </ResponsiveDialog>

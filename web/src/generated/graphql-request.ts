@@ -175,6 +175,7 @@ export type Mutation = {
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
   inviteSpaceMember: SpaceInviteResult
+  leaveSpace: Scalars['Boolean']['output']
   moveFile: Scalars['Boolean']['output']
   reactivateAccount: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
@@ -291,6 +292,10 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
 export type MutationInviteSpaceMemberArgs = {
   email: Scalars['String']['input']
   role: Scalars['String']['input']
+  spaceKey: Scalars['String']['input']
+}
+
+export type MutationLeaveSpaceArgs = {
   spaceKey: Scalars['String']['input']
 }
 
@@ -1043,6 +1048,12 @@ export type RemoveSpaceMemberMutationVariables = Exact<{
 }>
 
 export type RemoveSpaceMemberMutation = { __typename?: 'Mutation'; removeSpaceMember: boolean }
+
+export type LeaveSpaceMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+}>
+
+export type LeaveSpaceMutation = { __typename?: 'Mutation'; leaveSpace: boolean }
 
 export type UpdateOrgMemberRoleMutationVariables = Exact<{
   userId: Scalars['ID']['input']
@@ -1861,6 +1872,11 @@ export const RemoveSpaceMemberDocument = gql`
     removeSpaceMember(spaceKey: $spaceKey, userId: $userId)
   }
 `
+export const LeaveSpaceDocument = gql`
+  mutation LeaveSpace($spaceKey: String!) {
+    leaveSpace(spaceKey: $spaceKey)
+  }
+`
 export const UpdateOrgMemberRoleDocument = gql`
   mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {
     updateOrgMemberRole(userId: $userId, role: $role) {
@@ -2591,6 +2607,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'RemoveSpaceMember',
+        'mutation',
+        variables,
+      )
+    },
+    LeaveSpace(
+      variables: LeaveSpaceMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<LeaveSpaceMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<LeaveSpaceMutation>({
+            document: LeaveSpaceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'LeaveSpace',
         'mutation',
         variables,
       )

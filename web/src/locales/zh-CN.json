@@ -654,10 +654,12 @@
         "spaceCreatedSuccess": "空间创建成功",
         "spaceUpdatedSuccess": "空间更新成功",
         "spaceDeletedSuccess": "空间删除成功",
+        "leftSpaceSuccess": "你已离开共享空间。",
         "createSpaceFailed": "创建空间失败",
         "keyAlreadyTaken": "空间键已被使用",
         "updateSpaceFailed": "更新空间失败",
-        "deleteSpaceFailed": "删除空间失败"
+        "deleteSpaceFailed": "删除空间失败",
+        "leaveSpaceFailed": "离开共享空间失败"
       },
       "validation": {
         "keyFormat": "键只能包含小写字母、数字和连字符"
@@ -671,8 +673,9 @@
       },
       "configure": "配置",
       "startDescription": "先从托管空间开始，最快完成配置，然后再随着工作区成长自定义存储、交付和品牌。",
-      "sharedHint": "该空间由另一个组织共享给你。你可以在这里打开图库，但只有拥有该空间的组织可以管理设置。",
-      "configureUnavailable": "该空间的设置由拥有它的组织管理。",
+      "sharedLabel": "与你共享",
+      "leaveSpace": "离开",
+      "leaveSpaceDescription": "离开这个共享空间",
       "access": {
         "ownedByYou": "由你拥有",
         "sharedWithYou": "与你共享"

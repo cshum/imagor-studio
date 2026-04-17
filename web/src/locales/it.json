@@ -712,10 +712,12 @@
         "spaceCreatedSuccess": "Spazio creato correttamente",
         "spaceUpdatedSuccess": "Spazio aggiornato correttamente",
         "spaceDeletedSuccess": "Spazio eliminato correttamente",
+        "leftSpaceSuccess": "Hai lasciato lo spazio condiviso.",
         "createSpaceFailed": "Impossibile creare lo spazio",
         "keyAlreadyTaken": "La chiave spazio è già in uso",
         "updateSpaceFailed": "Impossibile aggiornare lo spazio",
-        "deleteSpaceFailed": "Impossibile eliminare lo spazio"
+        "deleteSpaceFailed": "Impossibile eliminare lo spazio",
+        "leaveSpaceFailed": "Impossibile lasciare lo spazio condiviso"
       },
       "validation": {
         "keyFormat": "La chiave può contenere solo lettere minuscole, numeri e trattini"
@@ -729,8 +731,9 @@
       },
       "configure": "Configura",
       "startDescription": "Inizia con uno spazio gestito per la configurazione più rapida, poi personalizza l'archiviazione, la consegna e il branding man mano che il tuo workspace cresce.",
-      "sharedHint": "Condiviso da un'altra organizzazione. Puoi aprire qui la galleria, ma solo l'organizzazione proprietaria può gestire le impostazioni.",
-      "configureUnavailable": "Le impostazioni sono gestite dall'organizzazione che possiede questo spazio.",
+      "sharedLabel": "Condiviso con te",
+      "leaveSpace": "Esci",
+      "leaveSpaceDescription": "Lascia questo spazio condiviso",
       "access": {
         "ownedByYou": "Di tua proprieta",
         "sharedWithYou": "Condiviso con te"

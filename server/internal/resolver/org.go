@@ -874,6 +874,41 @@ func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceKey strin
 	return true, nil
 }
 
+func (r *mutationResolver) LeaveSpace(ctx context.Context, spaceKey string) (bool, error) {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if r.spaceStore == nil {
+		return false, fmt.Errorf("space member management is not available in this deployment")
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	if space == nil {
+		return false, fmt.Errorf("space %q not found", spaceKey)
+	}
+	orgID, orgErr := r.getUserOrgID(ctx)
+	if orgErr != nil {
+		return false, orgErr
+	}
+	if orgID != "" && space.OrgID == orgID {
+		return false, fmt.Errorf("you can only leave shared spaces from another organization")
+	}
+	hasAccess, err := r.spaceStore.HasMember(ctx, spaceKey, claims.UserID)
+	if err != nil {
+		return false, fmt.Errorf("failed to check space membership: %w", err)
+	}
+	if !hasAccess {
+		return false, fmt.Errorf("you are not an explicit member of this space")
+	}
+	if err := r.spaceStore.RemoveMember(ctx, spaceKey, claims.UserID); err != nil {
+		return false, fmt.Errorf("failed to leave space: %w", err)
+	}
+	return true, nil
+}
+
 // UpdateOrgMemberRole changes a member's role within the caller's org (admin only).
 func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID string, role string) (*gql.OrgMember, error) {
 	if err := RequireAdminPermission(ctx); err != nil {

@@ -19,6 +19,8 @@ import type {
   ListSpaceInvitationsQuery,
   ListSpaceMembersQuery,
   ListSpacesQuery,
+  LeaveSpaceMutation,
+  LeaveSpaceMutationVariables,
   MyOrganizationQuery,
   RemoveOrgMemberMutation,
   RemoveOrgMemberMutationVariables,
@@ -221,6 +223,15 @@ export async function removeSpaceMember(
   const sdk = getSdk(client)
   const result = await sdk.RemoveSpaceMember(variables)
   return result.removeSpaceMember
+}
+
+export async function leaveSpace(
+  variables: LeaveSpaceMutationVariables,
+): Promise<LeaveSpaceMutation['leaveSpace']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.LeaveSpace(variables)
+  return result.leaveSpace
 }
 
 export async function updateOrgMemberRole(

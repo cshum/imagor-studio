@@ -704,10 +704,12 @@
         "spaceCreatedSuccess": "Space created successfully",
         "spaceUpdatedSuccess": "Space updated successfully",
         "spaceDeletedSuccess": "Space deleted successfully",
+        "leftSpaceSuccess": "You left the shared space.",
         "createSpaceFailed": "Failed to create space",
         "keyAlreadyTaken": "Space key is already taken",
         "updateSpaceFailed": "Failed to update space",
-        "deleteSpaceFailed": "Failed to delete space"
+        "deleteSpaceFailed": "Failed to delete space",
+        "leaveSpaceFailed": "Failed to leave shared space"
       },
       "validation": {
         "keyFormat": "Key must contain only lowercase letters, numbers, and hyphens"
@@ -721,8 +723,9 @@
       },
       "configure": "Configure",
       "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows.",
-      "sharedHint": "Shared by another organization. You can open the gallery here, but only the owning organization can manage settings.",
-      "configureUnavailable": "Settings are managed by the organization that owns this space.",
+      "sharedLabel": "Shared with you",
+      "leaveSpace": "Leave",
+      "leaveSpaceDescription": "Leave this shared space",
       "access": {
         "ownedByYou": "Owned by you",
         "sharedWithYou": "Shared with you"

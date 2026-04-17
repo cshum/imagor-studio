@@ -115,6 +115,7 @@ type ComplexityRoot struct {
 		GenerateImagorURL             func(childComplexity int, imagePath string, params ImagorParamsInput) int
 		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
 		InviteSpaceMember             func(childComplexity int, spaceKey string, email string, role string) int
+		LeaveSpace                    func(childComplexity int, spaceKey string) int
 		MoveFile                      func(childComplexity int, sourcePath string, destPath string, spaceKey *string) int
 		ReactivateAccount             func(childComplexity int, userID string) int
 		RegenerateTemplatePreview     func(childComplexity int, templatePath string, spaceKey *string) int
@@ -317,6 +318,7 @@ type MutationResolver interface {
 	InviteSpaceMember(ctx context.Context, spaceKey string, email string, role string) (*SpaceInviteResult, error)
 	RemoveOrgMember(ctx context.Context, userID string) (bool, error)
 	RemoveSpaceMember(ctx context.Context, spaceKey string, userID string) (bool, error)
+	LeaveSpace(ctx context.Context, spaceKey string) (bool, error)
 	UpdateOrgMemberRole(ctx context.Context, userID string, role string) (*OrgMember, error)
 	UpdateSpaceMemberRole(ctx context.Context, spaceKey string, userID string, role string) (*SpaceMember, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
@@ -810,6 +812,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.InviteSpaceMember(childComplexity, args["spaceKey"].(string), args["email"].(string), args["role"].(string)), true
+	case "Mutation.leaveSpace":
+		if e.ComplexityRoot.Mutation.LeaveSpace == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_leaveSpace_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.LeaveSpace(childComplexity, args["spaceKey"].(string)), true
 	case "Mutation.moveFile":
 		if e.ComplexityRoot.Mutation.MoveFile == nil {
 			break
@@ -2036,6 +2049,8 @@ extend type Mutation {
   removeOrgMember(userId: ID!): Boolean!
   # Remove a member from a specific space by userId (admin only)
   removeSpaceMember(spaceKey: String!, userId: ID!): Boolean!
+  # Leave a shared space you were explicitly added to
+  leaveSpace(spaceKey: String!): Boolean!
   # Change a member's role within the organization (admin only)
   updateOrgMemberRole(userId: ID!, role: String!): OrgMember!
   # Change a member's role within a specific space (admin only)
@@ -2662,6 +2677,17 @@ func (ec *executionContext) field_Mutation_inviteSpaceMember_args(ctx context.Co
 		return nil, err
 	}
 	args["role"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_leaveSpace_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg0
 	return args, nil
 }
 
@@ -5435,6 +5461,47 @@ func (ec *executionContext) fieldContext_Mutation_removeSpaceMember(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_removeSpaceMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_leaveSpace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_leaveSpace,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().LeaveSpace(ctx, fc.Args["spaceKey"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_leaveSpace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_leaveSpace_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12608,6 +12675,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "removeSpaceMember":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_removeSpaceMember(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "leaveSpace":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_leaveSpace(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

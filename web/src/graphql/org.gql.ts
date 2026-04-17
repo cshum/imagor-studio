@@ -251,6 +251,12 @@ export const REMOVE_SPACE_MEMBER = gql(`
   }
 `)
 
+export const LEAVE_SPACE = gql(`
+  mutation LeaveSpace($spaceKey: String!) {
+    leaveSpace(spaceKey: $spaceKey)
+  }
+`)
+
 export const UPDATE_ORG_MEMBER_ROLE = gql(`
   mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {
     updateOrgMemberRole(userId: $userId, role: $role) {

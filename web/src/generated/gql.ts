@@ -38,6 +38,7 @@ type Documents = {
   '\n  mutation InviteSpaceMember($spaceKey: String!, $email: String!, $role: String!) {\n    inviteSpaceMember(spaceKey: $spaceKey, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n': typeof types.InviteSpaceMemberDocument
   '\n  mutation RemoveOrgMember($userId: ID!) {\n    removeOrgMember(userId: $userId)\n  }\n': typeof types.RemoveOrgMemberDocument
   '\n  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {\n    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)\n  }\n': typeof types.RemoveSpaceMemberDocument
+  '\n  mutation LeaveSpace($spaceKey: String!) {\n    leaveSpace(spaceKey: $spaceKey)\n  }\n': typeof types.LeaveSpaceDocument
   '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateOrgMemberRoleDocument
   '\n  mutation UpdateSpaceMemberRole($spaceKey: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateSpaceMemberRoleDocument
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
@@ -121,6 +122,8 @@ const documents: Documents = {
     types.RemoveOrgMemberDocument,
   '\n  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {\n    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)\n  }\n':
     types.RemoveSpaceMemberDocument,
+  '\n  mutation LeaveSpace($spaceKey: String!) {\n    leaveSpace(spaceKey: $spaceKey)\n  }\n':
+    types.LeaveSpaceDocument,
   '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.UpdateOrgMemberRoleDocument,
   '\n  mutation UpdateSpaceMemberRole($spaceKey: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
@@ -344,6 +347,12 @@ export function gql(
 export function gql(
   source: '\n  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {\n    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)\n  }\n',
 ): (typeof documents)['\n  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {\n    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation LeaveSpace($spaceKey: String!) {\n    leaveSpace(spaceKey: $spaceKey)\n  }\n',
+): (typeof documents)['\n  mutation LeaveSpace($spaceKey: String!) {\n    leaveSpace(spaceKey: $spaceKey)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

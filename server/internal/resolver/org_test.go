@@ -562,6 +562,39 @@ func TestInviteSpaceMember_AddsExistingExternalAccountAsGuest(t *testing.T) {
 	userStore.AssertExpectations(t)
 }
 
+func TestLeaveSpace_RemovesGuestMembership(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	space := makeTestSpace("shared-space", "org-host")
+	spaceStore.On("Get", mock.Anything, "shared-space").Return(space, nil)
+	spaceStore.On("HasMember", mock.Anything, "shared-space", "user-1").Return(true, nil)
+	spaceStore.On("RemoveMember", mock.Anything, "shared-space", "user-1").Return(nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-guest")
+	ok, err := r.Mutation().LeaveSpace(ctx, "shared-space")
+	require.NoError(t, err)
+	assert.True(t, ok)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestLeaveSpace_RejectsOwnedSpace(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	space := makeTestSpace("owned-space", "org-1")
+	spaceStore.On("Get", mock.Anything, "owned-space").Return(space, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().LeaveSpace(ctx, "owned-space")
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "only leave shared spaces")
+	spaceStore.AssertExpectations(t)
+}
+
 func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}

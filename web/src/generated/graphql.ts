@@ -174,6 +174,7 @@ export type Mutation = {
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
   inviteSpaceMember: SpaceInviteResult
+  leaveSpace: Scalars['Boolean']['output']
   moveFile: Scalars['Boolean']['output']
   reactivateAccount: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
@@ -290,6 +291,10 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
 export type MutationInviteSpaceMemberArgs = {
   email: Scalars['String']['input']
   role: Scalars['String']['input']
+  spaceKey: Scalars['String']['input']
+}
+
+export type MutationLeaveSpaceArgs = {
   spaceKey: Scalars['String']['input']
 }
 
@@ -1042,6 +1047,12 @@ export type RemoveSpaceMemberMutationVariables = Exact<{
 }>
 
 export type RemoveSpaceMemberMutation = { __typename?: 'Mutation'; removeSpaceMember: boolean }
+
+export type LeaveSpaceMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+}>
+
+export type LeaveSpaceMutation = { __typename?: 'Mutation'; leaveSpace: boolean }
 
 export type UpdateOrgMemberRoleMutationVariables = Exact<{
   userId: Scalars['ID']['input']
@@ -2842,6 +2853,42 @@ export const RemoveSpaceMemberDocument = {
     },
   ],
 } as unknown as DocumentNode<RemoveSpaceMemberMutation, RemoveSpaceMemberMutationVariables>
+export const LeaveSpaceDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'LeaveSpace' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'leaveSpace' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<LeaveSpaceMutation, LeaveSpaceMutationVariables>
 export const UpdateOrgMemberRoleDocument = {
   kind: 'Document',
   definitions: [

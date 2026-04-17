@@ -676,10 +676,12 @@
         "spaceCreatedSuccess": "空間建立成功",
         "spaceUpdatedSuccess": "空間更新成功",
         "spaceDeletedSuccess": "空間刪除成功",
+        "leftSpaceSuccess": "您已離開共享空間。",
         "createSpaceFailed": "建立空間失敗",
         "keyAlreadyTaken": "空間鍵已被使用",
         "updateSpaceFailed": "更新空間失敗",
-        "deleteSpaceFailed": "刪除空間失敗"
+        "deleteSpaceFailed": "刪除空間失敗",
+        "leaveSpaceFailed": "離開共享空間失敗"
       },
       "validation": {
         "keyFormat": "鍵只能包含小寫字母、數字和連字號"
@@ -693,8 +695,9 @@
       },
       "configure": "設定",
       "startDescription": "先使用託管空間完成最快速的設定，之後再隨著工作區成長自訂儲存、交付與品牌。",
-      "sharedHint": "此空間由另一個組織分享給您。您可以在這裡開啟相簿，但只有擁有此空間的組織可以管理設定。",
-      "configureUnavailable": "此空間的設定由擁有它的組織管理。",
+      "sharedLabel": "與您共享",
+      "leaveSpace": "離開",
+      "leaveSpaceDescription": "離開這個共享空間",
       "access": {
         "ownedByYou": "由您擁有",
         "sharedWithYou": "與您共享"
