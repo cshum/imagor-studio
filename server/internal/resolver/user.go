@@ -181,7 +181,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 		// Use validation package
 		if err := validation.ValidateDisplayName(displayName); err != nil {
-			return nil, fmt.Errorf("invalid display name: %w", err)
+			return nil, apperror.BadRequest(fmt.Sprintf("invalid display name: %v", err), nil, "displayName")
 		}
 
 		// Normalize displayName
@@ -189,7 +189,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 		err = r.userStore.UpdateDisplayName(ctx, targetUserID, normalizedDisplayName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update display name: %w", err)
+			return nil, apperror.BadRequest(fmt.Sprintf("failed to update display name: %v", err), nil, "displayName")
 		}
 	}
 
@@ -198,7 +198,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 		// Use validation package
 		if err := validation.ValidateUsername(username); err != nil {
-			return nil, fmt.Errorf("invalid username: %w", err)
+			return nil, apperror.BadRequest(fmt.Sprintf("invalid username: %v", err), nil, "username")
 		}
 
 		// Normalize username
@@ -206,7 +206,10 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 		err = r.userStore.UpdateUsername(ctx, targetUserID, normalizedUsername)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update username: %w", err)
+			if strings.Contains(strings.ToLower(err.Error()), "already exists") {
+				return nil, apperror.Conflict("username already exists", "username")
+			}
+			return nil, apperror.BadRequest(fmt.Sprintf("failed to update username: %v", err), nil, "username")
 		}
 	}
 
@@ -314,7 +317,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 
 	// Use validation package for new password
 	if err := validation.ValidatePassword(input.NewPassword); err != nil {
-		return false, fmt.Errorf("invalid new password: %w", err)
+		return false, apperror.BadRequest(fmt.Sprintf("invalid new password: %v", err), nil, "newPassword")
 	}
 
 	// Get current user with password
@@ -332,10 +335,10 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 		hasPassword := currentUser.HashedPassword != "" && currentUser.HashedPassword != "oauth"
 		if hasPassword {
 			if input.CurrentPassword == nil || *input.CurrentPassword == "" {
-				return false, fmt.Errorf("current password is required")
+				return false, apperror.BadRequest("current password is required", nil, "currentPassword")
 			}
 			if err := auth.CheckPassword(currentUser.HashedPassword, *input.CurrentPassword); err != nil {
-				return false, fmt.Errorf("current password is incorrect")
+				return false, apperror.BadRequest("current password is incorrect", nil, "currentPassword")
 			}
 		}
 	}
