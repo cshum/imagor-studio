@@ -106,6 +106,8 @@
   },
   "pages": {
     "authCallback": {
+      "title": "欢迎回来",
+      "subtitle": "我们无法完成您的登录，请重试。",
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
       "errorNoToken": "未收到认证令牌",

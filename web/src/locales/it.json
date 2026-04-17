@@ -124,6 +124,8 @@
   },
   "pages": {
     "authCallback": {
+      "title": "Bentornato",
+      "subtitle": "Non siamo riusciti a completare l'accesso. Riprova.",
       "failed": "Autenticazione fallita",
       "errorOAuth": "Autenticazione fallita: {{error}}",
       "errorNoToken": "Nessun token di autenticazione ricevuto",

@@ -129,6 +129,8 @@
   },
   "pages": {
     "authCallback": {
+      "title": "Welcome back",
+      "subtitle": "We couldn't complete your sign-in. Please try again.",
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
       "errorNoToken": "No authentication token received",

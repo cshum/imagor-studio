@@ -129,6 +129,8 @@
   },
   "pages": {
     "authCallback": {
+      "title": "歡迎回來",
+      "subtitle": "我們無法完成您的登入，請再試一次。",
       "failed": "驗證失敗",
       "errorOAuth": "驗證失敗：{{error}}",
       "errorNoToken": "未收到驗證令牌",
