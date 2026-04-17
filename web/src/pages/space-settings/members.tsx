@@ -289,6 +289,7 @@ export function MembersSection({
           {members.map((member) => {
             const memberLabel = getMemberLabel(member)
             const isCurrentUser = member.userId === currentUserId
+            const hasRowActions = member.canChangeRole || member.canRemove
             const desktopMenuId = `${member.userId}-desktop`
             const mobileMenuId = `${member.userId}-mobile`
 
@@ -326,7 +327,7 @@ export function MembersSection({
                     </div>
                   </div>
                   <div>
-                    {isCurrentUser ? null : (
+                    {isCurrentUser || !hasRowActions ? null : (
                       <div className='flex justify-end'>
                         <DropdownMenu
                           open={openMenuMemberId === desktopMenuId}
@@ -343,26 +344,30 @@ export function MembersSection({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align='end'>
-                            <DropdownMenuItem
-                              disabled={updatingRoleUserId === member.userId}
-                              onClick={() =>
-                                handleRoleChange(
-                                  member.userId,
-                                  member.role === 'admin' ? 'member' : 'admin',
-                                )
-                              }
-                            >
-                              {member.role === 'admin'
-                                ? t('pages.spaceSettings.members.changeToMember')
-                                : t('pages.spaceSettings.members.promoteToManager')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={updatingRoleUserId === member.userId}
-                              className='text-destructive focus:text-destructive'
-                              onClick={() => requestRemoveMember(desktopMenuId, member.userId)}
-                            >
-                              {t('common.buttons.remove')}
-                            </DropdownMenuItem>
+                            {member.canChangeRole ? (
+                              <DropdownMenuItem
+                                disabled={updatingRoleUserId === member.userId}
+                                onClick={() =>
+                                  handleRoleChange(
+                                    member.userId,
+                                    member.role === 'admin' ? 'member' : 'admin',
+                                  )
+                                }
+                              >
+                                {member.role === 'admin'
+                                  ? t('pages.spaceSettings.members.changeToMember')
+                                  : t('pages.spaceSettings.members.promoteToManager')}
+                              </DropdownMenuItem>
+                            ) : null}
+                            {member.canRemove ? (
+                              <DropdownMenuItem
+                                disabled={updatingRoleUserId === member.userId}
+                                className='text-destructive focus:text-destructive'
+                                onClick={() => requestRemoveMember(desktopMenuId, member.userId)}
+                              >
+                                {t('common.buttons.remove')}
+                              </DropdownMenuItem>
+                            ) : null}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -399,7 +404,7 @@ export function MembersSection({
                         {member.email || `@${member.username}`}
                       </p>
                     </div>
-                    {isCurrentUser ? null : (
+                    {isCurrentUser || !hasRowActions ? null : (
                       <DropdownMenu
                         open={openMenuMemberId === mobileMenuId}
                         onOpenChange={(open) => setOpenMenuMemberId(open ? mobileMenuId : null)}
@@ -415,26 +420,30 @@ export function MembersSection({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align='end'>
-                          <DropdownMenuItem
-                            disabled={updatingRoleUserId === member.userId}
-                            onClick={() =>
-                              handleRoleChange(
-                                member.userId,
-                                member.role === 'admin' ? 'member' : 'admin',
-                              )
-                            }
-                          >
-                            {member.role === 'admin'
-                              ? t('pages.spaceSettings.members.changeToMember')
-                              : t('pages.spaceSettings.members.promoteToManager')}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={updatingRoleUserId === member.userId}
-                            className='text-destructive focus:text-destructive'
-                            onClick={() => requestRemoveMember(mobileMenuId, member.userId)}
-                          >
-                            {t('common.buttons.remove')}
-                          </DropdownMenuItem>
+                          {member.canChangeRole ? (
+                            <DropdownMenuItem
+                              disabled={updatingRoleUserId === member.userId}
+                              onClick={() =>
+                                handleRoleChange(
+                                  member.userId,
+                                  member.role === 'admin' ? 'member' : 'admin',
+                                )
+                              }
+                            >
+                              {member.role === 'admin'
+                                ? t('pages.spaceSettings.members.changeToMember')
+                                : t('pages.spaceSettings.members.promoteToManager')}
+                            </DropdownMenuItem>
+                          ) : null}
+                          {member.canRemove ? (
+                            <DropdownMenuItem
+                              disabled={updatingRoleUserId === member.userId}
+                              className='text-destructive focus:text-destructive'
+                              onClick={() => requestRemoveMember(mobileMenuId, member.userId)}
+                            >
+                              {t('common.buttons.remove')}
+                            </DropdownMenuItem>
+                          ) : null}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}

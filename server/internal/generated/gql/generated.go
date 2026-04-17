@@ -220,13 +220,15 @@ type ComplexityRoot struct {
 	}
 
 	SpaceMember struct {
-		AvatarURL   func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		DisplayName func(childComplexity int) int
-		Email       func(childComplexity int) int
-		Role        func(childComplexity int) int
-		UserID      func(childComplexity int) int
-		Username    func(childComplexity int) int
+		AvatarURL     func(childComplexity int) int
+		CanChangeRole func(childComplexity int) int
+		CanRemove     func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		DisplayName   func(childComplexity int) int
+		Email         func(childComplexity int) int
+		Role          func(childComplexity int) int
+		UserID        func(childComplexity int) int
+		Username      func(childComplexity int) int
 	}
 
 	StorageConfigResult struct {
@@ -1461,6 +1463,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SpaceMember.AvatarURL(childComplexity), true
+	case "SpaceMember.canChangeRole":
+		if e.ComplexityRoot.SpaceMember.CanChangeRole == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceMember.CanChangeRole(childComplexity), true
+	case "SpaceMember.canRemove":
+		if e.ComplexityRoot.SpaceMember.CanRemove == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceMember.CanRemove(childComplexity), true
 	case "SpaceMember.createdAt":
 		if e.ComplexityRoot.SpaceMember.CreatedAt == nil {
 			break
@@ -2014,6 +2028,8 @@ type SpaceMember {
   email: String
   avatarUrl: String
   role: String!
+  canChangeRole: Boolean!
+  canRemove: Boolean!
   createdAt: String!
 }
 
@@ -5352,6 +5368,10 @@ func (ec *executionContext) fieldContext_Mutation_addSpaceMember(ctx context.Con
 				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
+			case "canChangeRole":
+				return ec.fieldContext_SpaceMember_canChangeRole(ctx, field)
+			case "canRemove":
+				return ec.fieldContext_SpaceMember_canRemove(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SpaceMember_createdAt(ctx, field)
 			}
@@ -5634,6 +5654,10 @@ func (ec *executionContext) fieldContext_Mutation_updateSpaceMemberRole(ctx cont
 				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
+			case "canChangeRole":
+				return ec.fieldContext_SpaceMember_canChangeRole(ctx, field)
+			case "canRemove":
+				return ec.fieldContext_SpaceMember_canRemove(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SpaceMember_createdAt(ctx, field)
 			}
@@ -6968,6 +6992,10 @@ func (ec *executionContext) fieldContext_Query_spaceMembers(ctx context.Context,
 				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
+			case "canChangeRole":
+				return ec.fieldContext_SpaceMember_canChangeRole(ctx, field)
+			case "canRemove":
+				return ec.fieldContext_SpaceMember_canRemove(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SpaceMember_createdAt(ctx, field)
 			}
@@ -8500,6 +8528,10 @@ func (ec *executionContext) fieldContext_SpaceInviteResult_member(_ context.Cont
 				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
+			case "canChangeRole":
+				return ec.fieldContext_SpaceMember_canChangeRole(ctx, field)
+			case "canRemove":
+				return ec.fieldContext_SpaceMember_canRemove(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_SpaceMember_createdAt(ctx, field)
 			}
@@ -8719,6 +8751,64 @@ func (ec *executionContext) fieldContext_SpaceMember_role(_ context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceMember_canChangeRole(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceMember_canChangeRole,
+		func(ctx context.Context) (any, error) {
+			return obj.CanChangeRole, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceMember_canChangeRole(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceMember_canRemove(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceMember_canRemove,
+		func(ctx context.Context) (any, error) {
+			return obj.CanRemove, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceMember_canRemove(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13839,6 +13929,16 @@ func (ec *executionContext) _SpaceMember(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._SpaceMember_avatarUrl(ctx, field, obj)
 		case "role":
 			out.Values[i] = ec._SpaceMember_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canChangeRole":
+			out.Values[i] = ec._SpaceMember_canChangeRole(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canRemove":
+			out.Values[i] = ec._SpaceMember_canRemove(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

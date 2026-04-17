@@ -124,6 +124,23 @@ func (r *Resolver) getSpacePermissions(ctx context.Context, space *spacestore.Sp
 	return permissions, nil
 }
 
+func (r *Resolver) isProtectedHostSpaceMember(ctx context.Context, space *spacestore.Space, userID string) (bool, error) {
+	if r.orgStore == nil {
+		return false, nil
+	}
+	members, err := r.orgStore.ListMembers(ctx, space.OrgID)
+	if err != nil {
+		return false, fmt.Errorf("failed to verify host organization membership: %w", err)
+	}
+	for _, member := range members {
+		if member.UserID != userID {
+			continue
+		}
+		return member.Role == "owner" || member.Role == "admin", nil
+	}
+	return false, nil
+}
+
 func (r *Resolver) mapSpaceToGQLWithPermissions(ctx context.Context, s *spacestore.Space) (*gql.Space, error) {
 	space := mapSpaceToGQL(s)
 	permissions, err := r.getSpacePermissions(ctx, s)
@@ -138,14 +155,44 @@ func (r *Resolver) mapSpaceToGQLWithPermissions(ctx context.Context, s *spacesto
 
 func mapSpaceMemberToGQL(m *spacestore.SpaceMemberView) *gql.SpaceMember {
 	return &gql.SpaceMember{
-		UserID:      m.UserID,
-		Username:    m.Username,
-		DisplayName: m.DisplayName,
-		Email:       m.Email,
-		AvatarURL:   m.AvatarURL,
-		Role:        m.Role,
-		CreatedAt:   m.CreatedAt.UTC().Format(time.RFC3339),
+		UserID:        m.UserID,
+		Username:      m.Username,
+		DisplayName:   m.DisplayName,
+		Email:         m.Email,
+		AvatarURL:     m.AvatarURL,
+		Role:          m.Role,
+		CanChangeRole: false,
+		CanRemove:     false,
+		CreatedAt:     m.CreatedAt.UTC().Format(time.RFC3339),
 	}
+}
+
+func (r *Resolver) mapSpaceMemberToGQLWithPermissions(ctx context.Context, space *spacestore.Space, member *spacestore.SpaceMemberView) (*gql.SpaceMember, error) {
+	gqlMember := mapSpaceMemberToGQL(member)
+	permissions, err := r.getSpacePermissions(ctx, space)
+	if err != nil {
+		return nil, err
+	}
+	if !permissions.CanManage {
+		return gqlMember, nil
+	}
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if claims.UserID == member.UserID {
+		return gqlMember, nil
+	}
+	protectedMember, err := r.isProtectedHostSpaceMember(ctx, space, member.UserID)
+	if err != nil {
+		return nil, err
+	}
+	if protectedMember {
+		return gqlMember, nil
+	}
+	gqlMember.CanChangeRole = true
+	gqlMember.CanRemove = true
+	return gqlMember, nil
 }
 
 func mapSpaceInvitationToGQL(invitation *spaceinvite.Invitation) *gql.SpaceInvitation {
@@ -544,7 +591,11 @@ func (r *queryResolver) SpaceMembers(ctx context.Context, spaceKey string) ([]*g
 	}
 	result := make([]*gql.SpaceMember, 0, len(members))
 	for _, member := range members {
-		result = append(result, mapSpaceMemberToGQL(member))
+		mapped, mapErr := r.mapSpaceMemberToGQLWithPermissions(ctx, space, member)
+		if mapErr != nil {
+			return nil, mapErr
+		}
+		result = append(result, mapped)
 	}
 	return result, nil
 }
@@ -952,6 +1003,13 @@ func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceKey strin
 	if !permissions.CanManage {
 		return false, fmt.Errorf("forbidden: space manager access required")
 	}
+	protectedMember, err := r.isProtectedHostSpaceMember(ctx, space, userID)
+	if err != nil {
+		return false, err
+	}
+	if protectedMember {
+		return false, fmt.Errorf("you cannot remove a host organization owner or admin from this space")
+	}
 	if err := r.spaceStore.RemoveMember(ctx, spaceKey, userID); err != nil {
 		return false, fmt.Errorf("failed to remove space member: %w", err)
 	}
@@ -1053,6 +1111,13 @@ func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceKey s
 	}
 	if !permissions.CanManage {
 		return nil, fmt.Errorf("forbidden: space manager access required")
+	}
+	protectedMember, err := r.isProtectedHostSpaceMember(ctx, space, userID)
+	if err != nil {
+		return nil, err
+	}
+	if protectedMember {
+		return nil, fmt.Errorf("you cannot change the space role for a host organization owner or admin")
 	}
 	if err := r.spaceStore.UpdateMemberRole(ctx, spaceKey, userID, normalizedRole); err != nil {
 		return nil, fmt.Errorf("failed to update space member role: %w", err)

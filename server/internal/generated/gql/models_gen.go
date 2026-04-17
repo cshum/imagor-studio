@@ -242,13 +242,15 @@ type SpaceInviteResult struct {
 }
 
 type SpaceMember struct {
-	UserID      string  `json:"userId"`
-	Username    string  `json:"username"`
-	DisplayName string  `json:"displayName"`
-	Email       *string `json:"email,omitempty"`
-	AvatarURL   *string `json:"avatarUrl,omitempty"`
-	Role        string  `json:"role"`
-	CreatedAt   string  `json:"createdAt"`
+	UserID        string  `json:"userId"`
+	Username      string  `json:"username"`
+	DisplayName   string  `json:"displayName"`
+	Email         *string `json:"email,omitempty"`
+	AvatarURL     *string `json:"avatarUrl,omitempty"`
+	Role          string  `json:"role"`
+	CanChangeRole bool    `json:"canChangeRole"`
+	CanRemove     bool    `json:"canRemove"`
+	CreatedAt     string  `json:"createdAt"`
 }
 
 type StorageConfigInput struct {

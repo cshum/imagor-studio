@@ -556,6 +556,51 @@ func TestDeleteSpace_DeniesGuestManager(t *testing.T) {
 	spaceStore.AssertNotCalled(t, "SoftDelete")
 }
 
+func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	space := makeTestSpace("acme", "org-1")
+	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*spacestore.SpaceMemberView{
+		{
+			SpaceID:     "space-1",
+			UserID:      "user-1",
+			Username:    "alice",
+			DisplayName: "Alice",
+			Role:        "admin",
+			CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			SpaceID:     "space-1",
+			UserID:      "user-3",
+			Username:    "charlie",
+			DisplayName: "Charlie",
+			Role:        "member",
+			CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		},
+	}, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "admin"),
+		makeTestMember("user-3", "charlie", "member"),
+	}, nil).Twice()
+
+	ctx := createAdminContextWithOrg("user-2", "org-1")
+	result, err := r.Query().SpaceMembers(ctx, "acme")
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	assert.Equal(t, "user-1", result[0].UserID)
+	assert.False(t, result[0].CanChangeRole)
+	assert.False(t, result[0].CanRemove)
+	assert.Equal(t, "user-3", result[1].UserID)
+	assert.True(t, result[1].CanChangeRole)
+	assert.True(t, result[1].CanRemove)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
 func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
@@ -740,4 +785,48 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 	userStore.AssertExpectations(t)
 	inviteStore.AssertExpectations(t)
 	sender.AssertExpectations(t)
+}
+
+func TestRemoveSpaceMember_RejectsHostOrgOwner(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	space := makeTestSpace("acme", "org-1")
+	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "admin"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-2", "org-1")
+	ok, err := r.Mutation().RemoveSpaceMember(ctx, "acme", "user-1")
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "host organization owner or admin")
+	spaceStore.AssertNotCalled(t, "RemoveMember")
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestUpdateSpaceMemberRole_RejectsHostOrgOwner(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	space := makeTestSpace("acme", "org-1")
+	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "admin"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-2", "org-1")
+	result, err := r.Mutation().UpdateSpaceMemberRole(ctx, "acme", "user-1", "member")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "host organization owner or admin")
+	spaceStore.AssertNotCalled(t, "UpdateMemberRole")
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
 }

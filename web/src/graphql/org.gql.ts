@@ -176,6 +176,8 @@ export const LIST_SPACE_MEMBERS = gql(`
       email
       avatarUrl
       role
+      canChangeRole
+      canRemove
       createdAt
     }
   }
