@@ -1,3 +1,5 @@
+import { redirect } from '@tanstack/react-router'
+
 import { getImagorStatus } from '@/api/imagor-api'
 import { getLicenseStatus, type LicenseStatus } from '@/api/license-api'
 import { getMyOrganization, getSpace, listSpaces } from '@/api/org-api'
@@ -192,9 +194,12 @@ export const spaceSettingsLoader = async ({
 }: {
   params: { spaceKey: string }
 }): Promise<SpaceSettingsLoaderData> => {
-  const space = await getSpace(params.spaceKey)
+  const [space, organization] = await Promise.all([getSpace(params.spaceKey), getMyOrganization()])
   if (!space) {
     throw new Error(`Space "${params.spaceKey}" not found`)
+  }
+  if (!organization || space.orgId !== organization.id) {
+    throw redirect({ to: '/spaces/$spaceKey', params: { spaceKey: params.spaceKey } })
   }
   return {
     space,
