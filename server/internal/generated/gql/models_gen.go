@@ -224,6 +224,20 @@ type SpaceInput struct {
 	ImagorSecret    *string `json:"imagorSecret,omitempty"`
 }
 
+type SpaceInvitation struct {
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+	CreatedAt string `json:"createdAt"`
+	ExpiresAt string `json:"expiresAt"`
+}
+
+type SpaceInviteResult struct {
+	Status     string           `json:"status"`
+	Member     *SpaceMember     `json:"member,omitempty"`
+	Invitation *SpaceInvitation `json:"invitation,omitempty"`
+}
+
 type SpaceMember struct {
 	UserID      string `json:"userId"`
 	Username    string `json:"username"`

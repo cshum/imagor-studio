@@ -66,6 +66,8 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.Logger,
 		services.OrgStore,
 		services.SpaceStore,
+		services.SpaceInviteStore,
+		services.InviteSender,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
@@ -123,6 +125,8 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 			services.TokenManager,
 			services.UserStore,
 			services.OrgStore,
+			services.SpaceStore,
+			services.SpaceInviteStore,
 			services.Logger,
 			cfg.GoogleClientID,
 			cfg.GoogleClientSecret,

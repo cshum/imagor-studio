@@ -30,6 +30,7 @@ type Store interface {
 	Create(ctx context.Context, displayName, username, hashedPassword, role string) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
 	GetByIDAdmin(ctx context.Context, id string) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByUsername(ctx context.Context, username string) (*model.User, error)
 	GetByIDWithPassword(ctx context.Context, id string) (*model.User, error)
 	UpdateLastLogin(ctx context.Context, id string) error
@@ -141,6 +142,28 @@ func (s *store) Create(ctx context.Context, displayName, username, hashedPasswor
 	}
 
 	return modelUserToStore(*entry), nil
+}
+
+func (s *store) GetByEmail(ctx context.Context, email string) (*User, error) {
+	email = strings.TrimSpace(email)
+	if email == "" {
+		return nil, nil
+	}
+
+	var user model.User
+	err := s.db.NewSelect().
+		Model(&user).
+		Where("email = ?", email).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error looking up user by email: %w", err)
+	}
+
+	return modelUserToStore(user), nil
 }
 
 func (s *store) GetByID(ctx context.Context, id string) (*User, error) {

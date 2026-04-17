@@ -31,6 +31,8 @@ func newTestOAuthHandler(t *testing.T, googleClientID string) *OAuthHandler {
 		tokenManager,
 		mockUserStore,
 		nil, // no orgStore
+		nil, // no spaceStore
+		nil, // no inviteStore
 		logger,
 		googleClientID,
 		"test-client-secret",
@@ -218,7 +220,7 @@ func TestGoogleCallback_FullFlow_SelfHosted(t *testing.T) {
 	).Return(upsertedUser, nil)
 
 	handler := newOAuthHandlerWithConfig(
-		tm, ms, nil, zap.NewNop(),
+		tm, ms, nil, nil, nil, zap.NewNop(),
 		buildTestOAuthConfig(mockGoogle.URL),
 		"http://localhost",
 		mockGoogle.URL+"/userinfo",
@@ -280,7 +282,7 @@ func TestGoogleCallback_FullFlow_MultiTenant(t *testing.T) {
 	os := orgstore.New(newOrgTestDB(t))
 
 	handler := newOAuthHandlerWithConfig(
-		tm, ms, os, zap.NewNop(),
+		tm, ms, os, nil, nil, zap.NewNop(),
 		buildTestOAuthConfig(mockGoogle.URL),
 		"http://localhost",
 		mockGoogle.URL+"/userinfo",
@@ -344,7 +346,7 @@ func TestGoogleCallback_FullFlow_AdminRole(t *testing.T) {
 	).Return(adminUser, nil)
 
 	handler := newOAuthHandlerWithConfig(
-		tm, ms, nil, zap.NewNop(),
+		tm, ms, nil, nil, nil, zap.NewNop(),
 		buildTestOAuthConfig(mockGoogle.URL),
 		"http://localhost",
 		mockGoogle.URL+"/userinfo",
@@ -380,7 +382,7 @@ func TestGoogleCallback_FullFlow_GoogleErrorParam(t *testing.T) {
 	defer mockGoogle.Close()
 
 	handler := newOAuthHandlerWithConfig(
-		tm, ms, nil, zap.NewNop(),
+		tm, ms, nil, nil, nil, zap.NewNop(),
 		buildTestOAuthConfig(mockGoogle.URL),
 		"http://localhost",
 		mockGoogle.URL+"/userinfo",
@@ -417,7 +419,7 @@ func TestGoogleCallback_FullFlow_UpsertFails(t *testing.T) {
 		Return((*userstore.User)(nil), assert.AnError)
 
 	handler := newOAuthHandlerWithConfig(
-		tm, ms, nil, zap.NewNop(),
+		tm, ms, nil, nil, nil, zap.NewNop(),
 		buildTestOAuthConfig(mockGoogle.URL),
 		"http://localhost",
 		mockGoogle.URL+"/userinfo",

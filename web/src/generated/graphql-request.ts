@@ -173,6 +173,7 @@ export type Mutation = {
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
+  inviteSpaceMember: SpaceInviteResult
   moveFile: Scalars['Boolean']['output']
   reactivateAccount: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
@@ -279,6 +280,12 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
+}
+
+export type MutationInviteSpaceMemberArgs = {
+  email: Scalars['String']['input']
+  role: Scalars['String']['input']
+  spaceKey: Scalars['String']['input']
 }
 
 export type MutationMoveFileArgs = {
@@ -391,6 +398,7 @@ export type Query = {
   myOrganization: Maybe<Organization>
   orgMembers: Array<OrgMember>
   space: Maybe<Space>
+  spaceInvitations: Array<SpaceInvitation>
   spaceKeyExists: Scalars['Boolean']['output']
   spaceMembers: Array<SpaceMember>
   spaceRegistry: Array<UserRegistry>
@@ -436,6 +444,10 @@ export type QueryListUserRegistryArgs = {
 
 export type QuerySpaceArgs = {
   key: Scalars['String']['input']
+}
+
+export type QuerySpaceInvitationsArgs = {
+  spaceKey: Scalars['String']['input']
 }
 
 export type QuerySpaceKeyExistsArgs = {
@@ -542,6 +554,22 @@ export type SpaceInput = {
   signerTruncate: InputMaybe<Scalars['Int']['input']>
   storageType: InputMaybe<Scalars['String']['input']>
   usePathStyle: InputMaybe<Scalars['Boolean']['input']>
+}
+
+export type SpaceInvitation = {
+  __typename?: 'SpaceInvitation'
+  createdAt: Scalars['String']['output']
+  email: Scalars['String']['output']
+  expiresAt: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  role: Scalars['String']['output']
+}
+
+export type SpaceInviteResult = {
+  __typename?: 'SpaceInviteResult'
+  invitation: Maybe<SpaceInvitation>
+  member: Maybe<SpaceMember>
+  status: Scalars['String']['output']
 }
 
 export type SpaceMember = {
@@ -895,6 +923,22 @@ export type ListSpaceMembersQuery = {
   }>
 }
 
+export type ListSpaceInvitationsQueryVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+}>
+
+export type ListSpaceInvitationsQuery = {
+  __typename?: 'Query'
+  spaceInvitations: Array<{
+    __typename?: 'SpaceInvitation'
+    id: string
+    email: string
+    role: string
+    createdAt: string
+    expiresAt: string
+  }>
+}
+
 export type AddOrgMemberMutationVariables = Exact<{
   username: Scalars['String']['input']
   role: Scalars['String']['input']
@@ -927,6 +971,36 @@ export type AddSpaceMemberMutation = {
     displayName: string
     role: string
     createdAt: string
+  }
+}
+
+export type InviteSpaceMemberMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  email: Scalars['String']['input']
+  role: Scalars['String']['input']
+}>
+
+export type InviteSpaceMemberMutation = {
+  __typename?: 'Mutation'
+  inviteSpaceMember: {
+    __typename?: 'SpaceInviteResult'
+    status: string
+    member: {
+      __typename?: 'SpaceMember'
+      userId: string
+      username: string
+      displayName: string
+      role: string
+      createdAt: string
+    } | null
+    invitation: {
+      __typename?: 'SpaceInvitation'
+      id: string
+      email: string
+      role: string
+      createdAt: string
+      expiresAt: string
+    } | null
   }
 }
 
@@ -1683,6 +1757,17 @@ export const ListSpaceMembersDocument = gql`
     }
   }
 `
+export const ListSpaceInvitationsDocument = gql`
+  query ListSpaceInvitations($spaceKey: String!) {
+    spaceInvitations(spaceKey: $spaceKey) {
+      id
+      email
+      role
+      createdAt
+      expiresAt
+    }
+  }
+`
 export const AddOrgMemberDocument = gql`
   mutation AddOrgMember($username: String!, $role: String!) {
     addOrgMember(username: $username, role: $role) {
@@ -1702,6 +1787,27 @@ export const AddSpaceMemberDocument = gql`
       displayName
       role
       createdAt
+    }
+  }
+`
+export const InviteSpaceMemberDocument = gql`
+  mutation InviteSpaceMember($spaceKey: String!, $email: String!, $role: String!) {
+    inviteSpaceMember(spaceKey: $spaceKey, email: $email, role: $role) {
+      status
+      member {
+        userId
+        username
+        displayName
+        role
+        createdAt
+      }
+      invitation {
+        id
+        email
+        role
+        createdAt
+        expiresAt
+      }
     }
   }
 `
@@ -2323,6 +2429,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
         variables,
       )
     },
+    ListSpaceInvitations(
+      variables: ListSpaceInvitationsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<ListSpaceInvitationsQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<ListSpaceInvitationsQuery>({
+            document: ListSpaceInvitationsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'ListSpaceInvitations',
+        'query',
+        variables,
+      )
+    },
     AddOrgMember(
       variables: AddOrgMemberMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -2355,6 +2479,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'AddSpaceMember',
+        'mutation',
+        variables,
+      )
+    },
+    InviteSpaceMember(
+      variables: InviteSpaceMemberMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<InviteSpaceMemberMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<InviteSpaceMemberMutation>({
+            document: InviteSpaceMemberDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'InviteSpaceMember',
         'mutation',
         variables,
       )

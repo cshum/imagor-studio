@@ -725,16 +725,27 @@
           "role": "角色",
           "action": "操作"
         },
-        "inviteDescription": "將此空間的存取權授予現有組織成員。",
+        "inviteDescription": "以電子郵件分享此空間。現有組織成員會立即加入，其餘使用者會收到 Google 登入邀請。",
+        "addExistingDescription": "直接加入現有組織成員。",
+        "emailPlaceholder": "name@example.com",
+        "sendInviteButton": "傳送邀請",
+        "inviteHelp": "邀請連結會先進入 Google 登入，之後再把使用者加入此組織與空間。",
         "memberPlaceholder": "選擇組織成員",
         "memberPlaceholderEmpty": "所有組織成員都已具有存取權",
         "sharedTitle": "共享空間",
         "sharedDescription": "所有組織成員都可以瀏覽並複製此空間中的檔案。下方清單控制明確加入的管理員與協作者。",
         "emptyDescription": "目前只有組織管理員具有存取權。新增明確成員以在此空間中協作。",
         "addSuccess": "成員新增成功。",
+        "inviteSent": "邀請郵件已送出。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成員已移除。",
         "empty": "尚無成員。",
+        "pendingTitle": "待接受邀請",
+        "pendingHeaders": {
+          "email": "電子郵件",
+          "role": "角色",
+          "expires": "到期日"
+        },
         "removeTitle": "移除成員",
         "removeDescription": "確定要移除",
         "roles": {

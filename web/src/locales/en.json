@@ -790,16 +790,27 @@
           "role": "Role",
           "action": "Action"
         },
-        "inviteDescription": "Grant access to existing organisation members for this space.",
+        "inviteDescription": "Share this space by email. Existing organisation members are added immediately; everyone else gets a Google sign-in invite.",
+        "addExistingDescription": "Add an existing organisation member directly.",
+        "emailPlaceholder": "name@example.com",
+        "sendInviteButton": "Send invite",
+        "inviteHelp": "Invite links open Google sign-in and then attach the user to this organisation and space.",
         "memberPlaceholder": "Select an organisation member",
         "memberPlaceholderEmpty": "All organisation members already have access",
         "sharedTitle": "Shared space",
         "sharedDescription": "All organisation members can browse and copy files from this space. The list below controls explicit admins and collaborators.",
         "emptyDescription": "Only org admins currently have access. Add explicit members to collaborate inside this space.",
         "addSuccess": "Member added successfully.",
+        "inviteSent": "Invitation email sent.",
         "roleUpdated": "Role updated.",
         "removeSuccess": "Member removed.",
         "empty": "No members yet.",
+        "pendingTitle": "Pending invites",
+        "pendingHeaders": {
+          "email": "Email",
+          "role": "Role",
+          "expires": "Expires"
+        },
         "removeTitle": "Remove Member",
         "removeDescription": "Are you sure you want to remove",
         "roles": {

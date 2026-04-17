@@ -5,15 +5,20 @@ import { toast } from 'sonner'
 
 import {
   addSpaceMember,
+  inviteSpaceMember,
   listOrgMembers,
+  listSpaceInvitations,
   listSpaceMembers,
   removeSpaceMember,
   updateSpaceMemberRole,
   type OrgMemberItem,
+  type SpaceInvitationItem,
+  type SpaceInviteResultItem,
   type SpaceMemberItem,
 } from '@/api/org-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
+import { Input } from '@/components/ui/input'
 import {
   ResponsiveDialog,
   ResponsiveDialogDescription,
@@ -37,6 +42,7 @@ interface MembersSectionProps {
   spaceKey: string
   initialMembers: SpaceMemberItem[]
   initialOrgMembers: OrgMemberItem[]
+  initialInvitations: SpaceInvitationItem[]
   isShared: boolean
 }
 
@@ -44,13 +50,16 @@ export function MembersSection({
   spaceKey,
   initialMembers,
   initialOrgMembers,
+  initialInvitations,
   isShared,
 }: MembersSectionProps) {
   const { t } = useTranslation()
   const [members, setMembers] = useState<SpaceMemberItem[]>(initialMembers)
   const [orgMembers, setOrgMembers] = useState<OrgMemberItem[]>(initialOrgMembers)
+  const [invitations, setInvitations] = useState<SpaceInvitationItem[]>(initialInvitations)
   const [isLoading, setIsLoading] = useState(false)
   const [addUserId, setAddUserId] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
   const [addRole, setAddRole] = useState<string>('member')
   const [isAdding, setIsAdding] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
@@ -59,12 +68,14 @@ export function MembersSection({
   const reload = async () => {
     setIsLoading(true)
     try {
-      const [spaceMembers, allOrgMembers] = await Promise.all([
+      const [spaceMembers, allOrgMembers, pendingInvitations] = await Promise.all([
         listSpaceMembers(spaceKey),
         listOrgMembers(),
+        listSpaceInvitations(spaceKey),
       ])
       setMembers(spaceMembers)
       setOrgMembers(allOrgMembers)
+      setInvitations(pendingInvitations)
     } catch {
       // ignore
     } finally {
@@ -79,6 +90,29 @@ export function MembersSection({
       await addSpaceMember({ spaceKey, userId: addUserId, role: addRole })
       toast.success(t('pages.spaceSettings.members.addSuccess'))
       setAddUserId('')
+      await reload()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err))
+    } finally {
+      setIsAdding(false)
+    }
+  }
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) return
+    setIsAdding(true)
+    try {
+      const result: SpaceInviteResultItem = await inviteSpaceMember({
+        spaceKey,
+        email: inviteEmail.trim(),
+        role: addRole,
+      })
+      if (result.status === 'added') {
+        toast.success(t('pages.spaceSettings.members.addSuccess'))
+      } else {
+        toast.success(t('pages.spaceSettings.members.inviteSent'))
+      }
+      setInviteEmail('')
       await reload()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
@@ -190,6 +224,31 @@ export function MembersSection({
 
   const selectedCandidate = availableOrgMembers.find((member) => member.userId === addUserId)
 
+  const invitationsContent =
+    invitations.length === 0 ? null : (
+      <div className='overflow-hidden rounded-lg border'>
+        <div className='bg-muted/40 grid grid-cols-[minmax(0,1fr)_120px_140px] gap-4 border-b px-4 py-3 text-xs font-medium tracking-wide uppercase'>
+          <span>{t('pages.spaceSettings.members.pendingHeaders.email')}</span>
+          <span>{t('pages.spaceSettings.members.pendingHeaders.role')}</span>
+          <span>{t('pages.spaceSettings.members.pendingHeaders.expires')}</span>
+        </div>
+        <div className='divide-y'>
+          {invitations.map((invitation) => (
+            <div
+              key={invitation.id}
+              className='grid gap-3 px-4 py-3 text-sm md:grid-cols-[minmax(0,1fr)_120px_140px] md:items-center md:gap-4'
+            >
+              <span className='truncate'>{invitation.email}</span>
+              <span>{t(`pages.spaceSettings.members.roles.${invitation.role}`)}</span>
+              <span className='text-muted-foreground'>
+                {new Date(invitation.expiresAt).toLocaleDateString()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+
   return (
     <>
       <div className='space-y-4'>
@@ -207,7 +266,50 @@ export function MembersSection({
             {t('pages.spaceSettings.members.inviteDescription')}
           </p>
           <div className='flex flex-wrap gap-2 sm:flex-nowrap'>
-            <Select value={addUserId} onValueChange={setAddUserId} disabled={isAdding || availableOrgMembers.length === 0}>
+            <Input
+              value={inviteEmail}
+              onChange={(event) => setInviteEmail(event.target.value)}
+              placeholder={t('pages.spaceSettings.members.emailPlaceholder')}
+              disabled={isAdding}
+              className='min-w-0 flex-1'
+              type='email'
+            />
+            <Select value={addRole} onValueChange={setAddRole} disabled={isAdding}>
+              <SelectTrigger className='w-32 shrink-0'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLE_OPTIONS.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {t(`pages.spaceSettings.members.roles.${r}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <ButtonWithLoading
+              onClick={handleInvite}
+              isLoading={isAdding}
+              disabled={!inviteEmail.trim()}
+              className='shrink-0'
+            >
+              {t('pages.spaceSettings.members.sendInviteButton')}
+            </ButtonWithLoading>
+          </div>
+          <p className='text-muted-foreground text-xs'>
+            {t('pages.spaceSettings.members.inviteHelp')}
+          </p>
+        </div>
+
+        <div className='space-y-2'>
+          <p className='text-muted-foreground text-sm'>
+            {t('pages.spaceSettings.members.addExistingDescription')}
+          </p>
+          <div className='flex flex-wrap gap-2 sm:flex-nowrap'>
+            <Select
+              value={addUserId}
+              onValueChange={setAddUserId}
+              disabled={isAdding || availableOrgMembers.length === 0}
+            >
               <SelectTrigger className='min-w-0 flex-1'>
                 <SelectValue
                   placeholder={
@@ -247,11 +349,16 @@ export function MembersSection({
             </ButtonWithLoading>
           </div>
           {selectedCandidate ? (
-            <p className='text-muted-foreground text-xs'>
-              @{selectedCandidate.username}
-            </p>
+            <p className='text-muted-foreground text-xs'>@{selectedCandidate.username}</p>
           ) : null}
         </div>
+
+        {invitationsContent ? (
+          <div className='space-y-2'>
+            <p className='text-sm font-medium'>{t('pages.spaceSettings.members.pendingTitle')}</p>
+            {invitationsContent}
+          </div>
+        ) : null}
 
         {membersContent}
       </div>

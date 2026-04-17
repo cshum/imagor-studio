@@ -3,12 +3,14 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"go.uber.org/zap"
 )
@@ -56,6 +58,16 @@ func mapSpaceMemberToGQL(m *spacestore.SpaceMemberView) *gql.SpaceMember {
 		DisplayName: m.DisplayName,
 		Role:        m.Role,
 		CreatedAt:   m.CreatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+func mapSpaceInvitationToGQL(invitation *spaceinvite.Invitation) *gql.SpaceInvitation {
+	return &gql.SpaceInvitation{
+		ID:        invitation.ID,
+		Email:     invitation.Email,
+		Role:      invitation.Role,
+		CreatedAt: invitation.CreatedAt.UTC().Format(time.RFC3339),
+		ExpiresAt: invitation.ExpiresAt.UTC().Format(time.RFC3339),
 	}
 }
 
@@ -445,6 +457,38 @@ func (r *queryResolver) SpaceMembers(ctx context.Context, spaceKey string) ([]*g
 	return result, nil
 }
 
+func (r *queryResolver) SpaceInvitations(ctx context.Context, spaceKey string) ([]*gql.SpaceInvitation, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if r.spaceStore == nil || r.spaceInviteStore == nil {
+		return []*gql.SpaceInvitation{}, nil
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	if space == nil {
+		return []*gql.SpaceInvitation{}, nil
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if orgID != "" && space.OrgID != orgID {
+		return []*gql.SpaceInvitation{}, nil
+	}
+	invitations, err := r.spaceInviteStore.ListPendingBySpace(ctx, space.OrgID, spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list space invitations: %w", err)
+	}
+	result := make([]*gql.SpaceInvitation, 0, len(invitations))
+	for _, invitation := range invitations {
+		result = append(result, mapSpaceInvitationToGQL(invitation))
+	}
+	return result, nil
+}
+
 // OrgMembers lists all members of the caller's organization (admin only).
 func (r *queryResolver) OrgMembers(ctx context.Context) ([]*gql.OrgMember, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
@@ -603,6 +647,97 @@ func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceKey string, 
 		}
 	}
 	return &gql.SpaceMember{UserID: userID, Username: matched.Username, DisplayName: matched.DisplayName, Role: role}, nil
+}
+
+func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey string, email string, role string) (*gql.SpaceInviteResult, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if r.spaceStore == nil || r.orgStore == nil || r.userStore == nil {
+		return nil, fmt.Errorf("space member management is not available in this deployment")
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil || orgID == "" {
+		return nil, fmt.Errorf("no organization found")
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	if space == nil || space.OrgID != orgID {
+		return nil, fmt.Errorf("space %q not found", spaceKey)
+	}
+
+	normalizedEmail := strings.ToLower(strings.TrimSpace(email))
+	if normalizedEmail == "" {
+		return nil, fmt.Errorf("email is required")
+	}
+
+	orgMembers, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify org membership: %w", err)
+	}
+
+	existingUser, err := r.userStore.GetByEmail(ctx, normalizedEmail)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up user by email: %w", err)
+	}
+	if existingUser != nil {
+		for _, member := range orgMembers {
+			if member.UserID != existingUser.ID {
+				continue
+			}
+			hasAccess, hasAccessErr := r.spaceStore.HasMember(ctx, spaceKey, existingUser.ID)
+			if hasAccessErr != nil {
+				return nil, fmt.Errorf("failed to check space membership: %w", hasAccessErr)
+			}
+			if hasAccess {
+				return nil, fmt.Errorf("member already has access to this space")
+			}
+			if err := r.spaceStore.AddMember(ctx, spaceKey, existingUser.ID, role); err != nil {
+				return nil, fmt.Errorf("failed to add space member: %w", err)
+			}
+			spaceMembers, listErr := r.spaceStore.ListMembers(ctx, spaceKey)
+			if listErr == nil {
+				for _, spaceMember := range spaceMembers {
+					if spaceMember.UserID == existingUser.ID {
+						return &gql.SpaceInviteResult{Status: "added", Member: mapSpaceMemberToGQL(spaceMember)}, nil
+					}
+				}
+			}
+			return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: member.Username, DisplayName: member.DisplayName, Role: role}}, nil
+		}
+	}
+
+	if r.spaceInviteStore == nil || r.inviteSender == nil {
+		return nil, fmt.Errorf("email invitations are not configured")
+	}
+
+	claims, claimsErr := auth.GetClaimsFromContext(ctx)
+	if claimsErr != nil {
+		return nil, claimsErr
+	}
+	invitation, err := r.spaceInviteStore.CreateOrRefreshPending(ctx, orgID, spaceKey, normalizedEmail, role, claims.UserID, time.Now().UTC().Add(7*24*time.Hour))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create invitation: %w", err)
+	}
+
+	orgName := "your organization"
+	org, orgErr := r.orgStore.GetByUserID(ctx, claims.UserID)
+	if orgErr == nil && org != nil && org.Name != "" {
+		orgName = org.Name
+	}
+	if err := r.inviteSender.SendSpaceInvitation(ctx, spaceinvite.EmailParams{
+		ToEmail:     normalizedEmail,
+		OrgName:     orgName,
+		SpaceName:   space.Name,
+		InviteToken: invitation.Token,
+		Role:        role,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to send invitation email: %w", err)
+	}
+
+	return &gql.SpaceInviteResult{Status: "invited", Invitation: mapSpaceInvitationToGQL(invitation)}, nil
 }
 
 // RemoveSpaceMember removes an explicit member from a space (admin only).

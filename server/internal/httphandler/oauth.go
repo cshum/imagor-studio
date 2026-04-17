@@ -15,6 +15,8 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
+	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -26,6 +28,8 @@ type OAuthHandler struct {
 	tokenManager *auth.TokenManager
 	userStore    userstore.Store
 	orgStore     orgstore.Store // nil in self-hosted mode
+	spaceStore   spacestore.Store
+	inviteStore  spaceinvite.Store
 	logger       *zap.Logger
 	googleConfig *oauth2.Config
 	appBaseURL   string
@@ -42,6 +46,8 @@ func NewOAuthHandler(
 	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
 	orgStore orgstore.Store,
+	spaceStore spacestore.Store,
+	inviteStore spaceinvite.Store,
 	logger *zap.Logger,
 	googleClientID string,
 	googleClientSecret string,
@@ -68,6 +74,8 @@ func NewOAuthHandler(
 		tokenManager: tokenManager,
 		userStore:    userStore,
 		orgStore:     orgStore,
+		spaceStore:   spaceStore,
+		inviteStore:  inviteStore,
 		logger:       logger,
 		googleConfig: googleConfig,
 		appBaseURL:   appBaseURL,
@@ -81,6 +89,8 @@ func newOAuthHandlerWithConfig(
 	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
 	orgStore orgstore.Store,
+	spaceStore spacestore.Store,
+	inviteStore spaceinvite.Store,
 	logger *zap.Logger,
 	googleConfig *oauth2.Config,
 	appBaseURL string,
@@ -90,6 +100,8 @@ func newOAuthHandlerWithConfig(
 		tokenManager: tokenManager,
 		userStore:    userStore,
 		orgStore:     orgStore,
+		spaceStore:   spaceStore,
+		inviteStore:  inviteStore,
 		logger:       logger,
 		googleConfig: googleConfig,
 		appBaseURL:   appBaseURL,
@@ -135,6 +147,19 @@ func (h *OAuthHandler) GoogleLogin() http.HandlerFunc {
 			MaxAge:   int((10 * time.Minute).Seconds()),
 			Expires:  time.Now().Add(10 * time.Minute),
 		})
+
+		if inviteToken := strings.TrimSpace(r.URL.Query().Get("invite_token")); inviteToken != "" {
+			http.SetCookie(w, &http.Cookie{
+				Name:     "oauth_invite_token",
+				Value:    inviteToken,
+				Path:     "/",
+				HttpOnly: true,
+				Secure:   strings.HasPrefix(h.appBaseURL, "https://"),
+				SameSite: http.SameSiteLaxMode,
+				MaxAge:   int((30 * time.Minute).Seconds()),
+				Expires:  time.Now().Add(30 * time.Minute),
+			})
+		}
 
 		authURL := h.googleConfig.AuthCodeURL(state, oauth2.AccessTypeOnline)
 		http.Redirect(w, r, authURL, http.StatusFound)
@@ -245,6 +270,35 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 			}
 		}
 
+		inviteToken := ""
+		if inviteCookie, cookieErr := r.Cookie("oauth_invite_token"); cookieErr == nil {
+			inviteToken = strings.TrimSpace(inviteCookie.Value)
+		}
+		http.SetCookie(w, &http.Cookie{
+			Name:     "oauth_invite_token",
+			Value:    "",
+			Path:     "/",
+			HttpOnly: true,
+			MaxAge:   -1,
+		})
+
+		if inviteToken != "" && h.inviteStore != nil && h.orgStore != nil && h.spaceStore != nil {
+			invite, inviteErr := h.inviteStore.GetPendingByToken(ctx, inviteToken)
+			if inviteErr != nil {
+				h.logger.Error("OAuth callback: failed to load invitation", zap.Error(inviteErr))
+				http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("invite_failed"), http.StatusFound)
+				return
+			}
+			if invite != nil {
+				if acceptErr := h.acceptInvitation(ctx, user.ID, invite); acceptErr != nil {
+					h.logger.Error("OAuth callback: failed to accept invitation", zap.Error(acceptErr))
+					http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("invite_failed"), http.StatusFound)
+					return
+				}
+				orgID = invite.OrgID
+			}
+		}
+
 		// Generate JWT.
 		scopes := []string{"read", "write"}
 		if user.Role == "admin" {
@@ -270,6 +324,40 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 			"&expires_in=" + strconv.FormatInt(expiresIn, 10)
 		http.Redirect(w, r, frontendURL, http.StatusFound)
 	}
+}
+
+func (h *OAuthHandler) acceptInvitation(ctx context.Context, userID string, invite *spaceinvite.Invitation) error {
+	members, err := h.orgStore.ListMembers(ctx, invite.OrgID)
+	if err != nil {
+		return fmt.Errorf("list org members: %w", err)
+	}
+	userInOrg := false
+	for _, member := range members {
+		if member.UserID == userID {
+			userInOrg = true
+			break
+		}
+	}
+	if !userInOrg {
+		if err := h.orgStore.AddMember(ctx, invite.OrgID, userID, "member"); err != nil {
+			return fmt.Errorf("add invited user to organization: %w", err)
+		}
+	}
+
+	hasSpaceAccess, err := h.spaceStore.HasMember(ctx, invite.SpaceKey, userID)
+	if err != nil {
+		return fmt.Errorf("check space membership: %w", err)
+	}
+	if !hasSpaceAccess {
+		if err := h.spaceStore.AddMember(ctx, invite.SpaceKey, userID, invite.Role); err != nil {
+			return fmt.Errorf("add invited user to space: %w", err)
+		}
+	}
+
+	if err := h.inviteStore.MarkAccepted(ctx, invite.ID, time.Now().UTC()); err != nil {
+		return fmt.Errorf("mark invitation accepted: %w", err)
+	}
+	return nil
 }
 
 // googleUserInfo is the response from Google's userinfo endpoint.

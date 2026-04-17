@@ -172,6 +172,7 @@ export type Mutation = {
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
+  inviteSpaceMember: SpaceInviteResult
   moveFile: Scalars['Boolean']['output']
   reactivateAccount: Scalars['Boolean']['output']
   regenerateTemplatePreview: Scalars['Boolean']['output']
@@ -278,6 +279,12 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
+}
+
+export type MutationInviteSpaceMemberArgs = {
+  email: Scalars['String']['input']
+  role: Scalars['String']['input']
+  spaceKey: Scalars['String']['input']
 }
 
 export type MutationMoveFileArgs = {
@@ -390,6 +397,7 @@ export type Query = {
   myOrganization: Maybe<Organization>
   orgMembers: Array<OrgMember>
   space: Maybe<Space>
+  spaceInvitations: Array<SpaceInvitation>
   spaceKeyExists: Scalars['Boolean']['output']
   spaceMembers: Array<SpaceMember>
   spaceRegistry: Array<UserRegistry>
@@ -435,6 +443,10 @@ export type QueryListUserRegistryArgs = {
 
 export type QuerySpaceArgs = {
   key: Scalars['String']['input']
+}
+
+export type QuerySpaceInvitationsArgs = {
+  spaceKey: Scalars['String']['input']
 }
 
 export type QuerySpaceKeyExistsArgs = {
@@ -541,6 +553,22 @@ export type SpaceInput = {
   signerTruncate: InputMaybe<Scalars['Int']['input']>
   storageType: InputMaybe<Scalars['String']['input']>
   usePathStyle: InputMaybe<Scalars['Boolean']['input']>
+}
+
+export type SpaceInvitation = {
+  __typename?: 'SpaceInvitation'
+  createdAt: Scalars['String']['output']
+  email: Scalars['String']['output']
+  expiresAt: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  role: Scalars['String']['output']
+}
+
+export type SpaceInviteResult = {
+  __typename?: 'SpaceInviteResult'
+  invitation: Maybe<SpaceInvitation>
+  member: Maybe<SpaceMember>
+  status: Scalars['String']['output']
 }
 
 export type SpaceMember = {
@@ -894,6 +922,22 @@ export type ListSpaceMembersQuery = {
   }>
 }
 
+export type ListSpaceInvitationsQueryVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+}>
+
+export type ListSpaceInvitationsQuery = {
+  __typename?: 'Query'
+  spaceInvitations: Array<{
+    __typename?: 'SpaceInvitation'
+    id: string
+    email: string
+    role: string
+    createdAt: string
+    expiresAt: string
+  }>
+}
+
 export type AddOrgMemberMutationVariables = Exact<{
   username: Scalars['String']['input']
   role: Scalars['String']['input']
@@ -926,6 +970,36 @@ export type AddSpaceMemberMutation = {
     displayName: string
     role: string
     createdAt: string
+  }
+}
+
+export type InviteSpaceMemberMutationVariables = Exact<{
+  spaceKey: Scalars['String']['input']
+  email: Scalars['String']['input']
+  role: Scalars['String']['input']
+}>
+
+export type InviteSpaceMemberMutation = {
+  __typename?: 'Mutation'
+  inviteSpaceMember: {
+    __typename?: 'SpaceInviteResult'
+    status: string
+    member: {
+      __typename?: 'SpaceMember'
+      userId: string
+      username: string
+      displayName: string
+      role: string
+      createdAt: string
+    } | null
+    invitation: {
+      __typename?: 'SpaceInvitation'
+      id: string
+      email: string
+      role: string
+      createdAt: string
+      expiresAt: string
+    } | null
   }
 }
 
@@ -2322,6 +2396,52 @@ export const ListSpaceMembersDocument = {
     },
   ],
 } as unknown as DocumentNode<ListSpaceMembersQuery, ListSpaceMembersQueryVariables>
+export const ListSpaceInvitationsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListSpaceInvitations' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'spaceInvitations' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ListSpaceInvitationsQuery, ListSpaceInvitationsQueryVariables>
 export const AddOrgMemberDocument = {
   kind: 'Document',
   definitions: [
@@ -2453,6 +2573,102 @@ export const AddSpaceMemberDocument = {
     },
   ],
 } as unknown as DocumentNode<AddSpaceMemberMutation, AddSpaceMemberMutationVariables>
+export const InviteSpaceMemberDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'InviteSpaceMember' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'email' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'inviteSpaceMember' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'email' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'email' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'role' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'member' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'invitation' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<InviteSpaceMemberMutation, InviteSpaceMemberMutationVariables>
 export const RemoveOrgMemberDocument = {
   kind: 'Document',
   definitions: [

@@ -100,6 +100,10 @@ type Config struct {
 	GoogleClientID     string
 	GoogleClientSecret string
 
+	// Invitation email configuration
+	SESRegion    string
+	SESFromEmail string
+
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
 	flagSet         *flag.FlagSet // Private field to access flag values
@@ -160,6 +164,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 		googleClientID     = fs.String("google-client-id", "", "Google OAuth client ID (SaaS mode)")
 		googleClientSecret = fs.String("google-client-secret", "", "Google OAuth client secret (SaaS mode)")
+		sesRegion          = fs.String("ses-region", "", "AWS SES region for invitation emails")
+		sesFromEmail       = fs.String("ses-from-email", "", "From email address for invitation emails")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -268,6 +274,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		SpaceMaxConcurrency:         *spaceMaxConcurrency,
 		GoogleClientID:              *googleClientID,
 		GoogleClientSecret:          *googleClientSecret,
+		SESRegion:                   *sesRegion,
+		SESFromEmail:                *sesFromEmail,
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}
@@ -318,9 +326,7 @@ func GetFlagNameForRegistryKey(registryKey string) string {
 	key := strings.ToLower(registryKey)
 
 	// If it has config. prefix, strip it
-	if strings.HasPrefix(key, "config.") {
-		key = strings.TrimPrefix(key, "config.")
-	}
+	key = strings.TrimPrefix(key, "config.")
 
 	// Convert registry key to flag name format
 	// e.g., "storage_type" -> "storage-type"

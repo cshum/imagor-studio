@@ -53,7 +53,7 @@ func makeTestSpace(key, orgID string) *spacestore.Space {
 func newOrgResolver(orgStore *MockOrgStore, spaceStore *MockSpaceStore) *Resolver {
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
-	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore)
+	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
 }
 
 // ---------- MyOrganization ---------------------------------------------------
@@ -61,7 +61,7 @@ func newOrgResolver(orgStore *MockOrgStore, spaceStore *MockSpaceStore) *Resolve
 func TestMyOrganization_NilOrgStore(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
-	r := NewResolver(sp, nil, nil, nil, nil, nil, logger, nil, nil)
+	r := NewResolver(sp, nil, nil, nil, nil, nil, logger, nil, nil, nil, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().MyOrganization(ctx)
@@ -109,7 +109,7 @@ func TestMyOrganization_NoOrg(t *testing.T) {
 func TestSpaces_NilSpaceStore(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
-	r := NewResolver(sp, nil, nil, nil, nil, nil, logger, nil, nil)
+	r := NewResolver(sp, nil, nil, nil, nil, nil, logger, nil, nil, nil, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().Spaces(ctx)
@@ -219,7 +219,7 @@ func TestCreateSpace_RequiresAdmin(t *testing.T) {
 func TestCreateSpace_NilSpaceStore(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
-	r := NewResolver(sp, nil, nil, nil, nil, nil, logger, nil, nil)
+	r := NewResolver(sp, nil, nil, nil, nil, nil, logger, nil, nil, nil, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	input := gql.SpaceInput{Key: "acme", Name: "Acme"}
@@ -308,7 +308,7 @@ func TestCreateSpace_NoOrgAndNilOrgStore(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
 	spaceStore := &MockSpaceStore{}
-	r := NewResolver(sp, nil, nil, nil, nil, nil, logger, nil, spaceStore)
+	r := NewResolver(sp, nil, nil, nil, nil, nil, logger, nil, spaceStore, nil, nil)
 
 	ctx := createAdminContext("user-1") // no org_id claim
 	input := gql.SpaceInput{Key: "acme", Name: "Acme"}

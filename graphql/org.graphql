@@ -65,6 +65,20 @@ type SpaceMember {
   createdAt: String!
 }
 
+type SpaceInvitation {
+  id: ID!
+  email: String!
+  role: String!
+  createdAt: String!
+  expiresAt: String!
+}
+
+type SpaceInviteResult {
+  status: String!
+  member: SpaceMember
+  invitation: SpaceInvitation
+}
+
 extend type Query {
   # Returns the organization for the currently authenticated user
   myOrganization: Organization
@@ -78,6 +92,8 @@ extend type Query {
   orgMembers: [OrgMember!]!
   # Lists all members who currently have access to a specific space (admin only)
   spaceMembers(spaceKey: String!): [SpaceMember!]!
+  # Lists all pending invitation emails for a specific space (admin only)
+  spaceInvitations(spaceKey: String!): [SpaceInvitation!]!
   # Returns true when the space key is already taken (globally unique, admin only)
   spaceKeyExists(key: String!): Boolean!
 }
@@ -97,6 +113,8 @@ extend type Mutation {
   addOrgMember(username: String!, role: String!): OrgMember!
   # Add an existing org member to a specific space (admin only)
   addSpaceMember(spaceKey: String!, userId: ID!, role: String!): SpaceMember!
+  # Invite a user to a specific space by email (admin only)
+  inviteSpaceMember(spaceKey: String!, email: String!, role: String!): SpaceInviteResult!
   # Remove a member from the organization by userId (admin only)
   removeOrgMember(userId: ID!): Boolean!
   # Remove a member from a specific space by userId (admin only)

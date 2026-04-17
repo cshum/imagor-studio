@@ -22,7 +22,7 @@ func ptrStr(s string) *string { return &s }
 func newSpaceTestResolver(spaceStore spacestore.Store) *Resolver {
 	mockStor := &MockStorage{}
 	sp := NewMockStorageProvider(mockStor)
-	return NewResolver(sp, nil, nil, nil, nil, nil, zap.NewNop(), nil, spaceStore)
+	return NewResolver(sp, nil, nil, nil, nil, nil, zap.NewNop(), nil, spaceStore, nil, nil)
 }
 
 // ─── getSpaceStorage unit tests ───────────────────────────────────────────────

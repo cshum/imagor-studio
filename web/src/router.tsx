@@ -10,7 +10,12 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import { getSpaceRegistry, listOrgMembers, listSpaceMembers } from '@/api/org-api'
+import {
+  getSpaceRegistry,
+  listOrgMembers,
+  listSpaceInvitations,
+  listSpaceMembers,
+} from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
@@ -463,24 +468,26 @@ const membersSectionRoute = createRoute({
   path: '/members',
   loader: async ({ params }) => {
     try {
-      const [spaceMembers, orgMembers] = await Promise.all([
+      const [spaceMembers, orgMembers, invitations] = await Promise.all([
         listSpaceMembers(params.spaceKey),
         listOrgMembers(),
+        listSpaceInvitations(params.spaceKey),
       ])
-      return { spaceMembers, orgMembers }
+      return { spaceMembers, orgMembers, invitations }
     } catch {
-      return { spaceMembers: [], orgMembers: [] }
+      return { spaceMembers: [], orgMembers: [], invitations: [] }
     }
   },
   shouldReload: false,
   component: () => {
-    const { spaceMembers, orgMembers } = membersSectionRoute.useLoaderData()
+    const { spaceMembers, orgMembers, invitations } = membersSectionRoute.useLoaderData()
     const { space } = spaceSettingsLayoutRoute.useLoaderData()
     return (
       <MembersSection
         spaceKey={space.key}
         initialMembers={spaceMembers}
         initialOrgMembers={orgMembers}
+        initialInvitations={invitations}
         isShared={space.isShared}
       />
     )

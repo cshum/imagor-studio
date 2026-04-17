@@ -9,6 +9,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -54,6 +55,9 @@ type Resolver struct {
 	// Only set when InternalAPISecret is configured (multi-tenant deployment).
 	orgStore   orgstore.Store
 	spaceStore spacestore.Store
+
+	spaceInviteStore spaceinvite.Store
+	inviteSender     spaceinvite.EmailSender
 }
 
 func NewResolver(
@@ -66,17 +70,21 @@ func NewResolver(
 	logger *zap.Logger,
 	orgStore orgstore.Store,
 	spaceStore spacestore.Store,
+	spaceInviteStore spaceinvite.Store,
+	inviteSender spaceinvite.EmailSender,
 ) *Resolver {
 	return &Resolver{
-		storageProvider: storageProvider,
-		registryStore:   registryStore,
-		userStore:       userStore,
-		imagorProvider:  imagorProvider,
-		config:          cfg,
-		licenseService:  licenseService,
-		logger:          logger,
-		orgStore:        orgStore,
-		spaceStore:      spaceStore,
+		storageProvider:  storageProvider,
+		registryStore:    registryStore,
+		userStore:        userStore,
+		imagorProvider:   imagorProvider,
+		config:           cfg,
+		licenseService:   licenseService,
+		logger:           logger,
+		orgStore:         orgStore,
+		spaceStore:       spaceStore,
+		spaceInviteStore: spaceInviteStore,
+		inviteSender:     inviteSender,
 	}
 }
 

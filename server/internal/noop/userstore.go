@@ -30,6 +30,10 @@ func (n *UserStore) GetByIDAdmin(ctx context.Context, id string) (*userstore.Use
 	return nil, ErrEmbeddedMode
 }
 
+func (n *UserStore) GetByEmail(ctx context.Context, email string) (*userstore.User, error) {
+	return nil, ErrEmbeddedMode
+}
+
 func (n *UserStore) GetByUsername(ctx context.Context, username string) (*model.User, error) {
 	return nil, ErrEmbeddedMode
 }
