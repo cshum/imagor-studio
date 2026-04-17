@@ -112,11 +112,8 @@ const loginRoute = createRoute({
 const authCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/auth/callback',
-  loader: ({ location }) => authCallbackLoader(location.searchStr),
-  component: () => {
-    const loaderData = authCallbackRoute.useLoaderData()
-    return <AuthCallbackPage loaderData={loaderData} />
-  },
+  loader: authCallbackLoader,
+  component: AuthCallbackPage,
 })
 
 const adminSetupRoute = createRoute({
