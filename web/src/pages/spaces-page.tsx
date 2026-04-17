@@ -186,9 +186,9 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       <div className='flex min-w-0 items-center gap-2'>
                         <p className='truncate leading-tight font-semibold'>{space.name}</p>
                         {isSharedSpace && (
-                          <span className='text-muted-foreground shrink-0 text-xs'>
+                          <Badge variant='outline' className='h-5 shrink-0 px-2 text-[11px]'>
                             {t('pages.spaces.sharedLabel')}
-                          </span>
+                          </Badge>
                         )}
                       </div>
                       <p className='text-muted-foreground truncate font-mono text-xs'>

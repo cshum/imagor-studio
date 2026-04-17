@@ -695,7 +695,7 @@
       },
       "configure": "設定",
       "startDescription": "先使用託管空間完成最快速的設定，之後再隨著工作區成長自訂儲存、交付與品牌。",
-      "sharedLabel": "與您共享",
+      "sharedLabel": "共享",
       "leaveSpace": "離開",
       "leaveSpaceDescription": "離開這個共享空間",
       "access": {

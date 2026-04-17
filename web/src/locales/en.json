@@ -723,7 +723,7 @@
       },
       "configure": "Configure",
       "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows.",
-      "sharedLabel": "Shared with you",
+      "sharedLabel": "Shared",
       "leaveSpace": "Leave",
       "leaveSpaceDescription": "Leave this shared space",
       "access": {

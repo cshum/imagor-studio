@@ -673,7 +673,7 @@
       },
       "configure": "配置",
       "startDescription": "先从托管空间开始，最快完成配置，然后再随着工作区成长自定义存储、交付和品牌。",
-      "sharedLabel": "与你共享",
+      "sharedLabel": "共享",
       "leaveSpace": "离开",
       "leaveSpaceDescription": "离开这个共享空间",
       "access": {
