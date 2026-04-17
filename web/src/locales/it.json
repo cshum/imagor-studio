@@ -8,7 +8,7 @@
         "administration": "Amministrazione"
       },
       "tabs": {
-        "profile": "Profilo",
+        "profile": "Impostazioni account",
         "system": "Sistema",
         "users": "Utenti",
         "spaces": "Spazi"
@@ -319,7 +319,7 @@
     }
   },
   "profile": {
-    "title": "Profilo",
+    "title": "Account",
     "profileInformation": "Informazioni Profilo",
     "profileInformationDescription": "Aggiorna le informazioni del tuo account.",
     "displayName": "Nome Visualizzato",
@@ -390,7 +390,7 @@
     "updatePasswordFailed": "Impossibile aggiornare la password",
     "usernameAlreadyInUse": "Questo nome utente è già in uso",
     "currentPasswordIncorrect": "La password attuale non è corretta",
-    "titleDescription": "Gestisci le informazioni del tuo account personale e le impostazioni di sicurezza."
+    "titleDescription": "Gestisci le informazioni del tuo account, i metodi di accesso e le impostazioni di sicurezza."
   },
   "admin": {
     "title": "Amministrazione",

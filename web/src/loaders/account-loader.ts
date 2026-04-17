@@ -86,7 +86,7 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
         }
       : null,
     breadcrumb: {
-      translationKey: 'navigation.breadcrumbs.profile',
+      translationKey: 'navigation.breadcrumbs.account',
     },
   }
 }

@@ -8,7 +8,7 @@
         "administration": "管理"
       },
       "tabs": {
-        "profile": "個人資料",
+        "profile": "帳戶設定",
         "system": "系統",
         "users": "使用者",
         "spaces": "空間"
@@ -310,7 +310,7 @@
       }
     },
     "profile": {
-      "title": "個人資料",
+      "title": "帳戶",
       "profileInformation": "個人資料資訊",
       "profileInformationDescription": "更新您的賬戶個人資料資訊。",
       "displayName": "顯示名稱",
@@ -381,7 +381,7 @@
       "updatePasswordFailed": "更新密碼失敗",
       "usernameAlreadyInUse": "此使用者名稱已被使用",
       "currentPasswordIncorrect": "當前密碼不正確",
-      "titleDescription": "管理您的個人帳戶資訊與安全設定。"
+      "titleDescription": "管理您的帳戶資訊、登入方式與安全設定。"
     },
     "admin": {
       "title": "管理",

@@ -8,7 +8,7 @@
         "administration": "Administration"
       },
       "tabs": {
-        "profile": "Profile",
+        "profile": "Account settings",
         "system": "System",
         "users": "Users",
         "spaces": "Spaces"
@@ -310,7 +310,7 @@
       }
     },
     "profile": {
-      "title": "Profile",
+      "title": "Account",
       "profileInformation": "Profile Information",
       "profileInformationDescription": "Update your account profile information.",
       "displayName": "Display Name",
@@ -381,7 +381,7 @@
       "updatePasswordFailed": "Failed to update password",
       "usernameAlreadyInUse": "This username is already in use",
       "currentPasswordIncorrect": "Current password is incorrect",
-      "titleDescription": "Manage your personal account information and security settings."
+      "titleDescription": "Manage your account information, login methods, and security settings."
     },
     "admin": {
       "title": "Admin",
