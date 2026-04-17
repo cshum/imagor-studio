@@ -771,18 +771,17 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 		return nil, fmt.Errorf("failed to look up user by email: %w", err)
 	}
 	if existingUser != nil {
-		isOrgMember := false
+		hasAccess, hasAccessErr := r.spaceStore.HasMember(ctx, spaceKey, existingUser.ID)
+		if hasAccessErr != nil {
+			return nil, fmt.Errorf("failed to check space membership: %w", hasAccessErr)
+		}
+		if hasAccess {
+			return nil, fmt.Errorf("member already has access to this space")
+		}
+
 		for _, member := range orgMembers {
 			if member.UserID != existingUser.ID {
 				continue
-			}
-			isOrgMember = true
-			hasAccess, hasAccessErr := r.spaceStore.HasMember(ctx, spaceKey, existingUser.ID)
-			if hasAccessErr != nil {
-				return nil, fmt.Errorf("failed to check space membership: %w", hasAccessErr)
-			}
-			if hasAccess {
-				return nil, fmt.Errorf("member already has access to this space")
 			}
 			if err := r.spaceStore.AddMember(ctx, spaceKey, existingUser.ID, role); err != nil {
 				return nil, fmt.Errorf("failed to add space member: %w", err)
@@ -797,9 +796,19 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 			}
 			return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: member.Username, DisplayName: member.DisplayName, Email: existingUser.Email, AvatarURL: existingUser.AvatarUrl, Role: role}}, nil
 		}
-		if !isOrgMember {
-			return nil, fmt.Errorf("user exists but is outside your organization")
+
+		if err := r.spaceStore.AddMember(ctx, spaceKey, existingUser.ID, role); err != nil {
+			return nil, fmt.Errorf("failed to add space member: %w", err)
 		}
+		spaceMembers, listErr := r.spaceStore.ListMembers(ctx, spaceKey)
+		if listErr == nil {
+			for _, spaceMember := range spaceMembers {
+				if spaceMember.UserID == existingUser.ID {
+					return &gql.SpaceInviteResult{Status: "added", Member: mapSpaceMemberToGQL(spaceMember)}, nil
+				}
+			}
+		}
+		return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: existingUser.Username, DisplayName: existingUser.DisplayName, Email: existingUser.Email, AvatarURL: existingUser.AvatarUrl, Role: role}}, nil
 	}
 
 	if r.spaceInviteStore == nil || r.inviteSender == nil {

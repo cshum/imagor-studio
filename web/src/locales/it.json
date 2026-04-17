@@ -806,27 +806,18 @@
           "role": "Ruolo",
           "action": "Azione"
         },
-        "inviteDescription": "Condividi via email. I membri esistenti dell'organizzazione ottengono subito l'accesso. Se una persona ha gia un account ma non fa ancora parte della tua organizzazione, puoi prima aggiungerla all'organizzazione da qui.",
+        "inviteDescription": "Condividi via email. Gli utenti con un account esistente ottengono subito l'accesso a questo spazio, anche se appartengono a un'altra organizzazione. Le persone nuove ricevono ancora un invito via email.",
         "addExistingDescription": "Oppure aggiungi rapidamente qualcuno che fa già parte della tua organizzazione.",
         "emailPlaceholder": "name@example.com",
         "sendInviteButton": "Condividi",
-        "inviteHelp": "I compagni di team esistenti vengono aggiunti subito. Le nuove persone hanno ancora bisogno di un invito email per entrare in questa organizzazione e in questo spazio.",
-        "addToOrganizationAndShare": "Aggiungi all'organizzazione e condividi",
-        "addToOrganizationHelp": "Usa questa azione quando la persona ha gia un account ma non fa ancora parte della tua organizzazione.",
-        "addedToOrganizationAndShared": "Aggiunto all'organizzazione e condiviso con successo.",
+        "inviteHelp": "Gli account esistenti vengono aggiunti subito a questo spazio. Le persone nuove devono ancora accettare un invito via email.",
         "inviteErrors": {
           "required": "Inserisci un indirizzo email.",
           "invalidEmail": "Inserisci un indirizzo email valido.",
           "alreadyHasAccess": "Questa persona ha gia accesso a questo spazio.",
-          "outsideOrganization": "Questo utente ha gia un account ma non fa parte della tua organizzazione. Invitalo prima nella tua organizzazione.",
           "notConfigured": "Gli inviti email non sono ancora configurati.",
           "unavailable": "La condivisione non e disponibile in questa distribuzione.",
           "default": "Impossibile condividere questo spazio adesso. Riprova."
-        },
-        "orgInviteErrors": {
-          "accountNotFound": "Nessun account esistente trovato per questa email. Usa invece l'invito via email.",
-          "memberLimit": "La tua organizzazione ha raggiunto il limite di membri.",
-          "default": "Impossibile aggiungere questa persona alla tua organizzazione in questo momento. Riprova."
         },
         "memberPlaceholder": "Scegli un collega",
         "memberPlaceholderEmpty": "Tutti i membri della tua organizzazione hanno già accesso esplicito",

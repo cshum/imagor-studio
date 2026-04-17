@@ -4,7 +4,6 @@ import { Clock3 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
-  addOrgMemberByEmail,
   inviteSpaceMember,
   listSpaceInvitations,
   listSpaceMembers,
@@ -72,9 +71,7 @@ export function MembersSection({
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<string>('member')
   const [inviteFieldError, setInviteFieldError] = useState<string | null>(null)
-  const [canAddToOrganization, setCanAddToOrganization] = useState(false)
   const [isInviting, setIsInviting] = useState(false)
-  const [isAddingToOrganization, setIsAddingToOrganization] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState(false)
 
@@ -115,13 +112,6 @@ export function MembersSection({
       }
     }
 
-    if (normalized.includes('outside your organization')) {
-      return {
-        kind: 'outside-organization' as const,
-        message: t('pages.spaceSettings.members.inviteErrors.outsideOrganization'),
-      }
-    }
-
     if (normalized.includes('email invitations are not configured')) {
       return {
         kind: 'toast' as const,
@@ -157,7 +147,6 @@ export function MembersSection({
 
     setInviteEmail('')
     setInviteFieldError(null)
-    setCanAddToOrganization(false)
     await reload()
   }
 
@@ -166,7 +155,6 @@ export function MembersSection({
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
 
     setInviteFieldError(null)
-    setCanAddToOrganization(false)
 
     if (!normalizedEmail) {
       setInviteFieldError(t('pages.spaceSettings.members.inviteErrors.required'))
@@ -183,59 +171,13 @@ export function MembersSection({
       await shareWithEmail(normalizedEmail)
     } catch (err) {
       const mappedError = mapInviteError(extractErrorMessage(err))
-      if (mappedError.kind === 'outside-organization') {
-        setInviteFieldError(mappedError.message)
-        setCanAddToOrganization(true)
-      } else if (mappedError.kind === 'field') {
+      if (mappedError.kind === 'field') {
         setInviteFieldError(mappedError.message)
       } else {
         toast.error(mappedError.message)
       }
     } finally {
       setIsInviting(false)
-    }
-  }
-
-  const handleAddToOrganizationAndShare = async () => {
-    const normalizedEmail = inviteEmail.trim().toLowerCase()
-    if (!normalizedEmail) {
-      return
-    }
-
-    setIsAddingToOrganization(true)
-    try {
-      await addOrgMemberByEmail({ email: normalizedEmail, role: 'member' })
-      await shareWithEmail(normalizedEmail)
-      toast.success(t('pages.spaceSettings.members.addedToOrganizationAndShared'))
-    } catch (err) {
-      const normalized = extractErrorMessage(err).toLowerCase()
-
-      if (normalized.includes('already a member of your organization')) {
-        try {
-          await shareWithEmail(normalizedEmail)
-          return
-        } catch (shareErr) {
-          const mappedShareError = mapInviteError(extractErrorMessage(shareErr))
-          if (mappedShareError.kind === 'field' || mappedShareError.kind === 'outside-organization') {
-            setInviteFieldError(mappedShareError.message)
-            setCanAddToOrganization(mappedShareError.kind === 'outside-organization')
-          } else {
-            toast.error(mappedShareError.message)
-          }
-          return
-        }
-      }
-
-      if (normalized.includes('user with email') && normalized.includes('not found')) {
-        setInviteFieldError(t('pages.spaceSettings.members.orgInviteErrors.accountNotFound'))
-        setCanAddToOrganization(false)
-      } else if (normalized.includes('member limit')) {
-        setInviteFieldError(t('pages.spaceSettings.members.orgInviteErrors.memberLimit'))
-      } else {
-        toast.error(t('pages.spaceSettings.members.orgInviteErrors.default'))
-      }
-    } finally {
-      setIsAddingToOrganization(false)
     }
   }
 
@@ -394,12 +336,9 @@ export function MembersSection({
                 if (inviteFieldError) {
                   setInviteFieldError(null)
                 }
-                if (canAddToOrganization) {
-                  setCanAddToOrganization(false)
-                }
               }}
               placeholder={t('pages.spaceSettings.members.emailPlaceholder')}
-              disabled={isInviting || isAddingToOrganization}
+              disabled={isInviting}
               className='h-10 min-w-0 flex-1'
               type='email'
               aria-invalid={inviteFieldError ? 'true' : 'false'}
@@ -407,7 +346,7 @@ export function MembersSection({
             <Select
               value={inviteRole}
               onValueChange={setInviteRole}
-              disabled={isInviting || isAddingToOrganization}
+              disabled={isInviting}
             >
               <SelectTrigger className='h-10 w-full lg:w-32'>
                 <SelectValue />
@@ -423,32 +362,13 @@ export function MembersSection({
             <ButtonWithLoading
               onClick={handleInvite}
               isLoading={isInviting}
-              disabled={!inviteEmail.trim() || isAddingToOrganization}
+              disabled={!inviteEmail.trim()}
               className='h-10 w-full lg:w-auto'
             >
               {t('pages.spaceSettings.members.sendInviteButton')}
             </ButtonWithLoading>
           </div>
-          {inviteFieldError ? (
-            <div className='space-y-3'>
-              <p className='text-destructive text-sm'>{inviteFieldError}</p>
-              {canAddToOrganization ? (
-                <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-                  <ButtonWithLoading
-                    variant='outline'
-                    onClick={handleAddToOrganizationAndShare}
-                    isLoading={isAddingToOrganization}
-                    className='w-full sm:w-auto'
-                  >
-                    {t('pages.spaceSettings.members.addToOrganizationAndShare')}
-                  </ButtonWithLoading>
-                  <p className='text-muted-foreground text-sm'>
-                    {t('pages.spaceSettings.members.addToOrganizationHelp')}
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          {inviteFieldError ? <p className='text-destructive text-sm'>{inviteFieldError}</p> : null}
         </div>
 
         <div className='space-y-2'>

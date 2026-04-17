@@ -512,6 +512,56 @@ func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
 	userStore.AssertExpectations(t)
 }
 
+func TestInviteSpaceMember_AddsExistingExternalAccountAsGuest(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	userStore := &MockUserStore{}
+	logger, _ := zap.NewDevelopment()
+	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
+	guestEmail := "guest@example.com"
+	guestAvatarURL := "https://example.com/avatar.png"
+
+	space := makeTestSpace("acme", "org-1")
+	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+	}, nil)
+	userStore.On("GetByEmail", mock.Anything, "guest@example.com").Return(&userstore.User{
+		ID:          "user-9",
+		Email:       &guestEmail,
+		Username:    "guestuser",
+		DisplayName: "Guest User",
+		AvatarUrl:   &guestAvatarURL,
+	}, nil)
+	spaceStore.On("HasMember", mock.Anything, "acme", "user-9").Return(false, nil)
+	spaceStore.On("AddMember", mock.Anything, "acme", "user-9", "member").Return(nil)
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*spacestore.SpaceMemberView{{
+		SpaceID:     "space-1",
+		UserID:      "user-9",
+		Username:    "guestuser",
+		DisplayName: "Guest User",
+		Email:       &guestEmail,
+		AvatarURL:   &guestAvatarURL,
+		Role:        "member",
+		CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	}}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().InviteSpaceMember(ctx, "acme", "guest@example.com", "member")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "added", result.Status)
+	require.NotNil(t, result.Member)
+	assert.Equal(t, "user-9", result.Member.UserID)
+	require.NotNil(t, result.Member.Email)
+	assert.Equal(t, "guest@example.com", *result.Member.Email)
+	assert.Nil(t, result.Invitation)
+
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+}
+
 func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}

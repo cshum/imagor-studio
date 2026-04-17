@@ -754,27 +754,18 @@
           "role": "角色",
           "action": "操作"
         },
-        "inviteDescription": "以電子郵件分享。現有組織成員會立即取得存取權。若對方已經有帳號但還不在您的組織內，您也可以先在這裡將對方加入組織。",
+        "inviteDescription": "以電子郵件分享。既有使用者會立即取得此空間的存取權，即使對方屬於另一個組織也是如此。新使用者仍會收到電子郵件邀請。",
         "addExistingDescription": "或快速加入已在組織內的成員。",
         "emailPlaceholder": "name@example.com",
         "sendInviteButton": "分享",
-        "inviteHelp": "現有隊友會立即加入。全新的使用者仍需要透過電子郵件邀請加入此組織與空間。",
-        "addToOrganizationAndShare": "加入組織並分享",
-        "addToOrganizationHelp": "當對方已經有帳號、但尚未加入您的組織時，請使用這個操作。",
-        "addedToOrganizationAndShared": "已加入組織並完成分享。",
+        "inviteHelp": "既有帳號會立即加入此空間。全新的使用者仍需要透過電子郵件邀請來接受存取權。",
         "inviteErrors": {
           "required": "請輸入電子郵件地址。",
           "invalidEmail": "請輸入有效的電子郵件地址。",
           "alreadyHasAccess": "此人已可存取這個空間。",
-          "outsideOrganization": "這位使用者已經有帳號，但不在您的組織內。請先將對方邀請進入您的組織。",
           "notConfigured": "尚未設定電子郵件邀請。",
           "unavailable": "此部署目前無法使用分享功能。",
           "default": "目前無法分享這個空間，請稍後再試。"
-        },
-        "orgInviteErrors": {
-          "accountNotFound": "找不到這個電子郵件對應的既有帳號。請改用電子郵件邀請。",
-          "memberLimit": "您的組織已達成員上限。",
-          "default": "目前無法將這位使用者加入您的組織，請稍後再試。"
         },
         "memberPlaceholder": "選擇隊友",
         "memberPlaceholderEmpty": "您的組織成員都已具有明確存取權",
