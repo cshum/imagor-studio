@@ -639,7 +639,7 @@
         "managed": "由 Imagor Studio 管理，无需配置存储桶。",
         "s3": "连接您自己的 S3 兼容存储桶。"
       },
-      "keyDescription": "用于链接中的唯一 URL Slug。创建后无法更改。",
+      "keyDescription": "用于链接和 URL。你可以修改它，但旧链接不会重定向。",
       "tableHeaders": {
         "key": "URL Slug",
         "name": "名称",

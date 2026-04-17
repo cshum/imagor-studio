@@ -677,7 +677,7 @@
       "managed": "Gestita da Imagor Studio. Nessuna configurazione del bucket richiesta.",
       "s3": "Collega il tuo bucket S3-compatibile."
     },
-    "keyDescription": "Slug URL univoco usato nei link. Non può essere modificato dopo la creazione.",
+    "keyDescription": "Usato nei link e negli URL. Puoi modificarlo, ma i vecchi link non verranno reindirizzati.",
     "tableHeaders": {
       "key": "Slug URL",
       "name": "Nome",

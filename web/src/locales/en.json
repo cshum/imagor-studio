@@ -675,7 +675,7 @@
         "managed": "Managed by Imagor Studio. No bucket setup required.",
         "s3": "Connect your own S3-compatible bucket."
       },
-      "keyDescription": "Unique URL slug used in links. Cannot be changed after creation.",
+      "keyDescription": "Used in links and URLs. You can change it, but old links won't redirect.",
       "tableHeaders": {
         "key": "URL Slug",
         "name": "Name",

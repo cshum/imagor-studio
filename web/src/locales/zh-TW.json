@@ -661,7 +661,7 @@
         "managed": "由 Imagor Studio 管理，無需設定儲存桶。",
         "s3": "連接您自己的 S3 相容儲存桶。"
       },
-      "keyDescription": "用於連結中的唯一 URL Slug。建立後無法變更。",
+      "keyDescription": "用於連結和 URL。你可以變更它，但舊連結不會重新導向。",
       "tableHeaders": {
         "key": "URL Slug",
         "name": "名稱",
