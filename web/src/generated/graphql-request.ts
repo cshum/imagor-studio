@@ -23,6 +23,13 @@ export type Scalars = {
   Upload: { input: File; output: File }
 }
 
+export type AuthProvider = {
+  __typename?: 'AuthProvider'
+  email: Maybe<Scalars['String']['output']>
+  linkedAt: Scalars['String']['output']
+  provider: Scalars['String']['output']
+}
+
 export type ChangePasswordInput = {
   currentPassword: InputMaybe<Scalars['String']['input']>
   newPassword: Scalars['String']['input']
@@ -40,6 +47,12 @@ export type DimensionMode = 'ADAPTIVE' | 'PREDEFINED'
 export type DimensionsInput = {
   height: Scalars['Int']['input']
   width: Scalars['Int']['input']
+}
+
+export type EmailChangeRequestResult = {
+  __typename?: 'EmailChangeRequestResult'
+  email: Scalars['String']['output']
+  verificationRequired: Scalars['Boolean']['output']
 }
 
 export type FileItem = {
@@ -181,11 +194,13 @@ export type Mutation = {
   regenerateTemplatePreview: Scalars['Boolean']['output']
   removeOrgMember: Scalars['Boolean']['output']
   removeSpaceMember: Scalars['Boolean']['output']
+  requestEmailChange: EmailChangeRequestResult
   saveTemplate: TemplateResult
   setSpaceRegistry: Array<UserRegistry>
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
+  unlinkAuthProvider: Scalars['Boolean']['output']
   updateOrgMemberRole: OrgMember
   updateProfile: User
   updateSpace: Space
@@ -323,6 +338,11 @@ export type MutationRemoveSpaceMemberArgs = {
   userId: Scalars['ID']['input']
 }
 
+export type MutationRequestEmailChangeArgs = {
+  email: Scalars['String']['input']
+  userId?: InputMaybe<Scalars['ID']['input']>
+}
+
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
   spaceKey?: InputMaybe<Scalars['String']['input']>
@@ -346,6 +366,11 @@ export type MutationSetUserRegistryArgs = {
 
 export type MutationTestStorageConfigArgs = {
   input: StorageConfigInput
+}
+
+export type MutationUnlinkAuthProviderArgs = {
+  provider: Scalars['String']['input']
+  userId?: InputMaybe<Scalars['ID']['input']>
 }
 
 export type MutationUpdateOrgMemberRoleArgs = {
@@ -596,6 +621,7 @@ export type SpaceMember = {
   displayName: Scalars['String']['output']
   email: Maybe<Scalars['String']['output']>
   role: Scalars['String']['output']
+  roleSource: Scalars['String']['output']
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
 }
@@ -664,12 +690,16 @@ export type UpdateProfileInput = {
 
 export type User = {
   __typename?: 'User'
+  authProviders: Array<AuthProvider>
   avatarUrl: Maybe<Scalars['String']['output']>
   createdAt: Scalars['String']['output']
   displayName: Scalars['String']['output']
   email: Maybe<Scalars['String']['output']>
+  emailVerified: Scalars['Boolean']['output']
+  hasPassword: Scalars['Boolean']['output']
   id: Scalars['ID']['output']
   isActive: Scalars['Boolean']['output']
+  pendingEmail: Maybe<Scalars['String']['output']>
   role: Scalars['String']['output']
   updatedAt: Scalars['String']['output']
   username: Scalars['String']['output']
@@ -952,6 +982,7 @@ export type ListSpaceMembersQuery = {
     email: string | null
     avatarUrl: string | null
     role: string
+    roleSource: string
     canChangeRole: boolean
     canRemove: boolean
     createdAt: string
@@ -1458,7 +1489,16 @@ export type UserInfoFragment = {
   createdAt: string
   updatedAt: string
   email: string | null
+  pendingEmail: string | null
+  emailVerified: boolean
+  hasPassword: boolean
   avatarUrl: string | null
+  authProviders: Array<{
+    __typename?: 'AuthProvider'
+    provider: string
+    email: string | null
+    linkedAt: string
+  }>
 }
 
 export type MeQueryVariables = Exact<{ [key: string]: never }>
@@ -1475,7 +1515,16 @@ export type MeQuery = {
     createdAt: string
     updatedAt: string
     email: string | null
+    pendingEmail: string | null
+    emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
+    authProviders: Array<{
+      __typename?: 'AuthProvider'
+      provider: string
+      email: string | null
+      linkedAt: string
+    }>
   } | null
 }
 
@@ -1495,7 +1544,16 @@ export type GetUserQuery = {
     createdAt: string
     updatedAt: string
     email: string | null
+    pendingEmail: string | null
+    emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
+    authProviders: Array<{
+      __typename?: 'AuthProvider'
+      provider: string
+      email: string | null
+      linkedAt: string
+    }>
   } | null
 }
 
@@ -1520,7 +1578,16 @@ export type ListUsersQuery = {
       createdAt: string
       updatedAt: string
       email: string | null
+      pendingEmail: string | null
+      emailVerified: boolean
+      hasPassword: boolean
       avatarUrl: string | null
+      authProviders: Array<{
+        __typename?: 'AuthProvider'
+        provider: string
+        email: string | null
+        linkedAt: string
+      }>
     }>
   }
 }
@@ -1542,7 +1609,16 @@ export type UpdateProfileMutation = {
     createdAt: string
     updatedAt: string
     email: string | null
+    pendingEmail: string | null
+    emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
+    authProviders: Array<{
+      __typename?: 'AuthProvider'
+      provider: string
+      email: string | null
+      linkedAt: string
+    }>
   }
 }
 
@@ -1552,6 +1628,27 @@ export type ChangePasswordMutationVariables = Exact<{
 }>
 
 export type ChangePasswordMutation = { __typename?: 'Mutation'; changePassword: boolean }
+
+export type RequestEmailChangeMutationVariables = Exact<{
+  email: Scalars['String']['input']
+  userId?: InputMaybe<Scalars['ID']['input']>
+}>
+
+export type RequestEmailChangeMutation = {
+  __typename?: 'Mutation'
+  requestEmailChange: {
+    __typename?: 'EmailChangeRequestResult'
+    email: string
+    verificationRequired: boolean
+  }
+}
+
+export type UnlinkAuthProviderMutationVariables = Exact<{
+  provider: Scalars['String']['input']
+  userId?: InputMaybe<Scalars['ID']['input']>
+}>
+
+export type UnlinkAuthProviderMutation = { __typename?: 'Mutation'; unlinkAuthProvider: boolean }
 
 export type DeactivateAccountMutationVariables = Exact<{
   userId?: InputMaybe<Scalars['ID']['input']>
@@ -1581,7 +1678,16 @@ export type CreateUserMutation = {
     createdAt: string
     updatedAt: string
     email: string | null
+    pendingEmail: string | null
+    emailVerified: boolean
+    hasPassword: boolean
     avatarUrl: string | null
+    authProviders: Array<{
+      __typename?: 'AuthProvider'
+      provider: string
+      email: string | null
+      linkedAt: string
+    }>
   }
 }
 
@@ -1610,7 +1716,15 @@ export const UserInfoFragmentDoc = gql`
     createdAt
     updatedAt
     email
+    pendingEmail
+    emailVerified
+    hasPassword
     avatarUrl
+    authProviders {
+      provider
+      email
+      linkedAt
+    }
   }
 `
 export const ImagorStatusDocument = gql`
@@ -1825,6 +1939,7 @@ export const ListSpaceMembersDocument = gql`
       email
       avatarUrl
       role
+      roleSource
       canChangeRole
       canRemove
       createdAt
@@ -2198,6 +2313,19 @@ export const UpdateProfileDocument = gql`
 export const ChangePasswordDocument = gql`
   mutation ChangePassword($input: ChangePasswordInput!, $userId: ID) {
     changePassword(input: $input, userId: $userId)
+  }
+`
+export const RequestEmailChangeDocument = gql`
+  mutation RequestEmailChange($email: String!, $userId: ID) {
+    requestEmailChange(email: $email, userId: $userId) {
+      email
+      verificationRequired
+    }
+  }
+`
+export const UnlinkAuthProviderDocument = gql`
+  mutation UnlinkAuthProvider($provider: String!, $userId: ID) {
+    unlinkAuthProvider(provider: $provider, userId: $userId)
   }
 `
 export const DeactivateAccountDocument = gql`
@@ -3181,6 +3309,42 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'ChangePassword',
+        'mutation',
+        variables,
+      )
+    },
+    RequestEmailChange(
+      variables: RequestEmailChangeMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<RequestEmailChangeMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<RequestEmailChangeMutation>({
+            document: RequestEmailChangeDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'RequestEmailChange',
+        'mutation',
+        variables,
+      )
+    },
+    UnlinkAuthProvider(
+      variables: UnlinkAuthProviderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<UnlinkAuthProviderMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<UnlinkAuthProviderMutation>({
+            document: UnlinkAuthProviderDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'UnlinkAuthProvider',
         'mutation',
         variables,
       )

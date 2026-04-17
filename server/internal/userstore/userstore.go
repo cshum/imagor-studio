@@ -15,15 +15,24 @@ import (
 )
 
 type User struct {
-	ID          string    `json:"id"`
-	DisplayName string    `json:"displayName"`
-	Username    string    `json:"username"`
-	Role        string    `json:"role"`
-	IsActive    bool      `json:"isActive"`
-	Email       *string   `json:"email,omitempty"`
-	AvatarUrl   *string   `json:"avatarUrl,omitempty"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID            string    `json:"id"`
+	DisplayName   string    `json:"displayName"`
+	Username      string    `json:"username"`
+	Role          string    `json:"role"`
+	IsActive      bool      `json:"isActive"`
+	Email         *string   `json:"email,omitempty"`
+	PendingEmail  *string   `json:"pendingEmail,omitempty"`
+	EmailVerified bool      `json:"emailVerified"`
+	HasPassword   bool      `json:"hasPassword"`
+	AvatarUrl     *string   `json:"avatarUrl,omitempty"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+type AuthProvider struct {
+	Provider  string    `json:"provider"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Store interface {
@@ -37,6 +46,9 @@ type Store interface {
 	UpdatePassword(ctx context.Context, id string, hashedPassword string) error
 	UpdateDisplayName(ctx context.Context, id string, displayName string) error
 	UpdateUsername(ctx context.Context, id string, username string) error
+	RequestEmailChange(ctx context.Context, id string, email string) (*User, error)
+	ListAuthProviders(ctx context.Context, id string) ([]*AuthProvider, error)
+	UnlinkAuthProvider(ctx context.Context, id string, provider string) error
 	SetActive(ctx context.Context, id string, active bool) error
 	List(ctx context.Context, offset, limit int, search string) ([]*User, int, error)
 	UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*User, error)
@@ -85,15 +97,18 @@ func (s *store) UpdateRole(ctx context.Context, id string, role string) error {
 
 func modelUserToStore(user model.User) *User {
 	return &User{
-		ID:          user.ID,
-		DisplayName: user.DisplayName,
-		Username:    user.Username,
-		Role:        user.Role,
-		IsActive:    user.IsActive,
-		Email:       user.Email,
-		AvatarUrl:   user.AvatarUrl,
-		CreatedAt:   user.CreatedAt,
-		UpdatedAt:   user.UpdatedAt,
+		ID:            user.ID,
+		DisplayName:   user.DisplayName,
+		Username:      user.Username,
+		Role:          user.Role,
+		IsActive:      user.IsActive,
+		Email:         user.Email,
+		PendingEmail:  user.PendingEmail,
+		EmailVerified: user.EmailVerified,
+		HasPassword:   user.HashedPassword != "" && user.HashedPassword != "oauth",
+		AvatarUrl:     user.AvatarUrl,
+		CreatedAt:     user.CreatedAt,
+		UpdatedAt:     user.UpdatedAt,
 	}
 }
 
@@ -250,6 +265,89 @@ func (s *store) UpdatePassword(ctx context.Context, id string, hashedPassword st
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("error updating password: %w", err)
+	}
+	return nil
+}
+
+func (s *store) RequestEmailChange(ctx context.Context, id string, email string) (*User, error) {
+	email = strings.TrimSpace(strings.ToLower(email))
+	if email == "" {
+		return nil, fmt.Errorf("email cannot be empty")
+	}
+
+	existingUser, err := s.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	if existingUser != nil && existingUser.ID != id {
+		return nil, fmt.Errorf("email already exists")
+	}
+
+	_, err = s.db.NewUpdate().
+		Model((*model.User)(nil)).
+		Set("pending_email = ?", email).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error requesting email change: %w", err)
+	}
+
+	return s.GetByIDAdmin(ctx, id)
+}
+
+func (s *store) ListAuthProviders(ctx context.Context, id string) ([]*AuthProvider, error) {
+	var identities []oauthIdentity
+	err := s.db.NewSelect().
+		Model(&identities).
+		Where("user_id = ?", id).
+		Order("created_at ASC").
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []*AuthProvider{}, nil
+		}
+		return nil, fmt.Errorf("error listing auth providers: %w", err)
+	}
+
+	providers := make([]*AuthProvider, 0, len(identities))
+	for _, identity := range identities {
+		providers = append(providers, &AuthProvider{
+			Provider:  identity.Provider,
+			Email:     identity.Email,
+			CreatedAt: identity.CreatedAt,
+		})
+	}
+	return providers, nil
+}
+
+func (s *store) UnlinkAuthProvider(ctx context.Context, id string, provider string) error {
+	provider = strings.TrimSpace(strings.ToLower(provider))
+	if provider == "" {
+		return fmt.Errorf("provider cannot be empty")
+	}
+
+	count, err := s.db.NewSelect().
+		Model((*oauthIdentity)(nil)).
+		Where("user_id = ?", id).
+		Count(ctx)
+	if err != nil {
+		return fmt.Errorf("error counting auth providers: %w", err)
+	}
+	if count <= 1 {
+		return fmt.Errorf("cannot unlink the last auth provider")
+	}
+
+	res, err := s.db.NewDelete().
+		Model((*oauthIdentity)(nil)).
+		Where("user_id = ? AND provider = ?", id, provider).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error unlinking auth provider: %w", err)
+	}
+	affected, _ := res.RowsAffected()
+	if affected == 0 {
+		return fmt.Errorf("auth provider not found")
 	}
 	return nil
 }

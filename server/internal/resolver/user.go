@@ -9,6 +9,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/internal/validation"
 	"go.uber.org/zap"
 )
@@ -45,15 +46,19 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
 	}
 
 	return &gql.User{
-		ID:          user.ID,
-		DisplayName: user.DisplayName,
-		Username:    user.Username,
-		Role:        user.Role,
-		IsActive:    user.IsActive,
-		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
-		Email:       user.Email,
-		AvatarURL:   user.AvatarUrl,
+		ID:            user.ID,
+		DisplayName:   user.DisplayName,
+		Username:      user.Username,
+		Role:          user.Role,
+		IsActive:      user.IsActive,
+		CreatedAt:     user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:     user.UpdatedAt.Format(time.RFC3339),
+		Email:         user.Email,
+		PendingEmail:  user.PendingEmail,
+		EmailVerified: user.EmailVerified,
+		HasPassword:   user.HasPassword,
+		AvatarURL:     user.AvatarUrl,
+		AuthProviders: toGQLAuthProviders(r.userStore, r.logger, ctx, user.ID),
 	}, nil
 }
 
@@ -75,15 +80,19 @@ func (r *queryResolver) User(ctx context.Context, id string) (*gql.User, error) 
 	}
 
 	return &gql.User{
-		ID:          user.ID,
-		DisplayName: user.DisplayName,
-		Username:    user.Username,
-		Role:        user.Role,
-		IsActive:    user.IsActive,
-		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
-		Email:       user.Email,
-		AvatarURL:   user.AvatarUrl,
+		ID:            user.ID,
+		DisplayName:   user.DisplayName,
+		Username:      user.Username,
+		Role:          user.Role,
+		IsActive:      user.IsActive,
+		CreatedAt:     user.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:     user.UpdatedAt.Format(time.RFC3339),
+		Email:         user.Email,
+		PendingEmail:  user.PendingEmail,
+		EmailVerified: user.EmailVerified,
+		HasPassword:   user.HasPassword,
+		AvatarURL:     user.AvatarUrl,
+		AuthProviders: toGQLAuthProviders(r.userStore, r.logger, ctx, user.ID),
 	}, nil
 }
 
@@ -127,15 +136,19 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int, sear
 	gqlUsers := make([]*gql.User, len(users))
 	for i, user := range users {
 		gqlUsers[i] = &gql.User{
-			ID:          user.ID,
-			DisplayName: user.DisplayName,
-			Username:    user.Username,
-			Role:        user.Role,
-			IsActive:    user.IsActive,
-			CreatedAt:   user.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
-			Email:       user.Email,
-			AvatarURL:   user.AvatarUrl,
+			ID:            user.ID,
+			DisplayName:   user.DisplayName,
+			Username:      user.Username,
+			Role:          user.Role,
+			IsActive:      user.IsActive,
+			CreatedAt:     user.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:     user.UpdatedAt.Format(time.RFC3339),
+			Email:         user.Email,
+			PendingEmail:  user.PendingEmail,
+			EmailVerified: user.EmailVerified,
+			HasPassword:   user.HasPassword,
+			AvatarURL:     user.AvatarUrl,
+			AuthProviders: toGQLAuthProviders(r.userStore, r.logger, ctx, user.ID),
 		}
 	}
 
@@ -168,7 +181,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 		// Use validation package
 		if err := validation.ValidateDisplayName(displayName); err != nil {
-			return nil, fmt.Errorf("invalid display name: %w", err)
+			return nil, apperror.BadRequest(fmt.Sprintf("invalid display name: %v", err), nil, "displayName")
 		}
 
 		// Normalize displayName
@@ -176,7 +189,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 		err = r.userStore.UpdateDisplayName(ctx, targetUserID, normalizedDisplayName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update display name: %w", err)
+			return nil, apperror.BadRequest(fmt.Sprintf("failed to update display name: %v", err), nil, "displayName")
 		}
 	}
 
@@ -185,7 +198,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 		// Use validation package
 		if err := validation.ValidateUsername(username); err != nil {
-			return nil, fmt.Errorf("invalid username: %w", err)
+			return nil, apperror.BadRequest(fmt.Sprintf("invalid username: %v", err), nil, "username")
 		}
 
 		// Normalize username
@@ -193,7 +206,10 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 		err = r.userStore.UpdateUsername(ctx, targetUserID, normalizedUsername)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update username: %w", err)
+			if strings.Contains(strings.ToLower(err.Error()), "already exists") {
+				return nil, apperror.Conflict("username already exists", "username")
+			}
+			return nil, apperror.BadRequest(fmt.Sprintf("failed to update username: %v", err), nil, "username")
 		}
 	}
 
@@ -204,16 +220,91 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 	}
 
 	return &gql.User{
-		ID:          updatedUser.ID,
-		DisplayName: updatedUser.DisplayName,
-		Username:    updatedUser.Username,
-		Role:        updatedUser.Role,
-		IsActive:    updatedUser.IsActive,
-		CreatedAt:   updatedUser.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   updatedUser.UpdatedAt.Format(time.RFC3339),
-		Email:       updatedUser.Email,
-		AvatarURL:   updatedUser.AvatarUrl,
+		ID:            updatedUser.ID,
+		DisplayName:   updatedUser.DisplayName,
+		Username:      updatedUser.Username,
+		Role:          updatedUser.Role,
+		IsActive:      updatedUser.IsActive,
+		CreatedAt:     updatedUser.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:     updatedUser.UpdatedAt.Format(time.RFC3339),
+		Email:         updatedUser.Email,
+		PendingEmail:  updatedUser.PendingEmail,
+		EmailVerified: updatedUser.EmailVerified,
+		HasPassword:   updatedUser.HasPassword,
+		AvatarURL:     updatedUser.AvatarUrl,
+		AuthProviders: toGQLAuthProviders(r.userStore, r.logger, ctx, updatedUser.ID),
 	}, nil
+}
+
+func (r *mutationResolver) RequestEmailChange(ctx context.Context, email string, userID *string) (*gql.EmailChangeRequestResult, error) {
+	targetUserID, err := GetEffectiveTargetUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedUser, err := r.userStore.RequestEmailChange(ctx, targetUserID, email)
+	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), "already exists"):
+			return nil, apperror.Conflict("email already exists", "email")
+		case strings.Contains(err.Error(), "cannot be empty"):
+			return nil, apperror.BadRequest("email is required", nil, "email")
+		default:
+			return nil, fmt.Errorf("failed to request email change: %w", err)
+		}
+	}
+
+	if updatedUser == nil || updatedUser.PendingEmail == nil {
+		return nil, fmt.Errorf("email change request was not persisted")
+	}
+
+	return &gql.EmailChangeRequestResult{
+		Email:                *updatedUser.PendingEmail,
+		VerificationRequired: true,
+	}, nil
+}
+
+func (r *mutationResolver) UnlinkAuthProvider(ctx context.Context, provider string, userID *string) (bool, error) {
+	targetUserID, err := GetEffectiveTargetUserID(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.userStore.UnlinkAuthProvider(ctx, targetUserID, provider); err != nil {
+		switch {
+		case strings.Contains(err.Error(), "last auth provider"):
+			return false, apperror.Conflict("cannot unlink the last auth provider", "provider")
+		case strings.Contains(err.Error(), "not found"):
+			return false, apperror.NotFound("auth provider not found", "provider")
+		case strings.Contains(err.Error(), "cannot be empty"):
+			return false, apperror.BadRequest("provider is required", nil, "provider")
+		default:
+			return false, fmt.Errorf("failed to unlink auth provider: %w", err)
+		}
+	}
+
+	return true, nil
+}
+
+func toGQLAuthProviders(userStore userstore.Store, logger *zap.Logger, ctx context.Context, userID string) []*gql.AuthProvider {
+	providers, err := userStore.ListAuthProviders(ctx, userID)
+	if err != nil {
+		logger.Warn("failed to load auth providers", zap.String("userID", userID), zap.Error(err))
+		return []*gql.AuthProvider{}
+	}
+
+	result := make([]*gql.AuthProvider, 0, len(providers))
+	for _, provider := range providers {
+		if provider == nil {
+			continue
+		}
+		result = append(result, &gql.AuthProvider{
+			Provider: provider.Provider,
+			Email:    &provider.Email,
+			LinkedAt: provider.CreatedAt.Format(time.RFC3339),
+		})
+	}
+	return result
 }
 
 // ChangePassword changes a user's password (self or admin operation)
@@ -226,7 +317,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 
 	// Use validation package for new password
 	if err := validation.ValidatePassword(input.NewPassword); err != nil {
-		return false, fmt.Errorf("invalid new password: %w", err)
+		return false, apperror.BadRequest(fmt.Sprintf("invalid new password: %v", err), nil, "newPassword")
 	}
 
 	// Get current user with password
@@ -241,11 +332,14 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input gql.ChangeP
 
 	// Verify current password (only required for self-operation)
 	if !isAdminOperation {
-		if input.CurrentPassword == nil || *input.CurrentPassword == "" {
-			return false, fmt.Errorf("current password is required")
-		}
-		if err := auth.CheckPassword(currentUser.HashedPassword, *input.CurrentPassword); err != nil {
-			return false, fmt.Errorf("current password is incorrect")
+		hasPassword := currentUser.HashedPassword != "" && currentUser.HashedPassword != "oauth"
+		if hasPassword {
+			if input.CurrentPassword == nil || *input.CurrentPassword == "" {
+				return false, apperror.BadRequest("current password is required", nil, "currentPassword")
+			}
+			if err := auth.CheckPassword(currentUser.HashedPassword, *input.CurrentPassword); err != nil {
+				return false, apperror.BadRequest("current password is incorrect", nil, "currentPassword")
+			}
 		}
 	}
 

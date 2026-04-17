@@ -8,7 +8,7 @@
         "administration": "Administration"
       },
       "tabs": {
-        "profile": "Profile",
+        "profile": "Account settings",
         "system": "System",
         "users": "Users",
         "spaces": "Spaces"
@@ -129,6 +129,8 @@
   },
   "pages": {
     "authCallback": {
+      "title": "Welcome back",
+      "subtitle": "We couldn't complete your sign-in. Please try again.",
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
       "errorNoToken": "No authentication token received",
@@ -308,25 +310,64 @@
       }
     },
     "profile": {
-      "title": "Profile",
+      "title": "Account",
       "profileInformation": "Profile Information",
       "profileInformationDescription": "Update your account profile information.",
-      "avatar": "Avatar",
-      "avatarFromProvider": "Synced from your identity provider (e.g. Google).",
-      "avatarNoPhoto": "No profile photo set.",
       "displayName": "Display Name",
       "displayNameDescription": "Your public display name shown throughout the app.",
       "displayNamePlaceholder": "Enter your display name",
+      "email": "Email",
+      "emailDescription": "Your current sign-in email address.",
+      "invalidEmail": "Enter a valid email address.",
+      "noEmail": "No email address available",
+      "emailChangeManaged": "Email changes and verification are managed by your sign-in provider for now.",
+      "pendingEmailNotice": "Pending confirmation for {{email}}.",
+      "emailChangePending": "Email change requested.",
+      "emailVerified": "Email verified.",
+      "emailVerificationRequired": "Email verification is required after changing your address.",
+      "emailVerificationPending": "A confirmation step is required before the new email is used.",
+      "changeEmail": "Change",
+      "changeEmailTitle": "Change email",
+      "changeEmailDescription": "Update your sign-in email address.",
+      "emailChangeHelp": "We'll keep your current email until the new address is confirmed.",
+      "requestEmailChange": "Update Email",
+      "emailChangeRequestedSuccess": "Email change requested successfully",
+      "emailChangeRequestFailed": "Failed to request email change",
+      "emailAlreadyInUse": "This email is already in use",
       "usernameDescription": "Used for login. Can contain letters, numbers, underscores, and hyphens.",
       "usernamePlaceholder": "Enter your username",
       "updateProfile": "Update Profile",
       "securitySettings": "Security Settings",
       "securitySettingsDescription": "Manage your account security and password.",
+      "loginMethods": "Login Methods",
+      "signInMethod": "Sign-in Method",
+      "signInMethodDescription": "How you currently authenticate to this account.",
+      "signInMethodSummary": "Used for account login.",
+      "loginMethodsSummary": "Used for account login.",
+      "manage": "Manage",
+      "manageSignInTitle": "Manage sign-in methods",
+      "manageSignInDescription": "Review linked providers and remove ones you no longer need.",
+      "googleSignIn": "Google account connected",
+      "unlinkNotAvailable": "Account unlinking is not available yet.",
+      "unlink": "Unlink",
+      "unlinkProviderDescription": "You can unlink a provider if another sign-in method remains available.",
+      "unlinkLastProviderWarning": "You cannot unlink your last remaining sign-in method.",
+      "providerUnlinkedSuccess": "Provider unlinked successfully",
+      "providerUnlinkFailed": "Failed to unlink provider",
+      "noAuthProviders": "No linked sign-in providers.",
+      "noProviderEmail": "No provider email available",
+      "providers": {
+        "google": "Google"
+      },
       "password": "Password",
       "passwordDescription": "Change your account password",
+      "passwordNotSetDescription": "No password set for this account yet.",
       "changePassword": "Change Password",
+      "setPassword": "Set Password",
       "changePasswordTitle": "Change Password",
       "changePasswordDescription": "Enter your current password and choose a new one.",
+      "setPasswordTitle": "Set Password",
+      "setPasswordDescription": "Create a password so you can also sign in without your provider.",
       "currentPassword": "Current Password",
       "currentPasswordPlaceholder": "Enter your current password",
       "newPassword": "New Password",
@@ -340,7 +381,7 @@
       "updatePasswordFailed": "Failed to update password",
       "usernameAlreadyInUse": "This username is already in use",
       "currentPasswordIncorrect": "Current password is incorrect",
-      "titleDescription": "Manage your personal account information and security settings."
+      "titleDescription": "Manage your account information, login methods, and security settings."
     },
     "admin": {
       "title": "Admin",
@@ -840,11 +881,17 @@
         "removeTitle": "Remove Member",
         "removeDescription": "Are you sure you want to remove",
         "roleSectionLabel": "Change role",
-        "promoteToManager": "Promote to manager",
+        "promoteToManager": "Change to admin",
         "changeToMember": "Change to member",
         "roles": {
-          "admin": "Manager",
+          "owner": "Owner",
+          "admin": "Admin",
+          "spaceManager": "Admin",
           "member": "Member"
+        },
+        "roleSource": {
+          "organization": "Inherited from organization",
+          "space": "Granted for this space"
         }
       },
       "placeholders": {

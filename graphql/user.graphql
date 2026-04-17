@@ -9,9 +9,11 @@ extend type Query {
 extend type Mutation {
   # self operations, or admin scope with userId
   updateProfile(input: UpdateProfileInput!, userId: ID): User!
+  requestEmailChange(email: String!, userId: ID): EmailChangeRequestResult!
   changePassword(input: ChangePasswordInput!, userId: ID): Boolean!
   deactivateAccount(userId: ID): Boolean!
   reactivateAccount(userId: ID!): Boolean!
+  unlinkAuthProvider(provider: String!, userId: ID): Boolean!
 
   # admin only operations
   createUser(input: CreateUserInput!): User!
@@ -26,7 +28,22 @@ type User {
   createdAt: String!
   updatedAt: String!
   email: String
+  pendingEmail: String
+  emailVerified: Boolean!
+  hasPassword: Boolean!
   avatarUrl: String
+  authProviders: [AuthProvider!]!
+}
+
+type AuthProvider {
+  provider: String!
+  email: String
+  linkedAt: String!
+}
+
+type EmailChangeRequestResult {
+  email: String!
+  verificationRequired: Boolean!
 }
 
 type UserList {

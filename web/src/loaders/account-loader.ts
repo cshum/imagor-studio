@@ -21,6 +21,12 @@ export interface ProfileLoaderData {
   profile: {
     displayName: string
     username: string
+    email: string | null
+    pendingEmail: string | null
+    emailVerified: boolean
+    hasPassword: boolean
+    avatarUrl: string | null
+    authProviders: Array<{ provider: string; email: string | null; linkedAt: string }>
   } | null
   breadcrumb: BreadcrumbItem
 }
@@ -71,10 +77,16 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
       ? {
           displayName: auth.profile.displayName || '',
           username: auth.profile.username || '',
+          email: auth.profile.email ?? null,
+          pendingEmail: auth.profile.pendingEmail ?? null,
+          emailVerified: auth.profile.emailVerified ?? false,
+          hasPassword: auth.profile.hasPassword ?? false,
+          avatarUrl: auth.profile.avatarUrl ?? null,
+          authProviders: auth.profile.authProviders ?? [],
         }
       : null,
     breadcrumb: {
-      translationKey: 'navigation.breadcrumbs.profile',
+      translationKey: 'navigation.breadcrumbs.account',
     },
   }
 }

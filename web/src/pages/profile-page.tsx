@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { changePassword, updateProfile } from '@/api/user-api'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  changePassword,
+  requestEmailChange,
+  unlinkAuthProvider,
+  updateProfile,
+} from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -40,10 +44,15 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const { authState } = useAuth()
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false)
+  const [unlinkingProvider, setUnlinkingProvider] = useState<string | null>(null)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [providerDialogOpen, setProviderDialogOpen] = useState(false)
 
   const { handleFormError } = useFormErrors<ProfileForm>()
   const { handleFormError: handlePasswordError } = useFormErrors<PasswordForm>()
+  const { handleFormError: handleEmailError } = useFormErrors<EmailForm>()
 
   const profileSchema = z.object({
     displayName: z
@@ -57,35 +66,55 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       .regex(/^[a-zA-Z0-9_-]+$/, t('forms.validation.usernamePattern')),
   })
 
-  const passwordSchema = z
-    .object({
-      currentPassword: z.string().min(1, t('forms.validation.currentPasswordRequired')),
-      newPassword: z
-        .string()
-        .min(8, t('forms.validation.passwordMinLength'))
-        .max(72, t('forms.validation.passwordMaxLength')),
-      confirmPassword: z.string(),
-    })
-    .refine((data) => data.newPassword === data.confirmPassword, {
-      message: t('forms.validation.passwordsDoNotMatch'),
-      path: ['confirmPassword'],
-    })
+  const emailSchema = z.object({
+    email: z.string().email(t('pages.profile.invalidEmail')),
+  })
 
   type ProfileForm = z.infer<typeof profileSchema>
-  type PasswordForm = z.infer<typeof passwordSchema>
+  type PasswordForm = {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+  }
+  type EmailForm = z.infer<typeof emailSchema>
 
   const profileData = loaderData?.profile || {
     displayName: authState.profile?.displayName || '',
     username: authState.profile?.username || '',
+    email: authState.profile?.email || null,
+    pendingEmail: authState.profile?.pendingEmail || null,
+    emailVerified: authState.profile?.emailVerified || false,
+    hasPassword: authState.profile?.hasPassword || false,
+    avatarUrl: authState.profile?.avatarUrl || null,
+    authProviders: authState.profile?.authProviders || [],
   }
 
-  const avatarUrl = authState.profile?.avatarUrl
-  const displayName = profileData.displayName || profileData.username || ''
-  const initials = (() => {
-    const words = displayName.trim().split(/\s+/).filter(Boolean)
-    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
-    return displayName.slice(0, 2).toUpperCase() || '?'
-  })()
+  const email = profileData.email
+  const pendingEmail = profileData.pendingEmail
+  const emailVerified = profileData.emailVerified
+  const hasPassword = profileData.hasPassword
+  const authProviders = profileData.authProviders
+  const primaryProvider = authProviders[0] || null
+
+  const passwordSchema = useMemo(
+    () =>
+      z
+        .object({
+          currentPassword: hasPassword
+            ? z.string().min(1, t('forms.validation.currentPasswordRequired'))
+            : z.string(),
+          newPassword: z
+            .string()
+            .min(8, t('forms.validation.passwordMinLength'))
+            .max(72, t('forms.validation.passwordMaxLength')),
+          confirmPassword: z.string(),
+        })
+        .refine((data) => data.newPassword === data.confirmPassword, {
+          message: t('forms.validation.passwordsDoNotMatch'),
+          path: ['confirmPassword'],
+        }),
+    [hasPassword, t],
+  )
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -101,6 +130,13 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
+    },
+  })
+
+  const emailForm = useForm<EmailForm>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: {
+      email: pendingEmail || email || '',
     },
   })
 
@@ -141,6 +177,40 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
     }
   }
 
+  const onEmailSubmit = async (values: EmailForm) => {
+    setIsUpdatingEmail(true)
+    try {
+      const result = await requestEmailChange(values.email)
+      await initAuth()
+      emailForm.reset({ email: result.email })
+      setEmailDialogOpen(false)
+      toast.success(t('pages.profile.emailChangeRequestedSuccess'))
+    } catch (err) {
+      handleEmailError(
+        err,
+        emailForm.setError,
+        { email: { ALREADY_EXISTS: 'pages.profile.emailAlreadyInUse' } },
+        t('pages.profile.emailChangeRequestFailed'),
+      )
+    } finally {
+      setIsUpdatingEmail(false)
+    }
+  }
+
+  const handleUnlinkProvider = async (provider: string) => {
+    setUnlinkingProvider(provider)
+    try {
+      await unlinkAuthProvider(provider)
+      await initAuth()
+      setProviderDialogOpen(false)
+      toast.success(t('pages.profile.providerUnlinkedSuccess'))
+    } catch (err) {
+      handleFormError(err, profileForm.setError, undefined, t('pages.profile.providerUnlinkFailed'))
+    } finally {
+      setUnlinkingProvider(null)
+    }
+  }
+
   return (
     <div className='space-y-10'>
       {/* ── Profile information ─────────────────────────────────────── */}
@@ -148,22 +218,24 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
         title={t('pages.profile.profileInformation')}
         description={t('pages.profile.profileInformationDescription')}
       >
-        {/* ── Avatar (multi-tenant / SaaS mode only) ──────────────── */}
         {authState.multiTenant && (
           <SettingRow
-            label={t('pages.profile.avatar')}
+            label={t('pages.profile.email')}
             description={
-              avatarUrl ? t('pages.profile.avatarFromProvider') : t('pages.profile.avatarNoPhoto')
+              pendingEmail
+                ? t('pages.profile.emailChangePending')
+                : emailVerified
+                  ? t('pages.profile.emailVerified')
+                  : t('pages.profile.emailVerificationPending')
             }
+            contentClassName='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-end sm:max-w-none'
           >
-            <Avatar className='h-16 w-16'>
-              <AvatarImage
-                src={avatarUrl ?? undefined}
-                referrerPolicy='no-referrer'
-                alt={displayName}
-              />
-              <AvatarFallback className='text-sm font-semibold'>{initials}</AvatarFallback>
-            </Avatar>
+            <div className='min-w-0 text-left text-sm font-medium break-all sm:text-right'>
+              {email || t('pages.profile.noEmail')}
+            </div>
+            <Button variant='outline' type='button' onClick={() => setEmailDialogOpen(true)}>
+              {t('pages.profile.changeEmail')}
+            </Button>
           </SettingRow>
         )}
 
@@ -226,14 +298,39 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
         title={t('pages.profile.securitySettings')}
         description={t('pages.profile.securitySettingsDescription')}
       >
+        {authState.multiTenant && (
+          <SettingRow
+            label={t('pages.profile.loginMethods')}
+            description={primaryProvider?.email || t('pages.profile.loginMethodsSummary')}
+            contentClassName='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-end sm:max-w-none'
+          >
+            <div className='min-w-0 text-left text-sm font-medium sm:text-right'>
+              {primaryProvider
+                ? t(`pages.profile.providers.${primaryProvider.provider.toLowerCase()}`, {
+                    defaultValue: primaryProvider.provider,
+                  })
+                : t('pages.profile.noAuthProviders')}
+            </div>
+            {authProviders.length > 0 && (
+              <Button variant='outline' type='button' onClick={() => setProviderDialogOpen(true)}>
+                {t('pages.profile.manage')}
+              </Button>
+            )}
+          </SettingRow>
+        )}
+
         <SettingRow
           label={t('pages.profile.password')}
-          description={t('pages.profile.passwordDescription')}
+          description={
+            hasPassword
+              ? t('pages.profile.passwordDescription')
+              : t('pages.profile.passwordNotSetDescription')
+          }
           last
           contentClassName='flex justify-end sm:max-w-xs'
         >
           <Button variant='outline' onClick={() => setPasswordDialogOpen(true)}>
-            {t('pages.profile.changePassword')}
+            {hasPassword ? t('pages.profile.changePassword') : t('pages.profile.setPassword')}
           </Button>
         </SettingRow>
       </SettingsSection>
@@ -241,31 +338,39 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       {/* ── Change password dialog ───────────────────────────────────── */}
       <ResponsiveDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <ResponsiveDialogHeader>
-          <div className='text-lg font-semibold'>{t('pages.profile.changePasswordTitle')}</div>
+          <div className='text-lg font-semibold'>
+            {hasPassword
+              ? t('pages.profile.changePasswordTitle')
+              : t('pages.profile.setPasswordTitle')}
+          </div>
           <ResponsiveDialogDescription>
-            {t('pages.profile.changePasswordDescription')}
+            {hasPassword
+              ? t('pages.profile.changePasswordDescription')
+              : t('pages.profile.setPasswordDescription')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <Form {...passwordForm}>
           <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-3'>
-            <FormField
-              control={passwordForm.control}
-              name='currentPassword'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('pages.profile.currentPassword')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type='password'
-                      placeholder={t('pages.profile.currentPasswordPlaceholder')}
-                      {...field}
-                      disabled={isUpdatingPassword}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {hasPassword && (
+              <FormField
+                control={passwordForm.control}
+                name='currentPassword'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('pages.profile.currentPassword')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='password'
+                        placeholder={t('pages.profile.currentPasswordPlaceholder')}
+                        {...field}
+                        disabled={isUpdatingPassword}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={passwordForm.control}
               name='newPassword'
@@ -312,11 +417,107 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 {t('common.buttons.cancel')}
               </Button>
               <ButtonWithLoading type='submit' isLoading={isUpdatingPassword}>
-                {t('pages.profile.updatePassword')}
+                {hasPassword ? t('pages.profile.updatePassword') : t('pages.profile.setPassword')}
               </ButtonWithLoading>
             </div>
           </form>
         </Form>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <ResponsiveDialogHeader>
+          <div className='text-lg font-semibold'>{t('pages.profile.changeEmailTitle')}</div>
+          <ResponsiveDialogDescription>
+            {t('pages.profile.changeEmailDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <Form {...emailForm}>
+          <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className='space-y-3'>
+            <FormField
+              control={emailForm.control}
+              name='email'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('pages.profile.email')}</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={isUpdatingEmail} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className='text-muted-foreground text-sm'>
+              {t('pages.profile.emailChangeHelp')}
+            </div>
+            <div className='flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setEmailDialogOpen(false)}
+                disabled={isUpdatingEmail}
+              >
+                {t('common.buttons.cancel')}
+              </Button>
+              <ButtonWithLoading type='submit' isLoading={isUpdatingEmail}>
+                {t('pages.profile.requestEmailChange')}
+              </ButtonWithLoading>
+            </div>
+          </form>
+        </Form>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog open={providerDialogOpen} onOpenChange={setProviderDialogOpen}>
+        <ResponsiveDialogHeader>
+          <div className='text-lg font-semibold'>{t('pages.profile.manageSignInTitle')}</div>
+          <ResponsiveDialogDescription>
+            {t('pages.profile.manageSignInDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <div className='space-y-3'>
+          {authProviders.length > 0 ? (
+            authProviders.map((provider) => {
+              const providerKey = provider.provider.toLowerCase()
+              const isUnlinking = unlinkingProvider === provider.provider
+
+              return (
+                <div
+                  key={`${provider.provider}-${provider.linkedAt}`}
+                  className='flex items-center justify-between gap-4 rounded-md border px-3 py-3'
+                >
+                  <div className='min-w-0'>
+                    <div className='text-sm font-medium'>
+                      {t(`pages.profile.providers.${providerKey}`, {
+                        defaultValue: provider.provider,
+                      })}
+                    </div>
+                    <div className='text-muted-foreground truncate text-xs'>
+                      {provider.email || t('pages.profile.noProviderEmail')}
+                    </div>
+                  </div>
+                  <ButtonWithLoading
+                    type='button'
+                    variant='outline'
+                    isLoading={isUnlinking}
+                    disabled={authProviders.length <= 1 || isUnlinking}
+                    onClick={() => handleUnlinkProvider(provider.provider)}
+                  >
+                    {t('pages.profile.unlink')}
+                  </ButtonWithLoading>
+                </div>
+              )
+            })
+          ) : (
+            <div className='text-muted-foreground text-sm'>
+              {t('pages.profile.noAuthProviders')}
+            </div>
+          )}
+
+          <div className='text-muted-foreground text-sm'>
+            {authProviders.length <= 1
+              ? t('pages.profile.unlinkLastProviderWarning')
+              : t('pages.profile.unlinkProviderDescription')}
+          </div>
+        </div>
       </ResponsiveDialog>
     </div>
   )

@@ -162,6 +162,7 @@ func mapSpaceMemberToGQL(m *spacestore.SpaceMemberView) *gql.SpaceMember {
 		Email:         m.Email,
 		AvatarURL:     m.AvatarURL,
 		Role:          m.Role,
+		RoleSource:    "space",
 		CanChangeRole: false,
 		CanRemove:     false,
 		CreatedAt:     m.CreatedAt.UTC().Format(time.RFC3339),
@@ -182,6 +183,9 @@ func (r *Resolver) mapSpaceMemberToGQLWithPermissions(ctx context.Context, space
 		return nil, err
 	}
 	if claims.UserID == member.UserID {
+		if protectedMember, protectErr := r.isProtectedHostSpaceMember(ctx, space, member.UserID); protectErr == nil && protectedMember {
+			gqlMember.Role, gqlMember.RoleSource = r.getProtectedSpaceRole(ctx, space, member.UserID)
+		}
 		return gqlMember, nil
 	}
 	protectedMember, err := r.isProtectedHostSpaceMember(ctx, space, member.UserID)
@@ -189,11 +193,34 @@ func (r *Resolver) mapSpaceMemberToGQLWithPermissions(ctx context.Context, space
 		return nil, err
 	}
 	if protectedMember {
+		gqlMember.Role, gqlMember.RoleSource = r.getProtectedSpaceRole(ctx, space, member.UserID)
 		return gqlMember, nil
 	}
 	gqlMember.CanChangeRole = true
 	gqlMember.CanRemove = true
 	return gqlMember, nil
+}
+
+func (r *Resolver) getProtectedSpaceRole(ctx context.Context, space *spacestore.Space, userID string) (string, string) {
+	if r.orgStore == nil {
+		return "member", "space"
+	}
+	members, err := r.orgStore.ListMembers(ctx, space.OrgID)
+	if err != nil {
+		return "member", "space"
+	}
+	for _, member := range members {
+		if member.UserID != userID {
+			continue
+		}
+		switch member.Role {
+		case "owner":
+			return "owner", "organization"
+		case "admin":
+			return "admin", "organization"
+		}
+	}
+	return "member", "space"
 }
 
 func mapSpaceInvitationToGQL(invitation *spaceinvite.Invitation) *gql.SpaceInvitation {

@@ -8,7 +8,7 @@
         "administration": "Amministrazione"
       },
       "tabs": {
-        "profile": "Profilo",
+        "profile": "Impostazioni account",
         "system": "Sistema",
         "users": "Utenti",
         "spaces": "Spazi"
@@ -124,6 +124,8 @@
   },
   "pages": {
     "authCallback": {
+      "title": "Bentornato",
+      "subtitle": "Non siamo riusciti a completare l'accesso. Riprova.",
       "failed": "Autenticazione fallita",
       "errorOAuth": "Autenticazione fallita: {{error}}",
       "errorNoToken": "Nessun token di autenticazione ricevuto",
@@ -317,25 +319,64 @@
     }
   },
   "profile": {
-    "title": "Profilo",
+    "title": "Account",
     "profileInformation": "Informazioni Profilo",
     "profileInformationDescription": "Aggiorna le informazioni del tuo account.",
-    "avatar": "Avatar",
-    "avatarFromProvider": "Sincronizzato dal tuo provider di identità (es. Google).",
-    "avatarNoPhoto": "Nessuna foto del profilo impostata.",
     "displayName": "Nome Visualizzato",
     "displayNameDescription": "Il nome pubblico visualizzato in tutta l'app.",
     "displayNamePlaceholder": "Inserisci il tuo nome visualizzato",
+    "email": "Email",
+    "emailDescription": "Il tuo indirizzo email attuale usato per l'accesso.",
+    "invalidEmail": "Inserisci un indirizzo email valido.",
+    "noEmail": "Nessun indirizzo email disponibile",
+    "emailChangeManaged": "Le modifiche e la verifica dell'email sono attualmente gestite dal tuo provider di accesso.",
+    "pendingEmailNotice": "In attesa di conferma per {{email}}.",
+    "emailChangePending": "Richiesta di cambio email inviata.",
+    "emailVerified": "Email verificata.",
+    "emailVerificationRequired": "La verifica email è richiesta dopo aver modificato l'indirizzo.",
+    "emailVerificationPending": "È richiesto un passaggio di conferma prima di usare il nuovo indirizzo email.",
+    "changeEmail": "Cambia",
+    "changeEmailTitle": "Cambia email",
+    "changeEmailDescription": "Aggiorna il tuo indirizzo email di accesso.",
+    "emailChangeHelp": "Manterremo il tuo indirizzo attuale finché il nuovo non sarà confermato.",
+    "requestEmailChange": "Aggiorna Email",
+    "emailChangeRequestedSuccess": "Richiesta di cambio email inviata correttamente",
+    "emailChangeRequestFailed": "Impossibile richiedere il cambio email",
+    "emailAlreadyInUse": "Questa email è già in uso",
     "usernameDescription": "Utilizzato per l'accesso. Può contenere lettere, numeri, trattini bassi e trattini.",
     "usernamePlaceholder": "Inserisci il tuo nome utente",
     "updateProfile": "Aggiorna Profilo",
     "securitySettings": "Impostazioni di Sicurezza",
     "securitySettingsDescription": "Gestisci la sicurezza e la password del tuo account.",
+    "loginMethods": "Metodi di accesso",
+    "signInMethod": "Metodo di accesso",
+    "signInMethodDescription": "Come esegui attualmente l'autenticazione su questo account.",
+    "signInMethodSummary": "Usato per l'accesso all'account.",
+    "loginMethodsSummary": "Usato per l'accesso all'account.",
+    "manage": "Gestisci",
+    "manageSignInTitle": "Gestisci i metodi di accesso",
+    "manageSignInDescription": "Controlla i provider collegati e rimuovi quelli che non ti servono più.",
+    "googleSignIn": "Account Google collegato",
+    "unlinkNotAvailable": "La disconnessione dell'account non è ancora disponibile.",
+    "unlink": "Scollega",
+    "unlinkProviderDescription": "Puoi scollegare un provider se rimane disponibile un altro metodo di accesso.",
+    "unlinkLastProviderWarning": "Non puoi scollegare l'ultimo metodo di accesso rimasto.",
+    "providerUnlinkedSuccess": "Provider scollegato correttamente",
+    "providerUnlinkFailed": "Impossibile scollegare il provider",
+    "noAuthProviders": "Nessun provider di accesso collegato.",
+    "noProviderEmail": "Nessuna email del provider disponibile",
+    "providers": {
+      "google": "Google"
+    },
     "password": "Password",
     "passwordDescription": "Cambia la password del tuo account",
+    "passwordNotSetDescription": "Nessuna password impostata per questo account.",
     "changePassword": "Cambia Password",
+    "setPassword": "Imposta Password",
     "changePasswordTitle": "Cambia Password",
     "changePasswordDescription": "Inserisci la tua password attuale e scegli una nuova password.",
+    "setPasswordTitle": "Imposta Password",
+    "setPasswordDescription": "Crea una password per poter accedere anche senza il provider.",
     "currentPassword": "Password Attuale",
     "currentPasswordPlaceholder": "Inserisci la tua password attuale",
     "newPassword": "Nuova Password",
@@ -349,7 +390,7 @@
     "updatePasswordFailed": "Impossibile aggiornare la password",
     "usernameAlreadyInUse": "Questo nome utente è già in uso",
     "currentPasswordIncorrect": "La password attuale non è corretta",
-    "titleDescription": "Gestisci le informazioni del tuo account personale e le impostazioni di sicurezza."
+    "titleDescription": "Gestisci le informazioni del tuo account, i metodi di accesso e le impostazioni di sicurezza."
   },
   "admin": {
     "title": "Amministrazione",
@@ -848,11 +889,17 @@
       "removeTitle": "Rimuovi Membro",
       "removeDescription": "Sei sicuro di voler rimuovere",
       "roleSectionLabel": "Cambia ruolo",
-      "promoteToManager": "Promuovi a manager",
+      "promoteToManager": "Imposta come admin",
       "changeToMember": "Imposta come membro",
       "roles": {
-        "admin": "Manager",
+        "owner": "Owner",
+        "admin": "Admin",
+        "spaceManager": "Admin",
         "member": "Membro"
+      },
+      "roleSource": {
+        "organization": "Ereditato dall'organizzazione",
+        "space": "Concesso per questo spazio"
       }
     },
     "placeholders": {

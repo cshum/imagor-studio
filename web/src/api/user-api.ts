@@ -14,6 +14,10 @@ import type {
   MeQuery,
   ReactivateAccountMutation,
   ReactivateAccountMutationVariables,
+  RequestEmailChangeMutation,
+  RequestEmailChangeMutationVariables,
+  UnlinkAuthProviderMutation,
+  UnlinkAuthProviderMutationVariables,
   UpdateProfileMutation,
   UpdateProfileMutationVariables,
 } from '../generated/graphql'
@@ -89,6 +93,38 @@ export async function changePassword(
   }
   const result = await sdk.ChangePassword(variables)
   return result.changePassword
+}
+
+/**
+ * Request email change (self or admin)
+ */
+export async function requestEmailChange(
+  email: string,
+  userId?: string,
+): Promise<RequestEmailChangeMutation['requestEmailChange']> {
+  const sdk = getSdk(getGraphQLClient())
+  const variables: RequestEmailChangeMutationVariables = {
+    email,
+    userId: userId ?? null,
+  }
+  const result = await sdk.RequestEmailChange(variables)
+  return result.requestEmailChange
+}
+
+/**
+ * Unlink auth provider (self or admin)
+ */
+export async function unlinkAuthProvider(
+  provider: string,
+  userId?: string,
+): Promise<UnlinkAuthProviderMutation['unlinkAuthProvider']> {
+  const sdk = getSdk(getGraphQLClient())
+  const variables: UnlinkAuthProviderMutationVariables = {
+    provider,
+    userId: userId ?? null,
+  }
+  const result = await sdk.UnlinkAuthProvider(variables)
+  return result.unlinkAuthProvider
 }
 
 /**

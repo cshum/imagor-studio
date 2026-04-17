@@ -8,7 +8,7 @@
         "administration": "管理"
       },
       "tabs": {
-        "profile": "个人资料",
+        "profile": "账户设置",
         "system": "系统",
         "users": "用户",
         "spaces": "空间"
@@ -106,6 +106,8 @@
   },
   "pages": {
     "authCallback": {
+      "title": "欢迎回来",
+      "subtitle": "我们无法完成您的登录，请重试。",
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
       "errorNoToken": "未收到认证令牌",
@@ -285,25 +287,64 @@
       }
     },
     "profile": {
-      "title": "个人资料",
+      "title": "账户",
       "profileInformation": "个人资料信息",
       "profileInformationDescription": "更新您的账户个人资料信息。",
-      "avatar": "头像",
-      "avatarFromProvider": "已从您的身份提供商（如 Google）同步。",
-      "avatarNoPhoto": "尚未设置个人照片。",
       "displayName": "显示名称",
       "displayNameDescription": "在整个应用中显示的公开名称。",
       "displayNamePlaceholder": "输入您的显示名称",
+      "email": "电子邮件",
+      "emailDescription": "您当前用于登录的电子邮件地址。",
+      "invalidEmail": "请输入有效的电子邮件地址。",
+      "noEmail": "没有可用的电子邮件地址",
+      "emailChangeManaged": "当前电子邮件修改和验证由您的登录提供商管理。",
+      "pendingEmailNotice": "等待确认 {{email}}。",
+      "emailChangePending": "已提交电子邮件更改请求。",
+      "emailVerified": "电子邮件已验证。",
+      "emailVerificationRequired": "更改电子邮件地址后需要完成验证。",
+      "emailVerificationPending": "新电子邮件投入使用前需要完成确认步骤。",
+      "changeEmail": "更改",
+      "changeEmailTitle": "更改电子邮件",
+      "changeEmailDescription": "更新您的登录电子邮件地址。",
+      "emailChangeHelp": "在新地址确认之前，我们会继续保留您当前的电子邮件。",
+      "requestEmailChange": "更新电子邮件",
+      "emailChangeRequestedSuccess": "已成功提交电子邮件更改请求",
+      "emailChangeRequestFailed": "提交电子邮件更改请求失败",
+      "emailAlreadyInUse": "此电子邮件已被使用",
       "usernameDescription": "用于登录，可包含字母、数字、下划线和连字符。",
       "usernamePlaceholder": "输入您的用户名",
       "updateProfile": "更新个人资料",
       "securitySettings": "安全设置",
       "securitySettingsDescription": "管理您的账户安全和密码。",
+      "loginMethods": "登录方式",
+      "signInMethod": "登录方式",
+      "signInMethodDescription": "您当前用于访问此账户的认证方式。",
+      "signInMethodSummary": "用于账户登录。",
+      "loginMethodsSummary": "用于账户登录。",
+      "manage": "管理",
+      "manageSignInTitle": "管理登录方式",
+      "manageSignInDescription": "查看已关联的提供商，并移除不再需要的方式。",
+      "googleSignIn": "已连接 Google 账户",
+      "unlinkNotAvailable": "暂不支持取消关联账户。",
+      "unlink": "取消关联",
+      "unlinkProviderDescription": "仅当仍有其他可用登录方式时，才可以取消关联提供商。",
+      "unlinkLastProviderWarning": "无法取消关联最后一种登录方式。",
+      "providerUnlinkedSuccess": "提供商取消关联成功",
+      "providerUnlinkFailed": "取消关联提供商失败",
+      "noAuthProviders": "没有已关联的登录提供商。",
+      "noProviderEmail": "没有可用的提供商电子邮件",
+      "providers": {
+        "google": "Google"
+      },
       "password": "密码",
       "passwordDescription": "更改您的账户密码",
+      "passwordNotSetDescription": "此账户尚未设置密码。",
       "changePassword": "更改密码",
+      "setPassword": "设置密码",
       "changePasswordTitle": "更改密码",
       "changePasswordDescription": "输入您的当前密码并选择新密码。",
+      "setPasswordTitle": "设置密码",
+      "setPasswordDescription": "创建一个密码，以便您也可以不通过提供商登录。",
       "currentPassword": "当前密码",
       "currentPasswordPlaceholder": "输入您的当前密码",
       "newPassword": "新密码",
@@ -317,7 +358,7 @@
       "updatePasswordFailed": "更新密码失败",
       "usernameAlreadyInUse": "此用户名已被使用",
       "currentPasswordIncorrect": "当前密码不正确",
-      "titleDescription": "管理您的个人账户信息和安全设置。"
+      "titleDescription": "管理您的账户信息、登录方式和安全设置。"
     },
     "admin": {
       "title": "管理",
@@ -794,11 +835,17 @@
         "removeTitle": "移除成员",
         "removeDescription": "确定要移除",
         "roleSectionLabel": "更改角色",
-        "promoteToManager": "设为管理员",
+        "promoteToManager": "改为管理员",
         "changeToMember": "改为成员",
         "roles": {
+          "owner": "所有者",
           "admin": "管理员",
+          "spaceManager": "管理员",
           "member": "成员"
+        },
+        "roleSource": {
+          "organization": "继承自组织",
+          "space": "此空间授予"
         }
       },
       "imagor": {

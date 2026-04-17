@@ -40,6 +40,7 @@ func TestMe(t *testing.T) {
 	}
 
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(mockUser, nil)
+	mockUserStore.On("ListAuthProviders", ctx, "test-user-id").Return([]*userstore.AuthProvider{}, nil)
 
 	result, err := resolver.Query().Me(ctx)
 
@@ -101,6 +102,7 @@ func TestUser_AdminOnly(t *testing.T) {
 					UpdatedAt:   now,
 				}
 				mockUserStore.On("GetByID", ctx, "target-user-id").Return(targetUser, nil)
+				mockUserStore.On("ListAuthProviders", ctx, "target-user-id").Return([]*userstore.AuthProvider{}, nil)
 			}
 
 			result, err := resolver.Query().User(ctx, "target-user-id")
@@ -212,6 +214,7 @@ func TestUpdateProfile_SelfOperation(t *testing.T) {
 	mockUserStore.On("UpdateDisplayName", ctx, "test-user-id", "newDisplayName").Return(nil)
 	mockUserStore.On("UpdateUsername", ctx, "test-user-id", "newusername").Return(nil)
 	mockUserStore.On("GetByID", ctx, "test-user-id").Return(updatedUser, nil).Once()
+	mockUserStore.On("ListAuthProviders", ctx, "test-user-id").Return([]*userstore.AuthProvider{}, nil)
 
 	input := gql.UpdateProfileInput{
 		DisplayName: &newDisplayName,
@@ -268,6 +271,7 @@ func TestUpdateProfile_AdminOperation(t *testing.T) {
 	mockUserStore.On("UpdateDisplayName", ctx, "target-user-id", "newDisplayName").Return(nil)
 	mockUserStore.On("UpdateUsername", ctx, "target-user-id", "newusername").Return(nil)
 	mockUserStore.On("GetByID", ctx, "target-user-id").Return(updatedUser, nil).Once()
+	mockUserStore.On("ListAuthProviders", ctx, "target-user-id").Return([]*userstore.AuthProvider{}, nil)
 
 	input := gql.UpdateProfileInput{
 		DisplayName: &newDisplayName,
@@ -381,6 +385,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 			setupMocks: func() {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
+				mockUserStore.On("ListAuthProviders", ctx, "test-user-id").Return([]*userstore.AuthProvider{}, nil)
 			},
 			expectError: false, // Empty after trimming should be ignored
 		},
@@ -392,6 +397,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 			setupMocks: func() {
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
 				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
+				mockUserStore.On("ListAuthProviders", ctx, "test-user-id").Return([]*userstore.AuthProvider{}, nil)
 			},
 			expectError: false, // Empty after trimming should be ignored
 		},
@@ -412,6 +418,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 					CreatedAt:   now,
 					UpdatedAt:   now.Add(time.Minute),
 				}, nil).Once()
+				mockUserStore.On("ListAuthProviders", ctx, "test-user-id").Return([]*userstore.AuthProvider{}, nil)
 			},
 			expectError: false,
 		},
@@ -432,6 +439,7 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 					CreatedAt:   now,
 					UpdatedAt:   now.Add(time.Minute),
 				}, nil).Once()
+				mockUserStore.On("ListAuthProviders", ctx, "test-user-id").Return([]*userstore.AuthProvider{}, nil)
 			},
 			expectError: false,
 		},
@@ -624,6 +632,25 @@ func TestChangePassword_ValidationErrors(t *testing.T) {
 			expectError: true,
 			errorMsg:    "current password is required",
 		},
+		{
+			name: "OAuth-only user can set password without current password",
+			input: gql.ChangePasswordInput{
+				CurrentPassword: nil,
+				NewPassword:     "newpassword123",
+			},
+			setupMocks: func() {
+				mockUserStore.On("GetByIDWithPassword", ctx, "test-user-id").Return(&model.User{
+					ID:             "test-user-id",
+					DisplayName:    "testuser",
+					Username:       "testuser",
+					HashedPassword: "oauth",
+					Role:           "user",
+					IsActive:       true,
+				}, nil)
+				mockUserStore.On("UpdatePassword", ctx, "test-user-id", mock.AnythingOfType("string")).Return(nil)
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -633,10 +660,15 @@ func TestChangePassword_ValidationErrors(t *testing.T) {
 
 			result, err := resolver.Mutation().ChangePassword(ctx, tt.input, nil)
 
-			assert.Error(t, err)
-			assert.False(t, result)
-			if tt.errorMsg != "" {
-				assert.Contains(t, err.Error(), tt.errorMsg)
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.False(t, result)
+				if tt.errorMsg != "" {
+					assert.Contains(t, err.Error(), tt.errorMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.True(t, result)
 			}
 
 			mockUserStore.AssertExpectations(t)
@@ -838,6 +870,7 @@ func TestUsers_AdminOnly(t *testing.T) {
 				}
 
 				mockUserStore.On("List", ctx, expectedOffset, expectedLimit, mock.Anything).Return(users, 1, nil)
+				mockUserStore.On("ListAuthProviders", ctx, "user1").Return([]*userstore.AuthProvider{}, nil)
 			}
 
 			result, err := resolver.Query().Users(ctx, tt.offset, tt.limit, nil)
@@ -937,6 +970,7 @@ func TestUsers_LimitValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockUserStore.ExpectedCalls = nil
 			mockUserStore.On("List", ctx, tt.expectedOffset, tt.expectedLimit, mock.Anything).Return(users, 1, nil)
+			mockUserStore.On("ListAuthProviders", ctx, "user1").Return([]*userstore.AuthProvider{}, nil)
 
 			result, err := resolver.Query().Users(ctx, tt.offset, tt.limit, nil)
 

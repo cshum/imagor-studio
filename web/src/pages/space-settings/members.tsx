@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import {
   inviteSpaceMember,
+  leaveSpace,
   listSpaceInvitations,
   listSpaceMembers,
   removeSpaceMember,
@@ -50,11 +51,38 @@ function getInitials(value: string) {
     .join('')
 }
 
+function getRoleBadgeLabel(
+  member: Pick<SpaceMemberItem, 'role' | 'roleSource'>,
+  t: (key: string) => string,
+) {
+  if (member.roleSource === 'organization') {
+    if (member.role === 'owner') return t('pages.spaceSettings.members.roles.owner')
+    if (member.role === 'admin') return t('pages.spaceSettings.members.roles.admin')
+  }
+
+  if (member.role === 'admin') return t('pages.spaceSettings.members.roles.spaceManager')
+  return t('pages.spaceSettings.members.roles.member')
+}
+
+function getRoleDescription(
+  member: Pick<SpaceMemberItem, 'role' | 'roleSource'>,
+  t: (key: string) => string,
+) {
+  if (member.roleSource === 'organization') {
+    return t('pages.spaceSettings.members.roleSource.organization')
+  }
+  if (member.role === 'admin') {
+    return t('pages.spaceSettings.members.roleSource.space')
+  }
+  return null
+}
+
 interface MembersSectionProps {
   spaceKey: string
   initialMembers: SpaceMemberItem[]
   initialInvitations: SpaceInvitationItem[]
   isShared: boolean
+  canLeave?: boolean
 }
 
 export function MembersSection({
@@ -62,6 +90,7 @@ export function MembersSection({
   initialMembers,
   initialInvitations,
   isShared,
+  canLeave = false,
 }: MembersSectionProps) {
   const { t } = useTranslation()
   const { authState } = useAuth()
@@ -75,6 +104,8 @@ export function MembersSection({
   const [isRemoving, setIsRemoving] = useState(false)
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null)
   const [openMenuMemberId, setOpenMenuMemberId] = useState<string | null>(null)
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
+  const [isLeaving, setIsLeaving] = useState(false)
   const removeDialogTimerRef = useRef<number | null>(null)
 
   const currentUserId = authState.profile?.id ?? null
@@ -218,6 +249,24 @@ export function MembersSection({
     }
   }
 
+  const canLeaveSpace = Boolean(authState.profile?.id && canLeave)
+
+  const handleLeaveSpace = async () => {
+    setIsLeaving(true)
+    try {
+      await leaveSpace({ spaceKey })
+      toast.success(t('pages.spaces.messages.leaveSpaceSuccess'))
+      window.location.href = '/spaces'
+    } catch (err) {
+      toast.error(
+        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
+      )
+    } finally {
+      setIsLeaving(false)
+      setLeaveDialogOpen(false)
+    }
+  }
+
   const requestRemoveMember = (menuId: string, userId: string) => {
     setOpenMenuMemberId((current) => (current === menuId ? null : current))
     if (removeDialogTimerRef.current !== null) {
@@ -230,8 +279,10 @@ export function MembersSection({
   }
 
   const renderMemberActions = (member: SpaceMemberItem, menuId: string) => {
+    const isCurrentUser = member.userId === currentUserId
     const canShowRoleSection = member.canChangeRole
     const canShowRemove = member.canRemove
+    const canShowLeave = isCurrentUser && canLeaveSpace
 
     return (
       <DropdownMenuContent align='end'>
@@ -249,7 +300,7 @@ export function MembersSection({
               ) : (
                 <span className='mr-3 h-4 w-4' />
               )}
-              <span>{t('pages.spaceSettings.members.roles.admin')}</span>
+              <span>{t('pages.spaceSettings.members.roles.spaceManager')}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={updatingRoleUserId === member.userId || member.role === 'member'}
@@ -264,7 +315,9 @@ export function MembersSection({
             </DropdownMenuItem>
           </>
         ) : null}
-        {canShowRoleSection && canShowRemove ? <DropdownMenuSeparator /> : null}
+        {(canShowRoleSection && canShowRemove) || (canShowRoleSection && canShowLeave) ? (
+          <DropdownMenuSeparator />
+        ) : null}
         {canShowRemove ? (
           <DropdownMenuItem
             disabled={updatingRoleUserId === member.userId}
@@ -275,8 +328,22 @@ export function MembersSection({
             <span>{t('common.buttons.remove')}</span>
           </DropdownMenuItem>
         ) : null}
+        {canShowLeave ? (
+          <DropdownMenuItem
+            className='text-destructive focus:text-destructive'
+            onClick={() => setLeaveDialogOpen(true)}
+          >
+            <UserX className='mr-2 h-4 w-4' />
+            <span>{t('pages.spaces.leaveSpace')}</span>
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     )
+  }
+
+  const hasMemberActions = (member: SpaceMemberItem) => {
+    const isCurrentUser = member.userId === currentUserId
+    return member.canChangeRole || member.canRemove || (isCurrentUser && canLeaveSpace)
   }
 
   const invitationsContent =
@@ -341,7 +408,6 @@ export function MembersSection({
           {members.map((member) => {
             const memberLabel = getMemberLabel(member)
             const isCurrentUser = member.userId === currentUserId
-            const hasRowActions = member.canChangeRole || member.canRemove
             const desktopMenuId = `${member.userId}-desktop`
             const mobileMenuId = `${member.userId}-mobile`
 
@@ -358,9 +424,9 @@ export function MembersSection({
                     <div className='min-w-0'>
                       <div className='flex items-center gap-2'>
                         <p className='truncate text-sm font-medium'>{memberLabel}</p>
-                        {member.role === 'admin' ? (
+                        {member.role === 'admin' || member.role === 'owner' ? (
                           <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
-                            {t('pages.spaceSettings.members.roles.admin')}
+                            {getRoleBadgeLabel(member, t)}
                           </Badge>
                         ) : null}
                         {isCurrentUser ? (
@@ -376,10 +442,15 @@ export function MembersSection({
                       <p className='text-muted-foreground truncate text-xs'>
                         {member.email || `@${member.username}`}
                       </p>
+                      {getRoleDescription(member, t) ? (
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {getRoleDescription(member, t)}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <div>
-                    {isCurrentUser || !hasRowActions ? null : (
+                    {!hasMemberActions(member) ? null : (
                       <div className='flex justify-end'>
                         <DropdownMenu
                           open={openMenuMemberId === desktopMenuId}
@@ -412,9 +483,9 @@ export function MembersSection({
                     <div className='min-w-0 flex-1'>
                       <div className='flex items-center gap-2'>
                         <p className='truncate text-sm font-medium'>{memberLabel}</p>
-                        {member.role === 'admin' ? (
+                        {member.role === 'admin' || member.role === 'owner' ? (
                           <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
-                            {t('pages.spaceSettings.members.roles.admin')}
+                            {getRoleBadgeLabel(member, t)}
                           </Badge>
                         ) : null}
                         {isCurrentUser ? (
@@ -430,8 +501,13 @@ export function MembersSection({
                       <p className='text-muted-foreground truncate text-xs'>
                         {member.email || `@${member.username}`}
                       </p>
+                      {getRoleDescription(member, t) ? (
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {getRoleDescription(member, t)}
+                        </p>
+                      ) : null}
                     </div>
-                    {isCurrentUser || !hasRowActions ? null : (
+                    {!hasMemberActions(member) ? null : (
                       <DropdownMenu
                         open={openMenuMemberId === mobileMenuId}
                         onOpenChange={(open) => setOpenMenuMemberId(open ? mobileMenuId : null)}
@@ -548,6 +624,34 @@ export function MembersSection({
             className='w-full sm:w-auto'
           >
             {t('common.buttons.remove')}
+          </ButtonWithLoading>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.spaces.leaveSpace')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.spaces.leaveSpaceDescription')}{' '}
+            <strong className='text-foreground'>{spaceKey}</strong>?
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+          <Button
+            variant='outline'
+            onClick={() => setLeaveDialogOpen(false)}
+            disabled={isLeaving}
+            className='w-full sm:w-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+          <ButtonWithLoading
+            variant='destructive'
+            onClick={handleLeaveSpace}
+            isLoading={isLeaving}
+            className='w-full sm:w-auto'
+          >
+            {t('pages.spaces.leaveSpace')}
           </ButtonWithLoading>
         </ResponsiveDialogFooter>
       </ResponsiveDialog>

@@ -9,6 +9,12 @@ import (
 	"strconv"
 )
 
+type AuthProvider struct {
+	Provider string  `json:"provider"`
+	Email    *string `json:"email,omitempty"`
+	LinkedAt string  `json:"linkedAt"`
+}
+
 type ChangePasswordInput struct {
 	CurrentPassword *string `json:"currentPassword,omitempty"`
 	NewPassword     string  `json:"newPassword"`
@@ -24,6 +30,11 @@ type CreateUserInput struct {
 type DimensionsInput struct {
 	Width  int `json:"width"`
 	Height int `json:"height"`
+}
+
+type EmailChangeRequestResult struct {
+	Email                string `json:"email"`
+	VerificationRequired bool   `json:"verificationRequired"`
 }
 
 type FileItem struct {
@@ -249,6 +260,7 @@ type SpaceMember struct {
 	Email         *string `json:"email,omitempty"`
 	AvatarURL     *string `json:"avatarUrl,omitempty"`
 	Role          string  `json:"role"`
+	RoleSource    string  `json:"roleSource"`
 	CanChangeRole bool    `json:"canChangeRole"`
 	CanRemove     bool    `json:"canRemove"`
 	CreatedAt     string  `json:"createdAt"`
@@ -309,15 +321,19 @@ type UpdateProfileInput struct {
 }
 
 type User struct {
-	ID          string  `json:"id"`
-	DisplayName string  `json:"displayName"`
-	Username    string  `json:"username"`
-	Role        string  `json:"role"`
-	IsActive    bool    `json:"isActive"`
-	CreatedAt   string  `json:"createdAt"`
-	UpdatedAt   string  `json:"updatedAt"`
-	Email       *string `json:"email,omitempty"`
-	AvatarURL   *string `json:"avatarUrl,omitempty"`
+	ID            string          `json:"id"`
+	DisplayName   string          `json:"displayName"`
+	Username      string          `json:"username"`
+	Role          string          `json:"role"`
+	IsActive      bool            `json:"isActive"`
+	CreatedAt     string          `json:"createdAt"`
+	UpdatedAt     string          `json:"updatedAt"`
+	Email         *string         `json:"email,omitempty"`
+	PendingEmail  *string         `json:"pendingEmail,omitempty"`
+	EmailVerified bool            `json:"emailVerified"`
+	HasPassword   bool            `json:"hasPassword"`
+	AvatarURL     *string         `json:"avatarUrl,omitempty"`
+	AuthProviders []*AuthProvider `json:"authProviders"`
 }
 
 type UserList struct {

@@ -10,7 +10,15 @@ export const UserFragment = gql(`
     createdAt
     updatedAt
     email
+    pendingEmail
+    emailVerified
+    hasPassword
     avatarUrl
+    authProviders {
+      provider
+      email
+      linkedAt
+    }
   }
 `)
 
@@ -54,6 +62,21 @@ export const UpdateProfileMutation = gql(`
 export const ChangePasswordMutation = gql(`
   mutation ChangePassword($input: ChangePasswordInput!, $userId: ID) {
     changePassword(input: $input, userId: $userId)
+  }
+`)
+
+export const RequestEmailChangeMutation = gql(`
+  mutation RequestEmailChange($email: String!, $userId: ID) {
+    requestEmailChange(email: $email, userId: $userId) {
+      email
+      verificationRequired
+    }
+  }
+`)
+
+export const UnlinkAuthProviderMutation = gql(`
+  mutation UnlinkAuthProvider($provider: String!, $userId: ID) {
+    unlinkAuthProvider(provider: $provider, userId: $userId)
   }
 `)
 
