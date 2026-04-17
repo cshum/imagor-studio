@@ -78,9 +78,9 @@ func GetUserIDFromOwnerID(ownerID string) (string, error) {
 	return id, nil
 }
 
-// SpaceOwnerID creates a namespaced owner ID for a space
-func SpaceOwnerID(spaceKey string) string {
-	return fmt.Sprintf("space:%s", spaceKey)
+// SpaceOwnerID creates a namespaced owner ID for a space using its immutable ID.
+func SpaceOwnerID(spaceID string) string {
+	return fmt.Sprintf("space:%s", spaceID)
 }
 
 // IsSpaceOwnerID checks if the owner ID represents space settings
@@ -89,8 +89,8 @@ func IsSpaceOwnerID(ownerID string) bool {
 	return err == nil && namespace == SpaceNamespace
 }
 
-// GetSpaceKeyFromOwnerID extracts the space key from a space owner ID
-func GetSpaceKeyFromOwnerID(ownerID string) (string, error) {
+// GetSpaceIDFromOwnerID extracts the space ID from a space owner ID.
+func GetSpaceIDFromOwnerID(ownerID string) (string, error) {
 	namespace, id, err := ParseOwnerID(ownerID)
 	if err != nil {
 		return "", err

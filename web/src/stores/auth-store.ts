@@ -142,7 +142,18 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
 
   // Continue with normal auth flow
   try {
-    const currentAccessToken = accessToken || getToken()
+    console.log(
+      window.location.pathname === '/auth/callback'
+        ? new URLSearchParams(window.location.search).get('token')
+        : null,
+    )
+    // Token priority: explicit arg → ?token= on /auth/callback (OAuth) → localStorage
+    const currentAccessToken =
+      accessToken ||
+      (window.location.pathname === '/auth/callback'
+        ? new URLSearchParams(window.location.search).get('token')
+        : null) ||
+      getToken()
 
     if (currentAccessToken) {
       // Run token validation and first-run check in parallel — zero extra latency.

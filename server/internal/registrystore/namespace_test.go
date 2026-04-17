@@ -14,11 +14,11 @@ func TestUserOwnerID(t *testing.T) {
 }
 
 func TestSpaceOwnerID(t *testing.T) {
-	spaceKey := "my-space"
-	expected := "space:my-space"
-	actual := SpaceOwnerID(spaceKey)
+	spaceID := "123e4567-e89b-12d3-a456-426614174111"
+	expected := "space:123e4567-e89b-12d3-a456-426614174111"
+	actual := SpaceOwnerID(spaceID)
 	if actual != expected {
-		t.Errorf("SpaceOwnerID(%q) = %q, want %q", spaceKey, actual, expected)
+		t.Errorf("SpaceOwnerID(%q) = %q, want %q", spaceID, actual, expected)
 	}
 }
 
@@ -46,9 +46,9 @@ func TestParseOwnerID(t *testing.T) {
 		},
 		{
 			name:    "space owner ID",
-			ownerID: "space:my-space",
+			ownerID: "space:123e4567-e89b-12d3-a456-426614174111",
 			wantNS:  "space",
-			wantID:  "my-space",
+			wantID:  "123e4567-e89b-12d3-a456-426614174111",
 			wantErr: false,
 		},
 		{
@@ -105,7 +105,7 @@ func TestValidateOwnerID(t *testing.T) {
 		},
 		{
 			name:    "valid space owner ID",
-			ownerID: "space:my-space",
+			ownerID: "space:123e4567-e89b-12d3-a456-426614174111",
 			wantErr: false,
 		},
 		{
@@ -199,7 +199,7 @@ func TestIsSpaceOwnerID(t *testing.T) {
 	}{
 		{
 			name:    "space owner ID",
-			ownerID: "space:my-space",
+			ownerID: "space:123e4567-e89b-12d3-a456-426614174111",
 			want:    true,
 		},
 		{
@@ -229,7 +229,7 @@ func TestIsSpaceOwnerID(t *testing.T) {
 	}
 }
 
-func TestGetSpaceKeyFromOwnerID(t *testing.T) {
+func TestGetSpaceIDFromOwnerID(t *testing.T) {
 	tests := []struct {
 		name    string
 		ownerID string
@@ -238,8 +238,8 @@ func TestGetSpaceKeyFromOwnerID(t *testing.T) {
 	}{
 		{
 			name:    "valid space owner ID",
-			ownerID: "space:my-space",
-			want:    "my-space",
+			ownerID: "space:123e4567-e89b-12d3-a456-426614174111",
+			want:    "123e4567-e89b-12d3-a456-426614174111",
 			wantErr: false,
 		},
 		{
@@ -256,13 +256,13 @@ func TestGetSpaceKeyFromOwnerID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetSpaceKeyFromOwnerID(tt.ownerID)
+			got, err := GetSpaceIDFromOwnerID(tt.ownerID)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetSpaceKeyFromOwnerID() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetSpaceIDFromOwnerID() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !tt.wantErr && got != tt.want {
-				t.Errorf("GetSpaceKeyFromOwnerID() = %v, want %v", got, tt.want)
+				t.Errorf("GetSpaceIDFromOwnerID() = %v, want %v", got, tt.want)
 			}
 		})
 	}

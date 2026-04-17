@@ -1,6 +1,10 @@
 import type {
+  AddOrgMemberByEmailMutation,
+  AddOrgMemberByEmailMutationVariables,
   AddOrgMemberMutation,
   AddOrgMemberMutationVariables,
+  AddSpaceMemberMutation,
+  AddSpaceMemberMutationVariables,
   CreateSpaceMutation,
   CreateSpaceMutationVariables,
   DeleteSpaceMutation,
@@ -9,15 +13,26 @@ import type {
   DeleteSpaceRegistryMutationVariables,
   GetSpaceQuery,
   GetSpaceRegistryQuery,
+  InviteSpaceMemberMutation,
+  InviteSpaceMemberMutationVariables,
+  LeaveSpaceMutation,
+  LeaveSpaceMutationVariables,
   ListOrgMembersQuery,
+  ListSpaceInvitationsQuery,
+  ListSpaceMembersQuery,
   ListSpacesQuery,
+  MyOrganizationQuery,
   RemoveOrgMemberMutation,
   RemoveOrgMemberMutationVariables,
+  RemoveSpaceMemberMutation,
+  RemoveSpaceMemberMutationVariables,
   SetSpaceRegistryMutation,
   SetSpaceRegistryMutationVariables,
   SpaceKeyExistsQuery,
   UpdateOrgMemberRoleMutation,
   UpdateOrgMemberRoleMutationVariables,
+  UpdateSpaceMemberRoleMutation,
+  UpdateSpaceMemberRoleMutationVariables,
   UpdateSpaceMutation,
   UpdateSpaceMutationVariables,
 } from '@/generated/graphql'
@@ -31,6 +46,13 @@ export async function listSpaces(): Promise<ListSpacesQuery['spaces']> {
   const sdk = getSdk(client)
   const result = await sdk.ListSpaces()
   return result.spaces
+}
+
+export async function getMyOrganization(): Promise<MyOrganizationQuery['myOrganization']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.MyOrganization()
+  return result.myOrganization
 }
 
 export async function createSpace(
@@ -120,6 +142,9 @@ export async function checkSpaceKey(key: string): Promise<SpaceKeyExistsQuery['s
 // ── Org member management ────────────────────────────────────────────────────
 
 export type OrgMemberItem = ListOrgMembersQuery['orgMembers'][number]
+export type SpaceMemberItem = ListSpaceMembersQuery['spaceMembers'][number]
+export type SpaceInvitationItem = ListSpaceInvitationsQuery['spaceInvitations'][number]
+export type SpaceInviteResultItem = InviteSpaceMemberMutation['inviteSpaceMember']
 
 export async function listOrgMembers(): Promise<ListOrgMembersQuery['orgMembers']> {
   const client = getGraphQLClient()
@@ -137,6 +162,51 @@ export async function addOrgMember(
   return result.addOrgMember
 }
 
+export async function addOrgMemberByEmail(
+  variables: AddOrgMemberByEmailMutationVariables,
+): Promise<AddOrgMemberByEmailMutation['addOrgMemberByEmail']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.AddOrgMemberByEmail(variables)
+  return result.addOrgMemberByEmail
+}
+
+export async function listSpaceMembers(
+  spaceKey: string,
+): Promise<ListSpaceMembersQuery['spaceMembers']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.ListSpaceMembers({ spaceKey })
+  return result.spaceMembers
+}
+
+export async function listSpaceInvitations(
+  spaceKey: string,
+): Promise<ListSpaceInvitationsQuery['spaceInvitations']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.ListSpaceInvitations({ spaceKey })
+  return result.spaceInvitations
+}
+
+export async function addSpaceMember(
+  variables: AddSpaceMemberMutationVariables,
+): Promise<AddSpaceMemberMutation['addSpaceMember']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.AddSpaceMember(variables)
+  return result.addSpaceMember
+}
+
+export async function inviteSpaceMember(
+  variables: InviteSpaceMemberMutationVariables,
+): Promise<InviteSpaceMemberMutation['inviteSpaceMember']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.InviteSpaceMember(variables)
+  return result.inviteSpaceMember
+}
+
 export async function removeOrgMember(
   variables: RemoveOrgMemberMutationVariables,
 ): Promise<RemoveOrgMemberMutation['removeOrgMember']> {
@@ -146,6 +216,24 @@ export async function removeOrgMember(
   return result.removeOrgMember
 }
 
+export async function removeSpaceMember(
+  variables: RemoveSpaceMemberMutationVariables,
+): Promise<RemoveSpaceMemberMutation['removeSpaceMember']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.RemoveSpaceMember(variables)
+  return result.removeSpaceMember
+}
+
+export async function leaveSpace(
+  variables: LeaveSpaceMutationVariables,
+): Promise<LeaveSpaceMutation['leaveSpace']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.LeaveSpace(variables)
+  return result.leaveSpace
+}
+
 export async function updateOrgMemberRole(
   variables: UpdateOrgMemberRoleMutationVariables,
 ): Promise<UpdateOrgMemberRoleMutation['updateOrgMemberRole']> {
@@ -153,4 +241,13 @@ export async function updateOrgMemberRole(
   const sdk = getSdk(client)
   const result = await sdk.UpdateOrgMemberRole(variables)
   return result.updateOrgMemberRole
+}
+
+export async function updateSpaceMemberRole(
+  variables: UpdateSpaceMemberRoleMutationVariables,
+): Promise<UpdateSpaceMemberRoleMutation['updateSpaceMemberRole']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.UpdateSpaceMemberRole(variables)
+  return result.updateSpaceMemberRole
 }

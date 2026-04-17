@@ -13,6 +13,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -101,6 +102,14 @@ func (m *MockUserStore) GetByIDAdmin(ctx context.Context, id string) (*userstore
 	return args.Get(0).(*userstore.User), args.Error(1)
 }
 
+func (m *MockUserStore) GetByEmail(ctx context.Context, email string) (*userstore.User, error) {
+	args := m.Called(ctx, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
 func (m *MockUserStore) GetByUsername(ctx context.Context, username string) (*model.User, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
@@ -145,6 +154,19 @@ func (m *MockUserStore) GetByIDWithPassword(ctx context.Context, id string) (*mo
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*model.User), args.Error(1)
+}
+
+func (m *MockUserStore) UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*userstore.User, error) {
+	args := m.Called(ctx, provider, providerID, email, displayName, avatarURL)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
+func (m *MockUserStore) UpdateRole(ctx context.Context, id string, role string) error {
+	args := m.Called(ctx, id, role)
+	return args.Error(0)
 }
 
 type MockStorage struct {
@@ -340,6 +362,11 @@ func (m *MockSpaceStore) Create(ctx context.Context, s *spacestore.Space) error 
 	return args.Error(0)
 }
 
+func (m *MockSpaceStore) RenameKey(ctx context.Context, oldKey, newKey string) error {
+	args := m.Called(ctx, oldKey, newKey)
+	return args.Error(0)
+}
+
 func (m *MockSpaceStore) Upsert(ctx context.Context, s *spacestore.Space) error {
 	args := m.Called(ctx, s)
 	return args.Error(0)
@@ -368,6 +395,16 @@ func (m *MockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*spac
 	return args.Get(0).([]*spacestore.Space), args.Error(1)
 }
 
+func (m *MockSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*spacestore.Space, error) {
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "ListByMemberUserID" {
+			args := m.Called(ctx, userID)
+			return args.Get(0).([]*spacestore.Space), args.Error(1)
+		}
+	}
+	return []*spacestore.Space{}, nil
+}
+
 func (m *MockSpaceStore) Delta(ctx context.Context, since time.Time) (*spacestore.DeltaResult, error) {
 	args := m.Called(ctx, since)
 	if args.Get(0) == nil {
@@ -381,7 +418,96 @@ func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*spacestore.SpaceMemberView, error) {
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "ListMembers" {
+			args := m.Called(ctx, spaceKey)
+			if args.Get(0) == nil {
+				return nil, args.Error(1)
+			}
+			return args.Get(0).([]*spacestore.SpaceMemberView), args.Error(1)
+		}
+	}
+	return []*spacestore.SpaceMemberView{}, nil
+}
+
+func (m *MockSpaceStore) AddMember(ctx context.Context, spaceKey, userID, role string) error {
+	args := m.Called(ctx, spaceKey, userID, role)
+	return args.Error(0)
+}
+
+func (m *MockSpaceStore) RemoveMember(ctx context.Context, spaceKey, userID string) error {
+	args := m.Called(ctx, spaceKey, userID)
+	return args.Error(0)
+}
+
+func (m *MockSpaceStore) UpdateMemberRole(ctx context.Context, spaceKey, userID, role string) error {
+	args := m.Called(ctx, spaceKey, userID, role)
+	return args.Error(0)
+}
+
+func (m *MockSpaceStore) HasMember(ctx context.Context, spaceKey, userID string) (bool, error) {
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "HasMember" {
+			args := m.Called(ctx, spaceKey, userID)
+			return args.Bool(0), args.Error(1)
+		}
+	}
+	return false, nil
+}
+
 var _ spacestore.Store = (*MockSpaceStore)(nil)
+
+type MockSpaceInviteStore struct {
+	mock.Mock
+}
+
+func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*spaceinvite.Invitation, error) {
+	args := m.Called(ctx, orgID, spaceKey, email, role, invitedByUserID, expiresAt)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*spaceinvite.Invitation), args.Error(1)
+}
+
+func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*spaceinvite.Invitation, error) {
+	args := m.Called(ctx, orgID, spaceKey)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*spaceinvite.Invitation), args.Error(1)
+}
+
+func (m *MockSpaceInviteStore) GetPendingByToken(ctx context.Context, token string) (*spaceinvite.Invitation, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*spaceinvite.Invitation), args.Error(1)
+}
+
+func (m *MockSpaceInviteStore) MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error {
+	args := m.Called(ctx, id, acceptedAt)
+	return args.Error(0)
+}
+
+func (m *MockSpaceInviteStore) RenameSpaceKey(ctx context.Context, orgID, oldSpaceKey, newSpaceKey string) error {
+	args := m.Called(ctx, orgID, oldSpaceKey, newSpaceKey)
+	return args.Error(0)
+}
+
+var _ spaceinvite.Store = (*MockSpaceInviteStore)(nil)
+
+type MockInviteSender struct {
+	mock.Mock
+}
+
+func (m *MockInviteSender) SendSpaceInvitation(ctx context.Context, params spaceinvite.EmailParams) error {
+	args := m.Called(ctx, params)
+	return args.Error(0)
+}
+
+var _ spaceinvite.EmailSender = (*MockInviteSender)(nil)
 
 // MockRegistryStore mocks the registrystore.Store interface for tests that need it.
 // (Only defined here if not already defined by registry_test.go in this package.)
@@ -399,7 +525,7 @@ func newTestResolver(
 	lc LicenseChecker,
 	logger *zap.Logger,
 ) *Resolver {
-	return NewResolver(sp, rs, us, ip, cfg, lc, logger, nil, nil)
+	return NewResolver(sp, rs, us, ip, cfg, lc, logger, nil, nil, nil, nil)
 }
 
 // createAdminContextWithOrg creates an admin context that carries an OrgID claim.

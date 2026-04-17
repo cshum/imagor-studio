@@ -17,6 +17,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/spaceconfigstore"
+	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/spaceloader"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
@@ -37,6 +38,8 @@ type Services struct {
 	UserStore        userstore.Store
 	OrgStore         orgstore.Store                     // nil in self-hosted; set when InternalAPISecret != ""
 	SpaceStore       spacestore.Store                   // nil in self-hosted; set when InternalAPISecret != ""
+	SpaceInviteStore spaceinvite.Store                  // nil when invitation storage is unavailable
+	InviteSender     spaceinvite.EmailSender            // nil when invitation email is not configured
 	SpaceConfigStore *spaceconfigstore.SpaceConfigStore // nil unless SpacesEndpoint set; Start() called by server
 	LicenseService   *license.Service
 	Encryption       *encryption.Service
@@ -122,10 +125,25 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// handlers and resolvers to skip org/space logic.
 	var orgStore orgstore.Store
 	var spaceStore spacestore.Store
+	var spaceInviteStore spaceinvite.Store
 	if enhancedCfg.InternalAPISecret != "" {
 		orgStore = orgstore.New(db)
 		spaceStore = spacestore.New(db, encryptionService)
+		spaceInviteStore = spaceinvite.NewStore(db)
 		logger.Info("multi-tenant mode: org and space stores initialized")
+	}
+
+	var inviteSender spaceinvite.EmailSender
+	if enhancedCfg.SESFromEmail != "" {
+		sesRegion := enhancedCfg.SESRegion
+		if sesRegion == "" {
+			sesRegion = enhancedCfg.AWSRegion
+		}
+		sender, senderErr := spaceinvite.NewSESEmailSender(sesRegion, enhancedCfg.SESFromEmail, enhancedCfg.AppUrl, enhancedCfg.AppApiUrl)
+		if senderErr != nil {
+			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", senderErr)
+		}
+		inviteSender = sender
 	}
 
 	// Management node: StorageLoader delegates to registry-configured storage.
@@ -164,6 +182,8 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		UserStore:        userStore,
 		OrgStore:         orgStore,
 		SpaceStore:       spaceStore,
+		SpaceInviteStore: spaceInviteStore,
+		InviteSender:     inviteSender,
 		SpaceConfigStore: spaceConfigStore,
 		LicenseService:   licenseService,
 		Encryption:       encryptionService,
@@ -222,17 +242,19 @@ func initializeEmbeddedMode(cfg *config.Config, logger *zap.Logger) (*Services, 
 	)
 
 	return &Services{
-		DB:              nil, // No database in embedded mode
-		TokenManager:    tokenManager,
-		Storage:         stor,
-		StorageProvider: storageProvider,
-		ImagorProvider:  imagorProvider,
-		RegistryStore:   registryStore,
-		UserStore:       userStore,
-		LicenseService:  licenseService,
-		Encryption:      nil, // No encryption service in embedded mode
-		Config:          cfg,
-		Logger:          logger,
+		DB:               nil, // No database in embedded mode
+		TokenManager:     tokenManager,
+		Storage:          stor,
+		StorageProvider:  storageProvider,
+		ImagorProvider:   imagorProvider,
+		RegistryStore:    registryStore,
+		UserStore:        userStore,
+		SpaceInviteStore: nil,
+		InviteSender:     nil,
+		LicenseService:   licenseService,
+		Encryption:       nil, // No encryption service in embedded mode
+		Config:           cfg,
+		Logger:           logger,
 	}, nil
 }
 
@@ -369,6 +391,8 @@ func initializeProcessingMode(cfg *config.Config, logger *zap.Logger) (*Services
 		UserStore:        userStore,
 		OrgStore:         orgStore,
 		SpaceStore:       spaceStore,
+		SpaceInviteStore: nil,
+		InviteSender:     nil,
 		SpaceConfigStore: spaceConfigStore,
 		LicenseService:   licenseService,
 		Encryption:       nil, // no encryption service in processing mode

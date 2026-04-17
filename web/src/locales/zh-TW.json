@@ -10,7 +10,8 @@
       "tabs": {
         "profile": "個人資料",
         "system": "系統",
-        "users": "使用者"
+        "users": "使用者",
+        "spaces": "空間"
       }
     }
   },
@@ -34,11 +35,11 @@
     "navigation": {
       "title": "Imagor Studio",
       "home": "首頁",
-      "account": "賬戶",
+      "account": "帳戶",
       "profile": "個人資料",
       "dashboard": "儀表板",
       "users": "使用者",
-      "signOut": "退出登入",
+      "signOut": "登出",
       "login": "登入",
       "settings": "設定"
     },
@@ -127,6 +128,12 @@
     }
   },
   "pages": {
+    "authCallback": {
+      "failed": "驗證失敗",
+      "errorOAuth": "驗證失敗：{{error}}",
+      "errorNoToken": "未收到驗證令牌",
+      "backToLogin": "返回登入"
+    },
     "gallery": {
       "title": "相簿",
       "noImages": "未找到圖片",
@@ -304,6 +311,9 @@
       "title": "個人資料",
       "profileInformation": "個人資料資訊",
       "profileInformationDescription": "更新您的賬戶個人資料資訊。",
+      "avatar": "頭像",
+      "avatarFromProvider": "已從您的身分提供商（如 Google）同步。",
+      "avatarNoPhoto": "尚未設定個人照片。",
       "displayName": "顯示名稱",
       "displayNameDescription": "在整個應用程式中顯示的公開名稱。",
       "displayNamePlaceholder": "輸入您的顯示名稱",
@@ -630,6 +640,17 @@
       }
     },
     "spaces": {
+      "title": "空間",
+      "createSpace": "建立空間",
+      "createNewSpace": "建立新空間",
+      "createSpaceDescription": "將新空間加入您的組織。每個空間都有自己的儲存與 imagor 設定。",
+      "editSpace": "編輯空間",
+      "editSpaceDescription": "更新空間設定。變更會立即套用。",
+      "deleteSpace": "刪除空間",
+      "deleteSpaceDescription": "您確定要永久刪除空間",
+      "createSpaceButton": "建立空間",
+      "updateSpaceButton": "更新空間",
+      "noSpacesFound": "找不到空間",
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
@@ -640,9 +661,31 @@
         "managed": "由 Imagor Studio 管理，無需設定儲存桶。",
         "s3": "連接您自己的 S3 相容儲存桶。"
       },
+      "keyDescription": "用於連結和 URL。你可以變更它，但舊連結不會重新導向。",
+      "tableHeaders": {
+        "key": "URL Slug",
+        "name": "名稱",
+        "storage": "儲存",
+        "actions": "操作"
+      },
+      "formLabels": {
+        "key": "URL Slug",
+        "name": "顯示名稱",
+        "storageType": "儲存類型",
+        "bucket": "儲存桶",
+        "region": "區域",
+        "endpoint": "端點",
+        "prefix": "前綴",
+        "accessKeyId": "Access Key ID",
+        "secretKey": "Secret Key",
+        "customDomain": "自訂網域",
+        "imagorSecret": "Imagor Secret"
+      },
       "description": "管理您組織的工作空間。",
       "emptyDescription": "建立您的第一個空間，開始使用專屬工作區。",
       "settings": "設定",
+      "spaceCount": "{{count}} 個空間",
+      "openGallery": "開啟相簿",
       "wizard": {
         "stepIdentity": "基本資訊",
         "stepStorage": "儲存",
@@ -653,13 +696,31 @@
         "spaceCreatedSuccess": "空間建立成功",
         "spaceUpdatedSuccess": "空間更新成功",
         "spaceDeletedSuccess": "空間刪除成功",
+        "leftSpaceSuccess": "您已離開共享空間。",
         "createSpaceFailed": "建立空間失敗",
-        "keyAlreadyTaken": "空間鍵已被使用",
+        "keyAlreadyTaken": "URL Slug 已被使用",
         "updateSpaceFailed": "更新空間失敗",
-        "deleteSpaceFailed": "刪除空間失敗"
+        "deleteSpaceFailed": "刪除空間失敗",
+        "leaveSpaceFailed": "離開共享空間失敗"
       },
       "validation": {
-        "keyFormat": "鍵只能包含小寫字母、數字和連字號"
+        "keyFormat": "URL Slug 只能包含小寫字母、數字和連字號"
+      },
+      "stats": {
+        "totalSpaces": "空間總數",
+        "managedStorage": "託管儲存",
+        "externalStorage": "外部儲存",
+        "yourSpaces": "您的空間",
+        "sharedWithYou": "與您共享"
+      },
+      "configure": "設定",
+      "startDescription": "先使用託管空間完成最快速的設定，之後再隨著工作區成長自訂儲存、交付與品牌。",
+      "sharedLabel": "共享",
+      "leaveSpace": "離開",
+      "leaveSpaceDescription": "離開這個共享空間",
+      "access": {
+        "ownedByYou": "由您擁有",
+        "sharedWithYou": "與您共享"
       }
     },
     "spaceSettings": {
@@ -691,7 +752,7 @@
         "managedTitle": "平台託管儲存",
         "managedDescription": "檔案儲存在 Imagor Studio 的託管儲存中，儲存類型在空間建立後無法更改。",
         "bucketLocked": "儲存桶和區域在建立時固定，無法更改。",
-        "description": "設定此空間的檔案儲存憑証和 URL 簽名。",
+        "description": "檢視此空間的儲存設定。",
         "accessKeyIdDescription": "留空以保留現有憑証。",
         "secretKey": "私密存取金鑰",
         "secretKeyDescription": "留空以保留現有憑証。",
@@ -706,27 +767,59 @@
         "saved": "儲存與安全設定已儲存"
       },
       "members": {
-        "description": "管理有權存取此組織的成員。",
-        "addLabel": "邀請成員",
+        "description": "管理此空間的存取權。",
+        "addLabel": "新增成員",
         "usernamePlaceholder": "使用者名稱",
         "roleLabel": "角色",
-        "addButton": "新增",
+        "addButton": "直接加入",
         "tableHeaders": {
           "member": "成員",
           "role": "角色",
           "action": "操作"
         },
-        "inviteDescription": "邀請隊友並為其指派此空間的角色。",
-        "emptyDescription": "新增您的第一位成員以在此空間中協作。",
+        "inviteDescription": "以電子郵件分享。既有使用者會立即取得此空間的存取權，即使對方屬於另一個組織也是如此。新使用者仍會收到電子郵件邀請。",
+        "addExistingDescription": "或快速加入已在組織內的成員。",
+        "emailPlaceholder": "name@example.com",
+        "sendInviteButton": "分享",
+        "inviteHelp": "既有帳號會立即加入此空間。全新的使用者仍需要透過電子郵件邀請來接受存取權。",
+        "inviteErrors": {
+          "required": "請輸入電子郵件地址。",
+          "invalidEmail": "請輸入有效的電子郵件地址。",
+          "alreadyHasAccess": "此人已可存取這個空間。",
+          "notConfigured": "尚未設定電子郵件邀請。",
+          "unavailable": "此部署目前無法使用分享功能。",
+          "default": "目前無法分享這個空間，請稍後再試。"
+        },
+        "memberPlaceholder": "選擇隊友",
+        "memberPlaceholderEmpty": "您的組織成員都已具有明確存取權",
+        "sharedTitle": "組織層級存取權",
+        "sharedDescription": "此組織中的所有成員都可以檢視並複製這個空間。下方清單顯示的是被直接加入這個空間的人員，而組織管理員仍負責設定與分享管理。",
+        "emptyDescription": "目前還沒有人被直接加入這個空間。組織管理員仍保有繼承而來的存取權。",
         "addSuccess": "成員新增成功。",
+        "inviteSent": "邀請郵件已送出。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成員已移除。",
-        "empty": "尚無成員。",
+        "removeSelfDisabled": "您",
+        "removeSelfNotAllowed": "您不能將自己從這個空間移除。",
+        "empty": "這個空間尚無直接成員。",
+        "accessLabel": "共享存取",
+        "pendingTitle": "待接受的邀請",
+        "listHeaders": {
+          "member": "成員",
+          "action": "操作"
+        },
+        "pendingHeaders": {
+          "email": "電子郵件",
+          "role": "角色",
+          "expires": "到期日"
+        },
         "removeTitle": "移除成員",
         "removeDescription": "確定要移除",
+        "roleSectionLabel": "變更角色",
+        "promoteToManager": "設為管理者",
+        "changeToMember": "改為成員",
         "roles": {
-          "owner": "擁有者",
-          "admin": "管理員",
+          "admin": "管理者",
           "member": "成員"
         }
       },

@@ -6,7 +6,7 @@ import { useNavigate, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { deleteSpace, setSpaceRegistryObject, updateSpace } from '@/api/org-api'
+import { checkSpaceKey, deleteSpace, setSpaceRegistryObject, updateSpace } from '@/api/org-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/responsive-dialog'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
+import { extractErrorInfo } from '@/lib/error-utils'
 
 import { GallerySection } from './gallery'
 import type { SpaceSettingsData } from './shared'
@@ -27,6 +28,7 @@ import type { SpaceSettingsData } from './shared'
 // ── Schema ─────────────────────────────────────────────────────────────────
 
 const generalSchema = z.object({
+  key: z.string().min(1).max(64),
   name: z.string().min(1).max(255),
   customDomain: z.string().optional(),
   appTitle: z.string().optional(),
@@ -51,6 +53,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
   const form = useForm<GeneralFormData>({
     resolver: zodResolver(generalSchema),
     defaultValues: {
+      key: space.key ?? '',
       name: space.name ?? '',
       customDomain: space.customDomain ?? '',
       appTitle: initialValues['config.app_title'] ?? '',
@@ -61,11 +64,32 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
 
   const handleSave = async (values: GeneralFormData) => {
     setIsSaving(true)
+    form.clearErrors('key')
     try {
-      await updateSpace({
+      const nextKey = values.key.trim()
+
+      if (!nextKey) {
+        form.setError('key', { message: t('forms.validation.required') })
+        return
+      }
+
+      if (!/^[a-z0-9-]+$/.test(nextKey)) {
+        form.setError('key', { message: t('pages.spaces.validation.keyFormat') })
+        return
+      }
+
+      if (nextKey !== space.key) {
+        const isTaken = await checkSpaceKey(nextKey)
+        if (isTaken) {
+          form.setError('key', { message: t('pages.spaces.messages.keyAlreadyTaken') })
+          return
+        }
+      }
+
+      const updatedSpace = await updateSpace({
         key: space.key,
         input: {
-          key: space.key,
+          key: nextKey,
           name: values.name,
           customDomain: values.customDomain ?? null,
           storageType: null,
@@ -90,12 +114,24 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
         brandingChanges['config.app_url'] = values.appUrl ?? ''
       }
       if (Object.keys(brandingChanges).length > 0) {
-        await setSpaceRegistryObject(space.key, brandingChanges)
+        await setSpaceRegistryObject(updatedSpace.key, brandingChanges)
       }
       toast.success(t('pages.spaceSettings.general.saved'))
+      if (updatedSpace.key !== space.key) {
+        await navigate({
+          to: '/spaces/$spaceKey/settings/general',
+          params: { spaceKey: updatedSpace.key },
+          replace: true,
+        })
+      }
       await router.invalidate()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      const errorInfo = extractErrorInfo(err)
+      if (errorInfo.field === 'key') {
+        form.setError('key', { message: errorInfo.message })
+        return
+      }
+      toast.error(errorInfo.message)
     } finally {
       setIsSaving(false)
     }
@@ -106,7 +142,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     try {
       await deleteSpace({ key: space.key })
       toast.success(t('pages.spaces.messages.spaceDeletedSuccess'))
-      await navigate({ to: '/account/spaces' })
+      await navigate({ to: '/' })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
     } finally {
@@ -139,13 +175,23 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
                 </FormItem>
               )}
             />
-            {/* Space Key — read-only */}
-            <SettingRow
-              label={t('pages.spaces.formLabels.key')}
-              description={t('pages.spaces.keyDescription')}
-            >
-              <Input value={space.key} disabled className='font-mono' />
-            </SettingRow>
+            <FormField
+              control={form.control}
+              name='key'
+              render={({ field }) => (
+                <FormItem>
+                  <SettingRow
+                    label={t('pages.spaces.formLabels.key')}
+                    description={t('pages.spaces.keyDescription')}
+                  >
+                    <FormControl>
+                      <Input {...field} disabled={isSaving} className='font-mono' />
+                    </FormControl>
+                    <FormMessage className='mt-1.5' />
+                  </SettingRow>
+                </FormItem>
+              )}
+            />
             {/* Custom Domain */}
             <FormField
               control={form.control}
@@ -221,27 +267,28 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
         <GallerySection spaceKey={space.key} initialValues={initialValues} />
       </div>
 
-      {/* Danger Zone */}
-      <div className='border-destructive/20 mt-10 border-t pt-6'>
-        <h3 className='text-destructive text-base font-semibold'>
-          {t('pages.spaceSettings.sections.dangerZone')}
-        </h3>
-        <div className='mt-4 flex items-start justify-between gap-4'>
-          <div className='min-w-0'>
-            <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
-            <p className='text-muted-foreground mt-1 text-sm'>
-              {t('pages.spaceSettings.danger.deleteDescription')}
-            </p>
+      {space.canDelete ? (
+        <div className='border-destructive/20 mt-10 border-t pt-6'>
+          <h3 className='text-destructive text-base font-semibold'>
+            {t('pages.spaceSettings.sections.dangerZone')}
+          </h3>
+          <div className='mt-4 flex items-start justify-between gap-4'>
+            <div className='min-w-0'>
+              <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
+              <p className='text-muted-foreground mt-1 text-sm'>
+                {t('pages.spaceSettings.danger.deleteDescription')}
+              </p>
+            </div>
+            <Button
+              variant='destructive'
+              className='shrink-0'
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              {t('pages.spaceSettings.danger.deleteButton')}
+            </Button>
           </div>
-          <Button
-            variant='destructive'
-            className='shrink-0'
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
-            {t('pages.spaceSettings.danger.deleteButton')}
-          </Button>
         </div>
-      </div>
+      ) : null}
 
       {/* Delete confirmation dialog */}
       <ResponsiveDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

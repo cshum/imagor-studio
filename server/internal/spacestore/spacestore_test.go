@@ -8,6 +8,8 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
@@ -29,6 +31,12 @@ func newTestDB(t *testing.T) *bun.DB {
 		IfNotExists().
 		Exec(context.Background()); err != nil {
 		t.Fatalf("create spaces table: %v", err)
+	}
+	if _, err := db.NewCreateTable().
+		Model((*model.SpaceMember)(nil)).
+		IfNotExists().
+		Exec(context.Background()); err != nil {
+		t.Fatalf("create space_members table: %v", err)
 	}
 	return db
 }
@@ -334,6 +342,22 @@ func TestListByOrgID_ExcludesSoftDeleted(t *testing.T) {
 	if list[0].Key != "active-space" {
 		t.Errorf("want active-space, got %q", list[0].Key)
 	}
+}
+
+func TestListByMemberUserID(t *testing.T) {
+	st := spacestore.New(newTestDB(t), nil)
+	mustUpsert(t, st, &spacestore.Space{Key: "owned-space", OrgID: "org-a"})
+	mustUpsert(t, st, &spacestore.Space{Key: "shared-space", OrgID: "org-b"})
+	mustUpsert(t, st, &spacestore.Space{Key: "other-space", OrgID: "org-c"})
+
+	require.NoError(t, st.AddMember(context.Background(), "shared-space", "user-guest", "member"))
+	require.NoError(t, st.AddMember(context.Background(), "owned-space", "user-guest", "admin"))
+
+	list, err := st.ListByMemberUserID(context.Background(), "user-guest")
+	require.NoError(t, err)
+	require.Len(t, list, 2)
+	assert.Equal(t, "owned-space", list[0].Key)
+	assert.Equal(t, "shared-space", list[1].Key)
 }
 
 func TestDelta_Empty_ReturnsNonNilSlices(t *testing.T) {

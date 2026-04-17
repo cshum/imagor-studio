@@ -15,6 +15,8 @@ type User struct {
 	HashedPassword string    `bun:"hashed_password,notnull"`
 	Role           string    `bun:"role,notnull,default:'user'"`
 	IsActive       bool      `bun:"is_active,notnull,default:true"`
+	Email          *string   `bun:"email,type:text"`
+	AvatarUrl      *string   `bun:"avatar_url,type:text"`
 	CreatedAt      time.Time `bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt      time.Time `bun:"updated_at,notnull,default:current_timestamp"`
 }

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { changePassword, updateProfile } from '@/api/user-api'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -78,6 +79,14 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
     username: authState.profile?.username || '',
   }
 
+  const avatarUrl = authState.profile?.avatarUrl
+  const displayName = profileData.displayName || profileData.username || ''
+  const initials = (() => {
+    const words = displayName.trim().split(/\s+/).filter(Boolean)
+    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+    return displayName.slice(0, 2).toUpperCase() || '?'
+  })()
+
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -139,6 +148,25 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
         title={t('pages.profile.profileInformation')}
         description={t('pages.profile.profileInformationDescription')}
       >
+        {/* ── Avatar (multi-tenant / SaaS mode only) ──────────────── */}
+        {authState.multiTenant && (
+          <SettingRow
+            label={t('pages.profile.avatar')}
+            description={
+              avatarUrl ? t('pages.profile.avatarFromProvider') : t('pages.profile.avatarNoPhoto')
+            }
+          >
+            <Avatar className='h-16 w-16'>
+              <AvatarImage
+                src={avatarUrl ?? undefined}
+                referrerPolicy='no-referrer'
+                alt={displayName}
+              />
+              <AvatarFallback className='text-sm font-semibold'>{initials}</AvatarFallback>
+            </Avatar>
+          </SettingRow>
+        )}
+
         <Form {...profileForm}>
           <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
             <FormField

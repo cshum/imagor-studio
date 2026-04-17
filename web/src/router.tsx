@@ -4,23 +4,19 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  Link,
   Navigate,
   Outlet,
   redirect,
   RouterProvider,
 } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
 
-import { getSpaceRegistry, listOrgMembers } from '@/api/org-api'
+import { getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
-import { Button } from '@/components/ui/button'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
-import { SpacesLayout } from '@/layouts/spaces-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
@@ -31,10 +27,10 @@ import {
   adminStorageLoader,
   profileLoader,
   spaceSettingsLoader,
-  spacesLoader,
   usersLoader,
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
+import { authCallbackLoader } from '@/loaders/auth-callback-loader.ts'
 import {
   requireAccountAuth,
   requireAdminAccountAuth,
@@ -50,24 +46,26 @@ import {
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
+import { rootPageLoader } from '@/loaders/root-page-loader'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { AdminGeneralSection } from '@/pages/admin/general'
 import { AdminImagorSection } from '@/pages/admin/imagor'
 import { AdminLayout } from '@/pages/admin/layout'
 import { AdminLicenseSection } from '@/pages/admin/license'
 import { AdminStorageSection } from '@/pages/admin/storage'
+import { AuthCallbackPage } from '@/pages/auth-callback-page.tsx'
 import { CreateSpacePage } from '@/pages/create-space-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
+import { RootPage } from '@/pages/root-page'
 import { GeneralSection } from '@/pages/space-settings/general'
 import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
 import { MembersSection } from '@/pages/space-settings/members'
 import { SecuritySection } from '@/pages/space-settings/security'
 import { StorageSection } from '@/pages/space-settings/storage'
-import { SpacesPage } from '@/pages/spaces-page'
 import { UsersPage } from '@/pages/users-page'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import {
@@ -107,6 +105,13 @@ const loginRoute = createRoute({
   component: LoginPage,
 })
 
+const authCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/callback',
+  loader: authCallbackLoader,
+  component: AuthCallbackPage,
+})
+
 const adminSetupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin-setup',
@@ -126,25 +131,22 @@ const baseLayoutRoute = createRoute({
 })
 
 const rootPath = createRoute({
-  getParentRoute: () => baseLayoutRoute,
+  getParentRoute: () => settingsLayoutRoute,
   path: '/',
-  // In multi-tenant (SaaS) mode there is no system-level root gallery.
-  // Redirect to the spaces list so the user picks a space.
-  beforeLoad: () => {
+  // In multi-tenant (SaaS) mode, render the spaces list at the base path (no sidebar).
+  // In self-hosted mode, render the root gallery wrapped in SidebarLayout.
+  beforeLoad: async (context) => {
     const auth = getAuth()
     if (auth.multiTenant) {
-      throw redirect({ to: '/account/spaces' })
+      // Spaces list requires admin in multi-tenant mode
+      return requireAdminAccountAuth(context)
     }
   },
   component: () => {
-    const galleryLoaderData = rootPath.useLoaderData()
-    return (
-      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>
-        <Outlet />
-      </GalleryPage>
-    )
+    const loaderData = rootPath.useLoaderData()
+    return <RootPage loaderData={loaderData} />
   },
-  loader: () => galleryLoader({ params: { galleryKey: '' } }),
+  loader: rootPageLoader,
   shouldReload: false,
 })
 
@@ -381,7 +383,7 @@ const createSpaceRoute = createRoute({
 const spaceSettingsLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   path: '/spaces/$spaceKey/settings',
-  beforeLoad: requireAdminAccountAuth,
+  beforeLoad: requireAccountAuth,
   loader: ({ params: { spaceKey } }) => spaceSettingsLoader({ params: { spaceKey } }),
   shouldReload: false,
   component: () => {
@@ -459,17 +461,29 @@ const galleryRedirectRoute = createRoute({
 const membersSectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/members',
-  loader: async () => {
+  loader: async ({ params }) => {
     try {
-      return await listOrgMembers()
+      const [spaceMembers, invitations] = await Promise.all([
+        listSpaceMembers(params.spaceKey),
+        listSpaceInvitations(params.spaceKey),
+      ])
+      return { spaceMembers, invitations }
     } catch {
-      return []
+      return { spaceMembers: [], invitations: [] }
     }
   },
   shouldReload: false,
   component: () => {
-    const initialMembers = membersSectionRoute.useLoaderData()
-    return <MembersSection initialMembers={initialMembers} />
+    const { spaceMembers, invitations } = membersSectionRoute.useLoaderData()
+    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    return (
+      <MembersSection
+        spaceKey={space.key}
+        initialMembers={spaceMembers}
+        initialInvitations={invitations}
+        isShared={space.isShared}
+      />
+    )
   },
 })
 
@@ -594,45 +608,6 @@ const accountUsersRoute = createRoute({
   },
 })
 
-// /account/spaces  →  each child provides its own SpacesLayout
-const spacesLayoutRoute = createRoute({
-  getParentRoute: () => settingsLayoutRoute,
-  id: 'spaces-layout',
-  component: () => <Outlet />,
-})
-
-const accountSpacesRoute = createRoute({
-  getParentRoute: () => spacesLayoutRoute,
-  path: '/account/spaces',
-  beforeLoad: requireAdminAccountAuth,
-  loader: spacesLoader,
-  component: () => {
-    const { t } = useTranslation()
-    const loaderData = accountSpacesRoute.useLoaderData()
-    return (
-      <SpacesLayout
-        title={t('pages.spaces.title')}
-        description={t('pages.spaces.description')}
-        primaryAction={<CreateSpacePageTrigger />}
-      >
-        <SpacesPage loaderData={loaderData.spaces} />
-      </SpacesLayout>
-    )
-  },
-})
-
-const CreateSpacePageTrigger = () => {
-  const { t } = useTranslation()
-  return (
-    <Link to='/account/spaces/new'>
-      <Button>
-        <Plus className='mr-2 h-4 w-4' />
-        {t('pages.spaces.createSpace')}
-      </Button>
-    </Link>
-  )
-}
-
 // Check if embedded mode is enabled via environment variable
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
 
@@ -656,6 +631,7 @@ const routeTree = isEmbeddedMode
   : // Normal mode: full route tree
     rootRoute.addChildren([
       loginRoute,
+      authCallbackRoute,
       adminSetupRoute,
       createSpaceRoute,
       canvasEditorRoute,
@@ -666,6 +642,7 @@ const routeTree = isEmbeddedMode
       spaceGalleryImageEditorRoute,
       spaceCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
+        rootPath.addChildren([rootImagePage]),
         spaceSettingsLayoutRoute.addChildren([
           spaceSettingsIndexRoute,
           generalSectionRoute,
@@ -674,7 +651,6 @@ const routeTree = isEmbeddedMode
           galleryRedirectRoute,
           membersSectionRoute,
         ]),
-        spacesLayoutRoute.addChildren([accountSpacesRoute]),
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
@@ -689,7 +665,6 @@ const routeTree = isEmbeddedMode
         ]),
       ]),
       baseLayoutRoute.addChildren([
-        rootPath.addChildren([rootImagePage]),
         galleryRoute.addChildren([imagePage]),
         spaceRootRoute.addChildren([spaceRootImagePage]),
         spaceGalleryRoute.addChildren([spaceImagePage]),

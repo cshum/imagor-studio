@@ -36,6 +36,7 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
       <AppHeader
         profileLabel={getUserDisplayName()}
         roleLabel={authState.profile?.role}
+        avatarUrl={authState.profile?.avatarUrl}
         onLogout={handleLogout}
         appTitle={appTitle}
         breadcrumbs={title ? [{ label: title }] : undefined}

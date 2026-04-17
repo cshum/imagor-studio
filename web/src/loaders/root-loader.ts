@@ -28,7 +28,7 @@ export const rootLoader = async (): Promise<RootLoaderData> => {
     return {
       breadcrumb: {
         translationKey: 'navigation.breadcrumbs.spaces',
-        href: '/account/spaces',
+        href: '/',
       },
     }
   }

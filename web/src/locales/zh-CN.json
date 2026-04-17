@@ -10,7 +10,8 @@
       "tabs": {
         "profile": "个人资料",
         "system": "系统",
-        "users": "用户"
+        "users": "用户",
+        "spaces": "空间"
       }
     }
   },
@@ -64,28 +65,6 @@
       "title": "语言"
     }
   },
-  "auth": {
-    "login": {
-      "title": "欢迎回来",
-      "subtitle": "输入您的凭据以访问 Imagor Studio",
-      "signIn": "登录",
-      "loginFailed": "用户名或密码无效。请重试。"
-    },
-    "validation": {
-      "usernameRequired": "请输入有效的用户名",
-      "usernameMinLength": "用户名至少需要 3 个字符",
-      "usernameMaxLength": "用户名最多 30 个字符",
-      "passwordRequired": "密码为必填项",
-      "invalidUsername": "请输入有效的用户名"
-    },
-    "embedded": {
-      "tokenMissing": "缺少身份验证令牌。嵌入模式需要 URL 中的 JWT 令牌。预期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
-      "tokenInvalid": "身份验证令牌无效或已过期。请检查您的 JWT 令牌并重试。",
-      "authenticationFailed": "嵌入式身份验证失败。请验证您的令牌有效且未过期。",
-      "pathMissing": "路径参数为必填项。预期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
-      "pathInvalid": "路径格式无效。预期：gallery/folder/image.jpg 或 image.jpg"
-    }
-  },
   "forms": {
     "placeholders": {
       "enterUsername": "输入您的用户名",
@@ -126,6 +105,12 @@
     }
   },
   "pages": {
+    "authCallback": {
+      "failed": "认证失败",
+      "errorOAuth": "认证失败：{{error}}",
+      "errorNoToken": "未收到认证令牌",
+      "backToLogin": "返回登录"
+    },
     "gallery": {
       "title": "图库",
       "noImages": "未找到图片",
@@ -303,6 +288,9 @@
       "title": "个人资料",
       "profileInformation": "个人资料信息",
       "profileInformationDescription": "更新您的账户个人资料信息。",
+      "avatar": "头像",
+      "avatarFromProvider": "已从您的身份提供商（如 Google）同步。",
+      "avatarNoPhoto": "尚未设置个人照片。",
       "displayName": "显示名称",
       "displayNameDescription": "在整个应用中显示的公开名称。",
       "displayNamePlaceholder": "输入您的显示名称",
@@ -630,6 +618,17 @@
       }
     },
     "spaces": {
+      "title": "空间",
+      "createSpace": "创建空间",
+      "createNewSpace": "创建新空间",
+      "createSpaceDescription": "向你的组织添加一个新空间。每个空间都有自己的存储和 imagor 配置。",
+      "editSpace": "编辑空间",
+      "editSpaceDescription": "更新空间配置。更改会立即生效。",
+      "deleteSpace": "删除空间",
+      "deleteSpaceDescription": "您确定要永久删除空间",
+      "createSpaceButton": "创建空间",
+      "updateSpaceButton": "更新空间",
+      "noSpacesFound": "未找到空间",
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
@@ -640,9 +639,31 @@
         "managed": "由 Imagor Studio 管理，无需配置存储桶。",
         "s3": "连接您自己的 S3 兼容存储桶。"
       },
+      "keyDescription": "用于链接和 URL。你可以修改它，但旧链接不会重定向。",
+      "tableHeaders": {
+        "key": "URL Slug",
+        "name": "名称",
+        "storage": "存储",
+        "actions": "操作"
+      },
+      "formLabels": {
+        "key": "URL Slug",
+        "name": "显示名称",
+        "storageType": "存储类型",
+        "bucket": "存储桶",
+        "region": "区域",
+        "endpoint": "端点",
+        "prefix": "前缀",
+        "accessKeyId": "Access Key ID",
+        "secretKey": "Secret Key",
+        "customDomain": "自定义域名",
+        "imagorSecret": "Imagor Secret"
+      },
       "description": "管理您组织的工作空间。",
       "emptyDescription": "创建您的第一个空间，开始使用专属工作区。",
       "settings": "设置",
+      "spaceCount": "{{count}} 个空间",
+      "openGallery": "打开图库",
       "wizard": {
         "stepIdentity": "基本信息",
         "stepStorage": "存储",
@@ -653,13 +674,31 @@
         "spaceCreatedSuccess": "空间创建成功",
         "spaceUpdatedSuccess": "空间更新成功",
         "spaceDeletedSuccess": "空间删除成功",
+        "leftSpaceSuccess": "你已离开共享空间。",
         "createSpaceFailed": "创建空间失败",
-        "keyAlreadyTaken": "空间键已被使用",
+        "keyAlreadyTaken": "URL Slug 已被使用",
         "updateSpaceFailed": "更新空间失败",
-        "deleteSpaceFailed": "删除空间失败"
+        "deleteSpaceFailed": "删除空间失败",
+        "leaveSpaceFailed": "离开共享空间失败"
       },
       "validation": {
-        "keyFormat": "键只能包含小写字母、数字和连字符"
+        "keyFormat": "URL Slug 只能包含小写字母、数字和连字符"
+      },
+      "stats": {
+        "totalSpaces": "空间总数",
+        "managedStorage": "平台存储",
+        "externalStorage": "外部存储",
+        "yourSpaces": "你的空间",
+        "sharedWithYou": "与你共享"
+      },
+      "configure": "配置",
+      "startDescription": "先从托管空间开始，最快完成配置，然后再随着工作区成长自定义存储、交付和品牌。",
+      "sharedLabel": "共享",
+      "leaveSpace": "离开",
+      "leaveSpaceDescription": "离开这个共享空间",
+      "access": {
+        "ownedByYou": "由你拥有",
+        "sharedWithYou": "与你共享"
       }
     },
     "spaceSettings": {
@@ -691,7 +730,7 @@
         "managedTitle": "平台托管存储",
         "managedDescription": "文件存储在 Imagor Studio 的托管存储中，存储类型在空间创建后无法更改。",
         "bucketLocked": "存储桶和区域在创建时固定，无法更改。",
-        "description": "配置此空间的文件存储凭证和 URL 签名。",
+        "description": "查看此空间的存储设置。",
         "accessKeyIdDescription": "留空以保留现有凭证。",
         "secretKey": "私有访问密钥",
         "secretKeyDescription": "留空以保留现有凭证。",
@@ -706,26 +745,58 @@
         "saved": "存储与安全设置已保存"
       },
       "members": {
-        "description": "管理有权访问此组织的成员。",
-        "addLabel": "邀请成员",
+        "description": "管理此空间的访问权限。",
+        "addLabel": "添加成员",
         "usernamePlaceholder": "用户名",
         "roleLabel": "角色",
-        "addButton": "添加",
+        "addButton": "直接添加",
         "tableHeaders": {
           "member": "成员",
           "role": "角色",
           "action": "操作"
         },
-        "inviteDescription": "邀请队友并为其分配此空间的角色。",
-        "emptyDescription": "添加您的第一位成员以在此空间中协作。",
+        "inviteDescription": "通过电子邮件分享。已有账号的用户会立即获得此空间的访问权限，即使对方属于另一个组织也是如此。新用户仍会收到电子邮件邀请。",
+        "addExistingDescription": "或快速添加已经在组织中的成员。",
+        "emailPlaceholder": "name@example.com",
+        "sendInviteButton": "分享",
+        "inviteHelp": "已有账号会立即加入此空间。全新的用户仍需要通过电子邮件邀请来接受访问权限。",
+        "inviteErrors": {
+          "required": "请输入电子邮件地址。",
+          "invalidEmail": "请输入有效的电子邮件地址。",
+          "alreadyHasAccess": "此人已经可以访问这个空间。",
+          "notConfigured": "电子邮件邀请尚未配置。",
+          "unavailable": "当前部署暂不支持分享功能。",
+          "default": "目前无法分享此空间，请稍后再试。"
+        },
+        "memberPlaceholder": "选择队友",
+        "memberPlaceholderEmpty": "您组织中的成员都已经拥有明确访问权限",
+        "sharedTitle": "组织范围访问",
+        "sharedDescription": "此组织中的所有成员都可以查看和复制此空间。下方列表显示的是被直接加入此空间的人员，而组织管理员仍负责设置和分享管理。",
+        "emptyDescription": "目前还没有人被直接加入这个空间。组织管理员仍然保有继承而来的访问权限。",
         "addSuccess": "成员添加成功。",
+        "inviteSent": "邀请邮件已发送。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成员已移除。",
-        "empty": "暂无成员。",
+        "removeSelfDisabled": "你",
+        "removeSelfNotAllowed": "你不能将自己从这个空间移除。",
+        "empty": "这个空间还没有直接成员。",
+        "accessLabel": "共享访问",
+        "pendingTitle": "待处理邀请",
+        "listHeaders": {
+          "member": "成员",
+          "action": "操作"
+        },
+        "pendingHeaders": {
+          "email": "电子邮件",
+          "role": "角色",
+          "expires": "到期时间"
+        },
         "removeTitle": "移除成员",
         "removeDescription": "确定要移除",
+        "roleSectionLabel": "更改角色",
+        "promoteToManager": "设为管理员",
+        "changeToMember": "改为成员",
         "roles": {
-          "owner": "所有者",
           "admin": "管理员",
           "member": "成员"
         }

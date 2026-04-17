@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.14
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.14
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.99.0
+	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.60.2
 	github.com/cshum/imagor v1.8.5
 	github.com/cshum/imagorvideo v1.1.8
 	github.com/go-sql-driver/mysql v1.9.3
@@ -25,9 +26,11 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.32
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.50.0
+	golang.org/x/oauth2 v0.36.0
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.8 // indirect

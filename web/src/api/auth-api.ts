@@ -162,3 +162,28 @@ export async function embeddedGuestLogin(jwtToken: string): Promise<LoginRespons
 
   return response.json()
 }
+
+export interface AuthProvidersResponse {
+  providers: string[]
+}
+
+/**
+ * Returns the URL to redirect the browser to for Google OAuth login.
+ * Uses the configured API base URL so it works correctly in dev (VITE_API_BASE_URL=http://localhost:8080)
+ * and in production (same-host, empty base URL → relative /api/... path).
+ */
+export function getGoogleLoginUrl(): string {
+  return `${BASE_URL}/api/auth/google/login`
+}
+
+/**
+ * Get available auth providers (e.g. google, github)
+ */
+export async function getAuthProviders(): Promise<AuthProvidersResponse> {
+  const response = await fetch(`${BASE_URL}/api/auth/providers`)
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+  }
+  return response.json()
+}

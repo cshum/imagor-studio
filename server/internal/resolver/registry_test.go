@@ -1295,15 +1295,18 @@ func TestSpaceRegistry_SpaceOverridesGlobal(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createAdminContext("admin-user-id")
+	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
 	keys := []string{"config.app_home_title", "config.allow_guest_mode"}
+	space := makeTestSpace(spaceKey, "org-1")
 
-	spaceOwnerID := "space:my-space"
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	// Space has an override for home title
 	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
@@ -1335,15 +1338,18 @@ func TestSpaceRegistry_AllKeysFromGlobal(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createAdminContext("admin-user-id")
+	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
 	keys := []string{"config.app_home_title"}
+	space := makeTestSpace(spaceKey, "org-1")
 
-	spaceOwnerID := "space:my-space"
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	// No space-level override
 	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
@@ -1369,11 +1375,13 @@ func TestSpaceRegistry_NonAdminDenied(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createReadWriteContext("regular-user-id")
+	ctx := createReadWriteContextWithOrg("regular-user-id", "org-1")
+	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
 
 	_, err := resolver.Query().SpaceRegistry(ctx, "my-space", []string{"config.app_home_title"})
 
@@ -1385,13 +1393,16 @@ func TestSpaceRegistry_ListAll(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createAdminContext("admin-user-id")
+	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
-	spaceOwnerID := "space:my-space"
+	space := makeTestSpace(spaceKey, "org-1")
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	// List all space-level entries (no fallback when keys is nil/empty)
 	mockRegistryStore.On("List", ctx, spaceOwnerID, (*string)(nil)).
@@ -1413,15 +1424,18 @@ func TestSetSpaceRegistry_AdminSetsEntries(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createAdminContext("admin-user-id")
+	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
-	spaceOwnerID := "space:my-space"
+	space := makeTestSpace(spaceKey, "org-1")
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
 	key := "config.app_home_title"
 	value := "My Custom Space"
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	expectedEntries := []*registrystore.Registry{{Key: key, Value: value, IsEncrypted: false}}
 	mockRegistryStore.On("SetMulti", ctx, spaceOwnerID, expectedEntries).
@@ -1443,11 +1457,13 @@ func TestSetSpaceRegistry_NonAdminDenied(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createReadWriteContext("regular-user-id")
+	ctx := createReadWriteContextWithOrg("regular-user-id", "org-1")
+	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: "config.app_home_title", Value: "hack"}}
 	_, err := resolver.Mutation().SetSpaceRegistry(ctx, "my-space", entries)
@@ -1460,11 +1476,13 @@ func TestSetSpaceRegistry_EmptyEntriesRejected(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createAdminContext("admin-user-id")
+	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
+	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
 
 	_, err := resolver.Mutation().SetSpaceRegistry(ctx, "my-space", nil)
 
@@ -1476,14 +1494,17 @@ func TestDeleteSpaceRegistry_AdminDeletes(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createAdminContext("admin-user-id")
+	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
 	spaceKey := "my-space"
-	spaceOwnerID := "space:my-space"
+	space := makeTestSpace(spaceKey, "org-1")
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
 	keys := []string{"config.app_home_title", "config.allow_guest_mode"}
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
 
 	mockRegistryStore.On("DeleteMulti", ctx, spaceOwnerID, keys).Return(nil)
 
@@ -1500,11 +1521,13 @@ func TestDeleteSpaceRegistry_NonAdminDenied(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createReadWriteContext("regular-user-id")
+	ctx := createReadWriteContextWithOrg("regular-user-id", "org-1")
+	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
 
 	_, err := resolver.Mutation().DeleteSpaceRegistry(ctx, "my-space", []string{"config.app_home_title"})
 
@@ -1516,11 +1539,13 @@ func TestDeleteSpaceRegistry_EmptyKeysRejected(t *testing.T) {
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
 	mockRegistryStore := new(MockRegistryStore)
 	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
-	ctx := createAdminContext("admin-user-id")
+	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
+	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
 
 	_, err := resolver.Mutation().DeleteSpaceRegistry(ctx, "my-space", nil)
 

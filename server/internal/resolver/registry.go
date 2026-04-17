@@ -424,13 +424,27 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 	return result, nil
 }
 
-// SpaceRegistry gets space-scoped registry entries, falling back to system:global for unset keys (admin only)
+// SpaceRegistry gets space-scoped registry entries, falling back to system:global for unset keys (space manager only)
 func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceKey string, keys []string) ([]*gql.UserRegistry, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, fmt.Errorf("admin permission required for space registry: %w", err)
+	if r.spaceStore == nil {
+		return nil, fmt.Errorf("space registry is not available in this deployment")
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	if space == nil {
+		return nil, fmt.Errorf("space %q not found", spaceKey)
+	}
+	permissions, err := r.getSpacePermissions(ctx, space)
+	if err != nil {
+		return nil, err
+	}
+	if !permissions.CanManage {
+		return nil, fmt.Errorf("space manager permission required for space registry: forbidden")
 	}
 
-	ownerID := registrystore.SpaceOwnerID(spaceKey)
+	ownerID := registrystore.SpaceOwnerID(space.ID)
 
 	if len(keys) == 0 {
 		// No keys requested — list all space-scoped entries (no fallback for list)
@@ -509,17 +523,31 @@ func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceKey string, keys
 	return result, nil
 }
 
-// SetSpaceRegistry sets space-scoped registry entries (admin only)
+// SetSpaceRegistry sets space-scoped registry entries (space manager only)
 func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceKey string, entries []*gql.RegistryEntryInput) ([]*gql.UserRegistry, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, fmt.Errorf("admin permission required for space registry write: %w", err)
+	if r.spaceStore == nil {
+		return nil, fmt.Errorf("space registry is not available in this deployment")
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	if space == nil {
+		return nil, fmt.Errorf("space %q not found", spaceKey)
+	}
+	permissions, err := r.getSpacePermissions(ctx, space)
+	if err != nil {
+		return nil, err
+	}
+	if !permissions.CanManage {
+		return nil, fmt.Errorf("space manager permission required for space registry write: forbidden")
 	}
 
 	if len(entries) == 0 {
 		return nil, fmt.Errorf("entries must not be empty")
 	}
 
-	ownerID := registrystore.SpaceOwnerID(spaceKey)
+	ownerID := registrystore.SpaceOwnerID(space.ID)
 
 	registryEntries := make([]*registrystore.Registry, 0, len(entries))
 	for _, e := range entries {
@@ -551,17 +579,31 @@ func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceKey string
 	return result, nil
 }
 
-// DeleteSpaceRegistry deletes space-scoped registry entries, reverting to system:global defaults (admin only)
+// DeleteSpaceRegistry deletes space-scoped registry entries, reverting to system:global defaults (space manager only)
 func (r *mutationResolver) DeleteSpaceRegistry(ctx context.Context, spaceKey string, keys []string) (bool, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return false, fmt.Errorf("admin permission required for space registry delete: %w", err)
+	if r.spaceStore == nil {
+		return false, fmt.Errorf("space registry is not available in this deployment")
+	}
+	space, err := r.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch space: %w", err)
+	}
+	if space == nil {
+		return false, fmt.Errorf("space %q not found", spaceKey)
+	}
+	permissions, err := r.getSpacePermissions(ctx, space)
+	if err != nil {
+		return false, err
+	}
+	if !permissions.CanManage {
+		return false, fmt.Errorf("space manager permission required for space registry delete: forbidden")
 	}
 
 	if len(keys) == 0 {
 		return false, fmt.Errorf("keys must not be empty")
 	}
 
-	ownerID := registrystore.SpaceOwnerID(spaceKey)
+	ownerID := registrystore.SpaceOwnerID(space.ID)
 
 	if err := r.registryStore.DeleteMulti(ctx, ownerID, keys); err != nil {
 		return false, fmt.Errorf("failed to delete space registry: %w", err)

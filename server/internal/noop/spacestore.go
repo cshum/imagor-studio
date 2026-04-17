@@ -25,6 +25,10 @@ func (n *SpaceStore) Upsert(_ context.Context, _ *spacestore.Space) error {
 	return ErrEmbeddedMode
 }
 
+func (n *SpaceStore) RenameKey(_ context.Context, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
 func (n *SpaceStore) SoftDelete(_ context.Context, _ string) error {
 	return ErrEmbeddedMode
 }
@@ -41,10 +45,34 @@ func (n *SpaceStore) ListByOrgID(_ context.Context, _ string) ([]*spacestore.Spa
 	return nil, ErrEmbeddedMode
 }
 
+func (n *SpaceStore) ListByMemberUserID(_ context.Context, _ string) ([]*spacestore.Space, error) {
+	return nil, ErrEmbeddedMode
+}
+
 func (n *SpaceStore) Delta(_ context.Context, _ time.Time) (*spacestore.DeltaResult, error) {
 	return nil, ErrEmbeddedMode
 }
 
 func (n *SpaceStore) KeyExists(_ context.Context, _ string) (bool, error) {
+	return false, ErrEmbeddedMode
+}
+
+func (n *SpaceStore) ListMembers(_ context.Context, _ string) ([]*spacestore.SpaceMemberView, error) {
+	return nil, ErrEmbeddedMode
+}
+
+func (n *SpaceStore) AddMember(_ context.Context, _, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
+func (n *SpaceStore) RemoveMember(_ context.Context, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
+func (n *SpaceStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return ErrEmbeddedMode
+}
+
+func (n *SpaceStore) HasMember(_ context.Context, _, _ string) (bool, error) {
 	return false, ErrEmbeddedMode
 }

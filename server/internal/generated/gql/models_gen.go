@@ -188,6 +188,7 @@ type SaveTemplateInput struct {
 }
 
 type Space struct {
+	ID                   string `json:"id"`
 	OrgID                string `json:"orgId"`
 	Key                  string `json:"key"`
 	Name                 string `json:"name"`
@@ -203,6 +204,9 @@ type Space struct {
 	IsShared             bool   `json:"isShared"`
 	SignerAlgorithm      string `json:"signerAlgorithm"`
 	SignerTruncate       int    `json:"signerTruncate"`
+	CanManage            bool   `json:"canManage"`
+	CanDelete            bool   `json:"canDelete"`
+	CanLeave             bool   `json:"canLeave"`
 	UpdatedAt            string `json:"updatedAt"`
 }
 
@@ -222,6 +226,32 @@ type SpaceInput struct {
 	SignerAlgorithm *string `json:"signerAlgorithm,omitempty"`
 	SignerTruncate  *int    `json:"signerTruncate,omitempty"`
 	ImagorSecret    *string `json:"imagorSecret,omitempty"`
+}
+
+type SpaceInvitation struct {
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
+	CreatedAt string `json:"createdAt"`
+	ExpiresAt string `json:"expiresAt"`
+}
+
+type SpaceInviteResult struct {
+	Status     string           `json:"status"`
+	Member     *SpaceMember     `json:"member,omitempty"`
+	Invitation *SpaceInvitation `json:"invitation,omitempty"`
+}
+
+type SpaceMember struct {
+	UserID        string  `json:"userId"`
+	Username      string  `json:"username"`
+	DisplayName   string  `json:"displayName"`
+	Email         *string `json:"email,omitempty"`
+	AvatarURL     *string `json:"avatarUrl,omitempty"`
+	Role          string  `json:"role"`
+	CanChangeRole bool    `json:"canChangeRole"`
+	CanRemove     bool    `json:"canRemove"`
+	CreatedAt     string  `json:"createdAt"`
 }
 
 type StorageConfigInput struct {
@@ -279,13 +309,15 @@ type UpdateProfileInput struct {
 }
 
 type User struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"displayName"`
-	Username    string `json:"username"`
-	Role        string `json:"role"`
-	IsActive    bool   `json:"isActive"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID          string  `json:"id"`
+	DisplayName string  `json:"displayName"`
+	Username    string  `json:"username"`
+	Role        string  `json:"role"`
+	IsActive    bool    `json:"isActive"`
+	CreatedAt   string  `json:"createdAt"`
+	UpdatedAt   string  `json:"updatedAt"`
+	Email       *string `json:"email,omitempty"`
+	AvatarURL   *string `json:"avatarUrl,omitempty"`
 }
 
 type UserList struct {

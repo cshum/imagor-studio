@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   ArrowLeft,
+  Cloud,
   Cpu,
+  Database,
   FolderOpen,
   HardDrive,
   LayoutDashboard,
@@ -36,7 +38,7 @@ import {
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 
-import { avatarColor, spaceInitials, type SpaceSettingsData } from './shared'
+import { type SpaceSettingsData } from './shared'
 
 // ── Section ids ────────────────────────────────────────────────────────────
 
@@ -56,10 +58,6 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { location } = useRouterState()
 
-  const isByob = space.storageType === 's3'
-  const color = avatarColor(space.key)
-  const initials = spaceInitials(space.name)
-
   // Extract active section from the last URL segment
   const pathSegments = location.pathname.split('/')
   const activeSection = pathSegments[pathSegments.length - 1] ?? 'general'
@@ -76,7 +74,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
     navigate({ to: '/login' })
   }
 
-  // ── Nav items (Storage only shown for BYOB) ──────────────────────────────
+  // ── Nav items ────────────────────────────────────────────────────────────
 
   type NavItem = { id: SectionId; to: string; icon: React.ReactNode; label: string }
 
@@ -87,16 +85,12 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
       icon: <LayoutDashboard className='h-4 w-4' />,
       label: t('pages.spaceSettings.sections.general'),
     },
-    ...(isByob
-      ? [
-          {
-            id: 'storage' as SectionId,
-            to: '/spaces/$spaceKey/settings/storage',
-            icon: <HardDrive className='h-4 w-4' />,
-            label: t('pages.spaceSettings.sections.storage'),
-          },
-        ]
-      : []),
+    {
+      id: 'storage' as SectionId,
+      to: '/spaces/$spaceKey/settings/storage',
+      icon: <HardDrive className='h-4 w-4' />,
+      label: t('pages.spaceSettings.sections.storage'),
+    },
     {
       id: 'imagor',
       to: '/spaces/$spaceKey/settings/imagor',
@@ -124,18 +118,26 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
 
   const sidebarContent = (
     <>
-      <SidebarHeader className='border-b px-4 py-3'>
-        <div className='flex items-center gap-3'>
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${color}`}
-          >
-            {initials}
-          </div>
-          <div className='min-w-0'>
-            <p className='truncate text-sm leading-tight font-semibold'>{space.name}</p>
-            <p className='text-muted-foreground truncate font-mono text-xs'>{space.key}</p>
-          </div>
-        </div>
+      <SidebarHeader className='border-b p-2'>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild size='lg'>
+              <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
+                {space.storageType === 'managed' ? (
+                  <Cloud className='h-10 w-10 shrink-0' />
+                ) : (
+                  <Database className='h-10 w-10 shrink-0' />
+                )}
+                <div className='min-w-0'>
+                  <span className='truncate text-sm leading-tight font-semibold'>{space.name}</span>
+                  <span className='text-muted-foreground block truncate font-mono text-xs'>
+                    {space.customDomain || `${space.key}.imagor.app`}
+                  </span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
@@ -170,7 +172,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link to='/account/spaces'>
+              <Link to='/'>
                 <ArrowLeft className='h-4 w-4' />
                 <span>{t('pages.spaceSettings.backToSpaces')}</span>
               </Link>
@@ -219,6 +221,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
         <AppHeader
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
+          avatarUrl={authState.profile?.avatarUrl}
           onLogout={handleLogout}
           appTitle={appTitle}
           breadcrumbs={[

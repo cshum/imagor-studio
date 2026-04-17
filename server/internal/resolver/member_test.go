@@ -26,7 +26,7 @@ func newMemberResolver(os *MockOrgStore, us *MockUserStore) *Resolver {
 	if us != nil {
 		userS = us
 	}
-	return NewResolver(sp, nil, userS, nil, nil, nil, logger, orgS, nil)
+	return NewResolver(sp, nil, userS, nil, nil, nil, logger, orgS, nil, nil, nil)
 }
 
 func makeTestMember(userID, username, role string) *orgstore.OrgMemberView {

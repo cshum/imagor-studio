@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useRouter } from '@tanstack/react-router'
 import {
@@ -6,14 +6,14 @@ import {
   Database,
   FolderOpen,
   LayoutGrid,
+  LogOut,
   MoreHorizontal,
   Plus,
   Settings,
-  Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { deleteSpace, type SpaceItem } from '@/api/org-api'
+import { leaveSpace, type SpaceItem } from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -21,7 +21,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -32,70 +31,68 @@ import {
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ListSpacesQuery } from '@/generated/graphql'
+import { useAuth } from '@/stores/auth-store'
 
 interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']
+  currentOrganizationId?: string | null
 }
 
-const AVATAR_COLORS = [
-  'bg-blue-500',
-  'bg-violet-500',
-  'bg-emerald-500',
-  'bg-amber-500',
-  'bg-rose-500',
-  'bg-cyan-500',
-  'bg-indigo-500',
-  'bg-fuchsia-500',
-] as const
-
-function avatarColor(slug: string): string {
-  let hash = 0
-  for (let i = 0; i < slug.length; i++) {
-    hash = (hash * 31 + slug.charCodeAt(i)) >>> 0
-  }
-  return AVATAR_COLORS[hash % AVATAR_COLORS.length]
-}
-
-function spaceInitials(name: string): string {
-  const words = name.split(/\s+/).filter(Boolean)
-  if (words.length >= 2) {
-    return (words[0][0] + words[1][0]).toUpperCase()
-  }
-  return name.slice(0, 2).toUpperCase()
-}
-
-export function SpacesPage({ loaderData }: SpacesPageProps) {
+export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [selectedSpace, setSelectedSpace] = useState<SpaceItem | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const { authState } = useAuth()
+  const [leaveSpaceItem, setLeaveSpaceItem] = useState<SpaceItem | null>(null)
+  const [isLeaving, setIsLeaving] = useState(false)
+  const [openMenuSpaceKey, setOpenMenuSpaceKey] = useState<string | null>(null)
+  const leaveDialogTimerRef = useRef<number | null>(null)
 
   const spaces = loaderData ?? []
   const hasSpaces = spaces.length > 0
-  const managedCount = useMemo(
-    () => spaces.filter((space) => space.storageType === 'managed').length,
-    [spaces],
+  const ownedCount = useMemo(
+    () =>
+      currentOrganizationId === null
+        ? spaces.length
+        : spaces.filter((space) => space.orgId === currentOrganizationId).length,
+    [currentOrganizationId, spaces],
   )
-  const s3Count = spaces.length - managedCount
+  const sharedCount = useMemo(
+    () =>
+      currentOrganizationId === null
+        ? 0
+        : spaces.filter((space) => space.orgId !== currentOrganizationId).length,
+    [currentOrganizationId, spaces],
+  )
 
-  const handleDeleteSpace = async () => {
-    if (!selectedSpace) return
-    setIsDeleting(true)
+  const handleLeaveSpace = async () => {
+    if (!leaveSpaceItem) return
+
+    setIsLeaving(true)
     try {
-      await deleteSpace({ key: selectedSpace.key })
-      toast.success(t('pages.spaces.messages.spaceDeletedSuccess'))
-      setIsDeleteOpen(false)
-      setSelectedSpace(null)
+      await leaveSpace({ spaceKey: leaveSpaceItem.key })
+      toast.success(t('pages.spaces.messages.leftSpaceSuccess'))
+      setLeaveSpaceItem(null)
       await router.invalidate()
     } catch (err) {
       toast.error(
-        `${t('pages.spaces.messages.deleteSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
+        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
       )
     } finally {
-      setIsDeleting(false)
+      setIsLeaving(false)
     }
+  }
+
+  const requestLeaveSpace = (space: SpaceItem) => {
+    setOpenMenuSpaceKey(null)
+    if (leaveDialogTimerRef.current !== null) {
+      window.clearTimeout(leaveDialogTimerRef.current)
+    }
+    leaveDialogTimerRef.current = window.setTimeout(() => {
+      setLeaveSpaceItem(space)
+      leaveDialogTimerRef.current = null
+    }, 0)
   }
 
   return (
@@ -110,15 +107,15 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
           </div>
           <div className='bg-muted/30 rounded-xl p-4'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.managedStorage')}
+              {t('pages.spaces.stats.yourSpaces')}
             </p>
-            <p className='mt-2 text-2xl font-semibold'>{managedCount}</p>
+            <p className='mt-2 text-2xl font-semibold'>{ownedCount}</p>
           </div>
           <div className='bg-muted/30 rounded-xl p-4'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.externalStorage')}
+              {t('pages.spaces.stats.sharedWithYou')}
             </p>
-            <p className='mt-2 text-2xl font-semibold'>{s3Count}</p>
+            <p className='mt-2 text-2xl font-semibold'>{sharedCount}</p>
           </div>
         </div>
       )}
@@ -167,8 +164,8 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         /* Card grid */
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {spaces.map((space) => {
-            const color = avatarColor(space.key)
-            const initials = spaceInitials(space.name)
+            const canManageSpace = space.canManage
+            const isSharedSpace = !canManageSpace
             return (
               <div
                 key={space.key}
@@ -177,70 +174,41 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                 {/* Card header row */}
                 <div className='flex items-start justify-between gap-2'>
                   <div className='flex min-w-0 items-center gap-3'>
-                    <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${color}`}
-                    >
-                      {initials}
+                    <div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
+                      {space.storageType === 'managed' ? (
+                        <Cloud className='text-muted-foreground h-5 w-5' />
+                      ) : (
+                        <Database className='text-muted-foreground h-5 w-5' />
+                      )}
                     </div>
                     <div className='min-w-0'>
-                      <p className='truncate leading-tight font-semibold'>{space.name}</p>
+                      <div className='flex min-w-0 items-center gap-2'>
+                        <p className='truncate leading-tight font-semibold'>{space.name}</p>
+                        {isSharedSpace && (
+                          <Badge variant='outline' className='h-5 shrink-0 px-2 text-[11px]'>
+                            {t('pages.spaces.sharedLabel')}
+                          </Badge>
+                        )}
+                      </div>
                       <p className='text-muted-foreground truncate font-mono text-xs'>
-                        {space.key}
+                        {space.customDomain || `${space.key}.imagor.app`}
                       </p>
                     </div>
                   </div>
 
-                  {/* Kebab menu */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-8 w-8 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100'
-                        aria-label='Space actions'
-                      >
-                        <MoreHorizontal className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem asChild>
-                        <Link to='/spaces/$spaceKey/settings' params={{ spaceKey: space.key }}>
-                          <Settings className='mr-2 h-4 w-4' />
-                          {t('pages.spaces.settings')}
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className='text-destructive focus:text-destructive'
-                        onClick={() => {
-                          setSelectedSpace(space)
-                          setIsDeleteOpen(true)
-                        }}
-                      >
-                        <Trash2 className='mr-2 h-4 w-4' />
-                        {t('pages.spaces.deleteSpace')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                {/* Badges */}
-                <div className='mt-4 flex flex-wrap gap-2'>
-                  <Badge
-                    variant={space.storageType === 's3' ? 'outline' : 'secondary'}
-                    className={
-                      space.storageType === 's3'
-                        ? 'border-amber-500/40 text-amber-600 dark:text-amber-400'
-                        : ''
-                    }
-                  >
-                    {space.storageType === 's3' ? (
-                      <Database className='mr-1 h-3 w-3' />
-                    ) : (
-                      <Cloud className='mr-1 h-3 w-3' />
-                    )}
-                    {t(`pages.spaces.storageType.${space.storageType}`)}
-                  </Badge>
+                  {/* Badge */}
+                  <div className='mt-1 flex shrink-0 items-center gap-1'>
+                    <Badge
+                      variant={space.storageType === 's3' ? 'outline' : 'secondary'}
+                      className={
+                        space.storageType === 's3'
+                          ? 'border-amber-500/40 text-amber-600 dark:text-amber-400'
+                          : ''
+                      }
+                    >
+                      {t(`pages.spaces.storageType.${space.storageType}`)}
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Action buttons */}
@@ -251,15 +219,69 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                       {t('pages.spaces.openGallery')}
                     </Link>
                   </Button>
-                  <Button variant='outline' size='sm' className='flex-1' asChild>
-                    <Link
-                      to='/spaces/$spaceKey/settings/$section'
-                      params={{ spaceKey: space.key, section: 'general' }}
+                  {canManageSpace && !space.canLeave ? (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant='outline'
+                            size='icon'
+                            className='h-9 w-9 shrink-0'
+                            asChild
+                          >
+                            <Link
+                              to='/spaces/$spaceKey/settings/$section'
+                              params={{ spaceKey: space.key, section: 'general' }}
+                              aria-label={t('pages.spaces.configure')}
+                            >
+                              <Settings className='h-4 w-4' />
+                            </Link>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side='top'>{t('pages.spaces.configure')}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : null}
+                  {space.canLeave && authState.profile?.id ? (
+                    <DropdownMenu
+                      open={openMenuSpaceKey === space.key}
+                      onOpenChange={(open) => setOpenMenuSpaceKey(open ? space.key : null)}
                     >
-                      <Settings className='mr-1.5 h-4 w-4' />
-                      {t('pages.spaces.configure')}
-                    </Link>
-                  </Button>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant='outline'
+                          size='icon'
+                          className='h-9 w-9 shrink-0'
+                          aria-label={t('common.buttons.more')}
+                        >
+                          <MoreHorizontal className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        {canManageSpace ? (
+                          <DropdownMenuItem asChild>
+                            <Link
+                              to='/spaces/$spaceKey/settings/$section'
+                              params={{ spaceKey: space.key, section: 'general' }}
+                            >
+                              <Settings className='mr-2 h-4 w-4' />
+                              {t('pages.spaces.configure')}
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : null}
+                        <DropdownMenuItem
+                          onSelect={(event) => {
+                            event.preventDefault()
+                            requestLeaveSpace(space)
+                          }}
+                          className='text-destructive focus:text-destructive'
+                        >
+                          <LogOut className='mr-2 h-4 w-4' />
+                          {t('pages.spaces.leaveSpace')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </div>
               </div>
             )
@@ -274,31 +296,33 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         </p>
       )}
 
-      {/* Delete confirmation dialog */}
-      <ResponsiveDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+      <ResponsiveDialog
+        open={leaveSpaceItem !== null}
+        onOpenChange={(open) => !open && setLeaveSpaceItem(null)}
+      >
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{t('pages.spaces.deleteSpace')}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{t('pages.spaces.leaveSpace')}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            {t('pages.spaces.deleteSpaceDescription')}{' '}
-            <strong className='text-foreground'>{selectedSpace?.key}</strong>?
+            {t('pages.spaces.leaveSpaceDescription')}{' '}
+            <strong className='text-foreground'>{leaveSpaceItem?.key}</strong>?
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
           <Button
             variant='outline'
-            onClick={() => setIsDeleteOpen(false)}
-            disabled={isDeleting}
+            onClick={() => setLeaveSpaceItem(null)}
+            disabled={isLeaving}
             className='w-full sm:w-auto'
           >
             {t('common.buttons.cancel')}
           </Button>
           <ButtonWithLoading
             variant='destructive'
-            onClick={handleDeleteSpace}
-            isLoading={isDeleting}
+            onClick={handleLeaveSpace}
+            isLoading={isLeaving}
             className='w-full sm:w-auto'
           >
-            {t('common.buttons.delete')}
+            {t('pages.spaces.leaveSpace')}
           </ButtonWithLoading>
         </ResponsiveDialogFooter>
       </ResponsiveDialog>

@@ -38,8 +38,24 @@ func setupTestDB(t *testing.T) (*bun.DB, func()) {
 			hashed_password TEXT NOT NULL,
 			role TEXT NOT NULL DEFAULT 'user',
 			is_active BOOLEAN NOT NULL DEFAULT TRUE,
+			email TEXT,
+			avatar_url TEXT,
 			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	require.NoError(t, err)
+
+	// Create oauth_identities table
+	_, err = db.ExecContext(ctx, `
+		CREATE TABLE IF NOT EXISTS oauth_identities (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			provider TEXT NOT NULL,
+			provider_id TEXT NOT NULL,
+			email TEXT,
+			created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE(provider, provider_id)
 		)
 	`)
 	require.NoError(t, err)
@@ -474,6 +490,52 @@ func TestUserStore_ConcurrentAccess(t *testing.T) {
 		err = store.UpdateLastLogin(ctx, user.ID)
 		assert.NoError(t, err)
 	}
+}
+
+// TestUserStore_UpsertOAuth_OrphanedIdentity verifies that UpsertOAuth
+// recovers gracefully when an oauth_identity row exists but the referenced
+// user has been deleted (an "orphaned identity").  The stale identity should
+// be removed and a fresh user + new identity should be created.
+func TestUserStore_UpsertOAuth_OrphanedIdentity(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	s := New(db, logger)
+	ctx := context.Background()
+
+	// Step 1: First login — creates user + oauth_identity.
+	user1, err := s.UpsertOAuth(ctx, "google", "gid-orphan", "orphan@example.com", "Orphan User", "")
+	require.NoError(t, err)
+	require.NotNil(t, user1)
+
+	// Step 2: Simulate an admin deleting the user directly (without cascade).
+	_, err = db.NewDelete().
+		TableExpr("users").
+		Where("id = ?", user1.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	// Step 3: The same Google account tries to log in again.
+	// Without the fix this returns "error loading OAuth user: sql: no rows in result set".
+	user2, err := s.UpsertOAuth(ctx, "google", "gid-orphan", "orphan@example.com", "Orphan User", "")
+	require.NoError(t, err, "UpsertOAuth must not error when user was deleted and identity is orphaned")
+	require.NotNil(t, user2)
+
+	// A brand-new user should have been created.
+	assert.NotEqual(t, user1.ID, user2.ID, "should be a new user, not the deleted one")
+	assert.Equal(t, "Orphan User", user2.DisplayName)
+	assert.Equal(t, "user", user2.Role)
+
+	// The old stale oauth_identity should be gone; the new one should exist.
+	var identityCount int
+	err = db.NewSelect().
+		TableExpr("oauth_identities").
+		ColumnExpr("COUNT(*)").
+		Where("provider = ? AND provider_id = ?", "google", "gid-orphan").
+		Scan(ctx, &identityCount)
+	require.NoError(t, err)
+	assert.Equal(t, 1, identityCount, "exactly one identity should exist after recovery")
 }
 
 func BenchmarkUserStore_Create(b *testing.B) {

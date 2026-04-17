@@ -25,6 +25,8 @@ type User {
   isActive: Boolean!
   createdAt: String!
   updatedAt: String!
+  email: String
+  avatarUrl: String
 }
 
 type UserList {

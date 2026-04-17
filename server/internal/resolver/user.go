@@ -52,6 +52,8 @@ func (r *queryResolver) Me(ctx context.Context) (*gql.User, error) {
 		IsActive:    user.IsActive,
 		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
+		Email:       user.Email,
+		AvatarURL:   user.AvatarUrl,
 	}, nil
 }
 
@@ -80,6 +82,8 @@ func (r *queryResolver) User(ctx context.Context, id string) (*gql.User, error) 
 		IsActive:    user.IsActive,
 		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
+		Email:       user.Email,
+		AvatarURL:   user.AvatarUrl,
 	}, nil
 }
 
@@ -130,6 +134,8 @@ func (r *queryResolver) Users(ctx context.Context, offset *int, limit *int, sear
 			IsActive:    user.IsActive,
 			CreatedAt:   user.CreatedAt.Format(time.RFC3339),
 			UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
+			Email:       user.Email,
+			AvatarURL:   user.AvatarUrl,
 		}
 	}
 
@@ -205,6 +211,8 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 		IsActive:    updatedUser.IsActive,
 		CreatedAt:   updatedUser.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   updatedUser.UpdatedAt.Format(time.RFC3339),
+		Email:       updatedUser.Email,
+		AvatarURL:   updatedUser.AvatarUrl,
 	}, nil
 }
 
@@ -383,6 +391,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 		IsActive:    user.IsActive,
 		CreatedAt:   user.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   user.UpdatedAt.Format(time.RFC3339),
+		Email:       user.Email,
+		AvatarURL:   user.AvatarUrl,
 	}, nil
 }
 

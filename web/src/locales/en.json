@@ -128,6 +128,12 @@
     }
   },
   "pages": {
+    "authCallback": {
+      "failed": "Authentication failed",
+      "errorOAuth": "Authentication failed: {{error}}",
+      "errorNoToken": "No authentication token received",
+      "backToLogin": "Back to login"
+    },
     "gallery": {
       "title": "Gallery",
       "selectFolder": "Select Folder",
@@ -305,6 +311,9 @@
       "title": "Profile",
       "profileInformation": "Profile Information",
       "profileInformationDescription": "Update your account profile information.",
+      "avatar": "Avatar",
+      "avatarFromProvider": "Synced from your identity provider (e.g. Google).",
+      "avatarNoPhoto": "No profile photo set.",
       "displayName": "Display Name",
       "displayNameDescription": "Your public display name shown throughout the app.",
       "displayNamePlaceholder": "Enter your display name",
@@ -666,15 +675,15 @@
         "managed": "Managed by Imagor Studio. No bucket setup required.",
         "s3": "Connect your own S3-compatible bucket."
       },
-      "keyDescription": "Unique identifier used in URLs. Cannot be changed after creation.",
+      "keyDescription": "Used in links and URLs. You can change it, but old links won't redirect.",
       "tableHeaders": {
-        "key": "Key",
+        "key": "URL Slug",
         "name": "Name",
         "storage": "Storage",
         "actions": "Actions"
       },
       "formLabels": {
-        "key": "Space Key",
+        "key": "URL Slug",
         "name": "Display Name",
         "storageType": "Storage Type",
         "bucket": "Bucket",
@@ -695,21 +704,32 @@
         "spaceCreatedSuccess": "Space created successfully",
         "spaceUpdatedSuccess": "Space updated successfully",
         "spaceDeletedSuccess": "Space deleted successfully",
+        "leftSpaceSuccess": "You left the shared space.",
         "createSpaceFailed": "Failed to create space",
-        "keyAlreadyTaken": "Space key is already taken",
+        "keyAlreadyTaken": "URL slug is already taken",
         "updateSpaceFailed": "Failed to update space",
-        "deleteSpaceFailed": "Failed to delete space"
+        "deleteSpaceFailed": "Failed to delete space",
+        "leaveSpaceFailed": "Failed to leave shared space"
       },
       "validation": {
-        "keyFormat": "Key must contain only lowercase letters, numbers, and hyphens"
+        "keyFormat": "URL slug must contain only lowercase letters, numbers, and hyphens"
       },
       "stats": {
         "totalSpaces": "Total Spaces",
         "managedStorage": "Managed Storage",
-        "externalStorage": "External Storage"
+        "externalStorage": "External Storage",
+        "yourSpaces": "Your Spaces",
+        "sharedWithYou": "Shared With You"
       },
       "configure": "Configure",
-      "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows."
+      "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows.",
+      "sharedLabel": "Shared",
+      "leaveSpace": "Leave",
+      "leaveSpaceDescription": "Leave this shared space",
+      "access": {
+        "ownedByYou": "Owned by you",
+        "sharedWithYou": "Shared with you"
+      }
     },
     "spaceSettings": {
       "backToSpaces": "Back to Spaces",
@@ -741,7 +761,7 @@
         "saved": "General settings saved"
       },
       "storage": {
-        "description": "Configure S3 storage credentials for this space.",
+        "description": "View storage settings for this space.",
         "managedTitle": "Platform-managed Storage",
         "managedDescription": "Files are stored in Imagor Studio's managed storage. Storage type cannot be changed after the space is created.",
         "bucket": "Bucket",
@@ -771,27 +791,59 @@
         "deleteButton": "Delete Space"
       },
       "members": {
-        "description": "Manage who has access to this organisation.",
-        "addLabel": "Invite member",
+        "description": "Manage access for this space.",
+        "addLabel": "Add member",
         "usernamePlaceholder": "Username",
         "roleLabel": "Role",
-        "addButton": "Add",
+        "addButton": "Add directly",
         "tableHeaders": {
           "member": "Member",
           "role": "Role",
           "action": "Action"
         },
-        "inviteDescription": "Invite a teammate and assign their role for this space.",
-        "emptyDescription": "Add your first member to collaborate inside this space.",
+        "inviteDescription": "Share by email. Existing users get access right away, even if they belong to another organisation. New people still receive an email invitation.",
+        "addExistingDescription": "Or quickly add someone who is already in your organisation.",
+        "emailPlaceholder": "name@example.com",
+        "sendInviteButton": "Share",
+        "inviteHelp": "Existing accounts are added to this space immediately. New people still need an email invitation to accept access.",
+        "inviteErrors": {
+          "required": "Enter an email address.",
+          "invalidEmail": "Enter a valid email address.",
+          "alreadyHasAccess": "This person already has access to this space.",
+          "notConfigured": "Email invitations are not configured yet.",
+          "unavailable": "Sharing is not available in this deployment.",
+          "default": "Could not share this space right now. Please try again."
+        },
+        "memberPlaceholder": "Choose a teammate",
+        "memberPlaceholderEmpty": "Everyone in your organisation already has explicit access",
+        "sharedTitle": "Organisation-wide access",
+        "sharedDescription": "Everyone in this organisation can view and copy this space. The list below shows people who were added directly to this space, while organisation admins still manage settings and sharing.",
+        "emptyDescription": "No one has been added directly to this space yet. Organisation admins still have inherited access.",
+        "accessLabel": "Shared access",
         "addSuccess": "Member added successfully.",
+        "inviteSent": "Invitation email sent.",
         "roleUpdated": "Role updated.",
         "removeSuccess": "Member removed.",
-        "empty": "No members yet.",
+        "removeSelfDisabled": "You",
+        "removeSelfNotAllowed": "You cannot remove yourself from this space.",
+        "empty": "No direct space members yet.",
+        "pendingTitle": "Pending invitations",
+        "listHeaders": {
+          "member": "Member",
+          "action": "Action"
+        },
+        "pendingHeaders": {
+          "email": "Email",
+          "role": "Role",
+          "expires": "Expires"
+        },
         "removeTitle": "Remove Member",
         "removeDescription": "Are you sure you want to remove",
+        "roleSectionLabel": "Change role",
+        "promoteToManager": "Promote to manager",
+        "changeToMember": "Change to member",
         "roles": {
-          "owner": "Owner",
-          "admin": "Admin",
+          "admin": "Manager",
           "member": "Member"
         }
       },

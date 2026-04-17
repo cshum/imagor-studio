@@ -116,6 +116,14 @@ func (m *MockUserStore) GetByIDAdmin(ctx context.Context, id string) (*userstore
 	return args.Get(0).(*userstore.User), args.Error(1)
 }
 
+func (m *MockUserStore) GetByEmail(ctx context.Context, email string) (*userstore.User, error) {
+	args := m.Called(ctx, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
 func (m *MockUserStore) GetByUsername(ctx context.Context, username string) (*model.User, error) {
 	args := m.Called(ctx, username)
 	if args.Get(0) == nil {
@@ -163,6 +171,19 @@ func (m *MockUserStore) GetByIDWithPassword(ctx context.Context, id string) (*mo
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*model.User), args.Error(1)
+}
+
+func (m *MockUserStore) UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*userstore.User, error) {
+	args := m.Called(ctx, provider, providerID, email, displayName, avatarURL)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
+func (m *MockUserStore) UpdateRole(ctx context.Context, id string, role string) error {
+	args := m.Called(ctx, id, role)
+	return args.Error(0)
 }
 
 type MockRegistryStore struct {
