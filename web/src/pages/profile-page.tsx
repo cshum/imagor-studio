@@ -5,8 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { changePassword, requestEmailChange, unlinkAuthProvider, updateProfile } from '@/api/user-api'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  changePassword,
+  requestEmailChange,
+  unlinkAuthProvider,
+  updateProfile,
+} from '@/api/user-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -85,19 +89,12 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
     authProviders: authState.profile?.authProviders || [],
   }
 
-  const avatarUrl = profileData.avatarUrl
   const email = profileData.email
   const pendingEmail = profileData.pendingEmail
   const emailVerified = profileData.emailVerified
   const hasPassword = profileData.hasPassword
   const authProviders = profileData.authProviders
   const primaryProvider = authProviders[0] || null
-  const displayName = profileData.displayName || profileData.username || ''
-  const initials = (() => {
-    const words = displayName.trim().split(/\s+/).filter(Boolean)
-    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
-    return displayName.slice(0, 2).toUpperCase() || '?'
-  })()
 
   const passwordSchema = useMemo(
     () =>
@@ -221,39 +218,19 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
         title={t('pages.profile.profileInformation')}
         description={t('pages.profile.profileInformationDescription')}
       >
-        {/* ── Avatar (multi-tenant / SaaS mode only) ──────────────── */}
-        {authState.multiTenant && (
-          <SettingRow
-            label={t('pages.profile.avatar')}
-            description={
-              avatarUrl ? t('pages.profile.avatarFromProvider') : t('pages.profile.avatarNoPhoto')
-            }
-            contentClassName='sm:flex sm:justify-end sm:max-w-none'
-          >
-            <div>
-              <Avatar className='h-16 w-16'>
-                <AvatarImage
-                  src={avatarUrl ?? undefined}
-                  referrerPolicy='no-referrer'
-                  alt={displayName}
-                />
-                <AvatarFallback className='text-sm font-semibold'>{initials}</AvatarFallback>
-              </Avatar>
-            </div>
-          </SettingRow>
-        )}
-
         {authState.multiTenant && (
           <SettingRow
             label={t('pages.profile.email')}
-            description={pendingEmail
-              ? t('pages.profile.pendingEmailNotice', { email: pendingEmail })
-              : emailVerified
-                ? t('pages.profile.emailVerified')
-                : t('pages.profile.emailVerificationRequired')}
+            description={
+              pendingEmail
+                ? t('pages.profile.emailChangePending')
+                : emailVerified
+                  ? t('pages.profile.emailVerified')
+                  : t('pages.profile.emailVerificationPending')
+            }
             contentClassName='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-end sm:max-w-none'
           >
-            <div className='min-w-0 text-sm font-medium break-all text-left sm:text-right'>
+            <div className='min-w-0 text-left text-sm font-medium break-all sm:text-right'>
               {email || t('pages.profile.noEmail')}
             </div>
             <Button variant='outline' type='button' onClick={() => setEmailDialogOpen(true)}>
@@ -323,11 +300,11 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
       >
         {authState.multiTenant && (
           <SettingRow
-            label={t('pages.profile.signInMethod')}
-            description={primaryProvider?.email || t('pages.profile.signInMethodSummary')}
+            label={t('pages.profile.loginMethods')}
+            description={primaryProvider?.email || t('pages.profile.loginMethodsSummary')}
             contentClassName='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-end sm:max-w-none'
           >
-            <div className='min-w-0 text-sm font-medium text-left sm:text-right'>
+            <div className='min-w-0 text-left text-sm font-medium sm:text-right'>
               {primaryProvider
                 ? t(`pages.profile.providers.${primaryProvider.provider.toLowerCase()}`, {
                     defaultValue: primaryProvider.provider,
@@ -509,7 +486,9 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                 >
                   <div className='min-w-0'>
                     <div className='text-sm font-medium'>
-                      {t(`pages.profile.providers.${providerKey}`, { defaultValue: provider.provider })}
+                      {t(`pages.profile.providers.${providerKey}`, {
+                        defaultValue: provider.provider,
+                      })}
                     </div>
                     <div className='text-muted-foreground truncate text-xs'>
                       {provider.email || t('pages.profile.noProviderEmail')}
@@ -528,7 +507,9 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
               )
             })
           ) : (
-            <div className='text-muted-foreground text-sm'>{t('pages.profile.noAuthProviders')}</div>
+            <div className='text-muted-foreground text-sm'>
+              {t('pages.profile.noAuthProviders')}
+            </div>
           )}
 
           <div className='text-muted-foreground text-sm'>
