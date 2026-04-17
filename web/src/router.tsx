@@ -4,23 +4,19 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  Link,
   Navigate,
   Outlet,
   redirect,
   RouterProvider,
 } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
 
 import { getSpaceRegistry, listOrgMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
-import { Button } from '@/components/ui/button'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
-import { SpacesLayout } from '@/layouts/spaces-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
@@ -31,7 +27,6 @@ import {
   adminStorageLoader,
   profileLoader,
   spaceSettingsLoader,
-  spacesLoader,
   usersLoader,
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
@@ -51,6 +46,7 @@ import {
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
+import { rootPageLoader } from '@/loaders/root-page-loader'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { AdminGeneralSection } from '@/pages/admin/general'
 import { AdminImagorSection } from '@/pages/admin/imagor'
@@ -64,12 +60,12 @@ import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { ProfilePage } from '@/pages/profile-page'
+import { RootPage } from '@/pages/root-page'
 import { GeneralSection } from '@/pages/space-settings/general'
 import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
 import { MembersSection } from '@/pages/space-settings/members'
 import { SecuritySection } from '@/pages/space-settings/security'
 import { StorageSection } from '@/pages/space-settings/storage'
-import { SpacesPage } from '@/pages/spaces-page'
 import { UsersPage } from '@/pages/users-page'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import {
@@ -147,36 +143,10 @@ const rootPath = createRoute({
     }
   },
   component: () => {
-    const { t } = useTranslation()
-    const auth = getAuth()
-    if (auth.multiTenant) {
-      const loaderData = rootPath.useLoaderData() as Awaited<ReturnType<typeof spacesLoader>>
-      return (
-        <SpacesLayout
-          title={t('pages.spaces.title')}
-          description={t('pages.spaces.description')}
-          primaryAction={<CreateSpacePageTrigger />}
-        >
-          <SpacesPage loaderData={loaderData.spaces} />
-        </SpacesLayout>
-      )
-    }
-    const galleryLoaderData = rootPath.useLoaderData() as Awaited<ReturnType<typeof galleryLoader>>
-    return (
-      <SidebarLayout>
-        <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>
-          <Outlet />
-        </GalleryPage>
-      </SidebarLayout>
-    )
+    const loaderData = rootPath.useLoaderData()
+    return <RootPage loaderData={loaderData} />
   },
-  loader: () => {
-    const auth = getAuth()
-    if (auth.multiTenant) {
-      return spacesLoader()
-    }
-    return galleryLoader({ params: { galleryKey: '' } })
-  },
+  loader: rootPageLoader,
   shouldReload: false,
 })
 
@@ -625,18 +595,6 @@ const accountUsersRoute = createRoute({
     return <UsersPage loaderData={loaderData.users} searchQuery={q} />
   },
 })
-
-const CreateSpacePageTrigger = () => {
-  const { t } = useTranslation()
-  return (
-    <Link to='/account/spaces/new'>
-      <Button>
-        <Plus className='mr-2 h-4 w-4' />
-        {t('pages.spaces.createSpace')}
-      </Button>
-    </Link>
-  )
-}
 
 // Check if embedded mode is enabled via environment variable
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
