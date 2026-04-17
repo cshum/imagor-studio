@@ -137,7 +137,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
                 <div className='min-w-0'>
                   <span className='truncate text-sm leading-tight font-semibold'>{space.name}</span>
                   <span className='text-muted-foreground block truncate font-mono text-xs'>
-                    {space.key}
+                    {space.customDomain || `${space.key}.imagor.app`}
                   </span>
                 </div>
               </Link>

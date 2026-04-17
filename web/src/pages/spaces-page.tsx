@@ -156,9 +156,21 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                       )}
                     </div>
                     <div className='min-w-0'>
-                      <p className='truncate leading-tight font-semibold'>{space.name}</p>
+                      <div className='flex min-w-0 items-center gap-2'>
+                        <p className='truncate leading-tight font-semibold'>{space.name}</p>
+                        <Badge
+                          variant={space.storageType === 's3' ? 'outline' : 'secondary'}
+                          className={
+                            space.storageType === 's3'
+                              ? 'shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400'
+                              : 'shrink-0'
+                          }
+                        >
+                          {t(`pages.spaces.storageType.${space.storageType}`)}
+                        </Badge>
+                      </div>
                       <p className='text-muted-foreground truncate font-mono text-xs'>
-                        {space.key}
+                        {space.customDomain || `${space.key}.imagor.app`}
                       </p>
                     </div>
                   </div>
@@ -195,25 +207,6 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </div>
-
-                {/* Badges */}
-                <div className='mt-4 flex flex-wrap gap-2'>
-                  <Badge
-                    variant={space.storageType === 's3' ? 'outline' : 'secondary'}
-                    className={
-                      space.storageType === 's3'
-                        ? 'border-amber-500/40 text-amber-600 dark:text-amber-400'
-                        : ''
-                    }
-                  >
-                    {space.storageType === 's3' ? (
-                      <Database className='mr-1 h-3 w-3' />
-                    ) : (
-                      <Cloud className='mr-1 h-3 w-3' />
-                    )}
-                    {t(`pages.spaces.storageType.${space.storageType}`)}
-                  </Badge>
                 </div>
 
                 {/* Action buttons */}
