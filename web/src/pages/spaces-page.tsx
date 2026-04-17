@@ -1,29 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useRouter } from '@tanstack/react-router'
-import {
-  Cloud,
-  Database,
-  FolderOpen,
-  LayoutGrid,
-  MoreHorizontal,
-  Plus,
-  Settings,
-  Trash2,
-} from 'lucide-react'
+import { Cloud, Database, FolderOpen, LayoutGrid, Plus, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { deleteSpace, type SpaceItem } from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import {
   ResponsiveDialog,
   ResponsiveDialogDescription,
@@ -156,57 +140,26 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                       )}
                     </div>
                     <div className='min-w-0'>
-                      <div className='flex min-w-0 items-center gap-2'>
-                        <p className='truncate leading-tight font-semibold'>{space.name}</p>
-                        <Badge
-                          variant={space.storageType === 's3' ? 'outline' : 'secondary'}
-                          className={
-                            space.storageType === 's3'
-                              ? 'shrink-0 border-amber-500/40 text-amber-600 dark:text-amber-400'
-                              : 'shrink-0'
-                          }
-                        >
-                          {t(`pages.spaces.storageType.${space.storageType}`)}
-                        </Badge>
-                      </div>
+                      <p className='truncate leading-tight font-semibold'>{space.name}</p>
                       <p className='text-muted-foreground truncate font-mono text-xs'>
                         {space.customDomain || `${space.key}.imagor.app`}
                       </p>
                     </div>
                   </div>
 
-                  {/* Kebab menu */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-8 w-8 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100'
-                        aria-label='Space actions'
-                      >
-                        <MoreHorizontal className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem asChild>
-                        <Link to='/spaces/$spaceKey/settings' params={{ spaceKey: space.key }}>
-                          <Settings className='mr-2 h-4 w-4' />
-                          {t('pages.spaces.settings')}
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className='text-destructive focus:text-destructive'
-                        onClick={() => {
-                          setSelectedSpace(space)
-                          setIsDeleteOpen(true)
-                        }}
-                      >
-                        <Trash2 className='mr-2 h-4 w-4' />
-                        {t('pages.spaces.deleteSpace')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {/* Badge */}
+                  <div className='mt-1 flex shrink-0 items-center gap-1'>
+                    <Badge
+                      variant={space.storageType === 's3' ? 'outline' : 'secondary'}
+                      className={
+                        space.storageType === 's3'
+                          ? 'border-amber-500/40 text-amber-600 dark:text-amber-400'
+                          : ''
+                      }
+                    >
+                      {t(`pages.spaces.storageType.${space.storageType}`)}
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Action buttons */}
