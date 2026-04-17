@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   ArrowLeft,
+  Cloud,
   Cpu,
+  Database,
   FolderOpen,
   HardDrive,
   LayoutDashboard,
@@ -122,11 +124,26 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
 
   const sidebarContent = (
     <>
-      <SidebarHeader className='border-b px-4 py-3'>
-        <div className='min-w-0'>
-          <p className='truncate text-sm leading-tight font-semibold'>{space.name}</p>
-          <p className='text-muted-foreground truncate font-mono text-xs'>{space.key}</p>
-        </div>
+      <SidebarHeader className='border-b p-2'>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild size='lg'>
+              <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
+                {space.storageType === 'managed' ? (
+                  <Cloud className='h-10 w-10 shrink-0' />
+                ) : (
+                  <Database className='h-10 w-10 shrink-0' />
+                )}
+                <div className='min-w-0'>
+                  <span className='truncate text-sm leading-tight font-semibold'>{space.name}</span>
+                  <span className='text-muted-foreground block truncate font-mono text-xs'>
+                    {space.key}
+                  </span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
