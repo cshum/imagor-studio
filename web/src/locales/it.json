@@ -745,7 +745,7 @@
         "saved": "Impostazioni generali salvate"
       },
       "storage": {
-        "description": "Configura le credenziali di archiviazione e la firma URL per questo spazio.",
+        "description": "Visualizza le impostazioni di archiviazione per questo spazio.",
         "managedTitle": "Archiviazione gestita dalla piattaforma",
         "managedDescription": "I file sono archiviati nello storage gestito di Imagor Studio. Il tipo di storage non può essere modificato dopo la creazione dello spazio.",
         "bucket": "Bucket",

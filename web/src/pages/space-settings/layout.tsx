@@ -58,8 +58,6 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { location } = useRouterState()
 
-  const isByob = space.storageType === 's3'
-
   // Extract active section from the last URL segment
   const pathSegments = location.pathname.split('/')
   const activeSection = pathSegments[pathSegments.length - 1] ?? 'general'
@@ -76,7 +74,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
     navigate({ to: '/login' })
   }
 
-  // ── Nav items (Storage only shown for BYOB) ──────────────────────────────
+  // ── Nav items ────────────────────────────────────────────────────────────
 
   type NavItem = { id: SectionId; to: string; icon: React.ReactNode; label: string }
 
@@ -87,16 +85,12 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
       icon: <LayoutDashboard className='h-4 w-4' />,
       label: t('pages.spaceSettings.sections.general'),
     },
-    ...(isByob
-      ? [
-          {
-            id: 'storage' as SectionId,
-            to: '/spaces/$spaceKey/settings/storage',
-            icon: <HardDrive className='h-4 w-4' />,
-            label: t('pages.spaceSettings.sections.storage'),
-          },
-        ]
-      : []),
+    {
+      id: 'storage' as SectionId,
+      to: '/spaces/$spaceKey/settings/storage',
+      icon: <HardDrive className='h-4 w-4' />,
+      label: t('pages.spaceSettings.sections.storage'),
+    },
     {
       id: 'imagor',
       to: '/spaces/$spaceKey/settings/imagor',

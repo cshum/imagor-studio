@@ -750,7 +750,7 @@
         "saved": "General settings saved"
       },
       "storage": {
-        "description": "Configure S3 storage credentials for this space.",
+        "description": "View storage settings for this space.",
         "managedTitle": "Platform-managed Storage",
         "managedDescription": "Files are stored in Imagor Studio's managed storage. Storage type cannot be changed after the space is created.",
         "bucket": "Bucket",

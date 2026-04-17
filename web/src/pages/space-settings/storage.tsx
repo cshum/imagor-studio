@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Navigate, useRouter } from '@tanstack/react-router'
-import { Lock } from 'lucide-react'
+import { useRouter } from '@tanstack/react-router'
+import { Cloud, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -39,16 +39,20 @@ export function StorageSection({ space }: StorageSectionProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [showSecretKey, setShowSecretKey] = useState(false)
 
-  // Redirect non-BYOB spaces to Security
+  // Show read-only info panel for platform-managed spaces
   if (space.storageType !== 's3') {
     return (
-      <Navigate
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        to={'/spaces/$spaceKey/settings/security' as any}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        params={{ spaceKey: space.key } as any}
-        replace
-      />
+      <div className='rounded-lg border p-6'>
+        <div className='flex items-start gap-4'>
+          <Cloud className='text-muted-foreground mt-0.5 h-8 w-8 shrink-0' />
+          <div>
+            <h3 className='font-semibold'>{t('pages.spaceSettings.storage.managedTitle')}</h3>
+            <p className='text-muted-foreground mt-1 text-sm'>
+              {t('pages.spaceSettings.storage.managedDescription')}
+            </p>
+          </div>
+        </div>
+      </div>
     )
   }
 

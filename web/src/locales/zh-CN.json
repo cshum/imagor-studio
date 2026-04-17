@@ -700,7 +700,7 @@
         "managedTitle": "平台托管存储",
         "managedDescription": "文件存储在 Imagor Studio 的托管存储中，存储类型在空间创建后无法更改。",
         "bucketLocked": "存储桶和区域在创建时固定，无法更改。",
-        "description": "配置此空间的文件存储凭证和 URL 签名。",
+        "description": "查看此空间的存储设置。",
         "accessKeyIdDescription": "留空以保留现有凭证。",
         "secretKey": "私有访问密钥",
         "secretKeyDescription": "留空以保留现有凭证。",
