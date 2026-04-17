@@ -341,6 +341,11 @@ export function MembersSection({
     )
   }
 
+  const hasMemberActions = (member: SpaceMemberItem) => {
+    const isCurrentUser = member.userId === currentUserId
+    return member.canChangeRole || member.canRemove || (isCurrentUser && canLeaveSpace)
+  }
+
   const invitationsContent =
     invitations.length === 0 ? null : (
       <div className='overflow-hidden rounded-lg border'>
@@ -403,7 +408,6 @@ export function MembersSection({
           {members.map((member) => {
             const memberLabel = getMemberLabel(member)
             const isCurrentUser = member.userId === currentUserId
-            const hasRowActions = member.canChangeRole || member.canRemove
             const desktopMenuId = `${member.userId}-desktop`
             const mobileMenuId = `${member.userId}-mobile`
 
@@ -446,7 +450,7 @@ export function MembersSection({
                     </div>
                   </div>
                   <div>
-                    {!hasRowActions && !canLeaveSpace ? null : (
+                    {!hasMemberActions(member) ? null : (
                       <div className='flex justify-end'>
                         <DropdownMenu
                           open={openMenuMemberId === desktopMenuId}
@@ -503,7 +507,7 @@ export function MembersSection({
                         </p>
                       ) : null}
                     </div>
-                    {!hasRowActions && !canLeaveSpace ? null : (
+                    {!hasMemberActions(member) ? null : (
                       <DropdownMenu
                         open={openMenuMemberId === mobileMenuId}
                         onOpenChange={(open) => setOpenMenuMemberId(open ? mobileMenuId : null)}
@@ -586,7 +590,6 @@ export function MembersSection({
             {invitationsContent}
           </div>
         ) : null}
-
       </div>
 
       <ResponsiveDialog
@@ -629,8 +632,8 @@ export function MembersSection({
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{t('pages.spaces.leaveSpace')}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            {t('pages.spaces.leaveSpaceDescription')} <strong className='text-foreground'>{spaceKey}</strong>
-            ?
+            {t('pages.spaces.leaveSpaceDescription')}{' '}
+            <strong className='text-foreground'>{spaceKey}</strong>?
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
