@@ -65,28 +65,6 @@
       "title": "语言"
     }
   },
-  "auth": {
-    "login": {
-      "title": "欢迎回来",
-      "subtitle": "输入您的凭据以访问 Imagor Studio",
-      "signIn": "登录",
-      "loginFailed": "用户名或密码无效。请重试。"
-    },
-    "validation": {
-      "usernameRequired": "请输入有效的用户名",
-      "usernameMinLength": "用户名至少需要 3 个字符",
-      "usernameMaxLength": "用户名最多 30 个字符",
-      "passwordRequired": "密码为必填项",
-      "invalidUsername": "请输入有效的用户名"
-    },
-    "embedded": {
-      "tokenMissing": "缺少身份验证令牌。嵌入模式需要 URL 中的 JWT 令牌。预期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
-      "tokenInvalid": "身份验证令牌无效或已过期。请检查您的 JWT 令牌并重试。",
-      "authenticationFailed": "嵌入式身份验证失败。请验证您的令牌有效且未过期。",
-      "pathMissing": "路径参数为必填项。预期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
-      "pathInvalid": "路径格式无效。预期：gallery/folder/image.jpg 或 image.jpg"
-    }
-  },
   "forms": {
     "placeholders": {
       "enterUsername": "输入您的用户名",
@@ -716,26 +694,40 @@
         "saved": "存储与安全设置已保存"
       },
       "members": {
-        "description": "管理有权访问此组织的成员。",
-        "addLabel": "邀请成员",
+        "description": "管理此空间的访问权限。",
+        "addLabel": "添加成员",
         "usernamePlaceholder": "用户名",
         "roleLabel": "角色",
-        "addButton": "添加",
+        "addButton": "直接添加",
         "tableHeaders": {
           "member": "成员",
           "role": "角色",
           "action": "操作"
         },
-        "inviteDescription": "邀请队友并为其分配此空间的角色。",
-        "emptyDescription": "添加您的第一位成员以在此空间中协作。",
+        "inviteDescription": "通过电子邮件分享。现有组织成员会立即获得访问权限，其他人则会收到电子邮件邀请。",
+        "addExistingDescription": "或快速添加已经在组织中的成员。",
+        "emailPlaceholder": "name@example.com",
+        "sendInviteButton": "分享",
+        "inviteHelp": "现有队友会立即加入。新用户需要先使用 Google 登录，然后才会加入此组织和空间。",
+        "memberPlaceholder": "选择队友",
+        "memberPlaceholderEmpty": "您组织中的成员都已经拥有明确访问权限",
+        "sharedTitle": "组织范围访问",
+        "sharedDescription": "此组织中的所有成员都可以查看和复制此空间。使用下方列表管理明确加入的协作者和管理员。",
+        "emptyDescription": "目前还没有明确加入的协作者。组织管理员仍然具有访问权限。",
         "addSuccess": "成员添加成功。",
+        "inviteSent": "邀请邮件已发送。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成员已移除。",
-        "empty": "暂无成员。",
+        "empty": "暂无明确成员。",
+        "pendingTitle": "待处理邀请",
+        "pendingHeaders": {
+          "email": "电子邮件",
+          "role": "角色",
+          "expires": "到期时间"
+        },
         "removeTitle": "移除成员",
         "removeDescription": "确定要移除",
         "roles": {
-          "owner": "所有者",
           "admin": "管理员",
           "member": "成员"
         }
