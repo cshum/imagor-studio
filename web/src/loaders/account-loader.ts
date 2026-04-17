@@ -21,6 +21,8 @@ export interface ProfileLoaderData {
   profile: {
     displayName: string
     username: string
+    email: string | null
+    avatarUrl: string | null
   } | null
   breadcrumb: BreadcrumbItem
 }
@@ -71,6 +73,8 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
       ? {
           displayName: auth.profile.displayName || '',
           username: auth.profile.username || '',
+          email: auth.profile.email ?? null,
+          avatarUrl: auth.profile.avatarUrl ?? null,
         }
       : null,
     breadcrumb: {

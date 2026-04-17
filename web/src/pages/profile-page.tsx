@@ -77,9 +77,13 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const profileData = loaderData?.profile || {
     displayName: authState.profile?.displayName || '',
     username: authState.profile?.username || '',
+    email: authState.profile?.email || null,
+    avatarUrl: authState.profile?.avatarUrl || null,
   }
 
-  const avatarUrl = authState.profile?.avatarUrl
+  const avatarUrl = profileData.avatarUrl
+  const email = profileData.email
+  const hasProviderAvatar = authState.multiTenant && Boolean(avatarUrl)
   const displayName = profileData.displayName || profileData.username || ''
   const initials = (() => {
     const words = displayName.trim().split(/\s+/).filter(Boolean)
@@ -155,15 +159,37 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
             description={
               avatarUrl ? t('pages.profile.avatarFromProvider') : t('pages.profile.avatarNoPhoto')
             }
+            className='items-center'
           >
-            <Avatar className='h-16 w-16'>
-              <AvatarImage
-                src={avatarUrl ?? undefined}
-                referrerPolicy='no-referrer'
-                alt={displayName}
-              />
-              <AvatarFallback className='text-sm font-semibold'>{initials}</AvatarFallback>
-            </Avatar>
+            <div className='flex items-center justify-end gap-3 sm:max-w-none'>
+              <Avatar className='h-16 w-16'>
+                <AvatarImage
+                  src={avatarUrl ?? undefined}
+                  referrerPolicy='no-referrer'
+                  alt={displayName}
+                />
+                <AvatarFallback className='text-sm font-semibold'>{initials}</AvatarFallback>
+              </Avatar>
+              <div className='text-muted-foreground text-right text-xs'>
+                {hasProviderAvatar
+                  ? t('pages.profile.avatarManagedByProvider')
+                  : t('pages.profile.avatarNotAvailable')}
+              </div>
+            </div>
+          </SettingRow>
+        )}
+
+        {authState.multiTenant && (
+          <SettingRow
+            label={t('pages.profile.email')}
+            description={t('pages.profile.emailDescription')}
+          >
+            <div className='space-y-1 text-right sm:max-w-none'>
+              <div className='text-sm font-medium break-all'>{email || t('pages.profile.noEmail')}</div>
+              <div className='text-muted-foreground text-xs'>
+                {t('pages.profile.emailChangeManaged')}
+              </div>
+            </div>
           </SettingRow>
         )}
 
@@ -226,6 +252,20 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
         title={t('pages.profile.securitySettings')}
         description={t('pages.profile.securitySettingsDescription')}
       >
+        {authState.multiTenant && (
+          <SettingRow
+            label={t('pages.profile.signInMethod')}
+            description={t('pages.profile.signInMethodDescription')}
+          >
+            <div className='space-y-1 text-right sm:max-w-none'>
+              <div className='text-sm font-medium'>{t('pages.profile.googleSignIn')}</div>
+              <div className='text-muted-foreground text-xs'>
+                {t('pages.profile.unlinkNotAvailable')}
+              </div>
+            </div>
+          </SettingRow>
+        )}
+
         <SettingRow
           label={t('pages.profile.password')}
           description={t('pages.profile.passwordDescription')}
