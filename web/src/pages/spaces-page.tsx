@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { deleteSpace, leaveSpace, type SpaceItem } from '@/api/org-api'
+import { leaveSpace, type SpaceItem } from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -31,6 +31,7 @@ import {
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ListSpacesQuery } from '@/generated/graphql'
 import { useAuth } from '@/stores/auth-store'
 
@@ -219,17 +220,29 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       {t('pages.spaces.openGallery')}
                     </Link>
                   </Button>
-                  {canManageSpace && (
-                    <Button variant='outline' size='sm' className='flex-1' asChild>
-                      <Link
-                        to='/spaces/$spaceKey/settings/$section'
-                        params={{ spaceKey: space.key, section: 'general' }}
-                      >
-                        <Settings className='mr-1.5 h-4 w-4' />
-                        {t('pages.spaces.configure')}
-                      </Link>
-                    </Button>
-                  )}
+                  {canManageSpace ? (
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant='outline'
+                            size='icon'
+                            className='h-9 w-9 shrink-0'
+                            asChild
+                          >
+                            <Link
+                              to='/spaces/$spaceKey/settings/$section'
+                              params={{ spaceKey: space.key, section: 'general' }}
+                              aria-label={t('pages.spaces.configure')}
+                            >
+                              <Settings className='h-4 w-4' />
+                            </Link>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side='top'>{t('pages.spaces.configure')}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : null}
                   {isSharedSpace && authState.profile?.id ? (
                     <DropdownMenu
                       open={openMenuSpaceKey === space.key}
