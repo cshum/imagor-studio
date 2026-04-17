@@ -835,12 +835,9 @@
       "removeSelfNotAllowed": "Non puoi rimuoverti da questo spazio.",
       "empty": "Nessun membro diretto dello spazio.",
       "accessLabel": "Accesso condiviso",
-      "directAccessLabel": "Accesso diretto",
-      "pendingAccessLabel": "Invito in attesa",
       "pendingTitle": "Inviti in attesa",
       "listHeaders": {
         "member": "Membro",
-        "status": "Stato",
         "action": "Azione"
       },
       "pendingHeaders": {

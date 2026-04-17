@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Clock3 } from 'lucide-react'
+import { Clock3, MoreHorizontal, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -17,6 +17,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import {
   ResponsiveDialog,
@@ -64,6 +70,8 @@ export function MembersSection({
   const [isInviting, setIsInviting] = useState(false)
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState(false)
+  const [openMenuMemberId, setOpenMenuMemberId] = useState<string | null>(null)
+  const removeDialogTimerRef = useRef<number | null>(null)
 
   const currentUserId = authState.profile?.id ?? null
   const pendingMember = members.find((member) => member.userId === pendingRemoveId)
@@ -192,20 +200,24 @@ export function MembersSection({
     }
   }
 
+  const requestRemoveMember = (menuId: string, userId: string) => {
+    setOpenMenuMemberId((current) => (current === menuId ? null : current))
+    if (removeDialogTimerRef.current !== null) {
+      window.clearTimeout(removeDialogTimerRef.current)
+    }
+    removeDialogTimerRef.current = window.setTimeout(() => {
+      setPendingRemoveId(userId)
+      removeDialogTimerRef.current = null
+    }, 0)
+  }
+
   const invitationsContent =
     invitations.length === 0 ? null : (
       <div className='overflow-hidden rounded-lg border'>
-        <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_160px] gap-4 border-b px-4 py-3 text-xs font-medium md:grid'>
-          <div>{t('pages.spaceSettings.members.listHeaders.member')}</div>
-          <div>{t('pages.spaceSettings.members.listHeaders.status')}</div>
-        </div>
         <div className='divide-y'>
           {invitations.map((invitation) => (
-            <>
-              <div
-                key={`${invitation.id}-desktop`}
-                className='hidden grid-cols-[minmax(0,1fr)_160px] items-center gap-4 px-4 py-4 md:grid'
-              >
+            <div key={invitation.id}>
+              <div className='hidden px-4 py-4 md:block'>
                 <div className='min-w-0'>
                   <p className='truncate text-sm font-medium'>{invitation.email}</p>
                   <div className='text-muted-foreground mt-1 flex items-center gap-2 text-xs'>
@@ -213,13 +225,8 @@ export function MembersSection({
                     <span>{new Date(invitation.expiresAt).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <div>
-                  <Badge variant='outline' className='justify-center px-3 py-1'>
-                    {t('pages.spaceSettings.members.pendingAccessLabel')}
-                  </Badge>
-                </div>
               </div>
-              <div key={`${invitation.id}-mobile`} className='space-y-3 px-4 py-4 md:hidden'>
+              <div className='space-y-3 px-4 py-4 md:hidden'>
                 <div className='min-w-0'>
                   <p className='truncate text-sm font-medium'>{invitation.email}</p>
                   <div className='text-muted-foreground mt-1 flex items-center gap-2 text-xs'>
@@ -227,11 +234,8 @@ export function MembersSection({
                     <span>{new Date(invitation.expiresAt).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <Badge variant='outline' className='w-fit px-3 py-1'>
-                  {t('pages.spaceSettings.members.pendingAccessLabel')}
-                </Badge>
               </div>
-            </>
+            </div>
           ))}
         </div>
       </div>
@@ -255,22 +259,20 @@ export function MembersSection({
   ) : (
     <Card>
       <CardContent className='p-0'>
-        <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_160px_104px] gap-4 border-b px-4 py-3 text-xs font-medium md:grid'>
+        <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_44px] gap-4 border-b px-4 py-3 text-xs font-medium md:grid'>
           <div>{t('pages.spaceSettings.members.listHeaders.member')}</div>
-          <div>{t('pages.spaceSettings.members.listHeaders.status')}</div>
-          <div>{t('pages.spaceSettings.members.listHeaders.action')}</div>
+          <div className='text-right'>{t('pages.spaceSettings.members.listHeaders.action')}</div>
         </div>
         <div className='divide-y'>
           {members.map((member) => {
             const memberLabel = getMemberLabel(member)
             const isCurrentUser = member.userId === currentUserId
+            const desktopMenuId = `${member.userId}-desktop`
+            const mobileMenuId = `${member.userId}-mobile`
 
             return (
-              <>
-                <div
-                  key={`${member.userId}-desktop`}
-                  className='hidden grid-cols-[minmax(0,1fr)_160px_104px] items-center gap-4 px-4 py-4 md:grid'
-                >
+              <div key={member.userId}>
+                <div className='hidden grid-cols-[minmax(0,1fr)_44px] items-center gap-4 px-4 py-4 md:grid'>
                   <div className='flex min-w-0 items-center gap-3'>
                     <Avatar className='h-10 w-10'>
                       <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
@@ -279,32 +281,54 @@ export function MembersSection({
                       </AvatarFallback>
                     </Avatar>
                     <div className='min-w-0'>
-                      <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                      <div className='flex items-center gap-2'>
+                        <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                        {isCurrentUser ? (
+                          <Badge
+                            variant='outline'
+                            className='inline-flex h-5 items-center gap-1 px-2 text-[11px] font-medium'
+                          >
+                            <UserRound className='h-3 w-3' />
+                            {t('pages.spaceSettings.members.removeSelfDisabled')}
+                          </Badge>
+                        ) : null}
+                      </div>
                       <p className='text-muted-foreground truncate text-xs'>
                         {member.email || `@${member.username}`}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <Badge variant='secondary' className='justify-center px-3 py-1'>
-                      {t('pages.spaceSettings.members.directAccessLabel')}
-                    </Badge>
-                  </div>
-                  <div>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      className='text-destructive hover:text-destructive h-9 w-[104px] justify-center px-3'
-                      disabled={isCurrentUser}
-                      onClick={() => setPendingRemoveId(member.userId)}
-                    >
-                      {isCurrentUser
-                        ? t('pages.spaceSettings.members.removeSelfDisabled')
-                        : t('common.buttons.remove')}
-                    </Button>
+                    {isCurrentUser ? null : (
+                      <div className='flex justify-end'>
+                        <DropdownMenu
+                          open={openMenuMemberId === desktopMenuId}
+                          onOpenChange={(open) => setOpenMenuMemberId(open ? desktopMenuId : null)}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='h-9 w-9'
+                              aria-label={t('common.buttons.more')}
+                            >
+                              <MoreHorizontal className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem
+                              className='text-destructive focus:text-destructive'
+                              onClick={() => requestRemoveMember(desktopMenuId, member.userId)}
+                            >
+                              {t('common.buttons.remove')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div key={`${member.userId}-mobile`} className='space-y-3 px-4 py-4 md:hidden'>
+                <div className='px-4 py-4 md:hidden'>
                   <div className='flex min-w-0 items-center gap-3'>
                     <Avatar className='h-10 w-10'>
                       <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
@@ -312,31 +336,51 @@ export function MembersSection({
                         {getInitials(memberLabel)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className='min-w-0'>
-                      <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                    <div className='min-w-0 flex-1'>
+                      <div className='flex items-center gap-2'>
+                        <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                        {isCurrentUser ? (
+                          <Badge
+                            variant='outline'
+                            className='inline-flex h-5 items-center gap-1 px-2 text-[11px] font-medium'
+                          >
+                            <UserRound className='h-3 w-3' />
+                            {t('pages.spaceSettings.members.removeSelfDisabled')}
+                          </Badge>
+                        ) : null}
+                      </div>
                       <p className='text-muted-foreground truncate text-xs'>
                         {member.email || `@${member.username}`}
                       </p>
                     </div>
-                  </div>
-                  <div className='flex items-center justify-between gap-3'>
-                    <Badge variant='secondary' className='px-3 py-1'>
-                      {t('pages.spaceSettings.members.directAccessLabel')}
-                    </Badge>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      className='text-destructive hover:text-destructive h-9 px-3'
-                      disabled={isCurrentUser}
-                      onClick={() => setPendingRemoveId(member.userId)}
-                    >
-                      {isCurrentUser
-                        ? t('pages.spaceSettings.members.removeSelfDisabled')
-                        : t('common.buttons.remove')}
-                    </Button>
+                    {isCurrentUser ? null : (
+                      <DropdownMenu
+                        open={openMenuMemberId === mobileMenuId}
+                        onOpenChange={(open) => setOpenMenuMemberId(open ? mobileMenuId : null)}
+                      >
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-9 w-9'
+                            aria-label={t('common.buttons.more')}
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            className='text-destructive focus:text-destructive'
+                            onClick={() => requestRemoveMember(mobileMenuId, member.userId)}
+                          >
+                            {t('common.buttons.remove')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </div>
-              </>
+              </div>
             )
           })}
         </div>

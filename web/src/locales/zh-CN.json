@@ -761,12 +761,9 @@
         "removeSelfNotAllowed": "你不能将自己从这个空间移除。",
         "empty": "这个空间还没有直接成员。",
         "accessLabel": "共享访问",
-        "directAccessLabel": "直接访问",
-        "pendingAccessLabel": "待接受邀请",
         "pendingTitle": "待处理邀请",
         "listHeaders": {
           "member": "成员",
-          "status": "状态",
           "action": "操作"
         },
         "pendingHeaders": {

@@ -783,12 +783,9 @@
         "removeSelfNotAllowed": "您不能將自己從這個空間移除。",
         "empty": "這個空間尚無直接成員。",
         "accessLabel": "共享存取",
-        "directAccessLabel": "直接存取",
-        "pendingAccessLabel": "待接受邀請",
         "pendingTitle": "待接受的邀請",
         "listHeaders": {
           "member": "成員",
-          "status": "狀態",
           "action": "操作"
         },
         "pendingHeaders": {
