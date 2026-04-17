@@ -113,6 +113,8 @@ extend type Mutation {
   deleteSpaceRegistry(spaceKey: String!, keys: [String!]): Boolean!
   # Add a user to the caller's organization by username (admin only)
   addOrgMember(username: String!, role: String!): OrgMember!
+  # Add an existing user to the caller's organization by email (admin only)
+  addOrgMemberByEmail(email: String!, role: String!): OrgMember!
   # Add an existing org member to a specific space (admin only)
   addSpaceMember(spaceKey: String!, userId: ID!, role: String!): SpaceMember!
   # Invite a user to a specific space by email (admin only)

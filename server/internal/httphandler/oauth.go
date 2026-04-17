@@ -267,33 +267,29 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 		// Resolve org (multi-tenant mode only).
 		orgID := ""
 		if h.orgStore != nil {
-			if pendingInvite != nil {
-				orgID = pendingInvite.OrgID
-			} else {
-				org, orgErr := h.orgStore.GetByUserID(ctx, user.ID)
-				if orgErr != nil {
-					h.logger.Warn("OAuth callback: failed to get org for user",
-						zap.String("userID", user.ID), zap.Error(orgErr))
-				} else if org == nil {
-					// Auto-create a personal org for new OAuth users.
-					trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
-					newOrg, createErr := h.orgStore.CreateWithMember(ctx, user.ID, user.DisplayName, user.Username, &trialEndsAt)
-					if createErr != nil {
-						h.logger.Warn("OAuth callback: failed to create org for user",
-							zap.String("userID", user.ID), zap.Error(createErr))
-					} else {
-						orgID = newOrg.ID
-						// The org creator is the owner — promote them to admin.
-						if roleErr := h.userStore.UpdateRole(ctx, user.ID, "admin"); roleErr != nil {
-							h.logger.Warn("OAuth callback: failed to set admin role for org owner",
-								zap.String("userID", user.ID), zap.Error(roleErr))
-						} else {
-							user.Role = "admin"
-						}
-					}
+			org, orgErr := h.orgStore.GetByUserID(ctx, user.ID)
+			if orgErr != nil {
+				h.logger.Warn("OAuth callback: failed to get org for user",
+					zap.String("userID", user.ID), zap.Error(orgErr))
+			} else if org == nil {
+				// Auto-create a personal org for new OAuth users.
+				trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
+				newOrg, createErr := h.orgStore.CreateWithMember(ctx, user.ID, user.DisplayName, user.Username, &trialEndsAt)
+				if createErr != nil {
+					h.logger.Warn("OAuth callback: failed to create org for user",
+						zap.String("userID", user.ID), zap.Error(createErr))
 				} else {
-					orgID = org.ID
+					orgID = newOrg.ID
+					// The org creator is the owner — promote them to admin.
+					if roleErr := h.userStore.UpdateRole(ctx, user.ID, "admin"); roleErr != nil {
+						h.logger.Warn("OAuth callback: failed to set admin role for org owner",
+							zap.String("userID", user.ID), zap.Error(roleErr))
+					} else {
+						user.Role = "admin"
+					}
 				}
+			} else {
+				orgID = org.ID
 			}
 		}
 
@@ -333,23 +329,6 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 }
 
 func (h *OAuthHandler) acceptInvitation(ctx context.Context, userID string, invite *spaceinvite.Invitation) error {
-	members, err := h.orgStore.ListMembers(ctx, invite.OrgID)
-	if err != nil {
-		return fmt.Errorf("list org members: %w", err)
-	}
-	userInOrg := false
-	for _, member := range members {
-		if member.UserID == userID {
-			userInOrg = true
-			break
-		}
-	}
-	if !userInOrg {
-		if err := h.orgStore.AddMember(ctx, invite.OrgID, userID, "member"); err != nil {
-			return fmt.Errorf("add invited user to organization: %w", err)
-		}
-	}
-
 	hasSpaceAccess, err := h.spaceStore.HasMember(ctx, invite.SpaceKey, userID)
 	if err != nil {
 		return fmt.Errorf("check space membership: %w", err)

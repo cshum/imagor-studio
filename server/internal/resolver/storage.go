@@ -42,12 +42,6 @@ func (r *Resolver) getSpaceStorage(ctx context.Context, spaceKey *string) (stora
 		return r.getStorage(), nil
 	}
 
-	// Resolve caller's org ID so we can enforce ownership.
-	orgID, err := r.getUserOrgID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	// Fetch the space (decrypts credentials transparently).
 	space, err := r.spaceStore.Get(ctx, *spaceKey)
 	if err != nil {
@@ -60,13 +54,6 @@ func (r *Resolver) getSpaceStorage(ctx context.Context, spaceKey *string) (stora
 		}
 	}
 
-	// Authorization: the caller must belong to the space's org.
-	if orgID != "" && space.OrgID != orgID {
-		return nil, &gqlerror.Error{
-			Message:    "forbidden: space does not belong to your organization",
-			Extensions: map[string]interface{}{"code": "FORBIDDEN"},
-		}
-	}
 	allowed, err := r.canReadSpace(ctx, space)
 	if err != nil {
 		return nil, err

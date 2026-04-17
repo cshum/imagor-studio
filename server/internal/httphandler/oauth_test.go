@@ -506,6 +506,7 @@ func TestGoogleCallback_AcceptsPendingSpaceInvitation(t *testing.T) {
 		mock.Anything,
 		"google", "google-uid-123", "test@example.com", "Test User", "https://example.com/pic.jpg",
 	).Return(upsertedUser, nil)
+	ms.On("UpdateRole", mock.Anything, upsertedUser.ID, "admin").Return(nil)
 
 	handler := newOAuthHandlerWithConfig(
 		tm, ms, os, ss, is, zap.NewNop(),
@@ -528,7 +529,8 @@ func TestGoogleCallback_AcceptsPendingSpaceInvitation(t *testing.T) {
 	claims, err := tm.ValidateToken(rawToken)
 	require.NoError(t, err)
 	assert.Equal(t, upsertedUser.ID, claims.UserID)
-	assert.Equal(t, org.ID, claims.OrgID)
+	assert.NotEmpty(t, claims.OrgID)
+	assert.NotEqual(t, org.ID, claims.OrgID)
 
 	members, err := os.ListMembers(ctx, org.ID)
 	require.NoError(t, err)
@@ -536,7 +538,7 @@ func TestGoogleCallback_AcceptsPendingSpaceInvitation(t *testing.T) {
 	for _, member := range members {
 		memberIDs = append(memberIDs, member.UserID)
 	}
-	assert.Contains(t, memberIDs, upsertedUser.ID)
+	assert.NotContains(t, memberIDs, upsertedUser.ID)
 
 	hasSpaceAccess, err := ss.HasMember(ctx, "acme-space", upsertedUser.ID)
 	require.NoError(t, err)

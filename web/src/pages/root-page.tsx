@@ -44,7 +44,7 @@ export function RootPage({ loaderData }: RootPageProps) {
         description={t('pages.spaces.description')}
         primaryAction={<CreateSpacePageTrigger />}
       >
-        <SpacesPage loaderData={data.spaces} />
+        <SpacesPage loaderData={data.spaces} currentOrganizationId={data.currentOrganizationId} />
       </SpacesLayout>
     )
   }

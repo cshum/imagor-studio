@@ -20,9 +20,10 @@ import type { ListSpacesQuery } from '@/generated/graphql'
 
 interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']
+  currentOrganizationId?: string | null
 }
 
-export function SpacesPage({ loaderData }: SpacesPageProps) {
+export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -124,6 +125,7 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
         /* Card grid */
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           {spaces.map((space) => {
+            const canManageSpace = currentOrganizationId !== null && space.orgId === currentOrganizationId
             return (
               <div
                 key={space.key}
@@ -170,15 +172,17 @@ export function SpacesPage({ loaderData }: SpacesPageProps) {
                       {t('pages.spaces.openGallery')}
                     </Link>
                   </Button>
-                  <Button variant='outline' size='sm' className='flex-1' asChild>
-                    <Link
-                      to='/spaces/$spaceKey/settings/$section'
-                      params={{ spaceKey: space.key, section: 'general' }}
-                    >
-                      <Settings className='mr-1.5 h-4 w-4' />
-                      {t('pages.spaces.configure')}
-                    </Link>
-                  </Button>
+                  {canManageSpace && (
+                    <Button variant='outline' size='sm' className='flex-1' asChild>
+                      <Link
+                        to='/spaces/$spaceKey/settings/$section'
+                        params={{ spaceKey: space.key, section: 'general' }}
+                      >
+                        <Settings className='mr-1.5 h-4 w-4' />
+                        {t('pages.spaces.configure')}
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             )

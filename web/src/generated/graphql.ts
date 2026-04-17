@@ -155,6 +155,7 @@ export type LicenseStatus = {
 export type Mutation = {
   __typename?: 'Mutation'
   addOrgMember: OrgMember
+  addOrgMemberByEmail: OrgMember
   addSpaceMember: SpaceMember
   changePassword: Scalars['Boolean']['output']
   configureFileStorage: StorageConfigResult
@@ -193,6 +194,11 @@ export type Mutation = {
 export type MutationAddOrgMemberArgs = {
   role: Scalars['String']['input']
   username: Scalars['String']['input']
+}
+
+export type MutationAddOrgMemberByEmailArgs = {
+  email: Scalars['String']['input']
+  role: Scalars['String']['input']
 }
 
 export type MutationAddSpaceMemberArgs = {
@@ -950,6 +956,23 @@ export type AddOrgMemberMutationVariables = Exact<{
 export type AddOrgMemberMutation = {
   __typename?: 'Mutation'
   addOrgMember: {
+    __typename?: 'OrgMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }
+}
+
+export type AddOrgMemberByEmailMutationVariables = Exact<{
+  email: Scalars['String']['input']
+  role: Scalars['String']['input']
+}>
+
+export type AddOrgMemberByEmailMutation = {
+  __typename?: 'Mutation'
+  addOrgMemberByEmail: {
     __typename?: 'OrgMember'
     userId: string
     username: string
@@ -2507,6 +2530,65 @@ export const AddOrgMemberDocument = {
     },
   ],
 } as unknown as DocumentNode<AddOrgMemberMutation, AddOrgMemberMutationVariables>
+export const AddOrgMemberByEmailDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'AddOrgMemberByEmail' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'email' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addOrgMemberByEmail' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'email' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'email' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'role' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddOrgMemberByEmailMutation, AddOrgMemberByEmailMutationVariables>
 export const AddSpaceMemberDocument = {
   kind: 'Document',
   definitions: [

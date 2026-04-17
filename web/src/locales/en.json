@@ -790,11 +790,14 @@
           "role": "Role",
           "action": "Action"
         },
-        "inviteDescription": "Share by email. Existing organisation members get access right away; everyone else receives an email invite.",
+        "inviteDescription": "Share by email. Existing organisation members get access right away. If someone already has an account but is outside your organisation, you can add them to the organisation first from here.",
         "addExistingDescription": "Or quickly add someone who is already in your organisation.",
         "emailPlaceholder": "name@example.com",
         "sendInviteButton": "Share",
-        "inviteHelp": "We add existing teammates immediately. New people will be asked to sign in with Google to join this organisation and space.",
+        "inviteHelp": "Existing teammates are added immediately. New people still need an email invite to join this organisation and space.",
+        "addToOrganizationAndShare": "Add to organisation and share",
+        "addToOrganizationHelp": "Use this when the person already has an account but is not yet in your organisation.",
+        "addedToOrganizationAndShared": "Added to organisation and shared successfully.",
         "inviteErrors": {
           "required": "Enter an email address.",
           "invalidEmail": "Enter a valid email address.",
@@ -803,6 +806,11 @@
           "notConfigured": "Email invitations are not configured yet.",
           "unavailable": "Sharing is not available in this deployment.",
           "default": "Could not share this space right now. Please try again."
+        },
+        "orgInviteErrors": {
+          "accountNotFound": "No existing account was found for this email. Use email invite instead.",
+          "memberLimit": "Your organisation has reached its member limit.",
+          "default": "Could not add this person to your organisation right now. Please try again."
         },
         "memberPlaceholder": "Choose a teammate",
         "memberPlaceholderEmpty": "Everyone in your organisation already has explicit access",

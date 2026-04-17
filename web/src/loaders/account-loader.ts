@@ -1,6 +1,6 @@
 import { getImagorStatus } from '@/api/imagor-api'
 import { getLicenseStatus, type LicenseStatus } from '@/api/license-api'
-import { getSpace, listSpaces } from '@/api/org-api'
+import { getMyOrganization, getSpace, listSpaces } from '@/api/org-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
@@ -161,6 +161,7 @@ export const usersLoader = async ({
 
 export interface SpacesLoaderData {
   spaces: ListSpacesQuery['spaces']
+  currentOrganizationId: string | null
   breadcrumb: BreadcrumbItem
 }
 
@@ -168,9 +169,10 @@ export interface SpacesLoaderData {
  * Load spaces data for the spaces management page
  */
 export const spacesLoader = async (): Promise<SpacesLoaderData> => {
-  const spaces = await listSpaces()
+  const [spaces, organization] = await Promise.all([listSpaces(), getMyOrganization()])
   return {
     spaces,
+    currentOrganizationId: organization?.id ?? null,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.spaces',
     },

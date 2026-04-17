@@ -41,6 +41,10 @@ func (n *SpaceStore) ListByOrgID(_ context.Context, _ string) ([]*spacestore.Spa
 	return nil, ErrEmbeddedMode
 }
 
+func (n *SpaceStore) ListByMemberUserID(_ context.Context, _ string) ([]*spacestore.Space, error) {
+	return nil, ErrEmbeddedMode
+}
+
 func (n *SpaceStore) Delta(_ context.Context, _ time.Time) (*spacestore.DeltaResult, error) {
 	return nil, ErrEmbeddedMode
 }

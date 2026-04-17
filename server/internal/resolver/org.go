@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -103,13 +104,11 @@ func (r *Resolver) canReadSpace(ctx context.Context, space *spacestore.Space) (b
 	if err != nil {
 		return false, err
 	}
-	if orgID != "" && space.OrgID != orgID {
-		return false, nil
-	}
-	if RequireAdminPermission(ctx) == nil {
+	sameOrg := orgID != "" && space.OrgID == orgID
+	if sameOrg && RequireAdminPermission(ctx) == nil {
 		return true, nil
 	}
-	if space.IsShared {
+	if sameOrg && space.IsShared {
 		return true, nil
 	}
 	if r.spaceStore == nil {
@@ -199,16 +198,33 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 	if err != nil {
 		return nil, err
 	}
-	if orgID == "" {
-		return []*gql.Space{}, nil
-	}
-	spaces, err := r.spaceStore.ListByOrgID(ctx, orgID)
+	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
-		r.logger.Error("Spaces: failed to list spaces", zap.Error(err))
+		return nil, err
+	}
+
+	spacesByKey := map[string]*spacestore.Space{}
+	if orgID != "" {
+		ownSpaces, listErr := r.spaceStore.ListByOrgID(ctx, orgID)
+		if listErr != nil {
+			r.logger.Error("Spaces: failed to list own spaces", zap.Error(listErr))
+			return nil, fmt.Errorf("failed to list spaces: %w", listErr)
+		}
+		for _, s := range ownSpaces {
+			spacesByKey[s.Key] = s
+		}
+	}
+	memberSpaces, err := r.spaceStore.ListByMemberUserID(ctx, claims.UserID)
+	if err != nil {
+		r.logger.Error("Spaces: failed to list guest spaces", zap.Error(err))
 		return nil, fmt.Errorf("failed to list spaces: %w", err)
 	}
-	result := make([]*gql.Space, 0, len(spaces))
-	for _, s := range spaces {
+	for _, s := range memberSpaces {
+		spacesByKey[s.Key] = s
+	}
+
+	result := make([]*gql.Space, 0, len(spacesByKey))
+	for _, s := range spacesByKey {
 		allowed, allowErr := r.canReadSpace(ctx, s)
 		if allowErr != nil {
 			return nil, allowErr
@@ -218,6 +234,9 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 		}
 		result = append(result, mapSpaceToGQL(s))
 	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Key < result[j].Key
+	})
 	return result, nil
 }
 
@@ -237,20 +256,12 @@ func (r *queryResolver) Space(ctx context.Context, key string) (*gql.Space, erro
 	if r.spaceStore == nil {
 		return nil, nil
 	}
-	orgID, err := r.getUserOrgID(ctx)
-	if err != nil {
-		return nil, err
-	}
 	s, err := r.spaceStore.Get(ctx, key)
 	if err != nil {
 		r.logger.Error("Space: failed to get space", zap.String("key", key), zap.Error(err))
 		return nil, fmt.Errorf("failed to get space: %w", err)
 	}
 	if s == nil {
-		return nil, nil
-	}
-	if orgID != "" && s.OrgID != orgID {
-		r.logger.Warn("Space: org mismatch", zap.String("key", key), zap.String("spaceOrgID", s.OrgID), zap.String("callerOrgID", orgID))
 		return nil, nil
 	}
 	allowed, allowErr := r.canReadSpace(ctx, s)
@@ -580,6 +591,81 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 		UserID:   user.ID,
 		Username: user.Username,
 		Role:     role,
+	}, nil
+}
+
+// AddOrgMemberByEmail adds an existing user (found by email) to the caller's org (admin only).
+// Enforces the plan's MaxMembers limit before inserting.
+func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string, role string) (*gql.OrgMember, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if r.orgStore == nil || r.userStore == nil {
+		return nil, fmt.Errorf("member management is not available in this deployment")
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil || orgID == "" {
+		return nil, fmt.Errorf("no organization found")
+	}
+
+	normalizedEmail := strings.ToLower(strings.TrimSpace(email))
+	if normalizedEmail == "" {
+		return nil, fmt.Errorf("email is required")
+	}
+
+	user, err := r.userStore.GetByEmail(ctx, normalizedEmail)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up user by email: %w", err)
+	}
+	if user == nil {
+		return nil, fmt.Errorf("user with email %q not found", normalizedEmail)
+	}
+
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify org membership: %w", err)
+	}
+	for _, member := range members {
+		if member.UserID == user.ID {
+			return nil, fmt.Errorf("user is already a member of your organization")
+		}
+	}
+
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	org, err := r.orgStore.GetByUserID(ctx, claims.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve organization: %w", err)
+	}
+	if org != nil {
+		limits := model.GetLimits(org.Plan)
+		if limits.MaxMembers != -1 && len(members) >= limits.MaxMembers {
+			return nil, fmt.Errorf("member limit (%d) reached for plan %q", limits.MaxMembers, org.Plan)
+		}
+	}
+
+	if err := r.orgStore.AddMember(ctx, orgID, user.ID, role); err != nil {
+		r.logger.Error("AddOrgMemberByEmail: failed", zap.String("orgID", orgID), zap.String("userID", user.ID), zap.Error(err))
+		return nil, fmt.Errorf("failed to add member: %w", err)
+	}
+	r.logger.Info("OrgMember added by email", zap.String("orgID", orgID), zap.String("email", normalizedEmail), zap.String("role", role))
+
+	memberList, err := r.orgStore.ListMembers(ctx, orgID)
+	if err == nil {
+		for _, member := range memberList {
+			if member.UserID == user.ID {
+				return mapMemberToGQL(member), nil
+			}
+		}
+	}
+
+	return &gql.OrgMember{
+		UserID:      user.ID,
+		Username:    user.Username,
+		DisplayName: user.DisplayName,
+		Role:        role,
 	}, nil
 }
 

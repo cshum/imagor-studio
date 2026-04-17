@@ -138,6 +138,26 @@ func TestSpaces_ReturnsSpaces(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 }
 
+func TestSpaces_IncludesGuestAccessibleSpaces(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	ownSpace := makeTestSpace("acme", "org-1")
+	guestSpace := makeTestSpace("shared", "org-2")
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*spacestore.Space{ownSpace}, nil)
+	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*spacestore.Space{guestSpace}, nil)
+	spaceStore.On("HasMember", mock.Anything, "shared", "user-1").Return(true, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().Spaces(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	assert.Equal(t, "acme", result[0].Key)
+	assert.Equal(t, "shared", result[1].Key)
+	spaceStore.AssertExpectations(t)
+}
+
 func TestSpaces_FallbackToOrgStore(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
@@ -202,6 +222,24 @@ func TestSpace_WrongOrg(t *testing.T) {
 	result, err := r.Query().Space(ctx, "acme")
 	require.NoError(t, err)
 	assert.Nil(t, result, "should return nil when space belongs to a different org")
+	spaceStore.AssertExpectations(t)
+}
+
+func TestSpace_ReturnsGuestAccessibleSpace(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	s := makeTestSpace("acme", "org-2")
+	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
+	spaceStore.On("HasMember", mock.Anything, "acme", "user-1").Return(true, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().Space(ctx, "acme")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "acme", result.Key)
+	assert.Equal(t, "org-2", result.OrgID)
 	spaceStore.AssertExpectations(t)
 }
 

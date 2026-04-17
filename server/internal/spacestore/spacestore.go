@@ -97,6 +97,8 @@ type Store interface {
 	List(ctx context.Context) ([]*Space, error)
 	// ListByOrgID returns all active spaces belonging to the given org.
 	ListByOrgID(ctx context.Context, orgID string) ([]*Space, error)
+	// ListByMemberUserID returns all active spaces where the user has explicit membership.
+	ListByMemberUserID(ctx context.Context, userID string) ([]*Space, error)
 	// Delta returns all spaces (active and deleted) whose updated_at > since.
 	// Pass the zero time to request a full sync.
 	Delta(ctx context.Context, since time.Time) (*DeltaResult, error)
@@ -436,6 +438,28 @@ func (s *store) ListByOrgID(ctx context.Context, orgID string) ([]*Space, error)
 		OrderExpr("key ASC").
 		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("list spaces by org %s: %w", orgID, err)
+	}
+	result := make([]*Space, 0, len(rows))
+	for i := range rows {
+		sp, err := s.modelToApp(&rows[i])
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, sp)
+	}
+	return result, nil
+}
+
+func (s *store) ListByMemberUserID(ctx context.Context, userID string) ([]*Space, error) {
+	var rows []model.Space
+	if err := s.db.NewSelect().
+		Model(&rows).
+		Join("JOIN space_members AS sm ON sm.space_id = sp.id").
+		Where("sm.user_id = ?", userID).
+		Where("sp.deleted_at IS NULL").
+		OrderExpr("sp.key ASC").
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("list spaces by member %s: %w", userID, err)
 	}
 	result := make([]*Space, 0, len(rows))
 	for i := range rows {

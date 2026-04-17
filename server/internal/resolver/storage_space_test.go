@@ -108,6 +108,27 @@ func TestGetSpaceStorage_OrgMismatch(t *testing.T) {
 	mockSpaceStore.AssertExpectations(t)
 }
 
+func TestGetSpaceStorage_GuestMemberAllowed(t *testing.T) {
+	space := &spacestore.Space{
+		Key:         "space-1",
+		OrgID:       "org-b",
+		StorageType: "s3",
+		Bucket:      "guest-bucket",
+		Region:      "us-east-1",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "space-1").Return(space, nil)
+	mockSpaceStore.On("HasMember", mock.Anything, "space-1", "user-1").Return(true, nil)
+
+	r := newSpaceTestResolver(mockSpaceStore)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	assert.NotNil(t, stor)
+	assert.NoError(t, err)
+	mockSpaceStore.AssertExpectations(t)
+}
+
 // TestGetSpaceStorage_Valid: matching org + valid bucket → non-nil S3 storage
 // is constructed without any network call.
 func TestGetSpaceStorage_Valid(t *testing.T) {

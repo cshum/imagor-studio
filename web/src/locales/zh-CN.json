@@ -704,11 +704,14 @@
           "role": "角色",
           "action": "操作"
         },
-        "inviteDescription": "通过电子邮件分享。现有组织成员会立即获得访问权限，其他人则会收到电子邮件邀请。",
+        "inviteDescription": "通过电子邮件分享。现有组织成员会立即获得访问权限。如果对方已经有账号但还不在你的组织内，你也可以先在这里把对方加入组织。",
         "addExistingDescription": "或快速添加已经在组织中的成员。",
         "emailPlaceholder": "name@example.com",
         "sendInviteButton": "分享",
-        "inviteHelp": "现有队友会立即加入。新用户需要先使用 Google 登录，然后才会加入此组织和空间。",
+        "inviteHelp": "现有队友会立即加入。全新的用户仍需要通过电子邮件邀请加入此组织和空间。",
+        "addToOrganizationAndShare": "加入组织并分享",
+        "addToOrganizationHelp": "当对方已经有账号、但还未加入你的组织时，请使用这个操作。",
+        "addedToOrganizationAndShared": "已加入组织并完成分享。",
         "inviteErrors": {
           "required": "请输入电子邮件地址。",
           "invalidEmail": "请输入有效的电子邮件地址。",
@@ -717,6 +720,11 @@
           "notConfigured": "电子邮件邀请尚未配置。",
           "unavailable": "当前部署暂不支持分享功能。",
           "default": "目前无法分享此空间，请稍后再试。"
+        },
+        "orgInviteErrors": {
+          "accountNotFound": "找不到这个电子邮件对应的现有账号。请改用电子邮件邀请。",
+          "memberLimit": "你的组织已达到成员上限。",
+          "default": "目前无法将此人加入你的组织，请稍后再试。"
         },
         "memberPlaceholder": "选择队友",
         "memberPlaceholderEmpty": "您组织中的成员都已经拥有明确访问权限",

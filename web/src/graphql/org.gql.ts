@@ -193,6 +193,18 @@ export const ADD_ORG_MEMBER = gql(`
   }
 `)
 
+export const ADD_ORG_MEMBER_BY_EMAIL = gql(`
+  mutation AddOrgMemberByEmail($email: String!, $role: String!) {
+    addOrgMemberByEmail(email: $email, role: $role) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`)
+
 export const ADD_SPACE_MEMBER = gql(`
   mutation AddSpaceMember($spaceKey: String!, $userId: ID!, $role: String!) {
     addSpaceMember(spaceKey: $spaceKey, userId: $userId, role: $role) {

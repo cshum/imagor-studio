@@ -156,6 +156,7 @@ export type LicenseStatus = {
 export type Mutation = {
   __typename?: 'Mutation'
   addOrgMember: OrgMember
+  addOrgMemberByEmail: OrgMember
   addSpaceMember: SpaceMember
   changePassword: Scalars['Boolean']['output']
   configureFileStorage: StorageConfigResult
@@ -194,6 +195,11 @@ export type Mutation = {
 export type MutationAddOrgMemberArgs = {
   role: Scalars['String']['input']
   username: Scalars['String']['input']
+}
+
+export type MutationAddOrgMemberByEmailArgs = {
+  email: Scalars['String']['input']
+  role: Scalars['String']['input']
 }
 
 export type MutationAddSpaceMemberArgs = {
@@ -951,6 +957,23 @@ export type AddOrgMemberMutationVariables = Exact<{
 export type AddOrgMemberMutation = {
   __typename?: 'Mutation'
   addOrgMember: {
+    __typename?: 'OrgMember'
+    userId: string
+    username: string
+    displayName: string
+    role: string
+    createdAt: string
+  }
+}
+
+export type AddOrgMemberByEmailMutationVariables = Exact<{
+  email: Scalars['String']['input']
+  role: Scalars['String']['input']
+}>
+
+export type AddOrgMemberByEmailMutation = {
+  __typename?: 'Mutation'
+  addOrgMemberByEmail: {
     __typename?: 'OrgMember'
     userId: string
     username: string
@@ -1785,6 +1808,17 @@ export const AddOrgMemberDocument = gql`
     }
   }
 `
+export const AddOrgMemberByEmailDocument = gql`
+  mutation AddOrgMemberByEmail($email: String!, $role: String!) {
+    addOrgMemberByEmail(email: $email, role: $role) {
+      userId
+      username
+      displayName
+      role
+      createdAt
+    }
+  }
+`
 export const AddSpaceMemberDocument = gql`
   mutation AddSpaceMember($spaceKey: String!, $userId: ID!, $role: String!) {
     addSpaceMember(spaceKey: $spaceKey, userId: $userId, role: $role) {
@@ -2467,6 +2501,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'AddOrgMember',
+        'mutation',
+        variables,
+      )
+    },
+    AddOrgMemberByEmail(
+      variables: AddOrgMemberByEmailMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<AddOrgMemberByEmailMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<AddOrgMemberByEmailMutation>({
+            document: AddOrgMemberByEmailDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'AddOrgMemberByEmail',
         'mutation',
         variables,
       )

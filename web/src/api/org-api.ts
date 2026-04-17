@@ -1,5 +1,7 @@
 import type {
   AddOrgMemberMutation,
+  AddOrgMemberByEmailMutation,
+  AddOrgMemberByEmailMutationVariables,
   AddOrgMemberMutationVariables,
   AddSpaceMemberMutation,
   AddSpaceMemberMutationVariables,
@@ -17,6 +19,7 @@ import type {
   ListSpaceInvitationsQuery,
   ListSpaceMembersQuery,
   ListSpacesQuery,
+  MyOrganizationQuery,
   RemoveOrgMemberMutation,
   RemoveOrgMemberMutationVariables,
   RemoveSpaceMemberMutation,
@@ -41,6 +44,13 @@ export async function listSpaces(): Promise<ListSpacesQuery['spaces']> {
   const sdk = getSdk(client)
   const result = await sdk.ListSpaces()
   return result.spaces
+}
+
+export async function getMyOrganization(): Promise<MyOrganizationQuery['myOrganization']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.MyOrganization()
+  return result.myOrganization
 }
 
 export async function createSpace(
@@ -148,6 +158,15 @@ export async function addOrgMember(
   const sdk = getSdk(client)
   const result = await sdk.AddOrgMember(variables)
   return result.addOrgMember
+}
+
+export async function addOrgMemberByEmail(
+  variables: AddOrgMemberByEmailMutationVariables,
+): Promise<AddOrgMemberByEmailMutation['addOrgMemberByEmail']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.AddOrgMemberByEmail(variables)
+  return result.addOrgMemberByEmail
 }
 
 export async function listSpaceMembers(

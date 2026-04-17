@@ -96,6 +96,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AddOrgMember                  func(childComplexity int, username string, role string) int
+		AddOrgMemberByEmail           func(childComplexity int, email string, role string) int
 		AddSpaceMember                func(childComplexity int, spaceKey string, userID string, role string) int
 		ChangePassword                func(childComplexity int, input ChangePasswordInput, userID *string) int
 		ConfigureFileStorage          func(childComplexity int, input FileStorageInput) int
@@ -311,6 +312,7 @@ type MutationResolver interface {
 	SetSpaceRegistry(ctx context.Context, spaceKey string, entries []*RegistryEntryInput) ([]*UserRegistry, error)
 	DeleteSpaceRegistry(ctx context.Context, spaceKey string, keys []string) (bool, error)
 	AddOrgMember(ctx context.Context, username string, role string) (*OrgMember, error)
+	AddOrgMemberByEmail(ctx context.Context, email string, role string) (*OrgMember, error)
 	AddSpaceMember(ctx context.Context, spaceKey string, userID string, role string) (*SpaceMember, error)
 	InviteSpaceMember(ctx context.Context, spaceKey string, email string, role string) (*SpaceInviteResult, error)
 	RemoveOrgMember(ctx context.Context, userID string) (bool, error)
@@ -599,6 +601,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AddOrgMember(childComplexity, args["username"].(string), args["role"].(string)), true
+	case "Mutation.addOrgMemberByEmail":
+		if e.ComplexityRoot.Mutation.AddOrgMemberByEmail == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addOrgMemberByEmail_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AddOrgMemberByEmail(childComplexity, args["email"].(string), args["role"].(string)), true
 	case "Mutation.addSpaceMember":
 		if e.ComplexityRoot.Mutation.AddSpaceMember == nil {
 			break
@@ -2013,6 +2026,8 @@ extend type Mutation {
   deleteSpaceRegistry(spaceKey: String!, keys: [String!]): Boolean!
   # Add a user to the caller's organization by username (admin only)
   addOrgMember(username: String!, role: String!): OrgMember!
+  # Add an existing user to the caller's organization by email (admin only)
+  addOrgMemberByEmail(email: String!, role: String!): OrgMember!
   # Add an existing org member to a specific space (admin only)
   addSpaceMember(spaceKey: String!, userId: ID!, role: String!): SpaceMember!
   # Invite a user to a specific space by email (admin only)
@@ -2319,6 +2334,22 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_addOrgMemberByEmail_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "email", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["role"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_addOrgMember_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -5163,6 +5194,59 @@ func (ec *executionContext) fieldContext_Mutation_addOrgMember(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addOrgMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_addOrgMemberByEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_addOrgMemberByEmail,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().AddOrgMemberByEmail(ctx, fc.Args["email"].(string), fc.Args["role"].(string))
+		},
+		nil,
+		ec.marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addOrgMemberByEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userId":
+				return ec.fieldContext_OrgMember_userId(ctx, field)
+			case "username":
+				return ec.fieldContext_OrgMember_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "role":
+				return ec.fieldContext_OrgMember_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_OrgMember_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrgMember", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addOrgMemberByEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12489,6 +12573,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "addOrgMember":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addOrgMember(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addOrgMemberByEmail":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addOrgMemberByEmail(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

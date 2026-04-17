@@ -390,6 +390,16 @@ func (m *MockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*spac
 	return args.Get(0).([]*spacestore.Space), args.Error(1)
 }
 
+func (m *MockSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*spacestore.Space, error) {
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "ListByMemberUserID" {
+			args := m.Called(ctx, userID)
+			return args.Get(0).([]*spacestore.Space), args.Error(1)
+		}
+	}
+	return []*spacestore.Space{}, nil
+}
+
 func (m *MockSpaceStore) Delta(ctx context.Context, since time.Time) (*spacestore.DeltaResult, error) {
 	args := m.Called(ctx, since)
 	if args.Get(0) == nil {
@@ -427,8 +437,13 @@ func (m *MockSpaceStore) UpdateMemberRole(ctx context.Context, spaceKey, userID,
 }
 
 func (m *MockSpaceStore) HasMember(ctx context.Context, spaceKey, userID string) (bool, error) {
-	args := m.Called(ctx, spaceKey, userID)
-	return args.Bool(0), args.Error(1)
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "HasMember" {
+			args := m.Called(ctx, spaceKey, userID)
+			return args.Bool(0), args.Error(1)
+		}
+	}
+	return false, nil
 }
 
 var _ spacestore.Store = (*MockSpaceStore)(nil)

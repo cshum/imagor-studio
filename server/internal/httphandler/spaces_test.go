@@ -34,6 +34,9 @@ func (m *mockSpaceStore) List(ctx context.Context) ([]*spacestore.Space, error) 
 func (m *mockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*spacestore.Space, error) {
 	return nil, nil
 }
+func (m *mockSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*spacestore.Space, error) {
+	return nil, nil
+}
 func (m *mockSpaceStore) KeyExists(_ context.Context, _ string) (bool, error) { return false, nil }
 func (m *mockSpaceStore) ListMembers(_ context.Context, _ string) ([]*spacestore.SpaceMemberView, error) {
 	return nil, nil
