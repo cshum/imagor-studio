@@ -835,11 +835,17 @@
         "removeTitle": "移除成员",
         "removeDescription": "确定要移除",
         "roleSectionLabel": "更改角色",
-        "promoteToManager": "设为管理员",
+        "promoteToManager": "改为管理员",
         "changeToMember": "改为成员",
         "roles": {
+          "owner": "所有者",
           "admin": "管理员",
+          "spaceManager": "管理员",
           "member": "成员"
+        },
+        "roleSource": {
+          "organization": "继承自组织",
+          "space": "此空间授予"
         }
       },
       "imagor": {

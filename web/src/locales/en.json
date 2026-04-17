@@ -881,11 +881,17 @@
         "removeTitle": "Remove Member",
         "removeDescription": "Are you sure you want to remove",
         "roleSectionLabel": "Change role",
-        "promoteToManager": "Promote to manager",
+        "promoteToManager": "Change to admin",
         "changeToMember": "Change to member",
         "roles": {
-          "admin": "Manager",
+          "owner": "Owner",
+          "admin": "Admin",
+          "spaceManager": "Admin",
           "member": "Member"
+        },
+        "roleSource": {
+          "organization": "Inherited from organization",
+          "space": "Granted for this space"
         }
       },
       "placeholders": {

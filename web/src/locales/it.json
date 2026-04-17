@@ -889,11 +889,17 @@
       "removeTitle": "Rimuovi Membro",
       "removeDescription": "Sei sicuro di voler rimuovere",
       "roleSectionLabel": "Cambia ruolo",
-      "promoteToManager": "Promuovi a manager",
+      "promoteToManager": "Imposta come admin",
       "changeToMember": "Imposta come membro",
       "roles": {
-        "admin": "Manager",
+        "owner": "Owner",
+        "admin": "Admin",
+        "spaceManager": "Admin",
         "member": "Membro"
+      },
+      "roleSource": {
+        "organization": "Ereditato dall'organizzazione",
+        "space": "Concesso per questo spazio"
       }
     },
     "placeholders": {

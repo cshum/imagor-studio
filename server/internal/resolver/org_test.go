@@ -616,13 +616,15 @@ func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "admin"),
 		makeTestMember("user-3", "charlie", "member"),
-	}, nil).Twice()
+	}, nil).Times(3)
 
 	ctx := createAdminContextWithOrg("user-2", "org-1")
 	result, err := r.Query().SpaceMembers(ctx, "acme")
 	require.NoError(t, err)
 	require.Len(t, result, 2)
 	assert.Equal(t, "user-1", result[0].UserID)
+	assert.Equal(t, "owner", result[0].Role)
+	assert.Equal(t, "organization", result[0].RoleSource)
 	assert.False(t, result[0].CanChangeRole)
 	assert.False(t, result[0].CanRemove)
 	assert.Equal(t, "user-3", result[1].UserID)

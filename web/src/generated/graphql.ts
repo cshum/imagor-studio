@@ -620,6 +620,7 @@ export type SpaceMember = {
   displayName: Scalars['String']['output']
   email: Maybe<Scalars['String']['output']>
   role: Scalars['String']['output']
+  roleSource: Scalars['String']['output']
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
 }
@@ -980,6 +981,7 @@ export type ListSpaceMembersQuery = {
     email: string | null
     avatarUrl: string | null
     role: string
+    roleSource: string
     canChangeRole: boolean
     canRemove: boolean
     createdAt: string
@@ -2578,6 +2580,7 @@ export const ListSpaceMembersDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'email' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'roleSource' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canChangeRole' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canRemove' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },

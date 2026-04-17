@@ -621,6 +621,7 @@ export type SpaceMember = {
   displayName: Scalars['String']['output']
   email: Maybe<Scalars['String']['output']>
   role: Scalars['String']['output']
+  roleSource: Scalars['String']['output']
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
 }
@@ -981,6 +982,7 @@ export type ListSpaceMembersQuery = {
     email: string | null
     avatarUrl: string | null
     role: string
+    roleSource: string
     canChangeRole: boolean
     canRemove: boolean
     createdAt: string
@@ -1937,6 +1939,7 @@ export const ListSpaceMembersDocument = gql`
       email
       avatarUrl
       role
+      roleSource
       canChangeRole
       canRemove
       createdAt

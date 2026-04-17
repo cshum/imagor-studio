@@ -857,11 +857,17 @@
         "removeTitle": "移除成員",
         "removeDescription": "確定要移除",
         "roleSectionLabel": "變更角色",
-        "promoteToManager": "設為管理者",
+        "promoteToManager": "改為管理員",
         "changeToMember": "改為成員",
         "roles": {
-          "admin": "管理者",
+          "owner": "擁有者",
+          "admin": "管理員",
+          "spaceManager": "管理員",
           "member": "成員"
+        },
+        "roleSource": {
+          "organization": "繼承自組織",
+          "space": "此空間授予"
         }
       },
       "imagor": {

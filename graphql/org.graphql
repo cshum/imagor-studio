@@ -68,6 +68,7 @@ type SpaceMember {
   email: String
   avatarUrl: String
   role: String!
+  roleSource: String!
   canChangeRole: Boolean!
   canRemove: Boolean!
   createdAt: String!

@@ -260,6 +260,7 @@ type SpaceMember struct {
 	Email         *string `json:"email,omitempty"`
 	AvatarURL     *string `json:"avatarUrl,omitempty"`
 	Role          string  `json:"role"`
+	RoleSource    string  `json:"roleSource"`
 	CanChangeRole bool    `json:"canChangeRole"`
 	CanRemove     bool    `json:"canRemove"`
 	CreatedAt     string  `json:"createdAt"`

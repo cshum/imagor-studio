@@ -241,6 +241,7 @@ type ComplexityRoot struct {
 		DisplayName   func(childComplexity int) int
 		Email         func(childComplexity int) int
 		Role          func(childComplexity int) int
+		RoleSource    func(childComplexity int) int
 		UserID        func(childComplexity int) int
 		Username      func(childComplexity int) int
 	}
@@ -1579,6 +1580,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SpaceMember.Role(childComplexity), true
+	case "SpaceMember.roleSource":
+		if e.ComplexityRoot.SpaceMember.RoleSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceMember.RoleSource(childComplexity), true
 	case "SpaceMember.userId":
 		if e.ComplexityRoot.SpaceMember.UserID == nil {
 			break
@@ -2133,6 +2140,7 @@ type SpaceMember {
   email: String
   avatarUrl: String
   role: String!
+  roleSource: String!
   canChangeRole: Boolean!
   canRemove: Boolean!
   createdAt: String!
@@ -5671,6 +5679,8 @@ func (ec *executionContext) fieldContext_Mutation_addSpaceMember(ctx context.Con
 				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
+			case "roleSource":
+				return ec.fieldContext_SpaceMember_roleSource(ctx, field)
 			case "canChangeRole":
 				return ec.fieldContext_SpaceMember_canChangeRole(ctx, field)
 			case "canRemove":
@@ -5957,6 +5967,8 @@ func (ec *executionContext) fieldContext_Mutation_updateSpaceMemberRole(ctx cont
 				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
+			case "roleSource":
+				return ec.fieldContext_SpaceMember_roleSource(ctx, field)
 			case "canChangeRole":
 				return ec.fieldContext_SpaceMember_canChangeRole(ctx, field)
 			case "canRemove":
@@ -7403,6 +7415,8 @@ func (ec *executionContext) fieldContext_Query_spaceMembers(ctx context.Context,
 				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
+			case "roleSource":
+				return ec.fieldContext_SpaceMember_roleSource(ctx, field)
 			case "canChangeRole":
 				return ec.fieldContext_SpaceMember_canChangeRole(ctx, field)
 			case "canRemove":
@@ -8984,6 +8998,8 @@ func (ec *executionContext) fieldContext_SpaceInviteResult_member(_ context.Cont
 				return ec.fieldContext_SpaceMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_SpaceMember_role(ctx, field)
+			case "roleSource":
+				return ec.fieldContext_SpaceMember_roleSource(ctx, field)
 			case "canChangeRole":
 				return ec.fieldContext_SpaceMember_canChangeRole(ctx, field)
 			case "canRemove":
@@ -9200,6 +9216,35 @@ func (ec *executionContext) _SpaceMember_role(ctx context.Context, field graphql
 }
 
 func (ec *executionContext) fieldContext_SpaceMember_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceMember_roleSource(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceMember_roleSource,
+		func(ctx context.Context) (any, error) {
+			return obj.RoleSource, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceMember_roleSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SpaceMember",
 		Field:      field,
@@ -14626,6 +14671,11 @@ func (ec *executionContext) _SpaceMember(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._SpaceMember_avatarUrl(ctx, field, obj)
 		case "role":
 			out.Values[i] = ec._SpaceMember_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roleSource":
+			out.Values[i] = ec._SpaceMember_roleSource(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -50,6 +50,32 @@ function getInitials(value: string) {
     .join('')
 }
 
+function getRoleBadgeLabel(
+  member: Pick<SpaceMemberItem, 'role' | 'roleSource'>,
+  t: (key: string) => string,
+) {
+  if (member.roleSource === 'organization') {
+    if (member.role === 'owner') return t('pages.spaceSettings.members.roles.owner')
+    if (member.role === 'admin') return t('pages.spaceSettings.members.roles.admin')
+  }
+
+  if (member.role === 'admin') return t('pages.spaceSettings.members.roles.spaceManager')
+  return t('pages.spaceSettings.members.roles.member')
+}
+
+function getRoleDescription(
+  member: Pick<SpaceMemberItem, 'role' | 'roleSource'>,
+  t: (key: string) => string,
+) {
+  if (member.roleSource === 'organization') {
+    return t('pages.spaceSettings.members.roleSource.organization')
+  }
+  if (member.role === 'admin') {
+    return t('pages.spaceSettings.members.roleSource.space')
+  }
+  return null
+}
+
 interface MembersSectionProps {
   spaceKey: string
   initialMembers: SpaceMemberItem[]
@@ -249,7 +275,7 @@ export function MembersSection({
               ) : (
                 <span className='mr-3 h-4 w-4' />
               )}
-              <span>{t('pages.spaceSettings.members.roles.admin')}</span>
+              <span>{t('pages.spaceSettings.members.roles.spaceManager')}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={updatingRoleUserId === member.userId || member.role === 'member'}
@@ -358,9 +384,9 @@ export function MembersSection({
                     <div className='min-w-0'>
                       <div className='flex items-center gap-2'>
                         <p className='truncate text-sm font-medium'>{memberLabel}</p>
-                        {member.role === 'admin' ? (
+                        {member.role === 'admin' || member.role === 'owner' ? (
                           <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
-                            {t('pages.spaceSettings.members.roles.admin')}
+                            {getRoleBadgeLabel(member, t)}
                           </Badge>
                         ) : null}
                         {isCurrentUser ? (
@@ -376,6 +402,11 @@ export function MembersSection({
                       <p className='text-muted-foreground truncate text-xs'>
                         {member.email || `@${member.username}`}
                       </p>
+                      {getRoleDescription(member, t) ? (
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {getRoleDescription(member, t)}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <div>
@@ -412,9 +443,9 @@ export function MembersSection({
                     <div className='min-w-0 flex-1'>
                       <div className='flex items-center gap-2'>
                         <p className='truncate text-sm font-medium'>{memberLabel}</p>
-                        {member.role === 'admin' ? (
+                        {member.role === 'admin' || member.role === 'owner' ? (
                           <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
-                            {t('pages.spaceSettings.members.roles.admin')}
+                            {getRoleBadgeLabel(member, t)}
                           </Badge>
                         ) : null}
                         {isCurrentUser ? (
@@ -430,6 +461,11 @@ export function MembersSection({
                       <p className='text-muted-foreground truncate text-xs'>
                         {member.email || `@${member.username}`}
                       </p>
+                      {getRoleDescription(member, t) ? (
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {getRoleDescription(member, t)}
+                        </p>
+                      ) : null}
                     </div>
                     {isCurrentUser || !hasRowActions ? null : (
                       <DropdownMenu
