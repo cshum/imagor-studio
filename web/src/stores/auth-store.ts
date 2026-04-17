@@ -142,7 +142,18 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
 
   // Continue with normal auth flow
   try {
-    const currentAccessToken = accessToken || getToken()
+    console.log(
+      window.location.pathname === '/auth/callback'
+        ? new URLSearchParams(window.location.search).get('token')
+        : null,
+    )
+    // Token priority: explicit arg → ?token= on /auth/callback (OAuth) → localStorage
+    const currentAccessToken =
+      accessToken ||
+      (window.location.pathname === '/auth/callback'
+        ? new URLSearchParams(window.location.search).get('token')
+        : null) ||
+      getToken()
 
     if (currentAccessToken) {
       // Run token validation and first-run check in parallel — zero extra latency.
@@ -284,19 +295,6 @@ export const initEmbeddedAuth = async (): Promise<Auth> => {
     // Generic authentication failure
     throw new Error(i18n.t('auth.embedded.authenticationFailed'))
   }
-}
-
-/**
- * Persist a freshly-received JWT and do a full-page reload to "/".
- *
- * A hard reload (not a SPA navigation) is used here so that the single
- * module-level initAuth() call restarts with the token already in
- * localStorage, avoiding the race condition where the no-token initAuth()
- * path dispatches LOGOUT after we've already stored the credential.
- */
-export const login = (token: string): void => {
-  setToken(token)
-  window.location.replace('/')
 }
 
 export const useAuthEffect = authStore.useStoreEffect

@@ -47,16 +47,9 @@ interface HeaderBarProps {
   }
 }
 
-interface UserAvatarProps {
-  displayName: string
-  avatarUrl: string | null
-}
-
-const UserAvatar: React.FC<UserAvatarProps> = ({ displayName, avatarUrl }) => {
-  if (avatarUrl) {
-    return <img src={avatarUrl} alt={displayName} className='h-8 w-8 rounded-full object-cover' />
-  }
-
+// Self-hosted header: always shows initials fallback — no avatar images.
+// Avatar images are a multi-tenant (SaaS) feature only.
+const UserAvatar: React.FC<{ displayName: string }> = ({ displayName }) => {
   const initials = displayName
     .split(' ')
     .filter(Boolean)
@@ -224,14 +217,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant='ghost' size='icon' className='h-12 w-12 sm:h-10 sm:w-10'>
-                      <UserAvatar
-                        displayName={getUserDisplayName()}
-                        avatarUrl={
-                          authState.state === 'authenticated'
-                            ? (authState.profile?.avatarUrl ?? null)
-                            : null
-                        }
-                      />
+                      <UserAvatar displayName={getUserDisplayName()} />
                       <span className='sr-only'>{t('common.buttons.more')}</span>
                     </Button>
                   </DropdownMenuTrigger>

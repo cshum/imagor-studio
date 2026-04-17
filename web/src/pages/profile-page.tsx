@@ -148,20 +148,22 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
         title={t('pages.profile.profileInformation')}
         description={t('pages.profile.profileInformationDescription')}
       >
-        {/* ── Avatar ──────────────────────────────────────────────── */}
-        <SettingRow
-          label={t('pages.profile.avatar')}
-          description={
-            avatarUrl
-              ? t('pages.profile.avatarFromProvider')
-              : t('pages.profile.avatarNoPhoto')
-          }
-        >
-          <Avatar className='h-16 w-16'>
-            <AvatarImage src={avatarUrl ?? undefined} referrerPolicy='no-referrer' alt={displayName} />
-            <AvatarFallback className='text-sm font-semibold'>{initials}</AvatarFallback>
-          </Avatar>
-        </SettingRow>
+        {/* ── Avatar (multi-tenant / SaaS mode only) ──────────────── */}
+        {authState.multiTenant && (
+          <SettingRow
+            label={t('pages.profile.avatar')}
+            description={
+              avatarUrl
+                ? t('pages.profile.avatarFromProvider')
+                : t('pages.profile.avatarNoPhoto')
+            }
+          >
+            <Avatar className='h-16 w-16'>
+              <AvatarImage src={avatarUrl ?? undefined} referrerPolicy='no-referrer' alt={displayName} />
+              <AvatarFallback className='text-sm font-semibold'>{initials}</AvatarFallback>
+            </Avatar>
+          </SettingRow>
+        )}
 
         <Form {...profileForm}>
           <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
