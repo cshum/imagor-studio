@@ -127,6 +127,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 			cfg.GoogleClientID,
 			cfg.GoogleClientSecret,
 			cfg.AppUrl,
+			cfg.AppApiUrl, // backend API URL for OAuth redirect URI; empty = same as AppUrl
 		)
 		mux.HandleFunc("/api/auth/providers", oauthHandler.GoogleAuthProviders())
 		mux.HandleFunc("/api/auth/google/login", oauthHandler.GoogleLogin())

@@ -33,6 +33,11 @@ type OAuthHandler struct {
 }
 
 // NewOAuthHandler creates a new OAuthHandler.
+//
+// appBaseURL is the frontend URL used for the post-auth redirect to /auth/callback.
+// appApiBaseURL is the backend server URL used for the Google OAuth redirect URI
+// registration (/api/auth/google/callback).  When empty it falls back to appBaseURL,
+// which is correct for single-domain deployments where frontend and API share the same host.
 func NewOAuthHandler(
 	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
@@ -41,13 +46,20 @@ func NewOAuthHandler(
 	googleClientID string,
 	googleClientSecret string,
 	appBaseURL string,
+	appApiBaseURL string,
 ) *OAuthHandler {
+	// Determine the base URL to use for the server-side OAuth redirect URI.
+	// Falls back to appBaseURL when both share the same domain (default case).
+	apiBase := appApiBaseURL
+	if apiBase == "" {
+		apiBase = appBaseURL
+	}
 	var googleConfig *oauth2.Config
 	if googleClientID != "" {
 		googleConfig = &oauth2.Config{
 			ClientID:     googleClientID,
 			ClientSecret: googleClientSecret,
-			RedirectURL:  appBaseURL + "/api/auth/google/callback",
+			RedirectURL:  apiBase + "/api/auth/google/callback",
 			Scopes:       []string{"openid", "email", "profile"},
 			Endpoint:     google.Endpoint,
 		}

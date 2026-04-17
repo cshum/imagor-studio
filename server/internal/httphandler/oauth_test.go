@@ -35,6 +35,7 @@ func newTestOAuthHandler(t *testing.T, googleClientID string) *OAuthHandler {
 		googleClientID,
 		"test-client-secret",
 		"http://localhost:3000",
+		"", // appApiBaseURL: empty = same as appBaseURL (single-domain test setup)
 	)
 }
 
