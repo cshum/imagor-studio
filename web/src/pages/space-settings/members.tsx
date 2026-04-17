@@ -250,19 +250,19 @@ export function MembersSection({
           </div>
         ) : null}
 
-        <Card>
-          <CardContent className='p-4 sm:p-5'>
+        <div className='rounded-lg border p-4 sm:p-5'>
+          <div className='space-y-4'>
             <div className='flex flex-col gap-3 lg:flex-row'>
               <Input
                 value={inviteEmail}
                 onChange={(event) => setInviteEmail(event.target.value)}
                 placeholder={t('pages.spaceSettings.members.emailPlaceholder')}
                 disabled={isInviting}
-                className='min-w-0 flex-1'
+                className='h-10 min-w-0 flex-1'
                 type='email'
               />
               <Select value={inviteRole} onValueChange={setInviteRole} disabled={isInviting}>
-                <SelectTrigger className='w-full lg:w-36'>
+                <SelectTrigger className='h-10 w-full lg:w-36'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -277,13 +277,13 @@ export function MembersSection({
                 onClick={handleInvite}
                 isLoading={isInviting}
                 disabled={!inviteEmail.trim()}
-                className='w-full lg:w-auto'
+                className='h-10 w-full lg:w-auto'
               >
                 {t('pages.spaceSettings.members.sendInviteButton')}
               </ButtonWithLoading>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {invitationsContent ? (
           <div className='space-y-2'>
