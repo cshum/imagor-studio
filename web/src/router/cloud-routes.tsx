@@ -1,18 +1,18 @@
 import { createRoute, Outlet, redirect } from '@tanstack/react-router'
 
 import { CloudAccountLayout } from '@/cloud/account-layout'
-import { getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/cloud/org-api'
 import { spaceSettingsLoader, usersLoader } from '@/cloud/account-loader'
 import { requireAdminAccountAuth, requireImageEditorAuth } from '@/cloud/auth-loader'
 import { canvasEditorLoader } from '@/cloud/canvas-editor-loader'
 import { CreateSpacePage } from '@/cloud/create-space-page'
 import { galleryLoader, imageLoader } from '@/cloud/gallery-loader'
 import { GalleryPage } from '@/cloud/gallery-page'
-import { cloudRootPageLoader } from '@/cloud/root-page-loader'
-import { ImageEditorPage } from '@/cloud/image-editor-page'
 import { imageEditorLoader } from '@/cloud/image-editor-loader'
+import { ImageEditorPage } from '@/cloud/image-editor-page'
 import { ImagePage } from '@/cloud/image-page'
+import { getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/cloud/org-api'
 import { CloudRootPage } from '@/cloud/root-page'
+import { cloudRootPageLoader } from '@/cloud/root-page-loader'
 import {
   accountAdminGeneralRoute,
   accountAdminImagorRoute,

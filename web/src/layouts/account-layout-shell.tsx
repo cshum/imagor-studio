@@ -41,7 +41,8 @@ export interface AccountNavGroup {
   items: AccountNavItem[]
 }
 
-interface AccountLayoutShellProps extends PropsWithChildren {
+interface AccountLayoutShellProps extends PropsWithChildren<object> {
+  children?: React.ReactNode
   title: string
   showSidebar: boolean
   groups: AccountNavGroup[]

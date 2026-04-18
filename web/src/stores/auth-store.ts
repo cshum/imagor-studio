@@ -1,5 +1,5 @@
-import { createStore } from '@/lib/create-store.ts'
 import { initializeCloudAuth } from '@/cloud/auth'
+import { createStore } from '@/lib/create-store.ts'
 import { removeToken, setToken } from '@/lib/token'
 import { initializeEmbeddedAuth } from '@/stores/auth/embedded'
 import { isEmbeddedMode } from '@/stores/auth/runtime'

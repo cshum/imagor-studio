@@ -1,10 +1,14 @@
 import * as React from 'react'
 import { LoaderCircle } from 'lucide-react'
 
-import { Button, type ButtonProps } from '@shared/components/ui/button'
+import { Button } from '@shared/components/ui/button'
 
-type ButtonWithLoadingProps = ButtonProps & {
+export interface ButtonWithLoadingProps {
   children?: React.ReactNode
+  className?: string
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
+  asChild?: boolean
   disabled?: boolean
   onClick?: React.MouseEventHandler<HTMLButtonElement>
   type?: 'button' | 'submit' | 'reset'

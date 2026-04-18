@@ -45,6 +45,7 @@
       "@radix-ui/react-context-menu": ["../../web/node_modules/@radix-ui/react-context-menu"],
       "@radix-ui/react-slider": ["../../web/node_modules/@radix-ui/react-slider"],
       "@radix-ui/react-toggle": ["../../web/node_modules/@radix-ui/react-toggle"],
+      "sonner": ["../../web/node_modules/sonner"],
       "react": ["../../web/node_modules/react"],
       "react/jsx-runtime": ["../../web/node_modules/react/jsx-runtime"],
       "react-hook-form": ["../../web/node_modules/react-hook-form"],

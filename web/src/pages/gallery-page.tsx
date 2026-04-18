@@ -71,7 +71,8 @@ import {
 import { useSidebar } from '@/stores/sidebar-store.ts'
 import { ImagorParamsInput, SortOption, SortOrder } from '@/types/generated-shared'
 
-export interface GalleryPageProps extends React.PropsWithChildren {
+export interface GalleryPageProps extends React.PropsWithChildren<object> {
+  children?: React.ReactNode
   galleryLoaderData: GalleryLoaderData
   galleryKey: string
 }
