@@ -107,8 +107,8 @@ export function ImagorConfigForm({ initialValues, onSave, disabled }: ImagorConf
             render={({ field }) => (
               <FormItem>
                 <SettingRow
-                  label={t('pages.imagor.secret')}
-                  description={t('pages.imagor.secretDescription')}
+                  label={t('imagor.secret')}
+                  description={t('imagor.secretDescription')}
                 >
                   <SecretField
                     show={showSecret}
@@ -137,8 +137,8 @@ export function ImagorConfigForm({ initialValues, onSave, disabled }: ImagorConf
             render={({ field }) => (
               <FormItem>
                 <SettingRow
-                  label={t('pages.imagor.signerType')}
-                  description={t('pages.imagor.signerTypeDescription')}
+                  label={t('imagor.signerType')}
+                  description={t('imagor.signerTypeDescription')}
                 >
                   <Select onValueChange={field.onChange} value={field.value} disabled={isDisabled}>
                     <FormControl>
@@ -147,9 +147,9 @@ export function ImagorConfigForm({ initialValues, onSave, disabled }: ImagorConf
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value='SHA1'>{t('pages.imagor.algorithmSha1')}</SelectItem>
-                      <SelectItem value='SHA256'>{t('pages.imagor.algorithmSha256')}</SelectItem>
-                      <SelectItem value='SHA512'>{t('pages.imagor.algorithmSha512')}</SelectItem>
+                      <SelectItem value='SHA1'>{t('imagor.algorithmSha1')}</SelectItem>
+                      <SelectItem value='SHA256'>{t('imagor.algorithmSha256')}</SelectItem>
+                      <SelectItem value='SHA512'>{t('imagor.algorithmSha512')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className='mt-1.5' />
@@ -165,8 +165,8 @@ export function ImagorConfigForm({ initialValues, onSave, disabled }: ImagorConf
             render={({ field }) => (
               <FormItem>
                 <SettingRow
-                  label={t('pages.imagor.signerTruncate')}
-                  description={t('pages.imagor.signerTruncateDescription')}
+                  label={t('imagor.signerTruncate')}
+                  description={t('imagor.signerTruncateDescription')}
                   last
                 >
                   <FormControl>
