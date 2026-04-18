@@ -55,6 +55,139 @@ func mapSharedUserListToSelfHosted(list *sharedgql.UserList) *selfhostedgql.User
 	}
 }
 
+func mapSharedUserRegistryToSelfHosted(registry *sharedgql.UserRegistry) *selfhostedgql.UserRegistry {
+	if registry == nil {
+		return nil
+	}
+	return &selfhostedgql.UserRegistry{
+		Key:         registry.Key,
+		Value:       registry.Value,
+		IsEncrypted: registry.IsEncrypted,
+	}
+}
+
+func mapSharedUserRegistriesToSelfHosted(registries []*sharedgql.UserRegistry) []*selfhostedgql.UserRegistry {
+	result := make([]*selfhostedgql.UserRegistry, 0, len(registries))
+	for _, registry := range registries {
+		result = append(result, mapSharedUserRegistryToSelfHosted(registry))
+	}
+	return result
+}
+
+func mapSharedSystemRegistryToSelfHosted(registry *sharedgql.SystemRegistry) *selfhostedgql.SystemRegistry {
+	if registry == nil {
+		return nil
+	}
+	return &selfhostedgql.SystemRegistry{
+		Key:                  registry.Key,
+		Value:                registry.Value,
+		IsEncrypted:          registry.IsEncrypted,
+		IsOverriddenByConfig: registry.IsOverriddenByConfig,
+	}
+}
+
+func mapSharedSystemRegistriesToSelfHosted(registries []*sharedgql.SystemRegistry) []*selfhostedgql.SystemRegistry {
+	result := make([]*selfhostedgql.SystemRegistry, 0, len(registries))
+	for _, registry := range registries {
+		result = append(result, mapSharedSystemRegistryToSelfHosted(registry))
+	}
+	return result
+}
+
+func mapSharedFileStorageConfigToSelfHosted(config *sharedgql.FileStorageConfig) *selfhostedgql.FileStorageConfig {
+	if config == nil {
+		return nil
+	}
+	return &selfhostedgql.FileStorageConfig{
+		BaseDir:          config.BaseDir,
+		MkdirPermissions: config.MkdirPermissions,
+		WritePermissions: config.WritePermissions,
+	}
+}
+
+func mapSharedS3StorageConfigToSelfHosted(config *sharedgql.S3StorageConfig) *selfhostedgql.S3StorageConfig {
+	if config == nil {
+		return nil
+	}
+	return &selfhostedgql.S3StorageConfig{
+		Bucket:         config.Bucket,
+		Region:         config.Region,
+		Endpoint:       config.Endpoint,
+		ForcePathStyle: config.ForcePathStyle,
+		BaseDir:        config.BaseDir,
+	}
+}
+
+func mapSharedStorageStatusToSelfHosted(status *sharedgql.StorageStatus) *selfhostedgql.StorageStatus {
+	if status == nil {
+		return nil
+	}
+	return &selfhostedgql.StorageStatus{
+		Configured:           status.Configured,
+		Type:                 status.Type,
+		LastUpdated:          status.LastUpdated,
+		IsOverriddenByConfig: status.IsOverriddenByConfig,
+		FileConfig:           mapSharedFileStorageConfigToSelfHosted(status.FileConfig),
+		S3Config:             mapSharedS3StorageConfigToSelfHosted(status.S3Config),
+	}
+}
+
+func mapSharedThumbnailUrlsToSelfHosted(urls *sharedgql.ThumbnailUrls) *selfhostedgql.ThumbnailUrls {
+	if urls == nil {
+		return nil
+	}
+	return &selfhostedgql.ThumbnailUrls{
+		Grid:     urls.Grid,
+		Preview:  urls.Preview,
+		Full:     urls.Full,
+		Original: urls.Original,
+		Meta:     urls.Meta,
+	}
+}
+
+func mapSharedFileItemToSelfHosted(item *sharedgql.FileItem) *selfhostedgql.FileItem {
+	if item == nil {
+		return nil
+	}
+	return &selfhostedgql.FileItem{
+		Name:          item.Name,
+		Path:          item.Path,
+		Size:          item.Size,
+		IsDirectory:   item.IsDirectory,
+		ModifiedTime:  item.ModifiedTime,
+		ThumbnailUrls: mapSharedThumbnailUrlsToSelfHosted(item.ThumbnailUrls),
+	}
+}
+
+func mapSharedFileListToSelfHosted(list *sharedgql.FileList) *selfhostedgql.FileList {
+	if list == nil {
+		return nil
+	}
+	items := make([]*selfhostedgql.FileItem, 0, len(list.Items))
+	for _, item := range list.Items {
+		items = append(items, mapSharedFileItemToSelfHosted(item))
+	}
+	return &selfhostedgql.FileList{
+		Items:      items,
+		TotalCount: list.TotalCount,
+	}
+}
+
+func mapSharedFileStatToSelfHosted(stat *sharedgql.FileStat) *selfhostedgql.FileStat {
+	if stat == nil {
+		return nil
+	}
+	return &selfhostedgql.FileStat{
+		Name:          stat.Name,
+		Path:          stat.Path,
+		Size:          stat.Size,
+		IsDirectory:   stat.IsDirectory,
+		ModifiedTime:  stat.ModifiedTime,
+		Etag:          stat.Etag,
+		ThumbnailUrls: mapSharedThumbnailUrlsToSelfHosted(stat.ThumbnailUrls),
+	}
+}
+
 func mapSharedLicenseStatusToSelfHosted(status *sharedgql.LicenseStatus) *selfhostedgql.LicenseStatus {
 	if status == nil {
 		return nil
