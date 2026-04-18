@@ -62,7 +62,8 @@
       "role": "角色"
     },
     "language": {
-      "title": "语言"
+      "title": "语言",
+      "changeLanguage": "切换语言"
     }
   },
   "forms": {
@@ -204,7 +205,6 @@
       "deleteImage": {
         "title": "删除图片",
         "description": "您确定要删除此图片吗？",
-        "warning": "此操作无法撤销。",
         "success": "\"{{fileName}}\" 删除成功",
         "error": "删除图片失败"
       },
@@ -214,7 +214,6 @@
       "deleteFolder": {
         "title": "删除文件夹",
         "description": "您确定要删除此文件夹吗？",
-        "warning": "这将永久删除该文件夹及其所有内容。此操作无法撤销。",
         "success": "\"{{folderName}}\" 删除成功",
         "error": "删除文件夹失败"
       },
@@ -250,13 +249,12 @@
         "selectDestinationDescription": "选择要移动所选项目的位置。",
         "select": "选择",
         "move": "移动",
-        "success_one": "成功移动 {{count}} 项目",
-        "success_other": "成功移动 {{count}} 项目",
         "partialSuccess": "已移动 {{success}} 项目，{{failed}} 项目失败",
         "error": "移动项目失败",
         "fileExists": "无法移动：目标位置已存在同名的文件或文件夹",
         "cannotMoveToSelf": "无法将文件夹移动到自身",
-        "cannotMoveToSubfolder": "无法将文件夹移动到其子文件夹"
+        "cannotMoveToSubfolder": "无法将文件夹移动到其子文件夹",
+        "success": "已成功移动 {{count}} 个项目"
       },
       "dragDrop": {
         "itemCount": "{{count}} 项目",
@@ -272,7 +270,8 @@
         "deleteSelected": "删除所选",
         "clearSelection": "清除选择",
         "downloadNotImplemented": "批量下载功能即将推出",
-        "deleteNotImplemented": "批量删除功能即将推出"
+        "deleteNotImplemented": "批量删除功能即将推出",
+        "moveSelected": "移动到文件夹"
       },
       "bulkDelete": {
         "title": "删除所选项目",
@@ -284,7 +283,9 @@
         "success_other": "成功删除 {{count}} 项目",
         "partialSuccess": "已删除 {{success}} 项目，{{failed}} 项目失败",
         "error": "删除所选项目失败"
-      }
+      },
+      "selectFolder": "选择文件夹",
+      "selectFolderDescription": "从下方树状目录中选择一个文件夹。"
     },
     "profile": {
       "title": "账户",
@@ -461,7 +462,7 @@
       "sections": {
         "general": "常规",
         "storage": "存储",
-        "imagor": "Imagor",
+        "imagor": "Imagor 图像处理",
         "license": "许可证"
       },
       "sectionDescriptions": {
@@ -469,7 +470,8 @@
         "storage": "配置平台托管空间的默认存储后端。",
         "imagor": "配置平台的 imagor 图像处理和 URL 签名默认设置。",
         "license": "管理您的许可证密钥并查看当前计划。"
-      }
+      },
+      "settingsUpdatedSuccess": "设置更新成功"
     },
     "storage": {
       "configureStorage": "配置存储",
@@ -682,23 +684,23 @@
       },
       "keyDescription": "用于链接和 URL。你可以修改它，但旧链接不会重定向。",
       "tableHeaders": {
-        "key": "URL Slug",
+        "key": "URL 标识",
         "name": "名称",
         "storage": "存储",
         "actions": "操作"
       },
       "formLabels": {
-        "key": "URL Slug",
+        "key": "URL 标识",
         "name": "显示名称",
         "storageType": "存储类型",
         "bucket": "存储桶",
         "region": "区域",
         "endpoint": "端点",
         "prefix": "前缀",
-        "accessKeyId": "Access Key ID",
-        "secretKey": "Secret Key",
+        "accessKeyId": "访问密钥 ID",
+        "secretKey": "秘密密钥",
         "customDomain": "自定义域名",
-        "imagorSecret": "Imagor Secret"
+        "imagorSecret": "Imagor 密钥"
       },
       "description": "管理您组织的工作空间。",
       "emptyDescription": "创建您的第一个空间，开始使用专属工作区。",
@@ -740,13 +742,21 @@
       "access": {
         "ownedByYou": "由你拥有",
         "sharedWithYou": "与你共享"
+      },
+      "storageNotConfigured": "未配置",
+      "placeholders": {
+        "name": "我的空间",
+        "selectStorageType": "选择存储类型",
+        "unchanged": "（保持不变）"
       }
     },
     "spaceSettings": {
       "sections": {
         "members": "成员",
-        "storage": "Storage",
-        "imagor": "Imagor"
+        "storage": "存储",
+        "imagor": "Imagor 图像处理",
+        "general": "常规",
+        "dangerZone": "危险区域"
       },
       "gallery": {
         "description": "自定义此空间的图库显示和行为。空间级别的设置会覆盖平台默认值。"
@@ -783,7 +793,14 @@
         "signerAlgorithmDescription": "用于签名转换 URL 的 HMAC 算法。",
         "signerTruncate": "签名截断",
         "signerTruncateDescription": "将 HMAC 签名截断至此字符数（0 = 完整长度）。",
-        "saved": "存储与安全设置已保存"
+        "saved": "存储与安全设置已保存",
+        "bucket": "存储桶",
+        "region": "区域",
+        "endpoint": "端点",
+        "endpointDescription": "自定义 S3 兼容端点 URL。AWS S3 请留空。",
+        "prefix": "路径前缀",
+        "prefixDescription": "存储桶中的可选路径前缀（例如 media/）。",
+        "accessKeyId": "访问密钥 ID"
       },
       "members": {
         "description": "管理此空间的访问权限。",
@@ -862,13 +879,25 @@
         "signerTruncate": "签名截断",
         "signerTruncateDescription": "将 HMAC 签名截断为此字符数（0 = 完整长度）。",
         "saved": "安全设置已保存"
+      },
+      "backToSpaces": "返回空间列表",
+      "openGallery": "打开图库",
+      "danger": {
+        "deleteTitle": "删除此空间",
+        "deleteDescription": "删除后，此空间的所有配置都会被永久移除。您的 S3 存储桶中的文件不会受到影响。",
+        "deleteButton": "删除空间"
+      },
+      "placeholders": {
+        "unchanged": "（留空以保留现有值）"
       }
     }
   },
   "components": {
     "folderTree": {
       "folders": "文件夹",
-      "noFoldersFound": "未找到文件夹"
+      "noFoldersFound": "未找到文件夹",
+      "home": "首页",
+      "loadFolderError": "加载文件夹内容失败"
     },
     "filePicker": {
       "title": "选择文件",
@@ -936,11 +965,6 @@
       "templateNamePlaceholder": "例如：Instagram 方形、产品缩略图",
       "description": "描述",
       "descriptionPlaceholder": "描述此模板的用途...",
-      "dimensionMode": "尺寸模式",
-      "flexible": "灵活尺寸",
-      "flexibleDescription": "模板适应每张图片的尺寸",
-      "fixed": "固定尺寸",
-      "fixedDescription": "将模板锁定为 {{width}} × {{height}}",
       "filenamePreview": "文件将保存为",
       "saveLocation": "保存位置",
       "rootFolder": "根文件夹",
@@ -956,7 +980,9 @@
       "selectTemplate": "选择模板",
       "selectTemplateDescription": "选择要应用到此图像的模板",
       "applySuccess": "模板应用成功",
-      "applyError": "应用模板失败"
+      "applyError": "应用模板失败",
+      "editingTemplate": "编辑模板",
+      "downloadImage": "下载图片"
     },
     "controls": {
       "cropAspect": "裁剪和比例",
@@ -1054,6 +1080,11 @@
       "startCrop": "裁剪",
       "applyCrop": "应用裁剪"
     },
+    "zoom": {
+      "zoomIn": "放大",
+      "zoomOut": "缩小",
+      "fit": "适应视图"
+    },
     "preview": {
       "previewError": "预览错误",
       "failedToGenerate": "生成预览失败"
@@ -1136,6 +1167,28 @@
       "addImageLayerDescription": "从您的存储空间选择图片以添加为新图层。",
       "selectImageToReplace": "选择要替换的图片",
       "selectImageToReplaceDescription": "选择新图片以替换当前图片。"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "欢迎回来",
+      "subtitle": "输入您的凭据以访问 Imagor Studio",
+      "signIn": "登录",
+      "loginFailed": "用户名或密码无效，请重试。"
+    },
+    "validation": {
+      "usernameRequired": "请输入有效的用户名",
+      "usernameMinLength": "用户名至少需要 3 个字符",
+      "usernameMaxLength": "用户名最多 30 个字符",
+      "passwordRequired": "密码为必填项",
+      "invalidUsername": "请输入有效的用户名"
+    },
+    "embedded": {
+      "tokenMissing": "缺少身份验证令牌。嵌入模式需要 URL 中包含 JWT 令牌。预期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "tokenInvalid": "身份验证令牌无效或已过期。请检查您的 JWT 令牌后重试。",
+      "authenticationFailed": "嵌入式身份验证失败。请确认您的令牌有效且未过期。",
+      "pathMissing": "path 参数为必填项。预期格式：/?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "pathInvalid": "路径格式无效。预期：gallery/folder/image.jpg 或 image.jpg"
     }
   }
 }
