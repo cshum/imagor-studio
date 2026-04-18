@@ -21,6 +21,7 @@
     "paths": {
       "@/*": ["../../web/src/*"],
       "@cloud/*": ["../../web/src/cloud/*"],
+      "@/components/ui/*": ["../../shared/web/src/components/ui/*"],
       "@shared/*": ["../../shared/web/src/*"]
     }
   },
