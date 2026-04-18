@@ -6,6 +6,8 @@ import { getMyOrganization, getSpace, listSpaces } from '@/api/org-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
+import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
+import { getAuth } from '@/stores/auth-store'
 import type {
   GetSpaceQuery,
   ImagorStatusQuery,
@@ -14,8 +16,6 @@ import type {
   ListUsersQuery,
   StorageStatusQuery,
 } from '@/types/generated-cloud'
-import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
-import { getAuth } from '@/stores/auth-store'
 
 export interface ProfileLoaderData {
   profile: {
@@ -32,7 +32,10 @@ export interface ProfileLoaderData {
 }
 
 function normalizeAuthProviders(
-  authProviders: Array<{ provider: string; email?: string | null; linkedAt: string }> | null | undefined,
+  authProviders:
+    | Array<{ provider: string; email?: string | null; linkedAt: string }>
+    | null
+    | undefined,
 ): Array<{ provider: string; email: string | null; linkedAt: string }> {
   return (authProviders ?? []).map((provider) => ({
     provider: provider.provider,

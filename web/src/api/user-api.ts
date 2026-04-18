@@ -1,5 +1,4 @@
 import { getSharedGraphQLSdk } from '@/api/generated-clients'
-
 import type {
   ChangePasswordMutation,
   ChangePasswordMutationVariables,

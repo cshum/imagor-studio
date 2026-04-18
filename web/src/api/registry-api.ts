@@ -1,5 +1,4 @@
 import { getSharedGraphQLSdkWithClient } from '@/api/generated-clients'
-
 import type {
   DeleteSystemRegistryMutation,
   DeleteSystemRegistryMutationVariables,
@@ -225,7 +224,7 @@ export async function setSystemRegistry(
   value: string,
   isEncrypted: boolean = false,
 ): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
-	const sdk = getSharedGraphQLSdkWithClient()
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: SetSystemRegistryMutationVariables = {
     entry: { key, value, isEncrypted },

@@ -35,7 +35,6 @@ import { Input } from '@/components/ui/input'
 import { MobileBreadcrumb } from '@/components/ui/mobile-breadcrumb'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
-import { SortOption, SortOrder } from '@/types/generated-shared'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { addCacheBuster } from '@/lib/api-utils'
@@ -47,6 +46,7 @@ import {
 } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
+import { SortOption, SortOrder } from '@/types/generated-shared'
 
 export interface FilePickerContentProps {
   currentPath: string

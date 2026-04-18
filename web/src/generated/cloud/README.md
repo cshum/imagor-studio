@@ -3,6 +3,7 @@
 This directory is reserved for artifacts generated from `web/codegen.cloud.ts`.
 
 Expected outputs after generation may include:
+
 - `gql.ts`
 - `graphql.ts`
 - `fragment-masking.ts`

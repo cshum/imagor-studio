@@ -5,7 +5,10 @@ import { toast } from 'sonner'
 import { configureFileStorage, configureS3Storage, testStorageConfig } from '@/api/storage-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
-import type { StorageType as GraphQLStorageType, StorageStatusQuery } from '@/types/generated-shared'
+import type {
+  StorageType as GraphQLStorageType,
+  StorageStatusQuery,
+} from '@/types/generated-shared'
 
 import {
   FileStorageForm,

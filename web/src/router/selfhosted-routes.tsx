@@ -2,9 +2,9 @@ import { createRoute } from '@tanstack/react-router'
 
 import { SelfHostedAccountLayout } from '@/layouts/account-layout'
 import { imageLoader } from '@/loaders/gallery-loader.ts'
+import { selfHostedRootPageLoader } from '@/loaders/selfhosted/root-page-loader'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { SelfHostedRootPage } from '@/pages/selfhosted/root-page'
-import { selfHostedRootPageLoader } from '@/loaders/selfhosted/root-page-loader'
 import {
   accountAdminGeneralRoute,
   accountAdminImagorRoute,

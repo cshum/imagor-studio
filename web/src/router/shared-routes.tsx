@@ -1,11 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import {
-  createRootRoute,
-  createRoute,
-  Navigate,
-  Outlet,
-  redirect,
-} from '@tanstack/react-router'
+import { createRootRoute, createRoute, Navigate, Outlet, redirect } from '@tanstack/react-router'
 
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
@@ -303,8 +297,10 @@ export const embeddedEditorRoute = createRoute({
 export const rootPathBeforeLoad = async (context: unknown) => {
   const auth = getAuth()
   if (auth.multiTenant) {
-    return requireAdminAccountAuth(context as {
-      location?: { pathname: string; search: Record<string, unknown> }
-    })
+    return requireAdminAccountAuth(
+      context as {
+        location?: { pathname: string; search: Record<string, unknown> }
+      },
+    )
   }
 }

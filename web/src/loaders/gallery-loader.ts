@@ -3,7 +3,6 @@ import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/regist
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
-import { SortOption, SortOrder } from '@/types/generated-shared'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
@@ -11,6 +10,7 @@ import { hasExtension } from '@/lib/file-extensions.ts'
 import { preloadImage } from '@/lib/preload-image.ts'
 import { getAuth } from '@/stores/auth-store.ts'
 import { FolderNode, folderTreeStore, updateTreeData } from '@/stores/folder-tree-store.ts'
+import { SortOption, SortOrder } from '@/types/generated-shared'
 
 export interface GalleryLoaderData {
   galleryName: string

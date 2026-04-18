@@ -1,5 +1,5 @@
-import { getSdk as getSelfHostedSdk } from '@/generated/selfhosted/graphql-request'
 import { getSdk as getCloudSdk } from '@/generated/cloud/graphql-request'
+import { getSdk as getSelfHostedSdk } from '@/generated/selfhosted/graphql-request'
 import { getGraphQLClient } from '@/lib/graphql-client'
 
 // Transitional GraphQL SDK accessors.

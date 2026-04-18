@@ -6,13 +6,14 @@ import { SessionConfigStorage } from '@/lib/config-storage/session-config-storag
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { CLOUD_BUILD, EMBEDDED_MODE } from '@/lib/runtime-mode'
 import { cloudRouteTree } from '@/router/cloud-routes'
-import { embeddedEditorRoute, rootRoute } from '@/router/shared-routes'
 import { selfHostedRouteTree } from '@/router/selfhosted-routes'
-import { bootstrapCloudFolderTree, bootstrapSelfHostedFolderTree } from '@/stores/folder-tree-bootstrap'
+import { embeddedEditorRoute, rootRoute } from '@/router/shared-routes'
 import { initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import {
-  initializeFolderTreeCache,
-} from '@/stores/folder-tree-store.ts'
+  bootstrapCloudFolderTree,
+  bootstrapSelfHostedFolderTree,
+} from '@/stores/folder-tree-bootstrap'
+import { initializeFolderTreeCache } from '@/stores/folder-tree-store.ts'
 import { checkLicense } from '@/stores/license-store'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'

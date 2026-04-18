@@ -32,8 +32,8 @@ import {
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import type { ListSpacesQuery } from '@/types/generated-cloud'
 import { useAuth } from '@/stores/auth-store'
+import type { ListSpacesQuery } from '@/types/generated-cloud'
 
 interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']

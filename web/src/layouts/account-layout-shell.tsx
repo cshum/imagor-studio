@@ -179,25 +179,29 @@ export function AccountLayoutShell({
           {showSidebar && (
             <div className='bg-background border-b lg:hidden'>
               <div className='flex overflow-x-auto px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-                {groups.flatMap((g) => g.items).map((item) => (
-                  <Link
-                    key={item.id}
-                    to={item.path}
-                    className={[
-                      '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap',
-                      isActive(item.path)
-                        ? 'border-primary text-foreground'
-                        : 'text-muted-foreground hover:text-foreground border-transparent',
-                    ].join(' ')}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
+                {groups
+                  .flatMap((g) => g.items)
+                  .map((item) => (
+                    <Link
+                      key={item.id}
+                      to={item.path}
+                      className={[
+                        '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap',
+                        isActive(item.path)
+                          ? 'border-primary text-foreground'
+                          : 'text-muted-foreground hover:text-foreground border-transparent',
+                      ].join(' ')}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
               </div>
             </div>
           )}
-          <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>{children || <Outlet />}</div>
+          <div className='mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8'>
+            {children || <Outlet />}
+          </div>
         </main>
       </SidebarInset>
     </SidebarWrapper>
