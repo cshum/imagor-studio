@@ -3,8 +3,7 @@ package graphqlmode
 import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
-	cloudgql "github.com/cshum/imagor-studio/server/internal/generated/gql/cloud"
-	selfhostedgql "github.com/cshum/imagor-studio/server/internal/generated/gql/selfhosted"
+	sharedgql "github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/resolver"
 )
 
@@ -21,10 +20,10 @@ func NewExecutableSchema(mode bootstrap.Mode, r *resolver.Resolver) graphql.Exec
 	switch mode {
 	case bootstrap.ModeCloud:
 		var _ resolver.CloudCapabilities = r
-		return cloudgql.NewExecutableSchema(cloudgql.Config{Resolvers: r})
+		return sharedgql.NewExecutableSchema(sharedgql.Config{Resolvers: r})
 	default:
 		var _ resolver.SharedResolverRoot = r
 		var _ resolver.SharedCapabilities = r
-		return selfhostedgql.NewExecutableSchema(selfhostedgql.Config{Resolvers: r})
+		return sharedgql.NewExecutableSchema(sharedgql.Config{Resolvers: r})
 	}
 }
