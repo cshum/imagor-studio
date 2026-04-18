@@ -1,11 +1,11 @@
-import { spacesLoader } from '@/loaders/account-loader'
-import { galleryLoader } from '@/loaders/gallery-loader'
 import { getAuth } from '@/stores/auth-store'
+import { cloudRootPageLoader } from '@/loaders/cloud/root-page-loader'
+import { selfHostedRootPageLoader } from '@/loaders/selfhosted/root-page-loader'
 
 export function rootPageLoader() {
   const auth = getAuth()
   if (auth.multiTenant) {
-    return spacesLoader()
+    return cloudRootPageLoader()
   }
-  return galleryLoader({ params: { galleryKey: '' } })
+  return selfHostedRootPageLoader()
 }

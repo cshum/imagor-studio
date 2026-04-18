@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc -b && vite build",
+    "build:selfhosted": "tsc -b && vite build",
+    "build:cloud": "VITE_PRODUCT_MODE=cloud tsc -b && VITE_PRODUCT_MODE=cloud vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "type-check": "tsc -p tsconfig.app.json",

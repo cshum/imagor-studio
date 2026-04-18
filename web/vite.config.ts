@@ -12,6 +12,9 @@ export default defineConfig({
   // Configure environment file loading
   envDir: './',
   envPrefix: 'VITE_',
+  define: {
+    'import.meta.env.VITE_PRODUCT_MODE': JSON.stringify(process.env.VITE_PRODUCT_MODE ?? ''),
+  },
   build: {
     outDir: '../server/static',
     emptyOutDir: true,

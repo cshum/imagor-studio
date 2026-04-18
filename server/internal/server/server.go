@@ -12,6 +12,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
+	"github.com/cshum/imagor-studio/server/internal/cloud"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
@@ -88,14 +89,17 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 
 	// Create auth handler.  services.OrgStore is nil for self-hosted deployments
 	// and non-nil (wired by bootstrap) when InternalAPISecret is configured (multi-tenant).
+	mode := bootstrap.DetectMode(cfg)
+	isCloudMode := cloud.Enabled(cfg)
+
 	authHandler := httphandler.NewAuthHandler(
 		services.TokenManager,
 		services.UserStore,
 		services.OrgStore,
 		services.RegistryStore,
 		services.Logger,
-		cfg.EmbeddedMode,
-		cfg.InternalAPISecret != "", // multiTenant: true when InternalAPISecret is set
+		mode == bootstrap.ModeEmbedded,
+		isCloudMode,
 	)
 
 	// Create middleware chain
@@ -152,45 +156,8 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)
 
-	// Internal service-to-service endpoint (authenticated by Bearer token).
-	// Only mounted when InternalAPISecret is set (multi-tenant mode); self-hosted
-	// deployments never set it so the route is never exposed.
-	if services.SpaceStore != nil {
-		spacesHandler := httphandler.NewSpacesDeltaHandler(services.SpaceStore, services.Config.InternalAPISecret, services.Logger)
-		mux.HandleFunc("/internal/spaces/delta", spacesHandler.GetDelta())
-	}
-
-	// Processing nodes: imagor handles ALL requests (no SPA, no /imagor/ prefix).
-	// Requests arrive as: /{hmac}/{transforms}/image.jpg
-	// with the Host header identifying the space (e.g. acme.yoursaas.com).
-	//
-	// Management / self-hosted nodes: imagor is mounted at /imagor/ and the SPA
-	// is served at / — both share the same port.
-	if services.SpaceConfigStore != nil {
-		// Processing mode — wrap with per-space concurrency limiter then imagor.
-		baseDomain := cfg.SpaceBaseDomain
-		// SpaceBaseDomain in config has leading dot (e.g. ".imagor.cloud");
-		// SpaceConcurrencyMiddleware expects it without the leading dot.
-		if len(baseDomain) > 0 && baseDomain[0] == '.' {
-			baseDomain = baseDomain[1:]
-		}
-		imagorHandler := middleware.SpaceConcurrencyMiddleware(
-			services.SpaceConfigStore,
-			baseDomain,
-			int64(cfg.SpaceMaxConcurrency),
-		)(services.ImagorProvider.Imagor())
-		mux.Handle("/", imagorHandler)
-	} else {
-		// Management / self-hosted mode.
-		// Pass the imagor instance directly — it is set once during Initialize().
-		mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider.Imagor()))
-
-		// Static file serving for web frontend using embedded assets.
-		staticFS, err := fs.Sub(embedFS, "static")
-		if err != nil {
-			return nil, err
-		}
-		mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
+	if err := registerAppRoutes(mux, services, cfg, embedFS); err != nil {
+		return nil, err
 	}
 
 	// Configure CORS — if CORSOrigins is set, restrict to those specific origins.

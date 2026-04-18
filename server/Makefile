@@ -10,6 +10,8 @@ BINARY_UNIX=$(BINARY_NAME)_unix
 
 # Main package path
 MAIN_PACKAGE=./cmd/imagor-studio
+SELFHOSTED_PACKAGE=./cmd/imagor-studio-selfhosted
+CLOUD_PACKAGE=./cmd/imagor-studio-cloud
 
 # Build flags
 LDFLAGS=-ldflags "-w -s"
@@ -81,11 +83,23 @@ run-processing:
 # management binary: no CGO, no libvips — suitable for Fly.io management machines
 # (handles GraphQL, storage config, user/org/space CRUD, delta endpoint).
 BINARY_MANAGEMENT=imagor-studio-management
+BINARY_SELFHOSTED=imagor-studio-selfhosted
+BINARY_CLOUD=imagor-studio-cloud
 
 build-management:
 	mkdir -p static
 	touch static/.placeholder
 	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(BINARY_MANAGEMENT) $(MAIN_PACKAGE)
+
+build-selfhosted:
+	mkdir -p static
+	touch static/.placeholder
+	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_SELFHOSTED) $(SELFHOSTED_PACKAGE)
+
+build-cloud:
+	mkdir -p static
+	touch static/.placeholder
+	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(BINARY_CLOUD) $(CLOUD_PACKAGE)
 
 # processing binary: compiled with -tags vips — requires libvips + CGO.
 # Deployed on processing machines; routes image requests per space.
@@ -115,7 +129,7 @@ gqlgen-init:
 gqlgen-update:
 	$(GQLGEN) --verbose --config gqlgen.yml
 
-.PHONY: all build test clean run deps tidy build-linux build-management build-processing docker-build gqlgen gqlgen-init gqlgen-update
+.PHONY: all build test clean run deps tidy build-linux build-management build-selfhosted build-cloud build-processing docker-build gqlgen gqlgen-init gqlgen-update
 
 clean-db:
 	rm -f storage.db

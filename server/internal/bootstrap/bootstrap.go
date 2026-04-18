@@ -49,147 +49,16 @@ type Services struct {
 
 // Initialize sets up the database, runs migrations, and initializes all services
 func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	if cfg.EmbeddedMode {
+	switch DetectMode(cfg) {
+	case ModeEmbedded:
 		return initializeEmbeddedMode(cfg, logger)
-	}
-	// Processing-node mode: no database — all space state comes from SpaceConfigStore.
-	// Triggered when SpacesEndpoint is set (processing cluster polling management service).
-	if cfg.SpacesEndpoint != "" {
+	case ModeProcessing:
+		// Processing-node mode: no database — all space state comes from SpaceConfigStore.
+		// Triggered when SpacesEndpoint is set (processing cluster polling management service).
 		return initializeProcessingMode(cfg, logger)
+	default:
+		return initializeManagementMode(cfg, logger, args)
 	}
-	// Initialize database
-	db, err := initializeDatabase(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize database: %w", err)
-	}
-	// Guard: close the DB connection if any subsequent step fails so we don't
-	// leak the connection pool on error return paths.
-	initOK := false
-	defer func() {
-		if !initOK {
-			_ = db.Close()
-		}
-	}()
-
-	// Run migrations based on database type and configuration
-	if err := runMigrationsIfNeeded(db, cfg, logger); err != nil {
-		return nil, fmt.Errorf("failed to run migrations: %w", err)
-	}
-
-	// Initialize encryption service
-	encryptionService := encryption.NewService(cfg.DatabaseURL)
-
-	// Initialize registry store
-	registryStore := registrystore.New(db, logger, encryptionService)
-
-	// Resolve JWT secret (from CLI/env, registry, or generate new)
-	if err := resolveJWTSecret(cfg, registryStore); err != nil {
-		return nil, fmt.Errorf("failed to resolve JWT secret: %w", err)
-	}
-
-	// Set JWT key in encryption service BEFORE loading enhanced config
-	// This ensures the registry store can decrypt license keys and other JWT-encrypted values
-	encryptionService.SetJWTKey(cfg.JWTSecret)
-
-	// Load enhanced config with registry values using the original args
-	enhancedCfg, err := config.Load(args, registryStore)
-	if err != nil {
-		return nil, fmt.Errorf("failed to apply registry values to config: %w", err)
-	}
-
-	// Ensure JWT secret is set in enhanced config
-	if enhancedCfg.JWTSecret == "" {
-		enhancedCfg.JWTSecret = cfg.JWTSecret
-	}
-
-	// Initialize token manager
-	tokenManager := auth.NewTokenManager(enhancedCfg.JWTSecret, enhancedCfg.JWTExpiration)
-
-	// Initialize storage provider with registry store and config
-	storageProvider := storageprovider.New(logger, registryStore, enhancedCfg)
-
-	// Initialize storage with config (will use NoOp if not configured)
-	err = storageProvider.InitializeWithConfig(enhancedCfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize storage: %w", err)
-	}
-
-	// Get the current storage instance
-	stor := storageProvider.GetStorage()
-
-	// Initialize user store
-	userStore := userstore.New(db, logger)
-
-	// Initialize multi-tenant org + space stores when InternalAPISecret is configured.
-	// Self-hosted deployments leave both nil, which is the signal used by auth
-	// handlers and resolvers to skip org/space logic.
-	var orgStore orgstore.Store
-	var spaceStore spacestore.Store
-	var spaceInviteStore spaceinvite.Store
-	if enhancedCfg.InternalAPISecret != "" {
-		orgStore = orgstore.New(db)
-		spaceStore = spacestore.New(db, encryptionService)
-		spaceInviteStore = spaceinvite.NewStore(db)
-		logger.Info("multi-tenant mode: org and space stores initialized")
-	}
-
-	var inviteSender spaceinvite.EmailSender
-	if enhancedCfg.SESFromEmail != "" {
-		sesRegion := enhancedCfg.SESRegion
-		if sesRegion == "" {
-			sesRegion = enhancedCfg.AWSRegion
-		}
-		sender, senderErr := spaceinvite.NewSESEmailSender(sesRegion, enhancedCfg.SESFromEmail, enhancedCfg.AppUrl, enhancedCfg.AppApiUrl)
-		if senderErr != nil {
-			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", senderErr)
-		}
-		inviteSender = sender
-	}
-
-	// Management node: StorageLoader delegates to registry-configured storage.
-	// Processing nodes are handled by initializeProcessingMode (early exit above).
-	var spaceConfigStore *spaceconfigstore.SpaceConfigStore
-	loader := imagorprovider.NewStorageLoader(storageProvider)
-
-	// Initialize imagor provider with the management-node loader.
-	imagorProvider := imagorprovider.New(logger, registryStore, enhancedCfg, loader)
-
-	// Initialize imagor with config (will use disabled if not configured)
-	err = imagorProvider.Initialize()
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
-	}
-
-	// Initialize license service with config provider
-	licenseService := license.NewService(registryStore, enhancedCfg)
-
-	// Log configuration loaded
-	logger.Info("Configuration loaded",
-		zap.Int("port", enhancedCfg.Port),
-		zap.String("databaseURL", enhancedCfg.DatabaseURL),
-		zap.Duration("jwtExpiration", enhancedCfg.JWTExpiration),
-		zap.String("storageType", enhancedCfg.StorageType),
-	)
-
-	initOK = true // all steps succeeded; db ownership transfers to Services
-	return &Services{
-		DB:               db,
-		TokenManager:     tokenManager,
-		Storage:          stor,
-		StorageProvider:  storageProvider,
-		ImagorProvider:   imagorProvider,
-		RegistryStore:    registryStore,
-		UserStore:        userStore,
-		OrgStore:         orgStore,
-		SpaceStore:       spaceStore,
-		SpaceInviteStore: spaceInviteStore,
-		InviteSender:     inviteSender,
-		SpaceConfigStore: spaceConfigStore,
-		LicenseService:   licenseService,
-		Encryption:       encryptionService,
-		Config:           enhancedCfg,
-		Logger:           logger,
-	}, nil
 }
 
 // initializeEmbeddedMode initializes services for embedded mode (stateless, no database)
@@ -241,21 +110,24 @@ func initializeEmbeddedMode(cfg *config.Config, logger *zap.Logger) (*Services, 
 		zap.String("storageType", cfg.StorageType),
 	)
 
-	return &Services{
-		DB:               nil, // No database in embedded mode
-		TokenManager:     tokenManager,
-		Storage:          stor,
-		StorageProvider:  storageProvider,
-		ImagorProvider:   imagorProvider,
-		RegistryStore:    registryStore,
-		UserStore:        userStore,
-		SpaceInviteStore: nil,
-		InviteSender:     nil,
-		LicenseService:   licenseService,
-		Encryption:       nil, // No encryption service in embedded mode
-		Config:           cfg,
-		Logger:           logger,
-	}, nil
+	return buildServices(
+		nil,
+		tokenManager,
+		stor,
+		storageProvider,
+		imagorProvider,
+		registryStore,
+		userStore,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		licenseService,
+		nil,
+		cfg,
+		logger,
+	), nil
 }
 
 // initializeDatabase opens and configures the database connection
@@ -381,22 +253,22 @@ func initializeProcessingMode(cfg *config.Config, logger *zap.Logger) (*Services
 		zap.String("spaceBaseDomain", cfg.SpaceBaseDomain),
 	)
 
-	return &Services{
-		DB:               nil, // no database in processing mode
-		TokenManager:     tokenManager,
-		Storage:          nil, // no management storage in processing mode
-		StorageProvider:  nil, // no management storage in processing mode
-		ImagorProvider:   imagorProvider,
-		RegistryStore:    registryStore,
-		UserStore:        userStore,
-		OrgStore:         orgStore,
-		SpaceStore:       spaceStore,
-		SpaceInviteStore: nil,
-		InviteSender:     nil,
-		SpaceConfigStore: spaceConfigStore,
-		LicenseService:   licenseService,
-		Encryption:       nil, // no encryption service in processing mode
-		Config:           cfg,
-		Logger:           logger,
-	}, nil
+	return buildServices(
+		nil,
+		tokenManager,
+		nil,
+		nil,
+		imagorProvider,
+		registryStore,
+		userStore,
+		orgStore,
+		spaceStore,
+		nil,
+		nil,
+		spaceConfigStore,
+		licenseService,
+		nil,
+		cfg,
+		logger,
+	), nil
 }
