@@ -2,8 +2,207 @@ package graphqlmode
 
 import (
 	sharedgql "github.com/cshum/imagor-studio/server/internal/generated/gql"
+	cloudgql "github.com/cshum/imagor-studio/server/internal/generated/gql/cloud"
 	selfhostedgql "github.com/cshum/imagor-studio/server/internal/generated/gql/selfhosted"
 )
+
+func mapSharedAuthProviderToCloud(provider *sharedgql.AuthProvider) *cloudgql.AuthProvider {
+	if provider == nil {
+		return nil
+	}
+	return &cloudgql.AuthProvider{
+		Provider: provider.Provider,
+		Email:    provider.Email,
+		LinkedAt: provider.LinkedAt,
+	}
+}
+
+func mapSharedUserToCloud(user *sharedgql.User) *cloudgql.User {
+	if user == nil {
+		return nil
+	}
+	authProviders := make([]*cloudgql.AuthProvider, 0, len(user.AuthProviders))
+	for _, provider := range user.AuthProviders {
+		authProviders = append(authProviders, mapSharedAuthProviderToCloud(provider))
+	}
+	return &cloudgql.User{
+		ID:            user.ID,
+		DisplayName:   user.DisplayName,
+		Username:      user.Username,
+		Role:          user.Role,
+		IsActive:      user.IsActive,
+		CreatedAt:     user.CreatedAt,
+		UpdatedAt:     user.UpdatedAt,
+		Email:         user.Email,
+		PendingEmail:  user.PendingEmail,
+		EmailVerified: user.EmailVerified,
+		HasPassword:   user.HasPassword,
+		AvatarURL:     user.AvatarURL,
+		AuthProviders: authProviders,
+	}
+}
+
+func mapSharedUserListToCloud(list *sharedgql.UserList) *cloudgql.UserList {
+	if list == nil {
+		return nil
+	}
+	items := make([]*cloudgql.User, 0, len(list.Items))
+	for _, user := range list.Items {
+		items = append(items, mapSharedUserToCloud(user))
+	}
+	return &cloudgql.UserList{Items: items, TotalCount: list.TotalCount}
+}
+
+func mapSharedUserRegistryToCloud(registry *sharedgql.UserRegistry) *cloudgql.UserRegistry {
+	if registry == nil {
+		return nil
+	}
+	return &cloudgql.UserRegistry{Key: registry.Key, Value: registry.Value, IsEncrypted: registry.IsEncrypted}
+}
+
+func mapSharedUserRegistriesToCloud(registries []*sharedgql.UserRegistry) []*cloudgql.UserRegistry {
+	result := make([]*cloudgql.UserRegistry, 0, len(registries))
+	for _, registry := range registries {
+		result = append(result, mapSharedUserRegistryToCloud(registry))
+	}
+	return result
+}
+
+func mapSharedSystemRegistryToCloud(registry *sharedgql.SystemRegistry) *cloudgql.SystemRegistry {
+	if registry == nil {
+		return nil
+	}
+	return &cloudgql.SystemRegistry{
+		Key:                  registry.Key,
+		Value:                registry.Value,
+		IsEncrypted:          registry.IsEncrypted,
+		IsOverriddenByConfig: registry.IsOverriddenByConfig,
+	}
+}
+
+func mapSharedSystemRegistriesToCloud(registries []*sharedgql.SystemRegistry) []*cloudgql.SystemRegistry {
+	result := make([]*cloudgql.SystemRegistry, 0, len(registries))
+	for _, registry := range registries {
+		result = append(result, mapSharedSystemRegistryToCloud(registry))
+	}
+	return result
+}
+
+func mapSharedFileStorageConfigToCloud(config *sharedgql.FileStorageConfig) *cloudgql.FileStorageConfig {
+	if config == nil {
+		return nil
+	}
+	return &cloudgql.FileStorageConfig{BaseDir: config.BaseDir, MkdirPermissions: config.MkdirPermissions, WritePermissions: config.WritePermissions}
+}
+
+func mapSharedS3StorageConfigToCloud(config *sharedgql.S3StorageConfig) *cloudgql.S3StorageConfig {
+	if config == nil {
+		return nil
+	}
+	return &cloudgql.S3StorageConfig{Bucket: config.Bucket, Region: config.Region, Endpoint: config.Endpoint, ForcePathStyle: config.ForcePathStyle, BaseDir: config.BaseDir}
+}
+
+func mapSharedStorageStatusToCloud(status *sharedgql.StorageStatus) *cloudgql.StorageStatus {
+	if status == nil {
+		return nil
+	}
+	return &cloudgql.StorageStatus{
+		Configured:           status.Configured,
+		Type:                 status.Type,
+		LastUpdated:          status.LastUpdated,
+		IsOverriddenByConfig: status.IsOverriddenByConfig,
+		FileConfig:           mapSharedFileStorageConfigToCloud(status.FileConfig),
+		S3Config:             mapSharedS3StorageConfigToCloud(status.S3Config),
+	}
+}
+
+func mapSharedThumbnailUrlsToCloud(urls *sharedgql.ThumbnailUrls) *cloudgql.ThumbnailUrls {
+	if urls == nil {
+		return nil
+	}
+	return &cloudgql.ThumbnailUrls{Grid: urls.Grid, Preview: urls.Preview, Full: urls.Full, Original: urls.Original, Meta: urls.Meta}
+}
+
+func mapSharedFileItemToCloud(item *sharedgql.FileItem) *cloudgql.FileItem {
+	if item == nil {
+		return nil
+	}
+	return &cloudgql.FileItem{Name: item.Name, Path: item.Path, Size: item.Size, IsDirectory: item.IsDirectory, ModifiedTime: item.ModifiedTime, ThumbnailUrls: mapSharedThumbnailUrlsToCloud(item.ThumbnailUrls)}
+}
+
+func mapSharedFileListToCloud(list *sharedgql.FileList) *cloudgql.FileList {
+	if list == nil {
+		return nil
+	}
+	items := make([]*cloudgql.FileItem, 0, len(list.Items))
+	for _, item := range list.Items {
+		items = append(items, mapSharedFileItemToCloud(item))
+	}
+	return &cloudgql.FileList{Items: items, TotalCount: list.TotalCount}
+}
+
+func mapSharedFileStatToCloud(stat *sharedgql.FileStat) *cloudgql.FileStat {
+	if stat == nil {
+		return nil
+	}
+	return &cloudgql.FileStat{Name: stat.Name, Path: stat.Path, Size: stat.Size, IsDirectory: stat.IsDirectory, ModifiedTime: stat.ModifiedTime, Etag: stat.Etag, ThumbnailUrls: mapSharedThumbnailUrlsToCloud(stat.ThumbnailUrls)}
+}
+
+func mapSharedLicenseStatusToCloud(status *sharedgql.LicenseStatus) *cloudgql.LicenseStatus {
+	if status == nil {
+		return nil
+	}
+	return &cloudgql.LicenseStatus{IsLicensed: status.IsLicensed, LicenseType: status.LicenseType, Email: status.Email, Message: status.Message, IsOverriddenByConfig: status.IsOverriddenByConfig, SupportMessage: status.SupportMessage, MaskedLicenseKey: status.MaskedLicenseKey, ActivatedAt: status.ActivatedAt}
+}
+
+func mapSharedImagorConfigToCloud(config *sharedgql.ImagorConfig) *cloudgql.ImagorConfig {
+	if config == nil {
+		return nil
+	}
+	return &cloudgql.ImagorConfig{HasSecret: config.HasSecret, SignerType: cloudgql.ImagorSignerType(config.SignerType), SignerTruncate: config.SignerTruncate}
+}
+
+func mapSharedImagorStatusToCloud(status *sharedgql.ImagorStatus) *cloudgql.ImagorStatus {
+	if status == nil {
+		return nil
+	}
+	return &cloudgql.ImagorStatus{Configured: status.Configured, LastUpdated: status.LastUpdated, IsOverriddenByConfig: status.IsOverriddenByConfig, Config: mapSharedImagorConfigToCloud(status.Config)}
+}
+
+func mapSharedEmailChangeRequestResultToCloud(result *sharedgql.EmailChangeRequestResult) *cloudgql.EmailChangeRequestResult {
+	if result == nil {
+		return nil
+	}
+	return &cloudgql.EmailChangeRequestResult{Email: result.Email, VerificationRequired: result.VerificationRequired}
+}
+
+func mapSharedStorageConfigResultToCloud(result *sharedgql.StorageConfigResult) *cloudgql.StorageConfigResult {
+	if result == nil {
+		return nil
+	}
+	return &cloudgql.StorageConfigResult{Success: result.Success, Timestamp: result.Timestamp, Message: result.Message}
+}
+
+func mapSharedStorageTestResultToCloud(result *sharedgql.StorageTestResult) *cloudgql.StorageTestResult {
+	if result == nil {
+		return nil
+	}
+	return &cloudgql.StorageTestResult{Success: result.Success, Message: result.Message, Details: result.Details}
+}
+
+func mapSharedImagorConfigResultToCloud(result *sharedgql.ImagorConfigResult) *cloudgql.ImagorConfigResult {
+	if result == nil {
+		return nil
+	}
+	return &cloudgql.ImagorConfigResult{Success: result.Success, Timestamp: result.Timestamp, Message: result.Message}
+}
+
+func mapSharedTemplateResultToCloud(result *sharedgql.TemplateResult) *cloudgql.TemplateResult {
+	if result == nil {
+		return nil
+	}
+	return &cloudgql.TemplateResult{Success: result.Success, TemplatePath: result.TemplatePath, PreviewPath: result.PreviewPath, Message: result.Message}
+}
 
 func mapSharedAuthProviderToSelfHosted(provider *sharedgql.AuthProvider) *selfhostedgql.AuthProvider {
 	if provider == nil {
@@ -234,5 +433,50 @@ func mapSharedEmailChangeRequestResultToSelfHosted(result *sharedgql.EmailChange
 	return &selfhostedgql.EmailChangeRequestResult{
 		Email:                result.Email,
 		VerificationRequired: result.VerificationRequired,
+	}
+}
+
+func mapSharedStorageConfigResultToSelfHosted(result *sharedgql.StorageConfigResult) *selfhostedgql.StorageConfigResult {
+	if result == nil {
+		return nil
+	}
+	return &selfhostedgql.StorageConfigResult{
+		Success:   result.Success,
+		Timestamp: result.Timestamp,
+		Message:   result.Message,
+	}
+}
+
+func mapSharedStorageTestResultToSelfHosted(result *sharedgql.StorageTestResult) *selfhostedgql.StorageTestResult {
+	if result == nil {
+		return nil
+	}
+	return &selfhostedgql.StorageTestResult{
+		Success: result.Success,
+		Message: result.Message,
+		Details: result.Details,
+	}
+}
+
+func mapSharedImagorConfigResultToSelfHosted(result *sharedgql.ImagorConfigResult) *selfhostedgql.ImagorConfigResult {
+	if result == nil {
+		return nil
+	}
+	return &selfhostedgql.ImagorConfigResult{
+		Success:   result.Success,
+		Timestamp: result.Timestamp,
+		Message:   result.Message,
+	}
+}
+
+func mapSharedTemplateResultToSelfHosted(result *sharedgql.TemplateResult) *selfhostedgql.TemplateResult {
+	if result == nil {
+		return nil
+	}
+	return &selfhostedgql.TemplateResult{
+		Success:      result.Success,
+		TemplatePath: result.TemplatePath,
+		PreviewPath:  result.PreviewPath,
+		Message:      result.Message,
 	}
 }
