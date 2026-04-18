@@ -1,5 +1,6 @@
 schema:
-  - ../graphql/*.graphql
+  - ../graphql/shared/*.graphql
+  - ../graphql/cloud/*.graphql
 exec:
   filename: internal/generated/gql/generated.go
   package: gql

@@ -1,6 +1,5 @@
 import { gql } from '@/generated'
 
-// Query to get imagor status
 export const IMAGOR_STATUS_QUERY = gql(`
   query ImagorStatus {
     imagorStatus {
@@ -16,7 +15,6 @@ export const IMAGOR_STATUS_QUERY = gql(`
   }
 `)
 
-// Mutation to configure imagor
 export const CONFIGURE_IMAGOR_MUTATION = gql(`
   mutation ConfigureImagor($input: ImagorInput!) {
     configureImagor(input: $input) {
@@ -27,7 +25,6 @@ export const CONFIGURE_IMAGOR_MUTATION = gql(`
   }
 `)
 
-// Mutation to generate imagor URL for image transformations
 export const GENERATE_IMAGOR_URL_MUTATION = gql(`
   mutation GenerateImagorUrl(
     $imagePath: String!
@@ -40,7 +37,6 @@ export const GENERATE_IMAGOR_URL_MUTATION = gql(`
   }
 `)
 
-// Mutation to generate imagor URL from template JSON (backend conversion)
 export const GENERATE_IMAGOR_URL_FROM_TEMPLATE_MUTATION = gql(`
   mutation GenerateImagorUrlFromTemplate(
     $templateJson: String!

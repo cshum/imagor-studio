@@ -22,7 +22,6 @@ export const UserFragment = gql(`
   }
 `)
 
-// Queries
 export const MeQuery = gql(`
   query Me {
     me {
@@ -50,7 +49,6 @@ export const ListUsersQuery = gql(`
   }
 `)
 
-// Mutations
 export const UpdateProfileMutation = gql(`
   mutation UpdateProfile($input: UpdateProfileInput!, $userId: ID) {
     updateProfile(input: $input, userId: $userId) {

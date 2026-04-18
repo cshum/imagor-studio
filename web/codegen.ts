@@ -2,9 +2,9 @@ import type { CodegenConfig } from '@graphql-codegen/cli'
 
 const config: CodegenConfig = {
   // Point to your GraphQL schema
-  schema: '../graphql/*.graphql',
+  schema: ['../graphql/shared/*.graphql', '../graphql/cloud/*.graphql'],
   // Patterns to find GraphQL documents (queries, mutations, subscriptions)
-  documents: 'src/**/*.gql.ts',
+  documents: ['src/graphql/shared/**/*.gql.ts', 'src/graphql/cloud/**/*.gql.ts'],
 
   // Output configuration
   generates: {

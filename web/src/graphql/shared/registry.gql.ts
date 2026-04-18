@@ -17,7 +17,6 @@ export const SystemRegistryFragment = gql(`
   }
 `)
 
-// User Registry Queries
 export const ListUserRegistryQuery = gql(`
   query ListUserRegistry($prefix: String, $ownerID: String) {
     listUserRegistry(prefix: $prefix, ownerID: $ownerID) {
@@ -34,7 +33,6 @@ export const GetUserRegistryQuery = gql(`
   }
 `)
 
-// System Registry Queries
 export const ListSystemRegistryQuery = gql(`
   query ListSystemRegistry($prefix: String) {
     listSystemRegistry(prefix: $prefix) {
@@ -51,7 +49,6 @@ export const GetSystemRegistryQuery = gql(`
   }
 `)
 
-// User Registry Mutations
 export const SetUserRegistryMutation = gql(`
   mutation SetUserRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!], $ownerID: String) {
     setUserRegistry(entry: $entry, entries: $entries, ownerID: $ownerID) {
@@ -66,7 +63,6 @@ export const DeleteUserRegistryMutation = gql(`
   }
 `)
 
-// System Registry Mutations (admin only)
 export const SetSystemRegistryMutation = gql(`
   mutation SetSystemRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!]) {
     setSystemRegistry(entry: $entry, entries: $entries) {
@@ -81,7 +77,6 @@ export const DeleteSystemRegistryMutation = gql(`
   }
 `)
 
-// License Status Query
 export const LicenseStatusQuery = gql(`
   query LicenseStatus {
     licenseStatus {
