@@ -9,10 +9,10 @@ import * as z from 'zod'
 
 import { updateSpace } from '@/cloud/org-api'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@shared/components/ui/form'
 import { Input } from '@shared/components/ui/input'
-import { SettingRow } from '@/components/ui/setting-row'
-import { SettingsSection } from '@/components/ui/settings-section'
+import { SettingRow } from '@shared/components/ui/setting-row'
+import { SettingsSection } from '@shared/components/ui/settings-section'
 import { SecretField, type SpaceSettingsData } from '@/cloud/space-settings/shared'
 
 const credentialsSchema = z.object({

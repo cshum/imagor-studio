@@ -9,7 +9,7 @@ import * as z from 'zod'
 import { checkSpaceKey, deleteSpace, setSpaceRegistryObject, updateSpace } from '@/cloud/org-api'
 import { Button } from '@shared/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@shared/components/ui/form'
 import { Input } from '@shared/components/ui/input'
 import {
 	ResponsiveDialog,
@@ -17,9 +17,9 @@ import {
 	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from '@/components/ui/responsive-dialog'
-import { SettingRow } from '@/components/ui/setting-row'
-import { SettingsSection } from '@/components/ui/settings-section'
+} from '@shared/components/ui/responsive-dialog'
+import { SettingRow } from '@shared/components/ui/setting-row'
+import { SettingsSection } from '@shared/components/ui/settings-section'
 import { extractErrorInfo } from '@/lib/error-utils'
 
 import { GallerySection } from '@/cloud/space-settings/gallery'

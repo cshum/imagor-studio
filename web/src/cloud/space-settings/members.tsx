@@ -14,11 +14,11 @@ import {
 	type SpaceInviteResultItem,
 	type SpaceMemberItem,
 } from '@/cloud/org-api'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@shared/components/ui/avatar'
+import { Badge } from '@shared/components/ui/badge'
 import { Button } from '@shared/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@shared/components/ui/card'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -34,7 +34,7 @@ import {
 	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from '@/components/ui/responsive-dialog'
+} from '@shared/components/ui/responsive-dialog'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { useAuth } from '@/stores/auth-store'
 

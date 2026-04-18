@@ -23,7 +23,7 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage,
-} from '@/components/ui/form'
+} from '@shared/components/ui/form'
 import { Input } from '@shared/components/ui/input'
 import {
 	ResponsiveDialog,
@@ -31,8 +31,8 @@ import {
 	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
-} from '@/components/ui/responsive-dialog'
-import { Skeleton } from '@/components/ui/skeleton'
+} from '@shared/components/ui/responsive-dialog'
+import { Skeleton } from '@shared/components/ui/skeleton'
 import { useFormErrors } from '@/hooks/use-form-errors'
 import type { ListUsersQuery, User } from '@/types/generated-shared'
 

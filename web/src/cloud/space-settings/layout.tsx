@@ -34,7 +34,7 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarWrapper,
-} from '@/components/ui/sidebar'
+} from '@shared/components/ui/sidebar'
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 

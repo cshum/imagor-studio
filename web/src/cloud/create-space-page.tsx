@@ -19,14 +19,14 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage,
-} from '@/components/ui/form'
+} from '@shared/components/ui/form'
 import { Input } from '@shared/components/ui/input'
 import {
 	MultiStepForm,
 	type MultiStepFormNavigationProps,
 	type MultiStepFormStep,
 } from '@/components/ui/multi-step-form'
-import { Separator } from '@/components/ui/separator'
+import { Separator } from '@shared/components/ui/separator'
 import { useBrand } from '@/hooks/use-brand'
 import { extractErrorInfo } from '@/lib/error-utils'
 import { useAuth } from '@/stores/auth-store'
