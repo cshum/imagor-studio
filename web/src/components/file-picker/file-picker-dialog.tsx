@@ -186,7 +186,9 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
               {selectionMode === 'single' ? (
                 // Single selection: show filename
                 <span className='text-muted-foreground max-w-sm truncate text-sm md:inline'>
-                  {Array.from(selectedPaths)[0]?.split('/').pop()}
+                  {typeof Array.from(selectedPaths)[0] === 'string'
+                    ? Array.from(selectedPaths)[0].split('/').pop()
+                    : ''}
                 </span>
               ) : selectionMode === 'multiple' ? (
                 // Multiple selection: reset button + counter

@@ -20,6 +20,7 @@ export interface FolderNode {
 }
 
 interface FolderPickerNodeProps {
+  key?: React.Key
   folder: FolderNode
   selectedPath: string | null
   excludePaths: Set<string>
