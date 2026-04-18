@@ -12,6 +12,8 @@
     "preview": "vite preview",
     "type-check": "tsc -p tsconfig.app.json",
     "codegen": "graphql-codegen --config codegen.ts",
+    "codegen:selfhosted": "graphql-codegen --config codegen.selfhosted.ts",
+    "codegen:cloud": "graphql-codegen --config codegen.cloud.ts",
     "codegen:watch": "graphql-codegen --config codegen.ts --watch",
     "test": "vitest",
     "test:ui": "vitest --ui",
