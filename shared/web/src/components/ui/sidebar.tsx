@@ -22,4 +22,4 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   SidebarWrapper,
-} from '@/components/ui/sidebar'
+} from '@shared/components/ui/sidebar.impl'

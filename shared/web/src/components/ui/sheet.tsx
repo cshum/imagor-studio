@@ -64,7 +64,7 @@ const SheetContent = React.forwardRef<
       {!hideOverlay && <SheetOverlay />}
       <SheetPrimitive.Content
         ref={ref}
-        className={cn(sheetVariants({ side }), className)}
+        className={cn(sheetVariants({ side: side as SheetContentProps['side'] }), className)}
         onPointerDownOutside={(e) => {
           if (modal === false) e.preventDefault()
         }}

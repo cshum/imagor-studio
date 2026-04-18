@@ -25,7 +25,7 @@ import {
 	MultiStepForm,
 	type MultiStepFormNavigationProps,
 	type MultiStepFormStep,
-} from '@/components/ui/multi-step-form'
+} from '@shared/components/ui/multi-step-form'
 import { Separator } from '@shared/components/ui/separator'
 import { useBrand } from '@/hooks/use-brand'
 import { extractErrorInfo } from '@/lib/error-utils'

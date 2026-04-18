@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft } from 'lucide-react'
 
-import { useBreakpoint } from '@/hooks/use-breakpoint'
+import { useBreakpoint } from '@shared/hooks-use-breakpoint'
 import { cn } from '@shared/lib-utils'
 import { Button } from '@shared/components/ui/button'
 import {
@@ -12,7 +12,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@shared/components/ui/dialog'
 import {
   Sheet,
   SheetContent,

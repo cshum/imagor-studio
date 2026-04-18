@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 
 import { Button } from '@shared/components/ui/button'
-import { SpacesLayout } from '@/layouts/spaces-layout'
+import { SpacesLayout } from '@shared/layouts-spaces-layout'
 import { spacesLoader } from '@/cloud/account-loader'
 import { cloudRootPageLoader } from '@/cloud/root-page-loader'
 import { SpacesPage } from '@/pages/spaces-page'

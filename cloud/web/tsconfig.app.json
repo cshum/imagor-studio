@@ -22,7 +22,23 @@
       "@/*": ["../../web/src/*"],
       "@cloud/*": ["../../web/src/cloud/*"],
       "@/components/ui/*": ["../../shared/web/src/components/ui/*"],
-      "@shared/*": ["../../shared/web/src/*"]
+      "@shared/*": ["../../shared/web/src/*"],
+      "react": ["../../web/node_modules/react"],
+      "react/jsx-runtime": ["../../web/node_modules/react/jsx-runtime"],
+      "react-hook-form": ["../../web/node_modules/react-hook-form"],
+      "react-i18next": ["../../web/node_modules/react-i18next"],
+      "lucide-react": ["../../web/node_modules/lucide-react"],
+      "@radix-ui/react-label": ["../../web/node_modules/@radix-ui/react-label"],
+      "@radix-ui/react-slot": ["../../web/node_modules/@radix-ui/react-slot"],
+      "@radix-ui/react-dropdown-menu": ["../../web/node_modules/@radix-ui/react-dropdown-menu"],
+      "@radix-ui/react-dialog": ["../../web/node_modules/@radix-ui/react-dialog"],
+      "@radix-ui/react-tooltip": ["../../web/node_modules/@radix-ui/react-tooltip"],
+      "@radix-ui/react-collapsible": ["../../web/node_modules/@radix-ui/react-collapsible"],
+      "@tanstack/react-router": ["../../web/node_modules/@tanstack/react-router"],
+      "clsx": ["../../web/node_modules/clsx"],
+      "tailwind-merge": ["../../web/node_modules/tailwind-merge"],
+      "class-variance-authority": ["../../web/node_modules/class-variance-authority"],
+      "radix-ui": ["../../web/node_modules/radix-ui"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
