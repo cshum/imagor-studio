@@ -5,6 +5,42 @@ import (
 	selfhostedgql "github.com/cshum/imagor-studio/server/internal/generated/gql/selfhosted"
 )
 
+func mapSharedAuthProviderToSelfHosted(provider *sharedgql.AuthProvider) *selfhostedgql.AuthProvider {
+	if provider == nil {
+		return nil
+	}
+	return &selfhostedgql.AuthProvider{
+		Provider: provider.Provider,
+		Email:    provider.Email,
+		LinkedAt: provider.LinkedAt,
+	}
+}
+
+func mapSharedUserToSelfHosted(user *sharedgql.User) *selfhostedgql.User {
+	if user == nil {
+		return nil
+	}
+	authProviders := make([]*selfhostedgql.AuthProvider, 0, len(user.AuthProviders))
+	for _, provider := range user.AuthProviders {
+		authProviders = append(authProviders, mapSharedAuthProviderToSelfHosted(provider))
+	}
+	return &selfhostedgql.User{
+		ID:            user.ID,
+		DisplayName:   user.DisplayName,
+		Username:      user.Username,
+		Role:          user.Role,
+		IsActive:      user.IsActive,
+		CreatedAt:     user.CreatedAt,
+		UpdatedAt:     user.UpdatedAt,
+		Email:         user.Email,
+		PendingEmail:  user.PendingEmail,
+		EmailVerified: user.EmailVerified,
+		HasPassword:   user.HasPassword,
+		AvatarURL:     user.AvatarURL,
+		AuthProviders: authProviders,
+	}
+}
+
 func mapSharedLicenseStatusToSelfHosted(status *sharedgql.LicenseStatus) *selfhostedgql.LicenseStatus {
 	if status == nil {
 		return nil

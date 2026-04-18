@@ -28,3 +28,11 @@ func (r selfHostedQueryAdapter) ImagorStatus(ctx context.Context) (*selfhostedgq
 	}
 	return mapSharedImagorStatusToSelfHosted(status), nil
 }
+
+func (r selfHostedQueryAdapter) Me(ctx context.Context) (*selfhostedgql.User, error) {
+	user, err := r.Resolver.Query().Me(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return mapSharedUserToSelfHosted(user), nil
+}
