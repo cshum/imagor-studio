@@ -22,6 +22,7 @@
       "@/*": ["../../web/src/*"],
       "@cloud/*": ["../../web/src/cloud/*"],
       "@/components/ui/*": ["../../shared/web/src/components/ui/*"],
+      "@/layouts/spaces-layout": ["../../shared/web/src/layouts-spaces-layout"],
       "@shared/*": ["../../shared/web/src/*"],
       "react": ["../../web/node_modules/react"],
       "react/jsx-runtime": ["../../web/node_modules/react/jsx-runtime"],
