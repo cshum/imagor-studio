@@ -30,6 +30,7 @@ type OAuthHandler struct {
 	orgStore     orgstore.Store // nil in self-hosted mode
 	spaceStore   spacestore.Store
 	inviteStore  spaceinvite.Store
+	modeBehavior oauthModeBehavior
 	logger       *zap.Logger
 	googleConfig *oauth2.Config
 	appBaseURL   string
@@ -70,7 +71,7 @@ func NewOAuthHandler(
 			Endpoint:     google.Endpoint,
 		}
 	}
-	return &OAuthHandler{
+	handler := &OAuthHandler{
 		tokenManager: tokenManager,
 		userStore:    userStore,
 		orgStore:     orgStore,
@@ -81,6 +82,12 @@ func NewOAuthHandler(
 		appBaseURL:   appBaseURL,
 		userinfoURL:  "https://www.googleapis.com/oauth2/v2/userinfo",
 	}
+	if orgStore != nil || spaceStore != nil || inviteStore != nil {
+		handler.modeBehavior = cloudOAuthMode{handler: handler}
+	} else {
+		handler.modeBehavior = selfHostedOAuthMode{}
+	}
+	return handler
 }
 
 // newOAuthHandlerWithConfig constructs an OAuthHandler directly from a pre-built
@@ -96,7 +103,7 @@ func newOAuthHandlerWithConfig(
 	appBaseURL string,
 	userinfoURL string,
 ) *OAuthHandler {
-	return &OAuthHandler{
+	handler := &OAuthHandler{
 		tokenManager: tokenManager,
 		userStore:    userStore,
 		orgStore:     orgStore,
@@ -107,6 +114,12 @@ func newOAuthHandlerWithConfig(
 		appBaseURL:   appBaseURL,
 		userinfoURL:  userinfoURL,
 	}
+	if orgStore != nil || spaceStore != nil || inviteStore != nil {
+		handler.modeBehavior = cloudOAuthMode{handler: handler}
+	} else {
+		handler.modeBehavior = selfHostedOAuthMode{}
+	}
+	return handler
 }
 
 // AuthProvidersResponse is the typed response for the providers endpoint.
@@ -253,48 +266,17 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 			MaxAge:   -1,
 		})
 
-		var pendingInvite *spaceinvite.Invitation
-		if inviteToken != "" && h.inviteStore != nil && h.orgStore != nil && h.spaceStore != nil {
-			invite, inviteErr := h.inviteStore.GetPendingByToken(ctx, inviteToken)
-			if inviteErr != nil {
-				h.logger.Error("OAuth callback: failed to load invitation", zap.Error(inviteErr))
-				http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("invite_failed"), http.StatusFound)
-				return
-			}
-			pendingInvite = invite
+		pendingInvite, inviteErr := h.modeBehavior.loadPendingInvite(ctx, inviteToken)
+		if inviteErr != nil {
+			h.logger.Error("OAuth callback: failed to load invitation", zap.Error(inviteErr))
+			http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("invite_failed"), http.StatusFound)
+			return
 		}
 
-		// Resolve org (multi-tenant mode only).
-		orgID := ""
-		if h.orgStore != nil {
-			org, orgErr := h.orgStore.GetByUserID(ctx, user.ID)
-			if orgErr != nil {
-				h.logger.Warn("OAuth callback: failed to get org for user",
-					zap.String("userID", user.ID), zap.Error(orgErr))
-			} else if org == nil {
-				// Auto-create a personal org for new OAuth users.
-				trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
-				newOrg, createErr := h.orgStore.CreateWithMember(ctx, user.ID, user.DisplayName, user.Username, &trialEndsAt)
-				if createErr != nil {
-					h.logger.Warn("OAuth callback: failed to create org for user",
-						zap.String("userID", user.ID), zap.Error(createErr))
-				} else {
-					orgID = newOrg.ID
-					// The org creator is the owner — promote them to admin.
-					if roleErr := h.userStore.UpdateRole(ctx, user.ID, "admin"); roleErr != nil {
-						h.logger.Warn("OAuth callback: failed to set admin role for org owner",
-							zap.String("userID", user.ID), zap.Error(roleErr))
-					} else {
-						user.Role = "admin"
-					}
-				}
-			} else {
-				orgID = org.ID
-			}
-		}
+		orgID := h.modeBehavior.resolveOrgID(ctx, user)
 
 		if pendingInvite != nil {
-			if acceptErr := h.acceptInvitation(ctx, user.ID, pendingInvite); acceptErr != nil {
+			if acceptErr := h.modeBehavior.acceptInvitation(ctx, user.ID, pendingInvite); acceptErr != nil {
 				h.logger.Error("OAuth callback: failed to accept invitation", zap.Error(acceptErr))
 				http.Redirect(w, r, h.appBaseURL+"/auth/callback?error="+url.QueryEscape("invite_failed"), http.StatusFound)
 				return
@@ -326,23 +308,6 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 			"&expires_in=" + strconv.FormatInt(expiresIn, 10)
 		http.Redirect(w, r, frontendURL, http.StatusFound)
 	}
-}
-
-func (h *OAuthHandler) acceptInvitation(ctx context.Context, userID string, invite *spaceinvite.Invitation) error {
-	hasSpaceAccess, err := h.spaceStore.HasMember(ctx, invite.SpaceKey, userID)
-	if err != nil {
-		return fmt.Errorf("check space membership: %w", err)
-	}
-	if !hasSpaceAccess {
-		if err := h.spaceStore.AddMember(ctx, invite.SpaceKey, userID, invite.Role); err != nil {
-			return fmt.Errorf("add invited user to space: %w", err)
-		}
-	}
-
-	if err := h.inviteStore.MarkAccepted(ctx, invite.ID, time.Now().UTC()); err != nil {
-		return fmt.Errorf("mark invitation accepted: %w", err)
-	}
-	return nil
 }
 
 // googleUserInfo is the response from Google's userinfo endpoint.
