@@ -3,7 +3,7 @@ import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/regist
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
-import { SortOption, SortOrder } from '@/generated/graphql'
+import { SortOption, SortOrder } from '@/types/generated-shared'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'

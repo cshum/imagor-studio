@@ -33,7 +33,7 @@ import {
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { ListUsersQuery, User } from '@/generated/graphql'
+import type { ListUsersQuery, User } from '@/types/generated-shared'
 import { useFormErrors } from '@/hooks/use-form-errors'
 
 interface UsersPageProps {

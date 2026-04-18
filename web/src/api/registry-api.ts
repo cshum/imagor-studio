@@ -17,7 +17,6 @@ import type {
   SetSystemRegistryMutationVariables,
   SetUserRegistryMutation,
   SetUserRegistryMutationVariables,
-} from '../generated/graphql'
 } from '@/types/generated-shared'
 
 /**
