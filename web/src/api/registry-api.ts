@@ -225,7 +225,7 @@ export async function setSystemRegistry(
   value: string,
   isEncrypted: boolean = false,
 ): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+	const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: SetSystemRegistryMutationVariables = {
     entry: { key, value, isEncrypted },
@@ -242,7 +242,7 @@ export async function setSystemRegistry(
 export async function setSystemRegistryMultiple(
   entries: Array<{ key: string; value: string; isEncrypted?: boolean }>,
 ): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const entriesWithEncryption = entries.map((entry) => ({
     key: entry.key,
@@ -265,7 +265,7 @@ export async function setSystemRegistryMultiple(
 export async function deleteSystemRegistry(
   key: string,
 ): Promise<DeleteSystemRegistryMutation['deleteSystemRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: DeleteSystemRegistryMutationVariables = { key }
   const result = await sdk.DeleteSystemRegistry(variables)
@@ -295,7 +295,7 @@ export async function getSystemRegistryObject(prefix?: string): Promise<Record<s
 export async function setSystemRegistryObject(
   registryObject: Record<string, string>,
 ): Promise<SetSystemRegistryMutation['setSystemRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const entries = Object.entries(registryObject).map(([key, value]) => ({
     key,
