@@ -1,0 +1,59 @@
+import { AlertTriangle, Home } from 'lucide-react'
+
+import { BrandBar } from '@/components/brand-bar'
+import { LicenseBadge } from '@/components/license/license-badge.tsx'
+import { ModeToggle } from '@/components/mode-toggle'
+import { Button } from '@shared/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared/components/ui/card'
+
+interface ErrorPageProps {
+  error?: Error | string
+  title?: string
+  description?: string
+}
+
+const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+
+export function ErrorPage({
+  error,
+  title = 'Something went wrong',
+  description = 'There was an error loading the page. Please try going back to the home page.',
+}: ErrorPageProps) {
+  const handleGoHome = () => {
+    window.location.href = '/'
+  }
+
+  const errorMessage = typeof error === 'string' ? error : error?.message
+
+  return (
+    <div className='min-h-screen-safe flex flex-col'>
+      <BrandBar rightSlot={<ModeToggle />} />
+      <div className='relative flex flex-1 items-start justify-center py-6 md:items-center'>
+        <LicenseBadge />
+        <Card className='w-full max-w-xl'>
+          <CardHeader className='text-center'>
+            <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100'>
+              <AlertTriangle className='h-6 w-6 text-red-600' />
+            </div>
+            <CardTitle className='text-red-900'>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            {errorMessage && import.meta.env.DEV && (
+              <div className='rounded-md bg-red-50 p-3'>
+                <p className='text-sm font-medium text-red-800'>Error Details:</p>
+                <p className='mt-1 font-mono text-xs text-red-700'>{errorMessage}</p>
+              </div>
+            )}
+            {!isEmbeddedMode && (
+              <Button onClick={handleGoHome} className='w-full'>
+                <Home className='mr-2 h-4 w-4' />
+                Home
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
