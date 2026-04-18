@@ -1,6 +1,5 @@
-import { getSdk } from '@/generated/graphql-request'
+import { getSharedGraphQLSdk } from '@/api/generated-clients'
 import { getBaseUrl } from '@/lib/api-utils'
-import { getGraphQLClient } from '@/lib/graphql-client'
 
 const BASE_URL = getBaseUrl()
 
@@ -19,7 +18,7 @@ export interface LicenseStatus {
  * Get license status with full details (authenticated admin) - uses GraphQL
  */
 export const getLicenseStatus = async (): Promise<LicenseStatus> => {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const result = await sdk.LicenseStatus()
 
   return {

@@ -1,3 +1,4 @@
+import { getSharedGraphQLSdkWithClient } from '@/api/generated-clients'
 import type {
   ConfigureImagorMutation,
   ConfigureImagorMutationVariables,
@@ -7,14 +8,12 @@ import type {
   GenerateImagorUrlMutationVariables,
   ImagorStatusQuery,
 } from '@/generated/graphql'
-import { getSdk } from '@/generated/graphql-request'
-import { getGraphQLClient } from '@/lib/graphql-client'
 
 /**
  * Get Imagor status and configuration
  */
 export async function getImagorStatus(): Promise<ImagorStatusQuery['imagorStatus']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const result = await sdk.ImagorStatus()
   return result.imagorStatus
 }
@@ -25,7 +24,7 @@ export async function getImagorStatus(): Promise<ImagorStatusQuery['imagorStatus
 export async function configureImagor(
   variables: ConfigureImagorMutationVariables,
 ): Promise<ConfigureImagorMutation['configureImagor']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const result = await sdk.ConfigureImagor(variables)
   return result.configureImagor
 }
@@ -37,7 +36,7 @@ export async function generateImagorUrl(
   variables: GenerateImagorUrlMutationVariables,
   signal?: AbortSignal,
 ): Promise<GenerateImagorUrlMutation['generateImagorUrl']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const result = await sdk.GenerateImagorUrl(variables, undefined, signal)
   return result.generateImagorUrl
 }
@@ -50,7 +49,7 @@ export async function generateImagorUrlFromTemplate(
   variables: GenerateImagorUrlFromTemplateMutationVariables,
   signal?: AbortSignal,
 ): Promise<GenerateImagorUrlFromTemplateMutation['generateImagorUrlFromTemplate']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const result = await sdk.GenerateImagorUrlFromTemplate(variables, undefined, signal)
   return result.generateImagorUrlFromTemplate
 }

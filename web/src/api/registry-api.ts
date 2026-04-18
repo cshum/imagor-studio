@@ -1,4 +1,4 @@
-import { getGraphQLClient } from '@/lib/graphql-client'
+import { getSharedGraphQLSdkWithClient } from '@/api/generated-clients'
 
 import type {
   DeleteSystemRegistryMutation,
@@ -18,7 +18,6 @@ import type {
   SetUserRegistryMutation,
   SetUserRegistryMutationVariables,
 } from '../generated/graphql'
-import { getSdk } from '../generated/graphql-request'
 
 /**
  * Display value for a registry entry, showing dots for encrypted values
@@ -37,7 +36,7 @@ export async function listUserRegistry(
   prefix?: string,
   ownerID?: string,
 ): Promise<ListUserRegistryQuery['listUserRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: ListUserRegistryQueryVariables = {
     prefix: prefix ?? null,
@@ -55,7 +54,7 @@ export async function getUserRegistry(
   key: string,
   ownerID?: string,
 ): Promise<GetUserRegistryQuery['getUserRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: GetUserRegistryQueryVariables = {
     key,
@@ -74,7 +73,7 @@ export async function getUserRegistryMultiple(
   keys: string[],
   ownerID?: string,
 ): Promise<GetUserRegistryQuery['getUserRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: GetUserRegistryQueryVariables = {
     key: undefined,
@@ -95,7 +94,7 @@ export async function setUserRegistry(
   isEncrypted: boolean = false,
   ownerID?: string,
 ): Promise<SetUserRegistryMutation['setUserRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: SetUserRegistryMutationVariables = {
     entry: { key, value, isEncrypted },
@@ -114,7 +113,7 @@ export async function setUserRegistryMultiple(
   entries: Array<{ key: string; value: string; isEncrypted?: boolean }>,
   ownerID?: string,
 ): Promise<SetUserRegistryMutation['setUserRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const entriesWithEncryption = entries.map((entry) => ({
     key: entry.key,
@@ -139,7 +138,7 @@ export async function deleteUserRegistry(
   key: string,
   ownerID?: string,
 ): Promise<DeleteUserRegistryMutation['deleteUserRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: DeleteUserRegistryMutationVariables = {
     key,
@@ -176,7 +175,7 @@ export async function getUserRegistryObject(
 export async function listSystemRegistry(
   prefix?: string,
 ): Promise<ListSystemRegistryQuery['listSystemRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: ListSystemRegistryQueryVariables = {
     prefix: prefix ?? null,
@@ -192,7 +191,7 @@ export async function listSystemRegistry(
 export async function getSystemRegistry(
   key: string,
 ): Promise<GetSystemRegistryQuery['getSystemRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: GetSystemRegistryQueryVariables = {
     key,
@@ -208,7 +207,7 @@ export async function getSystemRegistry(
 export async function getSystemRegistryMultiple(
   keys: string[],
 ): Promise<GetSystemRegistryQuery['getSystemRegistry']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: GetSystemRegistryQueryVariables = {
     key: undefined,

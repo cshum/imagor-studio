@@ -1,4 +1,4 @@
-import { getGraphQLClient } from '@/lib/graphql-client'
+import { getSharedGraphQLSdk } from '@/api/generated-clients'
 
 import type {
   ChangePasswordMutation,
@@ -21,13 +21,12 @@ import type {
   UpdateProfileMutation,
   UpdateProfileMutationVariables,
 } from '../generated/graphql'
-import { getSdk } from '../generated/graphql-request'
 
 /**
  * Get current user information
  */
 export async function getCurrentUser(token?: string): Promise<MeQuery['me']> {
-  const sdk = getSdk(getGraphQLClient(token))
+  const sdk = getSharedGraphQLSdk(token)
   const result = await sdk.Me()
   return result.me
 }
@@ -36,7 +35,7 @@ export async function getCurrentUser(token?: string): Promise<MeQuery['me']> {
  * Get user by ID (admin only)
  */
 export async function getUser(id: string): Promise<GetUserQuery['user']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const variables: GetUserQueryVariables = { id }
   const result = await sdk.GetUser(variables)
   return result.user
@@ -50,7 +49,7 @@ export async function listUsers(
   limit?: number,
   search?: string,
 ): Promise<ListUsersQuery['users']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const variables: ListUsersQueryVariables = { offset, limit, search }
   const result = await sdk.ListUsers(variables)
   return result.users
@@ -63,7 +62,7 @@ export async function updateProfile(
   { displayName, username }: { displayName?: string; username?: string },
   userId?: string,
 ): Promise<UpdateProfileMutation['updateProfile']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const variables: UpdateProfileMutationVariables = {
     input: {
       displayName: displayName ?? null,
@@ -83,7 +82,7 @@ export async function changePassword(
   newPassword: string,
   userId?: string,
 ): Promise<ChangePasswordMutation['changePassword']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const variables: ChangePasswordMutationVariables = {
     input: {
       currentPassword: currentPassword ?? null,
@@ -102,7 +101,7 @@ export async function requestEmailChange(
   email: string,
   userId?: string,
 ): Promise<RequestEmailChangeMutation['requestEmailChange']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const variables: RequestEmailChangeMutationVariables = {
     email,
     userId: userId ?? null,
@@ -118,7 +117,7 @@ export async function unlinkAuthProvider(
   provider: string,
   userId?: string,
 ): Promise<UnlinkAuthProviderMutation['unlinkAuthProvider']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const variables: UnlinkAuthProviderMutationVariables = {
     provider,
     userId: userId ?? null,
@@ -133,7 +132,7 @@ export async function unlinkAuthProvider(
 export async function deactivateAccount(
   userId?: string,
 ): Promise<DeactivateAccountMutation['deactivateAccount']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const variables: DeactivateAccountMutationVariables = {
     userId: userId ?? null,
   }
@@ -147,7 +146,7 @@ export async function deactivateAccount(
 export async function reactivateAccount(
   userId: string,
 ): Promise<ReactivateAccountMutation['reactivateAccount']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const variables: ReactivateAccountMutationVariables = { userId }
   const result = await sdk.ReactivateAccount(variables)
   return result.reactivateAccount
@@ -162,7 +161,7 @@ export async function createUser(input: {
   password: string
   role: string
 }): Promise<CreateUserMutation['createUser']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdk()
   const variables: CreateUserMutationVariables = { input }
   const result = await sdk.CreateUser(variables)
   return result.createUser

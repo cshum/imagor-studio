@@ -1,3 +1,4 @@
+import { getSharedGraphQLSdkWithClient } from '@/api/generated-clients'
 import type {
   ConfigureFileStorageMutation,
   ConfigureFileStorageMutationVariables,
@@ -26,8 +27,6 @@ import type {
   TestStorageConfigMutationVariables,
   UploadFileMutation,
 } from '@/generated/graphql'
-import { getSdk } from '@/generated/graphql-request'
-import { getGraphQLClient } from '@/lib/graphql-client'
 
 /**
  * List files and folders in a directory
@@ -35,7 +34,7 @@ import { getGraphQLClient } from '@/lib/graphql-client'
 export async function listFiles(
   variables: ListFilesQueryVariables,
 ): Promise<ListFilesQuery['listFiles']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const result = await sdk.ListFiles(variables)
   return result.listFiles
@@ -48,7 +47,7 @@ export async function statFile(
   path: string,
   spaceKey?: string,
 ): Promise<StatFileQuery['statFile']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: StatFileQueryVariables = { path, spaceKey }
   const result = await sdk.StatFile(variables)
@@ -64,7 +63,7 @@ export async function uploadFile(
   signal?: AbortSignal,
   spaceKey?: string,
 ): Promise<UploadFileMutation['uploadFile']> {
-  const { UploadFileMutation } = await import('@/graphql/storage.gql')
+  const { UploadFileMutation } = await import('@/graphql/shared/storage.gql')
   const { uploadSingleFile } = await import('@/lib/graphql-upload')
 
   interface UploadFileResult {
@@ -89,7 +88,7 @@ export async function deleteFile(
   path: string,
   spaceKey?: string,
 ): Promise<DeleteFileMutation['deleteFile']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: DeleteFileMutationVariables = { path, spaceKey }
   const result = await sdk.DeleteFile(variables)
@@ -103,7 +102,7 @@ export async function createFolder(
   path: string,
   spaceKey?: string,
 ): Promise<CreateFolderMutation['createFolder']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
 
   const variables: CreateFolderMutationVariables = { path, spaceKey }
   const result = await sdk.CreateFolder(variables)
@@ -153,7 +152,7 @@ export async function listFilesPaginated(params: {
  * Get storage status
  */
 export async function getStorageStatus(): Promise<StorageStatusQuery['storageStatus']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const result = await sdk.StorageStatus()
   return result.storageStatus
 }
@@ -164,7 +163,7 @@ export async function getStorageStatus(): Promise<StorageStatusQuery['storageSta
 export async function configureFileStorage(
   variables: ConfigureFileStorageMutationVariables,
 ): Promise<ConfigureFileStorageMutation['configureFileStorage']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const result = await sdk.ConfigureFileStorage(variables)
   return result.configureFileStorage
 }
@@ -175,7 +174,7 @@ export async function configureFileStorage(
 export async function configureS3Storage(
   variables: ConfigureS3StorageMutationVariables,
 ): Promise<ConfigureS3StorageMutation['configureS3Storage']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const result = await sdk.ConfigureS3Storage(variables)
   return result.configureS3Storage
 }
@@ -186,7 +185,7 @@ export async function configureS3Storage(
 export async function testStorageConfig(
   variables: TestStorageConfigMutationVariables,
 ): Promise<TestStorageConfigMutation['testStorageConfig']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const result = await sdk.TestStorageConfig(variables)
   return result.testStorageConfig
 }
@@ -199,7 +198,7 @@ export async function copyFile(
   destPath: string,
   spaceKey?: string,
 ): Promise<CopyFileMutation['copyFile']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const variables: CopyFileMutationVariables = { sourcePath, destPath, spaceKey }
   const result = await sdk.CopyFile(variables)
   return result.copyFile
@@ -213,7 +212,7 @@ export async function moveFile(
   destPath: string,
   spaceKey?: string,
 ): Promise<MoveFileMutation['moveFile']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const variables: MoveFileMutationVariables = { sourcePath, destPath, spaceKey }
   const result = await sdk.MoveFile(variables)
   return result.moveFile
@@ -225,7 +224,7 @@ export async function moveFile(
 export async function saveTemplate(
   variables: SaveTemplateMutationVariables,
 ): Promise<SaveTemplateMutation['saveTemplate']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const result = await sdk.SaveTemplate(variables)
   return result.saveTemplate
 }
@@ -240,7 +239,7 @@ export async function regenerateTemplatePreview(
   templatePath: string,
   spaceKey?: string,
 ): Promise<RegenerateTemplatePreviewMutation['regenerateTemplatePreview']> {
-  const sdk = getSdk(getGraphQLClient())
+  const sdk = getSharedGraphQLSdkWithClient()
   const variables: RegenerateTemplatePreviewMutationVariables = { templatePath, spaceKey }
   const result = await sdk.RegenerateTemplatePreview(variables)
   return result.regenerateTemplatePreview
