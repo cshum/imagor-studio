@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 
-import { setSpaceRegistryObject } from '@/api/org-api'
+import { setSpaceRegistryObject } from '@/cloud/org-api'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 

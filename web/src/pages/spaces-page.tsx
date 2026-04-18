@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { leaveSpace, type SpaceItem } from '@/api/org-api'
+import { leaveSpace, type SpaceItem } from '@/cloud/org-api.ts'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'

@@ -13,7 +13,7 @@ import {
   type SpaceInvitationItem,
   type SpaceInviteResultItem,
   type SpaceMemberItem,
-} from '@/api/org-api'
+} from '@/cloud/org-api'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

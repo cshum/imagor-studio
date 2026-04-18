@@ -7,7 +7,7 @@ import { CheckCircle2, Cloud, Database, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { checkSpaceKey, createSpace } from '@/api/org-api'
+import { checkSpaceKey, createSpace } from '@/cloud/org-api'
 import { AppHeader } from '@/components/app-header'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'

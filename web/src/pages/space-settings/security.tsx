@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-import { updateSpace } from '@/api/org-api'
+import { updateSpace } from '@/cloud/org-api'
 import { ImagorConfigForm, type ImagorConfigValues } from '@/components/imagor/imagor-config-form'
 
 import type { SpaceSettingsData } from './shared'

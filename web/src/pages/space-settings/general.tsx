@@ -6,7 +6,7 @@ import { useNavigate, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { checkSpaceKey, deleteSpace, setSpaceRegistryObject, updateSpace } from '@/api/org-api'
+import { checkSpaceKey, deleteSpace, setSpaceRegistryObject, updateSpace } from '@/cloud/org-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'

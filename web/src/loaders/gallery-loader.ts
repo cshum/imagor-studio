@@ -1,4 +1,4 @@
-import { getSpace } from '@/api/org-api'
+import { getSpace } from '@/cloud/org-api.ts'
 import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'

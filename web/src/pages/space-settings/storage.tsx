@@ -7,7 +7,7 @@ import { Cloud, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { updateSpace } from '@/api/org-api'
+import { updateSpace } from '@/cloud/org-api'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
