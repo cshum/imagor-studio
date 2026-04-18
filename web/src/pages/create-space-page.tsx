@@ -441,9 +441,6 @@ export function CreateSpacePage() {
           { label: t('navigation.breadcrumbs.spaces'), href: '/' },
           { label: t('pages.spaces.createNewSpace') },
         ]}
-        profileText={t('layouts.account.tabs.profile')}
-        signOutText={t('common.navigation.signOut')}
-        moreText={t('common.buttons.more')}
       />
 
       {/* Wizard — pt-14 clears fixed header */}

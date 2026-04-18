@@ -238,8 +238,6 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
               <PanelLeft />
             </Button>
           }
-          signOutText={t('common.navigation.signOut')}
-          moreText={t('common.buttons.more')}
         />
 
         <main className='relative min-h-screen pt-14'>

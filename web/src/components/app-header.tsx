@@ -82,9 +82,6 @@ interface AppHeaderProps {
   avatarUrl?: string | null
   onLogout: () => void | Promise<void>
   profileLink?: string
-  profileText?: string
-  signOutText?: string
-  moreText?: string
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -99,11 +96,11 @@ export function AppHeader({
   avatarUrl,
   onLogout,
   profileLink = '/account/profile',
-  profileText = 'Profile',
-  signOutText = 'Sign Out',
-  moreText = 'More',
 }: AppHeaderProps) {
   const { t, i18n } = useTranslation()
+  const profileText = t('layouts.account.tabs.profile')
+  const signOutText = t('common.navigation.signOut')
+  const moreText = t('common.buttons.more')
   const initials = getInitials(profileLabel)
   const bgColor = avatarBg(profileLabel)
 

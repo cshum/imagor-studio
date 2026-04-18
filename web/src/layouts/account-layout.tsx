@@ -252,9 +252,6 @@ export function AccountLayout({ children }: PropsWithChildren) {
           appTitle={appTitle}
           breadcrumbs={breadcrumbs.map((c) => ({ label: c.label ?? '', href: c.href }))}
           mobileTrigger={triggerButton}
-          profileText={t('layouts.account.tabs.profile')}
-          signOutText={t('common.navigation.signOut')}
-          moreText={t('common.buttons.more')}
         />
 
         <main className='relative min-h-screen pt-14'>

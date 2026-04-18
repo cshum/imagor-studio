@@ -40,9 +40,6 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
         onLogout={handleLogout}
         appTitle={appTitle}
         breadcrumbs={title ? [{ label: title }] : undefined}
-        profileText={t('layouts.account.tabs.profile')}
-        signOutText={t('common.navigation.signOut')}
-        moreText={t('common.buttons.more')}
       />
 
       {/* Content area — pt-14 clears the fixed header */}
