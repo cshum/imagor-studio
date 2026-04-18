@@ -4,15 +4,13 @@ import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
+import { handleCloudAuthInit } from '@/cloud/bootstrap'
 import { CLOUD_BUILD, EMBEDDED_MODE } from '@/lib/runtime-mode'
 import { cloudRouteTree } from '@/cloud/router'
 import { selfHostedRouteTree } from '@/router/selfhosted-routes'
 import { embeddedEditorRoute, rootRoute } from '@/router/shared-routes'
 import { initAuth, useAuthEffect } from '@/stores/auth-store.ts'
-import {
-  bootstrapCloudFolderTree,
-  bootstrapSelfHostedFolderTree,
-} from '@/stores/folder-tree-bootstrap'
+import { bootstrapSelfHostedFolderTree } from '@/stores/folder-tree-bootstrap'
 import { initializeFolderTreeCache } from '@/stores/folder-tree-store.ts'
 import { checkLicense } from '@/stores/license-store'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
@@ -44,13 +42,13 @@ export function AppRouter() {
 
   useAuthEffect((authState, action) => {
     if (action.type === 'INIT') {
-      if (authState.state === 'authenticated') {
-        initializeTheme(userThemeStorage, 'class')
-        initializeSidebar(userSidebarStorage)
-      }
       if (authState.multiTenant) {
-        void bootstrapCloudFolderTree()
+        handleCloudAuthInit(authState, userThemeStorage, userSidebarStorage)
       } else {
+        if (authState.state === 'authenticated') {
+          initializeTheme(userThemeStorage, 'class')
+          initializeSidebar(userSidebarStorage)
+        }
         void bootstrapSelfHostedFolderTree()
       }
     } else if (action.type === 'LOGOUT') {
