@@ -41,6 +41,20 @@ func mapSharedUserToSelfHosted(user *sharedgql.User) *selfhostedgql.User {
 	}
 }
 
+func mapSharedUserListToSelfHosted(list *sharedgql.UserList) *selfhostedgql.UserList {
+	if list == nil {
+		return nil
+	}
+	items := make([]*selfhostedgql.User, 0, len(list.Items))
+	for _, user := range list.Items {
+		items = append(items, mapSharedUserToSelfHosted(user))
+	}
+	return &selfhostedgql.UserList{
+		Items:      items,
+		TotalCount: list.TotalCount,
+	}
+}
+
 func mapSharedLicenseStatusToSelfHosted(status *sharedgql.LicenseStatus) *selfhostedgql.LicenseStatus {
 	if status == nil {
 		return nil
