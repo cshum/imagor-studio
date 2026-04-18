@@ -12,7 +12,7 @@ import (
 type authModeBehavior interface {
 	firstRunResponse(isFirstRun bool) FirstRunResponse
 	resolveLoginOrgID(ctx context.Context, userID string) string
-	createUserOrg(ctx context.Context, user *userstore.User, normalizedDisplayName, normalizedUsername string) string
+	createUserOrg(ctx context.Context, user *userstore.User, normalizedDisplayName, normalizedUsername string) (string, error)
 }
 
 type selfHostedAuthMode struct{}
@@ -27,8 +27,8 @@ func (selfHostedAuthMode) firstRunResponse(isFirstRun bool) FirstRunResponse {
 
 func (selfHostedAuthMode) resolveLoginOrgID(context.Context, string) string { return "" }
 
-func (selfHostedAuthMode) createUserOrg(context.Context, *userstore.User, string, string) string {
-	return ""
+func (selfHostedAuthMode) createUserOrg(context.Context, *userstore.User, string, string) (string, error) {
+	return "", nil
 }
 
 type cloudAuthMode struct {
@@ -56,12 +56,12 @@ func (m cloudAuthMode) resolveLoginOrgID(ctx context.Context, userID string) str
 	return org.ID
 }
 
-func (m cloudAuthMode) createUserOrg(ctx context.Context, user *userstore.User, normalizedDisplayName, normalizedUsername string) string {
+func (m cloudAuthMode) createUserOrg(ctx context.Context, user *userstore.User, normalizedDisplayName, normalizedUsername string) (string, error) {
 	trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
 	org, err := m.orgStore.CreateWithMember(ctx, user.ID, normalizedDisplayName, normalizedUsername, &trialEndsAt)
 	if err != nil {
-		m.logger.Warn("Failed to create org for user on register", zap.String("userID", user.ID), zap.Error(err))
-		return ""
+		m.logger.Error("Failed to create org for user on register", zap.String("userID", user.ID), zap.Error(err))
+		return "", err
 	}
-	return org.ID
+	return org.ID, nil
 }

@@ -36,7 +36,8 @@ func NewAuthHandler(
 	multiTenant bool, // true when InternalAPISecret is set (multi-tenant mode)
 ) *AuthHandler {
 	modeBehavior := authModeBehavior(selfHostedAuthMode{})
-	if multiTenant && orgStore != nil {
+	if multiTenant || orgStore != nil {
+		multiTenant = true
 		modeBehavior = cloudAuthMode{orgStore: orgStore, logger: logger}
 	}
 
@@ -438,9 +439,9 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
-	orgID := h.modeBehavior.createUserOrg(ctx, user, normalizedDisplayName, normalizedUsername)
-	if h.multiTenant && orgID == "" {
-		h.logger.Error("Failed to initialize organization", zap.String("userID", user.ID))
+	orgID, orgErr := h.modeBehavior.createUserOrg(ctx, user, normalizedDisplayName, normalizedUsername)
+	if orgErr != nil {
+		h.logger.Error("Failed to initialize organization", zap.String("userID", user.ID), zap.Error(orgErr))
 		return nil, apperror.InternalServerError("Failed to initialize organization")
 	}
 
