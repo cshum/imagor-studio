@@ -5,7 +5,7 @@ import './i18n'
 import 'non.geist'
 import './index.css'
 
-import { AppRouter } from '@/router.tsx'
+import { AppRouter } from '@/cloud/app-router'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
