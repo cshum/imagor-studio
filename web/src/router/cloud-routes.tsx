@@ -7,7 +7,7 @@ import { requireAdminAccountAuth, requireImageEditorAuth } from '@/cloud/auth-lo
 import { canvasEditorLoader } from '@/loaders/canvas-editor-loader.ts'
 import { galleryLoader, imageLoader } from '@/cloud/gallery-loader'
 import { cloudRootPageLoader } from '@/loaders/cloud/root-page-loader'
-import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
+import { imageEditorLoader } from '@/cloud/image-editor-loader'
 import { CloudRootPage } from '@/pages/cloud/root-page'
 import { CreateSpacePage } from '@/pages/create-space-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
