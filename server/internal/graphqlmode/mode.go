@@ -13,8 +13,11 @@ import (
 func NewExecutableSchema(mode bootstrap.Mode, r *resolver.Resolver) graphql.ExecutableSchema {
 	switch mode {
 	case bootstrap.ModeCloud:
+		var _ resolver.CloudCapabilities = r
 		return sharedgql.NewExecutableSchema(sharedgql.Config{Resolvers: r})
 	default:
+		var _ resolver.SharedResolverRoot = r
+		var _ resolver.SharedCapabilities = r
 		return sharedgql.NewExecutableSchema(sharedgql.Config{Resolvers: r})
 	}
 }
