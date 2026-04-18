@@ -453,7 +453,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
             {isLoadingRoot ? (
               <div className='space-y-2 p-2'>
                 {Array.from({ length: 3 }).map((_, index) => (
-                  <Skeleton key={index} className='h-8 w-full' />
+                  <Skeleton className='h-8 w-full' data-skeleton-index={index} />
                 ))}
               </div>
             ) : localFolderTree.length === 0 ? (

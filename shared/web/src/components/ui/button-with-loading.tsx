@@ -5,6 +5,9 @@ import { Button, type ButtonProps } from '@shared/components/ui/button'
 
 type ButtonWithLoadingProps = ButtonProps & {
   children?: React.ReactNode
+  disabled?: boolean
+  onClick?: React.MouseEventHandler<HTMLButtonElement>
+  type?: 'button' | 'submit' | 'reset'
   isLoading?: boolean
 }
 

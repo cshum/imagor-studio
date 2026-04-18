@@ -307,7 +307,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
                 <FolderContextMenu renderMenuItems={renderContextMenuItems}>
                   {rootFolders.map((folder, index) => (
                     <FolderTreeNode
-                      key={`${folder.path}-${index}`}
+                      data-folder-render-key={`${folder.path}-${index}`}
                       folder={folder}
                       renderMenuItems={renderDropdownMenuItems}
                       onDragOver={handleDragOver}

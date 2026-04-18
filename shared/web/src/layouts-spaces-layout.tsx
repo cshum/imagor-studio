@@ -7,6 +7,7 @@ import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 
 export interface SpacesLayoutProps extends PropsWithChildren {
+  children?: React.ReactNode
   title?: string
   description?: string
   primaryAction?: React.ReactNode
