@@ -1,4 +1,4 @@
-import { getCloudGraphQLSdkWithClient } from '@/api/generated-clients'
+import { getCloudGraphQLSdkWithClient } from '@/cloud/api'
 import type {
   AddOrgMemberByEmailMutation,
   AddOrgMemberByEmailMutationVariables,
