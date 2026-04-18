@@ -14,6 +14,7 @@ import { FolderNode, useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 interface FolderTreeNodeProps {
+  key?: React.Key
   folder: FolderNode
   renderMenuItems?: (folderKey: string, folderName: string) => React.ReactNode
   // Drag and drop props

@@ -1,8 +1,10 @@
+import * as React from 'react'
 import { LoaderCircle } from 'lucide-react'
 
 import { Button, type ButtonProps } from '@shared/components/ui/button'
 
-interface ButtonWithLoadingProps extends React.PropsWithChildren<ButtonProps> {
+type ButtonWithLoadingProps = ButtonProps & {
+  children?: React.ReactNode
   isLoading?: boolean
 }
 
