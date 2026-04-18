@@ -135,6 +135,1060 @@
       "errorOAuth": "Autenticazione non riuscita: {{error}}",
       "errorNoToken": "Nessun token di autenticazione ricevuto",
       "backToLogin": "Torna al login"
+    },
+    "gallery": {
+      "title": "Galleria",
+      "selectFolder": "Seleziona cartella",
+      "selectFolderDescription": "Scegli una cartella dall'albero qui sotto.",
+      "noImages": "Nessuna immagine trovata",
+      "noImagesInGallery": "Nessuna immagine nella tua galleria",
+      "folderEmpty": "Questa cartella è vuota",
+      "dragAndDropHint": "Trascina qui i file per caricarli nella tua galleria",
+      "sorting": {
+        "sort": "Ordina",
+        "name": "Nome",
+        "modifiedTime": "Data di modifica"
+      },
+      "filter": {
+        "filter": "Filtra",
+        "placeholder": "Filtra",
+        "showingFiltered": "Visualizzazione di {{count}} elementi su {{total}}",
+        "clearFilter": "Cancella filtro"
+      },
+      "showFileNames": "Mostra nomi file",
+      "newCanvas": {
+        "menuItem": "Nuova tela",
+        "title": "Nuova tela",
+        "description": "Crea una tela vuota per iniziare da zero.",
+        "preset": "Dimensione tela",
+        "custom": "Personalizzato",
+        "width": "Larghezza",
+        "height": "Altezza",
+        "background": "Sfondo",
+        "create": "Crea"
+      },
+      "createFolder": {
+        "newFolder": "Nuova cartella",
+        "title": "Crea nuova cartella",
+        "description": "Inserisci un nome per la nuova cartella.",
+        "folderName": "Nome cartella",
+        "placeholder": "Inserisci il nome della cartella",
+        "success": "Cartella {{folderName}} creata correttamente",
+        "errors": {
+          "nameRequired": "Il nome della cartella è obbligatorio",
+          "invalidCharacters": "Il nome della cartella contiene caratteri non validi",
+          "createFailed": "Impossibile creare la cartella"
+        }
+      },
+      "upload": {
+        "dropZone": {
+          "dropToUpload": "Rilascia i file per caricarli",
+          "releaseToAdd": "Rilascia per aggiungere i file alla tua galleria"
+        },
+        "progress": {
+          "uploadProgress": "Avanzamento caricamento",
+          "filesCompleted": "{{completed}} di {{total}} file completati",
+          "failed": "{{count}} non riusciti",
+          "uploading": "{{count}} in caricamento",
+          "completed": "{{count}} completati"
+        },
+        "summary": {
+          "fileReady": "{{count}} file pronto",
+          "filesReady": "{{count}} file pronti",
+          "allFilesProcessed": "Tutti i file elaborati",
+          "pendingUpload": "{{count}} in attesa di caricamento",
+          "clear": "Cancella",
+          "upload": "Carica {{count}} file",
+          "uploadFiles": "Carica {{count}} file",
+          "uploading": "Caricamento..."
+        },
+        "uploadFiles": "Carica file",
+        "messages": {
+          "uploadSuccess": "File caricati correttamente",
+          "uploadFailed": "Impossibile caricare {{fileName}}"
+        }
+      },
+      "contextMenu": {
+        "open": "Apri",
+        "edit": "Modifica",
+        "copyUrl": "Copia URL",
+        "copyUrlSuccess": "URL copiato negli appunti",
+        "download": "Scarica",
+        "rename": "Rinomina",
+        "move": "Sposta",
+        "delete": "Elimina",
+        "copyUrlError": "Impossibile copiare l'URL",
+        "downloadError": "Impossibile scaricare"
+      },
+      "copyUrlDialog": {
+        "title": "Copia URL",
+        "description": "Copia l'URL qui sotto. Abbiamo provato a copiarlo automaticamente, ma potrebbe essere necessario copiarlo manualmente.",
+        "closeButton": "Chiudi",
+        "copyButton": "Seleziona e copia"
+      },
+      "deleteImage": {
+        "title": "Elimina immagine",
+        "description": "Sei sicuro di voler eliminare <1>{{imageName}}</1>?",
+        "success": "\"{{fileName}}\" eliminato correttamente",
+        "error": "Impossibile eliminare l'immagine"
+      },
+      "folderContextMenu": {
+        "delete": "Elimina cartella"
+      },
+      "deleteFolder": {
+        "title": "Elimina cartella",
+        "description": "Sei sicuro di voler eliminare <1>{{folderName}}</1>?",
+        "success": "\"{{folderName}}\" eliminata correttamente",
+        "error": "Impossibile eliminare la cartella"
+      },
+      "renameItem": {
+        "file": {
+          "title": "Rinomina file",
+          "description": "Inserisci un nuovo nome per questo file."
+        },
+        "folder": {
+          "title": "Rinomina cartella",
+          "description": "Inserisci un nuovo nome per questa cartella."
+        },
+        "newName": "Nuovo nome",
+        "placeholder": "Inserisci il nuovo nome",
+        "rename": "Rinomina",
+        "success": "\"{{name}}\" rinominato correttamente",
+        "error": "Impossibile rinominare {{type}}",
+        "fileExists": "Impossibile rinominare: esiste già un file o una cartella con questo nome",
+        "errors": {
+          "nameRequired": "Il nome è obbligatorio",
+          "invalidCharacters": "Il nome contiene caratteri non validi",
+          "alreadyExists": "Esiste già un {{type}} con questo nome"
+        }
+      },
+      "moveItem": {
+        "title": "Sposta {{name}}",
+        "success": "{{name}} spostato correttamente"
+      },
+      "moveItems": {
+        "title": "Sposta elementi",
+        "dialogTitle": "Sposta elementi ({{count}})",
+        "selectDestination": "Seleziona cartella di destinazione",
+        "selectDestinationDescription": "Scegli dove spostare gli elementi selezionati.",
+        "select": "Seleziona",
+        "move": "Sposta",
+        "success": "{{count}} elementi spostati correttamente",
+        "partialSuccess": "{{success}} elementi spostati, {{failed}} non riusciti",
+        "error": "Impossibile spostare gli elementi",
+        "fileExists": "Impossibile spostare: esiste già un file o una cartella con questo nome nella destinazione",
+        "cannotMoveToSelf": "Impossibile spostare una cartella dentro se stessa",
+        "cannotMoveToSubfolder": "Impossibile spostare una cartella in una propria sottocartella"
+      },
+      "dragDrop": {
+        "itemCount": "{{count}} elementi",
+        "moveSuccess": "{{count}} elementi spostati correttamente",
+        "partialSuccess": "{{success}} elementi spostati correttamente, {{failed}} non riusciti",
+        "moveError": "Impossibile spostare gli elementi",
+        "fileExists": "Impossibile spostare: esiste già un file o una cartella con questo nome nella destinazione"
+      },
+      "selection": {
+        "menu": "Menu selezione",
+        "title": "{{count}} elementi selezionati",
+        "downloadAll": "Scarica tutto",
+        "moveSelected": "Sposta nella cartella",
+        "deleteSelected": "Elimina selezionati",
+        "clearSelection": "Cancella selezione",
+        "downloadNotImplemented": "Funzione di download multiplo in arrivo",
+        "deleteNotImplemented": "Funzione di eliminazione multipla in arrivo"
+      },
+      "bulkDelete": {
+        "title": "Elimina elementi selezionati",
+        "description_one": "Sei sicuro di voler eliminare {{count}} elemento?",
+        "description_other": "Sei sicuro di voler eliminare {{count}} elementi?",
+        "confirmButton_one": "Elimina {{count}} elemento",
+        "confirmButton_other": "Elimina {{count}} elementi",
+        "success_one": "{{count}} elemento eliminato correttamente",
+        "success_other": "{{count}} elementi eliminati correttamente",
+        "partialSuccess": "{{success}} elementi eliminati, {{failed}} non riusciti",
+        "error": "Impossibile eliminare gli elementi selezionati"
+      }
+    },
+    "profile": {
+      "title": "Account",
+      "profileInformation": "Informazioni profilo",
+      "profileInformationDescription": "Aggiorna le informazioni del profilo del tuo account.",
+      "displayName": "Nome visualizzato",
+      "displayNameDescription": "Il tuo nome pubblico mostrato in tutta l'app.",
+      "displayNamePlaceholder": "Inserisci il tuo nome visualizzato",
+      "email": "Email",
+      "emailDescription": "Il tuo indirizzo email attuale per l'accesso.",
+      "invalidEmail": "Inserisci un indirizzo email valido.",
+      "noEmail": "Nessun indirizzo email disponibile",
+      "emailChangeManaged": "Le modifiche e la verifica dell'email sono attualmente gestite dal provider di accesso.",
+      "pendingEmailNotice": "Conferma in attesa per {{email}}.",
+      "emailChangePending": "Richiesta di modifica email inviata.",
+      "emailVerified": "Email verificata.",
+      "emailVerificationRequired": "La verifica dell'email è richiesta dopo aver cambiato indirizzo.",
+      "emailVerificationPending": "È richiesto un passaggio di conferma prima che la nuova email venga usata.",
+      "changeEmail": "Cambia",
+      "changeEmailTitle": "Cambia email",
+      "changeEmailDescription": "Aggiorna il tuo indirizzo email di accesso.",
+      "emailChangeHelp": "Manterremo la tua email attuale finché il nuovo indirizzo non sarà confermato.",
+      "requestEmailChange": "Aggiorna email",
+      "emailChangeRequestedSuccess": "Richiesta di modifica email inviata correttamente",
+      "emailChangeRequestFailed": "Impossibile richiedere la modifica email",
+      "emailAlreadyInUse": "Questa email è già in uso",
+      "usernameDescription": "Usato per l'accesso. Può contenere lettere, numeri, trattini bassi e trattini.",
+      "usernamePlaceholder": "Inserisci il tuo nome utente",
+      "updateProfile": "Aggiorna profilo",
+      "securitySettings": "Impostazioni di sicurezza",
+      "securitySettingsDescription": "Gestisci la sicurezza e la password del tuo account.",
+      "loginMethods": "Metodi di accesso",
+      "signInMethod": "Metodo di accesso",
+      "signInMethodDescription": "Come ti autentichi attualmente su questo account.",
+      "signInMethodSummary": "Usato per l'accesso all'account.",
+      "loginMethodsSummary": "Usato per l'accesso all'account.",
+      "manage": "Gestisci",
+      "manageSignInTitle": "Gestisci i metodi di accesso",
+      "manageSignInDescription": "Controlla i provider collegati e rimuovi quelli che non ti servono più.",
+      "googleSignIn": "Account Google collegato",
+      "unlinkNotAvailable": "La disconnessione dell'account non è ancora disponibile.",
+      "unlink": "Scollega",
+      "unlinkProviderDescription": "Puoi scollegare un provider se resta disponibile un altro metodo di accesso.",
+      "unlinkLastProviderWarning": "Non puoi scollegare l'ultimo metodo di accesso rimasto.",
+      "providerUnlinkedSuccess": "Provider scollegato correttamente",
+      "providerUnlinkFailed": "Impossibile scollegare il provider",
+      "noAuthProviders": "Nessun provider di accesso collegato.",
+      "noProviderEmail": "Nessuna email del provider disponibile",
+      "providers": {
+        "google": "Google"
+      },
+      "password": "Password",
+      "passwordDescription": "Cambia la password del tuo account",
+      "passwordNotSetDescription": "Nessuna password ancora impostata per questo account.",
+      "changePassword": "Cambia password",
+      "setPassword": "Imposta password",
+      "changePasswordTitle": "Cambia password",
+      "changePasswordDescription": "Inserisci la password attuale e scegline una nuova.",
+      "setPasswordTitle": "Imposta password",
+      "setPasswordDescription": "Crea una password per poter accedere anche senza provider.",
+      "currentPassword": "Password attuale",
+      "currentPasswordPlaceholder": "Inserisci la password attuale",
+      "newPassword": "Nuova password",
+      "newPasswordPlaceholder": "Inserisci la nuova password",
+      "confirmPassword": "Conferma nuova password",
+      "confirmPasswordPlaceholder": "Conferma la nuova password",
+      "updatePassword": "Aggiorna password",
+      "profileUpdatedSuccess": "Profilo aggiornato correttamente",
+      "passwordUpdatedSuccess": "Password aggiornata correttamente",
+      "updateProfileFailed": "Impossibile aggiornare il profilo",
+      "updatePasswordFailed": "Impossibile aggiornare la password",
+      "usernameAlreadyInUse": "Questo nome utente è già in uso",
+      "currentPasswordIncorrect": "La password attuale non è corretta",
+      "titleDescription": "Gestisci le informazioni del tuo account, i metodi di accesso e le impostazioni di sicurezza."
+    },
+    "admin": {
+      "title": "Amministrazione",
+      "setup": "Configurazione amministratore",
+      "systemSettings": {
+        "title": "Impostazioni di sistema",
+        "description": "Configura le impostazioni globali del sistema. Queste opzioni sono disponibili solo per gli amministratori.",
+        "fields": {
+          "homeTitle": {
+            "label": "Titolo home",
+            "description": "Personalizza il titolo mostrato per la home nella navigazione e nei breadcrumb"
+          },
+          "appTitle": {
+            "label": "Titolo applicazione",
+            "description": "Nome personalizzato mostrato nella barra di navigazione, nella scheda del browser e in tutti i link del brand (richiede licenza)"
+          },
+          "appUrl": {
+            "label": "URL applicazione",
+            "description": "URL aperto quando gli utenti cliccano sul titolo dell'applicazione (richiede licenza)"
+          },
+          "defaultLanguage": {
+            "label": "Lingua predefinita",
+            "description": "Imposta la lingua predefinita dell'applicazione"
+          },
+          "guestMode": {
+            "label": "Modalità ospite",
+            "description": "Consenti agli utenti di sfogliare la galleria senza creare un account"
+          },
+          "defaultSorting": {
+            "label": "Ordinamento file predefinito",
+            "description": "Scegli come ordinare file e cartelle per impostazione predefinita",
+            "sortBy": "Ordina per",
+            "order": "Ordine",
+            "options": {
+              "name": "Nome",
+              "modifiedTime": "Data di modifica",
+              "ascending": "Crescente",
+              "descending": "Decrescente"
+            }
+          },
+          "showFileNames": {
+            "label": "Mostra nomi file",
+            "description": "Mostra i nomi dei file sulle miniature della galleria per impostazione predefinita"
+          },
+          "imageExtensions": {
+            "label": "Estensioni file immagine",
+            "description": "Elenco separato da virgole delle estensioni immagine da mostrare (es. .jpg,.png,.gif)"
+          },
+          "videoExtensions": {
+            "label": "Estensioni file video",
+            "description": "Elenco separato da virgole delle estensioni video da mostrare (es. .mp4,.webm,.avi)"
+          },
+          "videoThumbnailPosition": {
+            "label": "Posizione miniatura video",
+            "description": "Scegli da dove estrarre le miniature video. Il primo fotogramma è il più veloce. Le opzioni di seek aiutano a ottenere un fotogramma più rappresentativo evitando schermate nere.",
+            "options": {
+              "firstFrame": "Primo fotogramma",
+              "seek1s": "Vai a 1 secondo",
+              "seek3s": "Vai a 3 secondi",
+              "seek5s": "Vai a 5 secondi",
+              "seek10pct": "Vai al 10%",
+              "seek25pct": "Vai al 25%"
+            }
+          },
+          "showHidden": {
+            "label": "Mostra file nascosti",
+            "description": "Mostra file e cartelle che iniziano con un punto (.)"
+          }
+        }
+      },
+      "storage": {
+        "title": "Configurazione archiviazione",
+        "description": "Gestisci dove sono archiviati immagini e file. Le modifiche potrebbero richiedere un riavvio del server.",
+        "storageType": "Tipo di archiviazione",
+        "status": "Stato",
+        "configurationDetails": "Dettagli configurazione",
+        "configureStorage": "Configura archiviazione"
+      },
+      "welcome": "Benvenuto in Imagor Studio",
+      "setupDescription": "Configuriamo la tua galleria immagini in pochi passaggi",
+      "createAdminAccount": "Crea account amministratore",
+      "systemConfiguration": "Configurazione sistema",
+      "storageConfiguration": "Configurazione archiviazione",
+      "username": "Nome utente",
+      "password": "Password",
+      "confirmPassword": "Conferma password",
+      "createAccount": "Crea account",
+      "skipForNow": "Salta per ora",
+      "next": "Avanti",
+      "guestMode": "Modalità ospite",
+      "guestModeDescription": "Consenti agli utenti di sfogliare la galleria senza creare un account",
+      "homeTitle": "Titolo home",
+      "homeTitleDescription": "Personalizza il titolo mostrato per la cartella home/root nella galleria",
+      "systemSettingsDescription": "Queste impostazioni possono essere modificate in seguito dal pannello admin",
+      "storageDescription": "Configura dove verranno archiviate le immagini",
+      "failedToCreateAccount": "Impossibile creare l'account amministratore",
+      "failedToSaveSettings": "Impossibile salvare le impostazioni",
+      "settingsUpdatedSuccess": "Impostazioni aggiornate correttamente",
+      "storageConfiguredSuccess": "Archiviazione configurata correttamente",
+      "storageConfiguredRestart": "Archiviazione configurata correttamente. Riavvia il server per applicare le modifiche.",
+      "sections": {
+        "general": "Generale",
+        "storage": "Archiviazione",
+        "imagor": "Imagor",
+        "license": "Licenza"
+      },
+      "sectionDescriptions": {
+        "general": "Configura le impostazioni generali della piattaforma. Queste opzioni sono disponibili solo per gli amministratori.",
+        "storage": "Configura il backend di archiviazione predefinito per gli spazi gestiti dalla piattaforma.",
+        "imagor": "Configura le impostazioni predefinite di elaborazione immagini e firma URL di imagor per la piattaforma.",
+        "license": "Gestisci la chiave di licenza e visualizza il piano attuale."
+      }
+    },
+    "storage": {
+      "configureStorage": "Configura archiviazione",
+      "storageType": "Tipo di archiviazione",
+      "storageTypeSelector": {
+        "fileStorageDescription": "Archivia le immagini nel file system locale",
+        "s3StorageDescription": "Archivia le immagini in Amazon S3 o in uno storage cloud compatibile"
+      },
+      "advancedSettings": "Impostazioni avanzate",
+      "dirPermissionsDescription": "Permessi per la creazione di nuove directory (formato ottale, es. 0755)",
+      "filePermissionsDescription": "Permessi per la scrittura di nuovi file (formato ottale, es. 0644)",
+      "fileStorage": "Archiviazione file",
+      "s3Storage": "Archiviazione S3",
+      "fileStorageConfig": "Configurazione archiviazione file",
+      "s3StorageConfig": "Configurazione archiviazione S3",
+      "baseDir": "Directory base",
+      "baseDirDescription": "La directory in cui verranno archiviate le immagini nel file system",
+      "directoryPermissions": "Permessi directory",
+      "filePermissions": "Permessi file",
+      "bucketName": "Nome bucket",
+      "bucketNameRequired": "Il nome del bucket è obbligatorio",
+      "bucketDescription": "Il nome del bucket S3 in cui verranno archiviate le immagini",
+      "region": "Region",
+      "regionDescription": "Regione AWS in cui si trova il bucket (es. us-east-1, eu-west-1)",
+      "customEndpoint": "Endpoint personalizzato",
+      "customEndpointDescription": "Endpoint S3 personalizzato per servizi compatibili con S3 (lascia vuoto per AWS S3)",
+      "forcePathStyle": "Forza path style",
+      "forcePathStyleDescription": "Abilita per MinIO e LocalStack. La maggior parte degli altri servizi compatibili con S3 funziona meglio con questa opzione disattivata.",
+      "accessKeyId": "Access Key ID",
+      "accessKeyIdDescription": "Access key ID AWS (lascia vuoto per usare ruoli IAM o variabili d'ambiente)",
+      "secretAccessKey": "Secret Access Key",
+      "secretAccessKeyDescription": "Secret access key AWS (lascia vuoto per usare ruoli IAM o variabili d'ambiente)",
+      "sessionToken": "Token di sessione",
+      "sessionTokenDescription": "Token di sessione AWS (richiesto solo per credenziali temporanee)",
+      "baseDirectory": "Directory base",
+      "baseDirectoryDescription": "Prefisso opzionale per tutte le chiavi oggetto nel bucket (es. \"images/\")",
+      "testConfiguration": "Test configurazione",
+      "testConfigurationFirst": "Compila prima la configurazione di archiviazione {{storageType}}",
+      "testPassed": "Test della configurazione archiviazione superato",
+      "testFailed": "Test della configurazione archiviazione non riuscito",
+      "testError": "Impossibile testare la configurazione archiviazione",
+      "configurationSuccess": "Archiviazione configurata correttamente",
+      "configurationError": "Impossibile configurare l'archiviazione {{storageType}}",
+      "configurationOverridden": "La configurazione dello storage è gestita da una configurazione esterna",
+      "baseDirRequired": "La directory base è obbligatoria",
+      "notConfigured": "Non configurato",
+      "active": "Attivo",
+      "s3Bucket": "Bucket S3",
+      "endpoint": "Endpoint",
+      "takingEffect": "Impostazioni salvate. Le modifiche potrebbero richiedere fino a 1 minuto per avere effetto.",
+      "testConfigFirst": "Compila prima la configurazione di archiviazione {{storageType}}",
+      "storageTypeDescription": "Seleziona dove verranno archiviati immagini e file"
+    },
+    "systemSettings": {
+      "settingOverridden": "Questa impostazione è sovrascritta dal file di configurazione o dalla variabile d'ambiente",
+      "licenseRequired": "Per usare questa impostazione è necessaria una licenza valida"
+    },
+    "imagor": {
+      "imagorConfiguration": "Configurazione Imagor",
+      "imagorConfigurationDescription": "Configura le impostazioni di elaborazione immagini. Imagor gestisce trasformazioni e ottimizzazioni delle immagini.",
+      "secret": "Chiave segreta",
+      "secretDescription": "Lascia vuoto e genereremo automaticamente una chiave di firma sicura.",
+      "signerType": "Tipo di firmatario",
+      "selectSignerType": "Seleziona il tipo di firmatario",
+      "signerTypeDescription": "Algoritmo hash usato per la firma degli URL",
+      "signerTruncate": "Troncamento firma",
+      "signerTruncateDescription": "Numero di caratteri da troncare dalla firma (0 = nessun troncamento)",
+      "configureImagor": "Configura Imagor",
+      "configurationSuccess": "Imagor configurato correttamente",
+      "configurationError": "Impossibile configurare Imagor",
+      "configurationOverridden": "La configurazione di Imagor è gestita da una configurazione esterna",
+      "configuredSuccess": "Imagor configurato correttamente",
+      "configurationDetails": "Dettagli configurazione",
+      "hasSecret": "Ha una chiave segreta",
+      "takingEffect": "Impostazioni salvate. Le modifiche potrebbero richiedere fino a 1 minuto per avere effetto.",
+      "algorithmSha1": "SHA-1 — Legacy, più veloce",
+      "algorithmSha256": "SHA-256 — Consigliato",
+      "algorithmSha512": "SHA-512 — Massima sicurezza"
+    },
+    "license": {
+      "licenseManagement": "Gestione licenza",
+      "licenseManagementDescription": "Gestisci la tua licenza Imagor Studio e visualizza le informazioni sulla licenza.",
+      "licenseType": "Tipo di licenza",
+      "status": "Stato",
+      "notLicensed": "Senza licenza",
+      "licensed": "Con licenza",
+      "configurationDetails": "Dettagli licenza",
+      "licensedTo": "Licenziato a",
+      "activatedOn": "Attivata il",
+      "licenseKey": "Chiave di licenza",
+      "updateLicense": "Aggiorna licenza",
+      "activateLicense": "Attiva licenza",
+      "configurationOverridden": "La configurazione della licenza è gestita da una configurazione esterna",
+      "purchaseLicense": "Acquista licenza",
+      "supportDevelopment": "Supporta lo sviluppo",
+      "activationSuccess": "Grazie per il supporto! Licenza attivata correttamente.",
+      "updateSuccess": "Licenza aggiornata correttamente. Grazie per il supporto continuo.",
+      "activationError": "Impossibile attivare la licenza",
+      "unableToLoad": "Impossibile caricare le informazioni sulla licenza",
+      "updateDialogDescription": "Inserisci una nuova chiave di licenza per aggiornare quella attuale.",
+      "activateDialogDescription": "Inserisci la chiave di licenza per attivare Imagor Studio.",
+      "newLicenseKeyLabel": "Nuova chiave di licenza",
+      "licenseKeyLabel": "Chiave di licenza",
+      "newLicenseKeyDescription": "Incolla qui la nuova chiave di licenza. Sostituirà quella attuale.",
+      "licenseKeyDescription": "Incolla qui la chiave di licenza per attivare Imagor Studio.",
+      "licenseKeyRequired": "La chiave di licenza è obbligatoria",
+      "registerForLicense": "Registra Imagor Studio",
+      "registerDescription": "Inserisci la chiave di licenza per attivare Imagor Studio.",
+      "supportTitle": "💝 Supporta Imagor Studio - dal creatore di imagor",
+      "creatorStory": "Servivamo milioni di immagini ma avevamo bisogno di strumenti migliori per gestirle e modificarle. Così è nato Imagor Studio — open source, self-hosted, costruito in anni di sviluppo da vipsgen a imagor.",
+      "features": {
+        "virtualScrollingGallery": "Galleria con scorrimento virtuale — sfoglia migliaia di immagini all'istante, senza indicizzazione o attese",
+        "imageEditing": "Modifica immagini — compositing multilivello e workflow con template con generazione URL immediata",
+        "dragAndDrop": "Gestione drag-and-drop — carica, organizza, multi-seleziona per operazioni di massa",
+        "nonDestructiveWorkflow": "Workflow non distruttivo — originali intatti, tutte le trasformazioni via URL"
+      },
+      "supportOngoingDevelopment": "Nessun abbonamento. Nessun vendor lock-in. Il tuo supporto rende possibile lo sviluppo continuo.",
+      "getEarlyBirdLicense": "Ottieni la licenza Early Bird ($39)",
+      "licenseTypes": {
+        "early_bird": "Early Bird",
+        "personal": "Personale",
+        "commercial": "Commerciale",
+        "enterprise": "Enterprise"
+      }
+    },
+    "users": {
+      "title": "Utenti",
+      "description": "Gestisci account utente e ruoli.",
+      "createUser": "Crea utente",
+      "createNewUser": "Crea nuovo utente",
+      "createUserDescription": "Aggiungi un nuovo utente al sistema. Potrà accedere con le credenziali fornite.",
+      "formLabels": {
+        "displayName": "Nome visualizzato",
+        "username": "Nome utente",
+        "password": "Password",
+        "confirmPassword": "Conferma password",
+        "role": "Ruolo"
+      },
+      "editUser": "Modifica utente",
+      "editUserDescription": "Aggiorna le informazioni dell'utente. Le modifiche saranno applicate immediatamente.",
+      "updateUser": "Aggiorna utente",
+      "createUserButton": "Crea utente",
+      "deactivateUser": "Disattiva utente",
+      "reactivateUser": "Riattiva utente",
+      "deactivateUserDescription": "Sei sicuro di voler disattivare",
+      "deactivateUserWarning": "Questo impedirà all'utente di accedere",
+      "reactivateUserWarning": "Questo consentirà all'utente di accedere di nuovo",
+      "searchPlaceholder": "Cerca utenti per nome o nome utente...",
+      "noUsersFound": "Nessun utente trovato",
+      "showingUsers": "Visualizzazione di {{filtered}} utenti su {{total}}",
+      "tableHeaders": {
+        "name": "Nome",
+        "username": "Nome utente",
+        "role": "Ruolo",
+        "status": "Stato",
+        "actions": "Azioni"
+      },
+      "status": {
+        "active": "Attivo",
+        "inactive": "Inattivo"
+      },
+      "roles": {
+        "user": "Utente",
+        "admin": "Admin"
+      },
+      "actions": {
+        "edit": "Modifica",
+        "deactivate": "Disattiva",
+        "reactivate": "Riattiva"
+      },
+      "messages": {
+        "userCreatedSuccess": "Utente creato correttamente",
+        "userUpdatedSuccess": "Utente aggiornato correttamente",
+        "userDeactivatedSuccess": "Utente disattivato correttamente",
+        "userReactivatedSuccess": "Utente riattivato correttamente",
+        "createUserFailed": "Impossibile creare l'utente",
+        "updateUserFailed": "Impossibile aggiornare l'utente",
+        "deactivateUserFailed": "Impossibile disattivare l'utente",
+        "reactivateUserFailed": "Impossibile riattivare l'utente",
+        "usernameAlreadyExists": "Questo nome utente è già in uso"
+      },
+      "placeholders": {
+        "enterDisplayName": "Inserisci il nome visualizzato",
+        "enterUsername": "Inserisci il nome utente",
+        "enterPassword": "Inserisci la password",
+        "confirmPassword": "Conferma password"
+      }
+    },
+    "spaces": {
+      "title": "Spazi",
+      "createSpace": "Crea spazio",
+      "createNewSpace": "Crea nuovo spazio",
+      "createSpaceDescription": "Aggiungi un nuovo spazio alla tua organizzazione. Ogni spazio ha la propria configurazione di storage e imagor.",
+      "editSpace": "Modifica spazio",
+      "editSpaceDescription": "Aggiorna la configurazione dello spazio. Le modifiche saranno applicate immediatamente.",
+      "deleteSpace": "Elimina spazio",
+      "deleteSpaceDescription": "Sei sicuro di voler eliminare definitivamente lo spazio",
+      "createSpaceButton": "Crea spazio",
+      "updateSpaceButton": "Aggiorna spazio",
+      "wizard": {
+        "stepIdentity": "Identità",
+        "stepStorage": "Storage",
+        "next": "Avanti",
+        "back": "Indietro"
+      },
+      "noSpacesFound": "Nessuno spazio trovato",
+      "description": "Gestisci gli spazi di lavoro della tua organizzazione.",
+      "emptyDescription": "Crea il tuo primo spazio per iniziare con un workspace dedicato.",
+      "settings": "Settings",
+      "spaceCount": "{{count}} spazio/i",
+      "openGallery": "Apri galleria",
+      "storageNotConfigured": "Non configurato",
+      "storageTypeLabel": "Tipo di archiviazione",
+      "credentialsEncrypted": "Le credenziali sono cifrate a riposo con AES-256 e non vengono mai esposte dopo il salvataggio.",
+      "storageType": {
+        "managed": "Storage piattaforma",
+        "s3": "Custom S3 (BYOB)"
+      },
+      "storageTypeDesc": {
+        "managed": "Gestito da Imagor Studio. Nessuna configurazione del bucket richiesta.",
+        "s3": "Collega il tuo bucket compatibile S3."
+      },
+      "keyDescription": "Usato nei link e negli URL. Puoi cambiarlo, ma i vecchi link non verranno reindirizzati.",
+      "tableHeaders": {
+        "key": "Slug URL",
+        "name": "Nome",
+        "storage": "Storage",
+        "actions": "Azioni"
+      },
+      "formLabels": {
+        "key": "Slug URL",
+        "name": "Nome visualizzato",
+        "storageType": "Tipo di archiviazione",
+        "bucket": "Bucket",
+        "region": "Region",
+        "endpoint": "Endpoint",
+        "prefix": "Prefisso",
+        "accessKeyId": "Access Key ID",
+        "secretKey": "Secret Key",
+        "customDomain": "Dominio personalizzato",
+        "imagorSecret": "Segreto Imagor"
+      },
+      "placeholders": {
+        "name": "Il mio spazio",
+        "selectStorageType": "Seleziona il tipo di archiviazione",
+        "unchanged": "(invariato)"
+      },
+      "messages": {
+        "spaceCreatedSuccess": "Spazio creato correttamente",
+        "spaceUpdatedSuccess": "Spazio aggiornato correttamente",
+        "spaceDeletedSuccess": "Spazio eliminato correttamente",
+        "leftSpaceSuccess": "Hai lasciato lo spazio condiviso.",
+        "createSpaceFailed": "Impossibile creare lo spazio",
+        "keyAlreadyTaken": "Lo slug URL è già in uso",
+        "updateSpaceFailed": "Impossibile aggiornare lo spazio",
+        "deleteSpaceFailed": "Impossibile eliminare lo spazio",
+        "leaveSpaceFailed": "Impossibile lasciare lo spazio condiviso"
+      },
+      "validation": {
+        "keyFormat": "Lo slug URL può contenere solo lettere minuscole, numeri e trattini"
+      },
+      "stats": {
+        "totalSpaces": "Spazi totali",
+        "managedStorage": "Storage gestito",
+        "externalStorage": "Storage esterno",
+        "yourSpaces": "I tuoi spazi",
+        "sharedWithYou": "Condivisi con te"
+      },
+      "configure": "Configura",
+      "startDescription": "Inizia con uno spazio gestito per la configurazione più rapida, poi personalizza storage, delivery e branding man mano che il workspace cresce.",
+      "sharedLabel": "Condiviso",
+      "leaveSpace": "Esci",
+      "leaveSpaceDescription": "Lascia questo spazio condiviso",
+      "access": {
+        "ownedByYou": "Di tua proprietà",
+        "sharedWithYou": "Condiviso con te"
+      }
+    },
+    "spaceSettings": {
+      "backToSpaces": "Torna agli spazi",
+      "openGallery": "Apri galleria",
+      "sections": {
+        "general": "Generale",
+        "storage": "Storage",
+        "dangerZone": "Zona di pericolo",
+        "members": "Membri",
+        "imagor": "Imagor"
+      },
+      "gallery": {
+        "description": "Personalizza visualizzazione e comportamento della galleria per questo spazio. Le impostazioni a livello di spazio sovrascrivono i valori predefiniti della piattaforma."
+      },
+      "branding": {
+        "title": "Branding",
+        "description": "Titolo e link dell'app mostrati nell'editor per questo spazio. Sovrascrive il valore predefinito della piattaforma (richiede licenza).",
+        "appTitle": "Titolo app editor",
+        "appTitleDescription": "Titolo personalizzato mostrato nella barra di navigazione durante la navigazione di questo spazio. Sovrascrive il valore predefinito della piattaforma (richiede licenza).",
+        "appUrl": "URL app editor",
+        "appUrlDescription": "URL aperto quando si clicca sul titolo dell'app durante la navigazione di questo spazio."
+      },
+      "general": {
+        "description": "Informazioni di base su questo spazio.",
+        "name": "Nome visualizzato",
+        "nameDescription": "Il nome mostrato nella navigazione e nell'elenco spazi.",
+        "customDomain": "Dominio personalizzato",
+        "customDomainDescription": "Dominio personalizzato per questo spazio. Se lasciato vuoto, verrà servito su {{spaceKey}}.imagor.app.",
+        "saved": "Impostazioni generali salvate"
+      },
+      "storage": {
+        "description": "Visualizza le impostazioni di archiviazione per questo spazio.",
+        "managedTitle": "Storage gestito dalla piattaforma",
+        "managedDescription": "I file sono archiviati nello storage gestito di Imagor Studio. Il tipo di storage non può essere cambiato dopo la creazione dello spazio.",
+        "bucket": "Bucket",
+        "region": "Region",
+        "bucketLocked": "Bucket e regione sono fissati al momento della creazione e non possono essere modificati.",
+        "endpoint": "Endpoint",
+        "endpointDescription": "URL endpoint personalizzato compatibile S3. Lascia vuoto per AWS S3.",
+        "prefix": "Prefisso percorso",
+        "prefixDescription": "Prefisso percorso opzionale all'interno del bucket (es. media/).",
+        "accessKeyId": "Access Key ID",
+        "accessKeyIdDescription": "Lascia vuoto per mantenere le credenziali esistenti.",
+        "secretKey": "Secret Access Key",
+        "secretKeyDescription": "Lascia vuoto per mantenere le credenziali esistenti.",
+        "urlSigning": "Firma URL",
+        "urlSigningDescription": "Firma HMAC per la generazione sicura di URL di trasformazione imagor.",
+        "imagorSecret": "Segreto di firma",
+        "imagorSecretDescription": "Usato per firmare gli URL di trasformazione imagor. Lascia vuoto per mantenere il segreto esistente.",
+        "signerAlgorithm": "Algoritmo di firma",
+        "signerAlgorithmDescription": "Algoritmo HMAC usato per firmare gli URL di trasformazione.",
+        "signerTruncate": "Troncamento firma",
+        "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza completa).",
+        "saved": "Credenziali di storage salvate"
+      },
+      "danger": {
+        "deleteTitle": "Elimina questo spazio",
+        "deleteDescription": "Una volta eliminato, tutta la configurazione di questo spazio viene rimossa definitivamente. I file nel bucket S3 non vengono toccati.",
+        "deleteButton": "Elimina spazio"
+      },
+      "members": {
+        "description": "Gestisci l'accesso a questo spazio.",
+        "addLabel": "Aggiungi membro",
+        "usernamePlaceholder": "Nome utente",
+        "roleLabel": "Ruolo",
+        "addButton": "Aggiungi direttamente",
+        "tableHeaders": {
+          "member": "Membro",
+          "role": "Ruolo",
+          "action": "Azione"
+        },
+        "inviteDescription": "Condividi via email. Gli utenti esistenti ottengono subito l'accesso, anche se appartengono a un'altra organizzazione. Le persone nuove ricevono comunque un invito email.",
+        "addExistingDescription": "Oppure aggiungi rapidamente qualcuno che fa già parte della tua organizzazione.",
+        "emailPlaceholder": "name@example.com",
+        "sendInviteButton": "Condividi",
+        "inviteHelp": "Gli account esistenti vengono aggiunti immediatamente a questo spazio. Le persone nuove devono comunque accettare un invito via email.",
+        "inviteErrors": {
+          "required": "Inserisci un indirizzo email.",
+          "invalidEmail": "Inserisci un indirizzo email valido.",
+          "alreadyHasAccess": "Questa persona ha già accesso a questo spazio.",
+          "notConfigured": "Gli inviti email non sono ancora configurati.",
+          "unavailable": "La condivisione non è disponibile in questa distribuzione.",
+          "default": "Impossibile condividere questo spazio in questo momento. Riprova."
+        },
+        "memberPlaceholder": "Scegli un collega",
+        "memberPlaceholderEmpty": "Tutti i membri della tua organizzazione hanno già accesso esplicito",
+        "sharedTitle": "Accesso a livello organizzazione",
+        "sharedDescription": "Tutti i membri di questa organizzazione possono visualizzare e copiare questo spazio. L'elenco qui sotto mostra chi è stato aggiunto direttamente, mentre gli amministratori dell'organizzazione continuano a gestire impostazioni e condivisione.",
+        "emptyDescription": "Nessuno è stato ancora aggiunto direttamente a questo spazio. Gli amministratori dell'organizzazione hanno comunque accesso ereditato.",
+        "accessLabel": "Accesso condiviso",
+        "addSuccess": "Membro aggiunto correttamente.",
+        "inviteSent": "Email di invito inviata.",
+        "roleUpdated": "Ruolo aggiornato.",
+        "removeSuccess": "Membro rimosso.",
+        "removeSelfDisabled": "Tu",
+        "removeSelfNotAllowed": "Non puoi rimuovere te stesso da questo spazio.",
+        "empty": "Nessun membro diretto dello spazio.",
+        "pendingTitle": "Inviti in attesa",
+        "listHeaders": {
+          "member": "Membro",
+          "action": "Azione"
+        },
+        "pendingHeaders": {
+          "email": "Email",
+          "role": "Ruolo",
+          "expires": "Scade"
+        },
+        "removeTitle": "Rimuovi membro",
+        "removeDescription": "Sei sicuro di voler rimuovere",
+        "roleSectionLabel": "Cambia ruolo",
+        "promoteToManager": "Cambia in admin",
+        "changeToMember": "Cambia in membro",
+        "roles": {
+          "owner": "Proprietario",
+          "admin": "Admin",
+          "spaceManager": "Admin",
+          "member": "Membro"
+        },
+        "roleSource": {
+          "organization": "Ereditato dall'organizzazione",
+          "space": "Concesso per questo spazio"
+        }
+      },
+      "placeholders": {
+        "unchanged": "(lascia vuoto per mantenere il valore esistente)"
+      },
+      "imagor": {
+        "description": "Configura le impostazioni di firma URL di imagor per questo spazio.",
+        "urlSigning": "Firma URL",
+        "urlSigningDescription": "Firma HMAC per la generazione sicura di URL di trasformazione imagor.",
+        "imagorSecret": "Segreto di firma",
+        "imagorSecretDescription": "Usato per firmare gli URL di trasformazione imagor.",
+        "signerAlgorithm": "Algoritmo di firma",
+        "signerAlgorithmDescription": "Algoritmo HMAC usato per firmare gli URL di trasformazione.",
+        "algorithmSha1": "SHA-1 — Legacy, più veloce",
+        "algorithmSha256": "SHA-256 — Consigliato",
+        "algorithmSha512": "SHA-512 — Massima sicurezza",
+        "signerTruncate": "Troncamento firma",
+        "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza completa).",
+        "saved": "Impostazioni di sicurezza salvate"
+      }
+    }
+  },
+  "components": {
+    "folderTree": {
+      "folders": "Cartelle",
+      "home": "Home",
+      "noFoldersFound": "Nessuna cartella trovata",
+      "loadFolderError": "Impossibile caricare il contenuto della cartella"
+    },
+    "filePicker": {
+      "title": "Seleziona file",
+      "description": "Scegli un file dalla tua galleria",
+      "select": "Seleziona",
+      "resetSelection": "Reimposta selezione",
+      "selectedCount": "{{count}} selezionati",
+      "noFiles": "Nessun file trovato in questa cartella",
+      "loadFilesError": "Impossibile caricare i file"
+    },
+    "licenseBadge": {
+      "unregistered": "Non registrato"
+    }
+  },
+  "home": "Home",
+  "posts": "Articoli",
+  "categories": "Categorie",
+  "tags": "Tag",
+  "users": "Utenti",
+  "account": "Account",
+  "signOut": "Esci",
+  "allPosts": "Tutti gli articoli",
+  "newPost": "Nuovo articolo",
+  "profile": "Profilo",
+  "dashboard": "Dashboard",
+  "footerText": "Realizzato con {{uiLink}}. Il codice sorgente è disponibile su {{githubLink}}.",
+  "placeholderImageAttribution": "Progettato da Freepik",
+  "switchTheme": "Cambia tema",
+  "close": "Chiudi",
+  "snooze": "Posticipa",
+  "replyAll": "Rispondi a tutti",
+  "forward": "Inoltra",
+  "more": "Altro",
+  "markAsUnread": "Segna come non letto",
+  "starThread": "Aggiungi ai preferiti",
+  "addLabel": "Aggiungi etichetta",
+  "muteThread": "Silenzia conversazione",
+  "imageInformation": "Informazioni immagine",
+  "noImageInfo": "Nessuna informazione immagine disponibile.",
+  "imageEditor": {
+    "newCanvas": "Nuova tela",
+    "page": {
+      "back": "Indietro",
+      "controls": "Controlli",
+      "resetAll": "Reimposta tutto",
+      "download": "Scarica",
+      "copyUrl": "Copia URL",
+      "copyUrlSuccess": "URL copiato negli appunti",
+      "retry": "Riprova",
+      "failedToDownload": "Impossibile scaricare l'immagine",
+      "undo": "Annulla",
+      "redo": "Ripeti",
+      "confirmLeave": "Vuoi uscire dall'editor?",
+      "confirmLeaveMessage": "Sei sicuro di voler tornare indietro?",
+      "leave": "Esci",
+      "stay": "Resta",
+      "showHideControls": "Mostra/Nascondi controlli"
+    },
+    "controls": {
+      "cropAspect": "Ritaglio e proporzioni",
+      "dimensionsResize": "Dimensioni e ridimensionamento",
+      "outputCompression": "Output e compressione",
+      "colorEffects": "Colore ed effetti",
+      "transformRotate": "Capovolgi e ruota",
+      "cropResize": "Ritaglia e ridimensiona",
+      "fillPadding": "Riempimento e padding"
+    },
+    "transform": {
+      "horizontalFlip": "Capovolgi orizzontalmente",
+      "verticalFlip": "Capovolgi verticalmente",
+      "horizontal": "Orizzontale",
+      "vertical": "Verticale",
+      "normal": "Normale",
+      "flipped": "Capovolto"
+    },
+    "effects": {
+      "brightness": "Luminosità",
+      "contrast": "Contrasto",
+      "saturation": "Saturazione",
+      "hue": "Tonalità",
+      "blur": "Sfocatura",
+      "sharpen": "Nitidezza",
+      "roundCorner": "Angoli arrotondati",
+      "grayscale": "Scala di grigi"
+    },
+    "dimensions": {
+      "title": "Dimensioni",
+      "width": "Larghezza",
+      "height": "Altezza",
+      "auto": "Auto",
+      "reset": "Reimposta",
+      "resetSize": "Ripristina dimensione originale",
+      "lockAspectRatio": "Blocca proporzioni",
+      "unlockAspectRatio": "Sblocca proporzioni",
+      "scale": "Scala",
+      "resizeMode": "Modalità di ridimensionamento",
+      "modes": {
+        "fitIn": "Adatta",
+        "fill": "Riempi",
+        "stretch": "Stira",
+        "smart": "Intelligente"
+      },
+      "modeDescriptions": {
+        "fitIn": "Ridimensiona per adattarsi alle dimensioni mantenendo le proporzioni",
+        "fill": "Ridimensiona e ritaglia per riempire le dimensioni",
+        "stretch": "Ridimensiona alle dimensioni esatte ignorando le proporzioni",
+        "smart": "Ritaglio intelligente per riempire le dimensioni con rilevamento del contenuto"
+      },
+      "horizontal": "Orizzontale",
+      "vertical": "Verticale",
+      "alignments": {
+        "left": "Sinistra",
+        "center": "Centro",
+        "right": "Destra",
+        "top": "Alto",
+        "middle": "Centro",
+        "bottom": "Basso"
+      },
+      "originalRatio": "Originale: {{ratio}}",
+      "outputSize": "Dimensione output"
+    },
+    "resize": {
+      "title": "Ridimensiona"
+    },
+    "output": {
+      "outputFormat": "Formato",
+      "formatOptions": {
+        "original": "Formato originale",
+        "jpeg": "JPEG",
+        "png": "PNG",
+        "gif": "GIF",
+        "webp": "WebP",
+        "avif": "AVIF",
+        "jxl": "JPEG XL",
+        "tiff": "TIFF",
+        "jp2": "JPEG 2000"
+      },
+      "quality": "Qualità",
+      "qualityAutoOptimized": "La qualità verrà ottimizzata automaticamente per rispettare il limite di dimensione",
+      "maxFileSize": "Dimensione max",
+      "maxSizeDescription": "Regola automaticamente la qualità per rispettare la dimensione del file",
+      "customSizeInBytes": "Dimensione personalizzata in byte",
+      "bytes": "byte",
+      "clear": "Cancella",
+      "targetSize": "Obiettivo: {{size}} - La qualità verrà ridotta automaticamente per rispettare questo limite",
+      "metadata": "Metadati",
+      "stripIcc": "Rimuovi profilo ICC",
+      "stripExif": "Rimuovi dati EXIF",
+      "metadataDescription": "Rimuovi metadati per ridurre la dimensione del file"
+    },
+    "crop": {
+      "startCrop": "Ritaglia",
+      "applyCrop": "Applica ritaglio"
+    },
+    "zoom": {
+      "zoomIn": "Zoom avanti",
+      "zoomOut": "Zoom indietro",
+      "fit": "Adatta alla viewport"
+    },
+    "preview": {
+      "previewError": "Errore anteprima",
+      "failedToGenerate": "Impossibile generare l'anteprima"
+    },
+    "fillPadding": {
+      "noFill": "Nessun riempimento",
+      "transparent": "Trasparente",
+      "customColor": "Colore personalizzato"
+    },
+    "layers": {
+      "title": "Livelli",
+      "addLayer": "Aggiungi livello",
+      "addImage": "Immagine",
+      "addText": "Testo",
+      "addColor": "Colore",
+      "addGroup": "Gruppo",
+      "colorLayer": "Colore",
+      "groupLayer": "Gruppo",
+      "textLayer": "Testo",
+      "textLayerDefaultText": "Testo",
+      "editText": "Modifica testo",
+      "applyTextEdit": "Applica modifica testo",
+      "textColor": "Colore",
+      "noLayers": "Nessun livello aggiunto",
+      "layerNumber": "Livello {{number}}",
+      "dragToReorder": "Trascina per riordinare",
+      "hideLayer": "Nascondi livello",
+      "showLayer": "Mostra livello",
+      "lockLayer": "Blocca livello",
+      "unlockLayer": "Sblocca livello",
+      "lockedLayer": "Bloccato",
+      "deleteLayer": "Elimina livello",
+      "duplicateLayer": "Duplica livello",
+      "moveUp": "Sposta su",
+      "moveDown": "Sposta giù",
+      "layerActions": "Azioni livello",
+      "failedToAddLayer": "Impossibile aggiungere il livello",
+      "selectImage": "Seleziona immagine per il livello",
+      "selectImageDescription": "Scegli un'immagine da aggiungere come nuovo livello",
+      "baseImage": "Base",
+      "replaceImage": "Sostituisci immagine",
+      "setColor": "Imposta colore",
+      "replaceImageError": "Impossibile sostituire l'immagine",
+      "addImageLayer": "Aggiungi livello immagine",
+      "addImageLayerDescription": "Scegli un'immagine dal tuo archivio da aggiungere come nuovo livello.",
+      "selectImageToReplace": "Seleziona immagine da sostituire",
+      "selectImageToReplaceDescription": "Scegli una nuova immagine per sostituire quella corrente.",
+      "baseLayer": "Immagine base (livello inferiore)",
+      "editing": "MODIFICA",
+      "editLayer": "Modifica livello",
+      "editImage": "Modifica immagine",
+      "editColor": "Modifica colore",
+      "editGroup": "Modifica gruppo",
+      "renameLayer": "Rinomina livello",
+      "renameLayerDescription": "Inserisci un nuovo nome per questo livello.",
+      "layerName": "Nome livello",
+      "enterLayerName": "Inserisci nome livello",
+      "layerColor": "Colore",
+      "transparent": "Trasparente",
+      "exitEditMode": "Applica",
+      "transparency": "Opacità",
+      "blendMode": "Metodo di fusione",
+      "blendModes": {
+        "normal": "Normale",
+        "multiply": "Moltiplica",
+        "screen": "Scolora",
+        "overlay": "Sovrapponi",
+        "soft-light": "Luce soffusa",
+        "darken": "Scurisci",
+        "lighten": "Schiarisci",
+        "mask": "Maschera"
+      },
+      "blendModeDescriptions": {
+        "normal": "Fusione standard",
+        "multiply": "Aggiungi ombre e profondità",
+        "screen": "Aggiungi luce e bagliori",
+        "overlay": "Aumenta il contrasto",
+        "soft-light": "Illuminazione delicata",
+        "darken": "Mostra le aree più scure",
+        "lighten": "Mostra le aree più chiare",
+        "mask": "Maschera di trasparenza"
+      }
+    },
+    "template": {
+      "editingTemplate": "Modifica template",
+      "saveTemplate": "Salva template",
+      "createTemplate": "Crea template",
+      "saveTemplateAs": "Salva template come...",
+      "downloadImage": "Scarica immagine",
+      "saveDescription": "Salva le trasformazioni correnti come template riutilizzabile",
+      "templateName": "Nome template",
+      "templateNamePlaceholder": "es. Instagram Square, Miniatura prodotto",
+      "description": "Descrizione",
+      "descriptionPlaceholder": "Descrivi cosa fa questo template...",
+      "filenamePreview": "Il file verrà salvato come",
+      "saveLocation": "Posizione di salvataggio",
+      "rootFolder": "Cartella radice",
+      "selectFolder": "Seleziona cartella template",
+      "selectFolderDescription": "Scegli dove salvare il file template",
+      "nameRequired": "Il nome del template è obbligatorio",
+      "saveSuccess": "Template \"{{name}}\" salvato correttamente",
+      "saveError": "Impossibile salvare il template",
+      "overwriteTitle": "Sovrascrivere il template?",
+      "overwriteConfirm": "Esiste già un template chiamato \"{{name}}\". Vuoi sostituirlo?",
+      "overwrite": "Sovrascrivi",
+      "applyTemplate": "Applica template...",
+      "selectTemplate": "Seleziona template",
+      "selectTemplateDescription": "Scegli un template da applicare a questa immagine",
+      "applySuccess": "Template applicato correttamente",
+      "applyError": "Impossibile applicare il template"
     }
   }
 }
