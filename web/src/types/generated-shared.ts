@@ -1,1 +1,1 @@
-export type * from '@/generated/graphql'
+export type * from '@/generated/selfhosted/graphql'
