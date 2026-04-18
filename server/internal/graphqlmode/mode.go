@@ -13,9 +13,7 @@ const (
 	GeneratedPackageCloud      = "internal/generated/gql/cloud"
 )
 
-// NewExecutableSchema returns the currently wired executable schema for the given mode.
-// For now this preserves the existing shared generated package while introducing a single
-// composition point that can switch to mode-specific generated packages as they are adopted.
+// NewExecutableSchema returns the mode-specific executable schema for the current deployment.
 func NewExecutableSchema(mode bootstrap.Mode, r *resolver.Resolver) graphql.ExecutableSchema {
 	switch mode {
 	case bootstrap.ModeCloud:

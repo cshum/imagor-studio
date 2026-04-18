@@ -204,6 +204,137 @@ func mapSharedTemplateResultToCloud(result *sharedgql.TemplateResult) *cloudgql.
 	return &cloudgql.TemplateResult{Success: result.Success, TemplatePath: result.TemplatePath, PreviewPath: result.PreviewPath, Message: result.Message}
 }
 
+func mapSharedOrganizationToCloud(org *sharedgql.Organization) *cloudgql.Organization {
+	if org == nil {
+		return nil
+	}
+	return &cloudgql.Organization{
+		ID:          org.ID,
+		Name:        org.Name,
+		Slug:        org.Slug,
+		OwnerUserID: org.OwnerUserID,
+		Plan:        org.Plan,
+		PlanStatus:  org.PlanStatus,
+		CreatedAt:   org.CreatedAt,
+		UpdatedAt:   org.UpdatedAt,
+	}
+}
+
+func mapSharedSpaceToCloud(space *sharedgql.Space) *cloudgql.Space {
+	if space == nil {
+		return nil
+	}
+	return &cloudgql.Space{
+		ID:                   space.ID,
+		OrgID:                space.OrgID,
+		Key:                  space.Key,
+		Name:                 space.Name,
+		StorageType:          space.StorageType,
+		Bucket:               space.Bucket,
+		Prefix:               space.Prefix,
+		Region:               space.Region,
+		Endpoint:             space.Endpoint,
+		UsePathStyle:         space.UsePathStyle,
+		CustomDomain:         space.CustomDomain,
+		CustomDomainVerified: space.CustomDomainVerified,
+		Suspended:            space.Suspended,
+		IsShared:             space.IsShared,
+		SignerAlgorithm:      space.SignerAlgorithm,
+		SignerTruncate:       space.SignerTruncate,
+		CanManage:            space.CanManage,
+		CanDelete:            space.CanDelete,
+		CanLeave:             space.CanLeave,
+		UpdatedAt:            space.UpdatedAt,
+	}
+}
+
+func mapSharedSpacesToCloud(spaces []*sharedgql.Space) []*cloudgql.Space {
+	result := make([]*cloudgql.Space, 0, len(spaces))
+	for _, space := range spaces {
+		result = append(result, mapSharedSpaceToCloud(space))
+	}
+	return result
+}
+
+func mapSharedOrgMemberToCloud(member *sharedgql.OrgMember) *cloudgql.OrgMember {
+	if member == nil {
+		return nil
+	}
+	return &cloudgql.OrgMember{
+		UserID:      member.UserID,
+		Username:    member.Username,
+		DisplayName: member.DisplayName,
+		Role:        member.Role,
+		CreatedAt:   member.CreatedAt,
+	}
+}
+
+func mapSharedOrgMembersToCloud(members []*sharedgql.OrgMember) []*cloudgql.OrgMember {
+	result := make([]*cloudgql.OrgMember, 0, len(members))
+	for _, member := range members {
+		result = append(result, mapSharedOrgMemberToCloud(member))
+	}
+	return result
+}
+
+func mapSharedSpaceMemberToCloud(member *sharedgql.SpaceMember) *cloudgql.SpaceMember {
+	if member == nil {
+		return nil
+	}
+	return &cloudgql.SpaceMember{
+		UserID:        member.UserID,
+		Username:      member.Username,
+		DisplayName:   member.DisplayName,
+		Email:         member.Email,
+		AvatarURL:     member.AvatarURL,
+		Role:          member.Role,
+		RoleSource:    member.RoleSource,
+		CanChangeRole: member.CanChangeRole,
+		CanRemove:     member.CanRemove,
+		CreatedAt:     member.CreatedAt,
+	}
+}
+
+func mapSharedSpaceMembersToCloud(members []*sharedgql.SpaceMember) []*cloudgql.SpaceMember {
+	result := make([]*cloudgql.SpaceMember, 0, len(members))
+	for _, member := range members {
+		result = append(result, mapSharedSpaceMemberToCloud(member))
+	}
+	return result
+}
+
+func mapSharedSpaceInvitationToCloud(invitation *sharedgql.SpaceInvitation) *cloudgql.SpaceInvitation {
+	if invitation == nil {
+		return nil
+	}
+	return &cloudgql.SpaceInvitation{
+		ID:        invitation.ID,
+		Email:     invitation.Email,
+		Role:      invitation.Role,
+		CreatedAt: invitation.CreatedAt,
+		ExpiresAt: invitation.ExpiresAt,
+	}
+}
+
+func mapSharedSpaceInvitationsToCloud(invitations []*sharedgql.SpaceInvitation) []*cloudgql.SpaceInvitation {
+	result := make([]*cloudgql.SpaceInvitation, 0, len(invitations))
+	for _, invitation := range invitations {
+		result = append(result, mapSharedSpaceInvitationToCloud(invitation))
+	}
+	return result
+}
+
+func mapSharedSpaceInviteResultToCloud(result *sharedgql.SpaceInviteResult) *cloudgql.SpaceInviteResult {
+	if result == nil {
+		return nil
+	}
+	return &cloudgql.SpaceInviteResult{
+		Status:     result.Status,
+		Member:     mapSharedSpaceMemberToCloud(result.Member),
+		Invitation: mapSharedSpaceInvitationToCloud(result.Invitation),
+	}
+}
+
 func mapSharedAuthProviderToSelfHosted(provider *sharedgql.AuthProvider) *selfhostedgql.AuthProvider {
 	if provider == nil {
 		return nil
