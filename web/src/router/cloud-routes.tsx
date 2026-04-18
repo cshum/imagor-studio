@@ -1,6 +1,7 @@
 import { createRoute, Outlet, redirect } from '@tanstack/react-router'
 
 import { getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/api/org-api'
+import { CloudAccountLayout } from '@/layouts/account-layout'
 import { spaceSettingsLoader, usersLoader } from '@/loaders/account-loader.ts'
 import { requireAdminAccountAuth, requireImageEditorAuth } from '@/loaders/auth-loader.ts'
 import { canvasEditorLoader } from '@/loaders/canvas-editor-loader.ts'
@@ -286,6 +287,12 @@ const accountUsersRoute = createRoute({
   },
 })
 
+const cloudAccountLayoutRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  id: 'cloud-account-layout',
+  component: () => <CloudAccountLayout />,
+})
+
 export const cloudRouteTree = rootRoute.addChildren([
   loginRoute,
   authCallbackRoute,
@@ -308,7 +315,7 @@ export const cloudRouteTree = rootRoute.addChildren([
       galleryRedirectRoute,
       membersSectionRoute,
     ]),
-    accountLayoutRoute.addChildren([
+    cloudAccountLayoutRoute.addChildren([
       accountRedirectRoute,
       accountProfileRoute,
       accountAdminLayoutRoute.addChildren([

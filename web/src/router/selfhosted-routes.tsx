@@ -1,5 +1,6 @@
 import { createRoute } from '@tanstack/react-router'
 
+import { SelfHostedAccountLayout } from '@/layouts/account-layout'
 import { imageLoader } from '@/loaders/gallery-loader.ts'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { SelfHostedRootPage } from '@/pages/selfhosted/root-page'
@@ -60,6 +61,12 @@ const rootImagePage = createRoute({
   },
 })
 
+const selfHostedAccountLayoutRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  id: 'selfhosted-account-layout',
+  component: () => <SelfHostedAccountLayout />,
+})
+
 export const selfHostedRouteTree = rootRoute.addChildren([
   loginRoute,
   authCallbackRoute,
@@ -70,7 +77,7 @@ export const selfHostedRouteTree = rootRoute.addChildren([
   galleryImageEditorRoute,
   settingsLayoutRoute.addChildren([
     rootPath.addChildren([rootImagePage]),
-    accountLayoutRoute.addChildren([
+    selfHostedAccountLayoutRoute.addChildren([
       accountRedirectRoute,
       accountProfileRoute,
       accountAdminLayoutRoute.addChildren([

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
@@ -24,6 +23,7 @@ type AuthHandler struct {
 	logger        *zap.Logger
 	embeddedMode  bool
 	multiTenant   bool // true when InternalAPISecret is set
+	modeBehavior  authModeBehavior
 }
 
 func NewAuthHandler(
@@ -35,6 +35,11 @@ func NewAuthHandler(
 	embeddedMode bool,
 	multiTenant bool, // true when InternalAPISecret is set (multi-tenant mode)
 ) *AuthHandler {
+	modeBehavior := authModeBehavior(selfHostedAuthMode{})
+	if multiTenant && orgStore != nil {
+		modeBehavior = cloudAuthMode{orgStore: orgStore, logger: logger}
+	}
+
 	return &AuthHandler{
 		tokenManager:  tokenManager,
 		userStore:     userStore,
@@ -43,6 +48,7 @@ func NewAuthHandler(
 		logger:        logger,
 		embeddedMode:  embeddedMode,
 		multiTenant:   multiTenant,
+		modeBehavior:  modeBehavior,
 	}
 }
 
@@ -96,11 +102,7 @@ func (h *AuthHandler) CheckFirstRun() http.HandlerFunc {
 			return apperror.InternalServerError("Failed to check system status")
 		}
 
-		return WriteSuccess(w, FirstRunResponse{
-			IsFirstRun:  totalCount == 0,
-			Timestamp:   time.Now().UnixMilli(),
-			MultiTenant: h.multiTenant,
-		})
+		return WriteSuccess(w, h.modeBehavior.firstRunResponse(totalCount == 0))
 	})
 }
 
@@ -232,17 +234,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			h.logger.Warn("Failed to update last login", zap.Error(err), zap.String("userID", user.ID))
 		}
 
-		// multi-tenant mode: look up org so we can embed org_id in the token.
-		orgID := ""
-		if h.orgStore != nil {
-			org, err := h.orgStore.GetByUserID(r.Context(), user.ID)
-			if err != nil {
-				h.logger.Warn("Failed to look up org for user on login",
-					zap.String("userID", user.ID), zap.Error(err))
-			} else if org != nil {
-				orgID = org.ID
-			}
-		}
+		orgID := h.modeBehavior.resolveLoginOrgID(r.Context(), user.ID)
 
 		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
 		if err != nil {
@@ -446,18 +438,10 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
-	// multi-tenant mode: auto-create a personal org for the new user (14-day trial).
-	// Self-hosted: orgStore is nil — skip org creation.
-	orgID := ""
-	if h.orgStore != nil {
-		trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
-		org, err := h.orgStore.CreateWithMember(ctx, user.ID, normalizedDisplayName, normalizedUsername, &trialEndsAt)
-		if err != nil {
-			h.logger.Error("Failed to create personal org for new user",
-				zap.String("userID", user.ID), zap.Error(err))
-			return nil, apperror.InternalServerError("Failed to initialize organization")
-		}
-		orgID = org.ID
+	orgID := h.modeBehavior.createUserOrg(ctx, user, normalizedDisplayName, normalizedUsername)
+	if h.multiTenant && orgID == "" {
+		h.logger.Error("Failed to initialize organization", zap.String("userID", user.ID))
+		return nil, apperror.InternalServerError("Failed to initialize organization")
 	}
 
 	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)

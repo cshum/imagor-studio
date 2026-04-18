@@ -8,11 +8,10 @@ import { CLOUD_BUILD, EMBEDDED_MODE } from '@/lib/runtime-mode'
 import { cloudRouteTree } from '@/router/cloud-routes'
 import { embeddedEditorRoute, rootRoute } from '@/router/shared-routes'
 import { selfHostedRouteTree } from '@/router/selfhosted-routes'
+import { bootstrapCloudFolderTree, bootstrapSelfHostedFolderTree } from '@/stores/folder-tree-bootstrap'
 import { initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import {
   initializeFolderTreeCache,
-  loadHomeTitle,
-  loadRootFolders,
 } from '@/stores/folder-tree-store.ts'
 import { checkLicense } from '@/stores/license-store'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
@@ -48,10 +47,11 @@ export function AppRouter() {
         initializeTheme(userThemeStorage, 'class')
         initializeSidebar(userSidebarStorage)
       }
-      if (!authState.multiTenant) {
-        loadRootFolders()
+      if (authState.multiTenant) {
+        void bootstrapCloudFolderTree()
+      } else {
+        void bootstrapSelfHostedFolderTree()
       }
-      loadHomeTitle()
     } else if (action.type === 'LOGOUT') {
       initializeTheme(localThemeStorage, 'class')
       initializeSidebar(localSidebarStorage)

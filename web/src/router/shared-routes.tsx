@@ -11,7 +11,6 @@ import { LicenseActivationDialog } from '@/components/license/license-activation
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
-import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import {
   adminGeneralLoader,
@@ -115,7 +114,7 @@ export const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
   beforeLoad: requireAccountAuth,
-  component: () => <AccountLayout />,
+  component: () => <Outlet />,
 })
 
 export const accountRedirectRoute = createRoute({
