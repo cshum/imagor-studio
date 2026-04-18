@@ -226,3 +226,13 @@ func mapSharedImagorStatusToSelfHosted(status *sharedgql.ImagorStatus) *selfhost
 		Config:               mapSharedImagorConfigToSelfHosted(status.Config),
 	}
 }
+
+func mapSharedEmailChangeRequestResultToSelfHosted(result *sharedgql.EmailChangeRequestResult) *selfhostedgql.EmailChangeRequestResult {
+	if result == nil {
+		return nil
+	}
+	return &selfhostedgql.EmailChangeRequestResult{
+		Email:                result.Email,
+		VerificationRequired: result.VerificationRequired,
+	}
+}

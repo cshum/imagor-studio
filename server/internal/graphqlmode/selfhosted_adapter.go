@@ -111,3 +111,11 @@ func (r selfHostedQueryAdapter) StatFile(ctx context.Context, path string, space
 	}
 	return mapSharedFileStatToSelfHosted(stat), nil
 }
+
+func (r selfHostedMutationAdapter) RequestEmailChange(ctx context.Context, email string, userID *string) (*selfhostedgql.EmailChangeRequestResult, error) {
+	result, err := r.Resolver.Mutation().RequestEmailChange(ctx, email, userID)
+	if err != nil {
+		return nil, err
+	}
+	return mapSharedEmailChangeRequestResultToSelfHosted(result), nil
+}
