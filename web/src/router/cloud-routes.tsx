@@ -13,12 +13,6 @@ import { ImageEditorPage } from '@/cloud/image-editor-page'
 import { imageEditorLoader } from '@/cloud/image-editor-loader'
 import { ImagePage } from '@/cloud/image-page'
 import { CloudRootPage } from '@/cloud/root-page'
-import { GeneralSection } from '@/cloud/space-settings/general'
-import { SpaceSettingsLayout } from '@/cloud/space-settings/layout'
-import { MembersSection } from '@/cloud/space-settings/members'
-import { SecuritySection } from '@/cloud/space-settings/security'
-import { StorageSection } from '@/cloud/space-settings/storage'
-import { UsersPage } from '@/cloud/users-page'
 import {
   accountAdminGeneralRoute,
   accountAdminImagorRoute,
@@ -42,7 +36,13 @@ import {
   rootPathBeforeLoad,
   rootRoute,
   settingsLayoutRoute,
-} from '@/router/shared-routes'
+} from '@/cloud/shared-routes'
+import { GeneralSection } from '@/cloud/space-settings/general'
+import { SpaceSettingsLayout } from '@/cloud/space-settings/layout'
+import { MembersSection } from '@/cloud/space-settings/members'
+import { SecuritySection } from '@/cloud/space-settings/security'
+import { StorageSection } from '@/cloud/space-settings/storage'
+import { UsersPage } from '@/cloud/users-page'
 
 const rootPath = createRoute({
   getParentRoute: () => settingsLayoutRoute,
