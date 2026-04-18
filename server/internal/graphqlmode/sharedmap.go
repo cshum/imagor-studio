@@ -20,3 +20,26 @@ func mapSharedLicenseStatusToSelfHosted(status *sharedgql.LicenseStatus) *selfho
 		ActivatedAt:          status.ActivatedAt,
 	}
 }
+
+func mapSharedImagorConfigToSelfHosted(config *sharedgql.ImagorConfig) *selfhostedgql.ImagorConfig {
+	if config == nil {
+		return nil
+	}
+	return &selfhostedgql.ImagorConfig{
+		HasSecret:      config.HasSecret,
+		SignerType:     selfhostedgql.ImagorSignerType(config.SignerType),
+		SignerTruncate: config.SignerTruncate,
+	}
+}
+
+func mapSharedImagorStatusToSelfHosted(status *sharedgql.ImagorStatus) *selfhostedgql.ImagorStatus {
+	if status == nil {
+		return nil
+	}
+	return &selfhostedgql.ImagorStatus{
+		Configured:           status.Configured,
+		LastUpdated:          status.LastUpdated,
+		IsOverriddenByConfig: status.IsOverriddenByConfig,
+		Config:               mapSharedImagorConfigToSelfHosted(status.Config),
+	}
+}

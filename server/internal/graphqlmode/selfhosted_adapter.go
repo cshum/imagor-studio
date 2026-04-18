@@ -20,3 +20,11 @@ func (r selfHostedQueryAdapter) LicenseStatus(ctx context.Context) (*selfhostedg
 	}
 	return mapSharedLicenseStatusToSelfHosted(status), nil
 }
+
+func (r selfHostedQueryAdapter) ImagorStatus(ctx context.Context) (*selfhostedgql.ImagorStatus, error) {
+	status, err := r.Resolver.Query().ImagorStatus(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return mapSharedImagorStatusToSelfHosted(status), nil
+}
