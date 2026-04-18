@@ -6,7 +6,7 @@ import { AppHeader } from '@/components/app-header.tsx'
 import { useBrand } from '@/hooks/use-brand'
 import { useAuth } from '@/stores/auth-store'
 
-export interface SpacesLayoutProps extends PropsWithChildren {
+export interface SpacesLayoutProps extends PropsWithChildren<object> {
   title?: string
   description?: string
   primaryAction?: React.ReactNode

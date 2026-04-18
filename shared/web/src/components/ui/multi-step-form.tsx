@@ -2,7 +2,7 @@ import { forwardRef, ReactNode, useCallback, useImperativeHandle, useRef } from 
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared/components/ui/card'
 import { cn } from '@shared/lib-utils'
-import { RectangleStepper } from '@/components/ui/rectangle-stepper'
+import { RectangleStepper } from '@shared/components/ui/rectangle-stepper'
 
 export interface MultiStepFormNavigationProps {
   next: () => Promise<void>
