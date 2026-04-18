@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, '../../web/src'),
       '@cloud': path.resolve(__dirname, '../../web/src/cloud'),
+      '@shared': path.resolve(__dirname, '../../shared/web/src'),
     },
   },
   envDir: '../../web',

@@ -1,0 +1,8 @@
+{
+  "name": "imagor-studio-workspace",
+  "private": true,
+  "workspaces": [
+    "web",
+    "cloud/web"
+  ]
+}

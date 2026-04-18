@@ -20,7 +20,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["../../web/src/*"],
-      "@cloud/*": ["../../web/src/cloud/*"]
+      "@cloud/*": ["../../web/src/cloud/*"],
+      "@shared/*": ["../../shared/web/src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
