@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@shared/components/ui/button'
 import { SpacesLayout } from '@/layouts/spaces-layout'
 import { spacesLoader } from '@/cloud/account-loader'
 import { cloudRootPageLoader } from '@/cloud/root-page-loader'

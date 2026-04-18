@@ -14,14 +14,14 @@ import {
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
-import { Button } from '@/components/ui/button'
+import { Button } from '@shared/components/ui/button'
 import {
 	Sheet,
 	SheetContent,
 	SheetDescription,
 	SheetHeader,
 	SheetTitle,
-} from '@/components/ui/sheet'
+} from '@shared/components/ui/sheet'
 import {
 	Sidebar,
 	SidebarContent,

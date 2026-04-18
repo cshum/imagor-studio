@@ -7,10 +7,10 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { checkSpaceKey, deleteSpace, setSpaceRegistryObject, updateSpace } from '@/cloud/org-api'
-import { Button } from '@/components/ui/button'
+import { Button } from '@shared/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+import { Input } from '@shared/components/ui/input'
 import {
 	ResponsiveDialog,
 	ResponsiveDialogDescription,

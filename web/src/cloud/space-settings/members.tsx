@@ -16,7 +16,7 @@ import {
 } from '@/cloud/org-api'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button } from '@shared/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -26,8 +26,8 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
+} from '@shared/components/ui/dropdown-menu'
+import { Input } from '@shared/components/ui/input'
 import {
 	ResponsiveDialog,
 	ResponsiveDialogDescription,

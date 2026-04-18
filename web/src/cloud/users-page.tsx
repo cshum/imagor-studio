@@ -8,14 +8,14 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { createUser, deactivateAccount, reactivateAccount, updateProfile } from '@/api/user-api'
-import { Button } from '@/components/ui/button'
+import { Button } from '@shared/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@shared/components/ui/dropdown-menu'
 import {
 	Form,
 	FormControl,
@@ -24,7 +24,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+import { Input } from '@shared/components/ui/input'
 import {
 	ResponsiveDialog,
 	ResponsiveDialogDescription,
