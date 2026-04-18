@@ -7,7 +7,7 @@ import type {
   GenerateImagorUrlMutation,
   GenerateImagorUrlMutationVariables,
   ImagorStatusQuery,
-} from '@/generated/graphql'
+} from '@/types/generated-shared'
 
 /**
  * Get Imagor status and configuration

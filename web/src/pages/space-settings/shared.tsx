@@ -1,4 +1,4 @@
-import type { GetSpaceQuery } from '@/generated/graphql'
+import type { GetSpaceQuery } from '@/types/generated-cloud'
 
 export { SecretField } from '@/components/ui/secret-field'
 

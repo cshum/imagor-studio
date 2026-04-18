@@ -13,7 +13,7 @@ import type {
   ListSystemRegistryQuery,
   ListUsersQuery,
   StorageStatusQuery,
-} from '@/generated/graphql'
+} from '@/types/generated-cloud'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { getAuth } from '@/stores/auth-store'
 

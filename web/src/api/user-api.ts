@@ -20,7 +20,7 @@ import type {
   UnlinkAuthProviderMutationVariables,
   UpdateProfileMutation,
   UpdateProfileMutationVariables,
-} from '../generated/graphql'
+} from '@/types/generated-shared'
 
 /**
  * Get current user information

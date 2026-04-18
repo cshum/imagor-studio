@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
-import type { StorageStatusQuery } from '@/generated/graphql'
+import type { StorageStatusQuery } from '@/types/generated-shared'
 
 // ── Propagation countdown helper ───────────────────────────────────────────
 

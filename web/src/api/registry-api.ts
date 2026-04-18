@@ -18,6 +18,7 @@ import type {
   SetUserRegistryMutation,
   SetUserRegistryMutationVariables,
 } from '../generated/graphql'
+} from '@/types/generated-shared'
 
 /**
  * Display value for a registry entry, showing dots for encrypted values

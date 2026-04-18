@@ -36,7 +36,7 @@ import type {
   UpdateSpaceMemberRoleMutationVariables,
   UpdateSpaceMutation,
   UpdateSpaceMutationVariables,
-} from '@/generated/graphql'
+} from '@/types/generated-cloud'
 
 export type SpaceItem = ListSpacesQuery['spaces'][number]
 

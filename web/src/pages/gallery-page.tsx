@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { UploadProgress } from '@/components/upload/upload-progress.tsx'
-import { ImagorParamsInput, SortOption, SortOrder } from '@/generated/graphql'
+import { ImagorParamsInput, SortOption, SortOrder } from '@/types/generated-shared'
 import { useBreakpoint } from '@/hooks/use-breakpoint.ts'
 import { useBulkSelectionMenu } from '@/hooks/use-bulk-selection-menu'
 import { DragDropFile } from '@/hooks/use-drag-drop'

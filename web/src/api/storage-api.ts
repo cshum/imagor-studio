@@ -26,7 +26,7 @@ import type {
   TestStorageConfigMutation,
   TestStorageConfigMutationVariables,
   UploadFileMutation,
-} from '@/generated/graphql'
+} from '@/types/generated-shared'
 
 /**
  * List files and folders in a directory

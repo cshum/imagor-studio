@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 
 import { configureImagor } from '@/api/imagor-api'
 import { ImagorConfigForm, type ImagorConfigValues } from '@/components/imagor/imagor-config-form'
-import type { ImagorStatusQuery } from '@/generated/graphql'
+import type { ImagorStatusQuery } from '@/types/generated-shared'
 
 // ── Propagation countdown helper ───────────────────────────────────────────
 

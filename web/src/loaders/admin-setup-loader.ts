@@ -1,5 +1,5 @@
 import { getStorageStatus } from '@/api/storage-api'
-import type { StorageStatusQuery } from '@/generated/graphql'
+import type { StorageStatusQuery } from '@/types/generated-shared'
 import { getAuth } from '@/stores/auth-store.ts'
 
 export interface AdminSetupLoaderData {

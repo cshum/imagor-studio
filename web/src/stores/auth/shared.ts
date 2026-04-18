@@ -1,4 +1,4 @@
-import type { MeQuery } from '@/generated/graphql'
+import type { MeQuery } from '@/types/generated-shared'
 
 export type UserProfile = MeQuery['me']
 
