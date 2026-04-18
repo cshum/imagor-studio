@@ -1,0 +1,21 @@
+schema:
+  - ../graphql/shared/*.graphql
+exec:
+  filename: internal/generated/gql/selfhosted/generated.go
+  package: selfhostedgql
+model:
+  filename: internal/generated/gql/selfhosted/models_gen.go
+  package: selfhostedgql
+autobind: []
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32

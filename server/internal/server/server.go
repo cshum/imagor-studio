@@ -14,7 +14,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
 	"github.com/cshum/imagor-studio/server/internal/cloud"
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/graphqlmode"
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/resolver"
@@ -70,7 +70,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		services.SpaceInviteStore,
 		services.InviteSender,
 	)
-	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
+	schema := graphqlmode.NewExecutableSchema(bootstrap.DetectMode(cfg), storageResolver)
 	gqlHandler := handler.New(schema)
 
 	// Add transports in the correct order (most specific first)

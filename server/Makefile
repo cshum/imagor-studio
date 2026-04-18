@@ -18,6 +18,8 @@ LDFLAGS=-ldflags "-w -s"
 
 # gqlgen
 GQLGEN=go run github.com/99designs/gqlgen generate
+GQLGEN_SELFHOSTED=go run github.com/99designs/gqlgen generate --config gqlgen.selfhosted.yml
+GQLGEN_CLOUD=go run github.com/99designs/gqlgen generate --config gqlgen.cloud.yml
 
 all: test build
 
@@ -119,6 +121,12 @@ docker-build:
 
 generate: gqlgen
 
+generate-selfhosted:
+	$(GQLGEN_SELFHOSTED)
+
+generate-cloud:
+	$(GQLGEN_CLOUD)
+
 # gqlgen commands
 gqlgen:
 	$(GQLGEN) --config gqlgen.yml
@@ -129,7 +137,7 @@ gqlgen-init:
 gqlgen-update:
 	$(GQLGEN) --verbose --config gqlgen.yml
 
-.PHONY: all build test clean run deps tidy build-linux build-management build-selfhosted build-cloud build-processing docker-build gqlgen gqlgen-init gqlgen-update
+.PHONY: all build test clean run deps tidy build-linux build-management build-selfhosted build-cloud build-processing docker-build gqlgen generate-selfhosted generate-cloud gqlgen-init gqlgen-update
 
 clean-db:
 	rm -f storage.db
