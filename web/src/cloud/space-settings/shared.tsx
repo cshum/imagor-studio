@@ -1,2 +1,5 @@
-export type { SpaceSettingsData } from '@/pages/space-settings/shared'
-export { SecretField } from '@/pages/space-settings/shared.tsx'
+import type { GetSpaceQuery } from '@/types/generated-cloud'
+
+export { SecretField } from '@/components/ui/secret-field'
+
+export type SpaceSettingsData = NonNullable<GetSpaceQuery['space']>

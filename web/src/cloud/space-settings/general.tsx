@@ -22,7 +22,7 @@ import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
 import { extractErrorInfo } from '@/lib/error-utils'
 
-import { GallerySection } from '@/pages/space-settings/gallery'
+import { GallerySection } from '@/cloud/space-settings/gallery'
 import type { SpaceSettingsData } from '@/cloud/space-settings/shared'
 
 const generalSchema = z.object({
