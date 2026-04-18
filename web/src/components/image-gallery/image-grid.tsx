@@ -13,6 +13,7 @@ import { getFileDisplayName } from '@/lib/file-utils'
 import { joinImagePath } from '@/lib/path-utils'
 
 interface ImageCellProps {
+  key?: React.Key
   image: GalleryImage
   columnWidth: number
   rowHeight: number

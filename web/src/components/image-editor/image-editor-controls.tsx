@@ -28,6 +28,7 @@ interface SectionConfig {
 }
 
 interface SortableSectionProps {
+  key?: React.Key
   section: SectionConfig
   isOpen: boolean
   onToggle: (open: boolean) => void
