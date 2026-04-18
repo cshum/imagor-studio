@@ -23,6 +23,9 @@ export async function initializeSelfHostedAuth(dispatch: Dispatch, accessToken?:
 				getCurrentUser(currentAccessToken),
 				checkFirstRun().catch(() => null),
 			])
+			if (!profile) {
+				throw new Error('Current user not found')
+			}
 			if (firstRunResponse) {
 				dispatch({
 					type: 'SET_FIRST_RUN',
@@ -54,6 +57,9 @@ export async function initializeSelfHostedAuth(dispatch: Dispatch, accessToken?:
 			try {
 				const guestResponse = await guestLogin()
 				const profile = await getCurrentUser(guestResponse.token)
+				if (!profile) {
+					throw new Error('Guest profile not found')
+				}
 				return dispatch({
 					type: 'INIT',
 					payload: { accessToken: guestResponse.token, profile },

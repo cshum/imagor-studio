@@ -6,6 +6,8 @@ import { isEmbeddedMode } from '@/stores/auth/runtime'
 import { initializeSelfHostedAuth } from '@/stores/auth/selfhosted'
 import { Auth, AuthAction, initialAuthState } from '@/stores/auth/shared'
 
+export type { Auth } from '@/stores/auth/shared'
+
 function reducer(state: Auth, action: AuthAction): Auth {
   switch (action.type) {
     case 'INIT': {

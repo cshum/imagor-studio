@@ -31,6 +31,16 @@ export interface ProfileLoaderData {
   breadcrumb: BreadcrumbItem
 }
 
+function normalizeAuthProviders(
+  authProviders: Array<{ provider: string; email?: string | null; linkedAt: string }> | null | undefined,
+): Array<{ provider: string; email: string | null; linkedAt: string }> {
+  return (authProviders ?? []).map((provider) => ({
+    provider: provider.provider,
+    email: provider.email ?? null,
+    linkedAt: provider.linkedAt,
+  }))
+}
+
 export interface AdminLoaderData {
   registry: Record<string, string>
   systemRegistryList: ListSystemRegistryQuery['listSystemRegistry']
@@ -82,7 +92,7 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
           emailVerified: auth.profile.emailVerified ?? false,
           hasPassword: auth.profile.hasPassword ?? false,
           avatarUrl: auth.profile.avatarUrl ?? null,
-          authProviders: auth.profile.authProviders ?? [],
+          authProviders: normalizeAuthProviders(auth.profile.authProviders),
         }
       : null,
     breadcrumb: {

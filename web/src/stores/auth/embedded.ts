@@ -25,6 +25,9 @@ export async function initializeEmbeddedAuth(
 	try {
 		const response = await embeddedGuestLogin(token)
 		const profile = await getCurrentUser(response.token)
+		if (!profile) {
+			throw new Error(i18n.t('auth.embedded.authenticationFailed'))
+		}
 
 		return dispatch({
 			type: 'INIT',
