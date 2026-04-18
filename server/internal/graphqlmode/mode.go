@@ -24,6 +24,7 @@ func NewExecutableSchema(mode bootstrap.Mode, r *resolver.Resolver) graphql.Exec
 	default:
 		var _ resolver.SharedResolverRoot = r
 		var _ resolver.SharedCapabilities = r
+		_ = mapSharedLicenseStatusToSelfHosted
 		return sharedgql.NewExecutableSchema(sharedgql.Config{Resolvers: r})
 	}
 }
