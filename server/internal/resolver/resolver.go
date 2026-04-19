@@ -2,11 +2,13 @@ package resolver
 
 import (
 	"context"
+	"errors"
 
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
+	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
@@ -91,6 +93,39 @@ func NewResolver(
 // getStorage returns the current storage instance from the provider
 func (r *Resolver) getStorage() storage.Storage {
 	return r.storageProvider.GetStorage()
+}
+
+func (r *Resolver) cloudEnabled() bool {
+	if r.spaceStore == nil || r.orgStore == nil {
+		if r.spaceStore != nil || r.orgStore != nil {
+			return true
+		}
+		return false
+	}
+	if !isNoopOrgStore(r.orgStore) && !isNoopSpaceStore(r.spaceStore) {
+		return true
+	}
+	if _, err := r.orgStore.GetByUserID(context.Background(), ""); errors.Is(err, noop.ErrCloudDisabled) {
+		return false
+	}
+	if _, err := r.spaceStore.List(context.Background()); errors.Is(err, noop.ErrCloudDisabled) {
+		return false
+	}
+	return true
+}
+
+func (r *Resolver) inviteEnabled() bool {
+	return r.spaceInviteStore != nil && r.inviteSender != nil
+}
+
+func isNoopOrgStore(store orgstore.Store) bool {
+	_, ok := store.(*noop.OrgStore)
+	return ok
+}
+
+func isNoopSpaceStore(store spacestore.Store) bool {
+	_, ok := store.(*noop.SpaceStore)
+	return ok
 }
 
 // Mutation returns MutationResolver implementation.

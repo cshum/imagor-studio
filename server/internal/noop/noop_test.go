@@ -4,6 +4,7 @@ package noop_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -79,19 +80,25 @@ func TestNoopSpaceStore_AllMethodsReturnError(t *testing.T) {
 }
 
 // ── Error message consistency ─────────────────────────────────────────────────
-// Both stores should mention "embedded" in their error messages so operators
-// get a clear signal when they accidentally hit a noop store.
+// Noop stores should mention the disabled operating mode so operators get a
+// clear signal when they accidentally hit a noop store.
 
-func TestNoopOrgStore_ErrorMentionsEmbedded(t *testing.T) {
+func TestNoopOrgStore_ErrorMentionsDisabledMode(t *testing.T) {
 	s := noop.NewOrgStore()
 	_, err := s.GetByUserID(ctx, "any")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "embedded", "noop OrgStore error should mention 'embedded'")
+	assert.True(t,
+		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),
+		"noop OrgStore error should mention the disabled mode",
+	)
 }
 
-func TestNoopSpaceStore_ErrorMentionsEmbedded(t *testing.T) {
+func TestNoopSpaceStore_ErrorMentionsDisabledMode(t *testing.T) {
 	s := noop.NewSpaceStore()
 	_, err := s.Get(ctx, "any")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "embedded", "noop SpaceStore error should mention 'embedded'")
+	assert.True(t,
+		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),
+		"noop SpaceStore error should mention the disabled mode",
+	)
 }

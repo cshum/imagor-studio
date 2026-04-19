@@ -97,7 +97,7 @@ func (r *Resolver) getSpacePermissions(ctx context.Context, space *spacestore.Sp
 		return permissions, nil
 	}
 
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return permissions, nil
 	}
 
@@ -126,7 +126,7 @@ func (r *Resolver) getSpacePermissions(ctx context.Context, space *spacestore.Sp
 }
 
 func (r *Resolver) isProtectedHostSpaceMember(ctx context.Context, space *spacestore.Space, userID string) (bool, error) {
-	if r.orgStore == nil {
+	if !r.cloudEnabled() {
 		return false, nil
 	}
 	members, err := r.orgStore.ListMembers(ctx, space.OrgID)
@@ -202,7 +202,7 @@ func (r *Resolver) mapSpaceMemberToGQLWithPermissions(ctx context.Context, space
 }
 
 func (r *Resolver) getProtectedSpaceRole(ctx context.Context, space *spacestore.Space, userID string) (string, string) {
-	if r.orgStore == nil {
+	if !r.cloudEnabled() {
 		return "member", "space"
 	}
 	members, err := r.orgStore.ListMembers(ctx, space.OrgID)
@@ -245,7 +245,7 @@ func (r *Resolver) getUserOrgID(ctx context.Context) (string, error) {
 		return claims.OrgID, nil
 	}
 	// Fallback: look up via orgStore (self-hosted or legacy token without org_id claim).
-	if r.orgStore == nil {
+	if r.orgStore == nil || !r.cloudEnabled() {
 		return "", nil
 	}
 	org, err := r.orgStore.GetByUserID(ctx, claims.UserID)
@@ -270,7 +270,7 @@ func (r *Resolver) canReadSpace(ctx context.Context, space *spacestore.Space) (b
 	if sameOrg && space.IsShared {
 		return true, nil
 	}
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return false, nil
 	}
 	claims, err := auth.GetClaimsFromContext(ctx)
@@ -330,7 +330,7 @@ func applySpaceInput(sp *spacestore.Space, input gql.SpaceInput) {
 
 // MyOrganization returns the organization for the currently authenticated user.
 func (r *queryResolver) MyOrganization(ctx context.Context) (*gql.Organization, error) {
-	if r.orgStore == nil {
+	if !r.cloudEnabled() {
 		return nil, nil
 	}
 	claims, err := auth.GetClaimsFromContext(ctx)
@@ -350,7 +350,7 @@ func (r *queryResolver) MyOrganization(ctx context.Context) (*gql.Organization, 
 
 // Spaces returns all active spaces for the authenticated user's organization.
 func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return []*gql.Space{}, nil
 	}
 	orgID, err := r.getUserOrgID(ctx)
@@ -408,7 +408,7 @@ func (r *queryResolver) SpaceKeyExists(ctx context.Context, key string) (bool, e
 	if err := RequireAdminPermission(ctx); err != nil {
 		return false, err
 	}
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return false, nil
 	}
 	return r.spaceStore.KeyExists(ctx, key)
@@ -416,7 +416,7 @@ func (r *queryResolver) SpaceKeyExists(ctx context.Context, key string) (bool, e
 
 // Space returns a single space by key, scoped to the authenticated user's org.
 func (r *queryResolver) Space(ctx context.Context, key string) (*gql.Space, error) {
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return nil, nil
 	}
 	s, err := r.spaceStore.Get(ctx, key)
@@ -486,7 +486,7 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 	claims, claimsErr := auth.GetClaimsFromContext(ctx)
 	if claimsErr == nil {
 		memberRoles := map[string]string{claims.UserID: "admin"}
-		if r.orgStore != nil {
+		if r.cloudEnabled() {
 			members, listErr := r.orgStore.ListMembers(ctx, orgID)
 			if listErr != nil {
 				return nil, fmt.Errorf("space created but failed to seed members: %w", listErr)
@@ -516,7 +516,7 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 // UpdateSpace updates an existing space by key (space manager).
 // Nil fields in the input are ignored — they preserve the existing value.
 func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gql.SpaceInput) (*gql.Space, error) {
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space management is not available in this deployment")
 	}
 
@@ -575,7 +575,7 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 
 // DeleteSpace soft-deletes a space by key (owning organization admins only).
 func (r *mutationResolver) DeleteSpace(ctx context.Context, key string) (bool, error) {
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return false, fmt.Errorf("space management is not available in this deployment")
 	}
 
@@ -618,7 +618,7 @@ func mapMemberToGQL(m *orgstore.OrgMemberView) *gql.OrgMember {
 
 // SpaceMembers lists all explicit members of a space (space manager).
 func (r *queryResolver) SpaceMembers(ctx context.Context, spaceKey string) ([]*gql.SpaceMember, error) {
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return []*gql.SpaceMember{}, nil
 	}
 	space, err := r.spaceStore.Get(ctx, spaceKey)
@@ -651,7 +651,7 @@ func (r *queryResolver) SpaceMembers(ctx context.Context, spaceKey string) ([]*g
 }
 
 func (r *queryResolver) SpaceInvitations(ctx context.Context, spaceKey string) ([]*gql.SpaceInvitation, error) {
-	if r.spaceStore == nil || r.spaceInviteStore == nil {
+	if !r.cloudEnabled() || r.spaceInviteStore == nil {
 		return []*gql.SpaceInvitation{}, nil
 	}
 	space, err := r.spaceStore.Get(ctx, spaceKey)
@@ -684,7 +684,7 @@ func (r *queryResolver) OrgMembers(ctx context.Context) ([]*gql.OrgMember, error
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
-	if r.orgStore == nil {
+	if !r.cloudEnabled() {
 		return []*gql.OrgMember{}, nil
 	}
 	orgID, err := r.getUserOrgID(ctx)
@@ -709,7 +709,7 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
-	if r.orgStore == nil || r.userStore == nil {
+	if !r.cloudEnabled() || r.userStore == nil {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
 	orgID, err := r.getUserOrgID(ctx)
@@ -777,7 +777,7 @@ func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
-	if r.orgStore == nil || r.userStore == nil {
+	if !r.cloudEnabled() || r.userStore == nil {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
 	orgID, err := r.getUserOrgID(ctx)
@@ -851,7 +851,7 @@ func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (
 	if err := RequireAdminPermission(ctx); err != nil {
 		return false, err
 	}
-	if r.orgStore == nil {
+	if !r.cloudEnabled() {
 		return false, fmt.Errorf("member management is not available in this deployment")
 	}
 	orgID, err := r.getUserOrgID(ctx)
@@ -869,7 +869,7 @@ func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (
 
 // AddSpaceMember adds an existing org member to a space (space manager).
 func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceKey string, userID string, role string) (*gql.SpaceMember, error) {
-	if r.spaceStore == nil || r.orgStore == nil {
+	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space member management is not available in this deployment")
 	}
 	normalizedRole, err := normalizeSpaceMemberRole(role)
@@ -919,7 +919,7 @@ func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceKey string, 
 }
 
 func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey string, email string, role string) (*gql.SpaceInviteResult, error) {
-	if r.spaceStore == nil || r.orgStore == nil || r.userStore == nil {
+	if !r.cloudEnabled() || r.userStore == nil {
 		return nil, fmt.Errorf("space member management is not available in this deployment")
 	}
 	normalizedRole, err := normalizeSpaceMemberRole(role)
@@ -996,7 +996,7 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 		return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: existingUser.Username, DisplayName: existingUser.DisplayName, Email: existingUser.Email, AvatarURL: existingUser.AvatarUrl, Role: normalizedRole}}, nil
 	}
 
-	if r.spaceInviteStore == nil || r.inviteSender == nil {
+	if !r.inviteEnabled() {
 		return nil, fmt.Errorf("email invitations are not configured")
 	}
 
@@ -1036,7 +1036,7 @@ func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceKey strin
 	if claims.UserID == userID {
 		return false, fmt.Errorf("you cannot remove yourself from this space")
 	}
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return false, fmt.Errorf("space member management is not available in this deployment")
 	}
 	space, err := r.spaceStore.Get(ctx, spaceKey)
@@ -1071,7 +1071,7 @@ func (r *mutationResolver) LeaveSpace(ctx context.Context, spaceKey string) (boo
 	if err != nil {
 		return false, err
 	}
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return false, fmt.Errorf("space member management is not available in this deployment")
 	}
 	space, err := r.spaceStore.Get(ctx, spaceKey)
@@ -1106,7 +1106,7 @@ func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID strin
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
-	if r.orgStore == nil {
+	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
 	orgID, err := r.getUserOrgID(ctx)
@@ -1134,7 +1134,7 @@ func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID strin
 
 // UpdateSpaceMemberRole changes a member's explicit role within a space (space manager).
 func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceKey string, userID string, role string) (*gql.SpaceMember, error) {
-	if r.spaceStore == nil {
+	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space member management is not available in this deployment")
 	}
 	claims, err := auth.GetClaimsFromContext(ctx)

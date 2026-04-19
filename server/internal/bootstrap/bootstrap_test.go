@@ -35,7 +35,7 @@ func TestInitialize(t *testing.T) {
 
 	logger := zap.NewNop()
 	args := []string{"--jwt-secret", "test-jwt-secret", "--database-url", "sqlite:" + tmpDB}
-	services, err := Initialize(cfg, logger, args)
+	services, err := Initialize(cfg, logger, args, "selfhosted")
 
 	require.NoError(t, err)
 	require.NotNil(t, services)
@@ -70,7 +70,7 @@ func TestInitializeEmbeddedMode(t *testing.T) {
 
 	logger := zap.NewNop()
 	args := []string{"--embedded-mode", "--jwt-secret", "test-jwt-secret"}
-	services, err := Initialize(cfg, logger, args)
+	services, err := Initialize(cfg, logger, args, "selfhosted")
 
 	require.NoError(t, err)
 	require.NotNil(t, services)
@@ -118,7 +118,7 @@ func TestEmbeddedModeJWTSecretGeneration(t *testing.T) {
 
 	logger := zap.NewNop()
 	args := []string{"--embedded-mode"}
-	services, err := Initialize(cfg, logger, args)
+	services, err := Initialize(cfg, logger, args, "selfhosted")
 
 	require.NoError(t, err)
 	require.NotNil(t, services)
@@ -346,7 +346,7 @@ func TestInitialize_RoutesToProcessingMode(t *testing.T) {
 		JWTExpiration:   24 * time.Hour,
 	}
 	// Initialize with a SpacesEndpoint → must take the processing-mode branch (no DB).
-	svc, err := Initialize(cfg, logger, nil)
+	svc, err := Initialize(cfg, logger, nil, "selfhosted")
 	require.NoError(t, err)
 
 	assert.Nil(t, svc.DB, "Initialize with SpacesEndpoint should produce a no-DB processing-mode service")
@@ -384,7 +384,7 @@ func TestImagorProviderIntegration(t *testing.T) {
 		"--database-url", "sqlite:" + tmpDB,
 		"--imagor-secret", "test-secret",
 	}
-	services, err := Initialize(cfg, logger, args)
+	services, err := Initialize(cfg, logger, args, "selfhosted")
 
 	require.NoError(t, err)
 	require.NotNil(t, services)

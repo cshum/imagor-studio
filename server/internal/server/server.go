@@ -20,6 +20,13 @@ import (
 	"go.uber.org/zap"
 )
 
+type Mode string
+
+const (
+	ModeSelfHosted Mode = "selfhosted"
+	ModeCloud      Mode = "cloud"
+)
+
 type Server struct {
 	cfg        *config.Config
 	services   *bootstrap.Services
@@ -48,9 +55,18 @@ func startSyncLoop(ctx context.Context, interval time.Duration, logger *zap.Logg
 	}()
 }
 
-func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (*Server, error) {
+func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string, mode Mode) (*Server, error) {
 	// Initialize all services using bootstrap package
-	services, err := bootstrap.Initialize(cfg, logger, args)
+	var (
+		services *bootstrap.Services
+		err      error
+	)
+	switch mode {
+	case ModeCloud:
+		services, err = bootstrap.InitializeCloud(cfg, logger, args)
+	default:
+		services, err = bootstrap.InitializeSelfHosted(cfg, logger, args)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize services: %w", err)
 	}
@@ -155,7 +171,7 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	// Internal service-to-service endpoint (authenticated by Bearer token).
 	// Only mounted when InternalAPISecret is set (multi-tenant mode); self-hosted
 	// deployments never set it so the route is never exposed.
-	if services.SpaceStore != nil {
+	if mode == ModeCloud && services.SpaceStore != nil {
 		spacesHandler := httphandler.NewSpacesDeltaHandler(services.SpaceStore, services.Config.InternalAPISecret, services.Logger)
 		mux.HandleFunc("/internal/spaces/delta", spacesHandler.GetDelta())
 	}

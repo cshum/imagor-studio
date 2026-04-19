@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	appmain.Run(tools.EmbedFS, server.ModeSelfHosted)
+	appmain.Run(tools.EmbedFS, server.ModeCloud)
 }

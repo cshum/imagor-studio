@@ -6,10 +6,13 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 BINARY_NAME=imagor-studio-server
+BINARY_SELFHOSTED=imagor-studio-selfhosted
+BINARY_CLOUD=imagor-studio-cloud
 BINARY_UNIX=$(BINARY_NAME)_unix
 
-# Main package path
-MAIN_PACKAGE=./cmd/imagor-studio
+# Main package paths
+SELFHOSTED_MAIN_PACKAGE=./cmd/imagor-studio
+CLOUD_MAIN_PACKAGE=./cmd/imagor-studio-cloud
 
 # Build flags
 LDFLAGS=-ldflags "-w -s"
@@ -24,7 +27,17 @@ all: test build
 build:
 	mkdir -p static
 	touch static/.placeholder
-	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_NAME) $(MAIN_PACKAGE)
+	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_SELFHOSTED) $(SELFHOSTED_MAIN_PACKAGE)
+
+build-selfhosted:
+	mkdir -p static
+	touch static/.placeholder
+	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_SELFHOSTED) $(SELFHOSTED_MAIN_PACKAGE)
+
+build-cloud:
+	mkdir -p static
+	touch static/.placeholder
+	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(BINARY_CLOUD) $(CLOUD_MAIN_PACKAGE)
 
 test:
 	$(GOTEST) -v ./...
@@ -51,7 +64,7 @@ LOCAL_GALLERY ?= ./gallery
 # Self-hosted dev run: no CGO, SQLite, no libvips — fast iteration.
 # All-in-one: GraphQL + admin UI + imagor at /imagor/.
 dev:
-	CGO_ENABLED=0 $(GOCMD) run $(MAIN_PACKAGE) \
+	CGO_ENABLED=0 $(GOCMD) run $(SELFHOSTED_MAIN_PACKAGE) \
 		--port=8080 \
 		--file-storage-base-dir=$(LOCAL_GALLERY)
 
@@ -60,7 +73,7 @@ dev:
 # No --file-storage-base-dir: management node has no system-level storage in SaaS mode.
 # File listing and imagor URL generation are handled by the processing node.
 run-management:
-	CGO_ENABLED=0 $(GOCMD) run $(MAIN_PACKAGE) \
+	CGO_ENABLED=0 $(GOCMD) run $(CLOUD_MAIN_PACKAGE) \
 		--port=8080 \
 		--internal-api-secret=$(LOCAL_SECRET)
 
@@ -68,7 +81,7 @@ run-management:
 # Requires libvips (CGO). Polls management on :8080 for space configs.
 # After startup, space config is served from in-memory SpaceConfigStore.
 run-processing:
-	$(GOCMD) run -tags vips $(MAIN_PACKAGE) \
+	$(GOCMD) run -tags vips $(SELFHOSTED_MAIN_PACKAGE) \
 		--port=8081 \
 		--jwt-secret=$(LOCAL_SECRET) \
 		--spaces-endpoint=http://localhost:8080 \
@@ -85,7 +98,7 @@ BINARY_MANAGEMENT=imagor-studio-management
 build-management:
 	mkdir -p static
 	touch static/.placeholder
-	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(BINARY_MANAGEMENT) $(MAIN_PACKAGE)
+	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(BINARY_MANAGEMENT) $(CLOUD_MAIN_PACKAGE)
 
 # processing binary: compiled with -tags vips — requires libvips + CGO.
 # Deployed on processing machines; routes image requests per space.
@@ -94,11 +107,11 @@ BINARY_PROCESSING=imagor-studio-processing
 build-processing:
 	mkdir -p static
 	touch static/.placeholder
-	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_PROCESSING) $(MAIN_PACKAGE)
+	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_PROCESSING) $(SELFHOSTED_MAIN_PACKAGE)
 
 # Cross compilation
 build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BINARY_UNIX) $(MAIN_PACKAGE)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BINARY_UNIX) $(SELFHOSTED_MAIN_PACKAGE)
 
 docker-build:
 	docker build -t imagor-studio-server .
@@ -115,7 +128,7 @@ gqlgen-init:
 gqlgen-update:
 	$(GQLGEN) --verbose --config gqlgen.yml
 
-.PHONY: all build test clean run deps tidy build-linux build-management build-processing docker-build gqlgen gqlgen-init gqlgen-update
+.PHONY: all build build-selfhosted build-cloud test clean run deps tidy build-linux build-management build-processing docker-build gqlgen gqlgen-init gqlgen-update
 
 clean-db:
 	rm -f storage.db

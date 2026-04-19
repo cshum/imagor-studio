@@ -27,6 +27,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	ModeSelfHosted = "selfhosted"
+	ModeCloud      = "cloud"
+)
+
 // Services contains all initialized application services
 type Services struct {
 	DB               *bun.DB
@@ -47,8 +52,29 @@ type Services struct {
 	Logger           *zap.Logger
 }
 
-// Initialize sets up the database, runs migrations, and initializes all services
-func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
+// Initialize sets up the database, runs migrations, and initializes all services.
+// Prefer the explicit mode wrappers for new call sites.
+func Initialize(cfg *config.Config, logger *zap.Logger, args []string, mode string) (*Services, error) {
+	switch mode {
+	case ModeCloud:
+		return InitializeCloud(cfg, logger, args)
+	case ModeSelfHosted, "":
+		return InitializeSelfHosted(cfg, logger, args)
+	default:
+		return nil, fmt.Errorf("unknown bootstrap mode: %s", mode)
+	}
+}
+
+func InitializeSelfHosted(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
+	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted)
+}
+
+func InitializeCloud(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud)
+}
+
+// initializeRuntimeMode sets up runtime services for self-hosted or cloud management modes.
+func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string) (*Services, error) {
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
 	}
@@ -120,18 +146,7 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Initialize user store
 	userStore := userstore.New(db, logger)
 
-	// Initialize multi-tenant org + space stores when InternalAPISecret is configured.
-	// Self-hosted deployments leave both nil, which is the signal used by auth
-	// handlers and resolvers to skip org/space logic.
-	var orgStore orgstore.Store
-	var spaceStore spacestore.Store
-	var spaceInviteStore spaceinvite.Store
-	if enhancedCfg.InternalAPISecret != "" {
-		orgStore = orgstore.New(db)
-		spaceStore = spacestore.New(db, encryptionService)
-		spaceInviteStore = spaceinvite.NewStore(db)
-		logger.Info("multi-tenant mode: org and space stores initialized")
-	}
+	orgStore, spaceStore, spaceInviteStore := initializeCloudStores(mode, enhancedCfg, db, encryptionService, logger)
 
 	var inviteSender spaceinvite.EmailSender
 	if enhancedCfg.SESFromEmail != "" {
@@ -190,6 +205,18 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 		Config:           enhancedCfg,
 		Logger:           logger,
 	}, nil
+}
+
+func initializeCloudStores(mode string, cfg *config.Config, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (orgstore.Store, spacestore.Store, spaceinvite.Store) {
+	if mode != ModeCloud || cfg.InternalAPISecret == "" {
+		return noop.NewSelfHostedOrgStore(), noop.NewSelfHostedSpaceStore(), nil
+	}
+
+	orgStore := orgstore.New(db)
+	spaceStore := spacestore.New(db, encryptionService)
+	spaceInviteStore := spaceinvite.NewStore(db)
+	logger.Info("cloud mode: org and space stores initialized")
+	return orgStore, spaceStore, spaceInviteStore
 }
 
 // initializeEmbeddedMode initializes services for embedded mode (stateless, no database)
