@@ -1,6 +1,4 @@
-// Package spacestore — internal test for the unexported validateSpaceKey helper.
-// (External tests live in spacestore_test.go; this file needs white-box access.)
-package spacestore
+package spacedefault
 
 import (
 	"strings"
@@ -13,7 +11,6 @@ func TestValidateSpaceKey(t *testing.T) {
 		key     string
 		wantErr bool
 	}{
-		// ── valid ──────────────────────────────────────────────────────────────
 		{"single alphanumeric", "a", false},
 		{"simple word", "acme", false},
 		{"digits only", "123", false},
@@ -23,8 +20,6 @@ func TestValidateSpaceKey(t *testing.T) {
 		{"digit-hyphen-digit", "1-2", false},
 		{"max length 63", strings.Repeat("a", 63), false},
 		{"mixed with leading digit", "1abc", false},
-
-		// ── invalid ────────────────────────────────────────────────────────────
 		{"empty", "", true},
 		{"too long 64", strings.Repeat("a", 64), true},
 		{"uppercase letter", "Acme", true},
