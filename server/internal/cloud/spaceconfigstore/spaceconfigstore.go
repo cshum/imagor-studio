@@ -21,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"go.uber.org/zap"
 )
 
@@ -45,6 +46,20 @@ type SpaceConfig struct {
 	ImagorSecret    string `json:"imagor_secret"`
 }
 
+func (c *SpaceConfig) GetKey() string             { return c.Key }
+func (c *SpaceConfig) GetPrefix() string          { return c.Prefix }
+func (c *SpaceConfig) GetBucket() string          { return c.Bucket }
+func (c *SpaceConfig) GetRegion() string          { return c.Region }
+func (c *SpaceConfig) GetEndpoint() string        { return c.Endpoint }
+func (c *SpaceConfig) GetAccessKeyID() string     { return c.AccessKeyID }
+func (c *SpaceConfig) GetSecretKey() string       { return c.SecretKey }
+func (c *SpaceConfig) GetUsePathStyle() bool      { return c.UsePathStyle }
+func (c *SpaceConfig) GetCustomDomain() string    { return c.CustomDomain }
+func (c *SpaceConfig) IsSuspended() bool          { return c.Suspended }
+func (c *SpaceConfig) GetSignerAlgorithm() string { return c.SignerAlgorithm }
+func (c *SpaceConfig) GetSignerTruncate() int     { return c.SignerTruncate }
+func (c *SpaceConfig) GetImagorSecret() string    { return c.ImagorSecret }
+
 // SpacesDeltaResponse is the JSON response from GET /internal/spaces/delta.
 type SpacesDeltaResponse struct {
 	Spaces     []*SpaceConfig `json:"spaces"`
@@ -66,6 +81,8 @@ type SpaceConfigStore struct {
 	syncInterval  time.Duration
 	logger        *zap.Logger
 }
+
+var _ cloudcontract.SpaceConfigReader = (*SpaceConfigStore)(nil)
 
 // Option configures a SpaceConfigStore.
 type Option func(*SpaceConfigStore)
@@ -133,7 +150,7 @@ func (s *SpaceConfigStore) Start(ctx context.Context) error {
 }
 
 // Get returns the SpaceConfig for the given space key, or false if not found.
-func (s *SpaceConfigStore) Get(key string) (*SpaceConfig, bool) {
+func (s *SpaceConfigStore) Get(key string) (cloudcontract.SpaceConfig, bool) {
 	s.mu.RLock()
 	cfg, ok := s.configs[key]
 	s.mu.RUnlock()
@@ -142,7 +159,7 @@ func (s *SpaceConfigStore) Get(key string) (*SpaceConfig, bool) {
 
 // GetByHostname returns the SpaceConfig whose CustomDomain matches hostname,
 // or false if no space has that custom domain registered.
-func (s *SpaceConfigStore) GetByHostname(hostname string) (*SpaceConfig, bool) {
+func (s *SpaceConfigStore) GetByHostname(hostname string) (cloudcontract.SpaceConfig, bool) {
 	s.mu.RLock()
 	cfg, ok := s.byDomain[hostname]
 	s.mu.RUnlock()

@@ -45,16 +45,16 @@ func TestApplyDelta_Upsert(t *testing.T) {
 
 	cfg, ok := s.Get("acme")
 	require.True(t, ok)
-	assert.Equal(t, "acme/", cfg.Prefix)
-	assert.Equal(t, "sec1", cfg.ImagorSecret)
+	assert.Equal(t, "acme/", cfg.GetPrefix())
+	assert.Equal(t, "sec1", cfg.GetImagorSecret())
 
 	cfg2, ok := s.Get("corp")
 	require.True(t, ok)
-	assert.Equal(t, "images.corp.com", cfg2.CustomDomain)
+	assert.Equal(t, "images.corp.com", cfg2.GetCustomDomain())
 
 	cfg3, ok := s.GetByHostname("images.corp.com")
 	require.True(t, ok)
-	assert.Equal(t, "corp", cfg3.Key)
+	assert.Equal(t, "corp", cfg3.GetKey())
 
 	// lastSync should advance to ServerTime
 	assert.Equal(t, int64(1000), s.lastSync.Unix())
@@ -123,7 +123,7 @@ func TestApplyDelta_DomainReassignment(t *testing.T) {
 
 	cfg, ok := s.GetByHostname("new.acme.com")
 	require.True(t, ok, "new domain should be present")
-	assert.Equal(t, "acme", cfg.Key)
+	assert.Equal(t, "acme", cfg.GetKey())
 }
 
 func TestApplyDelta_RemoveCustomDomain(t *testing.T) {
@@ -164,7 +164,7 @@ func TestApplyDelta_SuspendedFlag(t *testing.T) {
 
 	cfg, ok := s.Get("acme")
 	require.True(t, ok)
-	assert.True(t, cfg.Suspended)
+	assert.True(t, cfg.IsSuspended())
 }
 
 func TestGet_NotFound(t *testing.T) {
@@ -243,11 +243,11 @@ func TestStart_InitialFullSync(t *testing.T) {
 
 	cfg, ok := store.Get("acme")
 	require.True(t, ok)
-	assert.Equal(t, "acme/", cfg.Prefix)
+	assert.Equal(t, "acme/", cfg.GetPrefix())
 
 	cfg2, ok := store.GetByHostname("images.corp.com")
 	require.True(t, ok)
-	assert.Equal(t, "corp", cfg2.Key)
+	assert.Equal(t, "corp", cfg2.GetKey())
 }
 
 func TestStart_BearerTokenSent(t *testing.T) {
