@@ -8,9 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/cloudapi"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/stretchr/testify/assert"
@@ -18,8 +17,8 @@ import (
 )
 
 // Compile-time: NewOrgStore / NewSpaceStore must satisfy the public interfaces.
-var _ orgstore.Store = noop.NewOrgStore()
-var _ spacestore.Store = noop.NewSpaceStore()
+var _ cloudcontract.OrgStore = noop.NewOrgStore()
+var _ cloudcontract.SpaceStore = noop.NewSpaceStore()
 var _ cloudapi.Disabled = noop.NewOrgStore()
 var _ cloudapi.Disabled = noop.NewSpaceStore()
 
@@ -53,7 +52,7 @@ func TestNoopSpaceStore_AllMethodsReturnError(t *testing.T) {
 
 	t.Run("Upsert", func(t *testing.T) {
 		// Use a valid DNS-label key so validateSpaceKey passes and reaches the noop check.
-		err := s.Upsert(ctx, &spacestore.Space{Key: "test"})
+		err := s.Upsert(ctx, &cloudcontract.Space{Key: "test"})
 		require.Error(t, err, "Upsert must return an error in noop mode")
 	})
 
