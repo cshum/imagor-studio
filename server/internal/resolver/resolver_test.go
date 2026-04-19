@@ -7,8 +7,6 @@ import (
 
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
@@ -324,36 +322,36 @@ type MockOrgStore struct {
 	mock.Mock
 }
 
-func (m *MockOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*orgstore.Org, error) {
+func (m *MockOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*cloudcontract.Org, error) {
 	args := m.Called(ctx, ownerID, name, slug, trialEndsAt)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*orgstore.Org), args.Error(1)
+	return args.Get(0).(*cloudcontract.Org), args.Error(1)
 }
 
-func (m *MockOrgStore) GetByUserID(ctx context.Context, userID string) (*orgstore.Org, error) {
+func (m *MockOrgStore) GetByUserID(ctx context.Context, userID string) (*cloudcontract.Org, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*orgstore.Org), args.Error(1)
+	return args.Get(0).(*cloudcontract.Org), args.Error(1)
 }
 
-func (m *MockOrgStore) GetBySlug(ctx context.Context, slug string) (*orgstore.Org, error) {
+func (m *MockOrgStore) GetBySlug(ctx context.Context, slug string) (*cloudcontract.Org, error) {
 	args := m.Called(ctx, slug)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*orgstore.Org), args.Error(1)
+	return args.Get(0).(*cloudcontract.Org), args.Error(1)
 }
 
-func (m *MockOrgStore) ListMembers(ctx context.Context, orgID string) ([]*orgstore.OrgMemberView, error) {
+func (m *MockOrgStore) ListMembers(ctx context.Context, orgID string) ([]*cloudcontract.OrgMemberView, error) {
 	args := m.Called(ctx, orgID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*orgstore.OrgMemberView), args.Error(1)
+	return args.Get(0).([]*cloudcontract.OrgMemberView), args.Error(1)
 }
 
 func (m *MockOrgStore) AddMember(ctx context.Context, orgID, userID, role string) error {
@@ -371,14 +369,14 @@ func (m *MockOrgStore) UpdateMemberRole(ctx context.Context, orgID, userID, role
 	return args.Error(0)
 }
 
-var _ orgstore.Store = (*MockOrgStore)(nil)
+var _ cloudcontract.OrgStore = (*MockOrgStore)(nil)
 
 // MockSpaceStore mocks the spacestore.Store interface.
 type MockSpaceStore struct {
 	mock.Mock
 }
 
-func (m *MockSpaceStore) Create(ctx context.Context, s *spacestore.Space) error {
+func (m *MockSpaceStore) Create(ctx context.Context, s *cloudcontract.Space) error {
 	args := m.Called(ctx, s)
 	return args.Error(0)
 }
@@ -388,7 +386,7 @@ func (m *MockSpaceStore) RenameKey(ctx context.Context, oldKey, newKey string) e
 	return args.Error(0)
 }
 
-func (m *MockSpaceStore) Upsert(ctx context.Context, s *spacestore.Space) error {
+func (m *MockSpaceStore) Upsert(ctx context.Context, s *cloudcontract.Space) error {
 	args := m.Called(ctx, s)
 	return args.Error(0)
 }
@@ -398,40 +396,40 @@ func (m *MockSpaceStore) SoftDelete(ctx context.Context, key string) error {
 	return args.Error(0)
 }
 
-func (m *MockSpaceStore) Get(ctx context.Context, key string) (*spacestore.Space, error) {
+func (m *MockSpaceStore) Get(ctx context.Context, key string) (*cloudcontract.Space, error) {
 	args := m.Called(ctx, key)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*spacestore.Space), args.Error(1)
+	return args.Get(0).(*cloudcontract.Space), args.Error(1)
 }
 
-func (m *MockSpaceStore) List(ctx context.Context) ([]*spacestore.Space, error) {
+func (m *MockSpaceStore) List(ctx context.Context) ([]*cloudcontract.Space, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*spacestore.Space), args.Error(1)
+	return args.Get(0).([]*cloudcontract.Space), args.Error(1)
 }
 
-func (m *MockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*spacestore.Space, error) {
+func (m *MockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*cloudcontract.Space, error) {
 	args := m.Called(ctx, orgID)
-	return args.Get(0).([]*spacestore.Space), args.Error(1)
+	return args.Get(0).([]*cloudcontract.Space), args.Error(1)
 }
 
-func (m *MockSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*spacestore.Space, error) {
+func (m *MockSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*cloudcontract.Space, error) {
 	for _, expected := range m.ExpectedCalls {
 		if expected.Method == "ListByMemberUserID" {
 			args := m.Called(ctx, userID)
-			return args.Get(0).([]*spacestore.Space), args.Error(1)
+			return args.Get(0).([]*cloudcontract.Space), args.Error(1)
 		}
 	}
-	return []*spacestore.Space{}, nil
+	return []*cloudcontract.Space{}, nil
 }
 
-func (m *MockSpaceStore) Delta(ctx context.Context, since time.Time) (*spacestore.DeltaResult, error) {
+func (m *MockSpaceStore) Delta(ctx context.Context, since time.Time) (*cloudcontract.DeltaResult, error) {
 	args := m.Called(ctx, since)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*spacestore.DeltaResult), args.Error(1)
+	return args.Get(0).(*cloudcontract.DeltaResult), args.Error(1)
 }
 
 func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error) {
@@ -439,17 +437,17 @@ func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*spacestore.SpaceMemberView, error) {
+func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*cloudcontract.SpaceMemberView, error) {
 	for _, expected := range m.ExpectedCalls {
 		if expected.Method == "ListMembers" {
 			args := m.Called(ctx, spaceKey)
 			if args.Get(0) == nil {
 				return nil, args.Error(1)
 			}
-			return args.Get(0).([]*spacestore.SpaceMemberView), args.Error(1)
+			return args.Get(0).([]*cloudcontract.SpaceMemberView), args.Error(1)
 		}
 	}
-	return []*spacestore.SpaceMemberView{}, nil
+	return []*cloudcontract.SpaceMemberView{}, nil
 }
 
 func (m *MockSpaceStore) AddMember(ctx context.Context, spaceKey, userID, role string) error {
@@ -477,7 +475,7 @@ func (m *MockSpaceStore) HasMember(ctx context.Context, spaceKey, userID string)
 	return false, nil
 }
 
-var _ spacestore.Store = (*MockSpaceStore)(nil)
+var _ cloudcontract.SpaceStore = (*MockSpaceStore)(nil)
 
 type MockSpaceInviteStore struct {
 	mock.Mock
