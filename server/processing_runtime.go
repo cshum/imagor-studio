@@ -9,33 +9,19 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spaceconfigstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spaceloader"
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
+	"github.com/cshum/imagor-studio/server/internal/processingdefault"
 	internalserver "github.com/cshum/imagor-studio/server/internal/server"
 	"go.uber.org/zap"
 )
 
 func RunDefaultProcessing(embedFS fs.FS) {
-	RunProcessingWithFactory(embedFS, bootstrap.DefaultProcessingRuntimeFactory)
+	RunProcessingWithFactory(embedFS, DefaultProcessingRuntimeFactory)
 }
 
-func DefaultProcessingRuntimeFactory(cfg *ProcessingConfig, logger *zap.Logger) (ProcessingSpaceConfigReader, imagor.Loader, ProcessingProviderOption, error) {
-	spaceConfigStore := spaceconfigstore.New(
-		cfg.SpacesEndpoint,
-		cfg.InternalAPISecret,
-		logger,
-	)
-	loader := spaceloader.New(spaceConfigStore, cfg.SpaceBaseDomain)
-	return spaceConfigStore, loader, DefaultProcessingRuntimeFactoryOption(spaceConfigStore, cfg.SpaceBaseDomain), nil
-}
-
-func DefaultProcessingRuntimeFactoryOption(store ProcessingSpaceConfigReader, baseDomain string) ProcessingProviderOption {
-	return imagorprovider.WithSpaceConfigStore(store, baseDomain)
-}
+var DefaultProcessingRuntimeFactory ProcessingRuntimeFactory = processingdefault.DefaultProcessingRuntimeFactory
+var DefaultProcessingRuntimeFactoryOption = bootstrap.DefaultProcessingRuntimeFactoryOption
 
 func RunProcessingWithFactory(embedFS fs.FS, runtimeFactory ProcessingRuntimeFactory) {
 	RunProcessingWithBuilder(embedFS, func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error) {

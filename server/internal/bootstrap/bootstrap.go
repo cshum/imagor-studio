@@ -8,7 +8,6 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spaceconfigstore"
 	"github.com/cshum/imagor-studio/server/internal/cloud/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
@@ -160,7 +159,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 		inviteSender = sender
 	}
 
-	var spaceConfigStore *spaceconfigstore.SpaceConfigStore
+	var spaceConfigStore cloudruntime.SpaceConfigReader
 	loader := imagorprovider.NewStorageLoader(storageProvider)
 
 	// Initialize imagor provider with the management-node loader.

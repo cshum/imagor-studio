@@ -1,42 +1,15 @@
 package middleware_test
 
 import (
-	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"sync/atomic"
 	"testing"
 
-	"github.com/cshum/imagor-studio/server/internal/cloud/spaceconfigstore"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
-	"go.uber.org/zap"
+	"github.com/cshum/imagor-studio/server/internal/testprocessing"
 )
-
-// newTestStore constructs a SpaceConfigStore seeded with the given spaces.
-// It bypasses network I/O by applying delta directly via internal helpers.
-func newTestStore(spaces ...*spaceconfigstore.SpaceConfig) *spaceconfigstore.SpaceConfigStore {
-	store := spaceconfigstore.New("http://unused", "unused", zap.NewNop())
-	// We can't call Start() (would make a real HTTP call), so pre-populate via
-	// the public delta-apply path: expose an empty sync that seeds nothing, then
-	// call individual Set helpers… but SpaceConfigStore has no public Set.
-	// Instead we spin up a real test HTTP server and do a full sync.
-	// Simpler: use the exported SpacesDeltaResponse + a mock HTTP server.
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := spaceconfigstore.SpacesDeltaResponse{
-			Spaces:     spaces,
-			Deleted:    nil,
-			ServerTime: 1_000_000,
-		}
-		_ = json.NewEncoder(w).Encode(resp)
-	}))
-	// Recreate with the test server URL.
-	store = spaceconfigstore.New(srv.URL, "", zap.NewNop())
-	_ = store.Start(context.Background())
-	srv.Close()
-	return store
-}
 
 func okHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
@@ -45,7 +18,7 @@ func okHandler(w http.ResponseWriter, r *http.Request) {
 // TestSpaceConcurrencyMiddleware_AllowsUnderLimit verifies that requests below
 // the per-space limit pass through to the next handler with HTTP 200.
 func TestSpaceConcurrencyMiddleware_AllowsUnderLimit(t *testing.T) {
-	store := newTestStore(&spaceconfigstore.SpaceConfig{Key: "acme"})
+	store := testprocessing.NewTestSpaceConfigStore(&testprocessing.TestSpaceConfig{Key: "acme"})
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", 3)
 	handler := mid(http.HandlerFunc(okHandler))
 
@@ -62,7 +35,7 @@ func TestSpaceConcurrencyMiddleware_AllowsUnderLimit(t *testing.T) {
 // TestSpaceConcurrencyMiddleware_BlocksAtLimit verifies that when maxPerSpace
 // concurrent requests are in-flight, the next request gets HTTP 429.
 func TestSpaceConcurrencyMiddleware_BlocksAtLimit(t *testing.T) {
-	store := newTestStore(&spaceconfigstore.SpaceConfig{Key: "acme"})
+	store := testprocessing.NewTestSpaceConfigStore(&testprocessing.TestSpaceConfig{Key: "acme"})
 	const maxPerSpace = 2
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", maxPerSpace)
 
@@ -113,9 +86,9 @@ func TestSpaceConcurrencyMiddleware_BlocksAtLimit(t *testing.T) {
 // spaces do not share the same counter — acme being at limit does not block
 // widget-corp.
 func TestSpaceConcurrencyMiddleware_SeparateCountersPerSpace(t *testing.T) {
-	store := newTestStore(
-		&spaceconfigstore.SpaceConfig{Key: "acme"},
-		&spaceconfigstore.SpaceConfig{Key: "widget-corp"},
+	store := testprocessing.NewTestSpaceConfigStore(
+		&testprocessing.TestSpaceConfig{Key: "acme"},
+		&testprocessing.TestSpaceConfig{Key: "widget-corp"},
 	)
 	const maxPerSpace = 1
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", maxPerSpace)
@@ -173,7 +146,7 @@ func TestSpaceConcurrencyMiddleware_SeparateCountersPerSpace(t *testing.T) {
 // request for an unrecognised domain (not in SpaceConfigStore) is passed to
 // the next handler, not rejected by the middleware.
 func TestSpaceConcurrencyMiddleware_UnknownSpacePassesThrough(t *testing.T) {
-	store := newTestStore() // empty store
+	store := testprocessing.NewTestSpaceConfigStore() // empty store
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", 1)
 	var called bool
 	handler := mid(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +170,7 @@ func TestSpaceConcurrencyMiddleware_UnknownSpacePassesThrough(t *testing.T) {
 // TestSpaceConcurrencyMiddleware_CustomDomain verifies that spaces registered
 // with a custom domain (not subdomain) are resolved correctly.
 func TestSpaceConcurrencyMiddleware_CustomDomain(t *testing.T) {
-	store := newTestStore(&spaceconfigstore.SpaceConfig{
+	store := testprocessing.NewTestSpaceConfigStore(&testprocessing.TestSpaceConfig{
 		Key:          "acme",
 		CustomDomain: "images.acme.com",
 	})
@@ -217,7 +190,7 @@ func TestSpaceConcurrencyMiddleware_CustomDomain(t *testing.T) {
 // TestSpaceConcurrencyMiddleware_Disabled verifies that maxPerSpace=0 disables
 // the middleware entirely — all requests pass through regardless of volume.
 func TestSpaceConcurrencyMiddleware_Disabled(t *testing.T) {
-	store := newTestStore(&spaceconfigstore.SpaceConfig{Key: "acme"})
+	store := testprocessing.NewTestSpaceConfigStore(&testprocessing.TestSpaceConfig{Key: "acme"})
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", 0)
 	var count atomic.Int64
 	handler := mid(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
