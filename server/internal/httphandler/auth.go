@@ -8,6 +8,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -19,21 +20,21 @@ import (
 type AuthHandler struct {
 	tokenManager  *auth.TokenManager
 	userStore     userstore.Store
-	orgStore      orgstore.Store // nil in self-hosted mode
+	orgStore      orgstore.Store
 	registryStore registrystore.Store
 	logger        *zap.Logger
 	embeddedMode  bool
-	multiTenant   bool // true when InternalAPISecret is set
+	multiTenant   bool
 }
 
 func NewAuthHandler(
 	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
-	orgStore orgstore.Store, // pass nil for self-hosted deployments
+	orgStore orgstore.Store,
 	registryStore registrystore.Store,
 	logger *zap.Logger,
 	embeddedMode bool,
-	multiTenant bool, // true when InternalAPISecret is set (multi-tenant mode)
+	multiTenant bool,
 ) *AuthHandler {
 	return &AuthHandler{
 		tokenManager:  tokenManager,
@@ -44,6 +45,16 @@ func NewAuthHandler(
 		embeddedMode:  embeddedMode,
 		multiTenant:   multiTenant,
 	}
+}
+
+func (h *AuthHandler) cloudEnabled() bool {
+	if h.orgStore == nil {
+		return false
+	}
+	if _, ok := h.orgStore.(*noop.OrgStore); ok {
+		return false
+	}
+	return true
 }
 
 type RegisterRequest struct {
@@ -234,7 +245,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 
 		// multi-tenant mode: look up org so we can embed org_id in the token.
 		orgID := ""
-		if h.orgStore != nil {
+		if h.cloudEnabled() {
 			org, err := h.orgStore.GetByUserID(r.Context(), user.ID)
 			if err != nil {
 				h.logger.Warn("Failed to look up org for user on login",
@@ -449,7 +460,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	// multi-tenant mode: auto-create a personal org for the new user (14-day trial).
 	// Self-hosted: orgStore is nil — skip org creation.
 	orgID := ""
-	if h.orgStore != nil {
+	if h.cloudEnabled() {
 		trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
 		org, err := h.orgStore.CreateWithMember(ctx, user.ID, normalizedDisplayName, normalizedUsername, &trialEndsAt)
 		if err != nil {
