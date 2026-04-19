@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spaceconfigstore"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spaceloader"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/noop"
-	"github.com/cshum/imagor-studio/server/internal/spaceconfigstore"
-	"github.com/cshum/imagor-studio/server/internal/spaceloader"
 	"go.uber.org/zap"
 )
 

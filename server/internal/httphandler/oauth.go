@@ -14,10 +14,10 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spaceinvite"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/cloudmode"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"

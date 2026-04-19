@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"go.uber.org/zap"
 )
 

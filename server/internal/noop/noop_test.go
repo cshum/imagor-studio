@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/noop"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

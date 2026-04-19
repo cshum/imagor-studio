@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"go.uber.org/zap"
 )
 

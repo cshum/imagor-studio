@@ -13,8 +13,8 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/model"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"

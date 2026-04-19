@@ -1,10 +1,10 @@
 package cloudmode
 
 import (
+	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spaceinvite"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/noop"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
 )
 
 func OrgEnabled(store orgstore.Store) bool {

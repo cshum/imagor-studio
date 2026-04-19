@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
 )
 
 // OrgStore implements orgstore.Store with no-op behavior for processing-mode nodes.

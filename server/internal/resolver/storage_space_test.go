@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/vektah/gqlparser/v2/gqlerror"

@@ -9,8 +9,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/cshum/imagor-studio/server/internal/cloud/spaceconfigstore"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
-	"github.com/cshum/imagor-studio/server/internal/spaceconfigstore"
 	"go.uber.org/zap"
 )
 

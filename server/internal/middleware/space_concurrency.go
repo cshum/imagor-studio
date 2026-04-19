@@ -7,7 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/cshum/imagor-studio/server/internal/spaceconfigstore"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spaceconfigstore"
 )
 
 // SpaceConcurrencyMiddleware enforces a per-space maximum concurrent request

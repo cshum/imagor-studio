@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 )
 
 // SpaceStore implements spacestore.Store with no-op behavior for processing-mode nodes.
