@@ -14,7 +14,7 @@ import (
 
 func InitializeCloudStores(mode string, cfg *config.Config, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (cloudcontract.OrgStore, cloudcontract.SpaceStore, cloudcontract.SpaceInviteStore) {
 	if mode != "cloud" || cfg.InternalAPISecret == "" {
-		return noop.NewSelfHostedOrgStore(), noop.NewSelfHostedSpaceStore(), nil
+		return noop.NewSelfHostedOrgStore(), noop.NewSelfHostedSpaceStore(), noop.NewSelfHostedSpaceInviteStore()
 	}
 	orgStore := orgdefault.NewStore(db)
 	spaceStore := spacedefault.NewStore(db, encryptionService)
@@ -24,5 +24,8 @@ func InitializeCloudStores(mode string, cfg *config.Config, db *bun.DB, encrypti
 }
 
 func InitializeInviteSender(cfg *config.Config) (cloudcontract.InviteSender, error) {
+	if cfg.InternalAPISecret == "" {
+		return noop.NewSelfHostedInviteSender(), nil
+	}
 	return invitedefault.NewSender(cfg)
 }

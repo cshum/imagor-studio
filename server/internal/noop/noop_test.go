@@ -19,6 +19,8 @@ import (
 // Compile-time: NewOrgStore / NewSpaceStore must satisfy the public interfaces.
 var _ cloudcontract.OrgStore = noop.NewOrgStore()
 var _ cloudcontract.SpaceStore = noop.NewSpaceStore()
+var _ cloudcontract.SpaceInviteStore = noop.NewSpaceInviteStore()
+var _ cloudcontract.InviteSender = noop.NewInviteSender()
 var _ cloudapi.Disabled = noop.NewOrgStore()
 var _ cloudapi.Disabled = noop.NewSpaceStore()
 
@@ -82,6 +84,41 @@ func TestNoopSpaceStore_AllMethodsReturnError(t *testing.T) {
 	})
 }
 
+func TestNoopSpaceInviteStore_AllMethodsReturnError(t *testing.T) {
+	s := noop.NewSpaceInviteStore()
+
+	t.Run("CreateOrRefreshPending", func(t *testing.T) {
+		_, err := s.CreateOrRefreshPending(ctx, "org", "space", "user@example.com", "member", "user-1", time.Now())
+		require.Error(t, err)
+	})
+
+	t.Run("ListPendingBySpace", func(t *testing.T) {
+		_, err := s.ListPendingBySpace(ctx, "org", "space")
+		require.Error(t, err)
+	})
+
+	t.Run("GetPendingByToken", func(t *testing.T) {
+		_, err := s.GetPendingByToken(ctx, "token")
+		require.Error(t, err)
+	})
+
+	t.Run("MarkAccepted", func(t *testing.T) {
+		err := s.MarkAccepted(ctx, "id", time.Now())
+		require.Error(t, err)
+	})
+
+	t.Run("RenameSpaceKey", func(t *testing.T) {
+		err := s.RenameSpaceKey(ctx, "org", "old", "new")
+		require.Error(t, err)
+	})
+}
+
+func TestNoopInviteSender_ReturnsError(t *testing.T) {
+	s := noop.NewInviteSender()
+	err := s.SendSpaceInvitation(ctx, cloudcontract.EmailParams{ToEmail: "user@example.com"})
+	require.Error(t, err)
+}
+
 // ── Error message consistency ─────────────────────────────────────────────────
 // Noop stores should mention the disabled operating mode so operators get a
 // clear signal when they accidentally hit a noop store.
@@ -106,6 +143,26 @@ func TestNoopSpaceStore_ErrorMentionsDisabledMode(t *testing.T) {
 	)
 }
 
+func TestNoopSpaceInviteStore_ErrorMentionsDisabledMode(t *testing.T) {
+	s := noop.NewSpaceInviteStore()
+	_, err := s.GetPendingByToken(ctx, "token")
+	require.Error(t, err)
+	assert.True(t,
+		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),
+		"noop SpaceInviteStore error should mention the disabled mode",
+	)
+}
+
+func TestNoopInviteSender_ErrorMentionsDisabledMode(t *testing.T) {
+	s := noop.NewInviteSender()
+	err := s.SendSpaceInvitation(ctx, cloudcontract.EmailParams{})
+	require.Error(t, err)
+	assert.True(t,
+		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),
+		"noop InviteSender error should mention the disabled mode",
+	)
+}
+
 func TestNoopStores_ReportCloudDisabled(t *testing.T) {
 	assert.True(t, noop.NewOrgStore().CloudDisabled())
 	assert.True(t, noop.NewSpaceStore().CloudDisabled())
@@ -117,5 +174,5 @@ func TestCloudMode_DisabledNoopStoresDisableCloud(t *testing.T) {
 	assert.False(t, cloudmode.OrgEnabled(noop.NewOrgStore()))
 	assert.False(t, cloudmode.SpaceEnabled(noop.NewSpaceStore()))
 	assert.False(t, cloudmode.CloudEnabled(noop.NewOrgStore(), noop.NewSpaceStore()))
-	assert.False(t, cloudmode.InviteEnabled(noop.NewOrgStore(), noop.NewSpaceStore(), nil, nil))
+	assert.False(t, cloudmode.InviteEnabled(noop.NewOrgStore(), noop.NewSpaceStore(), noop.NewSpaceInviteStore(), noop.NewInviteSender()))
 }

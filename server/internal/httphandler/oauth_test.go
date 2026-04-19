@@ -8,12 +8,12 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
-	"github.com/cshum/imagor-studio/server/internal/invitedefault"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/orgdefault"
 	"github.com/cshum/imagor-studio/server/internal/spacedefault"
@@ -27,6 +27,83 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 )
+
+type memoryInviteStore struct {
+	mu      sync.Mutex
+	byToken map[string]*cloudcontract.Invitation
+	seq     int
+}
+
+func newMemoryInviteStore() *memoryInviteStore {
+	return &memoryInviteStore{byToken: make(map[string]*cloudcontract.Invitation)}
+}
+
+func (s *memoryInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*cloudcontract.Invitation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.seq++
+	invite := &cloudcontract.Invitation{
+		ID:              "invite-id",
+		OrgID:           orgID,
+		SpaceKey:        spaceKey,
+		Email:           strings.ToLower(strings.TrimSpace(email)),
+		Role:            role,
+		Token:           "invite-token",
+		InvitedByUserID: invitedByUserID,
+		ExpiresAt:       expiresAt,
+		CreatedAt:       time.Now().UTC(),
+		UpdatedAt:       time.Now().UTC(),
+	}
+	s.byToken[invite.Token] = invite
+	return invite, nil
+}
+
+func (s *memoryInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*cloudcontract.Invitation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var invites []*cloudcontract.Invitation
+	for _, invite := range s.byToken {
+		if invite.OrgID == orgID && invite.SpaceKey == spaceKey && invite.AcceptedAt == nil {
+			invites = append(invites, invite)
+		}
+	}
+	return invites, nil
+}
+
+func (s *memoryInviteStore) GetPendingByToken(ctx context.Context, token string) (*cloudcontract.Invitation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	invite := s.byToken[token]
+	if invite == nil || invite.AcceptedAt != nil {
+		return nil, nil
+	}
+	copy := *invite
+	return &copy, nil
+}
+
+func (s *memoryInviteStore) MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, invite := range s.byToken {
+		if invite.ID == id {
+			invite.AcceptedAt = &acceptedAt
+			invite.UpdatedAt = acceptedAt
+			return nil
+		}
+	}
+	return nil
+}
+
+func (s *memoryInviteStore) RenameSpaceKey(ctx context.Context, orgID, oldSpaceKey, newSpaceKey string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, invite := range s.byToken {
+		if invite.OrgID == orgID && invite.SpaceKey == oldSpaceKey {
+			invite.SpaceKey = newSpaceKey
+		}
+	}
+	return nil
+}
 
 // newTestOAuthHandler is a helper that builds an OAuthHandler with sensible
 // test defaults.  Pass googleClientID="" to simulate "no provider configured".
@@ -475,7 +552,7 @@ func TestGoogleCallback_AcceptsPendingSpaceInvitation(t *testing.T) {
 	db := newOAuthInviteTestDB(t)
 	os := orgdefault.NewStore(db)
 	ss := spacedefault.NewStore(db, nil)
-	is := invitedefault.NewStore(db)
+	is := newMemoryInviteStore()
 
 	ctx := context.Background()
 	org, err := os.CreateWithMember(ctx, "owner-1", "Acme Org", "acme-org", nil)
