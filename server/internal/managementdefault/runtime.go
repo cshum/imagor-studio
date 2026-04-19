@@ -1,13 +1,13 @@
 package managementdefault
 
 import (
-	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/invitedefault"
 	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/cshum/imagor-studio/server/internal/orgdefault"
+	"github.com/cshum/imagor-studio/server/internal/spacedefault"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -17,7 +17,7 @@ func InitializeCloudStores(mode string, cfg *config.Config, db *bun.DB, encrypti
 		return noop.NewSelfHostedOrgStore(), noop.NewSelfHostedSpaceStore(), nil
 	}
 	orgStore := orgdefault.NewStore(db)
-	spaceStore := spacestore.New(db, encryptionService)
+	spaceStore := spacedefault.NewStore(db, encryptionService)
 	spaceInviteStore := invitedefault.NewStore(db)
 	logger.Info("cloud mode: org and space stores initialized")
 	return orgStore, spaceStore, spaceInviteStore
