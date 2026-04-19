@@ -9,12 +9,17 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/bootstrap"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	internalserver "github.com/cshum/imagor-studio/server/internal/server"
 	"go.uber.org/zap"
 )
 
-func RunProcessing(embedFS fs.FS, build func(cfg *config.Config, logger *zap.Logger) (*ProcessingServices, error)) {
+func RunDefaultProcessing(embedFS fs.FS) {
+	RunProcessingWithBuilder(embedFS, bootstrap.InitializeProcessing)
+}
+
+func RunProcessingWithBuilder(embedFS fs.FS, build func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error)) {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		fmt.Printf("Failed to initialize logger: %v\n", err)
