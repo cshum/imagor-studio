@@ -13,8 +13,9 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/orgdefault"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
@@ -28,21 +29,21 @@ import (
 
 // ── failing orgStore stub ─────────────────────────────────────────────────────
 
-// errOrgStore implements orgstore.Store but returns an error on every call.
+// errOrgStore implements cloudcontract.OrgStore but returns an error on every call.
 // Used to verify failure paths without a real database.
 type errOrgStore struct{ msg string }
 
-func (e *errOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*orgstore.Org, error) {
+func (e *errOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*cloudcontract.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
-func (e *errOrgStore) GetByUserID(_ context.Context, _ string) (*orgstore.Org, error) {
+func (e *errOrgStore) GetByUserID(_ context.Context, _ string) (*cloudcontract.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
-func (e *errOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, error) {
+func (e *errOrgStore) GetBySlug(_ context.Context, _ string) (*cloudcontract.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
 
-func (e *errOrgStore) ListMembers(_ context.Context, _ string) ([]*orgstore.OrgMemberView, error) {
+func (e *errOrgStore) ListMembers(_ context.Context, _ string) ([]*cloudcontract.OrgMemberView, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
 
@@ -58,21 +59,21 @@ func (e *errOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error 
 	return fmt.Errorf("%s", e.msg)
 }
 
-// nilOrgStore implements orgstore.Store but returns (nil, nil) on lookups —
+// nilOrgStore implements cloudcontract.OrgStore but returns (nil, nil) on lookups —
 // simulates a user that exists but has no org yet.
 type nilOrgStore struct{}
 
-func (n *nilOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*orgstore.Org, error) {
+func (n *nilOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*cloudcontract.Org, error) {
 	return nil, nil
 }
-func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*orgstore.Org, error) {
+func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*cloudcontract.Org, error) {
 	return nil, nil // no org found
 }
-func (n *nilOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, error) {
+func (n *nilOrgStore) GetBySlug(_ context.Context, _ string) (*cloudcontract.Org, error) {
 	return nil, nil
 }
 
-func (n *nilOrgStore) ListMembers(_ context.Context, _ string) ([]*orgstore.OrgMemberView, error) {
+func (n *nilOrgStore) ListMembers(_ context.Context, _ string) ([]*cloudcontract.OrgMemberView, error) {
 	return nil, nil
 }
 
@@ -891,7 +892,7 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	os := orgstore.New(newOrgTestDB(t))
+	os := orgdefault.NewStore(newOrgTestDB(t))
 	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
 
 	const userID = "saas-reg-user-1"
@@ -939,7 +940,7 @@ func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	os := orgstore.New(newOrgTestDB(t))
+	os := orgdefault.NewStore(newOrgTestDB(t))
 	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
 
 	const userID = "saas-login-user-1"

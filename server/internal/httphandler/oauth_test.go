@@ -12,10 +12,11 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/invitedefault"
 	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/orgdefault"
+	"github.com/cshum/imagor-studio/server/internal/spacedefault"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -310,7 +311,7 @@ func TestGoogleCallback_FullFlow_MultiTenant(t *testing.T) {
 	ms.On("UpdateRole", mock.Anything, upsertedUser.ID, "admin").Return(nil)
 
 	// Use a real in-memory orgStore (same helper used by auth_test.go).
-	os := orgstore.New(newOrgTestDB(t))
+	os := orgdefault.NewStore(newOrgTestDB(t))
 
 	handler := newOAuthHandlerWithConfig(
 		tm, ms, os, nil, nil, zap.NewNop(),
@@ -472,15 +473,15 @@ func TestGoogleCallback_AcceptsPendingSpaceInvitation(t *testing.T) {
 	defer mockGoogle.Close()
 
 	db := newOAuthInviteTestDB(t)
-	os := orgstore.New(db)
-	ss := spacestore.New(db, nil)
+	os := orgdefault.NewStore(db)
+	ss := spacedefault.NewStore(db, nil)
 	is := invitedefault.NewStore(db)
 
 	ctx := context.Background()
 	org, err := os.CreateWithMember(ctx, "owner-1", "Acme Org", "acme-org", nil)
 	require.NoError(t, err)
 	require.NotNil(t, org)
-	require.NoError(t, ss.Create(ctx, &spacestore.Space{
+	require.NoError(t, ss.Create(ctx, &cloudcontract.Space{
 		OrgID:           org.ID,
 		Key:             "acme-space",
 		Name:            "Acme Space",
