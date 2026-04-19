@@ -70,6 +70,10 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string, m
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize services: %w", err)
 	}
+	return NewFromServices(cfg, embedFS, logger, services, mode)
+}
+
+func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, services *bootstrap.Services, mode Mode) (*Server, error) {
 
 	// Initialize GraphQL with enhanced config from services
 	storageResolver := resolver.NewResolver(
