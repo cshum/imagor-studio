@@ -30,6 +30,30 @@ Open in browser
 http://localhost:8000
 ```
 
+## Frontend build and embed contract
+
+The backend serves embedded static assets from `server/static`, and the frontend build writes directly to that path.
+
+- Frontend source: `web/`
+- Frontend build command: `cd web && npm run build`
+- Frontend build output: `server/static/`
+- Backend embed source: `server/embed.go` embeds `static/*`
+
+For local backend builds that must include the latest frontend assets:
+
+```bash
+cd server
+make build-with-static
+```
+
+Other useful targets:
+
+- `make prepare-static` — build frontend assets into `server/static`
+- `make build-selfhosted-with-static` — build self-hosted backend after preparing static assets
+- `make build-cloud-with-static` — build cloud backend after preparing static assets
+
+Plain backend build targets now expect `server/static/index.html` to already exist and will fail fast if embedded frontend assets are missing.
+
 **What this does:**
 
 - Mounts your Photos directory

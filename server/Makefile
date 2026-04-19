@@ -22,22 +22,37 @@ GQLGEN=go run github.com/99designs/gqlgen generate
 
 all: test build
 
+WEB_DIR=../web
+STATIC_DIR=./static
+
+prepare-static:
+	cd $(WEB_DIR) && npm run build
+
+check-static:
+	@test -f $(STATIC_DIR)/index.html || (echo "missing embedded frontend assets in $(STATIC_DIR). Run 'make prepare-static' or build the web app first." && exit 1)
+
 # build produces the full self-hosted binary with libvips + video support.
 # Use build-management for a no-CGO management-only binary.
-build:
+build: check-static
 	mkdir -p static
 	touch static/.placeholder
 	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_SELFHOSTED) $(SELFHOSTED_MAIN_PACKAGE)
 
-build-selfhosted:
+build-selfhosted: check-static
 	mkdir -p static
 	touch static/.placeholder
 	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_SELFHOSTED) $(SELFHOSTED_MAIN_PACKAGE)
 
-build-cloud:
+build-cloud: check-static
 	mkdir -p static
 	touch static/.placeholder
 	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(BINARY_CLOUD) $(CLOUD_MAIN_PACKAGE)
+
+build-with-static: prepare-static build
+
+build-selfhosted-with-static: prepare-static build-selfhosted
+
+build-cloud-with-static: prepare-static build-cloud
 
 test:
 	$(GOTEST) -v ./...
@@ -95,7 +110,7 @@ run-processing:
 # (handles GraphQL, storage config, user/org/space CRUD, delta endpoint).
 BINARY_MANAGEMENT=imagor-studio-management
 
-build-management:
+build-management: check-static
 	mkdir -p static
 	touch static/.placeholder
 	CGO_ENABLED=0 $(GOBUILD) $(LDFLAGS) -o $(BINARY_MANAGEMENT) $(CLOUD_MAIN_PACKAGE)
@@ -104,13 +119,13 @@ build-management:
 # Deployed on processing machines; routes image requests per space.
 BINARY_PROCESSING=imagor-studio-processing
 
-build-processing:
+build-processing: check-static
 	mkdir -p static
 	touch static/.placeholder
 	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_PROCESSING) $(SELFHOSTED_MAIN_PACKAGE)
 
 # Cross compilation
-build-linux:
+build-linux: check-static
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BINARY_UNIX) $(SELFHOSTED_MAIN_PACKAGE)
 
 docker-build:
@@ -128,7 +143,7 @@ gqlgen-init:
 gqlgen-update:
 	$(GQLGEN) --verbose --config gqlgen.yml
 
-.PHONY: all build build-selfhosted build-cloud test clean run deps tidy build-linux build-management build-processing docker-build gqlgen gqlgen-init gqlgen-update
+.PHONY: all build build-selfhosted build-cloud build-with-static build-selfhosted-with-static build-cloud-with-static prepare-static check-static test clean run deps tidy build-linux build-management build-processing docker-build gqlgen gqlgen-init gqlgen-update
 
 clean-db:
 	rm -f storage.db
