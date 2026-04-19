@@ -18,7 +18,6 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/spaceconfigstore"
 	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
-	"github.com/cshum/imagor-studio/server/internal/spaceloader"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
@@ -78,10 +77,8 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
 	}
-	// Processing-node mode: no database — all space state comes from SpaceConfigStore.
-	// Triggered when SpacesEndpoint is set (processing cluster polling management service).
 	if cfg.SpacesEndpoint != "" {
-		return initializeProcessingMode(cfg, logger)
+		return InitializeProcessing(cfg, logger)
 	}
 	// Initialize database
 	db, err := initializeDatabase(cfg)
@@ -161,8 +158,6 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 		inviteSender = sender
 	}
 
-	// Management node: StorageLoader delegates to registry-configured storage.
-	// Processing nodes are handled by initializeProcessingMode (early exit above).
 	var spaceConfigStore *spaceconfigstore.SpaceConfigStore
 	loader := imagorprovider.NewStorageLoader(storageProvider)
 
@@ -352,78 +347,4 @@ func generateSecureJWTSecret() (string, error) {
 
 	// Encode as base64 for safe storage and transmission
 	return base64.StdEncoding.EncodeToString(bytes), nil
-}
-
-// initializeProcessingMode initializes services for a processing-cluster node.
-//
-// Processing nodes have no database — all space configuration (S3 credentials,
-// HMAC secrets, routing) is sourced from SpaceConfigStore, which delta-syncs
-// from the management service's /internal/spaces/delta endpoint.
-//
-// All management-only stores (orgStore, spaceStore, registryStore, etc.) are
-// no-op implementations that return ErrEmbeddedMode on every call.
-//
-// The JWT secret must be provided explicitly via IMAGOR_JWT_SECRET / --jwt-secret;
-// there is no database available to auto-generate or store it.
-func initializeProcessingMode(cfg *config.Config, logger *zap.Logger) (*Services, error) {
-	if cfg.JWTSecret == "" {
-		return nil, fmt.Errorf("IMAGOR_JWT_SECRET is required in processing mode (no database to auto-generate it)")
-	}
-
-	// No-op stores — processing nodes do not manage users, orgs, or spaces directly.
-	registryStore := noop.NewRegistryStore()
-	userStore := noop.NewUserStore()
-	orgStore := noop.NewOrgStore()
-	spaceStore := noop.NewSpaceStore()
-
-	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
-
-	// SpaceConfigStore is the single source of truth for space credentials and
-	// signing secrets. Start() is called by the server after Initialize() returns,
-	// performing the initial blocking full-sync before accepting traffic.
-	spaceConfigStore := spaceconfigstore.New(
-		cfg.SpacesEndpoint,
-		cfg.InternalAPISecret,
-		logger,
-	)
-
-	// SpaceS3Loader routes each image request to the correct S3 bucket based on
-	// the request Host header, using credentials fetched from SpaceConfigStore.
-	loader := spaceloader.New(spaceConfigStore, cfg.SpaceBaseDomain)
-
-	// imagorprovider in processing-node mode: per-request WithGetSigner and
-	// WithGetResultKey driven by SpaceConfigStore instead of a single shared secret.
-	imagorProvider := imagorprovider.New(
-		logger, registryStore, cfg, loader,
-		imagorprovider.WithSpaceConfigStore(spaceConfigStore, cfg.SpaceBaseDomain),
-	)
-	if err := imagorProvider.Initialize(); err != nil {
-		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
-	}
-
-	licenseService := license.NewService(registryStore, cfg)
-
-	logger.Info("processing mode initialized",
-		zap.String("spacesEndpoint", cfg.SpacesEndpoint),
-		zap.String("spaceBaseDomain", cfg.SpaceBaseDomain),
-	)
-
-	return &Services{
-		DB:               nil, // no database in processing mode
-		TokenManager:     tokenManager,
-		Storage:          nil, // no management storage in processing mode
-		StorageProvider:  nil, // no management storage in processing mode
-		ImagorProvider:   imagorProvider,
-		RegistryStore:    registryStore,
-		UserStore:        userStore,
-		OrgStore:         orgStore,
-		SpaceStore:       spaceStore,
-		SpaceInviteStore: nil,
-		InviteSender:     nil,
-		SpaceConfigStore: spaceConfigStore,
-		LicenseService:   licenseService,
-		Encryption:       nil, // no encryption service in processing mode
-		Config:           cfg,
-		Logger:           logger,
-	}, nil
 }

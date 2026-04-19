@@ -300,7 +300,7 @@ func TestInitializeProcessingMode_MissingJWT(t *testing.T) {
 		SpacesEndpoint: "http://management.example.test",
 		// JWTSecret intentionally empty — must cause an error.
 	}
-	_, err := initializeProcessingMode(cfg, logger)
+	_, err := InitializeProcessing(cfg, logger)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "IMAGOR_JWT_SECRET")
 }
@@ -314,7 +314,7 @@ func TestInitializeProcessingMode_Success(t *testing.T) {
 		SpaceBaseDomain:   "imagor.test",
 		JWTExpiration:     24 * time.Hour,
 	}
-	svc, err := initializeProcessingMode(cfg, logger)
+	svc, err := InitializeProcessing(cfg, logger)
 	require.NoError(t, err)
 
 	// Processing nodes have no database.
@@ -363,7 +363,7 @@ func TestInitializeProcessingMode_LogsInfo(t *testing.T) {
 		JWTSecret:      "must-not-be-empty",
 		JWTExpiration:  time.Hour,
 	}
-	svc, err := initializeProcessingMode(cfg, logger)
+	svc, err := InitializeProcessing(cfg, logger)
 	require.NoError(t, err)
 	assert.NotNil(t, svc)
 }
