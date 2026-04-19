@@ -108,6 +108,8 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 
 	// Create auth handler.  services.OrgStore is nil for self-hosted deployments
 	// and non-nil (wired by bootstrap) when InternalAPISecret is configured (multi-tenant).
+	multiTenant := mode == ModeCloud && services.OrgStore != nil && services.SpaceStore != nil
+
 	authHandler := httphandler.NewAuthHandler(
 		services.TokenManager,
 		services.UserStore,
@@ -115,7 +117,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.RegistryStore,
 		services.Logger,
 		cfg.EmbeddedMode,
-		cfg.InternalAPISecret != "", // multiTenant: true when InternalAPISecret is set
+		multiTenant,
 	)
 
 	// Create middleware chain
@@ -139,7 +141,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	mux.HandleFunc("/api/auth/first-run", authHandler.CheckFirstRun())
 	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
 
-	if mode == ModeCloud {
+	if mode == ModeCloud && multiTenant {
 		registerCloudAuthRoutes(mux, cfg, services)
 	} else {
 		registerSelfHostedAuthRoutes(mux)
@@ -154,7 +156,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)
 
-	if mode == ModeCloud {
+	if mode == ModeCloud && multiTenant {
 		registerCloudInternalRoutes(mux, services)
 	}
 

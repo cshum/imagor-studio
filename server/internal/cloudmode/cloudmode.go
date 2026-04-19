@@ -1,29 +1,25 @@
 package cloudmode
 
 import (
-	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spaceinvite"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
-	"github.com/cshum/imagor-studio/server/internal/noop"
+	"github.com/cshum/imagor-studio/server/internal/cloudapi"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 )
 
-func OrgEnabled(store orgstore.Store) bool {
+func OrgEnabled(store cloudcontract.OrgStore) bool {
 	if store == nil {
 		return false
 	}
-	_, ok := store.(*noop.OrgStore)
-	return !ok
+	return !cloudapi.IsDisabled(store)
 }
 
-func SpaceEnabled(store spacestore.Store) bool {
+func SpaceEnabled(store cloudcontract.SpaceStore) bool {
 	if store == nil {
 		return false
 	}
-	_, ok := store.(*noop.SpaceStore)
-	return !ok
+	return !cloudapi.IsDisabled(store)
 }
 
-func CloudEnabled(orgStore orgstore.Store, spaceStore spacestore.Store) bool {
+func CloudEnabled(orgStore cloudcontract.OrgStore, spaceStore cloudcontract.SpaceStore) bool {
 	if orgStore == nil && spaceStore == nil {
 		return false
 	}
@@ -36,6 +32,6 @@ func CloudEnabled(orgStore orgstore.Store, spaceStore spacestore.Store) bool {
 	return OrgEnabled(orgStore) && SpaceEnabled(spaceStore)
 }
 
-func InviteEnabled(orgStore orgstore.Store, spaceStore spacestore.Store, inviteStore spaceinvite.Store, inviteSender spaceinvite.EmailSender) bool {
+func InviteEnabled(orgStore cloudcontract.OrgStore, spaceStore cloudcontract.SpaceStore, inviteStore cloudcontract.SpaceInviteStore, inviteSender cloudcontract.InviteSender) bool {
 	return inviteStore != nil && ((CloudEnabled(orgStore, spaceStore) && inviteSender != nil) || (OrgEnabled(orgStore) && SpaceEnabled(spaceStore)))
 }

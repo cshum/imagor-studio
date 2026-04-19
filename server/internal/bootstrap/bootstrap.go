@@ -11,6 +11,8 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/cloud/spaceconfigstore"
 	"github.com/cshum/imagor-studio/server/internal/cloud/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
+	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/database"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
@@ -40,11 +42,11 @@ type Services struct {
 	ImagorProvider   *imagorprovider.Provider
 	RegistryStore    registrystore.Store
 	UserStore        userstore.Store
-	OrgStore         orgstore.Store                     // nil in self-hosted; set when InternalAPISecret != ""
-	SpaceStore       spacestore.Store                   // nil in self-hosted; set when InternalAPISecret != ""
-	SpaceInviteStore spaceinvite.Store                  // nil when invitation storage is unavailable
-	InviteSender     spaceinvite.EmailSender            // nil when invitation email is not configured
-	SpaceConfigStore *spaceconfigstore.SpaceConfigStore // nil unless SpacesEndpoint set; Start() called by server
+	OrgStore         cloudcontract.OrgStore         // nil in self-hosted; set when InternalAPISecret != ""
+	SpaceStore       cloudcontract.SpaceStore       // nil in self-hosted; set when InternalAPISecret != ""
+	SpaceInviteStore cloudcontract.SpaceInviteStore // nil when invitation storage is unavailable
+	InviteSender     cloudcontract.InviteSender     // nil when invitation email is not configured
+	SpaceConfigStore cloudruntime.SpaceConfigReader // nil unless SpacesEndpoint set; Start() called by server
 	LicenseService   *license.Service
 	Encryption       *encryption.Service
 	Config           *config.Config
@@ -145,7 +147,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 
 	orgStore, spaceStore, spaceInviteStore := initializeCloudStores(mode, enhancedCfg, db, encryptionService, logger)
 
-	var inviteSender spaceinvite.EmailSender
+	var inviteSender cloudcontract.InviteSender
 	if enhancedCfg.SESFromEmail != "" {
 		sesRegion := enhancedCfg.SESRegion
 		if sesRegion == "" {
@@ -202,7 +204,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	}, nil
 }
 
-func initializeCloudStores(mode string, cfg *config.Config, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (orgstore.Store, spacestore.Store, spaceinvite.Store) {
+func initializeCloudStores(mode string, cfg *config.Config, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (cloudcontract.OrgStore, cloudcontract.SpaceStore, cloudcontract.SpaceInviteStore) {
 	if mode != ModeCloud || cfg.InternalAPISecret == "" {
 		return noop.NewSelfHostedOrgStore(), noop.NewSelfHostedSpaceStore(), nil
 	}

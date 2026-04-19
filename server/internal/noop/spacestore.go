@@ -20,6 +20,8 @@ func NewSpaceStore() *SpaceStore { return &SpaceStore{} }
 // NewSelfHostedSpaceStore creates a no-op space store for self-hosted builds where cloud space features are disabled.
 func NewSelfHostedSpaceStore() *SpaceStore { return &SpaceStore{} }
 
+func (n *SpaceStore) CloudDisabled() bool { return true }
+
 func (n *SpaceStore) Create(_ context.Context, _ *spacestore.Space) error {
 	return ErrCloudDisabled
 }

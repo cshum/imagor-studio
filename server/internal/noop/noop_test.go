@@ -10,6 +10,8 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/cloudapi"
+	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +20,8 @@ import (
 // Compile-time: NewOrgStore / NewSpaceStore must satisfy the public interfaces.
 var _ orgstore.Store = noop.NewOrgStore()
 var _ spacestore.Store = noop.NewSpaceStore()
+var _ cloudapi.Disabled = noop.NewOrgStore()
+var _ cloudapi.Disabled = noop.NewSpaceStore()
 
 var ctx = context.Background()
 
@@ -101,4 +105,18 @@ func TestNoopSpaceStore_ErrorMentionsDisabledMode(t *testing.T) {
 		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),
 		"noop SpaceStore error should mention the disabled mode",
 	)
+}
+
+func TestNoopStores_ReportCloudDisabled(t *testing.T) {
+	assert.True(t, noop.NewOrgStore().CloudDisabled())
+	assert.True(t, noop.NewSpaceStore().CloudDisabled())
+	assert.True(t, cloudapi.IsDisabled(noop.NewOrgStore()))
+	assert.True(t, cloudapi.IsDisabled(noop.NewSpaceStore()))
+}
+
+func TestCloudMode_DisabledNoopStoresDisableCloud(t *testing.T) {
+	assert.False(t, cloudmode.OrgEnabled(noop.NewOrgStore()))
+	assert.False(t, cloudmode.SpaceEnabled(noop.NewSpaceStore()))
+	assert.False(t, cloudmode.CloudEnabled(noop.NewOrgStore(), noop.NewSpaceStore()))
+	assert.False(t, cloudmode.InviteEnabled(noop.NewOrgStore(), noop.NewSpaceStore(), nil, nil))
 }

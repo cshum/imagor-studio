@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spaceinvite"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
@@ -54,11 +52,11 @@ type Resolver struct {
 
 	// Multi-tenant stores — nil in self-hosted / embedded mode.
 	// Only set when InternalAPISecret is configured (multi-tenant deployment).
-	orgStore   orgstore.Store
-	spaceStore spacestore.Store
+	orgStore   cloudcontract.OrgStore
+	spaceStore cloudcontract.SpaceStore
 
-	spaceInviteStore spaceinvite.Store
-	inviteSender     spaceinvite.EmailSender
+	spaceInviteStore cloudcontract.SpaceInviteStore
+	inviteSender     cloudcontract.InviteSender
 }
 
 func NewResolver(
@@ -69,10 +67,10 @@ func NewResolver(
 	cfg ConfigProvider,
 	licenseService LicenseChecker,
 	logger *zap.Logger,
-	orgStore orgstore.Store,
-	spaceStore spacestore.Store,
-	spaceInviteStore spaceinvite.Store,
-	inviteSender spaceinvite.EmailSender,
+	orgStore cloudcontract.OrgStore,
+	spaceStore cloudcontract.SpaceStore,
+	spaceInviteStore cloudcontract.SpaceInviteStore,
+	inviteSender cloudcontract.InviteSender,
 ) *Resolver {
 	return &Resolver{
 		storageProvider:  storageProvider,

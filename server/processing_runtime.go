@@ -9,14 +9,27 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
+	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
+	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	internalserver "github.com/cshum/imagor-studio/server/internal/server"
 	"go.uber.org/zap"
 )
 
 func RunDefaultProcessing(embedFS fs.FS) {
-	RunProcessingWithBuilder(embedFS, bootstrap.InitializeProcessing)
+	RunProcessingWithFactory(embedFS, bootstrap.DefaultProcessingRuntimeFactory)
+}
+
+func RunProcessingWithFactory(embedFS fs.FS, runtimeFactory bootstrap.ProcessingRuntimeFactory) {
+	RunProcessingWithBuilder(embedFS, func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error) {
+		return InitializeProcessingWithFactory(cfg, logger, runtimeFactory)
+	})
+}
+
+func InitializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, runtimeFactory func(cfg *config.Config, logger *zap.Logger) (cloudruntime.SpaceConfigReader, imagor.Loader, imagorprovider.ProviderOption, error)) (*bootstrap.Services, error) {
+	return bootstrap.InitializeProcessingWithFactory(cfg, logger, runtimeFactory)
 }
 
 func RunProcessingWithBuilder(embedFS fs.FS, build func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error)) {

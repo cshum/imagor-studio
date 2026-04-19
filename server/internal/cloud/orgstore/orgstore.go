@@ -12,42 +12,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/uuid"
 	"github.com/uptrace/bun"
 )
 
 // Org is the application-level representation of an organization.
-type Org struct {
-	ID      string
-	OwnerID string
-	Name    string
-	Slug    string
-
-	// Plan & status — no free tier.
-	Plan       string
-	PlanStatus string
-
-	// Billing — empty until Stripe subscription created.
-	StripeCustomerID     string
-	StripeSubscriptionID string
-	BillingEmail         string
-	TrialEndsAt          *time.Time
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
-}
+type Org = cloudcontract.Org
 
 // OrgMemberView is the application-level view of an org_member row,
 // augmented with the member's username and display name (joined from the users table).
-type OrgMemberView struct {
-	OrgID       string
-	UserID      string
-	Username    string
-	DisplayName string
-	Role        string
-	CreatedAt   time.Time
-}
+type OrgMemberView = cloudcontract.OrgMemberView
 
 // Store exposes org management operations to other packages.
 type Store interface {

@@ -9,19 +9,14 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 )
 
 type EmailSender interface {
 	SendSpaceInvitation(ctx context.Context, params EmailParams) error
 }
 
-type EmailParams struct {
-	ToEmail     string
-	OrgName     string
-	SpaceName   string
-	InviteToken string
-	Role        string
-}
+type EmailParams = cloudcontract.EmailParams
 
 type sesEmailSender struct {
 	client    *sesv2.Client

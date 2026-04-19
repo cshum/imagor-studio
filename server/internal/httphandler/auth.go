@@ -8,7 +8,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -20,7 +20,7 @@ import (
 type AuthHandler struct {
 	tokenManager  *auth.TokenManager
 	userStore     userstore.Store
-	orgStore      orgstore.Store
+	orgStore      cloudcontract.OrgStore
 	registryStore registrystore.Store
 	logger        *zap.Logger
 	embeddedMode  bool
@@ -30,7 +30,7 @@ type AuthHandler struct {
 func NewAuthHandler(
 	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
-	orgStore orgstore.Store,
+	orgStore cloudcontract.OrgStore,
 	registryStore registrystore.Store,
 	logger *zap.Logger,
 	embeddedMode bool,

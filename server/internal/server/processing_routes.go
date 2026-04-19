@@ -6,13 +6,14 @@ import (
 	"net/http"
 
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
+	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 )
 
 func registerCloudInternalRoutes(mux *http.ServeMux, services *bootstrap.Services) {
-	if services.SpaceStore == nil {
+	if !cloudmode.SpaceEnabled(services.SpaceStore) {
 		return
 	}
 	spacesHandler := httphandler.NewSpacesDeltaHandler(services.SpaceStore, services.Config.InternalAPISecret, services.Logger)

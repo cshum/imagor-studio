@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/uuid"
@@ -28,59 +29,14 @@ import (
 // Space is the application-level representation of a tenant space.
 // All sensitive credential fields are plaintext; encryption/decryption is
 // handled internally by the store.
-type Space struct {
-	ID          string
-	OrgID       string
-	Key         string
-	Name        string
-	StorageType string
-
-	// Storage config
-	Bucket       string
-	Prefix       string
-	Region       string
-	Endpoint     string
-	AccessKeyID  string
-	SecretKey    string
-	UsePathStyle bool
-
-	// Routing & status
-	CustomDomain         string
-	CustomDomainVerified bool
-	Suspended            bool
-	IsShared             bool
-
-	// Imagor signing
-	SignerAlgorithm string
-	SignerTruncate  int
-	ImagorSecret    string
-
-	UpdatedAt time.Time
-	DeletedAt *time.Time
-}
+type Space = cloudcontract.Space
 
 // DeltaResult is the output of a delta query.
-type DeltaResult struct {
-	// Upserted lists active spaces (DeletedAt is nil) that changed since the cursor.
-	Upserted []*Space
-	// Deleted lists the keys of spaces that were soft-deleted since the cursor.
-	Deleted []string
-	// ServerTime is the time at which the query was executed (use as the next cursor).
-	ServerTime time.Time
-}
+type DeltaResult = cloudcontract.DeltaResult
 
 // SpaceMemberView is the application-level view of a space membership row,
 // augmented with the member's username and display name.
-type SpaceMemberView struct {
-	SpaceID     string
-	UserID      string
-	Username    string
-	DisplayName string
-	Email       *string
-	AvatarURL   *string
-	Role        string
-	CreatedAt   time.Time
-}
+type SpaceMemberView = cloudcontract.SpaceMemberView
 
 // Store is the interface exposed to other packages.
 type Store interface {

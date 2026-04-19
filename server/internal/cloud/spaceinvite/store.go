@@ -10,24 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/uuid"
 	"github.com/uptrace/bun"
 )
 
-type Invitation struct {
-	ID              string
-	OrgID           string
-	SpaceKey        string
-	Email           string
-	Role            string
-	Token           string
-	InvitedByUserID string
-	AcceptedAt      *time.Time
-	ExpiresAt       time.Time
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-}
+type Invitation = cloudcontract.Invitation
 
 type Store interface {
 	CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*Invitation, error)

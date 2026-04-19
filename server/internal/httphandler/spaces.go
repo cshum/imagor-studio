@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"go.uber.org/zap"
 )
 
@@ -33,14 +33,14 @@ import (
 //	  "server_time": 1744640400                              // Unix seconds; use as next cursor
 //	}
 type SpacesDeltaHandler struct {
-	store     spacestore.Store
+	store     cloudcontract.SpaceStore
 	apiSecret string
 	logger    *zap.Logger
 }
 
 // NewSpacesDeltaHandler creates the handler. apiSecret must be non-empty in
 // production; an empty secret disables authentication (test/dev only).
-func NewSpacesDeltaHandler(store spacestore.Store, apiSecret string, logger *zap.Logger) *SpacesDeltaHandler {
+func NewSpacesDeltaHandler(store cloudcontract.SpaceStore, apiSecret string, logger *zap.Logger) *SpacesDeltaHandler {
 	return &SpacesDeltaHandler{
 		store:     store,
 		apiSecret: apiSecret,
@@ -138,7 +138,7 @@ func extractBearer(header string) (string, bool) {
 	return token, true
 }
 
-func spaceToPayload(sp *spacestore.Space) *spaceConfigPayload {
+func spaceToPayload(sp *cloudcontract.Space) *spaceConfigPayload {
 	signerAlg := sp.SignerAlgorithm
 	if signerAlg == "" {
 		signerAlg = "sha256"
