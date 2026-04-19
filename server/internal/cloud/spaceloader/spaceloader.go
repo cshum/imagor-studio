@@ -26,13 +26,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
+	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 )
 
 // SpaceS3Loader implements imagor.Loader by routing each request to the
 // correct space's S3 bucket based on the request Host header.
 type SpaceS3Loader struct {
-	store      cloudcontract.SpaceConfigReader
+	store      cloudruntime.SpaceConfigReader
 	baseDomain string // e.g. ".yoursaas.com" (note leading dot)
 }
 
@@ -42,7 +42,7 @@ type SpaceS3Loader struct {
 //   - baseDomain: the platform domain suffix, including the leading dot
 //     (e.g. ".yoursaas.com"). Requests whose Host has this suffix are resolved
 //     by stripping the suffix to get the space key.
-func New(store cloudcontract.SpaceConfigReader, baseDomain string) *SpaceS3Loader {
+func New(store cloudruntime.SpaceConfigReader, baseDomain string) *SpaceS3Loader {
 	return &SpaceS3Loader{store: store, baseDomain: baseDomain}
 }
 
@@ -89,7 +89,7 @@ func (l *SpaceS3Loader) Get(r *http.Request, image string) (*imagor.Blob, error)
 //     "acme.yoursaas.com" → strip ".yoursaas.com" → space key "acme"
 //  2. Custom domain — Host is looked up in the byDomain index:
 //     "images.acme.com" → SpaceConfigStore.GetByHostname
-func (l *SpaceS3Loader) resolveSpace(host string) (cloudcontract.SpaceConfig, error) {
+func (l *SpaceS3Loader) resolveSpace(host string) (cloudruntime.SpaceConfig, error) {
 	if strings.HasSuffix(host, l.baseDomain) {
 		spaceKey := strings.TrimSuffix(host, l.baseDomain)
 		cfg, ok := l.store.Get(spaceKey)
@@ -110,7 +110,7 @@ func (l *SpaceS3Loader) resolveSpace(host string) (cloudcontract.SpaceConfig, er
 //
 // This is struct allocation only (~microseconds); the AWS SDK's internal
 // http.Client pools TCP connections so no new connection is opened per call.
-func buildS3Client(ctx context.Context, cfg cloudcontract.SpaceConfig) (*s3.Client, error) {
+func buildS3Client(ctx context.Context, cfg cloudruntime.SpaceConfig) (*s3.Client, error) {
 	var loadOpts []func(*awsconfig.LoadOptions) error
 
 	if cfg.GetRegion() != "" {

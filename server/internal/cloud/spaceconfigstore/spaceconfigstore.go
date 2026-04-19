@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
+	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"go.uber.org/zap"
 )
 
@@ -82,7 +82,7 @@ type SpaceConfigStore struct {
 	logger        *zap.Logger
 }
 
-var _ cloudcontract.SpaceConfigReader = (*SpaceConfigStore)(nil)
+var _ cloudruntime.SpaceConfigReader = (*SpaceConfigStore)(nil)
 
 // Option configures a SpaceConfigStore.
 type Option func(*SpaceConfigStore)
@@ -150,7 +150,7 @@ func (s *SpaceConfigStore) Start(ctx context.Context) error {
 }
 
 // Get returns the SpaceConfig for the given space key, or false if not found.
-func (s *SpaceConfigStore) Get(key string) (cloudcontract.SpaceConfig, bool) {
+func (s *SpaceConfigStore) Get(key string) (cloudruntime.SpaceConfig, bool) {
 	s.mu.RLock()
 	cfg, ok := s.configs[key]
 	s.mu.RUnlock()
@@ -159,7 +159,7 @@ func (s *SpaceConfigStore) Get(key string) (cloudcontract.SpaceConfig, bool) {
 
 // GetByHostname returns the SpaceConfig whose CustomDomain matches hostname,
 // or false if no space has that custom domain registered.
-func (s *SpaceConfigStore) GetByHostname(hostname string) (cloudcontract.SpaceConfig, bool) {
+func (s *SpaceConfigStore) GetByHostname(hostname string) (cloudruntime.SpaceConfig, bool) {
 	s.mu.RLock()
 	cfg, ok := s.byDomain[hostname]
 	s.mu.RUnlock()

@@ -1,4 +1,4 @@
-package cloudcontract
+package cloudruntime
 
 import "context"
 

@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
+	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
@@ -83,7 +83,7 @@ type Provider struct {
 	// spaceConfigStore, when non-nil, switches the provider into processing-node
 	// mode: per-request signer and result-key lookups via WithGetSigner /
 	// WithGetResultKey instead of the single dynSigner.
-	spaceConfigStore cloudcontract.SpaceConfigReader
+	spaceConfigStore cloudruntime.SpaceConfigReader
 	baseDomain       string // e.g. "imagor.app" (no leading dot)
 
 	// app is the running *imagor.Imagor instance. Set during Initialize().
@@ -113,7 +113,7 @@ type ProviderOption func(*Provider)
 //   - baseDomain: the platform CDN domain (e.g. "imagor.app"); requests whose
 //     Host ends with "."+baseDomain are resolved by stripping the suffix to get
 //     the space key. Custom domains are looked up via GetByHostname.
-func WithSpaceConfigStore(store cloudcontract.SpaceConfigReader, baseDomain string) ProviderOption {
+func WithSpaceConfigStore(store cloudruntime.SpaceConfigReader, baseDomain string) ProviderOption {
 	return func(p *Provider) {
 		p.spaceConfigStore = store
 		p.baseDomain = baseDomain
@@ -299,7 +299,7 @@ func (p *Provider) Shutdown(ctx context.Context) error {
 // resolveSpaceFromHost maps a Host header to the corresponding SpaceConfig.
 // Subdomain routing: "acme.imagor.app" → strip ".imagor.app" → space key "acme".
 // Custom domain routing: "images.acme.com" → GetByHostname lookup.
-func resolveSpaceFromHost(store cloudcontract.SpaceConfigReader, host, baseDomain string) cloudcontract.SpaceConfig {
+func resolveSpaceFromHost(store cloudruntime.SpaceConfigReader, host, baseDomain string) cloudruntime.SpaceConfig {
 	if baseDomain != "" && strings.HasSuffix(host, "."+baseDomain) {
 		spaceKey := strings.TrimSuffix(host, "."+baseDomain)
 		sc, _ := store.Get(spaceKey)
@@ -312,7 +312,7 @@ func resolveSpaceFromHost(store cloudcontract.SpaceConfigReader, host, baseDomai
 // signerFromSpaceConfig builds an HMAC signer from a space's own secret and
 // algorithm settings. Returns nil if the space has no secret configured
 // (imagor will treat the request as unsigned — rejected in production).
-func signerFromSpaceConfig(sc cloudcontract.SpaceConfig) imagorpath.Signer {
+func signerFromSpaceConfig(sc cloudruntime.SpaceConfig) imagorpath.Signer {
 	if sc == nil || sc.GetImagorSecret() == "" {
 		return nil
 	}
