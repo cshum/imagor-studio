@@ -6,8 +6,8 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
@@ -772,7 +772,7 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 	space := makeTestSpace("acme", "org-1")
 	org := makeTestOrg("org-1", "user-1")
 	org.Name = "Acme Org"
-	invitation := &spaceinvite.Invitation{
+	invitation := &cloudcontract.Invitation{
 		ID:        "invite-1",
 		OrgID:     "org-1",
 		SpaceKey:  "acme",
@@ -799,7 +799,7 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 		mock.AnythingOfType("time.Time"),
 	).Return(invitation, nil)
 	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(org, nil)
-	sender.On("SendSpaceInvitation", mock.Anything, mock.MatchedBy(func(params spaceinvite.EmailParams) bool {
+	sender.On("SendSpaceInvitation", mock.Anything, mock.MatchedBy(func(params cloudcontract.EmailParams) bool {
 		return params.ToEmail == "new@example.com" && params.OrgName == "Acme Org" && params.SpaceName == "Test Space" && params.InviteToken == "tok-123"
 	})).Return(nil)
 

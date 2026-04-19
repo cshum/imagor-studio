@@ -13,8 +13,8 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
+	"github.com/cshum/imagor-studio/server/internal/invitedefault"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/stretchr/testify/assert"
@@ -474,7 +474,7 @@ func TestGoogleCallback_AcceptsPendingSpaceInvitation(t *testing.T) {
 	db := newOAuthInviteTestDB(t)
 	os := orgstore.New(db)
 	ss := spacestore.New(db, nil)
-	is := spaceinvite.NewStore(db)
+	is := invitedefault.NewStore(db)
 
 	ctx := context.Background()
 	org, err := os.CreateWithMember(ctx, "owner-1", "Acme Org", "acme-org", nil)
