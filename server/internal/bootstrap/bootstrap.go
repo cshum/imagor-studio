@@ -7,9 +7,6 @@ import (
 	"fmt"
 
 	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/cloud/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spaceinvite"
-	"github.com/cshum/imagor-studio/server/internal/cloud/spacestore"
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
@@ -17,6 +14,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
+	"github.com/cshum/imagor-studio/server/internal/managementdefault"
 	"github.com/cshum/imagor-studio/server/internal/migrator"
 	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
@@ -144,19 +142,11 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	// Initialize user store
 	userStore := userstore.New(db, logger)
 
-	orgStore, spaceStore, spaceInviteStore := initializeCloudStores(mode, enhancedCfg, db, encryptionService, logger)
+	orgStore, spaceStore, spaceInviteStore := managementdefault.InitializeCloudStores(mode, enhancedCfg, db, encryptionService, logger)
 
-	var inviteSender cloudcontract.InviteSender
-	if enhancedCfg.SESFromEmail != "" {
-		sesRegion := enhancedCfg.SESRegion
-		if sesRegion == "" {
-			sesRegion = enhancedCfg.AWSRegion
-		}
-		sender, senderErr := spaceinvite.NewSESEmailSender(sesRegion, enhancedCfg.SESFromEmail, enhancedCfg.AppUrl, enhancedCfg.AppApiUrl)
-		if senderErr != nil {
-			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", senderErr)
-		}
-		inviteSender = sender
+	inviteSender, err := managementdefault.InitializeInviteSender(enhancedCfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
 	}
 
 	var spaceConfigStore cloudruntime.SpaceConfigReader
@@ -201,18 +191,6 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 		Config:           enhancedCfg,
 		Logger:           logger,
 	}, nil
-}
-
-func initializeCloudStores(mode string, cfg *config.Config, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (cloudcontract.OrgStore, cloudcontract.SpaceStore, cloudcontract.SpaceInviteStore) {
-	if mode != ModeCloud || cfg.InternalAPISecret == "" {
-		return noop.NewSelfHostedOrgStore(), noop.NewSelfHostedSpaceStore(), nil
-	}
-
-	orgStore := orgstore.New(db)
-	spaceStore := spacestore.New(db, encryptionService)
-	spaceInviteStore := spaceinvite.NewStore(db)
-	logger.Info("cloud mode: org and space stores initialized")
-	return orgStore, spaceStore, spaceInviteStore
 }
 
 // initializeEmbeddedMode initializes services for embedded mode (stateless, no database)
