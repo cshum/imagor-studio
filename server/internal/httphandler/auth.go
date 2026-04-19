@@ -8,7 +8,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/noop"
+	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
@@ -48,13 +48,7 @@ func NewAuthHandler(
 }
 
 func (h *AuthHandler) cloudEnabled() bool {
-	if h.orgStore == nil {
-		return false
-	}
-	if _, ok := h.orgStore.(*noop.OrgStore); ok {
-		return false
-	}
-	return true
+	return cloudmode.OrgEnabled(h.orgStore)
 }
 
 type RegisterRequest struct {

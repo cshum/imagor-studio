@@ -14,7 +14,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/noop"
+	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
 	"github.com/cshum/imagor-studio/server/internal/spacestore"
@@ -111,25 +111,11 @@ func newOAuthHandlerWithConfig(
 }
 
 func (h *OAuthHandler) cloudEnabled() bool {
-	if h.orgStore == nil || h.spaceStore == nil {
-		if h.orgStore != nil {
-			if _, ok := h.orgStore.(*noop.OrgStore); !ok {
-				return true
-			}
-		}
-		return false
-	}
-	if _, ok := h.orgStore.(*noop.OrgStore); ok {
-		return false
-	}
-	if _, ok := h.spaceStore.(*noop.SpaceStore); ok {
-		return false
-	}
-	return true
+	return cloudmode.CloudEnabled(h.orgStore, h.spaceStore)
 }
 
 func (h *OAuthHandler) inviteFlowEnabled() bool {
-	return h.cloudEnabled() && h.inviteStore != nil
+	return cloudmode.InviteEnabled(h.orgStore, h.spaceStore, h.inviteStore, nil)
 }
 
 // AuthProvidersResponse is the typed response for the providers endpoint.
