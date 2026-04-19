@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"io/fs"
 	"net/http"
 
@@ -46,4 +47,11 @@ func registerProcessingOrSPA(
 	}
 	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
 	return nil
+}
+
+func startProcessingSyncIfNeeded(ctx context.Context, services *bootstrap.Services) error {
+	if services.SpaceConfigStore == nil {
+		return nil
+	}
+	return services.SpaceConfigStore.Start(ctx)
 }

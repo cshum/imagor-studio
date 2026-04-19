@@ -190,13 +190,9 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string, m
 	// Start background 30-second sync loop: pulls registry → imagor signer + storage.
 	syncCtx, syncCancel := context.WithCancel(context.Background())
 
-	// On processing nodes, perform the initial full sync of space configs
-	// (blocking) then let the background poller run via syncCtx.
-	if services.SpaceConfigStore != nil {
-		if err := services.SpaceConfigStore.Start(syncCtx); err != nil {
-			syncCancel()
-			return nil, fmt.Errorf("space config store initial sync failed: %w", err)
-		}
+	if err := startProcessingSyncIfNeeded(syncCtx, services); err != nil {
+		syncCancel()
+		return nil, fmt.Errorf("space config store initial sync failed: %w", err)
 	}
 
 	// Build the sync functions list. StorageProvider is nil in processing mode
