@@ -9,7 +9,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
-	auth2 "github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
@@ -18,7 +18,7 @@ import (
 )
 
 type AuthHandler struct {
-	tokenManager  *auth2.TokenManager
+	tokenManager  *auth.TokenManager
 	userStore     userstore.Store
 	orgStore      org.OrgStore
 	registryStore registrystore.Store
@@ -28,7 +28,7 @@ type AuthHandler struct {
 }
 
 func NewAuthHandler(
-	tokenManager *auth2.TokenManager,
+	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
 	orgStore org.OrgStore,
 	registryStore registrystore.Store,
@@ -228,7 +228,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 		}
 
 		// Check password - return generic login failed for wrong password
-		if err := auth2.CheckPassword(user.HashedPassword, req.Password); err != nil {
+		if err := auth.CheckPassword(user.HashedPassword, req.Password); err != nil {
 			return apperror.InvalidCredentials("LOGIN_FAILED")
 		}
 
@@ -361,7 +361,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 
 		// Extract JWT token from Authorization header
 		authHeader := r.Header.Get("Authorization")
-		jwtToken, err := auth2.ExtractTokenFromHeader(authHeader)
+		jwtToken, err := auth.ExtractTokenFromHeader(authHeader)
 		if err != nil {
 			return apperror.Unauthorized("Authorization header is missing or invalid")
 		}
@@ -432,7 +432,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
 
 	// Hash password
-	hashedPassword, err := auth2.HashPassword(req.Password)
+	hashedPassword, err := auth.HashPassword(req.Password)
 	if err != nil {
 		h.logger.Error("Failed to hash password", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to process registration")
