@@ -9,8 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/bootstrap"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	internalserver "github.com/cshum/imagor-studio/server/internal/server"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"go.uber.org/zap"
 )
 
@@ -22,6 +24,14 @@ const (
 )
 
 func Run(embedFS fs.FS, mode Mode) {
+	run(embedFS, mode, nil, nil)
+}
+
+func RunCloudWithFactories(embedFS fs.FS, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) {
+	run(embedFS, ModeCloud, cloudStoresFactory, inviteSenderFactory)
+}
+
+func run(embedFS fs.FS, mode Mode, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		fmt.Printf("Failed to initialize logger: %v\n", err)
@@ -35,7 +45,16 @@ func Run(embedFS fs.FS, mode Mode) {
 		logger.Fatal("Failed to load configuration", zap.Error(err))
 	}
 
-	srv, err := internalserver.New(cfg, embedFS, logger, args, internalserver.Mode(mode))
+	var srv *internalserver.Server
+	if internalserver.Mode(mode) == internalserver.ModeCloud && cloudStoresFactory != nil {
+		services, initErr := bootstrap.InitializeCloudWithFactories(cfg, logger, args, cloudStoresFactory, inviteSenderFactory)
+		if initErr != nil {
+			logger.Fatal("Failed to initialize cloud services", zap.Error(initErr))
+		}
+		srv, err = internalserver.NewFromServices(cfg, embedFS, logger, services, internalserver.Mode(mode))
+	} else {
+		srv, err = internalserver.New(cfg, embedFS, logger, args, internalserver.Mode(mode))
+	}
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err), zap.String("mode", string(mode)))
 	}

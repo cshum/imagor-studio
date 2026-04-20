@@ -3,8 +3,6 @@ package managementdefault
 import (
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/noop"
-	"github.com/cshum/imagor-studio/server/internal/orgdefault"
-	"github.com/cshum/imagor-studio/server/internal/spacedefault"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
@@ -13,13 +11,12 @@ import (
 )
 
 func InitializeCloudStores(mode string, cfg *config.Config, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (org.OrgStore, space.SpaceStore, space.SpaceInviteStore) {
-	if mode != "cloud" || cfg.InternalAPISecret == "" {
-		return noop.NewSelfHostedOrgStore(), noop.NewSelfHostedSpaceStore(), noop.NewSelfHostedSpaceInviteStore()
+	_ = db
+	_ = encryptionService
+	if mode == "cloud" && cfg.InternalAPISecret != "" {
+		logger.Info("cloud mode requested in public runtime; using disabled org and space stores")
 	}
-	orgStore := orgdefault.NewStore(db)
-	spaceStore := spacedefault.NewStore(db, encryptionService)
-	logger.Info("cloud mode: org and space stores initialized; invitations unavailable in public runtime")
-	return orgStore, spaceStore, nil
+	return noop.NewSelfHostedOrgStore(), noop.NewSelfHostedSpaceStore(), noop.NewSelfHostedSpaceInviteStore()
 }
 
 func InitializeInviteSender(cfg *config.Config) (space.InviteSender, error) {

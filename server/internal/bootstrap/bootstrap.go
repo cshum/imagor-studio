@@ -19,6 +19,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
@@ -65,15 +66,19 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string, mode stri
 }
 
 func InitializeSelfHosted(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted)
+	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, nil, nil)
 }
 
 func InitializeCloud(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud)
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, nil, nil)
+}
+
+func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args []string, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) (*Services, error) {
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudStoresFactory, inviteSenderFactory)
 }
 
 // initializeRuntimeMode sets up runtime services for self-hosted or cloud management modes.
-func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string) (*Services, error) {
+func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) (*Services, error) {
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
 	}
@@ -143,11 +148,31 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	// Initialize user store
 	userStore := userstore.New(db, logger)
 
-	orgStore, spaceStore, spaceInviteStore := managementdefault.InitializeCloudStores(mode, enhancedCfg, db, encryptionService, logger)
+	var (
+		orgStore         org.OrgStore
+		spaceStore       space.SpaceStore
+		spaceInviteStore space.SpaceInviteStore
+	)
+	if mode == ModeCloud && cloudStoresFactory != nil {
+		orgStore, spaceStore, spaceInviteStore, err = cloudStoresFactory(enhancedCfg, db, encryptionService, logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize cloud stores: %w", err)
+		}
+	} else {
+		orgStore, spaceStore, spaceInviteStore = managementdefault.InitializeCloudStores(mode, enhancedCfg, db, encryptionService, logger)
+	}
 
-	inviteSender, err := managementdefault.InitializeInviteSender(enhancedCfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
+	var inviteSender space.InviteSender
+	if mode == ModeCloud && inviteSenderFactory != nil {
+		inviteSender, err = inviteSenderFactory(enhancedCfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
+		}
+	} else {
+		inviteSender, err = managementdefault.InitializeInviteSender(enhancedCfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
+		}
 	}
 
 	var spaceConfigStore cloudruntime.SpaceConfigReader
