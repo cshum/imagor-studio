@@ -248,6 +248,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}
           avatarUrl={authState.profile?.avatarUrl}
+          menuTriggerStyle={isMultiTenant ? 'avatar' : 'overflow'}
           onLogout={handleLogout}
           appTitle={appTitle}
           breadcrumbs={breadcrumbs.map((c) => ({ label: c.label ?? '', href: c.href }))}

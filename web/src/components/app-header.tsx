@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
-import { Check, Languages, LogOut, Settings } from 'lucide-react'
+import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -80,6 +80,7 @@ interface AppHeaderProps {
   roleLabel?: string
   /** Optional avatar image URL (e.g. from Google OAuth). Falls back to initials. */
   avatarUrl?: string | null
+  menuTriggerStyle?: 'avatar' | 'overflow'
   onLogout: () => void | Promise<void>
   profileLink?: string
 }
@@ -94,6 +95,7 @@ export function AppHeader({
   profileLabel,
   roleLabel,
   avatarUrl,
+  menuTriggerStyle = 'avatar',
   onLogout,
   profileLink = '/account/profile',
 }: AppHeaderProps) {
@@ -171,19 +173,25 @@ export function AppHeader({
                   className='rounded-full p-0 focus-visible:ring-2'
                   aria-label={moreText}
                 >
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={profileLabel}
-                      referrerPolicy='no-referrer'
-                      className='h-9 w-9 rounded-full object-cover lg:h-8 lg:w-8'
-                    />
+                  {menuTriggerStyle === 'overflow' ? (
+                    <MoreVertical className='text-muted-foreground h-5 w-5' />
                   ) : (
-                    <div
-                      className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white lg:h-8 lg:w-8 ${bgColor}`}
-                    >
-                      {initials}
-                    </div>
+                    <>
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={profileLabel}
+                          referrerPolicy='no-referrer'
+                          className='h-9 w-9 rounded-full object-cover lg:h-8 lg:w-8'
+                        />
+                      ) : (
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold text-white lg:h-8 lg:w-8 ${bgColor}`}
+                        >
+                          {initials}
+                        </div>
+                      )}
+                    </>
                   )}
                 </Button>
               </DropdownMenuTrigger>
