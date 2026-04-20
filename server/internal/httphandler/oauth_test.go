@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/model"
-	"github.com/cshum/imagor-studio/server/internal/orgdefault"
-	"github.com/cshum/imagor-studio/server/internal/spacedefault"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/space"
@@ -388,7 +386,7 @@ func TestGoogleCallback_FullFlow_MultiTenant(t *testing.T) {
 	ms.On("UpdateRole", mock.Anything, upsertedUser.ID, "admin").Return(nil)
 
 	// Use a real in-memory orgStore (same helper used by auth_test.go).
-	os := orgdefault.NewStore(newOrgTestDB(t))
+	os := newTestOrgStore(newOrgTestDB(t))
 
 	handler := newOAuthHandlerWithConfig(
 		tm, ms, os, nil, nil, zap.NewNop(),
@@ -550,8 +548,8 @@ func TestGoogleCallback_AcceptsPendingSpaceInvitation(t *testing.T) {
 	defer mockGoogle.Close()
 
 	db := newOAuthInviteTestDB(t)
-	os := orgdefault.NewStore(db)
-	ss := spacedefault.NewStore(db, nil)
+	os := newTestOrgStore(db)
+	ss := newTestSpaceStore(db)
 	is := newMemoryInviteStore()
 
 	ctx := context.Background()

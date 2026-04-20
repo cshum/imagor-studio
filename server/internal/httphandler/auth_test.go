@@ -3,7 +3,6 @@ package httphandler
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,7 +11,6 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/model"
-	"github.com/cshum/imagor-studio/server/internal/orgdefault"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
@@ -21,9 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"github.com/uptrace/bun/driver/sqliteshim"
 	"go.uber.org/zap"
 )
 
@@ -865,26 +860,6 @@ func TestGuestLogin(t *testing.T) {
 
 // ── Multi-tenant org integration tests ───────────────────────────────────────────────
 
-// newOrgTestDB creates an in-memory SQLite DB with org + org_members tables.
-func newOrgTestDB(t *testing.T) *bun.DB {
-	t.Helper()
-	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
-	if err != nil {
-		t.Fatalf("open in-memory sqlite: %v", err)
-	}
-	t.Cleanup(func() { _ = sqldb.Close() })
-	db := bun.NewDB(sqldb, sqlitedialect.New())
-	if _, err := db.NewCreateTable().
-		Model((*model.Organization)(nil)).IfNotExists().Exec(context.Background()); err != nil {
-		t.Fatalf("create organizations table: %v", err)
-	}
-	if _, err := db.NewCreateTable().
-		Model((*model.OrgMember)(nil)).IfNotExists().Exec(context.Background()); err != nil {
-		t.Fatalf("create org_members table: %v", err)
-	}
-	return db
-}
-
 // TestRegister_MultiTenant_CreatesOrg verifies that registering with a wired orgStore:
 //   - Creates a personal org in the DB.
 //   - Embeds org_id in the returned JWT.
@@ -892,7 +867,7 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	os := orgdefault.NewStore(newOrgTestDB(t))
+	os := newTestOrgStore(newOrgTestDB(t))
 	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
 
 	const userID = "saas-reg-user-1"
@@ -940,7 +915,7 @@ func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	os := orgdefault.NewStore(newOrgTestDB(t))
+	os := newTestOrgStore(newOrgTestDB(t))
 	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
 
 	const userID = "saas-login-user-1"
