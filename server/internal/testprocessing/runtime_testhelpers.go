@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 
 	sharedtools "github.com/cshum/imagor-studio/server"
+	sharedprocessing "github.com/cshum/imagor-studio/server/pkg/processing"
 	"go.uber.org/zap"
 )
 
@@ -47,9 +48,9 @@ type testSpacesDeltaResponse struct {
 	ServerTime int64              `json:"server_time"`
 }
 
-// NewTestSpaceConfigStore constructs a ProcessingSpaceConfigReader seeded from a test HTTP server.
-func NewTestSpaceConfigStore(spaces ...*TestSpaceConfig) sharedtools.ProcessingSpaceConfigReader {
-	store, _, _, err := sharedtools.DefaultProcessingRuntimeFactory(&sharedtools.ProcessingConfig{
+// NewTestSpaceConfigStore constructs a processing.SpaceConfigReader seeded from a test HTTP server.
+func NewTestSpaceConfigStore(spaces ...*TestSpaceConfig) sharedprocessing.SpaceConfigReader {
+	store, _, _, err := sharedtools.DefaultProcessingRuntimeFactory(&sharedprocessing.Config{
 		SpacesEndpoint:    "http://unused",
 		InternalAPISecret: "unused",
 		SpaceBaseDomain:   "imagor.test",
@@ -61,7 +62,7 @@ func NewTestSpaceConfigStore(spaces ...*TestSpaceConfig) sharedtools.ProcessingS
 		_ = json.NewEncoder(w).Encode(testSpacesDeltaResponse{Spaces: spaces, ServerTime: 1_000_000})
 	}))
 	defer srv.Close()
-	store, _, _, err = sharedtools.DefaultProcessingRuntimeFactory(&sharedtools.ProcessingConfig{
+	store, _, _, err = sharedtools.DefaultProcessingRuntimeFactory(&sharedprocessing.Config{
 		SpacesEndpoint:    srv.URL,
 		InternalAPISecret: "",
 		SpaceBaseDomain:   "imagor.test",

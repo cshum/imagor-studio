@@ -4,7 +4,6 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/encryption"
-	"github.com/cshum/imagor-studio/server/internal/invitedefault"
 	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/cshum/imagor-studio/server/internal/orgdefault"
 	"github.com/cshum/imagor-studio/server/internal/spacedefault"
@@ -18,14 +17,13 @@ func InitializeCloudStores(mode string, cfg *config.Config, db *bun.DB, encrypti
 	}
 	orgStore := orgdefault.NewStore(db)
 	spaceStore := spacedefault.NewStore(db, encryptionService)
-	spaceInviteStore := invitedefault.NewStore(db)
-	logger.Info("cloud mode: org and space stores initialized")
-	return orgStore, spaceStore, spaceInviteStore
+	logger.Info("cloud mode: org and space stores initialized; invitations unavailable in public runtime")
+	return orgStore, spaceStore, nil
 }
 
 func InitializeInviteSender(cfg *config.Config) (cloudcontract.InviteSender, error) {
 	if cfg.InternalAPISecret == "" {
 		return noop.NewSelfHostedInviteSender(), nil
 	}
-	return invitedefault.NewSender(cfg)
+	return nil, nil
 }

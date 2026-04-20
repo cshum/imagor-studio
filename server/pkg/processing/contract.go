@@ -14,3 +14,5 @@ type SpaceConfigReader = cloudruntime.SpaceConfigReader
 type ProviderOption = imagorprovider.ProviderOption
 
 type RuntimeFactory = func(cfg *Config, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, ProviderOption, error)
+
+var DefaultRuntimeFactoryOption = imagorprovider.WithSpaceConfigStore
