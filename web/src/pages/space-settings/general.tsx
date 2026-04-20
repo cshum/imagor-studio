@@ -21,6 +21,7 @@ import {
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
 import { extractErrorInfo } from '@/lib/error-utils'
+import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 
 import { GallerySection } from './gallery'
 import type { SpaceSettingsData } from './shared'
@@ -116,7 +117,14 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
       if (Object.keys(brandingChanges).length > 0) {
         await setSpaceRegistryObject(updatedSpace.key, brandingChanges)
       }
-      toast.success(t('pages.spaceSettings.general.saved'))
+      rememberSpacePropagationNotice({
+        action: 'updated',
+        savedAt: Date.now(),
+        spaceKey: updatedSpace.key,
+      })
+      toast.success(t('pages.spaceSettings.general.saved'), {
+        description: t('pages.spacePropagation.description'),
+      })
       if (updatedSpace.key !== space.key) {
         await navigate({
           to: '/spaces/$spaceKey/settings/general',
@@ -141,7 +149,9 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     setIsDeleting(true)
     try {
       await deleteSpace({ key: space.key })
-      toast.success(t('pages.spaces.messages.spaceDeletedSuccess'))
+      toast.success(t('pages.spaces.messages.spaceDeletedSuccess'), {
+        description: t('pages.spacePropagation.deleteDescription'),
+      })
       await navigate({ to: '/' })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))

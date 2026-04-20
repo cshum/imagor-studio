@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Input } from '@/components/ui/input'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
+import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 import { SecretField, SpaceSettingsData } from '@/pages/space-settings/shared.tsx'
 
 export { SecretField } from '@/components/ui/secret-field'
@@ -39,6 +40,16 @@ export function StorageSection({ space }: StorageSectionProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [showSecretKey, setShowSecretKey] = useState(false)
 
+  const form = useForm<CredentialsFormData>({
+    resolver: zodResolver(credentialsSchema),
+    defaultValues: {
+      prefix: space.prefix ?? '',
+      endpoint: space.endpoint ?? '',
+      accessKeyId: '',
+      secretKey: '',
+    },
+  })
+
   // Show read-only info panel for platform-managed spaces
   if (space.storageType !== 's3') {
     return (
@@ -55,16 +66,6 @@ export function StorageSection({ space }: StorageSectionProps) {
       </div>
     )
   }
-
-  const form = useForm<CredentialsFormData>({
-    resolver: zodResolver(credentialsSchema),
-    defaultValues: {
-      prefix: space.prefix ?? '',
-      endpoint: space.endpoint ?? '',
-      accessKeyId: '',
-      secretKey: '',
-    },
-  })
 
   const handleSave = async (values: CredentialsFormData) => {
     setIsSaving(true)
@@ -89,7 +90,14 @@ export function StorageSection({ space }: StorageSectionProps) {
           imagorSecret: null,
         },
       })
-      toast.success(t('pages.spaceSettings.storage.saved'))
+      rememberSpacePropagationNotice({
+        action: 'updated',
+        savedAt: Date.now(),
+        spaceKey: space.key,
+      })
+      toast.success(t('pages.spaceSettings.storage.saved'), {
+        description: t('pages.spacePropagation.description'),
+      })
       form.setValue('accessKeyId', '')
       form.setValue('secretKey', '')
       setShowSecretKey(false)

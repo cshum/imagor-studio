@@ -772,6 +772,12 @@
         "unchanged": "（保持不變）"
       }
     },
+    "spacePropagation": {
+      "title": "變更正在傳播中",
+      "description": "處理節點通常會在 30 秒內套用這些變更。",
+      "createDescription": "新空間正在發布到處理節點，通常會在 30 秒內可供使用。",
+      "deleteDescription": "空間刪除正在傳播到處理節點，最多可能需要 30 秒才會完全生效。"
+    },
     "spaceSettings": {
       "sections": {
         "members": "成員",

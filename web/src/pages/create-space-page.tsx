@@ -29,6 +29,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { useBrand } from '@/hooks/use-brand'
 import { extractErrorInfo } from '@/lib/error-utils'
+import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 import { useAuth } from '@/stores/auth-store'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
@@ -71,8 +72,7 @@ function makeCreateSchema(t: (key: string) => string) {
 }
 
 // Derive the stable TS type from a no-t version for type annotations.
-const _schemaShape = makeCreateSchema((k) => k)
-type CreateFormData = z.infer<typeof _schemaShape>
+type CreateFormData = z.infer<ReturnType<typeof makeCreateSchema>>
 
 function slugify(value: string) {
   return value
@@ -396,7 +396,14 @@ export function CreateSpacePage() {
           imagorSecret: null,
         },
       })
-      toast.success(t('pages.spaces.messages.spaceCreatedSuccess'))
+      rememberSpacePropagationNotice({
+        action: 'created',
+        savedAt: Date.now(),
+        spaceKey: values.key,
+      })
+      toast.success(t('pages.spaces.messages.spaceCreatedSuccess'), {
+        description: t('pages.spacePropagation.createDescription'),
+      })
       await navigate({ to: '/spaces/$spaceKey/settings', params: { spaceKey: values.key } })
     } catch (err) {
       const errorInfo = extractErrorInfo(err)

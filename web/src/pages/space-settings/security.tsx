@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 
 import { updateSpace } from '@/api/org-api'
 import { ImagorConfigForm, type ImagorConfigValues } from '@/components/imagor/imagor-config-form'
+import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 
 import type { SpaceSettingsData } from './shared'
 
@@ -39,7 +40,14 @@ export function SecuritySection({ space }: SecuritySectionProps) {
         imagorSecret: values.secret || null,
       },
     })
-    toast.success(t('pages.spaceSettings.imagor.saved'))
+    rememberSpacePropagationNotice({
+      action: 'updated',
+      savedAt: Date.now(),
+      spaceKey: space.key,
+    })
+    toast.success(t('pages.spaceSettings.imagor.saved'), {
+      description: t('pages.spacePropagation.description'),
+    })
     await router.invalidate()
   }
 

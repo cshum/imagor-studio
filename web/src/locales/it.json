@@ -772,6 +772,12 @@
         "sharedWithYou": "Condiviso con te"
       }
     },
+    "spacePropagation": {
+      "title": "Le modifiche sono in propagazione",
+      "description": "I nodi di elaborazione applicano normalmente queste modifiche entro 30 secondi.",
+      "createDescription": "Il nuovo spazio viene pubblicato ai nodi di elaborazione e di solito è pronto entro 30 secondi.",
+      "deleteDescription": "La rimozione dello spazio è in propagazione verso i nodi di elaborazione e potrebbe richiedere fino a 30 secondi per avere pieno effetto."
+    },
     "spaceSettings": {
       "backToSpaces": "Torna agli spazi",
       "openGallery": "Apri galleria",

@@ -772,6 +772,12 @@
         "sharedWithYou": "Shared with you"
       }
     },
+    "spacePropagation": {
+      "title": "Changes are propagating",
+      "description": "Processing nodes usually apply these changes within 30 seconds.",
+      "createDescription": "The new space is being published to processing nodes and is usually ready within 30 seconds.",
+      "deleteDescription": "Space removal is propagating to processing nodes and may take up to 30 seconds to fully take effect."
+    },
     "spaceSettings": {
       "backToSpaces": "Back to Spaces",
       "openGallery": "Open Gallery",

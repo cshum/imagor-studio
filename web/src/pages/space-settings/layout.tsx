@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   ArrowLeft,
+  Clock3,
   Cloud,
   Cpu,
   Database,
@@ -36,6 +37,12 @@ import {
   SidebarWrapper,
 } from '@/components/ui/sidebar'
 import { useBrand } from '@/hooks/use-brand'
+import {
+  clearSpacePropagationNotice,
+  readSpacePropagationNotice,
+  SPACE_PROPAGATION_WINDOW_MS,
+  type SpacePropagationNotice,
+} from '@/lib/space-propagation'
 import { useAuth } from '@/stores/auth-store'
 
 import { type SpaceSettingsData } from './shared'
@@ -56,6 +63,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   const { title: appTitle } = useBrand()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [propagationNotice, setPropagationNotice] = useState<SpacePropagationNotice | null>(null)
   const { location } = useRouterState()
 
   // Extract active section from the last URL segment
@@ -65,6 +73,31 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   useEffect(() => {
     setMobileOpen(false)
   }, [activeSection])
+
+  useEffect(() => {
+    const nextNotice = readSpacePropagationNotice(space.key)
+    setPropagationNotice(nextNotice)
+
+    if (!nextNotice) {
+      return
+    }
+
+    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - nextNotice.savedAt)
+    if (remainingMs <= 0) {
+      clearSpacePropagationNotice()
+      setPropagationNotice(null)
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      clearSpacePropagationNotice()
+      setPropagationNotice(null)
+    }, remainingMs)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [location.pathname, space.key])
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
@@ -275,6 +308,22 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
                 </p>
               )}
             </div>
+
+            {propagationNotice && (
+              <div className='mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100'>
+                <Clock3 className='mt-0.5 h-5 w-5 shrink-0' />
+                <div>
+                  <p className='text-sm font-semibold'>{t('pages.spacePropagation.title')}</p>
+                  <p className='mt-1 text-sm text-amber-900/80 dark:text-amber-100/80'>
+                    {t(
+                      propagationNotice.action === 'created'
+                        ? 'pages.spacePropagation.createDescription'
+                        : 'pages.spacePropagation.description',
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <Outlet />
           </div>

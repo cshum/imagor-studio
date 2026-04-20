@@ -750,6 +750,12 @@
         "unchanged": "（保持不变）"
       }
     },
+    "spacePropagation": {
+      "title": "更改正在传播",
+      "description": "处理节点通常会在 30 秒内应用这些更改。",
+      "createDescription": "新空间正在发布到处理节点，通常会在 30 秒内可用。",
+      "deleteDescription": "空间删除正在传播到处理节点，最多可能需要 30 秒才会完全生效。"
+    },
     "spaceSettings": {
       "sections": {
         "members": "成员",
