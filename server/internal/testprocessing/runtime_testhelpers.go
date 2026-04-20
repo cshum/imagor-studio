@@ -50,7 +50,7 @@ type testSpacesDeltaResponse struct {
 
 // NewTestSpaceConfigStore constructs a processing.SpaceConfigReader seeded from a test HTTP server.
 func NewTestSpaceConfigStore(spaces ...*TestSpaceConfig) sharedprocessing.SpaceConfigReader {
-	store, _, _, err := sharedtools.DefaultProcessingRuntimeFactory(&sharedprocessing.Config{
+	store, _, err := sharedtools.DefaultProcessingRuntimeFactory(&sharedprocessing.Config{
 		SpacesEndpoint:    "http://unused",
 		InternalAPISecret: "unused",
 		SpaceBaseDomain:   "imagor.test",
@@ -62,7 +62,7 @@ func NewTestSpaceConfigStore(spaces ...*TestSpaceConfig) sharedprocessing.SpaceC
 		_ = json.NewEncoder(w).Encode(testSpacesDeltaResponse{Spaces: spaces, ServerTime: 1_000_000})
 	}))
 	defer srv.Close()
-	store, _, _, err = sharedtools.DefaultProcessingRuntimeFactory(&sharedprocessing.Config{
+	store, _, err = sharedtools.DefaultProcessingRuntimeFactory(&sharedprocessing.Config{
 		SpacesEndpoint:    srv.URL,
 		InternalAPISecret: "",
 		SpaceBaseDomain:   "imagor.test",

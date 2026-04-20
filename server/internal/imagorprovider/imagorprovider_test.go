@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
@@ -64,16 +64,16 @@ func (c *testSpaceConfig) GetSignerTruncate() int     { return c.SignerTruncate 
 func (c *testSpaceConfig) GetImagorSecret() string    { return c.ImagorSecret }
 
 type testSpaceConfigReader struct {
-	byKey      map[string]cloudruntime.SpaceConfig
-	byHostname map[string]cloudruntime.SpaceConfig
+	byKey      map[string]processing.SpaceConfig
+	byHostname map[string]processing.SpaceConfig
 }
 
-func (r *testSpaceConfigReader) Get(key string) (cloudruntime.SpaceConfig, bool) {
+func (r *testSpaceConfigReader) Get(key string) (processing.SpaceConfig, bool) {
 	cfg, ok := r.byKey[key]
 	return cfg, ok
 }
 
-func (r *testSpaceConfigReader) GetByHostname(hostname string) (cloudruntime.SpaceConfig, bool) {
+func (r *testSpaceConfigReader) GetByHostname(hostname string) (processing.SpaceConfig, bool) {
 	cfg, ok := r.byHostname[hostname]
 	return cfg, ok
 }
@@ -662,7 +662,7 @@ func TestSyncIsNoOpInProcessingMode(t *testing.T) {
 		SpaceBaseDomain: "example.test",
 	}
 	// New() does NOT start HTTP polling — Start() would; safe for unit tests.
-	scs := &testSpaceConfigReader{byKey: map[string]cloudruntime.SpaceConfig{}, byHostname: map[string]cloudruntime.SpaceConfig{}}
+	scs := &testSpaceConfigReader{byKey: map[string]processing.SpaceConfig{}, byHostname: map[string]processing.SpaceConfig{}}
 	// Use &StorageLoader{source: ...} directly — NewStorageLoader only accepts *storageprovider.Provider.
 	loader := &StorageLoader{source: &mockStorageSource{stor: newMockReadStorage()}}
 
@@ -687,7 +687,7 @@ func TestProviderProcessingMode_Initialize(t *testing.T) {
 		SpacesEndpoint:  "http://management.example.test",
 		SpaceBaseDomain: "imagor.test",
 	}
-	scs := &testSpaceConfigReader{byKey: map[string]cloudruntime.SpaceConfig{}, byHostname: map[string]cloudruntime.SpaceConfig{}}
+	scs := &testSpaceConfigReader{byKey: map[string]processing.SpaceConfig{}, byHostname: map[string]processing.SpaceConfig{}}
 	loader := &StorageLoader{source: &mockStorageSource{stor: newMockReadStorage()}}
 
 	p := New(

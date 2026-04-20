@@ -22,7 +22,6 @@ func RunDefaultProcessing(embedFS fs.FS) {
 }
 
 var DefaultProcessingRuntimeFactory sharedprocessing.RuntimeFactory = processingdefault.DefaultProcessingRuntimeFactory
-var DefaultProcessingRuntimeFactoryOption = bootstrap.DefaultProcessingRuntimeFactoryOption
 
 func RunProcessingWithFactory(embedFS fs.FS, runtimeFactory sharedprocessing.RuntimeFactory) {
 	RunProcessingWithBuilder(embedFS, func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error) {

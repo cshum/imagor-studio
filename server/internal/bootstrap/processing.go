@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
@@ -12,18 +11,18 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/processingdefault"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"go.uber.org/zap"
 )
 
-type ProcessingRuntimeFactory func(cfg *config.Config, logger *zap.Logger) (cloudruntime.SpaceConfigReader, imagor.Loader, imagorprovider.ProviderOption, error)
+type ProcessingRuntimeFactory func(cfg *config.Config, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error)
 
-func defaultProcessingRuntimeFactory(cfg *config.Config, logger *zap.Logger) (cloudruntime.SpaceConfigReader, imagor.Loader, imagorprovider.ProviderOption, error) {
+func defaultProcessingRuntimeFactory(cfg *config.Config, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
 	return processingdefault.DefaultProcessingRuntimeFactory(cfg, logger)
 }
 
 var DefaultProcessingRuntimeFactory ProcessingRuntimeFactory = defaultProcessingRuntimeFactory
-var DefaultProcessingRuntimeFactoryOption = imagorprovider.WithSpaceConfigStore
 
 func InitializeProcessing(cfg *config.Config, logger *zap.Logger) (*Services, error) {
 	return initializeProcessingWithFactory(cfg, logger, DefaultProcessingRuntimeFactory)
@@ -46,14 +45,14 @@ func initializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, run
 
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
 
-	spaceConfigStore, loader, processingOption, err := runtimeFactory(cfg, logger)
+	spaceConfigStore, loader, err := runtimeFactory(cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize processing runtime: %w", err)
 	}
 
 	imagorProvider := imagorprovider.New(
 		logger, registryStore, cfg, loader,
-		processingOption,
+		imagorprovider.WithSpaceConfigStore(spaceConfigStore, cfg.SpaceBaseDomain),
 	)
 	if err := imagorProvider.Initialize(); err != nil {
 		return nil, fmt.Errorf("failed to initialize imagor: %w", err)

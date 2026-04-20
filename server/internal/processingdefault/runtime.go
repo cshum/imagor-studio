@@ -14,9 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"go.uber.org/zap"
 )
 
@@ -80,14 +79,14 @@ func (s *SpaceConfigStore) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *SpaceConfigStore) Get(key string) (cloudruntime.SpaceConfig, bool) {
+func (s *SpaceConfigStore) Get(key string) (processing.SpaceConfig, bool) {
 	s.mu.RLock()
 	cfg, ok := s.configs[key]
 	s.mu.RUnlock()
 	return cfg, ok
 }
 
-func (s *SpaceConfigStore) GetByHostname(hostname string) (cloudruntime.SpaceConfig, bool) {
+func (s *SpaceConfigStore) GetByHostname(hostname string) (processing.SpaceConfig, bool) {
 	s.mu.RLock()
 	cfg, ok := s.byDomain[hostname]
 	s.mu.RUnlock()
@@ -95,11 +94,11 @@ func (s *SpaceConfigStore) GetByHostname(hostname string) (cloudruntime.SpaceCon
 }
 
 type SpaceS3Loader struct {
-	store      cloudruntime.SpaceConfigReader
+	store      processing.SpaceConfigReader
 	baseDomain string
 }
 
-func newSpaceS3Loader(store cloudruntime.SpaceConfigReader, baseDomain string) *SpaceS3Loader {
+func newSpaceS3Loader(store processing.SpaceConfigReader, baseDomain string) *SpaceS3Loader {
 	return &SpaceS3Loader{store: store, baseDomain: baseDomain}
 }
 
@@ -126,7 +125,7 @@ func (l *SpaceS3Loader) Get(r *http.Request, image string) (*imagor.Blob, error)
 	return blob, blob.Err()
 }
 
-func (l *SpaceS3Loader) resolveSpace(host string) (cloudruntime.SpaceConfig, error) {
+func (l *SpaceS3Loader) resolveSpace(host string) (processing.SpaceConfig, error) {
 	if strings.HasSuffix(host, l.baseDomain) {
 		spaceKey := strings.TrimSuffix(host, l.baseDomain)
 		cfg, ok := l.store.Get(spaceKey)
@@ -142,7 +141,7 @@ func (l *SpaceS3Loader) resolveSpace(host string) (cloudruntime.SpaceConfig, err
 	return cfg, nil
 }
 
-func buildS3Client(ctx context.Context, cfg cloudruntime.SpaceConfig) (*s3.Client, error) {
+func buildS3Client(ctx context.Context, cfg processing.SpaceConfig) (*s3.Client, error) {
 	var loadOpts []func(*awsconfig.LoadOptions) error
 	if cfg.GetRegion() != "" {
 		loadOpts = append(loadOpts, awsconfig.WithRegion(cfg.GetRegion()))
@@ -163,12 +162,12 @@ func buildS3Client(ctx context.Context, cfg cloudruntime.SpaceConfig) (*s3.Clien
 	return client, nil
 }
 
-func DefaultProcessingRuntimeFactory(cfg *config.Config, logger *zap.Logger) (cloudruntime.SpaceConfigReader, imagor.Loader, imagorprovider.ProviderOption, error) {
+func DefaultProcessingRuntimeFactory(cfg *config.Config, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
 	spaceConfigStore := newSpaceConfigStore(
 		cfg.SpacesEndpoint,
 		cfg.InternalAPISecret,
 		logger,
 	)
 	loader := newSpaceS3Loader(spaceConfigStore, cfg.SpaceBaseDomain)
-	return spaceConfigStore, loader, imagorprovider.WithSpaceConfigStore(spaceConfigStore, cfg.SpaceBaseDomain), nil
+	return spaceConfigStore, loader, nil
 }

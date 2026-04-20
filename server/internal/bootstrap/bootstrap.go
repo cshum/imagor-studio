@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/database"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
@@ -21,6 +20,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/uptrace/bun"
@@ -41,11 +41,11 @@ type Services struct {
 	ImagorProvider   *imagorprovider.Provider
 	RegistryStore    registrystore.Store
 	UserStore        userstore.Store
-	OrgStore         org.OrgStore                   // nil in self-hosted; set when InternalAPISecret != ""
-	SpaceStore       space.SpaceStore               // nil in self-hosted; set when InternalAPISecret != ""
-	SpaceInviteStore space.SpaceInviteStore         // nil when invitation storage is unavailable
-	InviteSender     space.InviteSender             // nil when invitation email is not configured
-	SpaceConfigStore cloudruntime.SpaceConfigReader // nil unless SpacesEndpoint set; Start() called by server
+	OrgStore         org.OrgStore                 // nil in self-hosted; set when InternalAPISecret != ""
+	SpaceStore       space.SpaceStore             // nil in self-hosted; set when InternalAPISecret != ""
+	SpaceInviteStore space.SpaceInviteStore       // nil when invitation storage is unavailable
+	InviteSender     space.InviteSender           // nil when invitation email is not configured
+	SpaceConfigStore processing.SpaceConfigReader // nil unless SpacesEndpoint set; Start() called by server
 	LicenseService   *license.Service
 	Encryption       *encryption.Service
 	Config           *config.Config
@@ -175,7 +175,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 		}
 	}
 
-	var spaceConfigStore cloudruntime.SpaceConfigReader
+	var spaceConfigStore processing.SpaceConfigReader
 	loader := imagorprovider.NewStorageLoader(storageProvider)
 
 	// Initialize imagor provider with the management-node loader.

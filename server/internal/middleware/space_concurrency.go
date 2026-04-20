@@ -7,7 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 )
 
 // SpaceConcurrencyMiddleware enforces a per-space maximum concurrent request
@@ -25,7 +25,7 @@ import (
 //   - store: SpaceConfigStore used to resolve space key from Host header
 //   - baseDomain: platform domain suffix, e.g. "imagor.app" (no leading dot)
 //   - maxPerSpace: maximum concurrent requests allowed per space (0 = disabled)
-func SpaceConcurrencyMiddleware(store cloudruntime.SpaceConfigReader, baseDomain string, maxPerSpace int64) func(http.Handler) http.Handler {
+func SpaceConcurrencyMiddleware(store processing.SpaceConfigReader, baseDomain string, maxPerSpace int64) func(http.Handler) http.Handler {
 	if maxPerSpace <= 0 {
 		// Disabled — return identity middleware.
 		return func(next http.Handler) http.Handler { return next }
@@ -63,7 +63,7 @@ func SpaceConcurrencyMiddleware(store cloudruntime.SpaceConfigReader, baseDomain
 //
 //   - "acme.imagor.app" with baseDomain "imagor.app" → "acme"
 //   - "images.acme.com" (custom domain) → looked up in SpaceConfigStore
-func resolveSpaceKey(store cloudruntime.SpaceConfigReader, host, baseDomain string) string {
+func resolveSpaceKey(store processing.SpaceConfigReader, host, baseDomain string) string {
 	if baseDomain != "" && strings.HasSuffix(host, "."+baseDomain) {
 		return strings.TrimSuffix(host, "."+baseDomain)
 	}

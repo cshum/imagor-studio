@@ -1,18 +1,35 @@
 package processing
 
 import (
+	"context"
+
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"go.uber.org/zap"
 )
 
 type Config = config.Config
-type SpaceConfig = cloudruntime.SpaceConfig
-type SpaceConfigReader = cloudruntime.SpaceConfigReader
-type ProviderOption = imagorprovider.ProviderOption
 
-type RuntimeFactory = func(cfg *Config, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, ProviderOption, error)
+type SpaceConfig interface {
+	GetKey() string
+	GetPrefix() string
+	GetBucket() string
+	GetRegion() string
+	GetEndpoint() string
+	GetAccessKeyID() string
+	GetSecretKey() string
+	GetUsePathStyle() bool
+	GetCustomDomain() string
+	IsSuspended() bool
+	GetSignerAlgorithm() string
+	GetSignerTruncate() int
+	GetImagorSecret() string
+}
 
-var DefaultRuntimeFactoryOption = imagorprovider.WithSpaceConfigStore
+type SpaceConfigReader interface {
+	Get(key string) (SpaceConfig, bool)
+	GetByHostname(hostname string) (SpaceConfig, bool)
+	Start(ctx context.Context) error
+}
+
+type RuntimeFactory = func(cfg *Config, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, error)
