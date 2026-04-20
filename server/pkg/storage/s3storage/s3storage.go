@@ -72,7 +72,7 @@ func New(bucket string, options ...Option) (*S3Storage, error) {
 		option(s)
 	}
 
-	ctx := context.TODO()
+	ctx := context.Background()
 	var cfg aws.Config
 	var err error
 

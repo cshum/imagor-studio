@@ -117,8 +117,10 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.OrgStore,
 		services.RegistryStore,
 		services.Logger,
-		cfg.EmbeddedMode,
-		multiTenant,
+		httphandler.AuthHandlerConfig{
+			EmbeddedMode: cfg.EmbeddedMode,
+			MultiTenant:  multiTenant,
+		},
 	)
 
 	// Create middleware chain

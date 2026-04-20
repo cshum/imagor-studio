@@ -27,14 +27,18 @@ type AuthHandler struct {
 	multiTenant   bool
 }
 
+type AuthHandlerConfig struct {
+	EmbeddedMode bool
+	MultiTenant  bool
+}
+
 func NewAuthHandler(
 	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
 	orgStore org.OrgStore,
 	registryStore registrystore.Store,
 	logger *zap.Logger,
-	embeddedMode bool,
-	multiTenant bool,
+	cfg AuthHandlerConfig,
 ) *AuthHandler {
 	return &AuthHandler{
 		tokenManager:  tokenManager,
@@ -42,8 +46,8 @@ func NewAuthHandler(
 		orgStore:      orgStore,
 		registryStore: registryStore,
 		logger:        logger,
-		embeddedMode:  embeddedMode,
-		multiTenant:   multiTenant,
+		embeddedMode:  cfg.EmbeddedMode,
+		multiTenant:   cfg.MultiTenant,
 	}
 }
 
