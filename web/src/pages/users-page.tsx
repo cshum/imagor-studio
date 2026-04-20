@@ -35,6 +35,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ListUsersQuery, User } from '@/generated/graphql'
 import { useFormErrors } from '@/hooks/use-form-errors'
+import { useAuth } from '@/stores/auth-store'
 
 interface UsersPageProps {
   loaderData?: ListUsersQuery['users']
@@ -43,6 +44,7 @@ interface UsersPageProps {
 
 export function UsersPage({ loaderData, searchQuery = '' }: UsersPageProps) {
   const { t } = useTranslation()
+  const { authState } = useAuth()
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState(searchQuery)
   const navigate = useNavigate()
@@ -117,6 +119,7 @@ export function UsersPage({ loaderData, searchQuery = '' }: UsersPageProps) {
   // Use loader data directly (server-side filtered)
   const users = loaderData?.items || []
   const totalCount = loaderData?.totalCount || 0
+  const currentUserID = authState.profile?.id ?? null
 
   const createForm = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -214,6 +217,10 @@ export function UsersPage({ loaderData, searchQuery = '' }: UsersPageProps) {
       await router.invalidate()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+      if (errorMessage.includes('use self-deactivation')) {
+        toast.error(t('pages.users.messages.deactivateUserFailed'))
+        return
+      }
       const failedMessage = isActive
         ? t('pages.users.messages.deactivateUserFailed')
         : t('pages.users.messages.reactivateUserFailed')
@@ -596,52 +603,49 @@ export function UsersPage({ loaderData, searchQuery = '' }: UsersPageProps) {
               />
 
               {/* Deactivate Section - Separate Row */}
-              <div className='mt-4 border-t pt-4'>
-                <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
-                  <div>
-                    <h4 className='text-sm font-medium'>
-                      {selectedUser?.isActive
-                        ? t('pages.users.deactivateUser')
-                        : t('pages.users.reactivateUser')}
-                    </h4>
-                    <p className='text-muted-foreground text-xs'>
-                      {selectedUser?.isActive
-                        ? t('pages.users.deactivateUserWarning')
-                        : t('pages.users.reactivateUserWarning')}
-                    </p>
+              {selectedUser && selectedUser.id !== currentUserID && (
+                <div className='mt-4 border-t pt-4'>
+                  <div className='bg-muted/50 flex items-center justify-between rounded-lg p-3'>
+                    <div>
+                      <h4 className='text-sm font-medium'>
+                        {selectedUser.isActive
+                          ? t('pages.users.deactivateUser')
+                          : t('pages.users.reactivateUser')}
+                      </h4>
+                      <p className='text-muted-foreground text-xs'>
+                        {selectedUser.isActive
+                          ? t('pages.users.deactivateUserWarning')
+                          : t('pages.users.reactivateUserWarning')}
+                      </p>
+                    </div>
+                    <Button
+                      type='button'
+                      variant={selectedUser.isActive ? 'destructive' : 'default'}
+                      size='sm'
+                      onClick={() => {
+                        if (selectedUser.isActive) {
+                          setIsConfirmDialogOpen(true)
+                        } else {
+                          handleDeactivateUser(selectedUser.id, selectedUser.isActive)
+                        }
+                      }}
+                      disabled={isUpdating || isDeactivating === selectedUser.id}
+                    >
+                      {selectedUser.isActive ? (
+                        <>
+                          <UserX className='mr-2 h-4 w-4' />
+                          {t('pages.users.actions.deactivate')}
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className='mr-2 h-4 w-4' />
+                          {t('pages.users.actions.reactivate')}
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    type='button'
-                    variant={selectedUser?.isActive ? 'destructive' : 'default'}
-                    size='sm'
-                    onClick={() => {
-                      if (!selectedUser) {
-                        return
-                      }
-                      if (selectedUser.isActive) {
-                        // Show confirmation dialog for deactivation
-                        setIsConfirmDialogOpen(true)
-                      } else {
-                        // No confirmation needed for reactivation
-                        handleDeactivateUser(selectedUser.id, selectedUser.isActive)
-                      }
-                    }}
-                    disabled={isUpdating || isDeactivating === selectedUser?.id}
-                  >
-                    {selectedUser?.isActive ? (
-                      <>
-                        <UserX className='mr-2 h-4 w-4' />
-                        {t('pages.users.actions.deactivate')}
-                      </>
-                    ) : (
-                      <>
-                        <UserCheck className='mr-2 h-4 w-4' />
-                        {t('pages.users.actions.reactivate')}
-                      </>
-                    )}
-                  </Button>
                 </div>
-              </div>
+              )}
 
               <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
                 <Button
