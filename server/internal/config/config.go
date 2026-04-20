@@ -58,7 +58,6 @@ type Config struct {
 	// Application Configuration
 	AppTitle                  string // Custom application title
 	AppUrl                    string // Frontend application URL (used for post-OAuth redirect to /auth/callback)
-	AppApiUrl                 string // Backend API base URL for OAuth redirect URI registration (falls back to AppUrl when empty)
 	AppHomeTitle              string // Custom home page title
 	AppImageExtensions        string // Comma-separated list of image file extensions
 	AppVideoExtensions        string // Comma-separated list of video file extensions
@@ -95,14 +94,6 @@ type Config struct {
 	// Maps to --space-max-concurrency / SPACE_MAX_CONCURRENCY env var.
 	// Default 8 (= dedicated vCPUs on a Fly.io performance-4x machine).
 	SpaceMaxConcurrency int
-
-	// OAuth Configuration (SaaS mode only)
-	GoogleClientID     string
-	GoogleClientSecret string
-
-	// Invitation email configuration
-	SESRegion    string
-	SESFromEmail string
 
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
@@ -147,7 +138,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 
 		appTitle                  = fs.String("app-title", "", "custom application title (license required)")
 		appUrl                    = fs.String("app-url", "", "frontend application URL used for post-OAuth redirect (license required for branding)")
-		appApiUrl                 = fs.String("app-api-url", "", "backend server base URL for OAuth callback registration (defaults to app-url when empty)")
 		appHomeTitle              = fs.String("app-home-title", "", "custom home page title")
 		appImageExtensions        = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw", "comma-separated list of image file extensions to show in application")
 		appVideoExtensions        = fs.String("app-video-extensions", ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", "comma-separated list of video file extensions to show in application")
@@ -161,11 +151,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		spaceBaseDomain     = fs.String("space-base-domain", "", "platform subdomain suffix for space routing, e.g. .imagor.cloud (processing nodes only)")
 		corsOrigins         = fs.String("cors-origins", "", "comma-separated allowed CORS origins; empty = allow all (*). Example: https://app.imagor.net")
 		spaceMaxConcurrency = fs.Int("space-max-concurrency", 8, "max concurrent imagor requests per space on processing nodes (0 = disabled)")
-
-		googleClientID     = fs.String("google-client-id", "", "Google OAuth client ID (SaaS mode)")
-		googleClientSecret = fs.String("google-client-secret", "", "Google OAuth client secret (SaaS mode)")
-		sesRegion          = fs.String("ses-region", "", "AWS SES region for invitation emails")
-		sesFromEmail       = fs.String("ses-from-email", "", "From email address for invitation emails")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -259,7 +244,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorSignerTruncate:        *imagorSignerTruncate,
 		AppTitle:                    *appTitle,
 		AppUrl:                      *appUrl,
-		AppApiUrl:                   *appApiUrl,
 		AppHomeTitle:                *appHomeTitle,
 		AppImageExtensions:          *appImageExtensions,
 		AppVideoExtensions:          *appVideoExtensions,
@@ -272,10 +256,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		SpaceBaseDomain:             *spaceBaseDomain,
 		CORSOrigins:                 *corsOrigins,
 		SpaceMaxConcurrency:         *spaceMaxConcurrency,
-		GoogleClientID:              *googleClientID,
-		GoogleClientSecret:          *googleClientSecret,
-		SESRegion:                   *sesRegion,
-		SESFromEmail:                *sesFromEmail,
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}

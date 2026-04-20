@@ -45,13 +45,21 @@ func run(embedFS fs.FS, mode Mode, factories management.CloudFactories) {
 		logger.Fatal("Failed to load configuration", zap.Error(err))
 	}
 
+	cloudConfig := management.CloudConfig{}
+	if internalserver.Mode(mode) == internalserver.ModeCloud && factories.ConfigLoader != nil {
+		cloudConfig, err = factories.ConfigLoader(args)
+		if err != nil {
+			logger.Fatal("Failed to load cloud configuration", zap.Error(err))
+		}
+	}
+
 	var srv *internalserver.Server
 	if internalserver.Mode(mode) == internalserver.ModeCloud && factories.Stores != nil {
-		services, initErr := bootstrap.InitializeCloudWithFactories(cfg, logger, args, factories)
+		services, initErr := bootstrap.InitializeCloudWithFactories(cfg, logger, args, cloudConfig, factories)
 		if initErr != nil {
 			logger.Fatal("Failed to initialize cloud services", zap.Error(initErr))
 		}
-		srv, err = internalserver.NewFromServices(cfg, embedFS, logger, services, internalserver.Mode(mode), factories)
+		srv, err = internalserver.NewFromServices(cfg, embedFS, logger, services, internalserver.Mode(mode), cloudConfig, factories)
 	} else {
 		srv, err = internalserver.New(cfg, embedFS, logger, args, internalserver.Mode(mode))
 	}

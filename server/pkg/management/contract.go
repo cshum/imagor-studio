@@ -17,6 +17,14 @@ type CloudStoresConfig struct {
 	InternalAPISecret string
 }
 
+type CloudConfig struct {
+	GoogleClientID     string
+	GoogleClientSecret string
+	SESRegion          string
+	SESFromEmail       string
+	AppAPIURL          string
+}
+
 type InviteSenderConfig = sharedinvite.Config
 
 type OAuthConfig struct {
@@ -40,11 +48,14 @@ type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionServic
 
 type InviteSenderFactory func(cfg InviteSenderConfig) (space.InviteSender, error)
 
+type CloudConfigLoader func(args []string) (CloudConfig, error)
+
 type AuthRoutesRegistrar func(mux *http.ServeMux, cfg OAuthConfig, services CloudHTTPServices)
 
 type InternalRoutesRegistrar func(mux *http.ServeMux, services CloudHTTPServices)
 
 type CloudFactories struct {
+	ConfigLoader   CloudConfigLoader
 	Stores         CloudStoresFactory
 	InviteSender   InviteSenderFactory
 	AuthRoutes     AuthRoutesRegistrar

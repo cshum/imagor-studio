@@ -66,19 +66,19 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string, mode stri
 }
 
 func InitializeSelfHosted(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, nil, nil)
+	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, management.CloudConfig{}, nil, nil)
 }
 
 func InitializeCloud(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud, nil, nil)
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, management.CloudConfig{}, nil, nil)
 }
 
-func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args []string, factories management.CloudFactories) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud, factories.Stores, factories.InviteSender)
+func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args []string, cloudConfig management.CloudConfig, factories management.CloudFactories) (*Services, error) {
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudConfig, factories.Stores, factories.InviteSender)
 }
 
 // initializeRuntimeMode sets up runtime services for self-hosted or cloud management modes.
-func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) (*Services, error) {
+func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudConfig management.CloudConfig, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) (*Services, error) {
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
 	}
@@ -164,7 +164,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 
 	var inviteSender space.InviteSender
 	if mode == ModeCloud && inviteSenderFactory != nil {
-		inviteSender, err = inviteSenderFactory(management.InviteSenderConfig{SESFromEmail: enhancedCfg.SESFromEmail, SESRegion: enhancedCfg.SESRegion, AWSRegion: enhancedCfg.AWSRegion, AppURL: enhancedCfg.AppUrl, AppAPIURL: enhancedCfg.AppApiUrl})
+		inviteSender, err = inviteSenderFactory(management.InviteSenderConfig{SESFromEmail: cloudConfig.SESFromEmail, SESRegion: cloudConfig.SESRegion, AWSRegion: enhancedCfg.AWSRegion, AppURL: enhancedCfg.AppUrl, AppAPIURL: cloudConfig.AppAPIURL})
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
 		}

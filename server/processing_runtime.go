@@ -53,7 +53,7 @@ func RunProcessingWithBuilder(embedFS fs.FS, build func(cfg *config.Config, logg
 		logger.Fatal("Failed to initialize processing services", zap.Error(err))
 	}
 
-	srv, err := internalserver.NewFromServices(cfg, embedFS, logger, services, ModeSelfHosted, management.CloudFactories{})
+	srv, err := internalserver.NewFromServices(cfg, embedFS, logger, services, ModeSelfHosted, management.CloudConfig{}, management.CloudFactories{})
 	if err != nil {
 		logger.Fatal("Failed to create processing server", zap.Error(err))
 	}

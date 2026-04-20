@@ -71,10 +71,10 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string, m
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize services: %w", err)
 	}
-	return NewFromServices(cfg, embedFS, logger, services, mode, management.CloudFactories{})
+	return NewFromServices(cfg, embedFS, logger, services, mode, management.CloudConfig{}, management.CloudFactories{})
 }
 
-func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, services *bootstrap.Services, mode Mode, cloudFactories management.CloudFactories) (*Server, error) {
+func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, services *bootstrap.Services, mode Mode, cloudConfig management.CloudConfig, cloudFactories management.CloudFactories) (*Server, error) {
 
 	// Initialize GraphQL with enhanced config from services
 	storageResolver := resolver.NewResolver(
@@ -154,10 +154,10 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 
 	if mode == ModeCloud && multiTenant && cloudFactories.AuthRoutes != nil {
 		cloudFactories.AuthRoutes(mux, management.OAuthConfig{
-			GoogleClientID:     cfg.GoogleClientID,
-			GoogleClientSecret: cfg.GoogleClientSecret,
+			GoogleClientID:     cloudConfig.GoogleClientID,
+			GoogleClientSecret: cloudConfig.GoogleClientSecret,
 			AppURL:             cfg.AppUrl,
-			AppAPIURL:          cfg.AppApiUrl,
+			AppAPIURL:          cloudConfig.AppAPIURL,
 		}, cloudServices)
 	} else {
 		registerSelfHostedAuthRoutes(mux)
