@@ -1,4 +1,4 @@
-package managementdefault
+package managementruntime
 
 import (
 	"github.com/cshum/imagor-studio/server/internal/config"

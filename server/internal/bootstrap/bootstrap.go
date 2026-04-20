@@ -10,7 +10,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/database"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
-	"github.com/cshum/imagor-studio/server/internal/managementdefault"
+	"github.com/cshum/imagor-studio/server/internal/managementruntime"
 	"github.com/cshum/imagor-studio/server/internal/migrator"
 	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
@@ -159,7 +159,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 			return nil, fmt.Errorf("failed to initialize cloud stores: %w", err)
 		}
 	} else {
-		orgStore, spaceStore, spaceInviteStore = managementdefault.InitializeCloudStores(mode, enhancedCfg, db, encryptionService, logger)
+		orgStore, spaceStore, spaceInviteStore = managementruntime.InitializeCloudStores(mode, enhancedCfg, db, encryptionService, logger)
 	}
 
 	var inviteSender space.InviteSender
@@ -169,7 +169,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
 		}
 	} else {
-		inviteSender, err = managementdefault.InitializeInviteSender(enhancedCfg)
+		inviteSender, err = managementruntime.InitializeInviteSender(enhancedCfg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
 		}
