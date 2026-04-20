@@ -6,19 +6,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/apperror"
-	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
-	"github.com/cshum/imagor-studio/server/internal/uuid"
-	"github.com/cshum/imagor-studio/server/internal/validation"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	auth2 "github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/uuid"
+	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"go.uber.org/zap"
 )
 
 type AuthHandler struct {
-	tokenManager  *auth.TokenManager
+	tokenManager  *auth2.TokenManager
 	userStore     userstore.Store
 	orgStore      cloudcontract.OrgStore
 	registryStore registrystore.Store
@@ -28,7 +28,7 @@ type AuthHandler struct {
 }
 
 func NewAuthHandler(
-	tokenManager *auth.TokenManager,
+	tokenManager *auth2.TokenManager,
 	userStore userstore.Store,
 	orgStore cloudcontract.OrgStore,
 	registryStore registrystore.Store,
@@ -228,7 +228,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 		}
 
 		// Check password - return generic login failed for wrong password
-		if err := auth.CheckPassword(user.HashedPassword, req.Password); err != nil {
+		if err := auth2.CheckPassword(user.HashedPassword, req.Password); err != nil {
 			return apperror.InvalidCredentials("LOGIN_FAILED")
 		}
 
@@ -361,7 +361,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 
 		// Extract JWT token from Authorization header
 		authHeader := r.Header.Get("Authorization")
-		jwtToken, err := auth.ExtractTokenFromHeader(authHeader)
+		jwtToken, err := auth2.ExtractTokenFromHeader(authHeader)
 		if err != nil {
 			return apperror.Unauthorized("Authorization header is missing or invalid")
 		}
@@ -432,7 +432,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
 
 	// Hash password
-	hashedPassword, err := auth.HashPassword(req.Password)
+	hashedPassword, err := auth2.HashPassword(req.Password)
 	if err != nil {
 		h.logger.Error("Failed to hash password", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to process registration")

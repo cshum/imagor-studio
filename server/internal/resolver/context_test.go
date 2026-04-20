@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cshum/imagor-studio/server/internal/auth"
+	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/apperror"
-	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/orgdefault"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	auth2 "github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -261,7 +261,7 @@ func (m *MockRegistryStore) DeleteMulti(ctx context.Context, ownerID string, key
 
 func TestRegister(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, false)
 
@@ -451,12 +451,12 @@ func TestRegister(t *testing.T) {
 
 func TestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, false)
 
 	// Create a valid hashed password for testing
-	hashedPassword, err := auth.HashPassword("password123")
+	hashedPassword, err := auth2.HashPassword("password123")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -644,7 +644,7 @@ func TestLogin(t *testing.T) {
 
 func TestRefreshToken(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, false)
 
@@ -773,7 +773,7 @@ func TestRefreshToken(t *testing.T) {
 
 func TestGuestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	mockRegistryStore := new(MockRegistryStore)
 
@@ -890,7 +890,7 @@ func newOrgTestDB(t *testing.T) *bun.DB {
 //   - Embeds org_id in the returned JWT.
 func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	os := orgdefault.NewStore(newOrgTestDB(t))
 	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
@@ -938,7 +938,7 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 // embeds the user's org_id in the returned JWT.
 func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	os := orgdefault.NewStore(newOrgTestDB(t))
 	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
@@ -949,7 +949,7 @@ func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
 	createdOrg, err := os.CreateWithMember(context.Background(), userID, "loginuser", "loginuser", nil)
 	require.NoError(t, err)
 
-	hashedPassword, err := auth.HashPassword("password123")
+	hashedPassword, err := auth2.HashPassword("password123")
 	require.NoError(t, err)
 
 	mockUserStore.On("GetByUsername", mock.Anything, "loginuser").Return(&model.User{
@@ -981,7 +981,7 @@ func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
 // org creation the handler should return 500 and not leak a partial JWT.
 func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "DB connection refused"}, nil, logger, false, false)
 
@@ -1006,7 +1006,7 @@ func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
 // deployment) the JWT must NOT carry an org_id.
 func TestRegister_MultiTenant_SelfHosted_NoOrgInJWT(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, nil /* no orgStore */, nil, logger, false, false)
 
@@ -1034,12 +1034,12 @@ func TestRegister_MultiTenant_SelfHosted_NoOrgInJWT(t *testing.T) {
 // and the JWT should carry an empty OrgID rather than failing.
 func TestLogin_MultiTenant_UserWithNoOrg(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, false, false)
 
 	const userID = "no-org-user-1"
-	hashedPassword, _ := auth.HashPassword("password123")
+	hashedPassword, _ := auth2.HashPassword("password123")
 
 	mockUserStore.On("GetByUsername", mock.Anything, "noorger").Return(&model.User{
 		ID: userID, DisplayName: "noorger", Username: "noorger",
@@ -1069,12 +1069,12 @@ func TestLogin_MultiTenant_UserWithNoOrg(t *testing.T) {
 // an empty OrgID; the error gets logged but is not surfaced to the client.
 func TestLogin_MultiTenant_OrgLookupError(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "read timeout"}, nil, logger, false, false)
 
 	const userID = "org-err-user-1"
-	hashedPassword, _ := auth.HashPassword("password123")
+	hashedPassword, _ := auth2.HashPassword("password123")
 
 	mockUserStore.On("GetByUsername", mock.Anything, "orgfail").Return(&model.User{
 		ID: userID, DisplayName: "orgfail", Username: "orgfail",
@@ -1101,7 +1101,7 @@ func TestLogin_MultiTenant_OrgLookupError(t *testing.T) {
 
 func TestCheckFirstRun(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 
 	tests := []struct {
 		name              string
@@ -1168,7 +1168,7 @@ func TestCheckFirstRun(t *testing.T) {
 
 func TestRegisterAdmin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	mockRegistryStore := new(MockRegistryStore)
 
@@ -1437,7 +1437,7 @@ func TestRegisterAdmin(t *testing.T) {
 
 func TestEmbeddedGuestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	tokenManager := auth2.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
 	mockRegistryStore := new(MockRegistryStore)
 
@@ -1454,7 +1454,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 	require.NoError(t, err)
 
 	// Generate expired token
-	expiredTokenManager := auth.NewTokenManager("test-secret", -time.Hour)
+	expiredTokenManager := auth2.NewTokenManager("test-secret", -time.Hour)
 	expiredToken, err := expiredTokenManager.GenerateToken("test-user", "user", []string{"read"}, "")
 	require.NoError(t, err)
 

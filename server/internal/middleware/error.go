@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/cshum/imagor-studio/server/internal/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"go.uber.org/zap"
 )
 

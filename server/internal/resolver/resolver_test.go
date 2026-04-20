@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
@@ -15,6 +14,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"

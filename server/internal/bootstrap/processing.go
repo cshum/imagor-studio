@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
@@ -12,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/cshum/imagor-studio/server/internal/processingdefault"
+	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"go.uber.org/zap"
 )
 

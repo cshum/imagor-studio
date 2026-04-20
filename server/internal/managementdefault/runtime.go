@@ -3,10 +3,10 @@ package managementdefault
 import (
 	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/cshum/imagor-studio/server/internal/orgdefault"
 	"github.com/cshum/imagor-studio/server/internal/spacedefault"
+	"github.com/cshum/imagor-studio/server/pkg/encryption"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )

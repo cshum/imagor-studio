@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/model"
-	"github.com/cshum/imagor-studio/server/internal/uuid"
+	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
