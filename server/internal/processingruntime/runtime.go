@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"go.uber.org/zap"
 )
@@ -162,7 +161,7 @@ func buildS3Client(ctx context.Context, cfg processing.SpaceConfig) (*s3.Client,
 	return client, nil
 }
 
-func DefaultProcessingRuntimeFactory(cfg *config.Config, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
+func DefaultProcessingRuntimeFactory(cfg processing.RuntimeConfig, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
 	spaceConfigStore := newSpaceConfigStore(
 		cfg.SpacesEndpoint,
 		cfg.InternalAPISecret,

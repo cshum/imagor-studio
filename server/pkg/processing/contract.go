@@ -4,11 +4,14 @@ import (
 	"context"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/config"
 	"go.uber.org/zap"
 )
 
-type Config = config.Config
+type RuntimeConfig struct {
+	SpacesEndpoint    string
+	InternalAPISecret string
+	SpaceBaseDomain   string
+}
 
 type SpaceConfig interface {
 	GetKey() string
@@ -32,4 +35,4 @@ type SpaceConfigReader interface {
 	Start(ctx context.Context) error
 }
 
-type RuntimeFactory = func(cfg *Config, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, error)
+type RuntimeFactory = func(cfg RuntimeConfig, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, error)

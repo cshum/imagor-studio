@@ -16,9 +16,9 @@ import (
 	"go.uber.org/zap"
 )
 
-type ProcessingRuntimeFactory func(cfg *config.Config, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error)
+type ProcessingRuntimeFactory = processing.RuntimeFactory
 
-func defaultProcessingRuntimeFactory(cfg *config.Config, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
+func defaultProcessingRuntimeFactory(cfg processing.RuntimeConfig, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
 	return processingruntime.DefaultProcessingRuntimeFactory(cfg, logger)
 }
 
@@ -45,7 +45,13 @@ func initializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, run
 
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
 
-	spaceConfigStore, loader, err := runtimeFactory(cfg, logger)
+	runtimeCfg := processing.RuntimeConfig{
+		SpacesEndpoint:    cfg.SpacesEndpoint,
+		InternalAPISecret: cfg.InternalAPISecret,
+		SpaceBaseDomain:   cfg.SpaceBaseDomain,
+	}
+
+	spaceConfigStore, loader, err := runtimeFactory(runtimeCfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize processing runtime: %w", err)
 	}

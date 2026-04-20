@@ -154,7 +154,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 		spaceInviteStore space.SpaceInviteStore
 	)
 	if mode == ModeCloud && cloudStoresFactory != nil {
-		orgStore, spaceStore, spaceInviteStore, err = cloudStoresFactory(enhancedCfg, db, encryptionService, logger)
+		orgStore, spaceStore, spaceInviteStore, err = cloudStoresFactory(management.CloudStoresConfig{InternalAPISecret: enhancedCfg.InternalAPISecret}, db, encryptionService, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize cloud stores: %w", err)
 		}
@@ -164,7 +164,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 
 	var inviteSender space.InviteSender
 	if mode == ModeCloud && inviteSenderFactory != nil {
-		inviteSender, err = inviteSenderFactory(enhancedCfg)
+		inviteSender, err = inviteSenderFactory(management.InviteSenderConfig{SESFromEmail: enhancedCfg.SESFromEmail, SESRegion: enhancedCfg.SESRegion, AWSRegion: enhancedCfg.AWSRegion, AppURL: enhancedCfg.AppUrl, AppAPIURL: enhancedCfg.AppApiUrl})
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
 		}
