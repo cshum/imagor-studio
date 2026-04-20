@@ -36,6 +36,7 @@ import {
   requireAdminAccountAuth,
   requireAuth,
   requireImageEditorAuth,
+  requireSelfHostedAdminAccountAuth,
 } from '@/loaders/auth-loader.ts'
 import { canvasEditorLoader } from '@/loaders/canvas-editor-loader.ts'
 import {
@@ -537,7 +538,7 @@ const accountLayoutRoute = createRoute({
 const accountAdminLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/admin',
-  beforeLoad: requireAdminAccountAuth,
+  beforeLoad: requireSelfHostedAdminAccountAuth,
   component: () => <AdminLayout />,
 })
 
@@ -596,7 +597,7 @@ const accountAdminLicenseRoute = createRoute({
 const accountUsersRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/users',
-  beforeLoad: requireAdminAccountAuth,
+  beforeLoad: requireSelfHostedAdminAccountAuth,
   validateSearch: (search: Record<string, unknown>) => ({
     q: (search.q as string) ?? '',
   }),

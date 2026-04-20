@@ -6,34 +6,39 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/apperror"
-	"github.com/cshum/imagor-studio/server/internal/auth"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
-	"github.com/cshum/imagor-studio/server/internal/uuid"
-	"github.com/cshum/imagor-studio/server/internal/validation"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/management"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/uuid"
+	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"go.uber.org/zap"
 )
 
 type AuthHandler struct {
 	tokenManager  *auth.TokenManager
 	userStore     userstore.Store
-	orgStore      orgstore.Store // nil in self-hosted mode
+	orgStore      org.OrgStore
 	registryStore registrystore.Store
 	logger        *zap.Logger
 	embeddedMode  bool
-	multiTenant   bool // true when InternalAPISecret is set
+	multiTenant   bool
+}
+
+type AuthHandlerConfig struct {
+	EmbeddedMode bool
+	MultiTenant  bool
 }
 
 func NewAuthHandler(
 	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
-	orgStore orgstore.Store, // pass nil for self-hosted deployments
+	orgStore org.OrgStore,
 	registryStore registrystore.Store,
 	logger *zap.Logger,
-	embeddedMode bool,
-	multiTenant bool, // true when InternalAPISecret is set (multi-tenant mode)
+	cfg AuthHandlerConfig,
 ) *AuthHandler {
 	return &AuthHandler{
 		tokenManager:  tokenManager,
@@ -41,9 +46,13 @@ func NewAuthHandler(
 		orgStore:      orgStore,
 		registryStore: registryStore,
 		logger:        logger,
-		embeddedMode:  embeddedMode,
-		multiTenant:   multiTenant,
+		embeddedMode:  cfg.EmbeddedMode,
+		multiTenant:   cfg.MultiTenant,
 	}
+}
+
+func (h *AuthHandler) cloudEnabled() bool {
+	return management.OrgEnabled(h.orgStore)
 }
 
 type RegisterRequest struct {
@@ -234,7 +243,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 
 		// multi-tenant mode: look up org so we can embed org_id in the token.
 		orgID := ""
-		if h.orgStore != nil {
+		if h.cloudEnabled() {
 			org, err := h.orgStore.GetByUserID(r.Context(), user.ID)
 			if err != nil {
 				h.logger.Warn("Failed to look up org for user on login",
@@ -449,7 +458,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	// multi-tenant mode: auto-create a personal org for the new user (14-day trial).
 	// Self-hosted: orgStore is nil — skip org creation.
 	orgID := ""
-	if h.orgStore != nil {
+	if h.cloudEnabled() {
 		trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
 		org, err := h.orgStore.CreateWithMember(ctx, user.ID, normalizedDisplayName, normalizedUsername, &trialEndsAt)
 		if err != nil {

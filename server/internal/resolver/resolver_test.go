@@ -6,17 +6,16 @@ import (
 	"time"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/model"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
-	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -324,36 +323,36 @@ type MockOrgStore struct {
 	mock.Mock
 }
 
-func (m *MockOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*orgstore.Org, error) {
+func (m *MockOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*org.Org, error) {
 	args := m.Called(ctx, ownerID, name, slug, trialEndsAt)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*orgstore.Org), args.Error(1)
+	return args.Get(0).(*org.Org), args.Error(1)
 }
 
-func (m *MockOrgStore) GetByUserID(ctx context.Context, userID string) (*orgstore.Org, error) {
+func (m *MockOrgStore) GetByUserID(ctx context.Context, userID string) (*org.Org, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*orgstore.Org), args.Error(1)
+	return args.Get(0).(*org.Org), args.Error(1)
 }
 
-func (m *MockOrgStore) GetBySlug(ctx context.Context, slug string) (*orgstore.Org, error) {
+func (m *MockOrgStore) GetBySlug(ctx context.Context, slug string) (*org.Org, error) {
 	args := m.Called(ctx, slug)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*orgstore.Org), args.Error(1)
+	return args.Get(0).(*org.Org), args.Error(1)
 }
 
-func (m *MockOrgStore) ListMembers(ctx context.Context, orgID string) ([]*orgstore.OrgMemberView, error) {
+func (m *MockOrgStore) ListMembers(ctx context.Context, orgID string) ([]*org.OrgMemberView, error) {
 	args := m.Called(ctx, orgID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*orgstore.OrgMemberView), args.Error(1)
+	return args.Get(0).([]*org.OrgMemberView), args.Error(1)
 }
 
 func (m *MockOrgStore) AddMember(ctx context.Context, orgID, userID, role string) error {
@@ -371,14 +370,14 @@ func (m *MockOrgStore) UpdateMemberRole(ctx context.Context, orgID, userID, role
 	return args.Error(0)
 }
 
-var _ orgstore.Store = (*MockOrgStore)(nil)
+var _ org.OrgStore = (*MockOrgStore)(nil)
 
 // MockSpaceStore mocks the spacestore.Store interface.
 type MockSpaceStore struct {
 	mock.Mock
 }
 
-func (m *MockSpaceStore) Create(ctx context.Context, s *spacestore.Space) error {
+func (m *MockSpaceStore) Create(ctx context.Context, s *space.Space) error {
 	args := m.Called(ctx, s)
 	return args.Error(0)
 }
@@ -388,7 +387,7 @@ func (m *MockSpaceStore) RenameKey(ctx context.Context, oldKey, newKey string) e
 	return args.Error(0)
 }
 
-func (m *MockSpaceStore) Upsert(ctx context.Context, s *spacestore.Space) error {
+func (m *MockSpaceStore) Upsert(ctx context.Context, s *space.Space) error {
 	args := m.Called(ctx, s)
 	return args.Error(0)
 }
@@ -398,40 +397,40 @@ func (m *MockSpaceStore) SoftDelete(ctx context.Context, key string) error {
 	return args.Error(0)
 }
 
-func (m *MockSpaceStore) Get(ctx context.Context, key string) (*spacestore.Space, error) {
+func (m *MockSpaceStore) Get(ctx context.Context, key string) (*space.Space, error) {
 	args := m.Called(ctx, key)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*spacestore.Space), args.Error(1)
+	return args.Get(0).(*space.Space), args.Error(1)
 }
 
-func (m *MockSpaceStore) List(ctx context.Context) ([]*spacestore.Space, error) {
+func (m *MockSpaceStore) List(ctx context.Context) ([]*space.Space, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*spacestore.Space), args.Error(1)
+	return args.Get(0).([]*space.Space), args.Error(1)
 }
 
-func (m *MockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*spacestore.Space, error) {
+func (m *MockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*space.Space, error) {
 	args := m.Called(ctx, orgID)
-	return args.Get(0).([]*spacestore.Space), args.Error(1)
+	return args.Get(0).([]*space.Space), args.Error(1)
 }
 
-func (m *MockSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*spacestore.Space, error) {
+func (m *MockSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*space.Space, error) {
 	for _, expected := range m.ExpectedCalls {
 		if expected.Method == "ListByMemberUserID" {
 			args := m.Called(ctx, userID)
-			return args.Get(0).([]*spacestore.Space), args.Error(1)
+			return args.Get(0).([]*space.Space), args.Error(1)
 		}
 	}
-	return []*spacestore.Space{}, nil
+	return []*space.Space{}, nil
 }
 
-func (m *MockSpaceStore) Delta(ctx context.Context, since time.Time) (*spacestore.DeltaResult, error) {
+func (m *MockSpaceStore) Delta(ctx context.Context, since time.Time) (*space.DeltaResult, error) {
 	args := m.Called(ctx, since)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*spacestore.DeltaResult), args.Error(1)
+	return args.Get(0).(*space.DeltaResult), args.Error(1)
 }
 
 func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error) {
@@ -439,17 +438,17 @@ func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*spacestore.SpaceMemberView, error) {
+func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*space.SpaceMemberView, error) {
 	for _, expected := range m.ExpectedCalls {
 		if expected.Method == "ListMembers" {
 			args := m.Called(ctx, spaceKey)
 			if args.Get(0) == nil {
 				return nil, args.Error(1)
 			}
-			return args.Get(0).([]*spacestore.SpaceMemberView), args.Error(1)
+			return args.Get(0).([]*space.SpaceMemberView), args.Error(1)
 		}
 	}
-	return []*spacestore.SpaceMemberView{}, nil
+	return []*space.SpaceMemberView{}, nil
 }
 
 func (m *MockSpaceStore) AddMember(ctx context.Context, spaceKey, userID, role string) error {
@@ -477,34 +476,34 @@ func (m *MockSpaceStore) HasMember(ctx context.Context, spaceKey, userID string)
 	return false, nil
 }
 
-var _ spacestore.Store = (*MockSpaceStore)(nil)
+var _ space.SpaceStore = (*MockSpaceStore)(nil)
 
 type MockSpaceInviteStore struct {
 	mock.Mock
 }
 
-func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*spaceinvite.Invitation, error) {
+func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*space.Invitation, error) {
 	args := m.Called(ctx, orgID, spaceKey, email, role, invitedByUserID, expiresAt)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*spaceinvite.Invitation), args.Error(1)
+	return args.Get(0).(*space.Invitation), args.Error(1)
 }
 
-func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*spaceinvite.Invitation, error) {
+func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*space.Invitation, error) {
 	args := m.Called(ctx, orgID, spaceKey)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*spaceinvite.Invitation), args.Error(1)
+	return args.Get(0).([]*space.Invitation), args.Error(1)
 }
 
-func (m *MockSpaceInviteStore) GetPendingByToken(ctx context.Context, token string) (*spaceinvite.Invitation, error) {
+func (m *MockSpaceInviteStore) GetPendingByToken(ctx context.Context, token string) (*space.Invitation, error) {
 	args := m.Called(ctx, token)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*spaceinvite.Invitation), args.Error(1)
+	return args.Get(0).(*space.Invitation), args.Error(1)
 }
 
 func (m *MockSpaceInviteStore) MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error {
@@ -517,18 +516,18 @@ func (m *MockSpaceInviteStore) RenameSpaceKey(ctx context.Context, orgID, oldSpa
 	return args.Error(0)
 }
 
-var _ spaceinvite.Store = (*MockSpaceInviteStore)(nil)
+var _ space.SpaceInviteStore = (*MockSpaceInviteStore)(nil)
 
 type MockInviteSender struct {
 	mock.Mock
 }
 
-func (m *MockInviteSender) SendSpaceInvitation(ctx context.Context, params spaceinvite.EmailParams) error {
+func (m *MockInviteSender) SendSpaceInvitation(ctx context.Context, params space.EmailParams) error {
 	args := m.Called(ctx, params)
 	return args.Error(0)
 }
 
-var _ spaceinvite.EmailSender = (*MockInviteSender)(nil)
+var _ space.InviteSender = (*MockInviteSender)(nil)
 
 // MockRegistryStore mocks the registrystore.Store interface for tests that need it.
 // (Only defined here if not already defined by registry_test.go in this package.)

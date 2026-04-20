@@ -13,9 +13,9 @@ import (
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
-	"github.com/cshum/imagor-studio/server/internal/spaceconfigstore"
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,6 +31,55 @@ func newMockRegistryStore() *mockRegistryStore {
 	return &mockRegistryStore{
 		data: make(map[string]string),
 	}
+}
+
+type testSpaceConfig struct {
+	Key             string
+	Prefix          string
+	Bucket          string
+	Region          string
+	Endpoint        string
+	AccessKeyID     string
+	SecretKey       string
+	UsePathStyle    bool
+	CustomDomain    string
+	Suspended       bool
+	SignerAlgorithm string
+	SignerTruncate  int
+	ImagorSecret    string
+}
+
+func (c *testSpaceConfig) GetKey() string             { return c.Key }
+func (c *testSpaceConfig) GetPrefix() string          { return c.Prefix }
+func (c *testSpaceConfig) GetBucket() string          { return c.Bucket }
+func (c *testSpaceConfig) GetRegion() string          { return c.Region }
+func (c *testSpaceConfig) GetEndpoint() string        { return c.Endpoint }
+func (c *testSpaceConfig) GetAccessKeyID() string     { return c.AccessKeyID }
+func (c *testSpaceConfig) GetSecretKey() string       { return c.SecretKey }
+func (c *testSpaceConfig) GetUsePathStyle() bool      { return c.UsePathStyle }
+func (c *testSpaceConfig) GetCustomDomain() string    { return c.CustomDomain }
+func (c *testSpaceConfig) IsSuspended() bool          { return c.Suspended }
+func (c *testSpaceConfig) GetSignerAlgorithm() string { return c.SignerAlgorithm }
+func (c *testSpaceConfig) GetSignerTruncate() int     { return c.SignerTruncate }
+func (c *testSpaceConfig) GetImagorSecret() string    { return c.ImagorSecret }
+
+type testSpaceConfigReader struct {
+	byKey      map[string]processing.SpaceConfig
+	byHostname map[string]processing.SpaceConfig
+}
+
+func (r *testSpaceConfigReader) Get(key string) (processing.SpaceConfig, bool) {
+	cfg, ok := r.byKey[key]
+	return cfg, ok
+}
+
+func (r *testSpaceConfigReader) GetByHostname(hostname string) (processing.SpaceConfig, bool) {
+	cfg, ok := r.byHostname[hostname]
+	return cfg, ok
+}
+
+func (r *testSpaceConfigReader) Start(ctx context.Context) error {
+	return nil
 }
 
 func (m *mockRegistryStore) Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*registrystore.Registry, error) {
@@ -537,7 +586,7 @@ var _ = time.Second
 // ── Processing-node (SpaceConfigStore) tests ──────────────────────────────────
 
 func TestSignerFromSpaceConfig_SHA256(t *testing.T) {
-	sc := &spaceconfigstore.SpaceConfig{
+	sc := &testSpaceConfig{
 		Key:             "acme",
 		ImagorSecret:    "secret256",
 		SignerAlgorithm: "sha256",
@@ -553,7 +602,7 @@ func TestSignerFromSpaceConfig_SHA256(t *testing.T) {
 	assert.Equal(t, sig1, sig2, "signer must be deterministic")
 
 	// Different secret must produce a different signature
-	sc2 := &spaceconfigstore.SpaceConfig{
+	sc2 := &testSpaceConfig{
 		ImagorSecret:    "different-secret",
 		SignerAlgorithm: "sha256",
 	}
@@ -562,7 +611,7 @@ func TestSignerFromSpaceConfig_SHA256(t *testing.T) {
 }
 
 func TestSignerFromSpaceConfig_SHA1(t *testing.T) {
-	sc := &spaceconfigstore.SpaceConfig{
+	sc := &testSpaceConfig{
 		ImagorSecret:    "sha1secret",
 		SignerAlgorithm: "sha1",
 	}
@@ -572,7 +621,7 @@ func TestSignerFromSpaceConfig_SHA1(t *testing.T) {
 }
 
 func TestSignerFromSpaceConfig_SHA512(t *testing.T) {
-	sc := &spaceconfigstore.SpaceConfig{
+	sc := &testSpaceConfig{
 		ImagorSecret:    "sha512secret",
 		SignerAlgorithm: "sha512",
 	}
@@ -583,7 +632,7 @@ func TestSignerFromSpaceConfig_SHA512(t *testing.T) {
 
 func TestSignerFromSpaceConfig_UnknownAlgorithmDefaults(t *testing.T) {
 	// Unsupported algorithm string must not panic; expected to fall back gracefully.
-	sc := &spaceconfigstore.SpaceConfig{
+	sc := &testSpaceConfig{
 		ImagorSecret:    "mysecret",
 		SignerAlgorithm: "md5",
 	}
@@ -593,7 +642,7 @@ func TestSignerFromSpaceConfig_UnknownAlgorithmDefaults(t *testing.T) {
 }
 
 func TestSignerFromSpaceConfig_Truncate(t *testing.T) {
-	sc := &spaceconfigstore.SpaceConfig{
+	sc := &testSpaceConfig{
 		ImagorSecret:    "truncsecret",
 		SignerAlgorithm: "sha256",
 		SignerTruncate:  28,
@@ -606,14 +655,13 @@ func TestSignerFromSpaceConfig_Truncate(t *testing.T) {
 
 func TestSyncIsNoOpInProcessingMode(t *testing.T) {
 	logger := zap.NewNop()
+	baseDomain := "example.test"
 	cfg := &config.Config{
-		JWTSecret:       "test-secret",
-		JWTExpiration:   time.Hour,
-		SpacesEndpoint:  "http://management.example.test",
-		SpaceBaseDomain: "example.test",
+		JWTSecret:     "test-secret",
+		JWTExpiration: time.Hour,
 	}
 	// New() does NOT start HTTP polling — Start() would; safe for unit tests.
-	scs := spaceconfigstore.New(cfg.SpacesEndpoint, "internal-secret", logger)
+	scs := &testSpaceConfigReader{byKey: map[string]processing.SpaceConfig{}, byHostname: map[string]processing.SpaceConfig{}}
 	// Use &StorageLoader{source: ...} directly — NewStorageLoader only accepts *storageprovider.Provider.
 	loader := &StorageLoader{source: &mockStorageSource{stor: newMockReadStorage()}}
 
@@ -622,7 +670,7 @@ func TestSyncIsNoOpInProcessingMode(t *testing.T) {
 		newMockRegistryStore(),
 		cfg,
 		loader,
-		WithSpaceConfigStore(scs, cfg.SpaceBaseDomain),
+		WithSpaceConfigStore(scs, baseDomain),
 	)
 	require.NoError(t, p.Initialize())
 
@@ -632,13 +680,12 @@ func TestSyncIsNoOpInProcessingMode(t *testing.T) {
 
 func TestProviderProcessingMode_Initialize(t *testing.T) {
 	logger := zap.NewNop()
+	baseDomain := "imagor.test"
 	cfg := &config.Config{
-		JWTSecret:       "processing-secret",
-		JWTExpiration:   time.Hour,
-		SpacesEndpoint:  "http://management.example.test",
-		SpaceBaseDomain: "imagor.test",
+		JWTSecret:     "processing-secret",
+		JWTExpiration: time.Hour,
 	}
-	scs := spaceconfigstore.New(cfg.SpacesEndpoint, "secret", logger)
+	scs := &testSpaceConfigReader{byKey: map[string]processing.SpaceConfig{}, byHostname: map[string]processing.SpaceConfig{}}
 	loader := &StorageLoader{source: &mockStorageSource{stor: newMockReadStorage()}}
 
 	p := New(
@@ -646,7 +693,7 @@ func TestProviderProcessingMode_Initialize(t *testing.T) {
 		newMockRegistryStore(),
 		cfg,
 		loader,
-		WithSpaceConfigStore(scs, cfg.SpaceBaseDomain),
+		WithSpaceConfigStore(scs, baseDomain),
 	)
 
 	require.NoError(t, p.Initialize())

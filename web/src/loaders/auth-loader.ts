@@ -112,3 +112,18 @@ export const requireAdminAccountAuth = async (context?: {
   }
   return auth
 }
+
+/**
+ * Admin-only auth check for self-hosted account routes.
+ * SaaS users are redirected back to the profile page because these pages
+ * are product-scoped to the self-hosted admin surface.
+ */
+export const requireSelfHostedAdminAccountAuth = async (context?: {
+  location?: { pathname: string; search: Record<string, unknown> }
+}) => {
+  const auth = await requireAdminAccountAuth(context)
+  if (auth.multiTenant) {
+    throw redirect({ to: '/account/profile' })
+  }
+  return auth
+}

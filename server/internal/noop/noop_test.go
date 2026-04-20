@@ -4,19 +4,23 @@ package noop_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/noop"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
+	"github.com/cshum/imagor-studio/server/pkg/management"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // Compile-time: NewOrgStore / NewSpaceStore must satisfy the public interfaces.
-var _ orgstore.Store = noop.NewOrgStore()
-var _ spacestore.Store = noop.NewSpaceStore()
+var _ org.OrgStore = noop.NewOrgStore()
+var _ space.SpaceStore = noop.NewSpaceStore()
+var _ space.SpaceInviteStore = noop.NewSpaceInviteStore()
+var _ space.InviteSender = noop.NewInviteSender()
 
 var ctx = context.Background()
 
@@ -48,7 +52,7 @@ func TestNoopSpaceStore_AllMethodsReturnError(t *testing.T) {
 
 	t.Run("Upsert", func(t *testing.T) {
 		// Use a valid DNS-label key so validateSpaceKey passes and reaches the noop check.
-		err := s.Upsert(ctx, &spacestore.Space{Key: "test"})
+		err := s.Upsert(ctx, &space.Space{Key: "test"})
 		require.Error(t, err, "Upsert must return an error in noop mode")
 	})
 
@@ -78,20 +82,95 @@ func TestNoopSpaceStore_AllMethodsReturnError(t *testing.T) {
 	})
 }
 
-// ── Error message consistency ─────────────────────────────────────────────────
-// Both stores should mention "embedded" in their error messages so operators
-// get a clear signal when they accidentally hit a noop store.
+func TestNoopSpaceInviteStore_AllMethodsReturnError(t *testing.T) {
+	s := noop.NewSpaceInviteStore()
 
-func TestNoopOrgStore_ErrorMentionsEmbedded(t *testing.T) {
+	t.Run("CreateOrRefreshPending", func(t *testing.T) {
+		_, err := s.CreateOrRefreshPending(ctx, "org", "space", "user@example.com", "member", "user-1", time.Now())
+		require.Error(t, err)
+	})
+
+	t.Run("ListPendingBySpace", func(t *testing.T) {
+		_, err := s.ListPendingBySpace(ctx, "org", "space")
+		require.Error(t, err)
+	})
+
+	t.Run("GetPendingByToken", func(t *testing.T) {
+		_, err := s.GetPendingByToken(ctx, "token")
+		require.Error(t, err)
+	})
+
+	t.Run("MarkAccepted", func(t *testing.T) {
+		err := s.MarkAccepted(ctx, "id", time.Now())
+		require.Error(t, err)
+	})
+
+	t.Run("RenameSpaceKey", func(t *testing.T) {
+		err := s.RenameSpaceKey(ctx, "org", "old", "new")
+		require.Error(t, err)
+	})
+}
+
+func TestNoopInviteSender_ReturnsError(t *testing.T) {
+	s := noop.NewInviteSender()
+	err := s.SendSpaceInvitation(ctx, space.EmailParams{ToEmail: "user@example.com"})
+	require.Error(t, err)
+}
+
+// ── Error message consistency ─────────────────────────────────────────────────
+// Noop stores should mention the disabled operating mode so operators get a
+// clear signal when they accidentally hit a noop store.
+
+func TestNoopOrgStore_ErrorMentionsDisabledMode(t *testing.T) {
 	s := noop.NewOrgStore()
 	_, err := s.GetByUserID(ctx, "any")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "embedded", "noop OrgStore error should mention 'embedded'")
+	assert.True(t,
+		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),
+		"noop OrgStore error should mention the disabled mode",
+	)
 }
 
-func TestNoopSpaceStore_ErrorMentionsEmbedded(t *testing.T) {
+func TestNoopSpaceStore_ErrorMentionsDisabledMode(t *testing.T) {
 	s := noop.NewSpaceStore()
 	_, err := s.Get(ctx, "any")
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "embedded", "noop SpaceStore error should mention 'embedded'")
+	assert.True(t,
+		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),
+		"noop SpaceStore error should mention the disabled mode",
+	)
+}
+
+func TestNoopSpaceInviteStore_ErrorMentionsDisabledMode(t *testing.T) {
+	s := noop.NewSpaceInviteStore()
+	_, err := s.GetPendingByToken(ctx, "token")
+	require.Error(t, err)
+	assert.True(t,
+		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),
+		"noop SpaceInviteStore error should mention the disabled mode",
+	)
+}
+
+func TestNoopInviteSender_ErrorMentionsDisabledMode(t *testing.T) {
+	s := noop.NewInviteSender()
+	err := s.SendSpaceInvitation(ctx, space.EmailParams{})
+	require.Error(t, err)
+	assert.True(t,
+		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),
+		"noop InviteSender error should mention the disabled mode",
+	)
+}
+
+func TestNoopStores_ReportCloudDisabled(t *testing.T) {
+	assert.True(t, noop.NewOrgStore().CloudDisabled())
+	assert.True(t, noop.NewSpaceStore().CloudDisabled())
+	assert.False(t, management.OrgEnabled(noop.NewOrgStore()))
+	assert.False(t, management.SpaceEnabled(noop.NewSpaceStore()))
+}
+
+func TestCloudMode_DisabledNoopStoresDisableCloud(t *testing.T) {
+	assert.False(t, management.OrgEnabled(noop.NewOrgStore()))
+	assert.False(t, management.SpaceEnabled(noop.NewSpaceStore()))
+	assert.False(t, management.CloudEnabled(noop.NewOrgStore(), noop.NewSpaceStore()))
+	assert.False(t, management.InviteEnabled(noop.NewOrgStore(), noop.NewSpaceStore(), noop.NewSpaceInviteStore(), noop.NewInviteSender()))
 }

@@ -17,7 +17,15 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/resolver"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"go.uber.org/zap"
+)
+
+type Mode string
+
+const (
+	ModeSelfHosted Mode = "selfhosted"
+	ModeCloud      Mode = "cloud"
 )
 
 type Server struct {
@@ -48,12 +56,25 @@ func startSyncLoop(ctx context.Context, interval time.Duration, logger *zap.Logg
 	}()
 }
 
-func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (*Server, error) {
+func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string, mode Mode) (*Server, error) {
 	// Initialize all services using bootstrap package
-	services, err := bootstrap.Initialize(cfg, logger, args)
+	var (
+		services *bootstrap.Services
+		err      error
+	)
+	switch mode {
+	case ModeCloud:
+		services, err = bootstrap.InitializeCloud(cfg, logger, args)
+	default:
+		services, err = bootstrap.InitializeSelfHosted(cfg, logger, args)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize services: %w", err)
 	}
+	return NewFromServices(cfg, embedFS, logger, services, mode, management.CloudConfig{}, management.CloudFactories{})
+}
+
+func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, services *bootstrap.Services, mode Mode, cloudConfig management.CloudConfig, cloudFactories management.CloudFactories) (*Server, error) {
 
 	// Initialize GraphQL with enhanced config from services
 	storageResolver := resolver.NewResolver(
@@ -86,16 +107,20 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	// Add useful extensions
 	gqlHandler.Use(extension.Introspection{})
 
-	// Create auth handler.  services.OrgStore is nil for self-hosted deployments
-	// and non-nil (wired by bootstrap) when InternalAPISecret is configured (multi-tenant).
+	// Create auth handler. services.OrgStore is nil for self-hosted deployments
+	// and non-nil only for cloud multi-tenant deployments.
+	multiTenant := mode == ModeCloud && services.OrgStore != nil && services.SpaceStore != nil
+
 	authHandler := httphandler.NewAuthHandler(
 		services.TokenManager,
 		services.UserStore,
 		services.OrgStore,
 		services.RegistryStore,
 		services.Logger,
-		cfg.EmbeddedMode,
-		cfg.InternalAPISecret != "", // multiTenant: true when InternalAPISecret is set
+		httphandler.AuthHandlerConfig{
+			EmbeddedMode: cfg.EmbeddedMode,
+			MultiTenant:  multiTenant,
+		},
 	)
 
 	// Create middleware chain
@@ -119,28 +144,25 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	mux.HandleFunc("/api/auth/first-run", authHandler.CheckFirstRun())
 	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
 
-	// Google OAuth endpoints (only mounted when Google OAuth is configured)
-	if cfg.GoogleClientID != "" {
-		oauthHandler := httphandler.NewOAuthHandler(
-			services.TokenManager,
-			services.UserStore,
-			services.OrgStore,
-			services.SpaceStore,
-			services.SpaceInviteStore,
-			services.Logger,
-			cfg.GoogleClientID,
-			cfg.GoogleClientSecret,
-			cfg.AppUrl,
-			cfg.AppApiUrl, // backend API URL for OAuth redirect URI; empty = same as AppUrl
-		)
-		mux.HandleFunc("/api/auth/providers", oauthHandler.GoogleAuthProviders())
-		mux.HandleFunc("/api/auth/google/login", oauthHandler.GoogleLogin())
-		mux.HandleFunc("/api/auth/google/callback", oauthHandler.GoogleCallback())
+	cloudServices := management.CloudHTTPServices{
+		TokenManager:      services.TokenManager,
+		UserStore:         services.UserStore,
+		OrgStore:          services.OrgStore,
+		SpaceStore:        services.SpaceStore,
+		SpaceInviteStore:  services.SpaceInviteStore,
+		InternalAPISecret: cloudConfig.InternalAPISecret,
+		Logger:            services.Logger,
+	}
+
+	if mode == ModeCloud && multiTenant && cloudFactories.AuthRoutes != nil {
+		cloudFactories.AuthRoutes(mux, management.OAuthConfig{
+			GoogleClientID:     cloudConfig.GoogleClientID,
+			GoogleClientSecret: cloudConfig.GoogleClientSecret,
+			AppURL:             cfg.AppUrl,
+			AppAPIURL:          cloudConfig.AppAPIURL,
+		}, cloudServices)
 	} else {
-		mux.HandleFunc("/api/auth/providers", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(`{"providers":[]}`))
-		})
+		registerSelfHostedAuthRoutes(mux)
 	}
 
 	// License endpoints (public - no auth required)
@@ -152,45 +174,12 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)
 
-	// Internal service-to-service endpoint (authenticated by Bearer token).
-	// Only mounted when InternalAPISecret is set (multi-tenant mode); self-hosted
-	// deployments never set it so the route is never exposed.
-	if services.SpaceStore != nil {
-		spacesHandler := httphandler.NewSpacesDeltaHandler(services.SpaceStore, services.Config.InternalAPISecret, services.Logger)
-		mux.HandleFunc("/internal/spaces/delta", spacesHandler.GetDelta())
+	if mode == ModeCloud && multiTenant && cloudFactories.InternalRoutes != nil {
+		cloudFactories.InternalRoutes(mux, cloudServices)
 	}
 
-	// Processing nodes: imagor handles ALL requests (no SPA, no /imagor/ prefix).
-	// Requests arrive as: /{hmac}/{transforms}/image.jpg
-	// with the Host header identifying the space (e.g. acme.yoursaas.com).
-	//
-	// Management / self-hosted nodes: imagor is mounted at /imagor/ and the SPA
-	// is served at / — both share the same port.
-	if services.SpaceConfigStore != nil {
-		// Processing mode — wrap with per-space concurrency limiter then imagor.
-		baseDomain := cfg.SpaceBaseDomain
-		// SpaceBaseDomain in config has leading dot (e.g. ".imagor.cloud");
-		// SpaceConcurrencyMiddleware expects it without the leading dot.
-		if len(baseDomain) > 0 && baseDomain[0] == '.' {
-			baseDomain = baseDomain[1:]
-		}
-		imagorHandler := middleware.SpaceConcurrencyMiddleware(
-			services.SpaceConfigStore,
-			baseDomain,
-			int64(cfg.SpaceMaxConcurrency),
-		)(services.ImagorProvider.Imagor())
-		mux.Handle("/", imagorHandler)
-	} else {
-		// Management / self-hosted mode.
-		// Pass the imagor instance directly — it is set once during Initialize().
-		mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider.Imagor()))
-
-		// Static file serving for web frontend using embedded assets.
-		staticFS, err := fs.Sub(embedFS, "static")
-		if err != nil {
-			return nil, err
-		}
-		mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
+	if err := registerProcessingOrSPA(mux, cfg, embedFS, services); err != nil {
+		return nil, err
 	}
 
 	// Configure CORS — if CORSOrigins is set, restrict to those specific origins.
@@ -225,13 +214,9 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 	// Start background 30-second sync loop: pulls registry → imagor signer + storage.
 	syncCtx, syncCancel := context.WithCancel(context.Background())
 
-	// On processing nodes, perform the initial full sync of space configs
-	// (blocking) then let the background poller run via syncCtx.
-	if services.SpaceConfigStore != nil {
-		if err := services.SpaceConfigStore.Start(syncCtx); err != nil {
-			syncCancel()
-			return nil, fmt.Errorf("space config store initial sync failed: %w", err)
-		}
+	if err := startProcessingSyncIfNeeded(syncCtx, services); err != nil {
+		syncCancel()
+		return nil, fmt.Errorf("space config store initial sync failed: %w", err)
 	}
 
 	// Build the sync functions list. StorageProvider is nil in processing mode
@@ -248,6 +233,50 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string) (
 		httpServer: httpServer,
 		syncCancel: syncCancel,
 	}, nil
+}
+
+func registerSelfHostedAuthRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/api/auth/providers", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"providers":[]}`))
+	})
+}
+
+func registerProcessingOrSPA(
+	mux *http.ServeMux,
+	cfg *config.Config,
+	embedFS fs.FS,
+	services *bootstrap.Services,
+) error {
+	if services.SpaceConfigStore != nil {
+		baseDomain := services.ProcessingConfig.Runtime.SpaceBaseDomain
+		if len(baseDomain) > 0 && baseDomain[0] == '.' {
+			baseDomain = baseDomain[1:]
+		}
+		imagorHandler := middleware.SpaceConcurrencyMiddleware(
+			services.SpaceConfigStore,
+			baseDomain,
+			int64(services.ProcessingConfig.SpaceMaxConcurrency),
+		)(services.ImagorProvider.Imagor())
+		mux.Handle("/", imagorHandler)
+		return nil
+	}
+
+	mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider.Imagor()))
+
+	staticFS, err := fs.Sub(embedFS, "static")
+	if err != nil {
+		return err
+	}
+	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
+	return nil
+}
+
+func startProcessingSyncIfNeeded(ctx context.Context, services *bootstrap.Services) error {
+	if services.SpaceConfigStore == nil {
+		return nil
+	}
+	return services.SpaceConfigStore.Start(ctx)
 }
 
 func (s *Server) Run() error {

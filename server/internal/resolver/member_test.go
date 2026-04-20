@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/model"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ import (
 func newMemberResolver(os *MockOrgStore, us *MockUserStore) *Resolver {
 	sp := NewMockStorageProvider(nil)
 	logger, _ := zap.NewDevelopment()
-	var orgS orgstore.Store
+	var orgS org.OrgStore
 	if os != nil {
 		orgS = os
 	}
@@ -29,8 +29,8 @@ func newMemberResolver(os *MockOrgStore, us *MockUserStore) *Resolver {
 	return NewResolver(sp, nil, userS, nil, nil, nil, logger, orgS, nil, nil, nil)
 }
 
-func makeTestMember(userID, username, role string) *orgstore.OrgMemberView {
-	return &orgstore.OrgMemberView{
+func makeTestMember(userID, username, role string) *org.OrgMemberView {
+	return &org.OrgMemberView{
 		OrgID:     "org-1",
 		UserID:    userID,
 		Username:  username,
@@ -45,7 +45,7 @@ func TestOrgMembers_ReturnsMembers(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
-	members := []*orgstore.OrgMemberView{
+	members := []*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "member"),
 	}
@@ -94,16 +94,16 @@ func TestAddOrgMember_Success(t *testing.T) {
 	}, nil)
 
 	// Plan limit check: starter plan with 2 current members (max 5).
-	org := makeTestOrg("org-1", "user-1")
-	org.Plan = "starter"
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(org, nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+	o := makeTestOrg("org-1", "user-1")
+	o.Plan = "starter"
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(o, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "member"),
 	}, nil)
 	orgStore.On("AddMember", mock.Anything, "org-1", "user-3", "member").Return(nil)
 	// Reload after add for return value.
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "member"),
 		makeTestMember("user-3", "charlie", "member"),
@@ -127,7 +127,7 @@ func TestAddOrgMember_UserNotFound(t *testing.T) {
 
 	userStore.On("GetByUsername", mock.Anything, "ghost").Return(nil, nil)
 	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-1"), nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{}, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{}, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	_, err := r.Mutation().AddOrgMember(ctx, "ghost", "member")
@@ -145,10 +145,10 @@ func TestAddOrgMember_PlanLimitReached(t *testing.T) {
 	}, nil)
 
 	// Trial plan: max 1 member. Already has 1.
-	org := makeTestOrg("org-1", "user-1")
-	org.Plan = "trial"
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(org, nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+	o := makeTestOrg("org-1", "user-1")
+	o.Plan = "trial"
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(o, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
 
@@ -207,7 +207,7 @@ func TestUpdateOrgMemberRole_Success(t *testing.T) {
 	r := newMemberResolver(orgStore, nil)
 
 	orgStore.On("UpdateMemberRole", mock.Anything, "org-1", "user-2", "admin").Return(nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*orgstore.OrgMemberView{
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		{OrgID: "org-1", UserID: "user-2", Username: "bob", Role: "admin",
 			CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)},

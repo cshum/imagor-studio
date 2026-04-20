@@ -3,7 +3,6 @@ package httphandler
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,38 +10,35 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/apperror"
-	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/model"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/sqlitedialect"
-	"github.com/uptrace/bun/driver/sqliteshim"
 	"go.uber.org/zap"
 )
 
 // ── failing orgStore stub ─────────────────────────────────────────────────────
 
-// errOrgStore implements orgstore.Store but returns an error on every call.
+// errOrgStore implements space.OrgStore but returns an error on every call.
 // Used to verify failure paths without a real database.
 type errOrgStore struct{ msg string }
 
-func (e *errOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*orgstore.Org, error) {
+func (e *errOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*org.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
-func (e *errOrgStore) GetByUserID(_ context.Context, _ string) (*orgstore.Org, error) {
+func (e *errOrgStore) GetByUserID(_ context.Context, _ string) (*org.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
-func (e *errOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, error) {
+func (e *errOrgStore) GetBySlug(_ context.Context, _ string) (*org.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
 
-func (e *errOrgStore) ListMembers(_ context.Context, _ string) ([]*orgstore.OrgMemberView, error) {
+func (e *errOrgStore) ListMembers(_ context.Context, _ string) ([]*org.OrgMemberView, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
 
@@ -58,21 +54,21 @@ func (e *errOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error 
 	return fmt.Errorf("%s", e.msg)
 }
 
-// nilOrgStore implements orgstore.Store but returns (nil, nil) on lookups —
+// nilOrgStore implements space.OrgStore but returns (nil, nil) on lookups —
 // simulates a user that exists but has no org yet.
 type nilOrgStore struct{}
 
-func (n *nilOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*orgstore.Org, error) {
+func (n *nilOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*org.Org, error) {
 	return nil, nil
 }
-func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*orgstore.Org, error) {
+func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*org.Org, error) {
 	return nil, nil // no org found
 }
-func (n *nilOrgStore) GetBySlug(_ context.Context, _ string) (*orgstore.Org, error) {
+func (n *nilOrgStore) GetBySlug(_ context.Context, _ string) (*org.Org, error) {
 	return nil, nil
 }
 
-func (n *nilOrgStore) ListMembers(_ context.Context, _ string) ([]*orgstore.OrgMemberView, error) {
+func (n *nilOrgStore) ListMembers(_ context.Context, _ string) ([]*org.OrgMemberView, error) {
 	return nil, nil
 }
 
@@ -262,7 +258,7 @@ func TestRegister(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, AuthHandlerConfig{})
 
 	tests := []struct {
 		name           string
@@ -452,7 +448,7 @@ func TestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, AuthHandlerConfig{})
 
 	// Create a valid hashed password for testing
 	hashedPassword, err := auth.HashPassword("password123")
@@ -645,7 +641,7 @@ func TestRefreshToken(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, AuthHandlerConfig{})
 
 	// Generate a valid token first
 	validToken, err := tokenManager.GenerateToken("user1", "user", []string{"read"}, "")
@@ -825,7 +821,7 @@ func TestGuestLogin(t *testing.T) {
 			mockRegistryStore.ExpectedCalls = nil
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, true, false)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, AuthHandlerConfig{EmbeddedMode: true})
 
 			req := httptest.NewRequest(http.MethodPost, "/api/auth/guest", nil)
 			rr := httptest.NewRecorder()
@@ -864,26 +860,6 @@ func TestGuestLogin(t *testing.T) {
 
 // ── Multi-tenant org integration tests ───────────────────────────────────────────────
 
-// newOrgTestDB creates an in-memory SQLite DB with org + org_members tables.
-func newOrgTestDB(t *testing.T) *bun.DB {
-	t.Helper()
-	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
-	if err != nil {
-		t.Fatalf("open in-memory sqlite: %v", err)
-	}
-	t.Cleanup(func() { _ = sqldb.Close() })
-	db := bun.NewDB(sqldb, sqlitedialect.New())
-	if _, err := db.NewCreateTable().
-		Model((*model.Organization)(nil)).IfNotExists().Exec(context.Background()); err != nil {
-		t.Fatalf("create organizations table: %v", err)
-	}
-	if _, err := db.NewCreateTable().
-		Model((*model.OrgMember)(nil)).IfNotExists().Exec(context.Background()); err != nil {
-		t.Fatalf("create org_members table: %v", err)
-	}
-	return db
-}
-
 // TestRegister_MultiTenant_CreatesOrg verifies that registering with a wired orgStore:
 //   - Creates a personal org in the DB.
 //   - Embeds org_id in the returned JWT.
@@ -891,8 +867,8 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	os := orgstore.New(newOrgTestDB(t))
-	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
+	os := newTestOrgStore(newOrgTestDB(t))
+	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, AuthHandlerConfig{})
 
 	const userID = "saas-reg-user-1"
 	mockUserStore.On("Create", mock.Anything, "saasuser", "saasuser", mock.AnythingOfType("string"), "user").
@@ -939,8 +915,8 @@ func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	os := orgstore.New(newOrgTestDB(t))
-	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, false, false)
+	os := newTestOrgStore(newOrgTestDB(t))
+	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, AuthHandlerConfig{})
 
 	const userID = "saas-login-user-1"
 
@@ -982,7 +958,7 @@ func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "DB connection refused"}, nil, logger, false, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "DB connection refused"}, nil, logger, AuthHandlerConfig{})
 
 	const userID = "saas-fail-user-1"
 	mockUserStore.On("Create", mock.Anything, "failuser", "failuser", mock.AnythingOfType("string"), "user").
@@ -1007,7 +983,7 @@ func TestRegister_MultiTenant_SelfHosted_NoOrgInJWT(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil /* no orgStore */, nil, logger, false, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil /* no orgStore */, nil, logger, AuthHandlerConfig{})
 
 	mockUserStore.On("Create", mock.Anything, "selfhosted", "selfhosted", mock.AnythingOfType("string"), "user").
 		Return(&userstore.User{ID: "sh-1", DisplayName: "selfhosted", Username: "selfhosted", Role: "user", IsActive: true}, nil)
@@ -1035,7 +1011,7 @@ func TestLogin_MultiTenant_UserWithNoOrg(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, false, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{})
 
 	const userID = "no-org-user-1"
 	hashedPassword, _ := auth.HashPassword("password123")
@@ -1070,7 +1046,7 @@ func TestLogin_MultiTenant_OrgLookupError(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
 	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "read timeout"}, nil, logger, false, false)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "read timeout"}, nil, logger, AuthHandlerConfig{})
 
 	const userID = "org-err-user-1"
 	hashedPassword, _ := auth.HashPassword("password123")
@@ -1142,7 +1118,7 @@ func TestCheckFirstRun(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockUserStore := new(MockUserStore)
-			handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, false, tt.multiTenant)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, AuthHandlerConfig{MultiTenant: tt.multiTenant})
 
 			mockUserStore.On("List", mock.Anything, 0, 1, "").Return([]*userstore.User{}, tt.userCount, nil)
 
@@ -1403,7 +1379,7 @@ func TestRegisterAdmin(t *testing.T) {
 			mockUserStore.On("List", mock.Anything, 0, 1, "").Return([]*userstore.User{}, tt.existingUsers, nil)
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, false, false)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, AuthHandlerConfig{})
 
 			body, err := json.Marshal(tt.body)
 			require.NoError(t, err)
@@ -1552,7 +1528,7 @@ func TestEmbeddedGuestLogin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, tt.embeddedMode, false)
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, AuthHandlerConfig{EmbeddedMode: tt.embeddedMode})
 
 			req := httptest.NewRequest(tt.method, "/api/auth/embedded-guest", nil)
 			if tt.authHeader != "" {

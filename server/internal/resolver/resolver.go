@@ -7,12 +7,12 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
-	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/management"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
 )
@@ -52,12 +52,12 @@ type Resolver struct {
 	logger          *zap.Logger
 
 	// Multi-tenant stores — nil in self-hosted / embedded mode.
-	// Only set when InternalAPISecret is configured (multi-tenant deployment).
-	orgStore   orgstore.Store
-	spaceStore spacestore.Store
+	// Only set for cloud multi-tenant deployments.
+	orgStore   org.OrgStore
+	spaceStore space.SpaceStore
 
-	spaceInviteStore spaceinvite.Store
-	inviteSender     spaceinvite.EmailSender
+	spaceInviteStore space.SpaceInviteStore
+	inviteSender     space.InviteSender
 }
 
 func NewResolver(
@@ -68,10 +68,10 @@ func NewResolver(
 	cfg ConfigProvider,
 	licenseService LicenseChecker,
 	logger *zap.Logger,
-	orgStore orgstore.Store,
-	spaceStore spacestore.Store,
-	spaceInviteStore spaceinvite.Store,
-	inviteSender spaceinvite.EmailSender,
+	orgStore org.OrgStore,
+	spaceStore space.SpaceStore,
+	spaceInviteStore space.SpaceInviteStore,
+	inviteSender space.InviteSender,
 ) *Resolver {
 	return &Resolver{
 		storageProvider:  storageProvider,
@@ -91,6 +91,14 @@ func NewResolver(
 // getStorage returns the current storage instance from the provider
 func (r *Resolver) getStorage() storage.Storage {
 	return r.storageProvider.GetStorage()
+}
+
+func (r *Resolver) cloudEnabled() bool {
+	return management.CloudEnabled(r.orgStore, r.spaceStore)
+}
+
+func (r *Resolver) inviteEnabled() bool {
+	return management.InviteEnabled(r.orgStore, r.spaceStore, r.spaceInviteStore, r.inviteSender)
 }
 
 // Mutation returns MutationResolver implementation.

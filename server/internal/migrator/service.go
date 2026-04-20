@@ -158,7 +158,8 @@ func (s *Service) migrateStatus(migrator *migrate.Migrator) error {
 		if m.GroupID > 0 {
 			status = "APPLIED"
 		}
-		fmt.Printf("%-50s %s\n", m.Name, status)
+		ownership := migrations.OwnershipForMigration(m.Name)
+		fmt.Printf("%-50s %-8s %s\n", m.Name, ownership, status)
 	}
 
 	return nil

@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagortemplate"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
 )

@@ -1,0 +1,605 @@
+package s3storage
+
+import (
+	"bytes"
+	"context"
+	"io"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/cshum/imagor-studio/server/pkg/storage"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/johannesboyne/gofakes3"
+	"github.com/johannesboyne/gofakes3/backend/s3mem"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func setupFakeS3(t *testing.T) *S3Storage {
+	folderSuffix = "/."
+	backend := s3mem.New()
+	faker := gofakes3.New(backend)
+	ts := httptest.NewServer(faker.Server())
+
+	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion("us-east-1"),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", "")),
+	)
+	require.NoError(t, err)
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(ts.URL)
+		o.UsePathStyle = true // Fake S3 requires path style
+	})
+
+	s3Storage, err := New("test-bucket",
+		WithRegion("us-east-1"),
+		WithEndpoint(ts.URL),
+		WithCredentials("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", ""),
+		WithForcePathStyle(true), // Default to true for fake S3
+	)
+	require.NoError(t, err)
+
+	s3Storage.client = s3Client
+
+	// Create the test bucket
+	_, err = s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
+		Bucket: aws.String("test-bucket"),
+	})
+	require.NoError(t, err)
+
+	return s3Storage
+}
+
+func setupFakeS3WithPathStyle(t *testing.T, forcePathStyle bool) *S3Storage {
+	folderSuffix = "/."
+	backend := s3mem.New()
+	faker := gofakes3.New(backend)
+	ts := httptest.NewServer(faker.Server())
+
+	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion("us-east-1"),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", "")),
+	)
+	require.NoError(t, err)
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(ts.URL)
+		o.UsePathStyle = true // Fake S3 always requires path style
+	})
+
+	s3Storage, err := New("test-bucket",
+		WithRegion("us-east-1"),
+		WithEndpoint(ts.URL),
+		WithCredentials("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", ""),
+		WithForcePathStyle(forcePathStyle),
+	)
+	require.NoError(t, err)
+
+	s3Storage.client = s3Client
+
+	// Create the test bucket
+	_, err = s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
+		Bucket: aws.String("test-bucket"),
+	})
+	require.NoError(t, err)
+
+	return s3Storage
+}
+
+func TestS3Storage_Put(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	content := "Hello, World!"
+	err := s3Storage.Put(ctx, "test.txt", bytes.NewReader([]byte(content)))
+	assert.NoError(t, err)
+
+	// Verify the file was uploaded
+	result, err := s3Storage.Get(ctx, "test.txt")
+	assert.NoError(t, err)
+	defer result.Close()
+
+	data, err := io.ReadAll(result)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(data))
+}
+
+func TestS3Storage_Get(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Upload a file
+	content := "Hello, S3!"
+	err := s3Storage.Put(ctx, "get_test.txt", bytes.NewReader([]byte(content)))
+	require.NoError(t, err)
+
+	// List the file
+	result, err := s3Storage.Get(ctx, "get_test.txt")
+	assert.NoError(t, err)
+	defer result.Close()
+
+	data, err := io.ReadAll(result)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(data))
+}
+
+func TestS3Storage_Delete(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Upload a file
+	err := s3Storage.Put(ctx, "delete_test.txt", bytes.NewReader([]byte("Delete me")))
+	require.NoError(t, err)
+
+	// Delete the file
+	err = s3Storage.Delete(ctx, "delete_test.txt")
+	assert.NoError(t, err)
+
+	// Try to get the deleted file
+	_, err = s3Storage.Get(ctx, "delete_test.txt")
+	assert.Error(t, err)
+}
+
+func TestS3Storage_List(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Upload some files
+	files := []string{"file1.txt", "file2.txt", "file3.txt"}
+	for _, file := range files {
+		err := s3Storage.Put(ctx, file, bytes.NewReader([]byte("content")))
+		require.NoError(t, err)
+	}
+
+	// Create some folders
+	folders := []string{"folder1", "folder2"}
+	for _, folder := range folders {
+		err := s3Storage.CreateFolder(ctx, folder)
+		require.NoError(t, err)
+	}
+
+	// List all items
+	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, len(files)+len(folders), result.TotalCount)
+	assert.Len(t, result.Items, len(files)+len(folders))
+
+	// Check file and folder names
+	names := make([]string, len(result.Items))
+	for i, item := range result.Items {
+		names[i] = item.Name
+	}
+	expectedNames := append(files, "folder1", "folder2")
+	assert.ElementsMatch(t, expectedNames, names)
+
+	// Test listing only files
+	filesResult, err := s3Storage.List(ctx, "", storage.ListOptions{OnlyFiles: true})
+	assert.NoError(t, err)
+	assert.Equal(t, len(files), filesResult.TotalCount)
+	assert.Len(t, filesResult.Items, len(files))
+
+	// Test listing only folders
+	foldersResult, err := s3Storage.List(ctx, "", storage.ListOptions{OnlyFolders: true})
+	assert.NoError(t, err)
+	assert.Equal(t, len(folders), foldersResult.TotalCount)
+	assert.Len(t, foldersResult.Items, len(folders))
+}
+
+func TestS3Storage_CreateFolder(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	err := s3Storage.CreateFolder(ctx, "test_folder")
+	assert.NoError(t, err)
+
+	// Verify the folder was created
+	result, err := s3Storage.List(ctx, "", storage.ListOptions{OnlyFolders: true})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, result.TotalCount)
+	assert.Len(t, result.Items, 1)
+	assert.Equal(t, "test_folder", result.Items[0].Name)
+	assert.True(t, result.Items[0].IsDir)
+}
+
+func TestS3Storage_Stat(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	content := "Stat test content"
+	err := s3Storage.Put(ctx, "stat_test.txt", bytes.NewReader([]byte(content)))
+	require.NoError(t, err)
+
+	info, err := s3Storage.Stat(ctx, "stat_test.txt")
+	assert.NoError(t, err)
+	assert.Equal(t, "stat_test.txt", info.Name)
+	assert.Equal(t, int64(len(content)), info.Size)
+	assert.False(t, info.IsDir)
+	assert.WithinDuration(t, time.Now(), info.ModifiedTime, time.Second*5)
+}
+
+func TestS3Storage_ListWithOptions(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Upload files and create folders
+	files := []string{"file1.txt", "file2.txt", "file3.txt"}
+	folders := []string{"folder1", "folder2"}
+
+	for _, file := range files {
+		err := s3Storage.Put(ctx, file, bytes.NewReader([]byte("content")))
+		require.NoError(t, err)
+	}
+
+	for _, folder := range folders {
+		err := s3Storage.CreateFolder(ctx, folder)
+		require.NoError(t, err)
+	}
+
+	// Test sorting by name descending
+	result, err := s3Storage.List(ctx, "", storage.ListOptions{
+		SortBy:    storage.SortByName,
+		SortOrder: storage.SortOrderDesc,
+	})
+	assert.NoError(t, err)
+	assert.Len(t, result.Items, len(files)+len(folders))
+	assert.True(t, result.Items[0].Name > result.Items[1].Name)
+
+	// Test pagination
+	paginatedResult, err := s3Storage.List(ctx, "", storage.ListOptions{
+		Offset: 1,
+		Limit:  2,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, len(files)+len(folders), paginatedResult.TotalCount) // Total count should still be all items
+	assert.Len(t, paginatedResult.Items, 2)                              // But only 2 items returned
+
+	// Test listing with a prefix
+	err = s3Storage.Put(ctx, "subfolder/file4.txt", bytes.NewReader([]byte("content")))
+	require.NoError(t, err)
+
+	subfolderResult, err := s3Storage.List(ctx, "subfolder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, subfolderResult.TotalCount)
+	assert.Len(t, subfolderResult.Items, 1)
+	assert.Equal(t, "file4.txt", subfolderResult.Items[0].Name)
+}
+
+func TestS3Storage_ListEmpty(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, result.TotalCount)
+	assert.Len(t, result.Items, 0)
+}
+
+func TestS3Storage_PutInSubfolder(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	content := "Hello, Subfolder!"
+	err := s3Storage.Put(ctx, "subfolder/test.txt", bytes.NewReader([]byte(content)))
+	assert.NoError(t, err)
+
+	// Verify the file was uploaded
+	result, err := s3Storage.Get(ctx, "subfolder/test.txt")
+	assert.NoError(t, err)
+	defer result.Close()
+
+	data, err := io.ReadAll(result)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(data))
+
+	// List the subfolder
+	listResult, err := s3Storage.List(ctx, "subfolder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, listResult.TotalCount)
+	assert.Len(t, listResult.Items, 1)
+	assert.Equal(t, "test.txt", listResult.Items[0].Name)
+}
+
+func TestS3Storage_DeleteFolder(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create a folder and put a file in it
+	err := s3Storage.CreateFolder(ctx, "test_folder")
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "test_folder/file.txt", bytes.NewReader([]byte("content")))
+	require.NoError(t, err)
+
+	// Delete the folder
+	err = s3Storage.Delete(ctx, "test_folder")
+	assert.NoError(t, err)
+
+	// Verify the folder and its contents are gone
+	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, result.TotalCount)
+	assert.Len(t, result.Items, 0)
+}
+
+func TestS3Storage_StatNonExistent(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	_, err := s3Storage.Stat(ctx, "non_existent.txt")
+	assert.Error(t, err)
+}
+
+func TestS3Storage_ListWithBaseDir(t *testing.T) {
+	// Setup S3 storage with a base directory
+	backend := s3mem.New()
+	faker := gofakes3.New(backend)
+	ts := httptest.NewServer(faker.Server())
+
+	cfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion("us-east-1"),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", "")),
+	)
+	require.NoError(t, err)
+
+	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(ts.URL)
+		o.UsePathStyle = true
+	})
+
+	s3Storage, err := New("test-bucket",
+		WithRegion("us-east-1"),
+		WithEndpoint(ts.URL),
+		WithCredentials("YOUR-ACCESSKEYID", "YOUR-SECRETKEY", ""),
+		WithBaseDir("base/dir"),
+	)
+	require.NoError(t, err)
+
+	s3Storage.client = s3Client
+
+	// Create the test bucket
+	_, err = s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
+		Bucket: aws.String("test-bucket"),
+	})
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	// Put a file in the base directory
+	err = s3Storage.Put(ctx, "test.txt", bytes.NewReader([]byte("content")))
+	require.NoError(t, err)
+
+	// List files
+	result, err := s3Storage.List(ctx, "", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, result.TotalCount)
+	assert.Len(t, result.Items, 1)
+	assert.Equal(t, "test.txt", result.Items[0].Name)
+
+	// Verify the full path of the file
+	fullPathResult, err := s3Client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket: aws.String("test-bucket"),
+	})
+	assert.NoError(t, err)
+	assert.Len(t, fullPathResult.Contents, 1)
+	assert.Equal(t, "base/dir/test.txt", *fullPathResult.Contents[0].Key)
+}
+
+func TestS3Storage_ForcePathStyleTrue(t *testing.T) {
+	s3Storage := setupFakeS3WithPathStyle(t, true)
+	ctx := context.Background()
+
+	// Verify that forcePathStyle is set correctly
+	assert.True(t, s3Storage.forcePathStyle)
+
+	// Test basic functionality with path style enabled
+	content := "Hello, Path Style!"
+	err := s3Storage.Put(ctx, "pathstyle_test.txt", bytes.NewReader([]byte(content)))
+	assert.NoError(t, err)
+
+	result, err := s3Storage.Get(ctx, "pathstyle_test.txt")
+	assert.NoError(t, err)
+	defer result.Close()
+
+	data, err := io.ReadAll(result)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(data))
+}
+
+func TestS3Storage_ForcePathStyleFalse(t *testing.T) {
+	s3Storage := setupFakeS3WithPathStyle(t, false)
+	ctx := context.Background()
+
+	// Verify that forcePathStyle is set correctly
+	assert.False(t, s3Storage.forcePathStyle)
+
+	// Test basic functionality with path style disabled
+	content := "Hello, Virtual Hosted Style!"
+	err := s3Storage.Put(ctx, "virtualhosted_test.txt", bytes.NewReader([]byte(content)))
+	assert.NoError(t, err)
+
+	result, err := s3Storage.Get(ctx, "virtualhosted_test.txt")
+	assert.NoError(t, err)
+	defer result.Close()
+
+	data, err := io.ReadAll(result)
+	assert.NoError(t, err)
+	assert.Equal(t, content, string(data))
+}
+
+func TestS3Storage_WithForcePathStyleOption(t *testing.T) {
+	// Test creating S3Storage with WithForcePathStyle option
+	s3Storage, err := New("test-bucket",
+		WithRegion("us-east-1"),
+		WithForcePathStyle(true),
+	)
+	assert.NoError(t, err)
+	assert.True(t, s3Storage.forcePathStyle)
+
+	s3Storage2, err := New("test-bucket",
+		WithRegion("us-east-1"),
+		WithForcePathStyle(false),
+	)
+	assert.NoError(t, err)
+	assert.False(t, s3Storage2.forcePathStyle)
+}
+
+func TestS3Storage_CopyFile(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create a source file
+	content := "Hello, Copy!"
+	err := s3Storage.Put(ctx, "source.txt", bytes.NewReader([]byte(content)))
+	require.NoError(t, err)
+
+	// Copy the file
+	err = s3Storage.Copy(ctx, "source.txt", "dest.txt")
+	assert.NoError(t, err)
+
+	// Verify both files exist
+	sourceData, err := s3Storage.Get(ctx, "source.txt")
+	assert.NoError(t, err)
+	defer sourceData.Close()
+	sourceContent, _ := io.ReadAll(sourceData)
+	assert.Equal(t, content, string(sourceContent))
+
+	destData, err := s3Storage.Get(ctx, "dest.txt")
+	assert.NoError(t, err)
+	defer destData.Close()
+	destContent, _ := io.ReadAll(destData)
+	assert.Equal(t, content, string(destContent))
+}
+
+func TestS3Storage_CopyFolder(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create a source folder with files
+	err := s3Storage.CreateFolder(ctx, "source_folder")
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "source_folder/file1.txt", bytes.NewReader([]byte("content1")))
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "source_folder/file2.txt", bytes.NewReader([]byte("content2")))
+	require.NoError(t, err)
+
+	// Copy the folder
+	err = s3Storage.Copy(ctx, "source_folder", "dest_folder")
+	assert.NoError(t, err)
+
+	// Verify destination folder and files exist
+	result, err := s3Storage.List(ctx, "dest_folder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, result.TotalCount)
+
+	// Verify file contents
+	file1Data, err := s3Storage.Get(ctx, "dest_folder/file1.txt")
+	assert.NoError(t, err)
+	defer file1Data.Close()
+	content1, _ := io.ReadAll(file1Data)
+	assert.Equal(t, "content1", string(content1))
+}
+
+func TestS3Storage_CopyNonExistent(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Try to copy a non-existent file
+	err := s3Storage.Copy(ctx, "non_existent.txt", "dest.txt")
+	assert.Error(t, err)
+}
+
+func TestS3Storage_CopyDestinationExists(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create source and destination files
+	err := s3Storage.Put(ctx, "source.txt", bytes.NewReader([]byte("source")))
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "dest.txt", bytes.NewReader([]byte("dest")))
+	require.NoError(t, err)
+
+	// Try to copy when destination exists
+	err = s3Storage.Copy(ctx, "source.txt", "dest.txt")
+	assert.Error(t, err)
+}
+
+func TestS3Storage_MoveFile(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create a source file
+	content := "Hello, Move!"
+	err := s3Storage.Put(ctx, "source.txt", bytes.NewReader([]byte(content)))
+	require.NoError(t, err)
+
+	// Move the file
+	err = s3Storage.Move(ctx, "source.txt", "dest.txt")
+	assert.NoError(t, err)
+
+	// Verify source no longer exists
+	_, err = s3Storage.Get(ctx, "source.txt")
+	assert.Error(t, err)
+
+	// Verify destination exists with correct content
+	destData, err := s3Storage.Get(ctx, "dest.txt")
+	assert.NoError(t, err)
+	defer destData.Close()
+	destContent, _ := io.ReadAll(destData)
+	assert.Equal(t, content, string(destContent))
+}
+
+func TestS3Storage_MoveFolder(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create a source folder with files
+	err := s3Storage.CreateFolder(ctx, "source_folder")
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "source_folder/file1.txt", bytes.NewReader([]byte("content1")))
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "source_folder/file2.txt", bytes.NewReader([]byte("content2")))
+	require.NoError(t, err)
+
+	// Move the folder
+	err = s3Storage.Move(ctx, "source_folder", "dest_folder")
+	assert.NoError(t, err)
+
+	// Verify source folder no longer exists
+	sourceResult, err := s3Storage.List(ctx, "source_folder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, sourceResult.TotalCount)
+
+	// Verify destination folder and files exist
+	result, err := s3Storage.List(ctx, "dest_folder", storage.ListOptions{})
+	assert.NoError(t, err)
+	assert.Equal(t, 2, result.TotalCount)
+}
+
+func TestS3Storage_MoveNonExistent(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Try to move a non-existent file
+	err := s3Storage.Move(ctx, "non_existent.txt", "dest.txt")
+	assert.Error(t, err)
+}
+
+func TestS3Storage_MoveDestinationExists(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	// Create source and destination files
+	err := s3Storage.Put(ctx, "source.txt", bytes.NewReader([]byte("source")))
+	require.NoError(t, err)
+	err = s3Storage.Put(ctx, "dest.txt", bytes.NewReader([]byte("dest")))
+	require.NoError(t, err)
+
+	// Try to move when destination exists
+	err = s3Storage.Move(ctx, "source.txt", "dest.txt")
+	assert.Error(t, err)
+}

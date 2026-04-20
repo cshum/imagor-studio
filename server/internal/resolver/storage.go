@@ -10,19 +10,19 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/cshum/imagor-studio/server/internal/apperror"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
 // getSpaceStorage returns the storage instance for the given optional spaceKey.
 //
-// When spaceKey is nil/empty or multi-tenancy is disabled (spaceStore == nil),
+// When spaceKey is nil/empty or cloud space mode is disabled,
 // the call falls back transparently to the system storage so all existing
 // single-tenant code paths continue to work unchanged.
 //
@@ -32,13 +32,13 @@ import (
 func (r *Resolver) getSpaceStorage(ctx context.Context, spaceKey *string) (storage.Storage, error) {
 	// In multi-tenant mode (spaceStore active) the root gallery has no system-level
 	// storage — all file operations must target a named space via spaceKey.
-	if r.spaceStore != nil && (spaceKey == nil || *spaceKey == "") {
+	if r.cloudEnabled() && (spaceKey == nil || *spaceKey == "") {
 		return nil, &gqlerror.Error{
 			Message:    "a spaceKey is required in multi-tenant mode",
 			Extensions: map[string]interface{}{"code": "NOT_AVAILABLE"},
 		}
 	}
-	if spaceKey == nil || *spaceKey == "" || r.spaceStore == nil {
+	if spaceKey == nil || *spaceKey == "" || !r.cloudEnabled() {
 		return r.getStorage(), nil
 	}
 

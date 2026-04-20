@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Check, Languages, LogOut, Settings } from 'lucide-react'
+import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -45,23 +45,6 @@ interface HeaderBarProps {
     handleDragLeave: (e: React.DragEvent, folderKey: string) => void
     handleDrop: (e: React.DragEvent, folderKey: string) => void
   }
-}
-
-// Self-hosted header: always shows initials fallback — no avatar images.
-// Avatar images are a multi-tenant (SaaS) feature only.
-const UserAvatar: React.FC<{ displayName: string }> = ({ displayName }) => {
-  const initials = displayName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0].toUpperCase())
-    .join('')
-
-  return (
-    <div className='bg-muted text-muted-foreground flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium'>
-      {initials || '?'}
-    </div>
-  )
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -217,7 +200,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant='ghost' size='icon' className='h-12 w-12 sm:h-10 sm:w-10'>
-                      <UserAvatar displayName={getUserDisplayName()} />
+                      <MoreVertical className='h-5 w-5' />
                       <span className='sr-only'>{t('common.buttons.more')}</span>
                     </Button>
                   </DropdownMenuTrigger>

@@ -6,25 +6,30 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/cshum/imagor-studio/server/internal/auth"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/database"
-	"github.com/cshum/imagor-studio/server/internal/encryption"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
+	"github.com/cshum/imagor-studio/server/internal/managementruntime"
 	"github.com/cshum/imagor-studio/server/internal/migrator"
 	"github.com/cshum/imagor-studio/server/internal/noop"
-	"github.com/cshum/imagor-studio/server/internal/orgstore"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
-	"github.com/cshum/imagor-studio/server/internal/spaceconfigstore"
-	"github.com/cshum/imagor-studio/server/internal/spaceinvite"
-	"github.com/cshum/imagor-studio/server/internal/spaceloader"
-	"github.com/cshum/imagor-studio/server/internal/spacestore"
-	"github.com/cshum/imagor-studio/server/internal/storage"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/encryption"
+	"github.com/cshum/imagor-studio/server/pkg/management"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
+	"github.com/cshum/imagor-studio/server/pkg/space"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
+)
+
+const (
+	ModeSelfHosted = "selfhosted"
+	ModeCloud      = "cloud"
 )
 
 // Services contains all initialized application services
@@ -36,26 +41,47 @@ type Services struct {
 	ImagorProvider   *imagorprovider.Provider
 	RegistryStore    registrystore.Store
 	UserStore        userstore.Store
-	OrgStore         orgstore.Store                     // nil in self-hosted; set when InternalAPISecret != ""
-	SpaceStore       spacestore.Store                   // nil in self-hosted; set when InternalAPISecret != ""
-	SpaceInviteStore spaceinvite.Store                  // nil when invitation storage is unavailable
-	InviteSender     spaceinvite.EmailSender            // nil when invitation email is not configured
-	SpaceConfigStore *spaceconfigstore.SpaceConfigStore // nil unless SpacesEndpoint set; Start() called by server
+	OrgStore         org.OrgStore                 // nil in self-hosted; set in cloud multi-tenant mode
+	SpaceStore       space.SpaceStore             // nil in self-hosted; set in cloud multi-tenant mode
+	SpaceInviteStore space.SpaceInviteStore       // nil when invitation storage is unavailable
+	InviteSender     space.InviteSender           // nil when invitation email is not configured
+	SpaceConfigStore processing.SpaceConfigReader // nil unless running a processing node; Start() called by server
+	ProcessingConfig *processing.NodeConfig       // nil unless running a processing node
 	LicenseService   *license.Service
 	Encryption       *encryption.Service
 	Config           *config.Config
 	Logger           *zap.Logger
 }
 
-// Initialize sets up the database, runs migrations, and initializes all services
-func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
+// Initialize sets up the database, runs migrations, and initializes all services.
+// Prefer the explicit mode wrappers for new call sites.
+func Initialize(cfg *config.Config, logger *zap.Logger, args []string, mode string) (*Services, error) {
+	switch mode {
+	case ModeCloud:
+		return InitializeCloud(cfg, logger, args)
+	case ModeSelfHosted, "":
+		return InitializeSelfHosted(cfg, logger, args)
+	default:
+		return nil, fmt.Errorf("unknown bootstrap mode: %s", mode)
+	}
+}
+
+func InitializeSelfHosted(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
+	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, management.CloudConfig{}, nil, nil)
+}
+
+func InitializeCloud(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, management.CloudConfig{}, nil, nil)
+}
+
+func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args []string, cloudConfig management.CloudConfig, factories management.CloudFactories) (*Services, error) {
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudConfig, factories.Stores, factories.InviteSender)
+}
+
+// initializeRuntimeMode sets up runtime services for self-hosted or cloud management modes.
+func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudConfig management.CloudConfig, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) (*Services, error) {
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
-	}
-	// Processing-node mode: no database — all space state comes from SpaceConfigStore.
-	// Triggered when SpacesEndpoint is set (processing cluster polling management service).
-	if cfg.SpacesEndpoint != "" {
-		return initializeProcessingMode(cfg, logger)
 	}
 	// Initialize database
 	db, err := initializeDatabase(cfg)
@@ -120,35 +146,34 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string) (*Service
 	// Initialize user store
 	userStore := userstore.New(db, logger)
 
-	// Initialize multi-tenant org + space stores when InternalAPISecret is configured.
-	// Self-hosted deployments leave both nil, which is the signal used by auth
-	// handlers and resolvers to skip org/space logic.
-	var orgStore orgstore.Store
-	var spaceStore spacestore.Store
-	var spaceInviteStore spaceinvite.Store
-	if enhancedCfg.InternalAPISecret != "" {
-		orgStore = orgstore.New(db)
-		spaceStore = spacestore.New(db, encryptionService)
-		spaceInviteStore = spaceinvite.NewStore(db)
-		logger.Info("multi-tenant mode: org and space stores initialized")
+	var (
+		orgStore         org.OrgStore
+		spaceStore       space.SpaceStore
+		spaceInviteStore space.SpaceInviteStore
+	)
+	if mode == ModeCloud && cloudStoresFactory != nil {
+		orgStore, spaceStore, spaceInviteStore, err = cloudStoresFactory(management.CloudStoresConfig{InternalAPISecret: cloudConfig.InternalAPISecret}, db, encryptionService, logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize cloud stores: %w", err)
+		}
+	} else {
+		orgStore, spaceStore, spaceInviteStore = managementruntime.InitializeCloudStores(mode, enhancedCfg, db, encryptionService, logger)
 	}
 
-	var inviteSender spaceinvite.EmailSender
-	if enhancedCfg.SESFromEmail != "" {
-		sesRegion := enhancedCfg.SESRegion
-		if sesRegion == "" {
-			sesRegion = enhancedCfg.AWSRegion
+	var inviteSender space.InviteSender
+	if mode == ModeCloud && inviteSenderFactory != nil {
+		inviteSender, err = inviteSenderFactory(management.InviteSenderConfig{SESFromEmail: cloudConfig.SESFromEmail, SESRegion: cloudConfig.SESRegion, AWSRegion: enhancedCfg.AWSRegion, AppURL: enhancedCfg.AppUrl, AppAPIURL: cloudConfig.AppAPIURL})
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
 		}
-		sender, senderErr := spaceinvite.NewSESEmailSender(sesRegion, enhancedCfg.SESFromEmail, enhancedCfg.AppUrl, enhancedCfg.AppApiUrl)
-		if senderErr != nil {
-			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", senderErr)
+	} else {
+		inviteSender, err = managementruntime.InitializeInviteSender(enhancedCfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
 		}
-		inviteSender = sender
 	}
 
-	// Management node: StorageLoader delegates to registry-configured storage.
-	// Processing nodes are handled by initializeProcessingMode (early exit above).
-	var spaceConfigStore *spaceconfigstore.SpaceConfigStore
+	var spaceConfigStore processing.SpaceConfigReader
 	loader := imagorprovider.NewStorageLoader(storageProvider)
 
 	// Initialize imagor provider with the management-node loader.
@@ -325,78 +350,4 @@ func generateSecureJWTSecret() (string, error) {
 
 	// Encode as base64 for safe storage and transmission
 	return base64.StdEncoding.EncodeToString(bytes), nil
-}
-
-// initializeProcessingMode initializes services for a processing-cluster node.
-//
-// Processing nodes have no database — all space configuration (S3 credentials,
-// HMAC secrets, routing) is sourced from SpaceConfigStore, which delta-syncs
-// from the management service's /internal/spaces/delta endpoint.
-//
-// All management-only stores (orgStore, spaceStore, registryStore, etc.) are
-// no-op implementations that return ErrEmbeddedMode on every call.
-//
-// The JWT secret must be provided explicitly via IMAGOR_JWT_SECRET / --jwt-secret;
-// there is no database available to auto-generate or store it.
-func initializeProcessingMode(cfg *config.Config, logger *zap.Logger) (*Services, error) {
-	if cfg.JWTSecret == "" {
-		return nil, fmt.Errorf("IMAGOR_JWT_SECRET is required in processing mode (no database to auto-generate it)")
-	}
-
-	// No-op stores — processing nodes do not manage users, orgs, or spaces directly.
-	registryStore := noop.NewRegistryStore()
-	userStore := noop.NewUserStore()
-	orgStore := noop.NewOrgStore()
-	spaceStore := noop.NewSpaceStore()
-
-	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
-
-	// SpaceConfigStore is the single source of truth for space credentials and
-	// signing secrets. Start() is called by the server after Initialize() returns,
-	// performing the initial blocking full-sync before accepting traffic.
-	spaceConfigStore := spaceconfigstore.New(
-		cfg.SpacesEndpoint,
-		cfg.InternalAPISecret,
-		logger,
-	)
-
-	// SpaceS3Loader routes each image request to the correct S3 bucket based on
-	// the request Host header, using credentials fetched from SpaceConfigStore.
-	loader := spaceloader.New(spaceConfigStore, cfg.SpaceBaseDomain)
-
-	// imagorprovider in processing-node mode: per-request WithGetSigner and
-	// WithGetResultKey driven by SpaceConfigStore instead of a single shared secret.
-	imagorProvider := imagorprovider.New(
-		logger, registryStore, cfg, loader,
-		imagorprovider.WithSpaceConfigStore(spaceConfigStore, cfg.SpaceBaseDomain),
-	)
-	if err := imagorProvider.Initialize(); err != nil {
-		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
-	}
-
-	licenseService := license.NewService(registryStore, cfg)
-
-	logger.Info("processing mode initialized",
-		zap.String("spacesEndpoint", cfg.SpacesEndpoint),
-		zap.String("spaceBaseDomain", cfg.SpaceBaseDomain),
-	)
-
-	return &Services{
-		DB:               nil, // no database in processing mode
-		TokenManager:     tokenManager,
-		Storage:          nil, // no management storage in processing mode
-		StorageProvider:  nil, // no management storage in processing mode
-		ImagorProvider:   imagorProvider,
-		RegistryStore:    registryStore,
-		UserStore:        userStore,
-		OrgStore:         orgStore,
-		SpaceStore:       spaceStore,
-		SpaceInviteStore: nil,
-		InviteSender:     nil,
-		SpaceConfigStore: spaceConfigStore,
-		LicenseService:   licenseService,
-		Encryption:       nil, // no encryption service in processing mode
-		Config:           cfg,
-		Logger:           logger,
-	}, nil
 }
