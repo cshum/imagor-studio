@@ -9,7 +9,7 @@ BINARY_NAME=imagor-studio-server
 BINARY_UNIX=$(BINARY_NAME)_unix
 
 # Main package paths
-SELFHOSTED_MAIN_PACKAGE=./cmd/imagor-studio
+MAIN_PACKAGE=./cmd/imagor-studio
 
 # Build flags
 LDFLAGS=-ldflags "-w -s"
@@ -32,14 +32,9 @@ check-static:
 build: check-static
 	mkdir -p static
 	touch static/.placeholder
-	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_NAME) $(SELFHOSTED_MAIN_PACKAGE)
-
-# Backward-compatible alias for older scripts.
-build-selfhosted: build
+	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_NAME) $(MAIN_PACKAGE)
 
 build-with-static: prepare-static build
-
-build-selfhosted-with-static: prepare-static build
 
 test:
 	$(GOTEST) -v ./...
@@ -61,7 +56,7 @@ tidy:
 LOCAL_GALLERY ?= ./gallery
 
 dev:
-	CGO_ENABLED=0 $(GOCMD) run $(SELFHOSTED_MAIN_PACKAGE) \
+	CGO_ENABLED=0 $(GOCMD) run $(MAIN_PACKAGE) \
 		--port=8080 \
 		--file-storage-base-dir=$(LOCAL_GALLERY)
 
@@ -69,7 +64,7 @@ dev:
 
 # Cross compilation
 build-linux: check-static
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BINARY_UNIX) $(SELFHOSTED_MAIN_PACKAGE)
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BINARY_UNIX) $(MAIN_PACKAGE)
 
 docker-build:
 	docker build -t imagor-studio-server .
@@ -86,7 +81,7 @@ gqlgen-init:
 gqlgen-update:
 	$(GQLGEN) --verbose --config gqlgen.yml
 
-.PHONY: all build build-selfhosted build-with-static build-selfhosted-with-static prepare-static check-static test clean run deps tidy build-linux docker-build gqlgen gqlgen-init gqlgen-update
+.PHONY: all build build-with-static prepare-static check-static test clean run deps tidy build-linux docker-build gqlgen gqlgen-init gqlgen-update
 
 clean-db:
 	rm -f storage.db
