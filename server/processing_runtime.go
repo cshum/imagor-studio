@@ -11,7 +11,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/processingdefault"
+	"github.com/cshum/imagor-studio/server/internal/processingruntime"
 	internalserver "github.com/cshum/imagor-studio/server/internal/server"
 	sharedprocessing "github.com/cshum/imagor-studio/server/pkg/processing"
 	"go.uber.org/zap"
@@ -21,7 +21,7 @@ func RunDefaultProcessing(embedFS fs.FS) {
 	RunProcessingWithFactory(embedFS, DefaultProcessingRuntimeFactory)
 }
 
-var DefaultProcessingRuntimeFactory sharedprocessing.RuntimeFactory = processingdefault.DefaultProcessingRuntimeFactory
+var DefaultProcessingRuntimeFactory sharedprocessing.RuntimeFactory = processingruntime.DefaultProcessingRuntimeFactory
 
 func RunProcessingWithFactory(embedFS fs.FS, runtimeFactory sharedprocessing.RuntimeFactory) {
 	RunProcessingWithBuilder(embedFS, func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error) {

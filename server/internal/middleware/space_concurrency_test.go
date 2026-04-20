@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/cshum/imagor-studio/server/internal/middleware"
-	"github.com/cshum/imagor-studio/server/internal/testprocessing"
 )
 
 func okHandler(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +17,7 @@ func okHandler(w http.ResponseWriter, r *http.Request) {
 // TestSpaceConcurrencyMiddleware_AllowsUnderLimit verifies that requests below
 // the per-space limit pass through to the next handler with HTTP 200.
 func TestSpaceConcurrencyMiddleware_AllowsUnderLimit(t *testing.T) {
-	store := testprocessing.NewTestSpaceConfigStore(&testprocessing.TestSpaceConfig{Key: "acme"})
+	store := newTestSpaceConfigStore(&testSpaceConfig{Key: "acme"})
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", 3)
 	handler := mid(http.HandlerFunc(okHandler))
 
@@ -35,7 +34,7 @@ func TestSpaceConcurrencyMiddleware_AllowsUnderLimit(t *testing.T) {
 // TestSpaceConcurrencyMiddleware_BlocksAtLimit verifies that when maxPerSpace
 // concurrent requests are in-flight, the next request gets HTTP 429.
 func TestSpaceConcurrencyMiddleware_BlocksAtLimit(t *testing.T) {
-	store := testprocessing.NewTestSpaceConfigStore(&testprocessing.TestSpaceConfig{Key: "acme"})
+	store := newTestSpaceConfigStore(&testSpaceConfig{Key: "acme"})
 	const maxPerSpace = 2
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", maxPerSpace)
 
@@ -86,9 +85,9 @@ func TestSpaceConcurrencyMiddleware_BlocksAtLimit(t *testing.T) {
 // spaces do not share the same counter — acme being at limit does not block
 // widget-corp.
 func TestSpaceConcurrencyMiddleware_SeparateCountersPerSpace(t *testing.T) {
-	store := testprocessing.NewTestSpaceConfigStore(
-		&testprocessing.TestSpaceConfig{Key: "acme"},
-		&testprocessing.TestSpaceConfig{Key: "widget-corp"},
+	store := newTestSpaceConfigStore(
+		&testSpaceConfig{Key: "acme"},
+		&testSpaceConfig{Key: "widget-corp"},
 	)
 	const maxPerSpace = 1
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", maxPerSpace)
@@ -146,7 +145,7 @@ func TestSpaceConcurrencyMiddleware_SeparateCountersPerSpace(t *testing.T) {
 // request for an unrecognised domain (not in SpaceConfigStore) is passed to
 // the next handler, not rejected by the middleware.
 func TestSpaceConcurrencyMiddleware_UnknownSpacePassesThrough(t *testing.T) {
-	store := testprocessing.NewTestSpaceConfigStore() // empty store
+	store := newTestSpaceConfigStore() // empty store
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", 1)
 	var called bool
 	handler := mid(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -170,7 +169,7 @@ func TestSpaceConcurrencyMiddleware_UnknownSpacePassesThrough(t *testing.T) {
 // TestSpaceConcurrencyMiddleware_CustomDomain verifies that spaces registered
 // with a custom domain (not subdomain) are resolved correctly.
 func TestSpaceConcurrencyMiddleware_CustomDomain(t *testing.T) {
-	store := testprocessing.NewTestSpaceConfigStore(&testprocessing.TestSpaceConfig{
+	store := newTestSpaceConfigStore(&testSpaceConfig{
 		Key:          "acme",
 		CustomDomain: "images.acme.com",
 	})
@@ -190,7 +189,7 @@ func TestSpaceConcurrencyMiddleware_CustomDomain(t *testing.T) {
 // TestSpaceConcurrencyMiddleware_Disabled verifies that maxPerSpace=0 disables
 // the middleware entirely — all requests pass through regardless of volume.
 func TestSpaceConcurrencyMiddleware_Disabled(t *testing.T) {
-	store := testprocessing.NewTestSpaceConfigStore(&testprocessing.TestSpaceConfig{Key: "acme"})
+	store := newTestSpaceConfigStore(&testSpaceConfig{Key: "acme"})
 	mid := middleware.SpaceConcurrencyMiddleware(store, "imagor.app", 0)
 	var count atomic.Int64
 	handler := mid(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

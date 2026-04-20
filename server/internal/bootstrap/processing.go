@@ -8,7 +8,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/noop"
-	"github.com/cshum/imagor-studio/server/internal/processingdefault"
+	"github.com/cshum/imagor-studio/server/internal/processingruntime"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
@@ -19,7 +19,7 @@ import (
 type ProcessingRuntimeFactory func(cfg *config.Config, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error)
 
 func defaultProcessingRuntimeFactory(cfg *config.Config, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
-	return processingdefault.DefaultProcessingRuntimeFactory(cfg, logger)
+	return processingruntime.DefaultProcessingRuntimeFactory(cfg, logger)
 }
 
 var DefaultProcessingRuntimeFactory ProcessingRuntimeFactory = defaultProcessingRuntimeFactory
