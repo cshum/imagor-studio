@@ -11,27 +11,20 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
 	"github.com/cshum/imagor-studio/server/internal/config"
-	"github.com/cshum/imagor-studio/server/internal/processingruntime"
 	internalserver "github.com/cshum/imagor-studio/server/internal/server"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	sharedprocessing "github.com/cshum/imagor-studio/server/pkg/processing"
 	"go.uber.org/zap"
 )
 
-func RunDefaultProcessing(embedFS fs.FS) {
-	RunProcessingWithFactory(embedFS, DefaultProcessingRuntimeFactory)
-}
-
-var DefaultProcessingRuntimeFactory sharedprocessing.RuntimeFactory = processingruntime.DefaultProcessingRuntimeFactory
-
-func RunProcessingWithFactory(embedFS fs.FS, runtimeFactory sharedprocessing.RuntimeFactory) {
+func RunProcessingWithFactory(embedFS fs.FS, nodeCfg sharedprocessing.NodeConfig, runtimeFactory sharedprocessing.RuntimeFactory) {
 	RunProcessingWithBuilder(embedFS, func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error) {
-		return InitializeProcessingWithFactory(cfg, logger, runtimeFactory)
+		return InitializeProcessingWithFactory(cfg, nodeCfg, logger, runtimeFactory)
 	})
 }
 
-func InitializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, runtimeFactory sharedprocessing.RuntimeFactory) (*bootstrap.Services, error) {
-	return bootstrap.InitializeProcessingWithFactory(cfg, logger, runtimeFactory)
+func InitializeProcessingWithFactory(cfg *config.Config, nodeCfg sharedprocessing.NodeConfig, logger *zap.Logger, runtimeFactory sharedprocessing.RuntimeFactory) (*bootstrap.Services, error) {
+	return bootstrap.InitializeProcessingWithFactory(cfg, nodeCfg, logger, runtimeFactory)
 }
 
 func RunProcessingWithBuilder(embedFS fs.FS, build func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error)) {

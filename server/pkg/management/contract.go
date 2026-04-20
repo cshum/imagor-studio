@@ -18,6 +18,7 @@ type CloudStoresConfig struct {
 }
 
 type CloudConfig struct {
+	InternalAPISecret  string
 	GoogleClientID     string
 	GoogleClientSecret string
 	SESRegion          string

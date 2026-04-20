@@ -52,7 +52,7 @@ type Resolver struct {
 	logger          *zap.Logger
 
 	// Multi-tenant stores — nil in self-hosted / embedded mode.
-	// Only set when InternalAPISecret is configured (multi-tenant deployment).
+	// Only set for cloud multi-tenant deployments.
 	orgStore   org.OrgStore
 	spaceStore space.SpaceStore
 

@@ -3,12 +3,10 @@ package bootstrap
 import (
 	"fmt"
 
-	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/noop"
-	"github.com/cshum/imagor-studio/server/internal/processingruntime"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
@@ -18,22 +16,12 @@ import (
 
 type ProcessingRuntimeFactory = processing.RuntimeFactory
 
-func defaultProcessingRuntimeFactory(cfg processing.RuntimeConfig, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
-	return processingruntime.DefaultProcessingRuntimeFactory(cfg, logger)
-}
-
-var DefaultProcessingRuntimeFactory ProcessingRuntimeFactory = defaultProcessingRuntimeFactory
-
-func InitializeProcessing(cfg *config.Config, logger *zap.Logger) (*Services, error) {
-	return initializeProcessingWithFactory(cfg, logger, DefaultProcessingRuntimeFactory)
-}
-
-func InitializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, runtimeFactory ProcessingRuntimeFactory) (*Services, error) {
-	return initializeProcessingWithFactory(cfg, logger, runtimeFactory)
+func InitializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.NodeConfig, logger *zap.Logger, runtimeFactory ProcessingRuntimeFactory) (*Services, error) {
+	return initializeProcessingWithFactory(cfg, nodeCfg, logger, runtimeFactory)
 }
 
 // InitializeProcessing sets up services for a cloud processing node.
-func initializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, runtimeFactory ProcessingRuntimeFactory) (*Services, error) {
+func initializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.NodeConfig, logger *zap.Logger, runtimeFactory ProcessingRuntimeFactory) (*Services, error) {
 	if cfg.JWTSecret == "" {
 		return nil, fmt.Errorf("IMAGOR_JWT_SECRET is required in processing mode (no database to auto-generate it)")
 	}
@@ -45,20 +33,14 @@ func initializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, run
 
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
 
-	runtimeCfg := processing.RuntimeConfig{
-		SpacesEndpoint:    cfg.SpacesEndpoint,
-		InternalAPISecret: cfg.InternalAPISecret,
-		SpaceBaseDomain:   cfg.SpaceBaseDomain,
-	}
-
-	spaceConfigStore, loader, err := runtimeFactory(runtimeCfg, logger)
+	spaceConfigStore, loader, err := runtimeFactory(nodeCfg.Runtime, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize processing runtime: %w", err)
 	}
 
 	imagorProvider := imagorprovider.New(
 		logger, registryStore, cfg, loader,
-		imagorprovider.WithSpaceConfigStore(spaceConfigStore, cfg.SpaceBaseDomain),
+		imagorprovider.WithSpaceConfigStore(spaceConfigStore, nodeCfg.Runtime.SpaceBaseDomain),
 	)
 	if err := imagorProvider.Initialize(); err != nil {
 		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
@@ -67,8 +49,8 @@ func initializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, run
 	licenseService := license.NewService(registryStore, cfg)
 
 	logger.Info("processing mode initialized",
-		zap.String("spacesEndpoint", cfg.SpacesEndpoint),
-		zap.String("spaceBaseDomain", cfg.SpaceBaseDomain),
+		zap.String("spacesEndpoint", nodeCfg.Runtime.SpacesEndpoint),
+		zap.String("spaceBaseDomain", nodeCfg.Runtime.SpaceBaseDomain),
 	)
 
 	return &Services{
@@ -84,6 +66,7 @@ func initializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, run
 		SpaceInviteStore: nil,
 		InviteSender:     nil,
 		SpaceConfigStore: spaceConfigStore,
+		ProcessingConfig: &nodeCfg,
 		LicenseService:   licenseService,
 		Encryption:       nil,
 		Config:           cfg,

@@ -13,6 +13,11 @@ type RuntimeConfig struct {
 	SpaceBaseDomain   string
 }
 
+type NodeConfig struct {
+	Runtime             RuntimeConfig
+	SpaceMaxConcurrency int
+}
+
 type SpaceConfig interface {
 	GetKey() string
 	GetPrefix() string

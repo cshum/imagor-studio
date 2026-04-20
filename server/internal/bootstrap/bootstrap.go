@@ -41,11 +41,12 @@ type Services struct {
 	ImagorProvider   *imagorprovider.Provider
 	RegistryStore    registrystore.Store
 	UserStore        userstore.Store
-	OrgStore         org.OrgStore                 // nil in self-hosted; set when InternalAPISecret != ""
-	SpaceStore       space.SpaceStore             // nil in self-hosted; set when InternalAPISecret != ""
+	OrgStore         org.OrgStore                 // nil in self-hosted; set in cloud multi-tenant mode
+	SpaceStore       space.SpaceStore             // nil in self-hosted; set in cloud multi-tenant mode
 	SpaceInviteStore space.SpaceInviteStore       // nil when invitation storage is unavailable
 	InviteSender     space.InviteSender           // nil when invitation email is not configured
-	SpaceConfigStore processing.SpaceConfigReader // nil unless SpacesEndpoint set; Start() called by server
+	SpaceConfigStore processing.SpaceConfigReader // nil unless running a processing node; Start() called by server
+	ProcessingConfig *processing.NodeConfig       // nil unless running a processing node
 	LicenseService   *license.Service
 	Encryption       *encryption.Service
 	Config           *config.Config
@@ -81,9 +82,6 @@ func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args [
 func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudConfig management.CloudConfig, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) (*Services, error) {
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
-	}
-	if cfg.SpacesEndpoint != "" {
-		return InitializeProcessing(cfg, logger)
 	}
 	// Initialize database
 	db, err := initializeDatabase(cfg)
@@ -154,7 +152,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 		spaceInviteStore space.SpaceInviteStore
 	)
 	if mode == ModeCloud && cloudStoresFactory != nil {
-		orgStore, spaceStore, spaceInviteStore, err = cloudStoresFactory(management.CloudStoresConfig{InternalAPISecret: enhancedCfg.InternalAPISecret}, db, encryptionService, logger)
+		orgStore, spaceStore, spaceInviteStore, err = cloudStoresFactory(management.CloudStoresConfig{InternalAPISecret: cloudConfig.InternalAPISecret}, db, encryptionService, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize cloud stores: %w", err)
 		}

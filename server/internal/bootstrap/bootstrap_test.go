@@ -6,15 +6,39 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/migrator"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+type stubSpaceConfigStore struct{}
+
+func (stubSpaceConfigStore) Get(key string) (processing.SpaceConfig, bool) {
+	return nil, false
+}
+
+func (stubSpaceConfigStore) GetByHostname(hostname string) (processing.SpaceConfig, bool) {
+	return nil, false
+}
+
+func (stubSpaceConfigStore) Start(ctx context.Context) error {
+	return nil
+}
+
+func stubProcessingRuntimeFactory() ProcessingRuntimeFactory {
+	return func(cfg processing.RuntimeConfig, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
+		_ = cfg
+		_ = logger
+		return stubSpaceConfigStore{}, nil, nil
+	}
+}
 
 func TestInitialize(t *testing.T) {
 	// Create a temporary database file
@@ -297,10 +321,10 @@ func TestConfigEnhancementWithEnvPriority(t *testing.T) {
 func TestInitializeProcessingMode_MissingJWT(t *testing.T) {
 	logger := zap.NewNop()
 	cfg := &config.Config{
-		SpacesEndpoint: "http://management.example.test",
 		// JWTSecret intentionally empty — must cause an error.
 	}
-	_, err := InitializeProcessing(cfg, logger)
+	nodeCfg := processing.NodeConfig{Runtime: processing.RuntimeConfig{SpacesEndpoint: "http://management.example.test"}}
+	_, err := InitializeProcessingWithFactory(cfg, nodeCfg, logger, stubProcessingRuntimeFactory())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "IMAGOR_JWT_SECRET")
 }
@@ -308,13 +332,18 @@ func TestInitializeProcessingMode_MissingJWT(t *testing.T) {
 func TestInitializeProcessingMode_Success(t *testing.T) {
 	logger := zap.NewNop()
 	cfg := &config.Config{
-		SpacesEndpoint:    "http://management.example.test",
-		InternalAPISecret: "test-internal-secret",
-		JWTSecret:         "test-jwt-secret",
-		SpaceBaseDomain:   "imagor.test",
-		JWTExpiration:     24 * time.Hour,
+		JWTSecret:     "test-jwt-secret",
+		JWTExpiration: 24 * time.Hour,
 	}
-	svc, err := InitializeProcessing(cfg, logger)
+	nodeCfg := processing.NodeConfig{
+		Runtime: processing.RuntimeConfig{
+			SpacesEndpoint:    "http://management.example.test",
+			InternalAPISecret: "test-internal-secret",
+			SpaceBaseDomain:   "imagor.test",
+		},
+		SpaceMaxConcurrency: 8,
+	}
+	svc, err := InitializeProcessingWithFactory(cfg, nodeCfg, logger, stubProcessingRuntimeFactory())
 	require.NoError(t, err)
 
 	// Processing nodes have no database.
@@ -337,33 +366,17 @@ func TestInitializeProcessingMode_Success(t *testing.T) {
 	assert.NotNil(t, svc.UserStore, "noop UserStore should be set")
 }
 
-func TestInitialize_RoutesToProcessingMode(t *testing.T) {
-	logger := zap.NewNop()
-	cfg := &config.Config{
-		SpacesEndpoint:  "http://management.example.test",
-		JWTSecret:       "test-jwt-secret",
-		SpaceBaseDomain: "imagor.test",
-		JWTExpiration:   24 * time.Hour,
-	}
-	// Initialize with a SpacesEndpoint → must take the processing-mode branch (no DB).
-	svc, err := Initialize(cfg, logger, nil, "selfhosted")
-	require.NoError(t, err)
-
-	assert.Nil(t, svc.DB, "Initialize with SpacesEndpoint should produce a no-DB processing-mode service")
-	assert.NotNil(t, svc.SpaceConfigStore)
-}
-
 func TestInitializeProcessingMode_LogsInfo(t *testing.T) {
 	// Smoke-test: ensure the function runs to completion without panicking even when
 	// logger is provided (not Nop) and all optional fields are empty strings.
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync() //nolint:errcheck
 	cfg := &config.Config{
-		SpacesEndpoint: "http://management.example.test",
-		JWTSecret:      "must-not-be-empty",
-		JWTExpiration:  time.Hour,
+		JWTSecret:     "must-not-be-empty",
+		JWTExpiration: time.Hour,
 	}
-	svc, err := InitializeProcessing(cfg, logger)
+	nodeCfg := processing.NodeConfig{Runtime: processing.RuntimeConfig{SpacesEndpoint: "http://management.example.test"}}
+	svc, err := InitializeProcessingWithFactory(cfg, nodeCfg, logger, stubProcessingRuntimeFactory())
 	require.NoError(t, err)
 	assert.NotNil(t, svc)
 }

@@ -655,11 +655,10 @@ func TestSignerFromSpaceConfig_Truncate(t *testing.T) {
 
 func TestSyncIsNoOpInProcessingMode(t *testing.T) {
 	logger := zap.NewNop()
+	baseDomain := "example.test"
 	cfg := &config.Config{
-		JWTSecret:       "test-secret",
-		JWTExpiration:   time.Hour,
-		SpacesEndpoint:  "http://management.example.test",
-		SpaceBaseDomain: "example.test",
+		JWTSecret:     "test-secret",
+		JWTExpiration: time.Hour,
 	}
 	// New() does NOT start HTTP polling — Start() would; safe for unit tests.
 	scs := &testSpaceConfigReader{byKey: map[string]processing.SpaceConfig{}, byHostname: map[string]processing.SpaceConfig{}}
@@ -671,7 +670,7 @@ func TestSyncIsNoOpInProcessingMode(t *testing.T) {
 		newMockRegistryStore(),
 		cfg,
 		loader,
-		WithSpaceConfigStore(scs, cfg.SpaceBaseDomain),
+		WithSpaceConfigStore(scs, baseDomain),
 	)
 	require.NoError(t, p.Initialize())
 
@@ -681,11 +680,10 @@ func TestSyncIsNoOpInProcessingMode(t *testing.T) {
 
 func TestProviderProcessingMode_Initialize(t *testing.T) {
 	logger := zap.NewNop()
+	baseDomain := "imagor.test"
 	cfg := &config.Config{
-		JWTSecret:       "processing-secret",
-		JWTExpiration:   time.Hour,
-		SpacesEndpoint:  "http://management.example.test",
-		SpaceBaseDomain: "imagor.test",
+		JWTSecret:     "processing-secret",
+		JWTExpiration: time.Hour,
 	}
 	scs := &testSpaceConfigReader{byKey: map[string]processing.SpaceConfig{}, byHostname: map[string]processing.SpaceConfig{}}
 	loader := &StorageLoader{source: &mockStorageSource{stor: newMockReadStorage()}}
@@ -695,7 +693,7 @@ func TestProviderProcessingMode_Initialize(t *testing.T) {
 		newMockRegistryStore(),
 		cfg,
 		loader,
-		WithSpaceConfigStore(scs, cfg.SpaceBaseDomain),
+		WithSpaceConfigStore(scs, baseDomain),
 	)
 
 	require.NoError(t, p.Initialize())

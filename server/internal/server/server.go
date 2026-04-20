@@ -107,8 +107,8 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	// Add useful extensions
 	gqlHandler.Use(extension.Introspection{})
 
-	// Create auth handler.  services.OrgStore is nil for self-hosted deployments
-	// and non-nil (wired by bootstrap) when InternalAPISecret is configured (multi-tenant).
+	// Create auth handler. services.OrgStore is nil for self-hosted deployments
+	// and non-nil only for cloud multi-tenant deployments.
 	multiTenant := mode == ModeCloud && services.OrgStore != nil && services.SpaceStore != nil
 
 	authHandler := httphandler.NewAuthHandler(
@@ -148,7 +148,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		OrgStore:          services.OrgStore,
 		SpaceStore:        services.SpaceStore,
 		SpaceInviteStore:  services.SpaceInviteStore,
-		InternalAPISecret: services.Config.InternalAPISecret,
+		InternalAPISecret: cloudConfig.InternalAPISecret,
 		Logger:            services.Logger,
 	}
 
@@ -247,14 +247,14 @@ func registerProcessingOrSPA(
 	services *bootstrap.Services,
 ) error {
 	if services.SpaceConfigStore != nil {
-		baseDomain := cfg.SpaceBaseDomain
+		baseDomain := services.ProcessingConfig.Runtime.SpaceBaseDomain
 		if len(baseDomain) > 0 && baseDomain[0] == '.' {
 			baseDomain = baseDomain[1:]
 		}
 		imagorHandler := middleware.SpaceConcurrencyMiddleware(
 			services.SpaceConfigStore,
 			baseDomain,
-			int64(cfg.SpaceMaxConcurrency),
+			int64(services.ProcessingConfig.SpaceMaxConcurrency),
 		)(services.ImagorProvider.Imagor())
 		mux.Handle("/", imagorHandler)
 		return nil
