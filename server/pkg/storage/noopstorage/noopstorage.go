@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 )
 
 // NoOpStorage implements the storage.Storage interface with no-operation responses

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cshum/imagor-studio/server/internal/storage"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
 )
 
 func TestNoOpStorage_New(t *testing.T) {

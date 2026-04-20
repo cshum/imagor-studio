@@ -12,10 +12,10 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
-	"github.com/cshum/imagor-studio/server/internal/storage"
-	"github.com/cshum/imagor-studio/server/internal/storage/filestorage"
-	"github.com/cshum/imagor-studio/server/internal/storage/noopstorage"
-	"github.com/cshum/imagor-studio/server/internal/storage/s3storage"
+	"github.com/cshum/imagor-studio/server/pkg/storage"
+	"github.com/cshum/imagor-studio/server/pkg/storage/filestorage"
+	"github.com/cshum/imagor-studio/server/pkg/storage/noopstorage"
+	"github.com/cshum/imagor-studio/server/pkg/storage/s3storage"
 	"go.uber.org/zap"
 )
 
