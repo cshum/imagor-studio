@@ -8,9 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudapi"
-	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/noop"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
@@ -22,8 +21,6 @@ var _ org.OrgStore = noop.NewOrgStore()
 var _ space.SpaceStore = noop.NewSpaceStore()
 var _ space.SpaceInviteStore = noop.NewSpaceInviteStore()
 var _ space.InviteSender = noop.NewInviteSender()
-var _ cloudapi.Disabled = noop.NewOrgStore()
-var _ cloudapi.Disabled = noop.NewSpaceStore()
 
 var ctx = context.Background()
 
@@ -167,13 +164,13 @@ func TestNoopInviteSender_ErrorMentionsDisabledMode(t *testing.T) {
 func TestNoopStores_ReportCloudDisabled(t *testing.T) {
 	assert.True(t, noop.NewOrgStore().CloudDisabled())
 	assert.True(t, noop.NewSpaceStore().CloudDisabled())
-	assert.True(t, cloudapi.IsDisabled(noop.NewOrgStore()))
-	assert.True(t, cloudapi.IsDisabled(noop.NewSpaceStore()))
+	assert.False(t, management.OrgEnabled(noop.NewOrgStore()))
+	assert.False(t, management.SpaceEnabled(noop.NewSpaceStore()))
 }
 
 func TestCloudMode_DisabledNoopStoresDisableCloud(t *testing.T) {
-	assert.False(t, cloudmode.OrgEnabled(noop.NewOrgStore()))
-	assert.False(t, cloudmode.SpaceEnabled(noop.NewSpaceStore()))
-	assert.False(t, cloudmode.CloudEnabled(noop.NewOrgStore(), noop.NewSpaceStore()))
-	assert.False(t, cloudmode.InviteEnabled(noop.NewOrgStore(), noop.NewSpaceStore(), noop.NewSpaceInviteStore(), noop.NewInviteSender()))
+	assert.False(t, management.OrgEnabled(noop.NewOrgStore()))
+	assert.False(t, management.SpaceEnabled(noop.NewSpaceStore()))
+	assert.False(t, management.CloudEnabled(noop.NewOrgStore(), noop.NewSpaceStore()))
+	assert.False(t, management.InviteEnabled(noop.NewOrgStore(), noop.NewSpaceStore(), noop.NewSpaceInviteStore(), noop.NewInviteSender()))
 }

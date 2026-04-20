@@ -4,18 +4,18 @@ import (
 	"net/http"
 
 	"github.com/cshum/imagor-studio/server/internal/bootstrap"
-	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 )
 
 func registerCloudAuthRoutes(mux *http.ServeMux, cfg *config.Config, services *bootstrap.Services) {
-	if !cloudmode.CloudEnabled(services.OrgStore, services.SpaceStore) {
+	if !management.CloudEnabled(services.OrgStore, services.SpaceStore) {
 		registerSelfHostedAuthRoutes(mux)
 		return
 	}
 
-	if !cloudmode.InviteEnabled(services.OrgStore, services.SpaceStore, services.SpaceInviteStore, services.InviteSender) && cfg.GoogleClientID == "" {
+	if !management.InviteEnabled(services.OrgStore, services.SpaceStore, services.SpaceInviteStore, services.InviteSender) && cfg.GoogleClientID == "" {
 		registerSelfHostedAuthRoutes(mux)
 		return
 	}

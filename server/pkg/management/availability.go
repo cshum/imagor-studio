@@ -1,23 +1,31 @@
-package cloudmode
+package management
 
 import (
-	"github.com/cshum/imagor-studio/server/internal/cloudapi"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 )
+
+type disabled interface {
+	CloudDisabled() bool
+}
+
+func isDisabled(v any) bool {
+	d, ok := v.(disabled)
+	return ok && d.CloudDisabled()
+}
 
 func OrgEnabled(store org.OrgStore) bool {
 	if store == nil {
 		return false
 	}
-	return !cloudapi.IsDisabled(store)
+	return !isDisabled(store)
 }
 
 func SpaceEnabled(store space.SpaceStore) bool {
 	if store == nil {
 		return false
 	}
-	return !cloudapi.IsDisabled(store)
+	return !isDisabled(store)
 }
 
 func CloudEnabled(orgStore org.OrgStore, spaceStore space.SpaceStore) bool {

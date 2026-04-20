@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
@@ -94,11 +94,11 @@ func (r *Resolver) getStorage() storage.Storage {
 }
 
 func (r *Resolver) cloudEnabled() bool {
-	return cloudmode.CloudEnabled(r.orgStore, r.spaceStore)
+	return management.CloudEnabled(r.orgStore, r.spaceStore)
 }
 
 func (r *Resolver) inviteEnabled() bool {
-	return cloudmode.InviteEnabled(r.orgStore, r.spaceStore, r.spaceInviteStore, r.inviteSender)
+	return management.InviteEnabled(r.orgStore, r.spaceStore, r.spaceInviteStore, r.inviteSender)
 }
 
 // Mutation returns MutationResolver implementation.

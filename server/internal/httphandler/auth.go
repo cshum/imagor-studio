@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	auth2 "github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
@@ -48,7 +48,7 @@ func NewAuthHandler(
 }
 
 func (h *AuthHandler) cloudEnabled() bool {
-	return cloudmode.OrgEnabled(h.orgStore)
+	return management.OrgEnabled(h.orgStore)
 }
 
 type RegisterRequest struct {

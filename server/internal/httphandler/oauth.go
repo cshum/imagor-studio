@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"go.uber.org/zap"
@@ -110,11 +110,11 @@ func newOAuthHandlerWithConfig(
 }
 
 func (h *OAuthHandler) cloudEnabled() bool {
-	return cloudmode.CloudEnabled(h.orgStore, h.spaceStore)
+	return management.CloudEnabled(h.orgStore, h.spaceStore)
 }
 
 func (h *OAuthHandler) inviteFlowEnabled() bool {
-	return cloudmode.InviteEnabled(h.orgStore, h.spaceStore, h.inviteStore, nil)
+	return management.InviteEnabled(h.orgStore, h.spaceStore, h.inviteStore, nil)
 }
 
 // AuthProvidersResponse is the typed response for the providers endpoint.
