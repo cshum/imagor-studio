@@ -24,21 +24,23 @@ const (
 )
 
 func Run(embedFS fs.FS, mode Mode) {
-	run(embedFS, mode, management.CloudFactories{})
+	run(embedFS, mode, os.Args[1:], management.CloudFactories{})
 }
 
 func RunCloudWithFactories(embedFS fs.FS, factories management.CloudFactories) {
-	run(embedFS, ModeCloud, factories)
+	run(embedFS, ModeCloud, os.Args[1:], factories)
 }
 
-func run(embedFS fs.FS, mode Mode, factories management.CloudFactories) {
+func RunCloudWithFactoriesAndArgs(embedFS fs.FS, args []string, factories management.CloudFactories) {
+	run(embedFS, ModeCloud, args, factories)
+}
+
+func run(embedFS fs.FS, mode Mode, args []string, factories management.CloudFactories) {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		fmt.Printf("Failed to initialize logger: %v\n", err)
 		os.Exit(1)
 	}
-
-	args := os.Args[1:]
 
 	cfg, err := config.Load(args, nil)
 	if err != nil {

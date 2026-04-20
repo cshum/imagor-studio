@@ -18,7 +18,11 @@ import (
 )
 
 func RunProcessingWithFactory(embedFS fs.FS, nodeCfg sharedprocessing.NodeConfig, runtimeFactory sharedprocessing.RuntimeFactory) {
-	RunProcessingWithBuilder(embedFS, func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error) {
+	RunProcessingWithFactoryAndArgs(embedFS, os.Args[1:], nodeCfg, runtimeFactory)
+}
+
+func RunProcessingWithFactoryAndArgs(embedFS fs.FS, args []string, nodeCfg sharedprocessing.NodeConfig, runtimeFactory sharedprocessing.RuntimeFactory) {
+	RunProcessingWithBuilderAndArgs(embedFS, args, func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error) {
 		return InitializeProcessingWithFactory(cfg, nodeCfg, logger, runtimeFactory)
 	})
 }
@@ -28,13 +32,15 @@ func InitializeProcessingWithFactory(cfg *config.Config, nodeCfg sharedprocessin
 }
 
 func RunProcessingWithBuilder(embedFS fs.FS, build func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error)) {
+	RunProcessingWithBuilderAndArgs(embedFS, os.Args[1:], build)
+}
+
+func RunProcessingWithBuilderAndArgs(embedFS fs.FS, args []string, build func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error)) {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		fmt.Printf("Failed to initialize logger: %v\n", err)
 		os.Exit(1)
 	}
-
-	args := os.Args[1:]
 
 	cfg, err := config.Load(args, nil)
 	if err != nil {
