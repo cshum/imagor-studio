@@ -6,7 +6,6 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 BINARY_NAME=imagor-studio-server
-BINARY_SELFHOSTED=imagor-studio-selfhosted
 BINARY_UNIX=$(BINARY_NAME)_unix
 
 # Main package paths
@@ -29,21 +28,18 @@ prepare-static:
 check-static:
 	@test -f $(STATIC_DIR)/index.html || (echo "missing embedded frontend assets in $(STATIC_DIR). Run 'make prepare-static' or build the web app first." && exit 1)
 
-# build produces the full self-hosted binary with libvips + video support.
-# Use build-management for a no-CGO management-only binary.
+# build produces the public all-in-one binary with libvips + video support.
 build: check-static
 	mkdir -p static
 	touch static/.placeholder
-	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_SELFHOSTED) $(SELFHOSTED_MAIN_PACKAGE)
+	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_NAME) $(SELFHOSTED_MAIN_PACKAGE)
 
-build-selfhosted: check-static
-	mkdir -p static
-	touch static/.placeholder
-	$(GOBUILD) $(LDFLAGS) -tags vips -o $(BINARY_SELFHOSTED) $(SELFHOSTED_MAIN_PACKAGE)
+# Backward-compatible alias for older scripts.
+build-selfhosted: build
 
 build-with-static: prepare-static build
 
-build-selfhosted-with-static: prepare-static build-selfhosted
+build-selfhosted-with-static: prepare-static build
 
 test:
 	$(GOTEST) -v ./...
@@ -62,11 +58,8 @@ deps:
 tidy:
 	$(GOMOD) tidy
 
-# ── Local development run targets ────────────────────────────────────────────
 LOCAL_GALLERY ?= ./gallery
 
-# Self-hosted dev run: no CGO, SQLite, no libvips — fast iteration.
-# All-in-one: GraphQL + admin UI + imagor at /imagor/.
 dev:
 	CGO_ENABLED=0 $(GOCMD) run $(SELFHOSTED_MAIN_PACKAGE) \
 		--port=8080 \
