@@ -73,8 +73,8 @@ func InitializeCloud(cfg *config.Config, logger *zap.Logger, args []string) (*Se
 	return initializeRuntimeMode(cfg, logger, args, ModeCloud, nil, nil)
 }
 
-func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args []string, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudStoresFactory, inviteSenderFactory)
+func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args []string, factories management.CloudFactories) (*Services, error) {
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, factories.Stores, factories.InviteSender)
 }
 
 // initializeRuntimeMode sets up runtime services for self-hosted or cloud management modes.

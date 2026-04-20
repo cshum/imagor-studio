@@ -13,6 +13,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/processingruntime"
 	internalserver "github.com/cshum/imagor-studio/server/internal/server"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	sharedprocessing "github.com/cshum/imagor-studio/server/pkg/processing"
 	"go.uber.org/zap"
 )
@@ -52,7 +53,7 @@ func RunProcessingWithBuilder(embedFS fs.FS, build func(cfg *config.Config, logg
 		logger.Fatal("Failed to initialize processing services", zap.Error(err))
 	}
 
-	srv, err := internalserver.NewFromServices(cfg, embedFS, logger, services, ModeSelfHosted)
+	srv, err := internalserver.NewFromServices(cfg, embedFS, logger, services, ModeSelfHosted, management.CloudFactories{})
 	if err != nil {
 		logger.Fatal("Failed to create processing server", zap.Error(err))
 	}

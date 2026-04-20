@@ -9,31 +9,15 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/model"
+	shareduser "github.com/cshum/imagor-studio/server/pkg/user"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-type User struct {
-	ID            string    `json:"id"`
-	DisplayName   string    `json:"displayName"`
-	Username      string    `json:"username"`
-	Role          string    `json:"role"`
-	IsActive      bool      `json:"isActive"`
-	Email         *string   `json:"email,omitempty"`
-	PendingEmail  *string   `json:"pendingEmail,omitempty"`
-	EmailVerified bool      `json:"emailVerified"`
-	HasPassword   bool      `json:"hasPassword"`
-	AvatarUrl     *string   `json:"avatarUrl,omitempty"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-}
+type User = shareduser.User
 
-type AuthProvider struct {
-	Provider  string    `json:"provider"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"createdAt"`
-}
+type AuthProvider = shareduser.AuthProvider
 
 type Store interface {
 	Create(ctx context.Context, displayName, username, hashedPassword, role string) (*User, error)

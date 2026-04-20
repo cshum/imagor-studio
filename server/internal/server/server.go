@@ -17,6 +17,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/resolver"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"go.uber.org/zap"
 )
 
@@ -70,10 +71,10 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string, m
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize services: %w", err)
 	}
-	return NewFromServices(cfg, embedFS, logger, services, mode)
+	return NewFromServices(cfg, embedFS, logger, services, mode, management.CloudFactories{})
 }
 
-func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, services *bootstrap.Services, mode Mode) (*Server, error) {
+func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, services *bootstrap.Services, mode Mode, cloudFactories management.CloudFactories) (*Server, error) {
 
 	// Initialize GraphQL with enhanced config from services
 	storageResolver := resolver.NewResolver(
@@ -141,8 +142,23 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	mux.HandleFunc("/api/auth/first-run", authHandler.CheckFirstRun())
 	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
 
-	if mode == ModeCloud && multiTenant {
-		registerCloudAuthRoutes(mux, cfg, services)
+	cloudServices := management.CloudHTTPServices{
+		TokenManager:      services.TokenManager,
+		UserStore:         services.UserStore,
+		OrgStore:          services.OrgStore,
+		SpaceStore:        services.SpaceStore,
+		SpaceInviteStore:  services.SpaceInviteStore,
+		InternalAPISecret: services.Config.InternalAPISecret,
+		Logger:            services.Logger,
+	}
+
+	if mode == ModeCloud && multiTenant && cloudFactories.AuthRoutes != nil {
+		cloudFactories.AuthRoutes(mux, management.OAuthConfig{
+			GoogleClientID:     cfg.GoogleClientID,
+			GoogleClientSecret: cfg.GoogleClientSecret,
+			AppURL:             cfg.AppUrl,
+			AppAPIURL:          cfg.AppApiUrl,
+		}, cloudServices)
 	} else {
 		registerSelfHostedAuthRoutes(mux)
 	}
@@ -156,8 +172,8 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	protectedHandler := middleware.JWTMiddleware(services.TokenManager)(gqlHandler)
 	mux.Handle("/api/query", protectedHandler)
 
-	if mode == ModeCloud && multiTenant {
-		registerCloudInternalRoutes(mux, services)
+	if mode == ModeCloud && multiTenant && cloudFactories.InternalRoutes != nil {
+		cloudFactories.InternalRoutes(mux, cloudServices)
 	}
 
 	if err := registerProcessingOrSPA(mux, cfg, embedFS, services); err != nil {
@@ -215,6 +231,50 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		httpServer: httpServer,
 		syncCancel: syncCancel,
 	}, nil
+}
+
+func registerSelfHostedAuthRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/api/auth/providers", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"providers":[]}`))
+	})
+}
+
+func registerProcessingOrSPA(
+	mux *http.ServeMux,
+	cfg *config.Config,
+	embedFS fs.FS,
+	services *bootstrap.Services,
+) error {
+	if services.SpaceConfigStore != nil {
+		baseDomain := cfg.SpaceBaseDomain
+		if len(baseDomain) > 0 && baseDomain[0] == '.' {
+			baseDomain = baseDomain[1:]
+		}
+		imagorHandler := middleware.SpaceConcurrencyMiddleware(
+			services.SpaceConfigStore,
+			baseDomain,
+			int64(cfg.SpaceMaxConcurrency),
+		)(services.ImagorProvider.Imagor())
+		mux.Handle("/", imagorHandler)
+		return nil
+	}
+
+	mux.Handle("/imagor/", http.StripPrefix("/imagor", services.ImagorProvider.Imagor()))
+
+	staticFS, err := fs.Sub(embedFS, "static")
+	if err != nil {
+		return err
+	}
+	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
+	return nil
+}
+
+func startProcessingSyncIfNeeded(ctx context.Context, services *bootstrap.Services) error {
+	if services.SpaceConfigStore == nil {
+		return nil
+	}
+	return services.SpaceConfigStore.Start(ctx)
 }
 
 func (s *Server) Run() error {
