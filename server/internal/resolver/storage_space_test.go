@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -19,7 +19,7 @@ func ptrStr(s string) *string { return &s }
 // and the provided spaceStore.  All other dependencies (registry, users, imagor,
 // config, license, org) are left nil — they are not exercised by the space-storage
 // tests.
-func newSpaceTestResolver(spaceStore cloudcontract.SpaceStore) *Resolver {
+func newSpaceTestResolver(spaceStore space.SpaceStore) *Resolver {
 	mockStor := &MockStorage{}
 	sp := NewMockStorageProvider(mockStor)
 	return NewResolver(sp, nil, nil, nil, nil, nil, zap.NewNop(), nil, spaceStore, nil, nil)
@@ -71,7 +71,7 @@ func TestGetSpaceStorage_SpaceStoreNil(t *testing.T) {
 func TestGetSpaceStorage_NotFound(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "space-1").
-		Return((*cloudcontract.Space)(nil), nil)
+		Return((*space.Space)(nil), nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
@@ -88,7 +88,7 @@ func TestGetSpaceStorage_NotFound(t *testing.T) {
 
 // TestGetSpaceStorage_OrgMismatch: space belongs to a different org → FORBIDDEN.
 func TestGetSpaceStorage_OrgMismatch(t *testing.T) {
-	space := &cloudcontract.Space{
+	space := &space.Space{
 		OrgID:  "org-b", // caller is in org-a
 		Bucket: "the-bucket",
 	}
@@ -109,7 +109,7 @@ func TestGetSpaceStorage_OrgMismatch(t *testing.T) {
 }
 
 func TestGetSpaceStorage_GuestMemberAllowed(t *testing.T) {
-	space := &cloudcontract.Space{
+	space := &space.Space{
 		Key:         "space-1",
 		OrgID:       "org-b",
 		StorageType: "s3",
@@ -132,7 +132,7 @@ func TestGetSpaceStorage_GuestMemberAllowed(t *testing.T) {
 // TestGetSpaceStorage_Valid: matching org + valid bucket → non-nil S3 storage
 // is constructed without any network call.
 func TestGetSpaceStorage_Valid(t *testing.T) {
-	space := &cloudcontract.Space{
+	space := &space.Space{
 		OrgID:       "org-a",
 		StorageType: "s3",
 		Bucket:      "my-bucket",
@@ -160,7 +160,7 @@ func TestGetSpaceStorage_Valid(t *testing.T) {
 func TestListFiles_SpaceKeyNotFound(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "missing-space").
-		Return((*cloudcontract.Space)(nil), nil)
+		Return((*space.Space)(nil), nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
@@ -181,7 +181,7 @@ func TestListFiles_SpaceKeyNotFound(t *testing.T) {
 // TestListFiles_SpaceKeyForbidden: passing a spaceKey whose org doesn't match the
 // caller's JWT org returns FORBIDDEN.
 func TestListFiles_SpaceKeyForbidden(t *testing.T) {
-	space := &cloudcontract.Space{
+	space := &space.Space{
 		OrgID:  "org-b", // caller is in org-a
 		Bucket: "b",
 	}
@@ -206,7 +206,7 @@ func TestListFiles_SpaceKeyForbidden(t *testing.T) {
 
 // TestDeleteFile_SpaceKeyForbidden: delete on a cross-org space also returns FORBIDDEN.
 func TestDeleteFile_SpaceKeyForbidden(t *testing.T) {
-	space := &cloudcontract.Space{
+	space := &space.Space{
 		OrgID:  "org-b",
 		Bucket: "b",
 	}
@@ -243,7 +243,7 @@ var minimalTemplateInput = gql.SaveTemplateInput{
 func TestSaveTemplate_SpaceKeyNotFound(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "missing").
-		Return((*cloudcontract.Space)(nil), nil)
+		Return((*space.Space)(nil), nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
@@ -260,7 +260,7 @@ func TestSaveTemplate_SpaceKeyNotFound(t *testing.T) {
 
 // TestSaveTemplate_SpaceKeyForbidden: cross-org space → FORBIDDEN gqlerror.
 func TestSaveTemplate_SpaceKeyForbidden(t *testing.T) {
-	space := &cloudcontract.Space{OrgID: "org-b", Bucket: "b"}
+	space := &space.Space{OrgID: "org-b", Bucket: "b"}
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
 
@@ -283,7 +283,7 @@ func TestSaveTemplate_SpaceKeyForbidden(t *testing.T) {
 func TestRegenerateTemplatePreview_SpaceKeyNotFound(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "missing").
-		Return((*cloudcontract.Space)(nil), nil)
+		Return((*space.Space)(nil), nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
@@ -302,7 +302,7 @@ func TestRegenerateTemplatePreview_SpaceKeyNotFound(t *testing.T) {
 
 // TestRegenerateTemplatePreview_SpaceKeyForbidden: cross-org space → FORBIDDEN.
 func TestRegenerateTemplatePreview_SpaceKeyForbidden(t *testing.T) {
-	space := &cloudcontract.Space{OrgID: "org-b", Bucket: "b"}
+	space := &space.Space{OrgID: "org-b", Bucket: "b"}
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
 

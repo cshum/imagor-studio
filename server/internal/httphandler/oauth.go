@@ -12,11 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -26,9 +27,9 @@ import (
 type OAuthHandler struct {
 	tokenManager *auth.TokenManager
 	userStore    userstore.Store
-	orgStore     cloudcontract.OrgStore // nil in self-hosted mode
-	spaceStore   cloudcontract.SpaceStore
-	inviteStore  cloudcontract.SpaceInviteStore
+	orgStore     org.OrgStore // nil in self-hosted mode
+	spaceStore   space.SpaceStore
+	inviteStore  space.SpaceInviteStore
 	logger       *zap.Logger
 	googleConfig *oauth2.Config
 	appBaseURL   string
@@ -44,9 +45,9 @@ type OAuthHandler struct {
 func NewOAuthHandler(
 	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
-	orgStore cloudcontract.OrgStore,
-	spaceStore cloudcontract.SpaceStore,
-	inviteStore cloudcontract.SpaceInviteStore,
+	orgStore org.OrgStore,
+	spaceStore space.SpaceStore,
+	inviteStore space.SpaceInviteStore,
 	logger *zap.Logger,
 	googleClientID string,
 	googleClientSecret string,
@@ -87,9 +88,9 @@ func NewOAuthHandler(
 func newOAuthHandlerWithConfig(
 	tokenManager *auth.TokenManager,
 	userStore userstore.Store,
-	orgStore cloudcontract.OrgStore,
-	spaceStore cloudcontract.SpaceStore,
-	inviteStore cloudcontract.SpaceInviteStore,
+	orgStore org.OrgStore,
+	spaceStore space.SpaceStore,
+	inviteStore space.SpaceInviteStore,
 	logger *zap.Logger,
 	googleConfig *oauth2.Config,
 	appBaseURL string,
@@ -260,7 +261,7 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 			MaxAge:   -1,
 		})
 
-		var pendingInvite *cloudcontract.Invitation
+		var pendingInvite *space.Invitation
 		if inviteToken != "" && h.inviteFlowEnabled() {
 			invite, inviteErr := h.inviteStore.GetPendingByToken(ctx, inviteToken)
 			if inviteErr != nil {
@@ -335,7 +336,7 @@ func (h *OAuthHandler) GoogleCallback() http.HandlerFunc {
 	}
 }
 
-func (h *OAuthHandler) acceptInvitation(ctx context.Context, userID string, invite *cloudcontract.Invitation) error {
+func (h *OAuthHandler) acceptInvitation(ctx context.Context, userID string, invite *space.Invitation) error {
 	hasSpaceAccess, err := h.spaceStore.HasMember(ctx, invite.SpaceKey, userID)
 	if err != nil {
 		return fmt.Errorf("check space membership: %w", err)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cshum/imagor"
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
@@ -12,6 +11,8 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/noop"
 	"github.com/cshum/imagor-studio/server/internal/processingdefault"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"go.uber.org/zap"
 )
 
@@ -40,8 +41,8 @@ func initializeProcessingWithFactory(cfg *config.Config, logger *zap.Logger, run
 
 	registryStore := noop.NewRegistryStore()
 	userStore := noop.NewUserStore()
-	var orgStore cloudcontract.OrgStore = noop.NewOrgStore()
-	var spaceStore cloudcontract.SpaceStore = noop.NewSpaceStore()
+	var orgStore org.OrgStore = noop.NewOrgStore()
+	var spaceStore space.SpaceStore = noop.NewSpaceStore()
 
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
 

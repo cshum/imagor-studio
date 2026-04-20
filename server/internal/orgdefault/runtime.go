@@ -7,20 +7,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/uptrace/bun"
 )
 
 type store struct{ db *bun.DB }
 
-func NewStore(db *bun.DB) cloudcontract.OrgStore {
+func NewStore(db *bun.DB) org.OrgStore {
 	return &store{db: db}
 }
 
-func rowToApp(row *model.Organization) *cloudcontract.Org {
-	o := &cloudcontract.Org{
+func rowToApp(row *model.Organization) *org.Org {
+	o := &org.Org{
 		ID:          row.ID,
 		OwnerID:     row.OwnerID,
 		Name:        row.Name,
@@ -43,7 +43,7 @@ func rowToApp(row *model.Organization) *cloudcontract.Org {
 	return o
 }
 
-func (s *store) CreateWithMember(ctx context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*cloudcontract.Org, error) {
+func (s *store) CreateWithMember(ctx context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*org.Org, error) {
 	now := time.Now().UTC()
 	orgID := uuid.GenerateUUID()
 	org := &model.Organization{ID: orgID, OwnerID: ownerID, Name: name, Slug: slug, Plan: model.PlanTrial, PlanStatus: model.PlanStatusTrialing, TrialEndsAt: trialEndsAt, CreatedAt: now, UpdatedAt: now}
@@ -62,7 +62,7 @@ func (s *store) CreateWithMember(ctx context.Context, ownerID, name, slug string
 	return rowToApp(org), nil
 }
 
-func (s *store) GetByUserID(ctx context.Context, userID string) (*cloudcontract.Org, error) {
+func (s *store) GetByUserID(ctx context.Context, userID string) (*org.Org, error) {
 	var member model.OrgMember
 	if err := s.db.NewSelect().Model(&member).Where("user_id = ?", userID).Limit(1).Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -80,7 +80,7 @@ func (s *store) GetByUserID(ctx context.Context, userID string) (*cloudcontract.
 	return rowToApp(&org), nil
 }
 
-func (s *store) GetBySlug(ctx context.Context, slug string) (*cloudcontract.Org, error) {
+func (s *store) GetBySlug(ctx context.Context, slug string) (*org.Org, error) {
 	var org model.Organization
 	if err := s.db.NewSelect().Model(&org).Where("slug = ?", slug).Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -91,7 +91,7 @@ func (s *store) GetBySlug(ctx context.Context, slug string) (*cloudcontract.Org,
 	return rowToApp(&org), nil
 }
 
-func (s *store) ListMembers(ctx context.Context, orgID string) ([]*cloudcontract.OrgMemberView, error) {
+func (s *store) ListMembers(ctx context.Context, orgID string) ([]*org.OrgMemberView, error) {
 	type memberRow struct {
 		OrgID       string    `bun:"org_id"`
 		UserID      string    `bun:"user_id"`
@@ -105,9 +105,9 @@ func (s *store) ListMembers(ctx context.Context, orgID string) ([]*cloudcontract
 	if err != nil {
 		return nil, fmt.Errorf("list org members: %w", err)
 	}
-	result := make([]*cloudcontract.OrgMemberView, 0, len(rows))
+	result := make([]*org.OrgMemberView, 0, len(rows))
 	for _, r := range rows {
-		result = append(result, &cloudcontract.OrgMemberView{OrgID: r.OrgID, UserID: r.UserID, Username: r.Username, DisplayName: r.DisplayName, Role: r.Role, CreatedAt: r.CreatedAt})
+		result = append(result, &org.OrgMemberView{OrgID: r.OrgID, UserID: r.UserID, Username: r.Username, DisplayName: r.DisplayName, Role: r.Role, CreatedAt: r.CreatedAt})
 	}
 	return result, nil
 }

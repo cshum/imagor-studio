@@ -4,15 +4,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 )
 
-// SpaceStore implements cloudcontract.SpaceStore with no-op behavior for processing-mode nodes.
+// SpaceStore implements space.SpaceStore with no-op behavior for processing-mode nodes.
 // Processing nodes derive all space state from SpaceConfigStore (delta sync),
 // not from the database.
 type SpaceStore struct{}
 
-var _ cloudcontract.SpaceStore = (*SpaceStore)(nil)
+var _ space.SpaceStore = (*SpaceStore)(nil)
 
 // NewSpaceStore creates a new no-op space store.
 func NewSpaceStore() *SpaceStore { return &SpaceStore{} }
@@ -22,11 +22,11 @@ func NewSelfHostedSpaceStore() *SpaceStore { return &SpaceStore{} }
 
 func (n *SpaceStore) CloudDisabled() bool { return true }
 
-func (n *SpaceStore) Create(_ context.Context, _ *cloudcontract.Space) error {
+func (n *SpaceStore) Create(_ context.Context, _ *space.Space) error {
 	return ErrCloudDisabled
 }
 
-func (n *SpaceStore) Upsert(_ context.Context, _ *cloudcontract.Space) error {
+func (n *SpaceStore) Upsert(_ context.Context, _ *space.Space) error {
 	return ErrCloudDisabled
 }
 
@@ -38,23 +38,23 @@ func (n *SpaceStore) SoftDelete(_ context.Context, _ string) error {
 	return ErrCloudDisabled
 }
 
-func (n *SpaceStore) Get(_ context.Context, _ string) (*cloudcontract.Space, error) {
+func (n *SpaceStore) Get(_ context.Context, _ string) (*space.Space, error) {
 	return nil, ErrCloudDisabled
 }
 
-func (n *SpaceStore) List(_ context.Context) ([]*cloudcontract.Space, error) {
+func (n *SpaceStore) List(_ context.Context) ([]*space.Space, error) {
 	return nil, ErrCloudDisabled
 }
 
-func (n *SpaceStore) ListByOrgID(_ context.Context, _ string) ([]*cloudcontract.Space, error) {
+func (n *SpaceStore) ListByOrgID(_ context.Context, _ string) ([]*space.Space, error) {
 	return nil, ErrCloudDisabled
 }
 
-func (n *SpaceStore) ListByMemberUserID(_ context.Context, _ string) ([]*cloudcontract.Space, error) {
+func (n *SpaceStore) ListByMemberUserID(_ context.Context, _ string) ([]*space.Space, error) {
 	return nil, ErrCloudDisabled
 }
 
-func (n *SpaceStore) Delta(_ context.Context, _ time.Time) (*cloudcontract.DeltaResult, error) {
+func (n *SpaceStore) Delta(_ context.Context, _ time.Time) (*space.DeltaResult, error) {
 	return nil, ErrCloudDisabled
 }
 
@@ -62,7 +62,7 @@ func (n *SpaceStore) KeyExists(_ context.Context, _ string) (bool, error) {
 	return false, ErrCloudDisabled
 }
 
-func (n *SpaceStore) ListMembers(_ context.Context, _ string) ([]*cloudcontract.SpaceMemberView, error) {
+func (n *SpaceStore) ListMembers(_ context.Context, _ string) ([]*space.SpaceMemberView, error) {
 	return nil, ErrCloudDisabled
 }
 

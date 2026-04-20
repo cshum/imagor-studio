@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/orgdefault"
 	"github.com/cshum/imagor-studio/server/internal/spacedefault"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,19 +30,19 @@ import (
 
 type memoryInviteStore struct {
 	mu      sync.Mutex
-	byToken map[string]*cloudcontract.Invitation
+	byToken map[string]*space.Invitation
 	seq     int
 }
 
 func newMemoryInviteStore() *memoryInviteStore {
-	return &memoryInviteStore{byToken: make(map[string]*cloudcontract.Invitation)}
+	return &memoryInviteStore{byToken: make(map[string]*space.Invitation)}
 }
 
-func (s *memoryInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*cloudcontract.Invitation, error) {
+func (s *memoryInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*space.Invitation, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.seq++
-	invite := &cloudcontract.Invitation{
+	invite := &space.Invitation{
 		ID:              "invite-id",
 		OrgID:           orgID,
 		SpaceKey:        spaceKey,
@@ -58,10 +58,10 @@ func (s *memoryInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, s
 	return invite, nil
 }
 
-func (s *memoryInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*cloudcontract.Invitation, error) {
+func (s *memoryInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*space.Invitation, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	var invites []*cloudcontract.Invitation
+	var invites []*space.Invitation
 	for _, invite := range s.byToken {
 		if invite.OrgID == orgID && invite.SpaceKey == spaceKey && invite.AcceptedAt == nil {
 			invites = append(invites, invite)
@@ -70,7 +70,7 @@ func (s *memoryInviteStore) ListPendingBySpace(ctx context.Context, orgID, space
 	return invites, nil
 }
 
-func (s *memoryInviteStore) GetPendingByToken(ctx context.Context, token string) (*cloudcontract.Invitation, error) {
+func (s *memoryInviteStore) GetPendingByToken(ctx context.Context, token string) (*space.Invitation, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	invite := s.byToken[token]
@@ -558,7 +558,7 @@ func TestGoogleCallback_AcceptsPendingSpaceInvitation(t *testing.T) {
 	org, err := os.CreateWithMember(ctx, "owner-1", "Acme Org", "acme-org", nil)
 	require.NoError(t, err)
 	require.NotNil(t, org)
-	require.NoError(t, ss.Create(ctx, &cloudcontract.Space{
+	require.NoError(t, ss.Create(ctx, &space.Space{
 		OrgID:           org.ID,
 		Key:             "acme-space",
 		Name:            "Acme Space",

@@ -9,18 +9,19 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/cloudapi"
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/noop"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // Compile-time: NewOrgStore / NewSpaceStore must satisfy the public interfaces.
-var _ cloudcontract.OrgStore = noop.NewOrgStore()
-var _ cloudcontract.SpaceStore = noop.NewSpaceStore()
-var _ cloudcontract.SpaceInviteStore = noop.NewSpaceInviteStore()
-var _ cloudcontract.InviteSender = noop.NewInviteSender()
+var _ org.OrgStore = noop.NewOrgStore()
+var _ space.SpaceStore = noop.NewSpaceStore()
+var _ space.SpaceInviteStore = noop.NewSpaceInviteStore()
+var _ space.InviteSender = noop.NewInviteSender()
 var _ cloudapi.Disabled = noop.NewOrgStore()
 var _ cloudapi.Disabled = noop.NewSpaceStore()
 
@@ -54,7 +55,7 @@ func TestNoopSpaceStore_AllMethodsReturnError(t *testing.T) {
 
 	t.Run("Upsert", func(t *testing.T) {
 		// Use a valid DNS-label key so validateSpaceKey passes and reaches the noop check.
-		err := s.Upsert(ctx, &cloudcontract.Space{Key: "test"})
+		err := s.Upsert(ctx, &space.Space{Key: "test"})
 		require.Error(t, err, "Upsert must return an error in noop mode")
 	})
 
@@ -115,7 +116,7 @@ func TestNoopSpaceInviteStore_AllMethodsReturnError(t *testing.T) {
 
 func TestNoopInviteSender_ReturnsError(t *testing.T) {
 	s := noop.NewInviteSender()
-	err := s.SendSpaceInvitation(ctx, cloudcontract.EmailParams{ToEmail: "user@example.com"})
+	err := s.SendSpaceInvitation(ctx, space.EmailParams{ToEmail: "user@example.com"})
 	require.Error(t, err)
 }
 
@@ -155,7 +156,7 @@ func TestNoopSpaceInviteStore_ErrorMentionsDisabledMode(t *testing.T) {
 
 func TestNoopInviteSender_ErrorMentionsDisabledMode(t *testing.T) {
 	s := noop.NewInviteSender()
-	err := s.SendSpaceInvitation(ctx, cloudcontract.EmailParams{})
+	err := s.SendSpaceInvitation(ctx, space.EmailParams{})
 	require.Error(t, err)
 	assert.True(t,
 		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),

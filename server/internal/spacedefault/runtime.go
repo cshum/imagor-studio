@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/uptrace/bun"
 )
@@ -22,7 +22,7 @@ type store struct {
 	encryption *encryption.Service
 }
 
-func NewStore(db *bun.DB, encryptionService *encryption.Service) cloudcontract.SpaceStore {
+func NewStore(db *bun.DB, encryptionService *encryption.Service) space.SpaceStore {
 	return &store{db: db, encryption: encryptionService}
 }
 
@@ -55,7 +55,7 @@ func (s *store) decrypt(value string) (string, error) {
 	return s.encryption.DecryptWithJWT(value)
 }
 
-func (s *store) modelToApp(row *model.Space) (*cloudcontract.Space, error) {
+func (s *store) modelToApp(row *model.Space) (*space.Space, error) {
 	accessKeyID, err := s.decrypt(row.AccessKeyID)
 	if err != nil {
 		return nil, fmt.Errorf("decrypt access_key_id for space %s: %w", row.Key, err)
@@ -68,7 +68,7 @@ func (s *store) modelToApp(row *model.Space) (*cloudcontract.Space, error) {
 	if err != nil {
 		return nil, fmt.Errorf("decrypt imagor_secret for space %s: %w", row.Key, err)
 	}
-	return &cloudcontract.Space{ID: row.ID, OrgID: row.OrgID, Key: row.Key, Name: row.Name, StorageType: row.StorageType, Bucket: row.Bucket, Prefix: row.Prefix, Region: row.Region, Endpoint: row.Endpoint, AccessKeyID: accessKeyID, SecretKey: secretKey, UsePathStyle: row.UsePathStyle, CustomDomain: row.CustomDomain, CustomDomainVerified: row.CustomDomainVerified, Suspended: row.Suspended, IsShared: row.IsShared, SignerAlgorithm: row.SignerAlgorithm, SignerTruncate: row.SignerTruncate, ImagorSecret: imagorSecret, UpdatedAt: row.UpdatedAt, DeletedAt: row.DeletedAt}, nil
+	return &space.Space{ID: row.ID, OrgID: row.OrgID, Key: row.Key, Name: row.Name, StorageType: row.StorageType, Bucket: row.Bucket, Prefix: row.Prefix, Region: row.Region, Endpoint: row.Endpoint, AccessKeyID: accessKeyID, SecretKey: secretKey, UsePathStyle: row.UsePathStyle, CustomDomain: row.CustomDomain, CustomDomainVerified: row.CustomDomainVerified, Suspended: row.Suspended, IsShared: row.IsShared, SignerAlgorithm: row.SignerAlgorithm, SignerTruncate: row.SignerTruncate, ImagorSecret: imagorSecret, UpdatedAt: row.UpdatedAt, DeletedAt: row.DeletedAt}, nil
 }
 
 func isDuplicateKeyError(err error) bool {
@@ -76,7 +76,7 @@ func isDuplicateKeyError(err error) bool {
 	return strings.Contains(msg, "UNIQUE constraint failed") || strings.Contains(msg, "duplicate key value violates unique constraint")
 }
 
-func (s *store) Create(ctx context.Context, sp *cloudcontract.Space) error {
+func (s *store) Create(ctx context.Context, sp *space.Space) error {
 	if err := validateSpaceKey(sp.Key); err != nil {
 		return fmt.Errorf("invalid space key: %w", err)
 	}
@@ -138,7 +138,7 @@ func (s *store) RenameKey(ctx context.Context, oldKey, newKey string) error {
 	return nil
 }
 
-func (s *store) Upsert(ctx context.Context, sp *cloudcontract.Space) error {
+func (s *store) Upsert(ctx context.Context, sp *space.Space) error {
 	if err := validateSpaceKey(sp.Key); err != nil {
 		return fmt.Errorf("invalid space key: %w", err)
 	}
@@ -184,7 +184,7 @@ func (s *store) SoftDelete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (s *store) Get(ctx context.Context, key string) (*cloudcontract.Space, error) {
+func (s *store) Get(ctx context.Context, key string) (*space.Space, error) {
 	var row model.Space
 	err := s.db.NewSelect().Model(&row).Where("key = ? AND deleted_at IS NULL", key).Scan(ctx)
 	if err != nil {
@@ -196,12 +196,12 @@ func (s *store) Get(ctx context.Context, key string) (*cloudcontract.Space, erro
 	return s.modelToApp(&row)
 }
 
-func (s *store) List(ctx context.Context) ([]*cloudcontract.Space, error) {
+func (s *store) List(ctx context.Context) ([]*space.Space, error) {
 	var rows []model.Space
 	if err := s.db.NewSelect().Model(&rows).Where("deleted_at IS NULL").OrderExpr("key ASC").Scan(ctx); err != nil {
 		return nil, fmt.Errorf("list spaces: %w", err)
 	}
-	result := make([]*cloudcontract.Space, 0, len(rows))
+	result := make([]*space.Space, 0, len(rows))
 	for i := range rows {
 		sp, err := s.modelToApp(&rows[i])
 		if err != nil {
@@ -212,12 +212,12 @@ func (s *store) List(ctx context.Context) ([]*cloudcontract.Space, error) {
 	return result, nil
 }
 
-func (s *store) ListByOrgID(ctx context.Context, orgID string) ([]*cloudcontract.Space, error) {
+func (s *store) ListByOrgID(ctx context.Context, orgID string) ([]*space.Space, error) {
 	var rows []model.Space
 	if err := s.db.NewSelect().Model(&rows).Where("org_id = ? AND deleted_at IS NULL", orgID).OrderExpr("key ASC").Scan(ctx); err != nil {
 		return nil, fmt.Errorf("list spaces by org: %w", err)
 	}
-	result := make([]*cloudcontract.Space, 0, len(rows))
+	result := make([]*space.Space, 0, len(rows))
 	for i := range rows {
 		sp, err := s.modelToApp(&rows[i])
 		if err != nil {
@@ -228,12 +228,12 @@ func (s *store) ListByOrgID(ctx context.Context, orgID string) ([]*cloudcontract
 	return result, nil
 }
 
-func (s *store) ListByMemberUserID(ctx context.Context, userID string) ([]*cloudcontract.Space, error) {
+func (s *store) ListByMemberUserID(ctx context.Context, userID string) ([]*space.Space, error) {
 	var rows []model.Space
 	if err := s.db.NewSelect().Model(&rows).Join("JOIN space_members sm ON sm.space_id = space.id").Where("sm.user_id = ? AND space.deleted_at IS NULL", userID).OrderExpr("space.key ASC").Scan(ctx); err != nil {
 		return nil, fmt.Errorf("list spaces by member: %w", err)
 	}
-	result := make([]*cloudcontract.Space, 0, len(rows))
+	result := make([]*space.Space, 0, len(rows))
 	for i := range rows {
 		sp, err := s.modelToApp(&rows[i])
 		if err != nil {
@@ -244,13 +244,13 @@ func (s *store) ListByMemberUserID(ctx context.Context, userID string) ([]*cloud
 	return result, nil
 }
 
-func (s *store) Delta(ctx context.Context, since time.Time) (*cloudcontract.DeltaResult, error) {
+func (s *store) Delta(ctx context.Context, since time.Time) (*space.DeltaResult, error) {
 	var rows []model.Space
 	q := s.db.NewSelect().Model(&rows).Where("updated_at > ?", since).OrderExpr("updated_at ASC")
 	if err := q.Scan(ctx); err != nil {
 		return nil, fmt.Errorf("space delta: %w", err)
 	}
-	result := &cloudcontract.DeltaResult{Deleted: []string{}, Upserted: []*cloudcontract.Space{}, ServerTime: time.Now().UTC()}
+	result := &space.DeltaResult{Deleted: []string{}, Upserted: []*space.Space{}, ServerTime: time.Now().UTC()}
 	for i := range rows {
 		if rows[i].DeletedAt != nil {
 			result.Deleted = append(result.Deleted, rows[i].Key)
@@ -273,7 +273,7 @@ func (s *store) KeyExists(ctx context.Context, key string) (bool, error) {
 	return exists, nil
 }
 
-func (s *store) ListMembers(ctx context.Context, spaceKey string) ([]*cloudcontract.SpaceMemberView, error) {
+func (s *store) ListMembers(ctx context.Context, spaceKey string) ([]*space.SpaceMemberView, error) {
 	type memberRow struct {
 		SpaceID     string    `bun:"space_id"`
 		UserID      string    `bun:"user_id"`
@@ -289,9 +289,9 @@ func (s *store) ListMembers(ctx context.Context, spaceKey string) ([]*cloudcontr
 	if err != nil {
 		return nil, fmt.Errorf("list space members: %w", err)
 	}
-	result := make([]*cloudcontract.SpaceMemberView, 0, len(rows))
+	result := make([]*space.SpaceMemberView, 0, len(rows))
 	for _, r := range rows {
-		result = append(result, &cloudcontract.SpaceMemberView{SpaceID: r.SpaceID, UserID: r.UserID, Username: r.Username, DisplayName: r.DisplayName, Email: r.Email, AvatarURL: r.AvatarURL, Role: r.Role, CreatedAt: r.CreatedAt})
+		result = append(result, &space.SpaceMemberView{SpaceID: r.SpaceID, UserID: r.UserID, Username: r.Username, DisplayName: r.DisplayName, Email: r.Email, AvatarURL: r.AvatarURL, Role: r.Role, CreatedAt: r.CreatedAt})
 	}
 	return result, nil
 }

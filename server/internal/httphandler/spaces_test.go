@@ -8,38 +8,38 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/httphandler"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"go.uber.org/zap"
 )
 
 // ── mock store ───────────────────────────────────────────────────────────────
 
 type mockSpaceStore struct {
-	deltaFunc func(ctx context.Context, since time.Time) (*cloudcontract.DeltaResult, error)
+	deltaFunc func(ctx context.Context, since time.Time) (*space.DeltaResult, error)
 }
 
-func (m *mockSpaceStore) Delta(ctx context.Context, since time.Time) (*cloudcontract.DeltaResult, error) {
+func (m *mockSpaceStore) Delta(ctx context.Context, since time.Time) (*space.DeltaResult, error) {
 	return m.deltaFunc(ctx, since)
 }
-func (m *mockSpaceStore) Create(ctx context.Context, s *cloudcontract.Space) error { return nil }
-func (m *mockSpaceStore) Upsert(ctx context.Context, s *cloudcontract.Space) error { return nil }
-func (m *mockSpaceStore) RenameKey(_ context.Context, _, _ string) error           { return nil }
-func (m *mockSpaceStore) SoftDelete(ctx context.Context, key string) error         { return nil }
-func (m *mockSpaceStore) Get(ctx context.Context, key string) (*cloudcontract.Space, error) {
+func (m *mockSpaceStore) Create(ctx context.Context, s *space.Space) error { return nil }
+func (m *mockSpaceStore) Upsert(ctx context.Context, s *space.Space) error { return nil }
+func (m *mockSpaceStore) RenameKey(_ context.Context, _, _ string) error   { return nil }
+func (m *mockSpaceStore) SoftDelete(ctx context.Context, key string) error { return nil }
+func (m *mockSpaceStore) Get(ctx context.Context, key string) (*space.Space, error) {
 	return nil, nil
 }
-func (m *mockSpaceStore) List(ctx context.Context) ([]*cloudcontract.Space, error) {
+func (m *mockSpaceStore) List(ctx context.Context) ([]*space.Space, error) {
 	return nil, nil
 }
-func (m *mockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*cloudcontract.Space, error) {
+func (m *mockSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*space.Space, error) {
 	return nil, nil
 }
-func (m *mockSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*cloudcontract.Space, error) {
+func (m *mockSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*space.Space, error) {
 	return nil, nil
 }
 func (m *mockSpaceStore) KeyExists(_ context.Context, _ string) (bool, error) { return false, nil }
-func (m *mockSpaceStore) ListMembers(_ context.Context, _ string) ([]*cloudcontract.SpaceMemberView, error) {
+func (m *mockSpaceStore) ListMembers(_ context.Context, _ string) ([]*space.SpaceMemberView, error) {
 	return nil, nil
 }
 func (m *mockSpaceStore) AddMember(_ context.Context, _, _, _ string) error { return nil }
@@ -51,13 +51,13 @@ func (m *mockSpaceStore) HasMember(_ context.Context, _, _ string) (bool, error)
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-func newDeltaHandler(store cloudcontract.SpaceStore, secret string) http.HandlerFunc {
+func newDeltaHandler(store space.SpaceStore, secret string) http.HandlerFunc {
 	h := httphandler.NewSpacesDeltaHandler(store, secret, zap.NewNop())
 	return h.GetDelta()
 }
 
-func fixedDelta(result *cloudcontract.DeltaResult) func(ctx context.Context, since time.Time) (*cloudcontract.DeltaResult, error) {
-	return func(_ context.Context, _ time.Time) (*cloudcontract.DeltaResult, error) {
+func fixedDelta(result *space.DeltaResult) func(ctx context.Context, since time.Time) (*space.DeltaResult, error) {
+	return func(_ context.Context, _ time.Time) (*space.DeltaResult, error) {
 		return result, nil
 	}
 }
@@ -94,8 +94,8 @@ func parseDeltaResp(t *testing.T, body []byte) deltaResp {
 // ── tests ────────────────────────────────────────────────────────────────────
 
 func TestSpacesDelta_FullSync_NoAuth(t *testing.T) {
-	st := &mockSpaceStore{deltaFunc: fixedDelta(&cloudcontract.DeltaResult{
-		Upserted:   []*cloudcontract.Space{{Key: "acme", Bucket: "b1", AccessKeyID: "AK", SecretKey: "SK", ImagorSecret: "SEC", SignerAlgorithm: "sha256"}},
+	st := &mockSpaceStore{deltaFunc: fixedDelta(&space.DeltaResult{
+		Upserted:   []*space.Space{{Key: "acme", Bucket: "b1", AccessKeyID: "AK", SecretKey: "SK", ImagorSecret: "SEC", SignerAlgorithm: "sha256"}},
 		Deleted:    []string{},
 		ServerTime: time.Unix(1_000_000, 0),
 	})}
@@ -136,7 +136,7 @@ func TestSpacesDelta_FullSync_NoAuth(t *testing.T) {
 
 func TestSpacesDelta_BearerToken_Valid(t *testing.T) {
 	const secret = "super-secret-token"
-	st := &mockSpaceStore{deltaFunc: fixedDelta(&cloudcontract.DeltaResult{
+	st := &mockSpaceStore{deltaFunc: fixedDelta(&space.DeltaResult{
 		ServerTime: time.Now(),
 	})}
 	handler := newDeltaHandler(st, secret)
@@ -179,9 +179,9 @@ func TestSpacesDelta_BearerToken_Wrong_Returns401(t *testing.T) {
 
 func TestSpacesDelta_SinceParam_Propagated(t *testing.T) {
 	var capturedSince time.Time
-	st := &mockSpaceStore{deltaFunc: func(_ context.Context, since time.Time) (*cloudcontract.DeltaResult, error) {
+	st := &mockSpaceStore{deltaFunc: func(_ context.Context, since time.Time) (*space.DeltaResult, error) {
 		capturedSince = since
-		return &cloudcontract.DeltaResult{ServerTime: time.Now()}, nil
+		return &space.DeltaResult{ServerTime: time.Now()}, nil
 	}}
 	handler := newDeltaHandler(st, "")
 	req := httptest.NewRequest(http.MethodGet, "/internal/spaces/delta?since=1700000000", nil)
@@ -198,9 +198,9 @@ func TestSpacesDelta_SinceParam_Propagated(t *testing.T) {
 
 func TestSpacesDelta_SinceZero_FullSync(t *testing.T) {
 	var capturedSince time.Time
-	st := &mockSpaceStore{deltaFunc: func(_ context.Context, since time.Time) (*cloudcontract.DeltaResult, error) {
+	st := &mockSpaceStore{deltaFunc: func(_ context.Context, since time.Time) (*space.DeltaResult, error) {
 		capturedSince = since
-		return &cloudcontract.DeltaResult{ServerTime: time.Now()}, nil
+		return &space.DeltaResult{ServerTime: time.Now()}, nil
 	}}
 	handler := newDeltaHandler(st, "")
 	req := httptest.NewRequest(http.MethodGet, "/internal/spaces/delta?since=0", nil)
@@ -228,8 +228,8 @@ func TestSpacesDelta_InvalidSince_Returns400(t *testing.T) {
 }
 
 func TestSpacesDelta_DeletedSpaces(t *testing.T) {
-	st := &mockSpaceStore{deltaFunc: fixedDelta(&cloudcontract.DeltaResult{
-		Upserted:   []*cloudcontract.Space{},
+	st := &mockSpaceStore{deltaFunc: fixedDelta(&space.DeltaResult{
+		Upserted:   []*space.Space{},
 		Deleted:    []string{"old-space", "gone-space"},
 		ServerTime: time.Unix(999, 0),
 	})}
@@ -267,8 +267,8 @@ func TestSpacesDelta_WrongMethod_Returns405(t *testing.T) {
 
 func TestSpacesDelta_DefaultSignerAlgorithm(t *testing.T) {
 	// SignerAlgorithm="" should be normalised to "sha256" in the response.
-	st := &mockSpaceStore{deltaFunc: fixedDelta(&cloudcontract.DeltaResult{
-		Upserted:   []*cloudcontract.Space{{Key: "x", Bucket: "b", SignerAlgorithm: ""}},
+	st := &mockSpaceStore{deltaFunc: fixedDelta(&space.DeltaResult{
+		Upserted:   []*space.Space{{Key: "x", Bucket: "b", SignerAlgorithm: ""}},
 		ServerTime: time.Now(),
 	})}
 	handler := newDeltaHandler(st, "")
@@ -283,7 +283,7 @@ func TestSpacesDelta_DefaultSignerAlgorithm(t *testing.T) {
 }
 
 func TestSpacesDelta_EmptyStore(t *testing.T) {
-	st := &mockSpaceStore{deltaFunc: fixedDelta(&cloudcontract.DeltaResult{
+	st := &mockSpaceStore{deltaFunc: fixedDelta(&space.DeltaResult{
 		ServerTime: time.Unix(1234567890, 0),
 	})}
 	handler := newDeltaHandler(st, "")

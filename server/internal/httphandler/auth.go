@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudmode"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	auth2 "github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"go.uber.org/zap"
@@ -20,7 +20,7 @@ import (
 type AuthHandler struct {
 	tokenManager  *auth2.TokenManager
 	userStore     userstore.Store
-	orgStore      cloudcontract.OrgStore
+	orgStore      org.OrgStore
 	registryStore registrystore.Store
 	logger        *zap.Logger
 	embeddedMode  bool
@@ -30,7 +30,7 @@ type AuthHandler struct {
 func NewAuthHandler(
 	tokenManager *auth2.TokenManager,
 	userStore userstore.Store,
-	orgStore cloudcontract.OrgStore,
+	orgStore org.OrgStore,
 	registryStore registrystore.Store,
 	logger *zap.Logger,
 	embeddedMode bool,

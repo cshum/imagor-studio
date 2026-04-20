@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/cloudruntime"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/database"
@@ -20,6 +19,8 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -39,10 +40,10 @@ type Services struct {
 	ImagorProvider   *imagorprovider.Provider
 	RegistryStore    registrystore.Store
 	UserStore        userstore.Store
-	OrgStore         cloudcontract.OrgStore         // nil in self-hosted; set when InternalAPISecret != ""
-	SpaceStore       cloudcontract.SpaceStore       // nil in self-hosted; set when InternalAPISecret != ""
-	SpaceInviteStore cloudcontract.SpaceInviteStore // nil when invitation storage is unavailable
-	InviteSender     cloudcontract.InviteSender     // nil when invitation email is not configured
+	OrgStore         org.OrgStore                   // nil in self-hosted; set when InternalAPISecret != ""
+	SpaceStore       space.SpaceStore               // nil in self-hosted; set when InternalAPISecret != ""
+	SpaceInviteStore space.SpaceInviteStore         // nil when invitation storage is unavailable
+	InviteSender     space.InviteSender             // nil when invitation email is not configured
 	SpaceConfigStore cloudruntime.SpaceConfigReader // nil unless SpacesEndpoint set; Start() called by server
 	LicenseService   *license.Service
 	Encryption       *encryption.Service

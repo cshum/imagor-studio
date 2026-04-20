@@ -4,10 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -16,9 +17,9 @@ import (
 
 // ---------- helpers ----------------------------------------------------------
 
-func makeTestOrg(id, ownerID string) *cloudcontract.Org {
+func makeTestOrg(id, ownerID string) *org.Org {
 	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	return &cloudcontract.Org{
+	return &org.Org{
 		ID:         id,
 		OwnerID:    ownerID,
 		Name:       "Test Org",
@@ -30,8 +31,8 @@ func makeTestOrg(id, ownerID string) *cloudcontract.Org {
 	}
 }
 
-func makeTestSpace(key, orgID string) *cloudcontract.Space {
-	return &cloudcontract.Space{
+func makeTestSpace(key, orgID string) *space.Space {
+	return &space.Space{
 		ID:              "space-" + key,
 		OrgID:           orgID,
 		Key:             key,
@@ -125,7 +126,7 @@ func TestSpaces_ReturnsSpaces(t *testing.T) {
 
 	s1 := makeTestSpace("acme", "org-1")
 	s2 := makeTestSpace("beta", "org-1")
-	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*cloudcontract.Space{s1, s2}, nil)
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{s1, s2}, nil)
 
 	// OrgID comes from JWT claim — no DB round-trip
 	ctx := createAdminContextWithOrg("user-1", "org-1")
@@ -144,10 +145,10 @@ func TestSpaces_IncludesGuestAccessibleSpaces(t *testing.T) {
 
 	ownSpace := makeTestSpace("acme", "org-1")
 	guestSpace := makeTestSpace("shared", "org-2")
-	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*cloudcontract.Space{ownSpace}, nil)
-	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*cloudcontract.Space{guestSpace}, nil)
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{ownSpace}, nil)
+	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*space.Space{guestSpace}, nil)
 	spaceStore.On("HasMember", mock.Anything, "shared", "user-1").Return(true, nil)
-	spaceStore.On("ListMembers", mock.Anything, "shared").Return([]*cloudcontract.SpaceMemberView{{
+	spaceStore.On("ListMembers", mock.Anything, "shared").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-2",
 		UserID:    "user-1",
 		Username:  "alice",
@@ -173,7 +174,7 @@ func TestSpaces_FallbackToOrgStore(t *testing.T) {
 
 	org := makeTestOrg("org-1", "user-1")
 	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(org, nil)
-	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*cloudcontract.Space{}, nil)
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil)
 
 	// No OrgID in claims → falls back to DB lookup
 	ctx := createAdminContext("user-1")
@@ -241,7 +242,7 @@ func TestSpace_ReturnsGuestAccessibleSpace(t *testing.T) {
 	s := makeTestSpace("acme", "org-2")
 	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
 	spaceStore.On("HasMember", mock.Anything, "acme", "user-1").Return(true, nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*cloudcontract.SpaceMemberView{{
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-2",
 		UserID:    "user-1",
 		Username:  "alice",
@@ -292,10 +293,10 @@ func TestCreateSpace_Success(t *testing.T) {
 	r := newOrgResolver(orgStore, spaceStore)
 
 	created := makeTestSpace("acme", "org-1")
-	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *cloudcontract.Space) bool {
+	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme" && s.OrgID == "org-1" && s.Name == "Acme"
 	})).Return(nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*cloudcontract.OrgMemberView{
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
 	spaceStore.On("AddMember", mock.Anything, "acme", "user-1", "admin").Return(nil)
@@ -316,7 +317,7 @@ func TestCreateSpace_DuplicateKey(t *testing.T) {
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
 
-	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *cloudcontract.Space) bool {
+	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme"
 	})).Return(apperror.Conflict(`space key "acme" is already taken`, "key"))
 
@@ -341,10 +342,10 @@ func TestCreateSpace_AutoCreatesOrg(t *testing.T) {
 	orgStore.On("CreateWithMember", mock.Anything, "user-1", "My Organization", "org-user-1", (*time.Time)(nil)).Return(newOrg, nil)
 
 	created := makeTestSpace("acme", "org-auto")
-	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *cloudcontract.Space) bool {
+	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme" && s.OrgID == "org-auto"
 	})).Return(nil)
-	orgStore.On("ListMembers", mock.Anything, "org-auto").Return([]*cloudcontract.OrgMemberView{
+	orgStore.On("ListMembers", mock.Anything, "org-auto").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
 	spaceStore.On("AddMember", mock.Anything, "acme", "user-1", "admin").Return(nil)
@@ -417,7 +418,7 @@ func TestUpdateSpace_Success(t *testing.T) {
 	updated.Name = "New Name"
 
 	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
-	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *cloudcontract.Space) bool {
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme" && s.Name == "New Name"
 	})).Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(updated, nil).Once()
@@ -441,18 +442,18 @@ func TestUpdateSpace_AllowsGuestManager(t *testing.T) {
 	updated.Name = "New Name"
 
 	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*cloudcontract.SpaceMemberView{{
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-1",
 		UserID:    "user-1",
 		Username:  "alice",
 		Role:      "admin",
 		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 	}}, nil).Once()
-	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *cloudcontract.Space) bool {
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme" && s.Name == "New Name"
 	})).Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(updated, nil).Once()
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*cloudcontract.SpaceMemberView{{
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-1",
 		UserID:    "user-1",
 		Username:  "alice",
@@ -484,7 +485,7 @@ func TestUpdateSpace_RenamesKeyAndMigratesDependencies(t *testing.T) {
 	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
 	inviteStore.On("RenameSpaceKey", mock.Anything, "org-1", "acme", "acme-renamed").Return(nil).Once()
 	spaceStore.On("RenameKey", mock.Anything, "acme", "acme-renamed").Return(nil).Once()
-	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *cloudcontract.Space) bool {
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme-renamed" && s.Name == "Renamed Space"
 	})).Return(nil).Once()
 	spaceStore.On("Get", mock.Anything, "acme-renamed").Return(updated, nil).Once()
@@ -567,9 +568,9 @@ func TestDeleteSpace_DeniesGuestManager(t *testing.T) {
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
 
-	space := makeTestSpace("acme", "org-host")
-	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*cloudcontract.SpaceMemberView{{
+	s := makeTestSpace("acme", "org-host")
+	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-1",
 		UserID:    "user-1",
 		Username:  "alice",
@@ -590,9 +591,9 @@ func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
 
-	space := makeTestSpace("acme", "org-1")
-	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*cloudcontract.SpaceMemberView{
+	s := makeTestSpace("acme", "org-1")
+	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{
 		{
 			SpaceID:     "space-1",
 			UserID:      "user-1",
@@ -610,7 +611,7 @@ func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
 			CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 	}, nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*cloudcontract.OrgMemberView{
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "admin"),
 		makeTestMember("user-3", "charlie", "member"),
@@ -639,9 +640,9 @@ func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
 
-	space := makeTestSpace("acme", "org-1")
-	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*cloudcontract.OrgMemberView{
+	s := makeTestSpace("acme", "org-1")
+	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "member"),
 	}, nil)
@@ -652,7 +653,7 @@ func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
 	}, nil)
 	spaceStore.On("HasMember", mock.Anything, "acme", "user-2").Return(false, nil)
 	spaceStore.On("AddMember", mock.Anything, "acme", "user-2", "member").Return(nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*cloudcontract.SpaceMemberView{{
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
 		SpaceID:     "space-1",
 		UserID:      "user-2",
 		Username:    "bob",
@@ -684,9 +685,9 @@ func TestInviteSpaceMember_AddsExistingExternalAccountAsGuest(t *testing.T) {
 	guestEmail := "guest@example.com"
 	guestAvatarURL := "https://example.com/avatar.png"
 
-	space := makeTestSpace("acme", "org-1")
-	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*cloudcontract.OrgMemberView{
+	s := makeTestSpace("acme", "org-1")
+	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
 	userStore.On("GetByEmail", mock.Anything, "guest@example.com").Return(&userstore.User{
@@ -698,7 +699,7 @@ func TestInviteSpaceMember_AddsExistingExternalAccountAsGuest(t *testing.T) {
 	}, nil)
 	spaceStore.On("HasMember", mock.Anything, "acme", "user-9").Return(false, nil)
 	spaceStore.On("AddMember", mock.Anything, "acme", "user-9", "member").Return(nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*cloudcontract.SpaceMemberView{{
+	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
 		SpaceID:     "space-1",
 		UserID:      "user-9",
 		Username:    "guestuser",
@@ -767,10 +768,10 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 	logger, _ := zap.NewDevelopment()
 	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, inviteStore, sender)
 
-	space := makeTestSpace("acme", "org-1")
-	org := makeTestOrg("org-1", "user-1")
-	org.Name = "Acme Org"
-	invitation := &cloudcontract.Invitation{
+	s := makeTestSpace("acme", "org-1")
+	o := makeTestOrg("org-1", "user-1")
+	o.Name = "Acme Org"
+	invitation := &space.Invitation{
 		ID:        "invite-1",
 		OrgID:     "org-1",
 		SpaceKey:  "acme",
@@ -781,8 +782,8 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 		ExpiresAt: time.Date(2026, 1, 8, 0, 0, 0, 0, time.UTC),
 	}
 
-	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*cloudcontract.OrgMemberView{
+	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
 	userStore.On("GetByEmail", mock.Anything, "new@example.com").Return((*userstore.User)(nil), nil)
@@ -796,8 +797,8 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 		"user-1",
 		mock.AnythingOfType("time.Time"),
 	).Return(invitation, nil)
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(org, nil)
-	sender.On("SendSpaceInvitation", mock.Anything, mock.MatchedBy(func(params cloudcontract.EmailParams) bool {
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(o, nil)
+	sender.On("SendSpaceInvitation", mock.Anything, mock.MatchedBy(func(params space.EmailParams) bool {
 		return params.ToEmail == "new@example.com" && params.OrgName == "Acme Org" && params.SpaceName == "Test Space" && params.InviteToken == "tok-123"
 	})).Return(nil)
 
@@ -825,7 +826,7 @@ func TestRemoveSpaceMember_RejectsHostOrgOwner(t *testing.T) {
 
 	space := makeTestSpace("acme", "org-1")
 	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*cloudcontract.OrgMemberView{
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "admin"),
 	}, nil)
@@ -847,7 +848,7 @@ func TestUpdateSpaceMemberRole_RejectsHostOrgOwner(t *testing.T) {
 
 	space := makeTestSpace("acme", "org-1")
 	spaceStore.On("Get", mock.Anything, "acme").Return(space, nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*cloudcontract.OrgMemberView{
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "admin"),
 	}, nil)

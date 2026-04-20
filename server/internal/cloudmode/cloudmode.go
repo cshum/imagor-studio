@@ -2,24 +2,25 @@ package cloudmode
 
 import (
 	"github.com/cshum/imagor-studio/server/internal/cloudapi"
-	"github.com/cshum/imagor-studio/server/internal/cloudcontract"
+	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 )
 
-func OrgEnabled(store cloudcontract.OrgStore) bool {
+func OrgEnabled(store org.OrgStore) bool {
 	if store == nil {
 		return false
 	}
 	return !cloudapi.IsDisabled(store)
 }
 
-func SpaceEnabled(store cloudcontract.SpaceStore) bool {
+func SpaceEnabled(store space.SpaceStore) bool {
 	if store == nil {
 		return false
 	}
 	return !cloudapi.IsDisabled(store)
 }
 
-func CloudEnabled(orgStore cloudcontract.OrgStore, spaceStore cloudcontract.SpaceStore) bool {
+func CloudEnabled(orgStore org.OrgStore, spaceStore space.SpaceStore) bool {
 	if orgStore == nil && spaceStore == nil {
 		return false
 	}
@@ -32,6 +33,6 @@ func CloudEnabled(orgStore cloudcontract.OrgStore, spaceStore cloudcontract.Spac
 	return OrgEnabled(orgStore) && SpaceEnabled(spaceStore)
 }
 
-func InviteEnabled(orgStore cloudcontract.OrgStore, spaceStore cloudcontract.SpaceStore, inviteStore cloudcontract.SpaceInviteStore, inviteSender cloudcontract.InviteSender) bool {
+func InviteEnabled(orgStore org.OrgStore, spaceStore space.SpaceStore, inviteStore space.SpaceInviteStore, inviteSender space.InviteSender) bool {
 	return inviteStore != nil && ((CloudEnabled(orgStore, spaceStore) && inviteSender != nil) || (OrgEnabled(orgStore) && SpaceEnabled(spaceStore)))
 }
