@@ -48,6 +48,7 @@ type Resolver struct {
 	userStore       userstore.Store
 	imagorProvider  ImagorProvider
 	config          ConfigProvider
+	cloudConfig     management.CloudConfig
 	licenseService  LicenseChecker
 	logger          *zap.Logger
 
@@ -66,6 +67,12 @@ type ResolverOption func(*Resolver)
 func WithProcessingOriginResolver(processingOriginResolver space.ProcessingOriginResolver) ResolverOption {
 	return func(r *Resolver) {
 		r.processingOriginResolver = processingOriginResolver
+	}
+}
+
+func WithCloudConfig(cloudConfig management.CloudConfig) ResolverOption {
+	return func(r *Resolver) {
+		r.cloudConfig = cloudConfig
 	}
 }
 

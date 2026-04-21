@@ -100,6 +100,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.SpaceStore,
 		services.SpaceInviteStore,
 		services.InviteSender,
+		resolver.WithCloudConfig(cloudConfig),
 		resolver.WithProcessingOriginResolver(processingOriginResolver),
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})

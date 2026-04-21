@@ -15,6 +15,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
@@ -25,6 +26,35 @@ const maxSinglePutUploadBytes int64 = 5 * 1024 * 1024 * 1024
 func supportsPresignedUpload(stor storage.Storage) bool {
 	_, ok := stor.(storage.PresignableStorage)
 	return ok
+}
+
+func (r *Resolver) effectiveSpaceStorageConfig(sp *space.Space) *space.Space {
+	effective := *sp
+	effective.StorageMode = space.NormalizeStorageMode(sp.StorageMode)
+	if effective.StorageMode != space.StorageModePlatform || strings.TrimSpace(r.cloudConfig.PlatformS3Bucket) == "" {
+		return &effective
+	}
+	effective.StorageType = "s3"
+	effective.Bucket = strings.TrimSpace(r.cloudConfig.PlatformS3Bucket)
+	effective.Region = strings.TrimSpace(r.cloudConfig.PlatformS3Region)
+	effective.Endpoint = strings.TrimSpace(r.cloudConfig.PlatformS3Endpoint)
+	effective.AccessKeyID = strings.TrimSpace(r.cloudConfig.PlatformS3AccessKeyID)
+	effective.SecretKey = strings.TrimSpace(r.cloudConfig.PlatformS3SecretKey)
+	effective.UsePathStyle = r.cloudConfig.PlatformS3UsePathStyle
+
+	prefix := strings.TrimSpace(r.cloudConfig.PlatformS3Prefix)
+	if prefix == "" {
+		prefix = "spaces/{spaceID}"
+	}
+	prefix = strings.ReplaceAll(prefix, "{spaceID}", sp.ID)
+	prefix = strings.Trim(prefix, "/")
+	if prefix == "" {
+		effective.Prefix = ""
+	} else {
+		effective.Prefix = prefix + "/"
+	}
+
+	return &effective
 }
 
 // getSpaceStorage returns the storage instance for the given optional spaceKey.
@@ -72,7 +102,8 @@ func (r *Resolver) getSpaceStorage(ctx context.Context, spaceKey *string) (stora
 		}
 	}
 
-	// Build an ephemeral S3 storage from the space's credentials.
+	// Build an ephemeral S3 storage from the space's effective credentials.
+	space = r.effectiveSpaceStorageConfig(space)
 	p := storageprovider.New(r.logger, nil, nil)
 	return p.NewStorageFromSpaceConfig(
 		space.StorageType,
