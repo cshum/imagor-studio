@@ -184,20 +184,89 @@ func (p *Provider) createApp(cfg *ImagorConfig) error {
 		// each space's HMAC secret is used independently.
 		store := p.spaceConfigStore
 		baseDomain := p.baseDomain
+		fallbackSigner := signerFromConfig(cfg)
 
 		options = append(options, imagor.WithGetSigner(func(r *http.Request) imagorpath.Signer {
 			sc := resolveSpaceFromHost(store, r.Host, baseDomain)
-			if isNilSpaceConfig(sc) || sc.IsSuspended() {
+			if isNilSpaceConfig(sc) {
+				p.logger.Warn("processing imagor request could not resolve space config",
+					zap.String("host", r.Host),
+					zap.String("normalizedHost", normalizeHost(r.Host)),
+					zap.String("baseDomain", baseDomain),
+					zap.String("path", r.URL.Path),
+				)
 				return nil // imagor returns ErrSignatureMismatch
 			}
-			return signerFromSpaceConfig(sc)
+
+			if sc.IsSuspended() {
+				p.logger.Warn("processing imagor request resolved a suspended space",
+					zap.String("host", r.Host),
+					zap.String("normalizedHost", normalizeHost(r.Host)),
+					zap.String("spaceKey", sc.GetKey()),
+					zap.String("customDomain", sc.GetCustomDomain()),
+					zap.String("path", r.URL.Path),
+				)
+				return nil // imagor returns ErrSignatureMismatch
+			}
+
+			signer := signerFromSpaceConfig(sc)
+			if signer == nil {
+				if fallbackSigner != nil {
+					p.logger.Warn("processing imagor request resolved a space without a per-space signer; falling back to global signer",
+						zap.String("host", r.Host),
+						zap.String("normalizedHost", normalizeHost(r.Host)),
+						zap.String("spaceKey", sc.GetKey()),
+						zap.String("customDomain", sc.GetCustomDomain()),
+						zap.String("signerAlgorithm", sc.GetSignerAlgorithm()),
+						zap.Int("signerTruncate", sc.GetSignerTruncate()),
+						zap.Bool("hasImagorSecret", strings.TrimSpace(sc.GetImagorSecret()) != ""),
+						zap.String("path", r.URL.Path),
+					)
+					return fallbackSigner
+				}
+
+				p.logger.Warn("processing imagor request resolved a space without a valid signer",
+					zap.String("host", r.Host),
+					zap.String("normalizedHost", normalizeHost(r.Host)),
+					zap.String("spaceKey", sc.GetKey()),
+					zap.String("customDomain", sc.GetCustomDomain()),
+					zap.String("signerAlgorithm", sc.GetSignerAlgorithm()),
+					zap.Int("signerTruncate", sc.GetSignerTruncate()),
+					zap.Bool("hasImagorSecret", strings.TrimSpace(sc.GetImagorSecret()) != ""),
+					zap.String("path", r.URL.Path),
+				)
+				return nil
+			}
+
+			p.logger.Debug("processing imagor request resolved space signer",
+				zap.String("host", r.Host),
+				zap.String("normalizedHost", normalizeHost(r.Host)),
+				zap.String("spaceKey", sc.GetKey()),
+				zap.String("customDomain", sc.GetCustomDomain()),
+				zap.String("signerAlgorithm", sc.GetSignerAlgorithm()),
+				zap.Int("signerTruncate", sc.GetSignerTruncate()),
+				zap.String("path", r.URL.Path),
+			)
+			return signer
 		}))
 
 		options = append(options, imagor.WithGetResultKey(func(r *http.Request, params imagorpath.Params) string {
 			sc := resolveSpaceFromHost(store, r.Host, baseDomain)
 			if isNilSpaceConfig(sc) {
+				p.logger.Debug("processing imagor request skipped result key because no space config matched",
+					zap.String("host", r.Host),
+					zap.String("normalizedHost", normalizeHost(r.Host)),
+					zap.String("baseDomain", baseDomain),
+					zap.String("path", r.URL.Path),
+				)
 				return ""
 			}
+			p.logger.Debug("processing imagor request resolved result key namespace",
+				zap.String("host", r.Host),
+				zap.String("normalizedHost", normalizeHost(r.Host)),
+				zap.String("spaceKey", sc.GetKey()),
+				zap.String("path", r.URL.Path),
+			)
 			// Namespace result cache by space key to prevent cross-space collisions.
 			// Generate the canonical (unsigned) path as the cache key suffix.
 			return sc.GetKey() + "/" + imagorpath.Generate(params, nil)

@@ -103,7 +103,10 @@ export function useFolderContextMenu({
       // Check if operation affects current view
       if (isPathAffected(folderPath, currentPath)) {
         // Current route is affected - redirect to home
-        await navigate({ to: '/' })
+        await navigate({
+          to: spaceKey ? '/spaces/$spaceKey' : '/',
+          params: spaceKey ? { spaceKey } : undefined,
+        })
       }
       await router.invalidate()
     } catch (error: any) {
@@ -144,7 +147,10 @@ export function useFolderContextMenu({
       // Check if operation affects current view
       if (isPathAffected(folderPath, currentPath)) {
         // Current route is affected - redirect to home
-        navigate({ to: '/' })
+        navigate({
+          to: spaceKey ? '/spaces/$spaceKey' : '/',
+          params: spaceKey ? { spaceKey } : undefined,
+        })
       } else {
         // Current route not affected - just refresh
         router.invalidate()
@@ -161,7 +167,10 @@ export function useFolderContextMenu({
    */
   const handleOpen = (folderKey: string) => {
     // Navigate to the folder
-    navigate({ to: '/gallery/$galleryKey', params: { galleryKey: folderKey } })
+    navigate({
+      to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+      params: spaceKey ? { spaceKey, galleryKey: folderKey } : { galleryKey: folderKey },
+    })
 
     // Call optional callback for additional actions (e.g., close mobile sidebar)
     onOpen?.(folderKey)

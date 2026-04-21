@@ -16,7 +16,6 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor/imagorpath"
-	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -428,10 +427,11 @@ func (r *Resolver) generateImagorURLForSpaceConfig(imagePath string, params imag
 		return r.imagorProvider.GenerateURL(imagePath, params)
 	}
 	if strings.TrimSpace(spaceConfig.ImagorSecret) == "" {
-		return "", &gqlerror.Error{
-			Message:    fmt.Sprintf("space %q is missing imagor signing configuration", spaceConfig.Key),
-			Extensions: map[string]interface{}{"code": "NOT_AVAILABLE"},
-		}
+		r.logger.Debug("space imagor URL generation falling back to global signer",
+			zap.String("spaceKey", spaceConfig.Key),
+			zap.String("imagePath", imagePath),
+		)
+		return r.imagorProvider.GenerateURL(imagePath, params)
 	}
 
 	params.Image = imagePath

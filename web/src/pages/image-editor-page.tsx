@@ -340,12 +340,13 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
     const galleryKey = pathGalleryKey || propGalleryKey || ''
     if (galleryKey) {
       await navigate({
-        to: '/gallery/$galleryKey',
-        params: { galleryKey },
+        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+        params: spaceKey ? { spaceKey, galleryKey } : { galleryKey },
       })
     } else {
       await navigate({
-        to: '/',
+        to: spaceKey ? '/spaces/$spaceKey' : '/',
+        params: spaceKey ? { spaceKey } : undefined,
       })
     }
   }
