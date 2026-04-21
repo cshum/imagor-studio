@@ -375,12 +375,14 @@ export function CreateSpacePage() {
 
     const values = form.getValues()
     const isS3 = values.storageType === 's3'
+    const storageMode = isS3 ? 'byob' : 'platform'
     setIsSaving(true)
     try {
       await createSpace({
         input: {
           key: values.key,
           name: values.name,
+          storageMode,
           storageType: values.storageType,
           bucket: isS3 ? (values.bucket ?? null) : null,
           region: isS3 ? (values.region ?? null) : null,

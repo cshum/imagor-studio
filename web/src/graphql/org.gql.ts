@@ -21,6 +21,7 @@ export const LIST_SPACES = gql(`
       orgId
       key
       name
+      storageMode
       storageType
       bucket
       prefix
@@ -47,6 +48,7 @@ export const GET_SPACE = gql(`
       orgId
       key
       name
+      storageMode
       storageType
       bucket
       prefix
@@ -73,6 +75,7 @@ export const CREATE_SPACE = gql(`
       orgId
       key
       name
+      storageMode
       storageType
       bucket
       prefix
@@ -98,6 +101,7 @@ export const UPDATE_SPACE = gql(`
       orgId
       key
       name
+      storageMode
       storageType
       bucket
       prefix

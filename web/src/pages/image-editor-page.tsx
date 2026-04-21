@@ -521,7 +521,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         const imagePath = paths[0] // Single selection mode
 
         // Fetch dimensions for the layer image
-        const dimensions = await fetchImageDimensions(imagePath)
+        const dimensions = await fetchImageDimensions(imagePath, spaceKey)
 
         // Extract filename for display name
         const filename = getFileDisplayName(imagePath.split('/').pop() || imagePath)
@@ -558,7 +558,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
       try {
         // Fetch dimensions for the new image
-        const dimensions = await fetchImageDimensions(newImagePath)
+        const dimensions = await fetchImageDimensions(newImagePath, spaceKey)
 
         // Swap the image using imageEditor
         imageEditor.replaceImage(newImagePath, dimensions, replaceImageLayerId)

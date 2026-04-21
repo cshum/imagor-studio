@@ -208,6 +208,7 @@ type Space struct {
 	OrgID                string `json:"orgId"`
 	Key                  string `json:"key"`
 	Name                 string `json:"name"`
+	StorageMode          string `json:"storageMode"`
 	StorageType          string `json:"storageType"`
 	Bucket               string `json:"bucket"`
 	Prefix               string `json:"prefix"`
@@ -229,6 +230,7 @@ type Space struct {
 type SpaceInput struct {
 	Key             string  `json:"key"`
 	Name            string  `json:"name"`
+	StorageMode     *string `json:"storageMode,omitempty"`
 	StorageType     *string `json:"storageType,omitempty"`
 	Bucket          *string `json:"bucket,omitempty"`
 	Prefix          *string `json:"prefix,omitempty"`

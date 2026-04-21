@@ -279,9 +279,7 @@ export const imageLoader = async ({
   const isVideo = hasExtension(fileStat.name, videoExtensions)
 
   // Use the full-size thumbnail URL for the detail view (same for both images and videos)
-  const fullSizeSrc = getFullImageUrl(
-    fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
-  )
+  const fullSizeSrc = getFullImageUrl(fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '')
 
   const imageElement = await preloadImage(fullSizeSrc)
 

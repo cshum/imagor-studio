@@ -293,6 +293,7 @@ export type MutationDeleteUserRegistryArgs = {
 export type MutationGenerateImagorUrlArgs = {
   imagePath: Scalars['String']['input']
   params: ImagorParamsInput
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationGenerateImagorUrlFromTemplateArgs = {
@@ -302,6 +303,7 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   imagePath?: InputMaybe<Scalars['String']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
 }
 
@@ -586,6 +588,7 @@ export type Space = {
   region: Scalars['String']['output']
   signerAlgorithm: Scalars['String']['output']
   signerTruncate: Scalars['Int']['output']
+  storageMode: Scalars['String']['output']
   storageType: Scalars['String']['output']
   suspended: Scalars['Boolean']['output']
   updatedAt: Scalars['String']['output']
@@ -606,6 +609,7 @@ export type SpaceInput = {
   secretKey: InputMaybe<Scalars['String']['input']>
   signerAlgorithm: InputMaybe<Scalars['String']['input']>
   signerTruncate: InputMaybe<Scalars['Int']['input']>
+  storageMode: InputMaybe<Scalars['String']['input']>
   storageType: InputMaybe<Scalars['String']['input']>
   usePathStyle: InputMaybe<Scalars['Boolean']['input']>
 }
@@ -767,6 +771,7 @@ export type ConfigureImagorMutation = {
 
 export type GenerateImagorUrlMutationVariables = Exact<{
   imagePath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   params: ImagorParamsInput
 }>
 
@@ -774,6 +779,7 @@ export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImago
 
 export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
   templateJson: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
@@ -812,6 +818,7 @@ export type ListSpacesQuery = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -842,6 +849,7 @@ export type GetSpaceQuery = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -872,6 +880,7 @@ export type CreateSpaceMutation = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -902,6 +911,7 @@ export type UpdateSpaceMutation = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -1779,13 +1789,14 @@ export const ConfigureImagorDocument = gql`
   }
 `
 export const GenerateImagorUrlDocument = gql`
-  mutation GenerateImagorUrl($imagePath: String!, $params: ImagorParamsInput!) {
-    generateImagorUrl(imagePath: $imagePath, params: $params)
+  mutation GenerateImagorUrl($imagePath: String!, $spaceKey: String, $params: ImagorParamsInput!) {
+    generateImagorUrl(imagePath: $imagePath, spaceKey: $spaceKey, params: $params)
   }
 `
 export const GenerateImagorUrlFromTemplateDocument = gql`
   mutation GenerateImagorUrlFromTemplate(
     $templateJson: String!
+    $spaceKey: String
     $contextPath: [String!]
     $forPreview: Boolean
     $previewMaxDimensions: DimensionsInput
@@ -1794,6 +1805,7 @@ export const GenerateImagorUrlFromTemplateDocument = gql`
   ) {
     generateImagorUrlFromTemplate(
       templateJson: $templateJson
+      spaceKey: $spaceKey
       contextPath: $contextPath
       forPreview: $forPreview
       previewMaxDimensions: $previewMaxDimensions

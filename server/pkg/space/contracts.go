@@ -10,6 +10,7 @@ type Space struct {
 	OrgID                string
 	Key                  string
 	Name                 string
+	StorageMode          string
 	StorageType          string
 	Bucket               string
 	Prefix               string

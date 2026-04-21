@@ -567,6 +567,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       const imagePath = joinImagePath(galleryKey, imageKey)
       const url = await generateImagorUrl({
         imagePath,
+        spaceKey,
         params: params as ImagorParamsInput,
       })
       const fullUrl = getFullImageUrl(url)
@@ -599,6 +600,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       const imagePath = joinImagePath(galleryKey, imageKey)
       const url = await generateImagorUrl({
         imagePath,
+        spaceKey,
         params: {
           filters,
         } as ImagorParamsInput,

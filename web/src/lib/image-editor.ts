@@ -1,5 +1,4 @@
 import { generateImagorUrlFromTemplate } from '@/api/imagor-api'
-import { getFullImageUrl } from '@/lib/api-utils'
 import { editorStateToImagorPath } from '@/lib/imagor-path'
 
 export interface ImageDimensions {
@@ -289,6 +288,7 @@ export interface ImagorTemplate {
 
 export interface ImageEditorConfig {
   imagePath: string
+  spaceKey?: string
   originalDimensions: {
     width: number
     height: number
@@ -764,6 +764,7 @@ export class ImageEditor {
       const url = await generateImagorUrlFromTemplate(
         {
           templateJson: this.buildTemplateJson(previewTransformations),
+          spaceKey: this.config.spaceKey ?? null,
           contextPath: this.editingContext.length > 0 ? this.editingContext : null,
           forPreview: true,
           previewMaxDimensions: this.config.previewMaxDimensions ?? null,
@@ -1155,6 +1156,7 @@ export class ImageEditor {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       templateJson: this.buildTemplateJson(baseState),
+      spaceKey: this.config.spaceKey ?? null,
       contextPath: null,
       forPreview: false,
     })
@@ -1169,6 +1171,7 @@ export class ImageEditor {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       templateJson: this.buildTemplateJson(baseState),
+      spaceKey: this.config.spaceKey ?? null,
       contextPath: null,
       forPreview: false,
       appendFilters: [{ name: 'attachment', args: '' }],
@@ -1188,8 +1191,7 @@ export class ImageEditor {
    * Get copy URL for dialog display
    */
   async getCopyUrl(): Promise<string> {
-    const copyUrl = await this.generateCopyUrl()
-    return getFullImageUrl(copyUrl)
+    return await this.generateCopyUrl()
   }
 
   /**
@@ -1200,7 +1202,7 @@ export class ImageEditor {
       const downloadUrl = await this.generateDownloadUrl()
 
       // Open in new tab to avoid navigation confirmation dialogs
-      window.open(getFullImageUrl(downloadUrl), '_blank')
+      window.open(downloadUrl, '_blank')
       return { success: true }
     } catch (error) {
       return {

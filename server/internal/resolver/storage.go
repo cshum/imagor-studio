@@ -399,7 +399,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceKey *st
 
 		// Generate thumbnail URLs for image files
 		if !item.IsDir {
-			thumbnailUrls := r.generateThumbnailUrls(item.Path, videoThumbnailPos)
+			thumbnailUrls := r.generateThumbnailUrlsForSpace(ctx, item.Path, videoThumbnailPos, spaceKey)
 			fileItem.ThumbnailUrls = thumbnailUrls
 		}
 
@@ -451,7 +451,7 @@ func (r *queryResolver) StatFile(ctx context.Context, path string, spaceKey *str
 
 	// Generate thumbnail URLs for image files
 	if !fileInfo.IsDir {
-		thumbnailUrls := r.generateThumbnailUrls(fileInfo.Path, videoThumbnailPos)
+		thumbnailUrls := r.generateThumbnailUrlsForSpace(ctx, fileInfo.Path, videoThumbnailPos, spaceKey)
 		fileStat.ThumbnailUrls = thumbnailUrls
 	}
 

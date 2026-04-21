@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -45,7 +47,7 @@ func TestGenerateImagorURL(t *testing.T) {
 			FitIn:  true,
 		}).Return(expectedURL, nil)
 
-		url, err := resolver.Mutation().GenerateImagorURL(ctx, "gallery1/image.jpg", params)
+		url, err := resolver.Mutation().GenerateImagorURL(ctx, "gallery1/image.jpg", nil, params)
 		require.NoError(t, err)
 		assert.Equal(t, expectedURL, url)
 
@@ -59,7 +61,7 @@ func TestGenerateImagorURL(t *testing.T) {
 		expectedURL := "/imagor/unsafe/gallery1/image.jpg"
 		mockImagorProvider.On("GenerateURL", "gallery1/image.jpg", imagorpath.Params{}).Return(expectedURL, nil)
 
-		url, err := resolver.Mutation().GenerateImagorURL(ctx, "gallery1/image.jpg", params)
+		url, err := resolver.Mutation().GenerateImagorURL(ctx, "gallery1/image.jpg", nil, params)
 		require.NoError(t, err)
 		assert.Equal(t, expectedURL, url)
 
@@ -77,7 +79,7 @@ func TestGenerateImagorURL(t *testing.T) {
 			Width: 400,
 		}).Return(expectedURL, nil)
 
-		url, err := resolver.Mutation().GenerateImagorURL(ctx, "root-image.jpg", params)
+		url, err := resolver.Mutation().GenerateImagorURL(ctx, "root-image.jpg", nil, params)
 		require.NoError(t, err)
 		assert.Equal(t, expectedURL, url)
 
@@ -753,6 +755,160 @@ func TestGenerateThumbnailUrls_TemplateFile(t *testing.T) {
 	mockImagorProvider.AssertExpectations(t)
 }
 
+func TestGenerateThumbnailUrlsForSpace_UsesVerifiedCustomDomain(t *testing.T) {
+	mockImagorProvider := new(MockImagorProvider)
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	mockSpaceStore := new(MockSpaceStore)
+	mockOrgStore := new(MockOrgStore)
+	logger := zap.NewNop()
+	cfg, err := config.Load([]string{"--jwt-secret", "test-secret"}, nil)
+	require.NoError(t, err)
+	spaceKey := "acme"
+
+	resolver := NewResolver(
+		mockStorageProvider,
+		mockRegistryStore,
+		mockUserStore,
+		mockImagorProvider,
+		cfg,
+		nil,
+		logger,
+		mockOrgStore,
+		mockSpaceStore,
+		nil,
+		nil,
+	)
+
+	imagePath := "test/image.jpg"
+	mockSpaceStore.On("Get", mock.Anything, spaceKey).Return(&space.Space{
+		Key:                  spaceKey,
+		CustomDomain:         "images.customer.test",
+		CustomDomainVerified: true,
+	}, nil)
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+		Width:  300,
+		Height: 225,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "80"},
+			{Name: "format", Args: "webp"},
+		},
+	}).Return("/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", nil)
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+		Width:  1200,
+		Height: 900,
+		FitIn:  true,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "90"},
+			{Name: "format", Args: "webp"},
+		},
+	}).Return("/imagor/fit-in/1200x900/filters:quality(90):format(webp)/test/image.jpg", nil)
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+		Width:  2400,
+		Height: 1800,
+		FitIn:  true,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "95"},
+			{Name: "format", Args: "webp"},
+		},
+	}).Return("/imagor/fit-in/2400x1800/filters:quality(95):format(webp)/test/image.jpg", nil)
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+		Filters: imagorpath.Filters{{Name: "raw"}},
+	}).Return("/imagor/filters:raw()/test/image.jpg", nil)
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{Meta: true}).Return("/imagor/meta/test/image.jpg", nil)
+
+	result := resolver.generateThumbnailUrlsForSpace(context.Background(), imagePath, "first_frame", &spaceKey)
+	require.NotNil(t, result)
+	assert.Equal(t, "https://images.customer.test/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", *result.Grid)
+	assert.Equal(t, "https://images.customer.test/imagor/meta/test/image.jpg", *result.Meta)
+	mockSpaceStore.AssertExpectations(t)
+	mockImagorProvider.AssertExpectations(t)
+}
+
+func TestGenerateThumbnailUrlsForSpace_UsesProcessingTemplate(t *testing.T) {
+	mockImagorProvider := new(MockImagorProvider)
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	mockSpaceStore := new(MockSpaceStore)
+	mockOrgStore := new(MockOrgStore)
+	logger := zap.NewNop()
+	cfg, err := config.Load([]string{"--jwt-secret", "test-secret"}, nil)
+	require.NoError(t, err)
+	spaceKey := "acme"
+
+	resolver := NewResolver(
+		mockStorageProvider,
+		mockRegistryStore,
+		mockUserStore,
+		mockImagorProvider,
+		cfg,
+		nil,
+		logger,
+		mockOrgStore,
+		mockSpaceStore,
+		nil,
+		nil,
+		WithProcessingOriginResolver(space.ProcessingOriginResolverFunc(func(ctx context.Context, key string) string {
+			if key == spaceKey {
+				return "https://acme.imagor.app"
+			}
+			return ""
+		})),
+	)
+
+	imagePath := "test/image.jpg"
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+		Width:  300,
+		Height: 225,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "80"},
+			{Name: "format", Args: "webp"},
+		},
+	}).Return("/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", nil)
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+		Width:  1200,
+		Height: 900,
+		FitIn:  true,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "90"},
+			{Name: "format", Args: "webp"},
+		},
+	}).Return("/imagor/fit-in/1200x900/filters:quality(90):format(webp)/test/image.jpg", nil)
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+		Width:  2400,
+		Height: 1800,
+		FitIn:  true,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "95"},
+			{Name: "format", Args: "webp"},
+		},
+	}).Return("/imagor/fit-in/2400x1800/filters:quality(95):format(webp)/test/image.jpg", nil)
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
+		Filters: imagorpath.Filters{{Name: "raw"}},
+	}).Return("/imagor/filters:raw()/test/image.jpg", nil)
+
+	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{Meta: true}).Return("/imagor/meta/test/image.jpg", nil)
+
+	result := resolver.generateThumbnailUrlsForSpace(context.Background(), imagePath, "first_frame", &spaceKey)
+	require.NotNil(t, result)
+	assert.Equal(t, "https://acme.imagor.app/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", *result.Grid)
+	assert.Equal(t, "https://acme.imagor.app/imagor/filters:raw()/test/image.jpg", *result.Original)
+	mockImagorProvider.AssertExpectations(t)
+}
+
 // Helper function for creating float pointers (intPtr and stringPtr already exist in resolver_test.go)
 func floatPtr(f float64) *float64 {
 	return &f
@@ -871,6 +1027,7 @@ func TestGenerateImagorURLFromTemplate_ImagePathOverride(t *testing.T) {
 			result, err := resolver.Mutation().GenerateImagorURLFromTemplate(
 				ctx,
 				tt.templateJSON,
+				nil,
 				&overridePath,
 				nil, // contextPath
 				nil, // forPreview
@@ -918,6 +1075,7 @@ func TestGenerateImagorURLFromTemplate_NoImagePath(t *testing.T) {
 	result, err := resolver.Mutation().GenerateImagorURLFromTemplate(
 		ctx,
 		templateJSON,
+		nil,
 		nil, // no imagePath override
 		nil,
 		nil,
