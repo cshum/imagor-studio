@@ -33,6 +33,7 @@ export interface GraphQLUploadOptions<
   variables: TVariables
   files: Record<string, File>
   signal?: AbortSignal
+  onProgress?: (progress: number) => void
 }
 
 export interface GraphQLUploadResult<TData = unknown> {
@@ -70,7 +71,13 @@ export interface GraphQLUploadResult<TData = unknown> {
 export async function executeGraphQLUpload<
   TVariables extends Record<string, unknown> = Record<string, unknown>,
   TData = unknown,
->({ mutation, variables, files, signal }: GraphQLUploadOptions<TVariables>): Promise<TData> {
+>({
+  mutation,
+  variables,
+  files,
+  signal,
+  onProgress,
+}: GraphQLUploadOptions<TVariables>): Promise<TData> {
   const endpoint = `${getBaseUrl()}/api/query`
   const auth = getAuth()
 
@@ -112,19 +119,75 @@ export async function executeGraphQLUpload<
     headers.Authorization = `Bearer ${auth.accessToken}`
   }
 
-  // Make the request
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers,
-    body: formData,
-    signal,
+  const result = await new Promise<GraphQLUploadResult<TData>>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    let aborted = false
+
+    const cleanup = () => {
+      if (signal) {
+        signal.removeEventListener('abort', handleAbort)
+      }
+    }
+
+    const handleAbort = () => {
+      aborted = true
+      xhr.abort()
+    }
+
+    xhr.open('POST', endpoint)
+    for (const [key, value] of Object.entries(headers)) {
+      xhr.setRequestHeader(key, value)
+    }
+
+    xhr.responseType = 'text'
+
+    xhr.upload.onprogress = (event) => {
+      if (!onProgress || !event.lengthComputable) {
+        return
+      }
+      onProgress(Math.round((event.loaded / event.total) * 100))
+    }
+
+    xhr.onerror = () => {
+      cleanup()
+      reject(new Error('Upload failed'))
+    }
+
+    xhr.onabort = () => {
+      cleanup()
+      reject(
+        aborted
+          ? new DOMException('The operation was aborted.', 'AbortError')
+          : new Error('Upload aborted'),
+      )
+    }
+
+    xhr.onload = () => {
+      cleanup()
+
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`))
+        return
+      }
+
+      try {
+        const parsed = JSON.parse(xhr.responseText) as GraphQLUploadResult<TData>
+        resolve(parsed)
+      } catch {
+        reject(new Error('Upload failed: invalid server response'))
+      }
+    }
+
+    if (signal) {
+      if (signal.aborted) {
+        handleAbort()
+        return
+      }
+      signal.addEventListener('abort', handleAbort, { once: true })
+    }
+
+    xhr.send(formData)
   })
-
-  if (!response.ok) {
-    throw new Error(`Upload failed: ${response.status} ${response.statusText}`)
-  }
-
-  const result: GraphQLUploadResult<TData> = await response.json()
 
   if (result.errors && result.errors.length > 0) {
     const errorMessage = result.errors[0]?.message || 'Unknown GraphQL error'
@@ -173,12 +236,14 @@ export async function uploadSingleFile<TData = unknown>(
   fileKey: string,
   file: File,
   signal?: AbortSignal,
+  onProgress?: (progress: number) => void,
 ): Promise<TData> {
   return executeGraphQLUpload({
     mutation,
     variables,
     files: { [fileKey]: file },
     signal,
+    onProgress,
   })
 }
 

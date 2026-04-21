@@ -55,11 +55,12 @@ type Documents = {
   '\n  query ListFiles(\n    $path: String!\n    $spaceKey: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceKey: $spaceKey\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n': typeof types.ListFilesDocument
   '\n  query StatFile($path: String!, $spaceKey: String) {\n    statFile(path: $path, spaceKey: $spaceKey) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n': typeof types.StatFileDocument
   '\n  mutation UploadFile($path: String!, $spaceKey: String, $content: Upload!) {\n    uploadFile(path: $path, spaceKey: $spaceKey, content: $content)\n  }\n': typeof types.UploadFileDocument
+  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceKey: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceKey: $spaceKey\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n': typeof types.RequestUploadDocument
   '\n  mutation DeleteFile($path: String!, $spaceKey: String) {\n    deleteFile(path: $path, spaceKey: $spaceKey)\n  }\n': typeof types.DeleteFileDocument
   '\n  mutation CreateFolder($path: String!, $spaceKey: String) {\n    createFolder(path: $path, spaceKey: $spaceKey)\n  }\n': typeof types.CreateFolderDocument
   '\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n': typeof types.CopyFileDocument
   '\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n': typeof types.MoveFileDocument
-  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n': typeof types.StorageStatusDocument
+  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      supportsPresignedUpload\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n': typeof types.StorageStatusDocument
   '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureFileStorageDocument
   '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureS3StorageDocument
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n': typeof types.TestStorageConfigDocument
@@ -158,6 +159,8 @@ const documents: Documents = {
     types.StatFileDocument,
   '\n  mutation UploadFile($path: String!, $spaceKey: String, $content: Upload!) {\n    uploadFile(path: $path, spaceKey: $spaceKey, content: $content)\n  }\n':
     types.UploadFileDocument,
+  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceKey: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceKey: $spaceKey\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n':
+    types.RequestUploadDocument,
   '\n  mutation DeleteFile($path: String!, $spaceKey: String) {\n    deleteFile(path: $path, spaceKey: $spaceKey)\n  }\n':
     types.DeleteFileDocument,
   '\n  mutation CreateFolder($path: String!, $spaceKey: String) {\n    createFolder(path: $path, spaceKey: $spaceKey)\n  }\n':
@@ -166,7 +169,7 @@ const documents: Documents = {
     types.CopyFileDocument,
   '\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n':
     types.MoveFileDocument,
-  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n':
+  '\n  query StorageStatus {\n    storageStatus {\n      configured\n      supportsPresignedUpload\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n':
     types.StorageStatusDocument,
   '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n':
     types.ConfigureFileStorageDocument,
@@ -459,6 +462,12 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
+  source: '\n  mutation RequestUpload(\n    $path: String!\n    $spaceKey: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceKey: $spaceKey\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation RequestUpload(\n    $path: String!\n    $spaceKey: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceKey: $spaceKey\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
   source: '\n  mutation DeleteFile($path: String!, $spaceKey: String) {\n    deleteFile(path: $path, spaceKey: $spaceKey)\n  }\n',
 ): (typeof documents)['\n  mutation DeleteFile($path: String!, $spaceKey: String) {\n    deleteFile(path: $path, spaceKey: $spaceKey)\n  }\n']
 /**
@@ -483,8 +492,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n',
-): (typeof documents)['\n  query StorageStatus {\n    storageStatus {\n      configured\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n']
+  source: '\n  query StorageStatus {\n    storageStatus {\n      configured\n      supportsPresignedUpload\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query StorageStatus {\n    storageStatus {\n      configured\n      supportsPresignedUpload\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

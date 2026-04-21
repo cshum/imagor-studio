@@ -38,9 +38,14 @@ export function GalleryDropZone({
   const { authState } = useAuth()
 
   const handleFileUpload = useCallback(
-    async (file: File, path: string, signal?: AbortSignal): Promise<boolean> => {
+    async (
+      file: File,
+      path: string,
+      signal?: AbortSignal,
+      onProgress?: (progress: number) => void,
+    ): Promise<boolean> => {
       try {
-        return await uploadFile(path, file, signal, spaceKey)
+        return await uploadFile(path, file, { signal, spaceKey, onProgress })
       } catch {
         return false
       }

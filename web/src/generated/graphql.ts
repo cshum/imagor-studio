@@ -194,6 +194,7 @@ export type Mutation = {
   removeOrgMember: Scalars['Boolean']['output']
   removeSpaceMember: Scalars['Boolean']['output']
   requestEmailChange: EmailChangeRequestResult
+  requestUpload: PresignedUpload
   saveTemplate: TemplateResult
   setSpaceRegistry: Array<UserRegistry>
   setSystemRegistry: Array<SystemRegistry>
@@ -342,6 +343,13 @@ export type MutationRequestEmailChangeArgs = {
   userId?: InputMaybe<Scalars['ID']['input']>
 }
 
+export type MutationRequestUploadArgs = {
+  contentType: Scalars['String']['input']
+  path: Scalars['String']['input']
+  sizeBytes: Scalars['Int']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
+}
+
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
   spaceKey?: InputMaybe<Scalars['String']['input']>
@@ -418,6 +426,12 @@ export type Organization = {
   planStatus: Scalars['String']['output']
   slug: Scalars['String']['output']
   updatedAt: Scalars['String']['output']
+}
+
+export type PresignedUpload = {
+  __typename?: 'PresignedUpload'
+  expiresAt: Scalars['String']['output']
+  uploadURL: Scalars['String']['output']
 }
 
 export type Query = {
@@ -645,6 +659,7 @@ export type StorageStatus = {
   isOverriddenByConfig: Scalars['Boolean']['output']
   lastUpdated: Maybe<Scalars['String']['output']>
   s3Config: Maybe<S3StorageConfig>
+  supportsPresignedUpload: Scalars['Boolean']['output']
   type: Maybe<Scalars['String']['output']>
 }
 
@@ -1353,6 +1368,18 @@ export type UploadFileMutationVariables = Exact<{
 
 export type UploadFileMutation = { __typename?: 'Mutation'; uploadFile: boolean }
 
+export type RequestUploadMutationVariables = Exact<{
+  path: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
+  contentType: Scalars['String']['input']
+  sizeBytes: Scalars['Int']['input']
+}>
+
+export type RequestUploadMutation = {
+  __typename?: 'Mutation'
+  requestUpload: { __typename?: 'PresignedUpload'; uploadURL: string; expiresAt: string }
+}
+
 export type DeleteFileMutationVariables = Exact<{
   path: Scalars['String']['input']
   spaceKey?: InputMaybe<Scalars['String']['input']>
@@ -1390,6 +1417,7 @@ export type StorageStatusQuery = {
   storageStatus: {
     __typename?: 'StorageStatus'
     configured: boolean
+    supportsPresignedUpload: boolean
     type: string | null
     lastUpdated: string | null
     isOverriddenByConfig: boolean
@@ -3989,6 +4017,85 @@ export const UploadFileDocument = {
     },
   ],
 } as unknown as DocumentNode<UploadFileMutation, UploadFileMutationVariables>
+export const RequestUploadDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RequestUpload' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'path' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'contentType' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'sizeBytes' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'requestUpload' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'path' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'path' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'contentType' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'contentType' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'sizeBytes' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'sizeBytes' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'uploadURL' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RequestUploadMutation, RequestUploadMutationVariables>
 export const DeleteFileDocument = {
   kind: 'Document',
   definitions: [
@@ -4216,6 +4323,7 @@ export const StorageStatusDocument = {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'configured' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supportsPresignedUpload' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'type' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'lastUpdated' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },

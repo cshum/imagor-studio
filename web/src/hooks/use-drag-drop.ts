@@ -14,7 +14,12 @@ export interface DragDropFile {
 
 export interface UseDragDropOptions {
   onFilesAdded?: (files: File[]) => void
-  onFileUpload?: (file: File, path: string, signal?: AbortSignal) => Promise<boolean>
+  onFileUpload?: (
+    file: File,
+    path: string,
+    signal?: AbortSignal,
+    onProgress?: (progress: number) => void,
+  ) => Promise<boolean>
   onFilesDropped?: () => void
   existingFiles?: string[]
   imageExtensions?: string
@@ -66,55 +71,6 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     [imageExtensions, videoExtensions],
   )
 
-  const addFiles = useCallback(
-    (newFiles: File[]) => {
-      const validFiles: DragDropFile[] = []
-      const usedNames: string[] = []
-
-      for (const file of newFiles) {
-        const error = validateFile(file)
-        if (error) {
-          continue
-        }
-
-        // Check for duplicates in current upload queue
-        const isDuplicate = files.some(
-          (f) => f.file.name === file.name && f.file.size === file.size,
-        )
-        if (isDuplicate) {
-          continue
-        }
-
-        // Generate unique filename to avoid conflicts
-        const uniqueFileName = generateUniqueFilename(file.name, existingFiles, usedNames)
-        usedNames.push(uniqueFileName)
-
-        // Create a new File object with the unique name if it was renamed
-        let fileToAdd = file
-        if (uniqueFileName !== file.name) {
-          fileToAdd = new File([file], uniqueFileName, { type: file.type })
-        }
-
-        const abortController = new AbortController()
-        validFiles.push({
-          file: fileToAdd,
-          id: `${uniqueFileName}-${file.size}-${Date.now()}-${Math.random()}`,
-          status: 'uploading', // Start as uploading instead of pending
-          progress: 0,
-          abortController,
-        })
-      }
-
-      if (validFiles.length > 0) {
-        setFiles((prev) => [...prev, ...validFiles])
-        onFilesAdded?.(validFiles.map((f) => f.file))
-        // Auto-upload files immediately after adding them
-        setTimeout(() => uploadFilesImmediate(validFiles), 0)
-      }
-    },
-    [files, validateFile, onFilesAdded, existingFiles],
-  )
-
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -148,22 +104,6 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     }
   }, [])
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDragActive(false)
-      dragCounter.current = 0
-
-      const droppedFiles = Array.from(e.dataTransfer.files)
-      if (droppedFiles.length > 0) {
-        addFiles(droppedFiles)
-        onFilesDropped?.()
-      }
-    },
-    [addFiles, onFilesDropped],
-  )
-
   // Internal function to upload specific files immediately
   const uploadFilesImmediate = useCallback(
     async (filesToUpload: DragDropFile[]) => {
@@ -178,6 +118,9 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
             fileItem.file,
             filePath,
             fileItem.abortController?.signal,
+            (progress) => {
+              setFiles((prev) => prev.map((f) => (f.id === fileItem.id ? { ...f, progress } : f)))
+            },
           )
 
           if (success) {
@@ -232,6 +175,70 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
     [onFileUpload, currentPath],
   )
 
+  const addFiles = useCallback(
+    (newFiles: File[]) => {
+      const validFiles: DragDropFile[] = []
+      const usedNames: string[] = []
+
+      for (const file of newFiles) {
+        const error = validateFile(file)
+        if (error) {
+          continue
+        }
+
+        // Check for duplicates in current upload queue
+        const isDuplicate = files.some(
+          (f) => f.file.name === file.name && f.file.size === file.size,
+        )
+        if (isDuplicate) {
+          continue
+        }
+
+        // Generate unique filename to avoid conflicts
+        const uniqueFileName = generateUniqueFilename(file.name, existingFiles, usedNames)
+        usedNames.push(uniqueFileName)
+
+        // Create a new File object with the unique name if it was renamed
+        let fileToAdd = file
+        if (uniqueFileName !== file.name) {
+          fileToAdd = new File([file], uniqueFileName, { type: file.type })
+        }
+
+        const abortController = new AbortController()
+        validFiles.push({
+          file: fileToAdd,
+          id: `${uniqueFileName}-${file.size}-${Date.now()}-${Math.random()}`,
+          status: 'uploading',
+          progress: 0,
+          abortController,
+        })
+      }
+
+      if (validFiles.length > 0) {
+        setFiles((prev) => [...prev, ...validFiles])
+        onFilesAdded?.(validFiles.map((f) => f.file))
+        setTimeout(() => uploadFilesImmediate(validFiles), 0)
+      }
+    },
+    [existingFiles, files, onFilesAdded, uploadFilesImmediate, validateFile],
+  )
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setIsDragActive(false)
+      dragCounter.current = 0
+
+      const droppedFiles = Array.from(e.dataTransfer.files)
+      if (droppedFiles.length > 0) {
+        addFiles(droppedFiles)
+        onFilesDropped?.()
+      }
+    },
+    [addFiles, onFilesDropped],
+  )
+
   const removeFile = useCallback((id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id))
   }, [])
@@ -271,7 +278,14 @@ export function useDragDrop(options: UseDragDropOptions = {}): UseDragDropReturn
         setIsUploading(true)
 
         const filePath = currentPath ? `${currentPath}/${fileItem.file.name}` : fileItem.file.name
-        const success = await onFileUpload(fileItem.file, filePath, abortController.signal)
+        const success = await onFileUpload(
+          fileItem.file,
+          filePath,
+          abortController.signal,
+          (progress) => {
+            setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, progress } : f)))
+          },
+        )
 
         if (success) {
           setFiles((prev) =>

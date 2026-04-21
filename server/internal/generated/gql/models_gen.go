@@ -160,6 +160,11 @@ type Organization struct {
 	UpdatedAt   string `json:"updatedAt"`
 }
 
+type PresignedUpload struct {
+	UploadURL string `json:"uploadURL"`
+	ExpiresAt string `json:"expiresAt"`
+}
+
 type Query struct {
 }
 
@@ -279,12 +284,13 @@ type StorageConfigResult struct {
 }
 
 type StorageStatus struct {
-	Configured           bool               `json:"configured"`
-	Type                 *string            `json:"type,omitempty"`
-	LastUpdated          *string            `json:"lastUpdated,omitempty"`
-	IsOverriddenByConfig bool               `json:"isOverriddenByConfig"`
-	FileConfig           *FileStorageConfig `json:"fileConfig,omitempty"`
-	S3Config             *S3StorageConfig   `json:"s3Config,omitempty"`
+	Configured              bool               `json:"configured"`
+	SupportsPresignedUpload bool               `json:"supportsPresignedUpload"`
+	Type                    *string            `json:"type,omitempty"`
+	LastUpdated             *string            `json:"lastUpdated,omitempty"`
+	IsOverriddenByConfig    bool               `json:"isOverriddenByConfig"`
+	FileConfig              *FileStorageConfig `json:"fileConfig,omitempty"`
+	S3Config                *S3StorageConfig   `json:"s3Config,omitempty"`
 }
 
 type StorageTestResult struct {

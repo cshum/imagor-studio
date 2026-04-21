@@ -19,6 +19,15 @@ import (
 	"go.uber.org/zap"
 )
 
+type MockPresignableStorage struct {
+	MockStorage
+}
+
+func (m *MockPresignableStorage) PresignedPutURL(ctx context.Context, key string, contentType string, sizeBytes int64, ttl time.Duration) (string, error) {
+	args := m.Called(ctx, key, contentType, sizeBytes, ttl)
+	return args.String(0), args.Error(1)
+}
+
 // MockedS3Resolver extends the regular resolver with mocked S3 validation
 type MockedS3Resolver struct {
 	*Resolver
@@ -182,6 +191,104 @@ func TestUploadFile_RequiresWriteScope(t *testing.T) {
 			mockStorage.AssertExpectations(t)
 		})
 	}
+}
+
+func TestRequestUpload_RequiresWriteScope(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadOnlyContext("test-user-id")
+	result, err := resolver.Mutation().RequestUpload(ctx, "test.txt", nil, "text/plain", 128)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "insufficient permission: write access required")
+}
+
+func TestRequestUpload_UnsupportedStorage(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	result, err := resolver.Mutation().RequestUpload(ctx, "test.txt", nil, "text/plain", 128)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "does not support presigned uploads")
+}
+
+func TestRequestUpload_Success(t *testing.T) {
+	mockStorage := new(MockPresignableStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	mockStorage.On("PresignedPutURL", ctx, "test.txt", "text/plain", int64(128), 5*time.Minute).
+		Return("https://example.com/upload", nil).Once()
+
+	result, err := resolver.Mutation().RequestUpload(ctx, "test.txt", nil, "text/plain", 128)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "https://example.com/upload", result.UploadURL)
+	assert.NotEmpty(t, result.ExpiresAt)
+	mockStorage.AssertExpectations(t)
+}
+
+func TestStorageStatus_SupportsPresignedUpload(t *testing.T) {
+	t.Run("false for non-presignable storage", func(t *testing.T) {
+		mockStorage := new(MockStorage)
+		mockRegistryStore := new(MockRegistryStore)
+		mockUserStore := new(MockUserStore)
+		logger, _ := zap.NewDevelopment()
+		cfg := &config.Config{}
+		mockStorageProvider := NewMockStorageProvider(mockStorage)
+		resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+		ctx := context.Background()
+		mockRegistryStore.On("GetMulti", mock.Anything, "system:global", mock.Anything).
+			Return([]*registrystore.Registry{}, nil).Once()
+
+		result, err := resolver.Query().StorageStatus(ctx)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.False(t, result.SupportsPresignedUpload)
+		mockRegistryStore.AssertExpectations(t)
+	})
+
+	t.Run("true for presignable storage", func(t *testing.T) {
+		mockStorage := new(MockPresignableStorage)
+		mockRegistryStore := new(MockRegistryStore)
+		mockUserStore := new(MockUserStore)
+		logger, _ := zap.NewDevelopment()
+		cfg := &config.Config{}
+		mockStorageProvider := NewMockStorageProvider(mockStorage)
+		resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+		ctx := context.Background()
+		mockRegistryStore.On("GetMulti", mock.Anything, "system:global", mock.Anything).
+			Return([]*registrystore.Registry{}, nil).Once()
+
+		result, err := resolver.Query().StorageStatus(ctx)
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.True(t, result.SupportsPresignedUpload)
+		mockRegistryStore.AssertExpectations(t)
+	})
 }
 
 func TestDeleteFile_RequiresWriteScope(t *testing.T) {

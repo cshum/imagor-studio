@@ -57,6 +57,12 @@ type Storage interface {
 	Move(ctx context.Context, sourcePath string, destPath string) error
 }
 
+// PresignableStorage is an optional extension for backends that can generate
+// direct-upload presigned PUT URLs, such as S3-compatible object stores.
+type PresignableStorage interface {
+	PresignedPutURL(ctx context.Context, key string, contentType string, sizeBytes int64, ttl time.Duration) (string, error)
+}
+
 // Helper functions for common filtering logic
 
 // MatchesExtensions checks if a filename matches any of the provided extensions
