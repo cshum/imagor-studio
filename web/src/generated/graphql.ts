@@ -587,6 +587,7 @@ export type Space = {
   region: Scalars['String']['output']
   signerAlgorithm: Scalars['String']['output']
   signerTruncate: Scalars['Int']['output']
+  storageMode: Scalars['String']['output']
   storageType: Scalars['String']['output']
   suspended: Scalars['Boolean']['output']
   updatedAt: Scalars['String']['output']
@@ -607,6 +608,7 @@ export type SpaceInput = {
   secretKey: InputMaybe<Scalars['String']['input']>
   signerAlgorithm: InputMaybe<Scalars['String']['input']>
   signerTruncate: InputMaybe<Scalars['Int']['input']>
+  storageMode: InputMaybe<Scalars['String']['input']>
   storageType: InputMaybe<Scalars['String']['input']>
   usePathStyle: InputMaybe<Scalars['Boolean']['input']>
 }
@@ -815,6 +817,7 @@ export type ListSpacesQuery = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -845,6 +848,7 @@ export type GetSpaceQuery = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -875,6 +879,7 @@ export type CreateSpaceMutation = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -905,6 +910,7 @@ export type UpdateSpaceMutation = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -2102,6 +2108,7 @@ export const ListSpacesDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'key' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageMode' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
@@ -2162,6 +2169,7 @@ export const GetSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'key' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageMode' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
@@ -2222,6 +2230,7 @@ export const CreateSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'key' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageMode' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },
@@ -2294,6 +2303,7 @@ export const UpdateSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'key' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageMode' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'prefix' } },

@@ -51,7 +51,7 @@ export function StorageSection({ space }: StorageSectionProps) {
   })
 
   // Show read-only info panel for platform-managed spaces
-  if (space.storageType !== 's3') {
+  if (space.storageMode !== 'byob') {
     return (
       <div className='rounded-lg border p-6'>
         <div className='flex items-start gap-4'>
@@ -75,6 +75,7 @@ export function StorageSection({ space }: StorageSectionProps) {
         input: {
           key: space.key,
           name: space.name,
+          storageMode: null,
           storageType: null,
           bucket: null,
           region: null,

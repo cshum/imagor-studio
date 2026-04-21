@@ -219,6 +219,7 @@ type ComplexityRoot struct {
 		Region               func(childComplexity int) int
 		SignerAlgorithm      func(childComplexity int) int
 		SignerTruncate       func(childComplexity int) int
+		StorageMode          func(childComplexity int) int
 		StorageType          func(childComplexity int) int
 		Suspended            func(childComplexity int) int
 		UpdatedAt            func(childComplexity int) int
@@ -1495,6 +1496,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Space.SignerTruncate(childComplexity), true
+	case "Space.storageMode":
+		if e.ComplexityRoot.Space.StorageMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.StorageMode(childComplexity), true
 	case "Space.storageType":
 		if e.ComplexityRoot.Space.StorageType == nil {
 			break
@@ -2126,6 +2133,7 @@ type Space {
   orgId: ID!
   key: String!
   name: String!
+  storageMode: String!
   storageType: String!
   bucket: String!
   prefix: String!
@@ -2147,6 +2155,7 @@ type Space {
 input SpaceInput {
   key: String!
   name: String!
+  storageMode: String
   storageType: String
   bucket: String
   prefix: String
@@ -5406,6 +5415,8 @@ func (ec *executionContext) fieldContext_Mutation_createSpace(ctx context.Contex
 				return ec.fieldContext_Space_key(ctx, field)
 			case "name":
 				return ec.fieldContext_Space_name(ctx, field)
+			case "storageMode":
+				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
 				return ec.fieldContext_Space_storageType(ctx, field)
 			case "bucket":
@@ -5489,6 +5500,8 @@ func (ec *executionContext) fieldContext_Mutation_updateSpace(ctx context.Contex
 				return ec.fieldContext_Space_key(ctx, field)
 			case "name":
 				return ec.fieldContext_Space_name(ctx, field)
+			case "storageMode":
+				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
 				return ec.fieldContext_Space_storageType(ctx, field)
 			case "bucket":
@@ -7360,6 +7373,8 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 				return ec.fieldContext_Space_key(ctx, field)
 			case "name":
 				return ec.fieldContext_Space_name(ctx, field)
+			case "storageMode":
+				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
 				return ec.fieldContext_Space_storageType(ctx, field)
 			case "bucket":
@@ -7432,6 +7447,8 @@ func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field 
 				return ec.fieldContext_Space_key(ctx, field)
 			case "name":
 				return ec.fieldContext_Space_name(ctx, field)
+			case "storageMode":
+				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
 				return ec.fieldContext_Space_storageType(ctx, field)
 			case "bucket":
@@ -8506,6 +8523,35 @@ func (ec *executionContext) _Space_name(ctx context.Context, field graphql.Colle
 }
 
 func (ec *executionContext) fieldContext_Space_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_storageMode(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_storageMode,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageMode, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_storageMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Space",
 		Field:      field,
@@ -12942,7 +12988,7 @@ func (ec *executionContext) unmarshalInputSpaceInput(ctx context.Context, obj an
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"key", "name", "storageType", "bucket", "prefix", "region", "endpoint", "accessKeyId", "secretKey", "usePathStyle", "customDomain", "isShared", "signerAlgorithm", "signerTruncate", "imagorSecret"}
+	fieldsInOrder := [...]string{"key", "name", "storageMode", "storageType", "bucket", "prefix", "region", "endpoint", "accessKeyId", "secretKey", "usePathStyle", "customDomain", "isShared", "signerAlgorithm", "signerTruncate", "imagorSecret"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12963,6 +13009,13 @@ func (ec *executionContext) unmarshalInputSpaceInput(ctx context.Context, obj an
 				return it, err
 			}
 			it.Name = data
+		case "storageMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageMode"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StorageMode = data
 		case "storageType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageType"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -14705,6 +14758,11 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "name":
 			out.Values[i] = ec._Space_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "storageMode":
+			out.Values[i] = ec._Space_storageMode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

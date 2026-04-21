@@ -92,6 +92,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
         input: {
           key: nextKey,
           name: values.name,
+          storageMode: null,
           customDomain: values.customDomain ?? null,
           storageType: null,
           bucket: null,

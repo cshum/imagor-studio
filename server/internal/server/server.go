@@ -158,6 +158,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		OrgStore:          services.OrgStore,
 		SpaceStore:        services.SpaceStore,
 		SpaceInviteStore:  services.SpaceInviteStore,
+		CloudConfig:       cloudConfig,
 		InternalAPISecret: cloudConfig.InternalAPISecret,
 		Logger:            services.Logger,
 	}

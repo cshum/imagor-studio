@@ -15,6 +15,7 @@ type Space {
   orgId: ID!
   key: String!
   name: String!
+  storageMode: String!
   storageType: String!
   bucket: String!
   prefix: String!
@@ -36,6 +37,7 @@ type Space {
 input SpaceInput {
   key: String!
   name: String!
+  storageMode: String
   storageType: String
   bucket: String
   prefix: String

@@ -24,6 +24,7 @@ export function SecuritySection({ space }: SecuritySectionProps) {
       input: {
         key: space.key,
         name: space.name,
+        storageMode: null,
         storageType: null,
         bucket: null,
         region: null,

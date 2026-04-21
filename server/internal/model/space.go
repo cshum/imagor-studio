@@ -17,7 +17,8 @@ type Space struct {
 	ID          string `bun:"id,pk,type:text"`
 	OrgID       string `bun:"org_id,notnull,default:''"` // owning org; FK added when orgs table exists
 	Key         string `bun:"key,notnull,unique"`
-	Name        string `bun:"name,notnull,default:''"`           // display name
+	Name        string `bun:"name,notnull,default:''"` // display name
+	StorageMode string `bun:"storage_mode,notnull,default:'platform'"`
 	StorageType string `bun:"storage_type,notnull,default:'s3'"` // "managed" | "s3" | "r2"
 
 	// Storage config

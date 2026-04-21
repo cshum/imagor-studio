@@ -36,6 +36,7 @@ func mapSpaceToGQL(s *space.Space) *gql.Space {
 		OrgID:                s.OrgID,
 		Key:                  s.Key,
 		Name:                 s.Name,
+		StorageMode:          space.NormalizeStorageMode(s.StorageMode),
 		StorageType:          s.StorageType,
 		Bucket:               s.Bucket,
 		Prefix:               s.Prefix,
@@ -279,13 +280,75 @@ func (r *Resolver) canReadSpace(ctx context.Context, space *space.Space) (bool, 
 	return r.spaceStore.HasMember(ctx, space.Key, claims.UserID)
 }
 
+func normalizeSpaceStorageType(storageType string) string {
+	return strings.TrimSpace(strings.ToLower(storageType))
+}
+
+func inferStorageMode(storageMode, storageType string) string {
+	normalizedMode := strings.TrimSpace(storageMode)
+	if normalizedMode != "" {
+		return space.NormalizeStorageMode(normalizedMode)
+	}
+
+	switch normalizeSpaceStorageType(storageType) {
+	case "managed":
+		return space.StorageModePlatform
+	case "s3", "r2":
+		return space.StorageModeBYOB
+	default:
+		return space.StorageModePlatform
+	}
+}
+
+func validateSpaceStorageConfig(sp *space.Space) error {
+	storageType := normalizeSpaceStorageType(sp.StorageType)
+	storageMode := inferStorageMode(sp.StorageMode, storageType)
+
+	sp.StorageMode = storageMode
+	sp.StorageType = storageType
+
+	switch storageMode {
+	case space.StorageModePlatform:
+		if sp.StorageType == "" {
+			sp.StorageType = "managed"
+		}
+		if sp.StorageType != "managed" {
+			return fmt.Errorf("platform storage requires storageType \"managed\"")
+		}
+		if strings.TrimSpace(sp.Bucket) != "" || strings.TrimSpace(sp.Prefix) != "" || strings.TrimSpace(sp.Region) != "" || strings.TrimSpace(sp.Endpoint) != "" || strings.TrimSpace(sp.AccessKeyID) != "" || strings.TrimSpace(sp.SecretKey) != "" || sp.UsePathStyle {
+			return fmt.Errorf("platform storage does not allow custom bucket, prefix, endpoint, or credential fields")
+		}
+	case space.StorageModeBYOB:
+		if sp.StorageType != "s3" && sp.StorageType != "r2" {
+			return fmt.Errorf("byob storage requires storageType \"s3\" or \"r2\"")
+		}
+		if strings.TrimSpace(sp.Bucket) == "" {
+			return fmt.Errorf("byob storage requires bucket")
+		}
+		if strings.TrimSpace(sp.Region) == "" {
+			return fmt.Errorf("byob storage requires region")
+		}
+	default:
+		return fmt.Errorf("invalid storage mode %q", sp.StorageMode)
+	}
+
+	return nil
+}
+
 // applySpaceInput applies a SpaceInput onto a Space struct.
 // Nil-pointer fields in SpaceInput are skipped (keep existing value).
-func applySpaceInput(sp *space.Space, input gql.SpaceInput) {
+func applySpaceInput(sp *space.Space, input gql.SpaceInput) error {
 	sp.Key = input.Key
 	sp.Name = input.Name
+	if input.StorageMode != nil {
+		storageMode := space.NormalizeStorageMode(*input.StorageMode)
+		if !space.IsValidStorageMode(storageMode) {
+			return fmt.Errorf("invalid storage mode %q", *input.StorageMode)
+		}
+		sp.StorageMode = storageMode
+	}
 	if input.StorageType != nil {
-		sp.StorageType = *input.StorageType
+		sp.StorageType = normalizeSpaceStorageType(*input.StorageType)
 	}
 	if input.Bucket != nil {
 		sp.Bucket = *input.Bucket
@@ -323,6 +386,7 @@ func applySpaceInput(sp *space.Space, input gql.SpaceInput) {
 	if input.ImagorSecret != nil {
 		sp.ImagorSecret = *input.ImagorSecret
 	}
+	return validateSpaceStorageConfig(sp)
 }
 
 // ---------- Query resolvers --------------------------------------------------
@@ -475,7 +539,9 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 	}
 
 	sp := &space.Space{OrgID: orgID}
-	applySpaceInput(sp, input)
+	if err := applySpaceInput(sp, input); err != nil {
+		return nil, err
+	}
 
 	if err := r.spaceStore.Create(ctx, sp); err != nil {
 		r.logger.Error("CreateSpace: failed to create", zap.String("key", input.Key), zap.Error(err))
@@ -557,7 +623,9 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 		}
 	}
 
-	applySpaceInput(existing, input)
+	if err := applySpaceInput(existing, input); err != nil {
+		return nil, err
+	}
 
 	if err := r.spaceStore.Upsert(ctx, existing); err != nil {
 		r.logger.Error("UpdateSpace: upsert failed", zap.String("key", key), zap.Error(err))

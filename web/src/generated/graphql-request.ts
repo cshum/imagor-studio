@@ -588,6 +588,7 @@ export type Space = {
   region: Scalars['String']['output']
   signerAlgorithm: Scalars['String']['output']
   signerTruncate: Scalars['Int']['output']
+  storageMode: Scalars['String']['output']
   storageType: Scalars['String']['output']
   suspended: Scalars['Boolean']['output']
   updatedAt: Scalars['String']['output']
@@ -608,6 +609,7 @@ export type SpaceInput = {
   secretKey: InputMaybe<Scalars['String']['input']>
   signerAlgorithm: InputMaybe<Scalars['String']['input']>
   signerTruncate: InputMaybe<Scalars['Int']['input']>
+  storageMode: InputMaybe<Scalars['String']['input']>
   storageType: InputMaybe<Scalars['String']['input']>
   usePathStyle: InputMaybe<Scalars['Boolean']['input']>
 }
