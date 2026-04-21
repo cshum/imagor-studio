@@ -700,3 +700,30 @@ func TestProviderProcessingMode_Initialize(t *testing.T) {
 	assert.NotNil(t, p.spaceConfigStore, "spaceConfigStore must be set in processing mode")
 	assert.Equal(t, "imagor.test", p.baseDomain)
 }
+
+func TestResolveSpaceFromHost_StripsPortForBaseDomainRouting(t *testing.T) {
+	scs := &testSpaceConfigReader{
+		byKey: map[string]processing.SpaceConfig{
+			"demo": &testSpaceConfig{Key: "demo", ImagorSecret: "secret"},
+		},
+		byHostname: map[string]processing.SpaceConfig{},
+	}
+
+	sc := resolveSpaceFromHost(scs, "demo.imagor.test:8081", "imagor.test")
+	require.NotNil(t, sc)
+	assert.Equal(t, "demo", sc.GetKey())
+}
+
+func TestResolveSpaceFromHost_TypedNilReturnsNil(t *testing.T) {
+	var nilConfig *testSpaceConfig
+	scs := &testSpaceConfigReader{
+		byKey: map[string]processing.SpaceConfig{
+			"demo": nilConfig,
+		},
+		byHostname: map[string]processing.SpaceConfig{},
+	}
+
+	sc := resolveSpaceFromHost(scs, "demo.imagor.test:8081", "imagor.test")
+	assert.Nil(t, sc)
+	assert.True(t, isNilSpaceConfig(sc))
+}
