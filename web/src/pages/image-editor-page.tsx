@@ -968,9 +968,23 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
           await router.invalidate({
             filter: (match) => !match.id.includes('/editor'),
           })
+          const { galleryKey: templateGalleryKey, imageKey: templateImageKey } =
+            splitImagePath(templatePath)
           navigate({
-            to: '/$imagePath/editor',
-            params: { imagePath: templatePath },
+            to: templateGalleryKey
+              ? spaceKey
+                ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
+                : '/gallery/$galleryKey/$imageKey/editor'
+              : spaceKey
+                ? '/spaces/$spaceKey/$imageKey/editor'
+                : '/$imageKey/editor',
+            params: templateGalleryKey
+              ? spaceKey
+                ? { spaceKey, galleryKey: templateGalleryKey, imageKey: templateImageKey }
+                : { galleryKey: templateGalleryKey, imageKey: templateImageKey }
+              : spaceKey
+                ? { spaceKey, imageKey: templateImageKey }
+                : { imageKey: templateImageKey },
           })
         }}
       />

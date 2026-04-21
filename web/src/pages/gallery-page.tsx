@@ -304,8 +304,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       }
       if (galleryKey) {
         return navigate({
-          to: '/gallery/$galleryKey/$imageKey/editor',
-          params: { galleryKey, imageKey },
+          to: spaceKey
+            ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
+            : '/gallery/$galleryKey/$imageKey/editor',
+          params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
         })
       } else {
         return navigate({
@@ -427,8 +429,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const handleEditImage = (imageKey: string) => {
     if (galleryKey) {
       navigate({
-        to: '/gallery/$galleryKey/$imageKey/editor',
-        params: { galleryKey, imageKey },
+        to: spaceKey
+          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
+          : '/gallery/$galleryKey/$imageKey/editor',
+        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
+      })
+    } else if (spaceKey) {
+      navigate({
+        to: '/spaces/$spaceKey/$imageKey/editor',
+        params: { spaceKey, imageKey },
       })
     } else {
       navigate({

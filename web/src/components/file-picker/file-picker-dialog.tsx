@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useParams } from '@tanstack/react-router'
 
 import { getUserRegistryMultiple, setUserRegistry } from '@/api/registry-api'
 import { statFile } from '@/api/storage-api'
@@ -51,6 +52,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 }) => {
   const { t } = useTranslation()
   const { authState } = useAuth()
+  const { spaceKey } = useParams({ strict: false })
   const [currentPath, setCurrentPath] = useState<string>(initialPath || '')
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set())
 
@@ -79,7 +81,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
             if (savedPath) {
               // Validate that the folder still exists
               try {
-                const stat = await statFile(savedPath)
+                const stat = await statFile(savedPath, spaceKey)
                 if (stat && stat.isDirectory) {
                   pathToUse = savedPath
                 }
@@ -97,7 +99,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
         setCurrentPath(pathToUse)
         setSelectedPaths(new Set())
-        loadRootFolders()
+        loadRootFolders(spaceKey)
         hasLoadedInitialPath.current = true
       }
 
@@ -108,7 +110,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
     if (!open) {
       hasLoadedInitialPath.current = false
     }
-  }, [open, initialPath, authState.profile?.id, authState.state])
+  }, [open, initialPath, authState.profile?.id, authState.state, spaceKey])
 
   const handlePathChange = useCallback((path: string) => {
     setCurrentPath(path)

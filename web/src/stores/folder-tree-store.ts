@@ -353,12 +353,13 @@ export const initializeFolderTreeCache = async (
 }
 
 // Async actions
-export const loadRootFolders = async () => {
+export const loadRootFolders = async (spaceKey?: string) => {
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path: '', loading: true })
 
     const result = await listFiles({
       path: '',
+      spaceKey,
       onlyFolders: true,
       sortBy: 'NAME',
       sortOrder: 'ASC',
@@ -380,12 +381,17 @@ export const loadRootFolders = async () => {
   }
 }
 
-export const loadFolderChildren = async (path: string, autoExpand: boolean = true) => {
+export const loadFolderChildren = async (
+  path: string,
+  autoExpand: boolean = true,
+  spaceKey?: string,
+) => {
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: true })
 
     const result = await listFiles({
       path,
+      spaceKey,
       onlyFolders: true,
       sortBy: 'NAME',
       sortOrder: 'ASC',
