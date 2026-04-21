@@ -20,6 +20,13 @@ import (
 	"go.uber.org/zap"
 )
 
+const maxSinglePutUploadBytes int64 = 5 * 1024 * 1024 * 1024
+
+func supportsPresignedUpload(stor storage.Storage) bool {
+	_, ok := stor.(storage.PresignableStorage)
+	return ok
+}
+
 // getSpaceStorage returns the storage instance for the given optional spaceKey.
 //
 // When spaceKey is nil/empty or cloud space mode is disabled,
@@ -103,6 +110,57 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceKey
 	}
 
 	return true, nil
+}
+
+// RequestUpload is the resolver for the requestUpload field.
+func (r *mutationResolver) RequestUpload(ctx context.Context, path string, spaceKey *string, contentType string, sizeBytes int) (*gql.PresignedUpload, error) {
+	if err := RequireWritePermission(ctx, path); err != nil {
+		return nil, err
+	}
+
+	if sizeBytes <= 0 {
+		return nil, &gqlerror.Error{
+			Message:    "invalid sizeBytes: must be greater than 0",
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+
+	if int64(sizeBytes) > maxSinglePutUploadBytes {
+		return nil, &gqlerror.Error{
+			Message:    fmt.Sprintf("file too large for single upload: max %d bytes", maxSinglePutUploadBytes),
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+
+	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	if err != nil {
+		return nil, err
+	}
+
+	presignable, ok := stor.(storage.PresignableStorage)
+	if !ok {
+		return nil, &gqlerror.Error{
+			Message:    "current storage backend does not support presigned uploads",
+			Extensions: map[string]interface{}{"code": "NOT_AVAILABLE"},
+		}
+	}
+
+	trimmedContentType := strings.TrimSpace(contentType)
+	if trimmedContentType == "" {
+		trimmedContentType = "application/octet-stream"
+	}
+
+	ttl := 5 * time.Minute
+	uploadURL, err := presignable.PresignedPutURL(ctx, path, trimmedContentType, int64(sizeBytes), ttl)
+	if err != nil {
+		r.logger.Error("Failed to generate presigned upload URL", zap.Error(err), zap.String("path", path))
+		return nil, fmt.Errorf("failed to generate upload URL: %w", err)
+	}
+
+	return &gql.PresignedUpload{
+		UploadURL: uploadURL,
+		ExpiresAt: time.Now().UTC().Add(ttl).Format(time.RFC3339),
+	}, nil
 }
 
 // DeleteFile is the resolver for the deleteFile field.
@@ -468,12 +526,13 @@ func (r *queryResolver) StorageStatus(ctx context.Context) (*gql.StorageStatus, 
 	}
 
 	return &gql.StorageStatus{
-		Configured:           isConfigured,
-		Type:                 storageType,
-		LastUpdated:          lastUpdated,
-		IsOverriddenByConfig: isConfigOverridden,
-		FileConfig:           fileConfig,
-		S3Config:             s3Config,
+		Configured:              isConfigured,
+		SupportsPresignedUpload: supportsPresignedUpload(r.getStorage()),
+		Type:                    storageType,
+		LastUpdated:             lastUpdated,
+		IsOverriddenByConfig:    isConfigOverridden,
+		FileConfig:              fileConfig,
+		S3Config:                s3Config,
 	}, nil
 }
 

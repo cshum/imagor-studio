@@ -133,6 +133,7 @@ type ComplexityRoot struct {
 		RemoveOrgMember               func(childComplexity int, userID string) int
 		RemoveSpaceMember             func(childComplexity int, spaceKey string, userID string) int
 		RequestEmailChange            func(childComplexity int, email string, userID *string) int
+		RequestUpload                 func(childComplexity int, path string, spaceKey *string, contentType string, sizeBytes int) int
 		SaveTemplate                  func(childComplexity int, input SaveTemplateInput, spaceKey *string) int
 		SetSpaceRegistry              func(childComplexity int, spaceKey string, entries []*RegistryEntryInput) int
 		SetSystemRegistry             func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
@@ -163,6 +164,11 @@ type ComplexityRoot struct {
 		PlanStatus  func(childComplexity int) int
 		Slug        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
+	}
+
+	PresignedUpload struct {
+		ExpiresAt func(childComplexity int) int
+		UploadURL func(childComplexity int) int
 	}
 
 	Query struct {
@@ -253,12 +259,13 @@ type ComplexityRoot struct {
 	}
 
 	StorageStatus struct {
-		Configured           func(childComplexity int) int
-		FileConfig           func(childComplexity int) int
-		IsOverriddenByConfig func(childComplexity int) int
-		LastUpdated          func(childComplexity int) int
-		S3Config             func(childComplexity int) int
-		Type                 func(childComplexity int) int
+		Configured              func(childComplexity int) int
+		FileConfig              func(childComplexity int) int
+		IsOverriddenByConfig    func(childComplexity int) int
+		LastUpdated             func(childComplexity int) int
+		S3Config                func(childComplexity int) int
+		SupportsPresignedUpload func(childComplexity int) int
+		Type                    func(childComplexity int) int
 	}
 
 	StorageTestResult struct {
@@ -319,6 +326,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	UploadFile(ctx context.Context, path string, spaceKey *string, content graphql.Upload) (bool, error)
+	RequestUpload(ctx context.Context, path string, spaceKey *string, contentType string, sizeBytes int) (*PresignedUpload, error)
 	DeleteFile(ctx context.Context, path string, spaceKey *string) (bool, error)
 	CreateFolder(ctx context.Context, path string, spaceKey *string) (bool, error)
 	CopyFile(ctx context.Context, sourcePath string, destPath string, spaceKey *string) (bool, error)
@@ -947,6 +955,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RequestEmailChange(childComplexity, args["email"].(string), args["userId"].(*string)), true
+	case "Mutation.requestUpload":
+		if e.ComplexityRoot.Mutation.RequestUpload == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_requestUpload_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RequestUpload(childComplexity, args["path"].(string), args["spaceKey"].(*string), args["contentType"].(string), args["sizeBytes"].(int)), true
 	case "Mutation.saveTemplate":
 		if e.ComplexityRoot.Mutation.SaveTemplate == nil {
 			break
@@ -1148,6 +1167,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Organization.UpdatedAt(childComplexity), true
+
+	case "PresignedUpload.expiresAt":
+		if e.ComplexityRoot.PresignedUpload.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PresignedUpload.ExpiresAt(childComplexity), true
+	case "PresignedUpload.uploadURL":
+		if e.ComplexityRoot.PresignedUpload.UploadURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PresignedUpload.UploadURL(childComplexity), true
 
 	case "Query.getSystemRegistry":
 		if e.ComplexityRoot.Query.GetSystemRegistry == nil {
@@ -1648,6 +1680,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.StorageStatus.S3Config(childComplexity), true
+	case "StorageStatus.supportsPresignedUpload":
+		if e.ComplexityRoot.StorageStatus.SupportsPresignedUpload == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageStatus.SupportsPresignedUpload(childComplexity), true
 	case "StorageStatus.type":
 		if e.ComplexityRoot.StorageStatus.Type == nil {
 			break
@@ -2295,6 +2333,12 @@ type LicenseStatus {
 type Mutation {
   # write scope required
   uploadFile(path: String!, spaceKey: String, content: Upload!): Boolean!
+  requestUpload(
+    path: String!
+    spaceKey: String
+    contentType: String!
+    sizeBytes: Int!
+  ): PresignedUpload!
   deleteFile(path: String!, spaceKey: String): Boolean!
   createFolder(path: String!, spaceKey: String): Boolean!
   copyFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
@@ -2358,11 +2402,17 @@ scalar Upload
 # Storage Configuration Types
 type StorageStatus {
   configured: Boolean!
+  supportsPresignedUpload: Boolean!
   type: String
   lastUpdated: String
   isOverriddenByConfig: Boolean!
   fileConfig: FileStorageConfig
   s3Config: S3StorageConfig
+}
+
+type PresignedUpload {
+  uploadURL: String!
+  expiresAt: String!
 }
 
 type FileStorageConfig {
@@ -2949,6 +2999,32 @@ func (ec *executionContext) field_Mutation_requestEmailChange_args(ctx context.C
 		return nil, err
 	}
 	args["userId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_requestUpload_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "path", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["path"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceKey"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "contentType", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["contentType"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "sizeBytes", ec.unmarshalNInt2int)
+	if err != nil {
+		return nil, err
+	}
+	args["sizeBytes"] = arg3
 	return args, nil
 }
 
@@ -4699,6 +4775,53 @@ func (ec *executionContext) fieldContext_Mutation_uploadFile(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_uploadFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_requestUpload(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_requestUpload,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RequestUpload(ctx, fc.Args["path"].(string), fc.Args["spaceKey"].(*string), fc.Args["contentType"].(string), fc.Args["sizeBytes"].(int))
+		},
+		nil,
+		ec.marshalNPresignedUpload2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐPresignedUpload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_requestUpload(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "uploadURL":
+				return ec.fieldContext_PresignedUpload_uploadURL(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_PresignedUpload_expiresAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PresignedUpload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_requestUpload_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6901,6 +7024,64 @@ func (ec *executionContext) fieldContext_Organization_updatedAt(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _PresignedUpload_uploadURL(ctx context.Context, field graphql.CollectedField, obj *PresignedUpload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PresignedUpload_uploadURL,
+		func(ctx context.Context) (any, error) {
+			return obj.UploadURL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PresignedUpload_uploadURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PresignedUpload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PresignedUpload_expiresAt(ctx context.Context, field graphql.CollectedField, obj *PresignedUpload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PresignedUpload_expiresAt,
+		func(ctx context.Context) (any, error) {
+			return obj.ExpiresAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PresignedUpload_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PresignedUpload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_listFiles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7031,6 +7212,8 @@ func (ec *executionContext) fieldContext_Query_storageStatus(_ context.Context, 
 			switch field.Name {
 			case "configured":
 				return ec.fieldContext_StorageStatus_configured(ctx, field)
+			case "supportsPresignedUpload":
+				return ec.fieldContext_StorageStatus_supportsPresignedUpload(ctx, field)
 			case "type":
 				return ec.fieldContext_StorageStatus_type(ctx, field)
 			case "lastUpdated":
@@ -9448,6 +9631,35 @@ func (ec *executionContext) _StorageStatus_configured(ctx context.Context, field
 }
 
 func (ec *executionContext) fieldContext_StorageStatus_configured(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StorageStatus_supportsPresignedUpload(ctx context.Context, field graphql.CollectedField, obj *StorageStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StorageStatus_supportsPresignedUpload,
+		func(ctx context.Context) (any, error) {
+			return obj.SupportsPresignedUpload, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StorageStatus_supportsPresignedUpload(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "StorageStatus",
 		Field:      field,
@@ -13466,6 +13678,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "requestUpload":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_requestUpload(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "deleteFile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteFile(ctx, field)
@@ -13855,6 +14074,50 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Organization_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var presignedUploadImplementors = []string{"PresignedUpload"}
+
+func (ec *executionContext) _PresignedUpload(ctx context.Context, sel ast.SelectionSet, obj *PresignedUpload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, presignedUploadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PresignedUpload")
+		case "uploadURL":
+			out.Values[i] = ec._PresignedUpload_uploadURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expiresAt":
+			out.Values[i] = ec._PresignedUpload_expiresAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -14776,6 +15039,11 @@ func (ec *executionContext) _StorageStatus(ctx context.Context, sel ast.Selectio
 			out.Values[i] = graphql.MarshalString("StorageStatus")
 		case "configured":
 			out.Values[i] = ec._StorageStatus_configured(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "supportsPresignedUpload":
+			out.Values[i] = ec._StorageStatus_supportsPresignedUpload(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -15773,6 +16041,20 @@ func (ec *executionContext) marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagor�
 		return graphql.Null
 	}
 	return ec._OrgMember(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPresignedUpload2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐPresignedUpload(ctx context.Context, sel ast.SelectionSet, v PresignedUpload) graphql.Marshaler {
+	return ec._PresignedUpload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPresignedUpload2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐPresignedUpload(ctx context.Context, sel ast.SelectionSet, v *PresignedUpload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PresignedUpload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRegistryEntryInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐRegistryEntryInput(ctx context.Context, v any) (*RegistryEntryInput, error) {

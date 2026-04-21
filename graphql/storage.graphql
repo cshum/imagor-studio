@@ -21,6 +21,12 @@ type Query {
 type Mutation {
   # write scope required
   uploadFile(path: String!, spaceKey: String, content: Upload!): Boolean!
+  requestUpload(
+    path: String!
+    spaceKey: String
+    contentType: String!
+    sizeBytes: Int!
+  ): PresignedUpload!
   deleteFile(path: String!, spaceKey: String): Boolean!
   createFolder(path: String!, spaceKey: String): Boolean!
   copyFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
@@ -84,11 +90,17 @@ scalar Upload
 # Storage Configuration Types
 type StorageStatus {
   configured: Boolean!
+  supportsPresignedUpload: Boolean!
   type: String
   lastUpdated: String
   isOverriddenByConfig: Boolean!
   fileConfig: FileStorageConfig
   s3Config: S3StorageConfig
+}
+
+type PresignedUpload {
+  uploadURL: String!
+  expiresAt: String!
 }
 
 type FileStorageConfig {
