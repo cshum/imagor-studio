@@ -123,8 +123,8 @@ type ComplexityRoot struct {
 		DeleteSpaceRegistry           func(childComplexity int, spaceKey string, keys []string) int
 		DeleteSystemRegistry          func(childComplexity int, key *string, keys []string) int
 		DeleteUserRegistry            func(childComplexity int, key *string, keys []string, ownerID *string) int
-		GenerateImagorURL             func(childComplexity int, imagePath string, params ImagorParamsInput) int
-		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
+		GenerateImagorURL             func(childComplexity int, imagePath string, spaceKey *string, params ImagorParamsInput) int
+		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, spaceKey *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
 		InviteSpaceMember             func(childComplexity int, spaceKey string, email string, role string) int
 		LeaveSpace                    func(childComplexity int, spaceKey string) int
 		MoveFile                      func(childComplexity int, sourcePath string, destPath string, spaceKey *string) int
@@ -337,8 +337,8 @@ type MutationResolver interface {
 	ConfigureS3Storage(ctx context.Context, input S3StorageInput) (*StorageConfigResult, error)
 	TestStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageTestResult, error)
 	ConfigureImagor(ctx context.Context, input ImagorInput) (*ImagorConfigResult, error)
-	GenerateImagorURL(ctx context.Context, imagePath string, params ImagorParamsInput) (string, error)
-	GenerateImagorURLFromTemplate(ctx context.Context, templateJSON string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) (string, error)
+	GenerateImagorURL(ctx context.Context, imagePath string, spaceKey *string, params ImagorParamsInput) (string, error)
+	GenerateImagorURLFromTemplate(ctx context.Context, templateJSON string, spaceKey *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) (string, error)
 	CreateSpace(ctx context.Context, input SpaceInput) (*Space, error)
 	UpdateSpace(ctx context.Context, key string, input SpaceInput) (*Space, error)
 	DeleteSpace(ctx context.Context, key string) (bool, error)
@@ -855,7 +855,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.GenerateImagorURL(childComplexity, args["imagePath"].(string), args["params"].(ImagorParamsInput)), true
+		return e.ComplexityRoot.Mutation.GenerateImagorURL(childComplexity, args["imagePath"].(string), args["spaceKey"].(*string), args["params"].(ImagorParamsInput)), true
 	case "Mutation.generateImagorUrlFromTemplate":
 		if e.ComplexityRoot.Mutation.GenerateImagorURLFromTemplate == nil {
 			break
@@ -866,7 +866,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.GenerateImagorURLFromTemplate(childComplexity, args["templateJson"].(string), args["imagePath"].(*string), args["contextPath"].([]string), args["forPreview"].(*bool), args["previewMaxDimensions"].(*DimensionsInput), args["skipLayerId"].(*string), args["appendFilters"].([]*ImagorFilterInput)), true
+		return e.ComplexityRoot.Mutation.GenerateImagorURLFromTemplate(childComplexity, args["templateJson"].(string), args["spaceKey"].(*string), args["imagePath"].(*string), args["contextPath"].([]string), args["forPreview"].(*bool), args["previewMaxDimensions"].(*DimensionsInput), args["skipLayerId"].(*string), args["appendFilters"].([]*ImagorFilterInput)), true
 	case "Mutation.inviteSpaceMember":
 		if e.ComplexityRoot.Mutation.InviteSpaceMember == nil {
 			break
@@ -2010,11 +2010,12 @@ extend type Mutation {
   configureImagor(input: ImagorInput!): ImagorConfigResult!
 
   # Imagor URL Generation API
-  generateImagorUrl(imagePath: String!, params: ImagorParamsInput!): String!
+  generateImagorUrl(imagePath: String!, spaceKey: String, params: ImagorParamsInput!): String!
 
   # Imagor URL generation from template JSON
   generateImagorUrlFromTemplate(
     templateJson: String!           # JSON-encoded ImagorTemplate envelope ({ version, transformations, ... })
+    spaceKey: String                # Optional: active space key for backend-owned processing URL resolution
     imagePath: String               # Optional: override the image path; triggers applyTemplateState logic (fetches dimensions via meta, applies crop/dimension-mode rules)
     contextPath: [String!]          # Layer ID path for f-token parent-dim resolution ([] = root)
     forPreview: Boolean             # Adds preview/webp filters, scales blur/sharpen/padding
@@ -2830,36 +2831,41 @@ func (ec *executionContext) field_Mutation_generateImagorUrlFromTemplate_args(ct
 		return nil, err
 	}
 	args["templateJson"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "imagePath", ec.unmarshalOString2ᚖstring)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["imagePath"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "contextPath", ec.unmarshalOString2ᚕstringᚄ)
+	args["spaceKey"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "imagePath", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["contextPath"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "forPreview", ec.unmarshalOBoolean2ᚖbool)
+	args["imagePath"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "contextPath", ec.unmarshalOString2ᚕstringᚄ)
 	if err != nil {
 		return nil, err
 	}
-	args["forPreview"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "previewMaxDimensions", ec.unmarshalODimensionsInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionsInput)
+	args["contextPath"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "forPreview", ec.unmarshalOBoolean2ᚖbool)
 	if err != nil {
 		return nil, err
 	}
-	args["previewMaxDimensions"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "skipLayerId", ec.unmarshalOString2ᚖstring)
+	args["forPreview"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "previewMaxDimensions", ec.unmarshalODimensionsInput2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐDimensionsInput)
 	if err != nil {
 		return nil, err
 	}
-	args["skipLayerId"] = arg5
-	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "appendFilters", ec.unmarshalOImagorFilterInput2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorFilterInputᚄ)
+	args["previewMaxDimensions"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "skipLayerId", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["appendFilters"] = arg6
+	args["skipLayerId"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "appendFilters", ec.unmarshalOImagorFilterInput2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorFilterInputᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["appendFilters"] = arg7
 	return args, nil
 }
 
@@ -2871,11 +2877,16 @@ func (ec *executionContext) field_Mutation_generateImagorUrl_args(ctx context.Co
 		return nil, err
 	}
 	args["imagePath"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "params", ec.unmarshalNImagorParamsInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorParamsInput)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceKey", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
-	args["params"] = arg1
+	args["spaceKey"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "params", ec.unmarshalNImagorParamsInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorParamsInput)
+	if err != nil {
+		return nil, err
+	}
+	args["params"] = arg2
 	return args, nil
 }
 
@@ -5288,7 +5299,7 @@ func (ec *executionContext) _Mutation_generateImagorUrl(ctx context.Context, fie
 		ec.fieldContext_Mutation_generateImagorUrl,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().GenerateImagorURL(ctx, fc.Args["imagePath"].(string), fc.Args["params"].(ImagorParamsInput))
+			return ec.Resolvers.Mutation().GenerateImagorURL(ctx, fc.Args["imagePath"].(string), fc.Args["spaceKey"].(*string), fc.Args["params"].(ImagorParamsInput))
 		},
 		nil,
 		ec.marshalNString2string,
@@ -5329,7 +5340,7 @@ func (ec *executionContext) _Mutation_generateImagorUrlFromTemplate(ctx context.
 		ec.fieldContext_Mutation_generateImagorUrlFromTemplate,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().GenerateImagorURLFromTemplate(ctx, fc.Args["templateJson"].(string), fc.Args["imagePath"].(*string), fc.Args["contextPath"].([]string), fc.Args["forPreview"].(*bool), fc.Args["previewMaxDimensions"].(*DimensionsInput), fc.Args["skipLayerId"].(*string), fc.Args["appendFilters"].([]*ImagorFilterInput))
+			return ec.Resolvers.Mutation().GenerateImagorURLFromTemplate(ctx, fc.Args["templateJson"].(string), fc.Args["spaceKey"].(*string), fc.Args["imagePath"].(*string), fc.Args["contextPath"].([]string), fc.Args["forPreview"].(*bool), fc.Args["previewMaxDimensions"].(*DimensionsInput), fc.Args["skipLayerId"].(*string), fc.Args["appendFilters"].([]*ImagorFilterInput))
 		},
 		nil,
 		ec.marshalNString2string,

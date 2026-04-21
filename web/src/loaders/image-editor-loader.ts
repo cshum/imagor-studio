@@ -30,12 +30,12 @@ export interface ImageEditorLoaderData {
  * If the file is a template (.imagor.json), loads the source image and applies transformations
  */
 export const imageEditorLoader = async ({
-  params: { galleryKey, imageKey },
+  params: { galleryKey, imageKey, spaceKey },
 }: {
-  params: { galleryKey: string; imageKey: string }
+  params: { galleryKey: string; imageKey: string; spaceKey?: string }
 }): Promise<ImageEditorLoaderData> => {
   const imagePath = joinImagePath(galleryKey, imageKey)
-  const fileStat = await statFile(imagePath)
+  const fileStat = await statFile(imagePath, spaceKey)
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found')
@@ -95,11 +95,11 @@ export const imageEditorLoader = async ({
     if (isColorLayer(actualImagePath) || isGroupLayer(actualImagePath)) {
       originalDimensions = { width: 1, height: 1 }
     } else {
-      const sourceFileStat = await statFile(actualImagePath)
+      const sourceFileStat = await statFile(actualImagePath, spaceKey)
       if (!sourceFileStat || sourceFileStat.isDirectory) {
         throw new Error(`Template source image not found: ${actualImagePath}`)
       }
-      originalDimensions = await fetchImageDimensions(actualImagePath)
+      originalDimensions = await fetchImageDimensions(actualImagePath, spaceKey)
     }
 
     // Clear image position for better transition
@@ -108,6 +108,7 @@ export const imageEditorLoader = async ({
     // Create ImageEditor instance with source image
     imageEditor = new ImageEditor({
       imagePath: actualImagePath,
+      spaceKey,
       originalDimensions,
     })
 
@@ -133,7 +134,7 @@ export const imageEditorLoader = async ({
   } else {
     // Normal image (not a template)
     // Fetch dimensions using utility (handles metadata API + fallback)
-    const originalDimensions = await fetchImageDimensions(imagePath)
+    const originalDimensions = await fetchImageDimensions(imagePath, spaceKey)
 
     // Clear image position for better transition
     clearPosition(galleryKey, imageKey)
@@ -141,6 +142,7 @@ export const imageEditorLoader = async ({
     // Create ImageEditor instance
     imageEditor = new ImageEditor({
       imagePath,
+      spaceKey,
       originalDimensions,
     })
     // Snapshot the initial config so initialize() can restore it on remount.

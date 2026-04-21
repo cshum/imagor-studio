@@ -8,11 +8,12 @@ extend type Mutation {
   configureImagor(input: ImagorInput!): ImagorConfigResult!
 
   # Imagor URL Generation API
-  generateImagorUrl(imagePath: String!, params: ImagorParamsInput!): String!
+  generateImagorUrl(imagePath: String!, spaceKey: String, params: ImagorParamsInput!): String!
 
   # Imagor URL generation from template JSON
   generateImagorUrlFromTemplate(
     templateJson: String!           # JSON-encoded ImagorTemplate envelope ({ version, transformations, ... })
+    spaceKey: String                # Optional: active space key for backend-owned processing URL resolution
     imagePath: String               # Optional: override the image path; triggers applyTemplateState logic (fetches dimensions via meta, applies crop/dimension-mode rules)
     contextPath: [String!]          # Layer ID path for f-token parent-dim resolution ([] = root)
     forPreview: Boolean             # Adds preview/webp filters, scales blur/sharpen/padding

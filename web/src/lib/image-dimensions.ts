@@ -15,8 +15,11 @@ export interface ImageDimensions {
  * @returns Promise with width and height
  * @throws Error if image not found or invalid
  */
-export async function fetchImageDimensions(imagePath: string): Promise<ImageDimensions> {
-  const fileStat = await statFile(imagePath)
+export async function fetchImageDimensions(
+  imagePath: string,
+  spaceKey?: string,
+): Promise<ImageDimensions> {
+  const fileStat = await statFile(imagePath, spaceKey)
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found or invalid')
@@ -38,9 +41,7 @@ export async function fetchImageDimensions(imagePath: string): Promise<ImageDime
   }
 
   // Fallback: load image to get dimensions
-  const fullSizeSrc = getFullImageUrl(
-    fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
-  )
+  const fullSizeSrc = getFullImageUrl(fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '')
   const imageElement = await preloadImage(fullSizeSrc)
 
   return {

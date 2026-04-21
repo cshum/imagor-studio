@@ -31,10 +31,12 @@ export const CONFIGURE_IMAGOR_MUTATION = gql(`
 export const GENERATE_IMAGOR_URL_MUTATION = gql(`
   mutation GenerateImagorUrl(
     $imagePath: String!
+    $spaceKey: String
     $params: ImagorParamsInput!
   ) {
     generateImagorUrl(
       imagePath: $imagePath
+      spaceKey: $spaceKey
       params: $params
     )
   }
@@ -44,6 +46,7 @@ export const GENERATE_IMAGOR_URL_MUTATION = gql(`
 export const GENERATE_IMAGOR_URL_FROM_TEMPLATE_MUTATION = gql(`
   mutation GenerateImagorUrlFromTemplate(
     $templateJson: String!
+    $spaceKey: String
     $contextPath: [String!]
     $forPreview: Boolean
     $previewMaxDimensions: DimensionsInput
@@ -52,6 +55,7 @@ export const GENERATE_IMAGOR_URL_FROM_TEMPLATE_MUTATION = gql(`
   ) {
     generateImagorUrlFromTemplate(
       templateJson: $templateJson
+      spaceKey: $spaceKey
       contextPath: $contextPath
       forPreview: $forPreview
       previewMaxDimensions: $previewMaxDimensions

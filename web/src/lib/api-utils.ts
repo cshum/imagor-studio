@@ -10,15 +10,24 @@ export const getBaseUrl = (): string => {
   return typeof window !== 'undefined' ? window.location.origin : ''
 }
 
+function trimTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url.slice(0, -1) : url
+}
+
 /**
  * Convert relative imagor URLs to full URLs for cross-origin access
  */
 export function getFullImageUrl(imageUrl: string): string {
   if (!imageUrl) return imageUrl
 
+  if (/^(?:[a-z][a-z\d+.-]*:)?\/\//i.test(imageUrl)) {
+    return imageUrl
+  }
+
   // If it's a relative path (starts with /), prepend server URL
   if (imageUrl.startsWith('/')) {
-    return `${getBaseUrl()}${imageUrl}`
+    const baseUrl = trimTrailingSlash(getBaseUrl())
+    return `${baseUrl}${imageUrl}`
   }
 
   // Otherwise, return as-is (shouldn't happen, but safe fallback)

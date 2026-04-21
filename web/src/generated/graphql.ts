@@ -292,6 +292,7 @@ export type MutationDeleteUserRegistryArgs = {
 export type MutationGenerateImagorUrlArgs = {
   imagePath: Scalars['String']['input']
   params: ImagorParamsInput
+  spaceKey?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationGenerateImagorUrlFromTemplateArgs = {
@@ -301,6 +302,7 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   imagePath?: InputMaybe<Scalars['String']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
 }
 
@@ -766,6 +768,7 @@ export type ConfigureImagorMutation = {
 
 export type GenerateImagorUrlMutationVariables = Exact<{
   imagePath: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   params: ImagorParamsInput
 }>
 
@@ -773,6 +776,7 @@ export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImago
 
 export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
   templateJson: Scalars['String']['input']
+  spaceKey?: InputMaybe<Scalars['String']['input']>
   contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
@@ -1895,6 +1899,11 @@ export const GenerateImagorUrlDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'params' } },
           type: {
             kind: 'NonNullType',
@@ -1913,6 +1922,11 @@ export const GenerateImagorUrlDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'imagePath' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'imagePath' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
               {
                 kind: 'Argument',
@@ -1941,6 +1955,11 @@ export const GenerateImagorUrlFromTemplateDocument = {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
           },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
         {
           kind: 'VariableDefinition',
@@ -1991,6 +2010,11 @@ export const GenerateImagorUrlFromTemplateDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'templateJson' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'templateJson' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceKey' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
               },
               {
                 kind: 'Argument',

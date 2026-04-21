@@ -174,7 +174,9 @@ const ImageCell = ({
         // image.imageSrc is already the imagor-processed grid URL for the preview file
         // (e.g. /imagor/300x225/filters:.../foo.imagor.preview). Busting the cache
         // forces the browser to re-fetch it now that the preview file exists.
-        setThumbnailSrc(addCacheBuster(getFullImageUrl(image.imageSrc), String(Date.now())))
+        setThumbnailSrc(
+          addCacheBuster(getFullImageUrl(image.imageSrc), String(Date.now())),
+        )
       }
     } catch {
       // Silently ignore errors — gray placeholder + FileText icon remains visible

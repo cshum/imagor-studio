@@ -19,7 +19,7 @@ import (
 )
 
 // GenerateImagorURL is the resolver for the generateImagorUrl field.
-func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath string, params gql.ImagorParamsInput) (string, error) {
+func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath string, spaceKey *string, params gql.ImagorParamsInput) (string, error) {
 	if err := RequireEditPermission(ctx); err != nil {
 		return "", err
 	}
@@ -43,7 +43,7 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 		zap.String("url", url),
 		zap.String("imagePath", imagePath))
 
-	return url, nil
+	return absolutizeURL(r.processingOriginForSpace(ctx, spaceKey), url), nil
 }
 
 // GenerateImagorURLFromTemplate converts a template JSON to an imagor URL on the backend.
@@ -52,6 +52,7 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	ctx context.Context,
 	templateJSON string,
+	spaceKey *string,
 	imagePath *string,
 	contextPath []string,
 	forPreview *bool,
@@ -115,7 +116,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	if err != nil {
 		return "", fmt.Errorf("failed to generate imagor URL: %w", err)
 	}
-	return url, nil
+	return absolutizeURL(r.processingOriginForSpace(ctx, spaceKey), url), nil
 }
 
 // fetchImageDimensions fetches the width and height of an image via the imagor meta URL.
@@ -177,6 +178,63 @@ func buildImagePath(galleryKey, imageKey string) string {
 		return imageKey // Root image
 	}
 	return galleryKey + "/" + imageKey // Gallery image
+}
+
+func normalizeOrigin(base string) string {
+	trimmed := strings.TrimSpace(base)
+	if trimmed == "" {
+		return ""
+	}
+	trimmed = strings.TrimRight(trimmed, "/")
+	if strings.HasPrefix(trimmed, "http://") || strings.HasPrefix(trimmed, "https://") {
+		return trimmed
+	}
+	return "https://" + trimmed
+}
+
+func applySpaceTemplate(template, spaceKey string) string {
+	if template == "" || spaceKey == "" {
+		return ""
+	}
+	return strings.ReplaceAll(template, "{spaceKey}", spaceKey)
+}
+
+func absolutizeURL(baseOrigin, path string) string {
+	if baseOrigin == "" || path == "" {
+		return path
+	}
+	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+		return path
+	}
+	return normalizeOrigin(baseOrigin) + path
+}
+
+func (r *Resolver) processingOriginForSpace(ctx context.Context, spaceKey *string) string {
+	if !r.cloudEnabled() || spaceKey == nil {
+		return ""
+	}
+
+	key := strings.TrimSpace(*spaceKey)
+	if key == "" {
+		return ""
+	}
+
+	if r.spaceStore != nil {
+		spaceConfig, err := r.spaceStore.Get(ctx, key)
+		if err == nil && spaceConfig != nil && spaceConfig.CustomDomainVerified {
+			if customDomain := strings.TrimSpace(spaceConfig.CustomDomain); customDomain != "" {
+				return normalizeOrigin(customDomain)
+			}
+		}
+	}
+
+	template, _ := r.config.GetByRegistryKey("config.app_processing_url_template")
+	template = strings.TrimSpace(template)
+	if template == "" {
+		return ""
+	}
+
+	return normalizeOrigin(applySpaceTemplate(template, key))
 }
 
 // convertToImagorParams converts GraphQL input to imagorpath.Params
@@ -276,22 +334,29 @@ func convertToImagorParams(input gql.ImagorParamsInput) imagorpath.Params {
 
 // generateThumbnailUrls generates thumbnail URLs using the imagor provider
 func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos string) *gql.ThumbnailUrls {
+	return r.generateThumbnailUrlsForSpace(context.Background(), imagePath, videoThumbnailPos, nil)
+}
+
+func (r *Resolver) generateThumbnailUrlsForSpace(ctx context.Context, imagePath string, videoThumbnailPos string, spaceKey *string) *gql.ThumbnailUrls {
 	if r.imagorProvider == nil {
 		return nil
 	}
+
+	processingOrigin := r.processingOriginForSpace(ctx, spaceKey)
 
 	// For .imagor.json template files, generate preview URLs but keep original pointing to JSON
 	if strings.HasSuffix(imagePath, ".imagor.json") {
 		previewPath := strings.TrimSuffix(imagePath, ".imagor.json") + ".imagor.preview"
 
 		// Generate preview-based URLs for display (grid, preview, full, meta)
-		previewUrls := r.generateThumbnailUrls(previewPath, videoThumbnailPos)
+		previewUrls := r.generateThumbnailUrlsForSpace(ctx, previewPath, videoThumbnailPos, spaceKey)
 
 		// Override 'original' to point to the actual JSON file
 		if previewUrls != nil {
 			jsonURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
 				Filters: imagorpath.Filters{{Name: "raw"}},
 			})
+			jsonURL = absolutizeURL(processingOrigin, jsonURL)
 			previewUrls.Original = &jsonURL
 		}
 
@@ -363,6 +428,12 @@ func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos str
 	metaURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
 		Meta: true,
 	})
+
+	gridURL = absolutizeURL(processingOrigin, gridURL)
+	previewURL = absolutizeURL(processingOrigin, previewURL)
+	fullURL = absolutizeURL(processingOrigin, fullURL)
+	originalURL = absolutizeURL(processingOrigin, originalURL)
+	metaURL = absolutizeURL(processingOrigin, metaURL)
 
 	return &gql.ThumbnailUrls{
 		Grid:     &gridURL,
