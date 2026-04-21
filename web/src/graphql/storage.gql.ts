@@ -70,6 +70,25 @@ export const UploadFileMutation = gql(`
   }
 `)
 
+export const RequestUploadMutation = gql(`
+  mutation RequestUpload(
+    $path: String!
+    $spaceKey: String
+    $contentType: String!
+    $sizeBytes: Int!
+  ) {
+    requestUpload(
+      path: $path
+      spaceKey: $spaceKey
+      contentType: $contentType
+      sizeBytes: $sizeBytes
+    ) {
+      uploadURL
+      expiresAt
+    }
+  }
+`)
+
 export const DELETE_FILE = gql(`
   mutation DeleteFile($path: String!, $spaceKey: String) {
     deleteFile(path: $path, spaceKey: $spaceKey)
@@ -98,6 +117,7 @@ export const STORAGE_STATUS = gql(`
   query StorageStatus {
     storageStatus {
       configured
+      supportsPresignedUpload
       type
       lastUpdated
       isOverriddenByConfig

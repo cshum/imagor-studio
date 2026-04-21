@@ -1,3 +1,5 @@
+import { ClientError } from 'graphql-request'
+
 import type {
   ConfigureFileStorageMutation,
   ConfigureFileStorageMutationVariables,
@@ -15,6 +17,8 @@ import type {
   MoveFileMutationVariables,
   RegenerateTemplatePreviewMutation,
   RegenerateTemplatePreviewMutationVariables,
+  RequestUploadMutation,
+  RequestUploadMutationVariables,
   SaveTemplateMutation,
   SaveTemplateMutationVariables,
   SortOption,
@@ -28,6 +32,105 @@ import type {
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'
 import { getGraphQLClient } from '@/lib/graphql-client'
+
+export interface UploadFileOptions {
+  signal?: AbortSignal
+  spaceKey?: string
+  onProgress?: (progress: number) => void
+}
+
+function getUploadContentType(file: File): string {
+  return file.type.trim() || 'application/octet-stream'
+}
+
+function isPresignedUploadUnsupported(error: unknown): boolean {
+  if (error instanceof ClientError) {
+    return (
+      error.response.errors?.some((graphqlError) => {
+        const code = graphqlError.extensions?.code
+        return code === 'NOT_AVAILABLE'
+      }) ?? false
+    )
+  }
+
+  return error instanceof Error && error.message.includes('does not support presigned uploads')
+}
+
+async function uploadToPresignedUrl(
+  uploadURL: string,
+  file: File,
+  options: UploadFileOptions,
+): Promise<void> {
+  const contentType = getUploadContentType(file)
+
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    let aborted = false
+
+    const cleanup = () => {
+      if (options.signal) {
+        options.signal.removeEventListener('abort', handleAbort)
+      }
+    }
+
+    const handleAbort = () => {
+      aborted = true
+      xhr.abort()
+    }
+
+    xhr.open('PUT', uploadURL)
+    xhr.responseType = 'text'
+    xhr.setRequestHeader('Content-Type', contentType)
+
+    xhr.upload.onprogress = (event) => {
+      if (!options.onProgress || !event.lengthComputable) {
+        return
+      }
+      options.onProgress(Math.round((event.loaded / event.total) * 100))
+    }
+
+    xhr.onerror = () => {
+      cleanup()
+      reject(new Error('Upload failed'))
+    }
+
+    xhr.onabort = () => {
+      cleanup()
+      reject(
+        aborted
+          ? new DOMException('The operation was aborted.', 'AbortError')
+          : new Error('Upload aborted'),
+      )
+    }
+
+    xhr.onload = () => {
+      cleanup()
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`))
+        return
+      }
+      resolve()
+    }
+
+    if (options.signal) {
+      if (options.signal.aborted) {
+        handleAbort()
+        return
+      }
+      options.signal.addEventListener('abort', handleAbort, { once: true })
+    }
+
+    xhr.send(file)
+  })
+}
+
+export async function requestUpload(
+  variables: RequestUploadMutationVariables,
+): Promise<RequestUploadMutation['requestUpload']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.RequestUpload(variables)
+  return result.requestUpload
+}
 
 /**
  * List files and folders in a directory
@@ -61,8 +164,7 @@ export async function statFile(
 export async function uploadFile(
   path: string,
   file: File,
-  signal?: AbortSignal,
-  spaceKey?: string,
+  options: UploadFileOptions = {},
 ): Promise<UploadFileMutation['uploadFile']> {
   const { UploadFileMutation } = await import('@/graphql/storage.gql')
   const { uploadSingleFile } = await import('@/lib/graphql-upload')
@@ -71,12 +173,29 @@ export async function uploadFile(
     uploadFile: boolean
   }
 
+  try {
+    const presignResult = await requestUpload({
+      path,
+      spaceKey: options.spaceKey,
+      contentType: getUploadContentType(file),
+      sizeBytes: file.size,
+    })
+
+    await uploadToPresignedUrl(presignResult.uploadURL, file, options)
+    return true
+  } catch (error) {
+    if (!isPresignedUploadUnsupported(error)) {
+      throw error
+    }
+  }
+
   const result = await uploadSingleFile<UploadFileResult>(
     UploadFileMutation,
-    { path, spaceKey, content: file },
+    { path, spaceKey: options.spaceKey, content: file },
     'content',
     file,
-    signal,
+    options.signal,
+    options.onProgress,
   )
 
   return result.uploadFile
