@@ -296,6 +296,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     const image = images.find((img) => img.imageKey === imageKey)
     if (image?.isTemplate) {
       // Navigate directly to editor for templates
+      if (spaceKey && !galleryKey) {
+        return navigate({
+          to: '/spaces/$spaceKey/$imageKey/editor',
+          params: { spaceKey, imageKey },
+        })
+      }
       if (galleryKey) {
         return navigate({
           to: '/gallery/$galleryKey/$imageKey/editor',
@@ -317,13 +323,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     // Handle navigation for root gallery vs sub-galleries
     if (galleryKey === '') {
       return navigate({
-        to: '/$imageKey',
-        params: { imageKey },
+        to: spaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
+        params: spaceKey ? { spaceKey, imageKey } : { imageKey },
       })
     } else {
       return navigate({
-        to: '/gallery/$galleryKey/$imageKey',
-        params: { galleryKey, imageKey },
+        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey' : '/gallery/$galleryKey/$imageKey',
+        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     }
   }

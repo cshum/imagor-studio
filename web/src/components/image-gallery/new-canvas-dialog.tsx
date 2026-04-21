@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { Paintbrush } from 'lucide-react'
 
 import { ColorPickerInput } from '@/components/image-editor/controls/color-picker-input'
@@ -42,6 +42,7 @@ const CANVAS_PRESETS = [
 export function NewCanvasDialog({ open, onOpenChange, galleryKey }: NewCanvasDialogProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { spaceKey } = useParams({ strict: false })
 
   const [width, setWidth] = useState(1080)
   const [height, setHeight] = useState(1080)
@@ -58,7 +59,13 @@ export function NewCanvasDialog({ open, onOpenChange, galleryKey }: NewCanvasDia
   }
 
   const handleCreate = () => {
-    if (galleryKey) {
+    if (spaceKey && !galleryKey) {
+      navigate({
+        to: '/spaces/$spaceKey/editor/new',
+        params: { spaceKey },
+        search: { color: colorValue, w: width, h: height },
+      })
+    } else if (galleryKey) {
       navigate({
         to: '/gallery/$galleryKey/editor/new',
         params: { galleryKey },
