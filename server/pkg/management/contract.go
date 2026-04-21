@@ -18,12 +18,13 @@ type CloudStoresConfig struct {
 }
 
 type CloudConfig struct {
-	InternalAPISecret  string
-	GoogleClientID     string
-	GoogleClientSecret string
-	SESRegion          string
-	SESFromEmail       string
-	AppAPIURL          string
+	InternalAPISecret     string
+	GoogleClientID        string
+	GoogleClientSecret    string
+	SESRegion             string
+	SESFromEmail          string
+	AppAPIURL             string
+	ProcessingURLTemplate string
 }
 
 type InviteSenderConfig = sharedinvite.Config
@@ -55,10 +56,13 @@ type AuthRoutesRegistrar func(mux *http.ServeMux, cfg OAuthConfig, services Clou
 
 type InternalRoutesRegistrar func(mux *http.ServeMux, services CloudHTTPServices)
 
+type ProcessingOriginResolverFactory func(cfg CloudConfig, spaceStore space.SpaceStore) space.ProcessingOriginResolver
+
 type CloudFactories struct {
-	ConfigLoader   CloudConfigLoader
-	Stores         CloudStoresFactory
-	InviteSender   InviteSenderFactory
-	AuthRoutes     AuthRoutesRegistrar
-	InternalRoutes InternalRoutesRegistrar
+	ConfigLoader             CloudConfigLoader
+	Stores                   CloudStoresFactory
+	InviteSender             InviteSenderFactory
+	AuthRoutes               AuthRoutesRegistrar
+	InternalRoutes           InternalRoutesRegistrar
+	ProcessingOriginResolver ProcessingOriginResolverFactory
 }

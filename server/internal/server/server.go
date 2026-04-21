@@ -18,6 +18,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/resolver"
 	"github.com/cshum/imagor-studio/server/pkg/management"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"go.uber.org/zap"
 )
 
@@ -75,8 +76,18 @@ func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string, m
 }
 
 func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, services *bootstrap.Services, mode Mode, cloudConfig management.CloudConfig, cloudFactories management.CloudFactories) (*Server, error) {
+	// Create auth handler. services.OrgStore is nil for self-hosted deployments
+	// and non-nil only for cloud multi-tenant deployments.
+	multiTenant := mode == ModeCloud && services.OrgStore != nil && services.SpaceStore != nil
 
 	// Initialize GraphQL with enhanced config from services
+	processingOriginResolver := space.NewCustomDomainProcessingOriginResolver(services.SpaceStore)
+	if mode == ModeCloud && multiTenant && cloudFactories.ProcessingOriginResolver != nil {
+		if customResolver := cloudFactories.ProcessingOriginResolver(cloudConfig, services.SpaceStore); customResolver != nil {
+			processingOriginResolver = customResolver
+		}
+	}
+
 	storageResolver := resolver.NewResolver(
 		services.StorageProvider,
 		services.RegistryStore,
@@ -89,6 +100,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.SpaceStore,
 		services.SpaceInviteStore,
 		services.InviteSender,
+		resolver.WithProcessingOriginResolver(processingOriginResolver),
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
@@ -106,10 +118,6 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 
 	// Add useful extensions
 	gqlHandler.Use(extension.Introspection{})
-
-	// Create auth handler. services.OrgStore is nil for self-hosted deployments
-	// and non-nil only for cloud multi-tenant deployments.
-	multiTenant := mode == ModeCloud && services.OrgStore != nil && services.SpaceStore != nil
 
 	authHandler := httphandler.NewAuthHandler(
 		services.TokenManager,

@@ -45,7 +45,6 @@ func TestLoadWithArgs(t *testing.T) {
 		"--port", "9090",
 		"--storage-type", "s3",
 		"--s3-storage-bucket", "test-bucket",
-		"--app-processing-url-template", "https://{spaceKey}.imagor.app",
 		"--jwt-secret", "test-secret",
 	}
 
@@ -57,7 +56,6 @@ func TestLoadWithArgs(t *testing.T) {
 	assert.Equal(t, 9090, cfg.Port)
 	assert.Equal(t, "s3", cfg.StorageType)
 	assert.Equal(t, "test-bucket", cfg.S3StorageBucket)
-	assert.Equal(t, "https://{spaceKey}.imagor.app", cfg.AppProcessingURLTemplate)
 	assert.Equal(t, "first_frame", cfg.AppVideoThumbnailPosition)
 }
 
@@ -66,13 +64,11 @@ func TestLoadWithEnvVars(t *testing.T) {
 	os.Setenv("PORT", "7070")
 	os.Setenv("STORAGE_TYPE", "s3")
 	os.Setenv("S3_STORAGE_BUCKET", "env-bucket")
-	os.Setenv("APP_PROCESSING_URL_TEMPLATE", "https://{spaceKey}.imagor.app")
 	os.Setenv("IMAGOR_MODE", "embedded")
 	defer func() {
 		os.Unsetenv("PORT")
 		os.Unsetenv("STORAGE_TYPE")
 		os.Unsetenv("S3_STORAGE_BUCKET")
-		os.Unsetenv("APP_PROCESSING_URL_TEMPLATE")
 		os.Unsetenv("IMAGOR_MODE")
 	}()
 
@@ -84,7 +80,6 @@ func TestLoadWithEnvVars(t *testing.T) {
 	assert.Equal(t, 7070, cfg.Port)
 	assert.Equal(t, "s3", cfg.StorageType)
 	assert.Equal(t, "env-bucket", cfg.S3StorageBucket)
-	assert.Equal(t, "https://{spaceKey}.imagor.app", cfg.AppProcessingURLTemplate)
 }
 
 func TestLoadWithRegistry(t *testing.T) {

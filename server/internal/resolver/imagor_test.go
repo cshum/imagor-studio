@@ -766,6 +766,7 @@ func TestGenerateThumbnailUrlsForSpace_UsesVerifiedCustomDomain(t *testing.T) {
 	logger := zap.NewNop()
 	cfg, err := config.Load([]string{"--jwt-secret", "test-secret"}, nil)
 	require.NoError(t, err)
+	spaceKey := "acme"
 
 	resolver := NewResolver(
 		mockStorageProvider,
@@ -781,7 +782,6 @@ func TestGenerateThumbnailUrlsForSpace_UsesVerifiedCustomDomain(t *testing.T) {
 		nil,
 	)
 
-	spaceKey := "acme"
 	imagePath := "test/image.jpg"
 	mockSpaceStore.On("Get", mock.Anything, spaceKey).Return(&space.Space{
 		Key:                  spaceKey,
@@ -841,8 +841,9 @@ func TestGenerateThumbnailUrlsForSpace_UsesProcessingTemplate(t *testing.T) {
 	mockSpaceStore := new(MockSpaceStore)
 	mockOrgStore := new(MockOrgStore)
 	logger := zap.NewNop()
-	cfg, err := config.Load([]string{"--jwt-secret", "test-secret", "--app-processing-url-template", "https://{spaceKey}.imagor.app"}, nil)
+	cfg, err := config.Load([]string{"--jwt-secret", "test-secret"}, nil)
 	require.NoError(t, err)
+	spaceKey := "acme"
 
 	resolver := NewResolver(
 		mockStorageProvider,
@@ -856,11 +857,15 @@ func TestGenerateThumbnailUrlsForSpace_UsesProcessingTemplate(t *testing.T) {
 		mockSpaceStore,
 		nil,
 		nil,
+		WithProcessingOriginResolver(space.ProcessingOriginResolverFunc(func(ctx context.Context, key string) string {
+			if key == spaceKey {
+				return "https://acme.imagor.app"
+			}
+			return ""
+		})),
 	)
 
-	spaceKey := "acme"
 	imagePath := "test/image.jpg"
-	mockSpaceStore.On("Get", mock.Anything, spaceKey).Return(&space.Space{Key: spaceKey}, nil)
 
 	mockImagorProvider.On("GenerateURL", imagePath, imagorpath.Params{
 		Width:  300,
@@ -901,7 +906,6 @@ func TestGenerateThumbnailUrlsForSpace_UsesProcessingTemplate(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "https://acme.imagor.app/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", *result.Grid)
 	assert.Equal(t, "https://acme.imagor.app/imagor/filters:raw()/test/image.jpg", *result.Original)
-	mockSpaceStore.AssertExpectations(t)
 	mockImagorProvider.AssertExpectations(t)
 }
 

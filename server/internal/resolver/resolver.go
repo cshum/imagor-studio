@@ -53,11 +53,20 @@ type Resolver struct {
 
 	// Multi-tenant stores — nil in self-hosted / embedded mode.
 	// Only set for cloud multi-tenant deployments.
-	orgStore   org.OrgStore
-	spaceStore space.SpaceStore
+	orgStore                 org.OrgStore
+	spaceStore               space.SpaceStore
+	processingOriginResolver space.ProcessingOriginResolver
 
 	spaceInviteStore space.SpaceInviteStore
 	inviteSender     space.InviteSender
+}
+
+type ResolverOption func(*Resolver)
+
+func WithProcessingOriginResolver(processingOriginResolver space.ProcessingOriginResolver) ResolverOption {
+	return func(r *Resolver) {
+		r.processingOriginResolver = processingOriginResolver
+	}
 }
 
 func NewResolver(
@@ -72,20 +81,30 @@ func NewResolver(
 	spaceStore space.SpaceStore,
 	spaceInviteStore space.SpaceInviteStore,
 	inviteSender space.InviteSender,
+	opts ...ResolverOption,
 ) *Resolver {
-	return &Resolver{
-		storageProvider:  storageProvider,
-		registryStore:    registryStore,
-		userStore:        userStore,
-		imagorProvider:   imagorProvider,
-		config:           cfg,
-		licenseService:   licenseService,
-		logger:           logger,
-		orgStore:         orgStore,
-		spaceStore:       spaceStore,
-		spaceInviteStore: spaceInviteStore,
-		inviteSender:     inviteSender,
+	r := &Resolver{
+		storageProvider:          storageProvider,
+		registryStore:            registryStore,
+		userStore:                userStore,
+		imagorProvider:           imagorProvider,
+		config:                   cfg,
+		licenseService:           licenseService,
+		logger:                   logger,
+		orgStore:                 orgStore,
+		spaceStore:               spaceStore,
+		processingOriginResolver: space.NewCustomDomainProcessingOriginResolver(spaceStore),
+		spaceInviteStore:         spaceInviteStore,
+		inviteSender:             inviteSender,
 	}
+
+	for _, opt := range opts {
+		if opt != nil {
+			opt(r)
+		}
+	}
+
+	return r
 }
 
 // getStorage returns the current storage instance from the provider

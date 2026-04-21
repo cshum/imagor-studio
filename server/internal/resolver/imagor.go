@@ -14,6 +14,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/imagortemplate"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
 )
@@ -180,25 +181,6 @@ func buildImagePath(galleryKey, imageKey string) string {
 	return galleryKey + "/" + imageKey // Gallery image
 }
 
-func normalizeOrigin(base string) string {
-	trimmed := strings.TrimSpace(base)
-	if trimmed == "" {
-		return ""
-	}
-	trimmed = strings.TrimRight(trimmed, "/")
-	if strings.HasPrefix(trimmed, "http://") || strings.HasPrefix(trimmed, "https://") {
-		return trimmed
-	}
-	return "https://" + trimmed
-}
-
-func applySpaceTemplate(template, spaceKey string) string {
-	if template == "" || spaceKey == "" {
-		return ""
-	}
-	return strings.ReplaceAll(template, "{spaceKey}", spaceKey)
-}
-
 func absolutizeURL(baseOrigin, path string) string {
 	if baseOrigin == "" || path == "" {
 		return path
@@ -206,35 +188,15 @@ func absolutizeURL(baseOrigin, path string) string {
 	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
 		return path
 	}
-	return normalizeOrigin(baseOrigin) + path
+	return space.NormalizeOrigin(baseOrigin) + path
 }
 
 func (r *Resolver) processingOriginForSpace(ctx context.Context, spaceKey *string) string {
-	if !r.cloudEnabled() || spaceKey == nil {
+	if r.processingOriginResolver == nil || spaceKey == nil {
 		return ""
 	}
 
-	key := strings.TrimSpace(*spaceKey)
-	if key == "" {
-		return ""
-	}
-
-	if r.spaceStore != nil {
-		spaceConfig, err := r.spaceStore.Get(ctx, key)
-		if err == nil && spaceConfig != nil && spaceConfig.CustomDomainVerified {
-			if customDomain := strings.TrimSpace(spaceConfig.CustomDomain); customDomain != "" {
-				return normalizeOrigin(customDomain)
-			}
-		}
-	}
-
-	template, _ := r.config.GetByRegistryKey("config.app_processing_url_template")
-	template = strings.TrimSpace(template)
-	if template == "" {
-		return ""
-	}
-
-	return normalizeOrigin(applySpaceTemplate(template, key))
+	return r.processingOriginResolver.ResolveProcessingOrigin(ctx, *spaceKey)
 }
 
 // convertToImagorParams converts GraphQL input to imagorpath.Params
