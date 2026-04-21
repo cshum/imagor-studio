@@ -156,7 +156,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size='lg'>
               <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
-                {space.storageType === 'managed' ? (
+              {space.storageMode === 'platform' ? (
                   <Cloud className='h-10 w-10 shrink-0' />
                 ) : (
                   <Database className='h-10 w-10 shrink-0' />

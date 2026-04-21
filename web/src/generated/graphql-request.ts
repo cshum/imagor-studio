@@ -818,6 +818,7 @@ export type ListSpacesQuery = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -848,6 +849,7 @@ export type GetSpaceQuery = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -878,6 +880,7 @@ export type CreateSpaceMutation = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string
@@ -908,6 +911,7 @@ export type UpdateSpaceMutation = {
     orgId: string
     key: string
     name: string
+    storageMode: string
     storageType: string
     bucket: string
     prefix: string

@@ -175,7 +175,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                 <div className='flex items-start justify-between gap-2'>
                   <div className='flex min-w-0 items-center gap-3'>
                     <div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
-                      {space.storageType === 'managed' ? (
+                    {space.storageMode === 'platform' ? (
                         <Cloud className='text-muted-foreground h-5 w-5' />
                       ) : (
                         <Database className='text-muted-foreground h-5 w-5' />
@@ -199,9 +199,9 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                   {/* Badge */}
                   <div className='mt-1 flex shrink-0 items-center gap-1'>
                     <Badge
-                      variant={space.storageType === 's3' ? 'outline' : 'secondary'}
+                      variant={space.storageMode === 'byob' ? 'outline' : 'secondary'}
                       className={
-                        space.storageType === 's3'
+                      space.storageMode === 'byob'
                           ? 'border-amber-500/40 text-amber-600 dark:text-amber-400'
                           : ''
                       }
