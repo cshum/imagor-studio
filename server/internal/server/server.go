@@ -163,6 +163,13 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		InternalAPISecret: cloudConfig.InternalAPISecret,
 		Logger:            services.Logger,
 	}
+	if imagorCfg := services.ImagorProvider.Config(); imagorCfg != nil {
+		cloudServices.GlobalImagor = management.ImagorSigningConfig{
+			Secret:         imagorCfg.Secret,
+			SignerType:     imagorCfg.SignerType,
+			SignerTruncate: imagorCfg.SignerTruncate,
+		}
+	}
 
 	if mode == ModeCloud && multiTenant && cloudFactories.AuthRoutes != nil {
 		cloudFactories.AuthRoutes(mux, management.OAuthConfig{

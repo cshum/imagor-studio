@@ -51,10 +51,16 @@ type CloudHTTPServices struct {
 	SpaceStore        space.SpaceStore
 	SpaceInviteStore  space.SpaceInviteStore
 	CloudConfig       CloudConfig
+	GlobalImagor      ImagorSigningConfig
 	InternalAPISecret string
 	Logger            *zap.Logger
 }
 
+type ImagorSigningConfig struct {
+	Secret         string
+	SignerType     string
+	SignerTruncate int
+}
 type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (org.OrgStore, space.SpaceStore, space.SpaceInviteStore, error)
 
 type InviteSenderFactory func(cfg InviteSenderConfig) (space.InviteSender, error)
