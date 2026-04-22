@@ -118,16 +118,16 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
       label: t('pages.spaceSettings.sections.general'),
     },
     {
-      id: 'storage' as SectionId,
-      to: '/spaces/$spaceKey/settings/storage',
-      icon: <HardDrive className='h-4 w-4' />,
-      label: t('pages.spaceSettings.sections.storage'),
-    },
-    {
       id: 'imagor',
       to: '/spaces/$spaceKey/settings/imagor',
       icon: <Cpu className='h-4 w-4' />,
       label: t('pages.spaceSettings.sections.imagor'),
+    },
+    {
+      id: 'storage' as SectionId,
+      to: '/spaces/$spaceKey/settings/storage',
+      icon: <HardDrive className='h-4 w-4' />,
+      label: t('pages.spaceSettings.sections.storage'),
     },
     {
       id: 'members',
