@@ -1034,6 +1034,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             isScrolled={isScrolledDown}
             customMenuItems={customMenuItems}
             secondaryMenuItems={secondaryMenuItems}
+            secondaryMenuLabel={spaceKey ? t('common.navigation.space') : undefined}
             selectionMenu={
               authState.state === 'authenticated' ? (
                 <SelectionMenu

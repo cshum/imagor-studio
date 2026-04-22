@@ -39,6 +39,7 @@ interface HeaderBarProps {
   isScrolled?: boolean
   customMenuItems?: React.ReactNode
   secondaryMenuItems?: React.ReactNode
+  secondaryMenuLabel?: React.ReactNode
   selectionMenu?: React.ReactNode
   dragDropHandlers?: {
     handleDragOver: (e: React.DragEvent, folderKey: string) => void
@@ -52,6 +53,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
   customMenuItems,
   secondaryMenuItems,
+  secondaryMenuLabel,
   selectionMenu,
   dragDropHandlers,
 }) => {
@@ -263,7 +265,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
                         <DropdownMenuSeparator />
 
+                        {secondaryMenuItems && secondaryMenuLabel ? (
+                          <DropdownMenuLabel className='text-muted-foreground px-2 py-1.5 text-xs font-medium'>
+                            {secondaryMenuLabel}
+                          </DropdownMenuLabel>
+                        ) : null}
+
                         {secondaryMenuItems}
+
+                        {secondaryMenuItems ? (
+                          <DropdownMenuLabel className='text-muted-foreground px-2 py-1.5 text-xs font-medium'>
+                            {t('common.navigation.account')}
+                          </DropdownMenuLabel>
+                        ) : null}
 
                         <DropdownMenuItem
                           className='interactive:cursor-pointer'
@@ -272,7 +286,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                           <Settings className='text-muted-foreground mr-3 h-4 w-4' />
                           {t('common.navigation.accountSettings')}
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className='interactive:cursor-pointer'
                           onClick={handleLogout}
