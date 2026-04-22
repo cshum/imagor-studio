@@ -1,3 +1,4 @@
+import { getSpace } from '@/api/org-api'
 import { getSystemRegistry } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
@@ -415,7 +416,23 @@ export const loadFolderChildren = async (
   }
 }
 
-export const loadHomeTitle = async () => {
+export const loadHomeTitle = async (spaceKey?: string) => {
+  if (spaceKey) {
+    try {
+      const space = await getSpace(spaceKey)
+      const spaceName = space?.name?.trim()
+
+      folderTreeStore.dispatch({
+        type: 'SET_HOME_TITLE',
+        title: spaceName || 'Home',
+      })
+      return
+    } catch {
+      folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: 'Home' })
+      return
+    }
+  }
+
   try {
     const registry = await getSystemRegistry('config.app_home_title')
     const customTitle = registry[0]?.value

@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useRouterState } from '@tanstack/react-router'
-import { Home } from 'lucide-react'
+import { ArrowLeft, Home } from 'lucide-react'
 
 import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { DeleteItemDialog } from '@/components/image-gallery/delete-item-dialog'
@@ -11,6 +11,7 @@ import { RenameItemDialog } from '@/components/image-gallery/rename-item-dialog'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -28,6 +29,7 @@ import {
   folderTreeStore,
   invalidateFolderCache,
   loadFolderChildren,
+  loadHomeTitle,
   useFolderTree,
 } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
@@ -110,6 +112,10 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
   const isOnHomePage = spaceKey
     ? routerState.location.pathname === `/spaces/${spaceKey}`
     : routerState.location.pathname === '/'
+
+  useEffect(() => {
+    void loadHomeTitle(spaceKey)
+  }, [spaceKey])
 
   const handleHomeClick = () => {
     // Close mobile sidebar when navigating to home on mobile
@@ -271,6 +277,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu onDragLeave={handleContainerDragLeave}>
               {/* Home Link as first item - droppable for moving items to root */}
+
               <SidebarMenuItem
                 className={dragOverTarget === '' ? 'relative z-10' : ''}
                 onDragOver={(e) => handleDragOver(e, '')}
@@ -330,6 +337,22 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {spaceKey && (
+        <SidebarFooter className='border-t py-2'>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to='/'>
+                  <ArrowLeft className='h-4 w-4' />
+                  <span>{t('pages.spaceSettings.backToSpaces')}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      )}
+
       <SidebarRail />
 
       {/* Rename Dialog */}

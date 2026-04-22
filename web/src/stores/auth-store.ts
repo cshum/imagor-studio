@@ -142,11 +142,6 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
 
   // Continue with normal auth flow
   try {
-    console.log(
-      window.location.pathname === '/auth/callback'
-        ? new URLSearchParams(window.location.search).get('token')
-        : null,
-    )
     // Token priority: explicit arg → ?token= on /auth/callback (OAuth) → localStorage
     const currentAccessToken =
       accessToken ||

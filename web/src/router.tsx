@@ -701,8 +701,8 @@ export function AppRouter() {
       // so skip the root-folder sidebar fetch — it would fail with NOT_AVAILABLE.
       if (!authState.multiTenant) {
         loadRootFolders()
+        loadHomeTitle()
       }
-      loadHomeTitle()
     } else if (action.type === 'LOGOUT') {
       initializeTheme(localThemeStorage, 'class')
       initializeSidebar(localSidebarStorage)

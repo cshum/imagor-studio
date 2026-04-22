@@ -8,6 +8,57 @@ export interface ErrorInfo {
   argumentName?: string
 }
 
+interface GraphQLErrorLike {
+  message?: string
+  extensions?: {
+    field?: string
+    code?: string
+    argumentName?: string
+  }
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
+}
+
+function getGraphQLErrors(error: unknown): GraphQLErrorLike[] {
+  const errorRecord = asRecord(error)
+  if (!errorRecord) {
+    return []
+  }
+
+  const responseRecord = asRecord(errorRecord.response)
+  const responseErrors = responseRecord?.errors
+  if (Array.isArray(responseErrors)) {
+    return responseErrors as GraphQLErrorLike[]
+  }
+
+  const directErrors = errorRecord.errors
+  if (Array.isArray(directErrors)) {
+    return directErrors as GraphQLErrorLike[]
+  }
+
+  return []
+}
+
+function getErrorMessageValue(error: unknown): string | null {
+  const errorRecord = asRecord(error)
+  if (!errorRecord) {
+    return null
+  }
+
+  if (typeof errorRecord.message === 'string') {
+    return errorRecord.message
+  }
+
+  const nestedErrorRecord = asRecord(errorRecord.error)
+  if (typeof nestedErrorRecord?.message === 'string') {
+    return nestedErrorRecord.message
+  }
+
+  return null
+}
+
 export function hasErrorCode(error: unknown, code: string): boolean {
   return extractErrorInfo(error).code === code
 }
@@ -21,30 +72,14 @@ export function extractErrorMessage(error: unknown): string {
     return error
   }
 
-  // Check for GraphQL errors in the response
-  if (error?.response?.errors && Array.isArray(error.response.errors)) {
-    const firstError = error.response.errors[0]
-    if (firstError?.message) {
-      return firstError.message
-    }
+  const firstError = getGraphQLErrors(error)[0]
+  if (firstError?.message) {
+    return firstError.message
   }
 
-  // Check for direct GraphQL errors
-  if (error?.errors && Array.isArray(error.errors)) {
-    const firstError = error.errors[0]
-    if (firstError?.message) {
-      return firstError.message
-    }
-  }
-
-  // Check for error message property
-  if (error?.message) {
-    return error.message
-  }
-
-  // Check for nested error messages
-  if (error?.error?.message) {
-    return error.error.message
+  const message = getErrorMessageValue(error)
+  if (message) {
+    return message
   }
 
   // Fallback to generic message
@@ -54,46 +89,25 @@ export function extractErrorMessage(error: unknown): string {
 /**
  * Extract enhanced error information including field targeting
  */
-export function extractErrorInfo(error: any): ErrorInfo {
+export function extractErrorInfo(error: unknown): ErrorInfo {
   // If it's already a string, return basic info
   if (typeof error === 'string') {
     return { message: error }
   }
 
-  // Check for GraphQL errors in the response
-  if (error?.response?.errors && Array.isArray(error.response.errors)) {
-    const firstError = error.response.errors[0]
-    if (firstError?.message) {
-      return {
-        message: firstError.message,
-        field: firstError.extensions?.field,
-        code: firstError.extensions?.code,
-        argumentName: firstError.extensions?.argumentName,
-      }
+  const firstError = getGraphQLErrors(error)[0]
+  if (firstError?.message) {
+    return {
+      message: firstError.message,
+      field: firstError.extensions?.field,
+      code: firstError.extensions?.code,
+      argumentName: firstError.extensions?.argumentName,
     }
   }
 
-  // Check for direct GraphQL errors
-  if (error?.errors && Array.isArray(error.errors)) {
-    const firstError = error.errors[0]
-    if (firstError?.message) {
-      return {
-        message: firstError.message,
-        field: firstError.extensions?.field,
-        code: firstError.extensions?.code,
-        argumentName: firstError.extensions?.argumentName,
-      }
-    }
-  }
-
-  // Check for error message property
-  if (error?.message) {
-    return { message: error.message }
-  }
-
-  // Check for nested error messages
-  if (error?.error?.message) {
-    return { message: error.error.message }
+  const message = getErrorMessageValue(error)
+  if (message) {
+    return { message }
   }
 
   // Fallback to generic message
@@ -103,7 +117,7 @@ export function extractErrorInfo(error: any): ErrorInfo {
 /**
  * Check if an error targets a specific field
  */
-export function isFieldError(error: any, fieldName: string): boolean {
+export function isFieldError(error: unknown, fieldName: string): boolean {
   const errorInfo = extractErrorInfo(error)
   return errorInfo.field === fieldName
 }
@@ -111,16 +125,12 @@ export function isFieldError(error: any, fieldName: string): boolean {
 /**
  * Get all field errors from a GraphQL response
  */
-export function extractFieldErrors(error: any): Record<string, string> {
+export function extractFieldErrors(error: unknown): Record<string, string> {
   const fieldErrors: Record<string, string> = {}
 
-  // Check for GraphQL errors in the response
-  const errors = error?.response?.errors || error?.errors
-  if (errors && Array.isArray(errors)) {
-    for (const err of errors) {
-      if (err?.extensions?.field && err?.message) {
-        fieldErrors[err.extensions.field] = err.message
-      }
+  for (const graphQLError of getGraphQLErrors(error)) {
+    if (graphQLError.extensions?.field && graphQLError.message) {
+      fieldErrors[graphQLError.extensions.field] = graphQLError.message
     }
   }
 

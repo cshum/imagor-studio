@@ -198,22 +198,27 @@ export const galleryLoader = async ({
       }
     })
 
-  // Get home title from the folder tree store
-  const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
   const spaceName = spaceKey
     ? await getSpace(spaceKey)
         .then((s) => s?.name ?? null)
         .catch(() => null)
     : null
-  const homeTitle = spaceName || folderTreeState.homeTitle
+  const folderTreeState = spaceKey
+    ? null
+    : await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
+  const homeTitle = spaceName || folderTreeState?.homeTitle || spaceKey || 'Home'
 
   // Use the actual folder name, or custom home title for root
   const galleryName = galleryKey === '' ? homeTitle : galleryKey.split('/').pop() || galleryKey
 
   // Generate breadcrumbs based on galleryKey
-  const breadcrumbs: BreadcrumbItem[] = []
+  const breadcrumbs: BreadcrumbItem[] = [
+    {
+      label: homeTitle,
+      ...(galleryKey ? { href: spaceKey ? `/spaces/${spaceKey}` : '/' } : {}),
+    },
+  ]
 
-  // For root gallery (empty galleryKey), just show custom home title without href
   if (galleryKey) {
     // Add breadcrumbs for nested paths
     const segments = galleryKey.split('/')
