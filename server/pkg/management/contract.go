@@ -7,6 +7,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
 	sharedinvite "github.com/cshum/imagor-studio/server/pkg/invite"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	shareduser "github.com/cshum/imagor-studio/server/pkg/user"
 	"github.com/uptrace/bun"
@@ -73,6 +74,8 @@ type InternalRoutesRegistrar func(mux *http.ServeMux, services CloudHTTPServices
 
 type ProcessingOriginResolverFactory func(cfg CloudConfig, spaceStore space.SpaceStore) space.ProcessingOriginResolver
 
+type TemplatePreviewRenderClientFactory func(cfg CloudConfig) processing.TemplatePreviewRenderClient
+
 type CloudFactories struct {
 	ConfigLoader             CloudConfigLoader
 	Stores                   CloudStoresFactory
@@ -80,4 +83,5 @@ type CloudFactories struct {
 	AuthRoutes               AuthRoutesRegistrar
 	InternalRoutes           InternalRoutesRegistrar
 	ProcessingOriginResolver ProcessingOriginResolverFactory
+	TemplatePreviewRenderer  TemplatePreviewRenderClientFactory
 }

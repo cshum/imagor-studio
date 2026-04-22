@@ -14,6 +14,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagortemplate"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
@@ -92,7 +93,7 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 		return nil, err
 	}
 
-	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, previewParams, spaceConfig, spaceKey)
+	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, input.TemplateJSON, previewParams, spaceConfig, spaceKey)
 	if err != nil {
 		r.logger.Warn("Preview generation failed (continuing without preview)", zap.Error(err))
 		// Don't fail the operation - template can work without preview
@@ -185,7 +186,25 @@ func derivePreviewParamsFromTemplateJSON(templateJSON string) imagorpath.Params 
 }
 
 // generateTemplatePreview generates a preview image for the template using Imagor.
-func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath string, params imagorpath.Params, spaceConfig *space.Space, spaceKey *string) ([]byte, error) {
+func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath, templateJSON string, params imagorpath.Params, spaceConfig *space.Space, spaceKey *string) ([]byte, error) {
+	if r.templatePreviewRenderer != nil && spaceKey != nil {
+		r.logger.Debug("Generating preview using internal processing renderer")
+
+		result, err := r.templatePreviewRenderer.RenderTemplatePreview(ctx, processing.TemplatePreviewRenderRequest{
+			SpaceKey:        *spaceKey,
+			SourceImagePath: sourceImagePath,
+			TemplateJSON:    templateJSON,
+			PreviewParams:   params,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to render preview via processing renderer: %w", err)
+		}
+		if result == nil || len(result.Image) == 0 {
+			return nil, fmt.Errorf("processing renderer returned empty preview image")
+		}
+
+		return result.Image, nil
+	}
 
 	var imageData []byte
 
@@ -313,7 +332,7 @@ func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templa
 		return false, err
 	}
 
-	previewImage, err := r.generateTemplatePreview(ctx, sourceImagePath, previewParams, spaceConfig, spaceKey)
+	previewImage, err := r.generateTemplatePreview(ctx, sourceImagePath, templateJSON, previewParams, spaceConfig, spaceKey)
 	if err != nil {
 		r.logger.Error("Failed to generate template preview", zap.Error(err),
 			zap.String("templatePath", templatePath))

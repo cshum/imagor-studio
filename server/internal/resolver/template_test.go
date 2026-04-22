@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/stretchr/testify/assert"
@@ -342,6 +344,7 @@ func TestGenerateTemplatePreview_UsesSpaceAwareURL(t *testing.T) {
 	result, err := resolver.Mutation().(*mutationResolver).generateTemplatePreview(
 		context.Background(),
 		"test.jpg",
+		`{"version":"1.0","transformations":{"width":800,"height":600}}`,
 		derivePreviewParamsFromTemplateJSON(`{"version":"1.0","transformations":{"width":800,"height":600}}`),
 		spaceConfig,
 		&spaceKey,
@@ -352,6 +355,76 @@ func TestGenerateTemplatePreview_UsesSpaceAwareURL(t *testing.T) {
 	assert.Contains(t, requestedPath, "test.jpg")
 	assert.NotEmpty(t, requestedPath)
 	mockImagorProvider.AssertExpectations(t)
+}
+
+func TestGenerateTemplatePreview_UsesInternalRendererWhenConfigured(t *testing.T) {
+	mockRenderer := new(MockTemplatePreviewRenderClient)
+	mockImagorProvider := new(MockImagorProvider)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(nil, nil, nil, mockImagorProvider, &config.Config{}, nil, logger, nil, nil, nil, nil,
+		WithTemplatePreviewRenderer(mockRenderer),
+	)
+
+	spaceKey := "demo"
+	spaceConfig := &space.Space{Key: spaceKey}
+	templateJSON := `{"version":"1.0","transformations":{"width":800,"height":600}}`
+	previewParams := derivePreviewParamsFromTemplateJSON(templateJSON)
+	previewBytes := []byte("preview-from-processing")
+
+	mockRenderer.On("RenderTemplatePreview", mock.Anything, processing.TemplatePreviewRenderRequest{
+		SpaceKey:        spaceKey,
+		SourceImagePath: "test.jpg",
+		TemplateJSON:    templateJSON,
+		PreviewParams:   previewParams,
+	}).Return(&processing.TemplatePreviewRenderResponse{Image: previewBytes, ContentType: "image/webp"}, nil).Once()
+
+	result, err := resolver.Mutation().(*mutationResolver).generateTemplatePreview(
+		context.Background(),
+		"test.jpg",
+		templateJSON,
+		previewParams,
+		spaceConfig,
+		&spaceKey,
+	)
+
+	assert.NoError(t, err)
+	assert.Equal(t, previewBytes, result)
+	mockRenderer.AssertExpectations(t)
+	mockImagorProvider.AssertNotCalled(t, "Imagor")
+	mockImagorProvider.AssertNotCalled(t, "GenerateURL", mock.Anything, mock.Anything)
+}
+
+func TestHTTPTemplatePreviewRenderClient(t *testing.T) {
+	previewBytes := []byte("preview-bytes")
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, processing.InternalTemplatePreviewRenderPath, r.URL.Path)
+		assert.Equal(t, "secret", r.Header.Get(processing.InternalAPISecretHeader))
+
+		var req processing.TemplatePreviewRenderRequest
+		assert.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+		assert.Equal(t, "demo", req.SpaceKey)
+
+		w.Header().Set("Content-Type", "application/json")
+		assert.NoError(t, json.NewEncoder(w).Encode(processing.TemplatePreviewRenderResponse{
+			Image:       previewBytes,
+			ContentType: "image/webp",
+		}))
+	}))
+	defer server.Close()
+
+	client := processing.NewHTTPTemplatePreviewRenderClient(server.URL, "secret")
+	result, err := client.RenderTemplatePreview(context.Background(), processing.TemplatePreviewRenderRequest{SpaceKey: "demo"})
+
+	assert.NoError(t, err)
+	assert.Equal(t, previewBytes, result.Image)
+	assert.Equal(t, "image/webp", result.ContentType)
+}
+
+func TestResolveProcessingBaseURL(t *testing.T) {
+	assert.Equal(t, "https://processing.example.test/internal", processing.ResolveProcessingBaseURL("https://processing.example.test/internal/", "demo"))
+	assert.Equal(t, "https://demo.processing.example.test", processing.ResolveProcessingBaseURL("https://{spaceKey}.processing.example.test", "demo"))
+	assert.Equal(t, "https://demo.processing.example.test", processing.ResolveProcessingBaseURL("https://{{spaceKey}}.processing.example.test", "demo"))
 }
 
 type processingOriginResolverStub string

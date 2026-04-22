@@ -11,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor/imagorpath"
@@ -57,6 +58,7 @@ type Resolver struct {
 	orgStore                 org.OrgStore
 	spaceStore               space.SpaceStore
 	processingOriginResolver space.ProcessingOriginResolver
+	templatePreviewRenderer  processing.TemplatePreviewRenderClient
 
 	spaceInviteStore space.SpaceInviteStore
 	inviteSender     space.InviteSender
@@ -73,6 +75,12 @@ func WithProcessingOriginResolver(processingOriginResolver space.ProcessingOrigi
 func WithCloudConfig(cloudConfig management.CloudConfig) ResolverOption {
 	return func(r *Resolver) {
 		r.cloudConfig = cloudConfig
+	}
+}
+
+func WithTemplatePreviewRenderer(renderer processing.TemplatePreviewRenderClient) ResolverOption {
+	return func(r *Resolver) {
+		r.templatePreviewRenderer = renderer
 	}
 }
 
