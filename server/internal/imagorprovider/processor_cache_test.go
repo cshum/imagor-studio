@@ -8,9 +8,9 @@ import (
 )
 
 func TestProcessorCacheSizeBytes_UsesDefaultWhenConfigMissing(t *testing.T) {
-	assert.Equal(t, 200*1024*1024, processorCacheSizeBytes(nil))
+	assert.EqualValues(t, 200*1024*1024, processorCacheSizeBytes(nil))
 }
 
 func TestProcessorCacheSizeBytes_UsesConfiguredValue(t *testing.T) {
-	assert.Equal(t, 512*1024*1024, processorCacheSizeBytes(&config.Config{ImagorCacheSizeBytes: 512 * 1024 * 1024}))
+	assert.EqualValues(t, 512*1024*1024, processorCacheSizeBytes(&config.Config{ImagorCacheSizeBytes: 512 * 1024 * 1024}))
 }

@@ -292,7 +292,16 @@ func registerProcessingOrSPA(
 	services *bootstrap.Services,
 ) error {
 	if services.SpaceConfigStore != nil {
-		mux.Handle("/", services.ImagorProvider.Imagor())
+		baseDomain := ""
+		if services.ProcessingConfig != nil {
+			baseDomain = services.ProcessingConfig.Runtime.SpaceBaseDomain
+		}
+		mux.Handle("/", newProcessingRootHandler(
+			services.ImagorProvider.Imagor(),
+			services.SpaceConfigStore,
+			cfg.AppUrl,
+			baseDomain,
+		))
 		return nil
 	}
 
