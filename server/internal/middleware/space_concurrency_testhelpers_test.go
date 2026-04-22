@@ -68,3 +68,7 @@ func (s *testSpaceConfigStore) GetByHostname(hostname string) (processing.SpaceC
 func (s *testSpaceConfigStore) Start(context.Context) error {
 	return nil
 }
+
+func (s *testSpaceConfigStore) Ready() bool {
+	return true
+}

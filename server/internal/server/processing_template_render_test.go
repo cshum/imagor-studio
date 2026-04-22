@@ -56,6 +56,8 @@ func (r processingTestSpaceConfigReader) GetByHostname(hostname string) (sharedp
 
 func (r processingTestSpaceConfigReader) Start(_ context.Context) error { return nil }
 
+func (r processingTestSpaceConfigReader) Ready() bool { return true }
+
 func TestProcessingTemplatePreviewRenderHandler_Unauthorized(t *testing.T) {
 	handler := newProcessingTemplatePreviewRenderHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), processingTestSpaceConfigReader{}, "imagor.test", "secret", zap.NewNop())
 

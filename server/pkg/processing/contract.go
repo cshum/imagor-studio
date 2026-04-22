@@ -37,6 +37,7 @@ type SpaceConfigReader interface {
 	Get(key string) (SpaceConfig, bool)
 	GetByHostname(hostname string) (SpaceConfig, bool)
 	Start(ctx context.Context) error
+	Ready() bool
 }
 
 type RuntimeFactory = func(cfg RuntimeConfig, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, error)

@@ -32,6 +32,10 @@ func (stubSpaceConfigStore) Start(ctx context.Context) error {
 	return nil
 }
 
+func (stubSpaceConfigStore) Ready() bool {
+	return true
+}
+
 func stubProcessingRuntimeFactory() ProcessingRuntimeFactory {
 	return func(cfg processing.RuntimeConfig, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
 		_ = cfg

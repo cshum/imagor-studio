@@ -82,6 +82,10 @@ func (r *testSpaceConfigReader) Start(ctx context.Context) error {
 	return nil
 }
 
+func (r *testSpaceConfigReader) Ready() bool {
+	return true
+}
+
 func (m *mockRegistryStore) Set(ctx context.Context, ownerID, key, value string, isEncrypted bool) (*registrystore.Registry, error) {
 	m.data[key] = value
 	return &registrystore.Registry{Key: key, Value: value, IsEncrypted: isEncrypted}, nil
