@@ -341,7 +341,6 @@ func TestInitializeProcessingMode_Success(t *testing.T) {
 			InternalAPISecret: "test-internal-secret",
 			SpaceBaseDomain:   "imagor.test",
 		},
-		SpaceMaxConcurrency: 8,
 	}
 	svc, err := InitializeProcessingWithFactory(cfg, nodeCfg, logger, stubProcessingRuntimeFactory())
 	require.NoError(t, err)

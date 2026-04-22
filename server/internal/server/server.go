@@ -282,16 +282,7 @@ func registerProcessingOrSPA(
 	services *bootstrap.Services,
 ) error {
 	if services.SpaceConfigStore != nil {
-		baseDomain := services.ProcessingConfig.Runtime.SpaceBaseDomain
-		if len(baseDomain) > 0 && baseDomain[0] == '.' {
-			baseDomain = baseDomain[1:]
-		}
-		imagorHandler := middleware.SpaceConcurrencyMiddleware(
-			services.SpaceConfigStore,
-			baseDomain,
-			int64(services.ProcessingConfig.SpaceMaxConcurrency),
-		)(services.ImagorProvider.Imagor())
-		mux.Handle("/", imagorHandler)
+		mux.Handle("/", services.ImagorProvider.Imagor())
 		return nil
 	}
 

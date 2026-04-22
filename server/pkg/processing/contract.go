@@ -14,8 +14,7 @@ type RuntimeConfig struct {
 }
 
 type NodeConfig struct {
-	Runtime             RuntimeConfig
-	SpaceMaxConcurrency int
+	Runtime RuntimeConfig
 }
 
 type SpaceConfig interface {
