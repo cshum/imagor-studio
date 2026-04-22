@@ -16,6 +16,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import { hasErrorCode } from '@/lib/error-utils'
 import { folderTreeStore, invalidateFolderCache, loadRootFolders } from '@/stores/folder-tree-store'
 
 interface UseFolderContextMenuProps {
@@ -109,9 +110,8 @@ export function useFolderContextMenu({
         })
       }
       await router.invalidate()
-    } catch (error: any) {
-      const errorCode = error?.response?.errors?.[0]?.extensions?.code
-      if (errorCode === 'FILE_ALREADY_EXISTS') {
+    } catch (error: unknown) {
+      if (hasErrorCode(error, 'FILE_ALREADY_EXISTS')) {
         toast.error(t('pages.gallery.renameItem.fileExists'))
       } else {
         toast.error(t('pages.gallery.renameItem.error', { type: 'folder' }))

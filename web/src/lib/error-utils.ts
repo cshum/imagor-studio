@@ -8,10 +8,14 @@ export interface ErrorInfo {
   argumentName?: string
 }
 
+export function hasErrorCode(error: unknown, code: string): boolean {
+  return extractErrorInfo(error).code === code
+}
+
 /**
  * Extract a clean error message from GraphQL error responses
  */
-export function extractErrorMessage(error: any): string {
+export function extractErrorMessage(error: unknown): string {
   // If it's already a string, return it
   if (typeof error === 'string') {
     return error

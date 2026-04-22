@@ -56,6 +56,7 @@ import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
+import { hasErrorCode } from '@/lib/error-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
 import { joinImagePath } from '@/lib/path-utils'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
@@ -181,9 +182,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
           await moveFile(item.key, newPath, spaceKey)
           successCount++
-        } catch (error: any) {
-          const errorCode = error?.response?.errors?.[0]?.extensions?.code
-          if (errorCode === 'FILE_ALREADY_EXISTS') {
+        } catch (error: unknown) {
+          if (hasErrorCode(error, 'FILE_ALREADY_EXISTS')) {
             hasFileExistsError = true
           }
           failCount++
@@ -553,9 +553,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         itemType: 'file',
         isRenaming: false,
       })
-    } catch (error: any) {
-      const errorCode = error?.response?.errors?.[0]?.extensions?.code
-      if (errorCode === 'FILE_ALREADY_EXISTS') {
+    } catch (error: unknown) {
+      if (hasErrorCode(error, 'FILE_ALREADY_EXISTS')) {
         toast.error(t('pages.gallery.renameItem.fileExists'))
       } else {
         toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))

@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import { moveFile } from '@/api/storage-api'
 import { FolderSelectionDialog } from '@/components/folder-picker/folder-selection-dialog.tsx'
+import { hasErrorCode } from '@/lib/error-utils'
 import { invalidateFolderCache } from '@/stores/folder-tree-store'
 
 export interface MoveItem {
@@ -102,9 +103,8 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
             // Invalidate destination folder
             invalidateFolderCache(destinationPath)
           }
-        } catch (error: any) {
-          const errorCode = error?.response?.errors?.[0]?.extensions?.code
-          if (errorCode === 'FILE_ALREADY_EXISTS') {
+        } catch (error: unknown) {
+          if (hasErrorCode(error, 'FILE_ALREADY_EXISTS')) {
             hasFileExistsError = true
           }
           failCount++
