@@ -886,6 +886,7 @@
         "signerTruncateDescription": "将 HMAC 签名截断为此字符数（0 = 完整长度）。",
         "saved": "安全设置已保存"
       },
+      "spaceSettings": "空间设置",
       "backToSpaces": "返回空间列表",
       "openGallery": "打开图库",
       "danger": {

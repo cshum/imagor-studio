@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useRouter, useRouterState } from '@tanstack/react-router'
 import {
+  ArrowLeft,
   ArrowDown,
   ArrowUp,
   Check,
@@ -10,6 +11,7 @@ import {
   FolderPlus,
   Paintbrush,
   Search,
+  Settings,
   Upload,
   X,
 } from 'lucide-react'
@@ -852,6 +854,36 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   })
 
   // Create menu items for authenticated users
+  const secondaryMenuItems =
+    authState.state === 'authenticated' && spaceKey ? (
+      <>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={(event) => {
+            event.preventDefault()
+            navigate({ to: '/' })
+          }}
+        >
+          <ArrowLeft className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.spaceSettings.backToSpaces')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={(event) => {
+            event.preventDefault()
+            navigate({
+              to: '/spaces/$spaceKey/settings/general',
+              params: { spaceKey },
+            })
+          }}
+        >
+          <Settings className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.spaceSettings.spaceSettings')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+      </>
+    ) : null
+
   const customMenuItems =
     authState.state === 'authenticated' ? (
       <>
@@ -1001,6 +1033,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           <HeaderBar
             isScrolled={isScrolledDown}
             customMenuItems={customMenuItems}
+            secondaryMenuItems={secondaryMenuItems}
             selectionMenu={
               authState.state === 'authenticated' ? (
                 <SelectionMenu

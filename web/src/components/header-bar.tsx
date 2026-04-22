@@ -38,6 +38,7 @@ import { useSidebar } from '@/stores/sidebar-store'
 interface HeaderBarProps {
   isScrolled?: boolean
   customMenuItems?: React.ReactNode
+  secondaryMenuItems?: React.ReactNode
   selectionMenu?: React.ReactNode
   dragDropHandlers?: {
     handleDragOver: (e: React.DragEvent, folderKey: string) => void
@@ -50,6 +51,7 @@ interface HeaderBarProps {
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
   customMenuItems,
+  secondaryMenuItems,
   selectionMenu,
   dragDropHandlers,
 }) => {
@@ -260,6 +262,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                         </DropdownMenuSub>
 
                         <DropdownMenuSeparator />
+
+                        {secondaryMenuItems}
 
                         <DropdownMenuItem
                           className='interactive:cursor-pointer'

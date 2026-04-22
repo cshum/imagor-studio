@@ -779,6 +779,7 @@
       "deleteDescription": "Space removal is propagating to processing nodes and may take up to 30 seconds to fully take effect."
     },
     "spaceSettings": {
+      "spaceSettings": "Space Settings",
       "backToSpaces": "Back to Spaces",
       "openGallery": "Open Gallery",
       "sections": {

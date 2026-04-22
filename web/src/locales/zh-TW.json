@@ -908,6 +908,7 @@
         "signerTruncateDescription": "將 HMAC 簽名截斷為此字元數（0 = 完整長度）。",
         "saved": "安全設定已儲存"
       },
+      "spaceSettings": "空間設定",
       "backToSpaces": "返回空間列表",
       "openGallery": "開啟相簿",
       "danger": {
