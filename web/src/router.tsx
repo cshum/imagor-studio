@@ -363,7 +363,8 @@ const spaceCanvasEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/spaces/$spaceKey/editor/new',
   beforeLoad: requireImageEditorAuth,
-  loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
+  loader: ({ location, params }) =>
+    canvasEditorLoader({ search: location.searchStr, spaceKey: params.spaceKey }),
   shouldReload: false,
   component: () => {
     const loaderData = spaceCanvasEditorRoute.useLoaderData()
