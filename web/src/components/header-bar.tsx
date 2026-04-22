@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
+import { Check, Languages, LogOut, MoreVertical } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -40,7 +40,6 @@ interface HeaderBarProps {
   isScrolled?: boolean
   customMenuItems?: React.ReactNode
   secondaryMenuItems?: React.ReactNode
-  secondaryMenuLabel?: React.ReactNode
   selectionMenu?: React.ReactNode
   dragDropHandlers?: {
     handleDragOver: (e: React.DragEvent, folderKey: string) => void
@@ -54,7 +53,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
   customMenuItems,
   secondaryMenuItems,
-  secondaryMenuLabel,
   selectionMenu,
   dragDropHandlers,
 }) => {
@@ -231,46 +229,55 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     {/* Custom menu items slot - for page-specific functionality */}
                     {customMenuItems}
 
-                    <DropdownMenuLabel className='font-normal'>
-                      <div className='flex items-center gap-3'>
-                        {authState.multiTenant && authState.state === 'authenticated' ? (
-                          <Avatar className='h-8 w-8'>
-                            <AvatarImage
-                              src={authState.profile?.avatarUrl ?? undefined}
-                              alt={getUserDisplayName()}
-                            />
-                            <AvatarFallback className='text-xs font-semibold'>
-                              {getUserInitials()}
-                            </AvatarFallback>
-                          </Avatar>
-                        ) : null}
-
-                        <div className='flex min-w-0 flex-col space-y-1'>
-                          <p className='truncate text-sm leading-none font-medium'>
-                            {getUserDisplayName()}
-                          </p>
-                          {getUserRole() && (
-                            <p className='text-muted-foreground truncate text-xs leading-none capitalize'>
-                              {getUserRole()}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-
                     {authState.state === 'guest' ? (
-                      // Guest user menu
-                      <DropdownMenuItem
-                        className='interactive:cursor-pointer'
-                        onClick={handleLoginClick}
-                      >
-                        <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
-                        {t('common.navigation.login')}
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuLabel className='font-normal'>
+                          <div className='flex flex-col space-y-1'>
+                            <p className='text-sm leading-none font-medium'>
+                              {getUserDisplayName()}
+                            </p>
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {/* Guest user menu */}
+                        <DropdownMenuItem
+                          className='interactive:cursor-pointer'
+                          onClick={handleLoginClick}
+                        >
+                          <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
+                          {t('common.navigation.login')}
+                        </DropdownMenuItem>
+                      </>
                     ) : (
                       // Authenticated user menu
                       <>
+                        <DropdownMenuItem
+                          className='interactive:cursor-pointer gap-3 px-2 py-2'
+                          onClick={handleAccountClick}
+                        >
+                          {authState.multiTenant ? (
+                            <Avatar className='h-8 w-8'>
+                              <AvatarImage
+                                src={authState.profile?.avatarUrl ?? undefined}
+                                alt={getUserDisplayName()}
+                              />
+                              <AvatarFallback className='text-xs font-semibold'>
+                                {getUserInitials()}
+                              </AvatarFallback>
+                            </Avatar>
+                          ) : null}
+
+                          <div className='flex min-w-0 flex-1 flex-col space-y-1'>
+                            <p className='truncate text-sm leading-none font-medium'>
+                              {getUserDisplayName()}
+                            </p>
+                            <p className='text-muted-foreground truncate text-xs leading-none'>
+                              {t('common.navigation.accountSettings')}
+                            </p>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+
                         {/* Language Selector Submenu */}
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger>
@@ -300,27 +307,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
                         <DropdownMenuSeparator />
 
-                        {secondaryMenuItems && secondaryMenuLabel ? (
-                          <DropdownMenuLabel className='text-muted-foreground px-2 py-1.5 text-xs font-medium'>
-                            {secondaryMenuLabel}
-                          </DropdownMenuLabel>
-                        ) : null}
-
                         {secondaryMenuItems}
-
-                        {secondaryMenuItems ? (
-                          <DropdownMenuLabel className='text-muted-foreground px-2 py-1.5 text-xs font-medium'>
-                            {t('common.navigation.account')}
-                          </DropdownMenuLabel>
-                        ) : null}
-
-                        <DropdownMenuItem
-                          className='interactive:cursor-pointer'
-                          onClick={handleAccountClick}
-                        >
-                          <Settings className='text-muted-foreground mr-3 h-4 w-4' />
-                          {t('common.navigation.accountSettings')}
-                        </DropdownMenuItem>
                         <DropdownMenuItem
                           className='interactive:cursor-pointer'
                           onClick={handleLogout}

@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useRouter, useRouterState } from '@tanstack/react-router'
 import {
-  ArrowLeft,
   ArrowDown,
+  ArrowLeft,
   ArrowUp,
   Check,
   Clock,
@@ -1034,7 +1034,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             isScrolled={isScrolledDown}
             customMenuItems={customMenuItems}
             secondaryMenuItems={secondaryMenuItems}
-            secondaryMenuLabel={spaceKey ? t('common.navigation.space') : undefined}
             selectionMenu={
               authState.state === 'authenticated' ? (
                 <SelectionMenu
