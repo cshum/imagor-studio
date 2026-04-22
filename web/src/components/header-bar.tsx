@@ -4,6 +4,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -93,6 +94,24 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
     }
     const role = authState.profile?.role
     return role ? t(`pages.users.roles.${role}`) : null
+  }
+
+  const getUserInitials = () => {
+    const label = getUserDisplayName().trim()
+    if (!label) {
+      return 'U'
+    }
+
+    const parts = label.split(/\s+/).filter(Boolean)
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase()
+    }
+
+    return parts
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
   }
 
   // Handle login navigation for guests
@@ -213,13 +232,29 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     {customMenuItems}
 
                     <DropdownMenuLabel className='font-normal'>
-                      <div className='flex flex-col space-y-1'>
-                        <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>
-                        {getUserRole() && (
-                          <p className='text-muted-foreground text-xs leading-none capitalize'>
-                            {getUserRole()}
+                      <div className='flex items-center gap-3'>
+                        {authState.multiTenant && authState.state === 'authenticated' ? (
+                          <Avatar className='h-8 w-8'>
+                            <AvatarImage
+                              src={authState.profile?.avatarUrl ?? undefined}
+                              alt={getUserDisplayName()}
+                            />
+                            <AvatarFallback className='text-xs font-semibold'>
+                              {getUserInitials()}
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : null}
+
+                        <div className='flex min-w-0 flex-col space-y-1'>
+                          <p className='truncate text-sm leading-none font-medium'>
+                            {getUserDisplayName()}
                           </p>
-                        )}
+                          {getUserRole() && (
+                            <p className='text-muted-foreground truncate text-xs leading-none capitalize'>
+                              {getUserRole()}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
