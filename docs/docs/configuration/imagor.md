@@ -17,6 +17,7 @@ imagor is a fast, secure image processing server and Go library that powers Imag
 | `--imagor-secret`          | `IMAGOR_SECRET`          | Yes       | Imagor signing secret |
 | `--imagor-signer-type`     | `IMAGOR_SIGNER_TYPE`     | No        | Signature algorithm  |
 | `--imagor-signer-truncate` | `IMAGOR_SIGNER_TRUNCATE` | No        | Signature truncation |
+| `--vips-cache-size`        | `VIPS_CACHE_SIZE`        | No        | imagor in-memory decoded-image cache byte budget |
 
 ## Image Processing Capabilities
 
@@ -151,6 +152,20 @@ export IMAGOR_PROCESS_CONCURRENCY=10
 # Set queue size for pending requests
 export IMAGOR_PROCESS_QUEUE_SIZE=100
 ```
+
+### In-Memory Cache
+
+Control imagor's in-memory decoded-image cache explicitly. This cache is used to avoid repeated source fetch and decode work for repeated preview, watermark, and overlay paths:
+
+```bash
+# Default: 200 MiB
+export VIPS_CACHE_SIZE=209715200
+
+# Example: allow a larger cache on dedicated processing nodes (512 MiB)
+export VIPS_CACHE_SIZE=536870912
+```
+
+For cloud processing nodes, this uses the same shared imagor config path as self-hosted deployments, so the same upstream imagor flag and environment variable work in both places.
 
 ## URL Structure
 

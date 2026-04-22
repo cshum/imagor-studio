@@ -365,6 +365,26 @@ func TestConfigWithImagorSecret(t *testing.T) {
 	assert.Equal(t, "test-imagor-secret", cfg.ImagorSecret)
 }
 
+func TestConfigWithVIPSCacheSize(t *testing.T) {
+	args := []string{
+		"--vips-cache-size", "536870912",
+	}
+
+	cfg, err := Load(args, nil)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, int64(536870912), cfg.ImagorCacheSizeBytes)
+}
+
+func TestConfigUsesDefaultImagorCacheSize(t *testing.T) {
+	cfg, err := Load([]string{"--port", "8080"}, nil)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, int64(200*1024*1024), cfg.ImagorCacheSizeBytes)
+}
+
 func TestJWTSecretFromRegistry(t *testing.T) {
 	// Test that JWT secret can be loaded from registry when provided
 	tmpDB := "/tmp/test_jwt_from_registry.db"

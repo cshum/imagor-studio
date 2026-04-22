@@ -54,6 +54,7 @@ type Config struct {
 	ImagorSecret         string // Imagor secret key
 	ImagorSignerType     string // Signer algorithm: "sha1", "sha256", "sha512"
 	ImagorSignerTruncate int    // Signer truncation length
+	ImagorCacheSizeBytes int64  // imagor in-memory decoded-image cache size in bytes
 
 	// Application Configuration
 	AppTitle                  string // Custom application title
@@ -113,6 +114,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		imagorSecret         = fs.String("imagor-secret", "", "secret key for imagor")
 		imagorSignerType     = fs.String("imagor-signer-type", "sha1", "imagor signer algorithm: sha1, sha256, sha512")
 		imagorSignerTruncate = fs.Int("imagor-signer-truncate", 0, "imagor signer truncation length")
+		vipsCacheSize        = fs.String("vips-cache-size", "", "imagor in-memory decoded-image cache size in bytes (matches imagor VIPS_CACHE_SIZE)")
 
 		appTitle                  = fs.String("app-title", "", "custom application title (license required)")
 		appUrl                    = fs.String("app-url", "", "frontend application URL used for post-OAuth redirect (license required for branding)")
@@ -191,6 +193,22 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		return nil, fmt.Errorf("invalid file-storage-write-permissions: %w", err)
 	}
 
+	maxIntValue := int64(^uint(0) >> 1)
+	imagorCacheSizeBytes := int64(200 * 1024 * 1024)
+	if strings.TrimSpace(*vipsCacheSize) != "" {
+		parsedCacheSizeBytes, err := strconv.ParseInt(strings.TrimSpace(*vipsCacheSize), 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid vips-cache-size: %w", err)
+		}
+		if parsedCacheSizeBytes <= 0 {
+			return nil, fmt.Errorf("vips-cache-size must be greater than 0")
+		}
+		if parsedCacheSizeBytes > maxIntValue {
+			return nil, fmt.Errorf("vips-cache-size exceeds supported platform int size")
+		}
+		imagorCacheSizeBytes = parsedCacheSizeBytes
+	}
+
 	cfg := &Config{
 		Port:                        portInt,
 		DatabaseURL:                 *databaseURL,
@@ -216,6 +234,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		ImagorSecret:                *imagorSecret,
 		ImagorSignerType:            *imagorSignerType,
 		ImagorSignerTruncate:        *imagorSignerTruncate,
+		ImagorCacheSizeBytes:        imagorCacheSizeBytes,
 		AppTitle:                    *appTitle,
 		AppUrl:                      *appUrl,
 		AppHomeTitle:                *appHomeTitle,
