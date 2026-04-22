@@ -172,7 +172,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const handleDropItems = async (items: DragItem[], targetFolderKey: string) => {
     const toastId = toast.loading(getMoveProgressMessage(0, items.length))
     try {
-      const { successCount, failCount, hasFileExistsError } = await moveGalleryItems({
+      const { successCount, skippedCount, errorCount } = await moveGalleryItems({
         items: items.map((item) => ({
           key: item.key,
           type: item.type === 'folder' ? 'folder' : 'file',
@@ -191,22 +191,47 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       await router.invalidate()
 
       // Show result toast
-      if (failCount === 0 && successCount > 0) {
+      if (skippedCount === 0 && errorCount === 0 && successCount > 0) {
         toast.success(t('pages.gallery.dragDrop.moveSuccess', { count: successCount }), {
           id: toastId,
         })
-      } else if (successCount > 0) {
-        const message = hasFileExistsError
-          ? t('pages.gallery.dragDrop.fileExists')
-          : t('pages.gallery.dragDrop.partialSuccess', {
-              success: successCount,
-              failed: failCount,
-            })
+      } else if (successCount > 0 && skippedCount > 0 && errorCount === 0) {
+        const message = t('pages.gallery.dragDrop.partialSkipped', {
+          success: successCount,
+          skipped: skippedCount,
+        })
         toast.warning(message, { id: toastId })
-      } else if (failCount > 0) {
-        const message = hasFileExistsError
-          ? t('pages.gallery.dragDrop.fileExists')
-          : t('pages.gallery.dragDrop.moveError')
+      } else if (successCount === 0 && skippedCount > 0 && errorCount === 0) {
+        toast.warning(t('pages.gallery.dragDrop.skipped', { count: skippedCount }), {
+          id: toastId,
+        })
+      } else if (successCount > 0 && skippedCount > 0 && errorCount > 0) {
+        toast.warning(
+          t('pages.gallery.dragDrop.partialMixed', {
+            success: successCount,
+            skipped: skippedCount,
+            failed: errorCount,
+          }),
+          { id: toastId },
+        )
+      } else if (successCount > 0 && errorCount > 0) {
+        toast.warning(
+          t('pages.gallery.dragDrop.partialSuccess', {
+            success: successCount,
+            failed: errorCount,
+          }),
+          { id: toastId },
+        )
+      } else if (skippedCount > 0 && errorCount > 0) {
+        toast.error(
+          t('pages.gallery.dragDrop.skippedWithErrors', {
+            skipped: skippedCount,
+            failed: errorCount,
+          }),
+          { id: toastId },
+        )
+      } else if (errorCount > 0) {
+        const message = t('pages.gallery.dragDrop.moveError')
         toast.error(message, { id: toastId })
       }
     } catch {

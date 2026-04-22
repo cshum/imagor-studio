@@ -3,6 +3,7 @@ package s3storage
 import (
 	"context"
 	"io"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -394,7 +395,7 @@ func (s *S3Storage) Copy(ctx context.Context, sourcePath string, destPath string
 		Key:    aws.String(destFullPath),
 	})
 	if err == nil {
-		return io.ErrClosedPipe // Use as "already exists" error
+		return os.ErrExist
 	}
 
 	// Also check if destination exists as a folder
@@ -404,7 +405,7 @@ func (s *S3Storage) Copy(ctx context.Context, sourcePath string, destPath string
 		MaxKeys: aws.Int32(1),
 	})
 	if err == nil && len(listResult.Contents) > 0 {
-		return io.ErrClosedPipe // Destination folder exists
+		return os.ErrExist
 	}
 
 	// Copy based on whether source is a file or folder

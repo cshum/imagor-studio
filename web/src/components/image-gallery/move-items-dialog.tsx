@@ -80,7 +80,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
     const toastId = toast.loading(getMoveProgressMessage(0))
 
     try {
-      const { successCount, failCount, hasFileExistsError } = await moveGalleryItems({
+      const { successCount, skippedCount, errorCount } = await moveGalleryItems({
         items,
         destinationPath,
         spaceKey,
@@ -102,7 +102,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
       await router.invalidate()
 
       // Show result toast
-      if (failCount === 0 && successCount > 0) {
+      if (skippedCount === 0 && errorCount === 0 && successCount > 0) {
         if (items.length === 1) {
           toast.success(t('pages.gallery.moveItem.success', { name: items[0].name }), {
             id: toastId,
@@ -112,18 +112,43 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
             id: toastId,
           })
         }
-      } else if (successCount > 0) {
-        const message = hasFileExistsError
-          ? t('pages.gallery.moveItems.fileExists')
-          : t('pages.gallery.moveItems.partialSuccess', {
-              success: successCount,
-              failed: failCount,
-            })
+      } else if (successCount > 0 && skippedCount > 0 && errorCount === 0) {
+        const message = t('pages.gallery.moveItems.partialSkipped', {
+          success: successCount,
+          skipped: skippedCount,
+        })
         toast.warning(message, { id: toastId })
-      } else if (failCount > 0) {
-        const message = hasFileExistsError
-          ? t('pages.gallery.moveItems.fileExists')
-          : t('pages.gallery.moveItems.error')
+      } else if (successCount === 0 && skippedCount > 0 && errorCount === 0) {
+        toast.warning(t('pages.gallery.moveItems.skipped', { count: skippedCount }), {
+          id: toastId,
+        })
+      } else if (successCount > 0 && skippedCount > 0 && errorCount > 0) {
+        toast.warning(
+          t('pages.gallery.moveItems.partialMixed', {
+            success: successCount,
+            skipped: skippedCount,
+            failed: errorCount,
+          }),
+          { id: toastId },
+        )
+      } else if (successCount > 0 && errorCount > 0) {
+        toast.warning(
+          t('pages.gallery.moveItems.partialSuccess', {
+            success: successCount,
+            failed: errorCount,
+          }),
+          { id: toastId },
+        )
+      } else if (skippedCount > 0 && errorCount > 0) {
+        toast.error(
+          t('pages.gallery.moveItems.skippedWithErrors', {
+            skipped: skippedCount,
+            failed: errorCount,
+          }),
+          { id: toastId },
+        )
+      } else if (errorCount > 0) {
+        const message = t('pages.gallery.moveItems.error')
         toast.error(message, { id: toastId })
       }
     } catch {

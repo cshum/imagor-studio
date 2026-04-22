@@ -16,8 +16,8 @@ export interface GalleryMoveProgress {
 
 export interface GalleryMoveResult {
   successCount: number
-  failCount: number
-  hasFileExistsError: boolean
+  skippedCount: number
+  errorCount: number
 }
 
 interface MoveGalleryItemsOptions {
@@ -36,16 +36,16 @@ export async function moveGalleryItems({
   onProgress,
 }: MoveGalleryItemsOptions): Promise<GalleryMoveResult> {
   let successCount = 0
-  let failCount = 0
+  let skippedCount = 0
+  let errorCount = 0
   let completedCount = 0
-  let hasFileExistsError = false
 
   const reportProgress = () => {
     onProgress?.({
       completedCount,
       totalCount: items.length,
       successCount,
-      failCount,
+      failCount: skippedCount + errorCount,
     })
   }
 
@@ -69,9 +69,10 @@ export async function moveGalleryItems({
       }
     } catch (error: unknown) {
       if (hasErrorCode(error, 'FILE_ALREADY_EXISTS')) {
-        hasFileExistsError = true
+        skippedCount++
+      } else {
+        errorCount++
       }
-      failCount++
     } finally {
       completedCount++
       reportProgress()
@@ -102,7 +103,7 @@ export async function moveGalleryItems({
 
   return {
     successCount,
-    failCount,
-    hasFileExistsError,
+    skippedCount,
+    errorCount,
   }
 }

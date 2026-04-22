@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -602,4 +603,5 @@ func TestS3Storage_MoveDestinationExists(t *testing.T) {
 	// Try to move when destination exists
 	err = s3Storage.Move(ctx, "source.txt", "dest.txt")
 	assert.Error(t, err)
+	assert.ErrorIs(t, err, os.ErrExist)
 }
