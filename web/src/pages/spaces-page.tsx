@@ -1,16 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useRouter } from '@tanstack/react-router'
-import {
-  Cloud,
-  Database,
-  FolderOpen,
-  LayoutGrid,
-  LogOut,
-  MoreHorizontal,
-  Plus,
-  Settings,
-} from 'lucide-react'
+import { Cloud, Database, LayoutGrid, LogOut, MoreHorizontal, Plus, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { leaveSpace, type SpaceItem } from '@/api/org-api'
@@ -169,8 +160,15 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
             return (
               <div
                 key={space.key}
-                className='group bg-card relative flex flex-col rounded-xl border p-5 transition-shadow hover:shadow-md'
+                className='group bg-card relative flex flex-col rounded-xl border p-5 transition-[background-color,border-color,box-shadow] hover:border-border hover:bg-accent/20 hover:shadow-md dark:hover:border-border/80 dark:hover:bg-accent/30'
               >
+                <Link
+                  to='/spaces/$spaceKey'
+                  params={{ spaceKey: space.key }}
+                  aria-label={`${t('pages.spaces.openGallery')}: ${space.name}`}
+                  className='focus-visible:ring-ring absolute inset-0 z-10 rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+                />
+
                 {/* Card header row */}
                 <div className='flex items-start justify-between gap-2'>
                   <div className='flex min-w-0 items-center gap-3'>
@@ -196,53 +194,51 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                     </div>
                   </div>
 
-                  {/* Badge */}
-                  <div className='mt-1 flex shrink-0 items-center gap-1'>
-                    <Badge
-                      variant={space.storageMode === 'byob' ? 'outline' : 'secondary'}
-                      className={
-                        space.storageMode === 'byob'
-                          ? 'border-amber-500/40 text-amber-600 dark:text-amber-400'
-                          : ''
-                      }
+                  <div className='relative z-20 mt-1 flex shrink-0 items-center gap-2'>
+                    <Link
+                      to='/spaces/$spaceKey'
+                      params={{ spaceKey: space.key }}
+                      aria-label={`${t('pages.spaces.openGallery')}: ${space.name}`}
                     >
-                      {t(`pages.spaces.storageType.${space.storageType}`)}
-                    </Badge>
+                      <Badge
+                        variant={space.storageMode === 'byob' ? 'outline' : 'secondary'}
+                        className={
+                          space.storageMode === 'byob'
+                            ? 'cursor-pointer border-amber-500/40 text-amber-600 dark:text-amber-400'
+                            : 'cursor-pointer'
+                        }
+                      >
+                        {t(`pages.spaces.storageType.${space.storageType}`)}
+                      </Badge>
+                    </Link>
+                    {canManageSpace && !space.canLeave ? (
+                      <TooltipProvider delayDuration={0}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='h-10 w-10 shrink-0'
+                              asChild
+                            >
+                              <Link
+                                to='/spaces/$spaceKey/settings/$section'
+                                params={{ spaceKey: space.key, section: 'general' }}
+                                aria-label={t('pages.spaces.configure')}
+                              >
+                                <Settings className='h-5 w-5' />
+                              </Link>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side='top'>{t('pages.spaces.configure')}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : null}
                   </div>
                 </div>
 
-                {/* Action buttons */}
-                <div className='mt-4 flex gap-2'>
-                  <Button variant='outline' size='sm' className='flex-1' asChild>
-                    <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
-                      <FolderOpen className='mr-1.5 h-4 w-4' />
-                      {t('pages.spaces.openGallery')}
-                    </Link>
-                  </Button>
-                  {canManageSpace && !space.canLeave ? (
-                    <TooltipProvider delayDuration={0}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant='outline'
-                            size='icon'
-                            className='h-9 w-9 shrink-0'
-                            asChild
-                          >
-                            <Link
-                              to='/spaces/$spaceKey/settings/$section'
-                              params={{ spaceKey: space.key, section: 'general' }}
-                              aria-label={t('pages.spaces.configure')}
-                            >
-                              <Settings className='h-4 w-4' />
-                            </Link>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side='top'>{t('pages.spaces.configure')}</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ) : null}
-                  {space.canLeave && authState.profile?.id ? (
+                {space.canLeave && authState.profile?.id ? (
+                  <div className='relative z-20 mt-4 flex justify-end gap-2'>
                     <DropdownMenu
                       open={openMenuSpaceKey === space.key}
                       onOpenChange={(open) => setOpenMenuSpaceKey(open ? space.key : null)}
@@ -281,8 +277,8 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  ) : null}
-                </div>
+                  </div>
+                ) : null}
               </div>
             )
           })}
