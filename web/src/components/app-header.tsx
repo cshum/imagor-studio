@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
-import { Check, Languages, LogOut, MoreVertical } from 'lucide-react'
+import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -16,6 +16,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -194,18 +195,13 @@ export function AppHeader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='w-56'>
-                <DropdownMenuItem
-                  className='interactive:cursor-pointer items-start px-2 py-2'
-                  asChild
-                >
-                  <Link
-                    to={profileLink}
-                    className='flex w-full min-w-0 flex-col items-start text-left'
-                  >
-                    <p className='truncate text-sm leading-none font-medium'>{profileLabel}</p>
-                    <p className='text-muted-foreground mt-1 truncate text-xs leading-none'>
-                      {accountSettingsText}
-                    </p>
+                <DropdownMenuLabel className='min-w-0 px-2 py-2'>
+                  <p className='truncate text-sm font-medium'>{profileLabel}</p>
+                </DropdownMenuLabel>
+                <DropdownMenuItem className='cursor-pointer' asChild>
+                  <Link to={profileLink} className='flex items-center'>
+                    <Settings className='text-muted-foreground mr-3 h-4 w-4' />
+                    {accountSettingsText}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
