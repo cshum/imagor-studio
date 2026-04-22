@@ -41,7 +41,9 @@ export async function fetchImageDimensions(
   }
 
   // Fallback: load image to get dimensions
-  const fullSizeSrc = getFullImageUrl(fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '')
+  const fullSizeSrc = getFullImageUrl(
+    fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
+  )
   const imageElement = await preloadImage(fullSizeSrc)
 
   return {

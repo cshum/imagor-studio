@@ -392,10 +392,10 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         galleryKey || '',
         true, // overwrite = true for direct save
       )
-        const result = await saveTemplate({ input: saveInput, spaceKey })
-        void regenerateTemplatePreview(result.templatePath, spaceKey).catch((error) => {
-          console.warn('Failed to regenerate template preview after save:', error)
-        })
+      const result = await saveTemplate({ input: saveInput, spaceKey })
+      void regenerateTemplatePreview(result.templatePath, spaceKey).catch((error) => {
+        console.warn('Failed to regenerate template preview after save:', error)
+      })
 
       // Mark as saved to skip unsaved changes warning
       isSavedRef.current = true

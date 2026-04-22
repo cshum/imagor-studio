@@ -330,7 +330,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       })
     } else {
       return navigate({
-        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey' : '/gallery/$galleryKey/$imageKey',
+        to: spaceKey
+          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
+          : '/gallery/$galleryKey/$imageKey',
         params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     }

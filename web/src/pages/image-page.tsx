@@ -67,7 +67,9 @@ export function ImagePage({
       })
     } else {
       navigate({
-        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey' : '/gallery/$galleryKey/$imageKey',
+        to: spaceKey
+          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
+          : '/gallery/$galleryKey/$imageKey',
         params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     }
@@ -138,12 +140,18 @@ export function ImagePage({
         if (galleryKey === '') {
           navigate({
             to: spaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
-            params: spaceKey ? { spaceKey, imageKey: nextImage.imageKey } : { imageKey: nextImage.imageKey },
+            params: spaceKey
+              ? { spaceKey, imageKey: nextImage.imageKey }
+              : { imageKey: nextImage.imageKey },
           })
         } else {
           navigate({
-            to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey' : '/gallery/$galleryKey/$imageKey',
-            params: spaceKey ? { spaceKey, galleryKey, imageKey: nextImage.imageKey } : { galleryKey, imageKey: nextImage.imageKey },
+            to: spaceKey
+              ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
+              : '/gallery/$galleryKey/$imageKey',
+            params: spaceKey
+              ? { spaceKey, galleryKey, imageKey: nextImage.imageKey }
+              : { galleryKey, imageKey: nextImage.imageKey },
           })
         }
       }, 5000)

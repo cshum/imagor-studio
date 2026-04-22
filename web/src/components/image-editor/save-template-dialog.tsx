@@ -162,9 +162,9 @@ export function SaveTemplateDialog({
       // Backend already returns the complete path with savePath included
       const templatePath = result.templatePath
 
-        void regenerateTemplatePreview(templatePath, spaceKey).catch((error) => {
-          console.warn('Failed to regenerate template preview after save:', error)
-        })
+      void regenerateTemplatePreview(templatePath, spaceKey).catch((error) => {
+        console.warn('Failed to regenerate template preview after save:', error)
+      })
 
       // Success - template saved
       toast.success(t('imageEditor.template.saveSuccess', { name: name.trim() }))
