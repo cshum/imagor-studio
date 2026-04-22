@@ -176,7 +176,7 @@ func (p *Provider) Initialize() error {
 // and stores it in p.app.
 func (p *Provider) createApp(cfg *ImagorConfig) error {
 	// Processor options — compiled in only when the vips build tag is set.
-	options := buildProcessors(p.logger)
+	options := buildProcessors(p.logger, p.config)
 
 	if p.spaceConfigStore != nil {
 		// ── Processing-node mode ─────────────────────────────────────────────

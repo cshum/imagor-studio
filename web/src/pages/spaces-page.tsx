@@ -160,7 +160,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
             return (
               <div
                 key={space.key}
-                className='group bg-card relative flex flex-col rounded-xl border p-5 transition-[background-color,border-color,box-shadow] hover:border-border hover:bg-accent/20 hover:shadow-md dark:hover:border-border/80 dark:hover:bg-accent/30'
+                className='group bg-card hover:border-border hover:bg-accent/20 dark:hover:border-border/80 dark:hover:bg-accent/30 relative flex flex-col rounded-xl border p-5 transition-[background-color,border-color,box-shadow] hover:shadow-md'
               >
                 <Link
                   to='/spaces/$spaceKey'
