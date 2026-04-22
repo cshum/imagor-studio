@@ -1,11 +1,15 @@
 package resolver
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -306,6 +310,54 @@ func TestSaveTemplate(t *testing.T) {
 
 		mockStorage.AssertExpectations(t)
 	})
+}
+
+func TestGenerateTemplatePreview_UsesSpaceAwareURL(t *testing.T) {
+	mockImagorProvider := new(MockImagorProvider)
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(nil, nil, nil, mockImagorProvider, &config.Config{}, nil, logger, nil, nil, nil, nil,
+		WithProcessingOriginResolver(processingOriginResolverStub("")),
+	)
+
+	previewBytes := []byte("preview-image")
+	var requestedPath string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(previewBytes)
+	}))
+	defer server.Close()
+
+	resolver.processingOriginResolver = processingOriginResolverStub(server.URL)
+	mockImagorProvider.On("Imagor").Return(nil).Once()
+
+	spaceKey := "demo"
+	spaceConfig := &space.Space{
+		Key:             spaceKey,
+		ImagorSecret:    "demo-secret",
+		SignerAlgorithm: "sha256",
+	}
+
+	result, err := resolver.Mutation().(*mutationResolver).generateTemplatePreview(
+		context.Background(),
+		"test.jpg",
+		derivePreviewParamsFromTemplateJSON(`{"version":"1.0","transformations":{"width":800,"height":600}}`),
+		spaceConfig,
+		&spaceKey,
+	)
+
+	assert.NoError(t, err)
+	assert.Equal(t, previewBytes, result)
+	assert.Contains(t, requestedPath, "test.jpg")
+	assert.NotEmpty(t, requestedPath)
+	mockImagorProvider.AssertExpectations(t)
+}
+
+type processingOriginResolverStub string
+
+func (p processingOriginResolverStub) ResolveProcessingOrigin(_ context.Context, _ string) string {
+	return string(p)
 }
 
 func TestSanitizeTemplateName(t *testing.T) {

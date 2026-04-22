@@ -14,6 +14,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagortemplate"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
 )
@@ -86,7 +87,12 @@ func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTempl
 
 	// 3. Generate preview image using Imagor
 	previewParams := derivePreviewParamsFromTemplateJSON(input.TemplateJSON)
-	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, previewParams)
+	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	if err != nil {
+		return nil, err
+	}
+
+	previewImage, err := r.generateTemplatePreview(ctx, input.SourceImagePath, previewParams, spaceConfig, spaceKey)
 	if err != nil {
 		r.logger.Warn("Preview generation failed (continuing without preview)", zap.Error(err))
 		// Don't fail the operation - template can work without preview
@@ -178,8 +184,8 @@ func derivePreviewParamsFromTemplateJSON(templateJSON string) imagorpath.Params 
 	return imagortemplate.ConvertToImagorParams(state, origDims, nil, true, previewMax, "", state.IsVisualCropEnabled())
 }
 
-// generateTemplatePreview generates a preview image for the template using Imagor
-func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath string, params imagorpath.Params) ([]byte, error) {
+// generateTemplatePreview generates a preview image for the template using Imagor.
+func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath string, params imagorpath.Params, spaceConfig *space.Space, spaceKey *string) ([]byte, error) {
 
 	var imageData []byte
 
@@ -189,7 +195,7 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 		r.logger.Debug("Generating preview using embedded Imagor instance")
 
 		// Generate properly signed URL using GenerateURL (respects configuration)
-		imagorURL, err := r.imagorProvider.GenerateURL(sourceImagePath, params)
+		imagorURL, err := r.generateImagorURLForSpaceConfig(sourceImagePath, params, spaceConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate imagor URL: %w", err)
 		}
@@ -216,10 +222,11 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 		// EXTERNAL MODE: Use HTTP request
 		r.logger.Debug("Generating preview using external Imagor service")
 
-		imagorURL, err := r.imagorProvider.GenerateURL(sourceImagePath, params)
+		imagorURL, err := r.generateImagorURLForSpaceConfig(sourceImagePath, params, spaceConfig)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate imagor URL: %w", err)
 		}
+		imagorURL = absolutizeURL(r.processingOriginForSpace(ctx, spaceKey), imagorURL)
 
 		r.logger.Debug("Fetching preview image", zap.String("url", imagorURL))
 
@@ -301,7 +308,12 @@ func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templa
 	previewParams := derivePreviewParamsFromTemplateJSON(templateJSON)
 
 	// Generate preview image
-	previewImage, err := r.generateTemplatePreview(ctx, sourceImagePath, previewParams)
+	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	if err != nil {
+		return false, err
+	}
+
+	previewImage, err := r.generateTemplatePreview(ctx, sourceImagePath, previewParams, spaceConfig, spaceKey)
 	if err != nil {
 		r.logger.Error("Failed to generate template preview", zap.Error(err),
 			zap.String("templatePath", templatePath))
