@@ -1122,7 +1122,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           }
                           draggedItems={dragState.draggedItems}
                           galleryKey={galleryKey}
-                          onTemplatePreviewError={regenerateTemplatePreview}
+                          onTemplatePreviewError={(templatePath) =>
+                            regenerateTemplatePreview(templatePath, spaceKey)
+                          }
                           interactive={!isImageViewOpen}
                           {...imageGridProps}
                         />
