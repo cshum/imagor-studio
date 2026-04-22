@@ -36,11 +36,13 @@
       "title": "Imagor Studio",
       "home": "首頁",
       "account": "帳戶",
+      "space": "空間",
       "profile": "個人資料",
       "dashboard": "儀表板",
       "users": "使用者",
       "signOut": "登出",
       "login": "登入",
+      "accountSettings": "帳戶設定",
       "settings": "設定"
     },
     "status": {
@@ -908,6 +910,7 @@
         "signerTruncateDescription": "將 HMAC 簽名截斷為此字元數（0 = 完整長度）。",
         "saved": "安全設定已儲存"
       },
+      "spaceSettings": "空間設定",
       "backToSpaces": "返回空間列表",
       "openGallery": "開啟相簿",
       "danger": {

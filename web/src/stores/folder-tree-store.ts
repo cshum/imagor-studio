@@ -1,7 +1,9 @@
+import { getSpace } from '@/api/org-api'
 import { getSystemRegistry } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { createStore } from '@/lib/create-store'
+import { normalizeDirectoryPath } from '@/lib/path-utils'
 
 export interface FolderNode {
   name: string
@@ -353,12 +355,13 @@ export const initializeFolderTreeCache = async (
 }
 
 // Async actions
-export const loadRootFolders = async () => {
+export const loadRootFolders = async (spaceKey?: string) => {
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path: '', loading: true })
 
     const result = await listFiles({
       path: '',
+      spaceKey,
       onlyFolders: true,
       sortBy: 'NAME',
       sortOrder: 'ASC',
@@ -366,7 +369,7 @@ export const loadRootFolders = async () => {
 
     const folders: FolderNode[] = result.items.map((item) => ({
       name: item.name,
-      path: item.path,
+      path: normalizeDirectoryPath(item.path),
       isDirectory: item.isDirectory,
       isLoaded: false,
       isExpanded: false,
@@ -380,12 +383,17 @@ export const loadRootFolders = async () => {
   }
 }
 
-export const loadFolderChildren = async (path: string, autoExpand: boolean = true) => {
+export const loadFolderChildren = async (
+  path: string,
+  autoExpand: boolean = true,
+  spaceKey?: string,
+) => {
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: true })
 
     const result = await listFiles({
       path,
+      spaceKey,
       onlyFolders: true,
       sortBy: 'NAME',
       sortOrder: 'ASC',
@@ -393,7 +401,7 @@ export const loadFolderChildren = async (path: string, autoExpand: boolean = tru
 
     const children: FolderNode[] = result.items.map((item) => ({
       name: item.name,
-      path: item.path,
+      path: normalizeDirectoryPath(item.path),
       isDirectory: item.isDirectory,
       children: [], // Initialize with empty array - will be populated when folder is expanded
       isLoaded: false,
@@ -408,7 +416,23 @@ export const loadFolderChildren = async (path: string, autoExpand: boolean = tru
   }
 }
 
-export const loadHomeTitle = async () => {
+export const loadHomeTitle = async (spaceKey?: string) => {
+  if (spaceKey) {
+    try {
+      const space = await getSpace(spaceKey)
+      const spaceName = space?.name?.trim()
+
+      folderTreeStore.dispatch({
+        type: 'SET_HOME_TITLE',
+        title: spaceName || 'Home',
+      })
+      return
+    } catch {
+      folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: 'Home' })
+      return
+    }
+  }
+
   try {
     const registry = await getSystemRegistry('config.app_home_title')
     const customTitle = registry[0]?.value

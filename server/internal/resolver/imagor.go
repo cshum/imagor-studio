@@ -30,9 +30,13 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 
 	// Convert GraphQL input to imagorpath.Params
 	imagorParams := convertToImagorParams(params)
+	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	if err != nil {
+		return "", err
+	}
 
-	// Generate URL using the imagor provider
-	url, err := r.imagorProvider.GenerateURL(imagePath, imagorParams)
+	// Generate URL using the appropriate signer for the requested space.
+	url, err := r.generateImagorURLForSpaceConfig(imagePath, imagorParams, spaceConfig)
 	if err != nil {
 		r.logger.Error("Failed to generate imagor URL",
 			zap.Error(err),
@@ -70,11 +74,16 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		return "", fmt.Errorf("invalid templateJson: %w", err)
 	}
 
+	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	if err != nil {
+		return "", err
+	}
+
 	// If an imagePath override is provided, apply the frontend's applyTemplateState logic:
 	// fetch the target image's actual dimensions via the imagor meta URL, then apply
 	// crop-validation and dimension-mode rules before proceeding.
 	if imagePath != nil && *imagePath != "" {
-		targetDims, err := r.fetchImageDimensions(ctx, *imagePath)
+		targetDims, err := r.fetchImageDimensions(ctx, *imagePath, spaceConfig)
 		if err != nil {
 			return "", fmt.Errorf("failed to fetch dimensions for image %q: %w", *imagePath, err)
 		}
@@ -113,7 +122,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		}
 	}
 
-	url, err := r.imagorProvider.GenerateURL(res.ImagePath, params)
+	url, err := r.generateImagorURLForSpaceConfig(res.ImagePath, params, spaceConfig)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate imagor URL: %w", err)
 	}
@@ -124,8 +133,8 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 // It mirrors the frontend's fetchImageDimensions logic: call the imagor meta endpoint
 // and parse the JSON response for width/height.
 // Uses embedded mode (in-process ServeHTTP) when available, otherwise falls back to HTTP GET.
-func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath string) (imagortemplate.Dimensions, error) {
-	metaURL, err := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{Meta: true})
+func (r *mutationResolver) fetchImageDimensions(ctx context.Context, imagePath string, spaceConfig *space.Space) (imagortemplate.Dimensions, error) {
+	metaURL, err := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{Meta: true}, spaceConfig)
 	if err != nil {
 		return imagortemplate.Dimensions{}, fmt.Errorf("failed to generate meta URL: %w", err)
 	}
@@ -300,6 +309,10 @@ func (r *Resolver) generateThumbnailUrls(imagePath string, videoThumbnailPos str
 }
 
 func (r *Resolver) generateThumbnailUrlsForSpace(ctx context.Context, imagePath string, videoThumbnailPos string, spaceKey *string) *gql.ThumbnailUrls {
+	return r.generateThumbnailUrlsForResolvedSpace(ctx, imagePath, videoThumbnailPos, spaceKey, nil)
+}
+
+func (r *Resolver) generateThumbnailUrlsForResolvedSpace(ctx context.Context, imagePath string, videoThumbnailPos string, spaceKey *string, spaceConfig *space.Space) *gql.ThumbnailUrls {
 	if r.imagorProvider == nil {
 		return nil
 	}
@@ -311,13 +324,13 @@ func (r *Resolver) generateThumbnailUrlsForSpace(ctx context.Context, imagePath 
 		previewPath := strings.TrimSuffix(imagePath, ".imagor.json") + ".imagor.preview"
 
 		// Generate preview-based URLs for display (grid, preview, full, meta)
-		previewUrls := r.generateThumbnailUrlsForSpace(ctx, previewPath, videoThumbnailPos, spaceKey)
+		previewUrls := r.generateThumbnailUrlsForResolvedSpace(ctx, previewPath, videoThumbnailPos, spaceKey, spaceConfig)
 
 		// Override 'original' to point to the actual JSON file
 		if previewUrls != nil {
-			jsonURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+			jsonURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
 				Filters: imagorpath.Filters{{Name: "raw"}},
-			})
+			}, spaceConfig)
 			jsonURL = absolutizeURL(processingOrigin, jsonURL)
 			previewUrls.Original = &jsonURL
 		}
@@ -359,37 +372,37 @@ func (r *Resolver) generateThumbnailUrlsForSpace(ctx context.Context, imagePath 
 	}
 
 	// Generate different sized URLs using the imagor provider
-	gridURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+	gridURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
 		Width:   300,
 		Height:  225,
 		Filters: buildFilters("80"),
-	})
+	}, spaceConfig)
 
-	previewURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+	previewURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
 		Width:   1200,
 		Height:  900,
 		FitIn:   true,
 		Filters: buildFilters("90"),
-	})
+	}, spaceConfig)
 
-	fullURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+	fullURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
 		Width:   2400,
 		Height:  1800,
 		FitIn:   true,
 		Filters: buildFilters("95"),
-	})
+	}, spaceConfig)
 
 	// For original, use raw filter
-	originalURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+	originalURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
 		Filters: imagorpath.Filters{
 			{Name: "raw"},
 		},
-	})
+	}, spaceConfig)
 
 	// Generate meta URL for EXIF data
-	metaURL, _ := r.imagorProvider.GenerateURL(imagePath, imagorpath.Params{
+	metaURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
 		Meta: true,
-	})
+	}, spaceConfig)
 
 	gridURL = absolutizeURL(processingOrigin, gridURL)
 	previewURL = absolutizeURL(processingOrigin, previewURL)
@@ -404,6 +417,30 @@ func (r *Resolver) generateThumbnailUrlsForSpace(ctx context.Context, imagePath 
 		Original: &originalURL,
 		Meta:     &metaURL,
 	}
+}
+
+func (r *Resolver) generateImagorURLForSpaceConfig(imagePath string, params imagorpath.Params, spaceConfig *space.Space) (string, error) {
+	if r.imagorProvider == nil {
+		return "", fmt.Errorf("imagor provider not configured")
+	}
+	if spaceConfig == nil {
+		return r.imagorProvider.GenerateURL(imagePath, params)
+	}
+	if strings.TrimSpace(spaceConfig.ImagorSecret) == "" {
+		r.logger.Debug("space imagor URL generation falling back to global signer",
+			zap.String("spaceKey", spaceConfig.Key),
+			zap.String("imagePath", imagePath),
+		)
+		return r.imagorProvider.GenerateURL(imagePath, params)
+	}
+
+	params.Image = imagePath
+	if strings.Contains(imagePath, " ") || strings.ContainsAny(imagePath, "?#&()") {
+		params.Base64Image = true
+	}
+
+	signer := imagorprovider.NewSigner(spaceConfig.ImagorSecret, spaceConfig.SignerAlgorithm, spaceConfig.SignerTruncate)
+	return fmt.Sprintf("/%s", imagorpath.Generate(params, signer)), nil
 }
 
 // ImagorStatus is the resolver for the imagorStatus query field.

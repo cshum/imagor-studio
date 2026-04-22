@@ -1502,7 +1502,6 @@ export type SaveTemplateMutation = {
     __typename?: 'TemplateResult'
     success: boolean
     templatePath: string
-    previewPath: string | null
     message: string | null
   }
 }
@@ -2324,7 +2323,6 @@ export const SaveTemplateDocument = gql`
     saveTemplate(input: $input, spaceKey: $spaceKey) {
       success
       templatePath
-      previewPath
       message
     }
   }

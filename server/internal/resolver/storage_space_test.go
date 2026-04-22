@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -23,6 +24,12 @@ func newSpaceTestResolver(spaceStore space.SpaceStore) *Resolver {
 	mockStor := &MockStorage{}
 	sp := NewMockStorageProvider(mockStor)
 	return NewResolver(sp, nil, nil, nil, nil, nil, zap.NewNop(), nil, spaceStore, nil, nil)
+}
+
+func newSpaceTestResolverWithCloudConfig(spaceStore space.SpaceStore, cloudConfig management.CloudConfig) *Resolver {
+	mockStor := &MockStorage{}
+	sp := NewMockStorageProvider(mockStor)
+	return NewResolver(sp, nil, nil, nil, nil, nil, zap.NewNop(), nil, spaceStore, nil, nil, WithCloudConfig(cloudConfig))
 }
 
 // ─── getSpaceStorage unit tests ───────────────────────────────────────────────
@@ -150,6 +157,33 @@ func TestGetSpaceStorage_Valid(t *testing.T) {
 	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
 	assert.NoError(t, err)
 	assert.NotNil(t, stor) // S3 client built without network calls
+	mockSpaceStore.AssertExpectations(t)
+}
+
+func TestGetSpaceStorage_PlatformManagedUsesCloudConfig(t *testing.T) {
+	space := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("Get", mock.Anything, "space-1").Return(space, nil)
+
+	r := newSpaceTestResolverWithCloudConfig(mockSpaceStore, management.CloudConfig{
+		PlatformS3Bucket:       "platform-bucket",
+		PlatformS3Region:       "auto",
+		PlatformS3Endpoint:     "https://example.r2.cloudflarestorage.com",
+		PlatformS3AccessKeyID:  "platform-ak",
+		PlatformS3SecretKey:    "platform-sk",
+		PlatformS3UsePathStyle: false,
+		PlatformS3Prefix:       "spaces/{spaceID}",
+	})
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	assert.NoError(t, err)
+	assert.NotNil(t, stor)
 	mockSpaceStore.AssertExpectations(t)
 }
 

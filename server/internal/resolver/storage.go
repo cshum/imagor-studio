@@ -15,6 +15,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
@@ -25,6 +26,77 @@ const maxSinglePutUploadBytes int64 = 5 * 1024 * 1024 * 1024
 func supportsPresignedUpload(stor storage.Storage) bool {
 	_, ok := stor.(storage.PresignableStorage)
 	return ok
+}
+
+func (r *Resolver) effectiveSpaceStorageConfig(sp *space.Space) *space.Space {
+	effective := *sp
+	effective.StorageMode = space.NormalizeStorageMode(sp.StorageMode)
+	if effective.StorageMode != space.StorageModePlatform || strings.TrimSpace(r.cloudConfig.PlatformS3Bucket) == "" {
+		return &effective
+	}
+	effective.StorageType = "s3"
+	effective.Bucket = strings.TrimSpace(r.cloudConfig.PlatformS3Bucket)
+	effective.Region = strings.TrimSpace(r.cloudConfig.PlatformS3Region)
+	effective.Endpoint = strings.TrimSpace(r.cloudConfig.PlatformS3Endpoint)
+	effective.AccessKeyID = strings.TrimSpace(r.cloudConfig.PlatformS3AccessKeyID)
+	effective.SecretKey = strings.TrimSpace(r.cloudConfig.PlatformS3SecretKey)
+	effective.UsePathStyle = r.cloudConfig.PlatformS3UsePathStyle
+
+	prefix := strings.TrimSpace(r.cloudConfig.PlatformS3Prefix)
+	if prefix == "" {
+		prefix = "spaces/{spaceID}"
+	}
+	prefix = strings.ReplaceAll(prefix, "{spaceID}", sp.ID)
+	prefix = strings.Trim(prefix, "/")
+	if prefix == "" {
+		effective.Prefix = ""
+	} else {
+		effective.Prefix = prefix + "/"
+	}
+
+	return &effective
+}
+
+func (r *Resolver) getAccessibleSpace(ctx context.Context, spaceKey *string) (*space.Space, error) {
+	if spaceKey == nil || *spaceKey == "" || !r.cloudEnabled() {
+		return nil, nil
+	}
+
+	sp, err := r.spaceStore.Get(ctx, *spaceKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up space %q: %w", *spaceKey, err)
+	}
+	if sp == nil {
+		return nil, &gqlerror.Error{
+			Message:    fmt.Sprintf("space %q not found", *spaceKey),
+			Extensions: map[string]interface{}{"code": "NOT_FOUND"},
+		}
+	}
+
+	allowed, err := r.canReadSpace(ctx, sp)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, &gqlerror.Error{
+			Message:    "forbidden: you do not have access to this space",
+			Extensions: map[string]interface{}{"code": "FORBIDDEN"},
+		}
+	}
+
+	return sp, nil
+}
+
+func (r *Resolver) storageFromSpaceConfig(sp *space.Space) (storage.Storage, error) {
+	effective := r.effectiveSpaceStorageConfig(sp)
+	p := storageprovider.New(r.logger, nil, nil)
+	return p.NewStorageFromSpaceConfig(
+		effective.StorageType,
+		effective.Bucket, effective.Prefix,
+		effective.Region, effective.Endpoint,
+		effective.AccessKeyID, effective.SecretKey,
+		effective.UsePathStyle,
+	)
 }
 
 // getSpaceStorage returns the storage instance for the given optional spaceKey.
@@ -49,38 +121,11 @@ func (r *Resolver) getSpaceStorage(ctx context.Context, spaceKey *string) (stora
 		return r.getStorage(), nil
 	}
 
-	// Fetch the space (decrypts credentials transparently).
-	space, err := r.spaceStore.Get(ctx, *spaceKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to look up space %q: %w", *spaceKey, err)
-	}
-	if space == nil {
-		return nil, &gqlerror.Error{
-			Message:    fmt.Sprintf("space %q not found", *spaceKey),
-			Extensions: map[string]interface{}{"code": "NOT_FOUND"},
-		}
-	}
-
-	allowed, err := r.canReadSpace(ctx, space)
+	sp, err := r.getAccessibleSpace(ctx, spaceKey)
 	if err != nil {
 		return nil, err
 	}
-	if !allowed {
-		return nil, &gqlerror.Error{
-			Message:    "forbidden: you do not have access to this space",
-			Extensions: map[string]interface{}{"code": "FORBIDDEN"},
-		}
-	}
-
-	// Build an ephemeral S3 storage from the space's credentials.
-	p := storageprovider.New(r.logger, nil, nil)
-	return p.NewStorageFromSpaceConfig(
-		space.StorageType,
-		space.Bucket, space.Prefix,
-		space.Region, space.Endpoint,
-		space.AccessKeyID, space.SecretKey,
-		space.UsePathStyle,
-	)
+	return r.storageFromSpaceConfig(sp)
 }
 
 // getPreviewPath returns the preview image path for a template file.
@@ -314,7 +359,17 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceKey *st
 	if err := RequireReadPermission(ctx, path); err != nil {
 		return nil, err
 	}
-	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var stor storage.Storage
+	if spaceConfig != nil {
+		stor, err = r.storageFromSpaceConfig(spaceConfig)
+	} else {
+		stor, err = r.getSpaceStorage(ctx, spaceKey)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +454,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceKey *st
 
 		// Generate thumbnail URLs for image files
 		if !item.IsDir {
-			thumbnailUrls := r.generateThumbnailUrlsForSpace(ctx, item.Path, videoThumbnailPos, spaceKey)
+			thumbnailUrls := r.generateThumbnailUrlsForResolvedSpace(ctx, item.Path, videoThumbnailPos, spaceKey, spaceConfig)
 			fileItem.ThumbnailUrls = thumbnailUrls
 		}
 
@@ -418,7 +473,17 @@ func (r *queryResolver) StatFile(ctx context.Context, path string, spaceKey *str
 	if err := RequireReadPermission(ctx, path); err != nil {
 		return nil, err
 	}
-	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var stor storage.Storage
+	if spaceConfig != nil {
+		stor, err = r.storageFromSpaceConfig(spaceConfig)
+	} else {
+		stor, err = r.getSpaceStorage(ctx, spaceKey)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +516,7 @@ func (r *queryResolver) StatFile(ctx context.Context, path string, spaceKey *str
 
 	// Generate thumbnail URLs for image files
 	if !fileInfo.IsDir {
-		thumbnailUrls := r.generateThumbnailUrlsForSpace(ctx, fileInfo.Path, videoThumbnailPos, spaceKey)
+		thumbnailUrls := r.generateThumbnailUrlsForResolvedSpace(ctx, fileInfo.Path, videoThumbnailPos, spaceKey, spaceConfig)
 		fileStat.ThumbnailUrls = thumbnailUrls
 	}
 

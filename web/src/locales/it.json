@@ -40,11 +40,13 @@
       "title": "Imagor Studio",
       "home": "Home",
       "account": "Account",
+      "space": "Spazio",
       "profile": "Profilo",
       "dashboard": "Dashboard",
       "users": "Utenti",
       "signOut": "Esci",
       "login": "Accedi",
+      "accountSettings": "Impostazioni account",
       "settings": "Impostazioni"
     },
     "status": {
@@ -779,6 +781,7 @@
       "deleteDescription": "La rimozione dello spazio è in propagazione verso i nodi di elaborazione e potrebbe richiedere fino a 30 secondi per avere pieno effetto."
     },
     "spaceSettings": {
+      "spaceSettings": "Impostazioni dello spazio",
       "backToSpaces": "Torna agli spazi",
       "openGallery": "Apri galleria",
       "sections": {

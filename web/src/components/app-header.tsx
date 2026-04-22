@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
-import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
+import { Check, Languages, LogOut, MoreVertical } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -16,7 +16,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -93,14 +92,13 @@ export function AppHeader({
   breadcrumbs,
   mobileTrigger,
   profileLabel,
-  roleLabel,
   avatarUrl,
   menuTriggerStyle = 'avatar',
   onLogout,
   profileLink = '/account/profile',
 }: AppHeaderProps) {
   const { t, i18n } = useTranslation()
-  const profileText = t('layouts.account.tabs.profile')
+  const accountSettingsText = t('common.navigation.accountSettings')
   const signOutText = t('common.navigation.signOut')
   const moreText = t('common.buttons.more')
   const initials = getInitials(profileLabel)
@@ -196,16 +194,20 @@ export function AppHeader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='w-56'>
-                <DropdownMenuLabel className='font-normal'>
-                  <div className='flex flex-col space-y-1'>
-                    <p className='text-sm leading-none font-medium'>{profileLabel}</p>
-                    {roleLabel ? (
-                      <p className='text-muted-foreground text-xs leading-none capitalize'>
-                        {roleLabel}
-                      </p>
-                    ) : null}
-                  </div>
-                </DropdownMenuLabel>
+                <DropdownMenuItem
+                  className='interactive:cursor-pointer items-start px-2 py-2'
+                  asChild
+                >
+                  <Link
+                    to={profileLink}
+                    className='flex w-full min-w-0 flex-col items-start text-left'
+                  >
+                    <p className='truncate text-sm leading-none font-medium'>{profileLabel}</p>
+                    <p className='text-muted-foreground mt-1 truncate text-xs leading-none'>
+                      {accountSettingsText}
+                    </p>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
@@ -230,13 +232,6 @@ export function AppHeader({
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={profileLink}>
-                    <Settings className='text-muted-foreground mr-3 h-4 w-4' />
-                    {profileText}
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onLogout} className='cursor-pointer'>
                   <LogOut className='text-muted-foreground mr-3 h-4 w-4' />

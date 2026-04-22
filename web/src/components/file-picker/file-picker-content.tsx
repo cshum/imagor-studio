@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useParams } from '@tanstack/react-router'
 import {
   ArrowDown,
   ArrowUp,
@@ -71,6 +72,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 }) => {
   const { t } = useTranslation()
   const { authState } = useAuth()
+  const { spaceKey } = useParams({ strict: false })
   const [folders, setFolders] = useState<Gallery[]>([])
   const [images, setImages] = useState<GalleryImage[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -288,6 +290,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
         const result = await listFiles({
           path: currentPath,
+          spaceKey,
           extensions: extensionsString,
           showHidden,
           sortBy: config.sortBy,
@@ -335,7 +338,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
 
     loadFilesData()
-  }, [currentPath, configReady, sortBy, sortOrder, showHidden])
+  }, [currentPath, configReady, sortBy, sortOrder, showHidden, spaceKey])
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement
@@ -468,6 +471,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                     folder={folder}
                     selectedPath={currentPath}
                     excludePaths={new Set()}
+                    spaceKey={spaceKey}
                     onSelect={(path) => {
                       onPathChange(path)
                       if (isMobile) setIsMobileSidebarOpen(false)

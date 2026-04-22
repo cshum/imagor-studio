@@ -1501,7 +1501,6 @@ export type SaveTemplateMutation = {
     __typename?: 'TemplateResult'
     success: boolean
     templatePath: string
-    previewPath: string | null
     message: string | null
   }
 }
@@ -4572,7 +4571,6 @@ export const SaveTemplateDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'success' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'templatePath' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'previewPath' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'message' } },
               ],
             },

@@ -23,6 +23,7 @@ interface FolderPickerNodeProps {
   folder: FolderNode
   selectedPath: string | null
   excludePaths: Set<string>
+  spaceKey?: string
   onSelect: (path: string) => void
   onUpdateNode: (path: string, updates: Partial<FolderNode>) => void
   level?: number
@@ -32,6 +33,7 @@ export function FolderPickerNode({
   folder,
   selectedPath,
   excludePaths,
+  spaceKey,
   onSelect,
   onUpdateNode,
   level = 0,
@@ -58,7 +60,7 @@ export function FolderPickerNode({
       if (folder.isDirectory) {
         if (!folder.isLoaded) {
           // Load data without auto-expanding in store, then update local state
-          await loadFolderChildren(folder.path, false)
+          await loadFolderChildren(folder.path, false, spaceKey)
           onUpdateNode(folder.path, { isExpanded: true })
         } else if (!folder.isExpanded) {
           onUpdateNode(folder.path, { isExpanded: true })
@@ -73,7 +75,7 @@ export function FolderPickerNode({
     if (!folder.isLoaded && folder.isDirectory) {
       // Load children if not loaded yet, don't auto-expand in store
       try {
-        await loadFolderChildren(folder.path, false)
+        await loadFolderChildren(folder.path, false, spaceKey)
         // Update local expand state after loading
         onUpdateNode(folder.path, { isExpanded: true })
       } catch {
@@ -137,6 +139,7 @@ export function FolderPickerNode({
               folder={child}
               selectedPath={selectedPath}
               excludePaths={excludePaths}
+              spaceKey={spaceKey}
               onSelect={onSelect}
               onUpdateNode={onUpdateNode}
               level={level + 1}

@@ -8,6 +8,7 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { hasExtension } from '@/lib/file-extensions.ts'
+import { normalizeDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
 import { getAuth } from '@/stores/auth-store.ts'
 import { FolderNode, folderTreeStore, updateTreeData } from '@/stores/folder-tree-store.ts'
@@ -160,7 +161,7 @@ export const galleryLoader = async ({
   const folders: Gallery[] = result.items
     .filter((item) => item.isDirectory)
     .map((item) => ({
-      galleryKey: item.path,
+      galleryKey: normalizeDirectoryPath(item.path),
       galleryName: item.name,
     }))
 
@@ -197,22 +198,27 @@ export const galleryLoader = async ({
       }
     })
 
-  // Get home title from the folder tree store
-  const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
   const spaceName = spaceKey
     ? await getSpace(spaceKey)
         .then((s) => s?.name ?? null)
         .catch(() => null)
     : null
-  const homeTitle = spaceName || folderTreeState.homeTitle
+  const folderTreeState = spaceKey
+    ? null
+    : await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
+  const homeTitle = spaceName || folderTreeState?.homeTitle || spaceKey || 'Home'
 
   // Use the actual folder name, or custom home title for root
   const galleryName = galleryKey === '' ? homeTitle : galleryKey.split('/').pop() || galleryKey
 
   // Generate breadcrumbs based on galleryKey
-  const breadcrumbs: BreadcrumbItem[] = []
+  const breadcrumbs: BreadcrumbItem[] = [
+    {
+      label: homeTitle,
+      ...(galleryKey ? { href: spaceKey ? `/spaces/${spaceKey}` : '/' } : {}),
+    },
+  ]
 
-  // For root gallery (empty galleryKey), just show custom home title without href
   if (galleryKey) {
     // Add breadcrumbs for nested paths
     const segments = galleryKey.split('/')
@@ -279,7 +285,9 @@ export const imageLoader = async ({
   const isVideo = hasExtension(fileStat.name, videoExtensions)
 
   // Use the full-size thumbnail URL for the detail view (same for both images and videos)
-  const fullSizeSrc = getFullImageUrl(fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '')
+  const fullSizeSrc = getFullImageUrl(
+    fileStat.thumbnailUrls.full || fileStat.thumbnailUrls.original || '',
+  )
 
   const imageElement = await preloadImage(fullSizeSrc)
 

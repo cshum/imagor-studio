@@ -1,3 +1,4 @@
+import { LoaderCircle } from 'lucide-react'
 import { Toaster as Sonner } from 'sonner'
 
 import { useTheme } from '@/stores/theme-store'
@@ -12,6 +13,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme={resolvedTheme as ToasterProps['theme']}
       className='toaster group'
       position='bottom-center'
+      icons={{
+        loading: <LoaderCircle className='h-4 w-4 animate-spin' />,
+      }}
       toastOptions={{
         classNames: {
           toast:

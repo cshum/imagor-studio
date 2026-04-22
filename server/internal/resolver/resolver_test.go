@@ -14,6 +14,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor/imagorpath"
@@ -301,6 +302,18 @@ type MockImagorConfig struct {
 	CachePath      string
 	SignerType     string
 	SignerTruncate int
+}
+
+type MockTemplatePreviewRenderClient struct {
+	mock.Mock
+}
+
+func (m *MockTemplatePreviewRenderClient) RenderTemplatePreview(ctx context.Context, req processing.TemplatePreviewRenderRequest) (*processing.TemplatePreviewRenderResponse, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*processing.TemplatePreviewRenderResponse), args.Error(1)
 }
 
 // MockLicenseChecker mocks the LicenseChecker interface for use in tests.

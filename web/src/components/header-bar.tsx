@@ -1,9 +1,10 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
+import { Check, Languages, LogOut, MoreVertical } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,6 +39,7 @@ import { useSidebar } from '@/stores/sidebar-store'
 interface HeaderBarProps {
   isScrolled?: boolean
   customMenuItems?: React.ReactNode
+  secondaryMenuItems?: React.ReactNode
   selectionMenu?: React.ReactNode
   dragDropHandlers?: {
     handleDragOver: (e: React.DragEvent, folderKey: string) => void
@@ -50,6 +52,7 @@ interface HeaderBarProps {
 export const HeaderBar: React.FC<HeaderBarProps> = ({
   isScrolled: isScrolledDown = false,
   customMenuItems,
+  secondaryMenuItems,
   selectionMenu,
   dragDropHandlers,
 }) => {
@@ -82,13 +85,22 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
     return authState.profile?.displayName || authState.profile?.username || t('common.status.user')
   }
 
-  // Get user role display (only for authenticated users)
-  const getUserRole = () => {
-    if (authState.state === 'guest') {
-      return null // No role subtitle for guests
+  const getUserInitials = () => {
+    const label = getUserDisplayName().trim()
+    if (!label) {
+      return 'U'
     }
-    const role = authState.profile?.role
-    return role ? t(`pages.users.roles.${role}`) : null
+
+    const parts = label.split(/\s+/).filter(Boolean)
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase()
+    }
+
+    return parts
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase()
   }
 
   // Handle login navigation for guests
@@ -208,30 +220,53 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     {/* Custom menu items slot - for page-specific functionality */}
                     {customMenuItems}
 
-                    <DropdownMenuLabel className='font-normal'>
-                      <div className='flex flex-col space-y-1'>
-                        <p className='text-sm leading-none font-medium'>{getUserDisplayName()}</p>
-                        {getUserRole() && (
-                          <p className='text-muted-foreground text-xs leading-none capitalize'>
-                            {getUserRole()}
-                          </p>
-                        )}
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-
                     {authState.state === 'guest' ? (
-                      // Guest user menu
-                      <DropdownMenuItem
-                        className='interactive:cursor-pointer'
-                        onClick={handleLoginClick}
-                      >
-                        <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
-                        {t('common.navigation.login')}
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuLabel className='font-normal'>
+                          <div className='flex flex-col space-y-1'>
+                            <p className='text-sm leading-none font-medium'>
+                              {getUserDisplayName()}
+                            </p>
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {/* Guest user menu */}
+                        <DropdownMenuItem
+                          className='interactive:cursor-pointer'
+                          onClick={handleLoginClick}
+                        >
+                          <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
+                          {t('common.navigation.login')}
+                        </DropdownMenuItem>
+                      </>
                     ) : (
                       // Authenticated user menu
                       <>
+                        <DropdownMenuItem
+                          className='interactive:cursor-pointer gap-3 px-2 py-2'
+                          onClick={handleAccountClick}
+                        >
+                          <Avatar className='h-8 w-8'>
+                            <AvatarImage
+                              src={authState.profile?.avatarUrl ?? undefined}
+                              alt={getUserDisplayName()}
+                            />
+                            <AvatarFallback className='text-xs font-semibold'>
+                              {getUserInitials()}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className='flex min-w-0 flex-1 flex-col'>
+                            <p className='truncate text-sm leading-none font-medium'>
+                              {getUserDisplayName()}
+                            </p>
+                            <p className='text-muted-foreground mt-1 truncate text-xs leading-none'>
+                              {t('common.navigation.accountSettings')}
+                            </p>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+
                         {/* Language Selector Submenu */}
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger>
@@ -261,14 +296,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuItem
-                          className='interactive:cursor-pointer'
-                          onClick={handleAccountClick}
-                        >
-                          <Settings className='text-muted-foreground mr-3 h-4 w-4' />
-                          {t('common.navigation.settings')}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
+                        {secondaryMenuItems}
                         <DropdownMenuItem
                           className='interactive:cursor-pointer'
                           onClick={handleLogout}

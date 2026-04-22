@@ -67,10 +67,19 @@ func signerFromConfig(cfg *ImagorConfig) imagorpath.Signer {
 	if cfg == nil {
 		return nil
 	}
+	return NewSigner(cfg.Secret, cfg.SignerType, cfg.SignerTruncate)
+}
+
+// NewSigner builds an imagor signer from explicit settings.
+// Returns nil when the secret is empty.
+func NewSigner(secret, signerType string, signerTruncate int) imagorpath.Signer {
+	if strings.TrimSpace(secret) == "" {
+		return nil
+	}
 	return imagorpath.NewHMACSigner(
-		getHashAlgorithm(cfg.SignerType),
-		cfg.SignerTruncate,
-		cfg.Secret,
+		getHashAlgorithm(signerType),
+		signerTruncate,
+		secret,
 	)
 }
 

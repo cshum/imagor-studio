@@ -172,7 +172,6 @@ export const SAVE_TEMPLATE = gql(`
     saveTemplate(input: $input, spaceKey: $spaceKey) {
       success
       templatePath
-      previewPath
       message
     }
   }

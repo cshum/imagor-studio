@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { ChevronRight, Folder, MoreVertical } from 'lucide-react'
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -34,6 +34,7 @@ export function FolderTreeNode({
   dragOverTarget,
 }: FolderTreeNodeProps) {
   const navigate = useNavigate()
+  const { spaceKey } = useParams({ strict: false })
   const { currentPath, dispatch, loadFolderChildren } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
   const { authState } = useAuth()
@@ -48,9 +49,15 @@ export function FolderTreeNode({
   const handleFolderClick = async () => {
     // Navigate to the folder
     if (folder.path === '') {
-      navigate({ to: '/' })
+      navigate({
+        to: spaceKey ? '/spaces/$spaceKey' : '/',
+        params: spaceKey ? { spaceKey } : undefined,
+      })
     } else {
-      navigate({ to: '/gallery/$galleryKey', params: { galleryKey: folder.path } })
+      navigate({
+        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+        params: spaceKey ? { spaceKey, galleryKey: folder.path } : { galleryKey: folder.path },
+      })
     }
 
     // Close mobile sidebar when navigating on mobile

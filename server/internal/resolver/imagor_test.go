@@ -10,6 +10,7 @@ import (
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
@@ -907,6 +908,63 @@ func TestGenerateThumbnailUrlsForSpace_UsesProcessingTemplate(t *testing.T) {
 	assert.Equal(t, "https://acme.imagor.app/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", *result.Grid)
 	assert.Equal(t, "https://acme.imagor.app/imagor/filters:raw()/test/image.jpg", *result.Original)
 	mockImagorProvider.AssertExpectations(t)
+}
+
+func TestGenerateThumbnailUrlsForResolvedSpace_UsesSpaceSigner(t *testing.T) {
+	mockImagorProvider := new(MockImagorProvider)
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	mockSpaceStore := new(MockSpaceStore)
+	mockOrgStore := new(MockOrgStore)
+	logger := zap.NewNop()
+	cfg, err := config.Load([]string{"--jwt-secret", "test-secret"}, nil)
+	require.NoError(t, err)
+	spaceKey := "acme"
+	spaceConfig := &space.Space{
+		Key:             spaceKey,
+		ImagorSecret:    "space-secret",
+		SignerAlgorithm: "sha256",
+		SignerTruncate:  32,
+	}
+
+	resolver := NewResolver(
+		mockStorageProvider,
+		mockRegistryStore,
+		mockUserStore,
+		mockImagorProvider,
+		cfg,
+		nil,
+		logger,
+		mockOrgStore,
+		mockSpaceStore,
+		nil,
+		nil,
+		WithProcessingOriginResolver(space.ProcessingOriginResolverFunc(func(ctx context.Context, key string) string {
+			if key == spaceKey {
+				return "https://acme.imagor.app"
+			}
+			return ""
+		})),
+	)
+
+	result := resolver.generateThumbnailUrlsForResolvedSpace(context.Background(), "test/image.jpg", "first_frame", &spaceKey, spaceConfig)
+	require.NotNil(t, result)
+	require.NotNil(t, result.Grid)
+
+	expectedGridPath := "/" + imagorpath.Generate(imagorpath.Params{
+		Image:  "test/image.jpg",
+		Width:  300,
+		Height: 225,
+		Filters: imagorpath.Filters{
+			{Name: "quality", Args: "80"},
+			{Name: "format", Args: "webp"},
+		},
+	}, imagorprovider.NewSigner(spaceConfig.ImagorSecret, spaceConfig.SignerAlgorithm, spaceConfig.SignerTruncate))
+
+	assert.Equal(t, "https://acme.imagor.app"+expectedGridPath, *result.Grid)
+	mockImagorProvider.AssertNotCalled(t, "GenerateURL", mock.Anything, mock.Anything)
 }
 
 // Helper function for creating float pointers (intPtr and stringPtr already exist in resolver_test.go)

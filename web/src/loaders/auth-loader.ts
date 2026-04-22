@@ -97,6 +97,20 @@ export const requireImageEditorAuth = async (context?: {
 }
 
 /**
+ * Image editor auth check for self-hosted-only root editor routes.
+ * Multi-tenant users must use the space-scoped editor routes instead.
+ */
+export const requireSelfHostedImageEditorAuth = async (context?: {
+  location?: { pathname: string; search: Record<string, unknown> }
+}) => {
+  const auth = await requireImageEditorAuth(context)
+  if (auth.multiTenant) {
+    throw redirect({ to: '/' })
+  }
+  return auth
+}
+
+/**
  * Combined auth and admin check for admin routes
  * First ensures authentication, then checks admin role
  */

@@ -4,7 +4,7 @@ import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
 import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { saveTemplate, statFile } from '@/api/storage-api'
+import { regenerateTemplatePreview, saveTemplate, statFile } from '@/api/storage-api'
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
@@ -340,12 +340,13 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
     const galleryKey = pathGalleryKey || propGalleryKey || ''
     if (galleryKey) {
       await navigate({
-        to: '/gallery/$galleryKey',
-        params: { galleryKey },
+        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+        params: spaceKey ? { spaceKey, galleryKey } : { galleryKey },
       })
     } else {
       await navigate({
-        to: '/',
+        to: spaceKey ? '/spaces/$spaceKey' : '/',
+        params: spaceKey ? { spaceKey } : undefined,
       })
     }
   }
@@ -391,7 +392,10 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         galleryKey || '',
         true, // overwrite = true for direct save
       )
-      await saveTemplate({ input: saveInput, spaceKey })
+      const result = await saveTemplate({ input: saveInput, spaceKey })
+      void regenerateTemplatePreview(result.templatePath, spaceKey).catch((error) => {
+        console.warn('Failed to regenerate template preview after save:', error)
+      })
 
       // Mark as saved to skip unsaved changes warning
       isSavedRef.current = true
@@ -967,9 +971,23 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
           await router.invalidate({
             filter: (match) => !match.id.includes('/editor'),
           })
+          const { galleryKey: templateGalleryKey, imageKey: templateImageKey } =
+            splitImagePath(templatePath)
           navigate({
-            to: '/$imagePath/editor',
-            params: { imagePath: templatePath },
+            to: templateGalleryKey
+              ? spaceKey
+                ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
+                : '/gallery/$galleryKey/$imageKey/editor'
+              : spaceKey
+                ? '/spaces/$spaceKey/$imageKey/editor'
+                : '/$imageKey/editor',
+            params: templateGalleryKey
+              ? spaceKey
+                ? { spaceKey, galleryKey: templateGalleryKey, imageKey: templateImageKey }
+                : { galleryKey: templateGalleryKey, imageKey: templateImageKey }
+              : spaceKey
+                ? { spaceKey, imageKey: templateImageKey }
+                : { imageKey: templateImageKey },
           })
         }}
       />

@@ -11,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor/imagorpath"
@@ -48,6 +49,7 @@ type Resolver struct {
 	userStore       userstore.Store
 	imagorProvider  ImagorProvider
 	config          ConfigProvider
+	cloudConfig     management.CloudConfig
 	licenseService  LicenseChecker
 	logger          *zap.Logger
 
@@ -56,6 +58,7 @@ type Resolver struct {
 	orgStore                 org.OrgStore
 	spaceStore               space.SpaceStore
 	processingOriginResolver space.ProcessingOriginResolver
+	templatePreviewRenderer  processing.TemplatePreviewRenderClient
 
 	spaceInviteStore space.SpaceInviteStore
 	inviteSender     space.InviteSender
@@ -66,6 +69,30 @@ type ResolverOption func(*Resolver)
 func WithProcessingOriginResolver(processingOriginResolver space.ProcessingOriginResolver) ResolverOption {
 	return func(r *Resolver) {
 		r.processingOriginResolver = processingOriginResolver
+	}
+}
+
+func WithCloudConfig(cloudConfig management.CloudConfig) ResolverOption {
+	return func(r *Resolver) {
+		r.cloudConfig = cloudConfig
+	}
+}
+
+func WithTemplatePreviewRenderer(renderer processing.TemplatePreviewRenderClient) ResolverOption {
+	return func(r *Resolver) {
+		r.templatePreviewRenderer = renderer
+	}
+}
+
+func WithLocalTemplatePreviewRenderer() ResolverOption {
+	return func(r *Resolver) {
+		if r.imagorProvider == nil {
+			return
+		}
+
+		r.templatePreviewRenderer = newLocalTemplatePreviewRenderClient(r.imagorProvider.Imagor(), func(imagePath string, req processing.TemplatePreviewRenderRequest) (string, error) {
+			return r.imagorProvider.GenerateURL(imagePath, req.PreviewParams)
+		})
 	}
 }
 

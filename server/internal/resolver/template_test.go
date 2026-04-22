@@ -1,11 +1,17 @@
 package resolver
 
 import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,13 +32,6 @@ func TestSaveTemplate(t *testing.T) {
 
 		ctx := createReadWriteContext("user1")
 
-		// Mock GetInstance to return nil (external mode - uses HTTP)
-		mockImagorProvider.On("Imagor").Return(nil).Maybe()
-
-		// Mock Imagor URL generation for preview (will fail but that's ok)
-		mockImagorProvider.On("GenerateURL", "test-image.jpg", mock.Anything).
-			Return("http://localhost:8000/preview-url", nil).Maybe()
-
 		// Mock storage Stat to check if file exists (return error = file doesn't exist)
 		// New sanitization preserves spaces and case
 		mockStorage.On("Stat", ctx, "templates/My Template.imagor.json").
@@ -41,10 +40,6 @@ func TestSaveTemplate(t *testing.T) {
 		// Mock storage Put for template JSON
 		mockStorage.On("Put", ctx, "templates/My Template.imagor.json", mock.Anything).
 			Return(nil)
-
-		// Mock storage Put for preview image (may be called if preview generation succeeds)
-		mockStorage.On("Put", ctx, "templates/My Template.imagor.preview", mock.Anything).
-			Return(nil).Maybe()
 
 		// Create valid template JSON
 		templateJSON := `{
@@ -80,6 +75,7 @@ func TestSaveTemplate(t *testing.T) {
 		assert.True(t, result.Success)
 		// New sanitization preserves spaces and case
 		assert.Equal(t, "templates/My Template.imagor.json", result.TemplatePath)
+		assert.Nil(t, result.PreviewPath)
 		assert.NotNil(t, result.Message)
 		assert.Equal(t, "Template saved successfully", *result.Message)
 
@@ -98,10 +94,6 @@ func TestSaveTemplate(t *testing.T) {
 
 		ctx := createReadWriteContext("user1")
 
-		mockImagorProvider.On("Imagor").Return(nil).Maybe()
-		mockImagorProvider.On("GenerateURL", mock.Anything, mock.Anything).
-			Return("http://localhost:8000/preview-url", nil).Maybe()
-
 		// Mock storage Stat to check if file exists (return error = file doesn't exist)
 		// New sanitization only removes filesystem-unsafe chars: / \ : * ? " < > |
 		// Characters like !@#$% are filesystem-safe and preserved
@@ -111,8 +103,6 @@ func TestSaveTemplate(t *testing.T) {
 		// Expect !@#$% to be preserved (they are filesystem-safe)
 		mockStorage.On("Put", ctx, "my-folder/My Special Template!@#$%.imagor.json", mock.Anything).
 			Return(nil)
-		mockStorage.On("Put", ctx, "my-folder/My Special Template!@#$%.imagor.preview", mock.Anything).
-			Return(nil).Maybe()
 
 		templateJSON := `{
 			"version": "1.0",
@@ -133,6 +123,7 @@ func TestSaveTemplate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, result.Success)
 		assert.Equal(t, "my-folder/My Special Template!@#$%.imagor.json", result.TemplatePath)
+		assert.Nil(t, result.PreviewPath)
 	})
 
 	t.Run("should reject invalid template name", func(t *testing.T) {
@@ -268,13 +259,6 @@ func TestSaveTemplate(t *testing.T) {
 
 		overwriteTrue := true
 
-		// Mock GetInstance
-		mockImagorProvider.On("Imagor").Return(nil).Maybe()
-
-		// Mock Imagor URL generation
-		mockImagorProvider.On("GenerateURL", "test.jpg", mock.Anything).
-			Return("http://localhost:8000/preview-url", nil).Maybe()
-
 		// Mock Stat to return success (file exists)
 		// New sanitization preserves spaces and case
 		mockStorage.On("Stat", ctx, "templates/Existing Template.imagor.json").
@@ -283,10 +267,6 @@ func TestSaveTemplate(t *testing.T) {
 		// Mock Put for template JSON (should be called despite file existing)
 		mockStorage.On("Put", ctx, "templates/Existing Template.imagor.json", mock.Anything).
 			Return(nil)
-
-		// Mock Put for preview image
-		mockStorage.On("Put", ctx, "templates/Existing Template.imagor.preview", mock.Anything).
-			Return(nil).Maybe()
 
 		input := gql.SaveTemplateInput{
 			Name:            "Existing Template",
@@ -303,9 +283,114 @@ func TestSaveTemplate(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.True(t, result.Success)
 		assert.Equal(t, "templates/Existing Template.imagor.json", result.TemplatePath)
+		assert.Nil(t, result.PreviewPath)
 
 		mockStorage.AssertExpectations(t)
 	})
+}
+
+func TestLocalTemplatePreviewRenderClient(t *testing.T) {
+	previewBytes := []byte("preview-image")
+	var requestedPath string
+
+	renderer := newLocalTemplatePreviewRenderClient(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		w.Header().Set("Content-Type", "image/webp")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(previewBytes)
+	}), func(imagePath string, req processing.TemplatePreviewRenderRequest) (string, error) {
+		assert.Equal(t, "test.jpg", imagePath)
+		assert.Equal(t, "demo", req.SpaceKey)
+		return "/unsafe/300x225/test.jpg", nil
+	})
+
+	result, err := renderer.RenderTemplatePreview(context.Background(), processing.TemplatePreviewRenderRequest{
+		SpaceKey:        "demo",
+		SourceImagePath: "test.jpg",
+	})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, previewBytes, result.Image)
+	assert.Equal(t, "image/webp", result.ContentType)
+	assert.Equal(t, "/unsafe/300x225/test.jpg", requestedPath)
+}
+
+func TestGenerateTemplatePreview_UsesInternalRendererWhenConfigured(t *testing.T) {
+	mockRenderer := new(MockTemplatePreviewRenderClient)
+	mockImagorProvider := new(MockImagorProvider)
+	mockImagorProvider.On("Imagor").Return(nil).Once()
+	logger, _ := zap.NewDevelopment()
+	resolver := NewResolver(nil, nil, nil, mockImagorProvider, &config.Config{}, nil, logger, nil, nil, nil, nil,
+		WithTemplatePreviewRenderer(mockRenderer),
+	)
+
+	spaceKey := "demo"
+	spaceConfig := &space.Space{Key: spaceKey}
+	templateJSON := `{"version":"1.0","transformations":{"width":800,"height":600}}`
+	previewParams := derivePreviewParamsFromTemplateJSON(templateJSON)
+	previewBytes := []byte("preview-from-processing")
+
+	mockRenderer.On("RenderTemplatePreview", mock.Anything, processing.TemplatePreviewRenderRequest{
+		SpaceKey:        spaceKey,
+		SourceImagePath: "test.jpg",
+		TemplateJSON:    templateJSON,
+		PreviewParams:   previewParams,
+	}).Return(&processing.TemplatePreviewRenderResponse{Image: previewBytes, ContentType: "image/webp"}, nil).Once()
+
+	result, err := resolver.Mutation().(*mutationResolver).generateTemplatePreview(
+		context.Background(),
+		"test.jpg",
+		templateJSON,
+		previewParams,
+		spaceConfig,
+		&spaceKey,
+	)
+
+	assert.NoError(t, err)
+	assert.Equal(t, previewBytes, result)
+	mockRenderer.AssertExpectations(t)
+	mockImagorProvider.AssertNotCalled(t, "Imagor")
+	mockImagorProvider.AssertNotCalled(t, "GenerateURL", mock.Anything, mock.Anything)
+}
+
+func TestHTTPTemplatePreviewRenderClient(t *testing.T) {
+	previewBytes := []byte("preview-bytes")
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, processing.InternalTemplatePreviewRenderPath, r.URL.Path)
+		assert.Equal(t, "secret", r.Header.Get(processing.InternalAPISecretHeader))
+
+		var req processing.TemplatePreviewRenderRequest
+		assert.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+		assert.Equal(t, "demo", req.SpaceKey)
+
+		w.Header().Set("Content-Type", "application/json")
+		assert.NoError(t, json.NewEncoder(w).Encode(processing.TemplatePreviewRenderResponse{
+			Image:       previewBytes,
+			ContentType: "image/webp",
+		}))
+	}))
+	defer server.Close()
+
+	client := processing.NewHTTPTemplatePreviewRenderClient(server.URL, "secret")
+	result, err := client.RenderTemplatePreview(context.Background(), processing.TemplatePreviewRenderRequest{SpaceKey: "demo"})
+
+	assert.NoError(t, err)
+	assert.Equal(t, previewBytes, result.Image)
+	assert.Equal(t, "image/webp", result.ContentType)
+}
+
+func TestResolveProcessingBaseURL(t *testing.T) {
+	assert.Equal(t, "https://processing.example.test/internal", processing.ResolveProcessingBaseURL("https://processing.example.test/internal/", "demo"))
+	assert.Equal(t, "https://demo.processing.example.test", processing.ResolveProcessingBaseURL("https://{spaceKey}.processing.example.test", "demo"))
+	assert.Equal(t, "https://demo.processing.example.test", processing.ResolveProcessingBaseURL("https://{{spaceKey}}.processing.example.test", "demo"))
+}
+
+type processingOriginResolverStub string
+
+func (p processingOriginResolverStub) ResolveProcessingOrigin(_ context.Context, _ string) string {
+	return string(p)
 }
 
 func TestSanitizeTemplateName(t *testing.T) {

@@ -18,6 +18,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/middleware"
 	"github.com/cshum/imagor-studio/server/internal/resolver"
 	"github.com/cshum/imagor-studio/server/pkg/management"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"go.uber.org/zap"
 )
@@ -88,6 +89,15 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		}
 	}
 
+	var templatePreviewRenderer resolver.ResolverOption
+	if mode == ModeCloud && multiTenant {
+		if cloudFactories.TemplatePreviewRenderer != nil {
+			templatePreviewRenderer = resolver.WithTemplatePreviewRenderer(cloudFactories.TemplatePreviewRenderer(cloudConfig))
+		} else if strings.TrimSpace(cloudConfig.ProcessingURLTemplate) != "" {
+			templatePreviewRenderer = resolver.WithTemplatePreviewRenderer(processing.NewHTTPTemplatePreviewRenderClient(cloudConfig.ProcessingURLTemplate, cloudConfig.InternalAPISecret))
+		}
+	}
+
 	storageResolver := resolver.NewResolver(
 		services.StorageProvider,
 		services.RegistryStore,
@@ -100,7 +110,10 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.SpaceStore,
 		services.SpaceInviteStore,
 		services.InviteSender,
+		resolver.WithLocalTemplatePreviewRenderer(),
+		resolver.WithCloudConfig(cloudConfig),
 		resolver.WithProcessingOriginResolver(processingOriginResolver),
+		templatePreviewRenderer,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
 	gqlHandler := handler.New(schema)
@@ -162,6 +175,13 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		InternalAPISecret: cloudConfig.InternalAPISecret,
 		Logger:            services.Logger,
 	}
+	if imagorCfg := services.ImagorProvider.Config(); imagorCfg != nil {
+		cloudServices.GlobalImagor = management.ImagorSigningConfig{
+			Secret:         imagorCfg.Secret,
+			SignerType:     imagorCfg.SignerType,
+			SignerTruncate: imagorCfg.SignerTruncate,
+		}
+	}
 
 	if mode == ModeCloud && multiTenant && cloudFactories.AuthRoutes != nil {
 		cloudFactories.AuthRoutes(mux, management.OAuthConfig{
@@ -185,6 +205,10 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 
 	if mode == ModeCloud && multiTenant && cloudFactories.InternalRoutes != nil {
 		cloudFactories.InternalRoutes(mux, cloudServices)
+	}
+
+	if services.SpaceConfigStore != nil {
+		registerProcessingInternalRoutes(mux, services)
 	}
 
 	if err := registerProcessingOrSPA(mux, cfg, embedFS, services); err != nil {

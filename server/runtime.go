@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -36,7 +37,7 @@ func RunCloudWithFactoriesAndArgs(embedFS fs.FS, args []string, factories manage
 }
 
 func run(embedFS fs.FS, mode Mode, args []string, factories management.CloudFactories) {
-	logger, err := zap.NewProduction()
+	logger, err := newLoggerFromEnv()
 	if err != nil {
 		fmt.Printf("Failed to initialize logger: %v\n", err)
 		os.Exit(1)
@@ -105,5 +106,34 @@ func run(embedFS fs.FS, mode Mode, args []string, factories management.CloudFact
 		}
 
 		os.Exit(1)
+	}
+}
+
+func newLoggerFromEnv() (*zap.Logger, error) {
+	if shouldUseDebugLogging() {
+		return zap.NewDevelopment()
+	}
+	return zap.NewProduction()
+}
+
+func shouldUseDebugLogging() bool {
+	if envVarEnablesDebug("DEBUG") || envVarEnablesDebug("IMAGOR_DEBUG") {
+		return true
+	}
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("IMAGOR_LOG_LEVEL"))) {
+	case "debug", "development", "dev":
+		return true
+	default:
+		return false
+	}
+}
+
+func envVarEnablesDebug(name string) bool {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv(name)))
+	switch value {
+	case "1", "true", "yes", "on", "debug", "development", "dev":
+		return true
+	default:
+		return false
 	}
 }

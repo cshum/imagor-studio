@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useRouter, useRouterState } from '@tanstack/react-router'
 import {
   ArrowDown,
+  ArrowLeft,
   ArrowUp,
   Check,
   Clock,
@@ -10,6 +11,7 @@ import {
   FolderPlus,
   Paintbrush,
   Search,
+  Settings,
   Upload,
   X,
 } from 'lucide-react'
@@ -56,7 +58,9 @@ import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
+import { hasErrorCode } from '@/lib/error-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
+import { moveGalleryItems } from '@/lib/gallery-move'
 import { joinImagePath } from '@/lib/path-utils'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
@@ -161,34 +165,24 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   } = galleryLoaderData
   const sidebar = useSidebar()
 
+  const getMoveProgressMessage = (completed: number, total: number) =>
+    `${t('pages.gallery.moveItems.move')}... (${completed}/${total})`
+
   // Drag and drop functionality
   const handleDropItems = async (items: DragItem[], targetFolderKey: string) => {
+    const toastId = toast.loading(getMoveProgressMessage(0, items.length))
     try {
-      let successCount = 0
-      let failCount = 0
-      let hasFileExistsError = false
-
-      // Move all items sequentially
-      for (const item of items) {
-        try {
-          const itemName = item.key.split('/').filter(Boolean).pop() || ''
-          const newPath = targetFolderKey ? `${targetFolderKey}/${itemName}` : itemName
-
-          // Skip if source and destination are the same
-          if (item.key === newPath) {
-            continue
-          }
-
-          await moveFile(item.key, newPath, spaceKey)
-          successCount++
-        } catch (error: any) {
-          const errorCode = error?.response?.errors?.[0]?.extensions?.code
-          if (errorCode === 'FILE_ALREADY_EXISTS') {
-            hasFileExistsError = true
-          }
-          failCount++
-        }
-      }
+      const { successCount, failCount, hasFileExistsError } = await moveGalleryItems({
+        items: items.map((item) => ({
+          key: item.key,
+          type: item.type === 'folder' ? 'folder' : 'file',
+        })),
+        destinationPath: targetFolderKey,
+        spaceKey,
+        onProgress: ({ completedCount }) => {
+          toast.loading(getMoveProgressMessage(completedCount, items.length), { id: toastId })
+        },
+      })
 
       // Clear selection after move
       selection.clearSelection()
@@ -198,7 +192,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
       // Show result toast
       if (failCount === 0 && successCount > 0) {
-        toast.success(t('pages.gallery.dragDrop.moveSuccess', { count: successCount }))
+        toast.success(t('pages.gallery.dragDrop.moveSuccess', { count: successCount }), {
+          id: toastId,
+        })
       } else if (successCount > 0) {
         const message = hasFileExistsError
           ? t('pages.gallery.dragDrop.fileExists')
@@ -206,15 +202,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               success: successCount,
               failed: failCount,
             })
-        toast.warning(message)
+        toast.warning(message, { id: toastId })
       } else if (failCount > 0) {
         const message = hasFileExistsError
           ? t('pages.gallery.dragDrop.fileExists')
           : t('pages.gallery.dragDrop.moveError')
-        toast.error(message)
+        toast.error(message, { id: toastId })
       }
     } catch {
-      toast.error(t('pages.gallery.dragDrop.moveError'))
+      toast.error(t('pages.gallery.dragDrop.moveError'), { id: toastId })
     }
   }
 
@@ -296,10 +292,18 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     const image = images.find((img) => img.imageKey === imageKey)
     if (image?.isTemplate) {
       // Navigate directly to editor for templates
+      if (spaceKey && !galleryKey) {
+        return navigate({
+          to: '/spaces/$spaceKey/$imageKey/editor',
+          params: { spaceKey, imageKey },
+        })
+      }
       if (galleryKey) {
         return navigate({
-          to: '/gallery/$galleryKey/$imageKey/editor',
-          params: { galleryKey, imageKey },
+          to: spaceKey
+            ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
+            : '/gallery/$galleryKey/$imageKey/editor',
+          params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
         })
       } else {
         return navigate({
@@ -317,13 +321,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     // Handle navigation for root gallery vs sub-galleries
     if (galleryKey === '') {
       return navigate({
-        to: '/$imageKey',
-        params: { imageKey },
+        to: spaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
+        params: spaceKey ? { spaceKey, imageKey } : { imageKey },
       })
     } else {
       return navigate({
-        to: '/gallery/$galleryKey/$imageKey',
-        params: { galleryKey, imageKey },
+        to: spaceKey
+          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
+          : '/gallery/$galleryKey/$imageKey',
+        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     }
   }
@@ -343,8 +349,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
     // Normal navigation
     return navigate({
-      to: '/gallery/$galleryKey',
-      params: { galleryKey: folderGalleryKey },
+      to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+      params: spaceKey
+        ? { spaceKey, galleryKey: folderGalleryKey }
+        : { galleryKey: folderGalleryKey },
     })
   }
 
@@ -421,8 +429,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const handleEditImage = (imageKey: string) => {
     if (galleryKey) {
       navigate({
-        to: '/gallery/$galleryKey/$imageKey/editor',
-        params: { galleryKey, imageKey },
+        to: spaceKey
+          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
+          : '/gallery/$galleryKey/$imageKey/editor',
+        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
+      })
+    } else if (spaceKey) {
+      navigate({
+        to: '/spaces/$spaceKey/$imageKey/editor',
+        params: { spaceKey, imageKey },
       })
     } else {
       navigate({
@@ -536,9 +551,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         itemType: 'file',
         isRenaming: false,
       })
-    } catch (error: any) {
-      const errorCode = error?.response?.errors?.[0]?.extensions?.code
-      if (errorCode === 'FILE_ALREADY_EXISTS') {
+    } catch (error: unknown) {
+      if (hasErrorCode(error, 'FILE_ALREADY_EXISTS')) {
         toast.error(t('pages.gallery.renameItem.fileExists'))
       } else {
         toast.error(t('pages.gallery.renameItem.error', { type: renameDialog.itemType }))
@@ -834,6 +848,36 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   })
 
   // Create menu items for authenticated users
+  const secondaryMenuItems =
+    authState.state === 'authenticated' && spaceKey ? (
+      <>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={(event) => {
+            event.preventDefault()
+            navigate({ to: '/' })
+          }}
+        >
+          <ArrowLeft className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.spaceSettings.backToSpaces')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className='hover:cursor-pointer'
+          onSelect={(event) => {
+            event.preventDefault()
+            navigate({
+              to: '/spaces/$spaceKey/settings/general',
+              params: { spaceKey },
+            })
+          }}
+        >
+          <Settings className='text-muted-foreground mr-3 h-4 w-4' />
+          {t('pages.spaceSettings.spaceSettings')}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+      </>
+    ) : null
+
   const customMenuItems =
     authState.state === 'authenticated' ? (
       <>
@@ -983,6 +1027,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           <HeaderBar
             isScrolled={isScrolledDown}
             customMenuItems={customMenuItems}
+            secondaryMenuItems={secondaryMenuItems}
             selectionMenu={
               authState.state === 'authenticated' ? (
                 <SelectionMenu
@@ -1105,7 +1150,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           }
                           draggedItems={dragState.draggedItems}
                           galleryKey={galleryKey}
-                          onTemplatePreviewError={regenerateTemplatePreview}
+                          onTemplatePreviewError={(templatePath) =>
+                            regenerateTemplatePreview(templatePath, spaceKey)
+                          }
                           interactive={!isImageViewOpen}
                           {...imageGridProps}
                         />

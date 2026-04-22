@@ -37,6 +37,7 @@ import {
   requireAuth,
   requireImageEditorAuth,
   requireSelfHostedAdminAccountAuth,
+  requireSelfHostedImageEditorAuth,
 } from '@/loaders/auth-loader.ts'
 import { canvasEditorLoader } from '@/loaders/canvas-editor-loader.ts'
 import {
@@ -173,7 +174,7 @@ const rootImagePage = createRoute({
 const rootImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/$imageKey/editor',
-  beforeLoad: requireImageEditorAuth,
+  beforeLoad: requireSelfHostedImageEditorAuth,
   loader: ({ params }) => imageEditorLoader({ params: { ...params, galleryKey: '' } }),
   shouldReload: false,
   component: () => {
@@ -220,7 +221,7 @@ const imagePage = createRoute({
 const canvasEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/editor/new',
-  beforeLoad: requireImageEditorAuth,
+  beforeLoad: requireSelfHostedImageEditorAuth,
   loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
   shouldReload: false,
   component: () => {
@@ -362,7 +363,8 @@ const spaceCanvasEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/spaces/$spaceKey/editor/new',
   beforeLoad: requireImageEditorAuth,
-  loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
+  loader: ({ location, params }) =>
+    canvasEditorLoader({ search: location.searchStr, spaceKey: params.spaceKey }),
   shouldReload: false,
   component: () => {
     const loaderData = spaceCanvasEditorRoute.useLoaderData()
@@ -700,8 +702,8 @@ export function AppRouter() {
       // so skip the root-folder sidebar fetch — it would fail with NOT_AVAILABLE.
       if (!authState.multiTenant) {
         loadRootFolders()
+        loadHomeTitle()
       }
-      loadHomeTitle()
     } else if (action.type === 'LOGOUT') {
       initializeTheme(localThemeStorage, 'class')
       initializeSidebar(localSidebarStorage)

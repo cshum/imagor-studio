@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FocusScope } from '@radix-ui/react-focus-scope'
-import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
+import { useNavigate, useParams, useRouter, useRouterState } from '@tanstack/react-router'
 
 import { GalleryImage, ImageView } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
@@ -22,6 +22,7 @@ export function ImagePage({
   imageKey,
 }: ImagePageProps) {
   const navigate = useNavigate()
+  const { spaceKey } = useParams({ strict: false })
   const router = useRouter()
   const { isLoading } = useRouterState()
   const { images } = galleryLoaderData
@@ -59,16 +60,17 @@ export function ImagePage({
   const handleImageClick = ({ imageKey }: GalleryImage) => {
     clearPosition(galleryKey, imageKey)
     if (galleryKey === '') {
-      // For root images, navigate to /$imageKey
+      // For root images, stay within the current space when present.
       navigate({
-        to: '/$imageKey',
-        params: { imageKey },
+        to: spaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
+        params: spaceKey ? { spaceKey, imageKey } : { imageKey },
       })
     } else {
-      // For gallery images, navigate to /gallery/$galleryKey/$imageKey
       navigate({
-        to: '/gallery/$galleryKey/$imageKey',
-        params: { galleryKey, imageKey },
+        to: spaceKey
+          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
+          : '/gallery/$galleryKey/$imageKey',
+        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     }
   }
@@ -76,15 +78,14 @@ export function ImagePage({
   const handleCloseFullView = () => {
     clearPosition(galleryKey, imageKey)
     if (galleryKey === '') {
-      // For root images, navigate back to root gallery
       navigate({
-        to: '/',
+        to: spaceKey ? '/spaces/$spaceKey' : '/',
+        params: spaceKey ? { spaceKey } : undefined,
       })
     } else {
-      // For gallery images, navigate back to the gallery
       navigate({
-        to: '/gallery/$galleryKey',
-        params: { galleryKey },
+        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+        params: spaceKey ? { spaceKey, galleryKey } : { galleryKey },
       })
     }
   }
@@ -114,8 +115,20 @@ export function ImagePage({
       // Preload next route immediately when timer starts
       try {
         router.preloadRoute({
-          to: galleryKey ? '/gallery/$galleryKey/$imageKey' : '/$imageKey',
-          params: { galleryKey, imageKey: nextImage.imageKey },
+          to: galleryKey
+            ? spaceKey
+              ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
+              : '/gallery/$galleryKey/$imageKey'
+            : spaceKey
+              ? '/spaces/$spaceKey/$imageKey'
+              : '/$imageKey',
+          params: galleryKey
+            ? spaceKey
+              ? { spaceKey, galleryKey, imageKey: nextImage.imageKey }
+              : { galleryKey, imageKey: nextImage.imageKey }
+            : spaceKey
+              ? { spaceKey, imageKey: nextImage.imageKey }
+              : { imageKey: nextImage.imageKey },
         })
       } catch {
         // Silent fail
@@ -126,13 +139,19 @@ export function ImagePage({
         clearPosition(galleryKey, nextImage.imageKey)
         if (galleryKey === '') {
           navigate({
-            to: '/$imageKey',
-            params: { imageKey: nextImage.imageKey },
+            to: spaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
+            params: spaceKey
+              ? { spaceKey, imageKey: nextImage.imageKey }
+              : { imageKey: nextImage.imageKey },
           })
         } else {
           navigate({
-            to: '/gallery/$galleryKey/$imageKey',
-            params: { galleryKey, imageKey: nextImage.imageKey },
+            to: spaceKey
+              ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
+              : '/gallery/$galleryKey/$imageKey',
+            params: spaceKey
+              ? { spaceKey, galleryKey, imageKey: nextImage.imageKey }
+              : { galleryKey, imageKey: nextImage.imageKey },
           })
         }
       }, 5000)

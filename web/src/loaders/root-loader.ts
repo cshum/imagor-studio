@@ -19,18 +19,13 @@ export const rootLoader = async (): Promise<RootLoaderData> => {
   // This ensures system default language is respected
   await initializeLocale()
 
-  if (!getAuth().accessToken) {
+  const auth = getAuth()
+  if (!auth.accessToken) {
     return {}
   }
-  const auth = getAuth()
   await licenseStore.waitFor((state) => state.isBrandLoaded)
   if (auth.multiTenant) {
-    return {
-      breadcrumb: {
-        translationKey: 'navigation.breadcrumbs.spaces',
-        href: '/',
-      },
-    }
+    return {}
   }
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)

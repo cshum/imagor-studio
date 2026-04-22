@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { FolderPlus } from 'lucide-react'
 
 import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-picker-node.tsx'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import {
   Dialog,
@@ -24,7 +25,7 @@ export interface FolderSelectionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   selectedPath: string | null
-  onSelect: (path: string) => void
+  onSelect: (path: string) => void | Promise<void>
   excludePaths?: string[]
   currentPath?: string
   showNewFolderButton?: boolean
@@ -35,6 +36,8 @@ export interface FolderSelectionDialogProps {
   description?: string
   confirmButtonText?: string
   itemCount?: number
+  closeOnSelect?: boolean
+  isSubmitting?: boolean
 }
 
 export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
@@ -51,6 +54,8 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   description,
   confirmButtonText,
   itemCount,
+  closeOnSelect = true,
+  isSubmitting = false,
 }) => {
   const { t } = useTranslation()
   const { homeTitle, rootFolders } = useFolderTree()
@@ -205,10 +210,12 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
     }
   }, [onFolderCreated, handleFolderCreatedCallback])
 
-  const handleSelect = () => {
+  const handleSelect = async () => {
     if (selectedPath !== null) {
-      onSelect(selectedPath)
-      onOpenChange(false)
+      await onSelect(selectedPath)
+      if (closeOnSelect) {
+        onOpenChange(false)
+      }
     }
   }
 
@@ -227,7 +234,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={isSubmitting ? undefined : onOpenChange}>
       <DialogContent className='w-sm md:w-lg'>
         <DialogHeader className='min-w-0'>
           <DialogTitle className='truncate'>{displayTitle}</DialogTitle>
@@ -265,18 +272,27 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
 
         <DialogFooter className='flex-row justify-between sm:justify-between'>
           {showNewFolderButton && onCreateFolder && (
-            <Button variant='outline' onClick={handleCreateFolder} className='gap-2'>
+            <Button
+              variant='outline'
+              onClick={handleCreateFolder}
+              className='gap-2'
+              disabled={isSubmitting}
+            >
               <FolderPlus className='h-4 w-4' />
               {t('pages.gallery.createFolder.newFolder')}
             </Button>
           )}
           <div className='flex gap-2'>
-            <Button variant='outline' onClick={() => onOpenChange(false)}>
+            <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               {t('common.buttons.cancel')}
             </Button>
-            <Button onClick={handleSelect} disabled={selectedPath === null}>
+            <ButtonWithLoading
+              onClick={handleSelect}
+              isLoading={isSubmitting}
+              disabled={selectedPath === null}
+            >
               {buttonText}
-            </Button>
+            </ButtonWithLoading>
           </div>
         </DialogFooter>
       </DialogContent>

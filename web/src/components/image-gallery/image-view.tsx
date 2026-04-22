@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ReactZoomPanPinchRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { AnimatePresence, motion, PanInfo } from 'framer-motion'
 import {
   ChevronLeft,
@@ -74,6 +74,7 @@ export function ImageView({
   onSlideshowChange,
 }: FullScreenImageProps) {
   const navigate = useNavigate()
+  const { spaceKey } = useParams({ strict: false })
   const { authState } = useAuth()
   const duration = 0.2
   const [scale, setScale] = useState(1)
@@ -325,10 +326,17 @@ export function ImageView({
 
   const handleImagorClick = () => {
     // Navigate to image editor
-    if (galleryKey) {
+    if (spaceKey && !galleryKey) {
       navigate({
-        to: '/gallery/$galleryKey/$imageKey/editor',
-        params: { galleryKey, imageKey },
+        to: '/spaces/$spaceKey/$imageKey/editor',
+        params: { spaceKey, imageKey },
+      })
+    } else if (galleryKey) {
+      navigate({
+        to: spaceKey
+          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
+          : '/gallery/$galleryKey/$imageKey/editor',
+        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     } else {
       navigate({

@@ -7,7 +7,6 @@ import {
   Cloud,
   Cpu,
   Database,
-  FolderOpen,
   HardDrive,
   LayoutDashboard,
   PanelLeft,
@@ -156,7 +155,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size='lg'>
               <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
-              {space.storageMode === 'platform' ? (
+                {space.storageMode === 'platform' ? (
                   <Cloud className='h-10 w-10 shrink-0' />
                 ) : (
                   <Database className='h-10 w-10 shrink-0' />
@@ -208,14 +207,6 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
               <Link to='/'>
                 <ArrowLeft className='h-4 w-4' />
                 <span>{t('pages.spaceSettings.backToSpaces')}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link to='/spaces/$spaceKey' params={{ spaceKey: space.key }}>
-                <FolderOpen className='h-4 w-4' />
-                <span>{t('pages.spaceSettings.openGallery')}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
