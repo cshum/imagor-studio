@@ -3,7 +3,6 @@ import { Link } from '@tanstack/react-router'
 import { Check, Languages, LogOut, MoreVertical } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,7 +16,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -94,7 +92,6 @@ export function AppHeader({
   breadcrumbs,
   mobileTrigger,
   profileLabel,
-  roleLabel,
   avatarUrl,
   menuTriggerStyle = 'avatar',
   onLogout,
@@ -197,23 +194,18 @@ export function AppHeader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='w-56'>
-                <DropdownMenuItem className='interactive:cursor-pointer gap-3 px-2 py-2' asChild>
-                  <Link to={profileLink}>
-                    <Avatar className='h-8 w-8'>
-                      {avatarUrl ? (
-                        <AvatarImage src={avatarUrl} alt={profileLabel} referrerPolicy='no-referrer' />
-                      ) : null}
-                      <AvatarFallback className={`text-xs font-semibold text-white ${bgColor}`}>
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <div className='flex min-w-0 flex-1 flex-col space-y-1'>
-                      <p className='truncate text-sm leading-none font-medium'>{profileLabel}</p>
-                      <p className='text-muted-foreground truncate text-xs leading-none'>
-                        {accountSettingsText}
-                      </p>
-                    </div>
+                <DropdownMenuItem
+                  className='interactive:cursor-pointer items-start px-2 py-2'
+                  asChild
+                >
+                  <Link
+                    to={profileLink}
+                    className='flex w-full min-w-0 flex-col items-start text-left'
+                  >
+                    <p className='truncate text-sm leading-none font-medium'>{profileLabel}</p>
+                    <p className='text-muted-foreground mt-1 truncate text-xs leading-none'>
+                      {accountSettingsText}
+                    </p>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

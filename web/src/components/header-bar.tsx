@@ -85,15 +85,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
     return authState.profile?.displayName || authState.profile?.username || t('common.status.user')
   }
 
-  // Get user role display (only for authenticated users)
-  const getUserRole = () => {
-    if (authState.state === 'guest') {
-      return null // No role subtitle for guests
-    }
-    const role = authState.profile?.role
-    return role ? t(`pages.users.roles.${role}`) : null
-  }
-
   const getUserInitials = () => {
     const label = getUserDisplayName().trim()
     if (!label) {
@@ -255,23 +246,21 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                           className='interactive:cursor-pointer gap-3 px-2 py-2'
                           onClick={handleAccountClick}
                         >
-                          {authState.multiTenant ? (
-                            <Avatar className='h-8 w-8'>
-                              <AvatarImage
-                                src={authState.profile?.avatarUrl ?? undefined}
-                                alt={getUserDisplayName()}
-                              />
-                              <AvatarFallback className='text-xs font-semibold'>
-                                {getUserInitials()}
-                              </AvatarFallback>
-                            </Avatar>
-                          ) : null}
+                          <Avatar className='h-8 w-8'>
+                            <AvatarImage
+                              src={authState.profile?.avatarUrl ?? undefined}
+                              alt={getUserDisplayName()}
+                            />
+                            <AvatarFallback className='text-xs font-semibold'>
+                              {getUserInitials()}
+                            </AvatarFallback>
+                          </Avatar>
 
-                          <div className='flex min-w-0 flex-1 flex-col space-y-1'>
+                          <div className='flex min-w-0 flex-1 flex-col'>
                             <p className='truncate text-sm leading-none font-medium'>
                               {getUserDisplayName()}
                             </p>
-                            <p className='text-muted-foreground truncate text-xs leading-none'>
+                            <p className='text-muted-foreground mt-1 truncate text-xs leading-none'>
                               {t('common.navigation.accountSettings')}
                             </p>
                           </div>
