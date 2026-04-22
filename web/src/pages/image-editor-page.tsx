@@ -4,7 +4,7 @@ import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
 import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { saveTemplate, statFile } from '@/api/storage-api'
+import { regenerateTemplatePreview, saveTemplate, statFile } from '@/api/storage-api'
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
@@ -392,7 +392,10 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         galleryKey || '',
         true, // overwrite = true for direct save
       )
-      await saveTemplate({ input: saveInput, spaceKey })
+        const result = await saveTemplate({ input: saveInput, spaceKey })
+        void regenerateTemplatePreview(result.templatePath, spaceKey).catch((error) => {
+          console.warn('Failed to regenerate template preview after save:', error)
+        })
 
       // Mark as saved to skip unsaved changes warning
       isSavedRef.current = true

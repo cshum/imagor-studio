@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Folder } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { saveTemplate } from '@/api/storage-api'
+import { regenerateTemplatePreview, saveTemplate } from '@/api/storage-api'
 import { FolderSelectionDialog } from '@/components/folder-picker/folder-selection-dialog'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
@@ -161,6 +161,10 @@ export function SaveTemplateDialog({
 
       // Backend already returns the complete path with savePath included
       const templatePath = result.templatePath
+
+        void regenerateTemplatePreview(templatePath, spaceKey).catch((error) => {
+          console.warn('Failed to regenerate template preview after save:', error)
+        })
 
       // Success - template saved
       toast.success(t('imageEditor.template.saveSuccess', { name: name.trim() }))

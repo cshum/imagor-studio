@@ -32,13 +32,6 @@ func TestSaveTemplate(t *testing.T) {
 
 		ctx := createReadWriteContext("user1")
 
-		// Mock GetInstance to return nil (external mode - uses HTTP)
-		mockImagorProvider.On("Imagor").Return(nil).Maybe()
-
-		// Mock Imagor URL generation for preview (will fail but that's ok)
-		mockImagorProvider.On("GenerateURL", "test-image.jpg", mock.Anything).
-			Return("http://localhost:8000/preview-url", nil).Maybe()
-
 		// Mock storage Stat to check if file exists (return error = file doesn't exist)
 		// New sanitization preserves spaces and case
 		mockStorage.On("Stat", ctx, "templates/My Template.imagor.json").
@@ -47,10 +40,6 @@ func TestSaveTemplate(t *testing.T) {
 		// Mock storage Put for template JSON
 		mockStorage.On("Put", ctx, "templates/My Template.imagor.json", mock.Anything).
 			Return(nil)
-
-		// Mock storage Put for preview image (may be called if preview generation succeeds)
-		mockStorage.On("Put", ctx, "templates/My Template.imagor.preview", mock.Anything).
-			Return(nil).Maybe()
 
 		// Create valid template JSON
 		templateJSON := `{
@@ -86,6 +75,7 @@ func TestSaveTemplate(t *testing.T) {
 		assert.True(t, result.Success)
 		// New sanitization preserves spaces and case
 		assert.Equal(t, "templates/My Template.imagor.json", result.TemplatePath)
+		assert.Nil(t, result.PreviewPath)
 		assert.NotNil(t, result.Message)
 		assert.Equal(t, "Template saved successfully", *result.Message)
 
@@ -104,10 +94,6 @@ func TestSaveTemplate(t *testing.T) {
 
 		ctx := createReadWriteContext("user1")
 
-		mockImagorProvider.On("Imagor").Return(nil).Maybe()
-		mockImagorProvider.On("GenerateURL", mock.Anything, mock.Anything).
-			Return("http://localhost:8000/preview-url", nil).Maybe()
-
 		// Mock storage Stat to check if file exists (return error = file doesn't exist)
 		// New sanitization only removes filesystem-unsafe chars: / \ : * ? " < > |
 		// Characters like !@#$% are filesystem-safe and preserved
@@ -117,8 +103,6 @@ func TestSaveTemplate(t *testing.T) {
 		// Expect !@#$% to be preserved (they are filesystem-safe)
 		mockStorage.On("Put", ctx, "my-folder/My Special Template!@#$%.imagor.json", mock.Anything).
 			Return(nil)
-		mockStorage.On("Put", ctx, "my-folder/My Special Template!@#$%.imagor.preview", mock.Anything).
-			Return(nil).Maybe()
 
 		templateJSON := `{
 			"version": "1.0",
@@ -139,6 +123,7 @@ func TestSaveTemplate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, result.Success)
 		assert.Equal(t, "my-folder/My Special Template!@#$%.imagor.json", result.TemplatePath)
+		assert.Nil(t, result.PreviewPath)
 	})
 
 	t.Run("should reject invalid template name", func(t *testing.T) {
@@ -274,13 +259,6 @@ func TestSaveTemplate(t *testing.T) {
 
 		overwriteTrue := true
 
-		// Mock GetInstance
-		mockImagorProvider.On("Imagor").Return(nil).Maybe()
-
-		// Mock Imagor URL generation
-		mockImagorProvider.On("GenerateURL", "test.jpg", mock.Anything).
-			Return("http://localhost:8000/preview-url", nil).Maybe()
-
 		// Mock Stat to return success (file exists)
 		// New sanitization preserves spaces and case
 		mockStorage.On("Stat", ctx, "templates/Existing Template.imagor.json").
@@ -289,10 +267,6 @@ func TestSaveTemplate(t *testing.T) {
 		// Mock Put for template JSON (should be called despite file existing)
 		mockStorage.On("Put", ctx, "templates/Existing Template.imagor.json", mock.Anything).
 			Return(nil)
-
-		// Mock Put for preview image
-		mockStorage.On("Put", ctx, "templates/Existing Template.imagor.preview", mock.Anything).
-			Return(nil).Maybe()
 
 		input := gql.SaveTemplateInput{
 			Name:            "Existing Template",
@@ -309,6 +283,7 @@ func TestSaveTemplate(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.True(t, result.Success)
 		assert.Equal(t, "templates/Existing Template.imagor.json", result.TemplatePath)
+		assert.Nil(t, result.PreviewPath)
 
 		mockStorage.AssertExpectations(t)
 	})
