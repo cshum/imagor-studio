@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
-import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
+import { Check, Languages, LogOut, MoreVertical } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -100,7 +101,7 @@ export function AppHeader({
   profileLink = '/account/profile',
 }: AppHeaderProps) {
   const { t, i18n } = useTranslation()
-  const profileText = t('layouts.account.tabs.profile')
+  const accountSettingsText = t('common.navigation.accountSettings')
   const signOutText = t('common.navigation.signOut')
   const moreText = t('common.buttons.more')
   const initials = getInitials(profileLabel)
@@ -196,16 +197,25 @@ export function AppHeader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end' className='w-56'>
-                <DropdownMenuLabel className='font-normal'>
-                  <div className='flex flex-col space-y-1'>
-                    <p className='text-sm leading-none font-medium'>{profileLabel}</p>
-                    {roleLabel ? (
-                      <p className='text-muted-foreground text-xs leading-none capitalize'>
-                        {roleLabel}
+                <DropdownMenuItem className='interactive:cursor-pointer gap-3 px-2 py-2' asChild>
+                  <Link to={profileLink}>
+                    <Avatar className='h-8 w-8'>
+                      {avatarUrl ? (
+                        <AvatarImage src={avatarUrl} alt={profileLabel} referrerPolicy='no-referrer' />
+                      ) : null}
+                      <AvatarFallback className={`text-xs font-semibold text-white ${bgColor}`}>
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className='flex min-w-0 flex-1 flex-col space-y-1'>
+                      <p className='truncate text-sm leading-none font-medium'>{profileLabel}</p>
+                      <p className='text-muted-foreground truncate text-xs leading-none'>
+                        {accountSettingsText}
                       </p>
-                    ) : null}
-                  </div>
-                </DropdownMenuLabel>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
@@ -230,13 +240,6 @@ export function AppHeader({
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={profileLink}>
-                    <Settings className='text-muted-foreground mr-3 h-4 w-4' />
-                    {profileText}
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onLogout} className='cursor-pointer'>
                   <LogOut className='text-muted-foreground mr-3 h-4 w-4' />
