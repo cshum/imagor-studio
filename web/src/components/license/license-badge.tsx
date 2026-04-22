@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Key } from 'lucide-react'
 
 import { Button } from '@/components/ui/button.tsx'
+import { useAuth } from '@/stores/auth-store'
 import { useLicense } from '@/stores/license-store.ts'
 
 interface LicenseBadgeProps {
@@ -21,9 +22,10 @@ const getThemeClasses = (theme: string) => {
 
 export const LicenseBadge = ({ side = 'right', theme = 'auto' }: LicenseBadgeProps) => {
   const { t } = useTranslation()
+  const { authState } = useAuth()
   const { isLicensed, showSupportDialog } = useLicense()
 
-  if (isLicensed) {
+  if (isLicensed || authState.multiTenant) {
     return null
   }
 
