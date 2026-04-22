@@ -36,6 +36,10 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
   const { t } = useTranslation()
   const router = useRouter()
   const [isMoving, setIsMoving] = useState(false)
+  const [completedCount, setCompletedCount] = useState(0)
+
+  const getMoveProgressMessage = (completed: number) =>
+    `${t('pages.gallery.moveItems.move')}... (${completed}/${items.length})`
 
   // Determine dialog title based on item count
   const dialogTitle =
@@ -74,6 +78,8 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
     }
 
     setIsMoving(true)
+    setCompletedCount(0)
+    const toastId = toast.loading(getMoveProgressMessage(0))
 
     try {
       let successCount = 0
@@ -93,6 +99,9 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
 
           await moveFile(item.key, newPath, spaceKey)
           successCount++
+          const nextCompletedCount = successCount + failCount
+          setCompletedCount(nextCompletedCount)
+          toast.loading(getMoveProgressMessage(nextCompletedCount), { id: toastId })
 
           // Invalidate folder tree cache for affected paths
           if (item.type === 'folder') {
@@ -108,12 +117,16 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
             hasFileExistsError = true
           }
           failCount++
+          const nextCompletedCount = successCount + failCount
+          setCompletedCount(nextCompletedCount)
+          toast.loading(getMoveProgressMessage(nextCompletedCount), { id: toastId })
         }
       }
 
       // Close dialog
       onOpenChange(false)
       setIsMoving(false)
+      setCompletedCount(0)
 
       // Call completion callback
       onMoveComplete?.()
@@ -124,9 +137,13 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
       // Show result toast
       if (failCount === 0 && successCount > 0) {
         if (items.length === 1) {
-          toast.success(t('pages.gallery.moveItem.success', { name: items[0].name }))
+          toast.success(t('pages.gallery.moveItem.success', { name: items[0].name }), {
+            id: toastId,
+          })
         } else {
-          toast.success(t('pages.gallery.moveItems.success', { count: successCount }))
+          toast.success(t('pages.gallery.moveItems.success', { count: successCount }), {
+            id: toastId,
+          })
         }
       } else if (successCount > 0) {
         const message = hasFileExistsError
@@ -135,16 +152,17 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
               success: successCount,
               failed: failCount,
             })
-        toast.warning(message)
+        toast.warning(message, { id: toastId })
       } else if (failCount > 0) {
         const message = hasFileExistsError
           ? t('pages.gallery.moveItems.fileExists')
           : t('pages.gallery.moveItems.error')
-        toast.error(message)
+        toast.error(message, { id: toastId })
       }
     } catch {
-      toast.error(t('pages.gallery.moveItems.error'))
+      toast.error(t('pages.gallery.moveItems.error'), { id: toastId })
       setIsMoving(false)
+      setCompletedCount(0)
     }
   }
 
@@ -163,10 +181,14 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
       excludePaths={excludePaths}
       currentPath={currentPath}
       title={dialogTitle}
-      description={t('pages.gallery.moveItems.selectDestinationDescription')}
+      description={
+        isMoving ? getMoveProgressMessage(completedCount) : t('pages.gallery.moveItems.selectDestinationDescription')
+      }
       confirmButtonText={t('pages.gallery.moveItems.move')}
       showNewFolderButton={true}
       onCreateFolder={onCreateFolder}
+      closeOnSelect={false}
+      isSubmitting={isMoving}
     />
   )
 }

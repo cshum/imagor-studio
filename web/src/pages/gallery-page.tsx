@@ -164,8 +164,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   } = galleryLoaderData
   const sidebar = useSidebar()
 
+  const getMoveProgressMessage = (completed: number, total: number) =>
+    `${t('pages.gallery.moveItems.move')}... (${completed}/${total})`
+
   // Drag and drop functionality
   const handleDropItems = async (items: DragItem[], targetFolderKey: string) => {
+    const toastId = toast.loading(getMoveProgressMessage(0, items.length))
     try {
       let successCount = 0
       let failCount = 0
@@ -184,11 +188,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
           await moveFile(item.key, newPath, spaceKey)
           successCount++
+          toast.loading(getMoveProgressMessage(successCount + failCount, items.length), { id: toastId })
         } catch (error: unknown) {
           if (hasErrorCode(error, 'FILE_ALREADY_EXISTS')) {
             hasFileExistsError = true
           }
           failCount++
+          toast.loading(getMoveProgressMessage(successCount + failCount, items.length), { id: toastId })
         }
       }
 
@@ -200,7 +206,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
       // Show result toast
       if (failCount === 0 && successCount > 0) {
-        toast.success(t('pages.gallery.dragDrop.moveSuccess', { count: successCount }))
+        toast.success(t('pages.gallery.dragDrop.moveSuccess', { count: successCount }), {
+          id: toastId,
+        })
       } else if (successCount > 0) {
         const message = hasFileExistsError
           ? t('pages.gallery.dragDrop.fileExists')
@@ -208,15 +216,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
               success: successCount,
               failed: failCount,
             })
-        toast.warning(message)
+        toast.warning(message, { id: toastId })
       } else if (failCount > 0) {
         const message = hasFileExistsError
           ? t('pages.gallery.dragDrop.fileExists')
           : t('pages.gallery.dragDrop.moveError')
-        toast.error(message)
+        toast.error(message, { id: toastId })
       }
     } catch {
-      toast.error(t('pages.gallery.dragDrop.moveError'))
+      toast.error(t('pages.gallery.dragDrop.moveError'), { id: toastId })
     }
   }
 
