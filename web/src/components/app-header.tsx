@@ -161,7 +161,7 @@ export function AppHeader({
         <div className='flex min-h-10 items-center justify-between gap-3'>
           <div className='min-w-0 flex-1'>{leftContent}</div>
 
-          <div className='-mr-1 flex shrink-0 items-center space-x-1'>
+          <div className='-mr-1 flex shrink-0 items-center space-x-2'>
             <ModeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

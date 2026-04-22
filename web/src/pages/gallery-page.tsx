@@ -9,7 +9,6 @@ import {
   Clock,
   FileText,
   FolderPlus,
-  Paintbrush,
   Search,
   Settings,
   Upload,
