@@ -60,6 +60,7 @@ import { getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
 import { hasErrorCode } from '@/lib/error-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
+import { moveGalleryItems } from '@/lib/gallery-move'
 import { joinImagePath } from '@/lib/path-utils'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
@@ -171,32 +172,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const handleDropItems = async (items: DragItem[], targetFolderKey: string) => {
     const toastId = toast.loading(getMoveProgressMessage(0, items.length))
     try {
-      let successCount = 0
-      let failCount = 0
-      let hasFileExistsError = false
-
-      // Move all items sequentially
-      for (const item of items) {
-        try {
-          const itemName = item.key.split('/').filter(Boolean).pop() || ''
-          const newPath = targetFolderKey ? `${targetFolderKey}/${itemName}` : itemName
-
-          // Skip if source and destination are the same
-          if (item.key === newPath) {
-            continue
-          }
-
-          await moveFile(item.key, newPath, spaceKey)
-          successCount++
-          toast.loading(getMoveProgressMessage(successCount + failCount, items.length), { id: toastId })
-        } catch (error: unknown) {
-          if (hasErrorCode(error, 'FILE_ALREADY_EXISTS')) {
-            hasFileExistsError = true
-          }
-          failCount++
-          toast.loading(getMoveProgressMessage(successCount + failCount, items.length), { id: toastId })
-        }
-      }
+      const { successCount, failCount, hasFileExistsError } = await moveGalleryItems({
+        items: items.map((item) => ({
+          key: item.key,
+          type: item.type === 'folder' ? 'folder' : 'file',
+        })),
+        destinationPath: targetFolderKey,
+        spaceKey,
+        onProgress: ({ completedCount }) => {
+          toast.loading(getMoveProgressMessage(completedCount, items.length), { id: toastId })
+        },
+      })
 
       // Clear selection after move
       selection.clearSelection()

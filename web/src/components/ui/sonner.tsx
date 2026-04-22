@@ -1,5 +1,5 @@
-import { Toaster as Sonner } from 'sonner'
 import { LoaderCircle } from 'lucide-react'
+import { Toaster as Sonner } from 'sonner'
 
 import { useTheme } from '@/stores/theme-store'
 

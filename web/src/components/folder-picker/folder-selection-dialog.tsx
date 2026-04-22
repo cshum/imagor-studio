@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { FolderPlus } from 'lucide-react'
 
 import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-picker-node.tsx'
-import { Button } from '@/components/ui/button.tsx'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
+import { Button } from '@/components/ui/button.tsx'
 import {
   Dialog,
   DialogContent,
@@ -286,7 +286,11 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
             <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               {t('common.buttons.cancel')}
             </Button>
-            <ButtonWithLoading onClick={handleSelect} isLoading={isSubmitting} disabled={selectedPath === null}>
+            <ButtonWithLoading
+              onClick={handleSelect}
+              isLoading={isSubmitting}
+              disabled={selectedPath === null}
+            >
               {buttonText}
             </ButtonWithLoading>
           </div>
