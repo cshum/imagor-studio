@@ -41,3 +41,11 @@ export function splitImagePath(imagePath: string): { galleryKey: string; imageKe
     imageKey: imagePath.substring(lastSlashIndex + 1),
   }
 }
+
+/**
+ * Normalize a directory path for routing and path comparisons.
+ * Folder identity helpers can still add a trailing slash separately when needed.
+ */
+export function normalizeDirectoryPath(path: string): string {
+  return path.replace(/\/+$/, '')
+}

@@ -2,6 +2,7 @@ import { getSystemRegistry } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { createStore } from '@/lib/create-store'
+import { normalizeDirectoryPath } from '@/lib/path-utils'
 
 export interface FolderNode {
   name: string
@@ -367,7 +368,7 @@ export const loadRootFolders = async (spaceKey?: string) => {
 
     const folders: FolderNode[] = result.items.map((item) => ({
       name: item.name,
-      path: item.path,
+      path: normalizeDirectoryPath(item.path),
       isDirectory: item.isDirectory,
       isLoaded: false,
       isExpanded: false,
@@ -399,7 +400,7 @@ export const loadFolderChildren = async (
 
     const children: FolderNode[] = result.items.map((item) => ({
       name: item.name,
-      path: item.path,
+      path: normalizeDirectoryPath(item.path),
       isDirectory: item.isDirectory,
       children: [], // Initialize with empty array - will be populated when folder is expanded
       isLoaded: false,

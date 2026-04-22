@@ -353,8 +353,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
     // Normal navigation
     return navigate({
-      to: '/gallery/$galleryKey',
-      params: { galleryKey: folderGalleryKey },
+      to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+      params: spaceKey
+        ? { spaceKey, galleryKey: folderGalleryKey }
+        : { galleryKey: folderGalleryKey },
     })
   }
 

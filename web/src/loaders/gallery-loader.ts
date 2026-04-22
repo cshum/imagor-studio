@@ -8,6 +8,7 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { hasExtension } from '@/lib/file-extensions.ts'
+import { normalizeDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
 import { getAuth } from '@/stores/auth-store.ts'
 import { FolderNode, folderTreeStore, updateTreeData } from '@/stores/folder-tree-store.ts'
@@ -160,7 +161,7 @@ export const galleryLoader = async ({
   const folders: Gallery[] = result.items
     .filter((item) => item.isDirectory)
     .map((item) => ({
-      galleryKey: item.path,
+      galleryKey: normalizeDirectoryPath(item.path),
       galleryName: item.name,
     }))
 
