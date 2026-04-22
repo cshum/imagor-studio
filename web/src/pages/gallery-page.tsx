@@ -325,8 +325,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       if (galleryKey) {
         return navigate({
           to: spaceKey
-            ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
-            : '/gallery/$galleryKey/$imageKey/editor',
+            ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
+            : '/f/$galleryKey/$imageKey/editor',
           params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
         })
       } else {
@@ -351,8 +351,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     } else {
       return navigate({
         to: spaceKey
-          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
-          : '/gallery/$galleryKey/$imageKey',
+          ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
+          : '/f/$galleryKey/$imageKey',
         params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     }
@@ -373,7 +373,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
     // Normal navigation
     return navigate({
-      to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+      to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
       params: spaceKey
         ? { spaceKey, galleryKey: folderGalleryKey }
         : { galleryKey: folderGalleryKey },
@@ -454,8 +454,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     if (galleryKey) {
       navigate({
         to: spaceKey
-          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
-          : '/gallery/$galleryKey/$imageKey/editor',
+            ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
+            : '/f/$galleryKey/$imageKey/editor',
         params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     } else if (spaceKey) {

@@ -68,8 +68,8 @@ export function ImagePage({
     } else {
       navigate({
         to: spaceKey
-          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
-          : '/gallery/$galleryKey/$imageKey',
+          ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
+          : '/f/$galleryKey/$imageKey',
         params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     }
@@ -84,7 +84,7 @@ export function ImagePage({
       })
     } else {
       navigate({
-        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
         params: spaceKey ? { spaceKey, galleryKey } : { galleryKey },
       })
     }
@@ -117,8 +117,8 @@ export function ImagePage({
         router.preloadRoute({
           to: galleryKey
             ? spaceKey
-              ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
-              : '/gallery/$galleryKey/$imageKey'
+              ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
+              : '/f/$galleryKey/$imageKey'
             : spaceKey
               ? '/spaces/$spaceKey/$imageKey'
               : '/$imageKey',
@@ -147,8 +147,8 @@ export function ImagePage({
         } else {
           navigate({
             to: spaceKey
-              ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey'
-              : '/gallery/$galleryKey/$imageKey',
+              ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
+              : '/f/$galleryKey/$imageKey',
             params: spaceKey
               ? { spaceKey, galleryKey, imageKey: nextImage.imageKey }
               : { galleryKey, imageKey: nextImage.imageKey },

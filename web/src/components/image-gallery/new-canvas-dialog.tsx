@@ -67,7 +67,7 @@ export function NewCanvasDialog({ open, onOpenChange, galleryKey }: NewCanvasDia
       })
     } else if (galleryKey) {
       navigate({
-        to: '/gallery/$galleryKey/editor/new',
+        to: '/f/$galleryKey/editor/new',
         params: { galleryKey },
         search: { color: colorValue, w: width, h: height },
       })

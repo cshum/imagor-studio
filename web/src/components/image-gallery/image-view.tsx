@@ -334,8 +334,8 @@ export function ImageView({
     } else if (galleryKey) {
       navigate({
         to: spaceKey
-          ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
-          : '/gallery/$galleryKey/$imageKey/editor',
+          ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
+          : '/f/$galleryKey/$imageKey/editor',
         params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     } else {
