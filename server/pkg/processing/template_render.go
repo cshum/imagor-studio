@@ -43,7 +43,7 @@ type TemplatePreviewRenderClient interface {
 }
 
 type HTTPTemplatePreviewRenderClient struct {
-	baseURL           string
+	baseURLTemplate   string
 	internalAPISecret string
 	httpClient        *http.Client
 }
@@ -55,7 +55,7 @@ func NewHTTPTemplatePreviewRenderClient(baseURL, internalAPISecret string) *HTTP
 	}
 
 	return &HTTPTemplatePreviewRenderClient{
-		baseURL:           trimmed,
+		baseURLTemplate:   trimmed,
 		internalAPISecret: internalAPISecret,
 		httpClient: &http.Client{
 			Timeout: 15 * time.Second,
@@ -64,8 +64,12 @@ func NewHTTPTemplatePreviewRenderClient(baseURL, internalAPISecret string) *HTTP
 }
 
 func (c *HTTPTemplatePreviewRenderClient) RenderTemplatePreview(ctx context.Context, req TemplatePreviewRenderRequest) (*TemplatePreviewRenderResponse, error) {
-	if c == nil || c.baseURL == "" {
+	if c == nil || c.baseURLTemplate == "" {
 		return nil, fmt.Errorf("template preview render client is not configured")
+	}
+	baseURL, err := c.resolveBaseURL(req.SpaceKey)
+	if err != nil {
+		return nil, err
 	}
 
 	body, err := json.Marshal(req)
@@ -73,7 +77,7 @@ func (c *HTTPTemplatePreviewRenderClient) RenderTemplatePreview(ctx context.Cont
 		return nil, fmt.Errorf("marshal render request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+InternalTemplatePreviewRenderPath, strings.NewReader(string(body)))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+InternalTemplatePreviewRenderPath, strings.NewReader(string(body)))
 	if err != nil {
 		return nil, fmt.Errorf("create render request: %w", err)
 	}
@@ -98,6 +102,20 @@ func (c *HTTPTemplatePreviewRenderClient) RenderTemplatePreview(ctx context.Cont
 	}
 
 	return &result, nil
+}
+
+func (c *HTTPTemplatePreviewRenderClient) resolveBaseURL(spaceKey string) (string, error) {
+	if c == nil || c.baseURLTemplate == "" {
+		return "", fmt.Errorf("template preview render client is not configured")
+	}
+	if (strings.Contains(c.baseURLTemplate, "{spaceKey}") || strings.Contains(c.baseURLTemplate, "{{spaceKey}}")) && strings.TrimSpace(spaceKey) == "" {
+		return "", fmt.Errorf("space key is required to resolve processing base URL")
+	}
+	baseURL := ResolveProcessingBaseURL(c.baseURLTemplate, spaceKey)
+	if baseURL == "" {
+		return "", fmt.Errorf("template preview render client is not configured")
+	}
+	return baseURL, nil
 }
 
 func ResolveProcessingBaseURL(template, spaceKey string) string {

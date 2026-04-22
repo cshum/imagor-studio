@@ -289,52 +289,37 @@ func TestSaveTemplate(t *testing.T) {
 	})
 }
 
-func TestGenerateTemplatePreview_UsesSpaceAwareURL(t *testing.T) {
-	mockImagorProvider := new(MockImagorProvider)
-	logger, _ := zap.NewDevelopment()
-	resolver := NewResolver(nil, nil, nil, mockImagorProvider, &config.Config{}, nil, logger, nil, nil, nil, nil,
-		WithProcessingOriginResolver(processingOriginResolverStub("")),
-	)
-
+func TestLocalTemplatePreviewRenderClient(t *testing.T) {
 	previewBytes := []byte("preview-image")
 	var requestedPath string
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	renderer := newLocalTemplatePreviewRenderClient(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestedPath = r.URL.Path
+		w.Header().Set("Content-Type", "image/webp")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(previewBytes)
-	}))
-	defer server.Close()
+	}), func(imagePath string, req processing.TemplatePreviewRenderRequest) (string, error) {
+		assert.Equal(t, "test.jpg", imagePath)
+		assert.Equal(t, "demo", req.SpaceKey)
+		return "/unsafe/300x225/test.jpg", nil
+	})
 
-	resolver.processingOriginResolver = processingOriginResolverStub(server.URL)
-	mockImagorProvider.On("Imagor").Return(nil).Once()
-
-	spaceKey := "demo"
-	spaceConfig := &space.Space{
-		Key:             spaceKey,
-		ImagorSecret:    "demo-secret",
-		SignerAlgorithm: "sha256",
-	}
-
-	result, err := resolver.Mutation().(*mutationResolver).generateTemplatePreview(
-		context.Background(),
-		"test.jpg",
-		`{"version":"1.0","transformations":{"width":800,"height":600}}`,
-		derivePreviewParamsFromTemplateJSON(`{"version":"1.0","transformations":{"width":800,"height":600}}`),
-		spaceConfig,
-		&spaceKey,
-	)
+	result, err := renderer.RenderTemplatePreview(context.Background(), processing.TemplatePreviewRenderRequest{
+		SpaceKey:        "demo",
+		SourceImagePath: "test.jpg",
+	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, previewBytes, result)
-	assert.Contains(t, requestedPath, "test.jpg")
-	assert.NotEmpty(t, requestedPath)
-	mockImagorProvider.AssertExpectations(t)
+	assert.NotNil(t, result)
+	assert.Equal(t, previewBytes, result.Image)
+	assert.Equal(t, "image/webp", result.ContentType)
+	assert.Equal(t, "/unsafe/300x225/test.jpg", requestedPath)
 }
 
 func TestGenerateTemplatePreview_UsesInternalRendererWhenConfigured(t *testing.T) {
 	mockRenderer := new(MockTemplatePreviewRenderClient)
 	mockImagorProvider := new(MockImagorProvider)
+	mockImagorProvider.On("Imagor").Return(nil).Once()
 	logger, _ := zap.NewDevelopment()
 	resolver := NewResolver(nil, nil, nil, mockImagorProvider, &config.Config{}, nil, logger, nil, nil, nil, nil,
 		WithTemplatePreviewRenderer(mockRenderer),

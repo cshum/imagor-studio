@@ -93,8 +93,8 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	if mode == ModeCloud && multiTenant {
 		if cloudFactories.TemplatePreviewRenderer != nil {
 			templatePreviewRenderer = resolver.WithTemplatePreviewRenderer(cloudFactories.TemplatePreviewRenderer(cloudConfig))
-		} else if baseURL := processing.ResolveProcessingBaseURL(cloudConfig.ProcessingURLTemplate, ""); baseURL != "" {
-			templatePreviewRenderer = resolver.WithTemplatePreviewRenderer(processing.NewHTTPTemplatePreviewRenderClient(baseURL, cloudConfig.InternalAPISecret))
+		} else if strings.TrimSpace(cloudConfig.ProcessingURLTemplate) != "" {
+			templatePreviewRenderer = resolver.WithTemplatePreviewRenderer(processing.NewHTTPTemplatePreviewRenderClient(cloudConfig.ProcessingURLTemplate, cloudConfig.InternalAPISecret))
 		}
 	}
 
@@ -110,6 +110,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.SpaceStore,
 		services.SpaceInviteStore,
 		services.InviteSender,
+		resolver.WithLocalTemplatePreviewRenderer(),
 		resolver.WithCloudConfig(cloudConfig),
 		resolver.WithProcessingOriginResolver(processingOriginResolver),
 		templatePreviewRenderer,

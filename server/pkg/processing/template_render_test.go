@@ -47,6 +47,17 @@ func TestHTTPTemplatePreviewRenderClient_Success(t *testing.T) {
 	assert.Equal(t, "image/webp", result.ContentType)
 }
 
+func TestHTTPTemplatePreviewRenderClient_ResolvesBaseURLPerRequest(t *testing.T) {
+	client := NewHTTPTemplatePreviewRenderClient("https://{spaceKey}.processing.example.test", "secret")
+
+	baseURL, err := client.resolveBaseURL("demo")
+	require.NoError(t, err)
+	assert.Equal(t, "https://demo.processing.example.test", baseURL)
+
+	_, err = client.resolveBaseURL("")
+	assert.ErrorContains(t, err, "space key is required")
+}
+
 func TestHTTPTemplatePreviewRenderClient_Errors(t *testing.T) {
 	t.Run("unconfigured client", func(t *testing.T) {
 		var client *HTTPTemplatePreviewRenderClient

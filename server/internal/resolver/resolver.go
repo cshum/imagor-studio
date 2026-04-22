@@ -84,6 +84,18 @@ func WithTemplatePreviewRenderer(renderer processing.TemplatePreviewRenderClient
 	}
 }
 
+func WithLocalTemplatePreviewRenderer() ResolverOption {
+	return func(r *Resolver) {
+		if r.imagorProvider == nil {
+			return
+		}
+
+		r.templatePreviewRenderer = newLocalTemplatePreviewRenderClient(r.imagorProvider.Imagor(), func(imagePath string, req processing.TemplatePreviewRenderRequest) (string, error) {
+			return r.imagorProvider.GenerateURL(imagePath, req.PreviewParams)
+		})
+	}
+}
+
 func NewResolver(
 	storageProvider StorageProvider,
 	registryStore registrystore.Store,

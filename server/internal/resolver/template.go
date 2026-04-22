@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
-	"net/http/httptest"
 	"regexp"
 	"strings"
 
@@ -157,11 +155,16 @@ func derivePreviewParamsFromTemplateJSON(templateJSON string) imagorpath.Params 
 
 // generateTemplatePreview generates a preview image for the template using Imagor.
 func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceImagePath, templateJSON string, params imagorpath.Params, spaceConfig *space.Space, spaceKey *string) ([]byte, error) {
-	if r.templatePreviewRenderer != nil && spaceKey != nil {
-		r.logger.Debug("Generating preview using internal processing renderer")
+	if r.templatePreviewRenderer != nil {
+		r.logger.Debug("Generating preview using configured template preview renderer")
+
+		resolvedSpaceKey := ""
+		if spaceKey != nil {
+			resolvedSpaceKey = *spaceKey
+		}
 
 		result, err := r.templatePreviewRenderer.RenderTemplatePreview(ctx, processing.TemplatePreviewRenderRequest{
-			SpaceKey:        *spaceKey,
+			SpaceKey:        resolvedSpaceKey,
 			SourceImagePath: sourceImagePath,
 			TemplateJSON:    templateJSON,
 			PreviewParams:   params,
@@ -176,69 +179,7 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 		return result.Image, nil
 	}
 
-	var imageData []byte
-
-	// Check if we're in embedded mode
-	if imagorInstance := r.imagorProvider.Imagor(); imagorInstance != nil {
-		// EMBEDDED MODE: Use ServeHTTP directly for in-process handling
-		r.logger.Debug("Generating preview using embedded Imagor instance")
-
-		// Generate properly signed URL using GenerateURL (respects configuration)
-		imagorURL, err := r.generateImagorURLForSpaceConfig(sourceImagePath, params, spaceConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate imagor URL: %w", err)
-		}
-
-		r.logger.Debug("Calling ServeHTTP for preview", zap.String("path", imagorURL))
-
-		// Create HTTP request and response recorder
-		req, err := http.NewRequestWithContext(ctx, "GET", imagorURL, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create request: %w", err)
-		}
-
-		recorder := httptest.NewRecorder()
-
-		// Call ServeHTTP directly (in-process, no network overhead)
-		imagorInstance.ServeHTTP(recorder, req)
-
-		if recorder.Code != http.StatusOK {
-			return nil, fmt.Errorf("imagor returned status %d", recorder.Code)
-		}
-
-		imageData = recorder.Body.Bytes()
-	} else {
-		// EXTERNAL MODE: Use HTTP request
-		r.logger.Debug("Generating preview using external Imagor service")
-
-		imagorURL, err := r.generateImagorURLForSpaceConfig(sourceImagePath, params, spaceConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate imagor URL: %w", err)
-		}
-		imagorURL = absolutizeURL(r.processingOriginForSpace(ctx, spaceKey), imagorURL)
-
-		r.logger.Debug("Fetching preview image", zap.String("url", imagorURL))
-
-		resp, err := http.Get(imagorURL)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch preview image: %w", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("imagor returned status %d", resp.StatusCode)
-		}
-
-		imageData, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read preview image: %w", err)
-		}
-	}
-
-	r.logger.Debug("Preview image generated successfully",
-		zap.Int("size", len(imageData)))
-
-	return imageData, nil
+	return nil, fmt.Errorf("template preview renderer is not configured")
 }
 
 // RegenerateTemplatePreview regenerates the preview image for an existing template.
