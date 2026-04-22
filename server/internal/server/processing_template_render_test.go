@@ -66,6 +66,64 @@ func TestProcessingTemplatePreviewRenderHandler_Unauthorized(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }
 
+func TestProcessingTemplatePreviewRenderHandler_Errors(t *testing.T) {
+	t.Run("method not allowed", func(t *testing.T) {
+		handler := newProcessingTemplatePreviewRenderHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), processingTestSpaceConfigReader{}, "imagor.test", "secret", zap.NewNop())
+		req := httptest.NewRequest(http.MethodGet, sharedprocessing.InternalTemplatePreviewRenderPath, nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
+	})
+
+	t.Run("bad request body", func(t *testing.T) {
+		handler := newProcessingTemplatePreviewRenderHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), processingTestSpaceConfigReader{}, "imagor.test", "secret", zap.NewNop())
+		req := httptest.NewRequest(http.MethodPost, sharedprocessing.InternalTemplatePreviewRenderPath, strings.NewReader("{"))
+		req.Header.Set(sharedprocessing.InternalAPISecretHeader, "secret")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
+	t.Run("missing fields", func(t *testing.T) {
+		for _, tc := range []sharedprocessing.TemplatePreviewRenderRequest{
+			{SourceImagePath: "test.jpg"},
+			{SpaceKey: "demo"},
+		} {
+			body, _ := json.Marshal(tc)
+			handler := newProcessingTemplatePreviewRenderHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), processingTestSpaceConfigReader{}, "imagor.test", "secret", zap.NewNop())
+			req := httptest.NewRequest(http.MethodPost, sharedprocessing.InternalTemplatePreviewRenderPath, strings.NewReader(string(body)))
+			req.Header.Set(sharedprocessing.InternalAPISecretHeader, "secret")
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req)
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
+		}
+	})
+
+	t.Run("space not found", func(t *testing.T) {
+		body, _ := json.Marshal(sharedprocessing.TemplatePreviewRenderRequest{SpaceKey: "demo", SourceImagePath: "test.jpg"})
+		handler := newProcessingTemplatePreviewRenderHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), processingTestSpaceConfigReader{spaces: map[string]sharedprocessing.SpaceConfig{}}, "imagor.test", "secret", zap.NewNop())
+		req := httptest.NewRequest(http.MethodPost, sharedprocessing.InternalTemplatePreviewRenderPath, strings.NewReader(string(body)))
+		req.Header.Set(sharedprocessing.InternalAPISecretHeader, "secret")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("imagor error", func(t *testing.T) {
+		spaceConfig := &processingTestSpaceConfig{key: "demo", signerAlgorithm: "sha256", signerTruncate: 32, imagorSecret: "secret"}
+		store := processingTestSpaceConfigReader{spaces: map[string]sharedprocessing.SpaceConfig{"demo": spaceConfig}}
+		body, _ := json.Marshal(sharedprocessing.TemplatePreviewRenderRequest{SpaceKey: "demo", SourceImagePath: "test.jpg"})
+		handler := newProcessingTemplatePreviewRenderHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}), store, "imagor.test", "secret", zap.NewNop())
+		req := httptest.NewRequest(http.MethodPost, sharedprocessing.InternalTemplatePreviewRenderPath, strings.NewReader(string(body)))
+		req.Header.Set(sharedprocessing.InternalAPISecretHeader, "secret")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusBadGateway, rec.Code)
+	})
+}
+
 func TestProcessingTemplatePreviewRenderHandler_Success(t *testing.T) {
 	spaceConfig := &processingTestSpaceConfig{key: "demo", signerAlgorithm: "sha256", signerTruncate: 32, imagorSecret: "secret"}
 	store := processingTestSpaceConfigReader{spaces: map[string]sharedprocessing.SpaceConfig{"demo": spaceConfig}}
@@ -113,4 +171,12 @@ func TestProcessingRenderHost(t *testing.T) {
 	host, err = processingRenderHost("demo", &processingTestSpaceConfig{key: "demo", customDomain: "images.demo.test"}, "")
 	assert.NoError(t, err)
 	assert.Equal(t, "images.demo.test", host)
+
+	_, err = processingRenderHost("demo", &processingTestSpaceConfig{key: "demo"}, "")
+	assert.Error(t, err)
+}
+
+func TestGenerateProcessingImagorPath_Errors(t *testing.T) {
+	_, err := generateProcessingImagorPath("test.jpg", imagorpath.Params{}, &processingTestSpaceConfig{key: "demo"})
+	assert.ErrorContains(t, err, "has no imagor secret")
 }
