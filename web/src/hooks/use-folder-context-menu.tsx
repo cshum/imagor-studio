@@ -168,7 +168,7 @@ export function useFolderContextMenu({
   const handleOpen = (folderKey: string) => {
     // Navigate to the folder
     navigate({
-      to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+      to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
       params: spaceKey ? { spaceKey, galleryKey: folderKey } : { galleryKey: folderKey },
     })
 

@@ -55,7 +55,7 @@ export function FolderTreeNode({
       })
     } else {
       navigate({
-        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
         params: spaceKey ? { spaceKey, galleryKey: folder.path } : { galleryKey: folder.path },
       })
     }

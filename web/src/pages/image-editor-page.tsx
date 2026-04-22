@@ -340,7 +340,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
     const galleryKey = pathGalleryKey || propGalleryKey || ''
     if (galleryKey) {
       await navigate({
-        to: spaceKey ? '/spaces/$spaceKey/gallery/$galleryKey' : '/gallery/$galleryKey',
+        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
         params: spaceKey ? { spaceKey, galleryKey } : { galleryKey },
       })
     } else {
@@ -976,8 +976,8 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
           navigate({
             to: templateGalleryKey
               ? spaceKey
-                ? '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor'
-                : '/gallery/$galleryKey/$imageKey/editor'
+                ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
+                : '/f/$galleryKey/$imageKey/editor'
               : spaceKey
                 ? '/spaces/$spaceKey/$imageKey/editor'
                 : '/$imageKey/editor',

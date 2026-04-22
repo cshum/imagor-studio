@@ -185,7 +185,7 @@ const rootImageEditorRoute = createRoute({
 
 const galleryRoute = createRoute({
   getParentRoute: () => baseLayoutRoute,
-  path: '/gallery/$galleryKey',
+  path: '/f/$galleryKey',
   component: () => {
     const galleryLoaderData = galleryRoute.useLoaderData()
     const { galleryKey } = galleryRoute.useParams()
@@ -232,7 +232,7 @@ const canvasEditorRoute = createRoute({
 
 const galleryCanvasEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/gallery/$galleryKey/editor/new',
+  path: '/f/$galleryKey/editor/new',
   beforeLoad: requireImageEditorAuth,
   loader: ({ location }) => canvasEditorLoader({ search: location.searchStr }),
   shouldReload: false,
@@ -245,7 +245,7 @@ const galleryCanvasEditorRoute = createRoute({
 
 const galleryImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/gallery/$galleryKey/$imageKey/editor',
+  path: '/f/$galleryKey/$imageKey/editor',
   beforeLoad: requireImageEditorAuth,
   loader: ({ params }) => imageEditorLoader({ params }),
   shouldReload: false,
@@ -294,10 +294,10 @@ const spaceRootImagePage = createRoute({
   },
 })
 
-// /spaces/$spaceKey/gallery/$galleryKey  →  nested folder inside a space
+// /spaces/$spaceKey/f/$galleryKey  →  nested folder inside a space
 const spaceGalleryRoute = createRoute({
   getParentRoute: () => baseLayoutRoute,
-  path: '/spaces/$spaceKey/gallery/$galleryKey',
+  path: '/spaces/$spaceKey/f/$galleryKey',
   component: () => {
     const galleryLoaderData = spaceGalleryRoute.useLoaderData()
     const { galleryKey } = spaceGalleryRoute.useParams()
@@ -311,7 +311,7 @@ const spaceGalleryRoute = createRoute({
   shouldReload: false,
 })
 
-// /spaces/$spaceKey/gallery/$galleryKey/$imageKey  →  image inside nested folder
+// /spaces/$spaceKey/f/$galleryKey/$imageKey  →  image inside nested folder
 const spaceImagePage = createRoute({
   getParentRoute: () => spaceGalleryRoute,
   path: '/$imageKey',
@@ -344,10 +344,10 @@ const spaceImageEditorRoute = createRoute({
   },
 })
 
-// /spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor  →  image editor inside a space folder
+// /spaces/$spaceKey/f/$galleryKey/$imageKey/editor  →  image editor inside a space folder
 const spaceGalleryImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey/gallery/$galleryKey/$imageKey/editor',
+  path: '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor',
   beforeLoad: requireImageEditorAuth,
   loader: ({ params }) => imageEditorLoader({ params }),
   shouldReload: false,
