@@ -28,6 +28,7 @@ type Space {
   isShared: Boolean!
   signerAlgorithm: String!
   signerTruncate: Int!
+  imagorCORSOrigins: String!
   canManage: Boolean!
   canDelete: Boolean!
   canLeave: Boolean!
@@ -51,6 +52,7 @@ input SpaceInput {
   signerAlgorithm: String
   signerTruncate: Int
   imagorSecret: String
+  imagorCORSOrigins: String
 }
 
 # OrgMember represents a user's membership in an organization.

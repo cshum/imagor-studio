@@ -49,6 +49,7 @@ func mapSpaceToGQL(s *space.Space) *gql.Space {
 		IsShared:             s.IsShared,
 		SignerAlgorithm:      s.SignerAlgorithm,
 		SignerTruncate:       s.SignerTruncate,
+		ImagorCORSOrigins:    s.ImagorCORSOrigins,
 		CanManage:            false,
 		CanDelete:            false,
 		CanLeave:             false,
@@ -385,6 +386,9 @@ func applySpaceInput(sp *space.Space, input gql.SpaceInput) error {
 	}
 	if input.ImagorSecret != nil {
 		sp.ImagorSecret = *input.ImagorSecret
+	}
+	if input.ImagorCORSOrigins != nil {
+		sp.ImagorCORSOrigins = strings.TrimSpace(*input.ImagorCORSOrigins)
 	}
 	return validateSpaceStorageConfig(sp)
 }

@@ -89,6 +89,7 @@ export function StorageSection({ space }: StorageSectionProps) {
           signerAlgorithm: null,
           signerTruncate: null,
           imagorSecret: null,
+          imagorCORSOrigins: null,
         },
       })
       rememberSpacePropagationNotice({

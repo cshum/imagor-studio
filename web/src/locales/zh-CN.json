@@ -20,6 +20,10 @@
     "buttons": {
       "save": "保存",
       "cancel": "取消",
+        "corsOrigins": "附加允许来源",
+        "corsOriginsDescription": "允许此空间的额外浏览器来源访问 imagor 响应。来自 APP_URL 的前端来源会自动放行。",
+        "corsOriginsHelp": "逗号分隔的来源，例如 https://editor.customer.test,https://cms.customer.test。",
+        "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
       "delete": "删除",
       "remove": "移除",
       "edit": "编辑",

@@ -918,6 +918,10 @@
         "algorithmSha512": "SHA-512 — 最高安全性",
         "signerTruncate": "簽名截斷",
         "signerTruncateDescription": "將 HMAC 簽名截斷為此字元數（0 = 完整長度）。",
+        "corsOrigins": "額外允許來源",
+        "corsOriginsDescription": "允許此空間的額外瀏覽器來源存取 imagor 回應。來自 APP_URL 的前端來源會自動允許。",
+        "corsOriginsHelp": "以逗號分隔的來源，例如 https://editor.customer.test,https://cms.customer.test。",
+        "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
         "saved": "安全設定已儲存"
       },
       "spaceSettings": "空間設定",

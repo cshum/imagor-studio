@@ -396,6 +396,7 @@ export function CreateSpacePage() {
           signerAlgorithm: null,
           signerTruncate: null,
           imagorSecret: null,
+          imagorCORSOrigins: null,
         },
       })
       rememberSpacePropagationNotice({

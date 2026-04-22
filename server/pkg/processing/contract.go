@@ -31,6 +31,7 @@ type SpaceConfig interface {
 	GetSignerAlgorithm() string
 	GetSignerTruncate() int
 	GetImagorSecret() string
+	GetImagorCORSOrigins() []string
 }
 
 type SpaceConfigReader interface {

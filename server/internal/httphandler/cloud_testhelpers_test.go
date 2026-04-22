@@ -143,7 +143,7 @@ func newTestSpaceStore(db *bun.DB) space.SpaceStore {
 
 func (s *testSpaceStore) Create(ctx context.Context, sp *space.Space) error {
 	now := time.Now().UTC()
-	row := &model.Space{ID: uuid.GenerateUUID(), OrgID: sp.OrgID, Key: sp.Key, Name: sp.Name, StorageType: sp.StorageType, Bucket: sp.Bucket, Prefix: sp.Prefix, Region: sp.Region, Endpoint: sp.Endpoint, AccessKeyID: sp.AccessKeyID, SecretKey: sp.SecretKey, UsePathStyle: sp.UsePathStyle, CustomDomain: sp.CustomDomain, CustomDomainVerified: sp.CustomDomainVerified, Suspended: sp.Suspended, IsShared: sp.IsShared, SignerAlgorithm: sp.SignerAlgorithm, SignerTruncate: sp.SignerTruncate, ImagorSecret: sp.ImagorSecret, CreatedAt: now, UpdatedAt: now}
+	row := &model.Space{ID: uuid.GenerateUUID(), OrgID: sp.OrgID, Key: sp.Key, Name: sp.Name, StorageType: sp.StorageType, Bucket: sp.Bucket, Prefix: sp.Prefix, Region: sp.Region, Endpoint: sp.Endpoint, AccessKeyID: sp.AccessKeyID, SecretKey: sp.SecretKey, UsePathStyle: sp.UsePathStyle, CustomDomain: sp.CustomDomain, CustomDomainVerified: sp.CustomDomainVerified, Suspended: sp.Suspended, IsShared: sp.IsShared, SignerAlgorithm: sp.SignerAlgorithm, SignerTruncate: sp.SignerTruncate, ImagorSecret: sp.ImagorSecret, ImagorCORSOrigins: sp.ImagorCORSOrigins, CreatedAt: now, UpdatedAt: now}
 	if row.StorageType == "" {
 		row.StorageType = "s3"
 	}
@@ -185,7 +185,7 @@ func (s *testSpaceStore) Get(ctx context.Context, key string) (*space.Space, err
 		}
 		return nil, err
 	}
-	return &space.Space{ID: row.ID, OrgID: row.OrgID, Key: row.Key, Name: row.Name, StorageType: row.StorageType, Bucket: row.Bucket, Prefix: row.Prefix, Region: row.Region, Endpoint: row.Endpoint, AccessKeyID: row.AccessKeyID, SecretKey: row.SecretKey, UsePathStyle: row.UsePathStyle, CustomDomain: row.CustomDomain, CustomDomainVerified: row.CustomDomainVerified, Suspended: row.Suspended, IsShared: row.IsShared, SignerAlgorithm: row.SignerAlgorithm, SignerTruncate: row.SignerTruncate, ImagorSecret: row.ImagorSecret, UpdatedAt: row.UpdatedAt, DeletedAt: row.DeletedAt}, nil
+	return &space.Space{ID: row.ID, OrgID: row.OrgID, Key: row.Key, Name: row.Name, StorageType: row.StorageType, Bucket: row.Bucket, Prefix: row.Prefix, Region: row.Region, Endpoint: row.Endpoint, AccessKeyID: row.AccessKeyID, SecretKey: row.SecretKey, UsePathStyle: row.UsePathStyle, CustomDomain: row.CustomDomain, CustomDomainVerified: row.CustomDomainVerified, Suspended: row.Suspended, IsShared: row.IsShared, SignerAlgorithm: row.SignerAlgorithm, SignerTruncate: row.SignerTruncate, ImagorSecret: row.ImagorSecret, ImagorCORSOrigins: row.ImagorCORSOrigins, UpdatedAt: row.UpdatedAt, DeletedAt: row.DeletedAt}, nil
 }
 
 func (s *testSpaceStore) List(ctx context.Context) ([]*space.Space, error) { return nil, nil }

@@ -929,6 +929,10 @@
         "algorithmSha512": "SHA-512 — Massima sicurezza",
         "signerTruncate": "Troncamento firma",
         "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza completa).",
+        "corsOrigins": "Origini consentite aggiuntive",
+        "corsOriginsDescription": "Consenti origini browser aggiuntive per recuperare risposte imagor per questo spazio. L'origine frontend derivata da APP_URL è consentita automaticamente.",
+        "corsOriginsHelp": "Origini separate da virgola, ad esempio https://editor.customer.test,https://cms.customer.test.",
+        "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
         "saved": "Impostazioni di sicurezza salvate"
       }
     }

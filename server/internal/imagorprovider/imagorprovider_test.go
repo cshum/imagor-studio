@@ -62,6 +62,9 @@ func (c *testSpaceConfig) IsSuspended() bool          { return c.Suspended }
 func (c *testSpaceConfig) GetSignerAlgorithm() string { return c.SignerAlgorithm }
 func (c *testSpaceConfig) GetSignerTruncate() int     { return c.SignerTruncate }
 func (c *testSpaceConfig) GetImagorSecret() string    { return c.ImagorSecret }
+func (c *testSpaceConfig) GetImagorCORSOrigins() []string {
+	return nil
+}
 
 type testSpaceConfigReader struct {
 	byKey      map[string]processing.SpaceConfig

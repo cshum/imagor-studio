@@ -106,6 +106,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
           signerAlgorithm: null,
           signerTruncate: null,
           imagorSecret: null,
+          imagorCORSOrigins: null,
         },
       })
       const brandingChanges: Record<string, string> = {}

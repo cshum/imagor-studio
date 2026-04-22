@@ -26,6 +26,7 @@ type Space struct {
 	SignerAlgorithm      string
 	SignerTruncate       int
 	ImagorSecret         string
+	ImagorCORSOrigins    string
 	UpdatedAt            time.Time
 	DeletedAt            *time.Time
 }

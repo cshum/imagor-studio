@@ -580,6 +580,7 @@ export type Space = {
   customDomainVerified: Scalars['Boolean']['output']
   endpoint: Scalars['String']['output']
   id: Scalars['ID']['output']
+  imagorCORSOrigins: Scalars['String']['output']
   isShared: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   name: Scalars['String']['output']
@@ -600,6 +601,7 @@ export type SpaceInput = {
   bucket: InputMaybe<Scalars['String']['input']>
   customDomain: InputMaybe<Scalars['String']['input']>
   endpoint: InputMaybe<Scalars['String']['input']>
+  imagorCORSOrigins: InputMaybe<Scalars['String']['input']>
   imagorSecret: InputMaybe<Scalars['String']['input']>
   isShared: InputMaybe<Scalars['Boolean']['input']>
   key: Scalars['String']['input']
@@ -831,6 +833,7 @@ export type ListSpacesQuery = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    imagorCORSOrigins: string
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -862,6 +865,7 @@ export type GetSpaceQuery = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    imagorCORSOrigins: string
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -892,6 +896,7 @@ export type CreateSpaceMutation = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    imagorCORSOrigins: string
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -923,6 +928,7 @@ export type UpdateSpaceMutation = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    imagorCORSOrigins: string
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -1833,6 +1839,7 @@ export const ListSpacesDocument = gql`
       orgId
       key
       name
+      storageMode
       storageType
       bucket
       prefix
@@ -1845,6 +1852,7 @@ export const ListSpacesDocument = gql`
       isShared
       signerAlgorithm
       signerTruncate
+      imagorCORSOrigins
       canManage
       canDelete
       canLeave
@@ -1858,6 +1866,7 @@ export const GetSpaceDocument = gql`
       orgId
       key
       name
+      storageMode
       storageType
       bucket
       prefix
@@ -1870,6 +1879,7 @@ export const GetSpaceDocument = gql`
       isShared
       signerAlgorithm
       signerTruncate
+      imagorCORSOrigins
       canManage
       canDelete
       canLeave
@@ -1883,6 +1893,7 @@ export const CreateSpaceDocument = gql`
       orgId
       key
       name
+      storageMode
       storageType
       bucket
       prefix
@@ -1894,6 +1905,7 @@ export const CreateSpaceDocument = gql`
       isShared
       signerAlgorithm
       signerTruncate
+      imagorCORSOrigins
       canManage
       canDelete
       canLeave
@@ -1907,6 +1919,7 @@ export const UpdateSpaceDocument = gql`
       orgId
       key
       name
+      storageMode
       storageType
       bucket
       prefix
@@ -1918,6 +1931,7 @@ export const UpdateSpaceDocument = gql`
       isShared
       signerAlgorithm
       signerTruncate
+      imagorCORSOrigins
       canManage
       canDelete
       canLeave

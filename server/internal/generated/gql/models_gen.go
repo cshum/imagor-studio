@@ -221,6 +221,7 @@ type Space struct {
 	IsShared             bool   `json:"isShared"`
 	SignerAlgorithm      string `json:"signerAlgorithm"`
 	SignerTruncate       int    `json:"signerTruncate"`
+	ImagorCORSOrigins    string `json:"imagorCORSOrigins"`
 	CanManage            bool   `json:"canManage"`
 	CanDelete            bool   `json:"canDelete"`
 	CanLeave             bool   `json:"canLeave"`
@@ -228,22 +229,23 @@ type Space struct {
 }
 
 type SpaceInput struct {
-	Key             string  `json:"key"`
-	Name            string  `json:"name"`
-	StorageMode     *string `json:"storageMode,omitempty"`
-	StorageType     *string `json:"storageType,omitempty"`
-	Bucket          *string `json:"bucket,omitempty"`
-	Prefix          *string `json:"prefix,omitempty"`
-	Region          *string `json:"region,omitempty"`
-	Endpoint        *string `json:"endpoint,omitempty"`
-	AccessKeyID     *string `json:"accessKeyId,omitempty"`
-	SecretKey       *string `json:"secretKey,omitempty"`
-	UsePathStyle    *bool   `json:"usePathStyle,omitempty"`
-	CustomDomain    *string `json:"customDomain,omitempty"`
-	IsShared        *bool   `json:"isShared,omitempty"`
-	SignerAlgorithm *string `json:"signerAlgorithm,omitempty"`
-	SignerTruncate  *int    `json:"signerTruncate,omitempty"`
-	ImagorSecret    *string `json:"imagorSecret,omitempty"`
+	Key               string  `json:"key"`
+	Name              string  `json:"name"`
+	StorageMode       *string `json:"storageMode,omitempty"`
+	StorageType       *string `json:"storageType,omitempty"`
+	Bucket            *string `json:"bucket,omitempty"`
+	Prefix            *string `json:"prefix,omitempty"`
+	Region            *string `json:"region,omitempty"`
+	Endpoint          *string `json:"endpoint,omitempty"`
+	AccessKeyID       *string `json:"accessKeyId,omitempty"`
+	SecretKey         *string `json:"secretKey,omitempty"`
+	UsePathStyle      *bool   `json:"usePathStyle,omitempty"`
+	CustomDomain      *string `json:"customDomain,omitempty"`
+	IsShared          *bool   `json:"isShared,omitempty"`
+	SignerAlgorithm   *string `json:"signerAlgorithm,omitempty"`
+	SignerTruncate    *int    `json:"signerTruncate,omitempty"`
+	ImagorSecret      *string `json:"imagorSecret,omitempty"`
+	ImagorCORSOrigins *string `json:"imagorCORSOrigins,omitempty"`
 }
 
 type SpaceInvitation struct {

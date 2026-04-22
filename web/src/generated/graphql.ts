@@ -579,6 +579,7 @@ export type Space = {
   customDomainVerified: Scalars['Boolean']['output']
   endpoint: Scalars['String']['output']
   id: Scalars['ID']['output']
+  imagorCORSOrigins: Scalars['String']['output']
   isShared: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   name: Scalars['String']['output']
@@ -599,6 +600,7 @@ export type SpaceInput = {
   bucket: InputMaybe<Scalars['String']['input']>
   customDomain: InputMaybe<Scalars['String']['input']>
   endpoint: InputMaybe<Scalars['String']['input']>
+  imagorCORSOrigins: InputMaybe<Scalars['String']['input']>
   imagorSecret: InputMaybe<Scalars['String']['input']>
   isShared: InputMaybe<Scalars['Boolean']['input']>
   key: Scalars['String']['input']
@@ -830,6 +832,7 @@ export type ListSpacesQuery = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    imagorCORSOrigins: string
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -861,6 +864,7 @@ export type GetSpaceQuery = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    imagorCORSOrigins: string
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -891,6 +895,7 @@ export type CreateSpaceMutation = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    imagorCORSOrigins: string
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -922,6 +927,7 @@ export type UpdateSpaceMutation = {
     isShared: boolean
     signerAlgorithm: string
     signerTruncate: number
+    imagorCORSOrigins: string
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -2120,6 +2126,7 @@ export const ListSpacesDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'imagorCORSOrigins' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canManage' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canDelete' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canLeave' } },
@@ -2181,6 +2188,7 @@ export const GetSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'imagorCORSOrigins' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canManage' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canDelete' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canLeave' } },
@@ -2241,6 +2249,7 @@ export const CreateSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'imagorCORSOrigins' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canManage' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canDelete' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canLeave' } },
@@ -2314,6 +2323,7 @@ export const UpdateSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'isShared' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerAlgorithm' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'signerTruncate' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'imagorCORSOrigins' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canManage' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canDelete' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'canLeave' } },

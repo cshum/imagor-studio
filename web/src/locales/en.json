@@ -929,6 +929,10 @@
         "algorithmSha512": "SHA-512 — Maximum security",
         "signerTruncate": "Signature Truncation",
         "signerTruncateDescription": "Truncate the HMAC signature to this many characters (0 = full length).",
+        "corsOrigins": "Additional Allowed Origins",
+        "corsOriginsDescription": "Allow extra browser origins to fetch imagor responses for this space. The frontend app origin from APP_URL is allowed automatically.",
+        "corsOriginsHelp": "Comma-separated origins such as https://editor.customer.test,https://cms.customer.test.",
+        "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
         "saved": "Security settings saved"
       }
     }

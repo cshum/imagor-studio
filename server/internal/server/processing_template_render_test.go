@@ -15,11 +15,12 @@ import (
 )
 
 type processingTestSpaceConfig struct {
-	key             string
-	customDomain    string
-	signerAlgorithm string
-	signerTruncate  int
-	imagorSecret    string
+	key               string
+	customDomain      string
+	signerAlgorithm   string
+	signerTruncate    int
+	imagorSecret      string
+	imagorCORSOrigins []string
 }
 
 func (c *processingTestSpaceConfig) GetKey() string             { return c.key }
@@ -35,6 +36,9 @@ func (c *processingTestSpaceConfig) IsSuspended() bool          { return false }
 func (c *processingTestSpaceConfig) GetSignerAlgorithm() string { return c.signerAlgorithm }
 func (c *processingTestSpaceConfig) GetSignerTruncate() int     { return c.signerTruncate }
 func (c *processingTestSpaceConfig) GetImagorSecret() string    { return c.imagorSecret }
+func (c *processingTestSpaceConfig) GetImagorCORSOrigins() []string {
+	return c.imagorCORSOrigins
+}
 
 type processingTestSpaceConfigReader struct {
 	spaces map[string]sharedprocessing.SpaceConfig

@@ -37,9 +37,10 @@ type Space struct {
 	IsShared             bool   `bun:"is_shared,notnull,default:false"` // true = all org members can browse & copy
 
 	// Imagor signing
-	SignerAlgorithm string `bun:"signer_algorithm,notnull,default:'sha256'"` // "sha1" | "sha256" | "sha512"
-	SignerTruncate  int    `bun:"signer_truncate,notnull,default:32"`
-	ImagorSecret    string `bun:"imagor_secret,notnull,default:''"` // encrypted at rest
+	SignerAlgorithm   string `bun:"signer_algorithm,notnull,default:'sha256'"` // "sha1" | "sha256" | "sha512"
+	SignerTruncate    int    `bun:"signer_truncate,notnull,default:32"`
+	ImagorSecret      string `bun:"imagor_secret,notnull,default:''"` // encrypted at rest
+	ImagorCORSOrigins string `bun:"imagor_cors_origins,notnull,default:''"`
 
 	CreatedAt time.Time  `bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt time.Time  `bun:"updated_at,notnull,default:current_timestamp"`

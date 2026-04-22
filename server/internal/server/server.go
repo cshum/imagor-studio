@@ -225,23 +225,28 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		return nil, err
 	}
 
-	// Configure CORS — if CORSOrigins is set, restrict to those specific origins.
-	// Empty string (default) keeps the open wildcard ("*") behaviour.
-	corsConfig := middleware.DefaultCORSConfig()
-	if cfg.CORSOrigins != "" {
-		allowedOrigins := strings.Split(cfg.CORSOrigins, ",")
-		for i, o := range allowedOrigins {
-			allowedOrigins[i] = strings.TrimSpace(o)
-		}
-		corsConfig.AllowedOrigins = allowedOrigins
-	}
+	baseHandler := middleware.ErrorMiddleware(services.Logger)(mux)
 
-	// Apply global middleware to the entire mux
-	h := middleware.CORSMiddleware(corsConfig)(
-		middleware.ErrorMiddleware(services.Logger)(
-			mux,
-		),
-	)
+	var h http.Handler
+	if services.SpaceConfigStore != nil {
+		baseDomain := ""
+		if services.ProcessingConfig != nil {
+			baseDomain = services.ProcessingConfig.Runtime.SpaceBaseDomain
+		}
+		h = newProcessingCORSMiddleware(services.SpaceConfigStore, cfg.AppUrl, cfg.CORSOrigins, baseDomain)(baseHandler)
+	} else {
+		// Configure CORS — if CORSOrigins is set, restrict to those specific origins.
+		// Empty string (default) keeps the open wildcard ("*") behaviour.
+		corsConfig := middleware.DefaultCORSConfig()
+		if cfg.CORSOrigins != "" {
+			allowedOrigins := strings.Split(cfg.CORSOrigins, ",")
+			for i, o := range allowedOrigins {
+				allowedOrigins[i] = strings.TrimSpace(o)
+			}
+			corsConfig.AllowedOrigins = allowedOrigins
+		}
+		h = middleware.CORSMiddleware(corsConfig)(baseHandler)
+	}
 
 	// Create HTTP server instance
 	addr := fmt.Sprintf(":%d", cfg.Port)

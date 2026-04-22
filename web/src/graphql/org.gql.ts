@@ -34,6 +34,7 @@ export const LIST_SPACES = gql(`
       isShared
       signerAlgorithm
       signerTruncate
+      imagorCORSOrigins
       canManage
       canDelete
       canLeave
@@ -61,6 +62,7 @@ export const GET_SPACE = gql(`
       isShared
       signerAlgorithm
       signerTruncate
+      imagorCORSOrigins
       canManage
       canDelete
       canLeave
@@ -87,6 +89,7 @@ export const CREATE_SPACE = gql(`
       isShared
       signerAlgorithm
       signerTruncate
+      imagorCORSOrigins
       canManage
       canDelete
       canLeave
@@ -113,6 +116,7 @@ export const UPDATE_SPACE = gql(`
       isShared
       signerAlgorithm
       signerTruncate
+      imagorCORSOrigins
       canManage
       canDelete
       canLeave

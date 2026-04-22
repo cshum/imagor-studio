@@ -35,6 +35,9 @@ func (c *testSpaceConfig) IsSuspended() bool          { return c.Suspended }
 func (c *testSpaceConfig) GetSignerAlgorithm() string { return c.SignerAlg }
 func (c *testSpaceConfig) GetSignerTruncate() int     { return c.SignerTrim }
 func (c *testSpaceConfig) GetImagorSecret() string    { return c.ImagorSecret }
+func (c *testSpaceConfig) GetImagorCORSOrigins() []string {
+	return nil
+}
 
 type testSpaceConfigStore struct {
 	byKey      map[string]processing.SpaceConfig
