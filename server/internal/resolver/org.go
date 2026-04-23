@@ -546,6 +546,15 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 	if err := applySpaceInput(sp, input); err != nil {
 		return nil, err
 	}
+	if sp.StorageMode == space.StorageModeBYOB && sp.StorageType == "s3" {
+		testResult := r.validateStorageConfig(ctx, storageConfigInputFromSpace(sp))
+		if !testResult.Success {
+			if testResult.Details != nil {
+				return nil, fmt.Errorf("invalid BYOB storage configuration: %s: %s", testResult.Message, *testResult.Details)
+			}
+			return nil, fmt.Errorf("invalid BYOB storage configuration: %s", testResult.Message)
+		}
+	}
 
 	if err := r.spaceStore.Create(ctx, sp); err != nil {
 		r.logger.Error("CreateSpace: failed to create", zap.String("key", input.Key), zap.Error(err))
@@ -604,8 +613,22 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 	if !permissions.CanManage {
 		return nil, fmt.Errorf("forbidden: space manager access required")
 	}
+	original := *existing
+	candidate := *existing
+	if err := applySpaceInput(&candidate, input); err != nil {
+		return nil, err
+	}
+	if shouldValidateUpdatedByobStorage(&original, &candidate, input) {
+		testResult := r.validateStorageConfig(ctx, storageConfigInputFromSpace(&candidate))
+		if !testResult.Success {
+			if testResult.Details != nil {
+				return nil, fmt.Errorf("invalid BYOB storage configuration: %s: %s", testResult.Message, *testResult.Details)
+			}
+			return nil, fmt.Errorf("invalid BYOB storage configuration: %s", testResult.Message)
+		}
+	}
 	oldKey := existing.Key
-	newKey := strings.TrimSpace(input.Key)
+	newKey := strings.TrimSpace(candidate.Key)
 	keyChanged := newKey != "" && newKey != oldKey
 	if keyChanged {
 		if r.spaceInviteStore != nil {
@@ -627,9 +650,7 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 		}
 	}
 
-	if err := applySpaceInput(existing, input); err != nil {
-		return nil, err
-	}
+	*existing = candidate
 
 	if err := r.spaceStore.Upsert(ctx, existing); err != nil {
 		r.logger.Error("UpdateSpace: upsert failed", zap.String("key", key), zap.Error(err))
@@ -642,6 +663,35 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 	}
 	r.logger.Info("Space updated", zap.String("key", key))
 	return r.mapSpaceToGQLWithPermissions(ctx, updated)
+}
+
+func shouldValidateUpdatedByobStorage(before, after *space.Space, input gql.SpaceInput) bool {
+	if after == nil {
+		return false
+	}
+	afterMode := inferStorageMode(after.StorageMode, after.StorageType)
+	afterType := normalizeSpaceStorageType(after.StorageType)
+	if afterMode != space.StorageModeBYOB || afterType != "s3" {
+		return false
+	}
+	if before == nil {
+		return true
+	}
+	beforeMode := inferStorageMode(before.StorageMode, before.StorageType)
+	beforeType := normalizeSpaceStorageType(before.StorageType)
+	if beforeMode != space.StorageModeBYOB || beforeType != "s3" {
+		return true
+	}
+
+	return input.StorageMode != nil ||
+		input.StorageType != nil ||
+		input.Bucket != nil ||
+		input.Prefix != nil ||
+		input.Region != nil ||
+		input.Endpoint != nil ||
+		input.AccessKeyID != nil ||
+		input.SecretKey != nil ||
+		input.UsePathStyle != nil
 }
 
 // DeleteSpace soft-deletes a space by key (owning organization admins only).

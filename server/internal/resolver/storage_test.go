@@ -1,8 +1,10 @@
 package resolver
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -75,6 +77,46 @@ func (r *mockedS3MutationResolver) validateStorageConfig(ctx context.Context, in
 			Message: "Unsupported storage type",
 		}
 	}
+}
+
+func TestValidateS3StorageCapabilities_Success(t *testing.T) {
+	mockStorage := new(MockPresignableStorage)
+	ctx := context.Background()
+	probePathMatcher := mock.MatchedBy(func(p string) bool {
+		return strings.HasPrefix(p, "__imagor_probe__/") && strings.HasSuffix(p, ".txt")
+	})
+
+	mockStorage.On("Put", mock.Anything, probePathMatcher, mock.Anything).Return(nil).Once()
+	mockStorage.On("Stat", mock.Anything, probePathMatcher).Return(storage.FileInfo{Size: 2}, nil).Once()
+	mockStorage.On("Get", mock.Anything, probePathMatcher).Return(io.NopCloser(bytes.NewReader([]byte("ok"))), nil).Once()
+	mockStorage.On("PresignedPutURL", mock.Anything, probePathMatcher, "text/plain", int64(2), time.Minute).Return("https://example.com/upload", nil).Once()
+	mockStorage.On("Delete", mock.Anything, probePathMatcher).Return(nil).Once()
+
+	result := validateS3StorageCapabilities(ctx, mockStorage)
+
+	assert.True(t, result.Success)
+	assert.Equal(t, "Storage configuration test successful", result.Message)
+	assert.Nil(t, result.Details)
+	mockStorage.AssertExpectations(t)
+}
+
+func TestValidateS3StorageCapabilities_RequiresPresignedUploadSupport(t *testing.T) {
+	mockStorage := new(MockStorage)
+	ctx := context.Background()
+	probePathMatcher := mock.MatchedBy(func(p string) bool {
+		return strings.HasPrefix(p, "__imagor_probe__/") && strings.HasSuffix(p, ".txt")
+	})
+
+	mockStorage.On("Put", mock.Anything, probePathMatcher, mock.Anything).Return(nil).Once()
+	mockStorage.On("Stat", mock.Anything, probePathMatcher).Return(storage.FileInfo{Size: 2}, nil).Once()
+	mockStorage.On("Get", mock.Anything, probePathMatcher).Return(io.NopCloser(bytes.NewReader([]byte("ok"))), nil).Once()
+	mockStorage.On("Delete", mock.Anything, probePathMatcher).Return(nil).Once()
+
+	result := validateS3StorageCapabilities(ctx, mockStorage)
+
+	assert.False(t, result.Success)
+	assert.Equal(t, "Storage backend does not support presigned uploads", result.Message)
+	mockStorage.AssertExpectations(t)
 }
 
 // Override TestStorageConfig to use mocked validation
