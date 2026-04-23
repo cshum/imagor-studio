@@ -110,9 +110,10 @@ export function StorageSection({ space }: StorageSectionProps) {
   }
 
   return (
-    <SettingsSection>
+    <SettingsSection contentClassName='border-t-0'>
       {/* Read-only bucket / region badge */}
-      <div className='bg-muted/40 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md px-3 py-2 text-sm'>
+      <div className='bg-muted/40 mb-4 w-full rounded-md px-3 py-2 text-sm'>
+        <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
         <span>
           <span className='text-muted-foreground'>{t('pages.spaceSettings.storage.bucket')}: </span>
           <code className='font-mono font-medium'>{space.bucket}</code>
@@ -125,9 +126,10 @@ export function StorageSection({ space }: StorageSectionProps) {
             <code className='font-mono font-medium'>{space.region}</code>
           </span>
         )}
-        <span className='text-muted-foreground text-xs'>
+        </div>
+        <p className='text-muted-foreground mt-2 text-xs'>
           {t('pages.spaceSettings.storage.bucketLocked')}
-        </span>
+        </p>
       </div>
 
       <Form {...form}>
@@ -140,6 +142,7 @@ export function StorageSection({ space }: StorageSectionProps) {
                 <SettingRow
                   label={t('pages.spaceSettings.storage.prefix')}
                   description={t('pages.spaceSettings.storage.prefixDescription')}
+                  contentClassName='sm:max-w-md'
                 >
                   <FormControl>
                     <Input placeholder='media/' {...field} disabled={isSaving} />
@@ -157,6 +160,7 @@ export function StorageSection({ space }: StorageSectionProps) {
                 <SettingRow
                   label={t('pages.spaceSettings.storage.endpoint')}
                   description={t('pages.spaceSettings.storage.endpointDescription')}
+                  contentClassName='sm:max-w-md'
                 >
                   <FormControl>
                     <Input placeholder='https://s3.amazonaws.com' {...field} disabled={isSaving} />
@@ -174,6 +178,7 @@ export function StorageSection({ space }: StorageSectionProps) {
                 <SettingRow
                   label={t('pages.spaceSettings.storage.accessKeyId')}
                   description={t('pages.spaceSettings.storage.accessKeyIdDescription')}
+                  contentClassName='sm:max-w-md'
                 >
                   <FormControl>
                     <Input
@@ -195,6 +200,8 @@ export function StorageSection({ space }: StorageSectionProps) {
                 <SettingRow
                   label={t('pages.spaceSettings.storage.secretKey')}
                   description={t('pages.spaceSettings.storage.secretKeyDescription')}
+                  last
+                  contentClassName='sm:max-w-md'
                 >
                   <SecretField
                     show={showSecretKey}
@@ -216,16 +223,17 @@ export function StorageSection({ space }: StorageSectionProps) {
             )}
           />
 
-          {/* AES-256 encryption notice */}
-          <div className='bg-muted/50 text-muted-foreground mx-4 mb-2 flex items-start gap-2 rounded-md px-3 py-2.5 text-xs'>
-            <Lock className='mt-0.5 h-3.5 w-3.5 shrink-0' />
-            <span>{t('pages.spaces.credentialsEncrypted')}</span>
-          </div>
+          <div className='space-y-4 py-4'>
+            <div className='bg-muted/50 text-muted-foreground flex w-full items-start gap-2 rounded-md px-3 py-2.5 text-xs'>
+              <Lock className='mt-0.5 h-3.5 w-3.5 shrink-0' />
+              <span>{t('pages.spaces.credentialsEncrypted')}</span>
+            </div>
 
-          <div className='mt-2 flex justify-end pt-2'>
-            <ButtonWithLoading type='submit' isLoading={isSaving}>
-              {t('common.buttons.save')}
-            </ButtonWithLoading>
+            <div className='flex justify-end'>
+              <ButtonWithLoading type='submit' isLoading={isSaving}>
+                {t('common.buttons.save')}
+              </ButtonWithLoading>
+            </div>
           </div>
         </form>
       </Form>
