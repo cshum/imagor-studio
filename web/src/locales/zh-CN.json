@@ -187,7 +187,10 @@
         "uploadFiles": "上传文件",
         "messages": {
           "uploadSuccess": "文件上传成功",
-          "uploadFailed": "上传 {{fileName}} 失败"
+          "uploadFailed": "上传 {{fileName}} 失败",
+          "previewWarmupTitle": "预览正在准备中",
+          "previewWarmupHint": "预览仍在准备中，通常会在 30 秒内显示。",
+          "previewWarmupDescription": "你的文件已上传成功。图片预览通常会在 30 秒内显示。"
         }
       },
       "contextMenu": {

@@ -10,6 +10,7 @@ import { DragDropFile } from '@/hooks/use-drag-drop'
 export interface UploadProgressProps {
   files: DragDropFile[]
   isUploading: boolean
+  completionHint?: string
   onRemoveFile?: (id: string) => void
   onCancelFile?: (id: string) => void
   onRetryFile?: (id: string) => Promise<void>
@@ -20,6 +21,7 @@ export interface UploadProgressProps {
 export function UploadProgress({
   files,
   isUploading,
+  completionHint,
   onRemoveFile,
   onCancelFile,
   onRetryFile,
@@ -227,6 +229,9 @@ export function UploadProgress({
           <div className='flex-1'>
             <h3 className='font-medium'>{title}</h3>
             <p className='text-muted-foreground text-sm'>{subtitle}</p>
+            {completionHint && activeStats.isComplete && activeStats.failed === 0 && (
+              <p className='text-muted-foreground mt-1 text-sm'>{completionHint}</p>
+            )}
           </div>
           <div className='flex items-center gap-1'>
             {/* Collapse/Expand button */}

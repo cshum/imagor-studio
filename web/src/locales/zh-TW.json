@@ -205,7 +205,10 @@
         "uploadFiles": "上傳檔案",
         "messages": {
           "uploadSuccess": "檔案上傳成功",
-          "uploadFailed": "上傳 {{fileName}} 失敗"
+          "uploadFailed": "上傳 {{fileName}} 失敗",
+          "previewWarmupTitle": "預覽正在準備中",
+          "previewWarmupHint": "預覽仍在準備中，通常會在 30 秒內顯示。",
+          "previewWarmupDescription": "你的檔案已成功上傳。圖片預覽通常會在 30 秒內顯示。"
         }
       },
       "contextMenu": {

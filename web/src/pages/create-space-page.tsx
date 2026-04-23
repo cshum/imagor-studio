@@ -407,7 +407,7 @@ export function CreateSpacePage() {
       toast.success(t('pages.spaces.messages.spaceCreatedSuccess'), {
         description: t('pages.spacePropagation.createDescription'),
       })
-      await navigate({ to: '/spaces/$spaceKey/settings', params: { spaceKey: values.key } })
+      await navigate({ to: '/spaces/$spaceKey', params: { spaceKey: values.key } })
     } catch (err) {
       const errorInfo = extractErrorInfo(err)
       if (errorInfo.field === 'key') {

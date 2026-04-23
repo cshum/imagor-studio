@@ -61,6 +61,7 @@ import { hasErrorCode } from '@/lib/error-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
 import { moveGalleryItems } from '@/lib/gallery-move'
 import { joinImagePath } from '@/lib/path-utils'
+import { readSpacePropagationNotice, SPACE_PROPAGATION_WINDOW_MS } from '@/lib/space-propagation'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { registerDropHandler } from '@/stores/drag-drop-store'
@@ -148,6 +149,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     open: false,
     items: [],
   })
+  const [postUploadWarmupEndsAt, setPostUploadWarmupEndsAt] = useState<number | null>(null)
 
   // Selection store
   const selection = useSelection()
@@ -163,6 +165,52 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     showFileNames,
   } = galleryLoaderData
   const sidebar = useSidebar()
+
+  useEffect(() => {
+    if (postUploadWarmupEndsAt == null) {
+      return
+    }
+
+    const remainingMs = postUploadWarmupEndsAt - Date.now()
+    if (remainingMs <= 0) {
+      setPostUploadWarmupEndsAt(null)
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setPostUploadWarmupEndsAt(null)
+    }, remainingMs)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [postUploadWarmupEndsAt])
+
+  const postUploadWarmupActive =
+    postUploadWarmupEndsAt != null && postUploadWarmupEndsAt > Date.now()
+  const uploadWarmupHint = postUploadWarmupActive
+    ? t('pages.gallery.upload.messages.previewWarmupHint')
+    : undefined
+
+  const handleUploadComplete = async () => {
+    await router.invalidate()
+
+    if (!spaceKey) {
+      return
+    }
+
+    const notice = readSpacePropagationNotice(spaceKey)
+    if (!notice || notice.action !== 'created') {
+      return
+    }
+
+    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - notice.savedAt)
+    if (remainingMs <= 0) {
+      return
+    }
+
+    setPostUploadWarmupEndsAt(Date.now() + remainingMs)
+  }
 
   const getMoveProgressMessage = (completed: number, total: number) =>
     `${t('pages.gallery.moveItems.move')}... (${completed}/${total})`
@@ -1072,6 +1120,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             }
           />
 
+          {postUploadWarmupActive && (
+            <div className='mx-2 mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100'>
+              <Clock className='mt-0.5 h-5 w-5 shrink-0' />
+              <div>
+                <p className='text-sm font-semibold'>
+                  {t('pages.gallery.upload.messages.previewWarmupTitle')}
+                </p>
+                <p className='mt-1 text-sm text-amber-900/80 dark:text-amber-100/80'>
+                  {t('pages.gallery.upload.messages.previewWarmupDescription')}
+                </p>
+              </div>
+            </div>
+          )}
+
           <Card className='rounded-lg border-none'>
             <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
               {contentWidth > 0 && (
@@ -1262,11 +1324,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <UploadProgress
           files={uploadState.files}
           isUploading={uploadState.isUploading}
+          completionHint={uploadWarmupHint}
           onRemoveFile={uploadState.removeFile}
           onCancelFile={uploadState.cancelFile}
           onRetryFile={uploadState.retryFile}
           onClearAll={uploadState.clearFiles}
-          onComplete={() => router.invalidate()}
+          onComplete={handleUploadComplete}
         />
       )}
 
