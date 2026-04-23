@@ -118,6 +118,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
   const handlePathChange = useCallback(
     (path: string) => {
+      setDialogCurrentPath(path)
       setFolderTreeCurrentPath(path, spaceKey)
     },
     [spaceKey],

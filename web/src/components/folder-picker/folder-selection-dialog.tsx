@@ -173,6 +173,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   // Load root folders when dialog opens
   useEffect(() => {
     if (open) {
+      setLocalExpandState({})
       setSelectedPath(initialSelectedPath)
 
       // Load root folders if not already loaded
@@ -263,6 +264,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
                     folder={folder}
                     selectedPath={selectedPath}
                     excludePaths={excludePathsSet}
+                    spaceKey={spaceKey}
                     onSelect={setSelectedPath}
                     onUpdateNode={updateNode}
                   />

@@ -93,6 +93,10 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const isMobile = !useBreakpoint('md')
 
+  useEffect(() => {
+    setLocalExpandState({})
+  }, [spaceKey])
+
   // Use a single ref object for all stable config/props to avoid triggering reloads
   const configRef = useRef({
     fileType,
