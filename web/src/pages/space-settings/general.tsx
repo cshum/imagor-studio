@@ -124,9 +124,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
         savedAt: Date.now(),
         spaceKey: updatedSpace.key,
       })
-      toast.success(t('pages.spaceSettings.general.saved'), {
-        description: t('pages.spacePropagation.description'),
-      })
+      toast.success(t('pages.spaceSettings.general.saved'))
       if (updatedSpace.key !== space.key) {
         await navigate({
           to: '/spaces/$spaceKey/settings/general',

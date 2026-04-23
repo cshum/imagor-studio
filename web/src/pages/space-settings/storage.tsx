@@ -97,9 +97,7 @@ export function StorageSection({ space }: StorageSectionProps) {
         savedAt: Date.now(),
         spaceKey: space.key,
       })
-      toast.success(t('pages.spaceSettings.storage.saved'), {
-        description: t('pages.spacePropagation.description'),
-      })
+      toast.success(t('pages.spaceSettings.storage.saved'))
       form.setValue('accessKeyId', '')
       form.setValue('secretKey', '')
       setShowSecretKey(false)

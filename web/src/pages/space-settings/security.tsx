@@ -84,9 +84,7 @@ export function SecuritySection({ space }: SecuritySectionProps) {
       savedAt: Date.now(),
       spaceKey: space.key,
     })
-    toast.success(t('pages.spaceSettings.imagor.saved'), {
-      description: t('pages.spacePropagation.description'),
-    })
+    toast.success(t('pages.spaceSettings.imagor.saved'))
     form.setValue('imagorSecret', '')
     setShowSecret(false)
     await router.invalidate()
@@ -95,125 +93,123 @@ export function SecuritySection({ space }: SecuritySectionProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSave)}>
-          <SettingsSection
-            title={t('pages.spaceSettings.imagor.urlSigning')}
-            description={t('pages.spaceSettings.imagor.urlSigningDescription')}
-            className='mb-8'
-          >
-            <FormField
-              control={form.control}
-              name='imagorSecret'
-              render={({ field }) => (
-                <FormItem>
-                  <SettingRow
-                    label={t('pages.imagor.secret')}
-                    description={t('pages.imagor.secretDescription')}
-                  >
-                    <SecretField
-                      show={showSecret}
-                      onShow={() => setShowSecret(true)}
-                      onHide={() => {
-                        setShowSecret(false)
-                        field.onChange('')
-                      }}
-                      updateLabel={t('common.buttons.update')}
-                      cancelLabel={t('common.buttons.cancel')}
-                      renderInput={() => <Input type='password' autoFocus {...field} />}
+        <SettingsSection
+          title={t('pages.spaceSettings.imagor.urlSigning')}
+          description={t('pages.spaceSettings.imagor.urlSigningDescription')}
+          className='mb-8'
+        >
+          <FormField
+            control={form.control}
+            name='imagorSecret'
+            render={({ field }) => (
+              <FormItem>
+                <SettingRow
+                  label={t('pages.imagor.secret')}
+                  description={t('pages.imagor.secretDescription')}
+                >
+                  <SecretField
+                    show={showSecret}
+                    onShow={() => setShowSecret(true)}
+                    onHide={() => {
+                      setShowSecret(false)
+                      field.onChange('')
+                    }}
+                    updateLabel={t('common.buttons.update')}
+                    cancelLabel={t('common.buttons.cancel')}
+                    renderInput={() => <Input type='password' autoFocus {...field} />}
+                  />
+                  <FormMessage className='mt-1.5' />
+                </SettingRow>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='signerType'
+            render={({ field }) => (
+              <FormItem>
+                <SettingRow
+                  label={t('pages.imagor.signerType')}
+                  description={t('pages.imagor.signerTypeDescription')}
+                >
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value='SHA1'>{t('pages.imagor.algorithmSha1')}</SelectItem>
+                      <SelectItem value='SHA256'>{t('pages.imagor.algorithmSha256')}</SelectItem>
+                      <SelectItem value='SHA512'>{t('pages.imagor.algorithmSha512')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className='mt-1.5' />
+                </SettingRow>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='signerTruncate'
+            render={({ field }) => (
+              <FormItem>
+                <SettingRow
+                  label={t('pages.imagor.signerTruncate')}
+                  description={t('pages.imagor.signerTruncateDescription')}
+                  last
+                >
+                  <FormControl>
+                    <Input
+                      type='number'
+                      min={0}
+                      placeholder='0'
+                      value={field.value ?? 0}
+                      onChange={(e) =>
+                        field.onChange(isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber)
+                      }
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
                     />
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
-                </FormItem>
-              )}
-            />
+                  </FormControl>
+                  <FormMessage className='mt-1.5' />
+                </SettingRow>
+              </FormItem>
+            )}
+          />
+        </SettingsSection>
 
-            <FormField
-              control={form.control}
-              name='signerType'
-              render={({ field }) => (
-                <FormItem>
-                  <SettingRow
-                    label={t('pages.imagor.signerType')}
-                    description={t('pages.imagor.signerTypeDescription')}
-                  >
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='SHA1'>{t('pages.imagor.algorithmSha1')}</SelectItem>
-                        <SelectItem value='SHA256'>{t('pages.imagor.algorithmSha256')}</SelectItem>
-                        <SelectItem value='SHA512'>{t('pages.imagor.algorithmSha512')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
-                </FormItem>
-              )}
-            />
+        <SettingsSection
+          title={t('pages.spaceSettings.imagor.corsOrigins')}
+          description={t('pages.spaceSettings.imagor.corsOriginsDescription')}
+        >
+          <FormField
+            control={form.control}
+            name='imagorCORSOrigins'
+            render={({ field }) => (
+              <FormItem>
+                <SettingRow description={t('pages.spaceSettings.imagor.corsOriginsHelp')} last>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder={t('pages.spaceSettings.imagor.corsOriginsPlaceholder')}
+                    />
+                  </FormControl>
+                  <FormMessage className='mt-1.5' />
+                </SettingRow>
+              </FormItem>
+            )}
+          />
+        </SettingsSection>
 
-            <FormField
-              control={form.control}
-              name='signerTruncate'
-              render={({ field }) => (
-                <FormItem>
-                  <SettingRow
-                    label={t('pages.imagor.signerTruncate')}
-                    description={t('pages.imagor.signerTruncateDescription')}
-                    last
-                  >
-                    <FormControl>
-                      <Input
-                        type='number'
-                        min={0}
-                        placeholder='0'
-                        value={field.value ?? 0}
-                        onChange={(e) =>
-                          field.onChange(
-                            isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber,
-                          )
-                        }
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                      />
-                    </FormControl>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
-                </FormItem>
-              )}
-            />
-          </SettingsSection>
-
-          <SettingsSection
-            title={t('pages.spaceSettings.imagor.corsOrigins')}
-            description={t('pages.spaceSettings.imagor.corsOriginsDescription')}
-          >
-            <FormField
-              control={form.control}
-              name='imagorCORSOrigins'
-              render={({ field }) => (
-                <FormItem>
-                  <SettingRow description={t('pages.spaceSettings.imagor.corsOriginsHelp')} last>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={t('pages.spaceSettings.imagor.corsOriginsPlaceholder')}
-                      />
-                    </FormControl>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
-                </FormItem>
-              )}
-            />
-          </SettingsSection>
-
-          <div className='mt-2 flex justify-end pt-2'>
-            <ButtonWithLoading type='submit' isLoading={form.formState.isSubmitting}>
-              {t('common.buttons.save')}
-            </ButtonWithLoading>
-          </div>
+        <div className='mt-2 flex justify-end pt-2'>
+          <ButtonWithLoading type='submit' isLoading={form.formState.isSubmitting}>
+            {t('common.buttons.save')}
+          </ButtonWithLoading>
+        </div>
       </form>
     </Form>
   )

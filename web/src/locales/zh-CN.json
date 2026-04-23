@@ -20,10 +20,10 @@
     "buttons": {
       "save": "保存",
       "cancel": "取消",
-        "corsOrigins": "附加 CORS 来源",
-        "corsOriginsDescription": "允许额外的浏览器来源访问此空间的 imagor 响应。",
-        "corsOriginsHelp": "输入以逗号分隔的来源列表，例如：https://editor.customer.test, https://cms.customer.test",
-        "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
+      "corsOrigins": "附加 CORS 来源",
+      "corsOriginsDescription": "允许额外的浏览器来源访问此空间的 imagor 响应。",
+      "corsOriginsHelp": "输入以逗号分隔的来源列表，例如：https://editor.customer.test, https://cms.customer.test",
+      "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
       "delete": "删除",
       "remove": "移除",
       "edit": "编辑",
@@ -768,7 +768,7 @@
     },
     "spacePropagation": {
       "title": "更改正在传播",
-      "description": "处理节点通常会在 30 秒内应用这些更改。",
+      "description": "这些更改通常会在 30 秒内生效。",
       "createDescription": "新空间正在发布到处理节点，通常会在 30 秒内可用。",
       "deleteDescription": "空间删除正在传播到处理节点，最多可能需要 30 秒才会完全生效。"
     },
@@ -800,8 +800,8 @@
         "saved": "常规设置已保存"
       },
       "storage": {
-        "managedTitle": "平台托管存储",
-        "managedDescription": "文件存储在 Imagor Studio 的托管存储中，存储类型在空间创建后无法更改。",
+        "managedTitle": "托管存储",
+        "managedDescription": "你的文件存储在 Imagor Studio 托管存储中。此存储配置在空间创建后无法更改。",
         "bucketLocked": "存储桶和区域在创建时固定，无法更改。",
         "description": "查看此空间的存储设置。",
         "accessKeyIdDescription": "留空以保留现有凭证。",

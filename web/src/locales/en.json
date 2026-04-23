@@ -786,7 +786,7 @@
     },
     "spacePropagation": {
       "title": "Changes are propagating",
-      "description": "Processing nodes usually apply these changes within 30 seconds.",
+      "description": "Changes usually go live within 30 seconds.",
       "createDescription": "The new space is being published to processing nodes and is usually ready within 30 seconds.",
       "deleteDescription": "Space removal is propagating to processing nodes and may take up to 30 seconds to fully take effect."
     },
@@ -822,8 +822,8 @@
       },
       "storage": {
         "description": "View storage settings for this space.",
-        "managedTitle": "Platform-managed Storage",
-        "managedDescription": "Files are stored in Imagor Studio's managed storage. Storage type cannot be changed after the space is created.",
+        "managedTitle": "Managed Storage",
+        "managedDescription": "Your files are stored in Imagor Studio managed storage. This storage setup cannot be changed after the space is created.",
         "bucket": "Bucket",
         "region": "Region",
         "bucketLocked": "Bucket and region are fixed at creation time and cannot be changed.",

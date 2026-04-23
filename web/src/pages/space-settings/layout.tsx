@@ -39,8 +39,10 @@ import { useBrand } from '@/hooks/use-brand'
 import {
   clearSpacePropagationNotice,
   readSpacePropagationNotice,
+  SPACE_PROPAGATION_EVENT,
   SPACE_PROPAGATION_WINDOW_MS,
   type SpacePropagationNotice,
+  type SpacePropagationNoticeEventDetail,
 } from '@/lib/space-propagation'
 import { useAuth } from '@/stores/auth-store'
 
@@ -72,6 +74,24 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   useEffect(() => {
     setMobileOpen(false)
   }, [activeSection])
+
+  useEffect(() => {
+    const handleNotice = (event: Event) => {
+      const nextNotice = (event as CustomEvent<SpacePropagationNoticeEventDetail>).detail?.notice
+      if (!nextNotice || nextNotice.spaceKey !== space.key) {
+        if (!nextNotice) {
+          setPropagationNotice(null)
+        }
+        return
+      }
+      setPropagationNotice(nextNotice)
+    }
+
+    window.addEventListener(SPACE_PROPAGATION_EVENT, handleNotice)
+    return () => {
+      window.removeEventListener(SPACE_PROPAGATION_EVENT, handleNotice)
+    }
+  }, [space.key])
 
   useEffect(() => {
     const nextNotice = readSpacePropagationNotice(space.key)
