@@ -825,8 +825,8 @@
       },
       "storage": {
         "description": "View storage settings for this space.",
-        "managedTitle": "Managed Storage",
-        "managedDescription": "Your files are stored in Imagor Studio managed storage. This storage setup cannot be changed after the space is created.",
+        "managedTitle": "Hosted Storage",
+        "managedDescription": "Your files are stored in Imagor Studio. This storage option is set when the space is created and cannot be changed later.",
         "bucket": "Bucket",
         "region": "Region",
         "bucketLocked": "Bucket and region are fixed at creation time and cannot be changed.",

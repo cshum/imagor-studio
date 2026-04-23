@@ -825,8 +825,8 @@
       },
       "storage": {
         "description": "Visualizza le impostazioni di archiviazione per questo spazio.",
-        "managedTitle": "Storage gestito",
-        "managedDescription": "I tuoi file sono archiviati nello storage gestito di Imagor Studio. Questa configurazione di storage non può essere cambiata dopo la creazione dello spazio.",
+        "managedTitle": "Storage ospitato",
+        "managedDescription": "I tuoi file sono archiviati in Imagor Studio. Questa opzione di storage viene impostata alla creazione dello spazio e non può essere cambiata in seguito.",
         "bucket": "Bucket",
         "region": "Region",
         "bucketLocked": "Bucket e regione sono fissati al momento della creazione e non possono essere modificati.",
