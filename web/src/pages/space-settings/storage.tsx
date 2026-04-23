@@ -118,38 +118,32 @@ export function StorageSection({ space }: StorageSectionProps) {
 
   return (
     <SettingsSection contentClassName='border-t-0'>
-      {/* Read-only bucket / region badge */}
-      <div className='bg-muted/40 mb-4 w-full rounded-md px-3 py-2 text-sm'>
-        <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
-          <span>
-            <span className='text-muted-foreground'>
-              {t('pages.spaceSettings.storage.bucket')}:{' '}
-            </span>
-            <code className='font-mono font-medium'>{space.bucket}</code>
-          </span>
-          {space.region && (
-            <span>
-              <span className='text-muted-foreground'>
-                {t('pages.spaceSettings.storage.region')}:{' '}
-              </span>
-              <code className='font-mono font-medium'>{space.region}</code>
-            </span>
-          )}
-          {space.prefix && (
-            <span>
-              <span className='text-muted-foreground'>
-                {t('pages.spaceSettings.storage.prefix')}:{' '}
-              </span>
-              <code className='font-mono font-medium'>{space.prefix}</code>
-            </span>
-          )}
-        </div>
-        <p className='text-muted-foreground mt-2 text-xs'>
-          {t('pages.spaceSettings.storage.bucketLocked')}
-        </p>
-      </div>
-
       <S3RequirementsNote className='mb-4' />
+
+      <div>
+        <SettingRow
+          label={t('pages.spaceSettings.storage.bucket')}
+          contentClassName='sm:max-w-md'
+        >
+          <div className='text-sm font-medium sm:text-right'>
+            <code className='font-mono'>{space.bucket}</code>
+          </div>
+        </SettingRow>
+        {space.region && (
+          <SettingRow label={t('pages.spaceSettings.storage.region')} contentClassName='sm:max-w-md'>
+            <div className='text-sm font-medium sm:text-right'>
+              <code className='font-mono'>{space.region}</code>
+            </div>
+          </SettingRow>
+        )}
+        {space.prefix && (
+          <SettingRow label={t('pages.spaceSettings.storage.prefix')} contentClassName='sm:max-w-md'>
+            <div className='text-sm font-medium sm:text-right'>
+              <code className='font-mono'>{space.prefix}</code>
+            </div>
+          </SettingRow>
+        )}
+      </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSave)}>
