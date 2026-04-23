@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useRouterState } from '@tanstack/react-router'
 import { ArrowLeft, Home } from 'lucide-react'
 
-import { CreateFolderDialog } from '@/components/image-gallery/create-folder-dialog'
 import { DeleteItemDialog } from '@/components/image-gallery/delete-item-dialog'
 import { FolderContextMenu } from '@/components/image-gallery/folder-context-menu'
 import { MoveItem, MoveItemsDialog } from '@/components/image-gallery/move-items-dialog'
@@ -25,14 +24,7 @@ import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useAuth } from '@/stores/auth-store'
 import { useDragDrop } from '@/stores/drag-drop-store'
-import {
-  folderTreeStore,
-  invalidateFolderCache,
-  loadFolderChildren,
-  loadRootFolders,
-  setCurrentPath,
-  useFolderTree,
-} from '@/stores/folder-tree-store'
+import { folderTreeStore, useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 import { FolderTreeNode } from './folder-tree-node'
@@ -66,8 +58,6 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
   } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
   const routerState = useRouterState()
-  const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
-  const [createFolderPath, setCreateFolderPath] = useState<string>('')
 
   const [deleteItemDialog, setDeleteItemDialog] = useState<{
     open: boolean
@@ -265,28 +255,6 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     }
   }
 
-  // Handle folder creation - reload parent folder in tree
-  const handleFolderCreated = async (folderPath: string) => {
-    // Get parent path
-    const pathParts = folderPath.split('/').filter(Boolean)
-    pathParts.pop() // Remove the new folder name
-    const parentPath = pathParts.join('/')
-
-    if (parentPath) {
-      // Invalidate and reload the parent folder's children in the store
-      invalidateFolderCache(parentPath)
-      await loadFolderChildren(parentPath, true, spaceKey) // Auto-expand to show new folder
-    } else {
-      await loadRootFolders(spaceKey)
-    }
-
-    setCurrentPath(folderPath, spaceKey)
-    navigate({
-      to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
-      params: spaceKey ? { spaceKey, galleryKey: folderPath } : { galleryKey: folderPath },
-    })
-  }
-
   return (
     <Sidebar {...props}>
       <SidebarContent>
@@ -404,15 +372,6 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
         onConfirm={handleDeleteItem}
       />
 
-      {/* Create Folder Dialog */}
-      <CreateFolderDialog
-        open={isCreateFolderDialogOpen}
-        onOpenChange={setIsCreateFolderDialogOpen}
-        currentPath={createFolderPath}
-        spaceKey={spaceKey}
-        onFolderCreated={handleFolderCreated}
-      />
-
       {/* Move Items Dialog */}
       <MoveItemsDialog
         open={moveDialog.open}
@@ -436,10 +395,6 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
               })
             }
           }
-        }}
-        onCreateFolder={(selectedPath) => {
-          setCreateFolderPath(selectedPath || '')
-          setIsCreateFolderDialogOpen(true)
         }}
       />
     </Sidebar>

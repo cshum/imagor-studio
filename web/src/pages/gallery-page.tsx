@@ -93,7 +93,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const { spaceKey } = useParams({ strict: false })
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
   const [isNewCanvasDialogOpen, setIsNewCanvasDialogOpen] = useState(false)
-  const [createFolderPath, setCreateFolderPath] = useState<string | null>(null)
   const [deleteItemDialog, setDeleteItemDialog] = useState<{
     open: boolean
     itemKey: string | null
@@ -1279,7 +1278,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       <CreateFolderDialog
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
-        currentPath={createFolderPath !== null ? createFolderPath : galleryKey}
+        currentPath={galleryKey}
         spaceKey={spaceKey}
       />
 
@@ -1313,10 +1312,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         currentPath={galleryKey}
         spaceKey={spaceKey}
         onMoveComplete={handleMoveComplete}
-        onCreateFolder={(selectedPath) => {
-          setCreateFolderPath(selectedPath !== null ? selectedPath : galleryKey)
-          setIsCreateFolderDialogOpen(true)
-        }}
       />
 
       <CopyUrlDialog

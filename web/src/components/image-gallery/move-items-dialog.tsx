@@ -19,7 +19,6 @@ export interface MoveItemsDialogProps {
   currentPath: string
   spaceKey?: string
   onMoveComplete?: () => void
-  onCreateFolder?: (selectedPath: string | null) => void
 }
 
 export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
@@ -29,7 +28,6 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
   currentPath,
   spaceKey,
   onMoveComplete,
-  onCreateFolder,
 }) => {
   const { t } = useTranslation()
   const router = useRouter()
@@ -179,8 +177,6 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
           : t('pages.gallery.moveItems.selectDestinationDescription')
       }
       confirmButtonText={t('pages.gallery.moveItems.move')}
-      showNewFolderButton={true}
-      onCreateFolder={onCreateFolder}
       closeOnSelect={false}
       isSubmitting={isMoving}
     />

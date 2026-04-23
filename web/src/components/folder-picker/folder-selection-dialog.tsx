@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from '@tanstack/react-router'
-import { FolderPlus } from 'lucide-react'
 
 import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-picker-node.tsx'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
@@ -19,9 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton.tsx'
 import {
   ensureFolderTreeReady,
   folderTreeStore,
-  invalidateFolderCache,
   loadFolderChildren,
-  loadRootFolders,
   useFolderTree,
 } from '@/stores/folder-tree-store.ts'
 
@@ -32,9 +29,6 @@ export interface FolderSelectionDialogProps {
   onSelect: (path: string) => void | Promise<void>
   excludePaths?: string[]
   currentPath?: string
-  showNewFolderButton?: boolean
-  onCreateFolder?: (selectedPath: string | null) => void
-  onFolderCreated?: (callback: (folderPath: string) => void) => void
   // Customization props for reusability
   title?: string
   description?: string
@@ -51,9 +45,6 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   onSelect,
   excludePaths = [],
   currentPath,
-  showNewFolderButton = false,
-  onCreateFolder,
-  onFolderCreated,
   title,
   description,
   confirmButtonText,
@@ -170,37 +161,6 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
     [findFolderNodeByPath, spaceKey],
   )
 
-  // Handle folder creation - refresh the parent folder in the store
-  const handleFolderCreatedCallback = useCallback(
-    async (folderPath: string) => {
-      // Get parent path
-      const pathParts = folderPath.split('/').filter(Boolean)
-      pathParts.pop() // Remove the new folder name
-      const parentPath = pathParts.join('/')
-
-      if (parentPath) {
-        // Invalidate and reload the parent folder's children in the store
-        invalidateFolderCache(parentPath)
-        await loadFolderChildren(parentPath, false, spaceKey) // Don't auto-expand in store
-      } else {
-        await loadRootFolders(spaceKey)
-      }
-
-      // Expand the parent in local state
-      setLocalExpandState((prev) => ({
-        ...prev,
-        [parentPath]: true,
-      }))
-
-      // Auto-select the newly created folder
-      setSelectedPath(folderPath)
-
-      // Expand to show the new folder path (in case it's nested)
-      await expandToPath(folderPath)
-    },
-    [expandToPath, spaceKey],
-  )
-
   // Load root folders when dialog opens
   useEffect(() => {
     if (open) {
@@ -237,33 +197,12 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
     }
   }, [open, currentPath, initialSelectedPath, expandToPath])
 
-  // Call the onFolderCreated callback when provided
-  useEffect(() => {
-    if (onFolderCreated) {
-      onFolderCreated(handleFolderCreatedCallback)
-    }
-  }, [onFolderCreated, handleFolderCreatedCallback])
-
   const handleSelect = async () => {
     if (selectedPath !== null) {
       await onSelect(selectedPath)
       if (closeOnSelect) {
         onOpenChange(false)
       }
-    }
-  }
-
-  const handleCreateFolder = () => {
-    // Call the create folder handler with the currently selected path
-    onCreateFolder?.(selectedPath)
-
-    // Invalidate the folder tree cache for the selected path to force refresh
-    // This ensures the new folder appears in the sidebar tree
-    if (selectedPath) {
-      invalidateFolderCache(selectedPath)
-    } else {
-      // If at root, invalidate root by reloading
-      invalidateFolderCache('')
     }
   }
 
@@ -316,18 +255,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
           </ScrollArea>
         </div>
 
-        <DialogFooter className='flex-row justify-between sm:justify-between'>
-          {showNewFolderButton && onCreateFolder && (
-            <Button
-              variant='outline'
-              onClick={handleCreateFolder}
-              className='gap-2'
-              disabled={isSubmitting}
-            >
-              <FolderPlus className='h-4 w-4' />
-              {t('pages.gallery.createFolder.newFolder')}
-            </Button>
-          )}
+        <DialogFooter className='flex-row justify-end'>
           <div className='flex gap-2'>
             <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               {t('common.buttons.cancel')}
