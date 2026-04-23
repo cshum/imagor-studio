@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import type { StorageType as GraphQLStorageType, StorageStatusQuery } from '@/generated/graphql'
+import { formatStorageValidationError } from '@/lib/storage-validation-errors'
 
 import {
   FileStorageForm,
@@ -135,9 +136,7 @@ export function StorageConfigurationWizard({
       })
 
       if (!probeResult.success) {
-        const errorMessage = probeResult.details
-          ? `${probeResult.message}: ${probeResult.details}`
-          : probeResult.message
+        const errorMessage = formatStorageValidationError(t, probeResult)
         setError(errorMessage)
         onError?.(errorMessage)
         return
@@ -230,7 +229,7 @@ export function StorageConfigurationWizard({
       if (result.success) {
         toast.success(t('pages.storage.testPassed'))
       } else {
-        const errorMessage = result.message || t('pages.storage.testFailed')
+        const errorMessage = formatStorageValidationError(t, result)
         setError(errorMessage)
       }
     } catch (error) {

@@ -566,6 +566,15 @@
         "permissions": "Il bucket deve consentire l'elenco, la lettura, la scrittura e l'eliminazione degli oggetti.",
         "cors": "Aggiungi <1>{{origin}}</1> alle origini consentite dal CORS del bucket e abilita gli upload PUT.",
         "appOriginFallback": "l'URL di questa app"
+      },
+      "validationErrors": {
+        "endpointUnreachable": "Impossibile raggiungere l'endpoint S3. Controlla il nome del bucket, la regione e l'URL dell'endpoint.",
+        "invalidAccessKey": "Il formato dell'Access Key ID non sembra valido.",
+        "invalidRegion": "La regione non sembra valida. Controlla il campo regione S3.",
+        "accessDenied": "Accesso negato. Controlla i permessi del bucket e le credenziali.",
+        "authentication": "Impossibile autenticarsi con S3. Controlla Access Key ID e Secret Access Key.",
+        "timeout": "La connessione a S3 è scaduta. Controlla il nome del bucket, la regione, l'endpoint e l'accesso di rete.",
+        "cors": "L'upload dal browser è stato bloccato. Controlla le impostazioni CORS del bucket per l'URL di questa app."
       }
     },
     "systemSettings": {

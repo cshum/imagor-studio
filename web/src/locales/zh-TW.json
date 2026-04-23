@@ -566,6 +566,15 @@
         "permissions": "此儲存桶必須允許列出、讀取、寫入與刪除物件。",
         "cors": "請將 <1>{{origin}}</1> 加入儲存桶 CORS 的允許來源，並允許 PUT 上傳。",
         "appOriginFallback": "此應用 URL"
+      },
+      "validationErrors": {
+        "endpointUnreachable": "無法連線到 S3 端點。請檢查儲存桶名稱、區域與端點 URL。",
+        "invalidAccessKey": "存取金鑰 ID 的格式看起來無效。",
+        "invalidRegion": "區域看起來無效。請檢查 S3 區域欄位。",
+        "accessDenied": "存取遭到拒絕。請檢查儲存桶權限與憑證。",
+        "authentication": "無法通過 S3 驗證。請檢查存取金鑰 ID 與秘密存取金鑰。",
+        "timeout": "連線到 S3 逾時。請檢查儲存桶名稱、區域、端點與網路連線。",
+        "cors": "瀏覽器上傳遭到阻擋。請檢查此應用 URL 對應的儲存桶 CORS 設定。"
       }
     },
     "systemSettings": {

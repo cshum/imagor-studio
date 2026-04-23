@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -122,6 +123,21 @@ func TestStorageUploadProbeFlow_WithFakeS3(t *testing.T) {
 		Key:    aws.String(path.Join("images", probe.ProbePath)),
 	})
 	assert.Error(t, err)
+}
+
+func TestStorageTestFailure_SanitizesIMDSCredentialErrors(t *testing.T) {
+	result := storageTestFailure(
+		"Failed to access storage directory",
+		errors.New("operation error S3: ListObjectsV2, get identity: get credentials: failed to refresh cached credentials, no EC2 IMDS role found, operation error ec2imds: GetMetadata, canceled, context deadline exceeded"),
+	)
+
+	require.NotNil(t, result)
+	assert.False(t, result.Success)
+	assert.Equal(t, "Failed to access storage directory", result.Message)
+	require.NotNil(t, result.Details)
+	require.NotNil(t, result.Code)
+	assert.Equal(t, storageErrorCodeAuthenticationFailed, *result.Code)
+	assert.Equal(t, "Unable to authenticate to S3. Provide an access key ID and secret access key, or verify the server's AWS role configuration.", *result.Details)
 }
 
 func boolPtrLocal(value bool) *bool {

@@ -137,6 +137,7 @@ type StorageTestResult {
   success: Boolean!
   message: String!
   details: String
+  code: String
 }
 
 type StorageUploadProbe {

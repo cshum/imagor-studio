@@ -29,10 +29,10 @@ import type {
   SortOrder,
   StatFileQuery,
   StatFileQueryVariables,
+  StorageConfigInput,
   StorageStatusQuery,
   TestStorageConfigMutation,
   TestStorageConfigMutationVariables,
-  StorageConfigInput,
   UploadFileMutation,
 } from '@/generated/graphql'
 import { getSdk } from '@/generated/graphql-request'
@@ -45,7 +45,7 @@ export interface UploadFileOptions {
 }
 
 interface StorageProbeOptions {
-	 signal?: AbortSignal
+  signal?: AbortSignal
 }
 
 const STORAGE_UPLOAD_PROBE_CONTENT = 'ok'
@@ -394,6 +394,7 @@ export async function testStorageConfigWithBrowserProbe(
   } catch (error) {
     return {
       success: false,
+      code: 'S3_CORS_PROBE_FAILED',
       message: 'Browser upload probe failed. Check bucket CORS for this app origin.',
       details: error instanceof Error ? error.message : 'Upload probe failed',
     }

@@ -273,6 +273,7 @@ type ComplexityRoot struct {
 	}
 
 	StorageTestResult struct {
+		Code    func(childComplexity int) int
 		Details func(childComplexity int) int
 		Message func(childComplexity int) int
 		Success func(childComplexity int) int
@@ -1739,6 +1740,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.StorageStatus.Type(childComplexity), true
 
+	case "StorageTestResult.code":
+		if e.ComplexityRoot.StorageTestResult.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageTestResult.Code(childComplexity), true
 	case "StorageTestResult.details":
 		if e.ComplexityRoot.StorageTestResult.Details == nil {
 			break
@@ -2519,6 +2526,7 @@ type StorageTestResult {
   success: Boolean!
   message: String!
   details: String
+  code: String
 }
 
 type StorageUploadProbe {
@@ -5351,6 +5359,8 @@ func (ec *executionContext) fieldContext_Mutation_testStorageConfig(ctx context.
 				return ec.fieldContext_StorageTestResult_message(ctx, field)
 			case "details":
 				return ec.fieldContext_StorageTestResult_details(ctx, field)
+			case "code":
+				return ec.fieldContext_StorageTestResult_code(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StorageTestResult", field.Name)
 		},
@@ -5449,6 +5459,8 @@ func (ec *executionContext) fieldContext_Mutation_completeStorageUploadProbe(ctx
 				return ec.fieldContext_StorageTestResult_message(ctx, field)
 			case "details":
 				return ec.fieldContext_StorageTestResult_details(ctx, field)
+			case "code":
+				return ec.fieldContext_StorageTestResult_code(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type StorageTestResult", field.Name)
 		},
@@ -10222,6 +10234,35 @@ func (ec *executionContext) _StorageTestResult_details(ctx context.Context, fiel
 }
 
 func (ec *executionContext) fieldContext_StorageTestResult_details(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageTestResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StorageTestResult_code(ctx context.Context, field graphql.CollectedField, obj *StorageTestResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StorageTestResult_code,
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_StorageTestResult_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "StorageTestResult",
 		Field:      field,
@@ -15541,6 +15582,8 @@ func (ec *executionContext) _StorageTestResult(ctx context.Context, sel ast.Sele
 			}
 		case "details":
 			out.Values[i] = ec._StorageTestResult_details(ctx, field, obj)
+		case "code":
+			out.Values[i] = ec._StorageTestResult_code(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

@@ -7,8 +7,8 @@ import { CheckCircle2, Cloud, Database, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { testStorageConfigWithBrowserProbe } from '@/api/storage-api'
 import { checkSpaceKey, createSpace } from '@/api/org-api'
+import { testStorageConfigWithBrowserProbe } from '@/api/storage-api'
 import { AppHeader } from '@/components/app-header'
 import { S3RequirementsNote } from '@/components/storage/s3-requirements-note'
 import { Button } from '@/components/ui/button'
@@ -32,6 +32,7 @@ import { Separator } from '@/components/ui/separator'
 import { useBrand } from '@/hooks/use-brand'
 import { extractErrorInfo } from '@/lib/error-utils'
 import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
+import { formatStorageValidationError } from '@/lib/storage-validation-errors'
 import { useAuth } from '@/stores/auth-store'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
@@ -67,6 +68,20 @@ function makeCreateSchema(t: (key: string) => string) {
             code: z.ZodIssueCode.custom,
             message: t('forms.validation.required'),
             path: ['region'],
+          })
+        }
+        if (!data.accessKeyId?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('forms.validation.required'),
+            path: ['accessKeyId'],
+          })
+        }
+        if (!data.secretKey?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('forms.validation.required'),
+            path: ['secretKey'],
           })
         }
       }
@@ -250,7 +265,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.bucket')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder='my-bucket' {...field} disabled={isSaving} />
+                    <Input {...field} disabled={isSaving} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -263,7 +278,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.region')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder='us-east-1' {...field} disabled={isSaving} />
+                    <Input {...field} disabled={isSaving} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -277,7 +292,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
                 <FormControl>
-                  <Input placeholder='https://s3.amazonaws.com' {...field} disabled={isSaving} />
+                  <Input {...field} disabled={isSaving} />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.endpointDescription')}
@@ -293,7 +308,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
                 <FormControl>
-                  <Input placeholder='' {...field} disabled={isSaving} />
+                  <Input {...field} disabled={isSaving} />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.prefixDescription')}
@@ -308,7 +323,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               name='accessKeyId'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('pages.spaceSettings.storage.accessKeyId')}</FormLabel>
+                  <FormLabel>{t('pages.spaceSettings.storage.accessKeyId')} *</FormLabel>
                   <FormControl>
                     <Input {...field} disabled={isSaving} />
                   </FormControl>
@@ -321,7 +336,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               name='secretKey'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('pages.spaceSettings.storage.secretKey')}</FormLabel>
+                  <FormLabel>{t('pages.spaceSettings.storage.secretKey')} *</FormLabel>
                   <FormControl>
                     <Input type='password' {...field} disabled={isSaving} />
                   </FormControl>
@@ -419,9 +434,7 @@ export function CreateSpacePage() {
         })
 
         if (!probeResult.success) {
-          const errorMessage = probeResult.details
-            ? `${probeResult.message}: ${probeResult.details}`
-            : probeResult.message
+          const errorMessage = formatStorageValidationError(t, probeResult)
           toast.error(`${t('pages.spaces.messages.createSpaceFailed')}: ${errorMessage}`)
           return
         }

@@ -566,6 +566,15 @@
         "permissions": "Bucket access must allow listing, reading, writing, and deleting objects.",
         "cors": "Add <1>{{origin}}</1> to your bucket CORS allowed origins and allow PUT uploads.",
         "appOriginFallback": "this app URL"
+      },
+      "validationErrors": {
+        "endpointUnreachable": "Could not reach the S3 endpoint. Check the bucket name, region, and endpoint URL.",
+        "invalidAccessKey": "The access key ID format looks invalid.",
+        "invalidRegion": "The region looks invalid. Check the S3 region field.",
+        "accessDenied": "Access was denied. Check the bucket permissions and credentials.",
+        "authentication": "Could not authenticate to S3. Check the access key ID and secret access key.",
+        "timeout": "Connecting to S3 timed out. Check the bucket name, region, endpoint, and network access.",
+        "cors": "Browser upload was blocked. Check the bucket CORS settings for this app URL."
       }
     },
     "systemSettings": {

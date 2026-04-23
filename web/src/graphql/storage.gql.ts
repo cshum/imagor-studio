@@ -163,6 +163,7 @@ export const TEST_STORAGE_CONFIG = gql(`
       success
       message
       details
+      code
     }
   }
 `)
@@ -199,6 +200,7 @@ export const COMPLETE_STORAGE_UPLOAD_PROBE = gql(`
       success
       message
       details
+      code
     }
   }
 `)

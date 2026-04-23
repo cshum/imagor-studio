@@ -72,9 +72,7 @@ function getResponseStatus(error: unknown): number | null {
 function sanitizeErrorMessage(error: unknown, message: string): string {
   if (/^GraphQL Error \(Code: \d+\):/i.test(message)) {
     const status = getResponseStatus(error)
-    return status
-      ? `GraphQL request failed with status ${status}`
-      : 'GraphQL request failed'
+    return status ? `GraphQL request failed with status ${status}` : 'GraphQL request failed'
   }
 
   return message

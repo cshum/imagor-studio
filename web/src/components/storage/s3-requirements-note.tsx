@@ -1,5 +1,5 @@
-import { Info } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
+import { Info } from 'lucide-react'
 
 interface S3RequirementsNoteProps {
   className?: string

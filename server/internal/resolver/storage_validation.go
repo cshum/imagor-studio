@@ -218,6 +218,7 @@ func validateS3StorageCapabilities(ctx context.Context, stor storagepkg.Storage)
 			Success: false,
 			Message: "Failed to verify probe object",
 			Details: optionalDetails("probe object content mismatch"),
+			Code:    optionalCode(storageErrorCodeProbeVerificationFailed),
 		}
 	}
 
@@ -226,6 +227,7 @@ func validateS3StorageCapabilities(ctx context.Context, stor storagepkg.Storage)
 		return &gql.StorageTestResult{
 			Success: false,
 			Message: "Storage backend does not support presigned uploads",
+			Code:    optionalCode(storageErrorCodePresignUnsupported),
 		}
 	}
 	if _, err := presignable.PresignedPutURL(ctx, path.Join("__imagor_probe__", studiouuid.GenerateUUID()+".txt"), probeContentType, int64(len(probeContent)), time.Minute); err != nil {
@@ -261,12 +263,56 @@ func storageConfigInputFromSpace(sp *space.Space) gql.StorageConfigInput {
 }
 
 func storageTestFailure(message string, err error) *gql.StorageTestResult {
-	details := optionalDetails(err.Error())
+	code, sanitized := classifyStorageValidationError(err)
+	details := optionalDetails(sanitized)
 	return &gql.StorageTestResult{
 		Success: false,
 		Message: message,
 		Details: details,
+		Code:    optionalCode(code),
 	}
+}
+
+func classifyStorageValidationError(err error) (string, string) {
+	if err == nil {
+		return "", ""
+	}
+
+	message := strings.TrimSpace(err.Error())
+	if message == "" {
+		return "", ""
+	}
+
+	if strings.Contains(message, "failed to refresh cached credentials") ||
+		strings.Contains(message, "no EC2 IMDS role found") ||
+		strings.Contains(message, "ec2imds") {
+		return storageErrorCodeAuthenticationFailed, "Unable to authenticate to S3. Provide an access key ID and secret access key, or verify the server's AWS role configuration."
+	}
+
+	if strings.Contains(message, "no such host") ||
+		strings.Contains(message, "dial tcp") ||
+		strings.Contains(message, "unable to resolve host") {
+		return storageErrorCodeEndpointUnreachable, "Unable to reach the S3 endpoint. Check the bucket name, region, and endpoint URL."
+	}
+
+	if strings.Contains(message, "credential access key has length") {
+		return storageErrorCodeInvalidAccessKey, "Access key ID format is invalid."
+	}
+
+	if strings.Contains(message, "invalid input region") {
+		return storageErrorCodeInvalidRegion, "Region is invalid. Check that the S3 region field is correct."
+	}
+
+	if strings.Contains(strings.ToLower(message), "accessdenied") ||
+		strings.Contains(strings.ToLower(message), "access denied") {
+		return storageErrorCodeAccessDenied, "Access denied. Check the bucket permissions and credentials."
+	}
+
+	if strings.Contains(message, "context deadline exceeded") {
+		return storageErrorCodeTimeout, "Timed out connecting to S3. Check the bucket name, region, endpoint, and network access."
+	}
+
+	return "", message
 }
 
 func optionalDetails(value string) *string {
@@ -285,9 +331,28 @@ func optionalStringPtr(value string) *string {
 	return &trimmed
 }
 
+func optionalCode(value string) *string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
+}
+
 var (
 	errMissingFileStorageConfig     = errors.New("File configuration is required for file storage type")
 	errMissingS3StorageConfig       = errors.New("S3 configuration is required for S3 storage type")
 	errUnsupportedStorageType       = errors.New("unsupported storage type")
 	errStorageDoesNotSupportPresign = errors.New("storage backend does not support presigned uploads")
+)
+
+const (
+	storageErrorCodeEndpointUnreachable     = "S3_ENDPOINT_UNREACHABLE"
+	storageErrorCodeInvalidAccessKey        = "S3_INVALID_ACCESS_KEY"
+	storageErrorCodeInvalidRegion           = "S3_INVALID_REGION"
+	storageErrorCodeAccessDenied            = "S3_ACCESS_DENIED"
+	storageErrorCodeAuthenticationFailed    = "S3_AUTHENTICATION_FAILED"
+	storageErrorCodeTimeout                 = "S3_TIMEOUT"
+	storageErrorCodePresignUnsupported      = "S3_PRESIGN_UNSUPPORTED"
+	storageErrorCodeProbeVerificationFailed = "S3_PROBE_VERIFICATION_FAILED"
 )

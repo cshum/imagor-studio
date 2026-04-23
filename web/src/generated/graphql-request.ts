@@ -686,6 +686,7 @@ export type StorageStatus = {
 
 export type StorageTestResult = {
   __typename?: 'StorageTestResult'
+  code: Maybe<Scalars['String']['output']>
   details: Maybe<Scalars['String']['output']>
   message: Scalars['String']['output']
   success: Scalars['Boolean']['output']
@@ -1515,6 +1516,7 @@ export type TestStorageConfigMutation = {
     success: boolean
     message: string
     details: string | null
+    code: string | null
   }
 }
 
@@ -1547,6 +1549,7 @@ export type CompleteStorageUploadProbeMutation = {
     success: boolean
     message: string
     details: string | null
+    code: string | null
   }
 }
 
@@ -2382,6 +2385,7 @@ export const TestStorageConfigDocument = gql`
       success
       message
       details
+      code
     }
   }
 `
@@ -2412,6 +2416,7 @@ export const CompleteStorageUploadProbeDocument = gql`
       success
       message
       details
+      code
     }
   }
 `
