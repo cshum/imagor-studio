@@ -109,7 +109,9 @@ type ComplexityRoot struct {
 		AddOrgMember                  func(childComplexity int, username string, role string) int
 		AddOrgMemberByEmail           func(childComplexity int, email string, role string) int
 		AddSpaceMember                func(childComplexity int, spaceKey string, userID string, role string) int
+		BeginStorageUploadProbe       func(childComplexity int, input StorageConfigInput, contentType string, sizeBytes int) int
 		ChangePassword                func(childComplexity int, input ChangePasswordInput, userID *string) int
+		CompleteStorageUploadProbe    func(childComplexity int, input StorageConfigInput, probePath string, expectedContent string) int
 		ConfigureFileStorage          func(childComplexity int, input FileStorageInput) int
 		ConfigureImagor               func(childComplexity int, input ImagorInput) int
 		ConfigureS3Storage            func(childComplexity int, input S3StorageInput) int
@@ -276,6 +278,12 @@ type ComplexityRoot struct {
 		Success func(childComplexity int) int
 	}
 
+	StorageUploadProbe struct {
+		ExpiresAt func(childComplexity int) int
+		ProbePath func(childComplexity int) int
+		UploadURL func(childComplexity int) int
+	}
+
 	SystemRegistry struct {
 		IsEncrypted          func(childComplexity int) int
 		IsOverriddenByConfig func(childComplexity int) int
@@ -338,6 +346,8 @@ type MutationResolver interface {
 	ConfigureFileStorage(ctx context.Context, input FileStorageInput) (*StorageConfigResult, error)
 	ConfigureS3Storage(ctx context.Context, input S3StorageInput) (*StorageConfigResult, error)
 	TestStorageConfig(ctx context.Context, input StorageConfigInput) (*StorageTestResult, error)
+	BeginStorageUploadProbe(ctx context.Context, input StorageConfigInput, contentType string, sizeBytes int) (*StorageUploadProbe, error)
+	CompleteStorageUploadProbe(ctx context.Context, input StorageConfigInput, probePath string, expectedContent string) (*StorageTestResult, error)
 	ConfigureImagor(ctx context.Context, input ImagorInput) (*ImagorConfigResult, error)
 	GenerateImagorURL(ctx context.Context, imagePath string, spaceKey *string, params ImagorParamsInput) (string, error)
 	GenerateImagorURLFromTemplate(ctx context.Context, templateJSON string, spaceKey *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) (string, error)
@@ -693,6 +703,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AddSpaceMember(childComplexity, args["spaceKey"].(string), args["userId"].(string), args["role"].(string)), true
+	case "Mutation.beginStorageUploadProbe":
+		if e.ComplexityRoot.Mutation.BeginStorageUploadProbe == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_beginStorageUploadProbe_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.BeginStorageUploadProbe(childComplexity, args["input"].(StorageConfigInput), args["contentType"].(string), args["sizeBytes"].(int)), true
 	case "Mutation.changePassword":
 		if e.ComplexityRoot.Mutation.ChangePassword == nil {
 			break
@@ -704,6 +725,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ChangePassword(childComplexity, args["input"].(ChangePasswordInput), args["userId"].(*string)), true
+	case "Mutation.completeStorageUploadProbe":
+		if e.ComplexityRoot.Mutation.CompleteStorageUploadProbe == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_completeStorageUploadProbe_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CompleteStorageUploadProbe(childComplexity, args["input"].(StorageConfigInput), args["probePath"].(string), args["expectedContent"].(string)), true
 	case "Mutation.configureFileStorage":
 		if e.ComplexityRoot.Mutation.ConfigureFileStorage == nil {
 			break
@@ -1726,6 +1758,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.StorageTestResult.Success(childComplexity), true
 
+	case "StorageUploadProbe.expiresAt":
+		if e.ComplexityRoot.StorageUploadProbe.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageUploadProbe.ExpiresAt(childComplexity), true
+	case "StorageUploadProbe.probePath":
+		if e.ComplexityRoot.StorageUploadProbe.ProbePath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageUploadProbe.ProbePath(childComplexity), true
+	case "StorageUploadProbe.uploadURL":
+		if e.ComplexityRoot.StorageUploadProbe.UploadURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageUploadProbe.UploadURL(childComplexity), true
+
 	case "SystemRegistry.isEncrypted":
 		if e.ComplexityRoot.SystemRegistry.IsEncrypted == nil {
 			break
@@ -2371,6 +2422,16 @@ type Mutation {
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!
   configureS3Storage(input: S3StorageInput!): StorageConfigResult!
   testStorageConfig(input: StorageConfigInput!): StorageTestResult!
+  beginStorageUploadProbe(
+    input: StorageConfigInput!
+    contentType: String!
+    sizeBytes: Int!
+  ): StorageUploadProbe!
+  completeStorageUploadProbe(
+    input: StorageConfigInput!
+    probePath: String!
+    expectedContent: String!
+  ): StorageTestResult!
 }
 
 type FileList {
@@ -2458,6 +2519,12 @@ type StorageTestResult {
   success: Boolean!
   message: String!
   details: String
+}
+
+type StorageUploadProbe {
+  probePath: String!
+  uploadURL: String!
+  expiresAt: String!
 }
 
 input StorageConfigInput {
@@ -2642,6 +2709,27 @@ func (ec *executionContext) field_Mutation_addSpaceMember_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_beginStorageUploadProbe_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "contentType", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["contentType"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "sizeBytes", ec.unmarshalNInt2int)
+	if err != nil {
+		return nil, err
+	}
+	args["sizeBytes"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2655,6 +2743,27 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 		return nil, err
 	}
 	args["userId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_completeStorageUploadProbe_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "probePath", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["probePath"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "expectedContent", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["expectedContent"] = arg2
 	return args, nil
 }
 
@@ -5254,6 +5363,104 @@ func (ec *executionContext) fieldContext_Mutation_testStorageConfig(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_testStorageConfig_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_beginStorageUploadProbe(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_beginStorageUploadProbe,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().BeginStorageUploadProbe(ctx, fc.Args["input"].(StorageConfigInput), fc.Args["contentType"].(string), fc.Args["sizeBytes"].(int))
+		},
+		nil,
+		ec.marshalNStorageUploadProbe2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageUploadProbe,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_beginStorageUploadProbe(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "probePath":
+				return ec.fieldContext_StorageUploadProbe_probePath(ctx, field)
+			case "uploadURL":
+				return ec.fieldContext_StorageUploadProbe_uploadURL(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_StorageUploadProbe_expiresAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StorageUploadProbe", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_beginStorageUploadProbe_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_completeStorageUploadProbe(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_completeStorageUploadProbe,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CompleteStorageUploadProbe(ctx, fc.Args["input"].(StorageConfigInput), fc.Args["probePath"].(string), fc.Args["expectedContent"].(string))
+		},
+		nil,
+		ec.marshalNStorageTestResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageTestResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_completeStorageUploadProbe(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_StorageTestResult_success(ctx, field)
+			case "message":
+				return ec.fieldContext_StorageTestResult_message(ctx, field)
+			case "details":
+				return ec.fieldContext_StorageTestResult_details(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StorageTestResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_completeStorageUploadProbe_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10027,6 +10234,93 @@ func (ec *executionContext) fieldContext_StorageTestResult_details(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _StorageUploadProbe_probePath(ctx context.Context, field graphql.CollectedField, obj *StorageUploadProbe) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StorageUploadProbe_probePath,
+		func(ctx context.Context) (any, error) {
+			return obj.ProbePath, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StorageUploadProbe_probePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageUploadProbe",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StorageUploadProbe_uploadURL(ctx context.Context, field graphql.CollectedField, obj *StorageUploadProbe) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StorageUploadProbe_uploadURL,
+		func(ctx context.Context) (any, error) {
+			return obj.UploadURL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StorageUploadProbe_uploadURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageUploadProbe",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StorageUploadProbe_expiresAt(ctx context.Context, field graphql.CollectedField, obj *StorageUploadProbe) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StorageUploadProbe_expiresAt,
+		func(ctx context.Context) (any, error) {
+			return obj.ExpiresAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StorageUploadProbe_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageUploadProbe",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SystemRegistry_key(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13865,6 +14159,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "beginStorageUploadProbe":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_beginStorageUploadProbe(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completeStorageUploadProbe":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_completeStorageUploadProbe(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "configureImagor":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_configureImagor(ctx, field)
@@ -15256,6 +15564,55 @@ func (ec *executionContext) _StorageTestResult(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var storageUploadProbeImplementors = []string{"StorageUploadProbe"}
+
+func (ec *executionContext) _StorageUploadProbe(ctx context.Context, sel ast.SelectionSet, obj *StorageUploadProbe) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, storageUploadProbeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StorageUploadProbe")
+		case "probePath":
+			out.Values[i] = ec._StorageUploadProbe_probePath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uploadURL":
+			out.Values[i] = ec._StorageUploadProbe_uploadURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expiresAt":
+			out.Values[i] = ec._StorageUploadProbe_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var systemRegistryImplementors = []string{"SystemRegistry"}
 
 func (ec *executionContext) _SystemRegistry(ctx context.Context, sel ast.SelectionSet, obj *SystemRegistry) graphql.Marshaler {
@@ -16359,6 +16716,20 @@ func (ec *executionContext) unmarshalNStorageType2githubᚗcomᚋcshumᚋimagor�
 
 func (ec *executionContext) marshalNStorageType2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageType(ctx context.Context, sel ast.SelectionSet, v StorageType) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNStorageUploadProbe2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageUploadProbe(ctx context.Context, sel ast.SelectionSet, v StorageUploadProbe) graphql.Marshaler {
+	return ec._StorageUploadProbe(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStorageUploadProbe2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageUploadProbe(ctx context.Context, sel ast.SelectionSet, v *StorageUploadProbe) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StorageUploadProbe(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {

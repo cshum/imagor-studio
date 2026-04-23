@@ -64,6 +64,8 @@ type Documents = {
   '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureFileStorageDocument
   '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureS3StorageDocument
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n': typeof types.TestStorageConfigDocument
+  '\n  mutation BeginStorageUploadProbe(\n    $input: StorageConfigInput!\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    beginStorageUploadProbe(\n      input: $input\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      probePath\n      uploadURL\n      expiresAt\n    }\n  }\n': typeof types.BeginStorageUploadProbeDocument
+  '\n  mutation CompleteStorageUploadProbe(\n    $input: StorageConfigInput!\n    $probePath: String!\n    $expectedContent: String!\n  ) {\n    completeStorageUploadProbe(\n      input: $input\n      probePath: $probePath\n      expectedContent: $expectedContent\n    ) {\n      success\n      message\n      details\n    }\n  }\n': typeof types.CompleteStorageUploadProbeDocument
   '\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {\n    saveTemplate(input: $input, spaceKey: $spaceKey) {\n      success\n      templatePath\n      message\n    }\n  }\n': typeof types.SaveTemplateDocument
   '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)\n  }\n': typeof types.RegenerateTemplatePreviewDocument
   '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    hasPassword\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n': typeof types.UserInfoFragmentDoc
@@ -177,6 +179,10 @@ const documents: Documents = {
     types.ConfigureS3StorageDocument,
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n':
     types.TestStorageConfigDocument,
+  '\n  mutation BeginStorageUploadProbe(\n    $input: StorageConfigInput!\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    beginStorageUploadProbe(\n      input: $input\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      probePath\n      uploadURL\n      expiresAt\n    }\n  }\n':
+    types.BeginStorageUploadProbeDocument,
+  '\n  mutation CompleteStorageUploadProbe(\n    $input: StorageConfigInput!\n    $probePath: String!\n    $expectedContent: String!\n  ) {\n    completeStorageUploadProbe(\n      input: $input\n      probePath: $probePath\n      expectedContent: $expectedContent\n    ) {\n      success\n      message\n      details\n    }\n  }\n':
+    types.CompleteStorageUploadProbeDocument,
   '\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {\n    saveTemplate(input: $input, spaceKey: $spaceKey) {\n      success\n      templatePath\n      message\n    }\n  }\n':
     types.SaveTemplateDocument,
   '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)\n  }\n':
@@ -512,6 +518,18 @@ export function gql(
 export function gql(
   source: '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n',
 ): (typeof documents)['\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation BeginStorageUploadProbe(\n    $input: StorageConfigInput!\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    beginStorageUploadProbe(\n      input: $input\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      probePath\n      uploadURL\n      expiresAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation BeginStorageUploadProbe(\n    $input: StorageConfigInput!\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    beginStorageUploadProbe(\n      input: $input\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      probePath\n      uploadURL\n      expiresAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation CompleteStorageUploadProbe(\n    $input: StorageConfigInput!\n    $probePath: String!\n    $expectedContent: String!\n  ) {\n    completeStorageUploadProbe(\n      input: $input\n      probePath: $probePath\n      expectedContent: $expectedContent\n    ) {\n      success\n      message\n      details\n    }\n  }\n',
+): (typeof documents)['\n  mutation CompleteStorageUploadProbe(\n    $input: StorageConfigInput!\n    $probePath: String!\n    $expectedContent: String!\n  ) {\n    completeStorageUploadProbe(\n      input: $input\n      probePath: $probePath\n      expectedContent: $expectedContent\n    ) {\n      success\n      message\n      details\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

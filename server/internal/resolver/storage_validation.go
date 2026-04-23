@@ -3,6 +3,7 @@ package resolver
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"path"
 	"strings"
@@ -27,15 +28,47 @@ func (r *Resolver) validateStorageConfigInput(ctx context.Context, input gql.Sto
 }
 
 func validateStorageConfigInput(ctx context.Context, input gql.StorageConfigInput, logger *zap.Logger, registryStore registrystore.Store) *gql.StorageTestResult {
+	testStorage, err := storageFromValidationInput(input, logger, registryStore)
+	if err != nil {
+		switch {
+		case errors.Is(err, errMissingFileStorageConfig), errors.Is(err, errMissingS3StorageConfig):
+			return &gql.StorageTestResult{Success: false, Message: err.Error()}
+		}
+		return storageTestFailure("Failed to create storage instance", err)
+	}
+
+	_, err = testStorage.List(ctx, "", storagepkg.ListOptions{Limit: 1})
+	if err != nil {
+		return storageTestFailure("Failed to access storage directory", err)
+	}
+
+	if input.Type == gql.StorageTypeS3 {
+		return validateS3StorageCapabilities(ctx, testStorage)
+	}
+
+	return &gql.StorageTestResult{
+		Success: true,
+		Message: "Storage configuration test successful",
+	}
+}
+
+func storageFromValidationInput(input gql.StorageConfigInput, logger *zap.Logger, registryStore registrystore.Store) (storagepkg.Storage, error) {
+	cfg, err := configFromStorageInput(input)
+	if err != nil {
+		return nil, err
+	}
+
+	testProvider := storageprovider.New(logger, registryStore, nil)
+	return testProvider.NewStorageFromConfig(cfg)
+}
+
+func configFromStorageInput(input gql.StorageConfigInput) (*config.Config, error) {
 	cfg := &config.Config{}
 
 	switch input.Type {
 	case gql.StorageTypeFile:
 		if input.FileConfig == nil {
-			return &gql.StorageTestResult{
-				Success: false,
-				Message: "File configuration is required for file storage type",
-			}
+			return nil, errMissingFileStorageConfig
 		}
 		cfg.StorageType = "file"
 		cfg.FileStorageBaseDir = input.FileConfig.BaseDir
@@ -44,10 +77,7 @@ func validateStorageConfigInput(ctx context.Context, input gql.StorageConfigInpu
 
 	case gql.StorageTypeS3:
 		if input.S3Config == nil {
-			return &gql.StorageTestResult{
-				Success: false,
-				Message: "S3 configuration is required for S3 storage type",
-			}
+			return nil, errMissingS3StorageConfig
 		}
 		cfg.StorageType = "s3"
 		cfg.S3StorageBucket = input.S3Config.Bucket
@@ -72,27 +102,75 @@ func validateStorageConfigInput(ctx context.Context, input gql.StorageConfigInpu
 		if input.S3Config.BaseDir != nil {
 			cfg.S3StorageBaseDir = *input.S3Config.BaseDir
 		}
+	default:
+		return nil, errUnsupportedStorageType
 	}
 
-	testProvider := storageprovider.New(logger, registryStore, nil)
-	testStorage, err := testProvider.NewStorageFromConfig(cfg)
+	return cfg, nil
+}
+
+func newStorageUploadProbe(ctx context.Context, stor storagepkg.Storage, contentType string, sizeBytes int64, ttl time.Duration) (*gql.StorageUploadProbe, error) {
+	presignable, ok := stor.(storagepkg.PresignableStorage)
+	if !ok {
+		return nil, errStorageDoesNotSupportPresign
+	}
+
+	trimmedContentType := strings.TrimSpace(contentType)
+	if trimmedContentType == "" {
+		trimmedContentType = "application/octet-stream"
+	}
+	probePath := path.Join("__imagor_probe__", studiouuid.GenerateUUID()+".txt")
+	uploadURL, err := presignable.PresignedPutURL(ctx, probePath, trimmedContentType, sizeBytes, ttl)
 	if err != nil {
-		return storageTestFailure("Failed to create storage instance", err)
+		return nil, err
 	}
 
-	_, err = testStorage.List(ctx, "", storagepkg.ListOptions{Limit: 1})
+	return &gql.StorageUploadProbe{
+		ProbePath: probePath,
+		UploadURL: uploadURL,
+		ExpiresAt: time.Now().UTC().Add(ttl).Format(time.RFC3339),
+	}, nil
+}
+
+func completeStorageUploadProbe(ctx context.Context, stor storagepkg.Storage, probePath string, expectedContent string) *gql.StorageTestResult {
+	trimmedProbePath := strings.TrimSpace(probePath)
+	if trimmedProbePath == "" {
+		return &gql.StorageTestResult{Success: false, Message: "Probe path is required"}
+	}
+
+	cleanupProbe := true
+	defer func() {
+		if cleanupProbe {
+			_ = stor.Delete(ctx, trimmedProbePath)
+		}
+	}()
+
+	reader, err := stor.Get(ctx, trimmedProbePath)
 	if err != nil {
-		return storageTestFailure("Failed to access storage directory", err)
+		return storageTestFailure("Failed to read probe object", err)
+	}
+	body, readErr := io.ReadAll(reader)
+	closeErr := reader.Close()
+	if readErr != nil {
+		return storageTestFailure("Failed to read probe object", readErr)
+	}
+	if closeErr != nil {
+		return storageTestFailure("Failed to close probe object reader", closeErr)
+	}
+	if string(body) != expectedContent {
+		return &gql.StorageTestResult{
+			Success: false,
+			Message: "Failed to verify probe object",
+			Details: optionalDetails("probe object content mismatch"),
+		}
 	}
 
-	if input.Type == gql.StorageTypeS3 {
-		return validateS3StorageCapabilities(ctx, testStorage)
+	if err := stor.Delete(ctx, trimmedProbePath); err != nil {
+		return storageTestFailure("Failed to delete probe object", err)
 	}
+	cleanupProbe = false
 
-	return &gql.StorageTestResult{
-		Success: true,
-		Message: "Storage configuration test successful",
-	}
+	return &gql.StorageTestResult{Success: true, Message: "Storage configuration test successful"}
 }
 
 func validateS3StorageCapabilities(ctx context.Context, stor storagepkg.Storage) *gql.StorageTestResult {
@@ -206,3 +284,10 @@ func optionalStringPtr(value string) *string {
 	}
 	return &trimmed
 }
+
+var (
+	errMissingFileStorageConfig     = errors.New("File configuration is required for file storage type")
+	errMissingS3StorageConfig       = errors.New("S3 configuration is required for S3 storage type")
+	errUnsupportedStorageType       = errors.New("unsupported storage type")
+	errStorageDoesNotSupportPresign = errors.New("storage backend does not support presigned uploads")
+)

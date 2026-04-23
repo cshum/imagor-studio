@@ -59,6 +59,27 @@ function getErrorMessageValue(error: unknown): string | null {
   return null
 }
 
+function getResponseStatus(error: unknown): number | null {
+  const errorRecord = asRecord(error)
+  if (!errorRecord) {
+    return null
+  }
+
+  const responseRecord = asRecord(errorRecord.response)
+  return typeof responseRecord?.status === 'number' ? responseRecord.status : null
+}
+
+function sanitizeErrorMessage(error: unknown, message: string): string {
+  if (/^GraphQL Error \(Code: \d+\):/i.test(message)) {
+    const status = getResponseStatus(error)
+    return status
+      ? `GraphQL request failed with status ${status}`
+      : 'GraphQL request failed'
+  }
+
+  return message
+}
+
 export function hasErrorCode(error: unknown, code: string): boolean {
   return extractErrorInfo(error).code === code
 }
@@ -79,7 +100,7 @@ export function extractErrorMessage(error: unknown): string {
 
   const message = getErrorMessageValue(error)
   if (message) {
-    return message
+    return sanitizeErrorMessage(error, message)
   }
 
   // Fallback to generic message
@@ -107,7 +128,7 @@ export function extractErrorInfo(error: unknown): ErrorInfo {
 
   const message = getErrorMessageValue(error)
   if (message) {
-    return { message }
+    return { message: sanitizeErrorMessage(error, message) }
   }
 
   // Fallback to generic message

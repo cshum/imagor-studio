@@ -20,6 +20,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
+import { S3RequirementsNote } from './s3-requirements-note'
+
 const createS3StorageSchema = (t: (key: string) => string) =>
   z.object({
     bucket: z.string().min(1, t('pages.storage.bucketNameRequired')),
@@ -79,6 +81,8 @@ export const S3StorageForm = forwardRef<S3StorageFormRef, S3StorageFormProps>(
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
             <div className={cn('space-y-6', disabled && 'opacity-60')}>
+              <S3RequirementsNote />
+
               <FormField
                 control={form.control}
                 name='bucket'

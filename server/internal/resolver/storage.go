@@ -879,6 +879,73 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 	return result, nil
 }
 
+// BeginStorageUploadProbe is the resolver for the beginStorageUploadProbe field.
+func (r *mutationResolver) BeginStorageUploadProbe(ctx context.Context, input gql.StorageConfigInput, contentType string, sizeBytes int) (*gql.StorageUploadProbe, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if input.Type != gql.StorageTypeS3 {
+		return nil, &gqlerror.Error{
+			Message:    "browser upload probes are only supported for S3 storage",
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+	if sizeBytes <= 0 {
+		return nil, &gqlerror.Error{
+			Message:    "invalid sizeBytes: must be greater than 0",
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+	if int64(sizeBytes) > maxSinglePutUploadBytes {
+		return nil, &gqlerror.Error{
+			Message:    fmt.Sprintf("file too large for single upload: max %d bytes", maxSinglePutUploadBytes),
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+
+	stor, err := storageFromValidationInput(input, r.logger, r.registryStore)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create storage instance: %w", err)
+	}
+	if _, err := stor.List(ctx, "", storage.ListOptions{Limit: 1}); err != nil {
+		return nil, fmt.Errorf("failed to access storage directory: %w", err)
+	}
+
+	probe, err := newStorageUploadProbe(ctx, stor, contentType, int64(sizeBytes), 5*time.Minute)
+	if err != nil {
+		if errors.Is(err, errStorageDoesNotSupportPresign) {
+			return nil, &gqlerror.Error{
+				Message:    err.Error(),
+				Extensions: map[string]interface{}{"code": "NOT_AVAILABLE"},
+			}
+		}
+		return nil, fmt.Errorf("failed to generate upload probe: %w", err)
+	}
+
+	return probe, nil
+}
+
+// CompleteStorageUploadProbe is the resolver for the completeStorageUploadProbe field.
+func (r *mutationResolver) CompleteStorageUploadProbe(ctx context.Context, input gql.StorageConfigInput, probePath string, expectedContent string) (*gql.StorageTestResult, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if input.Type != gql.StorageTypeS3 {
+		return nil, &gqlerror.Error{
+			Message:    "browser upload probes are only supported for S3 storage",
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+
+	stor, err := storageFromValidationInput(input, r.logger, r.registryStore)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create storage instance: %w", err)
+	}
+
+	result := completeStorageUploadProbe(ctx, stor, probePath, expectedContent)
+	return result, nil
+}
+
 // Helper function to delete a system registry key
 func (r *mutationResolver) deleteSystemRegistryKey(ctx context.Context, key string) error {
 	_, err := r.DeleteSystemRegistry(ctx, &key, nil)

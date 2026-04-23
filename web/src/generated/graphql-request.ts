@@ -171,7 +171,9 @@ export type Mutation = {
   addOrgMember: OrgMember
   addOrgMemberByEmail: OrgMember
   addSpaceMember: SpaceMember
+  beginStorageUploadProbe: StorageUploadProbe
   changePassword: Scalars['Boolean']['output']
+  completeStorageUploadProbe: StorageTestResult
   configureFileStorage: StorageConfigResult
   configureImagor: ImagorConfigResult
   configureS3Storage: StorageConfigResult
@@ -225,9 +227,21 @@ export type MutationAddSpaceMemberArgs = {
   userId: Scalars['ID']['input']
 }
 
+export type MutationBeginStorageUploadProbeArgs = {
+  contentType: Scalars['String']['input']
+  input: StorageConfigInput
+  sizeBytes: Scalars['Int']['input']
+}
+
 export type MutationChangePasswordArgs = {
   input: ChangePasswordInput
   userId?: InputMaybe<Scalars['ID']['input']>
+}
+
+export type MutationCompleteStorageUploadProbeArgs = {
+  expectedContent: Scalars['String']['input']
+  input: StorageConfigInput
+  probePath: Scalars['String']['input']
 }
 
 export type MutationConfigureFileStorageArgs = {
@@ -678,6 +692,13 @@ export type StorageTestResult = {
 }
 
 export type StorageType = 'FILE' | 'S3'
+
+export type StorageUploadProbe = {
+  __typename?: 'StorageUploadProbe'
+  expiresAt: Scalars['String']['output']
+  probePath: Scalars['String']['output']
+  uploadURL: Scalars['String']['output']
+}
 
 export type SystemRegistry = {
   __typename?: 'SystemRegistry'
@@ -1490,6 +1511,38 @@ export type TestStorageConfigMutationVariables = Exact<{
 export type TestStorageConfigMutation = {
   __typename?: 'Mutation'
   testStorageConfig: {
+    __typename?: 'StorageTestResult'
+    success: boolean
+    message: string
+    details: string | null
+  }
+}
+
+export type BeginStorageUploadProbeMutationVariables = Exact<{
+  input: StorageConfigInput
+  contentType: Scalars['String']['input']
+  sizeBytes: Scalars['Int']['input']
+}>
+
+export type BeginStorageUploadProbeMutation = {
+  __typename?: 'Mutation'
+  beginStorageUploadProbe: {
+    __typename?: 'StorageUploadProbe'
+    probePath: string
+    uploadURL: string
+    expiresAt: string
+  }
+}
+
+export type CompleteStorageUploadProbeMutationVariables = Exact<{
+  input: StorageConfigInput
+  probePath: Scalars['String']['input']
+  expectedContent: Scalars['String']['input']
+}>
+
+export type CompleteStorageUploadProbeMutation = {
+  __typename?: 'Mutation'
+  completeStorageUploadProbe: {
     __typename?: 'StorageTestResult'
     success: boolean
     message: string
@@ -2326,6 +2379,36 @@ export const ConfigureS3StorageDocument = gql`
 export const TestStorageConfigDocument = gql`
   mutation TestStorageConfig($input: StorageConfigInput!) {
     testStorageConfig(input: $input) {
+      success
+      message
+      details
+    }
+  }
+`
+export const BeginStorageUploadProbeDocument = gql`
+  mutation BeginStorageUploadProbe(
+    $input: StorageConfigInput!
+    $contentType: String!
+    $sizeBytes: Int!
+  ) {
+    beginStorageUploadProbe(input: $input, contentType: $contentType, sizeBytes: $sizeBytes) {
+      probePath
+      uploadURL
+      expiresAt
+    }
+  }
+`
+export const CompleteStorageUploadProbeDocument = gql`
+  mutation CompleteStorageUploadProbe(
+    $input: StorageConfigInput!
+    $probePath: String!
+    $expectedContent: String!
+  ) {
+    completeStorageUploadProbe(
+      input: $input
+      probePath: $probePath
+      expectedContent: $expectedContent
+    ) {
       success
       message
       details
@@ -3272,6 +3355,42 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'TestStorageConfig',
+        'mutation',
+        variables,
+      )
+    },
+    BeginStorageUploadProbe(
+      variables: BeginStorageUploadProbeMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<BeginStorageUploadProbeMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<BeginStorageUploadProbeMutation>({
+            document: BeginStorageUploadProbeDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'BeginStorageUploadProbe',
+        'mutation',
+        variables,
+      )
+    },
+    CompleteStorageUploadProbe(
+      variables: CompleteStorageUploadProbeMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<CompleteStorageUploadProbeMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<CompleteStorageUploadProbeMutation>({
+            document: CompleteStorageUploadProbeDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'CompleteStorageUploadProbe',
         'mutation',
         variables,
       )

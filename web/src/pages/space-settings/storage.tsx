@@ -9,6 +9,7 @@ import * as z from 'zod'
 
 import { updateSpace } from '@/api/org-api'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
+import { S3RequirementsNote } from '@/components/storage/s3-requirements-note'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { SettingRow } from '@/components/ui/setting-row'
@@ -139,6 +140,8 @@ export function StorageSection({ space }: StorageSectionProps) {
           {t('pages.spaceSettings.storage.bucketLocked')}
         </p>
       </div>
+
+      <S3RequirementsNote className='mb-4' />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSave)}>

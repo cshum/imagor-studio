@@ -543,7 +543,12 @@
       "endpoint": "端点",
       "takingEffect": "设置已保存。更改可能需要最多 1 分钟才能生效。",
       "testConfigFirst": "请先填写 {{storageType}} 存储配置",
-      "storageTypeDescription": "选择存储图片和文件的位置"
+      "storageTypeDescription": "选择存储图片和文件的位置",
+      "s3Requirements": {
+        "permissions": "此存储桶必须允许列出、读取、写入和删除对象。",
+        "cors": "请将 <1>{{origin}}</1> 添加到存储桶 CORS 的允许来源，并允许 PUT 上传。",
+        "appOriginFallback": "此应用 URL"
+      }
     },
     "systemSettings": {
       "settingOverridden": "此设置被配置文件或环境变量覆盖",

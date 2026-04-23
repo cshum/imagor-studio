@@ -561,7 +561,12 @@
       "endpoint": "Endpoint",
       "takingEffect": "Settings saved. Changes may take up to 1 minute to take effect.",
       "testConfigFirst": "Please fill in the {{storageType}} storage configuration first",
-      "storageTypeDescription": "Select where images and files will be stored"
+      "storageTypeDescription": "Select where images and files will be stored",
+      "s3Requirements": {
+        "permissions": "Bucket access must allow listing, reading, writing, and deleting objects.",
+        "cors": "Add <1>{{origin}}</1> to your bucket CORS allowed origins and allow PUT uploads.",
+        "appOriginFallback": "this app URL"
+      }
     },
     "systemSettings": {
       "settingOverridden": "This setting is overridden by configuration file or environment variable",

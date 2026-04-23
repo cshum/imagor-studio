@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { configureFileStorage, configureS3Storage, testStorageConfig } from '@/api/storage-api'
+import {
+  configureFileStorage,
+  configureS3Storage,
+  testStorageConfig,
+  testStorageConfigWithBrowserProbe,
+} from '@/api/storage-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
 import type { StorageType as GraphQLStorageType, StorageStatusQuery } from '@/generated/graphql'
@@ -112,16 +117,35 @@ export function StorageConfigurationWizard({
     setIsLoading(true)
     setError(null) // Clear any previous errors
     try {
+      const s3Input = {
+        bucket: data.bucket,
+        region: data.region || null,
+        endpoint: data.endpoint || null,
+        forcePathStyle: data.forcePathStyle || null,
+        accessKeyId: data.accessKeyId || null,
+        secretAccessKey: data.secretAccessKey || null,
+        sessionToken: data.sessionToken || null,
+        baseDir: data.baseDir || null,
+      }
+
+      const probeResult = await testStorageConfigWithBrowserProbe({
+        type: 'S3',
+        fileConfig: null,
+        s3Config: s3Input,
+      })
+
+      if (!probeResult.success) {
+        const errorMessage = probeResult.details
+          ? `${probeResult.message}: ${probeResult.details}`
+          : probeResult.message
+        setError(errorMessage)
+        onError?.(errorMessage)
+        return
+      }
+
       const result = await configureS3Storage({
         input: {
-          bucket: data.bucket,
-          region: data.region || null,
-          endpoint: data.endpoint || null,
-          forcePathStyle: data.forcePathStyle || null,
-          accessKeyId: data.accessKeyId || null,
-          secretAccessKey: data.secretAccessKey || null,
-          sessionToken: data.sessionToken || null,
-          baseDir: data.baseDir || null,
+          ...s3Input,
         },
       })
 
@@ -198,7 +222,10 @@ export function StorageConfigurationWizard({
         }
       }
 
-      const result = await testStorageConfig({ input: testInput })
+      const result =
+        storageType === 's3'
+          ? await testStorageConfigWithBrowserProbe(testInput)
+          : await testStorageConfig({ input: testInput })
 
       if (result.success) {
         toast.success(t('pages.storage.testPassed'))
