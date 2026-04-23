@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cshum/imagor"
+	"github.com/cshum/imagor-studio/server/internal/config"
 	"go.uber.org/zap"
 )
 
@@ -41,4 +42,4 @@ type SpaceConfigReader interface {
 	Ready() bool
 }
 
-type RuntimeFactory = func(cfg RuntimeConfig, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, error)
+type RuntimeFactory = func(runtimeCfg RuntimeConfig, serverCfg *config.Config, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, error)

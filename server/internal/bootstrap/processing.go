@@ -33,7 +33,7 @@ func initializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.Node
 
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
 
-	spaceConfigStore, loader, err := runtimeFactory(nodeCfg.Runtime, logger)
+	spaceConfigStore, loader, err := runtimeFactory(nodeCfg.Runtime, cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize processing runtime: %w", err)
 	}

@@ -191,6 +191,12 @@ func (p *Provider) NewS3Storage(cfg *config.Config) (storage.Storage, error) {
 		options = append(options, s3storage.WithBaseDir(cfg.S3StorageBaseDir))
 	}
 
+	maxIdleConnsPerHost := cfg.S3HTTPMaxIdleConnsPerHost
+	if maxIdleConnsPerHost <= 0 {
+		maxIdleConnsPerHost = config.DefaultS3HTTPMaxIdleConnsPerHost
+	}
+
+	options = append(options, s3storage.WithHTTPClient(s3storage.SharedHTTPClient(maxIdleConnsPerHost)))
 	options = append(options, s3storage.WithForcePathStyle(cfg.S3ForcePathStyle))
 
 	return s3storage.New(cfg.S3StorageBucket, options...)
