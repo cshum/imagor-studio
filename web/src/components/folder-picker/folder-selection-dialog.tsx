@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
+import { Skeleton } from '@/components/ui/skeleton.tsx'
 import {
   invalidateFolderCache,
   loadFolderChildren,
@@ -247,8 +248,19 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
         <div>
           <ScrollArea className='border-muted h-96 w-full max-w-[340px] overflow-x-hidden rounded-md border md:max-w-[460px] [&>div>div]:!block [&>div>div]:!min-w-0'>
             {isLoading ? (
-              <div className='flex h-full items-center justify-center'>
-                <div className='text-muted-foreground text-sm'>{t('common.status.loading')}</div>
+              <div className='space-y-2 p-2'>
+                <div className='flex items-center gap-2 px-2 py-1.5'>
+                  <Skeleton className='h-4 w-4 rounded-md' />
+                  <Skeleton className='h-4 flex-1' />
+                </div>
+                <div className='ml-6 space-y-2'>
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className='flex items-center gap-2 px-2 py-1.5'>
+                      <Skeleton className='h-4 w-4 rounded-md' />
+                      <Skeleton className='h-4 flex-1' />
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : tree.length === 0 ? (
               <div className='flex h-full items-center justify-center'>
