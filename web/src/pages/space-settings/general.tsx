@@ -153,6 +153,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
         description: t('pages.spacePropagation.deleteDescription'),
       })
       await navigate({ to: '/' })
+      await router.invalidate()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
     } finally {

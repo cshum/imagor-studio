@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { CheckCircle2, Cloud, Database, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
@@ -352,6 +352,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
 export function CreateSpacePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { authState, logout } = useAuth()
   const { title: appTitle } = useBrand()
   const [currentStep, setCurrentStep] = useState(1)
@@ -427,6 +428,7 @@ export function CreateSpacePage() {
       toast.success(t('pages.spaces.messages.spaceCreatedSuccess'), {
         description: t('pages.spacePropagation.createDescription'),
       })
+      await router.invalidate()
       await navigate({ to: '/spaces/$spaceKey', params: { spaceKey: values.key } })
     } catch (err) {
       const errorInfo = extractErrorInfo(err)
