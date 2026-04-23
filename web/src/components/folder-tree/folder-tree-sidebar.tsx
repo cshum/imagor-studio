@@ -31,6 +31,7 @@ import {
   loadFolderChildren,
   loadHomeTitle,
   loadRootFolders,
+  setCurrentPath,
   useFolderTree,
 } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
@@ -271,6 +272,12 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     // Invalidate and reload the parent folder's children in the store
     invalidateFolderCache(parentPath)
     await loadFolderChildren(parentPath, true, spaceKey) // Auto-expand to show new folder
+
+    setCurrentPath(folderPath, spaceKey)
+    navigate({
+      to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
+      params: spaceKey ? { spaceKey, galleryKey: folderPath } : { galleryKey: folderPath },
+    })
   }
 
   return (
@@ -384,6 +391,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={createFolderPath}
+        spaceKey={spaceKey}
         onFolderCreated={handleFolderCreated}
       />
 
