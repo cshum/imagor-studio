@@ -15,7 +15,6 @@ import {
   ensureFolderTreeReady,
   FolderNode,
   folderTreeStore,
-  setCurrentPath,
   updateTreeData,
 } from '@/stores/folder-tree-store.ts'
 
@@ -212,10 +211,6 @@ export const galleryLoader = async ({
         isTemplate,
       }
     })
-
-  if (latestGalleryLoaderRequests.isLatest(requestKey, requestGeneration)) {
-    await setCurrentPath(galleryKey, spaceKey)
-  }
 
   const folderTreeState = folderTreeStore.getState()
   const homeTitle = folderTreeState.homeTitle || spaceKey || 'Home'

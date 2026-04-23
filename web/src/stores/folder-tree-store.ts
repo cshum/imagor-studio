@@ -223,6 +223,22 @@ const getPersistedStateForCacheKey = (cacheKey: string): PersistedFolderTreeStat
     homeTitle: 'Home',
   })
 
+const applyToSpaceState = (
+  targetCacheKey: string,
+  applyToActiveState: () => void,
+  applyToPersistedState: (state: PersistedFolderTreeState) => PersistedFolderTreeState,
+) => {
+  const currentState = folderTreeStore.getState()
+
+  if (currentState.activeSpaceCacheKey === targetCacheKey) {
+    applyToActiveState()
+    return
+  }
+
+  const persistedState = getPersistedStateForCacheKey(targetCacheKey)
+  persistedTreeStates[targetCacheKey] = applyToPersistedState(persistedState)
+}
+
 function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): FolderTreeState {
   switch (action.type) {
     case 'SWITCH_SPACE':
@@ -767,16 +783,16 @@ export const loadRootFolders = async (spaceKey?: string) => {
       return
     }
 
-    const currentState = folderTreeStore.getState()
-    if (currentState.activeSpaceCacheKey === targetCacheKey) {
-      folderTreeStore.dispatch({ type: 'SET_ROOT_FOLDERS', folders })
-    } else {
-      const persistedState = getPersistedStateForCacheKey(targetCacheKey)
-      persistedTreeStates[targetCacheKey] = {
+    applyToSpaceState(
+      targetCacheKey,
+      () => {
+        folderTreeStore.dispatch({ type: 'SET_ROOT_FOLDERS', folders })
+      },
+      (persistedState) => ({
         ...persistedState,
         rootFolders: mergeFoldersPreservingState(folders, persistedState.rootFolders),
-      }
-    }
+      }),
+    )
   } catch {
     // Failed to load root folders - silently continue
   } finally {
@@ -820,12 +836,12 @@ export const loadFolderChildren = async (
       return
     }
 
-    const currentState = folderTreeStore.getState()
-    if (currentState.activeSpaceCacheKey === targetCacheKey) {
-      folderTreeStore.dispatch({ type: 'SET_FOLDER_CHILDREN', path, children, autoExpand })
-    } else {
-      const persistedState = getPersistedStateForCacheKey(targetCacheKey)
-      persistedTreeStates[targetCacheKey] = {
+    applyToSpaceState(
+      targetCacheKey,
+      () => {
+        folderTreeStore.dispatch({ type: 'SET_FOLDER_CHILDREN', path, children, autoExpand })
+      },
+      (persistedState) => ({
         ...persistedState,
         rootFolders: updateFolderTreeAtPath(persistedState.rootFolders, path, (folder) => ({
           ...folder,
@@ -837,8 +853,8 @@ export const loadFolderChildren = async (
           isLoaded: true,
           isExpanded: autoExpand !== false,
         })),
-      }
-    }
+      }),
+    )
   } catch {
     // Failed to load folder children - silently continue
   } finally {
@@ -858,17 +874,16 @@ export const loadHomeTitle = async (spaceKey?: string) => {
       return
     }
 
-    const currentState = folderTreeStore.getState()
-    if (currentState.activeSpaceCacheKey === targetCacheKey) {
-      folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title })
-      return
-    }
-
-    const persistedState = getPersistedStateForCacheKey(targetCacheKey)
-    persistedTreeStates[targetCacheKey] = {
-      ...persistedState,
-      homeTitle: title,
-    }
+    applyToSpaceState(
+      targetCacheKey,
+      () => {
+        folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title })
+      },
+      (persistedState) => ({
+        ...persistedState,
+        homeTitle: title,
+      }),
+    )
   }
 
   if (spaceKey) {
@@ -983,17 +998,16 @@ export const updateTreeData = async (path: string, folders: FolderNode[], spaceK
   const currentState = folderTreeStore.getState()
   const targetCacheKey = getResolvedSpaceCacheKey(currentState, spaceKey)
 
-  if (currentState.activeSpaceCacheKey === targetCacheKey) {
-    folderTreeStore.dispatch({ type: 'UPDATE_TREE_DATA', path, folders })
-    return
-  }
-
-  const persistedState = getPersistedStateForCacheKey(targetCacheKey)
-
-  persistedTreeStates[targetCacheKey] = {
-    ...persistedState,
-    rootFolders: applyTreeDataToRootFolders(persistedState.rootFolders, path, folders),
-  }
+  applyToSpaceState(
+    targetCacheKey,
+    () => {
+      folderTreeStore.dispatch({ type: 'UPDATE_TREE_DATA', path, folders })
+    },
+    (persistedState) => ({
+      ...persistedState,
+      rootFolders: applyTreeDataToRootFolders(persistedState.rootFolders, path, folders),
+    }),
+  )
 }
 
 /**
