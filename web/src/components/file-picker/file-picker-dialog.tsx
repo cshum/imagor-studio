@@ -15,10 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useAuth } from '@/stores/auth-store'
-import {
-  loadRootFolders,
-  setCurrentPath as setFolderTreeCurrentPath,
-} from '@/stores/folder-tree-store'
+import { ensureFolderTreeReady } from '@/stores/folder-tree-store'
 
 export interface FilePickerDialogProps {
   open: boolean
@@ -104,9 +101,8 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
         }
 
         setDialogCurrentPath(pathToUse)
-        setFolderTreeCurrentPath(pathToUse, spaceKey)
         setSelectedPaths(new Set())
-        loadRootFolders(spaceKey)
+        await ensureFolderTreeReady(spaceKey)
         hasLoadedInitialPath.current = true
       }
 
@@ -119,13 +115,9 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
     }
   }, [open, initialPath, authState.profile?.id, authState.state, spaceKey])
 
-  const handlePathChange = useCallback(
-    (path: string) => {
-      setDialogCurrentPath(path)
-      setFolderTreeCurrentPath(path, spaceKey)
-    },
-    [spaceKey],
-  )
+  const handlePathChange = useCallback((path: string) => {
+    setDialogCurrentPath(path)
+  }, [])
 
   const handleSelectionChange = useCallback(
     (path: string) => {

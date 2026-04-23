@@ -17,6 +17,8 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import {
+  ensureFolderTreeReady,
+  folderTreeStore,
   invalidateFolderCache,
   loadFolderChildren,
   loadRootFolders,
@@ -75,6 +77,23 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const excludePathsSet = useMemo(() => new Set(excludePaths), [excludePaths])
 
+  const findFolderNodeByPath = useCallback((folders: FolderNode[], targetPath: string) => {
+    for (const folder of folders) {
+      if (folder.path === targetPath) {
+        return folder
+      }
+
+      if (folder.children) {
+        const childMatch = findFolderNodeByPath(folder.children, targetPath)
+        if (childMatch) {
+          return childMatch
+        }
+      }
+    }
+
+    return undefined
+  }, [])
+
   // Build tree with local expand state overlaid on store data
   const buildTreeWithLocalExpand = useCallback(
     (storeFolders: FolderNode[]): FolderNode[] => {
@@ -128,13 +147,17 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
       for (const segment of segments) {
         currentPath = currentPath ? `${currentPath}/${segment}` : segment
 
-        // Load folder children using store
-        try {
-          await loadFolderChildren(currentPath, false, spaceKey) // Don't auto-expand in store
-          expandStates[currentPath] = true
+        const folderNode = findFolderNodeByPath(folderTreeStore.getState().rootFolders, currentPath)
 
-          // Small delay to allow state to update
-          await new Promise((resolve) => setTimeout(resolve, 50))
+        try {
+          if (!folderNode?.isLoaded) {
+            await loadFolderChildren(currentPath, false, spaceKey) // Don't auto-expand in store
+
+            // Small delay to allow freshly loaded state to render before continuing deeper.
+            await new Promise((resolve) => setTimeout(resolve, 50))
+          }
+
+          expandStates[currentPath] = true
         } catch (error) {
           console.error(`Failed to load folder: ${currentPath}`, error)
           break
@@ -144,7 +167,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
       // Update all expand states at once
       setLocalExpandState((prev) => ({ ...prev, ...expandStates }))
     },
-    [spaceKey],
+    [findFolderNodeByPath, spaceKey],
   )
 
   // Handle folder creation - refresh the parent folder in the store
@@ -188,7 +211,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
       const loadData = async () => {
         setIsLoading(true)
         try {
-          await loadRootFolders(spaceKey)
+          await ensureFolderTreeReady(spaceKey)
 
           // Auto-expand to show current path
           if (currentPath) {
