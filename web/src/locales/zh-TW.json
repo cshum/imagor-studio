@@ -830,7 +830,7 @@
       "storage": {
         "managedTitle": "託管儲存",
         "managedDescription": "你的檔案儲存在 Imagor Studio 中。此儲存選項會在空間建立時確定，之後無法更改。",
-        "bucketLocked": "儲存桶和區域在建立時固定，無法更改。",
+        "bucketLocked": "儲存桶、區域和路徑前綴會在建立時固定，無法更改。",
         "description": "檢視此空間的儲存設定。",
         "accessKeyIdDescription": "留空以保留現有憑証。",
         "secretKey": "私密存取金鑰",

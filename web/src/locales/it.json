@@ -835,7 +835,7 @@
         "managedDescription": "I tuoi file sono archiviati in Imagor Studio. Questa opzione di storage viene impostata alla creazione dello spazio e non può essere cambiata in seguito.",
         "bucket": "Bucket",
         "region": "Region",
-        "bucketLocked": "Bucket e regione sono fissati al momento della creazione e non possono essere modificati.",
+        "bucketLocked": "Bucket, regione e prefisso del percorso sono fissati al momento della creazione e non possono essere modificati.",
         "endpoint": "Endpoint",
         "endpointDescription": "URL endpoint personalizzato compatibile S3. Lascia vuoto per AWS S3.",
         "prefix": "Prefisso percorso",

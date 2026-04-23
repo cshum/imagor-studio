@@ -21,7 +21,6 @@ export { SecretField } from '@/components/ui/secret-field'
 // ── Schema ─────────────────────────────────────────────────────────────────
 
 const credentialsSchema = z.object({
-  prefix: z.string().optional(),
   endpoint: z.string().optional(),
   accessKeyId: z.string().optional(),
   secretKey: z.string().optional(),
@@ -43,7 +42,6 @@ export function StorageSection({ space }: StorageSectionProps) {
   const form = useForm<CredentialsFormData>({
     resolver: zodResolver(credentialsSchema),
     defaultValues: {
-      prefix: space.prefix ?? '',
       endpoint: space.endpoint ?? '',
       accessKeyId: '',
       secretKey: '',
@@ -80,7 +78,7 @@ export function StorageSection({ space }: StorageSectionProps) {
           bucket: null,
           region: null,
           endpoint: values.endpoint ?? null,
-          prefix: values.prefix ?? null,
+          prefix: null,
           accessKeyId: values.accessKeyId ?? null,
           secretKey: values.secretKey || null,
           usePathStyle: null,
@@ -114,18 +112,28 @@ export function StorageSection({ space }: StorageSectionProps) {
       {/* Read-only bucket / region badge */}
       <div className='bg-muted/40 mb-4 w-full rounded-md px-3 py-2 text-sm'>
         <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
-        <span>
-          <span className='text-muted-foreground'>{t('pages.spaceSettings.storage.bucket')}: </span>
-          <code className='font-mono font-medium'>{space.bucket}</code>
-        </span>
-        {space.region && (
           <span>
             <span className='text-muted-foreground'>
-              {t('pages.spaceSettings.storage.region')}:{' '}
+              {t('pages.spaceSettings.storage.bucket')}:{' '}
             </span>
-            <code className='font-mono font-medium'>{space.region}</code>
+            <code className='font-mono font-medium'>{space.bucket}</code>
           </span>
-        )}
+          {space.region && (
+            <span>
+              <span className='text-muted-foreground'>
+                {t('pages.spaceSettings.storage.region')}:{' '}
+              </span>
+              <code className='font-mono font-medium'>{space.region}</code>
+            </span>
+          )}
+          {space.prefix && (
+            <span>
+              <span className='text-muted-foreground'>
+                {t('pages.spaceSettings.storage.prefix')}:{' '}
+              </span>
+              <code className='font-mono font-medium'>{space.prefix}</code>
+            </span>
+          )}
         </div>
         <p className='text-muted-foreground mt-2 text-xs'>
           {t('pages.spaceSettings.storage.bucketLocked')}
@@ -134,24 +142,6 @@ export function StorageSection({ space }: StorageSectionProps) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSave)}>
-          <FormField
-            control={form.control}
-            name='prefix'
-            render={({ field }) => (
-              <FormItem>
-                <SettingRow
-                  label={t('pages.spaceSettings.storage.prefix')}
-                  description={t('pages.spaceSettings.storage.prefixDescription')}
-                  contentClassName='sm:max-w-md'
-                >
-                  <FormControl>
-                    <Input placeholder='media/' {...field} disabled={isSaving} />
-                  </FormControl>
-                  <FormMessage className='mt-1.5' />
-                </SettingRow>
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name='endpoint'

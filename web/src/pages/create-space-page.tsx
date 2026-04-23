@@ -290,7 +290,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
                 <FormControl>
-                  <Input placeholder='media/' {...field} disabled={isSaving} />
+                  <Input placeholder='' {...field} disabled={isSaving} />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.prefixDescription')}
