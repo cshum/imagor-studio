@@ -299,12 +299,15 @@ func classifyStorageValidationError(err error) (string, string) {
 		return storageErrorCodeInvalidAccessKey, "Access key ID format is invalid."
 	}
 
-	if strings.Contains(message, "invalid input region") {
+	lowerMessage := strings.ToLower(message)
+	if strings.Contains(message, "invalid input region") ||
+		strings.Contains(lowerMessage, "invalidregionname") ||
+		(strings.Contains(lowerMessage, "region name") && strings.Contains(lowerMessage, "must be one of")) {
 		return storageErrorCodeInvalidRegion, "Region is invalid. Check that the S3 region field is correct."
 	}
 
-	if strings.Contains(strings.ToLower(message), "accessdenied") ||
-		strings.Contains(strings.ToLower(message), "access denied") {
+	if strings.Contains(lowerMessage, "accessdenied") ||
+		strings.Contains(lowerMessage, "access denied") {
 		return storageErrorCodeAccessDenied, "Access denied. Check the bucket permissions and credentials."
 	}
 

@@ -51,7 +51,12 @@ function translateStorageValidationText(t: TFunction, text?: string | null): str
     return t('pages.storage.validationErrors.invalidAccessKey')
   }
 
-  if (normalized.includes('region is invalid') || normalized.includes('invalid input region')) {
+  if (
+    normalized.includes('region is invalid') ||
+    normalized.includes('invalid input region') ||
+    normalized.includes('invalidregionname') ||
+    (normalized.includes('region name') && normalized.includes('must be one of'))
+  ) {
     return t('pages.storage.validationErrors.invalidRegion')
   }
 

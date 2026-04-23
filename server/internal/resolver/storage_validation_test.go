@@ -140,6 +140,21 @@ func TestStorageTestFailure_SanitizesIMDSCredentialErrors(t *testing.T) {
 	assert.Equal(t, "Unable to authenticate to S3. Provide an access key ID and secret access key, or verify the server's AWS role configuration.", *result.Details)
 }
 
+func TestStorageTestFailure_ClassifiesR2InvalidRegionErrors(t *testing.T) {
+	result := storageTestFailure(
+		"Failed to access storage directory",
+		errors.New("operation error S3: ListObjectsV2, https response error StatusCode: 400, RequestID: , HostID: , api error InvalidRegionName: The region name 'adfdas' is not valid. Must be one of: wnam, enam, weur, eeur, apac, oc, auto"),
+	)
+
+	require.NotNil(t, result)
+	assert.False(t, result.Success)
+	assert.Equal(t, "Failed to access storage directory", result.Message)
+	require.NotNil(t, result.Details)
+	require.NotNil(t, result.Code)
+	assert.Equal(t, storageErrorCodeInvalidRegion, *result.Code)
+	assert.Equal(t, "Region is invalid. Check that the S3 region field is correct.", *result.Details)
+}
+
 func boolPtrLocal(value bool) *bool {
 	return &value
 }
