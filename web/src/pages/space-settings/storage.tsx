@@ -12,9 +12,9 @@ import { S3RequirementsNote } from '@/components/storage/s3-requirements-note'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { extractErrorInfo } from '@/lib/error-utils'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
+import { extractErrorInfo } from '@/lib/error-utils'
 import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 import { formatStorageValidationError } from '@/lib/storage-validation-errors'
 import { SecretField, SpaceSettingsData } from '@/pages/space-settings/shared.tsx'
@@ -105,7 +105,9 @@ export function StorageSection({ space }: StorageSectionProps) {
       await router.invalidate()
     } catch (err) {
       const errorInfo = extractErrorInfo(err)
-      toast.error(formatStorageValidationError(t, { message: errorInfo.message, code: errorInfo.code }))
+      toast.error(
+        formatStorageValidationError(t, { message: errorInfo.message, code: errorInfo.code }),
+      )
     } finally {
       setIsSaving(false)
     }
