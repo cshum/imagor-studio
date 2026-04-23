@@ -473,7 +473,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     return () => {
       registerDropHandler(null)
     }
-  }, [galleryKey])
+  }, [galleryKey, spaceKey])
 
   // Selection handlers
   const handleImageSelectionToggle = (imageKey: string, index: number) => {

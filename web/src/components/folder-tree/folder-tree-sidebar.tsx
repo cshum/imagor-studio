@@ -269,9 +269,13 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     pathParts.pop() // Remove the new folder name
     const parentPath = pathParts.join('/')
 
-    // Invalidate and reload the parent folder's children in the store
-    invalidateFolderCache(parentPath)
-    await loadFolderChildren(parentPath, true, spaceKey) // Auto-expand to show new folder
+    if (parentPath) {
+      // Invalidate and reload the parent folder's children in the store
+      invalidateFolderCache(parentPath)
+      await loadFolderChildren(parentPath, true, spaceKey) // Auto-expand to show new folder
+    } else {
+      await loadRootFolders(spaceKey)
+    }
 
     setCurrentPath(folderPath, spaceKey)
     navigate({
