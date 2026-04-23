@@ -67,9 +67,7 @@ export function ImagePage({
       })
     } else {
       navigate({
-        to: spaceKey
-          ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
-          : '/f/$galleryKey/$imageKey',
+        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey/$imageKey' : '/f/$galleryKey/$imageKey',
         params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     }
@@ -146,9 +144,7 @@ export function ImagePage({
           })
         } else {
           navigate({
-            to: spaceKey
-              ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
-              : '/f/$galleryKey/$imageKey',
+            to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey/$imageKey' : '/f/$galleryKey/$imageKey',
             params: spaceKey
               ? { spaceKey, galleryKey, imageKey: nextImage.imageKey }
               : { galleryKey, imageKey: nextImage.imageKey },

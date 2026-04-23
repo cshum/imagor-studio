@@ -207,7 +207,11 @@
         "uploadFiles": "Upload Files",
         "messages": {
           "uploadSuccess": "Files uploaded successfully",
-          "uploadFailed": "Failed to upload {{fileName}}"
+          "uploadFailed": "Failed to upload {{fileName}}",
+          "previewWarmupTitle": "Previews are getting ready",
+          "previewWarmupHint": "Previews are still getting ready and usually appear within 30 seconds.",
+          "previewWarmupDescription": "Your files were uploaded successfully. Image previews usually appear within 30 seconds.",
+          "spaceWarmupDescription": "This space is still being published. Image previews usually appear within 30 seconds."
         }
       },
       "contextMenu": {
@@ -698,7 +702,7 @@
       "title": "Spaces",
       "createSpace": "Create Space",
       "createNewSpace": "Create New Space",
-      "createSpaceDescription": "Add a new space to your organization. Each space has its own storage and imagor configuration.",
+      "createSpaceDescription": "Create a dedicated image workspace for your team.",
       "editSpace": "Edit Space",
       "editSpaceDescription": "Update space configuration. Changes will be applied immediately.",
       "deleteSpace": "Delete Space",
@@ -706,7 +710,7 @@
       "createSpaceButton": "Create Space",
       "updateSpaceButton": "Update Space",
       "wizard": {
-        "stepIdentity": "Identity",
+        "stepIdentity": "Space details",
         "stepStorage": "Storage",
         "next": "Next",
         "back": "Back"
@@ -721,14 +725,19 @@
       "storageTypeLabel": "Storage Type",
       "credentialsEncrypted": "Credentials are encrypted at rest using AES-256 and never exposed after saving.",
       "storageType": {
-        "managed": "Platform Storage",
-        "s3": "Custom S3 (BYOB)"
+        "managed": "Hosted Storage",
+        "s3": "S3 Bucket"
       },
       "storageTypeDesc": {
-        "managed": "Managed by Imagor Studio. No bucket setup required.",
-        "s3": "Connect your own S3-compatible bucket."
+        "managed": "Stored in Imagor Studio. No bucket setup required.",
+        "s3": "Use your own S3-compatible bucket."
       },
-      "keyDescription": "Used in links and URLs. You can change it, but old links won't redirect.",
+      "creationPreview": {
+        "title": "URLs for this space",
+        "appUrlLabel": "App URL",
+        "processingHostLabel": "Imagor Host"
+      },
+      "keyDescription": "This sets your space URL in the app and its dedicated imagor host. You can change it later.",
       "tableHeaders": {
         "key": "URL Slug",
         "name": "Name",
@@ -786,7 +795,7 @@
     },
     "spacePropagation": {
       "title": "Changes are propagating",
-      "description": "Processing nodes usually apply these changes within 30 seconds.",
+      "description": "Changes usually go live within 30 seconds.",
       "createDescription": "The new space is being published to processing nodes and is usually ready within 30 seconds.",
       "deleteDescription": "Space removal is propagating to processing nodes and may take up to 30 seconds to fully take effect."
     },
@@ -822,11 +831,11 @@
       },
       "storage": {
         "description": "View storage settings for this space.",
-        "managedTitle": "Platform-managed Storage",
-        "managedDescription": "Files are stored in Imagor Studio's managed storage. Storage type cannot be changed after the space is created.",
+        "managedTitle": "Hosted Storage",
+        "managedDescription": "Your files are stored in Imagor Studio. This storage option is set when the space is created and cannot be changed later.",
         "bucket": "Bucket",
         "region": "Region",
-        "bucketLocked": "Bucket and region are fixed at creation time and cannot be changed.",
+        "bucketLocked": "Bucket, region, and path prefix are fixed at creation time and cannot be changed.",
         "endpoint": "Endpoint",
         "endpointDescription": "Custom S3-compatible endpoint URL. Leave blank for AWS S3.",
         "prefix": "Path Prefix",

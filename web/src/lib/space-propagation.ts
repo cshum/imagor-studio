@@ -1,4 +1,5 @@
 export const SPACE_PROPAGATION_WINDOW_MS = 30_000
+export const SPACE_PROPAGATION_EVENT = 'imagor-studio:space-propagation-notice'
 
 const SPACE_PROPAGATION_STORAGE_KEY = 'imagor-studio.space-propagation-notice'
 
@@ -10,12 +11,21 @@ export interface SpacePropagationNotice {
   spaceKey: string
 }
 
+export interface SpacePropagationNoticeEventDetail {
+  notice: SpacePropagationNotice | null
+}
+
 export function rememberSpacePropagationNotice(notice: SpacePropagationNotice) {
   if (typeof window === 'undefined') {
     return
   }
 
   window.sessionStorage.setItem(SPACE_PROPAGATION_STORAGE_KEY, JSON.stringify(notice))
+  window.dispatchEvent(
+    new CustomEvent<SpacePropagationNoticeEventDetail>(SPACE_PROPAGATION_EVENT, {
+      detail: { notice },
+    }),
+  )
 }
 
 export function readSpacePropagationNotice(spaceKey: string): SpacePropagationNotice | null {
@@ -65,4 +75,9 @@ export function clearSpacePropagationNotice() {
   }
 
   window.sessionStorage.removeItem(SPACE_PROPAGATION_STORAGE_KEY)
+  window.dispatchEvent(
+    new CustomEvent<SpacePropagationNoticeEventDetail>(SPACE_PROPAGATION_EVENT, {
+      detail: { notice: null },
+    }),
+  )
 }

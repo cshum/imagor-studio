@@ -22,7 +22,6 @@ import {
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ListSpacesQuery } from '@/generated/graphql'
 import { useAuth } from '@/stores/auth-store'
 
@@ -170,7 +169,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                 />
 
                 {/* Card header row */}
-                <div className='flex items-start justify-between gap-2'>
+                <div className='flex items-center justify-between gap-2'>
                   <div className='flex min-w-0 items-center gap-3'>
                     <div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
                       {space.storageMode === 'platform' ? (
@@ -194,17 +193,18 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                     </div>
                   </div>
 
-                  <div className='relative z-20 mt-1 flex shrink-0 items-center gap-2'>
+                  <div className='pointer-events-none relative z-20 flex shrink-0 items-center gap-2 self-center'>
                     <Link
                       to='/spaces/$spaceKey'
                       params={{ spaceKey: space.key }}
                       aria-label={`${t('pages.spaces.openGallery')}: ${space.name}`}
+                      className='pointer-events-auto'
                     >
                       <Badge
                         variant={space.storageMode === 'byob' ? 'outline' : 'secondary'}
                         className={
                           space.storageMode === 'byob'
-                            ? 'cursor-pointer border-amber-500/40 text-amber-600 dark:text-amber-400'
+                            ? 'cursor-pointer border-sky-500/15 bg-sky-500/6 text-sky-700 dark:border-sky-400/15 dark:bg-sky-400/8 dark:text-sky-300'
                             : 'cursor-pointer'
                         }
                       >
@@ -212,33 +212,26 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       </Badge>
                     </Link>
                     {canManageSpace && !space.canLeave ? (
-                      <TooltipProvider delayDuration={0}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant='ghost'
-                              size='icon'
-                              className='h-10 w-10 shrink-0'
-                              asChild
-                            >
-                              <Link
-                                to='/spaces/$spaceKey/settings/$section'
-                                params={{ spaceKey: space.key, section: 'general' }}
-                                aria-label={t('pages.spaces.configure')}
-                              >
-                                <Settings className='h-5 w-5' />
-                              </Link>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side='top'>{t('pages.spaces.configure')}</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='pointer-events-auto h-10 w-10 shrink-0'
+                        asChild
+                      >
+                        <Link
+                          to='/spaces/$spaceKey/settings/$section'
+                          params={{ spaceKey: space.key, section: 'general' }}
+                          aria-label={t('pages.spaces.configure')}
+                        >
+                          <Settings className='h-5 w-5' />
+                        </Link>
+                      </Button>
                     ) : null}
                   </div>
                 </div>
 
                 {space.canLeave && authState.profile?.id ? (
-                  <div className='relative z-20 mt-4 flex justify-end gap-2'>
+                  <div className='pointer-events-none relative z-20 mt-4 flex justify-end gap-2'>
                     <DropdownMenu
                       open={openMenuSpaceKey === space.key}
                       onOpenChange={(open) => setOpenMenuSpaceKey(open ? space.key : null)}
@@ -247,7 +240,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                         <Button
                           variant='outline'
                           size='icon'
-                          className='h-9 w-9 shrink-0'
+                          className='pointer-events-auto h-9 w-9 shrink-0'
                           aria-label={t('common.buttons.more')}
                         >
                           <MoreHorizontal className='h-4 w-4' />

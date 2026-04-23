@@ -205,7 +205,11 @@
         "uploadFiles": "上傳檔案",
         "messages": {
           "uploadSuccess": "檔案上傳成功",
-          "uploadFailed": "上傳 {{fileName}} 失敗"
+          "uploadFailed": "上傳 {{fileName}} 失敗",
+          "previewWarmupTitle": "預覽正在準備中",
+          "previewWarmupHint": "預覽仍在準備中，通常會在 30 秒內顯示。",
+          "previewWarmupDescription": "你的檔案已成功上傳。圖片預覽通常會在 30 秒內顯示。",
+          "spaceWarmupDescription": "這個空間仍在發布中。圖片預覽通常會在 30 秒內顯示。"
         }
       },
       "contextMenu": {
@@ -709,14 +713,14 @@
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
-        "managed": "平台儲存",
-        "s3": "自訂 S3（BYOB）"
+        "managed": "託管儲存",
+        "s3": "S3 儲存桶"
       },
       "storageTypeDesc": {
-        "managed": "由 Imagor Studio 管理，無需設定儲存桶。",
-        "s3": "連接您自己的 S3 相容儲存桶。"
+        "managed": "儲存在 Imagor Studio 中，無需設定儲存桶。",
+        "s3": "使用你自己的 S3 相容儲存桶。"
       },
-      "keyDescription": "用於連結和 URL。你可以變更它，但舊連結不會重新導向。",
+      "keyDescription": "這會設定此空間在應用中的 URL 與專屬的 imagor 主機。之後仍可變更。",
       "tableHeaders": {
         "key": "URL 識別碼",
         "name": "名稱",
@@ -742,11 +746,12 @@
       "spaceCount": "{{count}} 個空間",
       "openGallery": "開啟相簿",
       "wizard": {
-        "stepIdentity": "基本資訊",
+        "stepIdentity": "空間詳情",
         "stepStorage": "儲存",
         "next": "下一步",
         "back": "上一步"
       },
+      "createSpaceDescription": "為您的團隊建立一個專屬圖片工作空間。",
       "messages": {
         "spaceCreatedSuccess": "空間建立成功",
         "spaceUpdatedSuccess": "空間更新成功",
@@ -769,6 +774,11 @@
         "sharedWithYou": "與您共享"
       },
       "configure": "設定",
+      "creationPreview": {
+        "title": "此空間的 URL",
+        "appUrlLabel": "應用 URL",
+        "processingHostLabel": "Imagor 主機"
+      },
       "startDescription": "先使用託管空間完成最快速的設定，之後再隨著工作區成長自訂儲存、交付與品牌。",
       "sharedLabel": "共享",
       "leaveSpace": "離開",
@@ -786,7 +796,7 @@
     },
     "spacePropagation": {
       "title": "變更正在傳播中",
-      "description": "處理節點通常會在 30 秒內套用這些變更。",
+      "description": "這些變更通常會在 30 秒內生效。",
       "createDescription": "新空間正在發布到處理節點，通常會在 30 秒內可供使用。",
       "deleteDescription": "空間刪除正在傳播到處理節點，最多可能需要 30 秒才會完全生效。"
     },
@@ -818,9 +828,9 @@
         "saved": "一般設定已儲存"
       },
       "storage": {
-        "managedTitle": "平台託管儲存",
-        "managedDescription": "檔案儲存在 Imagor Studio 的託管儲存中，儲存類型在空間建立後無法更改。",
-        "bucketLocked": "儲存桶和區域在建立時固定，無法更改。",
+        "managedTitle": "託管儲存",
+        "managedDescription": "你的檔案儲存在 Imagor Studio 中。此儲存選項會在空間建立時確定，之後無法更改。",
+        "bucketLocked": "儲存桶、區域和路徑前綴會在建立時固定，無法更改。",
         "description": "檢視此空間的儲存設定。",
         "accessKeyIdDescription": "留空以保留現有憑証。",
         "secretKey": "私密存取金鑰",

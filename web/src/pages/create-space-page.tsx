@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { CheckCircle2, Cloud, Database, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
@@ -93,6 +93,10 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
+  const previewKey = useWatch({ control: form.control, name: 'key' })
+  const normalizedKey = previewKey?.trim() || 'your-space'
+  const appURL = `app.imagor.net/spaces/${normalizedKey}`
+  const processingHost = `${normalizedKey}.imagor.app`
 
   const handleNext = async () => {
     setIsLoading(true)
@@ -144,6 +148,22 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
           </FormItem>
         )}
       />
+      <div className='bg-muted/50 rounded-lg border px-4 py-3'>
+        <div className='space-y-3'>
+          <div>
+            <p className='text-muted-foreground text-xs font-medium tracking-wide'>
+              {t('pages.spaces.creationPreview.appUrlLabel')}
+            </p>
+            <p className='mt-1 font-mono text-sm'>{appURL}</p>
+          </div>
+          <div>
+            <p className='text-muted-foreground text-xs font-medium tracking-wide'>
+              {t('pages.spaces.creationPreview.processingHostLabel')}
+            </p>
+            <p className='mt-1 font-mono text-sm'>{processingHost}</p>
+          </div>
+        </div>
+      </div>
       <div className='mt-6 flex items-center justify-between border-t pt-6'>
         <Button type='button' variant='outline' onClick={() => navigate({ to: '/' })}>
           {t('common.buttons.cancel')}
@@ -270,7 +290,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
                 <FormControl>
-                  <Input placeholder='media/' {...field} disabled={isSaving} />
+                  <Input placeholder='' {...field} disabled={isSaving} />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.prefixDescription')}
@@ -332,6 +352,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
 export function CreateSpacePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { authState, logout } = useAuth()
   const { title: appTitle } = useBrand()
   const [currentStep, setCurrentStep] = useState(1)
@@ -407,7 +428,8 @@ export function CreateSpacePage() {
       toast.success(t('pages.spaces.messages.spaceCreatedSuccess'), {
         description: t('pages.spacePropagation.createDescription'),
       })
-      await navigate({ to: '/spaces/$spaceKey/settings', params: { spaceKey: values.key } })
+      await router.invalidate()
+      await navigate({ to: '/spaces/$spaceKey', params: { spaceKey: values.key } })
     } catch (err) {
       const errorInfo = extractErrorInfo(err)
       if (errorInfo.field === 'key') {
@@ -425,7 +447,7 @@ export function CreateSpacePage() {
   const steps: MultiStepFormStep[] = [
     {
       id: 'identity',
-      title: t('pages.spaces.wizard.stepIdentity'),
+      title: '',
       content: (nav: MultiStepFormNavigationProps) => (
         <IdentityStep form={form} onNext={handleIdentityNext} {...nav} />
       ),

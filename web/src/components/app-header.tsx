@@ -127,7 +127,7 @@ export function AppHeader({
             <Breadcrumb>
               <BreadcrumbList className='flex-nowrap'>
                 {breadcrumbs.map((crumb, i) => (
-                  <span key={i} className='flex min-w-0 items-center gap-1.5'>
+                  <span key={i} className='flex min-w-0 items-center gap-2'>
                     {i > 0 && <BreadcrumbSeparator />}
                     <BreadcrumbItem className='min-w-0'>
                       {crumb.href ? (

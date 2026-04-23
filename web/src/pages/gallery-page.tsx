@@ -53,6 +53,7 @@ import { useImageContextMenu } from '@/hooks/use-image-context-menu'
 import { DragItem, useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
+import { useSpacePropagationNotice } from '@/hooks/use-space-propagation-notice'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { getFullImageUrl } from '@/lib/api-utils'
@@ -61,6 +62,7 @@ import { hasErrorCode } from '@/lib/error-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
 import { moveGalleryItems } from '@/lib/gallery-move'
 import { joinImagePath } from '@/lib/path-utils'
+import { SPACE_PROPAGATION_WINDOW_MS } from '@/lib/space-propagation'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { registerDropHandler } from '@/stores/drag-drop-store'
@@ -148,6 +150,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     open: false,
     items: [],
   })
+  const [previewWarmupState, setPreviewWarmupState] = useState<{
+    endsAt: number
+    source: 'space-created' | 'post-upload'
+  } | null>(null)
+  const propagationNotice = useSpacePropagationNotice(spaceKey)
 
   // Selection store
   const selection = useSelection()
@@ -163,6 +170,69 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     showFileNames,
   } = galleryLoaderData
   const sidebar = useSidebar()
+
+  useEffect(() => {
+    if (previewWarmupState == null) {
+      return
+    }
+
+    const remainingMs = previewWarmupState.endsAt - Date.now()
+    if (remainingMs <= 0) {
+      setPreviewWarmupState(null)
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setPreviewWarmupState(null)
+    }, remainingMs)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [previewWarmupState])
+
+  const previewWarmupActive = previewWarmupState != null && previewWarmupState.endsAt > Date.now()
+  const uploadWarmupHint =
+    previewWarmupActive && previewWarmupState?.source === 'post-upload'
+      ? t('pages.gallery.upload.messages.previewWarmupHint')
+      : undefined
+
+  useEffect(() => {
+    if (!spaceKey || !propagationNotice || propagationNotice.action !== 'created') {
+      return
+    }
+
+    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - propagationNotice.savedAt)
+    if (remainingMs <= 0) {
+      return
+    }
+
+    setPreviewWarmupState((currentState) => {
+      const nextEndsAt = Date.now() + remainingMs
+      if (currentState != null && currentState.endsAt >= nextEndsAt) {
+        return currentState
+      }
+      return { endsAt: nextEndsAt, source: 'space-created' }
+    })
+  }, [propagationNotice, spaceKey])
+
+  const handleUploadComplete = async () => {
+    await router.invalidate()
+
+    if (!spaceKey || !propagationNotice || propagationNotice.action !== 'created') {
+      return
+    }
+
+    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - propagationNotice.savedAt)
+    if (remainingMs <= 0) {
+      return
+    }
+
+    setPreviewWarmupState({
+      endsAt: Date.now() + remainingMs,
+      source: 'post-upload',
+    })
+  }
 
   const getMoveProgressMessage = (completed: number, total: number) =>
     `${t('pages.gallery.moveItems.move')}... (${completed}/${total})`
@@ -350,9 +420,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       })
     } else {
       return navigate({
-        to: spaceKey
-          ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
-          : '/f/$galleryKey/$imageKey',
+        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey/$imageKey' : '/f/$galleryKey/$imageKey',
         params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     }
@@ -454,8 +522,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     if (galleryKey) {
       navigate({
         to: spaceKey
-            ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
-            : '/f/$galleryKey/$imageKey/editor',
+          ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
+          : '/f/$galleryKey/$imageKey/editor',
         params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
       })
     } else if (spaceKey) {
@@ -1074,6 +1142,24 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             }
           />
 
+          {previewWarmupActive && (
+            <div className='mx-2 mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100'>
+              <Clock className='mt-0.5 h-5 w-5 shrink-0' />
+              <div>
+                <p className='text-sm font-semibold'>
+                  {t('pages.gallery.upload.messages.previewWarmupTitle')}
+                </p>
+                <p className='mt-1 text-sm text-amber-900/80 dark:text-amber-100/80'>
+                  {t(
+                    previewWarmupState?.source === 'post-upload'
+                      ? 'pages.gallery.upload.messages.previewWarmupDescription'
+                      : 'pages.gallery.upload.messages.spaceWarmupDescription',
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
           <Card className='rounded-lg border-none'>
             <CardContent className='overflow-hidden p-2 md:p-4' ref={contentRef}>
               {contentWidth > 0 && (
@@ -1264,11 +1350,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         <UploadProgress
           files={uploadState.files}
           isUploading={uploadState.isUploading}
+          completionHint={uploadWarmupHint}
           onRemoveFile={uploadState.removeFile}
           onCancelFile={uploadState.cancelFile}
           onRetryFile={uploadState.retryFile}
           onClearAll={uploadState.clearFiles}
-          onComplete={() => router.invalidate()}
+          onComplete={handleUploadComplete}
         />
       )}
 

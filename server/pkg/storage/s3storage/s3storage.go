@@ -3,12 +3,15 @@ package s3storage
 import (
 	"context"
 	"io"
+	"net/http"
 	"os"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -26,9 +29,11 @@ type S3Storage struct {
 	sessionToken    string
 	baseDir         string
 	forcePathStyle  bool
+	httpClient      aws.HTTPClient
 }
 
 var folderSuffix = "/"
+var sharedHTTPClients sync.Map
 
 type Option func(*S3Storage)
 
@@ -64,6 +69,33 @@ func WithForcePathStyle(forcePathStyle bool) Option {
 	}
 }
 
+func WithHTTPClient(client aws.HTTPClient) Option {
+	return func(s *S3Storage) {
+		s.httpClient = client
+	}
+}
+
+func SharedHTTPClient(maxIdleConnsPerHost int) aws.HTTPClient {
+	if maxIdleConnsPerHost <= 0 {
+		maxIdleConnsPerHost = awshttp.DefaultHTTPTransportMaxIdleConnsPerHost
+	}
+
+	if client, ok := sharedHTTPClients.Load(maxIdleConnsPerHost); ok {
+		return client.(aws.HTTPClient)
+	}
+
+	client := newBuildableHTTPClient(maxIdleConnsPerHost).Freeze()
+
+	actual, _ := sharedHTTPClients.LoadOrStore(maxIdleConnsPerHost, client)
+	return actual.(aws.HTTPClient)
+}
+
+func newBuildableHTTPClient(maxIdleConnsPerHost int) *awshttp.BuildableClient {
+	return awshttp.NewBuildableClient().WithTransportOptions(func(transport *http.Transport) {
+		transport.MaxIdleConnsPerHost = maxIdleConnsPerHost
+	})
+}
+
 func New(bucket string, options ...Option) (*S3Storage, error) {
 	s := &S3Storage{
 		bucket: bucket,
@@ -81,6 +113,7 @@ func New(bucket string, options ...Option) (*S3Storage, error) {
 		// Use provided credentials
 		cfg, err = config.LoadDefaultConfig(ctx,
 			config.WithRegion(s.region),
+			config.WithHTTPClient(resolveHTTPClient(s.httpClient)),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
 				s.accessKeyID,
 				s.secretAccessKey,
@@ -89,7 +122,10 @@ func New(bucket string, options ...Option) (*S3Storage, error) {
 		)
 	} else {
 		// Use default credential chain
-		cfg, err = config.LoadDefaultConfig(ctx, config.WithRegion(s.region))
+		cfg, err = config.LoadDefaultConfig(ctx,
+			config.WithRegion(s.region),
+			config.WithHTTPClient(resolveHTTPClient(s.httpClient)),
+		)
 	}
 
 	if err != nil {
@@ -108,6 +144,14 @@ func New(bucket string, options ...Option) (*S3Storage, error) {
 	s.client = s3.NewFromConfig(cfg, clientOpts...)
 
 	return s, nil
+}
+
+func resolveHTTPClient(client aws.HTTPClient) aws.HTTPClient {
+	if client != nil {
+		return client
+	}
+
+	return SharedHTTPClient(awshttp.DefaultHTTPTransportMaxIdleConnsPerHost)
 }
 
 func (s *S3Storage) fullPath(p string) string {

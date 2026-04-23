@@ -41,14 +41,15 @@ type Config struct {
 	FileStorageWritePermissions os.FileMode
 
 	// S3 Storage
-	S3StorageBucket    string
-	AWSRegion          string
-	S3Endpoint         string
-	S3ForcePathStyle   bool
-	AWSAccessKeyID     string
-	AWSSecretAccessKey string
-	AWSSessionToken    string
-	S3StorageBaseDir   string
+	S3StorageBucket           string
+	AWSRegion                 string
+	S3Endpoint                string
+	S3HTTPMaxIdleConnsPerHost int
+	S3ForcePathStyle          bool
+	AWSAccessKeyID            string
+	AWSSecretAccessKey        string
+	AWSSessionToken           string
+	S3StorageBaseDir          string
 
 	// Imagor Configuration
 	ImagorSecret         string // Imagor secret key
@@ -79,6 +80,8 @@ type Config struct {
 	flagSet         *flag.FlagSet // Private field to access flag values
 }
 
+const DefaultS3HTTPMaxIdleConnsPerHost = 100
+
 // Load loads configuration with optional registry enhancement
 // Both args and registryStore are optional (can be nil)
 func Load(args []string, registryStore registrystore.Store) (*Config, error) {
@@ -102,14 +105,15 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		fileStorageMkdirPermissions = fs.String("file-storage-mkdir-permissions", "0755", "directory creation permissions")
 		fileStorageWritePermissions = fs.String("file-storage-write-permissions", "0644", "file write permissions")
 
-		awsRegion          = fs.String("aws-region", "", "AWS region")
-		awsAccessKeyID     = fs.String("aws-access-key-id", "", "AWS access key ID (optional)")
-		awsSecretAccessKey = fs.String("aws-secret-access-key", "", "AWS secret access key (optional)")
-		awsSessionToken    = fs.String("aws-session-token", "", "AWS session token (optional)")
-		s3StorageBucket    = fs.String("s3-storage-bucket", "", "S3 bucket name")
-		s3Endpoint         = fs.String("s3-endpoint", "", "S3 endpoint (optional)")
-		s3ForcePathStyle   = fs.Bool("s3-force-path-style", false, "S3 force path style (optional)")
-		s3StorageBaseDir   = fs.String("s3-storage-base-dir", "", "S3 base directory (optional)")
+		awsRegion                 = fs.String("aws-region", "", "AWS region")
+		awsAccessKeyID            = fs.String("aws-access-key-id", "", "AWS access key ID (optional)")
+		awsSecretAccessKey        = fs.String("aws-secret-access-key", "", "AWS secret access key (optional)")
+		awsSessionToken           = fs.String("aws-session-token", "", "AWS session token (optional)")
+		s3StorageBucket           = fs.String("s3-storage-bucket", "", "S3 bucket name")
+		s3Endpoint                = fs.String("s3-endpoint", "", "S3 endpoint (optional)")
+		s3HTTPMaxIdleConnsPerHost = fs.Int("s3-http-max-idle-conns-per-host", DefaultS3HTTPMaxIdleConnsPerHost, "S3 HTTP transport max idle connections per host")
+		s3ForcePathStyle          = fs.Bool("s3-force-path-style", false, "S3 force path style (optional)")
+		s3StorageBaseDir          = fs.String("s3-storage-base-dir", "", "S3 base directory (optional)")
 
 		imagorSecret         = fs.String("imagor-secret", "", "secret key for imagor")
 		imagorSignerType     = fs.String("imagor-signer-type", "sha1", "imagor signer algorithm: sha1, sha256, sha512")
@@ -226,6 +230,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		S3StorageBucket:             *s3StorageBucket,
 		AWSRegion:                   *awsRegion,
 		S3Endpoint:                  *s3Endpoint,
+		S3HTTPMaxIdleConnsPerHost:   *s3HTTPMaxIdleConnsPerHost,
 		S3ForcePathStyle:            *s3ForcePathStyle,
 		AWSAccessKeyID:              *awsAccessKeyID,
 		AWSSecretAccessKey:          *awsSecretAccessKey,
@@ -267,6 +272,10 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 }
 
 func (c *Config) validateStorageConfig() error {
+	if c.S3HTTPMaxIdleConnsPerHost < 0 {
+		return fmt.Errorf("s3-http-max-idle-conns-per-host must not be negative")
+	}
+
 	switch c.StorageType {
 	case "file", "filesystem":
 		// File storage is always valid - will create directory if needed

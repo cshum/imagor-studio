@@ -32,6 +32,9 @@ func initializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.Node
 	var spaceStore space.SpaceStore = noop.NewSpaceStore()
 
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret, cfg.JWTExpiration)
+	if nodeCfg.Runtime.S3HTTPMaxIdleConnsPerHost <= 0 {
+		nodeCfg.Runtime.S3HTTPMaxIdleConnsPerHost = cfg.S3HTTPMaxIdleConnsPerHost
+	}
 
 	spaceConfigStore, loader, err := runtimeFactory(nodeCfg.Runtime, logger)
 	if err != nil {

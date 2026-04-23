@@ -21,7 +21,6 @@ export { SecretField } from '@/components/ui/secret-field'
 // ── Schema ─────────────────────────────────────────────────────────────────
 
 const credentialsSchema = z.object({
-  prefix: z.string().optional(),
   endpoint: z.string().optional(),
   accessKeyId: z.string().optional(),
   secretKey: z.string().optional(),
@@ -43,7 +42,6 @@ export function StorageSection({ space }: StorageSectionProps) {
   const form = useForm<CredentialsFormData>({
     resolver: zodResolver(credentialsSchema),
     defaultValues: {
-      prefix: space.prefix ?? '',
       endpoint: space.endpoint ?? '',
       accessKeyId: '',
       secretKey: '',
@@ -80,7 +78,7 @@ export function StorageSection({ space }: StorageSectionProps) {
           bucket: null,
           region: null,
           endpoint: values.endpoint ?? null,
-          prefix: values.prefix ?? null,
+          prefix: null,
           accessKeyId: values.accessKeyId ?? null,
           secretKey: values.secretKey || null,
           usePathStyle: null,
@@ -97,9 +95,7 @@ export function StorageSection({ space }: StorageSectionProps) {
         savedAt: Date.now(),
         spaceKey: space.key,
       })
-      toast.success(t('pages.spaceSettings.storage.saved'), {
-        description: t('pages.spacePropagation.description'),
-      })
+      toast.success(t('pages.spaceSettings.storage.saved'))
       form.setValue('accessKeyId', '')
       form.setValue('secretKey', '')
       setShowSecretKey(false)
@@ -112,45 +108,40 @@ export function StorageSection({ space }: StorageSectionProps) {
   }
 
   return (
-    <SettingsSection>
+    <SettingsSection contentClassName='border-t-0'>
       {/* Read-only bucket / region badge */}
-      <div className='bg-muted/40 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md px-3 py-2 text-sm'>
-        <span>
-          <span className='text-muted-foreground'>{t('pages.spaceSettings.storage.bucket')}: </span>
-          <code className='font-mono font-medium'>{space.bucket}</code>
-        </span>
-        {space.region && (
+      <div className='bg-muted/40 mb-4 w-full rounded-md px-3 py-2 text-sm'>
+        <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
           <span>
             <span className='text-muted-foreground'>
-              {t('pages.spaceSettings.storage.region')}:{' '}
+              {t('pages.spaceSettings.storage.bucket')}:{' '}
             </span>
-            <code className='font-mono font-medium'>{space.region}</code>
+            <code className='font-mono font-medium'>{space.bucket}</code>
           </span>
-        )}
-        <span className='text-muted-foreground text-xs'>
+          {space.region && (
+            <span>
+              <span className='text-muted-foreground'>
+                {t('pages.spaceSettings.storage.region')}:{' '}
+              </span>
+              <code className='font-mono font-medium'>{space.region}</code>
+            </span>
+          )}
+          {space.prefix && (
+            <span>
+              <span className='text-muted-foreground'>
+                {t('pages.spaceSettings.storage.prefix')}:{' '}
+              </span>
+              <code className='font-mono font-medium'>{space.prefix}</code>
+            </span>
+          )}
+        </div>
+        <p className='text-muted-foreground mt-2 text-xs'>
           {t('pages.spaceSettings.storage.bucketLocked')}
-        </span>
+        </p>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSave)}>
-          <FormField
-            control={form.control}
-            name='prefix'
-            render={({ field }) => (
-              <FormItem>
-                <SettingRow
-                  label={t('pages.spaceSettings.storage.prefix')}
-                  description={t('pages.spaceSettings.storage.prefixDescription')}
-                >
-                  <FormControl>
-                    <Input placeholder='media/' {...field} disabled={isSaving} />
-                  </FormControl>
-                  <FormMessage className='mt-1.5' />
-                </SettingRow>
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name='endpoint'
@@ -159,6 +150,7 @@ export function StorageSection({ space }: StorageSectionProps) {
                 <SettingRow
                   label={t('pages.spaceSettings.storage.endpoint')}
                   description={t('pages.spaceSettings.storage.endpointDescription')}
+                  contentClassName='sm:max-w-md'
                 >
                   <FormControl>
                     <Input placeholder='https://s3.amazonaws.com' {...field} disabled={isSaving} />
@@ -176,6 +168,7 @@ export function StorageSection({ space }: StorageSectionProps) {
                 <SettingRow
                   label={t('pages.spaceSettings.storage.accessKeyId')}
                   description={t('pages.spaceSettings.storage.accessKeyIdDescription')}
+                  contentClassName='sm:max-w-md'
                 >
                   <FormControl>
                     <Input
@@ -197,6 +190,8 @@ export function StorageSection({ space }: StorageSectionProps) {
                 <SettingRow
                   label={t('pages.spaceSettings.storage.secretKey')}
                   description={t('pages.spaceSettings.storage.secretKeyDescription')}
+                  last
+                  contentClassName='sm:max-w-md'
                 >
                   <SecretField
                     show={showSecretKey}
@@ -218,16 +213,17 @@ export function StorageSection({ space }: StorageSectionProps) {
             )}
           />
 
-          {/* AES-256 encryption notice */}
-          <div className='bg-muted/50 text-muted-foreground mx-4 mb-2 flex items-start gap-2 rounded-md px-3 py-2.5 text-xs'>
-            <Lock className='mt-0.5 h-3.5 w-3.5 shrink-0' />
-            <span>{t('pages.spaces.credentialsEncrypted')}</span>
-          </div>
+          <div className='space-y-4 py-4'>
+            <div className='bg-muted/50 text-muted-foreground flex w-full items-start gap-2 rounded-md px-3 py-2.5 text-xs'>
+              <Lock className='mt-0.5 h-3.5 w-3.5 shrink-0' />
+              <span>{t('pages.spaces.credentialsEncrypted')}</span>
+            </div>
 
-          <div className='mt-2 flex justify-end pt-2'>
-            <ButtonWithLoading type='submit' isLoading={isSaving}>
-              {t('common.buttons.save')}
-            </ButtonWithLoading>
+            <div className='flex justify-end'>
+              <ButtonWithLoading type='submit' isLoading={isSaving}>
+                {t('common.buttons.save')}
+              </ButtonWithLoading>
+            </div>
           </div>
         </form>
       </Form>

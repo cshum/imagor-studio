@@ -37,6 +37,26 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, false, cfg.AppShowHidden)
 	assert.Equal(t, "MODIFIED_TIME", cfg.AppDefaultSortBy)
 	assert.Equal(t, "DESC", cfg.AppDefaultSortOrder)
+	assert.Equal(t, DefaultS3HTTPMaxIdleConnsPerHost, cfg.S3HTTPMaxIdleConnsPerHost)
+}
+
+func TestLoadWithS3HTTPMaxIdleConnsPerHostArg(t *testing.T) {
+	cfg, err := Load([]string{"--jwt-secret", "test-secret", "--s3-http-max-idle-conns-per-host", "250"}, nil)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, 250, cfg.S3HTTPMaxIdleConnsPerHost)
+}
+
+func TestLoadWithS3HTTPMaxIdleConnsPerHostEnv(t *testing.T) {
+	os.Setenv("S3_HTTP_MAX_IDLE_CONNS_PER_HOST", "175")
+	defer os.Unsetenv("S3_HTTP_MAX_IDLE_CONNS_PER_HOST")
+
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, nil)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, 175, cfg.S3HTTPMaxIdleConnsPerHost)
 }
 
 func TestLoadWithArgs(t *testing.T) {
@@ -168,48 +188,62 @@ func TestConfigPriorityWithArgs(t *testing.T) {
 
 func TestValidateStorageConfig(t *testing.T) {
 	tests := []struct {
-		name        string
-		storageType string
-		s3Bucket    string
-		expectError bool
+		name                    string
+		storageType             string
+		s3Bucket                string
+		httpMaxIdleConnsPerHost int
+		expectError             bool
 	}{
 		{
-			name:        "valid file storage",
-			storageType: "file",
-			s3Bucket:    "",
-			expectError: false,
+			name:                    "valid file storage",
+			storageType:             "file",
+			s3Bucket:                "",
+			httpMaxIdleConnsPerHost: 0,
+			expectError:             false,
 		},
 		{
-			name:        "valid filesystem storage",
-			storageType: "filesystem",
-			s3Bucket:    "",
-			expectError: false,
+			name:                    "valid filesystem storage",
+			storageType:             "filesystem",
+			s3Bucket:                "",
+			httpMaxIdleConnsPerHost: 0,
+			expectError:             false,
 		},
 		{
-			name:        "valid s3 storage",
-			storageType: "s3",
-			s3Bucket:    "test-bucket",
-			expectError: false,
+			name:                    "valid s3 storage",
+			storageType:             "s3",
+			s3Bucket:                "test-bucket",
+			httpMaxIdleConnsPerHost: 0,
+			expectError:             false,
 		},
 		{
-			name:        "invalid s3 storage - missing bucket",
-			storageType: "s3",
-			s3Bucket:    "",
-			expectError: true,
+			name:                    "invalid s3 storage - missing bucket",
+			storageType:             "s3",
+			s3Bucket:                "",
+			httpMaxIdleConnsPerHost: 0,
+			expectError:             true,
 		},
 		{
-			name:        "invalid storage type",
-			storageType: "invalid",
-			s3Bucket:    "",
-			expectError: true,
+			name:                    "invalid negative s3 http max idle conns per host",
+			storageType:             "file",
+			s3Bucket:                "",
+			httpMaxIdleConnsPerHost: -1,
+			expectError:             true,
+		},
+		{
+			name:                    "invalid storage type",
+			storageType:             "invalid",
+			s3Bucket:                "",
+			httpMaxIdleConnsPerHost: 0,
+			expectError:             true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &Config{
-				StorageType:     tt.storageType,
-				S3StorageBucket: tt.s3Bucket,
+				StorageType:               tt.storageType,
+				S3StorageBucket:           tt.s3Bucket,
+				S3HTTPMaxIdleConnsPerHost: tt.httpMaxIdleConnsPerHost,
 			}
 
 			err := cfg.validateStorageConfig()

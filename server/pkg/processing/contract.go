@@ -8,9 +8,10 @@ import (
 )
 
 type RuntimeConfig struct {
-	SpacesEndpoint    string
-	InternalAPISecret string
-	SpaceBaseDomain   string
+	SpacesEndpoint            string
+	InternalAPISecret         string
+	SpaceBaseDomain           string
+	S3HTTPMaxIdleConnsPerHost int
 }
 
 type NodeConfig struct {
@@ -41,4 +42,4 @@ type SpaceConfigReader interface {
 	Ready() bool
 }
 
-type RuntimeFactory = func(cfg RuntimeConfig, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, error)
+type RuntimeFactory = func(runtimeCfg RuntimeConfig, logger *zap.Logger) (SpaceConfigReader, imagor.Loader, error)

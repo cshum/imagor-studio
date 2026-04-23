@@ -20,10 +20,10 @@
     "buttons": {
       "save": "保存",
       "cancel": "取消",
-        "corsOrigins": "附加 CORS 来源",
-        "corsOriginsDescription": "允许额外的浏览器来源访问此空间的 imagor 响应。",
-        "corsOriginsHelp": "输入以逗号分隔的来源列表，例如：https://editor.customer.test, https://cms.customer.test",
-        "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
+      "corsOrigins": "附加 CORS 来源",
+      "corsOriginsDescription": "允许额外的浏览器来源访问此空间的 imagor 响应。",
+      "corsOriginsHelp": "输入以逗号分隔的来源列表，例如：https://editor.customer.test, https://cms.customer.test",
+      "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
       "delete": "删除",
       "remove": "移除",
       "edit": "编辑",
@@ -187,7 +187,11 @@
         "uploadFiles": "上传文件",
         "messages": {
           "uploadSuccess": "文件上传成功",
-          "uploadFailed": "上传 {{fileName}} 失败"
+          "uploadFailed": "上传 {{fileName}} 失败",
+          "previewWarmupTitle": "预览正在准备中",
+          "previewWarmupHint": "预览仍在准备中，通常会在 30 秒内显示。",
+          "previewWarmupDescription": "你的文件已上传成功。图片预览通常会在 30 秒内显示。",
+          "spaceWarmupDescription": "这个空间仍在发布中。图片预览通常会在 30 秒内显示。"
         }
       },
       "contextMenu": {
@@ -691,14 +695,14 @@
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
-        "managed": "平台存储",
-        "s3": "自定义 S3（BYOB）"
+        "managed": "托管存储",
+        "s3": "S3 存储桶"
       },
       "storageTypeDesc": {
-        "managed": "由 Imagor Studio 管理，无需配置存储桶。",
-        "s3": "连接您自己的 S3 兼容存储桶。"
+        "managed": "存储在 Imagor Studio 中，无需配置存储桶。",
+        "s3": "使用你自己的 S3 兼容存储桶。"
       },
-      "keyDescription": "用于链接和 URL。你可以修改它，但旧链接不会重定向。",
+      "keyDescription": "这会设置此空间在应用中的 URL 以及专属的 imagor 主机。你之后可以再更改。",
       "tableHeaders": {
         "key": "URL 标识",
         "name": "名称",
@@ -724,11 +728,12 @@
       "spaceCount": "{{count}} 个空间",
       "openGallery": "打开图库",
       "wizard": {
-        "stepIdentity": "基本信息",
+        "stepIdentity": "空间详情",
         "stepStorage": "存储",
         "next": "下一步",
         "back": "上一步"
       },
+      "createSpaceDescription": "为你的团队创建一个专属图片工作空间。",
       "messages": {
         "spaceCreatedSuccess": "空间创建成功",
         "spaceUpdatedSuccess": "空间更新成功",
@@ -751,6 +756,11 @@
         "sharedWithYou": "与你共享"
       },
       "configure": "配置",
+      "creationPreview": {
+        "title": "此空间的 URL",
+        "appUrlLabel": "应用 URL",
+        "processingHostLabel": "Imagor 主机"
+      },
       "startDescription": "先从托管空间开始，最快完成配置，然后再随着工作区成长自定义存储、交付和品牌。",
       "sharedLabel": "共享",
       "leaveSpace": "离开",
@@ -768,7 +778,7 @@
     },
     "spacePropagation": {
       "title": "更改正在传播",
-      "description": "处理节点通常会在 30 秒内应用这些更改。",
+      "description": "这些更改通常会在 30 秒内生效。",
       "createDescription": "新空间正在发布到处理节点，通常会在 30 秒内可用。",
       "deleteDescription": "空间删除正在传播到处理节点，最多可能需要 30 秒才会完全生效。"
     },
@@ -800,9 +810,9 @@
         "saved": "常规设置已保存"
       },
       "storage": {
-        "managedTitle": "平台托管存储",
-        "managedDescription": "文件存储在 Imagor Studio 的托管存储中，存储类型在空间创建后无法更改。",
-        "bucketLocked": "存储桶和区域在创建时固定，无法更改。",
+        "managedTitle": "托管存储",
+        "managedDescription": "你的文件存储在 Imagor Studio 中。此存储选项会在空间创建时确定，之后无法更改。",
+        "bucketLocked": "存储桶、区域和路径前缀会在创建时固定，无法更改。",
         "description": "查看此空间的存储设置。",
         "accessKeyIdDescription": "留空以保留现有凭证。",
         "secretKey": "私有访问密钥",

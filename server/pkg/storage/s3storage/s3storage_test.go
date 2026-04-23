@@ -93,6 +93,18 @@ func setupFakeS3WithPathStyle(t *testing.T, forcePathStyle bool) *S3Storage {
 	return s3Storage
 }
 
+func TestSharedHTTPClient_UsesConfiguredMaxIdleConnsPerHost(t *testing.T) {
+	transport := newBuildableHTTPClient(123).GetTransport()
+	assert.Equal(t, 123, transport.MaxIdleConnsPerHost)
+}
+
+func TestSharedHTTPClient_ReusesClientForSameSetting(t *testing.T) {
+	first := SharedHTTPClient(88)
+	second := SharedHTTPClient(88)
+
+	assert.Same(t, first, second)
+}
+
 func TestS3Storage_Put(t *testing.T) {
 	s3Storage := setupFakeS3(t)
 	ctx := context.Background()

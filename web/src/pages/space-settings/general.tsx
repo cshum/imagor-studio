@@ -124,9 +124,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
         savedAt: Date.now(),
         spaceKey: updatedSpace.key,
       })
-      toast.success(t('pages.spaceSettings.general.saved'), {
-        description: t('pages.spacePropagation.description'),
-      })
+      toast.success(t('pages.spaceSettings.general.saved'))
       if (updatedSpace.key !== space.key) {
         await navigate({
           to: '/spaces/$spaceKey/settings/general',
@@ -151,10 +149,9 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     setIsDeleting(true)
     try {
       await deleteSpace({ key: space.key })
-      toast.success(t('pages.spaces.messages.spaceDeletedSuccess'), {
-        description: t('pages.spacePropagation.deleteDescription'),
-      })
+      toast.success(t('pages.spaces.messages.spaceDeletedSuccess'))
       await navigate({ to: '/' })
+      await router.invalidate()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : String(err))
     } finally {
