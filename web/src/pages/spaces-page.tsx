@@ -22,7 +22,6 @@ import {
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ListSpacesQuery } from '@/generated/graphql'
 import { useAuth } from '@/stores/auth-store'
 
@@ -212,27 +211,15 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       </Badge>
                     </Link>
                     {canManageSpace && !space.canLeave ? (
-                      <TooltipProvider delayDuration={0}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant='ghost'
-                              size='icon'
-                              className='h-10 w-10 shrink-0'
-                              asChild
-                            >
-                              <Link
-                                to='/spaces/$spaceKey/settings/$section'
-                                params={{ spaceKey: space.key, section: 'general' }}
-                                aria-label={t('pages.spaces.configure')}
-                              >
-                                <Settings className='h-5 w-5' />
-                              </Link>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side='top'>{t('pages.spaces.configure')}</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <Button variant='ghost' size='icon' className='h-10 w-10 shrink-0' asChild>
+                        <Link
+                          to='/spaces/$spaceKey/settings/$section'
+                          params={{ spaceKey: space.key, section: 'general' }}
+                          aria-label={t('pages.spaces.configure')}
+                        >
+                          <Settings className='h-5 w-5' />
+                        </Link>
+                      </Button>
                     ) : null}
                   </div>
                 </div>
