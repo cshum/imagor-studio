@@ -1,6 +1,10 @@
 import { ClientError } from 'graphql-request'
 
 import type {
+  BeginStorageUploadProbeMutation,
+  BeginStorageUploadProbeMutationVariables,
+  CompleteStorageUploadProbeMutation,
+  CompleteStorageUploadProbeMutationVariables,
   ConfigureFileStorageMutation,
   ConfigureFileStorageMutationVariables,
   ConfigureS3StorageMutation,
@@ -25,6 +29,7 @@ import type {
   SortOrder,
   StatFileQuery,
   StatFileQueryVariables,
+  StorageConfigInput,
   StorageStatusQuery,
   TestStorageConfigMutation,
   TestStorageConfigMutationVariables,
@@ -38,6 +43,14 @@ export interface UploadFileOptions {
   spaceKey?: string
   onProgress?: (progress: number) => void
 }
+
+interface StorageProbeOptions {
+  signal?: AbortSignal
+}
+
+const STORAGE_UPLOAD_PROBE_CONTENT = 'ok'
+const STORAGE_UPLOAD_PROBE_FILENAME = 'imagor-studio-probe.txt'
+const STORAGE_UPLOAD_PROBE_CONTENT_TYPE = 'text/plain'
 
 function getUploadContentType(file: File): string {
   return file.type.trim() || 'application/octet-stream'
@@ -54,6 +67,29 @@ function isPresignedUploadUnsupported(error: unknown): boolean {
   }
 
   return error instanceof Error && error.message.includes('does not support presigned uploads')
+}
+
+function isBrowserProbeMutationUnavailable(error: unknown): boolean {
+  if (!(error instanceof ClientError)) {
+    return false
+  }
+
+  const errorMessages =
+    error.response.errors
+      ?.map((graphqlError) => graphqlError.message)
+      .filter((message): message is string => Boolean(message)) ?? []
+
+  if (
+    errorMessages.some((message) =>
+      /(Cannot query field|Unknown argument|Unknown type|beginStorageUploadProbe|completeStorageUploadProbe)/i.test(
+        message,
+      ),
+    )
+  ) {
+    return true
+  }
+
+  return error.response.status === 400
 }
 
 async function uploadToPresignedUrl(
@@ -308,6 +344,74 @@ export async function testStorageConfig(
   const sdk = getSdk(getGraphQLClient())
   const result = await sdk.TestStorageConfig(variables)
   return result.testStorageConfig
+}
+
+export async function beginStorageUploadProbe(
+  variables: BeginStorageUploadProbeMutationVariables,
+): Promise<BeginStorageUploadProbeMutation['beginStorageUploadProbe']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.BeginStorageUploadProbe(variables)
+  return result.beginStorageUploadProbe
+}
+
+export async function completeStorageUploadProbe(
+  variables: CompleteStorageUploadProbeMutationVariables,
+): Promise<CompleteStorageUploadProbeMutation['completeStorageUploadProbe']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.CompleteStorageUploadProbe(variables)
+  return result.completeStorageUploadProbe
+}
+
+export async function testStorageConfigWithBrowserProbe(
+  input: StorageConfigInput,
+  options: StorageProbeOptions = {},
+): Promise<TestStorageConfigMutation['testStorageConfig']> {
+  const serverResult = await testStorageConfig({ input })
+  if (!serverResult.success || input.type !== 'S3') {
+    return serverResult
+  }
+
+  const probeFile = new File([STORAGE_UPLOAD_PROBE_CONTENT], STORAGE_UPLOAD_PROBE_FILENAME, {
+    type: STORAGE_UPLOAD_PROBE_CONTENT_TYPE,
+  })
+  let probe: BeginStorageUploadProbeMutation['beginStorageUploadProbe']
+
+  try {
+    probe = await beginStorageUploadProbe({
+      input,
+      contentType: probeFile.type,
+      sizeBytes: probeFile.size,
+    })
+  } catch (error) {
+    if (isBrowserProbeMutationUnavailable(error)) {
+      return serverResult
+    }
+    throw error
+  }
+
+  try {
+    await uploadToPresignedUrl(probe.uploadURL, probeFile, { signal: options.signal })
+  } catch (error) {
+    return {
+      success: false,
+      code: 'S3_CORS_PROBE_FAILED',
+      message: 'Browser upload probe failed. Check bucket CORS for this app origin.',
+      details: error instanceof Error ? error.message : 'Upload probe failed',
+    }
+  }
+
+  try {
+    return await completeStorageUploadProbe({
+      input,
+      probePath: probe.probePath,
+      expectedContent: STORAGE_UPLOAD_PROBE_CONTENT,
+    })
+  } catch (error) {
+    if (isBrowserProbeMutationUnavailable(error)) {
+      return serverResult
+    }
+    throw error
+  }
 }
 
 /**

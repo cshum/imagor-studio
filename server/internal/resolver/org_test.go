@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -56,6 +57,12 @@ func newOrgResolver(orgStore *MockOrgStore, spaceStore *MockSpaceStore) *Resolve
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
 	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
+}
+
+func newOrgResolverWithStorageValidator(orgStore *MockOrgStore, spaceStore *MockSpaceStore, validator StorageConfigValidator) *Resolver {
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil, WithStorageConfigValidator(validator))
 }
 
 // ---------- MyOrganization ---------------------------------------------------
@@ -359,7 +366,13 @@ func TestCreateSpace_RejectsByobWithoutBucket(t *testing.T) {
 func TestCreateSpace_DerivesStorageModeFromType(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
-	r := newOrgResolver(orgStore, spaceStore)
+	r := newOrgResolverWithStorageValidator(orgStore, spaceStore, func(ctx context.Context, input gql.StorageConfigInput) *gql.StorageTestResult {
+		assert.Equal(t, gql.StorageTypeS3, input.Type)
+		if assert.NotNil(t, input.S3Config) {
+			assert.Equal(t, "bucket", input.S3Config.Bucket)
+		}
+		return &gql.StorageTestResult{Success: true, Message: "Storage configuration test successful"}
+	})
 
 	created := makeTestSpace("acme", "org-1")
 	created.StorageMode = space.StorageModeBYOB
@@ -389,6 +402,33 @@ func TestCreateSpace_DerivesStorageModeFromType(t *testing.T) {
 	assert.Equal(t, space.StorageModeBYOB, result.StorageMode)
 	spaceStore.AssertExpectations(t)
 	orgStore.AssertExpectations(t)
+}
+
+func TestCreateSpace_RejectsInvalidByobStorageConfig(t *testing.T) {
+	r := newOrgResolverWithStorageValidator(&MockOrgStore{}, &MockSpaceStore{}, func(ctx context.Context, input gql.StorageConfigInput) *gql.StorageTestResult {
+		return &gql.StorageTestResult{
+			Success: false,
+			Message: "Failed to write probe object",
+			Details: stringPtr("access denied"),
+		}
+	})
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	storageType := "s3"
+	input := gql.SpaceInput{
+		Key:         "acme",
+		Name:        "Acme",
+		StorageType: &storageType,
+		Bucket:      ptrStr("bucket"),
+		Region:      ptrStr("us-east-1"),
+	}
+
+	result, err := r.Mutation().CreateSpace(ctx, input)
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid BYOB storage configuration")
+	assert.Contains(t, err.Error(), "Failed to write probe object")
+	assert.Contains(t, err.Error(), "access denied")
 }
 
 func TestCreateSpace_DuplicateKey(t *testing.T) {
@@ -539,6 +579,108 @@ func TestUpdateSpace_RejectsByobManagedTypeMismatch(t *testing.T) {
 	assert.Nil(t, result)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "requires storageType")
+	spaceStore.AssertExpectations(t)
+}
+
+func TestUpdateSpace_ValidatesByobStorageChanges(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolverWithStorageValidator(orgStore, spaceStore, func(ctx context.Context, input gql.StorageConfigInput) *gql.StorageTestResult {
+		if assert.NotNil(t, input.S3Config) {
+			assert.Equal(t, "new-bucket", input.S3Config.Bucket)
+		}
+		return &gql.StorageTestResult{Success: true, Message: "Storage configuration test successful"}
+	})
+
+	existing := makeTestSpace("acme", "org-1")
+	existing.StorageMode = space.StorageModeBYOB
+	existing.StorageType = "s3"
+	existing.Bucket = "bucket"
+	existing.Region = "us-east-1"
+	updated := makeTestSpace("acme", "org-1")
+	updated.StorageMode = space.StorageModeBYOB
+	updated.StorageType = "s3"
+	updated.Bucket = "new-bucket"
+	updated.Region = "us-east-1"
+
+	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
+		return s.Key == "acme" && s.Bucket == "new-bucket" && s.StorageMode == space.StorageModeBYOB
+	})).Return(nil)
+	spaceStore.On("Get", mock.Anything, "acme").Return(updated, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	bucket := "new-bucket"
+	input := gql.SpaceInput{Key: "acme", Name: "New Name", Bucket: &bucket}
+	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "new-bucket", result.Bucket)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestUpdateSpace_RejectsInvalidByobStorageChanges(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolverWithStorageValidator(orgStore, spaceStore, func(ctx context.Context, input gql.StorageConfigInput) *gql.StorageTestResult {
+		return &gql.StorageTestResult{
+			Success: false,
+			Message: "Failed to generate presigned upload URL",
+			Details: stringPtr("signature mismatch"),
+		}
+	})
+
+	existing := makeTestSpace("acme", "org-1")
+	existing.StorageMode = space.StorageModeBYOB
+	existing.StorageType = "s3"
+	existing.Bucket = "bucket"
+	existing.Region = "us-east-1"
+	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	bucket := "new-bucket"
+	input := gql.SpaceInput{Key: "acme", Name: "New Name", Bucket: &bucket}
+	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid BYOB storage configuration")
+	assert.Contains(t, err.Error(), "Failed to generate presigned upload URL")
+	spaceStore.AssertExpectations(t)
+}
+
+func TestUpdateSpace_SkipsValidationWhenByobStorageUnchanged(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	validatorCalled := false
+	r := newOrgResolverWithStorageValidator(orgStore, spaceStore, func(ctx context.Context, input gql.StorageConfigInput) *gql.StorageTestResult {
+		validatorCalled = true
+		return &gql.StorageTestResult{Success: true, Message: "Storage configuration test successful"}
+	})
+
+	existing := makeTestSpace("acme", "org-1")
+	existing.StorageMode = space.StorageModeBYOB
+	existing.StorageType = "s3"
+	existing.Bucket = "bucket"
+	existing.Region = "us-east-1"
+	updated := makeTestSpace("acme", "org-1")
+	updated.StorageMode = space.StorageModeBYOB
+	updated.StorageType = "s3"
+	updated.Bucket = "bucket"
+	updated.Region = "us-east-1"
+	updated.Name = "New Name"
+
+	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
+		return s.Key == "acme" && s.Name == "New Name" && s.Bucket == "bucket"
+	})).Return(nil)
+	spaceStore.On("Get", mock.Anything, "acme").Return(updated, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	input := gql.SpaceInput{Key: "acme", Name: "New Name"}
+	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, validatorCalled)
 	spaceStore.AssertExpectations(t)
 }
 

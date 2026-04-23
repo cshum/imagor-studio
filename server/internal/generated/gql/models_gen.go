@@ -301,6 +301,13 @@ type StorageTestResult struct {
 	Success bool    `json:"success"`
 	Message string  `json:"message"`
 	Details *string `json:"details,omitempty"`
+	Code    *string `json:"code,omitempty"`
+}
+
+type StorageUploadProbe struct {
+	ProbePath string `json:"probePath"`
+	UploadURL string `json:"uploadURL"`
+	ExpiresAt string `json:"expiresAt"`
 }
 
 type SystemRegistry struct {

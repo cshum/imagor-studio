@@ -170,7 +170,9 @@ export type Mutation = {
   addOrgMember: OrgMember
   addOrgMemberByEmail: OrgMember
   addSpaceMember: SpaceMember
+  beginStorageUploadProbe: StorageUploadProbe
   changePassword: Scalars['Boolean']['output']
+  completeStorageUploadProbe: StorageTestResult
   configureFileStorage: StorageConfigResult
   configureImagor: ImagorConfigResult
   configureS3Storage: StorageConfigResult
@@ -224,9 +226,21 @@ export type MutationAddSpaceMemberArgs = {
   userId: Scalars['ID']['input']
 }
 
+export type MutationBeginStorageUploadProbeArgs = {
+  contentType: Scalars['String']['input']
+  input: StorageConfigInput
+  sizeBytes: Scalars['Int']['input']
+}
+
 export type MutationChangePasswordArgs = {
   input: ChangePasswordInput
   userId?: InputMaybe<Scalars['ID']['input']>
+}
+
+export type MutationCompleteStorageUploadProbeArgs = {
+  expectedContent: Scalars['String']['input']
+  input: StorageConfigInput
+  probePath: Scalars['String']['input']
 }
 
 export type MutationConfigureFileStorageArgs = {
@@ -671,12 +685,20 @@ export type StorageStatus = {
 
 export type StorageTestResult = {
   __typename?: 'StorageTestResult'
+  code: Maybe<Scalars['String']['output']>
   details: Maybe<Scalars['String']['output']>
   message: Scalars['String']['output']
   success: Scalars['Boolean']['output']
 }
 
 export type StorageType = 'FILE' | 'S3'
+
+export type StorageUploadProbe = {
+  __typename?: 'StorageUploadProbe'
+  expiresAt: Scalars['String']['output']
+  probePath: Scalars['String']['output']
+  uploadURL: Scalars['String']['output']
+}
 
 export type SystemRegistry = {
   __typename?: 'SystemRegistry'
@@ -1493,6 +1515,40 @@ export type TestStorageConfigMutation = {
     success: boolean
     message: string
     details: string | null
+    code: string | null
+  }
+}
+
+export type BeginStorageUploadProbeMutationVariables = Exact<{
+  input: StorageConfigInput
+  contentType: Scalars['String']['input']
+  sizeBytes: Scalars['Int']['input']
+}>
+
+export type BeginStorageUploadProbeMutation = {
+  __typename?: 'Mutation'
+  beginStorageUploadProbe: {
+    __typename?: 'StorageUploadProbe'
+    probePath: string
+    uploadURL: string
+    expiresAt: string
+  }
+}
+
+export type CompleteStorageUploadProbeMutationVariables = Exact<{
+  input: StorageConfigInput
+  probePath: Scalars['String']['input']
+  expectedContent: Scalars['String']['input']
+}>
+
+export type CompleteStorageUploadProbeMutation = {
+  __typename?: 'Mutation'
+  completeStorageUploadProbe: {
+    __typename?: 'StorageTestResult'
+    success: boolean
+    message: string
+    details: string | null
+    code: string | null
   }
 }
 
@@ -4528,6 +4584,7 @@ export const TestStorageConfigDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'success' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'message' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'details' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
               ],
             },
           },
@@ -4536,6 +4593,153 @@ export const TestStorageConfigDocument = {
     },
   ],
 } as unknown as DocumentNode<TestStorageConfigMutation, TestStorageConfigMutationVariables>
+export const BeginStorageUploadProbeDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'BeginStorageUploadProbe' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'StorageConfigInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'contentType' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'sizeBytes' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'beginStorageUploadProbe' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'contentType' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'contentType' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'sizeBytes' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'sizeBytes' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'probePath' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'uploadURL' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  BeginStorageUploadProbeMutation,
+  BeginStorageUploadProbeMutationVariables
+>
+export const CompleteStorageUploadProbeDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CompleteStorageUploadProbe' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'StorageConfigInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'probePath' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedContent' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'completeStorageUploadProbe' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'probePath' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'probePath' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedContent' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedContent' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'success' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'details' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  CompleteStorageUploadProbeMutation,
+  CompleteStorageUploadProbeMutationVariables
+>
 export const SaveTemplateDocument = {
   kind: 'Document',
   definitions: [

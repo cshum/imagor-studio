@@ -543,7 +543,21 @@
       "endpoint": "端点",
       "takingEffect": "设置已保存。更改可能需要最多 1 分钟才能生效。",
       "testConfigFirst": "请先填写 {{storageType}} 存储配置",
-      "storageTypeDescription": "选择存储图片和文件的位置"
+      "storageTypeDescription": "选择存储图片和文件的位置",
+      "s3Requirements": {
+        "permissions": "此存储桶必须允许列出、读取、写入和删除对象。",
+        "cors": "请将 <1>{{origin}}</1> 添加到存储桶 CORS 的允许来源，并允许 PUT 上传。",
+        "appOriginFallback": "此应用 URL"
+      },
+      "validationErrors": {
+        "endpointUnreachable": "无法连接到 S3 端点。请检查存储桶名称、区域和端点 URL。",
+        "invalidAccessKey": "访问密钥 ID 的格式看起来无效。",
+        "invalidRegion": "区域看起来无效。请检查 S3 区域字段。",
+        "accessDenied": "访问被拒绝。请检查存储桶权限和凭证。",
+        "authentication": "无法通过 S3 身份验证。请检查访问密钥 ID 和秘密访问密钥。",
+        "timeout": "连接 S3 超时。请检查存储桶名称、区域、端点和网络访问。",
+        "cors": "浏览器上传被阻止。请检查此应用 URL 对应的存储桶 CORS 设置。"
+      }
     },
     "systemSettings": {
       "settingOverridden": "此设置被配置文件或环境变量覆盖",

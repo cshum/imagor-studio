@@ -43,6 +43,8 @@ type LicenseChecker interface {
 	GetLicenseStatus(ctx context.Context, includeDetails bool) (*license.LicenseStatus, error)
 }
 
+type StorageConfigValidator func(ctx context.Context, input gql.StorageConfigInput) *gql.StorageTestResult
+
 type Resolver struct {
 	storageProvider StorageProvider
 	registryStore   registrystore.Store
@@ -62,6 +64,8 @@ type Resolver struct {
 
 	spaceInviteStore space.SpaceInviteStore
 	inviteSender     space.InviteSender
+
+	storageConfigValidator StorageConfigValidator
 }
 
 type ResolverOption func(*Resolver)
@@ -81,6 +85,12 @@ func WithCloudConfig(cloudConfig management.CloudConfig) ResolverOption {
 func WithTemplatePreviewRenderer(renderer processing.TemplatePreviewRenderClient) ResolverOption {
 	return func(r *Resolver) {
 		r.templatePreviewRenderer = renderer
+	}
+}
+
+func WithStorageConfigValidator(validator StorageConfigValidator) ResolverOption {
+	return func(r *Resolver) {
+		r.storageConfigValidator = validator
 	}
 }
 

@@ -163,6 +163,44 @@ export const TEST_STORAGE_CONFIG = gql(`
       success
       message
       details
+      code
+    }
+  }
+`)
+
+export const BEGIN_STORAGE_UPLOAD_PROBE = gql(`
+  mutation BeginStorageUploadProbe(
+    $input: StorageConfigInput!
+    $contentType: String!
+    $sizeBytes: Int!
+  ) {
+    beginStorageUploadProbe(
+      input: $input
+      contentType: $contentType
+      sizeBytes: $sizeBytes
+    ) {
+      probePath
+      uploadURL
+      expiresAt
+    }
+  }
+`)
+
+export const COMPLETE_STORAGE_UPLOAD_PROBE = gql(`
+  mutation CompleteStorageUploadProbe(
+    $input: StorageConfigInput!
+    $probePath: String!
+    $expectedContent: String!
+  ) {
+    completeStorageUploadProbe(
+      input: $input
+      probePath: $probePath
+      expectedContent: $expectedContent
+    ) {
+      success
+      message
+      details
+      code
     }
   }
 `)

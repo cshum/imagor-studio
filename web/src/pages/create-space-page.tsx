@@ -8,7 +8,9 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { checkSpaceKey, createSpace } from '@/api/org-api'
+import { testStorageConfigWithBrowserProbe } from '@/api/storage-api'
 import { AppHeader } from '@/components/app-header'
+import { S3RequirementsNote } from '@/components/storage/s3-requirements-note'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -30,6 +32,7 @@ import { Separator } from '@/components/ui/separator'
 import { useBrand } from '@/hooks/use-brand'
 import { extractErrorInfo } from '@/lib/error-utils'
 import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
+import { formatStorageValidationError } from '@/lib/storage-validation-errors'
 import { useAuth } from '@/stores/auth-store'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
@@ -65,6 +68,20 @@ function makeCreateSchema(t: (key: string) => string) {
             code: z.ZodIssueCode.custom,
             message: t('forms.validation.required'),
             path: ['region'],
+          })
+        }
+        if (!data.accessKeyId?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('forms.validation.required'),
+            path: ['accessKeyId'],
+          })
+        }
+        if (!data.secretKey?.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('forms.validation.required'),
+            path: ['secretKey'],
           })
         }
       }
@@ -220,7 +237,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                       {type === 'managed' ? (
                         <Cloud className='text-primary h-5 w-5' />
                       ) : (
-                        <Database className='h-5 w-5 text-amber-500' />
+                        <Database className='h-5 w-5 text-sky-600 dark:text-sky-400' />
                       )}
                     </div>
                     <p className='text-sm font-medium'>{t(`pages.spaces.storageType.${type}`)}</p>
@@ -239,7 +256,8 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
       {isByob && (
         <>
           <Separator />
-          <div className='grid grid-cols-2 gap-4'>
+          <S3RequirementsNote />
+          <div className='grid grid-cols-2 items-start gap-4'>
             <FormField
               control={form.control}
               name='bucket'
@@ -247,7 +265,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.bucket')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder='my-bucket' {...field} disabled={isSaving} />
+                    <Input {...field} disabled={isSaving} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -260,7 +278,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.region')} *</FormLabel>
                   <FormControl>
-                    <Input placeholder='us-east-1' {...field} disabled={isSaving} />
+                    <Input {...field} disabled={isSaving} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -274,7 +292,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
                 <FormControl>
-                  <Input placeholder='https://s3.amazonaws.com' {...field} disabled={isSaving} />
+                  <Input {...field} disabled={isSaving} />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.endpointDescription')}
@@ -290,7 +308,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
                 <FormControl>
-                  <Input placeholder='' {...field} disabled={isSaving} />
+                  <Input {...field} disabled={isSaving} />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.prefixDescription')}
@@ -299,13 +317,13 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               </FormItem>
             )}
           />
-          <div className='grid grid-cols-2 gap-4'>
+          <div className='grid grid-cols-2 items-start gap-4'>
             <FormField
               control={form.control}
               name='accessKeyId'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('pages.spaceSettings.storage.accessKeyId')}</FormLabel>
+                  <FormLabel>{t('pages.spaceSettings.storage.accessKeyId')} *</FormLabel>
                   <FormControl>
                     <Input {...field} disabled={isSaving} />
                   </FormControl>
@@ -318,7 +336,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               name='secretKey'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('pages.spaceSettings.storage.secretKey')}</FormLabel>
+                  <FormLabel>{t('pages.spaceSettings.storage.secretKey')} *</FormLabel>
                   <FormControl>
                     <Input type='password' {...field} disabled={isSaving} />
                   </FormControl>
@@ -399,6 +417,29 @@ export function CreateSpacePage() {
     const storageMode = isS3 ? 'byob' : 'platform'
     setIsSaving(true)
     try {
+      if (isS3) {
+        const probeResult = await testStorageConfigWithBrowserProbe({
+          type: 'S3',
+          fileConfig: null,
+          s3Config: {
+            bucket: values.bucket ?? '',
+            region: values.region ?? null,
+            endpoint: values.endpoint ?? null,
+            forcePathStyle: null,
+            accessKeyId: values.accessKeyId ?? null,
+            secretAccessKey: values.secretKey ?? null,
+            sessionToken: null,
+            baseDir: values.prefix ?? null,
+          },
+        })
+
+        if (!probeResult.success) {
+          const errorMessage = formatStorageValidationError(t, probeResult)
+          toast.error(`${t('pages.spaces.messages.createSpaceFailed')}: ${errorMessage}`)
+          return
+        }
+      }
+
       await createSpace({
         input: {
           key: values.key,

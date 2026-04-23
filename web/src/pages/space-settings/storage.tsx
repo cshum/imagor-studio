@@ -8,12 +8,15 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { updateSpace } from '@/api/org-api'
+import { S3RequirementsNote } from '@/components/storage/s3-requirements-note'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
+import { extractErrorInfo } from '@/lib/error-utils'
 import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
+import { formatStorageValidationError } from '@/lib/storage-validation-errors'
 import { SecretField, SpaceSettingsData } from '@/pages/space-settings/shared.tsx'
 
 export { SecretField } from '@/components/ui/secret-field'
@@ -68,6 +71,9 @@ export function StorageSection({ space }: StorageSectionProps) {
   const handleSave = async (values: CredentialsFormData) => {
     setIsSaving(true)
     try {
+      const trimmedAccessKeyId = values.accessKeyId?.trim()
+      const trimmedSecretKey = values.secretKey?.trim()
+
       await updateSpace({
         key: space.key,
         input: {
@@ -79,8 +85,8 @@ export function StorageSection({ space }: StorageSectionProps) {
           region: null,
           endpoint: values.endpoint ?? null,
           prefix: null,
-          accessKeyId: values.accessKeyId ?? null,
-          secretKey: values.secretKey || null,
+          accessKeyId: trimmedAccessKeyId ? trimmedAccessKeyId : null,
+          secretKey: trimmedSecretKey ? trimmedSecretKey : null,
           usePathStyle: null,
           customDomain: null,
           isShared: null,
@@ -101,7 +107,10 @@ export function StorageSection({ space }: StorageSectionProps) {
       setShowSecretKey(false)
       await router.invalidate()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      const errorInfo = extractErrorInfo(err)
+      toast.error(
+        formatStorageValidationError(t, { message: errorInfo.message, code: errorInfo.code }),
+      )
     } finally {
       setIsSaving(false)
     }
@@ -109,35 +118,31 @@ export function StorageSection({ space }: StorageSectionProps) {
 
   return (
     <SettingsSection contentClassName='border-t-0'>
-      {/* Read-only bucket / region badge */}
-      <div className='bg-muted/40 mb-4 w-full rounded-md px-3 py-2 text-sm'>
-        <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
-          <span>
-            <span className='text-muted-foreground'>
-              {t('pages.spaceSettings.storage.bucket')}:{' '}
-            </span>
-            <code className='font-mono font-medium'>{space.bucket}</code>
-          </span>
-          {space.region && (
-            <span>
-              <span className='text-muted-foreground'>
-                {t('pages.spaceSettings.storage.region')}:{' '}
-              </span>
-              <code className='font-mono font-medium'>{space.region}</code>
-            </span>
-          )}
-          {space.prefix && (
-            <span>
-              <span className='text-muted-foreground'>
-                {t('pages.spaceSettings.storage.prefix')}:{' '}
-              </span>
-              <code className='font-mono font-medium'>{space.prefix}</code>
-            </span>
-          )}
-        </div>
-        <p className='text-muted-foreground mt-2 text-xs'>
-          {t('pages.spaceSettings.storage.bucketLocked')}
-        </p>
+      <S3RequirementsNote className='mb-4' />
+
+      <div>
+        <SettingRow
+          label={t('pages.spaceSettings.storage.bucket')}
+          contentClassName='sm:max-w-md'
+        >
+          <div className='text-sm font-medium sm:text-right'>
+            <code className='font-mono'>{space.bucket}</code>
+          </div>
+        </SettingRow>
+        {space.region && (
+          <SettingRow label={t('pages.spaceSettings.storage.region')} contentClassName='sm:max-w-md'>
+            <div className='text-sm font-medium sm:text-right'>
+              <code className='font-mono'>{space.region}</code>
+            </div>
+          </SettingRow>
+        )}
+        {space.prefix && (
+          <SettingRow label={t('pages.spaceSettings.storage.prefix')} contentClassName='sm:max-w-md'>
+            <div className='text-sm font-medium sm:text-right'>
+              <code className='font-mono'>{space.prefix}</code>
+            </div>
+          </SettingRow>
+        )}
       </div>
 
       <Form {...form}>

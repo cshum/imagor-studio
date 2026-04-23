@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
@@ -864,83 +863,7 @@ func (r *mutationResolver) ConfigureS3Storage(ctx context.Context, input gql.S3S
 
 // validateStorageConfig is a helper function that validates a storage configuration
 func (r *mutationResolver) validateStorageConfig(ctx context.Context, input gql.StorageConfigInput) *gql.StorageTestResult {
-	// Create a temporary config for testing
-	cfg := &config.Config{}
-
-	switch input.Type {
-	case gql.StorageTypeFile:
-		if input.FileConfig == nil {
-			return &gql.StorageTestResult{
-				Success: false,
-				Message: "File configuration is required for file storage type",
-			}
-		}
-		cfg.StorageType = "file"
-		cfg.FileStorageBaseDir = input.FileConfig.BaseDir
-		// Set defaults for permissions if not provided
-		cfg.FileStorageMkdirPermissions = 0755
-		cfg.FileStorageWritePermissions = 0644
-
-	case gql.StorageTypeS3:
-		if input.S3Config == nil {
-			return &gql.StorageTestResult{
-				Success: false,
-				Message: "S3 configuration is required for S3 storage type",
-			}
-		}
-		cfg.StorageType = "s3"
-		cfg.S3StorageBucket = input.S3Config.Bucket
-		if input.S3Config.Region != nil {
-			cfg.AWSRegion = *input.S3Config.Region
-		}
-		if input.S3Config.Endpoint != nil {
-			cfg.S3Endpoint = *input.S3Config.Endpoint
-		}
-		if input.S3Config.AccessKeyID != nil {
-			cfg.AWSAccessKeyID = *input.S3Config.AccessKeyID
-		}
-		if input.S3Config.SecretAccessKey != nil {
-			cfg.AWSSecretAccessKey = *input.S3Config.SecretAccessKey
-		}
-		if input.S3Config.SessionToken != nil {
-			cfg.AWSSessionToken = *input.S3Config.SessionToken
-		}
-		if input.S3Config.ForcePathStyle != nil {
-			cfg.S3ForcePathStyle = *input.S3Config.ForcePathStyle
-		}
-		if input.S3Config.BaseDir != nil {
-			cfg.S3StorageBaseDir = *input.S3Config.BaseDir
-		}
-	}
-
-	// Create a temporary storage provider for testing
-	testProvider := storageprovider.New(r.logger, r.registryStore, nil)
-	testStorage, err := testProvider.NewStorageFromConfig(cfg)
-	if err != nil {
-		errMsg := err.Error()
-		return &gql.StorageTestResult{
-			Success: false,
-			Message: "Failed to create storage instance",
-			Details: &errMsg,
-		}
-	}
-
-	// Test basic operations - start with List to verify directory exists without creating it
-	// Test list operation first (read-only, won't create directories)
-	_, err = testStorage.List(ctx, "", storage.ListOptions{Limit: 1})
-	if err != nil {
-		errMsg := err.Error()
-		return &gql.StorageTestResult{
-			Success: false,
-			Message: "Failed to access storage directory",
-			Details: &errMsg,
-		}
-	}
-
-	return &gql.StorageTestResult{
-		Success: true,
-		Message: "Storage configuration test successful",
-	}
+	return r.Resolver.validateStorageConfigInput(ctx, input)
 }
 
 // TestStorageConfig is the resolver for the testStorageConfig field.
@@ -953,6 +876,73 @@ func (r *mutationResolver) TestStorageConfig(ctx context.Context, input gql.Stor
 	r.logger.Debug("Testing storage configuration", zap.String("type", string(input.Type)))
 
 	result := r.validateStorageConfig(ctx, input)
+	return result, nil
+}
+
+// BeginStorageUploadProbe is the resolver for the beginStorageUploadProbe field.
+func (r *mutationResolver) BeginStorageUploadProbe(ctx context.Context, input gql.StorageConfigInput, contentType string, sizeBytes int) (*gql.StorageUploadProbe, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if input.Type != gql.StorageTypeS3 {
+		return nil, &gqlerror.Error{
+			Message:    "browser upload probes are only supported for S3 storage",
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+	if sizeBytes <= 0 {
+		return nil, &gqlerror.Error{
+			Message:    "invalid sizeBytes: must be greater than 0",
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+	if int64(sizeBytes) > maxSinglePutUploadBytes {
+		return nil, &gqlerror.Error{
+			Message:    fmt.Sprintf("file too large for single upload: max %d bytes", maxSinglePutUploadBytes),
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+
+	stor, err := storageFromValidationInput(input, r.logger, r.registryStore)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create storage instance: %w", err)
+	}
+	if _, err := stor.List(ctx, "", storage.ListOptions{Limit: 1}); err != nil {
+		return nil, fmt.Errorf("failed to access storage directory: %w", err)
+	}
+
+	probe, err := newStorageUploadProbe(ctx, stor, contentType, int64(sizeBytes), 5*time.Minute)
+	if err != nil {
+		if errors.Is(err, errStorageDoesNotSupportPresign) {
+			return nil, &gqlerror.Error{
+				Message:    err.Error(),
+				Extensions: map[string]interface{}{"code": "NOT_AVAILABLE"},
+			}
+		}
+		return nil, fmt.Errorf("failed to generate upload probe: %w", err)
+	}
+
+	return probe, nil
+}
+
+// CompleteStorageUploadProbe is the resolver for the completeStorageUploadProbe field.
+func (r *mutationResolver) CompleteStorageUploadProbe(ctx context.Context, input gql.StorageConfigInput, probePath string, expectedContent string) (*gql.StorageTestResult, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if input.Type != gql.StorageTypeS3 {
+		return nil, &gqlerror.Error{
+			Message:    "browser upload probes are only supported for S3 storage",
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+
+	stor, err := storageFromValidationInput(input, r.logger, r.registryStore)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create storage instance: %w", err)
+	}
+
+	result := completeStorageUploadProbe(ctx, stor, probePath, expectedContent)
 	return result, nil
 }
 

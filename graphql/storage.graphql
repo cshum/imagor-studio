@@ -40,6 +40,16 @@ type Mutation {
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!
   configureS3Storage(input: S3StorageInput!): StorageConfigResult!
   testStorageConfig(input: StorageConfigInput!): StorageTestResult!
+  beginStorageUploadProbe(
+    input: StorageConfigInput!
+    contentType: String!
+    sizeBytes: Int!
+  ): StorageUploadProbe!
+  completeStorageUploadProbe(
+    input: StorageConfigInput!
+    probePath: String!
+    expectedContent: String!
+  ): StorageTestResult!
 }
 
 type FileList {
@@ -127,6 +137,13 @@ type StorageTestResult {
   success: Boolean!
   message: String!
   details: String
+  code: String
+}
+
+type StorageUploadProbe {
+  probePath: String!
+  uploadURL: String!
+  expiresAt: String!
 }
 
 input StorageConfigInput {
