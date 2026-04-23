@@ -149,9 +149,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     setIsDeleting(true)
     try {
       await deleteSpace({ key: space.key })
-      toast.success(t('pages.spaces.messages.spaceDeletedSuccess'), {
-        description: t('pages.spacePropagation.deleteDescription'),
-      })
+      toast.success(t('pages.spaces.messages.spaceDeletedSuccess'))
       await navigate({ to: '/' })
       await router.invalidate()
     } catch (err) {
