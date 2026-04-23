@@ -87,6 +87,7 @@ describe('account-loader', () => {
   it('allows loading settings for a space owned by the current organization', async () => {
     vi.mocked(getSpace).mockResolvedValue({
       __typename: 'Space',
+      id: 'space-acme',
       orgId: 'org-1',
       key: 'acme',
       name: 'Acme',
@@ -130,6 +131,7 @@ describe('account-loader', () => {
   it('allows shared managers into space settings', async () => {
     vi.mocked(getSpace).mockResolvedValue({
       __typename: 'Space',
+      id: 'space-shared-manage',
       orgId: 'org-host',
       key: 'shared',
       name: 'Shared Space',
@@ -161,6 +163,7 @@ describe('account-loader', () => {
   it('redirects shared members away from settings when they cannot manage', async () => {
     vi.mocked(getSpace).mockResolvedValue({
       __typename: 'Space',
+      id: 'space-shared-readonly',
       orgId: 'org-host',
       key: 'shared',
       name: 'Shared Space',

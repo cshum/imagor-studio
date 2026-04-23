@@ -30,6 +30,7 @@ import {
   invalidateFolderCache,
   loadFolderChildren,
   loadHomeTitle,
+  loadRootFolders,
   useFolderTree,
 } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
@@ -114,6 +115,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     : routerState.location.pathname === '/'
 
   useEffect(() => {
+    void loadRootFolders(spaceKey)
     void loadHomeTitle(spaceKey)
   }, [spaceKey])
 
@@ -174,6 +176,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     onRename: handleRenameFromMenu,
     onDelete: handleDeleteFromMenu,
     onMove: handleMoveFromMenu,
+    spaceKey,
   })
 
   // Use the shared folder context menu hook for dropdown menus (three-dots)
@@ -189,6 +192,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     onDelete: handleDeleteFromMenu,
     onMove: handleMoveFromMenu,
     useDropdownItems: true,
+    spaceKey,
   })
 
   // Adapter function to match FolderTreeNode's expected signature
@@ -266,7 +270,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
 
     // Invalidate and reload the parent folder's children in the store
     invalidateFolderCache(parentPath)
-    await loadFolderChildren(parentPath, true) // Auto-expand to show new folder
+    await loadFolderChildren(parentPath, true, spaceKey) // Auto-expand to show new folder
   }
 
   return (

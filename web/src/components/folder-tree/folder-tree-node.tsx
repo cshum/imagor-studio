@@ -69,7 +69,7 @@ export function FolderTreeNode({
     dispatch({ type: 'SET_CURRENT_PATH', path: folder.path })
     if (folder.isDirectory) {
       if (!folder.isLoaded) {
-        await loadFolderChildren(folder.path)
+        await loadFolderChildren(folder.path, true, spaceKey)
       } else if (!folder.isExpanded) {
         dispatch({ type: 'EXPAND_FOLDER', path: folder.path })
       }
@@ -80,7 +80,7 @@ export function FolderTreeNode({
     evt?.stopPropagation()
     if (!folder.isLoaded && folder.isDirectory) {
       // Load children if not loaded yet
-      await loadFolderChildren(folder.path)
+      await loadFolderChildren(folder.path, true, spaceKey)
     } else if (folder.isExpanded) {
       // Collapse if already expanded
       dispatch({ type: 'COLLAPSE_FOLDER', path: folder.path })

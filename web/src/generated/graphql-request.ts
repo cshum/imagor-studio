@@ -871,6 +871,7 @@ export type GetSpaceQuery = {
   __typename?: 'Query'
   space: {
     __typename?: 'Space'
+    id: string
     orgId: string
     key: string
     name: string
@@ -1919,6 +1920,7 @@ export const ListSpacesDocument = gql`
 export const GetSpaceDocument = gql`
   query GetSpace($key: String!) {
     space(key: $key) {
+      id
       orgId
       key
       name

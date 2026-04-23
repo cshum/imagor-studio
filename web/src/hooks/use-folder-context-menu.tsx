@@ -93,7 +93,7 @@ export function useFolderContextMenu({
       }
 
       // Refresh folder tree
-      await loadRootFolders()
+      await loadRootFolders(spaceKey)
 
       // Show success toast
       toast.success(t('pages.gallery.renameItem.success', { name: newName }))
@@ -136,7 +136,7 @@ export function useFolderContextMenu({
       }
 
       // Refresh folder tree
-      await loadRootFolders()
+      await loadRootFolders(spaceKey)
 
       // Show success toast
       toast.success(t('pages.gallery.deleteFolder.success', { folderName }))

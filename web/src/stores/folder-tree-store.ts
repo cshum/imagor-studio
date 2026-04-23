@@ -15,15 +15,31 @@ export interface FolderNode {
 }
 
 export interface FolderTreeState {
+  activeSpaceCacheKey: string
   rootFolders: FolderNode[]
   loadingPaths: Set<string>
   currentPath: string
   isRootFoldersLoaded: boolean
   isHomeTitleLoaded: boolean
   homeTitle: string
+  resolvedSpaceCacheKeys: Record<string, string>
+  resolvingSpaceKeys: Set<string>
 }
 
 export type FolderTreeAction =
+  | {
+      type: 'SWITCH_SPACE'
+      payload: {
+        activeSpaceCacheKey: string
+        rootFolders: FolderNode[]
+        currentPath: string
+        homeTitle: string
+        isRootFoldersLoaded: boolean
+        isHomeTitleLoaded: boolean
+      }
+    }
+  | { type: 'SET_SPACE_RESOLVING'; payload: { spaceKey: string; isResolving: boolean } }
+  | { type: 'SET_SPACE_CACHE_KEY'; payload: { spaceKey: string; cacheKey: string } }
   | { type: 'SET_ROOT_FOLDERS'; folders: FolderNode[] }
   | { type: 'EXPAND_FOLDER'; path: string }
   | { type: 'COLLAPSE_FOLDER'; path: string }
@@ -39,12 +55,101 @@ export type FolderTreeAction =
   | { type: 'INVALIDATE_FOLDER_CACHE'; path: string }
 
 const initialState: FolderTreeState = {
+  activeSpaceCacheKey: '__default__',
   rootFolders: [],
   loadingPaths: new Set(),
   currentPath: '',
   isRootFoldersLoaded: false,
   isHomeTitleLoaded: false,
   homeTitle: 'Home',
+  resolvedSpaceCacheKeys: {},
+  resolvingSpaceKeys: new Set(),
+}
+
+interface PersistedFolderTreeState {
+  rootFolders: FolderNode[]
+  currentPath: string
+  homeTitle: string
+}
+
+const DEFAULT_SPACE_CACHE_KEY = '__default__'
+
+const getFallbackSpaceCacheKey = (spaceKey?: string) =>
+  spaceKey ? `space-key:${spaceKey}` : DEFAULT_SPACE_CACHE_KEY
+
+const getResolvedSpaceCacheKey = (state: FolderTreeState, spaceKey?: string) => {
+  if (!spaceKey) {
+    return DEFAULT_SPACE_CACHE_KEY
+  }
+
+  return state.resolvedSpaceCacheKeys[spaceKey] || getFallbackSpaceCacheKey(spaceKey)
+}
+
+const createStateForSpace = (
+  activeSpaceCacheKey: string,
+  persistedState?: PersistedFolderTreeState,
+): FolderTreeState => ({
+  activeSpaceCacheKey,
+  rootFolders: persistedState?.rootFolders || [],
+  loadingPaths: new Set(),
+  currentPath: persistedState?.currentPath || '',
+  isRootFoldersLoaded: !!persistedState,
+  isHomeTitleLoaded: !!persistedState,
+  homeTitle: persistedState?.homeTitle || 'Home',
+  resolvedSpaceCacheKeys: {},
+  resolvingSpaceKeys: new Set(),
+})
+
+const getPersistedStateFromFolderTree = (state: FolderTreeState): PersistedFolderTreeState => ({
+  rootFolders: state.rootFolders,
+  currentPath: state.currentPath,
+  homeTitle: state.homeTitle,
+})
+
+const isPersistedFolderTreeState = (value: unknown): value is PersistedFolderTreeState => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const candidate = value as Partial<PersistedFolderTreeState>
+  return Array.isArray(candidate.rootFolders) && typeof candidate.currentPath === 'string'
+}
+
+const parsePersistedFolderTreeStates = (
+  savedValue: string,
+): Record<string, PersistedFolderTreeState> => {
+  const parsed = JSON.parse(savedValue) as unknown
+
+  if (isPersistedFolderTreeState(parsed)) {
+    return {
+      [DEFAULT_SPACE_CACHE_KEY]: {
+        rootFolders: parsed.rootFolders,
+        currentPath: parsed.currentPath,
+        homeTitle: parsed.homeTitle || 'Home',
+      },
+    }
+  }
+
+  if (parsed && typeof parsed === 'object' && 'spaces' in parsed) {
+    const spaces = (parsed as { spaces?: unknown }).spaces
+
+    if (spaces && typeof spaces === 'object') {
+      return Object.fromEntries(
+        Object.entries(spaces)
+          .filter(([, state]) => isPersistedFolderTreeState(state))
+          .map(([cacheKey, state]) => [
+            cacheKey,
+            {
+              rootFolders: state.rootFolders,
+              currentPath: state.currentPath,
+              homeTitle: state.homeTitle || 'Home',
+            },
+          ]),
+      )
+    }
+  }
+
+  return {}
 }
 
 /**
@@ -62,6 +167,42 @@ const sortFoldersByName = (folders: FolderNode[]): FolderNode[] => {
 
 function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): FolderTreeState {
   switch (action.type) {
+    case 'SWITCH_SPACE':
+      return {
+        ...state,
+        activeSpaceCacheKey: action.payload.activeSpaceCacheKey,
+        rootFolders: action.payload.rootFolders,
+        loadingPaths: new Set(),
+        currentPath: action.payload.currentPath,
+        isRootFoldersLoaded: action.payload.isRootFoldersLoaded,
+        isHomeTitleLoaded: action.payload.isHomeTitleLoaded,
+        homeTitle: action.payload.homeTitle,
+      }
+
+    case 'SET_SPACE_RESOLVING': {
+      const resolvingSpaceKeys = new Set(state.resolvingSpaceKeys)
+
+      if (action.payload.isResolving) {
+        resolvingSpaceKeys.add(action.payload.spaceKey)
+      } else {
+        resolvingSpaceKeys.delete(action.payload.spaceKey)
+      }
+
+      return {
+        ...state,
+        resolvingSpaceKeys,
+      }
+    }
+
+    case 'SET_SPACE_CACHE_KEY':
+      return {
+        ...state,
+        resolvedSpaceCacheKeys: {
+          ...state.resolvedSpaceCacheKeys,
+          [action.payload.spaceKey]: action.payload.cacheKey,
+        },
+      }
+
     case 'SET_ROOT_FOLDERS':
       return {
         ...state,
@@ -75,6 +216,7 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
             children: existingFolder?.children,
           }
         }),
+        isRootFoldersLoaded: true,
       }
 
     case 'EXPAND_FOLDER': {
@@ -282,6 +424,100 @@ export const folderTreeStore = createStore(initialState, folderTreeReducer)
 let storage: ConfigStorage | null = null
 let saveTimeout: number | null = null
 let saveDelay: number = 300
+let persistedTreeStates: Record<string, PersistedFolderTreeState> = {}
+let hasStorageSubscription = false
+
+const persistFolderTreeState = (state: FolderTreeState) => {
+  persistedTreeStates[state.activeSpaceCacheKey] = getPersistedStateFromFolderTree(state)
+}
+
+const ensureResolvedSpaceCacheKey = async (spaceKey?: string) => {
+  if (!spaceKey) {
+    return DEFAULT_SPACE_CACHE_KEY
+  }
+
+  const currentState = folderTreeStore.getState()
+  const knownCacheKey = currentState.resolvedSpaceCacheKeys[spaceKey]
+  if (knownCacheKey) {
+    return knownCacheKey
+  }
+
+  if (currentState.resolvingSpaceKeys.has(spaceKey)) {
+    const resolvedState = await folderTreeStore.waitFor(
+      (state) => !!state.resolvedSpaceCacheKeys[spaceKey],
+    )
+    return resolvedState.resolvedSpaceCacheKeys[spaceKey]
+  }
+
+  folderTreeStore.dispatch({
+    type: 'SET_SPACE_RESOLVING',
+    payload: { spaceKey, isResolving: true },
+  })
+
+  try {
+    const space = await getSpace(spaceKey)
+    const resolvedCacheKey = space?.id ? `space:${space.id}` : getFallbackSpaceCacheKey(spaceKey)
+    folderTreeStore.dispatch({
+      type: 'SET_SPACE_CACHE_KEY',
+      payload: { spaceKey, cacheKey: resolvedCacheKey },
+    })
+
+    const fallbackCacheKey = getFallbackSpaceCacheKey(spaceKey)
+    if (resolvedCacheKey !== fallbackCacheKey && persistedTreeStates[fallbackCacheKey]) {
+      persistedTreeStates[resolvedCacheKey] = persistedTreeStates[fallbackCacheKey]
+      delete persistedTreeStates[fallbackCacheKey]
+    }
+
+    return resolvedCacheKey
+  } catch {
+    const fallbackCacheKey = getFallbackSpaceCacheKey(spaceKey)
+    folderTreeStore.dispatch({
+      type: 'SET_SPACE_CACHE_KEY',
+      payload: { spaceKey, cacheKey: fallbackCacheKey },
+    })
+    return fallbackCacheKey
+  } finally {
+    folderTreeStore.dispatch({
+      type: 'SET_SPACE_RESOLVING',
+      payload: { spaceKey, isResolving: false },
+    })
+  }
+}
+
+const switchFolderTreeSpace = (spaceKey?: string) => {
+  const currentState = folderTreeStore.getState()
+  const targetSpaceCacheKey = getResolvedSpaceCacheKey(currentState, spaceKey)
+
+  if (currentState.activeSpaceCacheKey === targetSpaceCacheKey) {
+    return
+  }
+
+  persistFolderTreeState(currentState)
+
+  const nextState = createStateForSpace(
+    targetSpaceCacheKey,
+    persistedTreeStates[targetSpaceCacheKey],
+  )
+  folderTreeStore.dispatch({
+    type: 'SWITCH_SPACE',
+    payload: {
+      activeSpaceCacheKey: nextState.activeSpaceCacheKey,
+      rootFolders: nextState.rootFolders,
+      currentPath: nextState.currentPath,
+      homeTitle: nextState.homeTitle,
+      isRootFoldersLoaded: nextState.isRootFoldersLoaded,
+      isHomeTitleLoaded: nextState.isHomeTitleLoaded,
+    },
+  })
+}
+
+const prepareFolderTreeSpace = async (spaceKey?: string) => {
+  if (spaceKey) {
+    await ensureResolvedSpaceCacheKey(spaceKey)
+  }
+
+  switchFolderTreeSpace(spaceKey)
+}
 
 /**
  * Debounced save to storage
@@ -295,11 +531,8 @@ const debouncedSaveToStorage = async () => {
 
   saveTimeout = window.setTimeout(async () => {
     const state = folderTreeStore.getState()
-    const treeState = {
-      rootFolders: state.rootFolders,
-      currentPath: state.currentPath,
-    }
-    const treeStateJson = JSON.stringify(treeState)
+    persistFolderTreeState(state)
+    const treeStateJson = JSON.stringify({ spaces: persistedTreeStates })
     await storage?.set(treeStateJson)
   }, saveDelay)
 }
@@ -317,14 +550,27 @@ export const initializeFolderTreeCache = async (
   try {
     const savedTreeState = await storage.get()
     if (savedTreeState) {
-      const treeState = JSON.parse(savedTreeState)
-      folderTreeStore.dispatch({
-        type: 'LOAD_TREE_STATE',
-        payload: {
-          rootFolders: treeState.rootFolders || [],
-          currentPath: treeState.currentPath || '',
-        },
-      })
+      persistedTreeStates = parsePersistedFolderTreeStates(savedTreeState)
+      const defaultState = persistedTreeStates[DEFAULT_SPACE_CACHE_KEY]
+
+      if (defaultState) {
+        folderTreeStore.dispatch({
+          type: 'LOAD_TREE_STATE',
+          payload: {
+            rootFolders: defaultState.rootFolders || [],
+            currentPath: defaultState.currentPath || '',
+          },
+        })
+        folderTreeStore.dispatch({
+          type: 'SET_HOME_TITLE',
+          title: defaultState.homeTitle || 'Home',
+        })
+      } else {
+        folderTreeStore.dispatch({
+          type: 'SET_LOADED',
+          payload: { isLoaded: true },
+        })
+      }
     } else {
       folderTreeStore.dispatch({
         type: 'SET_LOADED',
@@ -340,22 +586,29 @@ export const initializeFolderTreeCache = async (
   }
 
   // Set up auto-save subscription for tree state changes
-  folderTreeStore.subscribe((_, action) => {
-    if (
-      action.type === 'SET_ROOT_FOLDERS' ||
-      action.type === 'EXPAND_FOLDER' ||
-      action.type === 'COLLAPSE_FOLDER' ||
-      action.type === 'SET_FOLDER_CHILDREN' ||
-      action.type === 'UPDATE_TREE_DATA' ||
-      action.type === 'SET_CURRENT_PATH'
-    ) {
-      debouncedSaveToStorage()
-    }
-  })
+  if (!hasStorageSubscription) {
+    folderTreeStore.subscribe((state, action) => {
+      if (
+        action.type === 'SET_ROOT_FOLDERS' ||
+        action.type === 'EXPAND_FOLDER' ||
+        action.type === 'COLLAPSE_FOLDER' ||
+        action.type === 'SET_FOLDER_CHILDREN' ||
+        action.type === 'UPDATE_TREE_DATA' ||
+        action.type === 'SET_CURRENT_PATH' ||
+        action.type === 'SET_HOME_TITLE'
+      ) {
+        persistFolderTreeState(state)
+        debouncedSaveToStorage()
+      }
+    })
+    hasStorageSubscription = true
+  }
 }
 
 // Async actions
 export const loadRootFolders = async (spaceKey?: string) => {
+  await prepareFolderTreeSpace(spaceKey)
+
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path: '', loading: true })
 
@@ -388,6 +641,8 @@ export const loadFolderChildren = async (
   autoExpand: boolean = true,
   spaceKey?: string,
 ) => {
+  await prepareFolderTreeSpace(spaceKey)
+
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: true })
 
@@ -417,6 +672,8 @@ export const loadFolderChildren = async (
 }
 
 export const loadHomeTitle = async (spaceKey?: string) => {
+  await prepareFolderTreeSpace(spaceKey)
+
   if (spaceKey) {
     try {
       const space = await getSpace(spaceKey)
@@ -452,7 +709,14 @@ export const setHomeTitle = (title: string) => {
   folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title })
 }
 
-export const setCurrentPath = (path: string) => {
+export const setCurrentPath = (path: string, spaceKey?: string) => {
+  const currentState = folderTreeStore.getState()
+  const targetSpaceCacheKey = getResolvedSpaceCacheKey(currentState, spaceKey)
+
+  if (currentState.activeSpaceCacheKey !== targetSpaceCacheKey) {
+    switchFolderTreeSpace(spaceKey)
+  }
+
   folderTreeStore.dispatch({ type: 'SET_CURRENT_PATH', path })
 }
 
@@ -481,11 +745,8 @@ export const forceSave = async () => {
   }
 
   const state = folderTreeStore.getState()
-  const treeState = {
-    rootFolders: state.rootFolders,
-    currentPath: state.currentPath,
-  }
-  const treeStateJson = JSON.stringify(treeState)
+  persistFolderTreeState(state)
+  const treeStateJson = JSON.stringify({ spaces: persistedTreeStates })
   await storage.set(treeStateJson)
 }
 
@@ -498,6 +759,7 @@ export const cleanup = () => {
     saveTimeout = null
   }
   storage = null
+  persistedTreeStates = {}
 }
 
 // Hook to use the folder tree store
