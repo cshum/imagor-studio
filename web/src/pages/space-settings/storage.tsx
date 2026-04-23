@@ -71,6 +71,9 @@ export function StorageSection({ space }: StorageSectionProps) {
   const handleSave = async (values: CredentialsFormData) => {
     setIsSaving(true)
     try {
+      const trimmedAccessKeyId = values.accessKeyId?.trim()
+      const trimmedSecretKey = values.secretKey?.trim()
+
       await updateSpace({
         key: space.key,
         input: {
@@ -82,8 +85,8 @@ export function StorageSection({ space }: StorageSectionProps) {
           region: null,
           endpoint: values.endpoint ?? null,
           prefix: null,
-          accessKeyId: values.accessKeyId ?? null,
-          secretKey: values.secretKey || null,
+          accessKeyId: trimmedAccessKeyId ? trimmedAccessKeyId : null,
+          secretKey: trimmedSecretKey ? trimmedSecretKey : null,
           usePathStyle: null,
           customDomain: null,
           isShared: null,
