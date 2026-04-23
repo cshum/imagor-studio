@@ -193,11 +193,12 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                     </div>
                   </div>
 
-                  <div className='relative z-20 mt-1 flex shrink-0 items-center gap-2'>
+                  <div className='pointer-events-none relative z-20 mt-1 flex shrink-0 items-center gap-2'>
                     <Link
                       to='/spaces/$spaceKey'
                       params={{ spaceKey: space.key }}
                       aria-label={`${t('pages.spaces.openGallery')}: ${space.name}`}
+                      className='pointer-events-auto'
                     >
                       <Badge
                         variant={space.storageMode === 'byob' ? 'outline' : 'secondary'}
@@ -211,7 +212,12 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                       </Badge>
                     </Link>
                     {canManageSpace && !space.canLeave ? (
-                      <Button variant='ghost' size='icon' className='h-10 w-10 shrink-0' asChild>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='pointer-events-auto h-10 w-10 shrink-0'
+                        asChild
+                      >
                         <Link
                           to='/spaces/$spaceKey/settings/$section'
                           params={{ spaceKey: space.key, section: 'general' }}
@@ -225,7 +231,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                 </div>
 
                 {space.canLeave && authState.profile?.id ? (
-                  <div className='relative z-20 mt-4 flex justify-end gap-2'>
+                  <div className='pointer-events-none relative z-20 mt-4 flex justify-end gap-2'>
                     <DropdownMenu
                       open={openMenuSpaceKey === space.key}
                       onOpenChange={(open) => setOpenMenuSpaceKey(open ? space.key : null)}
@@ -234,7 +240,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                         <Button
                           variant='outline'
                           size='icon'
-                          className='h-9 w-9 shrink-0'
+                          className='pointer-events-auto h-9 w-9 shrink-0'
                           aria-label={t('common.buttons.more')}
                         >
                           <MoreHorizontal className='h-4 w-4' />
