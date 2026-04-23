@@ -546,7 +546,7 @@
       "storageTypeDescription": "选择存储图片和文件的位置",
       "s3Requirements": {
         "permissions": "此存储桶必须允许列出、读取、写入和删除对象。",
-        "cors": "请将 <1>{{origin}}</1> 添加到存储桶 CORS 的允许来源，并允许 PUT 上传。",
+        "cors": "请将 <1>{{origin}}</1> 添加到存储桶 CORS 的允许来源，并允许 <2>PUT</2> 上传。",
         "appOriginFallback": "此应用 URL"
       },
       "validationErrors": {

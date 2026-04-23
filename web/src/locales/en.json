@@ -564,7 +564,7 @@
       "storageTypeDescription": "Select where images and files will be stored",
       "s3Requirements": {
         "permissions": "Bucket access must allow listing, reading, writing, and deleting objects.",
-        "cors": "Add <1>{{origin}}</1> to your bucket CORS allowed origins and allow PUT uploads.",
+        "cors": "Add <1>{{origin}}</1> to your bucket CORS allowed origins and allow <2>PUT</2> uploads.",
         "appOriginFallback": "this app URL"
       },
       "validationErrors": {

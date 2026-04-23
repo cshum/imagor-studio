@@ -29,7 +29,10 @@ export function S3RequirementsNote({ className }: S3RequirementsNoteProps) {
             <Trans
               i18nKey='pages.storage.s3Requirements.cors'
               values={{ origin: appOrigin }}
-              components={{ 1: <strong className='text-foreground font-medium' /> }}
+              components={{
+                1: <strong className='text-foreground font-medium' />,
+                2: <strong className='text-foreground font-medium' />,
+              }}
             />
           </p>
         </div>
