@@ -4,6 +4,7 @@ import { listFiles } from '@/api/storage-api'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage'
 import { createStore } from '@/lib/create-store'
+import { createLatestRequestTracker } from '@/lib/latest-request-tracker'
 import { normalizeDirectoryPath } from '@/lib/path-utils'
 
 export interface FolderNode {
@@ -402,22 +403,9 @@ let hasStorageSubscription = false
 let persistedSpaceCacheKeys = new Set<string>()
 let initializationPromise: Promise<void> = Promise.resolve()
 const folderTreeReadyPromises = new Map<string, Promise<void>>()
-let asyncRequestGeneration = 0
-const latestRootLoadRequests = new Map<string, number>()
-const latestFolderChildrenRequests = new Map<string, number>()
-const latestHomeTitleRequests = new Map<string, number>()
-
-const beginTrackedRequest = (requestMap: Map<string, number>, requestKey: string) => {
-  asyncRequestGeneration += 1
-  requestMap.set(requestKey, asyncRequestGeneration)
-  return asyncRequestGeneration
-}
-
-const isLatestTrackedRequest = (
-  requestMap: Map<string, number>,
-  requestKey: string,
-  generation: number,
-) => requestMap.get(requestKey) === generation
+const latestRootLoadRequests = createLatestRequestTracker()
+const latestFolderChildrenRequests = createLatestRequestTracker()
+const latestHomeTitleRequests = createLatestRequestTracker()
 
 const isSessionConfigStorage = (value: ConfigStorage | null): value is SessionConfigStorage =>
   value instanceof SessionConfigStorage
@@ -754,7 +742,7 @@ export const loadRootFolders = async (spaceKey?: string) => {
 
   const initialState = folderTreeStore.getState()
   const targetCacheKey = getResolvedSpaceCacheKey(initialState, spaceKey)
-  const requestGeneration = beginTrackedRequest(latestRootLoadRequests, targetCacheKey)
+  const requestGeneration = latestRootLoadRequests.begin(targetCacheKey)
 
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path: '', loading: true })
@@ -775,7 +763,7 @@ export const loadRootFolders = async (spaceKey?: string) => {
       isExpanded: false,
     }))
 
-    if (!isLatestTrackedRequest(latestRootLoadRequests, targetCacheKey, requestGeneration)) {
+    if (!latestRootLoadRequests.isLatest(targetCacheKey, requestGeneration)) {
       return
     }
 
@@ -806,7 +794,7 @@ export const loadFolderChildren = async (
   const initialState = folderTreeStore.getState()
   const targetCacheKey = getResolvedSpaceCacheKey(initialState, spaceKey)
   const requestKey = `${targetCacheKey}:${path}`
-  const requestGeneration = beginTrackedRequest(latestFolderChildrenRequests, requestKey)
+  const requestGeneration = latestFolderChildrenRequests.begin(requestKey)
 
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: true })
@@ -828,7 +816,7 @@ export const loadFolderChildren = async (
       isExpanded: false,
     }))
 
-    if (!isLatestTrackedRequest(latestFolderChildrenRequests, requestKey, requestGeneration)) {
+    if (!latestFolderChildrenRequests.isLatest(requestKey, requestGeneration)) {
       return
     }
 
@@ -863,10 +851,10 @@ export const loadHomeTitle = async (spaceKey?: string) => {
 
   const initialState = folderTreeStore.getState()
   const targetCacheKey = getResolvedSpaceCacheKey(initialState, spaceKey)
-  const requestGeneration = beginTrackedRequest(latestHomeTitleRequests, targetCacheKey)
+  const requestGeneration = latestHomeTitleRequests.begin(targetCacheKey)
 
   const applyHomeTitle = (title: string) => {
-    if (!isLatestTrackedRequest(latestHomeTitleRequests, targetCacheKey, requestGeneration)) {
+    if (!latestHomeTitleRequests.isLatest(targetCacheKey, requestGeneration)) {
       return
     }
 

@@ -7,6 +7,7 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { hasExtension } from '@/lib/file-extensions.ts'
+import { createLatestRequestTracker } from '@/lib/latest-request-tracker'
 import { normalizeDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
 import { getAuth } from '@/stores/auth-store.ts'
@@ -41,17 +42,7 @@ export const DEFAULT_IMAGE_EXTENSIONS =
   '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw'
 export const DEFAULT_VIDEO_EXTENSIONS = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg'
 export const TEMPLATE_EXTENSION = '.imagor.json'
-let galleryLoaderRequestGeneration = 0
-const latestGalleryLoaderRequests = new Map<string, number>()
-
-const beginGalleryLoaderRequest = (requestKey: string) => {
-  galleryLoaderRequestGeneration += 1
-  latestGalleryLoaderRequests.set(requestKey, galleryLoaderRequestGeneration)
-  return galleryLoaderRequestGeneration
-}
-
-const isLatestGalleryLoaderRequest = (requestKey: string, requestGeneration: number) =>
-  latestGalleryLoaderRequests.get(requestKey) === requestGeneration
+const latestGalleryLoaderRequests = createLatestRequestTracker()
 
 /**
  * Gallery loader using imagor for thumbnail generation
@@ -63,7 +54,7 @@ export const galleryLoader = async ({
   params: { galleryKey: string; spaceKey?: string }
 }): Promise<GalleryLoaderData> => {
   const requestKey = `${spaceKey || '__default__'}:${galleryKey}`
-  const requestGeneration = beginGalleryLoaderRequest(requestKey)
+  const requestGeneration = latestGalleryLoaderRequests.begin(requestKey)
 
   await ensureFolderTreeReady(spaceKey)
 
@@ -197,7 +188,7 @@ export const galleryLoader = async ({
   }))
 
   // Update folder tree store with fresh data while preserving toggle states
-  if (isLatestGalleryLoaderRequest(requestKey, requestGeneration)) {
+  if (latestGalleryLoaderRequests.isLatest(requestKey, requestGeneration)) {
     await updateTreeData(path, folderNodes, spaceKey)
   }
 
@@ -222,7 +213,7 @@ export const galleryLoader = async ({
       }
     })
 
-  if (isLatestGalleryLoaderRequest(requestKey, requestGeneration)) {
+  if (latestGalleryLoaderRequests.isLatest(requestKey, requestGeneration)) {
     await setCurrentPath(galleryKey, spaceKey)
   }
 
