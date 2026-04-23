@@ -210,7 +210,8 @@
           "uploadFailed": "Impossibile caricare {{fileName}}",
           "previewWarmupTitle": "Le anteprime si stanno preparando",
           "previewWarmupHint": "Le anteprime si stanno ancora preparando e di solito compaiono entro 30 secondi.",
-          "previewWarmupDescription": "I tuoi file sono stati caricati correttamente. Le anteprime delle immagini di solito compaiono entro 30 secondi."
+          "previewWarmupDescription": "I tuoi file sono stati caricati correttamente. Le anteprime delle immagini di solito compaiono entro 30 secondi.",
+          "spaceWarmupDescription": "Questo spazio è ancora in fase di pubblicazione. Le anteprime delle immagini di solito compaiono entro 30 secondi."
         }
       },
       "contextMenu": {

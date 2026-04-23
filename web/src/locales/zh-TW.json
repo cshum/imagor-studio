@@ -208,7 +208,8 @@
           "uploadFailed": "上傳 {{fileName}} 失敗",
           "previewWarmupTitle": "預覽正在準備中",
           "previewWarmupHint": "預覽仍在準備中，通常會在 30 秒內顯示。",
-          "previewWarmupDescription": "你的檔案已成功上傳。圖片預覽通常會在 30 秒內顯示。"
+          "previewWarmupDescription": "你的檔案已成功上傳。圖片預覽通常會在 30 秒內顯示。",
+          "spaceWarmupDescription": "這個空間仍在發布中。圖片預覽通常會在 30 秒內顯示。"
         }
       },
       "contextMenu": {

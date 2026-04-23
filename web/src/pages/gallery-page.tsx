@@ -149,7 +149,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     open: false,
     items: [],
   })
-  const [postUploadWarmupEndsAt, setPostUploadWarmupEndsAt] = useState<number | null>(null)
+  const [previewWarmupState, setPreviewWarmupState] = useState<{
+    endsAt: number
+    source: 'space-created' | 'post-upload'
+  } | null>(null)
 
   // Selection store
   const selection = useSelection()
@@ -167,30 +170,55 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const sidebar = useSidebar()
 
   useEffect(() => {
-    if (postUploadWarmupEndsAt == null) {
+    if (previewWarmupState == null) {
       return
     }
 
-    const remainingMs = postUploadWarmupEndsAt - Date.now()
+    const remainingMs = previewWarmupState.endsAt - Date.now()
     if (remainingMs <= 0) {
-      setPostUploadWarmupEndsAt(null)
+      setPreviewWarmupState(null)
       return
     }
 
     const timer = window.setTimeout(() => {
-      setPostUploadWarmupEndsAt(null)
+      setPreviewWarmupState(null)
     }, remainingMs)
 
     return () => {
       window.clearTimeout(timer)
     }
-  }, [postUploadWarmupEndsAt])
+  }, [previewWarmupState])
 
-  const postUploadWarmupActive =
-    postUploadWarmupEndsAt != null && postUploadWarmupEndsAt > Date.now()
-  const uploadWarmupHint = postUploadWarmupActive
+  const previewWarmupActive =
+    previewWarmupState != null && previewWarmupState.endsAt > Date.now()
+  const uploadWarmupHint =
+    previewWarmupActive && previewWarmupState?.source === 'post-upload'
     ? t('pages.gallery.upload.messages.previewWarmupHint')
     : undefined
+
+  useEffect(() => {
+    if (!spaceKey) {
+      return
+    }
+
+    const notice = readSpacePropagationNotice(spaceKey)
+    if (!notice || notice.action !== 'created') {
+      return
+    }
+
+    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - notice.savedAt)
+    if (remainingMs <= 0) {
+      return
+    }
+
+    setPreviewWarmupState((currentState) => {
+      const nextEndsAt = Date.now() + remainingMs
+      if (currentState != null && currentState.endsAt >= nextEndsAt) {
+        return currentState
+      }
+      return { endsAt: nextEndsAt, source: 'space-created' }
+    })
+  }, [spaceKey])
 
   const handleUploadComplete = async () => {
     await router.invalidate()
@@ -209,7 +237,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       return
     }
 
-    setPostUploadWarmupEndsAt(Date.now() + remainingMs)
+    setPreviewWarmupState({
+      endsAt: Date.now() + remainingMs,
+      source: 'post-upload',
+    })
   }
 
   const getMoveProgressMessage = (completed: number, total: number) =>
@@ -1120,7 +1151,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             }
           />
 
-          {postUploadWarmupActive && (
+          {previewWarmupActive && (
             <div className='mx-2 mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100'>
               <Clock className='mt-0.5 h-5 w-5 shrink-0' />
               <div>
@@ -1128,7 +1159,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                   {t('pages.gallery.upload.messages.previewWarmupTitle')}
                 </p>
                 <p className='mt-1 text-sm text-amber-900/80 dark:text-amber-100/80'>
-                  {t('pages.gallery.upload.messages.previewWarmupDescription')}
+                  {t(
+                    previewWarmupState?.source === 'post-upload'
+                      ? 'pages.gallery.upload.messages.previewWarmupDescription'
+                      : 'pages.gallery.upload.messages.spaceWarmupDescription',
+                  )}
                 </p>
               </div>
             </div>

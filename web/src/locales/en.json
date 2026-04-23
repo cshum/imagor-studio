@@ -210,7 +210,8 @@
           "uploadFailed": "Failed to upload {{fileName}}",
           "previewWarmupTitle": "Previews are getting ready",
           "previewWarmupHint": "Previews are still getting ready and usually appear within 30 seconds.",
-          "previewWarmupDescription": "Your files were uploaded successfully. Image previews usually appear within 30 seconds."
+          "previewWarmupDescription": "Your files were uploaded successfully. Image previews usually appear within 30 seconds.",
+          "spaceWarmupDescription": "This space is still being published. Image previews usually appear within 30 seconds."
         }
       },
       "contextMenu": {
