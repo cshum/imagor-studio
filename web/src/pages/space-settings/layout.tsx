@@ -36,9 +36,9 @@ import {
   SidebarWrapper,
 } from '@/components/ui/sidebar'
 import { useBrand } from '@/hooks/use-brand'
-import {
-  
-} from '@/lib/space-propagation'
+
+import '@/lib/space-propagation'
+
 import { useSpacePropagationNotice } from '@/hooks/use-space-propagation-notice'
 import { useAuth } from '@/stores/auth-store'
 

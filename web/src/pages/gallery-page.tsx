@@ -191,12 +191,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     }
   }, [previewWarmupState])
 
-  const previewWarmupActive =
-    previewWarmupState != null && previewWarmupState.endsAt > Date.now()
+  const previewWarmupActive = previewWarmupState != null && previewWarmupState.endsAt > Date.now()
   const uploadWarmupHint =
     previewWarmupActive && previewWarmupState?.source === 'post-upload'
-    ? t('pages.gallery.upload.messages.previewWarmupHint')
-    : undefined
+      ? t('pages.gallery.upload.messages.previewWarmupHint')
+      : undefined
 
   useEffect(() => {
     if (!spaceKey || !propagationNotice || propagationNotice.action !== 'created') {
