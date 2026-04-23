@@ -701,7 +701,7 @@
       "title": "Spazi",
       "createSpace": "Crea spazio",
       "createNewSpace": "Crea nuovo spazio",
-      "createSpaceDescription": "Aggiungi un nuovo spazio alla tua organizzazione. Ogni spazio ha la propria configurazione di storage e imagor.",
+      "createSpaceDescription": "Crea uno spazio immagini dedicato per il tuo team.",
       "editSpace": "Modifica spazio",
       "editSpaceDescription": "Aggiorna la configurazione dello spazio. Le modifiche saranno applicate immediatamente.",
       "deleteSpace": "Elimina spazio",
@@ -709,7 +709,7 @@
       "createSpaceButton": "Crea spazio",
       "updateSpaceButton": "Aggiorna spazio",
       "wizard": {
-        "stepIdentity": "Identità",
+        "stepIdentity": "Dettagli spazio",
         "stepStorage": "Storage",
         "next": "Avanti",
         "back": "Indietro"
@@ -731,7 +731,12 @@
         "managed": "Gestito da Imagor Studio. Nessuna configurazione del bucket richiesta.",
         "s3": "Collega il tuo bucket compatibile S3."
       },
-      "keyDescription": "Usato nei link e negli URL. Puoi cambiarlo, ma i vecchi link non verranno reindirizzati.",
+      "creationPreview": {
+        "title": "URL di questo spazio",
+        "appUrlLabel": "URL app",
+        "processingHostLabel": "Host imagor"
+      },
+      "keyDescription": "Definisce l'URL di questo spazio nell'app e il suo host imagor dedicato. Puoi cambiarlo in seguito.",
       "tableHeaders": {
         "key": "Slug URL",
         "name": "Nome",

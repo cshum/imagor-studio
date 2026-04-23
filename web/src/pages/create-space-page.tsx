@@ -93,6 +93,10 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
+  const previewKey = useWatch({ control: form.control, name: 'key' })
+  const normalizedKey = previewKey?.trim() || 'your-space'
+  const appURL = `app.imagor.net/spaces/${normalizedKey}`
+  const processingHost = `${normalizedKey}.imagor.app`
 
   const handleNext = async () => {
     setIsLoading(true)
@@ -144,6 +148,22 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
           </FormItem>
         )}
       />
+      <div className='bg-muted/50 rounded-lg border px-4 py-3'>
+        <div className='space-y-3'>
+          <div>
+            <p className='text-muted-foreground text-xs font-medium tracking-wide'>
+              {t('pages.spaces.creationPreview.appUrlLabel')}
+            </p>
+            <p className='mt-1 font-mono text-sm'>{appURL}</p>
+          </div>
+          <div>
+            <p className='text-muted-foreground text-xs font-medium tracking-wide'>
+              {t('pages.spaces.creationPreview.processingHostLabel')}
+            </p>
+            <p className='mt-1 font-mono text-sm'>{processingHost}</p>
+          </div>
+        </div>
+      </div>
       <div className='mt-6 flex items-center justify-between border-t pt-6'>
         <Button type='button' variant='outline' onClick={() => navigate({ to: '/' })}>
           {t('common.buttons.cancel')}
@@ -425,7 +445,7 @@ export function CreateSpacePage() {
   const steps: MultiStepFormStep[] = [
     {
       id: 'identity',
-      title: t('pages.spaces.wizard.stepIdentity'),
+      title: '',
       content: (nav: MultiStepFormNavigationProps) => (
         <IdentityStep form={form} onNext={handleIdentityNext} {...nav} />
       ),

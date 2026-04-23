@@ -719,7 +719,7 @@
         "managed": "由 Imagor Studio 管理，無需設定儲存桶。",
         "s3": "連接您自己的 S3 相容儲存桶。"
       },
-      "keyDescription": "用於連結和 URL。你可以變更它，但舊連結不會重新導向。",
+      "keyDescription": "這會設定此空間在應用中的 URL 與專屬的 imagor 主機。之後仍可變更。",
       "tableHeaders": {
         "key": "URL 識別碼",
         "name": "名稱",
@@ -745,11 +745,12 @@
       "spaceCount": "{{count}} 個空間",
       "openGallery": "開啟相簿",
       "wizard": {
-        "stepIdentity": "基本資訊",
+        "stepIdentity": "空間詳情",
         "stepStorage": "儲存",
         "next": "下一步",
         "back": "上一步"
       },
+      "createSpaceDescription": "為您的團隊建立一個專屬圖片工作空間。",
       "messages": {
         "spaceCreatedSuccess": "空間建立成功",
         "spaceUpdatedSuccess": "空間更新成功",
@@ -772,6 +773,11 @@
         "sharedWithYou": "與您共享"
       },
       "configure": "設定",
+      "creationPreview": {
+        "title": "此空間的 URL",
+        "appUrlLabel": "應用 URL",
+        "processingHostLabel": "Imagor 主機"
+      },
       "startDescription": "先使用託管空間完成最快速的設定，之後再隨著工作區成長自訂儲存、交付與品牌。",
       "sharedLabel": "共享",
       "leaveSpace": "離開",

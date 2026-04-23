@@ -53,6 +53,7 @@ export const MultiStepForm = forwardRef<MultiStepFormRef, MultiStepFormProps>(
     const contentRef = useRef<HTMLDivElement>(null)
 
     const currentStepData = steps[currentStep - 1]
+    const hasStepHeader = Boolean(currentStepData?.title || currentStepData?.description)
     const isFirstStep = currentStep === 1
     const isLastStep = currentStep === steps.length
 
@@ -122,13 +123,17 @@ export const MultiStepForm = forwardRef<MultiStepFormRef, MultiStepFormProps>(
 
         {/* Step Content */}
         <Card className='min-h-[400px] p-2 sm:p-4'>
-          <CardHeader className='px-4 pt-4 pb-4 sm:px-6 sm:pt-6 sm:pb-6'>
-            <CardTitle className='text-lg sm:text-xl'>{currentStepData?.title}</CardTitle>
-            {currentStepData?.description && (
-              <CardDescription className='text-sm'>{currentStepData.description}</CardDescription>
-            )}
-          </CardHeader>
-          <CardContent>
+          {hasStepHeader && (
+            <CardHeader className='px-4 pt-4 pb-4 sm:px-6 sm:pt-6 sm:pb-6'>
+              {currentStepData?.title && (
+                <CardTitle className='text-lg sm:text-xl'>{currentStepData.title}</CardTitle>
+              )}
+              {currentStepData?.description && (
+                <CardDescription className='text-sm'>{currentStepData.description}</CardDescription>
+              )}
+            </CardHeader>
+          )}
+          <CardContent className={cn(!hasStepHeader && 'pt-4 sm:pt-6')}>
             {/* Content with fade transition */}
             <div key={currentStep} className='animate-in fade-in-50 duration-300' ref={contentRef}>
               {currentStepData?.content(navigationProps)}
