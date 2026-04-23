@@ -70,11 +70,7 @@ import { SecuritySection } from '@/pages/space-settings/security'
 import { StorageSection } from '@/pages/space-settings/storage'
 import { UsersPage } from '@/pages/users-page'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
-import {
-  initializeFolderTreeCache,
-  loadHomeTitle,
-  loadRootFolders,
-} from '@/stores/folder-tree-store.ts'
+import { initializeFolderTreeCache } from '@/stores/folder-tree-store.ts'
 import { checkLicense, useLicense } from '@/stores/license-store'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
@@ -697,12 +693,6 @@ export function AppRouter() {
       if (authState.state === 'authenticated') {
         initializeTheme(userThemeStorage, 'class')
         initializeSidebar(userSidebarStorage)
-      }
-      // In multi-tenant (SaaS) mode there is no system-level root gallery,
-      // so skip the root-folder sidebar fetch — it would fail with NOT_AVAILABLE.
-      if (!authState.multiTenant) {
-        loadRootFolders()
-        loadHomeTitle()
       }
     } else if (action.type === 'LOGOUT') {
       initializeTheme(localThemeStorage, 'class')

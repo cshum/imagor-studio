@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useRouterState } from '@tanstack/react-router'
 import { ArrowLeft, Home } from 'lucide-react'
@@ -29,7 +29,6 @@ import {
   folderTreeStore,
   invalidateFolderCache,
   loadFolderChildren,
-  loadHomeTitle,
   loadRootFolders,
   setCurrentPath,
   useFolderTree,
@@ -120,15 +119,9 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
   const isLoadingRoot = loadingPaths.has('')
   const isResolvingSpace = spaceKey ? resolvingSpaceKeys.has(spaceKey) : false
   const isInitializingTree = isResolvingSpace || !isRootFoldersLoaded || !isHomeTitleLoaded
-  const shouldShowRootLoadingSkeleton = isLoadingRoot && !isRootFoldersLoaded
   const isOnHomePage = spaceKey
     ? routerState.location.pathname === `/spaces/${spaceKey}`
     : routerState.location.pathname === '/'
-
-  useEffect(() => {
-    void loadRootFolders(spaceKey)
-    void loadHomeTitle(spaceKey)
-  }, [spaceKey])
 
   const handleHomeClick = () => {
     // Close mobile sidebar when navigating to home on mobile
@@ -338,7 +331,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
 
-                  {shouldShowRootLoadingSkeleton ? (
+                  {isLoadingRoot ? (
                     Array.from({ length: 3 }).map((_, index) => (
                       <div key={index} className='flex h-8 items-center gap-2 rounded-md px-2'>
                         <Skeleton className='h-4 w-4 rounded-md' />

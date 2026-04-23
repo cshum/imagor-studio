@@ -1,4 +1,3 @@
-import { getSpace } from '@/api/org-api'
 import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
@@ -11,7 +10,12 @@ import { hasExtension } from '@/lib/file-extensions.ts'
 import { normalizeDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
 import { getAuth } from '@/stores/auth-store.ts'
-import { FolderNode, folderTreeStore, updateTreeData } from '@/stores/folder-tree-store.ts'
+import {
+  ensureFolderTreeReady,
+  FolderNode,
+  folderTreeStore,
+  updateTreeData,
+} from '@/stores/folder-tree-store.ts'
 
 export interface GalleryLoaderData {
   galleryName: string
@@ -45,6 +49,8 @@ export const galleryLoader = async ({
 }: {
   params: { galleryKey: string; spaceKey?: string }
 }): Promise<GalleryLoaderData> => {
+  const folderTreeReadyPromise = ensureFolderTreeReady(spaceKey)
+
   // Use galleryKey as the path for storage API
   const path = galleryKey
 
@@ -198,15 +204,10 @@ export const galleryLoader = async ({
       }
     })
 
-  const spaceName = spaceKey
-    ? await getSpace(spaceKey)
-        .then((s) => s?.name ?? null)
-        .catch(() => null)
-    : null
-  const folderTreeState = spaceKey
-    ? null
-    : await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
-  const homeTitle = spaceName || folderTreeState?.homeTitle || spaceKey || 'Home'
+  await folderTreeReadyPromise
+
+  const folderTreeState = folderTreeStore.getState()
+  const homeTitle = folderTreeState.homeTitle || spaceKey || 'Home'
 
   // Use the actual folder name, or custom home title for root
   const galleryName = galleryKey === '' ? homeTitle : galleryKey.split('/').pop() || galleryKey
