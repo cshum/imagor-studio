@@ -14,6 +14,7 @@ import {
   ensureFolderTreeReady,
   FolderNode,
   folderTreeStore,
+  setCurrentPath,
   updateTreeData,
 } from '@/stores/folder-tree-store.ts'
 
@@ -40,6 +41,18 @@ export const DEFAULT_IMAGE_EXTENSIONS =
   '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw'
 export const DEFAULT_VIDEO_EXTENSIONS = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg'
 export const TEMPLATE_EXTENSION = '.imagor.json'
+let galleryLoaderRequestGeneration = 0
+const latestGalleryLoaderRequests = new Map<string, number>()
+
+const beginGalleryLoaderRequest = (requestKey: string) => {
+  galleryLoaderRequestGeneration += 1
+  latestGalleryLoaderRequests.set(requestKey, galleryLoaderRequestGeneration)
+  return galleryLoaderRequestGeneration
+}
+
+const isLatestGalleryLoaderRequest = (requestKey: string, requestGeneration: number) =>
+  latestGalleryLoaderRequests.get(requestKey) === requestGeneration
+
 /**
  * Gallery loader using imagor for thumbnail generation
  * Loads images and folders from storage API with imagor-generated thumbnails
@@ -49,7 +62,10 @@ export const galleryLoader = async ({
 }: {
   params: { galleryKey: string; spaceKey?: string }
 }): Promise<GalleryLoaderData> => {
-  const folderTreeReadyPromise = ensureFolderTreeReady(spaceKey)
+  const requestKey = `${spaceKey || '__default__'}:${galleryKey}`
+  const requestGeneration = beginGalleryLoaderRequest(requestKey)
+
+  await ensureFolderTreeReady(spaceKey)
 
   // Use galleryKey as the path for storage API
   const path = galleryKey
@@ -181,7 +197,9 @@ export const galleryLoader = async ({
   }))
 
   // Update folder tree store with fresh data while preserving toggle states
-  updateTreeData(path, folderNodes)
+  if (isLatestGalleryLoaderRequest(requestKey, requestGeneration)) {
+    await updateTreeData(path, folderNodes, spaceKey)
+  }
 
   // Filter and convert image files (including templates)
   const images: GalleryImage[] = result.items
@@ -204,7 +222,9 @@ export const galleryLoader = async ({
       }
     })
 
-  await folderTreeReadyPromise
+  if (isLatestGalleryLoaderRequest(requestKey, requestGeneration)) {
+    await setCurrentPath(galleryKey, spaceKey)
+  }
 
   const folderTreeState = folderTreeStore.getState()
   const homeTitle = folderTreeState.homeTitle || spaceKey || 'Home'
