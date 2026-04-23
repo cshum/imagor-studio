@@ -237,7 +237,7 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                       {type === 'managed' ? (
                         <Cloud className='text-primary h-5 w-5' />
                       ) : (
-                        <Database className='h-5 w-5 text-amber-500' />
+                        <Database className='h-5 w-5 text-sky-600 dark:text-sky-400' />
                       )}
                     </div>
                     <p className='text-sm font-medium'>{t(`pages.spaces.storageType.${type}`)}</p>
