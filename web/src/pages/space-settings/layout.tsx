@@ -37,13 +37,9 @@ import {
 } from '@/components/ui/sidebar'
 import { useBrand } from '@/hooks/use-brand'
 import {
-  clearSpacePropagationNotice,
-  readSpacePropagationNotice,
-  SPACE_PROPAGATION_EVENT,
-  SPACE_PROPAGATION_WINDOW_MS,
-  type SpacePropagationNotice,
-  type SpacePropagationNoticeEventDetail,
+  
 } from '@/lib/space-propagation'
+import { useSpacePropagationNotice } from '@/hooks/use-space-propagation-notice'
 import { useAuth } from '@/stores/auth-store'
 
 import { type SpaceSettingsData } from './shared'
@@ -64,8 +60,8 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   const { title: appTitle } = useBrand()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [propagationNotice, setPropagationNotice] = useState<SpacePropagationNotice | null>(null)
   const { location } = useRouterState()
+  const propagationNotice = useSpacePropagationNotice(space.key, location.pathname)
 
   // Extract active section from the last URL segment
   const pathSegments = location.pathname.split('/')
@@ -74,49 +70,6 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   useEffect(() => {
     setMobileOpen(false)
   }, [activeSection])
-
-  useEffect(() => {
-    const handleNotice = (event: Event) => {
-      const nextNotice = (event as CustomEvent<SpacePropagationNoticeEventDetail>).detail?.notice
-      if (!nextNotice || nextNotice.spaceKey !== space.key) {
-        if (!nextNotice) {
-          setPropagationNotice(null)
-        }
-        return
-      }
-      setPropagationNotice(nextNotice)
-    }
-
-    window.addEventListener(SPACE_PROPAGATION_EVENT, handleNotice)
-    return () => {
-      window.removeEventListener(SPACE_PROPAGATION_EVENT, handleNotice)
-    }
-  }, [space.key])
-
-  useEffect(() => {
-    const nextNotice = readSpacePropagationNotice(space.key)
-    setPropagationNotice(nextNotice)
-
-    if (!nextNotice) {
-      return
-    }
-
-    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - nextNotice.savedAt)
-    if (remainingMs <= 0) {
-      clearSpacePropagationNotice()
-      setPropagationNotice(null)
-      return
-    }
-
-    const timer = window.setTimeout(() => {
-      clearSpacePropagationNotice()
-      setPropagationNotice(null)
-    }, remainingMs)
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [location.pathname, space.key])
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')

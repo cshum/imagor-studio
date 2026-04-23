@@ -53,6 +53,7 @@ import { useImageContextMenu } from '@/hooks/use-image-context-menu'
 import { DragItem, useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
 import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
+import { useSpacePropagationNotice } from '@/hooks/use-space-propagation-notice'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
 import { getFullImageUrl } from '@/lib/api-utils'
@@ -61,7 +62,7 @@ import { hasErrorCode } from '@/lib/error-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
 import { moveGalleryItems } from '@/lib/gallery-move'
 import { joinImagePath } from '@/lib/path-utils'
-import { readSpacePropagationNotice, SPACE_PROPAGATION_WINDOW_MS } from '@/lib/space-propagation'
+import { SPACE_PROPAGATION_WINDOW_MS } from '@/lib/space-propagation'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { registerDropHandler } from '@/stores/drag-drop-store'
@@ -153,6 +154,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     endsAt: number
     source: 'space-created' | 'post-upload'
   } | null>(null)
+  const propagationNotice = useSpacePropagationNotice(spaceKey)
 
   // Selection store
   const selection = useSelection()
@@ -197,16 +199,11 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     : undefined
 
   useEffect(() => {
-    if (!spaceKey) {
+    if (!spaceKey || !propagationNotice || propagationNotice.action !== 'created') {
       return
     }
 
-    const notice = readSpacePropagationNotice(spaceKey)
-    if (!notice || notice.action !== 'created') {
-      return
-    }
-
-    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - notice.savedAt)
+    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - propagationNotice.savedAt)
     if (remainingMs <= 0) {
       return
     }
@@ -218,21 +215,16 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       }
       return { endsAt: nextEndsAt, source: 'space-created' }
     })
-  }, [spaceKey])
+  }, [propagationNotice, spaceKey])
 
   const handleUploadComplete = async () => {
     await router.invalidate()
 
-    if (!spaceKey) {
+    if (!spaceKey || !propagationNotice || propagationNotice.action !== 'created') {
       return
     }
 
-    const notice = readSpacePropagationNotice(spaceKey)
-    if (!notice || notice.action !== 'created') {
-      return
-    }
-
-    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - notice.savedAt)
+    const remainingMs = SPACE_PROPAGATION_WINDOW_MS - (Date.now() - propagationNotice.savedAt)
     if (remainingMs <= 0) {
       return
     }
