@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from '@tanstack/react-router'
 import { FolderPlus } from 'lucide-react'
@@ -73,7 +73,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   const [localExpandState, setLocalExpandState] = useState<Record<string, boolean>>({})
   const [selectedPath, setSelectedPath] = useState<string | null>(initialSelectedPath)
   const [isLoading, setIsLoading] = useState(false)
-  const [excludePathsSet] = useState(() => new Set(excludePaths))
+  const excludePathsSet = useMemo(() => new Set(excludePaths), [excludePaths])
 
   // Build tree with local expand state overlaid on store data
   const buildTreeWithLocalExpand = useCallback(
