@@ -695,12 +695,12 @@
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
-        "managed": "平台存储",
-        "s3": "自定义 S3（BYOB）"
+        "managed": "托管存储",
+        "s3": "S3 存储桶"
       },
       "storageTypeDesc": {
-        "managed": "由 Imagor Studio 管理，无需配置存储桶。",
-        "s3": "连接您自己的 S3 兼容存储桶。"
+        "managed": "存储在 Imagor Studio 中，无需配置存储桶。",
+        "s3": "使用你自己的 S3 兼容存储桶。"
       },
       "keyDescription": "这会设置此空间在应用中的 URL 以及专属的 imagor 主机。你之后可以再更改。",
       "tableHeaders": {

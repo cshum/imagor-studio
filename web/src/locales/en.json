@@ -725,12 +725,12 @@
       "storageTypeLabel": "Storage Type",
       "credentialsEncrypted": "Credentials are encrypted at rest using AES-256 and never exposed after saving.",
       "storageType": {
-        "managed": "Platform Storage",
-        "s3": "Custom S3 (BYOB)"
+        "managed": "Hosted Storage",
+        "s3": "S3 Bucket"
       },
       "storageTypeDesc": {
-        "managed": "Managed by Imagor Studio. No bucket setup required.",
-        "s3": "Connect your own S3-compatible bucket."
+        "managed": "Stored in Imagor Studio. No bucket setup required.",
+        "s3": "Use your own S3-compatible bucket."
       },
       "creationPreview": {
         "title": "URLs for this space",

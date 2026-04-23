@@ -713,12 +713,12 @@
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
-        "managed": "平台儲存",
-        "s3": "自訂 S3（BYOB）"
+        "managed": "託管儲存",
+        "s3": "S3 儲存桶"
       },
       "storageTypeDesc": {
-        "managed": "由 Imagor Studio 管理，無需設定儲存桶。",
-        "s3": "連接您自己的 S3 相容儲存桶。"
+        "managed": "儲存在 Imagor Studio 中，無需設定儲存桶。",
+        "s3": "使用你自己的 S3 相容儲存桶。"
       },
       "keyDescription": "這會設定此空間在應用中的 URL 與專屬的 imagor 主機。之後仍可變更。",
       "tableHeaders": {

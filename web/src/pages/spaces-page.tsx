@@ -169,7 +169,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                 />
 
                 {/* Card header row */}
-                <div className='flex items-start justify-between gap-2'>
+                <div className='flex items-center justify-between gap-2'>
                   <div className='flex min-w-0 items-center gap-3'>
                     <div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
                       {space.storageMode === 'platform' ? (
@@ -193,7 +193,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                     </div>
                   </div>
 
-                  <div className='pointer-events-none relative z-20 mt-1 flex shrink-0 items-center gap-2'>
+                  <div className='pointer-events-none relative z-20 flex shrink-0 items-center gap-2 self-center'>
                     <Link
                       to='/spaces/$spaceKey'
                       params={{ spaceKey: space.key }}

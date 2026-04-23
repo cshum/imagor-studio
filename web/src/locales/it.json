@@ -725,12 +725,12 @@
       "storageTypeLabel": "Tipo di archiviazione",
       "credentialsEncrypted": "Le credenziali sono cifrate a riposo con AES-256 e non vengono mai esposte dopo il salvataggio.",
       "storageType": {
-        "managed": "Storage piattaforma",
-        "s3": "Custom S3 (BYOB)"
+        "managed": "Storage ospitato",
+        "s3": "Bucket S3"
       },
       "storageTypeDesc": {
-        "managed": "Gestito da Imagor Studio. Nessuna configurazione del bucket richiesta.",
-        "s3": "Collega il tuo bucket compatibile S3."
+        "managed": "Archiviato in Imagor Studio. Nessuna configurazione del bucket richiesta.",
+        "s3": "Usa il tuo bucket compatibile S3."
       },
       "creationPreview": {
         "title": "URL di questo spazio",
