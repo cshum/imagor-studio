@@ -37,9 +37,8 @@ func (stubSpaceConfigStore) Ready() bool {
 }
 
 func stubProcessingRuntimeFactory() ProcessingRuntimeFactory {
-	return func(runtimeCfg processing.RuntimeConfig, serverCfg *config.Config, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
+	return func(runtimeCfg processing.RuntimeConfig, logger *zap.Logger) (processing.SpaceConfigReader, imagor.Loader, error) {
 		_ = runtimeCfg
-		_ = serverCfg
 		_ = logger
 		return stubSpaceConfigStore{}, nil, nil
 	}
