@@ -107,6 +107,14 @@ const getPersistedStateFromFolderTree = (state: FolderTreeState): PersistedFolde
   homeTitle: state.homeTitle,
 })
 
+const normalizePersistedFolderTreeState = (
+  state: PersistedFolderTreeState,
+): PersistedFolderTreeState => ({
+  rootFolders: state.rootFolders,
+  currentPath: state.currentPath,
+  homeTitle: state.homeTitle || 'Home',
+})
+
 const isPersistedFolderTreeState = (value: unknown): value is PersistedFolderTreeState => {
   if (!value || typeof value !== 'object') {
     return false
@@ -123,11 +131,7 @@ const parsePersistedFolderTreeStates = (
 
   if (isPersistedFolderTreeState(parsed)) {
     return {
-      [DEFAULT_SPACE_CACHE_KEY]: {
-        rootFolders: parsed.rootFolders,
-        currentPath: parsed.currentPath,
-        homeTitle: parsed.homeTitle || 'Home',
-      },
+      [DEFAULT_SPACE_CACHE_KEY]: normalizePersistedFolderTreeState(parsed),
     }
   }
 
@@ -138,14 +142,7 @@ const parsePersistedFolderTreeStates = (
       return Object.fromEntries(
         Object.entries(spaces)
           .filter(([, state]) => isPersistedFolderTreeState(state))
-          .map(([cacheKey, state]) => [
-            cacheKey,
-            {
-              rootFolders: state.rootFolders,
-              currentPath: state.currentPath,
-              homeTitle: state.homeTitle || 'Home',
-            },
-          ]),
+          .map(([cacheKey, state]) => [cacheKey, normalizePersistedFolderTreeState(state)]),
       )
     }
   }
@@ -165,6 +162,41 @@ const sortFoldersByName = (folders: FolderNode[]): FolderNode[] => {
     }),
   )
 }
+
+const sortTreeRecursively = (folders: FolderNode[]): FolderNode[] =>
+  sortFoldersByName(folders).map((folder) => ({
+    ...folder,
+    children: folder.children ? sortTreeRecursively(folder.children) : undefined,
+  }))
+
+const mergeFolderUiState = (folder: FolderNode, existingFolder?: FolderNode): FolderNode => ({
+  ...folder,
+  isLoaded: existingFolder?.isLoaded || false,
+  isExpanded: existingFolder?.isExpanded || false,
+  children: existingFolder?.children,
+})
+
+const mergeFoldersPreservingState = (
+  nextFolders: FolderNode[],
+  existingFolders: FolderNode[],
+): FolderNode[] =>
+  sortFoldersByName(nextFolders).map((folder) => {
+    const existingFolder = existingFolders.find((item) => item.path === folder.path)
+    return mergeFolderUiState(folder, existingFolder)
+  })
+
+const updateFolderTreeAtPath = (
+  folders: FolderNode[],
+  path: string,
+  updateFolder: (folder: FolderNode) => FolderNode,
+): FolderNode[] =>
+  folders.map((folder) =>
+    folder.path === path
+      ? updateFolder(folder)
+      : folder.children
+        ? { ...folder, children: updateFolderTreeAtPath(folder.children, path, updateFolder) }
+        : folder,
+  )
 
 function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): FolderTreeState {
   switch (action.type) {
@@ -207,48 +239,27 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
     case 'SET_ROOT_FOLDERS':
       return {
         ...state,
-        rootFolders: sortFoldersByName(action.folders).map((folder) => {
-          // Preserve expanded state from cache if it exists
-          const existingFolder = state.rootFolders.find((f) => f.path === folder.path)
-          return {
-            ...folder,
-            isLoaded: existingFolder?.isLoaded || false,
-            isExpanded: existingFolder?.isExpanded || false,
-            children: existingFolder?.children,
-          }
-        }),
+        rootFolders: mergeFoldersPreservingState(action.folders, state.rootFolders),
         isRootFoldersLoaded: true,
       }
 
     case 'EXPAND_FOLDER': {
-      const updateFolder = (folders: FolderNode[]): FolderNode[] =>
-        folders.map((folder) =>
-          folder.path === action.path
-            ? { ...folder, isExpanded: true }
-            : folder.children
-              ? { ...folder, children: updateFolder(folder.children) }
-              : folder,
-        )
-
       return {
         ...state,
-        rootFolders: updateFolder(state.rootFolders),
+        rootFolders: updateFolderTreeAtPath(state.rootFolders, action.path, (folder) => ({
+          ...folder,
+          isExpanded: true,
+        })),
       }
     }
 
     case 'COLLAPSE_FOLDER': {
-      const updateFolder = (folders: FolderNode[]): FolderNode[] =>
-        folders.map((folder) =>
-          folder.path === action.path
-            ? { ...folder, isExpanded: false }
-            : folder.children
-              ? { ...folder, children: updateFolder(folder.children) }
-              : folder,
-        )
-
       return {
         ...state,
-        rootFolders: updateFolder(state.rootFolders),
+        rootFolders: updateFolderTreeAtPath(state.rootFolders, action.path, (folder) => ({
+          ...folder,
+          isExpanded: false,
+        })),
       }
     }
 
@@ -256,27 +267,18 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
       // Default to true for backward compatibility
       const shouldExpand = action.autoExpand !== false
 
-      const updateFolder = (folders: FolderNode[]): FolderNode[] =>
-        folders.map((folder) =>
-          folder.path === action.path
-            ? {
-                ...folder,
-                children: sortFoldersByName(action.children).map((child) => ({
-                  ...child,
-                  isLoaded: false,
-                  isExpanded: false,
-                })),
-                isLoaded: true,
-                isExpanded: shouldExpand,
-              }
-            : folder.children
-              ? { ...folder, children: updateFolder(folder.children) }
-              : folder,
-        )
-
       return {
         ...state,
-        rootFolders: updateFolder(state.rootFolders),
+        rootFolders: updateFolderTreeAtPath(state.rootFolders, action.path, (folder) => ({
+          ...folder,
+          children: sortFoldersByName(action.children).map((child) => ({
+            ...child,
+            isLoaded: false,
+            isExpanded: false,
+          })),
+          isLoaded: true,
+          isExpanded: shouldExpand,
+        })),
       }
     }
 
@@ -285,46 +287,18 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
       if (action.path === '' || action.path === 'default') {
         return {
           ...state,
-          rootFolders: sortFoldersByName(action.folders).map((newFolder) => {
-            // Preserve expanded state and children from existing folder if it exists
-            const existingFolder = state.rootFolders.find((f) => f.path === newFolder.path)
-            return {
-              ...newFolder,
-              isLoaded: existingFolder?.isLoaded || false,
-              isExpanded: existingFolder?.isExpanded || false,
-              children: existingFolder?.children,
-            }
-          }),
+          rootFolders: mergeFoldersPreservingState(action.folders, state.rootFolders),
           isRootFoldersLoaded: true,
         }
       }
 
-      // Handle nested folder updates
-      const updateFolder = (folders: FolderNode[]): FolderNode[] =>
-        folders.map((folder) =>
-          folder.path === action.path
-            ? {
-                ...folder,
-                children: sortFoldersByName(action.folders).map((newChild) => {
-                  // Preserve expanded state and children from existing child if it exists
-                  const existingChild = folder.children?.find((c) => c.path === newChild.path)
-                  return {
-                    ...newChild,
-                    isLoaded: existingChild?.isLoaded || false,
-                    isExpanded: existingChild?.isExpanded || false,
-                    children: existingChild?.children,
-                  }
-                }),
-                isLoaded: true,
-              }
-            : folder.children
-              ? { ...folder, children: updateFolder(folder.children) }
-              : folder,
-        )
-
       return {
         ...state,
-        rootFolders: updateFolder(state.rootFolders),
+        rootFolders: updateFolderTreeAtPath(state.rootFolders, action.path, (folder) => ({
+          ...folder,
+          children: mergeFoldersPreservingState(action.folders, folder.children || []),
+          isLoaded: true,
+        })),
       }
     }
 
@@ -355,14 +329,6 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
       }
 
     case 'LOAD_TREE_STATE': {
-      // Recursively sort all folders in the tree when loading from cache
-      const sortTreeRecursively = (folders: FolderNode[]): FolderNode[] => {
-        return sortFoldersByName(folders).map((folder) => ({
-          ...folder,
-          children: folder.children ? sortTreeRecursively(folder.children) : undefined,
-        }))
-      }
-
       return {
         ...state,
         rootFolders: sortTreeRecursively(action.payload.rootFolders),
@@ -385,32 +351,14 @@ function folderTreeReducer(state: FolderTreeState, action: FolderTreeAction): Fo
       return state // This will be handled by the async action
 
     case 'INVALIDATE_FOLDER_CACHE': {
-      // Invalidate cache for a specific folder path
-      // This clears isLoaded, children, and collapses the folder
-      const invalidateFolder = (folders: FolderNode[]): FolderNode[] =>
-        folders.map((folder) => {
-          if (folder.path === action.path) {
-            // Found the folder to invalidate - clear its cache and collapse it
-            return {
-              ...folder,
-              isLoaded: false,
-              isExpanded: false,
-              children: undefined,
-            }
-          }
-          // Recursively check children
-          if (folder.children) {
-            return {
-              ...folder,
-              children: invalidateFolder(folder.children),
-            }
-          }
-          return folder
-        })
-
       return {
         ...state,
-        rootFolders: invalidateFolder(state.rootFolders),
+        rootFolders: updateFolderTreeAtPath(state.rootFolders, action.path, (folder) => ({
+          ...folder,
+          isLoaded: false,
+          isExpanded: false,
+          children: undefined,
+        })),
       }
     }
 
@@ -428,6 +376,7 @@ let saveDelay: number = 300
 let persistedTreeStates: Record<string, PersistedFolderTreeState> = {}
 let hasStorageSubscription = false
 let persistedSpaceCacheKeys = new Set<string>()
+let initializationPromise: Promise<void> = Promise.resolve()
 
 const isSessionConfigStorage = (value: ConfigStorage | null): value is SessionConfigStorage =>
   value instanceof SessionConfigStorage
@@ -498,6 +447,15 @@ const loadPersistedState = async (cacheKey: string) => {
 
   const savedValue = await targetStorage.get()
   if (!savedValue) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(savedValue) as unknown
+    if (isPersistedFolderTreeState(parsed)) {
+      return normalizePersistedFolderTreeState(parsed)
+    }
+  } catch {
     return null
   }
 
@@ -589,7 +547,9 @@ const ensureResolvedSpaceCacheKey = async (spaceKey?: string) => {
 
     const fallbackCacheKey = getFallbackSpaceCacheKey(spaceKey)
     if (resolvedCacheKey !== fallbackCacheKey && persistedTreeStates[fallbackCacheKey]) {
-      persistedTreeStates[resolvedCacheKey] = persistedTreeStates[fallbackCacheKey]
+      if (!persistedTreeStates[resolvedCacheKey]) {
+        persistedTreeStates[resolvedCacheKey] = persistedTreeStates[fallbackCacheKey]
+      }
       delete persistedTreeStates[fallbackCacheKey]
       rememberPersistedSpaceCacheKey(resolvedCacheKey)
       forgetPersistedSpaceCacheKey(fallbackCacheKey)
@@ -639,6 +599,8 @@ const switchFolderTreeSpace = (spaceKey?: string) => {
 }
 
 const prepareFolderTreeSpace = async (spaceKey?: string) => {
+  await initializationPromise
+
   if (spaceKey) {
     await ensureResolvedSpaceCacheKey(spaceKey)
   }
@@ -670,24 +632,28 @@ export const initializeFolderTreeCache = async (
   configStorage: ConfigStorage,
   debounceDelay: number = 300,
 ) => {
-  storage = configStorage
-  saveDelay = debounceDelay
-  persistedTreeStates = {}
-  persistedSpaceCacheKeys = new Set<string>()
+  initializationPromise = (async () => {
+    storage = configStorage
+    saveDelay = debounceDelay
+    persistedTreeStates = {}
+    persistedSpaceCacheKeys = new Set<string>()
 
-  try {
-    const savedTreeState = await storage.get()
-    if (savedTreeState) {
-      const parsedStates = parsePersistedFolderTreeStates(savedTreeState)
+    try {
+      const savedTreeState = await storage.get()
+      if (savedTreeState) {
+        const parsedStates = parsePersistedFolderTreeStates(savedTreeState)
 
-      if (Object.keys(parsedStates).length > 1 || savedTreeState.includes('"spaces"')) {
-        hydrateLegacyPersistedTreeStates(parsedStates)
+        if (Object.keys(parsedStates).length > 1 || savedTreeState.includes('"spaces"')) {
+          hydrateLegacyPersistedTreeStates(parsedStates)
+        } else {
+          await hydrateIndexedPersistedTreeStates()
+
+          if (parsedStates[DEFAULT_SPACE_CACHE_KEY]) {
+            persistedTreeStates[DEFAULT_SPACE_CACHE_KEY] = parsedStates[DEFAULT_SPACE_CACHE_KEY]
+          }
+        }
       } else {
         await hydrateIndexedPersistedTreeStates()
-
-        if (parsedStates[DEFAULT_SPACE_CACHE_KEY]) {
-          persistedTreeStates[DEFAULT_SPACE_CACHE_KEY] = parsedStates[DEFAULT_SPACE_CACHE_KEY]
-        }
       }
 
       const defaultState = persistedTreeStates[DEFAULT_SPACE_CACHE_KEY]
@@ -710,19 +676,16 @@ export const initializeFolderTreeCache = async (
           payload: { isLoaded: true },
         })
       }
-    } else {
+    } catch {
+      // Failed to load from storage - continue with empty state
       folderTreeStore.dispatch({
         type: 'SET_LOADED',
         payload: { isLoaded: true },
       })
     }
-  } catch {
-    // Failed to load from storage - continue with empty state
-    folderTreeStore.dispatch({
-      type: 'SET_LOADED',
-      payload: { isLoaded: true },
-    })
-  }
+  })()
+
+  await initializationPromise
 
   // Set up auto-save subscription for tree state changes
   if (!hasStorageSubscription) {
@@ -850,6 +813,15 @@ export const setHomeTitle = (title: string) => {
 
 export const setCurrentPath = (path: string, spaceKey?: string) => {
   const currentState = folderTreeStore.getState()
+
+  if (spaceKey && !currentState.resolvedSpaceCacheKeys[spaceKey]) {
+    void ensureResolvedSpaceCacheKey(spaceKey).then(() => {
+      switchFolderTreeSpace(spaceKey)
+      folderTreeStore.dispatch({ type: 'SET_CURRENT_PATH', path })
+    })
+    return
+  }
+
   const targetSpaceCacheKey = getResolvedSpaceCacheKey(currentState, spaceKey)
 
   if (currentState.activeSpaceCacheKey !== targetSpaceCacheKey) {
@@ -899,6 +871,7 @@ export const cleanup = () => {
   storage = null
   persistedTreeStates = {}
   persistedSpaceCacheKeys = new Set<string>()
+  initializationPromise = Promise.resolve()
 }
 
 // Hook to use the folder tree store
