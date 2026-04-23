@@ -606,7 +606,17 @@ const prepareFolderTreeSpace = async (spaceKey?: string) => {
   }
 
   switchFolderTreeSpace(spaceKey)
+
+  return getResolvedSpaceCacheKey(folderTreeStore.getState(), spaceKey)
 }
+
+export const ensureFolderTreeSpace = async (spaceKey?: string) => {
+  await prepareFolderTreeSpace(spaceKey)
+  return folderTreeStore.getState()
+}
+
+const isActiveSpaceCacheKey = (cacheKey: string) =>
+  folderTreeStore.getState().activeSpaceCacheKey === cacheKey
 
 /**
  * Debounced save to storage
@@ -709,7 +719,7 @@ export const initializeFolderTreeCache = async (
 
 // Async actions
 export const loadRootFolders = async (spaceKey?: string) => {
-  await prepareFolderTreeSpace(spaceKey)
+  const targetSpaceCacheKey = await prepareFolderTreeSpace(spaceKey)
 
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path: '', loading: true })
@@ -730,11 +740,15 @@ export const loadRootFolders = async (spaceKey?: string) => {
       isExpanded: false,
     }))
 
-    folderTreeStore.dispatch({ type: 'SET_ROOT_FOLDERS', folders })
+    if (isActiveSpaceCacheKey(targetSpaceCacheKey)) {
+      folderTreeStore.dispatch({ type: 'SET_ROOT_FOLDERS', folders })
+    }
   } catch {
     // Failed to load root folders - silently continue
   } finally {
-    folderTreeStore.dispatch({ type: 'SET_LOADING', path: '', loading: false })
+    if (isActiveSpaceCacheKey(targetSpaceCacheKey)) {
+      folderTreeStore.dispatch({ type: 'SET_LOADING', path: '', loading: false })
+    }
   }
 }
 
@@ -743,7 +757,7 @@ export const loadFolderChildren = async (
   autoExpand: boolean = true,
   spaceKey?: string,
 ) => {
-  await prepareFolderTreeSpace(spaceKey)
+  const targetSpaceCacheKey = await prepareFolderTreeSpace(spaceKey)
 
   try {
     folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: true })
@@ -765,29 +779,37 @@ export const loadFolderChildren = async (
       isExpanded: false,
     }))
 
-    folderTreeStore.dispatch({ type: 'SET_FOLDER_CHILDREN', path, children, autoExpand })
+    if (isActiveSpaceCacheKey(targetSpaceCacheKey)) {
+      folderTreeStore.dispatch({ type: 'SET_FOLDER_CHILDREN', path, children, autoExpand })
+    }
   } catch {
     // Failed to load folder children - silently continue
   } finally {
-    folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: false })
+    if (isActiveSpaceCacheKey(targetSpaceCacheKey)) {
+      folderTreeStore.dispatch({ type: 'SET_LOADING', path, loading: false })
+    }
   }
 }
 
 export const loadHomeTitle = async (spaceKey?: string) => {
-  await prepareFolderTreeSpace(spaceKey)
+  const targetSpaceCacheKey = await prepareFolderTreeSpace(spaceKey)
 
   if (spaceKey) {
     try {
       const space = await getSpace(spaceKey)
       const spaceName = space?.name?.trim()
 
-      folderTreeStore.dispatch({
-        type: 'SET_HOME_TITLE',
-        title: spaceName || 'Home',
-      })
+      if (isActiveSpaceCacheKey(targetSpaceCacheKey)) {
+        folderTreeStore.dispatch({
+          type: 'SET_HOME_TITLE',
+          title: spaceName || 'Home',
+        })
+      }
       return
     } catch {
-      folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: 'Home' })
+      if (isActiveSpaceCacheKey(targetSpaceCacheKey)) {
+        folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: 'Home' })
+      }
       return
     }
   }
@@ -796,6 +818,10 @@ export const loadHomeTitle = async (spaceKey?: string) => {
     const registry = await getSystemRegistry('config.app_home_title')
     const customTitle = registry[0]?.value
 
+    if (!isActiveSpaceCacheKey(targetSpaceCacheKey)) {
+      return
+    }
+
     if (customTitle && customTitle.trim()) {
       folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: customTitle.trim() })
     } else {
@@ -803,7 +829,9 @@ export const loadHomeTitle = async (spaceKey?: string) => {
     }
   } catch {
     // On error, fall back to default
-    folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: 'Home' })
+    if (isActiveSpaceCacheKey(targetSpaceCacheKey)) {
+      folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title: 'Home' })
+    }
   }
 }
 
@@ -881,6 +909,7 @@ export const useFolderTree = () => {
   return {
     ...state,
     dispatch: folderTreeStore.dispatch,
+    ensureFolderTreeSpace,
     loadRootFolders,
     loadFolderChildren,
     loadHomeTitle,

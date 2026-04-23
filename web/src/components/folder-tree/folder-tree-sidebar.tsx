@@ -120,6 +120,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
   const isLoadingRoot = loadingPaths.has('')
   const isResolvingSpace = spaceKey ? resolvingSpaceKeys.has(spaceKey) : false
   const isInitializingTree = isResolvingSpace || !isRootFoldersLoaded || !isHomeTitleLoaded
+  const shouldShowRootLoadingSkeleton = isLoadingRoot && !isRootFoldersLoaded
   const isOnHomePage = spaceKey
     ? routerState.location.pathname === `/spaces/${spaceKey}`
     : routerState.location.pathname === '/'
@@ -337,7 +338,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
 
-                  {isLoadingRoot ? (
+                  {shouldShowRootLoadingSkeleton ? (
                     Array.from({ length: 3 }).map((_, index) => (
                       <div key={index} className='flex h-8 items-center gap-2 rounded-md px-2'>
                         <Skeleton className='h-4 w-4 rounded-md' />
