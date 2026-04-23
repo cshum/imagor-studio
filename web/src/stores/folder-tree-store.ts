@@ -2,6 +2,7 @@ import { getSpace } from '@/api/org-api'
 import { getSystemRegistry } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { ConfigStorage } from '@/lib/config-storage/config-storage'
+import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage'
 import { createStore } from '@/lib/create-store'
 import { normalizeDirectoryPath } from '@/lib/path-utils'
 
@@ -426,9 +427,133 @@ let saveTimeout: number | null = null
 let saveDelay: number = 300
 let persistedTreeStates: Record<string, PersistedFolderTreeState> = {}
 let hasStorageSubscription = false
+let persistedSpaceCacheKeys = new Set<string>()
+
+const isSessionConfigStorage = (value: ConfigStorage | null): value is SessionConfigStorage =>
+  value instanceof SessionConfigStorage
+
+const getSpaceIndexStorage = () => {
+  if (!isSessionConfigStorage(storage)) {
+    return null
+  }
+
+  return new SessionConfigStorage(`${storage.storageKey}:space-index`)
+}
+
+const getStorageForCacheKey = (cacheKey: string) => {
+  if (cacheKey === DEFAULT_SPACE_CACHE_KEY) {
+    return storage
+  }
+
+  if (!isSessionConfigStorage(storage)) {
+    return storage
+  }
+
+  return new SessionConfigStorage(`${storage.storageKey}:${cacheKey}`)
+}
+
+const rememberPersistedSpaceCacheKey = (cacheKey: string) => {
+  if (cacheKey !== DEFAULT_SPACE_CACHE_KEY) {
+    persistedSpaceCacheKeys.add(cacheKey)
+  }
+}
+
+const forgetPersistedSpaceCacheKey = (cacheKey: string) => {
+  if (cacheKey !== DEFAULT_SPACE_CACHE_KEY) {
+    persistedSpaceCacheKeys.delete(cacheKey)
+  }
+}
+
+const saveSpaceCacheIndex = async () => {
+  const indexStorage = getSpaceIndexStorage()
+
+  if (!indexStorage) {
+    return
+  }
+
+  await indexStorage.set(JSON.stringify(Array.from(persistedSpaceCacheKeys)))
+}
+
+const savePersistedState = async (cacheKey: string, state: PersistedFolderTreeState) => {
+  const targetStorage = getStorageForCacheKey(cacheKey)
+
+  if (!targetStorage) {
+    return
+  }
+
+  await targetStorage.set(JSON.stringify(state))
+  rememberPersistedSpaceCacheKey(cacheKey)
+
+  if (cacheKey !== DEFAULT_SPACE_CACHE_KEY) {
+    await saveSpaceCacheIndex()
+  }
+}
+
+const loadPersistedState = async (cacheKey: string) => {
+  const targetStorage = getStorageForCacheKey(cacheKey)
+
+  if (!targetStorage) {
+    return null
+  }
+
+  const savedValue = await targetStorage.get()
+  if (!savedValue) {
+    return null
+  }
+
+  const parsedStates = parsePersistedFolderTreeStates(savedValue)
+  return parsedStates[cacheKey] || null
+}
+
+const hydrateLegacyPersistedTreeStates = (states: Record<string, PersistedFolderTreeState>) => {
+  persistedTreeStates = states
+
+  for (const cacheKey of Object.keys(states)) {
+    rememberPersistedSpaceCacheKey(cacheKey)
+  }
+}
+
+const hydrateIndexedPersistedTreeStates = async () => {
+  const defaultState = await loadPersistedState(DEFAULT_SPACE_CACHE_KEY)
+  if (defaultState) {
+    persistedTreeStates[DEFAULT_SPACE_CACHE_KEY] = defaultState
+  }
+
+  const indexStorage = getSpaceIndexStorage()
+  if (!indexStorage) {
+    return
+  }
+
+  const rawIndex = await indexStorage.get()
+  if (!rawIndex) {
+    return
+  }
+
+  try {
+    const cacheKeys = JSON.parse(rawIndex) as unknown
+    if (!Array.isArray(cacheKeys)) {
+      return
+    }
+
+    for (const cacheKey of cacheKeys) {
+      if (typeof cacheKey !== 'string') {
+        continue
+      }
+
+      const persistedState = await loadPersistedState(cacheKey)
+      if (persistedState) {
+        persistedTreeStates[cacheKey] = persistedState
+        rememberPersistedSpaceCacheKey(cacheKey)
+      }
+    }
+  } catch {
+    // Ignore malformed index values and continue with any states we already loaded.
+  }
+}
 
 const persistFolderTreeState = (state: FolderTreeState) => {
   persistedTreeStates[state.activeSpaceCacheKey] = getPersistedStateFromFolderTree(state)
+  rememberPersistedSpaceCacheKey(state.activeSpaceCacheKey)
 }
 
 const ensureResolvedSpaceCacheKey = async (spaceKey?: string) => {
@@ -466,6 +591,8 @@ const ensureResolvedSpaceCacheKey = async (spaceKey?: string) => {
     if (resolvedCacheKey !== fallbackCacheKey && persistedTreeStates[fallbackCacheKey]) {
       persistedTreeStates[resolvedCacheKey] = persistedTreeStates[fallbackCacheKey]
       delete persistedTreeStates[fallbackCacheKey]
+      rememberPersistedSpaceCacheKey(resolvedCacheKey)
+      forgetPersistedSpaceCacheKey(fallbackCacheKey)
     }
 
     return resolvedCacheKey
@@ -532,8 +659,7 @@ const debouncedSaveToStorage = async () => {
   saveTimeout = window.setTimeout(async () => {
     const state = folderTreeStore.getState()
     persistFolderTreeState(state)
-    const treeStateJson = JSON.stringify({ spaces: persistedTreeStates })
-    await storage?.set(treeStateJson)
+    await savePersistedState(state.activeSpaceCacheKey, getPersistedStateFromFolderTree(state))
   }, saveDelay)
 }
 
@@ -546,11 +672,24 @@ export const initializeFolderTreeCache = async (
 ) => {
   storage = configStorage
   saveDelay = debounceDelay
+  persistedTreeStates = {}
+  persistedSpaceCacheKeys = new Set<string>()
 
   try {
     const savedTreeState = await storage.get()
     if (savedTreeState) {
-      persistedTreeStates = parsePersistedFolderTreeStates(savedTreeState)
+      const parsedStates = parsePersistedFolderTreeStates(savedTreeState)
+
+      if (Object.keys(parsedStates).length > 1 || savedTreeState.includes('"spaces"')) {
+        hydrateLegacyPersistedTreeStates(parsedStates)
+      } else {
+        await hydrateIndexedPersistedTreeStates()
+
+        if (parsedStates[DEFAULT_SPACE_CACHE_KEY]) {
+          persistedTreeStates[DEFAULT_SPACE_CACHE_KEY] = parsedStates[DEFAULT_SPACE_CACHE_KEY]
+        }
+      }
+
       const defaultState = persistedTreeStates[DEFAULT_SPACE_CACHE_KEY]
 
       if (defaultState) {
@@ -746,8 +885,7 @@ export const forceSave = async () => {
 
   const state = folderTreeStore.getState()
   persistFolderTreeState(state)
-  const treeStateJson = JSON.stringify({ spaces: persistedTreeStates })
-  await storage.set(treeStateJson)
+  await savePersistedState(state.activeSpaceCacheKey, getPersistedStateFromFolderTree(state))
 }
 
 /**
@@ -760,6 +898,7 @@ export const cleanup = () => {
   }
   storage = null
   persistedTreeStates = {}
+  persistedSpaceCacheKeys = new Set<string>()
 }
 
 // Hook to use the folder tree store
