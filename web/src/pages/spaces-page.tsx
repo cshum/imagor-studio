@@ -204,7 +204,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                         variant={space.storageMode === 'byob' ? 'outline' : 'secondary'}
                         className={
                           space.storageMode === 'byob'
-                            ? 'cursor-pointer border-amber-500/40 text-amber-600 dark:text-amber-400'
+                            ? 'cursor-pointer border-sky-500/15 bg-sky-500/6 text-sky-700 dark:border-sky-400/15 dark:bg-sky-400/8 dark:text-sky-300'
                             : 'cursor-pointer'
                         }
                       >
