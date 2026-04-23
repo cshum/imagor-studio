@@ -223,6 +223,13 @@ const getPersistedStateForCacheKey = (cacheKey: string): PersistedFolderTreeStat
     homeTitle: 'Home',
   })
 
+const isSpaceReady = (state: FolderTreeState, targetCacheKey: string, spaceKey?: string) =>
+  state.activeSpaceCacheKey === targetCacheKey &&
+  state.isRootFoldersLoaded &&
+  state.isHomeTitleLoaded &&
+  !state.loadingPaths.has('') &&
+  (!spaceKey || !state.resolvingSpaceKeys.has(spaceKey))
+
 const applyToSpaceState = (
   targetCacheKey: string,
   applyToActiveState: () => void,
@@ -653,6 +660,17 @@ const prepareFolderTreeSpace = async (spaceKey?: string) => {
   switchFolderTreeSpace(spaceKey)
 }
 
+const prepareFolderTreeTarget = async (spaceKey?: string) => {
+  await prepareFolderTreeSpace(spaceKey)
+
+  const currentState = folderTreeStore.getState()
+
+  return {
+    currentState,
+    targetCacheKey: getResolvedSpaceCacheKey(currentState, spaceKey),
+  }
+}
+
 /**
  * Debounced save to storage
  */
@@ -754,10 +772,7 @@ export const initializeFolderTreeCache = async (
 
 // Async actions
 export const loadRootFolders = async (spaceKey?: string) => {
-  await prepareFolderTreeSpace(spaceKey)
-
-  const initialState = folderTreeStore.getState()
-  const targetCacheKey = getResolvedSpaceCacheKey(initialState, spaceKey)
+  const { targetCacheKey } = await prepareFolderTreeTarget(spaceKey)
   const requestGeneration = latestRootLoadRequests.begin(targetCacheKey)
 
   try {
@@ -805,10 +820,7 @@ export const loadFolderChildren = async (
   autoExpand: boolean = true,
   spaceKey?: string,
 ) => {
-  await prepareFolderTreeSpace(spaceKey)
-
-  const initialState = folderTreeStore.getState()
-  const targetCacheKey = getResolvedSpaceCacheKey(initialState, spaceKey)
+  const { targetCacheKey } = await prepareFolderTreeTarget(spaceKey)
   const requestKey = `${targetCacheKey}:${path}`
   const requestGeneration = latestFolderChildrenRequests.begin(requestKey)
 
@@ -863,10 +875,7 @@ export const loadFolderChildren = async (
 }
 
 export const loadHomeTitle = async (spaceKey?: string) => {
-  await prepareFolderTreeSpace(spaceKey)
-
-  const initialState = folderTreeStore.getState()
-  const targetCacheKey = getResolvedSpaceCacheKey(initialState, spaceKey)
+  const { targetCacheKey } = await prepareFolderTreeTarget(spaceKey)
   const requestGeneration = latestHomeTitleRequests.begin(targetCacheKey)
 
   const applyHomeTitle = (title: string) => {
@@ -915,18 +924,9 @@ export const loadHomeTitle = async (spaceKey?: string) => {
 }
 
 export const ensureFolderTreeReady = async (spaceKey?: string) => {
-  await prepareFolderTreeSpace(spaceKey)
+  const { currentState, targetCacheKey } = await prepareFolderTreeTarget(spaceKey)
 
-  const currentState = folderTreeStore.getState()
-  const targetCacheKey = getResolvedSpaceCacheKey(currentState, spaceKey)
-
-  if (
-    currentState.activeSpaceCacheKey === targetCacheKey &&
-    currentState.isRootFoldersLoaded &&
-    currentState.isHomeTitleLoaded &&
-    !currentState.loadingPaths.has('') &&
-    (!spaceKey || !currentState.resolvingSpaceKeys.has(spaceKey))
-  ) {
+  if (isSpaceReady(currentState, targetCacheKey, spaceKey)) {
     return
   }
 
@@ -952,14 +952,7 @@ export const ensureFolderTreeReady = async (spaceKey?: string) => {
       await Promise.all(loadOperations)
     }
 
-    await folderTreeStore.waitFor(
-      (state) =>
-        state.activeSpaceCacheKey === targetCacheKey &&
-        state.isRootFoldersLoaded &&
-        state.isHomeTitleLoaded &&
-        !state.loadingPaths.has('') &&
-        (!spaceKey || !state.resolvingSpaceKeys.has(spaceKey)),
-    )
+    await folderTreeStore.waitFor((state) => isSpaceReady(state, targetCacheKey, spaceKey))
   })()
 
   folderTreeReadyPromises.set(targetCacheKey, readyPromise)
