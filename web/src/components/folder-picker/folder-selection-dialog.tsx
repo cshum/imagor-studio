@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useParams } from '@tanstack/react-router'
 import { FolderPlus } from 'lucide-react'
 
 import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-picker-node.tsx'
@@ -14,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
+import { Skeleton } from '@/components/ui/skeleton.tsx'
 import {
   invalidateFolderCache,
   loadFolderChildren,
@@ -58,6 +60,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   isSubmitting = false,
 }) => {
   const { t } = useTranslation()
+  const { spaceKey } = useParams({ strict: false })
   const { homeTitle, rootFolders } = useFolderTree()
 
   // Generate title with item count if provided
@@ -70,7 +73,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   const [localExpandState, setLocalExpandState] = useState<Record<string, boolean>>({})
   const [selectedPath, setSelectedPath] = useState<string | null>(initialSelectedPath)
   const [isLoading, setIsLoading] = useState(false)
-  const [excludePathsSet] = useState(() => new Set(excludePaths))
+  const excludePathsSet = useMemo(() => new Set(excludePaths), [excludePaths])
 
   // Build tree with local expand state overlaid on store data
   const buildTreeWithLocalExpand = useCallback(
@@ -111,35 +114,38 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   }, [])
 
   // Auto-expand folders to reveal the current path
-  const expandToPath = useCallback(async (targetPath: string) => {
-    if (!targetPath) return
+  const expandToPath = useCallback(
+    async (targetPath: string) => {
+      if (!targetPath) return
 
-    // Split path into segments (e.g., "folder1/folder2/folder3" -> ["folder1", "folder2", "folder3"])
-    const segments = targetPath.split('/').filter(Boolean)
+      // Split path into segments (e.g., "folder1/folder2/folder3" -> ["folder1", "folder2", "folder3"])
+      const segments = targetPath.split('/').filter(Boolean)
 
-    // Expand each parent folder sequentially
-    let currentPath = ''
-    const expandStates: Record<string, boolean> = { '': true } // Expand root
+      // Expand each parent folder sequentially
+      let currentPath = ''
+      const expandStates: Record<string, boolean> = { '': true } // Expand root
 
-    for (const segment of segments) {
-      currentPath = currentPath ? `${currentPath}/${segment}` : segment
+      for (const segment of segments) {
+        currentPath = currentPath ? `${currentPath}/${segment}` : segment
 
-      // Load folder children using store
-      try {
-        await loadFolderChildren(currentPath, false) // Don't auto-expand in store
-        expandStates[currentPath] = true
+        // Load folder children using store
+        try {
+          await loadFolderChildren(currentPath, false, spaceKey) // Don't auto-expand in store
+          expandStates[currentPath] = true
 
-        // Small delay to allow state to update
-        await new Promise((resolve) => setTimeout(resolve, 50))
-      } catch (error) {
-        console.error(`Failed to load folder: ${currentPath}`, error)
-        break
+          // Small delay to allow state to update
+          await new Promise((resolve) => setTimeout(resolve, 50))
+        } catch (error) {
+          console.error(`Failed to load folder: ${currentPath}`, error)
+          break
+        }
       }
-    }
 
-    // Update all expand states at once
-    setLocalExpandState((prev) => ({ ...prev, ...expandStates }))
-  }, [])
+      // Update all expand states at once
+      setLocalExpandState((prev) => ({ ...prev, ...expandStates }))
+    },
+    [spaceKey],
+  )
 
   // Handle folder creation - refresh the parent folder in the store
   const handleFolderCreatedCallback = useCallback(
@@ -149,9 +155,13 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
       pathParts.pop() // Remove the new folder name
       const parentPath = pathParts.join('/')
 
-      // Invalidate and reload the parent folder's children in the store
-      invalidateFolderCache(parentPath)
-      await loadFolderChildren(parentPath, false) // Don't auto-expand in store
+      if (parentPath) {
+        // Invalidate and reload the parent folder's children in the store
+        invalidateFolderCache(parentPath)
+        await loadFolderChildren(parentPath, false, spaceKey) // Don't auto-expand in store
+      } else {
+        await loadRootFolders(spaceKey)
+      }
 
       // Expand the parent in local state
       setLocalExpandState((prev) => ({
@@ -165,19 +175,20 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
       // Expand to show the new folder path (in case it's nested)
       await expandToPath(folderPath)
     },
-    [expandToPath],
+    [expandToPath, spaceKey],
   )
 
   // Load root folders when dialog opens
   useEffect(() => {
     if (open) {
+      setLocalExpandState({})
       setSelectedPath(initialSelectedPath)
 
       // Load root folders if not already loaded
       const loadData = async () => {
         setIsLoading(true)
         try {
-          await loadRootFolders()
+          await loadRootFolders(spaceKey)
 
           // Auto-expand to show current path
           if (currentPath) {
@@ -244,8 +255,19 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
         <div>
           <ScrollArea className='border-muted h-96 w-full max-w-[340px] overflow-x-hidden rounded-md border md:max-w-[460px] [&>div>div]:!block [&>div>div]:!min-w-0'>
             {isLoading ? (
-              <div className='flex h-full items-center justify-center'>
-                <div className='text-muted-foreground text-sm'>{t('common.status.loading')}</div>
+              <div className='space-y-2 p-2'>
+                <div className='flex items-center gap-2 px-2 py-1.5'>
+                  <Skeleton className='h-4 w-4 rounded-md' />
+                  <Skeleton className='h-4 flex-1' />
+                </div>
+                <div className='ml-6 space-y-2'>
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className='flex items-center gap-2 px-2 py-1.5'>
+                      <Skeleton className='h-4 w-4 rounded-md' />
+                      <Skeleton className='h-4 flex-1' />
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : tree.length === 0 ? (
               <div className='flex h-full items-center justify-center'>
@@ -261,6 +283,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
                     folder={folder}
                     selectedPath={selectedPath}
                     excludePaths={excludePathsSet}
+                    spaceKey={spaceKey}
                     onSelect={setSelectedPath}
                     onUpdateNode={updateNode}
                   />

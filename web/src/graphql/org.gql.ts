@@ -46,6 +46,7 @@ export const LIST_SPACES = gql(`
 export const GET_SPACE = gql(`
   query GetSpace($key: String!) {
     space(key: $key) {
+      id
       orgId
       key
       name

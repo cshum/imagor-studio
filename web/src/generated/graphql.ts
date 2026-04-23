@@ -870,6 +870,7 @@ export type GetSpaceQuery = {
   __typename?: 'Query'
   space: {
     __typename?: 'Space'
+    id: string
     orgId: string
     key: string
     name: string
@@ -2228,6 +2229,7 @@ export const GetSpaceDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'key' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },

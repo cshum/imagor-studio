@@ -40,13 +40,21 @@ export function FolderPickerNode({
 }: FolderPickerNodeProps) {
   const { t } = useTranslation()
   const isSelected = selectedPath === folder.path
+  const isDescendantOfExcludedPath = (excludedPath: string) => {
+    if (!excludedPath) {
+      return false
+    }
+
+    return folder.path === excludedPath || folder.path.startsWith(`${excludedPath}/`)
+  }
+
   // Check if this folder is excluded or is a subfolder of an excluded folder
   const isDisabled =
     excludePaths.has(folder.path) ||
     Array.from(excludePaths).some((excludedPath) => {
       // Check if current folder is a subfolder of any excluded path
       // e.g., if "folder1/" is excluded, "folder1/subfolder/" should also be disabled
-      return excludedPath && folder.path.startsWith(excludedPath)
+      return isDescendantOfExcludedPath(excludedPath)
     })
   const hasChildren = folder.children && folder.children.length > 0
   // only show arrow if not loaded yet OR has children after loading

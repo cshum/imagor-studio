@@ -121,23 +121,26 @@ export function StorageSection({ space }: StorageSectionProps) {
       <S3RequirementsNote className='mb-4' />
 
       <div>
-        <SettingRow
-          label={t('pages.spaceSettings.storage.bucket')}
-          contentClassName='sm:max-w-md'
-        >
+        <SettingRow label={t('pages.spaceSettings.storage.bucket')} contentClassName='sm:max-w-md'>
           <div className='text-sm font-medium sm:text-right'>
             <code className='font-mono'>{space.bucket}</code>
           </div>
         </SettingRow>
         {space.region && (
-          <SettingRow label={t('pages.spaceSettings.storage.region')} contentClassName='sm:max-w-md'>
+          <SettingRow
+            label={t('pages.spaceSettings.storage.region')}
+            contentClassName='sm:max-w-md'
+          >
             <div className='text-sm font-medium sm:text-right'>
               <code className='font-mono'>{space.region}</code>
             </div>
           </SettingRow>
         )}
         {space.prefix && (
-          <SettingRow label={t('pages.spaceSettings.storage.prefix')} contentClassName='sm:max-w-md'>
+          <SettingRow
+            label={t('pages.spaceSettings.storage.prefix')}
+            contentClassName='sm:max-w-md'
+          >
             <div className='text-sm font-medium sm:text-right'>
               <code className='font-mono'>{space.prefix}</code>
             </div>

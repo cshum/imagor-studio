@@ -30,6 +30,8 @@ import {
   invalidateFolderCache,
   loadFolderChildren,
   loadHomeTitle,
+  loadRootFolders,
+  setCurrentPath,
   useFolderTree,
 } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
@@ -55,7 +57,14 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState } = useAuth()
-  const { rootFolders, loadingPaths, homeTitle } = useFolderTree()
+  const {
+    rootFolders,
+    loadingPaths,
+    homeTitle,
+    isRootFoldersLoaded,
+    isHomeTitleLoaded,
+    resolvingSpaceKeys,
+  } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
   const routerState = useRouterState()
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
@@ -109,11 +118,15 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     })
 
   const isLoadingRoot = loadingPaths.has('')
+  const isResolvingSpace = spaceKey ? resolvingSpaceKeys.has(spaceKey) : false
+  const isInitializingTree = isResolvingSpace || !isRootFoldersLoaded || !isHomeTitleLoaded
+  const shouldShowRootLoadingSkeleton = isLoadingRoot && !isRootFoldersLoaded
   const isOnHomePage = spaceKey
     ? routerState.location.pathname === `/spaces/${spaceKey}`
     : routerState.location.pathname === '/'
 
   useEffect(() => {
+    void loadRootFolders(spaceKey)
     void loadHomeTitle(spaceKey)
   }, [spaceKey])
 
@@ -174,6 +187,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     onRename: handleRenameFromMenu,
     onDelete: handleDeleteFromMenu,
     onMove: handleMoveFromMenu,
+    spaceKey,
   })
 
   // Use the shared folder context menu hook for dropdown menus (three-dots)
@@ -189,6 +203,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     onDelete: handleDeleteFromMenu,
     onMove: handleMoveFromMenu,
     useDropdownItems: true,
+    spaceKey,
   })
 
   // Adapter function to match FolderTreeNode's expected signature
@@ -264,9 +279,19 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     pathParts.pop() // Remove the new folder name
     const parentPath = pathParts.join('/')
 
-    // Invalidate and reload the parent folder's children in the store
-    invalidateFolderCache(parentPath)
-    await loadFolderChildren(parentPath, true) // Auto-expand to show new folder
+    if (parentPath) {
+      // Invalidate and reload the parent folder's children in the store
+      invalidateFolderCache(parentPath)
+      await loadFolderChildren(parentPath, true, spaceKey) // Auto-expand to show new folder
+    } else {
+      await loadRootFolders(spaceKey)
+    }
+
+    setCurrentPath(folderPath, spaceKey)
+    navigate({
+      to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
+      params: spaceKey ? { spaceKey, galleryKey: folderPath } : { galleryKey: folderPath },
+    })
   }
 
   return (
@@ -276,62 +301,73 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
           <SidebarGroupLabel>{t('components.folderTree.folders')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu onDragLeave={handleContainerDragLeave}>
-              {/* Home Link as first item - droppable for moving items to root */}
-
-              <SidebarMenuItem
-                className={dragOverTarget === '' ? 'relative z-10' : ''}
-                onDragOver={(e) => handleDragOver(e, '')}
-                onDragEnter={(e) => handleDragEnter(e, '')}
-                onDragLeave={(e) => handleDragLeave(e, '')}
-                onDrop={(e) => handleDrop(e, '')}
-              >
-                <SidebarMenuButton
-                  asChild
-                  isActive={isOnHomePage}
-                  className={
-                    dragOverTarget === '' ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950' : ''
-                  }
-                >
-                  <Link
-                    to={spaceKey ? '/spaces/$spaceKey' : '/'}
-                    params={spaceKey ? { spaceKey } : undefined}
-                    onClick={handleHomeClick}
-                  >
-                    <Home className='h-4 w-4' />
-                    <span>{homeTitle}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {isLoadingRoot ? (
-                // Loading skeleton
-                Array.from({ length: 3 }).map((_, index) => (
+              {isInitializingTree ? (
+                Array.from({ length: 4 }).map((_, index) => (
                   <div key={index} className='flex h-8 items-center gap-2 rounded-md px-2'>
                     <Skeleton className='h-4 w-4 rounded-md' />
                     <Skeleton className='h-4 flex-1' />
                   </div>
                 ))
-              ) : rootFolders.length === 0 ? (
-                // Empty state (but still show Home link above)
-                <div className='text-muted-foreground p-4 text-center text-sm'>
-                  {t('components.folderTree.noFoldersFound')}
-                </div>
               ) : (
-                // Render folder tree with context menu
-                <FolderContextMenu renderMenuItems={renderContextMenuItems}>
-                  {rootFolders.map((folder, index) => (
-                    <FolderTreeNode
-                      key={`${folder.path}-${index}`}
-                      folder={folder}
-                      renderMenuItems={renderDropdownMenuItems}
-                      onDragOver={handleDragOver}
-                      onDragEnter={handleDragEnter}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      dragOverTarget={dragOverTarget}
-                    />
-                  ))}
-                </FolderContextMenu>
+                <>
+                  {/* Home Link as first item - droppable for moving items to root */}
+                  <SidebarMenuItem
+                    className={dragOverTarget === '' ? 'relative z-10' : ''}
+                    onDragOver={(e) => handleDragOver(e, '')}
+                    onDragEnter={(e) => handleDragEnter(e, '')}
+                    onDragLeave={(e) => handleDragLeave(e, '')}
+                    onDrop={(e) => handleDrop(e, '')}
+                  >
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isOnHomePage}
+                      className={
+                        dragOverTarget === ''
+                          ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950'
+                          : ''
+                      }
+                    >
+                      <Link
+                        to={spaceKey ? '/spaces/$spaceKey' : '/'}
+                        params={spaceKey ? { spaceKey } : undefined}
+                        onClick={handleHomeClick}
+                      >
+                        <Home className='h-4 w-4' />
+                        <span>{homeTitle}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  {shouldShowRootLoadingSkeleton ? (
+                    Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className='flex h-8 items-center gap-2 rounded-md px-2'>
+                        <Skeleton className='h-4 w-4 rounded-md' />
+                        <Skeleton className='h-4 flex-1' />
+                      </div>
+                    ))
+                  ) : rootFolders.length === 0 ? (
+                    // Empty state (but still show Home link above)
+                    <div className='text-muted-foreground p-4 text-center text-sm'>
+                      {t('components.folderTree.noFoldersFound')}
+                    </div>
+                  ) : (
+                    // Render folder tree with context menu
+                    <FolderContextMenu renderMenuItems={renderContextMenuItems}>
+                      {rootFolders.map((folder, index) => (
+                        <FolderTreeNode
+                          key={`${folder.path}-${index}`}
+                          folder={folder}
+                          renderMenuItems={renderDropdownMenuItems}
+                          onDragOver={handleDragOver}
+                          onDragEnter={handleDragEnter}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
+                          dragOverTarget={dragOverTarget}
+                        />
+                      ))}
+                    </FolderContextMenu>
+                  )}
+                </>
               )}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -380,6 +416,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={createFolderPath}
+        spaceKey={spaceKey}
         onFolderCreated={handleFolderCreated}
       />
 

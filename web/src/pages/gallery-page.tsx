@@ -460,7 +460,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     })
 
   useEffect(() => {
-    setCurrentPath(galleryKey)
+    setCurrentPath(galleryKey, spaceKey)
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
     setFilterText('')
     // Initialize selection context for this gallery (clears selection)
@@ -473,7 +473,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     return () => {
       registerDropHandler(null)
     }
-  }, [galleryKey])
+  }, [galleryKey, spaceKey])
 
   // Selection handlers
   const handleImageSelectionToggle = (imageKey: string, index: number) => {
