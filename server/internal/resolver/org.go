@@ -641,21 +641,7 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 	newKey := strings.TrimSpace(candidate.Key)
 	keyChanged := newKey != "" && newKey != oldKey
 	if keyChanged {
-		if r.spaceInviteStore != nil {
-			if err := r.spaceInviteStore.RenameSpaceKey(ctx, existing.OrgID, oldKey, newKey); err != nil {
-				return nil, fmt.Errorf("failed to update pending invitations for renamed space: %w", err)
-			}
-		}
 		if err := r.spaceStore.RenameKey(ctx, oldKey, newKey); err != nil {
-			if r.spaceInviteStore != nil {
-				if rollbackErr := r.spaceInviteStore.RenameSpaceKey(ctx, existing.OrgID, newKey, oldKey); rollbackErr != nil {
-					r.logger.Warn("UpdateSpace: failed to roll back invitation space key rename",
-						zap.String("oldKey", oldKey),
-						zap.String("newKey", newKey),
-						zap.Error(rollbackErr),
-					)
-				}
-			}
 			return nil, err
 		}
 	}
@@ -799,7 +785,7 @@ func (r *queryResolver) SpaceInvitations(ctx context.Context, spaceKey string) (
 	if !permissions.CanManage {
 		return nil, fmt.Errorf("forbidden: space manager access required")
 	}
-	invitations, err := r.spaceInviteStore.ListPendingBySpace(ctx, space.OrgID, spaceKey)
+	invitations, err := r.spaceInviteStore.ListPendingBySpace(ctx, space.OrgID, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list space invitations: %w", err)
 	}
@@ -1135,7 +1121,7 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 	if claimsErr != nil {
 		return nil, claimsErr
 	}
-	invitation, err := r.spaceInviteStore.CreateOrRefreshPending(ctx, s.OrgID, spaceKey, normalizedEmail, normalizedRole, claims.UserID, time.Now().UTC().Add(7*24*time.Hour))
+	invitation, err := r.spaceInviteStore.CreateOrRefreshPending(ctx, s.OrgID, s.ID, normalizedEmail, normalizedRole, claims.UserID, time.Now().UTC().Add(7*24*time.Hour))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create invitation: %w", err)
 	}

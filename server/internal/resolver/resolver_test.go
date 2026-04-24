@@ -495,16 +495,16 @@ type MockSpaceInviteStore struct {
 	mock.Mock
 }
 
-func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*space.Invitation, error) {
-	args := m.Called(ctx, orgID, spaceKey, email, role, invitedByUserID, expiresAt)
+func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceID, email, role, invitedByUserID string, expiresAt time.Time) (*space.Invitation, error) {
+	args := m.Called(ctx, orgID, spaceID, email, role, invitedByUserID, expiresAt)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*space.Invitation), args.Error(1)
 }
 
-func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*space.Invitation, error) {
-	args := m.Called(ctx, orgID, spaceKey)
+func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceID string) ([]*space.Invitation, error) {
+	args := m.Called(ctx, orgID, spaceID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -521,11 +521,6 @@ func (m *MockSpaceInviteStore) GetPendingByToken(ctx context.Context, token stri
 
 func (m *MockSpaceInviteStore) MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error {
 	args := m.Called(ctx, id, acceptedAt)
-	return args.Error(0)
-}
-
-func (m *MockSpaceInviteStore) RenameSpaceKey(ctx context.Context, orgID, oldSpaceKey, newSpaceKey string) error {
-	args := m.Called(ctx, orgID, oldSpaceKey, newSpaceKey)
 	return args.Error(0)
 }
 

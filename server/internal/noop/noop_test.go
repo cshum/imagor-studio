@@ -86,12 +86,12 @@ func TestNoopSpaceInviteStore_AllMethodsReturnError(t *testing.T) {
 	s := noop.NewSpaceInviteStore()
 
 	t.Run("CreateOrRefreshPending", func(t *testing.T) {
-		_, err := s.CreateOrRefreshPending(ctx, "org", "space", "user@example.com", "member", "user-1", time.Now())
+		_, err := s.CreateOrRefreshPending(ctx, "org", "space-id", "user@example.com", "member", "user-1", time.Now())
 		require.Error(t, err)
 	})
 
 	t.Run("ListPendingBySpace", func(t *testing.T) {
-		_, err := s.ListPendingBySpace(ctx, "org", "space")
+		_, err := s.ListPendingBySpace(ctx, "org", "space-id")
 		require.Error(t, err)
 	})
 
@@ -105,10 +105,6 @@ func TestNoopSpaceInviteStore_AllMethodsReturnError(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("RenameSpaceKey", func(t *testing.T) {
-		err := s.RenameSpaceKey(ctx, "org", "old", "new")
-		require.Error(t, err)
-	})
 }
 
 func TestNoopInviteSender_ReturnsError(t *testing.T) {

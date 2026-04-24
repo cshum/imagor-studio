@@ -771,7 +771,6 @@ func TestUpdateSpace_RenamesKeyAndMigratesDependencies(t *testing.T) {
 	updated.Name = "Renamed Space"
 
 	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
-	inviteStore.On("RenameSpaceKey", mock.Anything, "org-1", "acme", "acme-renamed").Return(nil).Once()
 	spaceStore.On("RenameKey", mock.Anything, "acme", "acme-renamed").Return(nil).Once()
 	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme-renamed" && s.Name == "Renamed Space"
@@ -786,7 +785,6 @@ func TestUpdateSpace_RenamesKeyAndMigratesDependencies(t *testing.T) {
 	assert.Equal(t, "acme-renamed", result.Key)
 	assert.Equal(t, "Renamed Space", result.Name)
 	spaceStore.AssertExpectations(t)
-	inviteStore.AssertExpectations(t)
 }
 
 // ---------- DeleteSpace ------------------------------------------------------
@@ -1062,7 +1060,7 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 	invitation := &space.Invitation{
 		ID:        "invite-1",
 		OrgID:     "org-1",
-		SpaceKey:  "acme",
+		SpaceID:   "space-acme",
 		Email:     "new@example.com",
 		Role:      "member",
 		Token:     "tok-123",
@@ -1079,7 +1077,7 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 		"CreateOrRefreshPending",
 		mock.Anything,
 		"org-1",
-		"acme",
+		"space-acme",
 		"new@example.com",
 		"member",
 		"user-1",

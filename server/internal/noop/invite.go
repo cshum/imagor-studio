@@ -31,10 +31,6 @@ func (n *SpaceInviteStore) MarkAccepted(_ context.Context, _ string, _ time.Time
 	return ErrCloudDisabled
 }
 
-func (n *SpaceInviteStore) RenameSpaceKey(_ context.Context, _, _, _ string) error {
-	return ErrCloudDisabled
-}
-
 type InviteSender struct{}
 
 var _ space.InviteSender = (*InviteSender)(nil)

@@ -69,7 +69,7 @@ type SpaceStore interface {
 type Invitation struct {
 	ID              string
 	OrgID           string
-	SpaceKey        string
+	SpaceID         string
 	Email           string
 	Role            string
 	Token           string
@@ -81,11 +81,10 @@ type Invitation struct {
 }
 
 type SpaceInviteStore interface {
-	CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*Invitation, error)
-	ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*Invitation, error)
+	CreateOrRefreshPending(ctx context.Context, orgID, spaceID, email, role, invitedByUserID string, expiresAt time.Time) (*Invitation, error)
+	ListPendingBySpace(ctx context.Context, orgID, spaceID string) ([]*Invitation, error)
 	GetPendingByToken(ctx context.Context, token string) (*Invitation, error)
 	MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error
-	RenameSpaceKey(ctx context.Context, orgID, oldSpaceKey, newSpaceKey string) error
 }
 
 type EmailParams struct {
