@@ -9,7 +9,6 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import { getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
@@ -49,6 +48,11 @@ import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { rootPageLoader } from '@/loaders/root-page-loader'
+import {
+  spaceGeneralSectionLoader,
+  spaceMembersSectionLoader,
+  spaceSecuritySectionLoader,
+} from '@/loaders/space-settings-loader'
 import { AccountProfileRoutePage } from '@/pages/account-profile-route-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { AdminGeneralSection } from '@/pages/admin/general'
@@ -536,19 +540,7 @@ const spaceSettingsIndexRoute = createRoute({
 const generalSectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/general',
-  loader: async ({ context }) => {
-    try {
-      const { space } = context
-      const entries = await getSpaceRegistry(space.id)
-      const map: Record<string, string> = {}
-      entries.forEach((e) => {
-        map[e.key] = e.value
-      })
-      return map
-    } catch {
-      return {} as Record<string, string>
-    }
-  },
+  loader: spaceGeneralSectionLoader,
   shouldReload: false,
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useRouteContext()
@@ -571,19 +563,7 @@ const storageSectionRoute = createRoute({
 const securitySectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/imagor',
-  loader: async ({ context }) => {
-    try {
-      const { space } = context
-      const entries = await getSpaceRegistry(space.id)
-      const map: Record<string, string> = {}
-      entries.forEach((e) => {
-        map[e.key] = e.value
-      })
-      return map
-    } catch {
-      return {} as Record<string, string>
-    }
-  },
+  loader: spaceSecuritySectionLoader,
   shouldReload: false,
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useRouteContext()
@@ -605,18 +585,7 @@ const galleryRedirectRoute = createRoute({
 const membersSectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/members',
-  loader: async ({ context }) => {
-    try {
-      const { space } = context
-      const [spaceMembers, invitations] = await Promise.all([
-        listSpaceMembers(space.id),
-        listSpaceInvitations(space.id),
-      ])
-      return { spaceMembers, invitations }
-    } catch {
-      return { spaceMembers: [], invitations: [] }
-    }
-  },
+  loader: spaceMembersSectionLoader,
   shouldReload: false,
   component: () => {
     const { spaceMembers, invitations } = membersSectionRoute.useLoaderData()
