@@ -41,12 +41,27 @@ import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 
 import type { SpaceSettingsData } from './shared'
 
+const CUSTOM_DOMAIN_FEEDBACK_REQUESTED_AT_KEY = 'feedback.custom_domain_interest_at'
+const CUSTOM_DOMAIN_FEEDBACK_SOURCE_KEY = 'feedback.custom_domain_interest_source'
+
+const formatFeedbackDate = (value?: string) => {
+  if (!value) {
+    return null
+  }
+
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return null
+  }
+
+  return parsed.toLocaleDateString()
+}
+
 // ── Schema ─────────────────────────────────────────────────────────────────
 
 const generalSchema = z.object({
   key: z.string().min(1).max(64),
   name: z.string().min(1).max(255),
-  customDomain: z.string().optional(),
 })
 
 const experienceSchema = z.object({
@@ -95,7 +110,6 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     defaultValues: {
       key: space.key ?? '',
       name: space.name ?? '',
-      customDomain: space.customDomain ?? '',
     },
   })
   const experienceForm = useForm<ExperienceFormData>({
@@ -104,6 +118,11 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
   })
   const [isSavingIdentity, setIsSavingIdentity] = useState(false)
   const [isSavingExperience, setIsSavingExperience] = useState(false)
+  const [isSavingCustomDomainFeedback, setIsSavingCustomDomainFeedback] = useState(false)
+  const customDomainFeedbackRequestedAt =
+    initialValues[CUSTOM_DOMAIN_FEEDBACK_REQUESTED_AT_KEY] ?? ''
+  const formattedCustomDomainFeedbackDate = formatFeedbackDate(customDomainFeedbackRequestedAt)
+  const defaultProcessingHost = `${space.key}.imagor.app`
 
   const handleIdentitySave = async (values: IdentityFormData) => {
     setIsSavingIdentity(true)
@@ -135,7 +154,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
           key: nextKey,
           name: values.name,
           storageMode: null,
-          customDomain: values.customDomain ?? null,
+          customDomain: null,
           storageType: null,
           bucket: null,
           region: null,
@@ -211,6 +230,26 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     }
   }
 
+  const handleCustomDomainFeedback = async () => {
+    setIsSavingCustomDomainFeedback(true)
+    try {
+      await setSpaceRegistryObject(space.id, {
+        [CUSTOM_DOMAIN_FEEDBACK_REQUESTED_AT_KEY]: new Date().toISOString(),
+        [CUSTOM_DOMAIN_FEEDBACK_SOURCE_KEY]: 'space-settings-general',
+      })
+      toast.success(
+        t('pages.spaceSettings.general.customDomainFeedbackSaved', {
+          defaultValue: 'Thanks. We saved your interest for the custom domain beta.',
+        }),
+      )
+      await router.invalidate()
+    } catch (err) {
+      toast.error(extractErrorInfo(err).message)
+    } finally {
+      setIsSavingCustomDomainFeedback(false)
+    }
+  }
+
   const handleDeleteSpace = async () => {
     setIsDeleting(true)
     try {
@@ -273,59 +312,82 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={identityForm.control}
-                name='customDomain'
-                render={({ field }) => (
-                  <FormItem>
-                    {(() => {
-                      const customDomain = field.value?.trim() ?? ''
-                      const targetHost = `${space.key}.imagor.app`
+              <SettingRow
+                label={t('pages.spaceSettings.general.customDomain')}
+                description={t('pages.spaceSettings.general.customDomainDescription', {
+                  spaceKey: space.key,
+                  defaultValue: 'Use your own branded hostname for image delivery.',
+                })}
+                labelClassName={LABEL_WIDTH_CLASS}
+                contentClassName={FIELD_WIDTH_CLASS}
+                last
+              >
+                <div className='space-y-3'>
+                  <div className='bg-muted/30 rounded-md border px-3 py-2'>
+                    <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+                      {space.customDomainVerified && space.customDomain
+                        ? t('pages.spaceSettings.general.customDomainCurrentLabel', {
+                            defaultValue: 'Current hostname',
+                          })
+                        : t('pages.spaceSettings.general.customDomainDefaultLabel', {
+                            defaultValue: 'Default host',
+                          })}
+                    </p>
+                    <p className='mt-1 font-mono text-sm'>
+                      {space.customDomainVerified && space.customDomain
+                        ? space.customDomain
+                        : defaultProcessingHost}
+                    </p>
+                    <p className='text-muted-foreground mt-1 text-sm'>
+                      {space.customDomainVerified && space.customDomain
+                        ? t('pages.spaceSettings.general.customDomainActiveDescription', {
+                            defaultValue: 'This hostname is active for generated image URLs.',
+                          })
+                        : t('pages.spaceSettings.general.customDomainComingSoon', {
+                            defaultValue: 'Coming soon on Team plans.',
+                          })}
+                    </p>
+                  </div>
 
-                      return (
-                    <SettingRow
-                      label={t('pages.spaceSettings.general.customDomain')}
-                      description={t('pages.spaceSettings.general.customDomainDescription', {
-                        spaceKey: space.key,
-                      })}
-                      labelClassName={LABEL_WIDTH_CLASS}
-                      contentClassName={FIELD_WIDTH_CLASS}
-                      last
-                    >
-                      <FormControl>
-                        <Input
-                          placeholder={`${space.key}.imagor.app`}
-                          {...field}
-                          disabled={isSavingIdentity}
-                        />
-                      </FormControl>
-                      <div className='mt-2 space-y-1 text-sm text-muted-foreground'>
-                        <p>
-                          {t('pages.spaceSettings.general.customDomainDnsHint', {
-                            defaultValue: 'Point {{customDomain}} to {{targetHost}} with a CNAME record.',
-                            customDomain: customDomain || 'your custom hostname',
-                            targetHost,
+                  {!space.customDomainVerified && (
+                    <div className='flex items-start justify-between gap-3 rounded-md border px-3 py-3'>
+                      <div className='min-w-0'>
+                        <p className='text-sm font-medium'>
+                          {t('pages.spaceSettings.general.customDomainFeedbackTitle', {
+                            defaultValue: 'Help shape custom domains',
                           })}
                         </p>
-                        <p>
-                          {space.customDomainVerified
-                            ? t('pages.spaceSettings.general.customDomainVerifiedHint', {
-                                defaultValue:
-                                  'This domain is verified and active for generated imagor URLs.',
+                        <p className='text-muted-foreground mt-1 text-sm'>
+                          {customDomainFeedbackRequestedAt
+                            ? t('pages.spaceSettings.general.customDomainFeedbackRequested', {
+                                defaultValue: 'Beta interest recorded{{dateSuffix}}.',
+                                dateSuffix: formattedCustomDomainFeedbackDate
+                                  ? ` on ${formattedCustomDomainFeedbackDate}`
+                                  : '',
                               })
-                            : t('pages.spaceSettings.general.customDomainPendingHint', {
-                                defaultValue:
-                                  'This domain stays inactive until DNS resolves to the default host and TLS is provisioned.',
+                            : t('pages.spaceSettings.general.customDomainFeedbackDescription', {
+                                defaultValue: 'Tell us if branded delivery matters for this space.',
                               })}
                         </p>
                       </div>
-                      <FormMessage className='mt-1.5' />
-                    </SettingRow>
-                      )
-                    })()}
-                  </FormItem>
-                )}
-              />
+                      <ButtonWithLoading
+                        type='button'
+                        variant='outline'
+                        isLoading={isSavingCustomDomainFeedback}
+                        onClick={handleCustomDomainFeedback}
+                      >
+                        {customDomainFeedbackRequestedAt
+                          ? t('pages.spaceSettings.general.customDomainFeedbackUpdateButton', {
+                              defaultValue: 'Update interest',
+                            })
+                          : t('pages.spaceSettings.general.customDomainFeedbackButton', {
+                              defaultValue: 'Join beta',
+                            })}
+                      </ButtonWithLoading>
+                    </div>
+                  )}
+                </div>
+              </SettingRow>
 
               <div className='mt-2 flex justify-end pt-2'>
                 <ButtonWithLoading type='submit' isLoading={isSavingIdentity}>

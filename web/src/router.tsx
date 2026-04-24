@@ -622,7 +622,10 @@ const accountProfileRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/profile',
   loader: profileLoader,
-  component: AccountProfileRoutePage,
+  component: () => {
+    const loaderData = accountProfileRoute.useLoaderData()
+    return <AccountProfileRoutePage loaderData={loaderData} />
+  },
 })
 
 const accountLayoutRoute = createRoute({
