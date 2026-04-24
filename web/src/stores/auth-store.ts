@@ -6,6 +6,7 @@ import { createStore } from '@/lib/create-store.ts'
 import { getToken, removeToken, setToken } from '@/lib/token'
 
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
 
 export type UserProfile = MeQuery['me']
 
@@ -27,10 +28,28 @@ const initialState: Auth = {
   accessToken: null,
   profile: null,
   isFirstRun: null,
-  multiTenant: false,
+  multiTenant: isMultiTenantMode,
   error: null,
   isEmbedded: false,
   pathPrefix: '',
+}
+
+function getPublicSpaceKeyFromPath(pathname: string): string | undefined {
+  const match = pathname.match(/^\/spaces\/([^/]+)/)
+  if (!match) {
+    return undefined
+  }
+
+  const [, encodedSpaceKey] = match
+  if (!encodedSpaceKey) {
+    return undefined
+  }
+
+  try {
+    return decodeURIComponent(encodedSpaceKey)
+  } catch {
+    return encodedSpaceKey
+  }
 }
 
 export type AuthAction =
@@ -107,7 +126,7 @@ function reducer(state: Auth, action: AuthAction): Auth {
       return {
         ...state,
         isFirstRun: action.payload.isFirstRun,
-        multiTenant: action.payload.multiTenant ?? state.multiTenant,
+        multiTenant: isMultiTenantMode || action.payload.multiTenant === true,
       }
 
     case 'CLEAR_ERROR':
@@ -126,7 +145,10 @@ export const authStore = createStore(initialState, reducer)
 /**
  * Initialize auth state - handles both normal and embedded modes
  */
-export const initAuth = async (accessToken?: string): Promise<Auth> => {
+export const initAuth = async (
+  accessToken?: string,
+  pathname = window.location.pathname,
+): Promise<Auth> => {
   // In embedded mode, handle embedded token from URL
   if (isEmbeddedMode) {
     try {
@@ -152,7 +174,8 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
 
     if (currentAccessToken) {
       // Run token validation and first-run check in parallel — zero extra latency.
-      // checkFirstRun populates multiTenant regardless of which auth path we take.
+      // Multi-tenant mode can be forced by env for SaaS builds, or discovered
+      // from the backend during local/private development against cloud APIs.
       const [profile, firstRunResponse] = await Promise.all([
         getCurrentUser(currentAccessToken),
         checkFirstRun().catch(() => null),
@@ -188,7 +211,7 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
     // If not first run and no token, try guest login
     if (!isFirstRun) {
       try {
-        const guestResponse = await guestLogin()
+        const guestResponse = await guestLogin(getPublicSpaceKeyFromPath(pathname))
         const profile = await getCurrentUser(guestResponse.token)
         return authStore.dispatch({
           type: 'INIT',

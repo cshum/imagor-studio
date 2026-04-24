@@ -2,6 +2,9 @@ package httphandler
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +15,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"go.uber.org/zap"
@@ -21,6 +25,7 @@ type AuthHandler struct {
 	tokenManager  *auth.TokenManager
 	userStore     userstore.Store
 	orgStore      org.OrgStore
+	spaceStore    space.SpaceStore
 	registryStore registrystore.Store
 	logger        *zap.Logger
 	embeddedMode  bool
@@ -30,6 +35,11 @@ type AuthHandler struct {
 type AuthHandlerConfig struct {
 	EmbeddedMode bool
 	MultiTenant  bool
+	SpaceStore   space.SpaceStore
+}
+
+type GuestLoginRequest struct {
+	SpaceKey string `json:"spaceKey"`
 }
 
 func NewAuthHandler(
@@ -44,6 +54,7 @@ func NewAuthHandler(
 		tokenManager:  tokenManager,
 		userStore:     userStore,
 		orgStore:      orgStore,
+		spaceStore:    cfg.SpaceStore,
 		registryStore: registryStore,
 		logger:        logger,
 		embeddedMode:  cfg.EmbeddedMode,
@@ -152,20 +163,6 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		// Populate default app settings for first admin
 		defaultEntries := []*registrystore.Registry{
 			{
-				Key:   "config.app_image_extensions",
-				Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw",
-			},
-			{
-				Key:         "config.app_video_extensions",
-				Value:       ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg",
-				IsEncrypted: false,
-			},
-			{
-				Key:         "config.app_show_hidden",
-				Value:       "false",
-				IsEncrypted: false,
-			},
-			{
 				Key:         "config.app_default_language",
 				Value:       defaultLanguage,
 				IsEncrypted: false,
@@ -264,25 +261,19 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 
 func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
-		// Check if guest mode is enabled via system metadata
-		// Try new format first: config.allow_guest_mode
-		guestModeMetadata, err := h.registryStore.Get(r.Context(), registrystore.SystemOwnerID, "config.allow_guest_mode")
-		if err != nil {
-			h.logger.Error("Failed to check guest mode setting", zap.Error(err))
-			return apperror.InternalServerError("Failed to check system configuration")
-		}
-
-		// If new format not found, try old format: auth.enableGuestMode
-		if guestModeMetadata == nil {
-			guestModeMetadata, err = h.registryStore.Get(r.Context(), registrystore.SystemOwnerID, "auth.enableGuestMode")
-			if err != nil {
-				h.logger.Error("Failed to check legacy guest mode setting", zap.Error(err))
-				return apperror.InternalServerError("Failed to check system configuration")
+		var req GuestLoginRequest
+		if r.Body != nil {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil && !errors.Is(err, io.EOF) {
+				return apperror.BadRequest("Invalid request body", map[string]interface{}{"error": err.Error()})
 			}
 		}
 
-		// If guest mode is not set or not "true", block guest login
-		if guestModeMetadata == nil || guestModeMetadata.Value != "true" {
+		allowed, err := h.isGuestLoginAllowed(r.Context(), strings.TrimSpace(req.SpaceKey))
+		if err != nil {
+			return err
+		}
+
+		if !allowed {
 			return apperror.Forbidden("Guest mode is not enabled")
 		}
 
@@ -308,6 +299,47 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 		h.logger.Info("Guest login successful", zap.String("guestID", guestID))
 		return WriteSuccess(w, response)
 	})
+}
+
+func (h *AuthHandler) isGuestLoginAllowed(ctx context.Context, spaceKey string) (bool, error) {
+	guestModeMetadata, err := h.registryStore.Get(ctx, registrystore.SystemOwnerID, "config.allow_guest_mode")
+	if err != nil {
+		h.logger.Error("Failed to check guest mode setting", zap.Error(err))
+		return false, apperror.InternalServerError("Failed to check system configuration")
+	}
+
+	if guestModeMetadata == nil {
+		guestModeMetadata, err = h.registryStore.Get(ctx, registrystore.SystemOwnerID, "auth.enableGuestMode")
+		if err != nil {
+			h.logger.Error("Failed to check legacy guest mode setting", zap.Error(err))
+			return false, apperror.InternalServerError("Failed to check system configuration")
+		}
+	}
+
+	if guestModeMetadata != nil && guestModeMetadata.Value == "true" {
+		return true, nil
+	}
+
+	if spaceKey == "" || h.spaceStore == nil || h.registryStore == nil {
+		return false, nil
+	}
+
+	spaceRecord, err := h.spaceStore.Get(ctx, spaceKey)
+	if err != nil {
+		h.logger.Error("Failed to load public space", zap.String("spaceKey", spaceKey), zap.Error(err))
+		return false, apperror.InternalServerError("Failed to check space configuration")
+	}
+	if spaceRecord == nil {
+		return false, nil
+	}
+
+	publicAccess, err := h.registryStore.Get(ctx, registrystore.SpaceOwnerID(spaceRecord.ID), "config.allow_guest_mode")
+	if err != nil {
+		h.logger.Error("Failed to check space public access", zap.String("spaceKey", spaceKey), zap.Error(err))
+		return false, apperror.InternalServerError("Failed to check space configuration")
+	}
+
+	return publicAccess != nil && publicAccess.Value == "true", nil
 }
 
 func (h *AuthHandler) RefreshToken() http.HandlerFunc {

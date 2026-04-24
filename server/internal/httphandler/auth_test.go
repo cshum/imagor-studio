@@ -16,6 +16,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -83,6 +84,43 @@ func (n *nilOrgStore) RemoveMember(_ context.Context, _, _ string) error {
 func (n *nilOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
 	return nil
 }
+
+type stubSpaceStore struct {
+	spaceByKey map[string]*space.Space
+	err        error
+}
+
+func (s *stubSpaceStore) Create(_ context.Context, _ *space.Space) error { return nil }
+func (s *stubSpaceStore) RenameKey(_ context.Context, _, _ string) error { return nil }
+func (s *stubSpaceStore) Upsert(_ context.Context, _ *space.Space) error { return nil }
+func (s *stubSpaceStore) SoftDelete(_ context.Context, _ string) error   { return nil }
+func (s *stubSpaceStore) Get(_ context.Context, key string) (*space.Space, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	if s.spaceByKey == nil {
+		return nil, nil
+	}
+	return s.spaceByKey[key], nil
+}
+func (s *stubSpaceStore) List(_ context.Context) ([]*space.Space, error) { return nil, nil }
+func (s *stubSpaceStore) ListByOrgID(_ context.Context, _ string) ([]*space.Space, error) {
+	return nil, nil
+}
+func (s *stubSpaceStore) ListByMemberUserID(_ context.Context, _ string) ([]*space.Space, error) {
+	return nil, nil
+}
+func (s *stubSpaceStore) Delta(_ context.Context, _ time.Time) (*space.DeltaResult, error) {
+	return nil, nil
+}
+func (s *stubSpaceStore) KeyExists(_ context.Context, _ string) (bool, error) { return false, nil }
+func (s *stubSpaceStore) ListMembers(_ context.Context, _ string) ([]*space.SpaceMemberView, error) {
+	return nil, nil
+}
+func (s *stubSpaceStore) AddMember(_ context.Context, _, _, _ string) error        { return nil }
+func (s *stubSpaceStore) RemoveMember(_ context.Context, _, _ string) error        { return nil }
+func (s *stubSpaceStore) UpdateMemberRole(_ context.Context, _, _, _ string) error { return nil }
+func (s *stubSpaceStore) HasMember(_ context.Context, _, _ string) (bool, error)   { return false, nil }
 
 type MockUserStore struct {
 	mock.Mock
@@ -774,13 +812,16 @@ func TestGuestLogin(t *testing.T) {
 
 	tests := []struct {
 		name           string
+		requestBody    string
+		spaceStore     space.SpaceStore
 		setupMocks     func()
 		expectedStatus int
 		expectError    bool
 		errorCode      string
 	}{
 		{
-			name: "Guest login enabled",
+			name:        "Guest login enabled",
+			requestBody: "",
 			setupMocks: func() {
 				mockRegistryStore.On("Get", mock.Anything, registrystore.SystemOwnerID, "config.allow_guest_mode").Return(&registrystore.Registry{
 					Key:   "config.allow_guest_mode",
@@ -791,7 +832,8 @@ func TestGuestLogin(t *testing.T) {
 			expectError:    false,
 		},
 		{
-			name: "Guest login disabled",
+			name:        "Guest login disabled",
+			requestBody: "",
 			setupMocks: func() {
 				mockRegistryStore.On("Get", mock.Anything, registrystore.SystemOwnerID, "config.allow_guest_mode").Return(&registrystore.Registry{
 					Key:   "config.allow_guest_mode",
@@ -803,7 +845,8 @@ func TestGuestLogin(t *testing.T) {
 			errorCode:      "FORBIDDEN",
 		},
 		{
-			name: "Guest mode setting not found - fallback to old key",
+			name:        "Guest mode setting not found - fallback to old key",
+			requestBody: "",
 			setupMocks: func() {
 				// First call for new key returns nil
 				mockRegistryStore.On("Get", mock.Anything, registrystore.SystemOwnerID, "config.allow_guest_mode").Return(nil, nil)
@@ -814,6 +857,25 @@ func TestGuestLogin(t *testing.T) {
 			expectError:    true,
 			errorCode:      "FORBIDDEN",
 		},
+		{
+			name:        "Public space guest login enabled",
+			requestBody: `{"spaceKey":"testspace"}`,
+			spaceStore: &stubSpaceStore{spaceByKey: map[string]*space.Space{
+				"testspace": {ID: "space-testspace", Key: "testspace"},
+			}},
+			setupMocks: func() {
+				mockRegistryStore.On("Get", mock.Anything, registrystore.SystemOwnerID, "config.allow_guest_mode").Return(&registrystore.Registry{
+					Key:   "config.allow_guest_mode",
+					Value: "false",
+				}, nil)
+				mockRegistryStore.On("Get", mock.Anything, registrystore.SpaceOwnerID("space-testspace"), "config.allow_guest_mode").Return(&registrystore.Registry{
+					Key:   "config.allow_guest_mode",
+					Value: "true",
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectError:    false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -821,9 +883,16 @@ func TestGuestLogin(t *testing.T) {
 			mockRegistryStore.ExpectedCalls = nil
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, AuthHandlerConfig{EmbeddedMode: true})
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, AuthHandlerConfig{EmbeddedMode: true, SpaceStore: tt.spaceStore})
 
-			req := httptest.NewRequest(http.MethodPost, "/api/auth/guest", nil)
+			var body *bytes.Buffer
+			if tt.requestBody != "" {
+				body = bytes.NewBufferString(tt.requestBody)
+			} else {
+				body = bytes.NewBuffer(nil)
+			}
+			req := httptest.NewRequest(http.MethodPost, "/api/auth/guest", body)
+			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()
 
 			handler.GuestLogin()(rr, req)
@@ -1175,43 +1244,21 @@ func TestRegisterAdmin(t *testing.T) {
 					IsActive:    true,
 				}, nil)
 
-				// Expect registry population with 4 entries including default language
+				// Expect registry population with default language only
 				mockRegistryStore.On("SetMulti", mock.Anything, registrystore.SystemOwnerID, mock.MatchedBy(func(entries []*registrystore.Registry) bool {
-					if len(entries) != 4 {
+					if len(entries) != 1 {
 						return false
 					}
-					// Verify all four entries
-					imageExtensionsFound := false
-					videoExtensionsFound := false
-					hiddenFound := false
 					languageFound := false
 					for _, entry := range entries {
-						if entry.Key == "config.app_image_extensions" &&
-							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw" &&
-							!entry.IsEncrypted {
-							imageExtensionsFound = true
-						}
-						if entry.Key == "config.app_video_extensions" &&
-							entry.Value == ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg" &&
-							!entry.IsEncrypted {
-							videoExtensionsFound = true
-						}
-						if entry.Key == "config.app_show_hidden" &&
-							entry.Value == "false" &&
-							!entry.IsEncrypted {
-							hiddenFound = true
-						}
 						if entry.Key == "config.app_default_language" &&
 							entry.Value == "en" &&
 							!entry.IsEncrypted {
 							languageFound = true
 						}
 					}
-					return imageExtensionsFound && videoExtensionsFound && hiddenFound && languageFound
+					return languageFound
 				})).Return([]*registrystore.Registry{
-					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
-					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
-					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 					{Key: "config.app_default_language", Value: "en", IsEncrypted: false},
 				}, nil)
 			},
@@ -1246,11 +1293,8 @@ func TestRegisterAdmin(t *testing.T) {
 							languageFound = true
 						}
 					}
-					return languageFound && len(entries) == 4
+					return languageFound && len(entries) == 1
 				})).Return([]*registrystore.Registry{
-					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
-					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
-					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 					{Key: "config.app_default_language", Value: "zh-CN", IsEncrypted: false},
 				}, nil)
 			},
@@ -1285,11 +1329,8 @@ func TestRegisterAdmin(t *testing.T) {
 							languageFound = true
 						}
 					}
-					return languageFound && len(entries) == 4
+					return languageFound && len(entries) == 1
 				})).Return([]*registrystore.Registry{
-					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
-					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
-					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 					{Key: "config.app_default_language", Value: "it", IsEncrypted: false},
 				}, nil)
 			},
@@ -1324,11 +1365,8 @@ func TestRegisterAdmin(t *testing.T) {
 							languageFound = true
 						}
 					}
-					return languageFound && len(entries) == 4
+					return languageFound && len(entries) == 1
 				})).Return([]*registrystore.Registry{
-					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
-					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
-					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 					{Key: "config.app_default_language", Value: "en", IsEncrypted: false},
 				}, nil)
 			},

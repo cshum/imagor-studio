@@ -41,11 +41,8 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { addCacheBuster } from '@/lib/api-utils'
 import { hasExtension } from '@/lib/file-extensions'
-import {
-  DEFAULT_IMAGE_EXTENSIONS,
-  DEFAULT_VIDEO_EXTENSIONS,
-  TEMPLATE_EXTENSION,
-} from '@/loaders/gallery-loader.ts'
+import { IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/gallery-config'
+import { TEMPLATE_EXTENSION } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
 
@@ -80,9 +77,6 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const [sortBy, setSortBy] = useState<SortOption>('NAME')
   const [sortOrder, setSortOrder] = useState<SortOrder>('ASC')
   const [showFileNames, setShowFileNames] = useState(true)
-  const [imageExtensions, setImageExtensions] = useState('')
-  const [videoExtensions, setVideoExtensions] = useState('')
-  const [showHidden, setShowHidden] = useState(false)
   const [contentWidth, setContentWidth] = useState(800)
   const [filterText, setFilterText] = useState('')
   const [configReady, setConfigReady] = useState(false)
@@ -101,8 +95,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const configRef = useRef({
     fileType,
     fileExtensions,
-    imageExtensions,
-    videoExtensions,
+    imageExtensions: IMAGE_EXTENSIONS,
+    videoExtensions: VIDEO_EXTENSIONS,
     sortBy,
     sortOrder,
   })
@@ -112,12 +106,12 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     configRef.current = {
       fileType,
       fileExtensions,
-      imageExtensions,
-      videoExtensions,
+      imageExtensions: IMAGE_EXTENSIONS,
+      videoExtensions: VIDEO_EXTENSIONS,
       sortBy,
       sortOrder,
     }
-  }, [fileType, fileExtensions, imageExtensions, videoExtensions, sortBy, sortOrder])
+  }, [fileType, fileExtensions, sortBy, sortOrder])
 
   // Build tree with local expand state (like move dialog)
   const buildTreeWithLocalExpand = useCallback(
@@ -200,9 +194,6 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           'config.app_default_sort_by',
           'config.app_default_sort_order',
           'config.app_show_file_names',
-          'config.app_image_extensions',
-          'config.app_video_extensions',
-          'config.app_show_hidden',
         ])
 
         const systemSortBy = systemRegistryResult.find(
@@ -214,29 +205,14 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         const systemShowFileNames = systemRegistryResult.find(
           (r) => r.key === 'config.app_show_file_names',
         )?.value
-        const systemImageExtensions = systemRegistryResult.find(
-          (r) => r.key === 'config.app_image_extensions',
-        )?.value
-        const systemVideoExtensions = systemRegistryResult.find(
-          (r) => r.key === 'config.app_video_extensions',
-        )?.value
-        const systemShowHidden = systemRegistryResult.find(
-          (r) => r.key === 'config.app_show_hidden',
-        )?.value
-
         setSortBy((userSortBy || systemSortBy || 'NAME') as SortOption)
         setSortOrder((userSortOrder || systemSortOrder || 'ASC') as SortOrder)
         setShowFileNames((userShowFileNames || systemShowFileNames || 'true') === 'true')
-        setImageExtensions(systemImageExtensions || DEFAULT_IMAGE_EXTENSIONS)
-        setVideoExtensions(systemVideoExtensions || DEFAULT_VIDEO_EXTENSIONS)
-        setShowHidden((systemShowHidden || 'false') === 'true')
         setConfigReady(true)
       } catch {
         setSortBy('NAME')
         setSortOrder('ASC')
         setShowFileNames(true)
-        setImageExtensions(DEFAULT_IMAGE_EXTENSIONS)
-        setVideoExtensions(DEFAULT_VIDEO_EXTENSIONS)
         setConfigReady(true)
       }
     }
@@ -296,7 +272,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           path: currentPath,
           spaceKey,
           extensions: extensionsString,
-          showHidden,
+          showHidden: false,
           sortBy: config.sortBy,
           sortOrder: config.sortOrder,
         })
@@ -342,7 +318,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
 
     loadFilesData()
-  }, [currentPath, configReady, sortBy, sortOrder, showHidden, spaceKey])
+  }, [currentPath, configReady, sortBy, sortOrder, spaceKey])
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement

@@ -405,8 +405,8 @@
             "description": "设置应用程序的默认语言"
           },
           "guestMode": {
-            "label": "访客模式",
-            "description": "允许用户无需创建账户即可浏览图库"
+            "label": "公开访问",
+            "description": "允许没有账户的人浏览此图库。公开用户不能上传、编辑或管理内容。"
           },
           "defaultSorting": {
             "label": "默认文件排序",
@@ -424,14 +424,6 @@
             "label": "显示文件名",
             "description": "默认在图库的图片缩略图上显示文件名"
           },
-          "imageExtensions": {
-            "label": "图片文件扩展名",
-            "description": "要显示的图片文件扩展名列表，用逗号分隔（例如：.jpg,.png,.gif）"
-          },
-          "videoExtensions": {
-            "label": "视频文件扩展名",
-            "description": "要显示的视频文件扩展名列表，用逗号分隔（例如：.mp4,.webm,.avi）"
-          },
           "videoThumbnailPosition": {
             "label": "视频缩略图位置",
             "description": "选择提取视频缩略图的位置。第一帧最快。跳转选项有助于获得更具代表性的帧并避免黑屏。",
@@ -443,10 +435,6 @@
               "seek10pct": "跳转 10% 位置",
               "seek25pct": "跳转 25% 位置"
             }
-          },
-          "showHidden": {
-            "label": "显示隐藏文件",
-            "description": "显示以点（.）开头的文件和文件夹"
           }
         }
       },
@@ -469,8 +457,8 @@
       "createAccount": "创建账户",
       "skipForNow": "暂时跳过",
       "next": "下一步",
-      "guestMode": "访客模式",
-      "guestModeDescription": "允许用户无需创建账户即可浏览图库",
+      "guestMode": "公开访问",
+      "guestModeDescription": "允许没有账户的人浏览此图库。公开用户不能上传、编辑或管理内容。",
       "homeTitle": "首页标题",
       "homeTitleDescription": "自定义图库中首页/根文件夹显示的标题",
       "systemSettingsDescription": "这些设置稍后可以在管理面板中更改",
@@ -572,7 +560,7 @@
       "selectSignerType": "选择签名类型",
       "signerTypeDescription": "用于 URL 签名的哈希算法",
       "signerTruncate": "签名截断",
-      "signerTruncateDescription": "从签名中截断的字符数（0 = 不截断）",
+      "signerTruncateDescription": "将 URL 签名缩短为此字符长度。值越小，URL 越短，但安全性越低。使用 0 表示完整签名。",
       "configureImagor": "配置 Imagor",
       "configurationSuccess": "Imagor 配置成功",
       "configurationError": "配置 Imagor 失败",
@@ -581,7 +569,7 @@
       "configurationDetails": "配置详情",
       "hasSecret": "有密钥",
       "takingEffect": "设置已保存，最多 1 分钟内生效。",
-      "algorithmSha1": "SHA-1 - 旧版，最快",
+      "algorithmSha1": "SHA-1 - 旧版",
       "algorithmSha256": "SHA-256 - 推荐",
       "algorithmSha512": "SHA-512 - 最高安全性"
     },
@@ -838,7 +826,7 @@
         "signerAlgorithm": "签名算法",
         "signerAlgorithmDescription": "用于签名转换 URL 的 HMAC 算法。",
         "signerTruncate": "签名截断",
-        "signerTruncateDescription": "将 HMAC 签名截断至此字符数（0 = 完整长度）。",
+        "signerTruncateDescription": "将 URL 签名缩短为此字符长度。值越小，URL 越短，但安全性越低。使用 0 表示完整签名。",
         "saved": "存储与安全设置已保存",
         "bucket": "存储桶",
         "region": "区域",
@@ -912,18 +900,18 @@
         }
       },
       "imagor": {
-        "description": "为此空间配置 imagor URL 签名设置。",
+        "description": "为此空间配置 imagor 设置。",
         "urlSigning": "URL 签名",
         "urlSigningDescription": "HMAC 签名，用于安全生成 imagor 变换 URL。",
         "imagorSecret": "签名密鑰",
         "imagorSecretDescription": "用于签署 imagor 变换 URL。",
         "signerAlgorithm": "签名算法",
         "signerAlgorithmDescription": "用于签署变换 URL 的 HMAC 算法。",
-        "algorithmSha1": "SHA-1 — 旧版，速度最快",
+        "algorithmSha1": "SHA-1 — 旧版",
         "algorithmSha256": "SHA-256 — 推荐",
         "algorithmSha512": "SHA-512 — 最高安全性",
         "signerTruncate": "签名截断",
-        "signerTruncateDescription": "将 HMAC 签名截断为此字符数（0 = 完整长度）。",
+        "signerTruncateDescription": "将 URL 签名缩短为此字符长度。值越小，URL 越短，但安全性越低。使用 0 表示完整签名。",
         "saved": "安全设置已保存"
       },
       "spaceSettings": "空间设置",

@@ -40,6 +40,10 @@ export interface RefreshTokenRequest {
   token: string
 }
 
+export interface GuestLoginRequest {
+  spaceKey?: string
+}
+
 const BASE_URL = getBaseUrl()
 
 /**
@@ -111,10 +115,11 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 /**
  * Login as guest
  */
-export async function guestLogin(): Promise<LoginResponse> {
+export async function guestLogin(spaceKey?: string): Promise<LoginResponse> {
   const response = await fetch(`${BASE_URL}/api/auth/guest`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    body: spaceKey ? JSON.stringify({ spaceKey } satisfies GuestLoginRequest) : undefined,
   })
 
   if (!response.ok) {

@@ -423,8 +423,8 @@
             "description": "設定應用程式的預設語言"
           },
           "guestMode": {
-            "label": "訪客模式",
-            "description": "允許使用者無需建立賬戶即可瀏覽相簿"
+            "label": "公開存取",
+            "description": "允許沒有帳戶的人瀏覽此相簿。公開使用者不能上傳、編輯或管理內容。"
           },
           "defaultSorting": {
             "label": "預設檔案排序",
@@ -442,14 +442,6 @@
             "label": "顯示檔名",
             "description": "預設在相簿的圖片縮圖上顯示檔名"
           },
-          "imageExtensions": {
-            "label": "圖片副檔名",
-            "description": "要顯示的圖片副檔名列表，用逗號分隔（例如：.jpg,.png,.gif）"
-          },
-          "videoExtensions": {
-            "label": "影片副檔名",
-            "description": "要顯示的影片副檔名列表，用逗號分隔（例如：.mp4,.webm,.avi）"
-          },
           "videoThumbnailPosition": {
             "label": "影片縮圖位置",
             "description": "選擇提取影片縮圖的位置。第一幀最快。跳轉選項有助於獲得更具代表性的幀並避免黑屏。",
@@ -461,10 +453,6 @@
               "seek10pct": "跳轉 10% 位置",
               "seek25pct": "跳轉 25% 位置"
             }
-          },
-          "showHidden": {
-            "label": "顯示隱藏檔案",
-            "description": "顯示以點（.）開頭的檔案和資料夾"
           }
         }
       },
@@ -487,8 +475,8 @@
       "createAccount": "建立賬戶",
       "skipForNow": "暫時跳過",
       "next": "下一步",
-      "guestMode": "訪客模式",
-      "guestModeDescription": "允許使用者無需建立賬戶即可瀏覽相簿",
+      "guestMode": "公開存取",
+      "guestModeDescription": "允許沒有帳戶的人瀏覽此相簿。公開使用者不能上傳、編輯或管理內容。",
       "homeTitle": "首頁標題",
       "homeTitleDescription": "自定義相簿中首頁/根資料夾顯示的標題",
       "systemSettingsDescription": "這些設定稍後可以在管理面板中更改",
@@ -590,7 +578,7 @@
       "selectSignerType": "選擇簽名型別",
       "signerTypeDescription": "用於 URL 簽名的雜湊演算法",
       "signerTruncate": "簽名截斷",
-      "signerTruncateDescription": "從簽名中截斷的字元數（0 = 不截斷）",
+      "signerTruncateDescription": "將 URL 簽名縮短為此字元長度。值越小，URL 越短，但安全性越低。使用 0 表示完整簽名。",
       "configureImagor": "配置 Imagor",
       "configurationSuccess": "Imagor 配置成功",
       "configurationError": "配置 Imagor 失敗",
@@ -599,7 +587,7 @@
       "configurationDetails": "配置詳情",
       "hasSecret": "有金鑰",
       "takingEffect": "設定已儲存，最多 1 分鐘內生效。",
-      "algorithmSha1": "SHA-1 - 旧版，最快",
+      "algorithmSha1": "SHA-1 - 舊版",
       "algorithmSha256": "SHA-256 - 推荐",
       "algorithmSha512": "SHA-512 - 最高安全性"
     },
@@ -856,7 +844,7 @@
         "signerAlgorithm": "簽名演算法",
         "signerAlgorithmDescription": "用於簽名轉換 URL 的 HMAC 演算法。",
         "signerTruncate": "簽名截斷",
-        "signerTruncateDescription": "將 HMAC 簽名截斷至此字元數（0 = 完整長度）。",
+        "signerTruncateDescription": "將 URL 簽名縮短為此字元長度。值越小，URL 越短，但安全性越低。使用 0 表示完整簽名。",
         "saved": "儲存與安全設定已儲存",
         "bucket": "儲存桶",
         "region": "區域",
@@ -930,18 +918,18 @@
         }
       },
       "imagor": {
-        "description": "為此空間設定 imagor URL 簽名設定。",
+        "description": "為此空間設定 imagor 設定。",
         "urlSigning": "URL 簽名",
         "urlSigningDescription": "HMAC 簽名，用於安全生成 imagor 變換 URL。",
         "imagorSecret": "簽名金鑰",
         "imagorSecretDescription": "用於簽署 imagor 變換 URL。",
         "signerAlgorithm": "簽名演算法",
         "signerAlgorithmDescription": "用於簽署變換 URL 的 HMAC 演算法。",
-        "algorithmSha1": "SHA-1 — 舊版，速度最快",
+        "algorithmSha1": "SHA-1 — 舊版",
         "algorithmSha256": "SHA-256 — 建議使用",
         "algorithmSha512": "SHA-512 — 最高安全性",
         "signerTruncate": "簽名截斷",
-        "signerTruncateDescription": "將 HMAC 簽名截斷為此字元數（0 = 完整長度）。",
+        "signerTruncateDescription": "將 URL 簽名縮短為此字元長度。值越小，URL 越短，但安全性越低。使用 0 表示完整簽名。",
         "corsOrigins": "額外 CORS 來源",
         "corsOriginsDescription": "允許額外的瀏覽器來源存取此空間的 imagor 回應。",
         "corsOriginsHelp": "輸入以逗號分隔的來源清單，例如：https://editor.customer.test, https://cms.customer.test",

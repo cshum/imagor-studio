@@ -55,9 +55,17 @@ interface ImagorConfigFormProps {
   onSave: (values: ImagorConfigValues) => Promise<void>
   /** Externally-imposed disabled state (e.g. config is overridden) */
   disabled?: boolean
+  title?: string
+  description?: React.ReactNode
 }
 
-export function ImagorConfigForm({ initialValues, onSave, disabled }: ImagorConfigFormProps) {
+export function ImagorConfigForm({
+  initialValues,
+  onSave,
+  disabled,
+  title,
+  description,
+}: ImagorConfigFormProps) {
   const { t } = useTranslation()
   const [isSaving, setIsSaving] = useState(false)
   const [showSecret, setShowSecret] = useState(false)
@@ -97,7 +105,7 @@ export function ImagorConfigForm({ initialValues, onSave, disabled }: ImagorConf
   const isDisabled = disabled || isSaving
 
   return (
-    <SettingsSection>
+    <SettingsSection title={title} description={description}>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSave)}>
           {/* HMAC Secret */}

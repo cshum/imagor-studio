@@ -20,7 +20,7 @@ import (
 type ImagorConfig struct {
 	Secret         string // Secret key for HMAC URL signing
 	SignerType     string // Hash algorithm: "sha1", "sha256", "sha512"
-	SignerTruncate int    // Signature truncation length (0 = no truncation)
+	SignerTruncate int    // Truncate the signature to this many characters (0 = full length)
 }
 
 // dynamicSigner wraps an imagorpath.Signer behind an RWMutex so the active

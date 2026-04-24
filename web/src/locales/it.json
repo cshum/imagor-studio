@@ -423,8 +423,8 @@
             "description": "Imposta la lingua predefinita dell'applicazione"
           },
           "guestMode": {
-            "label": "Modalità ospite",
-            "description": "Consenti agli utenti di sfogliare la galleria senza creare un account"
+            "label": "Accesso pubblico",
+            "description": "Consenti a chi non ha un account di sfogliare questa galleria. Gli utenti pubblici non possono caricare, modificare o gestire contenuti."
           },
           "defaultSorting": {
             "label": "Ordinamento file predefinito",
@@ -442,14 +442,6 @@
             "label": "Mostra nomi file",
             "description": "Mostra i nomi dei file sulle miniature della galleria per impostazione predefinita"
           },
-          "imageExtensions": {
-            "label": "Estensioni file immagine",
-            "description": "Elenco separato da virgole delle estensioni immagine da mostrare (es. .jpg,.png,.gif)"
-          },
-          "videoExtensions": {
-            "label": "Estensioni file video",
-            "description": "Elenco separato da virgole delle estensioni video da mostrare (es. .mp4,.webm,.avi)"
-          },
           "videoThumbnailPosition": {
             "label": "Posizione miniatura video",
             "description": "Scegli da dove estrarre le miniature video. Il primo fotogramma è il più veloce. Le opzioni di seek aiutano a ottenere un fotogramma più rappresentativo evitando schermate nere.",
@@ -461,10 +453,6 @@
               "seek10pct": "Vai al 10%",
               "seek25pct": "Vai al 25%"
             }
-          },
-          "showHidden": {
-            "label": "Mostra file nascosti",
-            "description": "Mostra file e cartelle che iniziano con un punto (.)"
           }
         }
       },
@@ -487,8 +475,8 @@
       "createAccount": "Crea account",
       "skipForNow": "Salta per ora",
       "next": "Avanti",
-      "guestMode": "Modalità ospite",
-      "guestModeDescription": "Consenti agli utenti di sfogliare la galleria senza creare un account",
+      "guestMode": "Accesso pubblico",
+      "guestModeDescription": "Consenti a chi non ha un account di sfogliare questa galleria. Gli utenti pubblici non possono caricare, modificare o gestire contenuti.",
       "homeTitle": "Titolo home",
       "homeTitleDescription": "Personalizza il titolo mostrato per la cartella home/root nella galleria",
       "systemSettingsDescription": "Queste impostazioni possono essere modificate in seguito dal pannello admin",
@@ -590,7 +578,7 @@
       "selectSignerType": "Seleziona il tipo di firmatario",
       "signerTypeDescription": "Algoritmo hash usato per la firma degli URL",
       "signerTruncate": "Troncamento firma",
-      "signerTruncateDescription": "Numero di caratteri da troncare dalla firma (0 = nessun troncamento)",
+      "signerTruncateDescription": "Accorcia la firma URL a questa lunghezza in caratteri. Valori più piccoli rendono gli URL più brevi ma riducono la sicurezza. Usa 0 per la firma completa.",
       "configureImagor": "Configura Imagor",
       "configurationSuccess": "Imagor configurato correttamente",
       "configurationError": "Impossibile configurare Imagor",
@@ -599,7 +587,7 @@
       "configurationDetails": "Dettagli configurazione",
       "hasSecret": "Ha una chiave segreta",
       "takingEffect": "Impostazioni salvate. Le modifiche potrebbero richiedere fino a 1 minuto per avere effetto.",
-      "algorithmSha1": "SHA-1 — Legacy, più veloce",
+      "algorithmSha1": "SHA-1 — Legacy",
       "algorithmSha256": "SHA-256 — Consigliato",
       "algorithmSha512": "SHA-512 — Massima sicurezza"
     },
@@ -865,7 +853,7 @@
         "signerAlgorithm": "Algoritmo di firma",
         "signerAlgorithmDescription": "Algoritmo HMAC usato per firmare gli URL di trasformazione.",
         "signerTruncate": "Troncamento firma",
-        "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza completa).",
+        "signerTruncateDescription": "Accorcia la firma URL a questa lunghezza in caratteri. Valori più piccoli rendono gli URL più brevi ma riducono la sicurezza. Usa 0 per la firma completa.",
         "saved": "Credenziali di storage salvate"
       },
       "danger": {
@@ -940,18 +928,18 @@
         "unchanged": "(lascia vuoto per mantenere il valore esistente)"
       },
       "imagor": {
-        "description": "Configura le impostazioni di firma URL di imagor per questo spazio.",
+        "description": "Configura le impostazioni di imagor per questo spazio.",
         "urlSigning": "Firma URL",
         "urlSigningDescription": "Firma HMAC per la generazione sicura di URL di trasformazione imagor.",
         "imagorSecret": "Segreto di firma",
         "imagorSecretDescription": "Usato per firmare gli URL di trasformazione imagor.",
         "signerAlgorithm": "Algoritmo di firma",
         "signerAlgorithmDescription": "Algoritmo HMAC usato per firmare gli URL di trasformazione.",
-        "algorithmSha1": "SHA-1 — Legacy, più veloce",
+        "algorithmSha1": "SHA-1 — Legacy",
         "algorithmSha256": "SHA-256 — Consigliato",
         "algorithmSha512": "SHA-512 — Massima sicurezza",
         "signerTruncate": "Troncamento firma",
-        "signerTruncateDescription": "Tronca la firma HMAC a questo numero di caratteri (0 = lunghezza completa).",
+        "signerTruncateDescription": "Accorcia la firma URL a questa lunghezza in caratteri. Valori più piccoli rendono gli URL più brevi ma riducono la sicurezza. Usa 0 per la firma completa.",
         "corsOrigins": "Origini CORS aggiuntive",
         "corsOriginsDescription": "Consenti a origini browser aggiuntive di accedere alle risposte imagor per questo spazio.",
         "corsOriginsHelp": "Inserisci un elenco di origini separate da virgola, ad esempio: https://editor.customer.test, https://cms.customer.test",

@@ -12,6 +12,7 @@ interface SettingRowProps {
   children: React.ReactNode
   last?: boolean
   className?: string
+  labelClassName?: string
   contentClassName?: string
 }
 
@@ -21,6 +22,7 @@ export function SettingRow({
   children,
   last,
   className,
+  labelClassName,
   contentClassName,
 }: SettingRowProps) {
   return (
@@ -31,7 +33,7 @@ export function SettingRow({
         className,
       )}
     >
-      <div className='min-w-0 sm:w-2/5'>
+      <div className={cn('min-w-0 sm:w-2/5', labelClassName)}>
         {label && <p className='text-sm leading-none font-medium'>{label}</p>}
         {description && (
           <div className='text-muted-foreground mt-1.5 space-y-1 text-sm leading-snug whitespace-pre-line'>

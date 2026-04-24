@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/org"
@@ -57,6 +58,12 @@ func newOrgResolver(orgStore *MockOrgStore, spaceStore *MockSpaceStore) *Resolve
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
 	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
+}
+
+func newOrgResolverWithRegistry(orgStore *MockOrgStore, spaceStore *MockSpaceStore, registryStore *MockRegistryStore) *Resolver {
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	return NewResolver(sp, registryStore, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
 }
 
 func newOrgResolverWithStorageValidator(orgStore *MockOrgStore, spaceStore *MockSpaceStore, validator StorageConfigValidator) *Resolver {
@@ -267,6 +274,35 @@ func TestSpace_ReturnsGuestAccessibleSpace(t *testing.T) {
 	assert.False(t, result.CanDelete)
 	assert.True(t, result.CanLeave)
 	spaceStore.AssertExpectations(t)
+}
+
+func TestSpace_ReturnsPublicAccessSpaceForGuestToken(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	registryStore := &MockRegistryStore{}
+	r := newOrgResolverWithRegistry(orgStore, spaceStore, registryStore)
+
+	s := makeTestSpace("public", "org-2")
+	spaceStore.On("Get", mock.Anything, "public").Return(s, nil)
+	orgStore.On("GetByUserID", mock.Anything, "guest-id").Return(nil, nil)
+	registryStore.On(
+		"Get",
+		mock.Anything,
+		registrystore.SpaceOwnerID(s.ID),
+		"config.allow_guest_mode",
+	).Return(&registrystore.Registry{Key: "config.allow_guest_mode", Value: "true"}, nil)
+
+	ctx := createGuestContext("guest-id")
+	result, err := r.Query().Space(ctx, "public")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "public", result.Key)
+	assert.Equal(t, "org-2", result.OrgID)
+	assert.False(t, result.CanManage)
+	assert.False(t, result.CanDelete)
+	assert.False(t, result.CanLeave)
+	spaceStore.AssertExpectations(t)
+	registryStore.AssertExpectations(t)
 }
 
 // ---------- CreateSpace ------------------------------------------------------

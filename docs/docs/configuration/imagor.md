@@ -107,7 +107,7 @@ export IMAGOR_SIGNER_TYPE=sha512
 
 ### Signature Truncation
 
-Truncate signatures for shorter URLs:
+Truncate the generated signature to a shorter length for shorter URLs:
 
 ```bash
 # Truncate to 40 characters
