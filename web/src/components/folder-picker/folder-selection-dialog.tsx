@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams } from '@tanstack/react-router'
 
 import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-picker-node.tsx'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading.tsx'
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/dialog.tsx'
 import { ScrollArea } from '@/components/ui/scroll-area.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
+import type { SpaceIdentity } from '@/lib/space'
 import {
   ensureFolderTreeReady,
   folderTreeStore,
@@ -27,6 +27,7 @@ export interface FolderSelectionDialogProps {
   onOpenChange: (open: boolean) => void
   selectedPath: string | null
   onSelect: (path: string) => void | Promise<void>
+  space?: SpaceIdentity
   excludePaths?: string[]
   currentPath?: string
   // Customization props for reusability
@@ -43,6 +44,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   onOpenChange,
   selectedPath: initialSelectedPath,
   onSelect,
+  space,
   excludePaths = [],
   currentPath,
   title,
@@ -53,7 +55,6 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
   isSubmitting = false,
 }) => {
   const { t } = useTranslation()
-  const { spaceKey } = useParams({ strict: false })
   const { homeTitle, rootFolders } = useFolderTree()
 
   // Generate title with item count if provided
@@ -142,7 +143,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
 
         try {
           if (!folderNode?.isLoaded) {
-            await loadFolderChildren(currentPath, false, spaceKey) // Don't auto-expand in store
+            await loadFolderChildren(currentPath, false, space) // Don't auto-expand in store
 
             // Small delay to allow freshly loaded state to render before continuing deeper.
             await new Promise((resolve) => setTimeout(resolve, 50))
@@ -158,7 +159,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
       // Update all expand states at once
       setLocalExpandState((prev) => ({ ...prev, ...expandStates }))
     },
-    [findFolderNodeByPath, spaceKey],
+    [findFolderNodeByPath, space],
   )
 
   // Load root folders when dialog opens
@@ -171,7 +172,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
       const loadData = async () => {
         setIsLoading(true)
         try {
-          await ensureFolderTreeReady(spaceKey)
+          await ensureFolderTreeReady(space)
 
           // Auto-expand to show current path
           if (currentPath) {
@@ -195,7 +196,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
 
       loadData()
     }
-  }, [open, currentPath, initialSelectedPath, expandToPath])
+  }, [open, currentPath, initialSelectedPath, expandToPath, space])
 
   const handleSelect = async () => {
     if (selectedPath !== null) {
@@ -245,7 +246,7 @@ export const FolderSelectionDialog: React.FC<FolderSelectionDialogProps> = ({
                     folder={folder}
                     selectedPath={selectedPath}
                     excludePaths={excludePathsSet}
-                    spaceKey={spaceKey}
+                    space={space}
                     onSelect={setSelectedPath}
                     onUpdateNode={updateNode}
                   />

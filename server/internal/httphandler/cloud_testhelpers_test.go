@@ -163,7 +163,7 @@ func (s *testSpaceStore) RenameKey(ctx context.Context, oldKey, newKey string) e
 }
 
 func (s *testSpaceStore) Upsert(ctx context.Context, sp *space.Space) error {
-	if existing, err := s.Get(ctx, sp.Key); err != nil {
+	if existing, err := s.GetByKey(ctx, sp.Key); err != nil {
 		return err
 	} else if existing != nil {
 		_, err = s.db.NewUpdate().Model((*model.Space)(nil)).Set("org_id = ?", sp.OrgID).Set("name = ?", sp.Name).Set("updated_at = ?", time.Now().UTC()).Where("key = ?", sp.Key).Exec(ctx)
@@ -177,9 +177,20 @@ func (s *testSpaceStore) SoftDelete(ctx context.Context, key string) error {
 	return err
 }
 
-func (s *testSpaceStore) Get(ctx context.Context, key string) (*space.Space, error) {
+func (s *testSpaceStore) GetByKey(ctx context.Context, key string) (*space.Space, error) {
 	var row model.Space
 	if err := s.db.NewSelect().Model(&row).Where("key = ? AND deleted_at IS NULL", key).Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &space.Space{ID: row.ID, OrgID: row.OrgID, Key: row.Key, Name: row.Name, StorageType: row.StorageType, Bucket: row.Bucket, Prefix: row.Prefix, Region: row.Region, Endpoint: row.Endpoint, AccessKeyID: row.AccessKeyID, SecretKey: row.SecretKey, UsePathStyle: row.UsePathStyle, CustomDomain: row.CustomDomain, CustomDomainVerified: row.CustomDomainVerified, Suspended: row.Suspended, IsShared: row.IsShared, SignerAlgorithm: row.SignerAlgorithm, SignerTruncate: row.SignerTruncate, ImagorSecret: row.ImagorSecret, ImagorCORSOrigins: row.ImagorCORSOrigins, UpdatedAt: row.UpdatedAt, DeletedAt: row.DeletedAt}, nil
+}
+
+func (s *testSpaceStore) GetByID(ctx context.Context, id string) (*space.Space, error) {
+	var row model.Space
+	if err := s.db.NewSelect().Model(&row).Where("id = ? AND deleted_at IS NULL", id).Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
@@ -202,42 +213,23 @@ func (s *testSpaceStore) KeyExists(ctx context.Context, key string) (bool, error
 	exists, err := s.db.NewSelect().Model((*model.Space)(nil)).Where("key = ?", key).Exists(ctx)
 	return exists, err
 }
-func (s *testSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*space.SpaceMemberView, error) {
+func (s *testSpaceStore) ListMembers(ctx context.Context, spaceID string) ([]*space.SpaceMemberView, error) {
 	return nil, nil
 }
-func (s *testSpaceStore) AddMember(ctx context.Context, spaceKey, userID, role string) error {
-	sp, err := s.Get(ctx, spaceKey)
-	if err != nil {
-		return err
-	}
-	if sp == nil {
-		return fmt.Errorf("space %s not found", spaceKey)
-	}
-	_, err = s.db.NewInsert().Model(&model.SpaceMember{SpaceID: sp.ID, UserID: userID, Role: role, CreatedAt: time.Now().UTC()}).Exec(ctx)
+func (s *testSpaceStore) AddMember(ctx context.Context, spaceID, userID, role string) error {
+	_, err := s.db.NewInsert().Model(&model.SpaceMember{SpaceID: spaceID, UserID: userID, Role: role, CreatedAt: time.Now().UTC()}).Exec(ctx)
 	return err
 }
-func (s *testSpaceStore) RemoveMember(ctx context.Context, spaceKey, userID string) error {
-	sp, err := s.Get(ctx, spaceKey)
-	if err != nil || sp == nil {
-		return err
-	}
-	_, err = s.db.NewDelete().TableExpr("space_members").Where("space_id = ? AND user_id = ?", sp.ID, userID).Exec(ctx)
+func (s *testSpaceStore) RemoveMember(ctx context.Context, spaceID, userID string) error {
+	_, err := s.db.NewDelete().TableExpr("space_members").Where("space_id = ? AND user_id = ?", spaceID, userID).Exec(ctx)
 	return err
 }
-func (s *testSpaceStore) UpdateMemberRole(ctx context.Context, spaceKey, userID, role string) error {
-	sp, err := s.Get(ctx, spaceKey)
-	if err != nil || sp == nil {
-		return err
-	}
-	_, err = s.db.NewUpdate().TableExpr("space_members").Set("role = ?", role).Where("space_id = ? AND user_id = ?", sp.ID, userID).Exec(ctx)
+func (s *testSpaceStore) UpdateMemberRole(ctx context.Context, spaceID, userID, role string) error {
+	_, err := s.db.NewUpdate().TableExpr("space_members").Set("role = ?", role).Where("space_id = ? AND user_id = ?", spaceID, userID).Exec(ctx)
 	return err
 }
-func (s *testSpaceStore) HasMember(ctx context.Context, spaceKey, userID string) (bool, error) {
-	sp, err := s.Get(ctx, spaceKey)
-	if err != nil || sp == nil {
-		return false, err
-	}
-	return s.db.NewSelect().TableExpr("space_members").Where("space_id = ? AND user_id = ?", sp.ID, userID).Exists(ctx)
+func (s *testSpaceStore) HasMember(ctx context.Context, spaceID, userID string) (bool, error) {
+	return s.db.NewSelect().TableExpr("space_members").Where("space_id = ? AND user_id = ?", spaceID, userID).Exists(ctx)
 }
 
 func newOrgTestDB(t *testing.T) *bun.DB {

@@ -25,19 +25,19 @@ describe('canvasEditorLoader', () => {
     vi.clearAllMocks()
   })
 
-  it('passes the tenant spaceKey into generated imagor URLs for color canvases', async () => {
+  it('passes the tenant spaceID into generated imagor URLs for color canvases', async () => {
     const { generateImagorUrlFromTemplate } = await import('@/api/imagor-api')
 
     const result = await canvasEditorLoader({
       search: '?color=ffffff&w=1080&h=1080',
-      spaceKey: 'demo',
+      spaceID: 'space-demo',
     })
 
     await result.imageEditor.generateCopyUrl()
 
     expect(generateImagorUrlFromTemplate).toHaveBeenCalledWith({
       templateJson: expect.any(String),
-      spaceKey: 'demo',
+      spaceID: 'space-demo',
       contextPath: null,
       forPreview: false,
     })

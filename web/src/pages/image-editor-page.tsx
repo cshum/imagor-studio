@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -36,6 +36,7 @@ import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
+import type { SpaceIdentity } from '@/lib/space'
 import { debounce } from '@/lib/utils.ts'
 import { calculateLayerPositionForCurrentView } from '@/lib/viewport-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
@@ -46,16 +47,26 @@ interface ImageEditorPageProps {
   loaderData: ImageEditorLoaderData
   /** Gallery key for back navigation — passed from the route component */
   galleryKey?: string
+  space?: SpaceIdentity
 }
 
-export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: ImageEditorPageProps) {
+export function ImageEditorPage({
+  loaderData,
+  galleryKey: propGalleryKey,
+  space,
+}: ImageEditorPageProps) {
   const { imageEditor, initialEditorOpenSections, isTemplate, templateMetadata } = loaderData
 
   const { t } = useTranslation()
   const navigate = useNavigate()
   const router = useRouter()
   const { authState } = useAuth()
-  const { spaceKey } = useParams({ strict: false })
+  const routeSpaceKey = space?.spaceKey
+  const activeSpace: SpaceIdentity | undefined =
+    space ??
+    (loaderData.spaceID
+      ? { spaceKey: '', spaceID: loaderData.spaceID, spaceName: loaderData.spaceName }
+      : undefined)
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
@@ -340,13 +351,13 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
     const galleryKey = pathGalleryKey || propGalleryKey || ''
     if (galleryKey) {
       await navigate({
-        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
-        params: spaceKey ? { spaceKey, galleryKey } : { galleryKey },
+        to: routeSpaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
+        params: routeSpaceKey ? { spaceKey: routeSpaceKey, galleryKey } : { galleryKey },
       })
     } else {
       await navigate({
-        to: spaceKey ? '/spaces/$spaceKey' : '/',
-        params: spaceKey ? { spaceKey } : undefined,
+        to: routeSpaceKey ? '/spaces/$spaceKey' : '/',
+        params: routeSpaceKey ? { spaceKey: routeSpaceKey } : undefined,
       })
     }
   }
@@ -392,8 +403,8 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         galleryKey || '',
         true, // overwrite = true for direct save
       )
-      const result = await saveTemplate({ input: saveInput, spaceKey })
-      void regenerateTemplatePreview(result.templatePath, spaceKey).catch((error) => {
+      const result = await saveTemplate({ input: saveInput, spaceID: activeSpace?.spaceID })
+      void regenerateTemplatePreview(result.templatePath, activeSpace?.spaceID).catch((error) => {
         console.warn('Failed to regenerate template preview after save:', error)
       })
 
@@ -409,7 +420,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       console.error('Failed to save template:', error)
       toast.error(t('imageEditor.template.saveError'))
     }
-  }, [imageEditor, router, t, templateMetadata, spaceKey])
+  }, [imageEditor, router, t, templateMetadata, routeSpaceKey])
 
   const handleApplyTemplate = async (selectedPaths: string[]) => {
     if (selectedPaths.length === 0) return
@@ -418,7 +429,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
     try {
       // Fetch file metadata first
-      const fileStat = await statFile(templatePath, spaceKey)
+      const fileStat = await statFile(templatePath, activeSpace?.spaceID)
 
       if (!fileStat || !fileStat.thumbnailUrls?.original) {
         throw new Error('Template file URL not available')
@@ -525,7 +536,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         const imagePath = paths[0] // Single selection mode
 
         // Fetch dimensions for the layer image
-        const dimensions = await fetchImageDimensions(imagePath, spaceKey)
+        const dimensions = await fetchImageDimensions(imagePath, activeSpace?.spaceID)
 
         // Extract filename for display name
         const filename = getFileDisplayName(imagePath.split('/').pop() || imagePath)
@@ -562,7 +573,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
       try {
         // Fetch dimensions for the new image
-        const dimensions = await fetchImageDimensions(newImagePath, spaceKey)
+        const dimensions = await fetchImageDimensions(newImagePath, activeSpace?.spaceID)
 
         // Swap the image using imageEditor
         imageEditor.replaceImage(newImagePath, dimensions, replaceImageLayerId)
@@ -958,7 +969,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         imageEditor={imageEditor}
         templateMetadata={templateMetadata}
         galleryKey={propGalleryKey}
-        spaceKey={spaceKey}
+        space={activeSpace}
         title={
           templateMetadata
             ? t('imageEditor.template.saveTemplateAs')
@@ -975,18 +986,22 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
             splitImagePath(templatePath)
           navigate({
             to: templateGalleryKey
-              ? spaceKey
+              ? routeSpaceKey
                 ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
                 : '/f/$galleryKey/$imageKey/editor'
-              : spaceKey
+              : routeSpaceKey
                 ? '/spaces/$spaceKey/$imageKey/editor'
                 : '/$imageKey/editor',
             params: templateGalleryKey
-              ? spaceKey
-                ? { spaceKey, galleryKey: templateGalleryKey, imageKey: templateImageKey }
+              ? routeSpaceKey
+                ? {
+                    spaceKey: routeSpaceKey,
+                    galleryKey: templateGalleryKey,
+                    imageKey: templateImageKey,
+                  }
                 : { galleryKey: templateGalleryKey, imageKey: templateImageKey }
-              : spaceKey
-                ? { spaceKey, imageKey: templateImageKey }
+              : routeSpaceKey
+                ? { spaceKey: routeSpaceKey, imageKey: templateImageKey }
                 : { imageKey: templateImageKey },
           })
         }}
@@ -994,6 +1009,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       <FilePickerDialog
         open={applyTemplateDialogOpen}
         onOpenChange={setApplyTemplateDialogOpen}
+        space={activeSpace}
         title={t('imageEditor.template.selectTemplate')}
         description={t('imageEditor.template.selectTemplateDescription')}
         onSelect={handleApplyTemplate}
@@ -1004,6 +1020,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       <FilePickerDialog
         open={replaceImageDialogOpen}
         onOpenChange={setReplaceImageDialogOpen}
+        space={activeSpace}
         title={t('imageEditor.layers.selectImageToReplace')}
         description={t('imageEditor.layers.selectImageToReplaceDescription')}
         onSelect={handleReplaceImageSelect}
@@ -1013,6 +1030,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       <FilePickerDialog
         open={addLayerDialogOpen}
         onOpenChange={setAddLayerDialogOpen}
+        space={activeSpace}
         title={t('imageEditor.layers.addImageLayer')}
         description={t('imageEditor.layers.addImageLayerDescription')}
         onSelect={async (paths) => {

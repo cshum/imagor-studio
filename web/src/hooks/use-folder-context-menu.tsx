@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { hasErrorCode } from '@/lib/error-utils'
+import type { SpaceIdentity } from '@/lib/space'
 import { folderTreeStore, invalidateFolderCache, loadRootFolders } from '@/stores/folder-tree-store'
 
 interface UseFolderContextMenuProps {
@@ -42,11 +43,8 @@ interface UseFolderContextMenuProps {
    * Use this for dropdown menus (three-dots) instead of context menus (right-click).
    */
   useDropdownItems?: boolean
-  /**
-   * Space key for multi-tenant storage scoping.
-   * Pass from the page via useParams; omit for system-level operations (e.g. sidebar).
-   */
-  spaceKey?: string
+  /** Resolved space identity for multi-tenant storage scoping. */
+  space?: SpaceIdentity
 }
 
 /**
@@ -66,13 +64,16 @@ export function useFolderContextMenu({
   onDelete,
   onMove,
   useDropdownItems = false,
-  spaceKey,
+  space,
 }: UseFolderContextMenuProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const router = useRouter()
   const [isRenaming, setIsRenaming] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const spaceKey = space?.spaceKey
+  const spaceID = space?.spaceID
 
   /**
    * Centralized rename logic - handles cache invalidation and redirect
@@ -84,7 +85,7 @@ export function useFolderContextMenu({
       pathParts[pathParts.length - 1] = newName
       const newPath = pathParts.join('/')
 
-      await moveFile(folderPath, newPath, spaceKey)
+      await moveFile(folderPath, newPath, spaceID)
 
       // Invalidate parent folder cache
       const parentPath = folderPath.split('/').slice(0, -1).join('/')
@@ -93,7 +94,7 @@ export function useFolderContextMenu({
       }
 
       // Refresh folder tree
-      await loadRootFolders(spaceKey)
+      await loadRootFolders(space)
 
       // Show success toast
       toast.success(t('pages.gallery.renameItem.success', { name: newName }))
@@ -127,7 +128,7 @@ export function useFolderContextMenu({
   const handleDelete = async (folderPath: string, folderName: string) => {
     setIsDeleting(true)
     try {
-      await deleteFile(folderPath, spaceKey)
+      await deleteFile(folderPath, spaceID)
 
       // Invalidate parent folder cache
       const parentPath = folderPath.split('/').slice(0, -1).join('/')
@@ -136,7 +137,7 @@ export function useFolderContextMenu({
       }
 
       // Refresh folder tree
-      await loadRootFolders(spaceKey)
+      await loadRootFolders(space)
 
       // Show success toast
       toast.success(t('pages.gallery.deleteFolder.success', { folderName }))

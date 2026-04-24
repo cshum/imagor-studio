@@ -19,13 +19,13 @@ import (
 )
 
 // SaveTemplate is the resolver for the saveTemplate field.
-func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTemplateInput, spaceKey *string) (*gql.TemplateResult, error) {
+func (r *mutationResolver) SaveTemplate(ctx context.Context, input gql.SaveTemplateInput, spaceID *string) (*gql.TemplateResult, error) {
 	// Check write permissions for the save path
 	if err := RequireWritePermission(ctx, input.SavePath); err != nil {
 		return nil, err
 	}
 
-	store, err := r.getSpaceStorage(ctx, spaceKey)
+	store, err := r.getSpaceStorageByID(ctx, spaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -186,12 +186,12 @@ func (r *mutationResolver) generateTemplatePreview(ctx context.Context, sourceIm
 // It reads the template JSON from storage, derives preview params, generates the preview
 // via imagor, and writes the result back as a .imagor.preview file.
 // Returns true on success, false if the template JSON cannot be read or preview generation fails.
-func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templatePath string, spaceKey *string) (bool, error) {
+func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templatePath string, spaceID *string) (bool, error) {
 	if err := RequireWritePermission(ctx, templatePath); err != nil {
 		return false, err
 	}
 
-	store, err := r.getSpaceStorage(ctx, spaceKey)
+	store, err := r.getSpaceStorageByID(ctx, spaceID)
 	if err != nil {
 		return false, err
 	}
@@ -238,12 +238,17 @@ func (r *mutationResolver) RegenerateTemplatePreview(ctx context.Context, templa
 	previewParams := derivePreviewParamsFromTemplateJSON(templateJSON)
 
 	// Generate preview image
-	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	spaceConfig, err := r.getAccessibleSpaceByID(ctx, spaceID)
 	if err != nil {
 		return false, err
 	}
 
-	previewImage, err := r.generateTemplatePreview(ctx, sourceImagePath, templateJSON, previewParams, spaceConfig, spaceKey)
+	var previewSpaceKey *string
+	if spaceConfig != nil {
+		previewSpaceKey = &spaceConfig.Key
+	}
+
+	previewImage, err := r.generateTemplatePreview(ctx, sourceImagePath, templateJSON, previewParams, spaceConfig, previewSpaceKey)
 	if err != nil {
 		r.logger.Error("Failed to generate template preview", zap.Error(err),
 			zap.String("templatePath", templatePath))

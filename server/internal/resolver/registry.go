@@ -16,6 +16,26 @@ var licenseRequiredRegistryKeys = map[string]bool{
 	"config.app_url":   true,
 }
 
+var publicSpaceRegistryKeys = map[string]bool{
+	"config.allow_guest_mode":       true,
+	"config.app_default_language":   true,
+	"config.app_default_sort_by":    true,
+	"config.app_default_sort_order": true,
+	"config.app_show_file_names":    true,
+}
+
+func arePublicSpaceRegistryKeys(keys []string) bool {
+	if len(keys) == 0 {
+		return false
+	}
+	for _, key := range keys {
+		if !publicSpaceRegistryKeys[key] {
+			return false
+		}
+	}
+	return true
+}
+
 // checkLicensed returns true if the instance is licensed.
 // Returns true when licenseService is nil (test / embedded-dev mode).
 func (r *Resolver) checkLicensed(ctx context.Context) bool {
@@ -425,23 +445,29 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 }
 
 // SpaceRegistry gets space-scoped registry entries, falling back to system:global for unset keys (space manager only)
-func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceKey string, keys []string) ([]*gql.UserRegistry, error) {
+func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceID string, keys []string) ([]*gql.UserRegistry, error) {
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space registry is not available in this deployment")
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if space == nil {
-		return nil, fmt.Errorf("space %q not found", spaceKey)
+		return nil, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, space)
 	if err != nil {
 		return nil, err
 	}
 	if !permissions.CanManage {
-		return nil, fmt.Errorf("space manager permission required for space registry: forbidden")
+		canRead, readErr := r.canReadSpace(ctx, space)
+		if readErr != nil {
+			return nil, readErr
+		}
+		if !(canRead && arePublicSpaceRegistryKeys(keys)) {
+			return nil, fmt.Errorf("space manager permission required for space registry: forbidden")
+		}
 	}
 
 	ownerID := registrystore.SpaceOwnerID(space.ID)
@@ -524,16 +550,16 @@ func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceKey string, keys
 }
 
 // SetSpaceRegistry sets space-scoped registry entries (space manager only)
-func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceKey string, entries []*gql.RegistryEntryInput) ([]*gql.UserRegistry, error) {
+func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceID string, entries []*gql.RegistryEntryInput) ([]*gql.UserRegistry, error) {
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space registry is not available in this deployment")
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if space == nil {
-		return nil, fmt.Errorf("space %q not found", spaceKey)
+		return nil, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, space)
 	if err != nil {
@@ -580,16 +606,16 @@ func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceKey string
 }
 
 // DeleteSpaceRegistry deletes space-scoped registry entries, reverting to system:global defaults (space manager only)
-func (r *mutationResolver) DeleteSpaceRegistry(ctx context.Context, spaceKey string, keys []string) (bool, error) {
+func (r *mutationResolver) DeleteSpaceRegistry(ctx context.Context, spaceID string, keys []string) (bool, error) {
 	if !r.cloudEnabled() {
 		return false, fmt.Errorf("space registry is not available in this deployment")
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if space == nil {
-		return false, fmt.Errorf("space %q not found", spaceKey)
+		return false, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, space)
 	if err != nil {

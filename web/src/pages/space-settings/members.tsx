@@ -78,7 +78,7 @@ function getRoleDescription(
 }
 
 interface MembersSectionProps {
-  spaceKey: string
+  spaceID: string
   initialMembers: SpaceMemberItem[]
   initialInvitations: SpaceInvitationItem[]
   isShared: boolean
@@ -86,7 +86,7 @@ interface MembersSectionProps {
 }
 
 export function MembersSection({
-  spaceKey,
+  spaceID,
   initialMembers,
   initialInvitations,
   isShared,
@@ -116,8 +116,8 @@ export function MembersSection({
     setIsLoading(true)
     try {
       const [spaceMembers, pendingInvitations] = await Promise.all([
-        listSpaceMembers(spaceKey),
-        listSpaceInvitations(spaceKey),
+        listSpaceMembers(spaceID),
+        listSpaceInvitations(spaceID),
       ])
       setMembers(spaceMembers)
       setInvitations(pendingInvitations)
@@ -167,7 +167,7 @@ export function MembersSection({
 
   const shareWithEmail = async (email: string) => {
     const result: SpaceInviteResultItem = await inviteSpaceMember({
-      spaceKey,
+      spaceID,
       email,
       role: 'member',
     })
@@ -224,7 +224,7 @@ export function MembersSection({
 
     setIsRemoving(true)
     try {
-      await removeSpaceMember({ spaceKey, userId: pendingRemoveId })
+      await removeSpaceMember({ spaceID, userId: pendingRemoveId })
       toast.success(t('pages.spaceSettings.members.removeSuccess'))
       setPendingRemoveId(null)
       await reload()
@@ -239,7 +239,7 @@ export function MembersSection({
     setOpenMenuMemberId(null)
     setUpdatingRoleUserId(userId)
     try {
-      await updateSpaceMemberRole({ spaceKey, userId, role })
+      await updateSpaceMemberRole({ spaceID, userId, role })
       toast.success(t('pages.spaceSettings.members.roleUpdated'))
       await reload()
     } catch (err) {
@@ -254,7 +254,7 @@ export function MembersSection({
   const handleLeaveSpace = async () => {
     setIsLeaving(true)
     try {
-      await leaveSpace({ spaceKey })
+      await leaveSpace({ spaceID })
       toast.success(t('pages.spaces.messages.leaveSpaceSuccess'))
       window.location.href = '/spaces'
     } catch (err) {
@@ -633,7 +633,7 @@ export function MembersSection({
           <ResponsiveDialogTitle>{t('pages.spaces.leaveSpace')}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             {t('pages.spaces.leaveSpaceDescription')}{' '}
-            <strong className='text-foreground'>{spaceKey}</strong>?
+            <strong className='text-foreground'>{spaceID}</strong>?
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>

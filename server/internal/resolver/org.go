@@ -103,7 +103,7 @@ func (r *Resolver) getSpacePermissions(ctx context.Context, space *space.Space) 
 		return permissions, nil
 	}
 
-	members, err := r.spaceStore.ListMembers(ctx, space.Key)
+	members, err := r.spaceStore.ListMembers(ctx, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list space members: %w", err)
 	}
@@ -288,7 +288,7 @@ func (r *Resolver) canReadSpace(ctx context.Context, space *space.Space) (bool, 
 			return true, nil
 		}
 	}
-	return r.spaceStore.HasMember(ctx, space.Key, claims.UserID)
+	return r.spaceStore.HasMember(ctx, space.ID, claims.UserID)
 }
 
 func normalizeSpaceStorageType(storageType string) string {
@@ -496,7 +496,7 @@ func (r *queryResolver) Space(ctx context.Context, key string) (*gql.Space, erro
 	if !r.cloudEnabled() {
 		return nil, nil
 	}
-	s, err := r.spaceStore.Get(ctx, key)
+	s, err := r.spaceStore.GetByKey(ctx, key)
 	if err != nil {
 		r.logger.Error("Space: failed to get space", zap.String("key", key), zap.Error(err))
 		return nil, fmt.Errorf("failed to get space: %w", err)
@@ -571,6 +571,12 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 		return nil, err
 	}
 
+	created, err := r.spaceStore.GetByKey(ctx, input.Key)
+	if err != nil || created == nil {
+		r.logger.Error("CreateSpace: failed to fetch after upsert", zap.String("key", input.Key), zap.Error(err))
+		return nil, fmt.Errorf("space created but could not be retrieved")
+	}
+
 	claims, claimsErr := auth.GetClaimsFromContext(ctx)
 	if claimsErr == nil {
 		memberRoles := map[string]string{claims.UserID: "admin"}
@@ -586,16 +592,10 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 			}
 		}
 		for userID, role := range memberRoles {
-			if err := r.spaceStore.AddMember(ctx, input.Key, userID, role); err != nil {
+			if err := r.spaceStore.AddMember(ctx, created.ID, userID, role); err != nil {
 				return nil, fmt.Errorf("space created but failed to seed members: %w", err)
 			}
 		}
-	}
-
-	created, err := r.spaceStore.Get(ctx, input.Key)
-	if err != nil || created == nil {
-		r.logger.Error("CreateSpace: failed to fetch after upsert", zap.String("key", input.Key), zap.Error(err))
-		return nil, fmt.Errorf("space created but could not be retrieved")
 	}
 	r.logger.Info("Space created", zap.String("key", input.Key), zap.String("orgID", orgID))
 	return r.mapSpaceToGQLWithPermissions(ctx, created)
@@ -609,7 +609,7 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 	}
 
 	// Load existing space so we can apply partial updates.
-	existing, err := r.spaceStore.Get(ctx, key)
+	existing, err := r.spaceStore.GetByKey(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
@@ -641,21 +641,7 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 	newKey := strings.TrimSpace(candidate.Key)
 	keyChanged := newKey != "" && newKey != oldKey
 	if keyChanged {
-		if r.spaceInviteStore != nil {
-			if err := r.spaceInviteStore.RenameSpaceKey(ctx, existing.OrgID, oldKey, newKey); err != nil {
-				return nil, fmt.Errorf("failed to update pending invitations for renamed space: %w", err)
-			}
-		}
 		if err := r.spaceStore.RenameKey(ctx, oldKey, newKey); err != nil {
-			if r.spaceInviteStore != nil {
-				if rollbackErr := r.spaceInviteStore.RenameSpaceKey(ctx, existing.OrgID, newKey, oldKey); rollbackErr != nil {
-					r.logger.Warn("UpdateSpace: failed to roll back invitation space key rename",
-						zap.String("oldKey", oldKey),
-						zap.String("newKey", newKey),
-						zap.Error(rollbackErr),
-					)
-				}
-			}
 			return nil, err
 		}
 	}
@@ -667,7 +653,7 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 		return nil, fmt.Errorf("failed to update space: %w", err)
 	}
 
-	updated, err := r.spaceStore.Get(ctx, input.Key)
+	updated, err := r.spaceStore.GetByKey(ctx, input.Key)
 	if err != nil || updated == nil {
 		return nil, fmt.Errorf("space updated but could not be retrieved")
 	}
@@ -711,7 +697,7 @@ func (r *mutationResolver) DeleteSpace(ctx context.Context, key string) (bool, e
 	}
 
 	// Verify ownership before deleting.
-	existing, err := r.spaceStore.Get(ctx, key)
+	existing, err := r.spaceStore.GetByKey(ctx, key)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch space: %w", err)
 	}
@@ -748,11 +734,11 @@ func mapMemberToGQL(m *org.OrgMemberView) *gql.OrgMember {
 }
 
 // SpaceMembers lists all explicit members of a space (space manager).
-func (r *queryResolver) SpaceMembers(ctx context.Context, spaceKey string) ([]*gql.SpaceMember, error) {
+func (r *queryResolver) SpaceMembers(ctx context.Context, spaceID string) ([]*gql.SpaceMember, error) {
 	if !r.cloudEnabled() {
 		return []*gql.SpaceMember{}, nil
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
@@ -766,7 +752,7 @@ func (r *queryResolver) SpaceMembers(ctx context.Context, spaceKey string) ([]*g
 	if !permissions.CanManage {
 		return nil, fmt.Errorf("forbidden: space manager access required")
 	}
-	members, err := r.spaceStore.ListMembers(ctx, spaceKey)
+	members, err := r.spaceStore.ListMembers(ctx, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list space members: %w", err)
 	}
@@ -781,11 +767,11 @@ func (r *queryResolver) SpaceMembers(ctx context.Context, spaceKey string) ([]*g
 	return result, nil
 }
 
-func (r *queryResolver) SpaceInvitations(ctx context.Context, spaceKey string) ([]*gql.SpaceInvitation, error) {
+func (r *queryResolver) SpaceInvitations(ctx context.Context, spaceID string) ([]*gql.SpaceInvitation, error) {
 	if !r.cloudEnabled() || r.spaceInviteStore == nil {
 		return []*gql.SpaceInvitation{}, nil
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
@@ -799,7 +785,7 @@ func (r *queryResolver) SpaceInvitations(ctx context.Context, spaceKey string) (
 	if !permissions.CanManage {
 		return nil, fmt.Errorf("forbidden: space manager access required")
 	}
-	invitations, err := r.spaceInviteStore.ListPendingBySpace(ctx, space.OrgID, spaceKey)
+	invitations, err := r.spaceInviteStore.ListPendingBySpace(ctx, space.OrgID, space.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list space invitations: %w", err)
 	}
@@ -999,7 +985,7 @@ func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (
 }
 
 // AddSpaceMember adds an existing org member to a space (space manager).
-func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceKey string, userID string, role string) (*gql.SpaceMember, error) {
+func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceID string, userID string, role string) (*gql.SpaceMember, error) {
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space member management is not available in this deployment")
 	}
@@ -1007,12 +993,12 @@ func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceKey string, 
 	if err != nil {
 		return nil, err
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if space == nil {
-		return nil, fmt.Errorf("space %q not found", spaceKey)
+		return nil, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, space)
 	if err != nil {
@@ -1035,10 +1021,10 @@ func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceKey string, 
 	if matched == nil {
 		return nil, fmt.Errorf("user is not a member of this organization")
 	}
-	if err := r.spaceStore.AddMember(ctx, spaceKey, userID, normalizedRole); err != nil {
+	if err := r.spaceStore.AddMember(ctx, space.ID, userID, normalizedRole); err != nil {
 		return nil, fmt.Errorf("failed to add space member: %w", err)
 	}
-	spaceMembers, err := r.spaceStore.ListMembers(ctx, spaceKey)
+	spaceMembers, err := r.spaceStore.ListMembers(ctx, space.ID)
 	if err == nil {
 		for _, member := range spaceMembers {
 			if member.UserID == userID {
@@ -1049,7 +1035,7 @@ func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceKey string, 
 	return &gql.SpaceMember{UserID: userID, Username: matched.Username, DisplayName: matched.DisplayName, Role: normalizedRole}, nil
 }
 
-func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey string, email string, role string) (*gql.SpaceInviteResult, error) {
+func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceID string, email string, role string) (*gql.SpaceInviteResult, error) {
 	if !r.cloudEnabled() || r.userStore == nil {
 		return nil, fmt.Errorf("space member management is not available in this deployment")
 	}
@@ -1057,12 +1043,12 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 	if err != nil {
 		return nil, err
 	}
-	s, err := r.spaceStore.Get(ctx, spaceKey)
+	s, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if s == nil {
-		return nil, fmt.Errorf("space %q not found", spaceKey)
+		return nil, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, s)
 	if err != nil {
@@ -1087,7 +1073,7 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 		return nil, fmt.Errorf("failed to look up user by email: %w", err)
 	}
 	if existingUser != nil {
-		hasAccess, hasAccessErr := r.spaceStore.HasMember(ctx, spaceKey, existingUser.ID)
+		hasAccess, hasAccessErr := r.spaceStore.HasMember(ctx, s.ID, existingUser.ID)
 		if hasAccessErr != nil {
 			return nil, fmt.Errorf("failed to check space membership: %w", hasAccessErr)
 		}
@@ -1099,10 +1085,10 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 			if member.UserID != existingUser.ID {
 				continue
 			}
-			if err := r.spaceStore.AddMember(ctx, spaceKey, existingUser.ID, normalizedRole); err != nil {
+			if err := r.spaceStore.AddMember(ctx, s.ID, existingUser.ID, normalizedRole); err != nil {
 				return nil, fmt.Errorf("failed to add space member: %w", err)
 			}
-			spaceMembers, listErr := r.spaceStore.ListMembers(ctx, spaceKey)
+			spaceMembers, listErr := r.spaceStore.ListMembers(ctx, s.ID)
 			if listErr == nil {
 				for _, spaceMember := range spaceMembers {
 					if spaceMember.UserID == existingUser.ID {
@@ -1113,10 +1099,10 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 			return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: member.Username, DisplayName: member.DisplayName, Email: existingUser.Email, AvatarURL: existingUser.AvatarUrl, Role: normalizedRole}}, nil
 		}
 
-		if err := r.spaceStore.AddMember(ctx, spaceKey, existingUser.ID, normalizedRole); err != nil {
+		if err := r.spaceStore.AddMember(ctx, s.ID, existingUser.ID, normalizedRole); err != nil {
 			return nil, fmt.Errorf("failed to add space member: %w", err)
 		}
-		spaceMembers, listErr := r.spaceStore.ListMembers(ctx, spaceKey)
+		spaceMembers, listErr := r.spaceStore.ListMembers(ctx, s.ID)
 		if listErr == nil {
 			for _, spaceMember := range spaceMembers {
 				if spaceMember.UserID == existingUser.ID {
@@ -1135,7 +1121,7 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 	if claimsErr != nil {
 		return nil, claimsErr
 	}
-	invitation, err := r.spaceInviteStore.CreateOrRefreshPending(ctx, s.OrgID, spaceKey, normalizedEmail, normalizedRole, claims.UserID, time.Now().UTC().Add(7*24*time.Hour))
+	invitation, err := r.spaceInviteStore.CreateOrRefreshPending(ctx, s.OrgID, s.ID, normalizedEmail, normalizedRole, claims.UserID, time.Now().UTC().Add(7*24*time.Hour))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create invitation: %w", err)
 	}
@@ -1159,7 +1145,7 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceKey strin
 }
 
 // RemoveSpaceMember removes an explicit member from a space (space manager).
-func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceKey string, userID string) (bool, error) {
+func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceID string, userID string) (bool, error) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return false, err
@@ -1170,12 +1156,12 @@ func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceKey strin
 	if !r.cloudEnabled() {
 		return false, fmt.Errorf("space member management is not available in this deployment")
 	}
-	s, err := r.spaceStore.Get(ctx, spaceKey)
+	s, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if s == nil {
-		return false, fmt.Errorf("space %q not found", spaceKey)
+		return false, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, s)
 	if err != nil {
@@ -1191,13 +1177,13 @@ func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceKey strin
 	if protectedMember {
 		return false, fmt.Errorf("you cannot remove a host organization owner or admin from this space")
 	}
-	if err := r.spaceStore.RemoveMember(ctx, spaceKey, userID); err != nil {
+	if err := r.spaceStore.RemoveMember(ctx, s.ID, userID); err != nil {
 		return false, fmt.Errorf("failed to remove space member: %w", err)
 	}
 	return true, nil
 }
 
-func (r *mutationResolver) LeaveSpace(ctx context.Context, spaceKey string) (bool, error) {
+func (r *mutationResolver) LeaveSpace(ctx context.Context, spaceID string) (bool, error) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return false, err
@@ -1205,12 +1191,12 @@ func (r *mutationResolver) LeaveSpace(ctx context.Context, spaceKey string) (boo
 	if !r.cloudEnabled() {
 		return false, fmt.Errorf("space member management is not available in this deployment")
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if space == nil {
-		return false, fmt.Errorf("space %q not found", spaceKey)
+		return false, fmt.Errorf("space %q not found", spaceID)
 	}
 	orgID, orgErr := r.getUserOrgID(ctx)
 	if orgErr != nil {
@@ -1219,14 +1205,14 @@ func (r *mutationResolver) LeaveSpace(ctx context.Context, spaceKey string) (boo
 	if orgID != "" && space.OrgID == orgID {
 		return false, fmt.Errorf("you can only leave shared spaces from another organization")
 	}
-	hasAccess, err := r.spaceStore.HasMember(ctx, spaceKey, claims.UserID)
+	hasAccess, err := r.spaceStore.HasMember(ctx, space.ID, claims.UserID)
 	if err != nil {
 		return false, fmt.Errorf("failed to check space membership: %w", err)
 	}
 	if !hasAccess {
 		return false, fmt.Errorf("you are not an explicit member of this space")
 	}
-	if err := r.spaceStore.RemoveMember(ctx, spaceKey, claims.UserID); err != nil {
+	if err := r.spaceStore.RemoveMember(ctx, space.ID, claims.UserID); err != nil {
 		return false, fmt.Errorf("failed to leave space: %w", err)
 	}
 	return true, nil
@@ -1264,7 +1250,7 @@ func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID strin
 }
 
 // UpdateSpaceMemberRole changes a member's explicit role within a space (space manager).
-func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceKey string, userID string, role string) (*gql.SpaceMember, error) {
+func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceID string, userID string, role string) (*gql.SpaceMember, error) {
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space member management is not available in this deployment")
 	}
@@ -1279,12 +1265,12 @@ func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceKey s
 	if err != nil {
 		return nil, err
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if space == nil {
-		return nil, fmt.Errorf("space %q not found", spaceKey)
+		return nil, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, space)
 	if err != nil {
@@ -1300,10 +1286,10 @@ func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceKey s
 	if protectedMember {
 		return nil, fmt.Errorf("you cannot change the space role for a host organization owner or admin")
 	}
-	if err := r.spaceStore.UpdateMemberRole(ctx, spaceKey, userID, normalizedRole); err != nil {
+	if err := r.spaceStore.UpdateMemberRole(ctx, space.ID, userID, normalizedRole); err != nil {
 		return nil, fmt.Errorf("failed to update space member role: %w", err)
 	}
-	members, err := r.spaceStore.ListMembers(ctx, spaceKey)
+	members, err := r.spaceStore.ListMembers(ctx, space.ID)
 	if err == nil {
 		for _, member := range members {
 			if member.UserID == userID {

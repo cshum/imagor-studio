@@ -1,20 +1,23 @@
 import React, { useState } from 'react'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Folder, MoreVertical } from 'lucide-react'
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from '@/components/ui/sidebar'
+import { normalizeScopedDirectoryPath } from '@/lib/path-utils'
+import type { SpaceIdentity } from '@/lib/space'
 import { useAuth } from '@/stores/auth-store'
 import { FolderNode, useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 interface FolderTreeNodeProps {
   folder: FolderNode
+  space?: SpaceIdentity
   renderMenuItems?: (folderKey: string, folderName: string) => React.ReactNode
   // Drag and drop props
   onDragOver?: (e: React.DragEvent, targetFolderKey: string) => void
@@ -26,6 +29,7 @@ interface FolderTreeNodeProps {
 
 export function FolderTreeNode({
   folder,
+  space,
   renderMenuItems,
   onDragOver,
   onDragEnter,
@@ -34,21 +38,22 @@ export function FolderTreeNode({
   dragOverTarget,
 }: FolderTreeNodeProps) {
   const navigate = useNavigate()
-  const { spaceKey } = useParams({ strict: false })
   const { currentPath, dispatch, loadFolderChildren } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
   const { authState } = useAuth()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const folderPath = normalizeScopedDirectoryPath(folder.path, space?.spaceID)
 
-  const isActive = currentPath === folder.path
+  const isActive = currentPath === folderPath
   const hasChildren = folder.children && folder.children.length > 0
   const canExpand = folder.isDirectory && (!folder.isLoaded || hasChildren)
-  const isDragOver = dragOverTarget === folder.path
+  const isDragOver = dragOverTarget === folderPath
+  const spaceKey = space?.spaceKey
 
   const handleFolderClick = async () => {
     // Navigate to the folder
-    if (folder.path === '') {
+    if (folderPath === '') {
       navigate({
         to: spaceKey ? '/spaces/$spaceKey' : '/',
         params: spaceKey ? { spaceKey } : undefined,
@@ -56,7 +61,7 @@ export function FolderTreeNode({
     } else {
       navigate({
         to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
-        params: spaceKey ? { spaceKey, galleryKey: folder.path } : { galleryKey: folder.path },
+        params: spaceKey ? { spaceKey, galleryKey: folderPath } : { galleryKey: folderPath },
       })
     }
 
@@ -66,12 +71,12 @@ export function FolderTreeNode({
     }
 
     // Update current path
-    dispatch({ type: 'SET_CURRENT_PATH', path: folder.path })
+    dispatch({ type: 'SET_CURRENT_PATH', path: folderPath })
     if (folder.isDirectory) {
       if (!folder.isLoaded) {
-        await loadFolderChildren(folder.path, true, spaceKey)
+        await loadFolderChildren(folderPath, true, space)
       } else if (!folder.isExpanded) {
-        dispatch({ type: 'EXPAND_FOLDER', path: folder.path })
+        dispatch({ type: 'EXPAND_FOLDER', path: folderPath })
       }
     }
   }
@@ -80,18 +85,18 @@ export function FolderTreeNode({
     evt?.stopPropagation()
     if (!folder.isLoaded && folder.isDirectory) {
       // Load children if not loaded yet
-      await loadFolderChildren(folder.path, true, spaceKey)
+      await loadFolderChildren(folderPath, true, space)
     } else if (folder.isExpanded) {
       // Collapse if already expanded
-      dispatch({ type: 'COLLAPSE_FOLDER', path: folder.path })
+      dispatch({ type: 'COLLAPSE_FOLDER', path: folderPath })
     } else {
       // Expand if collapsed
-      dispatch({ type: 'EXPAND_FOLDER', path: folder.path })
+      dispatch({ type: 'EXPAND_FOLDER', path: folderPath })
     }
   }
 
   // Check if user is authenticated to show dropdown
-  const showDropdown = renderMenuItems && authState.state === 'authenticated' && folder.path
+  const showDropdown = renderMenuItems && authState.state === 'authenticated' && folderPath
 
   // If this is a leaf folder (no children), render as a simple button
   if (!canExpand) {
@@ -101,15 +106,15 @@ export function FolderTreeNode({
           className={`group/folder relative ${isDragOver ? 'z-10' : ''}`}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onDragOver={(e) => onDragOver?.(e, folder.path)}
-          onDragEnter={(e) => onDragEnter?.(e, folder.path)}
-          onDragLeave={(e) => onDragLeave?.(e, folder.path)}
-          onDrop={(e) => onDrop?.(e, folder.path)}
+          onDragOver={(e) => onDragOver?.(e, folderPath)}
+          onDragEnter={(e) => onDragEnter?.(e, folderPath)}
+          onDragLeave={(e) => onDragLeave?.(e, folderPath)}
+          onDrop={(e) => onDrop?.(e, folderPath)}
         >
           <SidebarMenuButton
             onClick={handleFolderClick}
             isActive={isActive}
-            data-folder-key={folder.path}
+            data-folder-key={folderPath}
             data-folder-name={folder.name || 'Root'}
             className={isDragOver ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950' : ''}
           >
@@ -136,7 +141,7 @@ export function FolderTreeNode({
                 </DropdownMenuTrigger>
               </div>
               <DropdownMenuContent align='start' className='w-56'>
-                {renderMenuItems(folder.path, folder.name || 'Root')}
+                {renderMenuItems(folderPath, folder.name || 'Root')}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -156,26 +161,24 @@ export function FolderTreeNode({
           className={`group/folder relative ${isDragOver ? 'z-10' : ''}`}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onDragOver={(e) => onDragOver?.(e, folder.path)}
-          onDragEnter={(e) => onDragEnter?.(e, folder.path)}
-          onDragLeave={(e) => onDragLeave?.(e, folder.path)}
-          onDrop={(e) => onDrop?.(e, folder.path)}
+          onDragOver={(e) => onDragOver?.(e, folderPath)}
+          onDragEnter={(e) => onDragEnter?.(e, folderPath)}
+          onDragLeave={(e) => onDragLeave?.(e, folderPath)}
+          onDrop={(e) => onDrop?.(e, folderPath)}
         >
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton
-              onClick={handleFolderClick}
-              isActive={isActive}
-              data-folder-key={folder.path}
-              data-folder-name={folder.name || 'Root'}
-              className={isDragOver ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950' : ''}
-            >
-              <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
-                <ChevronRight className='size-4 transition-transform' />
-              </span>
-              <Folder className='h-4 w-4' />
-              <span className='truncate'>{folder.name || 'Root'}</span>
-            </SidebarMenuButton>
-          </CollapsibleTrigger>
+          <SidebarMenuButton
+            onClick={handleFolderClick}
+            isActive={isActive}
+            data-folder-key={folderPath}
+            data-folder-name={folder.name || 'Root'}
+            className={isDragOver ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950' : ''}
+          >
+            <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
+              <ChevronRight className='size-4 transition-transform' />
+            </span>
+            <Folder className='h-4 w-4' />
+            <span className='truncate'>{folder.name || 'Root'}</span>
+          </SidebarMenuButton>
           {showDropdown && (isHovered || isDropdownOpen) && (
             <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen} modal={false}>
               <div
@@ -193,7 +196,7 @@ export function FolderTreeNode({
                 </DropdownMenuTrigger>
               </div>
               <DropdownMenuContent align='start' className='w-56'>
-                {renderMenuItems(folder.path, folder.name || 'Root')}
+                {renderMenuItems(folderPath, folder.name || 'Root')}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -205,6 +208,7 @@ export function FolderTreeNode({
               <FolderTreeNode
                 key={`${child.path}-${index}`}
                 folder={child}
+                space={space}
                 renderMenuItems={renderMenuItems}
                 onDragOver={onDragOver}
                 onDragEnter={onDragEnter}

@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import { FolderSelectionDialog } from '@/components/folder-picker/folder-selection-dialog.tsx'
 import { moveGalleryItems } from '@/lib/gallery-move'
+import type { SpaceIdentity } from '@/lib/space'
 
 export interface MoveItem {
   key: string
@@ -17,7 +18,7 @@ export interface MoveItemsDialogProps {
   onOpenChange: (open: boolean) => void
   items: MoveItem[]
   currentPath: string
-  spaceKey?: string
+  space?: SpaceIdentity
   onMoveComplete?: () => void
 }
 
@@ -26,7 +27,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
   onOpenChange,
   items,
   currentPath,
-  spaceKey,
+  space,
   onMoveComplete,
 }) => {
   const { t } = useTranslation()
@@ -81,7 +82,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
       const { successCount, skippedCount, errorCount } = await moveGalleryItems({
         items,
         destinationPath,
-        spaceKey,
+        spaceID: space?.spaceID,
         onProgress: ({ completedCount: nextCompletedCount }) => {
           setCompletedCount(nextCompletedCount)
           toast.loading(getMoveProgressMessage(nextCompletedCount), { id: toastId })
@@ -170,6 +171,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
       onSelect={handleConfirmMove}
       excludePaths={excludePaths}
       currentPath={currentPath}
+      space={space}
       title={dialogTitle}
       description={
         isMoving

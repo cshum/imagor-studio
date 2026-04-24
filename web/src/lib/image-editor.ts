@@ -288,7 +288,7 @@ export interface ImagorTemplate {
 
 export interface ImageEditorConfig {
   imagePath: string
-  spaceKey?: string
+  spaceID?: string
   originalDimensions: {
     width: number
     height: number
@@ -764,7 +764,7 @@ export class ImageEditor {
       const url = await generateImagorUrlFromTemplate(
         {
           templateJson: this.buildTemplateJson(previewTransformations),
-          spaceKey: this.config.spaceKey ?? null,
+          spaceID: this.config.spaceID ?? null,
           contextPath: this.editingContext.length > 0 ? this.editingContext : null,
           forPreview: true,
           previewMaxDimensions: this.config.previewMaxDimensions ?? null,
@@ -1156,7 +1156,7 @@ export class ImageEditor {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       templateJson: this.buildTemplateJson(baseState),
-      spaceKey: this.config.spaceKey ?? null,
+      spaceID: this.config.spaceID ?? null,
       contextPath: null,
       forPreview: false,
     })
@@ -1171,7 +1171,7 @@ export class ImageEditor {
     const baseState = this.getBaseState()
     return await generateImagorUrlFromTemplate({
       templateJson: this.buildTemplateJson(baseState),
-      spaceKey: this.config.spaceKey ?? null,
+      spaceID: this.config.spaceID ?? null,
       contextPath: null,
       forPreview: false,
       appendFilters: [{ name: 'attachment', args: '' }],

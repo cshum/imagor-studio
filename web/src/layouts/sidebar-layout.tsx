@@ -2,14 +2,15 @@ import { PropsWithChildren } from 'react'
 
 import { FolderTreeSidebar } from '@/components/folder-tree/folder-tree-sidebar'
 import { SidebarInset, SidebarWrapper } from '@/components/ui/sidebar'
+import type { SpaceIdentity } from '@/lib/space'
 import { cn } from '@/lib/utils'
 
-type BasePanelLayoutProps = PropsWithChildren
+type BasePanelLayoutProps = PropsWithChildren<{ space?: SpaceIdentity }>
 
-export function SidebarLayout({ children }: BasePanelLayoutProps) {
+export function SidebarLayout({ children, space }: BasePanelLayoutProps) {
   return (
     <SidebarWrapper>
-      <FolderTreeSidebar />
+      <FolderTreeSidebar space={space} />
       <SidebarInset>
         <main
           className={cn(

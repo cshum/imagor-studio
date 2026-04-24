@@ -784,7 +784,7 @@ func TestGenerateThumbnailUrlsForSpace_UsesVerifiedCustomDomain(t *testing.T) {
 	)
 
 	imagePath := "test/image.jpg"
-	mockSpaceStore.On("Get", mock.Anything, spaceKey).Return(&space.Space{
+	mockSpaceStore.On("GetByKey", mock.Anything, spaceKey).Return(&space.Space{
 		Key:                  spaceKey,
 		CustomDomain:         "images.customer.test",
 		CustomDomainVerified: true,

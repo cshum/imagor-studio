@@ -43,6 +43,7 @@ describe('account-loader', () => {
     vi.mocked(listSpaces).mockResolvedValue([
       {
         __typename: 'Space',
+        id: 'space-acme',
         orgId: 'org-1',
         key: 'acme',
         name: 'Acme',
@@ -122,7 +123,7 @@ describe('account-loader', () => {
       updatedAt: '2026-04-18T00:00:00Z',
     })
 
-    const result = await spaceSettingsLoader({ params: { spaceKey: 'acme' } })
+    const result = await spaceSettingsLoader({ params: { routeSpaceKey: 'acme' } })
 
     expect(result.space.key).toBe('acme')
     expect(result.breadcrumb.label).toBe('Acme')
@@ -155,7 +156,7 @@ describe('account-loader', () => {
       updatedAt: '2026-04-18T00:00:00Z',
     })
 
-    const result = await spaceSettingsLoader({ params: { spaceKey: 'shared' } })
+    const result = await spaceSettingsLoader({ params: { routeSpaceKey: 'shared' } })
 
     expect(result.space.key).toBe('shared')
   })
@@ -188,7 +189,7 @@ describe('account-loader', () => {
     })
 
     try {
-      await spaceSettingsLoader({ params: { spaceKey: 'shared' } })
+      await spaceSettingsLoader({ params: { routeSpaceKey: 'shared' } })
       throw new Error('expected loader to redirect')
     } catch (error) {
       expect(error).toBeInstanceOf(Response)

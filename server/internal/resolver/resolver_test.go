@@ -410,8 +410,16 @@ func (m *MockSpaceStore) SoftDelete(ctx context.Context, key string) error {
 	return args.Error(0)
 }
 
-func (m *MockSpaceStore) Get(ctx context.Context, key string) (*space.Space, error) {
+func (m *MockSpaceStore) GetByKey(ctx context.Context, key string) (*space.Space, error) {
 	args := m.Called(ctx, key)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*space.Space), args.Error(1)
+}
+
+func (m *MockSpaceStore) GetByID(ctx context.Context, id string) (*space.Space, error) {
+	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -451,10 +459,10 @@ func (m *MockSpaceStore) KeyExists(ctx context.Context, key string) (bool, error
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*space.SpaceMemberView, error) {
+func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceID string) ([]*space.SpaceMemberView, error) {
 	for _, expected := range m.ExpectedCalls {
 		if expected.Method == "ListMembers" {
-			args := m.Called(ctx, spaceKey)
+			args := m.Called(ctx, spaceID)
 			if args.Get(0) == nil {
 				return nil, args.Error(1)
 			}
@@ -464,25 +472,25 @@ func (m *MockSpaceStore) ListMembers(ctx context.Context, spaceKey string) ([]*s
 	return []*space.SpaceMemberView{}, nil
 }
 
-func (m *MockSpaceStore) AddMember(ctx context.Context, spaceKey, userID, role string) error {
-	args := m.Called(ctx, spaceKey, userID, role)
+func (m *MockSpaceStore) AddMember(ctx context.Context, spaceID, userID, role string) error {
+	args := m.Called(ctx, spaceID, userID, role)
 	return args.Error(0)
 }
 
-func (m *MockSpaceStore) RemoveMember(ctx context.Context, spaceKey, userID string) error {
-	args := m.Called(ctx, spaceKey, userID)
+func (m *MockSpaceStore) RemoveMember(ctx context.Context, spaceID, userID string) error {
+	args := m.Called(ctx, spaceID, userID)
 	return args.Error(0)
 }
 
-func (m *MockSpaceStore) UpdateMemberRole(ctx context.Context, spaceKey, userID, role string) error {
-	args := m.Called(ctx, spaceKey, userID, role)
+func (m *MockSpaceStore) UpdateMemberRole(ctx context.Context, spaceID, userID, role string) error {
+	args := m.Called(ctx, spaceID, userID, role)
 	return args.Error(0)
 }
 
-func (m *MockSpaceStore) HasMember(ctx context.Context, spaceKey, userID string) (bool, error) {
+func (m *MockSpaceStore) HasMember(ctx context.Context, spaceID, userID string) (bool, error) {
 	for _, expected := range m.ExpectedCalls {
 		if expected.Method == "HasMember" {
-			args := m.Called(ctx, spaceKey, userID)
+			args := m.Called(ctx, spaceID, userID)
 			return args.Bool(0), args.Error(1)
 		}
 	}
@@ -495,16 +503,16 @@ type MockSpaceInviteStore struct {
 	mock.Mock
 }
 
-func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceKey, email, role, invitedByUserID string, expiresAt time.Time) (*space.Invitation, error) {
-	args := m.Called(ctx, orgID, spaceKey, email, role, invitedByUserID, expiresAt)
+func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID, spaceID, email, role, invitedByUserID string, expiresAt time.Time) (*space.Invitation, error) {
+	args := m.Called(ctx, orgID, spaceID, email, role, invitedByUserID, expiresAt)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*space.Invitation), args.Error(1)
 }
 
-func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceKey string) ([]*space.Invitation, error) {
-	args := m.Called(ctx, orgID, spaceKey)
+func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceID string) ([]*space.Invitation, error) {
+	args := m.Called(ctx, orgID, spaceID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -521,11 +529,6 @@ func (m *MockSpaceInviteStore) GetPendingByToken(ctx context.Context, token stri
 
 func (m *MockSpaceInviteStore) MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error {
 	args := m.Called(ctx, id, acceptedAt)
-	return args.Error(0)
-}
-
-func (m *MockSpaceInviteStore) RenameSpaceKey(ctx context.Context, orgID, oldSpaceKey, newSpaceKey string) error {
-	args := m.Called(ctx, orgID, oldSpaceKey, newSpaceKey)
 	return args.Error(0)
 }
 

@@ -18,6 +18,7 @@ export const MY_ORGANIZATION = gql(`
 export const LIST_SPACES = gql(`
   query ListSpaces {
     spaces {
+      id
       orgId
       key
       name
@@ -133,8 +134,8 @@ export const DELETE_SPACE = gql(`
 `)
 
 export const GET_SPACE_REGISTRY = gql(`
-  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {
-    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {
+  query GetSpaceRegistry($spaceID: String!, $keys: [String!]) {
+    spaceRegistry(spaceID: $spaceID, keys: $keys) {
       key
       value
       isEncrypted
@@ -143,8 +144,8 @@ export const GET_SPACE_REGISTRY = gql(`
 `)
 
 export const SET_SPACE_REGISTRY = gql(`
-  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {
-    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {
+  mutation SetSpaceRegistry($spaceID: String!, $entries: [RegistryEntryInput!]) {
+    setSpaceRegistry(spaceID: $spaceID, entries: $entries) {
       key
       value
       isEncrypted
@@ -153,8 +154,8 @@ export const SET_SPACE_REGISTRY = gql(`
 `)
 
 export const DELETE_SPACE_REGISTRY = gql(`
-  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {
-    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)
+  mutation DeleteSpaceRegistry($spaceID: String!, $keys: [String!]!) {
+    deleteSpaceRegistry(spaceID: $spaceID, keys: $keys)
   }
 `)
 
@@ -177,8 +178,8 @@ export const LIST_ORG_MEMBERS = gql(`
 `)
 
 export const LIST_SPACE_MEMBERS = gql(`
-  query ListSpaceMembers($spaceKey: String!) {
-    spaceMembers(spaceKey: $spaceKey) {
+  query ListSpaceMembers($spaceID: String!) {
+    spaceMembers(spaceID: $spaceID) {
       userId
       username
       displayName
@@ -194,8 +195,8 @@ export const LIST_SPACE_MEMBERS = gql(`
 `)
 
 export const LIST_SPACE_INVITATIONS = gql(`
-  query ListSpaceInvitations($spaceKey: String!) {
-    spaceInvitations(spaceKey: $spaceKey) {
+  query ListSpaceInvitations($spaceID: String!) {
+    spaceInvitations(spaceID: $spaceID) {
       id
       email
       role
@@ -230,8 +231,8 @@ export const ADD_ORG_MEMBER_BY_EMAIL = gql(`
 `)
 
 export const ADD_SPACE_MEMBER = gql(`
-  mutation AddSpaceMember($spaceKey: String!, $userId: ID!, $role: String!) {
-    addSpaceMember(spaceKey: $spaceKey, userId: $userId, role: $role) {
+  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: String!) {
+    addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {
       userId
       username
       displayName
@@ -242,8 +243,8 @@ export const ADD_SPACE_MEMBER = gql(`
 `)
 
 export const INVITE_SPACE_MEMBER = gql(`
-  mutation InviteSpaceMember($spaceKey: String!, $email: String!, $role: String!) {
-    inviteSpaceMember(spaceKey: $spaceKey, email: $email, role: $role) {
+  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: String!) {
+    inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {
       status
       member {
         userId
@@ -270,14 +271,14 @@ export const REMOVE_ORG_MEMBER = gql(`
 `)
 
 export const REMOVE_SPACE_MEMBER = gql(`
-  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {
-    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)
+  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {
+    removeSpaceMember(spaceID: $spaceID, userId: $userId)
   }
 `)
 
 export const LEAVE_SPACE = gql(`
-  mutation LeaveSpace($spaceKey: String!) {
-    leaveSpace(spaceKey: $spaceKey)
+  mutation LeaveSpace($spaceID: String!) {
+    leaveSpace(spaceID: $spaceID)
   }
 `)
 
@@ -294,8 +295,8 @@ export const UPDATE_ORG_MEMBER_ROLE = gql(`
 `)
 
 export const UPDATE_SPACE_MEMBER_ROLE = gql(`
-  mutation UpdateSpaceMemberRole($spaceKey: String!, $userId: ID!, $role: String!) {
-    updateSpaceMemberRole(spaceKey: $spaceKey, userId: $userId, role: $role) {
+  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: String!) {
+    updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {
       userId
       username
       displayName

@@ -11,7 +11,7 @@ type SpaceInvitation struct {
 
 	ID              string     `bun:"id,pk,type:text"`
 	OrgID           string     `bun:"org_id,notnull,type:text"`
-	SpaceKey        string     `bun:"space_key,notnull,type:text"`
+	SpaceID         string     `bun:"space_id,notnull,type:text"`
 	Email           string     `bun:"email,notnull,type:text"`
 	Role            string     `bun:"role,notnull,type:text"`
 	Token           string     `bun:"token,notnull,type:text,unique"`

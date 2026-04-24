@@ -57,18 +57,18 @@ func (r *Resolver) effectiveSpaceStorageConfig(sp *space.Space) *space.Space {
 	return &effective
 }
 
-func (r *Resolver) getAccessibleSpace(ctx context.Context, spaceKey *string) (*space.Space, error) {
-	if spaceKey == nil || *spaceKey == "" || !r.cloudEnabled() {
+func (r *Resolver) getAccessibleSpaceByID(ctx context.Context, spaceID *string) (*space.Space, error) {
+	if spaceID == nil || *spaceID == "" || !r.cloudEnabled() {
 		return nil, nil
 	}
 
-	sp, err := r.spaceStore.Get(ctx, *spaceKey)
+	sp, err := r.spaceStore.GetByID(ctx, *spaceID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to look up space %q: %w", *spaceKey, err)
+		return nil, fmt.Errorf("failed to look up space %q: %w", *spaceID, err)
 	}
 	if sp == nil {
 		return nil, &gqlerror.Error{
-			Message:    fmt.Sprintf("space %q not found", *spaceKey),
+			Message:    fmt.Sprintf("space %q not found", *spaceID),
 			Extensions: map[string]interface{}{"code": "NOT_FOUND"},
 		}
 	}
@@ -130,29 +130,29 @@ func (r *queryResolver) getEffectiveVideoThumbnailPosition(ctx context.Context, 
 	return defaultValue
 }
 
-// getSpaceStorage returns the storage instance for the given optional spaceKey.
+// getSpaceStorageByID returns the storage instance for the given optional spaceID.
 //
-// When spaceKey is nil/empty or cloud space mode is disabled,
+// When spaceID is nil/empty or cloud space mode is disabled,
 // the call falls back transparently to the system storage so all existing
 // single-tenant code paths continue to work unchanged.
 //
-// When spaceKey is set the caller's org membership is verified (JWT claim or
+// When spaceID is set the caller's org membership is verified (JWT claim or
 // DB fallback) and an ephemeral S3 storage instance is built from the space's
 // credentials (no registry round-trip).
-func (r *Resolver) getSpaceStorage(ctx context.Context, spaceKey *string) (storage.Storage, error) {
+func (r *Resolver) getSpaceStorageByID(ctx context.Context, spaceID *string) (storage.Storage, error) {
 	// In multi-tenant mode (spaceStore active) the root gallery has no system-level
-	// storage — all file operations must target a named space via spaceKey.
-	if r.cloudEnabled() && (spaceKey == nil || *spaceKey == "") {
+	// storage — all file operations must target a named space via spaceID.
+	if r.cloudEnabled() && (spaceID == nil || *spaceID == "") {
 		return nil, &gqlerror.Error{
-			Message:    "a spaceKey is required in multi-tenant mode",
+			Message:    "a spaceID is required in multi-tenant mode",
 			Extensions: map[string]interface{}{"code": "NOT_AVAILABLE"},
 		}
 	}
-	if spaceKey == nil || *spaceKey == "" || !r.cloudEnabled() {
+	if spaceID == nil || *spaceID == "" || !r.cloudEnabled() {
 		return r.getStorage(), nil
 	}
 
-	sp, err := r.getAccessibleSpace(ctx, spaceKey)
+	sp, err := r.getAccessibleSpaceByID(ctx, spaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -169,12 +169,12 @@ func getPreviewPath(templatePath string) string {
 }
 
 // UploadFile is the resolver for the uploadFile field.
-func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceKey *string, content graphql.Upload) (bool, error) {
+func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceID *string, content graphql.Upload) (bool, error) {
 	// Check write permissions and path access
 	if err := RequireWritePermission(ctx, path); err != nil {
 		return false, err
 	}
-	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	stor, err := r.getSpaceStorageByID(ctx, spaceID)
 	if err != nil {
 		return false, err
 	}
@@ -189,7 +189,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceKey
 }
 
 // RequestUpload is the resolver for the requestUpload field.
-func (r *mutationResolver) RequestUpload(ctx context.Context, path string, spaceKey *string, contentType string, sizeBytes int) (*gql.PresignedUpload, error) {
+func (r *mutationResolver) RequestUpload(ctx context.Context, path string, spaceID *string, contentType string, sizeBytes int) (*gql.PresignedUpload, error) {
 	if err := RequireWritePermission(ctx, path); err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (r *mutationResolver) RequestUpload(ctx context.Context, path string, space
 		}
 	}
 
-	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	stor, err := r.getSpaceStorageByID(ctx, spaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -240,12 +240,12 @@ func (r *mutationResolver) RequestUpload(ctx context.Context, path string, space
 }
 
 // DeleteFile is the resolver for the deleteFile field.
-func (r *mutationResolver) DeleteFile(ctx context.Context, path string, spaceKey *string) (bool, error) {
+func (r *mutationResolver) DeleteFile(ctx context.Context, path string, spaceID *string) (bool, error) {
 	// Check write permissions and path access
 	if err := RequireWritePermission(ctx, path); err != nil {
 		return false, err
 	}
-	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	stor, err := r.getSpaceStorageByID(ctx, spaceID)
 	if err != nil {
 		return false, err
 	}
@@ -274,12 +274,12 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string, spaceKey
 }
 
 // CreateFolder is the resolver for the createFolder field.
-func (r *mutationResolver) CreateFolder(ctx context.Context, path string, spaceKey *string) (bool, error) {
+func (r *mutationResolver) CreateFolder(ctx context.Context, path string, spaceID *string) (bool, error) {
 	// Check write permissions and path access
 	if err := RequireWritePermission(ctx, path); err != nil {
 		return false, err
 	}
-	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	stor, err := r.getSpaceStorageByID(ctx, spaceID)
 	if err != nil {
 		return false, err
 	}
@@ -295,7 +295,7 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, path string, spaceK
 }
 
 // CopyFile is the resolver for the copyFile field.
-func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, destPath string, spaceKey *string) (bool, error) {
+func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, destPath string, spaceID *string) (bool, error) {
 	// Check write permissions for both source and destination paths
 	if err := RequireWritePermission(ctx, sourcePath); err != nil {
 		return false, err
@@ -303,7 +303,7 @@ func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, dest
 	if err := RequireWritePermission(ctx, destPath); err != nil {
 		return false, err
 	}
-	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	stor, err := r.getSpaceStorageByID(ctx, spaceID)
 	if err != nil {
 		return false, err
 	}
@@ -330,7 +330,7 @@ func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, dest
 }
 
 // MoveFile is the resolver for the moveFile field.
-func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, destPath string, spaceKey *string) (bool, error) {
+func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, destPath string, spaceID *string) (bool, error) {
 	// Check write permissions for both source and destination paths
 	if err := RequireWritePermission(ctx, sourcePath); err != nil {
 		return false, err
@@ -338,7 +338,7 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 	if err := RequireWritePermission(ctx, destPath); err != nil {
 		return false, err
 	}
-	stor, err := r.getSpaceStorage(ctx, spaceKey)
+	stor, err := r.getSpaceStorageByID(ctx, spaceID)
 	if err != nil {
 		return false, err
 	}
@@ -385,12 +385,12 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 }
 
 // ListFiles is the resolver for the listFiles field.
-func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceKey *string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
+func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceID *string, offset *int, limit *int, onlyFiles *bool, onlyFolders *bool, extensions *string, showHidden *bool, sortBy *gql.SortOption, sortOrder *gql.SortOrder) (*gql.FileList, error) {
 	// Check read permissions and path access
 	if err := RequireReadPermission(ctx, path); err != nil {
 		return nil, err
 	}
-	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	spaceConfig, err := r.getAccessibleSpaceByID(ctx, spaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +399,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceKey *st
 	if spaceConfig != nil {
 		stor, err = r.storageFromSpaceConfig(spaceConfig)
 	} else {
-		stor, err = r.getSpaceStorage(ctx, spaceKey)
+		stor, err = r.getSpaceStorageByID(ctx, spaceID)
 	}
 	if err != nil {
 		return nil, err
@@ -478,7 +478,11 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceKey *st
 
 		// Generate thumbnail URLs for image files
 		if !item.IsDir {
-			thumbnailUrls := r.generateThumbnailUrlsForResolvedSpace(ctx, item.Path, videoThumbnailPos, spaceKey, spaceConfig)
+			var resolvedSpaceKey *string
+			if spaceConfig != nil {
+				resolvedSpaceKey = &spaceConfig.Key
+			}
+			thumbnailUrls := r.generateThumbnailUrlsForResolvedSpace(ctx, item.Path, videoThumbnailPos, resolvedSpaceKey, spaceConfig)
 			fileItem.ThumbnailUrls = thumbnailUrls
 		}
 
@@ -492,12 +496,12 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceKey *st
 }
 
 // StatFile is the resolver for the statFile field.
-func (r *queryResolver) StatFile(ctx context.Context, path string, spaceKey *string) (*gql.FileStat, error) {
+func (r *queryResolver) StatFile(ctx context.Context, path string, spaceID *string) (*gql.FileStat, error) {
 	// Check read permissions and path access
 	if err := RequireReadPermission(ctx, path); err != nil {
 		return nil, err
 	}
-	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	spaceConfig, err := r.getAccessibleSpaceByID(ctx, spaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -506,7 +510,7 @@ func (r *queryResolver) StatFile(ctx context.Context, path string, spaceKey *str
 	if spaceConfig != nil {
 		stor, err = r.storageFromSpaceConfig(spaceConfig)
 	} else {
-		stor, err = r.getSpaceStorage(ctx, spaceKey)
+		stor, err = r.getSpaceStorageByID(ctx, spaceID)
 	}
 	if err != nil {
 		return nil, err
@@ -533,7 +537,11 @@ func (r *queryResolver) StatFile(ctx context.Context, path string, spaceKey *str
 
 	// Generate thumbnail URLs for image files
 	if !fileInfo.IsDir {
-		thumbnailUrls := r.generateThumbnailUrlsForResolvedSpace(ctx, fileInfo.Path, videoThumbnailPos, spaceKey, spaceConfig)
+		var resolvedSpaceKey *string
+		if spaceConfig != nil {
+			resolvedSpaceKey = &spaceConfig.Key
+		}
+		thumbnailUrls := r.generateThumbnailUrlsForResolvedSpace(ctx, fileInfo.Path, videoThumbnailPos, resolvedSpaceKey, spaceConfig)
 		fileStat.ThumbnailUrls = thumbnailUrls
 	}
 

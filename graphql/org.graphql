@@ -100,13 +100,13 @@ extend type Query {
   # Returns a single space by key (must belong to caller's org)
   space(key: String!): Space
   # Returns space-scoped registry entries, falling back to system:global defaults for unset keys (admin only)
-  spaceRegistry(spaceKey: String!, keys: [String!]): [UserRegistry!]!
+  spaceRegistry(spaceID: String!, keys: [String!]): [UserRegistry!]!
   # Lists all members of the caller's organization (admin only)
   orgMembers: [OrgMember!]!
   # Lists all members who currently have access to a specific space (admin only)
-  spaceMembers(spaceKey: String!): [SpaceMember!]!
+  spaceMembers(spaceID: String!): [SpaceMember!]!
   # Lists all pending invitation emails for a specific space (admin only)
-  spaceInvitations(spaceKey: String!): [SpaceInvitation!]!
+  spaceInvitations(spaceID: String!): [SpaceInvitation!]!
   # Returns true when the space key is already taken (globally unique, admin only)
   spaceKeyExists(key: String!): Boolean!
 }
@@ -119,25 +119,25 @@ extend type Mutation {
   # Soft-delete a space by key (admin only)
   deleteSpace(key: String!): Boolean!
   # Write space-scoped registry entries (admin only)
-  setSpaceRegistry(spaceKey: String!, entries: [RegistryEntryInput!]): [UserRegistry!]!
+  setSpaceRegistry(spaceID: String!, entries: [RegistryEntryInput!]): [UserRegistry!]!
   # Delete space-scoped registry keys, reverting to system:global defaults (admin only)
-  deleteSpaceRegistry(spaceKey: String!, keys: [String!]): Boolean!
+  deleteSpaceRegistry(spaceID: String!, keys: [String!]): Boolean!
   # Add a user to the caller's organization by username (admin only)
   addOrgMember(username: String!, role: String!): OrgMember!
   # Add an existing user to the caller's organization by email (admin only)
   addOrgMemberByEmail(email: String!, role: String!): OrgMember!
   # Add an existing org member to a specific space (admin only)
-  addSpaceMember(spaceKey: String!, userId: ID!, role: String!): SpaceMember!
+  addSpaceMember(spaceID: String!, userId: ID!, role: String!): SpaceMember!
   # Invite a user to a specific space by email (admin only)
-  inviteSpaceMember(spaceKey: String!, email: String!, role: String!): SpaceInviteResult!
+  inviteSpaceMember(spaceID: String!, email: String!, role: String!): SpaceInviteResult!
   # Remove a member from the organization by userId (admin only)
   removeOrgMember(userId: ID!): Boolean!
   # Remove a member from a specific space by userId (admin only)
-  removeSpaceMember(spaceKey: String!, userId: ID!): Boolean!
+  removeSpaceMember(spaceID: String!, userId: ID!): Boolean!
   # Leave a shared space you were explicitly added to
-  leaveSpace(spaceKey: String!): Boolean!
+  leaveSpace(spaceID: String!): Boolean!
   # Change a member's role within the organization (admin only)
   updateOrgMemberRole(userId: ID!, role: String!): OrgMember!
   # Change a member's role within a specific space (admin only)
-  updateSpaceMemberRole(spaceKey: String!, userId: ID!, role: String!): SpaceMember!
+  updateSpaceMemberRole(spaceID: String!, userId: ID!, role: String!): SpaceMember!
 }

@@ -21,11 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import type { SpaceIdentity } from '@/lib/space'
 
 interface NewCanvasDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   galleryKey: string
+  space?: SpaceIdentity
 }
 
 const CANVAS_PRESETS = [
@@ -39,10 +41,11 @@ const CANVAS_PRESETS = [
   { label: '3840 × 2160 (4K)', w: 3840, h: 2160 },
 ] as const
 
-export function NewCanvasDialog({ open, onOpenChange, galleryKey }: NewCanvasDialogProps) {
+export function NewCanvasDialog({ open, onOpenChange, galleryKey, space }: NewCanvasDialogProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { spaceKey } = useParams({ strict: false })
+  const { spaceKey: routeSpaceKey } = useParams({ strict: false })
+  const spaceKey = space?.spaceKey ?? routeSpaceKey
 
   const [width, setWidth] = useState(1080)
   const [height, setHeight] = useState(1080)
@@ -59,7 +62,13 @@ export function NewCanvasDialog({ open, onOpenChange, galleryKey }: NewCanvasDia
   }
 
   const handleCreate = () => {
-    if (spaceKey && !galleryKey) {
+    if (spaceKey && galleryKey) {
+      navigate({
+        to: '/spaces/$spaceKey/f/$galleryKey/editor/new',
+        params: { spaceKey, galleryKey },
+        search: { color: colorValue, w: width, h: height },
+      })
+    } else if (spaceKey) {
       navigate({
         to: '/spaces/$spaceKey/editor/new',
         params: { spaceKey },

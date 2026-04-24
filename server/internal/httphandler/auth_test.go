@@ -94,7 +94,7 @@ func (s *stubSpaceStore) Create(_ context.Context, _ *space.Space) error { retur
 func (s *stubSpaceStore) RenameKey(_ context.Context, _, _ string) error { return nil }
 func (s *stubSpaceStore) Upsert(_ context.Context, _ *space.Space) error { return nil }
 func (s *stubSpaceStore) SoftDelete(_ context.Context, _ string) error   { return nil }
-func (s *stubSpaceStore) Get(_ context.Context, key string) (*space.Space, error) {
+func (s *stubSpaceStore) GetByKey(_ context.Context, key string) (*space.Space, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
@@ -102,6 +102,20 @@ func (s *stubSpaceStore) Get(_ context.Context, key string) (*space.Space, error
 		return nil, nil
 	}
 	return s.spaceByKey[key], nil
+}
+func (s *stubSpaceStore) GetByID(_ context.Context, id string) (*space.Space, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	if s.spaceByKey == nil {
+		return nil, nil
+	}
+	for _, sp := range s.spaceByKey {
+		if sp != nil && sp.ID == id {
+			return sp, nil
+		}
+	}
+	return nil, nil
 }
 func (s *stubSpaceStore) List(_ context.Context) ([]*space.Space, error) { return nil, nil }
 func (s *stubSpaceStore) ListByOrgID(_ context.Context, _ string) ([]*space.Space, error) {

@@ -1,4 +1,5 @@
-import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api.ts'
+import { getSpaceRegistry } from '@/api/org-api.ts'
+import { getSystemRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
@@ -9,8 +10,9 @@ import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils
 import { hasExtension } from '@/lib/file-extensions.ts'
 import { FILE_EXTENSIONS, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/gallery-config'
 import { createLatestRequestTracker } from '@/lib/latest-request-tracker'
-import { normalizeDirectoryPath } from '@/lib/path-utils'
+import { normalizeScopedDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
+import { getScopedUserRegistryValues } from '@/lib/user-config'
 import { getAuth } from '@/stores/auth-store.ts'
 import {
   ensureFolderTreeReady,
@@ -22,6 +24,8 @@ import {
 export interface GalleryLoaderData {
   galleryName: string
   galleryKey: string
+  spaceID?: string
+  spaceName?: string
   images: GalleryImage[]
   folders: Gallery[]
   breadcrumbs: BreadcrumbItem[]
@@ -46,20 +50,21 @@ const latestGalleryLoaderRequests = createLatestRequestTracker()
  * Loads images and folders from storage API with imagor-generated thumbnails
  */
 export const galleryLoader = async ({
-  params: { galleryKey, spaceKey },
+  params: { galleryKey, routeSpaceKey, spaceID, spaceName },
 }: {
-  params: { galleryKey: string; spaceKey?: string }
+  params: { galleryKey: string; routeSpaceKey?: string; spaceID?: string; spaceName?: string }
 }): Promise<GalleryLoaderData> => {
-  const requestKey = `${spaceKey || '__default__'}:${galleryKey}`
+  const requestKey = `${spaceID || '__default__'}:${galleryKey}`
   const requestGeneration = latestGalleryLoaderRequests.begin(requestKey)
 
-  await ensureFolderTreeReady(spaceKey)
+  await ensureFolderTreeReady({ spaceID, spaceName })
 
   // Use galleryKey as the path for storage API
   const path = galleryKey
 
-  // Fetch registry settings for gallery filtering and sorting
-  // Priority: User registry → System registry → Hardcoded defaults
+  // Fetch registry settings for gallery filtering and sorting.
+  // Priority in spaces: User-space registry → Space registry (with system fallback) → defaults.
+  // Priority outside spaces: Global user registry → System registry → defaults.
   const extensionsString = `${FILE_EXTENSIONS},${TEMPLATE_EXTENSION}`
   const imageExtensions = IMAGE_EXTENSIONS
   const videoExtensions = VIDEO_EXTENSIONS
@@ -78,39 +83,46 @@ export const galleryLoader = async ({
     let userShowFileNames: string | undefined
     if (userId && auth.state === 'authenticated') {
       try {
-        const userRegistryResult = await getUserRegistryMultiple(
+        const userRegistryValues = await getScopedUserRegistryValues(
           [
             'config.app_default_sort_by',
             'config.app_default_sort_order',
             'config.app_show_file_names',
           ],
           userId,
+          { spaceID },
         )
 
-        const userSortByEntry = userRegistryResult.find(
-          (r) => r.key === 'config.app_default_sort_by',
-        )
-        const userSortOrderEntry = userRegistryResult.find(
-          (r) => r.key === 'config.app_default_sort_order',
-        )
-        const userShowFileNamesEntry = userRegistryResult.find(
-          (r) => r.key === 'config.app_show_file_names',
-        )
-
-        userSortBy = userSortByEntry?.value
-        userSortOrder = userSortOrderEntry?.value
-        userShowFileNames = userShowFileNamesEntry?.value
+        userSortBy = userRegistryValues['config.app_default_sort_by']
+        userSortOrder = userRegistryValues['config.app_default_sort_order']
+        userShowFileNames = userRegistryValues['config.app_show_file_names']
       } catch {
         // User registry fetch failed, will fall back to system registry
       }
     }
 
-    // Fetch system registry for all settings (and as fallback for sorting)
-    const systemRegistryResult = await getSystemRegistryMultiple([
-      'config.app_default_sort_by',
-      'config.app_default_sort_order',
-      'config.app_show_file_names',
-    ])
+    let systemRegistryResult
+    if (spaceID) {
+      try {
+        systemRegistryResult = await getSpaceRegistry(spaceID, [
+          'config.app_default_sort_by',
+          'config.app_default_sort_order',
+          'config.app_show_file_names',
+        ])
+      } catch {
+        systemRegistryResult = await getSystemRegistryMultiple([
+          'config.app_default_sort_by',
+          'config.app_default_sort_order',
+          'config.app_show_file_names',
+        ])
+      }
+    } else {
+      systemRegistryResult = await getSystemRegistryMultiple([
+        'config.app_default_sort_by',
+        'config.app_default_sort_order',
+        'config.app_show_file_names',
+      ])
+    }
 
     // Use user preferences if available, otherwise fall back to system registry, then defaults
     const systemSortByEntry = systemRegistryResult.find(
@@ -135,7 +147,7 @@ export const galleryLoader = async ({
   // Fetch files from storage API with registry settings
   const result = await listFiles({
     path,
-    spaceKey,
+    spaceID,
     extensions: extensionsString,
     showHidden: false,
     sortBy,
@@ -146,7 +158,7 @@ export const galleryLoader = async ({
   const folders: Gallery[] = result.items
     .filter((item) => item.isDirectory)
     .map((item) => ({
-      galleryKey: normalizeDirectoryPath(item.path),
+      galleryKey: normalizeScopedDirectoryPath(item.path, spaceID),
       galleryName: item.name,
     }))
 
@@ -161,7 +173,7 @@ export const galleryLoader = async ({
 
   // Update folder tree store with fresh data while preserving toggle states
   if (latestGalleryLoaderRequests.isLatest(requestKey, requestGeneration)) {
-    await updateTreeData(path, folderNodes, spaceKey)
+    await updateTreeData(path, folderNodes, { spaceID, spaceName })
   }
 
   // Filter and convert image files (including templates)
@@ -186,7 +198,10 @@ export const galleryLoader = async ({
     })
 
   const folderTreeState = folderTreeStore.getState()
-  const homeTitle = folderTreeState.homeTitle || spaceKey || 'Home'
+  const resolvedSpaceHomeTitle = spaceName?.trim()
+  const homeTitle = routeSpaceKey
+    ? resolvedSpaceHomeTitle || folderTreeState.homeTitle || routeSpaceKey || 'Home'
+    : folderTreeState.homeTitle || 'Home'
 
   // Use the actual folder name, or custom home title for root
   const galleryName = galleryKey === '' ? homeTitle : galleryKey.split('/').pop() || galleryKey
@@ -195,7 +210,7 @@ export const galleryLoader = async ({
   const breadcrumbs: BreadcrumbItem[] = [
     {
       label: homeTitle,
-      ...(galleryKey ? { href: spaceKey ? `/spaces/${spaceKey}` : '/' } : {}),
+      ...(galleryKey ? { href: routeSpaceKey ? `/spaces/${routeSpaceKey}` : '/' } : {}),
     },
   ]
 
@@ -204,7 +219,7 @@ export const galleryLoader = async ({
     const segments = galleryKey.split('/')
 
     // Base path for breadcrumb hrefs — space-scoped vs system gallery
-    const galleryBase = spaceKey ? `/spaces/${spaceKey}/gallery` : `/gallery`
+    const galleryBase = routeSpaceKey ? `/spaces/${routeSpaceKey}/gallery` : `/gallery`
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i]
@@ -226,6 +241,8 @@ export const galleryLoader = async ({
     images,
     folders,
     galleryKey,
+    spaceID,
+    spaceName,
     breadcrumbs,
     imageExtensions,
     videoExtensions,
@@ -240,14 +257,14 @@ export const galleryLoader = async ({
  * Loads real image data from storage API and preloads the selected image
  */
 export const imageLoader = async ({
-  params: { imageKey, galleryKey, spaceKey },
+  params: { imageKey, galleryKey, spaceID },
 }: {
-  params: { imageKey: string; galleryKey: string; spaceKey?: string }
+  params: { imageKey: string; galleryKey: string; spaceID?: string }
 }): Promise<ImageLoaderData> => {
   // Use galleryKey as the path for storage API, then append the image name
   const basePath = galleryKey
   const imagePath = basePath ? `${basePath}/${imageKey}` : imageKey
-  const fileStat = await statFile(imagePath, spaceKey)
+  const fileStat = await statFile(imagePath, spaceID)
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found')

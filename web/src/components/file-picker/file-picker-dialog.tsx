@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams } from '@tanstack/react-router'
 
-import { getUserRegistryMultiple, setUserRegistry } from '@/api/registry-api'
 import { statFile } from '@/api/storage-api'
 import { FilePickerContent } from '@/components/file-picker/file-picker-content'
 import { Button } from '@/components/ui/button'
@@ -14,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import type { SpaceIdentity } from '@/lib/space'
+import { getScopedUserRegistryValues, setScopedUserRegistryValue } from '@/lib/user-config'
 import { useAuth } from '@/stores/auth-store'
 import { ensureFolderTreeReady } from '@/stores/folder-tree-store'
 
@@ -21,6 +21,7 @@ export interface FilePickerDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (paths: string[]) => void
+  space?: SpaceIdentity
 
   // Configuration
   selectionMode?: 'single' | 'multiple'
@@ -40,6 +41,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   open,
   onOpenChange,
   onSelect,
+  space,
   selectionMode = 'single',
   currentPath: initialPath,
   fileType = 'both',
@@ -52,7 +54,6 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 }) => {
   const { t } = useTranslation()
   const { authState } = useAuth()
-  const { spaceKey } = useParams({ strict: false })
   const [currentPath, setDialogCurrentPath] = useState<string>(initialPath || '')
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set())
   const [dialogSessionKey, setDialogSessionKey] = useState(0)
@@ -75,16 +76,17 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
         // Only load saved path if no initialPath was provided
         if (!initialPath && authState.profile?.id && authState.state === 'authenticated') {
           try {
-            const result = await getUserRegistryMultiple(
+            const result = await getScopedUserRegistryValues(
               [lastLocationRegistryKey],
               authState.profile.id,
+              { spaceID: space?.spaceID },
             )
-            const savedPath = result.find((r) => r.key === lastLocationRegistryKey)?.value
+            const savedPath = result[lastLocationRegistryKey]
 
             if (savedPath) {
               // Validate that the folder still exists
               try {
-                const stat = await statFile(savedPath, spaceKey)
+                const stat = await statFile(savedPath, space?.spaceID)
                 if (stat && stat.isDirectory) {
                   pathToUse = savedPath
                 }
@@ -102,7 +104,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
         setDialogCurrentPath(pathToUse)
         setSelectedPaths(new Set())
-        await ensureFolderTreeReady(spaceKey)
+        await ensureFolderTreeReady(space)
         hasLoadedInitialPath.current = true
       }
 
@@ -113,7 +115,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
     if (!open) {
       hasLoadedInitialPath.current = false
     }
-  }, [open, initialPath, authState.profile?.id, authState.state, spaceKey])
+  }, [open, initialPath, authState.profile?.id, authState.state, space])
 
   const handlePathChange = useCallback((path: string) => {
     setDialogCurrentPath(path)
@@ -151,7 +153,13 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
     if (selectedPaths.size > 0) {
       // Save the current path to user registry when user confirms selection
       if (authState.profile?.id && authState.state === 'authenticated') {
-        setUserRegistry(lastLocationRegistryKey, currentPath, false, authState.profile.id)
+        void setScopedUserRegistryValue(
+          lastLocationRegistryKey,
+          currentPath,
+          false,
+          authState.profile.id,
+          { spaceID: space?.spaceID },
+        )
       }
 
       onSelect(Array.from(selectedPaths))
@@ -175,9 +183,10 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
           <div className='min-h-0 flex-1 overflow-hidden'>
             <FilePickerContent
-              key={`${spaceKey || 'default'}:${dialogSessionKey}`}
+              key={`${space?.spaceKey || 'default'}:${dialogSessionKey}`}
               currentPath={currentPath}
               selectedPaths={selectedPaths}
+              space={space}
               fileType={fileType}
               fileExtensions={fileExtensions}
               maxItemWidth={maxItemWidth}
@@ -188,10 +197,10 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
           <DialogFooter className='flex-row justify-between p-4 sm:justify-between'>
             {/* Left side - Selection info */}
-            <div className='flex items-center gap-4'>
+            <div className='flex min-w-0 flex-1 items-center gap-4 overflow-hidden'>
               {selectionMode === 'single' ? (
                 // Single selection: show filename
-                <span className='text-muted-foreground max-w-sm truncate text-sm md:inline'>
+                <span className='text-muted-foreground max-w-sm min-w-0 truncate text-sm md:inline'>
                   {Array.from(selectedPaths)[0]?.split('/').pop()}
                 </span>
               ) : selectionMode === 'multiple' ? (
@@ -212,7 +221,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
             </div>
 
             {/* Right side - Action buttons */}
-            <div className='flex gap-2'>
+            <div className='flex shrink-0 gap-2'>
               <Button variant='outline' onClick={handleCancel}>
                 {t('common.buttons.cancel')}
               </Button>

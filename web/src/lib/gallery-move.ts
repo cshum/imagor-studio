@@ -23,7 +23,7 @@ export interface GalleryMoveResult {
 interface MoveGalleryItemsOptions {
   items: GalleryMoveItem[]
   destinationPath: string
-  spaceKey?: string
+  spaceID?: string
   fileConcurrency?: number
   onProgress?: (progress: GalleryMoveProgress) => void
 }
@@ -31,7 +31,7 @@ interface MoveGalleryItemsOptions {
 export async function moveGalleryItems({
   items,
   destinationPath,
-  spaceKey,
+  spaceID,
   fileConcurrency = 4,
   onProgress,
 }: MoveGalleryItemsOptions): Promise<GalleryMoveResult> {
@@ -60,7 +60,7 @@ export async function moveGalleryItems({
     }
 
     try {
-      await moveFile(item.key, newPath, spaceKey)
+      await moveFile(item.key, newPath, spaceID)
       successCount++
 
       if (item.type === 'folder') {

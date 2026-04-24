@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FocusScope } from '@radix-ui/react-focus-scope'
-import { useNavigate, useParams, useRouter, useRouterState } from '@tanstack/react-router'
+import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 
 import { GalleryImage, ImageView } from '@/components/image-gallery/image-view.tsx'
 import { LoadingBar } from '@/components/loading-bar.tsx'
 import { SlideshowTimer } from '@/components/slideshow-timer.tsx'
+import type { SpaceIdentity } from '@/lib/space'
 import { GalleryLoaderData, ImageLoaderData } from '@/loaders/gallery-loader.ts'
 import { clearPosition, getPosition } from '@/stores/image-position-store.ts'
 
@@ -13,6 +14,7 @@ export interface ImagePageProps {
   galleryLoaderData: GalleryLoaderData
   galleryKey: string
   imageKey: string
+  space?: SpaceIdentity
 }
 
 export function ImagePage({
@@ -20,9 +22,10 @@ export function ImagePage({
   galleryLoaderData,
   galleryKey,
   imageKey,
+  space,
 }: ImagePageProps) {
   const navigate = useNavigate()
-  const { spaceKey } = useParams({ strict: false })
+  const routeSpaceKey = space?.spaceKey
   const router = useRouter()
   const { isLoading } = useRouterState()
   const { images } = galleryLoaderData
@@ -62,13 +65,17 @@ export function ImagePage({
     if (galleryKey === '') {
       // For root images, stay within the current space when present.
       navigate({
-        to: spaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
-        params: spaceKey ? { spaceKey, imageKey } : { imageKey },
+        to: routeSpaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
+        params: routeSpaceKey ? { spaceKey: routeSpaceKey, imageKey } : { imageKey },
       })
     } else {
       navigate({
-        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey/$imageKey' : '/f/$galleryKey/$imageKey',
-        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
+        to: routeSpaceKey
+          ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
+          : '/f/$galleryKey/$imageKey',
+        params: routeSpaceKey
+          ? { spaceKey: routeSpaceKey, galleryKey, imageKey }
+          : { galleryKey, imageKey },
       })
     }
   }
@@ -77,13 +84,13 @@ export function ImagePage({
     clearPosition(galleryKey, imageKey)
     if (galleryKey === '') {
       navigate({
-        to: spaceKey ? '/spaces/$spaceKey' : '/',
-        params: spaceKey ? { spaceKey } : undefined,
+        to: routeSpaceKey ? '/spaces/$spaceKey' : '/',
+        params: routeSpaceKey ? { spaceKey: routeSpaceKey } : undefined,
       })
     } else {
       navigate({
-        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
-        params: spaceKey ? { spaceKey, galleryKey } : { galleryKey },
+        to: routeSpaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
+        params: routeSpaceKey ? { spaceKey: routeSpaceKey, galleryKey } : { galleryKey },
       })
     }
   }
@@ -114,18 +121,18 @@ export function ImagePage({
       try {
         router.preloadRoute({
           to: galleryKey
-            ? spaceKey
+            ? routeSpaceKey
               ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
               : '/f/$galleryKey/$imageKey'
-            : spaceKey
+            : routeSpaceKey
               ? '/spaces/$spaceKey/$imageKey'
               : '/$imageKey',
           params: galleryKey
-            ? spaceKey
-              ? { spaceKey, galleryKey, imageKey: nextImage.imageKey }
+            ? routeSpaceKey
+              ? { spaceKey: routeSpaceKey, galleryKey, imageKey: nextImage.imageKey }
               : { galleryKey, imageKey: nextImage.imageKey }
-            : spaceKey
-              ? { spaceKey, imageKey: nextImage.imageKey }
+            : routeSpaceKey
+              ? { spaceKey: routeSpaceKey, imageKey: nextImage.imageKey }
               : { imageKey: nextImage.imageKey },
         })
       } catch {
@@ -137,16 +144,18 @@ export function ImagePage({
         clearPosition(galleryKey, nextImage.imageKey)
         if (galleryKey === '') {
           navigate({
-            to: spaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
-            params: spaceKey
-              ? { spaceKey, imageKey: nextImage.imageKey }
+            to: routeSpaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
+            params: routeSpaceKey
+              ? { spaceKey: routeSpaceKey, imageKey: nextImage.imageKey }
               : { imageKey: nextImage.imageKey },
           })
         } else {
           navigate({
-            to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey/$imageKey' : '/f/$galleryKey/$imageKey',
-            params: spaceKey
-              ? { spaceKey, galleryKey, imageKey: nextImage.imageKey }
+            to: routeSpaceKey
+              ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
+              : '/f/$galleryKey/$imageKey',
+            params: routeSpaceKey
+              ? { spaceKey: routeSpaceKey, galleryKey, imageKey: nextImage.imageKey }
               : { galleryKey, imageKey: nextImage.imageKey },
           })
         }
@@ -154,7 +163,7 @@ export function ImagePage({
 
       return () => clearTimeout(timer)
     }
-  }, [imageKey, isSlideshow, slideshowImages, router, galleryKey, navigate])
+  }, [imageKey, isSlideshow, slideshowImages, router, galleryKey, navigate, routeSpaceKey])
 
   return (
     <>

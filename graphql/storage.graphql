@@ -1,7 +1,7 @@
 type Query {
   listFiles(
     path: String!
-    spaceKey: String
+    spaceID: String
     offset: Int
     limit: Int
     onlyFiles: Boolean
@@ -12,7 +12,7 @@ type Query {
     sortOrder: SortOrder
   ): FileList!
 
-  statFile(path: String!, spaceKey: String): FileStat
+  statFile(path: String!, spaceID: String): FileStat
 
   # Storage Configuration APIs
   storageStatus: StorageStatus!
@@ -20,21 +20,21 @@ type Query {
 
 type Mutation {
   # write scope required
-  uploadFile(path: String!, spaceKey: String, content: Upload!): Boolean!
+  uploadFile(path: String!, spaceID: String, content: Upload!): Boolean!
   requestUpload(
     path: String!
-    spaceKey: String
+    spaceID: String
     contentType: String!
     sizeBytes: Int!
   ): PresignedUpload!
-  deleteFile(path: String!, spaceKey: String): Boolean!
-  createFolder(path: String!, spaceKey: String): Boolean!
-  copyFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
-  moveFile(sourcePath: String!, destPath: String!, spaceKey: String): Boolean!
+  deleteFile(path: String!, spaceID: String): Boolean!
+  createFolder(path: String!, spaceID: String): Boolean!
+  copyFile(sourcePath: String!, destPath: String!, spaceID: String): Boolean!
+  moveFile(sourcePath: String!, destPath: String!, spaceID: String): Boolean!
 
   # Template management (write scope required)
-  saveTemplate(input: SaveTemplateInput!, spaceKey: String): TemplateResult!
-  regenerateTemplatePreview(templatePath: String!, spaceKey: String): Boolean!
+  saveTemplate(input: SaveTemplateInput!, spaceID: String): TemplateResult!
+  regenerateTemplatePreview(templatePath: String!, spaceID: String): Boolean!
 
   # Storage Configuration APIs (admin only)
   configureFileStorage(input: FileStorageInput!): StorageConfigResult!

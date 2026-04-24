@@ -2,7 +2,7 @@ import { redirect } from '@tanstack/react-router'
 
 import { getImagorStatus } from '@/api/imagor-api'
 import { getLicenseStatus, type LicenseStatus } from '@/api/license-api'
-import { getMyOrganization, getSpace, listSpaces } from '@/api/org-api'
+import { getMyOrganization, listSpaces } from '@/api/org-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
@@ -15,6 +15,7 @@ import type {
   StorageStatusQuery,
 } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
+import { resolveSpace } from '@/lib/space'
 import { getAuth } from '@/stores/auth-store'
 
 export interface ProfileLoaderData {
@@ -208,14 +209,11 @@ export interface SpaceSettingsLoaderData {
 export const spaceSettingsLoader = async ({
   params,
 }: {
-  params: { spaceKey: string }
+  params: { routeSpaceKey: string }
 }): Promise<SpaceSettingsLoaderData> => {
-  const space = await getSpace(params.spaceKey)
-  if (!space) {
-    throw new Error(`Space "${params.spaceKey}" not found`)
-  }
+  const space = await resolveSpace(params.routeSpaceKey)
   if (!space.canManage) {
-    throw redirect({ to: '/spaces/$spaceKey', params: { spaceKey: params.spaceKey } })
+    throw redirect({ to: '/spaces/$spaceKey', params: { spaceKey: params.routeSpaceKey } })
   }
   return {
     space,

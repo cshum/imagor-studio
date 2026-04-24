@@ -43,7 +43,7 @@ interface CreateFolderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   currentPath: string
-  spaceKey?: string
+  spaceID?: string
   onFolderCreated?: (folderPath: string) => void
 }
 
@@ -51,7 +51,7 @@ export function CreateFolderDialog({
   open,
   onOpenChange,
   currentPath,
-  spaceKey,
+  spaceID,
   onFolderCreated,
 }: CreateFolderDialogProps) {
   const { t } = useTranslation()
@@ -73,7 +73,7 @@ export function CreateFolderDialog({
         ? `${currentPath}/${values.folderName.trim()}`
         : values.folderName.trim()
 
-      await createFolder(folderPath, spaceKey)
+      await createFolder(folderPath, spaceID)
 
       toast.success(
         t('pages.gallery.createFolder.success', { folderName: values.folderName.trim() }),

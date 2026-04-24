@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams, useRouter, useRouterState } from '@tanstack/react-router'
+import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import {
   ArrowDown,
   ArrowLeft,
@@ -17,7 +17,6 @@ import {
 import { toast } from 'sonner'
 
 import { generateImagorUrl } from '@/api/imagor-api'
-import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile, moveFile, regenerateTemplatePreview } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { BulkDeleteDialog } from '@/components/image-gallery/bulk-delete-dialog'
@@ -62,7 +61,9 @@ import { hasErrorCode } from '@/lib/error-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
 import { moveGalleryItems } from '@/lib/gallery-move'
 import { joinImagePath } from '@/lib/path-utils'
+import type { SpaceIdentity } from '@/lib/space'
 import { SPACE_PROPAGATION_WINDOW_MS } from '@/lib/space-propagation'
+import { setScopedUserRegistryMultiple } from '@/lib/user-config'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { registerDropHandler } from '@/stores/drag-drop-store'
@@ -79,9 +80,10 @@ import { useSidebar } from '@/stores/sidebar-store.ts'
 export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData
   galleryKey: string
+  space?: SpaceIdentity
 }
 
-export function GalleryPage({ galleryLoaderData, galleryKey, children }: GalleryPageProps) {
+export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: GalleryPageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const router = useRouter()
@@ -90,7 +92,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const fileSelectHandlerRef = useRef<((fileList: FileList | null) => void) | null>(null)
   const { isLoading, pendingMatches, matches } = useRouterState()
   const { authState } = useAuth()
-  const { spaceKey } = useParams({ strict: false })
+  const routeSpaceKey = space?.spaceKey
+  const userConfigScope = { spaceID: space?.spaceID }
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
   const [isNewCanvasDialogOpen, setIsNewCanvasDialogOpen] = useState(false)
   const [deleteItemDialog, setDeleteItemDialog] = useState<{
@@ -153,7 +156,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     endsAt: number
     source: 'space-created' | 'post-upload'
   } | null>(null)
-  const propagationNotice = useSpacePropagationNotice(spaceKey)
+  const propagationNotice = useSpacePropagationNotice(routeSpaceKey)
 
   // Selection store
   const selection = useSelection()
@@ -197,7 +200,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       : undefined
 
   useEffect(() => {
-    if (!spaceKey || !propagationNotice || propagationNotice.action !== 'created') {
+    if (!routeSpaceKey || !propagationNotice || propagationNotice.action !== 'created') {
       return
     }
 
@@ -213,12 +216,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       }
       return { endsAt: nextEndsAt, source: 'space-created' }
     })
-  }, [propagationNotice, spaceKey])
+  }, [propagationNotice, routeSpaceKey])
 
   const handleUploadComplete = async () => {
     await router.invalidate()
 
-    if (!spaceKey || !propagationNotice || propagationNotice.action !== 'created') {
+    if (!routeSpaceKey || !propagationNotice || propagationNotice.action !== 'created') {
       return
     }
 
@@ -246,7 +249,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           type: item.type === 'folder' ? 'folder' : 'file',
         })),
         destinationPath: targetFolderKey,
-        spaceKey,
+        spaceID: space?.spaceID,
         onProgress: ({ completedCount }) => {
           toast.loading(getMoveProgressMessage(completedCount, items.length), { id: toastId })
         },
@@ -337,12 +340,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
     if (authState.profile?.id && authState.state === 'authenticated') {
-      await setUserRegistryMultiple(
+      await setScopedUserRegistryMultiple(
         [
           { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
           { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
         ],
         authState.profile.id,
+        userConfigScope,
       )
       // Invalidate only the current gallery route to trigger loader reload
       await router.invalidate()
@@ -385,18 +389,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     const image = images.find((img) => img.imageKey === imageKey)
     if (image?.isTemplate) {
       // Navigate directly to editor for templates
-      if (spaceKey && !galleryKey) {
+      if (routeSpaceKey && !galleryKey) {
         return navigate({
           to: '/spaces/$spaceKey/$imageKey/editor',
-          params: { spaceKey, imageKey },
+          params: { spaceKey: routeSpaceKey, imageKey },
         })
       }
       if (galleryKey) {
         return navigate({
-          to: spaceKey
+          to: routeSpaceKey
             ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
             : '/f/$galleryKey/$imageKey/editor',
-          params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
+          params: routeSpaceKey
+            ? { spaceKey: routeSpaceKey, galleryKey, imageKey }
+            : { galleryKey, imageKey },
         })
       } else {
         return navigate({
@@ -414,13 +420,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     // Handle navigation for root gallery vs sub-galleries
     if (galleryKey === '') {
       return navigate({
-        to: spaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
-        params: spaceKey ? { spaceKey, imageKey } : { imageKey },
+        to: routeSpaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
+        params: routeSpaceKey ? { spaceKey: routeSpaceKey, imageKey } : { imageKey },
       })
     } else {
       return navigate({
-        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey/$imageKey' : '/f/$galleryKey/$imageKey',
-        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
+        to: routeSpaceKey
+          ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
+          : '/f/$galleryKey/$imageKey',
+        params: routeSpaceKey
+          ? { spaceKey: routeSpaceKey, galleryKey, imageKey }
+          : { galleryKey, imageKey },
       })
     }
   }
@@ -440,9 +450,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
     // Normal navigation
     return navigate({
-      to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
-      params: spaceKey
-        ? { spaceKey, galleryKey: folderGalleryKey }
+      to: routeSpaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
+      params: routeSpaceKey
+        ? { spaceKey: routeSpaceKey, galleryKey: folderGalleryKey }
         : { galleryKey: folderGalleryKey },
     })
   }
@@ -459,7 +469,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     })
 
   useEffect(() => {
-    void setCurrentPath(galleryKey, spaceKey)
+    void setCurrentPath(galleryKey, space)
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
     setFilterText('')
     // Initialize selection context for this gallery (clears selection)
@@ -472,7 +482,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     return () => {
       registerDropHandler(null)
     }
-  }, [galleryKey, spaceKey])
+  }, [galleryKey, space])
 
   // Selection handlers
   const handleImageSelectionToggle = (imageKey: string, index: number) => {
@@ -520,15 +530,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const handleEditImage = (imageKey: string) => {
     if (galleryKey) {
       navigate({
-        to: spaceKey
+        to: routeSpaceKey
           ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
           : '/f/$galleryKey/$imageKey/editor',
-        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
+        params: routeSpaceKey
+          ? { spaceKey: routeSpaceKey, galleryKey, imageKey }
+          : { galleryKey, imageKey },
       })
-    } else if (spaceKey) {
+    } else if (routeSpaceKey) {
       navigate({
         to: '/spaces/$spaceKey/$imageKey/editor',
-        params: { spaceKey, imageKey },
+        params: { spaceKey: routeSpaceKey, imageKey },
       })
     } else {
       navigate({
@@ -567,7 +579,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           ? `${galleryKey}/${deleteItemDialog.itemKey}`
           : deleteItemDialog.itemKey
 
-        await deleteFile(itemPath, spaceKey)
+        await deleteFile(itemPath, space?.spaceID)
         await router.invalidate()
         toast.success(
           t('pages.gallery.deleteImage.success', { fileName: deleteItemDialog.itemName }),
@@ -630,7 +642,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         pathParts[pathParts.length - 1] = newName
         const newPath = pathParts.join('/')
 
-        await moveFile(renameDialog.itemPath, newPath, spaceKey)
+        await moveFile(renameDialog.itemPath, newPath, space?.spaceID)
         await router.invalidate()
         toast.success(t('pages.gallery.renameItem.success', { name: newName }))
       }
@@ -672,7 +684,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       const imagePath = joinImagePath(galleryKey, imageKey)
       const url = await generateImagorUrl({
         imagePath,
-        spaceKey,
+        spaceID: space?.spaceID,
         params: params as ImagorParamsInput,
       })
       const fullUrl = getFullImageUrl(url)
@@ -705,7 +717,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       const imagePath = joinImagePath(galleryKey, imageKey)
       const url = await generateImagorUrl({
         imagePath,
-        spaceKey,
+        spaceID: space?.spaceID,
         params: {
           filters,
         } as ImagorParamsInput,
@@ -732,7 +744,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
       setTimeout(() => handleMoveFromMenu(folderKey, folderName, 'folder'), 0)
     },
-    spaceKey,
+    space,
   })
 
   const isNavigateToImage = !!(
@@ -747,9 +759,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const handleToggleShowFileNames = async () => {
     const newValue = !showFileNames
     if (authState.profile?.id) {
-      await setUserRegistryMultiple(
+      await setScopedUserRegistryMultiple(
         [{ key: 'config.app_show_file_names', value: newValue.toString(), isEncrypted: false }],
         authState.profile.id,
+        userConfigScope,
       )
       // Invalidate the router to reload loader data with new value
       await router.invalidate()
@@ -778,7 +791,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Delete all items sequentially
       for (const folderKey of folders) {
         try {
-          await deleteFile(folderKey, spaceKey)
+          await deleteFile(folderKey, space?.spaceID)
           successCount++
         } catch {
           failCount++
@@ -787,7 +800,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
       for (const imageKey of images) {
         try {
-          await deleteFile(imageKey, spaceKey)
+          await deleteFile(imageKey, space?.spaceID)
           successCount++
         } catch {
           failCount++
@@ -908,7 +921,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     },
     onMove: (folderKey, folderName) => handleMoveFromMenu(folderKey, folderName, 'folder'),
     useDropdownItems: true,
-    spaceKey,
+    space,
   })
 
   // Use the image context menu hook for context menus (right-click)
@@ -940,7 +953,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   // Create menu items for authenticated users
   const secondaryMenuItems =
-    authState.state === 'authenticated' && spaceKey ? (
+    authState.state === 'authenticated' && routeSpaceKey ? (
       <>
         <DropdownMenuItem
           className='hover:cursor-pointer'
@@ -958,7 +971,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
             event.preventDefault()
             navigate({
               to: '/spaces/$spaceKey/settings/general',
-              params: { spaceKey },
+              params: { spaceKey: routeSpaceKey },
             })
           }}
         >
@@ -1107,7 +1120,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
           existingFiles={images.map((img) => img.imageName)}
           imageExtensions={imageExtensions}
           videoExtensions={videoExtensions}
-          spaceKey={spaceKey}
+          spaceID={space?.spaceID}
           onFileSelect={handleFileSelectHandler}
           onUploadStateChange={setUploadState}
           className='min-h-screen'
@@ -1260,7 +1273,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
                           draggedItems={dragState.draggedItems}
                           galleryKey={galleryKey}
                           onTemplatePreviewError={(templatePath) =>
-                            regenerateTemplatePreview(templatePath, spaceKey)
+                            regenerateTemplatePreview(templatePath, space?.spaceID)
                           }
                           interactive={!isImageViewOpen}
                           {...imageGridProps}
@@ -1279,13 +1292,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={galleryKey}
-        spaceKey={spaceKey}
+        spaceID={space?.spaceID}
       />
 
       <NewCanvasDialog
         open={isNewCanvasDialogOpen}
         onOpenChange={setIsNewCanvasDialogOpen}
         galleryKey={galleryKey}
+        space={space}
       />
 
       <DeleteItemDialog
@@ -1310,7 +1324,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         onOpenChange={handleMoveDialogClose}
         items={moveDialog.items}
         currentPath={galleryKey}
-        spaceKey={spaceKey}
+        space={space}
         onMoveComplete={handleMoveComplete}
       />
 

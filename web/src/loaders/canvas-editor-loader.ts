@@ -33,10 +33,10 @@ function parseCanvasSearch(search: string): {
  */
 export const canvasEditorLoader = async ({
   search,
-  spaceKey,
+  spaceID,
 }: {
   search: string
-  spaceKey?: string
+  spaceID?: string
 }): Promise<ImageEditorLoaderData> => {
   const { color, width, height } = parseCanvasSearch(search)
 
@@ -51,7 +51,7 @@ export const canvasEditorLoader = async ({
   // The user-specified canvas size is set as explicit width/height on the editor state.
   const imageEditor = new ImageEditor({
     imagePath,
-    spaceKey,
+    spaceID,
     originalDimensions: { width: 1, height: 1 },
   })
 
