@@ -59,11 +59,11 @@ type SpaceStore interface {
 	ListByMemberUserID(ctx context.Context, userID string) ([]*Space, error)
 	Delta(ctx context.Context, since time.Time) (*DeltaResult, error)
 	KeyExists(ctx context.Context, key string) (bool, error)
-	ListMembers(ctx context.Context, spaceKey string) ([]*SpaceMemberView, error)
-	AddMember(ctx context.Context, spaceKey, userID, role string) error
-	RemoveMember(ctx context.Context, spaceKey, userID string) error
-	UpdateMemberRole(ctx context.Context, spaceKey, userID, role string) error
-	HasMember(ctx context.Context, spaceKey, userID string) (bool, error)
+	ListMembers(ctx context.Context, spaceID string) ([]*SpaceMemberView, error)
+	AddMember(ctx context.Context, spaceID, userID, role string) error
+	RemoveMember(ctx context.Context, spaceID, userID string) error
+	UpdateMemberRole(ctx context.Context, spaceID, userID, role string) error
+	HasMember(ctx context.Context, spaceID, userID string) (bool, error)
 }
 
 type Invitation struct {

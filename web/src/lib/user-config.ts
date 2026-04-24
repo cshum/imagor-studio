@@ -25,9 +25,7 @@ export async function resolveScopedUserConfigKeys(
   return Object.fromEntries(
     baseKeys.map((baseKey) => [
       baseKey,
-      scope?.spaceID
-        ? buildSpaceScopedUserConfigKey(scope.spaceID, baseKey)
-        : baseKey,
+      scope?.spaceID ? buildSpaceScopedUserConfigKey(scope.spaceID, baseKey) : baseKey,
     ]),
   )
 }

@@ -36,6 +36,7 @@ import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
+import type { SpaceIdentity } from '@/lib/space'
 import { debounce } from '@/lib/utils.ts'
 import { calculateLayerPositionForCurrentView } from '@/lib/viewport-utils'
 import type { ImageEditorLoaderData } from '@/loaders/image-editor-loader'
@@ -56,6 +57,10 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
   const router = useRouter()
   const { authState } = useAuth()
   const { spaceKey } = useParams({ strict: false })
+  const activeSpace: SpaceIdentity | undefined =
+    spaceKey && loaderData.spaceID
+      ? { spaceKey, spaceID: loaderData.spaceID, spaceName: loaderData.spaceName }
+      : undefined
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
@@ -958,7 +963,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         imageEditor={imageEditor}
         templateMetadata={templateMetadata}
         galleryKey={propGalleryKey}
-        spaceKey={spaceKey}
+        space={activeSpace}
         title={
           templateMetadata
             ? t('imageEditor.template.saveTemplateAs')
@@ -994,8 +999,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       <FilePickerDialog
         open={applyTemplateDialogOpen}
         onOpenChange={setApplyTemplateDialogOpen}
-        spaceID={loaderData.spaceID}
-        spaceName={loaderData.spaceName}
+        space={activeSpace}
         title={t('imageEditor.template.selectTemplate')}
         description={t('imageEditor.template.selectTemplateDescription')}
         onSelect={handleApplyTemplate}
@@ -1006,8 +1010,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       <FilePickerDialog
         open={replaceImageDialogOpen}
         onOpenChange={setReplaceImageDialogOpen}
-        spaceID={loaderData.spaceID}
-        spaceName={loaderData.spaceName}
+        space={activeSpace}
         title={t('imageEditor.layers.selectImageToReplace')}
         description={t('imageEditor.layers.selectImageToReplaceDescription')}
         onSelect={handleReplaceImageSelect}
@@ -1017,8 +1020,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       <FilePickerDialog
         open={addLayerDialogOpen}
         onOpenChange={setAddLayerDialogOpen}
-        spaceID={loaderData.spaceID}
-        spaceName={loaderData.spaceName}
+        space={activeSpace}
         title={t('imageEditor.layers.addImageLayer')}
         description={t('imageEditor.layers.addImageLayerDescription')}
         onSelect={async (paths) => {

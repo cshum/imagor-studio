@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/responsive-dialog'
 import type { ImageEditor } from '@/lib/image-editor'
 import { splitImagePath } from '@/lib/path-utils'
+import type { SpaceIdentity } from '@/lib/space'
 import { useFolderTree } from '@/stores/folder-tree-store'
 
 // Validate filename - only block filesystem-unsafe characters
@@ -73,8 +74,8 @@ interface SaveTemplateDialogProps {
   title?: string // Custom dialog title
   /** Fallback gallery key for save location when image path has no gallery (e.g. canvas/color images) */
   galleryKey?: string
-  /** Space key for multi-tenant storage scoping. */
-  spaceKey?: string
+  /** Resolved space identity for multi-tenant storage scoping. */
+  space?: SpaceIdentity
 }
 
 export function SaveTemplateDialog({
@@ -85,7 +86,7 @@ export function SaveTemplateDialog({
   onSaveSuccess,
   title,
   galleryKey: propGalleryKey,
-  spaceKey,
+  space,
 }: SaveTemplateDialogProps) {
   const { t } = useTranslation()
   const { homeTitle } = useFolderTree()
@@ -157,12 +158,12 @@ export function SaveTemplateDialog({
         overwrite,
       )
 
-      const result = await saveTemplate({ input: saveInput, spaceKey })
+      const result = await saveTemplate({ input: saveInput, spaceKey: space?.spaceKey })
 
       // Backend already returns the complete path with savePath included
       const templatePath = result.templatePath
 
-      void regenerateTemplatePreview(templatePath, spaceKey).catch((error) => {
+      void regenerateTemplatePreview(templatePath, space?.spaceKey).catch((error) => {
         console.warn('Failed to regenerate template preview after save:', error)
       })
 
@@ -266,6 +267,7 @@ export function SaveTemplateDialog({
           setSavePath(path)
           setFolderDialogOpen(false)
         }}
+        space={space}
         currentPath={savePath}
         title={t('imageEditor.template.selectFolder')}
         description={t('imageEditor.template.selectFolderDescription')}

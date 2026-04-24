@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Folder, MoreVertical } from 'lucide-react'
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -9,12 +9,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from '@/components/ui/sidebar'
+import type { SpaceIdentity } from '@/lib/space'
 import { useAuth } from '@/stores/auth-store'
 import { FolderNode, useFolderTree } from '@/stores/folder-tree-store'
 import { useSidebar } from '@/stores/sidebar-store'
 
 interface FolderTreeNodeProps {
   folder: FolderNode
+  space?: SpaceIdentity
   renderMenuItems?: (folderKey: string, folderName: string) => React.ReactNode
   // Drag and drop props
   onDragOver?: (e: React.DragEvent, targetFolderKey: string) => void
@@ -26,6 +28,7 @@ interface FolderTreeNodeProps {
 
 export function FolderTreeNode({
   folder,
+  space,
   renderMenuItems,
   onDragOver,
   onDragEnter,
@@ -34,7 +37,6 @@ export function FolderTreeNode({
   dragOverTarget,
 }: FolderTreeNodeProps) {
   const navigate = useNavigate()
-  const { spaceKey } = useParams({ strict: false })
   const { currentPath, dispatch, loadFolderChildren } = useFolderTree()
   const { isMobile, setOpenMobile } = useSidebar()
   const { authState } = useAuth()
@@ -45,6 +47,7 @@ export function FolderTreeNode({
   const hasChildren = folder.children && folder.children.length > 0
   const canExpand = folder.isDirectory && (!folder.isLoaded || hasChildren)
   const isDragOver = dragOverTarget === folder.path
+  const spaceKey = space?.spaceKey
 
   const handleFolderClick = async () => {
     // Navigate to the folder
@@ -69,7 +72,7 @@ export function FolderTreeNode({
     dispatch({ type: 'SET_CURRENT_PATH', path: folder.path })
     if (folder.isDirectory) {
       if (!folder.isLoaded) {
-        await loadFolderChildren(folder.path, true, spaceKey)
+        await loadFolderChildren(folder.path, true, space)
       } else if (!folder.isExpanded) {
         dispatch({ type: 'EXPAND_FOLDER', path: folder.path })
       }
@@ -80,7 +83,7 @@ export function FolderTreeNode({
     evt?.stopPropagation()
     if (!folder.isLoaded && folder.isDirectory) {
       // Load children if not loaded yet
-      await loadFolderChildren(folder.path, true, spaceKey)
+      await loadFolderChildren(folder.path, true, space)
     } else if (folder.isExpanded) {
       // Collapse if already expanded
       dispatch({ type: 'COLLAPSE_FOLDER', path: folder.path })

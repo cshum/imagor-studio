@@ -36,8 +36,9 @@ export interface FolderTreeSpaceIdentity {
 
 type FolderTreeSpaceInput = FolderTreeSpaceIdentity | string | undefined
 
-const normalizeFolderTreeSpace = (space?: FolderTreeSpaceInput): FolderTreeSpaceIdentity | undefined =>
-  typeof space === 'string' ? { spaceKey: space } : space
+const normalizeFolderTreeSpace = (
+  space?: FolderTreeSpaceInput,
+): FolderTreeSpaceIdentity | undefined => (typeof space === 'string' ? { spaceKey: space } : space)
 
 export type FolderTreeAction =
   | {
@@ -1009,31 +1010,35 @@ export const setHomeTitle = (title: string) => {
   folderTreeStore.dispatch({ type: 'SET_HOME_TITLE', title })
 }
 
-export const setCurrentPath = async (path: string, spaceKey?: string) => {
-  const space = spaceKey ? { spaceKey } : undefined
-  await ensureFolderTreeReady(space)
+export const setCurrentPath = async (path: string, space?: FolderTreeSpaceInput) => {
+  const normalizedSpace = normalizeFolderTreeSpace(space)
+  await ensureFolderTreeReady(normalizedSpace)
 
   const currentState = folderTreeStore.getState()
-  const targetSpaceCacheKey = getResolvedSpaceCacheKey(currentState, space)
+  const targetSpaceCacheKey = getResolvedSpaceCacheKey(currentState, normalizedSpace)
 
   if (currentState.activeSpaceCacheKey !== targetSpaceCacheKey) {
-    switchFolderTreeSpace(space)
+    switchFolderTreeSpace(normalizedSpace)
   }
 
   folderTreeStore.dispatch({ type: 'SET_CURRENT_PATH', path })
 }
 
-export const updateTreeData = async (path: string, folders: FolderNode[], spaceKey?: string) => {
+export const updateTreeData = async (
+  path: string,
+  folders: FolderNode[],
+  space?: FolderTreeSpaceInput,
+) => {
   await initializationPromise
 
-  const space = spaceKey ? { spaceKey } : undefined
+  const normalizedSpace = normalizeFolderTreeSpace(space)
 
-  if (space?.spaceKey) {
-    await ensureResolvedSpaceCacheKey(space)
+  if (normalizedSpace?.spaceKey) {
+    await ensureResolvedSpaceCacheKey(normalizedSpace)
   }
 
   const currentState = folderTreeStore.getState()
-  const targetCacheKey = getResolvedSpaceCacheKey(currentState, space)
+  const targetCacheKey = getResolvedSpaceCacheKey(currentState, normalizedSpace)
 
   applyToSpaceState(
     targetCacheKey,

@@ -61,6 +61,7 @@ import { hasErrorCode } from '@/lib/error-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
 import { moveGalleryItems } from '@/lib/gallery-move'
 import { joinImagePath } from '@/lib/path-utils'
+import type { SpaceIdentity } from '@/lib/space'
 import { SPACE_PROPAGATION_WINDOW_MS } from '@/lib/space-propagation'
 import { setScopedUserRegistryMultiple } from '@/lib/user-config'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
@@ -79,9 +80,10 @@ import { useSidebar } from '@/stores/sidebar-store.ts'
 export interface GalleryPageProps extends React.PropsWithChildren {
   galleryLoaderData: GalleryLoaderData
   galleryKey: string
+  space?: SpaceIdentity
 }
 
-export function GalleryPage({ galleryLoaderData, galleryKey, children }: GalleryPageProps) {
+export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: GalleryPageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const router = useRouter()
@@ -91,7 +93,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const { isLoading, pendingMatches, matches } = useRouterState()
   const { authState } = useAuth()
   const { spaceKey } = useParams({ strict: false })
-  const userConfigScope = { spaceID: galleryLoaderData.spaceID, spaceKey }
+  const userConfigScope = { spaceID: space?.spaceID }
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
   const [isNewCanvasDialogOpen, setIsNewCanvasDialogOpen] = useState(false)
   const [deleteItemDialog, setDeleteItemDialog] = useState<{
@@ -461,7 +463,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     })
 
   useEffect(() => {
-    void setCurrentPath(galleryKey, spaceKey)
+    void setCurrentPath(galleryKey, space)
     requestAnimationFrame(() => restoreScrollPosition(galleryKey))
     setFilterText('')
     // Initialize selection context for this gallery (clears selection)
@@ -474,7 +476,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     return () => {
       registerDropHandler(null)
     }
-  }, [galleryKey, spaceKey])
+  }, [galleryKey, space])
 
   // Selection handlers
   const handleImageSelectionToggle = (imageKey: string, index: number) => {
@@ -734,7 +736,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
       // Use setTimeout to avoid Radix UI bug when opening dialog from context menu
       setTimeout(() => handleMoveFromMenu(folderKey, folderName, 'folder'), 0)
     },
-    spaceKey,
+    space,
   })
 
   const isNavigateToImage = !!(
@@ -911,7 +913,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
     },
     onMove: (folderKey, folderName) => handleMoveFromMenu(folderKey, folderName, 'folder'),
     useDropdownItems: true,
-    spaceKey,
+    space,
   })
 
   // Use the image context menu hook for context menus (right-click)
@@ -1313,7 +1315,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
         onOpenChange={handleMoveDialogClose}
         items={moveDialog.items}
         currentPath={galleryKey}
-        spaceKey={spaceKey}
+        space={space}
         onMoveComplete={handleMoveComplete}
       />
 

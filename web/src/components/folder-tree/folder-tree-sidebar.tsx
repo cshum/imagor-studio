@@ -22,6 +22,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useItemDragDrop } from '@/hooks/use-item-drag-drop'
+import type { SpaceIdentity } from '@/lib/space'
 import { useAuth } from '@/stores/auth-store'
 import { useDragDrop } from '@/stores/drag-drop-store'
 import { folderTreeStore, useFolderTree } from '@/stores/folder-tree-store'
@@ -32,7 +33,7 @@ import { FolderTreeNode } from './folder-tree-node'
 export type FolderTreeSidebarProps = Omit<
   React.ComponentProps<typeof Sidebar>,
   'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDrop'
->
+> & { space?: SpaceIdentity }
 
 /**
  * Check if a folder path affects the current viewing path.
@@ -44,7 +45,7 @@ function isPathAffected(folderPath: string, currentPath: string): boolean {
   return currentPath.startsWith(`${folderPath}/`) // Parent folder
 }
 
-export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
+export function FolderTreeSidebar({ space, ...props }: FolderTreeSidebarProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState } = useAuth()
@@ -97,7 +98,8 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
 
   // Get drag state and drop handler from global store
   const { dragOverTarget, onDropHandler } = useDragDrop()
-  const { spaceKey } = useParams({ strict: false })
+  const { spaceKey: routeSpaceKey } = useParams({ strict: false })
+  const spaceKey = space?.spaceKey ?? routeSpaceKey
 
   // Get drag handlers from hook, using the handler from store
   const { handleDragOver, handleDragEnter, handleDragLeave, handleContainerDragLeave, handleDrop } =
@@ -170,7 +172,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     onRename: handleRenameFromMenu,
     onDelete: handleDeleteFromMenu,
     onMove: handleMoveFromMenu,
-    spaceKey,
+    space,
   })
 
   // Use the shared folder context menu hook for dropdown menus (three-dots)
@@ -186,7 +188,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
     onDelete: handleDeleteFromMenu,
     onMove: handleMoveFromMenu,
     useDropdownItems: true,
-    spaceKey,
+    space,
   })
 
   // Adapter function to match FolderTreeNode's expected signature
@@ -318,6 +320,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
                         <FolderTreeNode
                           key={`${folder.path}-${index}`}
                           folder={folder}
+                          space={space}
                           renderMenuItems={renderDropdownMenuItems}
                           onDragOver={handleDragOver}
                           onDragEnter={handleDragEnter}
@@ -378,6 +381,7 @@ export function FolderTreeSidebar(props: FolderTreeSidebarProps) {
         onOpenChange={(open) => setMoveDialog({ open, items: [], currentPath: '' })}
         items={moveDialog.items}
         currentPath={moveDialog.currentPath}
+        space={space}
         onMoveComplete={() => {
           // Check if current path is affected by the move
           if (moveDialog.items.length > 0) {

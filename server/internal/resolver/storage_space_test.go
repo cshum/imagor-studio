@@ -104,11 +104,13 @@ func TestGetSpaceStorage_NotFound(t *testing.T) {
 // TestGetSpaceStorage_OrgMismatch: space belongs to a different org → FORBIDDEN.
 func TestGetSpaceStorage_OrgMismatch(t *testing.T) {
 	space := &space.Space{
+		ID:     "space-1",
 		OrgID:  "org-b", // caller is in org-a
 		Bucket: "the-bucket",
 	}
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "space-1").Return(space, nil)
+	mockSpaceStore.On("HasMember", mock.Anything, "space-1", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
@@ -125,6 +127,7 @@ func TestGetSpaceStorage_OrgMismatch(t *testing.T) {
 
 func TestGetSpaceStorage_GuestMemberAllowed(t *testing.T) {
 	space := &space.Space{
+		ID:          "space-1",
 		Key:         "space-1",
 		OrgID:       "org-b",
 		StorageType: "s3",
@@ -251,11 +254,13 @@ func TestListFiles_SpaceKeyNotFound(t *testing.T) {
 // caller's JWT org returns FORBIDDEN.
 func TestListFiles_SpaceKeyForbidden(t *testing.T) {
 	space := &space.Space{
+		ID:     "space-other",
 		OrgID:  "org-b", // caller is in org-a
 		Bucket: "b",
 	}
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+	mockSpaceStore.On("HasMember", mock.Anything, "space-other", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
@@ -276,11 +281,13 @@ func TestListFiles_SpaceKeyForbidden(t *testing.T) {
 // TestDeleteFile_SpaceKeyForbidden: delete on a cross-org space also returns FORBIDDEN.
 func TestDeleteFile_SpaceKeyForbidden(t *testing.T) {
 	space := &space.Space{
+		ID:     "space-other",
 		OrgID:  "org-b",
 		Bucket: "b",
 	}
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+	mockSpaceStore.On("HasMember", mock.Anything, "space-other", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
@@ -329,9 +336,10 @@ func TestSaveTemplate_SpaceKeyNotFound(t *testing.T) {
 
 // TestSaveTemplate_SpaceKeyForbidden: cross-org space → FORBIDDEN gqlerror.
 func TestSaveTemplate_SpaceKeyForbidden(t *testing.T) {
-	space := &space.Space{OrgID: "org-b", Bucket: "b"}
+	space := &space.Space{ID: "space-other", OrgID: "org-b", Bucket: "b"}
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+	mockSpaceStore.On("HasMember", mock.Anything, "space-other", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
@@ -371,9 +379,10 @@ func TestRegenerateTemplatePreview_SpaceKeyNotFound(t *testing.T) {
 
 // TestRegenerateTemplatePreview_SpaceKeyForbidden: cross-org space → FORBIDDEN.
 func TestRegenerateTemplatePreview_SpaceKeyForbidden(t *testing.T) {
-	space := &space.Space{OrgID: "org-b", Bucket: "b"}
+	space := &space.Space{ID: "space-other", OrgID: "org-b", Bucket: "b"}
 	mockSpaceStore := &MockSpaceStore{}
 	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+	mockSpaceStore.On("HasMember", mock.Anything, "space-other", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")

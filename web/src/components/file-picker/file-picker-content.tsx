@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams } from '@tanstack/react-router'
 import {
   ArrowDown,
   ArrowUp,
@@ -43,6 +42,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { addCacheBuster } from '@/lib/api-utils'
 import { hasExtension } from '@/lib/file-extensions'
 import { IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/gallery-config'
+import type { SpaceIdentity } from '@/lib/space'
 import { getScopedUserRegistryValues } from '@/lib/user-config'
 import { TEMPLATE_EXTENSION } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
@@ -51,7 +51,7 @@ import { useFolderTree } from '@/stores/folder-tree-store'
 export interface FilePickerContentProps {
   currentPath: string
   selectedPaths: Set<string>
-  spaceID?: string
+  space?: SpaceIdentity
   fileType?: 'images' | 'videos' | 'both'
   fileExtensions?: string[]
   maxItemWidth?: number
@@ -63,7 +63,7 @@ export interface FilePickerContentProps {
 export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   currentPath,
   selectedPaths,
-  spaceID,
+  space,
   fileType = 'both',
   fileExtensions,
   maxItemWidth = 200,
@@ -73,7 +73,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 }) => {
   const { t } = useTranslation()
   const { authState } = useAuth()
-  const { spaceKey } = useParams({ strict: false })
+  const spaceKey = space?.spaceKey
   const [folders, setFolders] = useState<Gallery[]>([])
   const [images, setImages] = useState<GalleryImage[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -177,7 +177,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                 'config.app_show_file_names',
               ],
               userId,
-              { spaceID },
+              { spaceID: space?.spaceID },
             )
 
             userSortBy = userRegistryValues['config.app_default_sort_by']
@@ -466,7 +466,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                     folder={folder}
                     selectedPath={currentPath}
                     excludePaths={new Set()}
-                    spaceKey={spaceKey}
+                    space={space}
                     onSelect={(path) => {
                       onPathChange(path)
                       if (isMobile) setIsMobileSidebarOpen(false)

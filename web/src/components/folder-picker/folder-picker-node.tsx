@@ -8,6 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible.tsx'
+import type { SpaceIdentity } from '@/lib/space'
 import { loadFolderChildren } from '@/stores/folder-tree-store.ts'
 
 export interface FolderNode {
@@ -23,7 +24,7 @@ interface FolderPickerNodeProps {
   folder: FolderNode
   selectedPath: string | null
   excludePaths: Set<string>
-  spaceKey?: string
+  space?: SpaceIdentity
   onSelect: (path: string) => void
   onUpdateNode: (path: string, updates: Partial<FolderNode>) => void
   level?: number
@@ -33,7 +34,7 @@ export function FolderPickerNode({
   folder,
   selectedPath,
   excludePaths,
-  spaceKey,
+  space,
   onSelect,
   onUpdateNode,
   level = 0,
@@ -68,7 +69,7 @@ export function FolderPickerNode({
       if (folder.isDirectory) {
         if (!folder.isLoaded) {
           // Load data without auto-expanding in store, then update local state
-          await loadFolderChildren(folder.path, false, spaceKey)
+          await loadFolderChildren(folder.path, false, space)
           onUpdateNode(folder.path, { isExpanded: true })
         } else if (!folder.isExpanded) {
           onUpdateNode(folder.path, { isExpanded: true })
@@ -83,7 +84,7 @@ export function FolderPickerNode({
     if (!folder.isLoaded && folder.isDirectory) {
       // Load children if not loaded yet, don't auto-expand in store
       try {
-        await loadFolderChildren(folder.path, false, spaceKey)
+        await loadFolderChildren(folder.path, false, space)
         // Update local expand state after loading
         onUpdateNode(folder.path, { isExpanded: true })
       } catch {
@@ -147,7 +148,7 @@ export function FolderPickerNode({
               folder={child}
               selectedPath={selectedPath}
               excludePaths={excludePaths}
-              spaceKey={spaceKey}
+              space={space}
               onSelect={onSelect}
               onUpdateNode={onUpdateNode}
               level={level + 1}

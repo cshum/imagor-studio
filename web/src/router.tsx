@@ -10,7 +10,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import { getSpace, getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/api/org-api'
+import { getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
@@ -20,6 +20,7 @@ import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
+import { resolveSpace } from '@/lib/space'
 import {
   adminGeneralLoader,
   adminImagorLoader,
@@ -128,13 +129,20 @@ const baseLayoutRoute = createRoute({
   ),
 })
 
-async function resolveSpace(spaceKey: string) {
-  const space = await getSpace(spaceKey)
-  if (!space) {
-    throw new Error('Space not found')
-  }
-  return space
-}
+const spaceBaseLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/spaces/$spaceKey',
+  beforeLoad: requireAuth,
+  loader: async ({ params }) => ({ space: await resolveSpace(params.spaceKey) }),
+  component: () => {
+    const { space } = spaceBaseLayoutRoute.useLoaderData()
+    return (
+      <SidebarLayout space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}>
+        <Outlet />
+      </SidebarLayout>
+    )
+  },
+})
 
 const rootPath = createRoute({
   getParentRoute: () => settingsLayoutRoute,
@@ -264,12 +272,17 @@ const galleryImageEditorRoute = createRoute({
 
 // /spaces/$spaceKey  →  root gallery for this space (galleryKey = '')
 const spaceRootRoute = createRoute({
-  getParentRoute: () => baseLayoutRoute,
-  path: '/spaces/$spaceKey',
+  getParentRoute: () => spaceBaseLayoutRoute,
+  path: '/',
   component: () => {
     const galleryLoaderData = spaceRootRoute.useLoaderData()
+    const { space } = spaceBaseLayoutRoute.useLoaderData()
     return (
-      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>
+      <GalleryPage
+        galleryLoaderData={galleryLoaderData}
+        galleryKey=''
+        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+      >
         <Outlet />
       </GalleryPage>
     )
@@ -310,13 +323,18 @@ const spaceRootImagePage = createRoute({
 
 // /spaces/$spaceKey/f/$galleryKey  →  nested folder inside a space
 const spaceGalleryRoute = createRoute({
-  getParentRoute: () => baseLayoutRoute,
-  path: '/spaces/$spaceKey/f/$galleryKey',
+  getParentRoute: () => spaceBaseLayoutRoute,
+  path: '/f/$galleryKey',
   component: () => {
     const galleryLoaderData = spaceGalleryRoute.useLoaderData()
+    const { space } = spaceBaseLayoutRoute.useLoaderData()
     const { galleryKey } = spaceGalleryRoute.useParams()
     return (
-      <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey={galleryKey}>
+      <GalleryPage
+        galleryLoaderData={galleryLoaderData}
+        galleryKey={galleryKey}
+        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+      >
         <Outlet />
       </GalleryPage>
     )
@@ -707,8 +725,8 @@ const routeTree = isEmbeddedMode
           accountUsersRoute,
         ]),
       ]),
-      baseLayoutRoute.addChildren([
-        galleryRoute.addChildren([imagePage]),
+      baseLayoutRoute.addChildren([galleryRoute.addChildren([imagePage])]),
+      spaceBaseLayoutRoute.addChildren([
         spaceRootRoute.addChildren([spaceRootImagePage]),
         spaceGalleryRoute.addChildren([spaceImagePage]),
       ]),

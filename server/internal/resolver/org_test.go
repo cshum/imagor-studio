@@ -161,8 +161,8 @@ func TestSpaces_IncludesGuestAccessibleSpaces(t *testing.T) {
 	guestSpace := makeTestSpace("shared", "org-2")
 	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{ownSpace}, nil)
 	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*space.Space{guestSpace}, nil)
-	spaceStore.On("HasMember", mock.Anything, "shared", "user-1").Return(true, nil)
-	spaceStore.On("ListMembers", mock.Anything, "shared").Return([]*space.SpaceMemberView{{
+	spaceStore.On("HasMember", mock.Anything, "space-shared", "user-1").Return(true, nil)
+	spaceStore.On("ListMembers", mock.Anything, "space-shared").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-2",
 		UserID:    "user-1",
 		Username:  "alice",
@@ -255,8 +255,8 @@ func TestSpace_ReturnsGuestAccessibleSpace(t *testing.T) {
 
 	s := makeTestSpace("acme", "org-2")
 	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
-	spaceStore.On("HasMember", mock.Anything, "acme", "user-1").Return(true, nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
+	spaceStore.On("HasMember", mock.Anything, "space-acme", "user-1").Return(true, nil)
+	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-2",
 		UserID:    "user-1",
 		Username:  "alice",
@@ -346,7 +346,7 @@ func TestCreateSpace_Success(t *testing.T) {
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
-	spaceStore.On("AddMember", mock.Anything, "acme", "user-1", "admin").Return(nil)
+	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-1", "admin").Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(created, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
@@ -419,7 +419,7 @@ func TestCreateSpace_DerivesStorageModeFromType(t *testing.T) {
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
-	spaceStore.On("AddMember", mock.Anything, "acme", "user-1", "admin").Return(nil)
+	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-1", "admin").Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(created, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
@@ -503,7 +503,7 @@ func TestCreateSpace_AutoCreatesOrg(t *testing.T) {
 	orgStore.On("ListMembers", mock.Anything, "org-auto").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
-	spaceStore.On("AddMember", mock.Anything, "acme", "user-1", "admin").Return(nil)
+	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-1", "admin").Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(created, nil)
 
 	ctx := createAdminContext("user-1") // no org_id claim
@@ -730,7 +730,7 @@ func TestUpdateSpace_AllowsGuestManager(t *testing.T) {
 	updated.Name = "New Name"
 
 	spaceStore.On("Get", mock.Anything, "acme").Return(existing, nil).Once()
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
+	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-1",
 		UserID:    "user-1",
 		Username:  "alice",
@@ -741,7 +741,7 @@ func TestUpdateSpace_AllowsGuestManager(t *testing.T) {
 		return s.Key == "acme" && s.Name == "New Name"
 	})).Return(nil)
 	spaceStore.On("Get", mock.Anything, "acme").Return(updated, nil).Once()
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
+	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-1",
 		UserID:    "user-1",
 		Username:  "alice",
@@ -858,7 +858,7 @@ func TestDeleteSpace_DeniesGuestManager(t *testing.T) {
 
 	s := makeTestSpace("acme", "org-host")
 	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
+	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
 		SpaceID:   "space-1",
 		UserID:    "user-1",
 		Username:  "alice",
@@ -881,7 +881,7 @@ func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
 
 	s := makeTestSpace("acme", "org-1")
 	spaceStore.On("Get", mock.Anything, "acme").Return(s, nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{
+	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{
 		{
 			SpaceID:     "space-1",
 			UserID:      "user-1",
@@ -939,9 +939,9 @@ func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
 		Username:    "bob",
 		DisplayName: "Bob",
 	}, nil)
-	spaceStore.On("HasMember", mock.Anything, "acme", "user-2").Return(false, nil)
-	spaceStore.On("AddMember", mock.Anything, "acme", "user-2", "member").Return(nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
+	spaceStore.On("HasMember", mock.Anything, "space-acme", "user-2").Return(false, nil)
+	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-2", "member").Return(nil)
+	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
 		SpaceID:     "space-1",
 		UserID:      "user-2",
 		Username:    "bob",
@@ -985,9 +985,9 @@ func TestInviteSpaceMember_AddsExistingExternalAccountAsGuest(t *testing.T) {
 		DisplayName: "Guest User",
 		AvatarUrl:   &guestAvatarURL,
 	}, nil)
-	spaceStore.On("HasMember", mock.Anything, "acme", "user-9").Return(false, nil)
-	spaceStore.On("AddMember", mock.Anything, "acme", "user-9", "member").Return(nil)
-	spaceStore.On("ListMembers", mock.Anything, "acme").Return([]*space.SpaceMemberView{{
+	spaceStore.On("HasMember", mock.Anything, "space-acme", "user-9").Return(false, nil)
+	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-9", "member").Return(nil)
+	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
 		SpaceID:     "space-1",
 		UserID:      "user-9",
 		Username:    "guestuser",
@@ -1021,8 +1021,8 @@ func TestLeaveSpace_RemovesGuestMembership(t *testing.T) {
 
 	space := makeTestSpace("shared-space", "org-host")
 	spaceStore.On("Get", mock.Anything, "shared-space").Return(space, nil)
-	spaceStore.On("HasMember", mock.Anything, "shared-space", "user-1").Return(true, nil)
-	spaceStore.On("RemoveMember", mock.Anything, "shared-space", "user-1").Return(nil)
+	spaceStore.On("HasMember", mock.Anything, "space-shared-space", "user-1").Return(true, nil)
+	spaceStore.On("RemoveMember", mock.Anything, "space-shared-space", "user-1").Return(nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-guest")
 	ok, err := r.Mutation().LeaveSpace(ctx, "shared-space")
