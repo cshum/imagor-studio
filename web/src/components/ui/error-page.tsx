@@ -1,5 +1,5 @@
-import { AlertTriangle, Home, ShieldAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { AlertTriangle, Home, ShieldAlert } from 'lucide-react'
 
 import { BrandBar } from '@/components/brand-bar'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
@@ -18,11 +18,7 @@ interface ErrorPageProps {
 
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
 
-export function ErrorPage({
-  error,
-  title,
-  description,
-}: ErrorPageProps) {
+export function ErrorPage({ error, title, description }: ErrorPageProps) {
   const { t } = useTranslation()
   const auth = getAuth()
   const errorInfo = extractErrorInfo(error)
