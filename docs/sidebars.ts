@@ -50,7 +50,6 @@ const sidebars: SidebarsConfig = {
       items: [
         "deployment/migration",
         "deployment/docker",
-        "deployment/custom-domains",
         "deployment/kubernetes",
         "deployment/embedded-mode",
       ],
