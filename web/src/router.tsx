@@ -132,10 +132,12 @@ const baseLayoutRoute = createRoute({
 const spaceBaseLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/spaces/$spaceKey',
-  beforeLoad: requireAuth,
-  loader: async ({ params }) => ({ space: await resolveSpace(params.spaceKey) }),
+  beforeLoad: async (context) => {
+    await requireAuth(context)
+    return { space: await resolveSpace(context.params.spaceKey) }
+  },
   component: () => {
-    const { space } = spaceBaseLayoutRoute.useLoaderData()
+    const { space } = spaceBaseLayoutRoute.useRouteContext()
     return (
       <SidebarLayout space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}>
         <Outlet />
@@ -276,7 +278,7 @@ const spaceRootRoute = createRoute({
   path: '/',
   component: () => {
     const galleryLoaderData = spaceRootRoute.useLoaderData()
-    const { space } = spaceBaseLayoutRoute.useLoaderData()
+    const { space } = spaceBaseLayoutRoute.useRouteContext()
     return (
       <GalleryPage
         galleryLoaderData={galleryLoaderData}
@@ -287,8 +289,8 @@ const spaceRootRoute = createRoute({
       </GalleryPage>
     )
   },
-  loader: async ({ params }) => {
-    const space = await resolveSpace(params.spaceKey)
+  loader: ({ params, context }) => {
+    const { space } = context
     return galleryLoader({
       params: {
         galleryKey: '',
@@ -305,7 +307,12 @@ const spaceRootRoute = createRoute({
 const spaceRootImagePage = createRoute({
   getParentRoute: () => spaceRootRoute,
   path: '/$imageKey',
-  loader: ({ params }) => imageLoader({ params: { ...params, galleryKey: '' } }),
+  loader: ({ params, context }) => {
+    const { space } = context
+    return imageLoader({
+      params: { ...params, galleryKey: '', spaceID: space.id },
+    })
+  },
   component: () => {
     const galleryLoaderData = spaceRootRoute.useLoaderData()
     const imageLoaderData = spaceRootImagePage.useLoaderData()
@@ -327,7 +334,7 @@ const spaceGalleryRoute = createRoute({
   path: '/f/$galleryKey',
   component: () => {
     const galleryLoaderData = spaceGalleryRoute.useLoaderData()
-    const { space } = spaceBaseLayoutRoute.useLoaderData()
+    const { space } = spaceBaseLayoutRoute.useRouteContext()
     const { galleryKey } = spaceGalleryRoute.useParams()
     return (
       <GalleryPage
@@ -339,8 +346,8 @@ const spaceGalleryRoute = createRoute({
       </GalleryPage>
     )
   },
-  loader: async ({ params }) => {
-    const space = await resolveSpace(params.spaceKey)
+  loader: ({ params, context }) => {
+    const { space } = context
     return galleryLoader({ params: { ...params, spaceID: space.id, spaceName: space.name } })
   },
   shouldReload: false,
@@ -350,7 +357,10 @@ const spaceGalleryRoute = createRoute({
 const spaceImagePage = createRoute({
   getParentRoute: () => spaceGalleryRoute,
   path: '/$imageKey',
-  loader: ({ params }) => imageLoader({ params }),
+  loader: ({ params, context }) => {
+    const { space } = context
+    return imageLoader({ params: { ...params, spaceID: space.id } })
+  },
   component: () => {
     const galleryLoaderData = spaceGalleryRoute.useLoaderData()
     const imageLoaderData = spaceImagePage.useLoaderData()
@@ -370,9 +380,12 @@ const spaceImagePage = createRoute({
 const spaceImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/spaces/$spaceKey/$imageKey/editor',
-  beforeLoad: requireImageEditorAuth,
-  loader: async ({ params }) => {
-    const space = await resolveSpace(params.spaceKey)
+  beforeLoad: async (context) => {
+    await requireImageEditorAuth(context)
+    return { space: await resolveSpace(context.params.spaceKey) }
+  },
+  loader: ({ params, context }) => {
+    const { space } = context
     return imageEditorLoader({
       params: { ...params, galleryKey: '', spaceID: space.id, spaceName: space.name },
     })
@@ -388,9 +401,12 @@ const spaceImageEditorRoute = createRoute({
 const spaceGalleryImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor',
-  beforeLoad: requireImageEditorAuth,
-  loader: async ({ params }) => {
-    const space = await resolveSpace(params.spaceKey)
+  beforeLoad: async (context) => {
+    await requireImageEditorAuth(context)
+    return { space: await resolveSpace(context.params.spaceKey) }
+  },
+  loader: ({ params, context }) => {
+    const { space } = context
     return imageEditorLoader({ params: { ...params, spaceID: space.id, spaceName: space.name } })
   },
   shouldReload: false,
@@ -405,9 +421,12 @@ const spaceGalleryImageEditorRoute = createRoute({
 const spaceCanvasEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/spaces/$spaceKey/editor/new',
-  beforeLoad: requireImageEditorAuth,
-  loader: async ({ location, params }) => {
-    const space = await resolveSpace(params.spaceKey)
+  beforeLoad: async (context) => {
+    await requireImageEditorAuth(context)
+    return { space: await resolveSpace(context.params.spaceKey) }
+  },
+  loader: ({ location, context }) => {
+    const { space } = context
     return canvasEditorLoader({ search: location.searchStr, spaceID: space?.id })
   },
   shouldReload: false,

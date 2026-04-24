@@ -5,7 +5,7 @@ import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage'
 import { createStore } from '@/lib/create-store'
 import { createLatestRequestTracker } from '@/lib/latest-request-tracker'
-import { normalizeDirectoryPath } from '@/lib/path-utils'
+import { normalizeScopedDirectoryPath } from '@/lib/path-utils'
 
 export interface FolderNode {
   name: string
@@ -91,6 +91,21 @@ const DEFAULT_SPACE_CACHE_KEY = '__default__'
 const getFallbackSpaceCacheKey = (spaceKey?: string) =>
   spaceKey ? `space-key:${spaceKey}` : DEFAULT_SPACE_CACHE_KEY
 
+const getSpaceIDFromCacheKey = (cacheKey: string): string | undefined => {
+  if (!cacheKey.startsWith('space:')) {
+    return undefined
+  }
+
+  return cacheKey.slice('space:'.length) || undefined
+}
+
+const normalizePersistedFolderNodes = (folders: FolderNode[], spaceID?: string): FolderNode[] =>
+  folders.map((folder) => ({
+    ...folder,
+    path: normalizeScopedDirectoryPath(folder.path, spaceID),
+    children: folder.children ? normalizePersistedFolderNodes(folder.children, spaceID) : undefined,
+  }))
+
 const getResolvedSpaceCacheKey = (state: FolderTreeState, space?: FolderTreeSpaceInput) => {
   const normalizedSpace = normalizeFolderTreeSpace(space)
   if (!normalizedSpace?.spaceKey) {
@@ -126,9 +141,10 @@ const getPersistedStateFromFolderTree = (state: FolderTreeState): PersistedFolde
 
 const normalizePersistedFolderTreeState = (
   state: PersistedFolderTreeState,
+  cacheKey: string = DEFAULT_SPACE_CACHE_KEY,
 ): PersistedFolderTreeState => ({
-  rootFolders: state.rootFolders,
-  currentPath: state.currentPath,
+  rootFolders: normalizePersistedFolderNodes(state.rootFolders, getSpaceIDFromCacheKey(cacheKey)),
+  currentPath: normalizeScopedDirectoryPath(state.currentPath, getSpaceIDFromCacheKey(cacheKey)),
   homeTitle: state.homeTitle || 'Home',
 })
 
@@ -148,7 +164,7 @@ const parsePersistedFolderTreeStates = (
 
   if (isPersistedFolderTreeState(parsed)) {
     return {
-      [DEFAULT_SPACE_CACHE_KEY]: normalizePersistedFolderTreeState(parsed),
+      [DEFAULT_SPACE_CACHE_KEY]: normalizePersistedFolderTreeState(parsed, DEFAULT_SPACE_CACHE_KEY),
     }
   }
 
@@ -159,7 +175,10 @@ const parsePersistedFolderTreeStates = (
       return Object.fromEntries(
         Object.entries(spaces)
           .filter(([, state]) => isPersistedFolderTreeState(state))
-          .map(([cacheKey, state]) => [cacheKey, normalizePersistedFolderTreeState(state)]),
+          .map(([cacheKey, state]) => [
+            cacheKey,
+            normalizePersistedFolderTreeState(state, cacheKey),
+          ]),
       )
     }
   }
@@ -521,7 +540,7 @@ const loadPersistedState = async (cacheKey: string) => {
   try {
     const parsed = JSON.parse(savedValue) as unknown
     if (isPersistedFolderTreeState(parsed)) {
-      return normalizePersistedFolderTreeState(parsed)
+      return normalizePersistedFolderTreeState(parsed, cacheKey)
     }
   } catch {
     return null
@@ -604,7 +623,10 @@ const ensureResolvedSpaceCacheKey = async (space?: FolderTreeSpaceInput) => {
     const fallbackCacheKey = getFallbackSpaceCacheKey(normalizedSpace.spaceKey)
     if (resolvedCacheKey !== fallbackCacheKey && persistedTreeStates[fallbackCacheKey]) {
       if (!persistedTreeStates[resolvedCacheKey]) {
-        persistedTreeStates[resolvedCacheKey] = persistedTreeStates[fallbackCacheKey]
+        persistedTreeStates[resolvedCacheKey] = normalizePersistedFolderTreeState(
+          persistedTreeStates[fallbackCacheKey],
+          resolvedCacheKey,
+        )
       }
       delete persistedTreeStates[fallbackCacheKey]
       rememberPersistedSpaceCacheKey(resolvedCacheKey)
@@ -820,7 +842,7 @@ export const loadRootFolders = async (space?: FolderTreeSpaceInput) => {
 
     const folders: FolderNode[] = result.items.map((item) => ({
       name: item.name,
-      path: normalizeDirectoryPath(item.path),
+      path: normalizeScopedDirectoryPath(item.path, normalizedSpace?.spaceID),
       isDirectory: item.isDirectory,
       isLoaded: false,
       isExpanded: false,
@@ -870,7 +892,7 @@ export const loadFolderChildren = async (
 
     const children: FolderNode[] = result.items.map((item) => ({
       name: item.name,
-      path: normalizeDirectoryPath(item.path),
+      path: normalizeScopedDirectoryPath(item.path, normalizedSpace?.spaceID),
       isDirectory: item.isDirectory,
       children: [], // Initialize with empty array - will be populated when folder is expanded
       isLoaded: false,

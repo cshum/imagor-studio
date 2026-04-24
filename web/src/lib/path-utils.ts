@@ -49,3 +49,26 @@ export function splitImagePath(imagePath: string): { galleryKey: string; imageKe
 export function normalizeDirectoryPath(path: string): string {
   return path.replace(/\/+$/, '')
 }
+
+/**
+ * Convert a storage path into a gallery-relative path for the current scope.
+ * In space mode the backend may return physical paths prefixed with
+ * spaces/<spaceID>/..., while the router expects paths relative to the space root.
+ */
+export function normalizeScopedDirectoryPath(path: string, spaceID?: string): string {
+  const normalizedPath = normalizeDirectoryPath(path)
+
+  if (!spaceID) {
+    return normalizedPath
+  }
+
+  const spacePrefix = `spaces/${spaceID}`
+  if (normalizedPath === spacePrefix) {
+    return ''
+  }
+  if (normalizedPath.startsWith(`${spacePrefix}/`)) {
+    return normalizedPath.slice(spacePrefix.length + 1)
+  }
+
+  return normalizedPath
+}

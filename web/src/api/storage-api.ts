@@ -183,10 +183,7 @@ export async function listFiles(
 /**
  * Get file/folder statistics
  */
-export async function statFile(
-  path: string,
-  spaceID?: string,
-): Promise<StatFileQuery['statFile']> {
+export async function statFile(path: string, spaceID?: string): Promise<StatFileQuery['statFile']> {
   const sdk = getSdk(getGraphQLClient())
 
   const variables: StatFileQueryVariables = { path, spaceID }

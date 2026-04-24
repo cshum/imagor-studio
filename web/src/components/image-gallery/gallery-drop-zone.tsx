@@ -50,7 +50,7 @@ export function GalleryDropZone({
         return false
       }
     },
-      [spaceID],
+    [spaceID],
   )
 
   const {

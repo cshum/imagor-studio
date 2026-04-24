@@ -10,7 +10,7 @@ import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils
 import { hasExtension } from '@/lib/file-extensions.ts'
 import { FILE_EXTENSIONS, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/gallery-config'
 import { createLatestRequestTracker } from '@/lib/latest-request-tracker'
-import { normalizeDirectoryPath } from '@/lib/path-utils'
+import { normalizeScopedDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
 import { getScopedUserRegistryValues } from '@/lib/user-config'
 import { getAuth } from '@/stores/auth-store.ts'
@@ -54,10 +54,10 @@ export const galleryLoader = async ({
 }: {
   params: { galleryKey: string; spaceKey?: string; spaceID?: string; spaceName?: string }
 }): Promise<GalleryLoaderData> => {
-  const requestKey = `${spaceKey || '__default__'}:${galleryKey}`
+  const requestKey = `${spaceID || '__default__'}:${galleryKey}`
   const requestGeneration = latestGalleryLoaderRequests.begin(requestKey)
 
-  await ensureFolderTreeReady({ spaceKey, spaceID, spaceName })
+  await ensureFolderTreeReady({ spaceID, spaceName })
 
   // Use galleryKey as the path for storage API
   const path = galleryKey
@@ -158,7 +158,7 @@ export const galleryLoader = async ({
   const folders: Gallery[] = result.items
     .filter((item) => item.isDirectory)
     .map((item) => ({
-      galleryKey: normalizeDirectoryPath(item.path),
+      galleryKey: normalizeScopedDirectoryPath(item.path, spaceID),
       galleryName: item.name,
     }))
 
@@ -173,7 +173,7 @@ export const galleryLoader = async ({
 
   // Update folder tree store with fresh data while preserving toggle states
   if (latestGalleryLoaderRequests.isLatest(requestKey, requestGeneration)) {
-    await updateTreeData(path, folderNodes, { spaceKey, spaceID, spaceName })
+    await updateTreeData(path, folderNodes, { spaceID, spaceName })
   }
 
   // Filter and convert image files (including templates)
