@@ -725,9 +725,9 @@
         "next": "Next",
         "back": "Back"
       },
-      "noSpacesFound": "No spaces found",
+      "noSpacesFound": "Create your first space",
       "description": "Manage workspaces for your organization.",
-      "emptyDescription": "Create your first space to get started with a dedicated workspace.",
+      "emptyDescription": "Create an image workspace for your team.",
       "settings": "Settings",
       "spaceCount": "{{count}} space(s)",
       "openGallery": "Open Gallery",
@@ -793,7 +793,7 @@
         "sharedWithYou": "Shared With You"
       },
       "configure": "Configure",
-      "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows.",
+      "startDescription": "You can customize storage, delivery, and access as you grow.",
       "sharedLabel": "Shared",
       "leaveSpace": "Leave",
       "leaveSpaceDescription": "Leave this shared space",

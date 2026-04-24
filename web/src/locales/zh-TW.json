@@ -719,7 +719,7 @@
       "deleteSpaceDescription": "您確定要永久刪除空間",
       "createSpaceButton": "建立空間",
       "updateSpaceButton": "更新空間",
-      "noSpacesFound": "找不到空間",
+      "noSpacesFound": "建立您的第一個空間",
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
@@ -751,7 +751,7 @@
         "imagorSecret": "Imagor 金鑰"
       },
       "description": "管理您組織的工作空間。",
-      "emptyDescription": "建立您的第一個空間，開始使用專屬工作區。",
+      "emptyDescription": "為您的團隊建立一個圖片工作區。",
       "settings": "設定",
       "spaceCount": "{{count}} 個空間",
       "openGallery": "開啟相簿",
@@ -788,7 +788,7 @@
         "appUrlLabel": "應用 URL",
         "processingHostLabel": "預設主機"
       },
-      "startDescription": "先使用託管空間完成最快速的設定，之後再隨著工作區成長自訂儲存、交付與品牌。",
+      "startDescription": "您可以隨著成長逐步自訂儲存、交付與存取權限。",
       "sharedLabel": "共享",
       "leaveSpace": "離開",
       "leaveSpaceDescription": "離開這個共享空間",
