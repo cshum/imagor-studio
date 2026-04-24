@@ -442,14 +442,6 @@
             "label": "Mostra nomi file",
             "description": "Mostra i nomi dei file sulle miniature della galleria per impostazione predefinita"
           },
-          "imageExtensions": {
-            "label": "Estensioni file immagine",
-            "description": "Elenco separato da virgole delle estensioni immagine da mostrare (es. .jpg,.png,.gif)"
-          },
-          "videoExtensions": {
-            "label": "Estensioni file video",
-            "description": "Elenco separato da virgole delle estensioni video da mostrare (es. .mp4,.webm,.avi)"
-          },
           "videoThumbnailPosition": {
             "label": "Posizione miniatura video",
             "description": "Scegli da dove estrarre le miniature video. Il primo fotogramma è il più veloce. Le opzioni di seek aiutano a ottenere un fotogramma più rappresentativo evitando schermate nere.",
@@ -461,10 +453,6 @@
               "seek10pct": "Vai al 10%",
               "seek25pct": "Vai al 25%"
             }
-          },
-          "showHidden": {
-            "label": "Mostra file nascosti",
-            "description": "Mostra file e cartelle che iniziano con un punto (.)"
           }
         }
       },

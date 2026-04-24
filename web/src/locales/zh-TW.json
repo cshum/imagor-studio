@@ -442,14 +442,6 @@
             "label": "顯示檔名",
             "description": "預設在相簿的圖片縮圖上顯示檔名"
           },
-          "imageExtensions": {
-            "label": "圖片副檔名",
-            "description": "要顯示的圖片副檔名列表，用逗號分隔（例如：.jpg,.png,.gif）"
-          },
-          "videoExtensions": {
-            "label": "影片副檔名",
-            "description": "要顯示的影片副檔名列表，用逗號分隔（例如：.mp4,.webm,.avi）"
-          },
           "videoThumbnailPosition": {
             "label": "影片縮圖位置",
             "description": "選擇提取影片縮圖的位置。第一幀最快。跳轉選項有助於獲得更具代表性的幀並避免黑屏。",
@@ -461,10 +453,6 @@
               "seek10pct": "跳轉 10% 位置",
               "seek25pct": "跳轉 25% 位置"
             }
-          },
-          "showHidden": {
-            "label": "顯示隱藏檔案",
-            "description": "顯示以點（.）開頭的檔案和資料夾"
           }
         }
       },

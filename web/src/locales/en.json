@@ -442,14 +442,6 @@
             "label": "Show File Names",
             "description": "Display file names on image thumbnails in the gallery by default"
           },
-          "imageExtensions": {
-            "label": "Image File Extensions",
-            "description": "Comma-separated list of image file extensions to show (e.g., .jpg,.png,.gif)"
-          },
-          "videoExtensions": {
-            "label": "Video File Extensions",
-            "description": "Comma-separated list of video file extensions to show (e.g., .mp4,.webm,.avi)"
-          },
           "videoThumbnailPosition": {
             "label": "Video Thumbnail Position",
             "description": "Choose where to extract video thumbnails. First frame is fastest. Seek options help get a more representative frame and avoid black frames.",
@@ -461,10 +453,6 @@
               "seek10pct": "Seek 10% Position",
               "seek25pct": "Seek 25% Position"
             }
-          },
-          "showHidden": {
-            "label": "Show Hidden Files",
-            "description": "Show files and folders that start with a dot (.)"
           }
         }
       },

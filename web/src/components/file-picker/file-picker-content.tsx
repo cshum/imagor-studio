@@ -46,9 +46,7 @@ import {
   DEFAULT_SHOW_HIDDEN_FILES,
   DEFAULT_VIDEO_EXTENSIONS,
 } from '@/lib/gallery-config'
-import {
-  TEMPLATE_EXTENSION,
-} from '@/loaders/gallery-loader.ts'
+import { TEMPLATE_EXTENSION } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
 

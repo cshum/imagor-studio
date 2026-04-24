@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { setSpaceRegistryObject } from '@/api/org-api'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
+import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 
 // ── Gallery section ────────────────────────────────────────────────────────
