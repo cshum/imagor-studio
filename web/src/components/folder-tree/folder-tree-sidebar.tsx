@@ -114,6 +114,7 @@ export function FolderTreeSidebar({ space, ...props }: FolderTreeSidebarProps) {
   const isOnHomePage = spaceKey
     ? routerState.location.pathname === `/spaces/${spaceKey}`
     : routerState.location.pathname === '/'
+  const showBackToSpaces = Boolean(spaceKey && authState.state === 'authenticated')
 
   const handleHomeClick = () => {
     // Close mobile sidebar when navigating to home on mobile
@@ -338,7 +339,7 @@ export function FolderTreeSidebar({ space, ...props }: FolderTreeSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      {spaceKey && (
+      {showBackToSpaces && (
         <SidebarFooter className='border-t py-2'>
           <SidebarMenu>
             <SidebarMenuItem>
