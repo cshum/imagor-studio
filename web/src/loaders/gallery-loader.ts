@@ -1,4 +1,4 @@
-import { getSpace, getSpaceRegistry } from '@/api/org-api.ts'
+import { getSpaceRegistry } from '@/api/org-api.ts'
 import { getSystemRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
@@ -49,21 +49,12 @@ const latestGalleryLoaderRequests = createLatestRequestTracker()
  * Loads images and folders from storage API with imagor-generated thumbnails
  */
 export const galleryLoader = async ({
-  params: { galleryKey, spaceKey },
+  params: { galleryKey, spaceKey, spaceID },
 }: {
-  params: { galleryKey: string; spaceKey?: string }
+  params: { galleryKey: string; spaceKey?: string; spaceID?: string }
 }): Promise<GalleryLoaderData> => {
   const requestKey = `${spaceKey || '__default__'}:${galleryKey}`
   const requestGeneration = latestGalleryLoaderRequests.begin(requestKey)
-  let spaceID: string | undefined
-  if (spaceKey) {
-    try {
-      const space = await getSpace(spaceKey)
-      spaceID = space?.id ?? undefined
-    } catch {
-      // Keep gallery functional even if space lookup fails; scoped user prefs will skip to defaults.
-    }
-  }
 
   await ensureFolderTreeReady(spaceKey)
 
@@ -98,7 +89,7 @@ export const galleryLoader = async ({
             'config.app_show_file_names',
           ],
           userId,
-          { spaceID, spaceKey },
+          { spaceID },
         )
 
         userSortBy = userRegistryValues['config.app_default_sort_by']

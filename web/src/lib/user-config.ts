@@ -1,4 +1,3 @@
-import { getSpace } from '@/api/org-api'
 import {
   getUserRegistryMultiple,
   setUserRegistry,
@@ -13,54 +12,21 @@ type UserRegistryEntryInput = {
 
 type UserConfigScope = {
   spaceID?: string
-  spaceKey?: string
 }
-
-type ResolvedUserConfigScope =
-  | { mode: 'global' }
-  | { mode: 'space'; spaceID: string }
-  | { mode: 'unresolved-space' }
 
 export function buildSpaceScopedUserConfigKey(spaceID: string, key: string): string {
   return `space.${spaceID}.${key}`
 }
 
-async function resolveScope(scope?: UserConfigScope): Promise<ResolvedUserConfigScope> {
-  if (scope?.spaceID) {
-    return { mode: 'space', spaceID: scope.spaceID }
-  }
-
-  if (!scope?.spaceKey) {
-    return { mode: 'global' }
-  }
-
-  try {
-    const space = await getSpace(scope.spaceKey)
-    if (space?.id) {
-      return { mode: 'space', spaceID: space.id }
-    }
-  } catch {
-    return { mode: 'unresolved-space' }
-  }
-
-  return { mode: 'unresolved-space' }
-}
-
 export async function resolveScopedUserConfigKeys(
   baseKeys: string[],
   scope?: UserConfigScope,
-): Promise<Record<string, string> | null> {
-  const resolvedScope = await resolveScope(scope)
-
-  if (resolvedScope.mode === 'unresolved-space') {
-    return null
-  }
-
+): Promise<Record<string, string>> {
   return Object.fromEntries(
     baseKeys.map((baseKey) => [
       baseKey,
-      resolvedScope.mode === 'space'
-        ? buildSpaceScopedUserConfigKey(resolvedScope.spaceID, baseKey)
+      scope?.spaceID
+        ? buildSpaceScopedUserConfigKey(scope.spaceID, baseKey)
         : baseKey,
     ]),
   )
@@ -72,10 +38,6 @@ export async function getScopedUserRegistryValues(
   scope?: UserConfigScope,
 ): Promise<Record<string, string | undefined>> {
   const scopedKeyMap = await resolveScopedUserConfigKeys(baseKeys, scope)
-
-  if (!scopedKeyMap) {
-    return Object.fromEntries(baseKeys.map((baseKey) => [baseKey, undefined]))
-  }
 
   const registryEntries = await getUserRegistryMultiple(Object.values(scopedKeyMap), userID)
 
@@ -96,10 +58,6 @@ export async function setScopedUserRegistryValue(
 ): Promise<void> {
   const scopedKeyMap = await resolveScopedUserConfigKeys([baseKey], scope)
 
-  if (!scopedKeyMap) {
-    throw new Error('Unable to resolve space-scoped user configuration key')
-  }
-
   await setUserRegistry(scopedKeyMap[baseKey], value, isEncrypted, userID)
 }
 
@@ -112,10 +70,6 @@ export async function setScopedUserRegistryMultiple(
     entries.map((entry) => entry.key),
     scope,
   )
-
-  if (!scopedKeyMap) {
-    throw new Error('Unable to resolve space-scoped user configuration keys')
-  }
 
   await setUserRegistryMultiple(
     entries.map((entry) => ({

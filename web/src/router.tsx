@@ -10,7 +10,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import { getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/api/org-api'
+import { getSpace, getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
@@ -127,6 +127,14 @@ const baseLayoutRoute = createRoute({
     </SidebarLayout>
   ),
 })
+
+async function resolveSpaceID(spaceKey: string): Promise<string> {
+  const space = await getSpace(spaceKey)
+  if (!space) {
+    throw new Error('Space not found')
+  }
+  return space.id
+}
 
 const rootPath = createRoute({
   getParentRoute: () => settingsLayoutRoute,
@@ -266,7 +274,10 @@ const spaceRootRoute = createRoute({
       </GalleryPage>
     )
   },
-  loader: ({ params }) => galleryLoader({ params: { galleryKey: '', spaceKey: params.spaceKey } }),
+  loader: async ({ params }) => {
+    const spaceID = await resolveSpaceID(params.spaceKey)
+    return galleryLoader({ params: { galleryKey: '', spaceKey: params.spaceKey, spaceID } })
+  },
   shouldReload: false,
 })
 
@@ -303,7 +314,10 @@ const spaceGalleryRoute = createRoute({
       </GalleryPage>
     )
   },
-  loader: ({ params }) => galleryLoader({ params }),
+  loader: async ({ params }) => {
+    const spaceID = await resolveSpaceID(params.spaceKey)
+    return galleryLoader({ params: { ...params, spaceID } })
+  },
   shouldReload: false,
 })
 
@@ -332,7 +346,10 @@ const spaceImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/spaces/$spaceKey/$imageKey/editor',
   beforeLoad: requireImageEditorAuth,
-  loader: ({ params }) => imageEditorLoader({ params: { ...params, galleryKey: '' } }),
+  loader: async ({ params }) => {
+    const spaceID = await resolveSpaceID(params.spaceKey)
+    return imageEditorLoader({ params: { ...params, galleryKey: '', spaceID } })
+  },
   shouldReload: false,
   component: () => {
     const loaderData = spaceImageEditorRoute.useLoaderData()
@@ -345,7 +362,10 @@ const spaceGalleryImageEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor',
   beforeLoad: requireImageEditorAuth,
-  loader: ({ params }) => imageEditorLoader({ params }),
+  loader: async ({ params }) => {
+    const spaceID = await resolveSpaceID(params.spaceKey)
+    return imageEditorLoader({ params: { ...params, spaceID } })
+  },
   shouldReload: false,
   component: () => {
     const loaderData = spaceGalleryImageEditorRoute.useLoaderData()

@@ -51,6 +51,7 @@ import { useFolderTree } from '@/stores/folder-tree-store'
 export interface FilePickerContentProps {
   currentPath: string
   selectedPaths: Set<string>
+  spaceID?: string
   fileType?: 'images' | 'videos' | 'both'
   fileExtensions?: string[]
   maxItemWidth?: number
@@ -62,6 +63,7 @@ export interface FilePickerContentProps {
 export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   currentPath,
   selectedPaths,
+  spaceID,
   fileType = 'both',
   fileExtensions,
   maxItemWidth = 200,
@@ -175,7 +177,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
                 'config.app_show_file_names',
               ],
               userId,
-              { spaceKey },
+              { spaceID },
             )
 
             userSortBy = userRegistryValues['config.app_default_sort_by']

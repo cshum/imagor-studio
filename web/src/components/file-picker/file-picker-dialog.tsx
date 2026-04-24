@@ -21,6 +21,7 @@ export interface FilePickerDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (paths: string[]) => void
+  spaceID?: string
 
   // Configuration
   selectionMode?: 'single' | 'multiple'
@@ -40,6 +41,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   open,
   onOpenChange,
   onSelect,
+  spaceID,
   selectionMode = 'single',
   currentPath: initialPath,
   fileType = 'both',
@@ -78,7 +80,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
             const result = await getScopedUserRegistryValues(
               [lastLocationRegistryKey],
               authState.profile.id,
-              { spaceKey },
+              { spaceID },
             )
             const savedPath = result[lastLocationRegistryKey]
 
@@ -157,7 +159,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
           currentPath,
           false,
           authState.profile.id,
-          { spaceKey },
+          { spaceID },
         )
       }
 
@@ -185,6 +187,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
               key={`${spaceKey || 'default'}:${dialogSessionKey}`}
               currentPath={currentPath}
               selectedPaths={selectedPaths}
+              spaceID={spaceID}
               fileType={fileType}
               fileExtensions={fileExtensions}
               maxItemWidth={maxItemWidth}
