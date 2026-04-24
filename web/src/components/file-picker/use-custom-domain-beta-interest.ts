@@ -4,10 +4,12 @@ import { toast } from 'sonner'
 
 import { setSpaceRegistryObject } from '@/api/org-api'
 import { extractErrorInfo } from '@/lib/error-utils'
+import { getAuth } from '@/stores/auth-store'
 
 const CUSTOM_DOMAIN_FEEDBACK_REQUESTED_AT_KEY = 'feedback.custom_domain_interest_at'
-const CUSTOM_DOMAIN_FEEDBACK_SOURCE_KEY = 'feedback.custom_domain_interest_source'
-const CUSTOM_DOMAIN_FEEDBACK_SOURCE = 'space-settings-general'
+
+const buildCustomDomainFeedbackUserRequestedAtKey = (userId: string) =>
+  `feedback.custom_domain_interest_users.${encodeURIComponent(userId)}.requested_at`
 
 const formatFeedbackDate = (value?: string) => {
   if (!value) {
@@ -42,10 +44,17 @@ export function useCustomDomainBetaInterest({
   const recordInterest = async () => {
     setIsSaving(true)
     try {
-      await setSpaceRegistryObject(spaceId, {
-        [CUSTOM_DOMAIN_FEEDBACK_REQUESTED_AT_KEY]: new Date().toISOString(),
-        [CUSTOM_DOMAIN_FEEDBACK_SOURCE_KEY]: CUSTOM_DOMAIN_FEEDBACK_SOURCE,
-      })
+      const requestedAt = new Date().toISOString()
+      const userId = getAuth().profile?.id
+      const nextValues: Record<string, string> = {
+        [CUSTOM_DOMAIN_FEEDBACK_REQUESTED_AT_KEY]: requestedAt,
+      }
+
+      if (userId) {
+        nextValues[buildCustomDomainFeedbackUserRequestedAtKey(userId)] = requestedAt
+      }
+
+      await setSpaceRegistryObject(spaceId, nextValues)
       toast.success(onSuccessMessage)
       await router.invalidate()
     } catch (err) {
