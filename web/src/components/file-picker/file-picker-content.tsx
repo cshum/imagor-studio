@@ -186,17 +186,28 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           }
         }
 
-        const systemRegistryResult = spaceKey
-          ? await getSpaceRegistry(spaceKey, [
+        let systemRegistryResult
+        if (spaceKey) {
+          try {
+            systemRegistryResult = await getSpaceRegistry(spaceKey, [
               'config.app_default_sort_by',
               'config.app_default_sort_order',
               'config.app_show_file_names',
             ])
-          : await getSystemRegistryMultiple([
+          } catch {
+            systemRegistryResult = await getSystemRegistryMultiple([
               'config.app_default_sort_by',
               'config.app_default_sort_order',
               'config.app_show_file_names',
             ])
+          }
+        } else {
+          systemRegistryResult = await getSystemRegistryMultiple([
+            'config.app_default_sort_by',
+            'config.app_default_sort_order',
+            'config.app_show_file_names',
+          ])
+        }
 
         const systemSortBy = systemRegistryResult.find(
           (r) => r.key === 'config.app_default_sort_by',

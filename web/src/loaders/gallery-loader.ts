@@ -109,17 +109,28 @@ export const galleryLoader = async ({
       }
     }
 
-    const systemRegistryResult = spaceKey
-      ? await getSpaceRegistry(spaceKey, [
+    let systemRegistryResult
+    if (spaceKey) {
+      try {
+        systemRegistryResult = await getSpaceRegistry(spaceKey, [
           'config.app_default_sort_by',
           'config.app_default_sort_order',
           'config.app_show_file_names',
         ])
-      : await getSystemRegistryMultiple([
+      } catch {
+        systemRegistryResult = await getSystemRegistryMultiple([
           'config.app_default_sort_by',
           'config.app_default_sort_order',
           'config.app_show_file_names',
         ])
+      }
+    } else {
+      systemRegistryResult = await getSystemRegistryMultiple([
+        'config.app_default_sort_by',
+        'config.app_default_sort_order',
+        'config.app_show_file_names',
+      ])
+    }
 
     // Use user preferences if available, otherwise fall back to system registry, then defaults
     const systemSortByEntry = systemRegistryResult.find(
