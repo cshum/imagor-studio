@@ -41,11 +41,7 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { addCacheBuster } from '@/lib/api-utils'
 import { hasExtension } from '@/lib/file-extensions'
-import {
-  DEFAULT_IMAGE_EXTENSIONS,
-  DEFAULT_SHOW_HIDDEN_FILES,
-  DEFAULT_VIDEO_EXTENSIONS,
-} from '@/lib/gallery-config'
+import { IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/gallery-config'
 import { TEMPLATE_EXTENSION } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
@@ -99,8 +95,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   const configRef = useRef({
     fileType,
     fileExtensions,
-    imageExtensions: DEFAULT_IMAGE_EXTENSIONS,
-    videoExtensions: DEFAULT_VIDEO_EXTENSIONS,
+    imageExtensions: IMAGE_EXTENSIONS,
+    videoExtensions: VIDEO_EXTENSIONS,
     sortBy,
     sortOrder,
   })
@@ -110,8 +106,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     configRef.current = {
       fileType,
       fileExtensions,
-      imageExtensions: DEFAULT_IMAGE_EXTENSIONS,
-      videoExtensions: DEFAULT_VIDEO_EXTENSIONS,
+      imageExtensions: IMAGE_EXTENSIONS,
+      videoExtensions: VIDEO_EXTENSIONS,
       sortBy,
       sortOrder,
     }
@@ -276,7 +272,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           path: currentPath,
           spaceKey,
           extensions: extensionsString,
-          showHidden: DEFAULT_SHOW_HIDDEN_FILES,
+          showHidden: false,
           sortBy: config.sortBy,
           sortOrder: config.sortOrder,
         })

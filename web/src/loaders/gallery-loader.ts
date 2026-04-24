@@ -7,12 +7,7 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { hasExtension } from '@/lib/file-extensions.ts'
-import {
-  DEFAULT_FILE_EXTENSIONS,
-  DEFAULT_IMAGE_EXTENSIONS,
-  DEFAULT_SHOW_HIDDEN_FILES,
-  DEFAULT_VIDEO_EXTENSIONS,
-} from '@/lib/gallery-config'
+import { FILE_EXTENSIONS, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/gallery-config'
 import { createLatestRequestTracker } from '@/lib/latest-request-tracker'
 import { normalizeDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
@@ -65,10 +60,9 @@ export const galleryLoader = async ({
 
   // Fetch registry settings for gallery filtering and sorting
   // Priority: User registry → System registry → Hardcoded defaults
-  const extensionsString = `${DEFAULT_FILE_EXTENSIONS},${TEMPLATE_EXTENSION}`
-  const imageExtensions = DEFAULT_IMAGE_EXTENSIONS
-  const videoExtensions = DEFAULT_VIDEO_EXTENSIONS
-  const showHidden = DEFAULT_SHOW_HIDDEN_FILES
+  const extensionsString = `${FILE_EXTENSIONS},${TEMPLATE_EXTENSION}`
+  const imageExtensions = IMAGE_EXTENSIONS
+  const videoExtensions = VIDEO_EXTENSIONS
   let sortBy: SortOption
   let sortOrder: SortOrder
   let showFileNames: boolean
@@ -143,7 +137,7 @@ export const galleryLoader = async ({
     path,
     spaceKey,
     extensions: extensionsString,
-    showHidden,
+    showHidden: false,
     sortBy,
     sortOrder,
   })
@@ -259,7 +253,7 @@ export const imageLoader = async ({
     throw new Error('Image not found')
   }
 
-  const isVideo = hasExtension(fileStat.name, DEFAULT_VIDEO_EXTENSIONS)
+  const isVideo = hasExtension(fileStat.name, VIDEO_EXTENSIONS)
 
   // Use the full-size thumbnail URL for the detail view (same for both images and videos)
   const fullSizeSrc = getFullImageUrl(
