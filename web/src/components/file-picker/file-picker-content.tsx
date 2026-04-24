@@ -15,7 +15,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api'
+import { getSpaceRegistry } from '@/api/org-api'
+import { getSystemRegistryMultiple } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { FilePickerBreadcrumb } from '@/components/file-picker/file-picker-breadcrumb'
 import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-picker-node.tsx'
@@ -42,6 +43,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { addCacheBuster } from '@/lib/api-utils'
 import { hasExtension } from '@/lib/file-extensions'
 import { IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/gallery-config'
+import { getScopedUserRegistryValues } from '@/lib/user-config'
 import { TEMPLATE_EXTENSION } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
@@ -166,35 +168,35 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
         if (userId && authState.state === 'authenticated') {
           try {
-            const userRegistryResult = await getUserRegistryMultiple(
+            const userRegistryValues = await getScopedUserRegistryValues(
               [
                 'config.app_default_sort_by',
                 'config.app_default_sort_order',
                 'config.app_show_file_names',
-                'config.file_picker_last_folder_path',
               ],
               userId,
+              { spaceKey },
             )
 
-            userSortBy = userRegistryResult.find(
-              (r) => r.key === 'config.app_default_sort_by',
-            )?.value
-            userSortOrder = userRegistryResult.find(
-              (r) => r.key === 'config.app_default_sort_order',
-            )?.value
-            userShowFileNames = userRegistryResult.find(
-              (r) => r.key === 'config.app_show_file_names',
-            )?.value
+            userSortBy = userRegistryValues['config.app_default_sort_by']
+            userSortOrder = userRegistryValues['config.app_default_sort_order']
+            userShowFileNames = userRegistryValues['config.app_show_file_names']
           } catch {
             // User registry fetch failed
           }
         }
 
-        const systemRegistryResult = await getSystemRegistryMultiple([
-          'config.app_default_sort_by',
-          'config.app_default_sort_order',
-          'config.app_show_file_names',
-        ])
+        const systemRegistryResult = spaceKey
+          ? await getSpaceRegistry(spaceKey, [
+              'config.app_default_sort_by',
+              'config.app_default_sort_order',
+              'config.app_show_file_names',
+            ])
+          : await getSystemRegistryMultiple([
+              'config.app_default_sort_by',
+              'config.app_default_sort_order',
+              'config.app_show_file_names',
+            ])
 
         const systemSortBy = systemRegistryResult.find(
           (r) => r.key === 'config.app_default_sort_by',

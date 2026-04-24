@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from '@tanstack/react-router'
 
-import { getUserRegistryMultiple, setUserRegistry } from '@/api/registry-api'
 import { statFile } from '@/api/storage-api'
 import { FilePickerContent } from '@/components/file-picker/file-picker-content'
 import { Button } from '@/components/ui/button'
@@ -14,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { getScopedUserRegistryValues, setScopedUserRegistryValue } from '@/lib/user-config'
 import { useAuth } from '@/stores/auth-store'
 import { ensureFolderTreeReady } from '@/stores/folder-tree-store'
 
@@ -75,11 +75,12 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
         // Only load saved path if no initialPath was provided
         if (!initialPath && authState.profile?.id && authState.state === 'authenticated') {
           try {
-            const result = await getUserRegistryMultiple(
+            const result = await getScopedUserRegistryValues(
               [lastLocationRegistryKey],
               authState.profile.id,
+              { spaceKey },
             )
-            const savedPath = result.find((r) => r.key === lastLocationRegistryKey)?.value
+            const savedPath = result[lastLocationRegistryKey]
 
             if (savedPath) {
               // Validate that the folder still exists
@@ -151,7 +152,13 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
     if (selectedPaths.size > 0) {
       // Save the current path to user registry when user confirms selection
       if (authState.profile?.id && authState.state === 'authenticated') {
-        setUserRegistry(lastLocationRegistryKey, currentPath, false, authState.profile.id)
+        void setScopedUserRegistryValue(
+          lastLocationRegistryKey,
+          currentPath,
+          false,
+          authState.profile.id,
+          { spaceKey },
+        )
       }
 
       onSelect(Array.from(selectedPaths))

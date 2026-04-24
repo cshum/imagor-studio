@@ -1,4 +1,5 @@
-import { getSystemRegistryMultiple, getUserRegistryMultiple } from '@/api/registry-api.ts'
+import { getSpace, getSpaceRegistry } from '@/api/org-api.ts'
+import { getSystemRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
@@ -11,6 +12,7 @@ import { FILE_EXTENSIONS, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/galle
 import { createLatestRequestTracker } from '@/lib/latest-request-tracker'
 import { normalizeDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
+import { getScopedUserRegistryValues } from '@/lib/user-config'
 import { getAuth } from '@/stores/auth-store.ts'
 import {
   ensureFolderTreeReady,
@@ -22,6 +24,7 @@ import {
 export interface GalleryLoaderData {
   galleryName: string
   galleryKey: string
+  spaceID?: string
   images: GalleryImage[]
   folders: Gallery[]
   breadcrumbs: BreadcrumbItem[]
@@ -52,14 +55,24 @@ export const galleryLoader = async ({
 }): Promise<GalleryLoaderData> => {
   const requestKey = `${spaceKey || '__default__'}:${galleryKey}`
   const requestGeneration = latestGalleryLoaderRequests.begin(requestKey)
+  let spaceID: string | undefined
+  if (spaceKey) {
+    try {
+      const space = await getSpace(spaceKey)
+      spaceID = space?.id ?? undefined
+    } catch {
+      // Keep gallery functional even if space lookup fails; scoped user prefs will skip to defaults.
+    }
+  }
 
   await ensureFolderTreeReady(spaceKey)
 
   // Use galleryKey as the path for storage API
   const path = galleryKey
 
-  // Fetch registry settings for gallery filtering and sorting
-  // Priority: User registry → System registry → Hardcoded defaults
+  // Fetch registry settings for gallery filtering and sorting.
+  // Priority in spaces: User-space registry → Space registry (with system fallback) → defaults.
+  // Priority outside spaces: Global user registry → System registry → defaults.
   const extensionsString = `${FILE_EXTENSIONS},${TEMPLATE_EXTENSION}`
   const imageExtensions = IMAGE_EXTENSIONS
   const videoExtensions = VIDEO_EXTENSIONS
@@ -78,39 +91,35 @@ export const galleryLoader = async ({
     let userShowFileNames: string | undefined
     if (userId && auth.state === 'authenticated') {
       try {
-        const userRegistryResult = await getUserRegistryMultiple(
+        const userRegistryValues = await getScopedUserRegistryValues(
           [
             'config.app_default_sort_by',
             'config.app_default_sort_order',
             'config.app_show_file_names',
           ],
           userId,
+          { spaceID, spaceKey },
         )
 
-        const userSortByEntry = userRegistryResult.find(
-          (r) => r.key === 'config.app_default_sort_by',
-        )
-        const userSortOrderEntry = userRegistryResult.find(
-          (r) => r.key === 'config.app_default_sort_order',
-        )
-        const userShowFileNamesEntry = userRegistryResult.find(
-          (r) => r.key === 'config.app_show_file_names',
-        )
-
-        userSortBy = userSortByEntry?.value
-        userSortOrder = userSortOrderEntry?.value
-        userShowFileNames = userShowFileNamesEntry?.value
+        userSortBy = userRegistryValues['config.app_default_sort_by']
+        userSortOrder = userRegistryValues['config.app_default_sort_order']
+        userShowFileNames = userRegistryValues['config.app_show_file_names']
       } catch {
         // User registry fetch failed, will fall back to system registry
       }
     }
 
-    // Fetch system registry for all settings (and as fallback for sorting)
-    const systemRegistryResult = await getSystemRegistryMultiple([
-      'config.app_default_sort_by',
-      'config.app_default_sort_order',
-      'config.app_show_file_names',
-    ])
+    const systemRegistryResult = spaceKey
+      ? await getSpaceRegistry(spaceKey, [
+          'config.app_default_sort_by',
+          'config.app_default_sort_order',
+          'config.app_show_file_names',
+        ])
+      : await getSystemRegistryMultiple([
+          'config.app_default_sort_by',
+          'config.app_default_sort_order',
+          'config.app_show_file_names',
+        ])
 
     // Use user preferences if available, otherwise fall back to system registry, then defaults
     const systemSortByEntry = systemRegistryResult.find(
@@ -226,6 +235,7 @@ export const galleryLoader = async ({
     images,
     folders,
     galleryKey,
+    spaceID,
     breadcrumbs,
     imageExtensions,
     videoExtensions,

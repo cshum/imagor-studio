@@ -17,7 +17,6 @@ import {
 import { toast } from 'sonner'
 
 import { generateImagorUrl } from '@/api/imagor-api'
-import { setUserRegistryMultiple } from '@/api/registry-api.ts'
 import { deleteFile, moveFile, regenerateTemplatePreview } from '@/api/storage-api.ts'
 import { HeaderBar } from '@/components/header-bar'
 import { BulkDeleteDialog } from '@/components/image-gallery/bulk-delete-dialog'
@@ -63,6 +62,7 @@ import { getFileDisplayName } from '@/lib/file-utils'
 import { moveGalleryItems } from '@/lib/gallery-move'
 import { joinImagePath } from '@/lib/path-utils'
 import { SPACE_PROPAGATION_WINDOW_MS } from '@/lib/space-propagation'
+import { setScopedUserRegistryMultiple } from '@/lib/user-config'
 import { GalleryLoaderData } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { registerDropHandler } from '@/stores/drag-drop-store'
@@ -91,6 +91,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const { isLoading, pendingMatches, matches } = useRouterState()
   const { authState } = useAuth()
   const { spaceKey } = useParams({ strict: false })
+  const userConfigScope = { spaceID: galleryLoaderData.spaceID, spaceKey }
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
   const [isNewCanvasDialogOpen, setIsNewCanvasDialogOpen] = useState(false)
   const [deleteItemDialog, setDeleteItemDialog] = useState<{
@@ -337,12 +338,13 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
 
   const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
     if (authState.profile?.id && authState.state === 'authenticated') {
-      await setUserRegistryMultiple(
+      await setScopedUserRegistryMultiple(
         [
           { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
           { key: 'config.app_default_sort_order', value: sortOrder, isEncrypted: false },
         ],
         authState.profile.id,
+        userConfigScope,
       )
       // Invalidate only the current gallery route to trigger loader reload
       await router.invalidate()
@@ -747,9 +749,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children }: Gallery
   const handleToggleShowFileNames = async () => {
     const newValue = !showFileNames
     if (authState.profile?.id) {
-      await setUserRegistryMultiple(
+      await setScopedUserRegistryMultiple(
         [{ key: 'config.app_show_file_names', value: newValue.toString(), isEncrypted: false }],
         authState.profile.id,
+        userConfigScope,
       )
       // Invalidate the router to reload loader data with new value
       await router.invalidate()
