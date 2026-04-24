@@ -128,12 +128,12 @@ const baseLayoutRoute = createRoute({
   ),
 })
 
-async function resolveSpaceID(spaceKey: string): Promise<string> {
+async function resolveSpace(spaceKey: string) {
   const space = await getSpace(spaceKey)
   if (!space) {
     throw new Error('Space not found')
   }
-  return space.id
+  return space
 }
 
 const rootPath = createRoute({
@@ -275,8 +275,15 @@ const spaceRootRoute = createRoute({
     )
   },
   loader: async ({ params }) => {
-    const spaceID = await resolveSpaceID(params.spaceKey)
-    return galleryLoader({ params: { galleryKey: '', spaceKey: params.spaceKey, spaceID } })
+    const space = await resolveSpace(params.spaceKey)
+    return galleryLoader({
+      params: {
+        galleryKey: '',
+        spaceKey: params.spaceKey,
+        spaceID: space.id,
+        spaceName: space.name,
+      },
+    })
   },
   shouldReload: false,
 })
@@ -315,8 +322,8 @@ const spaceGalleryRoute = createRoute({
     )
   },
   loader: async ({ params }) => {
-    const spaceID = await resolveSpaceID(params.spaceKey)
-    return galleryLoader({ params: { ...params, spaceID } })
+    const space = await resolveSpace(params.spaceKey)
+    return galleryLoader({ params: { ...params, spaceID: space.id, spaceName: space.name } })
   },
   shouldReload: false,
 })
@@ -347,8 +354,10 @@ const spaceImageEditorRoute = createRoute({
   path: '/spaces/$spaceKey/$imageKey/editor',
   beforeLoad: requireImageEditorAuth,
   loader: async ({ params }) => {
-    const spaceID = await resolveSpaceID(params.spaceKey)
-    return imageEditorLoader({ params: { ...params, galleryKey: '', spaceID } })
+    const space = await resolveSpace(params.spaceKey)
+    return imageEditorLoader({
+      params: { ...params, galleryKey: '', spaceID: space.id, spaceName: space.name },
+    })
   },
   shouldReload: false,
   component: () => {
@@ -363,8 +372,8 @@ const spaceGalleryImageEditorRoute = createRoute({
   path: '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor',
   beforeLoad: requireImageEditorAuth,
   loader: async ({ params }) => {
-    const spaceID = await resolveSpaceID(params.spaceKey)
-    return imageEditorLoader({ params: { ...params, spaceID } })
+    const space = await resolveSpace(params.spaceKey)
+    return imageEditorLoader({ params: { ...params, spaceID: space.id, spaceName: space.name } })
   },
   shouldReload: false,
   component: () => {

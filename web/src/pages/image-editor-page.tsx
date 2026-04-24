@@ -995,6 +995,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         open={applyTemplateDialogOpen}
         onOpenChange={setApplyTemplateDialogOpen}
         spaceID={loaderData.spaceID}
+        spaceName={loaderData.spaceName}
         title={t('imageEditor.template.selectTemplate')}
         description={t('imageEditor.template.selectTemplateDescription')}
         onSelect={handleApplyTemplate}
@@ -1006,6 +1007,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         open={replaceImageDialogOpen}
         onOpenChange={setReplaceImageDialogOpen}
         spaceID={loaderData.spaceID}
+        spaceName={loaderData.spaceName}
         title={t('imageEditor.layers.selectImageToReplace')}
         description={t('imageEditor.layers.selectImageToReplaceDescription')}
         onSelect={handleReplaceImageSelect}
@@ -1016,6 +1018,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         open={addLayerDialogOpen}
         onOpenChange={setAddLayerDialogOpen}
         spaceID={loaderData.spaceID}
+        spaceName={loaderData.spaceName}
         title={t('imageEditor.layers.addImageLayer')}
         description={t('imageEditor.layers.addImageLayerDescription')}
         onSelect={async (paths) => {

@@ -22,6 +22,7 @@ export interface ImageEditorLoaderData {
   imageEditor: ImageEditor
   isTemplate: boolean
   spaceID?: string
+  spaceName?: string
   templateMetadata?: TemplateMetadata
 }
 
@@ -31,9 +32,15 @@ export interface ImageEditorLoaderData {
  * If the file is a template (.imagor.json), loads the source image and applies transformations
  */
 export const imageEditorLoader = async ({
-  params: { galleryKey, imageKey, spaceKey, spaceID },
+  params: { galleryKey, imageKey, spaceKey, spaceID, spaceName },
 }: {
-  params: { galleryKey: string; imageKey: string; spaceKey?: string; spaceID?: string }
+  params: {
+    galleryKey: string
+    imageKey: string
+    spaceKey?: string
+    spaceID?: string
+    spaceName?: string
+  }
 }): Promise<ImageEditorLoaderData> => {
   const imagePath = joinImagePath(galleryKey, imageKey)
   const fileStat = await statFile(imagePath, spaceKey)
@@ -166,6 +173,7 @@ export const imageEditorLoader = async ({
     imageEditor,
     isTemplate,
     spaceID,
+    spaceName,
     templateMetadata,
   }
 }

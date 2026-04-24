@@ -22,6 +22,7 @@ export interface FilePickerDialogProps {
   onOpenChange: (open: boolean) => void
   onSelect: (paths: string[]) => void
   spaceID?: string
+  spaceName?: string
 
   // Configuration
   selectionMode?: 'single' | 'multiple'
@@ -42,6 +43,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   onOpenChange,
   onSelect,
   spaceID,
+  spaceName,
   selectionMode = 'single',
   currentPath: initialPath,
   fileType = 'both',
@@ -105,7 +107,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
         setDialogCurrentPath(pathToUse)
         setSelectedPaths(new Set())
-        await ensureFolderTreeReady(spaceKey)
+        await ensureFolderTreeReady({ spaceKey, spaceID, spaceName })
         hasLoadedInitialPath.current = true
       }
 
@@ -116,7 +118,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
     if (!open) {
       hasLoadedInitialPath.current = false
     }
-  }, [open, initialPath, authState.profile?.id, authState.state, spaceKey])
+  }, [open, initialPath, authState.profile?.id, authState.state, spaceKey, spaceID, spaceName])
 
   const handlePathChange = useCallback((path: string) => {
     setDialogCurrentPath(path)

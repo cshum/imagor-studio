@@ -25,6 +25,7 @@ export interface GalleryLoaderData {
   galleryName: string
   galleryKey: string
   spaceID?: string
+  spaceName?: string
   images: GalleryImage[]
   folders: Gallery[]
   breadcrumbs: BreadcrumbItem[]
@@ -49,14 +50,14 @@ const latestGalleryLoaderRequests = createLatestRequestTracker()
  * Loads images and folders from storage API with imagor-generated thumbnails
  */
 export const galleryLoader = async ({
-  params: { galleryKey, spaceKey, spaceID },
+  params: { galleryKey, spaceKey, spaceID, spaceName },
 }: {
-  params: { galleryKey: string; spaceKey?: string; spaceID?: string }
+  params: { galleryKey: string; spaceKey?: string; spaceID?: string; spaceName?: string }
 }): Promise<GalleryLoaderData> => {
   const requestKey = `${spaceKey || '__default__'}:${galleryKey}`
   const requestGeneration = latestGalleryLoaderRequests.begin(requestKey)
 
-  await ensureFolderTreeReady(spaceKey)
+  await ensureFolderTreeReady({ spaceKey, spaceID, spaceName })
 
   // Use galleryKey as the path for storage API
   const path = galleryKey
@@ -238,6 +239,7 @@ export const galleryLoader = async ({
     folders,
     galleryKey,
     spaceID,
+    spaceName,
     breadcrumbs,
     imageExtensions,
     videoExtensions,
