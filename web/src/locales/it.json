@@ -138,6 +138,14 @@
       "errorNoToken": "Nessun token di autenticazione ricevuto",
       "backToLogin": "Torna al login"
     },
+    "error": {
+      "defaultTitle": "Qualcosa è andato storto",
+      "notFoundTitle": "Spazio non trovato",
+      "forbiddenTitle": "Accesso negato",
+      "defaultDescription": "Si è verificato un errore durante il caricamento della pagina. Prova a tornare alla home.",
+      "notFoundDescription": "Non siamo riusciti a trovare quello spazio. Controlla il link oppure torna al tuo workspace.",
+      "forbiddenDescription": "Hai effettuato l'accesso, ma questo spazio non è disponibile per il tuo account. Chiedi l'accesso a un amministratore dello spazio oppure torna al tuo workspace."
+    },
     "gallery": {
       "title": "Galleria",
       "selectFolder": "Seleziona cartella",

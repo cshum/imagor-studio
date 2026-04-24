@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -240,11 +241,15 @@ func TestSpace_WrongOrg(t *testing.T) {
 	// Space belongs to org-2, caller is in org-1
 	s := makeTestSpace("acme", "org-2")
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(s, nil)
+	spaceStore.On("HasMember", mock.Anything, "space-acme", "user-1").Return(false, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().Space(ctx, "acme")
-	require.NoError(t, err)
-	assert.Nil(t, result, "should return nil when space belongs to a different org")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	require.True(t, ok)
+	assert.Equal(t, "FORBIDDEN", gqlErr.Extensions["code"])
 	spaceStore.AssertExpectations(t)
 }
 
@@ -293,6 +298,34 @@ func TestSpace_ReturnsPublicAccessSpaceForGuestToken(t *testing.T) {
 	).Return(&registrystore.Registry{Key: "config.allow_guest_mode", Value: "true"}, nil)
 
 	ctx := createGuestContext("guest-id")
+	result, err := r.Query().Space(ctx, "public")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "public", result.Key)
+	assert.Equal(t, "org-2", result.OrgID)
+	assert.False(t, result.CanManage)
+	assert.False(t, result.CanDelete)
+	assert.False(t, result.CanLeave)
+	spaceStore.AssertExpectations(t)
+	registryStore.AssertExpectations(t)
+}
+
+func TestSpace_ReturnsPublicAccessSpaceForAuthenticatedNonMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	registryStore := &MockRegistryStore{}
+	r := newOrgResolverWithRegistry(orgStore, spaceStore, registryStore)
+
+	s := makeTestSpace("public", "org-2")
+	spaceStore.On("GetByKey", mock.Anything, "public").Return(s, nil)
+	registryStore.On(
+		"Get",
+		mock.Anything,
+		registrystore.SpaceOwnerID(s.ID),
+		"config.allow_guest_mode",
+	).Return(&registrystore.Registry{Key: "config.allow_guest_mode", Value: "true"}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().Space(ctx, "public")
 	require.NoError(t, err)
 	require.NotNil(t, result)

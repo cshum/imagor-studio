@@ -138,6 +138,14 @@
       "errorNoToken": "No authentication token received",
       "backToLogin": "Back to login"
     },
+    "error": {
+      "defaultTitle": "Something went wrong",
+      "notFoundTitle": "Space not found",
+      "forbiddenTitle": "Access denied",
+      "defaultDescription": "There was an error loading the page. Please try going back to the home page.",
+      "notFoundDescription": "We couldn't find that space. Check the link or return to your workspace.",
+      "forbiddenDescription": "You're signed in, but this space is not available to your account. Ask a space admin for access or return to your workspace."
+    },
     "gallery": {
       "title": "Gallery",
       "selectFolder": "Select Folder",

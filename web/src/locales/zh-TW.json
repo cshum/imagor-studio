@@ -138,6 +138,14 @@
       "errorNoToken": "未收到驗證令牌",
       "backToLogin": "返回登入"
     },
+    "error": {
+      "defaultTitle": "發生錯誤",
+      "notFoundTitle": "找不到空間",
+      "forbiddenTitle": "拒絕存取",
+      "defaultDescription": "載入頁面時發生錯誤。請嘗試返回首頁。",
+      "notFoundDescription": "找不到該空間。請檢查連結，或返回您的工作區。",
+      "forbiddenDescription": "您已登入，但此空間未開放給您的帳戶。請聯絡空間管理員取得存取權，或返回您的工作區。"
+    },
     "gallery": {
       "title": "相簿",
       "noImages": "未找到圖片",

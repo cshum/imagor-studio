@@ -147,6 +147,35 @@ func TestGetSpaceStorage_GuestMemberAllowed(t *testing.T) {
 	mockSpaceStore.AssertExpectations(t)
 }
 
+func TestGetSpaceStorage_PublicAccessAllowedForAuthenticatedNonMember(t *testing.T) {
+	space := &space.Space{
+		ID:          "space-1",
+		Key:         "space-1",
+		OrgID:       "org-b",
+		StorageType: "s3",
+		Bucket:      "public-bucket",
+		Region:      "us-east-1",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockRegistryStore := &MockRegistryStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(space, nil)
+	mockRegistryStore.On(
+		"Get",
+		mock.Anything,
+		registrystore.SpaceOwnerID(space.ID),
+		"config.allow_guest_mode",
+	).Return(&registrystore.Registry{Key: "config.allow_guest_mode", Value: "true"}, nil)
+
+	r, _ := newSpaceRegistryTestResolver(mockSpaceStore, mockRegistryStore, &config.Config{})
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+
+	stor, err := r.getSpaceStorageByID(ctx, ptrStr("space-1"))
+	assert.NotNil(t, stor)
+	assert.NoError(t, err)
+	mockSpaceStore.AssertExpectations(t)
+	mockRegistryStore.AssertExpectations(t)
+}
+
 // TestGetSpaceStorage_Valid: matching org + valid bucket → non-nil S3 storage
 // is constructed without any network call.
 func TestGetSpaceStorage_Valid(t *testing.T) {

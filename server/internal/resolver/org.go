@@ -13,6 +13,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -279,7 +280,7 @@ func (r *Resolver) canReadSpace(ctx context.Context, space *space.Space) (bool, 
 	if err != nil {
 		return false, err
 	}
-	if claims.Role == "guest" && r.registryStore != nil {
+	if r.registryStore != nil {
 		publicAccess, registryErr := r.registryStore.Get(ctx, registrystore.SpaceOwnerID(space.ID), "config.allow_guest_mode")
 		if registryErr != nil {
 			return false, fmt.Errorf("failed to check space public access: %w", registryErr)
@@ -509,7 +510,10 @@ func (r *queryResolver) Space(ctx context.Context, key string) (*gql.Space, erro
 		return nil, allowErr
 	}
 	if !allowed {
-		return nil, nil
+		return nil, &gqlerror.Error{
+			Message:    "forbidden: you do not have access to this space",
+			Extensions: map[string]interface{}{"code": "FORBIDDEN"},
+		}
 	}
 	return r.mapSpaceToGQLWithPermissions(ctx, s)
 }

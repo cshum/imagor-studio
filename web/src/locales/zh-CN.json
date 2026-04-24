@@ -120,6 +120,14 @@
       "errorNoToken": "未收到认证令牌",
       "backToLogin": "返回登录"
     },
+    "error": {
+      "defaultTitle": "出现了一些问题",
+      "notFoundTitle": "未找到空间",
+      "forbiddenTitle": "无权访问",
+      "defaultDescription": "加载页面时出错。请尝试返回首页。",
+      "notFoundDescription": "我们找不到该空间。请检查链接，或返回您的工作区。",
+      "forbiddenDescription": "您已登录，但您的账户无权访问此空间。请联系空间管理员获取权限，或返回您的工作区。"
+    },
     "gallery": {
       "title": "图库",
       "noImages": "未找到图片",
