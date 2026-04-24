@@ -202,11 +202,6 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
       }
 
       await setSpaceRegistryObject(space.key, registryChanges)
-      rememberSpacePropagationNotice({
-        action: 'updated',
-        savedAt: Date.now(),
-        spaceKey: space.key,
-      })
       toast.success(t('pages.spaceSettings.general.saved'))
       await router.invalidate()
     } catch (err) {
