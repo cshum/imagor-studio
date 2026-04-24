@@ -16,6 +16,26 @@ var licenseRequiredRegistryKeys = map[string]bool{
 	"config.app_url":   true,
 }
 
+var publicSpaceRegistryKeys = map[string]bool{
+	"config.allow_guest_mode":       true,
+	"config.app_default_language":   true,
+	"config.app_default_sort_by":    true,
+	"config.app_default_sort_order": true,
+	"config.app_show_file_names":    true,
+}
+
+func arePublicSpaceRegistryKeys(keys []string) bool {
+	if len(keys) == 0 {
+		return false
+	}
+	for _, key := range keys {
+		if !publicSpaceRegistryKeys[key] {
+			return false
+		}
+	}
+	return true
+}
+
 // checkLicensed returns true if the instance is licensed.
 // Returns true when licenseService is nil (test / embedded-dev mode).
 func (r *Resolver) checkLicensed(ctx context.Context) bool {
@@ -441,7 +461,13 @@ func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceKey string, keys
 		return nil, err
 	}
 	if !permissions.CanManage {
-		return nil, fmt.Errorf("space manager permission required for space registry: forbidden")
+		canRead, readErr := r.canReadSpace(ctx, space)
+		if readErr != nil {
+			return nil, readErr
+		}
+		if !(canRead && arePublicSpaceRegistryKeys(keys)) {
+			return nil, fmt.Errorf("space manager permission required for space registry: forbidden")
+		}
 	}
 
 	ownerID := registrystore.SpaceOwnerID(space.ID)

@@ -1388,6 +1388,73 @@ func TestSpaceRegistry_NonAdminDenied(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestSpaceRegistry_GuestPublicAccess_AllowlistedKeysAllowed(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
+
+	ctx := createGuestContext("guest-id")
+	spaceKey := "public"
+	keys := []string{"config.app_default_sort_by", "config.app_show_file_names"}
+	space := makeTestSpace(spaceKey, "org-2")
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
+	mockRegistryStore.On("Get", ctx, spaceOwnerID, "config.allow_guest_mode").
+		Return(&registrystore.Registry{Key: "config.allow_guest_mode", Value: "true"}, nil)
+	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
+		Return([]*registrystore.Registry{{Key: "config.app_default_sort_by", Value: "NAME"}}, nil)
+	mockRegistryStore.On("GetMulti", ctx, registrystore.SystemOwnerID, []string{"config.app_show_file_names"}).
+		Return([]*registrystore.Registry{{Key: "config.app_show_file_names", Value: "true"}}, nil)
+
+	result, err := resolver.Query().SpaceRegistry(ctx, spaceKey, keys)
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 2)
+	assert.Equal(t, "config.app_default_sort_by", result[0].Key)
+	assert.Equal(t, "NAME", result[0].Value)
+	assert.Equal(t, "config.app_show_file_names", result[1].Key)
+	assert.Equal(t, "true", result[1].Value)
+
+	mockRegistryStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestSpaceRegistry_SharingViewer_AllowlistedKeysAllowed(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	spaceStore := &MockSpaceStore{}
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
+
+	ctx := createReadWriteContextWithOrg("regular-user-id", "org-1")
+	spaceKey := "shared-space"
+	keys := []string{"config.app_default_sort_order"}
+	space := makeTestSpace(spaceKey, "org-1")
+	space.IsShared = true
+	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
+	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
+	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
+		Return([]*registrystore.Registry{{Key: "config.app_default_sort_order", Value: "ASC"}}, nil)
+
+	result, err := resolver.Query().SpaceRegistry(ctx, spaceKey, keys)
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "config.app_default_sort_order", result[0].Key)
+	assert.Equal(t, "ASC", result[0].Value)
+
+	mockRegistryStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
 func TestSpaceRegistry_ListAll(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
