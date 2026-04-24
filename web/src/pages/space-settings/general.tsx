@@ -278,6 +278,11 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
                 name='customDomain'
                 render={({ field }) => (
                   <FormItem>
+                    {(() => {
+                      const customDomain = field.value?.trim() ?? ''
+                      const targetHost = `${space.key}.imagor.app`
+
+                      return (
                     <SettingRow
                       label={t('pages.spaceSettings.general.customDomain')}
                       description={t('pages.spaceSettings.general.customDomainDescription', {
@@ -294,8 +299,30 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
                           disabled={isSavingIdentity}
                         />
                       </FormControl>
+                      <div className='mt-2 space-y-1 text-sm text-muted-foreground'>
+                        <p>
+                          {t('pages.spaceSettings.general.customDomainDnsHint', {
+                            defaultValue: 'Point {{customDomain}} to {{targetHost}} with a CNAME record.',
+                            customDomain: customDomain || 'your custom hostname',
+                            targetHost,
+                          })}
+                        </p>
+                        <p>
+                          {space.customDomainVerified
+                            ? t('pages.spaceSettings.general.customDomainVerifiedHint', {
+                                defaultValue:
+                                  'This domain is verified and active for generated imagor URLs.',
+                              })
+                            : t('pages.spaceSettings.general.customDomainPendingHint', {
+                                defaultValue:
+                                  'This domain stays inactive until DNS resolves to the default host and TLS is provisioned.',
+                              })}
+                        </p>
+                      </div>
                       <FormMessage className='mt-1.5' />
                     </SettingRow>
+                      )
+                    })()}
                   </FormItem>
                 )}
               />

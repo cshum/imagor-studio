@@ -384,7 +384,11 @@ func applySpaceInput(sp *space.Space, input gql.SpaceInput) error {
 		sp.UsePathStyle = *input.UsePathStyle
 	}
 	if input.CustomDomain != nil {
-		sp.CustomDomain = *input.CustomDomain
+		nextCustomDomain := normalizeCustomDomain(*input.CustomDomain)
+		if normalizeCustomDomain(sp.CustomDomain) != nextCustomDomain {
+			sp.CustomDomainVerified = false
+		}
+		sp.CustomDomain = nextCustomDomain
 	}
 	if input.IsShared != nil {
 		sp.IsShared = *input.IsShared
@@ -402,6 +406,11 @@ func applySpaceInput(sp *space.Space, input gql.SpaceInput) error {
 		sp.ImagorCORSOrigins = strings.TrimSpace(*input.ImagorCORSOrigins)
 	}
 	return validateSpaceStorageConfig(sp)
+}
+
+func normalizeCustomDomain(domain string) string {
+	trimmed := strings.TrimSpace(strings.ToLower(domain))
+	return strings.TrimSuffix(trimmed, ".")
 }
 
 // ---------- Query resolvers --------------------------------------------------
