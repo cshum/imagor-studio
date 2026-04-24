@@ -54,6 +54,8 @@ export interface AdminStorageLoaderData {
 
 export interface AdminImagorLoaderData {
   imagorStatus: ImagorStatusQuery['imagorStatus']
+  registry: Record<string, string>
+  systemRegistryList: ListSystemRegistryQuery['listSystemRegistry']
   breadcrumb: BreadcrumbItem
 }
 
@@ -146,6 +148,8 @@ export const adminStorageLoader = async (): Promise<AdminStorageLoaderData> => {
 export const adminImagorLoader = async (): Promise<AdminImagorLoaderData> => {
   return {
     imagorStatus: await getImagorStatus(),
+    registry: await getSystemRegistryObject(),
+    systemRegistryList: await listSystemRegistry(),
     breadcrumb: { translationKey: 'pages.admin.sections.imagor' },
   }
 }

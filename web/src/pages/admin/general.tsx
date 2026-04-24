@@ -1,146 +1,415 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from '@tanstack/react-router'
+import { toast } from 'sonner'
+import * as z from 'zod'
 
-import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
-import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { setSystemRegistryObject } from '@/api/registry-api'
+import { ButtonWithLoading } from '@/components/ui/button-with-loading'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { SettingRow } from '@/components/ui/setting-row'
+import { SettingsSection } from '@/components/ui/settings-section'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
+import { extractErrorMessage } from '@/lib/error-utils'
 import type { AdminGeneralLoaderData } from '@/loaders/account-loader'
 import { useAuth } from '@/stores/auth-store'
+import { setHomeTitle } from '@/stores/folder-tree-store'
 
 interface AdminGeneralSectionProps {
   loaderData: AdminGeneralLoaderData
 }
 
+const adminGeneralSchema = z.object({
+  homeTitle: z.string().min(1),
+  guestMode: z.boolean(),
+  defaultLanguage: z.string().min(1),
+  defaultSortBy: z.enum(['NAME', 'MODIFIED_TIME']),
+  defaultSortOrder: z.enum(['ASC', 'DESC']),
+  showFileNames: z.boolean(),
+})
+
+type AdminGeneralFormData = z.infer<typeof adminGeneralSchema>
+
+const FIELD_WIDTH_CLASS = 'sm:max-w-sm'
+const BOOLEAN_FIELD_WIDTH_CLASS = 'sm:max-w-sm sm:flex sm:justify-end'
+const LABEL_WIDTH_CLASS = 'sm:w-1/2'
+
 export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
   const { t } = useTranslation()
+  const router = useRouter()
   const { authState } = useAuth()
   const isMultiTenant = authState.multiTenant
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const languageCodes = getLanguageCodes()
+  const languageLabels = getLanguageLabels()
 
-  // In multi-tenant mode, gallery/UX settings move to per-space Settings.
-  // Platform admin only shows settings that are genuinely platform-wide.
-  const GALLERY_SETTING_KEYS = new Set([
-    'config.app_default_language',
-    'config.app_home_title',
-    'config.allow_guest_mode',
-    'config.app_default_sort_by',
-    'config.app_show_file_names',
-  ])
+  const form = useForm<AdminGeneralFormData>({
+    resolver: zodResolver(adminGeneralSchema),
+    defaultValues: {
+      homeTitle: loaderData.registry['config.app_home_title'] ?? 'Home',
+      guestMode: (loaderData.registry['config.allow_guest_mode'] ?? 'false') === 'true',
+      defaultLanguage: loaderData.registry['config.app_default_language'] ?? 'en',
+      defaultSortBy:
+        loaderData.registry['config.app_default_sort_by'] === 'NAME' ? 'NAME' : 'MODIFIED_TIME',
+      defaultSortOrder:
+        loaderData.registry['config.app_default_sort_order'] === 'ASC' ? 'ASC' : 'DESC',
+      showFileNames: (loaderData.registry['config.app_show_file_names'] ?? 'false') === 'true',
+    },
+  })
 
-  const ALL_SYSTEM_SETTINGS: SystemSetting[] = [
-    {
-      key: 'config.app_home_title',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.homeTitle.label'),
-      description: t('pages.admin.systemSettings.fields.homeTitle.description'),
-      defaultValue: 'Home',
-    },
-    {
-      key: 'config.app_default_language',
-      type: 'select',
-      label: t('pages.admin.systemSettings.fields.defaultLanguage.label'),
-      description: t('pages.admin.systemSettings.fields.defaultLanguage.description'),
-      defaultValue: 'en',
-      options: getLanguageCodes(),
-      optionLabels: getLanguageLabels(),
-    },
-    {
-      key: 'config.allow_guest_mode',
-      type: 'boolean',
-      label: t('pages.admin.systemSettings.fields.guestMode.label'),
-      description: t('pages.admin.systemSettings.fields.guestMode.description'),
-      defaultValue: false,
-    },
-    {
-      key: 'config.app_default_sort_by',
-      type: 'dual-select',
-      label: t('pages.admin.systemSettings.fields.defaultSorting.label'),
-      description: t('pages.admin.systemSettings.fields.defaultSorting.description'),
-      defaultValue: 'MODIFIED_TIME',
-      options: ['NAME', 'MODIFIED_TIME'],
-      optionLabels: {
-        NAME: t('pages.admin.systemSettings.fields.defaultSorting.options.name'),
-        MODIFIED_TIME: t('pages.admin.systemSettings.fields.defaultSorting.options.modifiedTime'),
-      },
-      primaryLabel: t('pages.admin.systemSettings.fields.defaultSorting.sortBy'),
-      secondaryKey: 'config.app_default_sort_order',
-      secondaryDefaultValue: 'DESC',
-      secondaryOptions: ['ASC', 'DESC'],
-      secondaryOptionLabels: {
-        ASC: t('pages.admin.systemSettings.fields.defaultSorting.options.ascending'),
-        DESC: t('pages.admin.systemSettings.fields.defaultSorting.options.descending'),
-      },
-      secondaryLabel: t('pages.admin.systemSettings.fields.defaultSorting.order'),
-    },
-    {
-      key: 'config.app_show_file_names',
-      type: 'boolean',
-      label: t('pages.admin.systemSettings.fields.showFileNames.label'),
-      description: t('pages.admin.systemSettings.fields.showFileNames.description'),
-      defaultValue: false,
-    },
-  ]
+  const getOverrideEntry = (key: string) =>
+    loaderData.systemRegistryList.find((item) => item.key === key && item.isOverriddenByConfig)
 
-  const ADVANCED_SYSTEM_SETTINGS: SystemSetting[] = [
-    {
-      key: 'config.app_video_thumbnail_position',
-      type: 'select',
-      label: t('pages.admin.systemSettings.fields.videoThumbnailPosition.label'),
-      description: t('pages.admin.systemSettings.fields.videoThumbnailPosition.description'),
-      defaultValue: 'first_frame',
-      options: ['first_frame', 'seek_1s', 'seek_3s', 'seek_5s', 'seek_10pct', 'seek_25pct'],
-      optionLabels: {
-        first_frame: t(
-          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.firstFrame',
-        ),
-        seek_1s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek1s'),
-        seek_3s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek3s'),
-        seek_5s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek5s'),
-        seek_10pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek10pct'),
-        seek_25pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct'),
-      },
-    },
-  ]
+  const formatDescription = (description: string, key: string) => {
+    const override = getOverrideEntry(key)
+    return override ? `${description}\n${t('pages.systemSettings.settingOverridden')}` : description
+  }
 
-  const SYSTEM_SETTINGS = isMultiTenant
-    ? ALL_SYSTEM_SETTINGS.filter((s) => !GALLERY_SETTING_KEYS.has(s.key))
-    : ALL_SYSTEM_SETTINGS
+  const effectiveValue = useMemo(
+    () => ({
+      homeTitle: getOverrideEntry('config.app_home_title')?.value ?? form.watch('homeTitle'),
+      guestMode:
+        (getOverrideEntry('config.allow_guest_mode')?.value ?? String(form.watch('guestMode'))) ===
+        'true',
+      defaultLanguage:
+        getOverrideEntry('config.app_default_language')?.value ?? form.watch('defaultLanguage'),
+      defaultSortBy:
+        (getOverrideEntry('config.app_default_sort_by')?.value as
+          | AdminGeneralFormData['defaultSortBy']
+          | undefined) ?? form.watch('defaultSortBy'),
+      defaultSortOrder:
+        (getOverrideEntry('config.app_default_sort_order')?.value as
+          | AdminGeneralFormData['defaultSortOrder']
+          | undefined) ?? form.watch('defaultSortOrder'),
+      showFileNames:
+        (getOverrideEntry('config.app_show_file_names')?.value ??
+          String(form.watch('showFileNames'))) === 'true',
+    }),
+    [form, loaderData.systemRegistryList],
+  )
+
+  const handleSave = async (values: AdminGeneralFormData) => {
+    setIsSaving(true)
+    try {
+      const changedValues: Record<string, string> = {}
+      const nextValues: Array<[string, string, boolean]> = [
+        ['config.app_home_title', values.homeTitle, !isMultiTenant],
+        ['config.allow_guest_mode', String(values.guestMode), !isMultiTenant],
+        ['config.app_default_language', values.defaultLanguage, !isMultiTenant],
+        ['config.app_default_sort_by', values.defaultSortBy, !isMultiTenant],
+        ['config.app_default_sort_order', values.defaultSortOrder, !isMultiTenant],
+        ['config.app_show_file_names', String(values.showFileNames), !isMultiTenant],
+      ]
+
+      nextValues.forEach(([key, value, include]) => {
+        if (!include && key !== 'config.app_home_title') return
+        if (getOverrideEntry(key)) return
+        if ((loaderData.registry[key] ?? '') !== value) {
+          changedValues[key] = value
+        }
+      })
+
+      if (Object.keys(changedValues).length === 0) {
+        toast.success('Settings updated successfully')
+        return
+      }
+
+      await setSystemRegistryObject(changedValues)
+      if (changedValues['config.app_home_title']) {
+        setHomeTitle(changedValues['config.app_home_title'])
+      }
+      toast.success('Settings updated successfully')
+      await router.invalidate()
+    } catch (err) {
+      toast.error(`Failed to update settings: ${extractErrorMessage(err)}`)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
-    <div className='space-y-6'>
-      <SystemSettingsForm
-        title=''
-        description=''
-        settings={SYSTEM_SETTINGS}
-        initialValues={loaderData.registry}
-        systemRegistryList={loaderData.systemRegistryList}
-      />
-
-      {!isMultiTenant ? (
-        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-          <CollapsibleTrigger asChild>
-            <Button variant='ghost' className='gap-2' size='sm' type='button'>
-              {showAdvanced ? (
-                <ChevronDown className='text-muted-foreground h-4 w-4' />
-              ) : (
-                <ChevronRight className='text-muted-foreground h-4 w-4' />
+    <SettingsSection contentClassName='border-t-0'>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSave)}>
+          <SettingsSection
+            title={t('pages.spaceSettings.general.identity', { defaultValue: 'Identity' })}
+            contentClassName='border-t-0'
+            className='mb-8'
+          >
+            <FormField
+              control={form.control}
+              name='homeTitle'
+              render={({ field }) => (
+                <FormItem>
+                  <SettingRow
+                    label={t('pages.admin.systemSettings.fields.homeTitle.label')}
+                    description={formatDescription(
+                      t('pages.admin.systemSettings.fields.homeTitle.description'),
+                      'config.app_home_title',
+                    )}
+                    labelClassName={LABEL_WIDTH_CLASS}
+                    contentClassName={FIELD_WIDTH_CLASS}
+                    last
+                  >
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={effectiveValue.homeTitle}
+                        onChange={(e) => {
+                          if (!getOverrideEntry('config.app_home_title')) {
+                            field.onChange(e.target.value)
+                          }
+                        }}
+                        disabled={isSaving || Boolean(getOverrideEntry('config.app_home_title'))}
+                      />
+                    </FormControl>
+                    <FormMessage className='mt-1.5' />
+                  </SettingRow>
+                </FormItem>
               )}
-              {t('pages.storage.advancedSettings')}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className='pt-4'>
-            <SystemSettingsForm
-              title=''
-              description=''
-              settings={ADVANCED_SYSTEM_SETTINGS}
-              initialValues={loaderData.registry}
-              systemRegistryList={loaderData.systemRegistryList}
             />
-          </CollapsibleContent>
-        </Collapsible>
-      ) : null}
-    </div>
+          </SettingsSection>
+
+          {!isMultiTenant ? (
+            <>
+              <SettingsSection
+                title={t('pages.spaceSettings.general.access', { defaultValue: 'Access' })}
+                contentClassName='border-t-0'
+                className='mb-6'
+              >
+                <FormField
+                  control={form.control}
+                  name='guestMode'
+                  render={({ field }) => (
+                    <FormItem>
+                      <SettingRow
+                        label={t('pages.admin.systemSettings.fields.guestMode.label')}
+                        description={formatDescription(
+                          t('pages.admin.systemSettings.fields.guestMode.description'),
+                          'config.allow_guest_mode',
+                        )}
+                        labelClassName={LABEL_WIDTH_CLASS}
+                        contentClassName={BOOLEAN_FIELD_WIDTH_CLASS}
+                        last
+                      >
+                        <FormControl>
+                          <div className='flex justify-start sm:justify-end'>
+                            <Checkbox
+                              checked={effectiveValue.guestMode}
+                              onCheckedChange={(checked) => {
+                                if (!getOverrideEntry('config.allow_guest_mode')) {
+                                  field.onChange(Boolean(checked))
+                                }
+                              }}
+                              disabled={
+                                isSaving || Boolean(getOverrideEntry('config.allow_guest_mode'))
+                              }
+                            />
+                          </div>
+                        </FormControl>
+                      </SettingRow>
+                    </FormItem>
+                  )}
+                />
+              </SettingsSection>
+
+              <SettingsSection
+                title={t('pages.spaceSettings.general.experience', { defaultValue: 'Experience' })}
+                contentClassName='border-t-0'
+              >
+                <FormField
+                  control={form.control}
+                  name='defaultLanguage'
+                  render={({ field }) => (
+                    <FormItem>
+                      <SettingRow
+                        label={t('pages.admin.systemSettings.fields.defaultLanguage.label')}
+                        description={formatDescription(
+                          t('pages.admin.systemSettings.fields.defaultLanguage.description'),
+                          'config.app_default_language',
+                        )}
+                        labelClassName={LABEL_WIDTH_CLASS}
+                        contentClassName={FIELD_WIDTH_CLASS}
+                      >
+                        <Select
+                          onValueChange={field.onChange}
+                          value={effectiveValue.defaultLanguage}
+                          disabled={
+                            isSaving || Boolean(getOverrideEntry('config.app_default_language'))
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {languageCodes.map((code) => (
+                              <SelectItem key={code} value={code}>
+                                {languageLabels[code] ?? code}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className='mt-1.5' />
+                      </SettingRow>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='defaultSortBy'
+                  render={({ field }) => (
+                    <FormItem>
+                      <SettingRow
+                        label={t('pages.admin.systemSettings.fields.defaultSorting.label')}
+                        description={formatDescription(
+                          t('pages.admin.systemSettings.fields.defaultSorting.description'),
+                          'config.app_default_sort_by',
+                        )}
+                        labelClassName={LABEL_WIDTH_CLASS}
+                        contentClassName={FIELD_WIDTH_CLASS}
+                      >
+                        <div className='grid gap-3 sm:grid-cols-2'>
+                          <div className='space-y-1.5'>
+                            <FormLabel>
+                              {t('pages.admin.systemSettings.fields.defaultSorting.sortBy')}
+                            </FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={effectiveValue.defaultSortBy}
+                              disabled={
+                                isSaving || Boolean(getOverrideEntry('config.app_default_sort_by'))
+                              }
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value='NAME'>
+                                  {t(
+                                    'pages.admin.systemSettings.fields.defaultSorting.options.name',
+                                  )}
+                                </SelectItem>
+                                <SelectItem value='MODIFIED_TIME'>
+                                  {t(
+                                    'pages.admin.systemSettings.fields.defaultSorting.options.modifiedTime',
+                                  )}
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <FormField
+                            control={form.control}
+                            name='defaultSortOrder'
+                            render={({ field: orderField }) => (
+                              <div className='space-y-1.5'>
+                                <FormLabel>
+                                  {t('pages.admin.systemSettings.fields.defaultSorting.order')}
+                                </FormLabel>
+                                <Select
+                                  onValueChange={orderField.onChange}
+                                  value={effectiveValue.defaultSortOrder}
+                                  disabled={
+                                    isSaving ||
+                                    Boolean(getOverrideEntry('config.app_default_sort_order'))
+                                  }
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value='ASC'>
+                                      {t(
+                                        'pages.admin.systemSettings.fields.defaultSorting.options.ascending',
+                                      )}
+                                    </SelectItem>
+                                    <SelectItem value='DESC'>
+                                      {t(
+                                        'pages.admin.systemSettings.fields.defaultSorting.options.descending',
+                                      )}
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          />
+                        </div>
+                        <FormMessage className='mt-1.5' />
+                      </SettingRow>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='showFileNames'
+                  render={({ field }) => (
+                    <FormItem>
+                      <SettingRow
+                        label={t('pages.admin.systemSettings.fields.showFileNames.label')}
+                        description={formatDescription(
+                          t('pages.admin.systemSettings.fields.showFileNames.description'),
+                          'config.app_show_file_names',
+                        )}
+                        labelClassName={LABEL_WIDTH_CLASS}
+                        contentClassName={BOOLEAN_FIELD_WIDTH_CLASS}
+                        last
+                      >
+                        <FormControl>
+                          <div className='flex justify-start sm:justify-end'>
+                            <Checkbox
+                              checked={effectiveValue.showFileNames}
+                              onCheckedChange={(checked) => {
+                                if (!getOverrideEntry('config.app_show_file_names')) {
+                                  field.onChange(Boolean(checked))
+                                }
+                              }}
+                              disabled={
+                                isSaving || Boolean(getOverrideEntry('config.app_show_file_names'))
+                              }
+                            />
+                          </div>
+                        </FormControl>
+                      </SettingRow>
+                    </FormItem>
+                  )}
+                />
+              </SettingsSection>
+            </>
+          ) : null}
+
+          <div className='mt-2 flex justify-end pt-2'>
+            <ButtonWithLoading type='submit' isLoading={isSaving}>
+              {t('common.buttons.save')}
+            </ButtonWithLoading>
+          </div>
+        </form>
+      </Form>
+    </SettingsSection>
   )
 }

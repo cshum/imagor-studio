@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 
 import { configureImagor } from '@/api/imagor-api'
 import { ImagorConfigForm, type ImagorConfigValues } from '@/components/imagor/imagor-config-form'
-import type { ImagorStatusQuery } from '@/generated/graphql'
+import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
+import type { AdminImagorLoaderData } from '@/loaders/account-loader'
 
 // ── Propagation countdown helper ───────────────────────────────────────────
 
@@ -22,14 +23,36 @@ function calcRemaining(lastUpdated: string | null | undefined): number {
 // ── Props ──────────────────────────────────────────────────────────────────
 
 interface AdminImagorSectionProps {
-  imagorStatus: ImagorStatusQuery['imagorStatus'] | null
+  loaderData: AdminImagorLoaderData
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-export function AdminImagorSection({ imagorStatus }: AdminImagorSectionProps) {
+export function AdminImagorSection({ loaderData }: AdminImagorSectionProps) {
   const { t } = useTranslation()
   const router = useRouter()
+  const { imagorStatus } = loaderData
+
+  const mediaSettings: SystemSetting[] = [
+    {
+      key: 'config.app_video_thumbnail_position',
+      type: 'select',
+      label: t('pages.admin.systemSettings.fields.videoThumbnailPosition.label'),
+      description: t('pages.admin.systemSettings.fields.videoThumbnailPosition.description'),
+      defaultValue: 'first_frame',
+      options: ['first_frame', 'seek_1s', 'seek_3s', 'seek_5s', 'seek_10pct', 'seek_25pct'],
+      optionLabels: {
+        first_frame: t(
+          'pages.admin.systemSettings.fields.videoThumbnailPosition.options.firstFrame',
+        ),
+        seek_1s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek1s'),
+        seek_3s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek3s'),
+        seek_5s: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek5s'),
+        seek_10pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek10pct'),
+        seek_25pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct'),
+      },
+    },
+  ]
 
   const [remainingSeconds, setRemainingSeconds] = useState(() =>
     calcRemaining(imagorStatus?.lastUpdated),
@@ -89,6 +112,16 @@ export function AdminImagorSection({ imagorStatus }: AdminImagorSectionProps) {
         }}
         onSave={handleSave}
         disabled={isOverridden}
+      />
+
+      <SystemSettingsForm
+        title={t('pages.admin.imagor.media', { defaultValue: 'Media' })}
+        description={t('pages.admin.imagor.mediaDescription', {
+          defaultValue: 'Control how video thumbnails are generated across the instance.',
+        })}
+        settings={mediaSettings}
+        initialValues={loaderData.registry}
+        systemRegistryList={loaderData.systemRegistryList}
       />
 
       {/* Propagation countdown */}

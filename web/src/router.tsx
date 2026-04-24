@@ -441,9 +441,23 @@ const storageSectionRoute = createRoute({
 const securitySectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/imagor',
+  loader: async ({ params: { spaceKey } }) => {
+    try {
+      const entries = await getSpaceRegistry(spaceKey)
+      const map: Record<string, string> = {}
+      entries.forEach((e) => {
+        map[e.key] = e.value
+      })
+      return map
+    } catch {
+      return {} as Record<string, string>
+    }
+  },
+  shouldReload: false,
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useLoaderData()
-    return <SecuritySection space={space} />
+    const initialValues = securitySectionRoute.useLoaderData()
+    return <SecuritySection space={space} initialValues={initialValues} />
   },
 })
 
@@ -576,8 +590,8 @@ const accountAdminImagorRoute = createRoute({
   loader: adminImagorLoader,
   shouldReload: false,
   component: () => {
-    const { imagorStatus } = accountAdminImagorRoute.useLoaderData()
-    return <AdminImagorSection imagorStatus={imagorStatus} />
+    const loaderData = accountAdminImagorRoute.useLoaderData()
+    return <AdminImagorSection loaderData={loaderData} />
   },
 })
 
