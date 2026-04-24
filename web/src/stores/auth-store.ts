@@ -65,7 +65,7 @@ export type AuthAction =
   | { type: 'LOGOUT' }
   | { type: 'LOGOUT_WITH_ERROR'; payload: { error: string } }
   | { type: 'SET_ERROR'; payload: { error: string } }
-  | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean } }
+  | { type: 'SET_FIRST_RUN'; payload: { isFirstRun: boolean; multiTenant?: boolean } }
   | { type: 'CLEAR_ERROR' }
 
 function reducer(state: Auth, action: AuthAction): Auth {
@@ -126,7 +126,7 @@ function reducer(state: Auth, action: AuthAction): Auth {
       return {
         ...state,
         isFirstRun: action.payload.isFirstRun,
-        multiTenant: isMultiTenantMode,
+        multiTenant: isMultiTenantMode || action.payload.multiTenant === true,
       }
 
     case 'CLEAR_ERROR':
@@ -174,8 +174,8 @@ export const initAuth = async (
 
     if (currentAccessToken) {
       // Run token validation and first-run check in parallel — zero extra latency.
-      // The deployment mode comes from Vite env; the first-run endpoint only
-      // determines whether setup/login flows should be shown.
+      // Multi-tenant mode can be forced by env for SaaS builds, or discovered
+      // from the backend during local/private development against cloud APIs.
       const [profile, firstRunResponse] = await Promise.all([
         getCurrentUser(currentAccessToken),
         checkFirstRun().catch(() => null),
@@ -183,7 +183,10 @@ export const initAuth = async (
       if (firstRunResponse) {
         authStore.dispatch({
           type: 'SET_FIRST_RUN',
-          payload: { isFirstRun: firstRunResponse.isFirstRun },
+          payload: {
+            isFirstRun: firstRunResponse.isFirstRun,
+            multiTenant: firstRunResponse.multiTenant,
+          },
         })
       }
       return authStore.dispatch({
@@ -199,7 +202,7 @@ export const initAuth = async (
       isFirstRun = firstRunResponse.isFirstRun
       authStore.dispatch({
         type: 'SET_FIRST_RUN',
-        payload: { isFirstRun },
+        payload: { isFirstRun, multiTenant: firstRunResponse.multiTenant },
       })
     } catch {
       // Ignore first run check failures
@@ -232,7 +235,7 @@ export const initAuth = async (
         }
         authStore.dispatch({
           type: 'SET_FIRST_RUN',
-          payload: { isFirstRun: true },
+          payload: { isFirstRun: true, multiTenant: firstRunResponse.multiTenant },
         })
         return authStore.dispatch({ type: 'LOGOUT' })
       }
