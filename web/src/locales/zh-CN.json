@@ -406,7 +406,7 @@
           },
           "guestMode": {
             "label": "公开访问",
-            "description": "允许没有账户的人浏览此图库"
+            "description": "允许没有账户的人浏览此图库。公开用户不能上传、编辑或管理内容。"
           },
           "defaultSorting": {
             "label": "默认文件排序",
@@ -458,7 +458,7 @@
       "skipForNow": "暂时跳过",
       "next": "下一步",
       "guestMode": "公开访问",
-      "guestModeDescription": "允许没有账户的人浏览此图库",
+      "guestModeDescription": "允许没有账户的人浏览此图库。公开用户不能上传、编辑或管理内容。",
       "homeTitle": "首页标题",
       "homeTitleDescription": "自定义图库中首页/根文件夹显示的标题",
       "systemSettingsDescription": "这些设置稍后可以在管理面板中更改",

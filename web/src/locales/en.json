@@ -424,7 +424,7 @@
           },
           "guestMode": {
             "label": "Public Access",
-            "description": "Allow people without an account to browse this gallery"
+            "description": "Allow people without an account to browse this gallery. Public users cannot upload, edit, or manage content."
           },
           "defaultSorting": {
             "label": "Default File Sorting",
@@ -476,7 +476,7 @@
       "skipForNow": "Skip for Now",
       "next": "Next",
       "guestMode": "Public Access",
-      "guestModeDescription": "Allow people without an account to browse this gallery",
+      "guestModeDescription": "Allow people without an account to browse this gallery. Public users cannot upload, edit, or manage content.",
       "homeTitle": "Home Title",
       "homeTitleDescription": "Customize the title displayed for the home/root folder in the gallery",
       "systemSettingsDescription": "These settings can be changed later in admin panel",

@@ -424,7 +424,7 @@
           },
           "guestMode": {
             "label": "Accesso pubblico",
-            "description": "Consenti a chi non ha un account di sfogliare questa galleria"
+            "description": "Consenti a chi non ha un account di sfogliare questa galleria. Gli utenti pubblici non possono caricare, modificare o gestire contenuti."
           },
           "defaultSorting": {
             "label": "Ordinamento file predefinito",
@@ -476,7 +476,7 @@
       "skipForNow": "Salta per ora",
       "next": "Avanti",
       "guestMode": "Accesso pubblico",
-      "guestModeDescription": "Consenti a chi non ha un account di sfogliare questa galleria",
+      "guestModeDescription": "Consenti a chi non ha un account di sfogliare questa galleria. Gli utenti pubblici non possono caricare, modificare o gestire contenuti.",
       "homeTitle": "Titolo home",
       "homeTitleDescription": "Personalizza il titolo mostrato per la cartella home/root nella galleria",
       "systemSettingsDescription": "Queste impostazioni possono essere modificate in seguito dal pannello admin",

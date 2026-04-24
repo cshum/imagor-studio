@@ -424,7 +424,7 @@
           },
           "guestMode": {
             "label": "公開存取",
-            "description": "允許沒有帳戶的人瀏覽此相簿"
+            "description": "允許沒有帳戶的人瀏覽此相簿。公開使用者不能上傳、編輯或管理內容。"
           },
           "defaultSorting": {
             "label": "預設檔案排序",
@@ -476,7 +476,7 @@
       "skipForNow": "暫時跳過",
       "next": "下一步",
       "guestMode": "公開存取",
-      "guestModeDescription": "允許沒有帳戶的人瀏覽此相簿",
+      "guestModeDescription": "允許沒有帳戶的人瀏覽此相簿。公開使用者不能上傳、編輯或管理內容。",
       "homeTitle": "首頁標題",
       "homeTitleDescription": "自定義相簿中首頁/根資料夾顯示的標題",
       "systemSettingsDescription": "這些設定稍後可以在管理面板中更改",
