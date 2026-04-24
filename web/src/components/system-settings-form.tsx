@@ -19,7 +19,7 @@ import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { setHomeTitle } from '@/stores/folder-tree-store'
-import { licenseStore, setBrand } from '@/stores/license-store'
+import { licenseStore } from '@/stores/license-store'
 
 export interface SystemSetting {
   key: string
@@ -54,7 +54,7 @@ export interface SystemSettingsFormProps {
   hideUpdateButton?: boolean
   compact?: boolean
   /** When provided, replaces the default system registry save with a custom handler.
-   *  Receives only the changed values and skips global brand/title side-effects. */
+   *  Receives only the changed values. */
   saveCallback?: (changedValues: Record<string, string>) => Promise<void>
 }
 
@@ -189,17 +189,6 @@ export function SystemSettingsForm({
         // Update the store immediately if home title was changed
         if (changedValues['config.app_home_title']) {
           setHomeTitle(changedValues['config.app_home_title'])
-        }
-
-        // Update brand store immediately if brand settings changed
-        if (
-          changedValues['config.app_title'] !== undefined ||
-          changedValues['config.app_url'] !== undefined
-        ) {
-          setBrand(
-            changedValues['config.app_title'] ?? formValues['config.app_title'] ?? '',
-            changedValues['config.app_url'] ?? formValues['config.app_url'] ?? '',
-          )
         }
 
         toast.success('Settings updated successfully')

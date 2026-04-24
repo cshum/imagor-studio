@@ -6,7 +6,7 @@ import { useNavigate, useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
-import { checkSpaceKey, deleteSpace, setSpaceRegistryObject, updateSpace } from '@/api/org-api'
+import { checkSpaceKey, deleteSpace, updateSpace } from '@/api/org-api'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
@@ -32,8 +32,6 @@ const generalSchema = z.object({
   key: z.string().min(1).max(64),
   name: z.string().min(1).max(255),
   customDomain: z.string().optional(),
-  appTitle: z.string().optional(),
-  appUrl: z.string().optional(),
 })
 type GeneralFormData = z.infer<typeof generalSchema>
 
@@ -57,8 +55,6 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
       key: space.key ?? '',
       name: space.name ?? '',
       customDomain: space.customDomain ?? '',
-      appTitle: initialValues['config.app_title'] ?? '',
-      appUrl: initialValues['config.app_url'] ?? '',
     },
   })
   const [isSaving, setIsSaving] = useState(false)
@@ -109,16 +105,6 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
           imagorCORSOrigins: null,
         },
       })
-      const brandingChanges: Record<string, string> = {}
-      if ((values.appTitle ?? '') !== (initialValues['config.app_title'] ?? '')) {
-        brandingChanges['config.app_title'] = values.appTitle ?? ''
-      }
-      if ((values.appUrl ?? '') !== (initialValues['config.app_url'] ?? '')) {
-        brandingChanges['config.app_url'] = values.appUrl ?? ''
-      }
-      if (Object.keys(brandingChanges).length > 0) {
-        await setSpaceRegistryObject(updatedSpace.key, brandingChanges)
-      }
       rememberSpacePropagationNotice({
         action: 'updated',
         savedAt: Date.now(),
@@ -219,43 +205,6 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
                         {...field}
                         disabled={isSaving}
                       />
-                    </FormControl>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
-                </FormItem>
-              )}
-            />
-            {/* App Title */}
-            <FormField
-              control={form.control}
-              name='appTitle'
-              render={({ field }) => (
-                <FormItem>
-                  <SettingRow
-                    label={t('pages.spaceSettings.branding.appTitle')}
-                    description={t('pages.spaceSettings.branding.appTitleDescription')}
-                  >
-                    <FormControl>
-                      <Input {...field} disabled={isSaving} />
-                    </FormControl>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
-                </FormItem>
-              )}
-            />
-            {/* App URL */}
-            <FormField
-              control={form.control}
-              name='appUrl'
-              render={({ field }) => (
-                <FormItem>
-                  <SettingRow
-                    label={t('pages.spaceSettings.branding.appUrl')}
-                    description={t('pages.spaceSettings.branding.appUrlDescription')}
-                    last
-                  >
-                    <FormControl>
-                      <Input {...field} disabled={isSaving} />
                     </FormControl>
                     <FormMessage className='mt-1.5' />
                   </SettingRow>

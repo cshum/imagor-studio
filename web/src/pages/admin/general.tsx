@@ -19,11 +19,9 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
   const isMultiTenant = authState.multiTenant
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  // In multi-tenant mode, gallery/branding/UX settings move to per-space Settings.
+  // In multi-tenant mode, gallery/UX settings move to per-space Settings.
   // Platform admin only shows settings that are genuinely platform-wide.
   const GALLERY_SETTING_KEYS = new Set([
-    'config.app_title',
-    'config.app_url',
     'config.app_default_language',
     'config.app_home_title',
     'config.allow_guest_mode',
@@ -38,22 +36,6 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
       label: t('pages.admin.systemSettings.fields.homeTitle.label'),
       description: t('pages.admin.systemSettings.fields.homeTitle.description'),
       defaultValue: 'Home',
-    },
-    {
-      key: 'config.app_title',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.appTitle.label'),
-      description: t('pages.admin.systemSettings.fields.appTitle.description'),
-      defaultValue: 'Imagor Studio',
-      requiresLicense: true,
-    },
-    {
-      key: 'config.app_url',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.appUrl.label'),
-      description: t('pages.admin.systemSettings.fields.appUrl.description'),
-      defaultValue: 'https://imagor.net',
-      requiresLicense: true,
     },
     {
       key: 'config.app_default_language',
