@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useRouter } from '@tanstack/react-router'
@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { checkSpaceKey, deleteSpace, setSpaceRegistryObject, updateSpace } from '@/api/org-api'
+import { useCustomDomainBetaInterest } from '@/components/file-picker/use-custom-domain-beta-interest.ts'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -40,22 +41,6 @@ import { extractErrorInfo } from '@/lib/error-utils'
 import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 
 import type { SpaceSettingsData } from './shared'
-
-const CUSTOM_DOMAIN_FEEDBACK_REQUESTED_AT_KEY = 'feedback.custom_domain_interest_at'
-const CUSTOM_DOMAIN_FEEDBACK_SOURCE_KEY = 'feedback.custom_domain_interest_source'
-
-const formatFeedbackDate = (value?: string) => {
-  if (!value) {
-    return null
-  }
-
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return null
-  }
-
-  return parsed.toLocaleDateString()
-}
 
 // ── Schema ─────────────────────────────────────────────────────────────────
 
@@ -112,17 +97,25 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
       name: space.name ?? '',
     },
   })
+  const previewKey = useWatch({ control: identityForm.control, name: 'key' })
   const experienceForm = useForm<ExperienceFormData>({
     resolver: zodResolver(experienceSchema),
     defaultValues: registryInitialValues,
   })
   const [isSavingIdentity, setIsSavingIdentity] = useState(false)
   const [isSavingExperience, setIsSavingExperience] = useState(false)
-  const [isSavingCustomDomainFeedback, setIsSavingCustomDomainFeedback] = useState(false)
-  const customDomainFeedbackRequestedAt =
-    initialValues[CUSTOM_DOMAIN_FEEDBACK_REQUESTED_AT_KEY] ?? ''
-  const formattedCustomDomainFeedbackDate = formatFeedbackDate(customDomainFeedbackRequestedAt)
-  const defaultProcessingHost = `${space.key}.imagor.app`
+  const previewSpaceKey = previewKey?.trim() || space.key
+  const defaultProcessingHost = `${previewSpaceKey}.imagor.app`
+  const {
+    formattedRequestedAt: formattedCustomDomainFeedbackDate,
+    hasRequestedInterest: hasRequestedCustomDomainInterest,
+    isSaving: isSavingCustomDomainFeedback,
+    recordInterest: handleCustomDomainFeedback,
+  } = useCustomDomainBetaInterest({
+    spaceId: space.id,
+    initialValues,
+    onSuccessMessage: t('pages.spaceSettings.general.customDomainFeedbackSaved'),
+  })
 
   const handleIdentitySave = async (values: IdentityFormData) => {
     setIsSavingIdentity(true)
@@ -230,26 +223,6 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     }
   }
 
-  const handleCustomDomainFeedback = async () => {
-    setIsSavingCustomDomainFeedback(true)
-    try {
-      await setSpaceRegistryObject(space.id, {
-        [CUSTOM_DOMAIN_FEEDBACK_REQUESTED_AT_KEY]: new Date().toISOString(),
-        [CUSTOM_DOMAIN_FEEDBACK_SOURCE_KEY]: 'space-settings-general',
-      })
-      toast.success(
-        t('pages.spaceSettings.general.customDomainFeedbackSaved', {
-          defaultValue: 'Thanks. We saved your interest for the custom domain beta.',
-        }),
-      )
-      await router.invalidate()
-    } catch (err) {
-      toast.error(extractErrorInfo(err).message)
-    } finally {
-      setIsSavingCustomDomainFeedback(false)
-    }
-  }
-
   const handleDeleteSpace = async () => {
     setIsDeleting(true)
     try {
@@ -315,77 +288,58 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
               <SettingRow
                 label={t('pages.spaceSettings.general.customDomain')}
                 description={t('pages.spaceSettings.general.customDomainDescription', {
-                  spaceKey: space.key,
+                  spaceKey: previewSpaceKey,
                   defaultValue: 'Use your own branded hostname for image delivery.',
                 })}
                 labelClassName={LABEL_WIDTH_CLASS}
                 contentClassName={FIELD_WIDTH_CLASS}
                 last
               >
-                <div className='space-y-3'>
-                  <div className='bg-muted/30 rounded-md border px-3 py-2'>
-                    <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                      {space.customDomainVerified && space.customDomain
-                        ? t('pages.spaceSettings.general.customDomainCurrentLabel', {
-                            defaultValue: 'Current hostname',
-                          })
-                        : t('pages.spaceSettings.general.customDomainDefaultLabel', {
-                            defaultValue: 'Default host',
-                          })}
-                    </p>
-                    <p className='mt-1 font-mono text-sm'>
-                      {space.customDomainVerified && space.customDomain
-                        ? space.customDomain
-                        : defaultProcessingHost}
-                    </p>
-                    <p className='text-muted-foreground mt-1 text-sm'>
-                      {space.customDomainVerified && space.customDomain
-                        ? t('pages.spaceSettings.general.customDomainActiveDescription', {
-                            defaultValue: 'This hostname is active for generated image URLs.',
-                          })
-                        : t('pages.spaceSettings.general.customDomainComingSoon', {
-                            defaultValue: 'Coming soon on Team plans.',
-                          })}
-                    </p>
-                  </div>
+                <div className='bg-muted/30 space-y-2 rounded-md border px-3 py-2.5'>
+                  <p className='text-muted-foreground text-xs font-medium tracking-wide'>
+                    {space.customDomainVerified && space.customDomain
+                      ? t('pages.spaceSettings.general.customDomainCurrentLabel')
+                      : t('pages.spaceSettings.general.customDomainDefaultLabel')}
+                  </p>
 
-                  {!space.customDomainVerified && (
-                    <div className='flex items-start justify-between gap-3 rounded-md border px-3 py-3'>
-                      <div className='min-w-0'>
-                        <p className='text-sm font-medium'>
-                          {t('pages.spaceSettings.general.customDomainFeedbackTitle', {
-                            defaultValue: 'Help shape custom domains',
-                          })}
-                        </p>
-                        <p className='text-muted-foreground mt-1 text-sm'>
-                          {customDomainFeedbackRequestedAt
-                            ? t('pages.spaceSettings.general.customDomainFeedbackRequested', {
-                                defaultValue: 'Beta interest recorded{{dateSuffix}}.',
-                                dateSuffix: formattedCustomDomainFeedbackDate
-                                  ? ` on ${formattedCustomDomainFeedbackDate}`
-                                  : '',
-                              })
-                            : t('pages.spaceSettings.general.customDomainFeedbackDescription', {
-                                defaultValue: 'Tell us if branded delivery matters for this space.',
-                              })}
-                        </p>
-                      </div>
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <div className='min-w-0'>
+                      <p className='font-mono text-sm'>
+                        {space.customDomainVerified && space.customDomain
+                          ? space.customDomain
+                          : defaultProcessingHost}
+                      </p>
+                      <p className='text-muted-foreground mt-1 text-sm'>
+                        {space.customDomainVerified && space.customDomain
+                          ? t('pages.spaceSettings.general.customDomainActiveDescription')
+                          : t('pages.spaceSettings.general.customDomainComingSoonCompact')}
+                        {!space.customDomainVerified && hasRequestedCustomDomainInterest && (
+                          <>
+                            {' '}
+                            {t('pages.spaceSettings.general.customDomainFeedbackRequestedCompact', {
+                              dateSuffix: formattedCustomDomainFeedbackDate
+                                ? ` ${formattedCustomDomainFeedbackDate}`
+                                : '',
+                            })}
+                          </>
+                        )}
+                      </p>
+                    </div>
+
+                    {!space.customDomainVerified && (
                       <ButtonWithLoading
                         type='button'
                         variant='outline'
+                        size='sm'
                         isLoading={isSavingCustomDomainFeedback}
                         onClick={handleCustomDomainFeedback}
                       >
-                        {customDomainFeedbackRequestedAt
-                          ? t('pages.spaceSettings.general.customDomainFeedbackUpdateButton', {
-                              defaultValue: 'Update interest',
-                            })
-                          : t('pages.spaceSettings.general.customDomainFeedbackButton', {
-                              defaultValue: 'Join beta',
-                            })}
+                        {hasRequestedCustomDomainInterest
+                          ? t('pages.spaceSettings.general.customDomainFeedbackUpdateButton')
+                          : t('pages.spaceSettings.general.customDomainFeedbackButtonCompact')}
                       </ButtonWithLoading>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </SettingRow>
 

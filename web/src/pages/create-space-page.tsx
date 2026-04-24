@@ -161,6 +161,15 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
               <Input placeholder='my-space' {...field} className='font-mono' />
             </FormControl>
             <FormDescription>{t('pages.spaces.keyDescription')}</FormDescription>
+            <div className='bg-muted/40 rounded-md border px-3 py-2'>
+              <p className='text-muted-foreground text-xs font-medium'>
+                {t('pages.spaces.creationPreview.processingHostInlineLabel')}
+              </p>
+              <p className='mt-1 font-mono text-sm'>{processingHost}</p>
+              <p className='text-muted-foreground mt-1 text-sm'>
+                {t('pages.spaces.creationPreview.processingHostInlineDescription')}
+              </p>
+            </div>
             <FormMessage />
           </FormItem>
         )}

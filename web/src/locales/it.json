@@ -745,7 +745,9 @@
       "creationPreview": {
         "title": "URL di questo spazio",
         "appUrlLabel": "URL app",
-        "processingHostLabel": "Host imagor"
+        "processingHostLabel": "Host imagor",
+        "processingHostInlineLabel": "Host predefinito",
+        "processingHostInlineDescription": "Questo sottodominio è riservato allo spazio e diventa l'host predefinito per la distribuzione delle immagini."
       },
       "keyDescription": "Definisce l'URL di questo spazio nell'app e il suo host imagor dedicato. Puoi cambiarlo in seguito.",
       "tableHeaders": {
@@ -837,6 +839,14 @@
         "nameDescription": "Il nome mostrato nella navigazione e nell'elenco spazi.",
         "customDomain": "Dominio personalizzato",
         "customDomainDescription": "Dominio personalizzato per questo spazio. Se lasciato vuoto, verrà servito su {{spaceKey}}.imagor.app.",
+        "customDomainCurrentLabel": "Hostname attuale",
+        "customDomainDefaultLabel": "Host predefinito",
+        "customDomainActiveDescription": "Questo hostname è attivo per gli URL immagine generati.",
+        "customDomainComingSoonCompact": "Disponibile presto nei piani Team.",
+        "customDomainFeedbackRequestedCompact": "Interesse registrato{{dateSuffix}}.",
+        "customDomainFeedbackSaved": "Grazie. Abbiamo registrato il tuo interesse per la beta del dominio personalizzato.",
+        "customDomainFeedbackUpdateButton": "Aggiorna interesse",
+        "customDomainFeedbackButtonCompact": "Avvisami",
         "saved": "Impostazioni generali salvate"
       },
       "storage": {

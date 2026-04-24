@@ -787,7 +787,9 @@
       "creationPreview": {
         "title": "此空間的 URL",
         "appUrlLabel": "應用 URL",
-        "processingHostLabel": "Imagor 主機"
+        "processingHostLabel": "Imagor 主機",
+        "processingHostInlineLabel": "預設主機",
+        "processingHostInlineDescription": "此子網域會保留給這個空間，並成為預設的圖片交付主機。"
       },
       "startDescription": "先使用託管空間完成最快速的設定，之後再隨著工作區成長自訂儲存、交付與品牌。",
       "sharedLabel": "共享",
@@ -835,6 +837,14 @@
         "nameDescription": "導覽列中和空間清單中顯示的名稱。",
         "customDomain": "自訂網域",
         "customDomainDescription": "此空間的自訂網域。如果留空，將使用 {{spaceKey}}.imagor.app。",
+        "customDomainCurrentLabel": "目前主機名稱",
+        "customDomainDefaultLabel": "預設主機",
+        "customDomainActiveDescription": "這個主機名稱目前用於生成圖片 URL。",
+        "customDomainComingSoonCompact": "團隊方案即將推出。",
+        "customDomainFeedbackRequestedCompact": "已記錄您的興趣{{dateSuffix}}。",
+        "customDomainFeedbackSaved": "感謝您，我們已記錄您對自訂網域 beta 的興趣。",
+        "customDomainFeedbackUpdateButton": "更新興趣",
+        "customDomainFeedbackButtonCompact": "通知我",
         "saved": "一般設定已儲存"
       },
       "storage": {

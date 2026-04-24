@@ -769,7 +769,9 @@
       "creationPreview": {
         "title": "此空间的 URL",
         "appUrlLabel": "应用 URL",
-        "processingHostLabel": "Imagor 主机"
+        "processingHostLabel": "Imagor 主机",
+        "processingHostInlineLabel": "默认主机",
+        "processingHostInlineDescription": "此子域名会保留给该空间，并成为默认的图片交付主机。"
       },
       "startDescription": "先从托管空间开始，最快完成配置，然后再随着工作区成长自定义存储、交付和品牌。",
       "sharedLabel": "共享",
@@ -817,6 +819,14 @@
         "nameDescription": "导航栏和空间列表中显示的名称。",
         "customDomain": "自定义域名",
         "customDomainDescription": "此空间的自定义域名。如果留空，将使用 {{spaceKey}}.imagor.app。",
+        "customDomainCurrentLabel": "当前主机名",
+        "customDomainDefaultLabel": "默认主机",
+        "customDomainActiveDescription": "此主机名当前用于生成图片 URL。",
+        "customDomainComingSoonCompact": "团队方案即将推出。",
+        "customDomainFeedbackRequestedCompact": "已记录您的兴趣{{dateSuffix}}。",
+        "customDomainFeedbackSaved": "感谢，我们已记录您对自定义域名 beta 的意向。",
+        "customDomainFeedbackUpdateButton": "更新意向",
+        "customDomainFeedbackButtonCompact": "通知我",
         "saved": "常规设置已保存"
       },
       "storage": {
