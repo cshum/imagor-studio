@@ -236,11 +236,12 @@ export function SaveTemplateDialog({
           <Button
             type='button'
             variant='outline'
-            className='justify-start'
+            className='w-full min-w-0 justify-start overflow-hidden'
             onClick={() => setFolderDialogOpen(true)}
+            title={savePath || homeTitle}
           >
-            <Folder className='mr-2 h-4 w-4' />
-            <span className='flex-1 truncate text-left'>{savePath || homeTitle}</span>
+            <Folder className='mr-2 h-4 w-4 shrink-0' />
+            <span className='min-w-0 flex-1 truncate text-left'>{savePath || homeTitle}</span>
           </Button>
         </div>
       </div>
