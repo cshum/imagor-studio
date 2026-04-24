@@ -767,11 +767,8 @@
       },
       "configure": "配置",
       "creationPreview": {
-        "title": "此空间的 URL",
         "appUrlLabel": "应用 URL",
-        "processingHostLabel": "Imagor 主机",
-        "processingHostInlineLabel": "默认主机",
-        "processingHostInlineDescription": "此子域名会保留给该空间，并成为默认的图片交付主机。"
+        "processingHostLabel": "默认主机"
       },
       "startDescription": "先从托管空间开始，最快完成配置，然后再随着工作区成长自定义存储、交付和品牌。",
       "sharedLabel": "共享",

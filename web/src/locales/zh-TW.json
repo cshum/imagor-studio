@@ -785,11 +785,8 @@
       },
       "configure": "設定",
       "creationPreview": {
-        "title": "此空間的 URL",
         "appUrlLabel": "應用 URL",
-        "processingHostLabel": "Imagor 主機",
-        "processingHostInlineLabel": "預設主機",
-        "processingHostInlineDescription": "此子網域會保留給這個空間，並成為預設的圖片交付主機。"
+        "processingHostLabel": "預設主機"
       },
       "startDescription": "先使用託管空間完成最快速的設定，之後再隨著工作區成長自訂儲存、交付與品牌。",
       "sharedLabel": "共享",

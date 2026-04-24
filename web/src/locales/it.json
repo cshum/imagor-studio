@@ -743,11 +743,8 @@
         "s3": "Usa il tuo bucket compatibile S3."
       },
       "creationPreview": {
-        "title": "URL di questo spazio",
         "appUrlLabel": "URL app",
-        "processingHostLabel": "Host imagor",
-        "processingHostInlineLabel": "Host predefinito",
-        "processingHostInlineDescription": "Questo sottodominio è riservato allo spazio e diventa l'host predefinito per la distribuzione delle immagini."
+        "processingHostLabel": "Host predefinito"
       },
       "keyDescription": "Definisce l'URL di questo spazio nell'app e il suo host imagor dedicato. Puoi cambiarlo in seguito.",
       "tableHeaders": {

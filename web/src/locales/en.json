@@ -743,11 +743,8 @@
         "s3": "Use your own S3-compatible bucket."
       },
       "creationPreview": {
-        "title": "URLs for this space",
         "appUrlLabel": "App URL",
-        "processingHostLabel": "Imagor Host",
-        "processingHostInlineLabel": "Default Host",
-        "processingHostInlineDescription": "This subdomain is reserved for the space and becomes its default image delivery host."
+        "processingHostLabel": "Default Host"
       },
       "keyDescription": "This sets your space URL in the app and its dedicated imagor host. You can change it later.",
       "tableHeaders": {
