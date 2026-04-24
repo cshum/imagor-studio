@@ -1306,7 +1306,7 @@ func TestSpaceRegistry_SpaceOverridesGlobal(t *testing.T) {
 	space := makeTestSpace(spaceKey, "org-1")
 
 	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
-	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
 	// Space has an override for home title
 	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
@@ -1319,7 +1319,7 @@ func TestSpaceRegistry_SpaceOverridesGlobal(t *testing.T) {
 			{Key: "config.allow_guest_mode", Value: "true"},
 		}, nil)
 
-	result, err := resolver.Query().SpaceRegistry(ctx, spaceKey, keys)
+	result, err := resolver.Query().SpaceRegistry(ctx, space.ID, keys)
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 2)
@@ -1349,7 +1349,7 @@ func TestSpaceRegistry_AllKeysFromGlobal(t *testing.T) {
 	space := makeTestSpace(spaceKey, "org-1")
 
 	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
-	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
 	// No space-level override
 	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
@@ -1360,7 +1360,7 @@ func TestSpaceRegistry_AllKeysFromGlobal(t *testing.T) {
 			{Key: "config.app_home_title", Value: "Global Home"},
 		}, nil)
 
-	result, err := resolver.Query().SpaceRegistry(ctx, spaceKey, keys)
+	result, err := resolver.Query().SpaceRegistry(ctx, space.ID, keys)
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
@@ -1381,9 +1381,10 @@ func TestSpaceRegistry_NonAdminDenied(t *testing.T) {
 	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
 	ctx := createReadWriteContextWithOrg("regular-user-id", "org-1")
-	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
+	space := makeTestSpace("my-space", "org-1")
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
-	_, err := resolver.Query().SpaceRegistry(ctx, "my-space", []string{"config.app_home_title"})
+	_, err := resolver.Query().SpaceRegistry(ctx, space.ID, []string{"config.app_home_title"})
 
 	assert.Error(t, err)
 }
@@ -1403,7 +1404,7 @@ func TestSpaceRegistry_GuestPublicAccess_AllowlistedKeysAllowed(t *testing.T) {
 	keys := []string{"config.app_default_sort_by", "config.app_show_file_names"}
 	space := makeTestSpace(spaceKey, "org-2")
 	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
-	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 	mockRegistryStore.On("Get", ctx, spaceOwnerID, "config.allow_guest_mode").
 		Return(&registrystore.Registry{Key: "config.allow_guest_mode", Value: "true"}, nil)
 	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
@@ -1411,7 +1412,7 @@ func TestSpaceRegistry_GuestPublicAccess_AllowlistedKeysAllowed(t *testing.T) {
 	mockRegistryStore.On("GetMulti", ctx, registrystore.SystemOwnerID, []string{"config.app_show_file_names"}).
 		Return([]*registrystore.Registry{{Key: "config.app_show_file_names", Value: "true"}}, nil)
 
-	result, err := resolver.Query().SpaceRegistry(ctx, spaceKey, keys)
+	result, err := resolver.Query().SpaceRegistry(ctx, space.ID, keys)
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 2)
@@ -1440,11 +1441,11 @@ func TestSpaceRegistry_SharingViewer_AllowlistedKeysAllowed(t *testing.T) {
 	space := makeTestSpace(spaceKey, "org-1")
 	space.IsShared = true
 	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
-	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 	mockRegistryStore.On("GetMulti", ctx, spaceOwnerID, keys).
 		Return([]*registrystore.Registry{{Key: "config.app_default_sort_order", Value: "ASC"}}, nil)
 
-	result, err := resolver.Query().SpaceRegistry(ctx, spaceKey, keys)
+	result, err := resolver.Query().SpaceRegistry(ctx, space.ID, keys)
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
@@ -1469,7 +1470,7 @@ func TestSpaceRegistry_ListAll(t *testing.T) {
 	spaceKey := "my-space"
 	space := makeTestSpace(spaceKey, "org-1")
 	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
-	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
 	// List all space-level entries (no fallback when keys is nil/empty)
 	mockRegistryStore.On("List", ctx, spaceOwnerID, (*string)(nil)).
@@ -1478,7 +1479,7 @@ func TestSpaceRegistry_ListAll(t *testing.T) {
 			{Key: "config.allow_guest_mode", Value: "false"},
 		}, nil)
 
-	result, err := resolver.Query().SpaceRegistry(ctx, spaceKey, nil)
+	result, err := resolver.Query().SpaceRegistry(ctx, space.ID, nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 2)
@@ -1502,14 +1503,14 @@ func TestSetSpaceRegistry_AdminSetsEntries(t *testing.T) {
 	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
 	key := "config.app_home_title"
 	value := "My Custom Space"
-	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
 	expectedEntries := []*registrystore.Registry{{Key: key, Value: value, IsEncrypted: false}}
 	mockRegistryStore.On("SetMulti", ctx, spaceOwnerID, expectedEntries).
 		Return([]*registrystore.Registry{{Key: key, Value: value}}, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: key, Value: value}}
-	result, err := resolver.Mutation().SetSpaceRegistry(ctx, spaceKey, entries)
+	result, err := resolver.Mutation().SetSpaceRegistry(ctx, space.ID, entries)
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
@@ -1530,10 +1531,11 @@ func TestSetSpaceRegistry_NonAdminDenied(t *testing.T) {
 	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
 	ctx := createReadWriteContextWithOrg("regular-user-id", "org-1")
-	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
+	space := makeTestSpace("my-space", "org-1")
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
 	entries := []*gql.RegistryEntryInput{{Key: "config.app_home_title", Value: "hack"}}
-	_, err := resolver.Mutation().SetSpaceRegistry(ctx, "my-space", entries)
+	_, err := resolver.Mutation().SetSpaceRegistry(ctx, space.ID, entries)
 
 	assert.Error(t, err)
 }
@@ -1549,9 +1551,10 @@ func TestSetSpaceRegistry_EmptyEntriesRejected(t *testing.T) {
 	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
 	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
-	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
+	space := makeTestSpace("my-space", "org-1")
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
-	_, err := resolver.Mutation().SetSpaceRegistry(ctx, "my-space", nil)
+	_, err := resolver.Mutation().SetSpaceRegistry(ctx, space.ID, nil)
 
 	assert.Error(t, err)
 }
@@ -1571,11 +1574,11 @@ func TestDeleteSpaceRegistry_AdminDeletes(t *testing.T) {
 	space := makeTestSpace(spaceKey, "org-1")
 	spaceOwnerID := registrystore.SpaceOwnerID(space.ID)
 	keys := []string{"config.app_home_title", "config.allow_guest_mode"}
-	spaceStore.On("Get", ctx, spaceKey).Return(space, nil)
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
 	mockRegistryStore.On("DeleteMulti", ctx, spaceOwnerID, keys).Return(nil)
 
-	ok, err := resolver.Mutation().DeleteSpaceRegistry(ctx, spaceKey, keys)
+	ok, err := resolver.Mutation().DeleteSpaceRegistry(ctx, space.ID, keys)
 
 	assert.NoError(t, err)
 	assert.True(t, ok)
@@ -1594,9 +1597,10 @@ func TestDeleteSpaceRegistry_NonAdminDenied(t *testing.T) {
 	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
 	ctx := createReadWriteContextWithOrg("regular-user-id", "org-1")
-	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
+	space := makeTestSpace("my-space", "org-1")
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
-	_, err := resolver.Mutation().DeleteSpaceRegistry(ctx, "my-space", []string{"config.app_home_title"})
+	_, err := resolver.Mutation().DeleteSpaceRegistry(ctx, space.ID, []string{"config.app_home_title"})
 
 	assert.Error(t, err)
 }
@@ -1612,9 +1616,10 @@ func TestDeleteSpaceRegistry_EmptyKeysRejected(t *testing.T) {
 	resolver := NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger, nil, spaceStore, nil, nil)
 
 	ctx := createAdminContextWithOrg("admin-user-id", "org-1")
-	spaceStore.On("Get", ctx, "my-space").Return(makeTestSpace("my-space", "org-1"), nil)
+	space := makeTestSpace("my-space", "org-1")
+	spaceStore.On("GetByID", ctx, space.ID).Return(space, nil)
 
-	_, err := resolver.Mutation().DeleteSpaceRegistry(ctx, "my-space", nil)
+	_, err := resolver.Mutation().DeleteSpaceRegistry(ctx, space.ID, nil)
 
 	assert.Error(t, err)
 }

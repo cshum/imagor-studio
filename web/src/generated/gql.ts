@@ -20,27 +20,27 @@ type Documents = {
   '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceID: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceID: $spaceID\n      params: $params\n    )\n  }\n': typeof types.GenerateImagorUrlDocument
   '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceID: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceID: $spaceID\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n': typeof types.GenerateImagorUrlFromTemplateDocument
   '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n': typeof types.MyOrganizationDocument
-  '\n  query ListSpaces {\n    spaces {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.ListSpacesDocument
+  '\n  query ListSpaces {\n    spaces {\n      id\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.ListSpacesDocument
   '\n  query GetSpace($key: String!) {\n    space(key: $key) {\n      id\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.GetSpaceDocument
   '\n  mutation CreateSpace($input: SpaceInput!) {\n    createSpace(input: $input) {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.CreateSpaceDocument
   '\n  mutation UpdateSpace($key: String!, $input: SpaceInput!) {\n    updateSpace(key: $key, input: $input) {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.UpdateSpaceDocument
   '\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n': typeof types.DeleteSpaceDocument
-  '\n  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {\n    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n': typeof types.GetSpaceRegistryDocument
-  '\n  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n': typeof types.SetSpaceRegistryDocument
-  '\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n': typeof types.DeleteSpaceRegistryDocument
+  '\n  query GetSpaceRegistry($spaceID: String!, $keys: [String!]) {\n    spaceRegistry(spaceID: $spaceID, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n': typeof types.GetSpaceRegistryDocument
+  '\n  mutation SetSpaceRegistry($spaceID: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceID: $spaceID, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n': typeof types.SetSpaceRegistryDocument
+  '\n  mutation DeleteSpaceRegistry($spaceID: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceID: $spaceID, keys: $keys)\n  }\n': typeof types.DeleteSpaceRegistryDocument
   '\n  query SpaceKeyExists($key: String!) {\n    spaceKeyExists(key: $key)\n  }\n': typeof types.SpaceKeyExistsDocument
   '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.ListOrgMembersDocument
-  '\n  query ListSpaceMembers($spaceKey: String!) {\n    spaceMembers(spaceKey: $spaceKey) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n': typeof types.ListSpaceMembersDocument
-  '\n  query ListSpaceInvitations($spaceKey: String!) {\n    spaceInvitations(spaceKey: $spaceKey) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n': typeof types.ListSpaceInvitationsDocument
+  '\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n': typeof types.ListSpaceMembersDocument
+  '\n  query ListSpaceInvitations($spaceID: String!) {\n    spaceInvitations(spaceID: $spaceID) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n': typeof types.ListSpaceInvitationsDocument
   '\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddOrgMemberDocument
   '\n  mutation AddOrgMemberByEmail($email: String!, $role: String!) {\n    addOrgMemberByEmail(email: $email, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddOrgMemberByEmailDocument
-  '\n  mutation AddSpaceMember($spaceKey: String!, $userId: ID!, $role: String!) {\n    addSpaceMember(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddSpaceMemberDocument
-  '\n  mutation InviteSpaceMember($spaceKey: String!, $email: String!, $role: String!) {\n    inviteSpaceMember(spaceKey: $spaceKey, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n': typeof types.InviteSpaceMemberDocument
+  '\n  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: String!) {\n    addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddSpaceMemberDocument
+  '\n  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: String!) {\n    inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n': typeof types.InviteSpaceMemberDocument
   '\n  mutation RemoveOrgMember($userId: ID!) {\n    removeOrgMember(userId: $userId)\n  }\n': typeof types.RemoveOrgMemberDocument
-  '\n  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {\n    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)\n  }\n': typeof types.RemoveSpaceMemberDocument
-  '\n  mutation LeaveSpace($spaceKey: String!) {\n    leaveSpace(spaceKey: $spaceKey)\n  }\n': typeof types.LeaveSpaceDocument
+  '\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n': typeof types.RemoveSpaceMemberDocument
+  '\n  mutation LeaveSpace($spaceID: String!) {\n    leaveSpace(spaceID: $spaceID)\n  }\n': typeof types.LeaveSpaceDocument
   '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateOrgMemberRoleDocument
-  '\n  mutation UpdateSpaceMemberRole($spaceKey: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateSpaceMemberRoleDocument
+  '\n  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateSpaceMemberRoleDocument
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
   '\n  query ListUserRegistry($prefix: String, $ownerID: String) {\n    listUserRegistry(prefix: $prefix, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.ListUserRegistryDocument
@@ -91,7 +91,7 @@ const documents: Documents = {
     types.GenerateImagorUrlFromTemplateDocument,
   '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n':
     types.MyOrganizationDocument,
-  '\n  query ListSpaces {\n    spaces {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n':
+  '\n  query ListSpaces {\n    spaces {\n      id\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n':
     types.ListSpacesDocument,
   '\n  query GetSpace($key: String!) {\n    space(key: $key) {\n      id\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n':
     types.GetSpaceDocument,
@@ -101,37 +101,37 @@ const documents: Documents = {
     types.UpdateSpaceDocument,
   '\n  mutation DeleteSpace($key: String!) {\n    deleteSpace(key: $key)\n  }\n':
     types.DeleteSpaceDocument,
-  '\n  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {\n    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n':
+  '\n  query GetSpaceRegistry($spaceID: String!, $keys: [String!]) {\n    spaceRegistry(spaceID: $spaceID, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n':
     types.GetSpaceRegistryDocument,
-  '\n  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n':
+  '\n  mutation SetSpaceRegistry($spaceID: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceID: $spaceID, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n':
     types.SetSpaceRegistryDocument,
-  '\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n':
+  '\n  mutation DeleteSpaceRegistry($spaceID: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceID: $spaceID, keys: $keys)\n  }\n':
     types.DeleteSpaceRegistryDocument,
   '\n  query SpaceKeyExists($key: String!) {\n    spaceKeyExists(key: $key)\n  }\n':
     types.SpaceKeyExistsDocument,
   '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.ListOrgMembersDocument,
-  '\n  query ListSpaceMembers($spaceKey: String!) {\n    spaceMembers(spaceKey: $spaceKey) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n':
+  '\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n':
     types.ListSpaceMembersDocument,
-  '\n  query ListSpaceInvitations($spaceKey: String!) {\n    spaceInvitations(spaceKey: $spaceKey) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n':
+  '\n  query ListSpaceInvitations($spaceID: String!) {\n    spaceInvitations(spaceID: $spaceID) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n':
     types.ListSpaceInvitationsDocument,
   '\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.AddOrgMemberDocument,
   '\n  mutation AddOrgMemberByEmail($email: String!, $role: String!) {\n    addOrgMemberByEmail(email: $email, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.AddOrgMemberByEmailDocument,
-  '\n  mutation AddSpaceMember($spaceKey: String!, $userId: ID!, $role: String!) {\n    addSpaceMember(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
+  '\n  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: String!) {\n    addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.AddSpaceMemberDocument,
-  '\n  mutation InviteSpaceMember($spaceKey: String!, $email: String!, $role: String!) {\n    inviteSpaceMember(spaceKey: $spaceKey, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n':
+  '\n  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: String!) {\n    inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n':
     types.InviteSpaceMemberDocument,
   '\n  mutation RemoveOrgMember($userId: ID!) {\n    removeOrgMember(userId: $userId)\n  }\n':
     types.RemoveOrgMemberDocument,
-  '\n  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {\n    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)\n  }\n':
+  '\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n':
     types.RemoveSpaceMemberDocument,
-  '\n  mutation LeaveSpace($spaceKey: String!) {\n    leaveSpace(spaceKey: $spaceKey)\n  }\n':
+  '\n  mutation LeaveSpace($spaceID: String!) {\n    leaveSpace(spaceID: $spaceID)\n  }\n':
     types.LeaveSpaceDocument,
   '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.UpdateOrgMemberRoleDocument,
-  '\n  mutation UpdateSpaceMemberRole($spaceKey: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
+  '\n  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.UpdateSpaceMemberRoleDocument,
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
     types.RegistryInfoFragmentDoc,
@@ -258,8 +258,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query ListSpaces {\n    spaces {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n',
-): (typeof documents)['\n  query ListSpaces {\n    spaces {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n']
+  source: '\n  query ListSpaces {\n    spaces {\n      id\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n',
+): (typeof documents)['\n  query ListSpaces {\n    spaces {\n      id\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -288,20 +288,20 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {\n    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n',
-): (typeof documents)['\n  query GetSpaceRegistry($spaceKey: String!, $keys: [String!]) {\n    spaceRegistry(spaceKey: $spaceKey, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n']
+  source: '\n  query GetSpaceRegistry($spaceID: String!, $keys: [String!]) {\n    spaceRegistry(spaceID: $spaceID, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n',
+): (typeof documents)['\n  query GetSpaceRegistry($spaceID: String!, $keys: [String!]) {\n    spaceRegistry(spaceID: $spaceID, keys: $keys) {\n      key\n      value\n      isEncrypted\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n',
-): (typeof documents)['\n  mutation SetSpaceRegistry($spaceKey: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceKey: $spaceKey, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n']
+  source: '\n  mutation SetSpaceRegistry($spaceID: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceID: $spaceID, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n',
+): (typeof documents)['\n  mutation SetSpaceRegistry($spaceID: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceID: $spaceID, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n',
-): (typeof documents)['\n  mutation DeleteSpaceRegistry($spaceKey: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceKey: $spaceKey, keys: $keys)\n  }\n']
+  source: '\n  mutation DeleteSpaceRegistry($spaceID: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceID: $spaceID, keys: $keys)\n  }\n',
+): (typeof documents)['\n  mutation DeleteSpaceRegistry($spaceID: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceID: $spaceID, keys: $keys)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -318,14 +318,14 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query ListSpaceMembers($spaceKey: String!) {\n    spaceMembers(spaceKey: $spaceKey) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n',
-): (typeof documents)['\n  query ListSpaceMembers($spaceKey: String!) {\n    spaceMembers(spaceKey: $spaceKey) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n']
+  source: '\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n',
+): (typeof documents)['\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query ListSpaceInvitations($spaceKey: String!) {\n    spaceInvitations(spaceKey: $spaceKey) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n',
-): (typeof documents)['\n  query ListSpaceInvitations($spaceKey: String!) {\n    spaceInvitations(spaceKey: $spaceKey) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n']
+  source: '\n  query ListSpaceInvitations($spaceID: String!) {\n    spaceInvitations(spaceID: $spaceID) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n',
+): (typeof documents)['\n  query ListSpaceInvitations($spaceID: String!) {\n    spaceInvitations(spaceID: $spaceID) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -342,14 +342,14 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation AddSpaceMember($spaceKey: String!, $userId: ID!, $role: String!) {\n    addSpaceMember(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
-): (typeof documents)['\n  mutation AddSpaceMember($spaceKey: String!, $userId: ID!, $role: String!) {\n    addSpaceMember(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
+  source: '\n  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: String!) {\n    addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: String!) {\n    addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation InviteSpaceMember($spaceKey: String!, $email: String!, $role: String!) {\n    inviteSpaceMember(spaceKey: $spaceKey, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n',
-): (typeof documents)['\n  mutation InviteSpaceMember($spaceKey: String!, $email: String!, $role: String!) {\n    inviteSpaceMember(spaceKey: $spaceKey, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n']
+  source: '\n  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: String!) {\n    inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: String!) {\n    inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -360,14 +360,14 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {\n    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)\n  }\n',
-): (typeof documents)['\n  mutation RemoveSpaceMember($spaceKey: String!, $userId: ID!) {\n    removeSpaceMember(spaceKey: $spaceKey, userId: $userId)\n  }\n']
+  source: '\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n',
+): (typeof documents)['\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation LeaveSpace($spaceKey: String!) {\n    leaveSpace(spaceKey: $spaceKey)\n  }\n',
-): (typeof documents)['\n  mutation LeaveSpace($spaceKey: String!) {\n    leaveSpace(spaceKey: $spaceKey)\n  }\n']
+  source: '\n  mutation LeaveSpace($spaceID: String!) {\n    leaveSpace(spaceID: $spaceID)\n  }\n',
+): (typeof documents)['\n  mutation LeaveSpace($spaceID: String!) {\n    leaveSpace(spaceID: $spaceID)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -378,8 +378,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation UpdateSpaceMemberRole($spaceKey: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
-): (typeof documents)['\n  mutation UpdateSpaceMemberRole($spaceKey: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceKey: $spaceKey, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
+  source: '\n  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: String!) {\n    updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

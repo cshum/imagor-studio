@@ -222,7 +222,7 @@ export type MutationAddOrgMemberByEmailArgs = {
 
 export type MutationAddSpaceMemberArgs = {
   role: Scalars['String']['input']
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
 }
 
@@ -289,7 +289,7 @@ export type MutationDeleteSpaceArgs = {
 
 export type MutationDeleteSpaceRegistryArgs = {
   keys?: InputMaybe<Array<Scalars['String']['input']>>
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }
 
 export type MutationDeleteSystemRegistryArgs = {
@@ -323,11 +323,11 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
 export type MutationInviteSpaceMemberArgs = {
   email: Scalars['String']['input']
   role: Scalars['String']['input']
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }
 
 export type MutationLeaveSpaceArgs = {
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }
 
 export type MutationMoveFileArgs = {
@@ -350,7 +350,7 @@ export type MutationRemoveOrgMemberArgs = {
 }
 
 export type MutationRemoveSpaceMemberArgs = {
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
 }
 
@@ -373,7 +373,7 @@ export type MutationSaveTemplateArgs = {
 
 export type MutationSetSpaceRegistryArgs = {
   entries?: InputMaybe<Array<RegistryEntryInput>>
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }
 
 export type MutationSetSystemRegistryArgs = {
@@ -413,7 +413,7 @@ export type MutationUpdateSpaceArgs = {
 
 export type MutationUpdateSpaceMemberRoleArgs = {
   role: Scalars['String']['input']
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
 }
 
@@ -512,7 +512,7 @@ export type QuerySpaceArgs = {
 }
 
 export type QuerySpaceInvitationsArgs = {
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }
 
 export type QuerySpaceKeyExistsArgs = {
@@ -520,12 +520,12 @@ export type QuerySpaceKeyExistsArgs = {
 }
 
 export type QuerySpaceMembersArgs = {
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }
 
 export type QuerySpaceRegistryArgs = {
   keys?: InputMaybe<Array<Scalars['String']['input']>>
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }
 
 export type QueryStatFileArgs = {
@@ -838,6 +838,7 @@ export type ListSpacesQuery = {
   __typename?: 'Query'
   spaces: Array<{
     __typename?: 'Space'
+    id: string
     orgId: string
     key: string
     name: string
@@ -965,7 +966,7 @@ export type DeleteSpaceMutationVariables = Exact<{
 export type DeleteSpaceMutation = { __typename?: 'Mutation'; deleteSpace: boolean }
 
 export type GetSpaceRegistryQueryVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   keys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
 }>
 
@@ -980,7 +981,7 @@ export type GetSpaceRegistryQuery = {
 }
 
 export type SetSpaceRegistryMutationVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
 }>
 
@@ -995,7 +996,7 @@ export type SetSpaceRegistryMutation = {
 }
 
 export type DeleteSpaceRegistryMutationVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   keys: Array<Scalars['String']['input']> | Scalars['String']['input']
 }>
 
@@ -1022,7 +1023,7 @@ export type ListOrgMembersQuery = {
 }
 
 export type ListSpaceMembersQueryVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }>
 
 export type ListSpaceMembersQuery = {
@@ -1043,7 +1044,7 @@ export type ListSpaceMembersQuery = {
 }
 
 export type ListSpaceInvitationsQueryVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }>
 
 export type ListSpaceInvitationsQuery = {
@@ -1093,7 +1094,7 @@ export type AddOrgMemberByEmailMutation = {
 }
 
 export type AddSpaceMemberMutationVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
   role: Scalars['String']['input']
 }>
@@ -1111,7 +1112,7 @@ export type AddSpaceMemberMutation = {
 }
 
 export type InviteSpaceMemberMutationVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   email: Scalars['String']['input']
   role: Scalars['String']['input']
 }>
@@ -1147,14 +1148,14 @@ export type RemoveOrgMemberMutationVariables = Exact<{
 export type RemoveOrgMemberMutation = { __typename?: 'Mutation'; removeOrgMember: boolean }
 
 export type RemoveSpaceMemberMutationVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
 }>
 
 export type RemoveSpaceMemberMutation = { __typename?: 'Mutation'; removeSpaceMember: boolean }
 
 export type LeaveSpaceMutationVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
 }>
 
 export type LeaveSpaceMutation = { __typename?: 'Mutation'; leaveSpace: boolean }
@@ -1177,7 +1178,7 @@ export type UpdateOrgMemberRoleMutation = {
 }
 
 export type UpdateSpaceMemberRoleMutationVariables = Exact<{
-  spaceKey: Scalars['String']['input']
+  spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
   role: Scalars['String']['input']
 }>
@@ -2167,6 +2168,7 @@ export const ListSpacesDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'key' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
@@ -2440,7 +2442,7 @@ export const GetSpaceRegistryDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -2467,8 +2469,8 @@ export const GetSpaceRegistryDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
               {
                 kind: 'Argument',
@@ -2500,7 +2502,7 @@ export const SetSpaceRegistryDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -2527,8 +2529,8 @@ export const SetSpaceRegistryDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
               {
                 kind: 'Argument',
@@ -2560,7 +2562,7 @@ export const DeleteSpaceRegistryDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -2590,8 +2592,8 @@ export const DeleteSpaceRegistryDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
               {
                 kind: 'Argument',
@@ -2680,7 +2682,7 @@ export const ListSpaceMembersDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -2696,8 +2698,8 @@ export const ListSpaceMembersDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
             ],
             selectionSet: {
@@ -2731,7 +2733,7 @@ export const ListSpaceInvitationsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -2747,8 +2749,8 @@ export const ListSpaceInvitationsDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
             ],
             selectionSet: {
@@ -2895,7 +2897,7 @@ export const AddSpaceMemberDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -2927,8 +2929,8 @@ export const AddSpaceMemberDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
               {
                 kind: 'Argument',
@@ -2967,7 +2969,7 @@ export const InviteSpaceMemberDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -2999,8 +3001,8 @@ export const InviteSpaceMemberDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
               {
                 kind: 'Argument',
@@ -3099,7 +3101,7 @@ export const RemoveSpaceMemberDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -3123,8 +3125,8 @@ export const RemoveSpaceMemberDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
               {
                 kind: 'Argument',
@@ -3148,7 +3150,7 @@ export const LeaveSpaceDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -3164,8 +3166,8 @@ export const LeaveSpaceDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
             ],
           },
@@ -3243,7 +3245,7 @@ export const UpdateSpaceMemberRoleDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
@@ -3275,8 +3277,8 @@ export const UpdateSpaceMemberRoleDocument = {
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'spaceKey' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceKey' } },
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
               },
               {
                 kind: 'Argument',

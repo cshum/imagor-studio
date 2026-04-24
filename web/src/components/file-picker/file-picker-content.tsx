@@ -189,9 +189,9 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         }
 
         let systemRegistryResult
-        if (spaceKey) {
+        if (space?.spaceID) {
           try {
-            systemRegistryResult = await getSpaceRegistry(spaceKey, [
+            systemRegistryResult = await getSpaceRegistry(space.spaceID, [
               'config.app_default_sort_by',
               'config.app_default_sort_order',
               'config.app_show_file_names',

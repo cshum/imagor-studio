@@ -43,6 +43,7 @@ describe('account-loader', () => {
     vi.mocked(listSpaces).mockResolvedValue([
       {
         __typename: 'Space',
+        id: 'space-acme',
         orgId: 'org-1',
         key: 'acme',
         name: 'Acme',

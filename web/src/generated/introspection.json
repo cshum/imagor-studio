@@ -1202,7 +1202,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -1672,7 +1672,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -1949,7 +1949,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -1974,7 +1974,7 @@
             "description": null,
             "args": [
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -2127,7 +2127,7 @@
             "description": null,
             "args": [
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -2307,7 +2307,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -2623,7 +2623,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -3275,7 +3275,7 @@
             "description": null,
             "args": [
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -3333,7 +3333,7 @@
             "description": null,
             "args": [
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",
@@ -3382,7 +3382,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": {
                   "kind": "NON_NULL",

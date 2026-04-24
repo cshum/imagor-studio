@@ -201,7 +201,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
         return
       }
 
-      await setSpaceRegistryObject(space.key, registryChanges)
+      await setSpaceRegistryObject(space.id, registryChanges)
       toast.success(t('pages.spaceSettings.general.saved'))
       await router.invalidate()
     } catch (err) {

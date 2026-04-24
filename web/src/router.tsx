@@ -458,7 +458,8 @@ const generalSectionRoute = createRoute({
   path: '/general',
   loader: async ({ params: { spaceKey } }) => {
     try {
-      const entries = await getSpaceRegistry(spaceKey)
+      const space = await resolveSpace(spaceKey)
+      const entries = await getSpaceRegistry(space.id)
       const map: Record<string, string> = {}
       entries.forEach((e) => {
         map[e.key] = e.value
@@ -492,7 +493,8 @@ const securitySectionRoute = createRoute({
   path: '/imagor',
   loader: async ({ params: { spaceKey } }) => {
     try {
-      const entries = await getSpaceRegistry(spaceKey)
+      const space = await resolveSpace(spaceKey)
+      const entries = await getSpaceRegistry(space.id)
       const map: Record<string, string> = {}
       entries.forEach((e) => {
         map[e.key] = e.value
@@ -525,9 +527,10 @@ const membersSectionRoute = createRoute({
   path: '/members',
   loader: async ({ params }) => {
     try {
+      const space = await resolveSpace(params.spaceKey)
       const [spaceMembers, invitations] = await Promise.all([
-        listSpaceMembers(params.spaceKey),
-        listSpaceInvitations(params.spaceKey),
+        listSpaceMembers(space.id),
+        listSpaceInvitations(space.id),
       ])
       return { spaceMembers, invitations }
     } catch {
@@ -540,7 +543,7 @@ const membersSectionRoute = createRoute({
     const { space } = spaceSettingsLayoutRoute.useLoaderData()
     return (
       <MembersSection
-        spaceKey={space.key}
+        spaceID={space.id}
         initialMembers={spaceMembers}
         initialInvitations={invitations}
         isShared={space.isShared}

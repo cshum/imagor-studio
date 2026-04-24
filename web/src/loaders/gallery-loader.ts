@@ -102,9 +102,9 @@ export const galleryLoader = async ({
     }
 
     let systemRegistryResult
-    if (spaceKey) {
+    if (spaceID) {
       try {
-        systemRegistryResult = await getSpaceRegistry(spaceKey, [
+        systemRegistryResult = await getSpaceRegistry(spaceID, [
           'config.app_default_sort_by',
           'config.app_default_sort_order',
           'config.app_show_file_names',

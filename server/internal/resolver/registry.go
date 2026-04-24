@@ -445,16 +445,16 @@ func (r *queryResolver) ListSystemRegistry(ctx context.Context, prefix *string) 
 }
 
 // SpaceRegistry gets space-scoped registry entries, falling back to system:global for unset keys (space manager only)
-func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceKey string, keys []string) ([]*gql.UserRegistry, error) {
+func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceID string, keys []string) ([]*gql.UserRegistry, error) {
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space registry is not available in this deployment")
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if space == nil {
-		return nil, fmt.Errorf("space %q not found", spaceKey)
+		return nil, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, space)
 	if err != nil {
@@ -550,16 +550,16 @@ func (r *queryResolver) SpaceRegistry(ctx context.Context, spaceKey string, keys
 }
 
 // SetSpaceRegistry sets space-scoped registry entries (space manager only)
-func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceKey string, entries []*gql.RegistryEntryInput) ([]*gql.UserRegistry, error) {
+func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceID string, entries []*gql.RegistryEntryInput) ([]*gql.UserRegistry, error) {
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space registry is not available in this deployment")
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if space == nil {
-		return nil, fmt.Errorf("space %q not found", spaceKey)
+		return nil, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, space)
 	if err != nil {
@@ -606,16 +606,16 @@ func (r *mutationResolver) SetSpaceRegistry(ctx context.Context, spaceKey string
 }
 
 // DeleteSpaceRegistry deletes space-scoped registry entries, reverting to system:global defaults (space manager only)
-func (r *mutationResolver) DeleteSpaceRegistry(ctx context.Context, spaceKey string, keys []string) (bool, error) {
+func (r *mutationResolver) DeleteSpaceRegistry(ctx context.Context, spaceID string, keys []string) (bool, error) {
 	if !r.cloudEnabled() {
 		return false, fmt.Errorf("space registry is not available in this deployment")
 	}
-	space, err := r.spaceStore.Get(ctx, spaceKey)
+	space, err := r.spaceStore.GetByID(ctx, spaceID)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch space: %w", err)
 	}
 	if space == nil {
-		return false, fmt.Errorf("space %q not found", spaceKey)
+		return false, fmt.Errorf("space %q not found", spaceID)
 	}
 	permissions, err := r.getSpacePermissions(ctx, space)
 	if err != nil {

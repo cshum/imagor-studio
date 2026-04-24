@@ -90,12 +90,12 @@ export async function deleteSpace(
 }
 
 export async function getSpaceRegistry(
-  spaceKey: string,
+  spaceID: string,
   keys?: string[],
 ): Promise<GetSpaceRegistryQuery['spaceRegistry']> {
   const client = getGraphQLClient()
   const sdk = getSdk(client)
-  const result = await sdk.GetSpaceRegistry({ spaceKey, keys })
+  const result = await sdk.GetSpaceRegistry({ spaceID, keys })
   return result.spaceRegistry
 }
 
@@ -119,7 +119,7 @@ export async function deleteSpaceRegistry(
 
 /** Convenience: save a map of {key → value} to the space-scoped registry */
 export async function setSpaceRegistryObject(
-  spaceKey: string,
+  spaceID: string,
   values: Record<string, string>,
 ): Promise<void> {
   const entries = Object.entries(values).map(([key, value]) => ({
@@ -128,7 +128,7 @@ export async function setSpaceRegistryObject(
     isEncrypted: false,
   }))
   if (entries.length === 0) return
-  await setSpaceRegistry({ spaceKey, entries })
+  await setSpaceRegistry({ spaceID, entries })
 }
 
 /** Returns true when the given space key is already taken (globally unique). */
@@ -172,20 +172,20 @@ export async function addOrgMemberByEmail(
 }
 
 export async function listSpaceMembers(
-  spaceKey: string,
+  spaceID: string,
 ): Promise<ListSpaceMembersQuery['spaceMembers']> {
   const client = getGraphQLClient()
   const sdk = getSdk(client)
-  const result = await sdk.ListSpaceMembers({ spaceKey })
+  const result = await sdk.ListSpaceMembers({ spaceID })
   return result.spaceMembers
 }
 
 export async function listSpaceInvitations(
-  spaceKey: string,
+  spaceID: string,
 ): Promise<ListSpaceInvitationsQuery['spaceInvitations']> {
   const client = getGraphQLClient()
   const sdk = getSdk(client)
-  const result = await sdk.ListSpaceInvitations({ spaceKey })
+  const result = await sdk.ListSpaceInvitations({ spaceID })
   return result.spaceInvitations
 }
 

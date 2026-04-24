@@ -57,36 +57,6 @@ func (r *Resolver) effectiveSpaceStorageConfig(sp *space.Space) *space.Space {
 	return &effective
 }
 
-func (r *Resolver) getAccessibleSpace(ctx context.Context, spaceKey *string) (*space.Space, error) {
-	if spaceKey == nil || *spaceKey == "" || !r.cloudEnabled() {
-		return nil, nil
-	}
-
-	sp, err := r.spaceStore.Get(ctx, *spaceKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to look up space %q: %w", *spaceKey, err)
-	}
-	if sp == nil {
-		return nil, &gqlerror.Error{
-			Message:    fmt.Sprintf("space %q not found", *spaceKey),
-			Extensions: map[string]interface{}{"code": "NOT_FOUND"},
-		}
-	}
-
-	allowed, err := r.canReadSpace(ctx, sp)
-	if err != nil {
-		return nil, err
-	}
-	if !allowed {
-		return nil, &gqlerror.Error{
-			Message:    "forbidden: you do not have access to this space",
-			Extensions: map[string]interface{}{"code": "FORBIDDEN"},
-		}
-	}
-
-	return sp, nil
-}
-
 func (r *Resolver) getAccessibleSpaceByID(ctx context.Context, spaceID *string) (*space.Space, error) {
 	if spaceID == nil || *spaceID == "" || !r.cloudEnabled() {
 		return nil, nil

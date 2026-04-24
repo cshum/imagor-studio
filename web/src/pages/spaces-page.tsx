@@ -61,7 +61,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
 
     setIsLeaving(true)
     try {
-      await leaveSpace({ spaceKey: leaveSpaceItem.key })
+      await leaveSpace({ spaceID: leaveSpaceItem.id })
       toast.success(t('pages.spaces.messages.leftSpaceSuccess'))
       setLeaveSpaceItem(null)
       await router.invalidate()
