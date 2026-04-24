@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import { configureImagor } from '@/api/imagor-api'
 import { ImagorConfigForm, type ImagorConfigValues } from '@/components/imagor/imagor-config-form'
+import { ImagorUrlSigningDescription } from '@/components/imagor/imagor-url-signing-description'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import type { AdminImagorLoaderData } from '@/loaders/account-loader'
 
@@ -110,6 +111,8 @@ export function AdminImagorSection({ loaderData }: AdminImagorSectionProps) {
           signerType: imagorStatus?.config?.signerType,
           signerTruncate: imagorStatus?.config?.signerTruncate,
         }}
+        title={t('pages.spaceSettings.imagor.urlSigning')}
+        description={<ImagorUrlSigningDescription />}
         onSave={handleSave}
         disabled={isOverridden}
       />

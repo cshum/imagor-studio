@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { setSpaceRegistryObject, updateSpace } from '@/api/org-api'
+import { ImagorUrlSigningDescription } from '@/components/imagor/imagor-url-signing-description'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
@@ -122,7 +123,7 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
         <form onSubmit={form.handleSubmit(handleSave)}>
           <SettingsSection
             title={t('pages.spaceSettings.imagor.urlSigning')}
-            description={t('pages.spaceSettings.imagor.urlSigningDescription')}
+            description={<ImagorUrlSigningDescription />}
             className='mb-8'
           >
             <FormField
