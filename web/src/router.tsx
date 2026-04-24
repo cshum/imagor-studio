@@ -468,6 +468,33 @@ const spaceCanvasEditorRoute = createRoute({
   },
 })
 
+// /spaces/$spaceKey/f/$galleryKey/editor/new  →  new canvas editor inside a space folder
+const spaceGalleryCanvasEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/spaces/$spaceKey/f/$galleryKey/editor/new',
+  beforeLoad: async (context) => {
+    await requireImageEditorAuth(context)
+    return { space: await resolveSpace(context.params.spaceKey) }
+  },
+  loader: ({ location, context }) => {
+    const { space } = context
+    return canvasEditorLoader({ search: location.searchStr, spaceID: space?.id })
+  },
+  shouldReload: false,
+  component: () => {
+    const loaderData = spaceGalleryCanvasEditorRoute.useLoaderData()
+    const { space } = spaceGalleryCanvasEditorRoute.useRouteContext()
+    const { galleryKey } = spaceGalleryCanvasEditorRoute.useParams()
+    return (
+      <ImageEditorPage
+        loaderData={loaderData}
+        galleryKey={galleryKey}
+        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+      />
+    )
+  },
+})
+
 // /account/spaces/new  →  full-page create-space wizard (no sidebar)
 const createSpaceRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -761,6 +788,7 @@ const routeTree = isEmbeddedMode
       spaceImageEditorRoute,
       spaceGalleryImageEditorRoute,
       spaceCanvasEditorRoute,
+      spaceGalleryCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
         rootPath.addChildren([rootImagePage]),
         spaceSettingsLayoutRoute.addChildren([

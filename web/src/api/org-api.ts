@@ -103,22 +103,25 @@ export async function getSpace(key: string): Promise<GetSpaceQuery['space']> {
 
   const client = getGraphQLClient()
   const sdk = getSdk(client)
-  const request = sdk.GetSpace({ key }).then((result) => {
-    if (!result.space) {
-      spaceQueryCache.delete(key)
+  const request = sdk
+    .GetSpace({ key })
+    .then((result) => {
+      if (!result.space) {
+        spaceQueryCache.delete(key)
+        return result.space
+      }
+
+      setCachedSpace(key, result.space)
+      if (result.space.key !== key) {
+        setCachedSpace(result.space.key, result.space)
+      }
+
       return result.space
-    }
-
-    setCachedSpace(key, result.space)
-    if (result.space.key !== key) {
-      setCachedSpace(result.space.key, result.space)
-    }
-
-    return result.space
-  }).catch((error) => {
-    spaceQueryCache.delete(key)
-    throw error
-  })
+    })
+    .catch((error) => {
+      spaceQueryCache.delete(key)
+      throw error
+    })
 
   spaceQueryCache.set(key, request)
   return request

@@ -963,11 +963,11 @@ export const loadHomeTitle = async (space?: FolderTreeSpaceInput) => {
 
     if (normalizedSpace.spaceKey) {
       try {
-      const resolvedSpace = await getSpace(normalizedSpace.spaceKey)
-      const spaceName = resolvedSpace?.name?.trim()
+        const resolvedSpace = await getSpace(normalizedSpace.spaceKey)
+        const spaceName = resolvedSpace?.name?.trim()
 
-      applyHomeTitle(spaceName || 'Home')
-      return
+        applyHomeTitle(spaceName || 'Home')
+        return
       } catch {
         applyHomeTitle('Home')
         return

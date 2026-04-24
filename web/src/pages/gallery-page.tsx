@@ -1299,6 +1299,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
         open={isNewCanvasDialogOpen}
         onOpenChange={setIsNewCanvasDialogOpen}
         galleryKey={galleryKey}
+        space={space}
       />
 
       <DeleteItemDialog
