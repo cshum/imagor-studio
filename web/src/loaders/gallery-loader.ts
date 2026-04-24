@@ -198,7 +198,10 @@ export const galleryLoader = async ({
     })
 
   const folderTreeState = folderTreeStore.getState()
-  const homeTitle = folderTreeState.homeTitle || routeSpaceKey || 'Home'
+  const resolvedSpaceHomeTitle = spaceName?.trim()
+  const homeTitle = routeSpaceKey
+    ? resolvedSpaceHomeTitle || folderTreeState.homeTitle || routeSpaceKey || 'Home'
+    : folderTreeState.homeTitle || 'Home'
 
   // Use the actual folder name, or custom home title for root
   const galleryName = galleryKey === '' ? homeTitle : galleryKey.split('/').pop() || galleryKey
