@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
 import {
   createRootRoute,
   createRoute,
@@ -50,6 +49,7 @@ import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { rootPageLoader } from '@/loaders/root-page-loader'
+import { AccountProfileRoutePage } from '@/pages/account-profile-route-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { AdminGeneralSection } from '@/pages/admin/general'
 import { AdminImagorSection } from '@/pages/admin/imagor'
@@ -62,7 +62,6 @@ import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
-import { ProfilePage } from '@/pages/profile-page'
 import { RootPage } from '@/pages/root-page'
 import { GeneralSection } from '@/pages/space-settings/general'
 import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
@@ -654,21 +653,7 @@ const accountProfileRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/profile',
   loader: profileLoader,
-  component: () => {
-    const { t } = useTranslation()
-    const loaderData = accountProfileRoute.useLoaderData()
-    return (
-      <>
-        <div className='mb-8'>
-          <h1 className='text-2xl font-semibold tracking-tight'>{t('pages.profile.title')}</h1>
-          <p className='text-muted-foreground mt-1 text-sm'>
-            {t('pages.profile.titleDescription')}
-          </p>
-        </div>
-        <ProfilePage loaderData={loaderData} />
-      </>
-    )
-  },
+  component: AccountProfileRoutePage,
 })
 
 const accountLayoutRoute = createRoute({
