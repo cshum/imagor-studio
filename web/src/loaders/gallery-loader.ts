@@ -7,6 +7,12 @@ import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { hasExtension } from '@/lib/file-extensions.ts'
+import {
+  DEFAULT_FILE_EXTENSIONS,
+  DEFAULT_IMAGE_EXTENSIONS,
+  DEFAULT_SHOW_HIDDEN_FILES,
+  DEFAULT_VIDEO_EXTENSIONS,
+} from '@/lib/gallery-config'
 import { createLatestRequestTracker } from '@/lib/latest-request-tracker'
 import { normalizeDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
@@ -37,9 +43,6 @@ export interface ImageLoaderData {
   galleryKey: string
 }
 
-export const DEFAULT_IMAGE_EXTENSIONS =
-  '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw'
-export const DEFAULT_VIDEO_EXTENSIONS = '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg'
 export const TEMPLATE_EXTENSION = '.imagor.json'
 const latestGalleryLoaderRequests = createLatestRequestTracker()
 
@@ -62,10 +65,10 @@ export const galleryLoader = async ({
 
   // Fetch registry settings for gallery filtering and sorting
   // Priority: User registry → System registry → Hardcoded defaults
-  let extensionsString: string | undefined
-  let imageExtensions: string
-  let videoExtensions: string
-  let showHidden: boolean
+  const extensionsString = `${DEFAULT_FILE_EXTENSIONS},${TEMPLATE_EXTENSION}`
+  const imageExtensions = DEFAULT_IMAGE_EXTENSIONS
+  const videoExtensions = DEFAULT_VIDEO_EXTENSIONS
+  const showHidden = DEFAULT_SHOW_HIDDEN_FILES
   let sortBy: SortOption
   let sortOrder: SortOrder
   let showFileNames: boolean
@@ -110,29 +113,10 @@ export const galleryLoader = async ({
 
     // Fetch system registry for all settings (and as fallback for sorting)
     const systemRegistryResult = await getSystemRegistryMultiple([
-      'config.app_image_extensions',
-      'config.app_video_extensions',
-      'config.app_show_hidden',
       'config.app_default_sort_by',
       'config.app_default_sort_order',
       'config.app_show_file_names',
     ])
-
-    const imageExtensionsEntry = systemRegistryResult.find(
-      (r) => r.key === 'config.app_image_extensions',
-    )
-    const videoExtensionsEntry = systemRegistryResult.find(
-      (r) => r.key === 'config.app_video_extensions',
-    )
-
-    imageExtensions = imageExtensionsEntry?.value || DEFAULT_IMAGE_EXTENSIONS
-    videoExtensions = videoExtensionsEntry?.value || DEFAULT_VIDEO_EXTENSIONS
-
-    // Combine image, video, and template extensions
-    extensionsString = `${imageExtensions},${videoExtensions},${TEMPLATE_EXTENSION}`
-
-    const showHiddenEntry = systemRegistryResult.find((r) => r.key === 'config.app_show_hidden')
-    showHidden = showHiddenEntry?.value === 'true'
 
     // Use user preferences if available, otherwise fall back to system registry, then defaults
     const systemSortByEntry = systemRegistryResult.find(
@@ -149,11 +133,6 @@ export const galleryLoader = async ({
     sortOrder = (userSortOrder || systemSortOrderEntry?.value || 'DESC') as SortOrder
     showFileNames = (userShowFileNames || systemShowFileNamesEntry?.value || 'false') === 'true'
   } catch {
-    // If registry fetch fails, use defaults
-    extensionsString = `${DEFAULT_IMAGE_EXTENSIONS},${DEFAULT_VIDEO_EXTENSIONS}`
-    imageExtensions = DEFAULT_IMAGE_EXTENSIONS
-    videoExtensions = DEFAULT_VIDEO_EXTENSIONS
-    showHidden = false
     sortBy = 'MODIFIED_TIME'
     sortOrder = 'DESC'
     showFileNames = false
@@ -280,16 +259,7 @@ export const imageLoader = async ({
     throw new Error('Image not found')
   }
 
-  let videoExtensions: string
-  try {
-    const registryResult = await getSystemRegistryMultiple(['config.app_video_extensions'])
-    const videoExtensionsEntry = registryResult.find((r) => r.key === 'config.app_video_extensions')
-    videoExtensions = videoExtensionsEntry?.value || DEFAULT_VIDEO_EXTENSIONS
-  } catch {
-    videoExtensions = DEFAULT_VIDEO_EXTENSIONS
-  }
-
-  const isVideo = hasExtension(fileStat.name, videoExtensions)
+  const isVideo = hasExtension(fileStat.name, DEFAULT_VIDEO_EXTENSIONS)
 
   // Use the full-size thumbnail URL for the detail view (same for both images and videos)
   const fullSizeSrc = getFullImageUrl(

@@ -1,5 +1,9 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import type { AdminGeneralLoaderData } from '@/loaders/account-loader'
@@ -13,6 +17,7 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
   const { t } = useTranslation()
   const { authState } = useAuth()
   const isMultiTenant = authState.multiTenant
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   // In multi-tenant mode, gallery/branding/UX settings move to per-space Settings.
   // Platform admin only shows settings that are genuinely platform-wide.
@@ -24,10 +29,6 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
     'config.allow_guest_mode',
     'config.app_default_sort_by',
     'config.app_show_file_names',
-    'config.app_image_extensions',
-    'config.app_video_extensions',
-    'config.app_video_thumbnail_position',
-    'config.app_show_hidden',
   ])
 
   const ALL_SYSTEM_SETTINGS: SystemSetting[] = [
@@ -98,21 +99,9 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
       description: t('pages.admin.systemSettings.fields.showFileNames.description'),
       defaultValue: false,
     },
-    {
-      key: 'config.app_image_extensions',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.imageExtensions.label'),
-      description: t('pages.admin.systemSettings.fields.imageExtensions.description'),
-      defaultValue:
-        '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw',
-    },
-    {
-      key: 'config.app_video_extensions',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.videoExtensions.label'),
-      description: t('pages.admin.systemSettings.fields.videoExtensions.description'),
-      defaultValue: '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
-    },
+  ]
+
+  const ADVANCED_SYSTEM_SETTINGS: SystemSetting[] = [
     {
       key: 'config.app_video_thumbnail_position',
       type: 'select',
@@ -131,13 +120,6 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
         seek_25pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct'),
       },
     },
-    {
-      key: 'config.app_show_hidden',
-      type: 'boolean',
-      label: t('pages.admin.systemSettings.fields.showHidden.label'),
-      description: t('pages.admin.systemSettings.fields.showHidden.description'),
-      defaultValue: false,
-    },
   ]
 
   const SYSTEM_SETTINGS = isMultiTenant
@@ -145,12 +127,38 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
     : ALL_SYSTEM_SETTINGS
 
   return (
-    <SystemSettingsForm
-      title=''
-      description=''
-      settings={SYSTEM_SETTINGS}
-      initialValues={loaderData.registry}
-      systemRegistryList={loaderData.systemRegistryList}
-    />
+    <div className='space-y-6'>
+      <SystemSettingsForm
+        title=''
+        description=''
+        settings={SYSTEM_SETTINGS}
+        initialValues={loaderData.registry}
+        systemRegistryList={loaderData.systemRegistryList}
+      />
+
+      {!isMultiTenant ? (
+        <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+          <CollapsibleTrigger asChild>
+            <Button variant='ghost' className='gap-2' size='sm' type='button'>
+              {showAdvanced ? (
+                <ChevronDown className='text-muted-foreground h-4 w-4' />
+              ) : (
+                <ChevronRight className='text-muted-foreground h-4 w-4' />
+              )}
+              {t('pages.storage.advancedSettings')}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className='pt-4'>
+            <SystemSettingsForm
+              title=''
+              description=''
+              settings={ADVANCED_SYSTEM_SETTINGS}
+              initialValues={loaderData.registry}
+              systemRegistryList={loaderData.systemRegistryList}
+            />
+          </CollapsibleContent>
+        </Collapsible>
+      ) : null}
+    </div>
   )
 }

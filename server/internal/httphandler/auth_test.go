@@ -1175,43 +1175,21 @@ func TestRegisterAdmin(t *testing.T) {
 					IsActive:    true,
 				}, nil)
 
-				// Expect registry population with 4 entries including default language
+				// Expect registry population with default language only
 				mockRegistryStore.On("SetMulti", mock.Anything, registrystore.SystemOwnerID, mock.MatchedBy(func(entries []*registrystore.Registry) bool {
-					if len(entries) != 4 {
+					if len(entries) != 1 {
 						return false
 					}
-					// Verify all four entries
-					imageExtensionsFound := false
-					videoExtensionsFound := false
-					hiddenFound := false
 					languageFound := false
 					for _, entry := range entries {
-						if entry.Key == "config.app_image_extensions" &&
-							entry.Value == ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw" &&
-							!entry.IsEncrypted {
-							imageExtensionsFound = true
-						}
-						if entry.Key == "config.app_video_extensions" &&
-							entry.Value == ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg" &&
-							!entry.IsEncrypted {
-							videoExtensionsFound = true
-						}
-						if entry.Key == "config.app_show_hidden" &&
-							entry.Value == "false" &&
-							!entry.IsEncrypted {
-							hiddenFound = true
-						}
 						if entry.Key == "config.app_default_language" &&
 							entry.Value == "en" &&
 							!entry.IsEncrypted {
 							languageFound = true
 						}
 					}
-					return imageExtensionsFound && videoExtensionsFound && hiddenFound && languageFound
+					return languageFound
 				})).Return([]*registrystore.Registry{
-					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
-					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
-					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 					{Key: "config.app_default_language", Value: "en", IsEncrypted: false},
 				}, nil)
 			},
@@ -1246,11 +1224,8 @@ func TestRegisterAdmin(t *testing.T) {
 							languageFound = true
 						}
 					}
-					return languageFound && len(entries) == 4
+					return languageFound && len(entries) == 1
 				})).Return([]*registrystore.Registry{
-					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
-					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
-					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 					{Key: "config.app_default_language", Value: "zh-CN", IsEncrypted: false},
 				}, nil)
 			},
@@ -1285,11 +1260,8 @@ func TestRegisterAdmin(t *testing.T) {
 							languageFound = true
 						}
 					}
-					return languageFound && len(entries) == 4
+					return languageFound && len(entries) == 1
 				})).Return([]*registrystore.Registry{
-					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
-					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
-					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 					{Key: "config.app_default_language", Value: "it", IsEncrypted: false},
 				}, nil)
 			},
@@ -1324,11 +1296,8 @@ func TestRegisterAdmin(t *testing.T) {
 							languageFound = true
 						}
 					}
-					return languageFound && len(entries) == 4
+					return languageFound && len(entries) == 1
 				})).Return([]*registrystore.Registry{
-					{Key: "config.app_image_extensions", Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2", IsEncrypted: false},
-					{Key: "config.app_video_extensions", Value: ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", IsEncrypted: false},
-					{Key: "config.app_show_hidden", Value: "false", IsEncrypted: false},
 					{Key: "config.app_default_language", Value: "en", IsEncrypted: false},
 				}, nil)
 			},

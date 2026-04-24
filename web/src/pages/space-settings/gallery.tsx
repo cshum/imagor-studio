@@ -1,5 +1,9 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { setSpaceRegistryObject } from '@/api/org-api'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
@@ -13,6 +17,7 @@ interface GallerySectionProps {
 
 export function GallerySection({ spaceKey, initialValues }: GallerySectionProps) {
   const { t } = useTranslation()
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const GALLERY_SETTINGS: SystemSetting[] = [
     {
@@ -59,21 +64,9 @@ export function GallerySection({ spaceKey, initialValues }: GallerySectionProps)
       description: t('pages.admin.systemSettings.fields.showFileNames.description'),
       defaultValue: false,
     },
-    {
-      key: 'config.app_image_extensions',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.imageExtensions.label'),
-      description: t('pages.admin.systemSettings.fields.imageExtensions.description'),
-      defaultValue:
-        '.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw',
-    },
-    {
-      key: 'config.app_video_extensions',
-      type: 'text',
-      label: t('pages.admin.systemSettings.fields.videoExtensions.label'),
-      description: t('pages.admin.systemSettings.fields.videoExtensions.description'),
-      defaultValue: '.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg',
-    },
+  ]
+
+  const ADVANCED_GALLERY_SETTINGS: SystemSetting[] = [
     {
       key: 'config.app_video_thumbnail_position',
       type: 'select',
@@ -92,13 +85,6 @@ export function GallerySection({ spaceKey, initialValues }: GallerySectionProps)
         seek_25pct: t('pages.admin.systemSettings.fields.videoThumbnailPosition.options.seek25pct'),
       },
     },
-    {
-      key: 'config.app_show_hidden',
-      type: 'boolean',
-      label: t('pages.admin.systemSettings.fields.showHidden.label'),
-      description: t('pages.admin.systemSettings.fields.showHidden.description'),
-      defaultValue: false,
-    },
   ]
 
   const handleSave = async (changedValues: Record<string, string>) => {
@@ -106,12 +92,36 @@ export function GallerySection({ spaceKey, initialValues }: GallerySectionProps)
   }
 
   return (
-    <SystemSettingsForm
-      title=''
-      description=''
-      settings={GALLERY_SETTINGS}
-      initialValues={initialValues}
-      saveCallback={handleSave}
-    />
+    <div className='space-y-6'>
+      <SystemSettingsForm
+        title=''
+        description=''
+        settings={GALLERY_SETTINGS}
+        initialValues={initialValues}
+        saveCallback={handleSave}
+      />
+
+      <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+        <CollapsibleTrigger asChild>
+          <Button variant='ghost' className='gap-2' size='sm' type='button'>
+            {showAdvanced ? (
+              <ChevronDown className='text-muted-foreground h-4 w-4' />
+            ) : (
+              <ChevronRight className='text-muted-foreground h-4 w-4' />
+            )}
+            {t('pages.storage.advancedSettings')}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className='pt-4'>
+          <SystemSettingsForm
+            title=''
+            description=''
+            settings={ADVANCED_GALLERY_SETTINGS}
+            initialValues={initialValues}
+            saveCallback={handleSave}
+          />
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   )
 }

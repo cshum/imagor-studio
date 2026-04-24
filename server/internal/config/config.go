@@ -61,9 +61,6 @@ type Config struct {
 	AppTitle                  string // Custom application title
 	AppUrl                    string // Frontend application URL (used for post-OAuth redirect to /auth/callback)
 	AppHomeTitle              string // Custom home page title
-	AppImageExtensions        string // Comma-separated list of image file extensions
-	AppVideoExtensions        string // Comma-separated list of video file extensions
-	AppShowHidden             bool   // Show hidden files starting with dot
 	AppDefaultSortBy          string // Default file sorting option
 	AppDefaultSortOrder       string // Default file sorting order
 	AppVideoThumbnailPosition string // Video thumbnail extraction position
@@ -123,9 +120,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		appTitle                  = fs.String("app-title", "", "custom application title (license required)")
 		appUrl                    = fs.String("app-url", "", "frontend application URL used for post-OAuth redirect (license required for branding)")
 		appHomeTitle              = fs.String("app-home-title", "", "custom home page title")
-		appImageExtensions        = fs.String("app-image-extensions", ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw", "comma-separated list of image file extensions to show in application")
-		appVideoExtensions        = fs.String("app-video-extensions", ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg", "comma-separated list of video file extensions to show in application")
-		appShowHidden             = fs.Bool("app-show-hidden", false, "show hidden files and folders starting with dot")
 		appDefaultSortBy          = fs.String("app-default-sort-by", "MODIFIED_TIME", "default file sorting option: NAME, MODIFIED_TIME, SIZE")
 		appDefaultSortOrder       = fs.String("app-default-sort-order", "DESC", "default file sorting order: ASC, DESC")
 		appVideoThumbnailPosition = fs.String("app-video-thumbnail-position", "first_frame", "video thumbnail extraction position: first_frame, seek_1s, seek_3s, seek_5s, seek_10pct, seek_25pct")
@@ -243,9 +237,6 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppTitle:                    *appTitle,
 		AppUrl:                      *appUrl,
 		AppHomeTitle:                *appHomeTitle,
-		AppImageExtensions:          *appImageExtensions,
-		AppVideoExtensions:          *appVideoExtensions,
-		AppShowHidden:               *appShowHidden,
 		AppDefaultSortBy:            *appDefaultSortBy,
 		AppDefaultSortOrder:         *appDefaultSortOrder,
 		AppVideoThumbnailPosition:   *appVideoThumbnailPosition,

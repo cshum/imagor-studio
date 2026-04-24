@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
@@ -30,6 +32,12 @@ func newSpaceTestResolverWithCloudConfig(spaceStore space.SpaceStore, cloudConfi
 	mockStor := &MockStorage{}
 	sp := NewMockStorageProvider(mockStor)
 	return NewResolver(sp, nil, nil, nil, nil, nil, zap.NewNop(), nil, spaceStore, nil, nil, WithCloudConfig(cloudConfig))
+}
+
+func newSpaceRegistryTestResolver(spaceStore space.SpaceStore, registryStore registrystore.Store, cfg *config.Config) (*Resolver, *MockStorage) {
+	mockStor := &MockStorage{}
+	sp := NewMockStorageProvider(mockStor)
+	return NewResolver(sp, registryStore, nil, nil, cfg, nil, zap.NewNop(), nil, spaceStore, nil, nil), mockStor
 }
 
 // ─── getSpaceStorage unit tests ───────────────────────────────────────────────
@@ -185,6 +193,33 @@ func TestGetSpaceStorage_PlatformManagedUsesCloudConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, stor)
 	mockSpaceStore.AssertExpectations(t)
+}
+
+func TestGetEffectiveVideoThumbnailPosition_UsesSpaceOverride(t *testing.T) {
+	mockSpaceStore := &MockSpaceStore{}
+	mockRegistryStore := &MockRegistryStore{}
+	resolver, _ := newSpaceRegistryTestResolver(mockSpaceStore, mockRegistryStore, &config.Config{})
+
+	spaceRecord := &space.Space{
+		ID:    "space-id-1",
+		Key:   "space-1",
+		OrgID: "org-a",
+	}
+
+	mockRegistryStore.On(
+		"GetMulti",
+		mock.Anything,
+		registrystore.SpaceOwnerID(spaceRecord.ID),
+		[]string{"config.app_video_thumbnail_position"},
+	).Return([]*registrystore.Registry{{
+		Key:   "config.app_video_thumbnail_position",
+		Value: "seek_3s",
+	}}, nil).Once()
+
+	position := (&queryResolver{resolver}).getEffectiveVideoThumbnailPosition(context.Background(), spaceRecord)
+
+	assert.Equal(t, "seek_3s", position)
+	mockRegistryStore.AssertExpectations(t)
 }
 
 // ─── ListFiles integration: auth error paths ─────────────────────────────────

@@ -11,6 +11,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
@@ -96,6 +97,37 @@ func (r *Resolver) storageFromSpaceConfig(sp *space.Space) (storage.Storage, err
 		effective.AccessKeyID, effective.SecretKey,
 		effective.UsePathStyle,
 	)
+}
+
+func (r *queryResolver) getEffectiveVideoThumbnailPosition(ctx context.Context, spaceConfig *space.Space) string {
+	defaultValue := "first_frame"
+	if r.config != nil {
+		configValue, isOverridden := r.config.GetByRegistryKey("config.app_video_thumbnail_position")
+		if isOverridden {
+			return configValue
+		}
+		if configValue != "" {
+			defaultValue = configValue
+		}
+	}
+
+	if spaceConfig != nil && r.registryStore != nil {
+		entries, err := r.registryStore.GetMulti(
+			ctx,
+			registrystore.SpaceOwnerID(spaceConfig.ID),
+			[]string{"config.app_video_thumbnail_position"},
+		)
+		if err == nil && len(entries) > 0 && entries[0] != nil {
+			return entries[0].Value
+		}
+	}
+
+	result := registryutil.GetEffectiveValue(ctx, r.registryStore, r.config, "config.app_video_thumbnail_position")
+	if result.Exists && result.Value != "" {
+		return result.Value
+	}
+
+	return defaultValue
 }
 
 // getSpaceStorage returns the storage instance for the given optional spaceKey.
@@ -432,14 +464,7 @@ func (r *queryResolver) ListFiles(ctx context.Context, path string, spaceKey *st
 		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
 
-	// Read video thumbnail position ONCE for this request
-	videoThumbnailResults := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
-		"config.app_video_thumbnail_position")
-
-	videoThumbnailPos := "first_frame"
-	if len(videoThumbnailResults) > 0 && videoThumbnailResults[0].Exists {
-		videoThumbnailPos = videoThumbnailResults[0].Value
-	}
+	videoThumbnailPos := r.getEffectiveVideoThumbnailPosition(ctx, spaceConfig)
 
 	files := make([]*gql.FileItem, len(result.Items))
 	for i, item := range result.Items {
@@ -495,14 +520,7 @@ func (r *queryResolver) StatFile(ctx context.Context, path string, spaceKey *str
 		return nil, fmt.Errorf("failed to get file stats: %w", err)
 	}
 
-	// Read video thumbnail position for this request
-	videoThumbnailResults := registryutil.GetEffectiveValues(ctx, r.registryStore, r.config,
-		"config.app_video_thumbnail_position")
-
-	videoThumbnailPos := "first_frame"
-	if len(videoThumbnailResults) > 0 && videoThumbnailResults[0].Exists {
-		videoThumbnailPos = videoThumbnailResults[0].Value
-	}
+	videoThumbnailPos := r.getEffectiveVideoThumbnailPosition(ctx, spaceConfig)
 
 	fileStat := &gql.FileStat{
 		Name:         fileInfo.Name,

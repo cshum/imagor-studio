@@ -152,20 +152,6 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 		// Populate default app settings for first admin
 		defaultEntries := []*registrystore.Registry{
 			{
-				Key:   "config.app_image_extensions",
-				Value: ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.tif,.svg,.jxl,.avif,.heic,.heif,.cr2,.raf,.orf,.rw2,.x3f,.cr3,.dng,.nef,.arw,.pef,.raw,.nrw,.srw,.erf,.mrw,.dcr,.kdc,.3fr,.mef,.iiq,.rwl,.sr2,.srf,.crw",
-			},
-			{
-				Key:         "config.app_video_extensions",
-				Value:       ".mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp,.flv,.wmv,.mpg,.mpeg",
-				IsEncrypted: false,
-			},
-			{
-				Key:         "config.app_show_hidden",
-				Value:       "false",
-				IsEncrypted: false,
-			},
-			{
 				Key:         "config.app_default_language",
 				Value:       defaultLanguage,
 				IsEncrypted: false,

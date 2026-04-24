@@ -43,7 +43,10 @@ import { addCacheBuster } from '@/lib/api-utils'
 import { hasExtension } from '@/lib/file-extensions'
 import {
   DEFAULT_IMAGE_EXTENSIONS,
+  DEFAULT_SHOW_HIDDEN_FILES,
   DEFAULT_VIDEO_EXTENSIONS,
+} from '@/lib/gallery-config'
+import {
   TEMPLATE_EXTENSION,
 } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
@@ -200,9 +203,6 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           'config.app_default_sort_by',
           'config.app_default_sort_order',
           'config.app_show_file_names',
-          'config.app_image_extensions',
-          'config.app_video_extensions',
-          'config.app_show_hidden',
         ])
 
         const systemSortBy = systemRegistryResult.find(
@@ -214,22 +214,12 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         const systemShowFileNames = systemRegistryResult.find(
           (r) => r.key === 'config.app_show_file_names',
         )?.value
-        const systemImageExtensions = systemRegistryResult.find(
-          (r) => r.key === 'config.app_image_extensions',
-        )?.value
-        const systemVideoExtensions = systemRegistryResult.find(
-          (r) => r.key === 'config.app_video_extensions',
-        )?.value
-        const systemShowHidden = systemRegistryResult.find(
-          (r) => r.key === 'config.app_show_hidden',
-        )?.value
-
         setSortBy((userSortBy || systemSortBy || 'NAME') as SortOption)
         setSortOrder((userSortOrder || systemSortOrder || 'ASC') as SortOrder)
         setShowFileNames((userShowFileNames || systemShowFileNames || 'true') === 'true')
-        setImageExtensions(systemImageExtensions || DEFAULT_IMAGE_EXTENSIONS)
-        setVideoExtensions(systemVideoExtensions || DEFAULT_VIDEO_EXTENSIONS)
-        setShowHidden((systemShowHidden || 'false') === 'true')
+        setImageExtensions(DEFAULT_IMAGE_EXTENSIONS)
+        setVideoExtensions(DEFAULT_VIDEO_EXTENSIONS)
+        setShowHidden(DEFAULT_SHOW_HIDDEN_FILES)
         setConfigReady(true)
       } catch {
         setSortBy('NAME')
@@ -237,6 +227,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         setShowFileNames(true)
         setImageExtensions(DEFAULT_IMAGE_EXTENSIONS)
         setVideoExtensions(DEFAULT_VIDEO_EXTENSIONS)
+        setShowHidden(DEFAULT_SHOW_HIDDEN_FILES)
         setConfigReady(true)
       }
     }
