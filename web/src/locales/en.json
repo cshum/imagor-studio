@@ -928,7 +928,7 @@
         "unchanged": "(leave blank to keep existing)"
       },
       "imagor": {
-        "description": "Configure imagor URL signing settings for this space.",
+        "description": "Configure imagor settings for this space.",
         "urlSigning": "URL Signing",
         "urlSigningDescription": "HMAC signing for secure imagor transformation URL generation.",
         "imagorSecret": "Signing Secret",

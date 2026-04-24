@@ -900,7 +900,7 @@
         }
       },
       "imagor": {
-        "description": "为此空间配置 imagor URL 签名设置。",
+        "description": "为此空间配置 imagor 设置。",
         "urlSigning": "URL 签名",
         "urlSigningDescription": "HMAC 签名，用于安全生成 imagor 变换 URL。",
         "imagorSecret": "签名密鑰",

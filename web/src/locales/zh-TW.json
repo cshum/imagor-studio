@@ -918,7 +918,7 @@
         }
       },
       "imagor": {
-        "description": "為此空間設定 imagor URL 簽名設定。",
+        "description": "為此空間設定 imagor 設定。",
         "urlSigning": "URL 簽名",
         "urlSigningDescription": "HMAC 簽名，用於安全生成 imagor 變換 URL。",
         "imagorSecret": "簽名金鑰",

@@ -928,7 +928,7 @@
         "unchanged": "(lascia vuoto per mantenere il valore esistente)"
       },
       "imagor": {
-        "description": "Configura le impostazioni di firma URL di imagor per questo spazio.",
+        "description": "Configura le impostazioni di imagor per questo spazio.",
         "urlSigning": "Firma URL",
         "urlSigningDescription": "Firma HMAC per la generazione sicura di URL di trasformazione imagor.",
         "imagorSecret": "Segreto di firma",
