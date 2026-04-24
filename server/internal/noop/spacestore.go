@@ -42,6 +42,10 @@ func (n *SpaceStore) Get(_ context.Context, _ string) (*space.Space, error) {
 	return nil, ErrCloudDisabled
 }
 
+func (n *SpaceStore) GetByID(_ context.Context, _ string) (*space.Space, error) {
+	return nil, ErrCloudDisabled
+}
+
 func (n *SpaceStore) List(_ context.Context) ([]*space.Space, error) {
 	return nil, ErrCloudDisabled
 }

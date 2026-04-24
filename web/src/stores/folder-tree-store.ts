@@ -812,7 +812,7 @@ export const loadRootFolders = async (space?: FolderTreeSpaceInput) => {
 
     const result = await listFiles({
       path: '',
-      spaceKey: normalizedSpace?.spaceKey,
+      spaceID: normalizedSpace?.spaceID,
       onlyFolders: true,
       sortBy: 'NAME',
       sortOrder: 'ASC',
@@ -862,7 +862,7 @@ export const loadFolderChildren = async (
 
     const result = await listFiles({
       path,
-      spaceKey: normalizedSpace?.spaceKey,
+      spaceID: normalizedSpace?.spaceID,
       onlyFolders: true,
       sortBy: 'NAME',
       sortOrder: 'ASC',

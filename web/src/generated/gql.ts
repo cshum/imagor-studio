@@ -17,8 +17,8 @@ import * as types from './graphql'
 type Documents = {
   '\n  query ImagorStatus {\n    imagorStatus {\n      configured\n      lastUpdated\n      isOverriddenByConfig\n      config {\n        hasSecret\n        signerType\n        signerTruncate\n      }\n    }\n  }\n': typeof types.ImagorStatusDocument
   '\n  mutation ConfigureImagor($input: ImagorInput!) {\n    configureImagor(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureImagorDocument
-  '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceKey: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceKey: $spaceKey\n      params: $params\n    )\n  }\n': typeof types.GenerateImagorUrlDocument
-  '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceKey: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceKey: $spaceKey\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n': typeof types.GenerateImagorUrlFromTemplateDocument
+  '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceID: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceID: $spaceID\n      params: $params\n    )\n  }\n': typeof types.GenerateImagorUrlDocument
+  '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceID: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceID: $spaceID\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n': typeof types.GenerateImagorUrlFromTemplateDocument
   '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n': typeof types.MyOrganizationDocument
   '\n  query ListSpaces {\n    spaces {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.ListSpacesDocument
   '\n  query GetSpace($key: String!) {\n    space(key: $key) {\n      id\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.GetSpaceDocument
@@ -52,22 +52,22 @@ type Documents = {
   '\n  mutation SetSystemRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!]) {\n    setSystemRegistry(entry: $entry, entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.SetSystemRegistryDocument
   '\n  mutation DeleteSystemRegistry($key: String!) {\n    deleteSystemRegistry(key: $key)\n  }\n': typeof types.DeleteSystemRegistryDocument
   '\n  query LicenseStatus {\n    licenseStatus {\n      isLicensed\n      licenseType\n      email\n      message\n      isOverriddenByConfig\n      supportMessage\n      maskedLicenseKey\n      activatedAt\n    }\n  }\n': typeof types.LicenseStatusDocument
-  '\n  query ListFiles(\n    $path: String!\n    $spaceKey: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceKey: $spaceKey\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n': typeof types.ListFilesDocument
-  '\n  query StatFile($path: String!, $spaceKey: String) {\n    statFile(path: $path, spaceKey: $spaceKey) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n': typeof types.StatFileDocument
-  '\n  mutation UploadFile($path: String!, $spaceKey: String, $content: Upload!) {\n    uploadFile(path: $path, spaceKey: $spaceKey, content: $content)\n  }\n': typeof types.UploadFileDocument
-  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceKey: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceKey: $spaceKey\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n': typeof types.RequestUploadDocument
-  '\n  mutation DeleteFile($path: String!, $spaceKey: String) {\n    deleteFile(path: $path, spaceKey: $spaceKey)\n  }\n': typeof types.DeleteFileDocument
-  '\n  mutation CreateFolder($path: String!, $spaceKey: String) {\n    createFolder(path: $path, spaceKey: $spaceKey)\n  }\n': typeof types.CreateFolderDocument
-  '\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n': typeof types.CopyFileDocument
-  '\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n': typeof types.MoveFileDocument
+  '\n  query ListFiles(\n    $path: String!\n    $spaceID: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceID: $spaceID\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n': typeof types.ListFilesDocument
+  '\n  query StatFile($path: String!, $spaceID: String) {\n    statFile(path: $path, spaceID: $spaceID) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n': typeof types.StatFileDocument
+  '\n  mutation UploadFile($path: String!, $spaceID: String, $content: Upload!) {\n    uploadFile(path: $path, spaceID: $spaceID, content: $content)\n  }\n': typeof types.UploadFileDocument
+  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n': typeof types.RequestUploadDocument
+  '\n  mutation DeleteFile($path: String!, $spaceID: String) {\n    deleteFile(path: $path, spaceID: $spaceID)\n  }\n': typeof types.DeleteFileDocument
+  '\n  mutation CreateFolder($path: String!, $spaceID: String) {\n    createFolder(path: $path, spaceID: $spaceID)\n  }\n': typeof types.CreateFolderDocument
+  '\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceID: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)\n  }\n': typeof types.CopyFileDocument
+  '\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceID: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)\n  }\n': typeof types.MoveFileDocument
   '\n  query StorageStatus {\n    storageStatus {\n      configured\n      supportsPresignedUpload\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n': typeof types.StorageStatusDocument
   '\n  mutation ConfigureFileStorage($input: FileStorageInput!) {\n    configureFileStorage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureFileStorageDocument
   '\n  mutation ConfigureS3Storage($input: S3StorageInput!) {\n    configureS3Storage(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureS3StorageDocument
   '\n  mutation TestStorageConfig($input: StorageConfigInput!) {\n    testStorageConfig(input: $input) {\n      success\n      message\n      details\n      code\n    }\n  }\n': typeof types.TestStorageConfigDocument
   '\n  mutation BeginStorageUploadProbe(\n    $input: StorageConfigInput!\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    beginStorageUploadProbe(\n      input: $input\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      probePath\n      uploadURL\n      expiresAt\n    }\n  }\n': typeof types.BeginStorageUploadProbeDocument
   '\n  mutation CompleteStorageUploadProbe(\n    $input: StorageConfigInput!\n    $probePath: String!\n    $expectedContent: String!\n  ) {\n    completeStorageUploadProbe(\n      input: $input\n      probePath: $probePath\n      expectedContent: $expectedContent\n    ) {\n      success\n      message\n      details\n      code\n    }\n  }\n': typeof types.CompleteStorageUploadProbeDocument
-  '\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {\n    saveTemplate(input: $input, spaceKey: $spaceKey) {\n      success\n      templatePath\n      message\n    }\n  }\n': typeof types.SaveTemplateDocument
-  '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)\n  }\n': typeof types.RegenerateTemplatePreviewDocument
+  '\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceID: String) {\n    saveTemplate(input: $input, spaceID: $spaceID) {\n      success\n      templatePath\n      message\n    }\n  }\n': typeof types.SaveTemplateDocument
+  '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceID: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceID: $spaceID)\n  }\n': typeof types.RegenerateTemplatePreviewDocument
   '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    hasPassword\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n': typeof types.UserInfoFragmentDoc
   '\n  query Me {\n    me {\n      ...UserInfo\n    }\n  }\n': typeof types.MeDocument
   '\n  query GetUser($id: ID!) {\n    user(id: $id) {\n      ...UserInfo\n    }\n  }\n': typeof types.GetUserDocument
@@ -85,9 +85,9 @@ const documents: Documents = {
     types.ImagorStatusDocument,
   '\n  mutation ConfigureImagor($input: ImagorInput!) {\n    configureImagor(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n':
     types.ConfigureImagorDocument,
-  '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceKey: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceKey: $spaceKey\n      params: $params\n    )\n  }\n':
+  '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceID: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceID: $spaceID\n      params: $params\n    )\n  }\n':
     types.GenerateImagorUrlDocument,
-  '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceKey: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceKey: $spaceKey\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n':
+  '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceID: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceID: $spaceID\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n':
     types.GenerateImagorUrlFromTemplateDocument,
   '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n':
     types.MyOrganizationDocument,
@@ -155,21 +155,21 @@ const documents: Documents = {
     types.DeleteSystemRegistryDocument,
   '\n  query LicenseStatus {\n    licenseStatus {\n      isLicensed\n      licenseType\n      email\n      message\n      isOverriddenByConfig\n      supportMessage\n      maskedLicenseKey\n      activatedAt\n    }\n  }\n':
     types.LicenseStatusDocument,
-  '\n  query ListFiles(\n    $path: String!\n    $spaceKey: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceKey: $spaceKey\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n':
+  '\n  query ListFiles(\n    $path: String!\n    $spaceID: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceID: $spaceID\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n':
     types.ListFilesDocument,
-  '\n  query StatFile($path: String!, $spaceKey: String) {\n    statFile(path: $path, spaceKey: $spaceKey) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n':
+  '\n  query StatFile($path: String!, $spaceID: String) {\n    statFile(path: $path, spaceID: $spaceID) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n':
     types.StatFileDocument,
-  '\n  mutation UploadFile($path: String!, $spaceKey: String, $content: Upload!) {\n    uploadFile(path: $path, spaceKey: $spaceKey, content: $content)\n  }\n':
+  '\n  mutation UploadFile($path: String!, $spaceID: String, $content: Upload!) {\n    uploadFile(path: $path, spaceID: $spaceID, content: $content)\n  }\n':
     types.UploadFileDocument,
-  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceKey: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceKey: $spaceKey\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n':
+  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n':
     types.RequestUploadDocument,
-  '\n  mutation DeleteFile($path: String!, $spaceKey: String) {\n    deleteFile(path: $path, spaceKey: $spaceKey)\n  }\n':
+  '\n  mutation DeleteFile($path: String!, $spaceID: String) {\n    deleteFile(path: $path, spaceID: $spaceID)\n  }\n':
     types.DeleteFileDocument,
-  '\n  mutation CreateFolder($path: String!, $spaceKey: String) {\n    createFolder(path: $path, spaceKey: $spaceKey)\n  }\n':
+  '\n  mutation CreateFolder($path: String!, $spaceID: String) {\n    createFolder(path: $path, spaceID: $spaceID)\n  }\n':
     types.CreateFolderDocument,
-  '\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n':
+  '\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceID: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)\n  }\n':
     types.CopyFileDocument,
-  '\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n':
+  '\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceID: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)\n  }\n':
     types.MoveFileDocument,
   '\n  query StorageStatus {\n    storageStatus {\n      configured\n      supportsPresignedUpload\n      type\n      lastUpdated\n      isOverriddenByConfig\n      fileConfig {\n        baseDir\n        mkdirPermissions\n        writePermissions\n      }\n      s3Config {\n        bucket\n        region\n        endpoint\n        forcePathStyle\n        baseDir\n      }\n    }\n  }\n':
     types.StorageStatusDocument,
@@ -183,9 +183,9 @@ const documents: Documents = {
     types.BeginStorageUploadProbeDocument,
   '\n  mutation CompleteStorageUploadProbe(\n    $input: StorageConfigInput!\n    $probePath: String!\n    $expectedContent: String!\n  ) {\n    completeStorageUploadProbe(\n      input: $input\n      probePath: $probePath\n      expectedContent: $expectedContent\n    ) {\n      success\n      message\n      details\n      code\n    }\n  }\n':
     types.CompleteStorageUploadProbeDocument,
-  '\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {\n    saveTemplate(input: $input, spaceKey: $spaceKey) {\n      success\n      templatePath\n      message\n    }\n  }\n':
+  '\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceID: String) {\n    saveTemplate(input: $input, spaceID: $spaceID) {\n      success\n      templatePath\n      message\n    }\n  }\n':
     types.SaveTemplateDocument,
-  '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)\n  }\n':
+  '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceID: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceID: $spaceID)\n  }\n':
     types.RegenerateTemplatePreviewDocument,
   '\n  fragment UserInfo on User {\n    id\n    displayName\n    username\n    role\n    isActive\n    createdAt\n    updatedAt\n    email\n    pendingEmail\n    emailVerified\n    hasPassword\n    avatarUrl\n    authProviders {\n      provider\n      email\n      linkedAt\n    }\n  }\n':
     types.UserInfoFragmentDoc,
@@ -240,14 +240,14 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceKey: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceKey: $spaceKey\n      params: $params\n    )\n  }\n',
-): (typeof documents)['\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceKey: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceKey: $spaceKey\n      params: $params\n    )\n  }\n']
+  source: '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceID: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceID: $spaceID\n      params: $params\n    )\n  }\n',
+): (typeof documents)['\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceID: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceID: $spaceID\n      params: $params\n    )\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceKey: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceKey: $spaceKey\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n',
-): (typeof documents)['\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceKey: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceKey: $spaceKey\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n']
+  source: '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceID: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceID: $spaceID\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n',
+): (typeof documents)['\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceID: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceID: $spaceID\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -450,50 +450,50 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query ListFiles(\n    $path: String!\n    $spaceKey: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceKey: $spaceKey\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n',
-): (typeof documents)['\n  query ListFiles(\n    $path: String!\n    $spaceKey: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceKey: $spaceKey\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n']
+  source: '\n  query ListFiles(\n    $path: String!\n    $spaceID: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceID: $spaceID\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n',
+): (typeof documents)['\n  query ListFiles(\n    $path: String!\n    $spaceID: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceID: $spaceID\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query StatFile($path: String!, $spaceKey: String) {\n    statFile(path: $path, spaceKey: $spaceKey) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n',
-): (typeof documents)['\n  query StatFile($path: String!, $spaceKey: String) {\n    statFile(path: $path, spaceKey: $spaceKey) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n']
+  source: '\n  query StatFile($path: String!, $spaceID: String) {\n    statFile(path: $path, spaceID: $spaceID) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query StatFile($path: String!, $spaceID: String) {\n    statFile(path: $path, spaceID: $spaceID) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation UploadFile($path: String!, $spaceKey: String, $content: Upload!) {\n    uploadFile(path: $path, spaceKey: $spaceKey, content: $content)\n  }\n',
-): (typeof documents)['\n  mutation UploadFile($path: String!, $spaceKey: String, $content: Upload!) {\n    uploadFile(path: $path, spaceKey: $spaceKey, content: $content)\n  }\n']
+  source: '\n  mutation UploadFile($path: String!, $spaceID: String, $content: Upload!) {\n    uploadFile(path: $path, spaceID: $spaceID, content: $content)\n  }\n',
+): (typeof documents)['\n  mutation UploadFile($path: String!, $spaceID: String, $content: Upload!) {\n    uploadFile(path: $path, spaceID: $spaceID, content: $content)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation RequestUpload(\n    $path: String!\n    $spaceKey: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceKey: $spaceKey\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n',
-): (typeof documents)['\n  mutation RequestUpload(\n    $path: String!\n    $spaceKey: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceKey: $spaceKey\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n']
+  source: '\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation DeleteFile($path: String!, $spaceKey: String) {\n    deleteFile(path: $path, spaceKey: $spaceKey)\n  }\n',
-): (typeof documents)['\n  mutation DeleteFile($path: String!, $spaceKey: String) {\n    deleteFile(path: $path, spaceKey: $spaceKey)\n  }\n']
+  source: '\n  mutation DeleteFile($path: String!, $spaceID: String) {\n    deleteFile(path: $path, spaceID: $spaceID)\n  }\n',
+): (typeof documents)['\n  mutation DeleteFile($path: String!, $spaceID: String) {\n    deleteFile(path: $path, spaceID: $spaceID)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation CreateFolder($path: String!, $spaceKey: String) {\n    createFolder(path: $path, spaceKey: $spaceKey)\n  }\n',
-): (typeof documents)['\n  mutation CreateFolder($path: String!, $spaceKey: String) {\n    createFolder(path: $path, spaceKey: $spaceKey)\n  }\n']
+  source: '\n  mutation CreateFolder($path: String!, $spaceID: String) {\n    createFolder(path: $path, spaceID: $spaceID)\n  }\n',
+): (typeof documents)['\n  mutation CreateFolder($path: String!, $spaceID: String) {\n    createFolder(path: $path, spaceID: $spaceID)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n',
-): (typeof documents)['\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n']
+  source: '\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceID: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)\n  }\n',
+): (typeof documents)['\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceID: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n',
-): (typeof documents)['\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)\n  }\n']
+  source: '\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceID: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)\n  }\n',
+): (typeof documents)['\n  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceID: String) {\n    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -534,14 +534,14 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {\n    saveTemplate(input: $input, spaceKey: $spaceKey) {\n      success\n      templatePath\n      message\n    }\n  }\n',
-): (typeof documents)['\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {\n    saveTemplate(input: $input, spaceKey: $spaceKey) {\n      success\n      templatePath\n      message\n    }\n  }\n']
+  source: '\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceID: String) {\n    saveTemplate(input: $input, spaceID: $spaceID) {\n      success\n      templatePath\n      message\n    }\n  }\n',
+): (typeof documents)['\n  mutation SaveTemplate($input: SaveTemplateInput!, $spaceID: String) {\n    saveTemplate(input: $input, spaceID: $spaceID) {\n      success\n      templatePath\n      message\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)\n  }\n',
-): (typeof documents)['\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)\n  }\n']
+  source: '\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceID: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceID: $spaceID)\n  }\n',
+): (typeof documents)['\n  mutation RegenerateTemplatePreview($templatePath: String!, $spaceID: String) {\n    regenerateTemplatePreview(templatePath: $templatePath, spaceID: $spaceID)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

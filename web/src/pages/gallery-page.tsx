@@ -249,7 +249,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
           type: item.type === 'folder' ? 'folder' : 'file',
         })),
         destinationPath: targetFolderKey,
-        spaceKey,
+        spaceID: space?.spaceID,
         onProgress: ({ completedCount }) => {
           toast.loading(getMoveProgressMessage(completedCount, items.length), { id: toastId })
         },
@@ -571,7 +571,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
           ? `${galleryKey}/${deleteItemDialog.itemKey}`
           : deleteItemDialog.itemKey
 
-        await deleteFile(itemPath, spaceKey)
+        await deleteFile(itemPath, space?.spaceID)
         await router.invalidate()
         toast.success(
           t('pages.gallery.deleteImage.success', { fileName: deleteItemDialog.itemName }),
@@ -634,7 +634,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
         pathParts[pathParts.length - 1] = newName
         const newPath = pathParts.join('/')
 
-        await moveFile(renameDialog.itemPath, newPath, spaceKey)
+        await moveFile(renameDialog.itemPath, newPath, space?.spaceID)
         await router.invalidate()
         toast.success(t('pages.gallery.renameItem.success', { name: newName }))
       }
@@ -676,7 +676,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
       const imagePath = joinImagePath(galleryKey, imageKey)
       const url = await generateImagorUrl({
         imagePath,
-        spaceKey,
+        spaceID: space?.spaceID,
         params: params as ImagorParamsInput,
       })
       const fullUrl = getFullImageUrl(url)
@@ -709,7 +709,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
       const imagePath = joinImagePath(galleryKey, imageKey)
       const url = await generateImagorUrl({
         imagePath,
-        spaceKey,
+        spaceID: space?.spaceID,
         params: {
           filters,
         } as ImagorParamsInput,
@@ -783,7 +783,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
       // Delete all items sequentially
       for (const folderKey of folders) {
         try {
-          await deleteFile(folderKey, spaceKey)
+          await deleteFile(folderKey, space?.spaceID)
           successCount++
         } catch {
           failCount++
@@ -792,7 +792,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
 
       for (const imageKey of images) {
         try {
-          await deleteFile(imageKey, spaceKey)
+          await deleteFile(imageKey, space?.spaceID)
           successCount++
         } catch {
           failCount++
@@ -1112,7 +1112,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
           existingFiles={images.map((img) => img.imageName)}
           imageExtensions={imageExtensions}
           videoExtensions={videoExtensions}
-          spaceKey={spaceKey}
+          spaceID={space?.spaceID}
           onFileSelect={handleFileSelectHandler}
           onUploadStateChange={setUploadState}
           className='min-h-screen'
@@ -1265,7 +1265,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
                           draggedItems={dragState.draggedItems}
                           galleryKey={galleryKey}
                           onTemplatePreviewError={(templatePath) =>
-                            regenerateTemplatePreview(templatePath, spaceKey)
+                            regenerateTemplatePreview(templatePath, space?.spaceID)
                           }
                           interactive={!isImageViewOpen}
                           {...imageGridProps}
@@ -1284,7 +1284,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
         open={isCreateFolderDialogOpen}
         onOpenChange={setIsCreateFolderDialogOpen}
         currentPath={galleryKey}
-        spaceKey={spaceKey}
+        spaceID={space?.spaceID}
       />
 
       <NewCanvasDialog

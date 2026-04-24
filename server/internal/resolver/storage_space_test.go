@@ -40,44 +40,44 @@ func newSpaceRegistryTestResolver(spaceStore space.SpaceStore, registryStore reg
 	return NewResolver(sp, registryStore, nil, nil, cfg, nil, zap.NewNop(), nil, spaceStore, nil, nil), mockStor
 }
 
-// ─── getSpaceStorage unit tests ───────────────────────────────────────────────
+// ─── getSpaceStorageByID unit tests ───────────────────────────────────────────
 
-// TestGetSpaceStorage_NilSpaceKey: nil key with active spaceStore → NOT_AVAILABLE error.
+// TestGetSpaceStorage_NilSpaceID: nil id with active spaceStore → NOT_AVAILABLE error.
 // In multi-tenant mode the root gallery has no system storage; callers must provide
-// a spaceKey.  spaceStore.Get must never be called.
-func TestGetSpaceStorage_NilSpaceKey(t *testing.T) {
+// a spaceID. spaceStore.GetByID must never be called.
+func TestGetSpaceStorage_NilSpaceID(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
 	r := newSpaceTestResolver(mockSpaceStore)
 
-	stor, err := r.getSpaceStorage(context.Background(), nil)
+	stor, err := r.getSpaceStorageByID(context.Background(), nil)
 	assert.Error(t, err)
 	assert.Nil(t, stor)
 	gqlErr, ok := err.(*gqlerror.Error)
 	assert.True(t, ok, "expected a gqlerror.Error")
 	assert.Equal(t, "NOT_AVAILABLE", gqlErr.Extensions["code"])
-	mockSpaceStore.AssertNotCalled(t, "Get")
+	mockSpaceStore.AssertNotCalled(t, "GetByID")
 }
 
-// TestGetSpaceStorage_EmptySpaceKey: empty-string key with active spaceStore → NOT_AVAILABLE error.
-func TestGetSpaceStorage_EmptySpaceKey(t *testing.T) {
+// TestGetSpaceStorage_EmptySpaceID: empty-string id with active spaceStore → NOT_AVAILABLE error.
+func TestGetSpaceStorage_EmptySpaceID(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
 	r := newSpaceTestResolver(mockSpaceStore)
 
-	stor, err := r.getSpaceStorage(context.Background(), ptrStr(""))
+	stor, err := r.getSpaceStorageByID(context.Background(), ptrStr(""))
 	assert.Error(t, err)
 	assert.Nil(t, stor)
 	gqlErr, ok := err.(*gqlerror.Error)
 	assert.True(t, ok, "expected a gqlerror.Error")
 	assert.Equal(t, "NOT_AVAILABLE", gqlErr.Extensions["code"])
-	mockSpaceStore.AssertNotCalled(t, "Get")
+	mockSpaceStore.AssertNotCalled(t, "GetByID")
 }
 
 // TestGetSpaceStorage_SpaceStoreNil: multi-tenancy disabled (spaceStore == nil)
-// → transparent fallback even when a non-empty key is supplied.
+// → transparent fallback even when a non-empty id is supplied.
 func TestGetSpaceStorage_SpaceStoreNil(t *testing.T) {
 	r := newSpaceTestResolver(nil)
 
-	stor, err := r.getSpaceStorage(context.Background(), ptrStr("space-1"))
+	stor, err := r.getSpaceStorageByID(context.Background(), ptrStr("space-1"))
 	assert.NoError(t, err)
 	assert.NotNil(t, stor)
 }
@@ -85,13 +85,13 @@ func TestGetSpaceStorage_SpaceStoreNil(t *testing.T) {
 // TestGetSpaceStorage_NotFound: spaceStore returns (nil, nil) → NOT_FOUND gqlerror.
 func TestGetSpaceStorage_NotFound(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "space-1").
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").
 		Return((*space.Space)(nil), nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
 
-	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	stor, err := r.getSpaceStorageByID(ctx, ptrStr("space-1"))
 	assert.Nil(t, stor)
 	assert.Error(t, err)
 
@@ -109,13 +109,13 @@ func TestGetSpaceStorage_OrgMismatch(t *testing.T) {
 		Bucket: "the-bucket",
 	}
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "space-1").Return(space, nil)
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(space, nil)
 	mockSpaceStore.On("HasMember", mock.Anything, "space-1", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
 
-	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	stor, err := r.getSpaceStorageByID(ctx, ptrStr("space-1"))
 	assert.Nil(t, stor)
 	assert.Error(t, err)
 
@@ -135,13 +135,13 @@ func TestGetSpaceStorage_GuestMemberAllowed(t *testing.T) {
 		Region:      "us-east-1",
 	}
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "space-1").Return(space, nil)
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(space, nil)
 	mockSpaceStore.On("HasMember", mock.Anything, "space-1", "user-1").Return(true, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
 
-	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	stor, err := r.getSpaceStorageByID(ctx, ptrStr("space-1"))
 	assert.NotNil(t, stor)
 	assert.NoError(t, err)
 	mockSpaceStore.AssertExpectations(t)
@@ -160,12 +160,12 @@ func TestGetSpaceStorage_Valid(t *testing.T) {
 		SecretKey:   "test-secret",
 	}
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "space-1").Return(space, nil)
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(space, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
 	ctx := createAdminContextWithOrg("user-1", "org-a")
 
-	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	stor, err := r.getSpaceStorageByID(ctx, ptrStr("space-1"))
 	assert.NoError(t, err)
 	assert.NotNil(t, stor) // S3 client built without network calls
 	mockSpaceStore.AssertExpectations(t)
@@ -179,7 +179,7 @@ func TestGetSpaceStorage_PlatformManagedUsesCloudConfig(t *testing.T) {
 		StorageType: "managed",
 	}
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "space-1").Return(space, nil)
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(space, nil)
 
 	r := newSpaceTestResolverWithCloudConfig(mockSpaceStore, management.CloudConfig{
 		PlatformS3Bucket:       "platform-bucket",
@@ -192,7 +192,7 @@ func TestGetSpaceStorage_PlatformManagedUsesCloudConfig(t *testing.T) {
 	})
 	ctx := createAdminContextWithOrg("user-1", "org-a")
 
-	stor, err := r.getSpaceStorage(ctx, ptrStr("space-1"))
+	stor, err := r.getSpaceStorageByID(ctx, ptrStr("space-1"))
 	assert.NoError(t, err)
 	assert.NotNil(t, stor)
 	mockSpaceStore.AssertExpectations(t)
@@ -227,11 +227,11 @@ func TestGetEffectiveVideoThumbnailPosition_UsesSpaceOverride(t *testing.T) {
 
 // ─── ListFiles integration: auth error paths ─────────────────────────────────
 
-// TestListFiles_SpaceKeyNotFound: passing a spaceKey that doesn't exist in the
+// TestListFiles_SpaceIDNotFound: passing a spaceID that doesn't exist in the
 // store propagates NOT_FOUND through the resolver.
-func TestListFiles_SpaceKeyNotFound(t *testing.T) {
+func TestListFiles_SpaceIDNotFound(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "missing-space").
+	mockSpaceStore.On("GetByID", mock.Anything, "missing-space").
 		Return((*space.Space)(nil), nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
@@ -250,16 +250,16 @@ func TestListFiles_SpaceKeyNotFound(t *testing.T) {
 	mockSpaceStore.AssertExpectations(t)
 }
 
-// TestListFiles_SpaceKeyForbidden: passing a spaceKey whose org doesn't match the
+// TestListFiles_SpaceIDForbidden: passing a spaceID whose org doesn't match the
 // caller's JWT org returns FORBIDDEN.
-func TestListFiles_SpaceKeyForbidden(t *testing.T) {
+func TestListFiles_SpaceIDForbidden(t *testing.T) {
 	space := &space.Space{
 		ID:     "space-other",
 		OrgID:  "org-b", // caller is in org-a
 		Bucket: "b",
 	}
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+	mockSpaceStore.On("GetByID", mock.Anything, "other-space").Return(space, nil)
 	mockSpaceStore.On("HasMember", mock.Anything, "space-other", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
@@ -278,15 +278,15 @@ func TestListFiles_SpaceKeyForbidden(t *testing.T) {
 	mockSpaceStore.AssertExpectations(t)
 }
 
-// TestDeleteFile_SpaceKeyForbidden: delete on a cross-org space also returns FORBIDDEN.
-func TestDeleteFile_SpaceKeyForbidden(t *testing.T) {
+// TestDeleteFile_SpaceIDForbidden: delete on a cross-org space also returns FORBIDDEN.
+func TestDeleteFile_SpaceIDForbidden(t *testing.T) {
 	space := &space.Space{
 		ID:     "space-other",
 		OrgID:  "org-b",
 		Bucket: "b",
 	}
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+	mockSpaceStore.On("GetByID", mock.Anything, "other-space").Return(space, nil)
 	mockSpaceStore.On("HasMember", mock.Anything, "space-other", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
@@ -315,10 +315,10 @@ var minimalTemplateInput = gql.SaveTemplateInput{
 	SavePath:        "",
 }
 
-// TestSaveTemplate_SpaceKeyNotFound: unknown space → NOT_FOUND gqlerror.
-func TestSaveTemplate_SpaceKeyNotFound(t *testing.T) {
+// TestSaveTemplate_SpaceIDNotFound: unknown space → NOT_FOUND gqlerror.
+func TestSaveTemplate_SpaceIDNotFound(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "missing").
+	mockSpaceStore.On("GetByID", mock.Anything, "missing").
 		Return((*space.Space)(nil), nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
@@ -334,11 +334,11 @@ func TestSaveTemplate_SpaceKeyNotFound(t *testing.T) {
 	mockSpaceStore.AssertExpectations(t)
 }
 
-// TestSaveTemplate_SpaceKeyForbidden: cross-org space → FORBIDDEN gqlerror.
-func TestSaveTemplate_SpaceKeyForbidden(t *testing.T) {
+// TestSaveTemplate_SpaceIDForbidden: cross-org space → FORBIDDEN gqlerror.
+func TestSaveTemplate_SpaceIDForbidden(t *testing.T) {
 	space := &space.Space{ID: "space-other", OrgID: "org-b", Bucket: "b"}
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+	mockSpaceStore.On("GetByID", mock.Anything, "other-space").Return(space, nil)
 	mockSpaceStore.On("HasMember", mock.Anything, "space-other", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
@@ -356,10 +356,10 @@ func TestSaveTemplate_SpaceKeyForbidden(t *testing.T) {
 
 // ─── RegenerateTemplatePreview space-routing tests ───────────────────────────
 
-// TestRegenerateTemplatePreview_SpaceKeyNotFound: unknown space → NOT_FOUND.
-func TestRegenerateTemplatePreview_SpaceKeyNotFound(t *testing.T) {
+// TestRegenerateTemplatePreview_SpaceIDNotFound: unknown space → NOT_FOUND.
+func TestRegenerateTemplatePreview_SpaceIDNotFound(t *testing.T) {
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "missing").
+	mockSpaceStore.On("GetByID", mock.Anything, "missing").
 		Return((*space.Space)(nil), nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)
@@ -377,11 +377,11 @@ func TestRegenerateTemplatePreview_SpaceKeyNotFound(t *testing.T) {
 	mockSpaceStore.AssertExpectations(t)
 }
 
-// TestRegenerateTemplatePreview_SpaceKeyForbidden: cross-org space → FORBIDDEN.
-func TestRegenerateTemplatePreview_SpaceKeyForbidden(t *testing.T) {
+// TestRegenerateTemplatePreview_SpaceIDForbidden: cross-org space → FORBIDDEN.
+func TestRegenerateTemplatePreview_SpaceIDForbidden(t *testing.T) {
 	space := &space.Space{ID: "space-other", OrgID: "org-b", Bucket: "b"}
 	mockSpaceStore := &MockSpaceStore{}
-	mockSpaceStore.On("Get", mock.Anything, "other-space").Return(space, nil)
+	mockSpaceStore.On("GetByID", mock.Anything, "other-space").Return(space, nil)
 	mockSpaceStore.On("HasMember", mock.Anything, "space-other", "user-1").Return(false, nil)
 
 	r := newSpaceTestResolver(mockSpaceStore)

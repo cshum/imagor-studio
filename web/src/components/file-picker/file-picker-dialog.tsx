@@ -72,7 +72,6 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
       const loadLastFolderPath = async () => {
         let pathToUse = initialPath || ''
-        const spaceKey = space?.spaceKey
 
         // Only load saved path if no initialPath was provided
         if (!initialPath && authState.profile?.id && authState.state === 'authenticated') {
@@ -87,7 +86,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
             if (savedPath) {
               // Validate that the folder still exists
               try {
-                const stat = await statFile(savedPath, spaceKey)
+                const stat = await statFile(savedPath, space?.spaceID)
                 if (stat && stat.isDirectory) {
                   pathToUse = savedPath
                 }

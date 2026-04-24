@@ -20,7 +20,7 @@ import (
 )
 
 // GenerateImagorURL is the resolver for the generateImagorUrl field.
-func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath string, spaceKey *string, params gql.ImagorParamsInput) (string, error) {
+func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath string, spaceID *string, params gql.ImagorParamsInput) (string, error) {
 	if err := RequireEditPermission(ctx); err != nil {
 		return "", err
 	}
@@ -30,7 +30,7 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 
 	// Convert GraphQL input to imagorpath.Params
 	imagorParams := convertToImagorParams(params)
-	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	spaceConfig, err := r.getAccessibleSpaceByID(ctx, spaceID)
 	if err != nil {
 		return "", err
 	}
@@ -48,7 +48,7 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 		zap.String("url", url),
 		zap.String("imagePath", imagePath))
 
-	return absolutizeURL(r.processingOriginForSpace(ctx, spaceKey), url), nil
+	return absolutizeURL(r.processingOriginForResolvedSpace(ctx, spaceConfig), url), nil
 }
 
 // GenerateImagorURLFromTemplate converts a template JSON to an imagor URL on the backend.
@@ -57,7 +57,7 @@ func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath stri
 func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	ctx context.Context,
 	templateJSON string,
-	spaceKey *string,
+	spaceID *string,
 	imagePath *string,
 	contextPath []string,
 	forPreview *bool,
@@ -74,7 +74,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		return "", fmt.Errorf("invalid templateJson: %w", err)
 	}
 
-	spaceConfig, err := r.getAccessibleSpace(ctx, spaceKey)
+	spaceConfig, err := r.getAccessibleSpaceByID(ctx, spaceID)
 	if err != nil {
 		return "", err
 	}
@@ -126,7 +126,7 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	if err != nil {
 		return "", fmt.Errorf("failed to generate imagor URL: %w", err)
 	}
-	return absolutizeURL(r.processingOriginForSpace(ctx, spaceKey), url), nil
+	return absolutizeURL(r.processingOriginForResolvedSpace(ctx, spaceConfig), url), nil
 }
 
 // fetchImageDimensions fetches the width and height of an image via the imagor meta URL.
@@ -206,6 +206,14 @@ func (r *Resolver) processingOriginForSpace(ctx context.Context, spaceKey *strin
 	}
 
 	return r.processingOriginResolver.ResolveProcessingOrigin(ctx, *spaceKey)
+}
+
+func (r *Resolver) processingOriginForResolvedSpace(ctx context.Context, spaceConfig *space.Space) string {
+	if r.processingOriginResolver == nil || spaceConfig == nil {
+		return ""
+	}
+
+	return r.processingOriginResolver.ResolveProcessingOrigin(ctx, spaceConfig.Key)
 }
 
 // convertToImagorParams converts GraphQL input to imagorpath.Params

@@ -73,6 +73,7 @@ export function useFolderContextMenu({
   const [isDeleting, setIsDeleting] = useState(false)
 
   const spaceKey = space?.spaceKey
+  const spaceID = space?.spaceID
 
   /**
    * Centralized rename logic - handles cache invalidation and redirect
@@ -84,7 +85,7 @@ export function useFolderContextMenu({
       pathParts[pathParts.length - 1] = newName
       const newPath = pathParts.join('/')
 
-      await moveFile(folderPath, newPath, spaceKey)
+      await moveFile(folderPath, newPath, spaceID)
 
       // Invalidate parent folder cache
       const parentPath = folderPath.split('/').slice(0, -1).join('/')
@@ -127,7 +128,7 @@ export function useFolderContextMenu({
   const handleDelete = async (folderPath: string, folderName: string) => {
     setIsDeleting(true)
     try {
-      await deleteFile(folderPath, spaceKey)
+      await deleteFile(folderPath, spaceID)
 
       // Invalidate parent folder cache
       const parentPath = folderPath.split('/').slice(0, -1).join('/')

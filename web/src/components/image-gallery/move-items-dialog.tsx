@@ -82,7 +82,7 @@ export const MoveItemsDialog: React.FC<MoveItemsDialogProps> = ({
       const { successCount, skippedCount, errorCount } = await moveGalleryItems({
         items,
         destinationPath,
-        spaceKey: space?.spaceKey,
+        spaceID: space?.spaceID,
         onProgress: ({ completedCount: nextCompletedCount }) => {
           setCompletedCount(nextCompletedCount)
           toast.loading(getMoveProgressMessage(nextCompletedCount), { id: toastId })

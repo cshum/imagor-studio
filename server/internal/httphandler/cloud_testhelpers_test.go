@@ -188,6 +188,17 @@ func (s *testSpaceStore) Get(ctx context.Context, key string) (*space.Space, err
 	return &space.Space{ID: row.ID, OrgID: row.OrgID, Key: row.Key, Name: row.Name, StorageType: row.StorageType, Bucket: row.Bucket, Prefix: row.Prefix, Region: row.Region, Endpoint: row.Endpoint, AccessKeyID: row.AccessKeyID, SecretKey: row.SecretKey, UsePathStyle: row.UsePathStyle, CustomDomain: row.CustomDomain, CustomDomainVerified: row.CustomDomainVerified, Suspended: row.Suspended, IsShared: row.IsShared, SignerAlgorithm: row.SignerAlgorithm, SignerTruncate: row.SignerTruncate, ImagorSecret: row.ImagorSecret, ImagorCORSOrigins: row.ImagorCORSOrigins, UpdatedAt: row.UpdatedAt, DeletedAt: row.DeletedAt}, nil
 }
 
+func (s *testSpaceStore) GetByID(ctx context.Context, id string) (*space.Space, error) {
+	var row model.Space
+	if err := s.db.NewSelect().Model(&row).Where("id = ? AND deleted_at IS NULL", id).Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &space.Space{ID: row.ID, OrgID: row.OrgID, Key: row.Key, Name: row.Name, StorageType: row.StorageType, Bucket: row.Bucket, Prefix: row.Prefix, Region: row.Region, Endpoint: row.Endpoint, AccessKeyID: row.AccessKeyID, SecretKey: row.SecretKey, UsePathStyle: row.UsePathStyle, CustomDomain: row.CustomDomain, CustomDomainVerified: row.CustomDomainVerified, Suspended: row.Suspended, IsShared: row.IsShared, SignerAlgorithm: row.SignerAlgorithm, SignerTruncate: row.SignerTruncate, ImagorSecret: row.ImagorSecret, ImagorCORSOrigins: row.ImagorCORSOrigins, UpdatedAt: row.UpdatedAt, DeletedAt: row.DeletedAt}, nil
+}
+
 func (s *testSpaceStore) List(ctx context.Context) ([]*space.Space, error) { return nil, nil }
 func (s *testSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*space.Space, error) {
 	return nil, nil

@@ -147,7 +147,7 @@ export const galleryLoader = async ({
   // Fetch files from storage API with registry settings
   const result = await listFiles({
     path,
-    spaceKey,
+    spaceID,
     extensions: extensionsString,
     showHidden: false,
     sortBy,
@@ -173,7 +173,7 @@ export const galleryLoader = async ({
 
   // Update folder tree store with fresh data while preserving toggle states
   if (latestGalleryLoaderRequests.isLatest(requestKey, requestGeneration)) {
-    await updateTreeData(path, folderNodes, spaceKey)
+    await updateTreeData(path, folderNodes, { spaceKey, spaceID, spaceName })
   }
 
   // Filter and convert image files (including templates)
@@ -254,14 +254,14 @@ export const galleryLoader = async ({
  * Loads real image data from storage API and preloads the selected image
  */
 export const imageLoader = async ({
-  params: { imageKey, galleryKey, spaceKey },
+  params: { imageKey, galleryKey, spaceID },
 }: {
-  params: { imageKey: string; galleryKey: string; spaceKey?: string }
+  params: { imageKey: string; galleryKey: string; spaceID?: string }
 }): Promise<ImageLoaderData> => {
   // Use galleryKey as the path for storage API, then append the image name
   const basePath = galleryKey
   const imagePath = basePath ? `${basePath}/${imageKey}` : imageKey
-  const fileStat = await statFile(imagePath, spaceKey)
+  const fileStat = await statFile(imagePath, spaceID)
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found')

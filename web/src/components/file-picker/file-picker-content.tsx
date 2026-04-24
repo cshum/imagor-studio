@@ -285,7 +285,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 
         const result = await listFiles({
           path: currentPath,
-          spaceKey,
+          spaceID: space?.spaceID,
           extensions: extensionsString,
           showHidden: false,
           sortBy: config.sortBy,

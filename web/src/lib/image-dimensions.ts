@@ -17,9 +17,9 @@ export interface ImageDimensions {
  */
 export async function fetchImageDimensions(
   imagePath: string,
-  spaceKey?: string,
+  spaceID?: string,
 ): Promise<ImageDimensions> {
-  const fileStat = await statFile(imagePath, spaceKey)
+  const fileStat = await statFile(imagePath, spaceID)
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found or invalid')

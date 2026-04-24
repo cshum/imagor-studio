@@ -418,6 +418,14 @@ func (m *MockSpaceStore) Get(ctx context.Context, key string) (*space.Space, err
 	return args.Get(0).(*space.Space), args.Error(1)
 }
 
+func (m *MockSpaceStore) GetByID(ctx context.Context, id string) (*space.Space, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*space.Space), args.Error(1)
+}
+
 func (m *MockSpaceStore) List(ctx context.Context) ([]*space.Space, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]*space.Space), args.Error(1)

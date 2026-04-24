@@ -103,6 +103,20 @@ func (s *stubSpaceStore) Get(_ context.Context, key string) (*space.Space, error
 	}
 	return s.spaceByKey[key], nil
 }
+func (s *stubSpaceStore) GetByID(_ context.Context, id string) (*space.Space, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	if s.spaceByKey == nil {
+		return nil, nil
+	}
+	for _, sp := range s.spaceByKey {
+		if sp != nil && sp.ID == id {
+			return sp, nil
+		}
+	}
+	return nil, nil
+}
 func (s *stubSpaceStore) List(_ context.Context) ([]*space.Space, error) { return nil, nil }
 func (s *stubSpaceStore) ListByOrgID(_ context.Context, _ string) ([]*space.Space, error) {
 	return nil, nil

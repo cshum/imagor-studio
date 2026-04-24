@@ -397,8 +397,8 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         galleryKey || '',
         true, // overwrite = true for direct save
       )
-      const result = await saveTemplate({ input: saveInput, spaceKey })
-      void regenerateTemplatePreview(result.templatePath, spaceKey).catch((error) => {
+      const result = await saveTemplate({ input: saveInput, spaceID: activeSpace?.spaceID })
+      void regenerateTemplatePreview(result.templatePath, activeSpace?.spaceID).catch((error) => {
         console.warn('Failed to regenerate template preview after save:', error)
       })
 
@@ -423,7 +423,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
     try {
       // Fetch file metadata first
-      const fileStat = await statFile(templatePath, spaceKey)
+      const fileStat = await statFile(templatePath, activeSpace?.spaceID)
 
       if (!fileStat || !fileStat.thumbnailUrls?.original) {
         throw new Error('Template file URL not available')
@@ -530,7 +530,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
         const imagePath = paths[0] // Single selection mode
 
         // Fetch dimensions for the layer image
-        const dimensions = await fetchImageDimensions(imagePath, spaceKey)
+        const dimensions = await fetchImageDimensions(imagePath, activeSpace?.spaceID)
 
         // Extract filename for display name
         const filename = getFileDisplayName(imagePath.split('/').pop() || imagePath)
@@ -567,7 +567,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
 
       try {
         // Fetch dimensions for the new image
-        const dimensions = await fetchImageDimensions(newImagePath, spaceKey)
+        const dimensions = await fetchImageDimensions(newImagePath, activeSpace?.spaceID)
 
         // Swap the image using imageEditor
         imageEditor.replaceImage(newImagePath, dimensions, replaceImageLayerId)

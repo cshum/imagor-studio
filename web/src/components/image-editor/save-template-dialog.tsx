@@ -158,12 +158,12 @@ export function SaveTemplateDialog({
         overwrite,
       )
 
-      const result = await saveTemplate({ input: saveInput, spaceKey: space?.spaceKey })
+      const result = await saveTemplate({ input: saveInput, spaceID: space?.spaceID })
 
       // Backend already returns the complete path with savePath included
       const templatePath = result.templatePath
 
-      void regenerateTemplatePreview(templatePath, space?.spaceKey).catch((error) => {
+      void regenerateTemplatePreview(templatePath, space?.spaceID).catch((error) => {
         console.warn('Failed to regenerate template preview after save:', error)
       })
 

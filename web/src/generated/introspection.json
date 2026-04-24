@@ -1473,7 +1473,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -1506,7 +1506,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -1610,7 +1610,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -1803,7 +1803,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -1892,7 +1892,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -2023,7 +2023,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -2069,7 +2069,7 @@
             "description": null,
             "args": [
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -2233,7 +2233,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -2266,7 +2266,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -2684,7 +2684,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -3131,7 +3131,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,
@@ -3447,7 +3447,7 @@
                 "deprecationReason": null
               },
               {
-                "name": "spaceKey",
+                "name": "spaceID",
                 "description": null,
                 "type": { "kind": "SCALAR", "name": "String", "ofType": null },
                 "defaultValue": null,

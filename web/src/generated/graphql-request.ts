@@ -259,12 +259,12 @@ export type MutationConfigureS3StorageArgs = {
 export type MutationCopyFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationCreateFolderArgs = {
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationCreateSpaceArgs = {
@@ -281,7 +281,7 @@ export type MutationDeactivateAccountArgs = {
 
 export type MutationDeleteFileArgs = {
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationDeleteSpaceArgs = {
@@ -307,7 +307,7 @@ export type MutationDeleteUserRegistryArgs = {
 export type MutationGenerateImagorUrlArgs = {
   imagePath: Scalars['String']['input']
   params: ImagorParamsInput
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationGenerateImagorUrlFromTemplateArgs = {
@@ -317,7 +317,7 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   imagePath?: InputMaybe<Scalars['String']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
   skipLayerId?: InputMaybe<Scalars['String']['input']>
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
 }
 
@@ -334,7 +334,7 @@ export type MutationLeaveSpaceArgs = {
 export type MutationMoveFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationReactivateAccountArgs = {
@@ -342,7 +342,7 @@ export type MutationReactivateAccountArgs = {
 }
 
 export type MutationRegenerateTemplatePreviewArgs = {
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
   templatePath: Scalars['String']['input']
 }
 
@@ -364,12 +364,12 @@ export type MutationRequestUploadArgs = {
   contentType: Scalars['String']['input']
   path: Scalars['String']['input']
   sizeBytes: Scalars['Int']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationSaveTemplateArgs = {
   input: SaveTemplateInput
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationSetSpaceRegistryArgs = {
@@ -421,7 +421,7 @@ export type MutationUpdateSpaceMemberRoleArgs = {
 export type MutationUploadFileArgs = {
   content: Scalars['Upload']['input']
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type OrgMember = {
@@ -496,7 +496,7 @@ export type QueryListFilesArgs = {
   showHidden?: InputMaybe<Scalars['Boolean']['input']>
   sortBy?: InputMaybe<SortOption>
   sortOrder?: InputMaybe<SortOrder>
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryListSystemRegistryArgs = {
@@ -531,7 +531,7 @@ export type QuerySpaceRegistryArgs = {
 
 export type QueryStatFileArgs = {
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type QueryUserArgs = {
@@ -795,7 +795,7 @@ export type ConfigureImagorMutation = {
 
 export type GenerateImagorUrlMutationVariables = Exact<{
   imagePath: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
   params: ImagorParamsInput
 }>
 
@@ -803,7 +803,7 @@ export type GenerateImagorUrlMutation = { __typename?: 'Mutation'; generateImago
 
 export type GenerateImagorUrlFromTemplateMutationVariables = Exact<{
   templateJson: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
   contextPath?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
   forPreview?: InputMaybe<Scalars['Boolean']['input']>
   previewMaxDimensions?: InputMaybe<DimensionsInput>
@@ -1339,7 +1339,7 @@ export type LicenseStatusQuery = {
 
 export type ListFilesQueryVariables = Exact<{
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
   offset?: InputMaybe<Scalars['Int']['input']>
   limit?: InputMaybe<Scalars['Int']['input']>
   onlyFiles?: InputMaybe<Scalars['Boolean']['input']>
@@ -1376,7 +1376,7 @@ export type ListFilesQuery = {
 
 export type StatFileQueryVariables = Exact<{
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type StatFileQuery = {
@@ -1402,7 +1402,7 @@ export type StatFileQuery = {
 
 export type UploadFileMutationVariables = Exact<{
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
   content: Scalars['Upload']['input']
 }>
 
@@ -1410,7 +1410,7 @@ export type UploadFileMutation = { __typename?: 'Mutation'; uploadFile: boolean 
 
 export type RequestUploadMutationVariables = Exact<{
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
   contentType: Scalars['String']['input']
   sizeBytes: Scalars['Int']['input']
 }>
@@ -1422,14 +1422,14 @@ export type RequestUploadMutation = {
 
 export type DeleteFileMutationVariables = Exact<{
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type DeleteFileMutation = { __typename?: 'Mutation'; deleteFile: boolean }
 
 export type CreateFolderMutationVariables = Exact<{
   path: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: boolean }
@@ -1437,7 +1437,7 @@ export type CreateFolderMutation = { __typename?: 'Mutation'; createFolder: bool
 export type CopyFileMutationVariables = Exact<{
   sourcePath: Scalars['String']['input']
   destPath: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type CopyFileMutation = { __typename?: 'Mutation'; copyFile: boolean }
@@ -1445,7 +1445,7 @@ export type CopyFileMutation = { __typename?: 'Mutation'; copyFile: boolean }
 export type MoveFileMutationVariables = Exact<{
   sourcePath: Scalars['String']['input']
   destPath: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type MoveFileMutation = { __typename?: 'Mutation'; moveFile: boolean }
@@ -1556,7 +1556,7 @@ export type CompleteStorageUploadProbeMutation = {
 
 export type SaveTemplateMutationVariables = Exact<{
   input: SaveTemplateInput
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type SaveTemplateMutation = {
@@ -1571,7 +1571,7 @@ export type SaveTemplateMutation = {
 
 export type RegenerateTemplatePreviewMutationVariables = Exact<{
   templatePath: Scalars['String']['input']
-  spaceKey?: InputMaybe<Scalars['String']['input']>
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }>
 
 export type RegenerateTemplatePreviewMutation = {
@@ -1851,14 +1851,14 @@ export const ConfigureImagorDocument = gql`
   }
 `
 export const GenerateImagorUrlDocument = gql`
-  mutation GenerateImagorUrl($imagePath: String!, $spaceKey: String, $params: ImagorParamsInput!) {
-    generateImagorUrl(imagePath: $imagePath, spaceKey: $spaceKey, params: $params)
+  mutation GenerateImagorUrl($imagePath: String!, $spaceID: String, $params: ImagorParamsInput!) {
+    generateImagorUrl(imagePath: $imagePath, spaceID: $spaceID, params: $params)
   }
 `
 export const GenerateImagorUrlFromTemplateDocument = gql`
   mutation GenerateImagorUrlFromTemplate(
     $templateJson: String!
-    $spaceKey: String
+    $spaceID: String
     $contextPath: [String!]
     $forPreview: Boolean
     $previewMaxDimensions: DimensionsInput
@@ -1867,7 +1867,7 @@ export const GenerateImagorUrlFromTemplateDocument = gql`
   ) {
     generateImagorUrlFromTemplate(
       templateJson: $templateJson
-      spaceKey: $spaceKey
+      spaceID: $spaceID
       contextPath: $contextPath
       forPreview: $forPreview
       previewMaxDimensions: $previewMaxDimensions
@@ -2238,7 +2238,7 @@ export const LicenseStatusDocument = gql`
 export const ListFilesDocument = gql`
   query ListFiles(
     $path: String!
-    $spaceKey: String
+    $spaceID: String
     $offset: Int
     $limit: Int
     $onlyFiles: Boolean
@@ -2250,7 +2250,7 @@ export const ListFilesDocument = gql`
   ) {
     listFiles(
       path: $path
-      spaceKey: $spaceKey
+      spaceID: $spaceID
       offset: $offset
       limit: $limit
       onlyFiles: $onlyFiles
@@ -2279,8 +2279,8 @@ export const ListFilesDocument = gql`
   }
 `
 export const StatFileDocument = gql`
-  query StatFile($path: String!, $spaceKey: String) {
-    statFile(path: $path, spaceKey: $spaceKey) {
+  query StatFile($path: String!, $spaceID: String) {
+    statFile(path: $path, spaceID: $spaceID) {
       name
       path
       size
@@ -2298,20 +2298,20 @@ export const StatFileDocument = gql`
   }
 `
 export const UploadFileDocument = gql`
-  mutation UploadFile($path: String!, $spaceKey: String, $content: Upload!) {
-    uploadFile(path: $path, spaceKey: $spaceKey, content: $content)
+  mutation UploadFile($path: String!, $spaceID: String, $content: Upload!) {
+    uploadFile(path: $path, spaceID: $spaceID, content: $content)
   }
 `
 export const RequestUploadDocument = gql`
   mutation RequestUpload(
     $path: String!
-    $spaceKey: String
+    $spaceID: String
     $contentType: String!
     $sizeBytes: Int!
   ) {
     requestUpload(
       path: $path
-      spaceKey: $spaceKey
+      spaceID: $spaceID
       contentType: $contentType
       sizeBytes: $sizeBytes
     ) {
@@ -2321,23 +2321,23 @@ export const RequestUploadDocument = gql`
   }
 `
 export const DeleteFileDocument = gql`
-  mutation DeleteFile($path: String!, $spaceKey: String) {
-    deleteFile(path: $path, spaceKey: $spaceKey)
+  mutation DeleteFile($path: String!, $spaceID: String) {
+    deleteFile(path: $path, spaceID: $spaceID)
   }
 `
 export const CreateFolderDocument = gql`
-  mutation CreateFolder($path: String!, $spaceKey: String) {
-    createFolder(path: $path, spaceKey: $spaceKey)
+  mutation CreateFolder($path: String!, $spaceID: String) {
+    createFolder(path: $path, spaceID: $spaceID)
   }
 `
 export const CopyFileDocument = gql`
-  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {
-    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)
+  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceID: String) {
+    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)
   }
 `
 export const MoveFileDocument = gql`
-  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceKey: String) {
-    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceKey: $spaceKey)
+  mutation MoveFile($sourcePath: String!, $destPath: String!, $spaceID: String) {
+    moveFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)
   }
 `
 export const StorageStatusDocument = gql`
@@ -2423,8 +2423,8 @@ export const CompleteStorageUploadProbeDocument = gql`
   }
 `
 export const SaveTemplateDocument = gql`
-  mutation SaveTemplate($input: SaveTemplateInput!, $spaceKey: String) {
-    saveTemplate(input: $input, spaceKey: $spaceKey) {
+  mutation SaveTemplate($input: SaveTemplateInput!, $spaceID: String) {
+    saveTemplate(input: $input, spaceID: $spaceID) {
       success
       templatePath
       message
@@ -2432,8 +2432,8 @@ export const SaveTemplateDocument = gql`
   }
 `
 export const RegenerateTemplatePreviewDocument = gql`
-  mutation RegenerateTemplatePreview($templatePath: String!, $spaceKey: String) {
-    regenerateTemplatePreview(templatePath: $templatePath, spaceKey: $spaceKey)
+  mutation RegenerateTemplatePreview($templatePath: String!, $spaceID: String) {
+    regenerateTemplatePreview(templatePath: $templatePath, spaceID: $spaceID)
   }
 `
 export const MeDocument = gql`
