@@ -33,6 +33,24 @@ const initialState: Auth = {
   pathPrefix: '',
 }
 
+function getPublicSpaceKeyFromPath(pathname: string): string | undefined {
+  const match = pathname.match(/^\/spaces\/([^/]+)/)
+  if (!match) {
+    return undefined
+  }
+
+  const [, encodedSpaceKey] = match
+  if (!encodedSpaceKey) {
+    return undefined
+  }
+
+  try {
+    return decodeURIComponent(encodedSpaceKey)
+  } catch {
+    return encodedSpaceKey
+  }
+}
+
 export type AuthAction =
   | {
       type: 'INIT'
@@ -126,7 +144,7 @@ export const authStore = createStore(initialState, reducer)
 /**
  * Initialize auth state - handles both normal and embedded modes
  */
-export const initAuth = async (accessToken?: string): Promise<Auth> => {
+export const initAuth = async (accessToken?: string, pathname = window.location.pathname): Promise<Auth> => {
   // In embedded mode, handle embedded token from URL
   if (isEmbeddedMode) {
     try {
@@ -188,7 +206,7 @@ export const initAuth = async (accessToken?: string): Promise<Auth> => {
     // If not first run and no token, try guest login
     if (!isFirstRun) {
       try {
-        const guestResponse = await guestLogin()
+        const guestResponse = await guestLogin(getPublicSpaceKeyFromPath(pathname))
         const profile = await getCurrentUser(guestResponse.token)
         return authStore.dispatch({
           type: 'INIT',

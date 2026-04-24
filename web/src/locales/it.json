@@ -423,8 +423,8 @@
             "description": "Imposta la lingua predefinita dell'applicazione"
           },
           "guestMode": {
-            "label": "Modalità ospite",
-            "description": "Consenti agli utenti di sfogliare la galleria senza creare un account"
+            "label": "Accesso pubblico",
+            "description": "Consenti a chi non ha un account di sfogliare questa galleria"
           },
           "defaultSorting": {
             "label": "Ordinamento file predefinito",
@@ -475,8 +475,8 @@
       "createAccount": "Crea account",
       "skipForNow": "Salta per ora",
       "next": "Avanti",
-      "guestMode": "Modalità ospite",
-      "guestModeDescription": "Consenti agli utenti di sfogliare la galleria senza creare un account",
+      "guestMode": "Accesso pubblico",
+      "guestModeDescription": "Consenti a chi non ha un account di sfogliare questa galleria",
       "homeTitle": "Titolo home",
       "homeTitleDescription": "Personalizza il titolo mostrato per la cartella home/root nella galleria",
       "systemSettingsDescription": "Queste impostazioni possono essere modificate in seguito dal pannello admin",

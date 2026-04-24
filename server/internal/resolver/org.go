@@ -9,6 +9,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/model"
+	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
@@ -277,6 +278,15 @@ func (r *Resolver) canReadSpace(ctx context.Context, space *space.Space) (bool, 
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return false, err
+	}
+	if claims.Role == "guest" && r.registryStore != nil {
+		publicAccess, registryErr := r.registryStore.Get(ctx, registrystore.SpaceOwnerID(space.ID), "config.allow_guest_mode")
+		if registryErr != nil {
+			return false, fmt.Errorf("failed to check space public access: %w", registryErr)
+		}
+		if publicAccess != nil && publicAccess.Value == "true" {
+			return true, nil
+		}
 	}
 	return r.spaceStore.HasMember(ctx, space.Key, claims.UserID)
 }

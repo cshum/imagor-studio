@@ -423,8 +423,8 @@
             "description": "Set the default language for the application"
           },
           "guestMode": {
-            "label": "Guest Mode",
-            "description": "Allow users to browse the gallery without creating an account"
+            "label": "Public Access",
+            "description": "Allow people without an account to browse this gallery"
           },
           "defaultSorting": {
             "label": "Default File Sorting",
@@ -475,8 +475,8 @@
       "createAccount": "Create Account",
       "skipForNow": "Skip for Now",
       "next": "Next",
-      "guestMode": "Guest Mode",
-      "guestModeDescription": "Allow users to browse the gallery without creating an account",
+      "guestMode": "Public Access",
+      "guestModeDescription": "Allow people without an account to browse this gallery",
       "homeTitle": "Home Title",
       "homeTitleDescription": "Customize the title displayed for the home/root folder in the gallery",
       "systemSettingsDescription": "These settings can be changed later in admin panel",

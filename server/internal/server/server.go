@@ -141,6 +141,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		httphandler.AuthHandlerConfig{
 			EmbeddedMode: cfg.EmbeddedMode,
 			MultiTenant:  multiTenant,
+			SpaceStore:   services.SpaceStore,
 		},
 	)
 
