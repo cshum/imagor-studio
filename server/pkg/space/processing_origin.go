@@ -31,7 +31,7 @@ func NewCustomDomainProcessingOriginResolver(spaceStore SpaceStore) ProcessingOr
 			return ""
 		}
 
-		spaceConfig, err := spaceStore.Get(ctx, key)
+		spaceConfig, err := spaceStore.GetByKey(ctx, key)
 		if err != nil || spaceConfig == nil || !spaceConfig.CustomDomainVerified {
 			return ""
 		}

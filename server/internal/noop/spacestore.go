@@ -38,7 +38,7 @@ func (n *SpaceStore) SoftDelete(_ context.Context, _ string) error {
 	return ErrCloudDisabled
 }
 
-func (n *SpaceStore) Get(_ context.Context, _ string) (*space.Space, error) {
+func (n *SpaceStore) GetByKey(_ context.Context, _ string) (*space.Space, error) {
 	return nil, ErrCloudDisabled
 }
 

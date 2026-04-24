@@ -94,7 +94,7 @@ func (s *stubSpaceStore) Create(_ context.Context, _ *space.Space) error { retur
 func (s *stubSpaceStore) RenameKey(_ context.Context, _, _ string) error { return nil }
 func (s *stubSpaceStore) Upsert(_ context.Context, _ *space.Space) error { return nil }
 func (s *stubSpaceStore) SoftDelete(_ context.Context, _ string) error   { return nil }
-func (s *stubSpaceStore) Get(_ context.Context, key string) (*space.Space, error) {
+func (s *stubSpaceStore) GetByKey(_ context.Context, key string) (*space.Space, error) {
 	if s.err != nil {
 		return nil, s.err
 	}

@@ -163,7 +163,7 @@ func (s *testSpaceStore) RenameKey(ctx context.Context, oldKey, newKey string) e
 }
 
 func (s *testSpaceStore) Upsert(ctx context.Context, sp *space.Space) error {
-	if existing, err := s.Get(ctx, sp.Key); err != nil {
+	if existing, err := s.GetByKey(ctx, sp.Key); err != nil {
 		return err
 	} else if existing != nil {
 		_, err = s.db.NewUpdate().Model((*model.Space)(nil)).Set("org_id = ?", sp.OrgID).Set("name = ?", sp.Name).Set("updated_at = ?", time.Now().UTC()).Where("key = ?", sp.Key).Exec(ctx)
@@ -177,7 +177,7 @@ func (s *testSpaceStore) SoftDelete(ctx context.Context, key string) error {
 	return err
 }
 
-func (s *testSpaceStore) Get(ctx context.Context, key string) (*space.Space, error) {
+func (s *testSpaceStore) GetByKey(ctx context.Context, key string) (*space.Space, error) {
 	var row model.Space
 	if err := s.db.NewSelect().Model(&row).Where("key = ? AND deleted_at IS NULL", key).Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

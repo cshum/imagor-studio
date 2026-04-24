@@ -57,7 +57,7 @@ func TestNoopSpaceStore_AllMethodsReturnError(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		_, err := s.Get(ctx, "test")
+		_, err := s.GetByKey(ctx, "test")
 		require.Error(t, err)
 	})
 
@@ -129,7 +129,7 @@ func TestNoopOrgStore_ErrorMentionsDisabledMode(t *testing.T) {
 
 func TestNoopSpaceStore_ErrorMentionsDisabledMode(t *testing.T) {
 	s := noop.NewSpaceStore()
-	_, err := s.Get(ctx, "any")
+	_, err := s.GetByKey(ctx, "any")
 	require.Error(t, err)
 	assert.True(t,
 		strings.Contains(err.Error(), "embedded") || strings.Contains(err.Error(), "self-hosted"),

@@ -496,7 +496,7 @@ func (r *queryResolver) Space(ctx context.Context, key string) (*gql.Space, erro
 	if !r.cloudEnabled() {
 		return nil, nil
 	}
-	s, err := r.spaceStore.Get(ctx, key)
+	s, err := r.spaceStore.GetByKey(ctx, key)
 	if err != nil {
 		r.logger.Error("Space: failed to get space", zap.String("key", key), zap.Error(err))
 		return nil, fmt.Errorf("failed to get space: %w", err)
@@ -571,7 +571,7 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 		return nil, err
 	}
 
-	created, err := r.spaceStore.Get(ctx, input.Key)
+	created, err := r.spaceStore.GetByKey(ctx, input.Key)
 	if err != nil || created == nil {
 		r.logger.Error("CreateSpace: failed to fetch after upsert", zap.String("key", input.Key), zap.Error(err))
 		return nil, fmt.Errorf("space created but could not be retrieved")
@@ -609,7 +609,7 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 	}
 
 	// Load existing space so we can apply partial updates.
-	existing, err := r.spaceStore.Get(ctx, key)
+	existing, err := r.spaceStore.GetByKey(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch space: %w", err)
 	}
@@ -653,7 +653,7 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 		return nil, fmt.Errorf("failed to update space: %w", err)
 	}
 
-	updated, err := r.spaceStore.Get(ctx, input.Key)
+	updated, err := r.spaceStore.GetByKey(ctx, input.Key)
 	if err != nil || updated == nil {
 		return nil, fmt.Errorf("space updated but could not be retrieved")
 	}
@@ -697,7 +697,7 @@ func (r *mutationResolver) DeleteSpace(ctx context.Context, key string) (bool, e
 	}
 
 	// Verify ownership before deleting.
-	existing, err := r.spaceStore.Get(ctx, key)
+	existing, err := r.spaceStore.GetByKey(ctx, key)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch space: %w", err)
 	}

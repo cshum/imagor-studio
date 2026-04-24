@@ -324,7 +324,7 @@ func (h *AuthHandler) isGuestLoginAllowed(ctx context.Context, spaceKey string) 
 		return false, nil
 	}
 
-	spaceRecord, err := h.spaceStore.Get(ctx, spaceKey)
+	spaceRecord, err := h.spaceStore.GetByKey(ctx, spaceKey)
 	if err != nil {
 		h.logger.Error("Failed to load public space", zap.String("spaceKey", spaceKey), zap.Error(err))
 		return false, apperror.InternalServerError("Failed to check space configuration")

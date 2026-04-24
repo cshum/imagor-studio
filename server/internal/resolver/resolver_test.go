@@ -410,7 +410,7 @@ func (m *MockSpaceStore) SoftDelete(ctx context.Context, key string) error {
 	return args.Error(0)
 }
 
-func (m *MockSpaceStore) Get(ctx context.Context, key string) (*space.Space, error) {
+func (m *MockSpaceStore) GetByKey(ctx context.Context, key string) (*space.Space, error) {
 	args := m.Called(ctx, key)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
