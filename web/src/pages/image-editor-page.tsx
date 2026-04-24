@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -47,20 +47,26 @@ interface ImageEditorPageProps {
   loaderData: ImageEditorLoaderData
   /** Gallery key for back navigation — passed from the route component */
   galleryKey?: string
+  space?: SpaceIdentity
 }
 
-export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: ImageEditorPageProps) {
+export function ImageEditorPage({
+  loaderData,
+  galleryKey: propGalleryKey,
+  space,
+}: ImageEditorPageProps) {
   const { imageEditor, initialEditorOpenSections, isTemplate, templateMetadata } = loaderData
 
   const { t } = useTranslation()
   const navigate = useNavigate()
   const router = useRouter()
   const { authState } = useAuth()
-  const { spaceKey } = useParams({ strict: false })
+  const routeSpaceKey = space?.spaceKey
   const activeSpace: SpaceIdentity | undefined =
-    spaceKey && loaderData.spaceID
-      ? { spaceKey, spaceID: loaderData.spaceID, spaceName: loaderData.spaceName }
-      : undefined
+    space ??
+    (loaderData.spaceID
+      ? { spaceKey: '', spaceID: loaderData.spaceID, spaceName: loaderData.spaceName }
+      : undefined)
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [copyUrlDialogOpen, setCopyUrlDialogOpen] = useState(false)
   const [copyUrl, setCopyUrl] = useState('')
@@ -345,13 +351,13 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
     const galleryKey = pathGalleryKey || propGalleryKey || ''
     if (galleryKey) {
       await navigate({
-        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
-        params: spaceKey ? { spaceKey, galleryKey } : { galleryKey },
+        to: routeSpaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
+        params: routeSpaceKey ? { spaceKey: routeSpaceKey, galleryKey } : { galleryKey },
       })
     } else {
       await navigate({
-        to: spaceKey ? '/spaces/$spaceKey' : '/',
-        params: spaceKey ? { spaceKey } : undefined,
+        to: routeSpaceKey ? '/spaces/$spaceKey' : '/',
+        params: routeSpaceKey ? { spaceKey: routeSpaceKey } : undefined,
       })
     }
   }
@@ -414,7 +420,7 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
       console.error('Failed to save template:', error)
       toast.error(t('imageEditor.template.saveError'))
     }
-  }, [imageEditor, router, t, templateMetadata, spaceKey])
+  }, [imageEditor, router, t, templateMetadata, routeSpaceKey])
 
   const handleApplyTemplate = async (selectedPaths: string[]) => {
     if (selectedPaths.length === 0) return
@@ -980,18 +986,22 @@ export function ImageEditorPage({ loaderData, galleryKey: propGalleryKey }: Imag
             splitImagePath(templatePath)
           navigate({
             to: templateGalleryKey
-              ? spaceKey
+              ? routeSpaceKey
                 ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
                 : '/f/$galleryKey/$imageKey/editor'
-              : spaceKey
+              : routeSpaceKey
                 ? '/spaces/$spaceKey/$imageKey/editor'
                 : '/$imageKey/editor',
             params: templateGalleryKey
-              ? spaceKey
-                ? { spaceKey, galleryKey: templateGalleryKey, imageKey: templateImageKey }
+              ? routeSpaceKey
+                ? {
+                    spaceKey: routeSpaceKey,
+                    galleryKey: templateGalleryKey,
+                    imageKey: templateImageKey,
+                  }
                 : { galleryKey: templateGalleryKey, imageKey: templateImageKey }
-              : spaceKey
-                ? { spaceKey, imageKey: templateImageKey }
+              : routeSpaceKey
+                ? { spaceKey: routeSpaceKey, imageKey: templateImageKey }
                 : { imageKey: templateImageKey },
           })
         }}

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams, useRouter, useRouterState } from '@tanstack/react-router'
+import { useNavigate, useRouter, useRouterState } from '@tanstack/react-router'
 import {
   ArrowDown,
   ArrowLeft,
@@ -92,7 +92,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
   const fileSelectHandlerRef = useRef<((fileList: FileList | null) => void) | null>(null)
   const { isLoading, pendingMatches, matches } = useRouterState()
   const { authState } = useAuth()
-  const { spaceKey } = useParams({ strict: false })
+  const routeSpaceKey = space?.spaceKey
   const userConfigScope = { spaceID: space?.spaceID }
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false)
   const [isNewCanvasDialogOpen, setIsNewCanvasDialogOpen] = useState(false)
@@ -156,7 +156,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
     endsAt: number
     source: 'space-created' | 'post-upload'
   } | null>(null)
-  const propagationNotice = useSpacePropagationNotice(spaceKey)
+  const propagationNotice = useSpacePropagationNotice(routeSpaceKey)
 
   // Selection store
   const selection = useSelection()
@@ -200,7 +200,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
       : undefined
 
   useEffect(() => {
-    if (!spaceKey || !propagationNotice || propagationNotice.action !== 'created') {
+    if (!routeSpaceKey || !propagationNotice || propagationNotice.action !== 'created') {
       return
     }
 
@@ -216,12 +216,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
       }
       return { endsAt: nextEndsAt, source: 'space-created' }
     })
-  }, [propagationNotice, spaceKey])
+  }, [propagationNotice, routeSpaceKey])
 
   const handleUploadComplete = async () => {
     await router.invalidate()
 
-    if (!spaceKey || !propagationNotice || propagationNotice.action !== 'created') {
+    if (!routeSpaceKey || !propagationNotice || propagationNotice.action !== 'created') {
       return
     }
 
@@ -389,18 +389,20 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
     const image = images.find((img) => img.imageKey === imageKey)
     if (image?.isTemplate) {
       // Navigate directly to editor for templates
-      if (spaceKey && !galleryKey) {
+      if (routeSpaceKey && !galleryKey) {
         return navigate({
           to: '/spaces/$spaceKey/$imageKey/editor',
-          params: { spaceKey, imageKey },
+          params: { spaceKey: routeSpaceKey, imageKey },
         })
       }
       if (galleryKey) {
         return navigate({
-          to: spaceKey
+          to: routeSpaceKey
             ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
             : '/f/$galleryKey/$imageKey/editor',
-          params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
+          params: routeSpaceKey
+            ? { spaceKey: routeSpaceKey, galleryKey, imageKey }
+            : { galleryKey, imageKey },
         })
       } else {
         return navigate({
@@ -418,13 +420,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
     // Handle navigation for root gallery vs sub-galleries
     if (galleryKey === '') {
       return navigate({
-        to: spaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
-        params: spaceKey ? { spaceKey, imageKey } : { imageKey },
+        to: routeSpaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
+        params: routeSpaceKey ? { spaceKey: routeSpaceKey, imageKey } : { imageKey },
       })
     } else {
       return navigate({
-        to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey/$imageKey' : '/f/$galleryKey/$imageKey',
-        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
+        to: routeSpaceKey
+          ? '/spaces/$spaceKey/f/$galleryKey/$imageKey'
+          : '/f/$galleryKey/$imageKey',
+        params: routeSpaceKey
+          ? { spaceKey: routeSpaceKey, galleryKey, imageKey }
+          : { galleryKey, imageKey },
       })
     }
   }
@@ -444,9 +450,9 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
 
     // Normal navigation
     return navigate({
-      to: spaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
-      params: spaceKey
-        ? { spaceKey, galleryKey: folderGalleryKey }
+      to: routeSpaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
+      params: routeSpaceKey
+        ? { spaceKey: routeSpaceKey, galleryKey: folderGalleryKey }
         : { galleryKey: folderGalleryKey },
     })
   }
@@ -524,15 +530,17 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
   const handleEditImage = (imageKey: string) => {
     if (galleryKey) {
       navigate({
-        to: spaceKey
+        to: routeSpaceKey
           ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
           : '/f/$galleryKey/$imageKey/editor',
-        params: spaceKey ? { spaceKey, galleryKey, imageKey } : { galleryKey, imageKey },
+        params: routeSpaceKey
+          ? { spaceKey: routeSpaceKey, galleryKey, imageKey }
+          : { galleryKey, imageKey },
       })
-    } else if (spaceKey) {
+    } else if (routeSpaceKey) {
       navigate({
         to: '/spaces/$spaceKey/$imageKey/editor',
-        params: { spaceKey, imageKey },
+        params: { spaceKey: routeSpaceKey, imageKey },
       })
     } else {
       navigate({
@@ -945,7 +953,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
 
   // Create menu items for authenticated users
   const secondaryMenuItems =
-    authState.state === 'authenticated' && spaceKey ? (
+    authState.state === 'authenticated' && routeSpaceKey ? (
       <>
         <DropdownMenuItem
           className='hover:cursor-pointer'
@@ -963,7 +971,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
             event.preventDefault()
             navigate({
               to: '/spaces/$spaceKey/settings/general',
-              params: { spaceKey },
+              params: { spaceKey: routeSpaceKey },
             })
           }}
         >

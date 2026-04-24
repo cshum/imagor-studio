@@ -316,6 +316,7 @@ const spaceRootImagePage = createRoute({
   component: () => {
     const galleryLoaderData = spaceRootRoute.useLoaderData()
     const imageLoaderData = spaceRootImagePage.useLoaderData()
+    const { space } = spaceBaseLayoutRoute.useRouteContext()
     const { imageKey } = spaceRootImagePage.useParams()
     return (
       <ImagePage
@@ -323,6 +324,7 @@ const spaceRootImagePage = createRoute({
         galleryLoaderData={galleryLoaderData}
         galleryKey=''
         imageKey={imageKey}
+        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
       />
     )
   },
@@ -371,6 +373,7 @@ const spaceImagePage = createRoute({
   component: () => {
     const galleryLoaderData = spaceGalleryRoute.useLoaderData()
     const imageLoaderData = spaceImagePage.useLoaderData()
+    const { space } = spaceBaseLayoutRoute.useRouteContext()
     const { galleryKey, imageKey } = spaceImagePage.useParams()
     return (
       <ImagePage
@@ -378,6 +381,7 @@ const spaceImagePage = createRoute({
         galleryLoaderData={galleryLoaderData}
         galleryKey={galleryKey}
         imageKey={imageKey}
+        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
       />
     )
   },
@@ -400,7 +404,14 @@ const spaceImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceImageEditorRoute.useLoaderData()
-    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
+    const { space } = spaceImageEditorRoute.useRouteContext()
+    return (
+      <ImageEditorPage
+        loaderData={loaderData}
+        galleryKey=''
+        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+      />
+    )
   },
 })
 
@@ -419,8 +430,15 @@ const spaceGalleryImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceGalleryImageEditorRoute.useLoaderData()
+    const { space } = spaceGalleryImageEditorRoute.useRouteContext()
     const { galleryKey } = spaceGalleryImageEditorRoute.useParams()
-    return <ImageEditorPage loaderData={loaderData} galleryKey={galleryKey} />
+    return (
+      <ImageEditorPage
+        loaderData={loaderData}
+        galleryKey={galleryKey}
+        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+      />
+    )
   },
 })
 
@@ -439,7 +457,14 @@ const spaceCanvasEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceCanvasEditorRoute.useLoaderData()
-    return <ImageEditorPage loaderData={loaderData} galleryKey='' />
+    const { space } = spaceCanvasEditorRoute.useRouteContext()
+    return (
+      <ImageEditorPage
+        loaderData={loaderData}
+        galleryKey=''
+        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+      />
+    )
   },
 })
 
