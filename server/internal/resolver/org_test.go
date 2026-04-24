@@ -628,6 +628,64 @@ func TestUpdateSpace_Success(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 }
 
+func TestUpdateSpace_ResetsCustomDomainVerificationWhenDomainChanges(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	existing := makeTestSpace("acme", "org-1")
+	existing.CustomDomain = "images.old.test"
+	existing.CustomDomainVerified = true
+	updated := makeTestSpace("acme", "org-1")
+	updated.CustomDomain = "images.new.test"
+	updated.CustomDomainVerified = false
+
+	spaceStore.On("GetByKey", mock.Anything, "acme").Return(existing, nil).Once()
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
+		return s.Key == "acme" && s.CustomDomain == "images.new.test" && !s.CustomDomainVerified
+	})).Return(nil)
+	spaceStore.On("GetByKey", mock.Anything, "acme").Return(updated, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	customDomain := "images.new.test"
+	input := gql.SpaceInput{Key: "acme", Name: "Acme", CustomDomain: &customDomain}
+	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "images.new.test", result.CustomDomain)
+	assert.False(t, result.CustomDomainVerified)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestUpdateSpace_KeepsCustomDomainVerificationWhenDomainIsUnchanged(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	existing := makeTestSpace("acme", "org-1")
+	existing.CustomDomain = "images.demo.test"
+	existing.CustomDomainVerified = true
+	updated := makeTestSpace("acme", "org-1")
+	updated.CustomDomain = "images.demo.test"
+	updated.CustomDomainVerified = true
+
+	spaceStore.On("GetByKey", mock.Anything, "acme").Return(existing, nil).Once()
+	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
+		return s.Key == "acme" && s.CustomDomain == "images.demo.test" && s.CustomDomainVerified
+	})).Return(nil)
+	spaceStore.On("GetByKey", mock.Anything, "acme").Return(updated, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	customDomain := " IMAGES.DEMO.TEST. "
+	input := gql.SpaceInput{Key: "acme", Name: "Acme", CustomDomain: &customDomain}
+	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "images.demo.test", result.CustomDomain)
+	assert.True(t, result.CustomDomainVerified)
+	spaceStore.AssertExpectations(t)
+}
+
 func TestUpdateSpace_RejectsByobManagedTypeMismatch(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}

@@ -725,9 +725,9 @@
         "next": "Avanti",
         "back": "Indietro"
       },
-      "noSpacesFound": "Nessuno spazio trovato",
+      "noSpacesFound": "Crea il tuo primo spazio",
       "description": "Gestisci gli spazi di lavoro della tua organizzazione.",
-      "emptyDescription": "Crea il tuo primo spazio per iniziare con un workspace dedicato.",
+      "emptyDescription": "Crea un workspace immagini per il tuo team.",
       "settings": "Settings",
       "spaceCount": "{{count}} spazio/i",
       "openGallery": "Apri galleria",
@@ -743,9 +743,8 @@
         "s3": "Usa il tuo bucket compatibile S3."
       },
       "creationPreview": {
-        "title": "URL di questo spazio",
         "appUrlLabel": "URL app",
-        "processingHostLabel": "Host imagor"
+        "processingHostLabel": "Host predefinito"
       },
       "keyDescription": "Definisce l'URL di questo spazio nell'app e il suo host imagor dedicato. Puoi cambiarlo in seguito.",
       "tableHeaders": {
@@ -794,7 +793,7 @@
         "sharedWithYou": "Condivisi con te"
       },
       "configure": "Configura",
-      "startDescription": "Inizia con uno spazio gestito per la configurazione più rapida, poi personalizza storage, delivery e branding man mano che il workspace cresce.",
+      "startDescription": "Puoi personalizzare storage, delivery e accesso man mano che cresci.",
       "sharedLabel": "Condiviso",
       "leaveSpace": "Esci",
       "leaveSpaceDescription": "Lascia questo spazio condiviso",
@@ -837,6 +836,14 @@
         "nameDescription": "Il nome mostrato nella navigazione e nell'elenco spazi.",
         "customDomain": "Dominio personalizzato",
         "customDomainDescription": "Dominio personalizzato per questo spazio. Se lasciato vuoto, verrà servito su {{spaceKey}}.imagor.app.",
+        "customDomainCurrentLabel": "Hostname attuale",
+        "customDomainDefaultLabel": "Host predefinito",
+        "customDomainActiveDescription": "Questo hostname è attivo per gli URL immagine generati.",
+        "customDomainComingSoonCompact": "Disponibile presto nei piani Team.",
+        "customDomainFeedbackRequestedCompact": "Interesse registrato{{dateSuffix}}.",
+        "customDomainFeedbackSaved": "Grazie. Abbiamo registrato il tuo interesse per la beta del dominio personalizzato.",
+        "customDomainFeedbackUpdateButton": "Aggiorna interesse",
+        "customDomainFeedbackButtonCompact": "Avvisami",
         "saved": "Impostazioni generali salvate"
       },
       "storage": {

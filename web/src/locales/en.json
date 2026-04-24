@@ -725,9 +725,9 @@
         "next": "Next",
         "back": "Back"
       },
-      "noSpacesFound": "No spaces found",
+      "noSpacesFound": "Create your first space",
       "description": "Manage workspaces for your organization.",
-      "emptyDescription": "Create your first space to get started with a dedicated workspace.",
+      "emptyDescription": "Create an image workspace for your team.",
       "settings": "Settings",
       "spaceCount": "{{count}} space(s)",
       "openGallery": "Open Gallery",
@@ -743,9 +743,8 @@
         "s3": "Use your own S3-compatible bucket."
       },
       "creationPreview": {
-        "title": "URLs for this space",
         "appUrlLabel": "App URL",
-        "processingHostLabel": "Imagor Host"
+        "processingHostLabel": "Default Host"
       },
       "keyDescription": "This sets your space URL in the app and its dedicated imagor host. You can change it later.",
       "tableHeaders": {
@@ -794,7 +793,7 @@
         "sharedWithYou": "Shared With You"
       },
       "configure": "Configure",
-      "startDescription": "Start with a managed space for the fastest setup, then customize storage, delivery, and branding as your workspace grows.",
+      "startDescription": "You can customize storage, delivery, and access as you grow.",
       "sharedLabel": "Shared",
       "leaveSpace": "Leave",
       "leaveSpaceDescription": "Leave this shared space",
@@ -837,6 +836,14 @@
         "nameDescription": "The name shown in the navigation and spaces list.",
         "customDomain": "Custom Domain",
         "customDomainDescription": "Custom domain for this space. If left empty, served at {{spaceKey}}.imagor.app.",
+        "customDomainCurrentLabel": "Current Hostname",
+        "customDomainDefaultLabel": "Default Host",
+        "customDomainActiveDescription": "This hostname is active for generated image URLs.",
+        "customDomainComingSoonCompact": "Team plans, coming soon.",
+        "customDomainFeedbackRequestedCompact": "Interest recorded{{dateSuffix}}.",
+        "customDomainFeedbackSaved": "Thanks. We saved your interest for the custom domain beta.",
+        "customDomainFeedbackUpdateButton": "Update interest",
+        "customDomainFeedbackButtonCompact": "Notify me",
         "saved": "General settings saved"
       },
       "storage": {

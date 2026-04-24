@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { closestCenter, DndContext } from '@dnd-kit/core'
+import { Link } from '@tanstack/react-router'
 import { ChevronLeft, Download, FileText, MoreVertical, Redo2, Undo2 } from 'lucide-react'
 
 import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
@@ -16,6 +17,7 @@ import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
 import { useNoBodyOverscroll } from '@/hooks/use-no-body-overscroll'
 import type { EditorSections, SectionKey } from '@/lib/editor-sections'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/stores/auth-store'
 
 export interface ImageEditorLayoutProps {
   // Loading
@@ -108,6 +110,8 @@ export function ImageEditorLayout({
   const isDesktop = useBreakpoint('lg')
   const isTablet = !isMobile && !isDesktop
   const { title: appTitle, url: appUrl } = useBrand()
+  const { authState } = useAuth()
+  const useInternalBrandLink = authState.multiTenant && appUrl === 'https://imagor.net'
 
   // Prevent macOS document-level bounce while editor is open,
   // without affecting inner scrollable panels or other pages.
@@ -211,13 +215,23 @@ export function ImageEditorLayout({
 
   const centeredTitle = (
     <div className='flex flex-1 justify-center'>
-      <a
-        href={appUrl}
-        target='_blank'
-        className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
-      >
-        {appTitle}
-      </a>
+      {useInternalBrandLink ? (
+        <Link
+          to='/'
+          className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
+        >
+          {appTitle}
+        </Link>
+      ) : (
+        <a
+          href={appUrl}
+          target='_blank'
+          rel='noreferrer'
+          className='text-foreground hover:text-foreground/80 text-xl font-bold transition-colors'
+        >
+          {appTitle}
+        </a>
+      )}
     </div>
   )
 

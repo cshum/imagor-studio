@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useRouter } from '@tanstack/react-router'
@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { checkSpaceKey, deleteSpace, setSpaceRegistryObject, updateSpace } from '@/api/org-api'
+import { useCustomDomainBetaInterest } from '@/components/file-picker/use-custom-domain-beta-interest.ts'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -46,7 +47,6 @@ import type { SpaceSettingsData } from './shared'
 const generalSchema = z.object({
   key: z.string().min(1).max(64),
   name: z.string().min(1).max(255),
-  customDomain: z.string().optional(),
 })
 
 const experienceSchema = z.object({
@@ -95,15 +95,27 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
     defaultValues: {
       key: space.key ?? '',
       name: space.name ?? '',
-      customDomain: space.customDomain ?? '',
     },
   })
+  const previewKey = useWatch({ control: identityForm.control, name: 'key' })
   const experienceForm = useForm<ExperienceFormData>({
     resolver: zodResolver(experienceSchema),
     defaultValues: registryInitialValues,
   })
   const [isSavingIdentity, setIsSavingIdentity] = useState(false)
   const [isSavingExperience, setIsSavingExperience] = useState(false)
+  const previewSpaceKey = previewKey?.trim() || space.key
+  const defaultProcessingHost = `${previewSpaceKey}.imagor.app`
+  const {
+    formattedRequestedAt: formattedCustomDomainFeedbackDate,
+    hasRequestedInterest: hasRequestedCustomDomainInterest,
+    isSaving: isSavingCustomDomainFeedback,
+    recordInterest: handleCustomDomainFeedback,
+  } = useCustomDomainBetaInterest({
+    spaceId: space.id,
+    initialValues,
+    onSuccessMessage: t('pages.spaceSettings.general.customDomainFeedbackSaved'),
+  })
 
   const handleIdentitySave = async (values: IdentityFormData) => {
     setIsSavingIdentity(true)
@@ -135,7 +147,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
           key: nextKey,
           name: values.name,
           storageMode: null,
-          customDomain: values.customDomain ?? null,
+          customDomain: null,
           storageType: null,
           bucket: null,
           region: null,
@@ -273,32 +285,63 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={identityForm.control}
-                name='customDomain'
-                render={({ field }) => (
-                  <FormItem>
-                    <SettingRow
-                      label={t('pages.spaceSettings.general.customDomain')}
-                      description={t('pages.spaceSettings.general.customDomainDescription', {
-                        spaceKey: space.key,
-                      })}
-                      labelClassName={LABEL_WIDTH_CLASS}
-                      contentClassName={FIELD_WIDTH_CLASS}
-                      last
-                    >
-                      <FormControl>
-                        <Input
-                          placeholder={`${space.key}.imagor.app`}
-                          {...field}
-                          disabled={isSavingIdentity}
-                        />
-                      </FormControl>
-                      <FormMessage className='mt-1.5' />
-                    </SettingRow>
-                  </FormItem>
-                )}
-              />
+              <SettingRow
+                label={t('pages.spaceSettings.general.customDomain')}
+                description={t('pages.spaceSettings.general.customDomainDescription', {
+                  spaceKey: previewSpaceKey,
+                  defaultValue: 'Use your own branded hostname for image delivery.',
+                })}
+                labelClassName={LABEL_WIDTH_CLASS}
+                contentClassName={FIELD_WIDTH_CLASS}
+                last
+              >
+                <div className='bg-muted/30 space-y-2 rounded-md border px-3 py-2.5'>
+                  <p className='text-muted-foreground text-xs font-medium tracking-wide'>
+                    {space.customDomainVerified && space.customDomain
+                      ? t('pages.spaceSettings.general.customDomainCurrentLabel')
+                      : t('pages.spaceSettings.general.customDomainDefaultLabel')}
+                  </p>
+
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <div className='min-w-0'>
+                      <p className='font-mono text-sm'>
+                        {space.customDomainVerified && space.customDomain
+                          ? space.customDomain
+                          : defaultProcessingHost}
+                      </p>
+                      <p className='text-muted-foreground mt-1 text-sm'>
+                        {space.customDomainVerified && space.customDomain
+                          ? t('pages.spaceSettings.general.customDomainActiveDescription')
+                          : t('pages.spaceSettings.general.customDomainComingSoonCompact')}
+                        {!space.customDomainVerified && hasRequestedCustomDomainInterest && (
+                          <>
+                            {' '}
+                            {t('pages.spaceSettings.general.customDomainFeedbackRequestedCompact', {
+                              dateSuffix: formattedCustomDomainFeedbackDate
+                                ? ` ${formattedCustomDomainFeedbackDate}`
+                                : '',
+                            })}
+                          </>
+                        )}
+                      </p>
+                    </div>
+
+                    {!space.customDomainVerified && (
+                      <ButtonWithLoading
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        isLoading={isSavingCustomDomainFeedback}
+                        onClick={handleCustomDomainFeedback}
+                      >
+                        {hasRequestedCustomDomainInterest
+                          ? t('pages.spaceSettings.general.customDomainFeedbackUpdateButton')
+                          : t('pages.spaceSettings.general.customDomainFeedbackButtonCompact')}
+                      </ButtonWithLoading>
+                    )}
+                  </div>
+                </div>
+              </SettingRow>
 
               <div className='mt-2 flex justify-end pt-2'>
                 <ButtonWithLoading type='submit' isLoading={isSavingIdentity}>
