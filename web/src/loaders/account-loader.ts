@@ -209,11 +209,11 @@ export interface SpaceSettingsLoaderData {
 export const spaceSettingsLoader = async ({
   params,
 }: {
-  params: { spaceKey: string }
+  params: { routeSpaceKey: string }
 }): Promise<SpaceSettingsLoaderData> => {
-  const space = await resolveSpace(params.spaceKey)
+  const space = await resolveSpace(params.routeSpaceKey)
   if (!space.canManage) {
-    throw redirect({ to: '/spaces/$spaceKey', params: { spaceKey: params.spaceKey } })
+    throw redirect({ to: '/spaces/$spaceKey', params: { spaceKey: params.routeSpaceKey } })
   }
   return {
     space,

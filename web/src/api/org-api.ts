@@ -41,6 +41,25 @@ import { getGraphQLClient } from '@/lib/graphql-client'
 
 export type SpaceItem = ListSpacesQuery['spaces'][number]
 
+const spaceQueryCache = new Map<string, Promise<GetSpaceQuery['space']>>()
+
+const setCachedSpace = (key: string, space: GetSpaceQuery['space']) => {
+  if (!space) {
+    spaceQueryCache.delete(key)
+    return
+  }
+
+  spaceQueryCache.set(key, Promise.resolve(space))
+}
+
+const invalidateCachedSpace = (key?: string | null) => {
+  if (!key) {
+    return
+  }
+
+  spaceQueryCache.delete(key)
+}
+
 export async function listSpaces(): Promise<ListSpacesQuery['spaces']> {
   const client = getGraphQLClient()
   const sdk = getSdk(client)
@@ -61,6 +80,7 @@ export async function createSpace(
   const client = getGraphQLClient()
   const sdk = getSdk(client)
   const result = await sdk.CreateSpace(variables)
+  invalidateCachedSpace(result.createSpace.key)
   return result.createSpace
 }
 
@@ -70,14 +90,38 @@ export async function updateSpace(
   const client = getGraphQLClient()
   const sdk = getSdk(client)
   const result = await sdk.UpdateSpace(variables)
+  invalidateCachedSpace(variables.key)
+  invalidateCachedSpace(result.updateSpace.key)
   return result.updateSpace
 }
 
 export async function getSpace(key: string): Promise<GetSpaceQuery['space']> {
+  const cachedSpace = spaceQueryCache.get(key)
+  if (cachedSpace) {
+    return cachedSpace
+  }
+
   const client = getGraphQLClient()
   const sdk = getSdk(client)
-  const result = await sdk.GetSpace({ key })
-  return result.space
+  const request = sdk.GetSpace({ key }).then((result) => {
+    if (!result.space) {
+      spaceQueryCache.delete(key)
+      return result.space
+    }
+
+    setCachedSpace(key, result.space)
+    if (result.space.key !== key) {
+      setCachedSpace(result.space.key, result.space)
+    }
+
+    return result.space
+  }).catch((error) => {
+    spaceQueryCache.delete(key)
+    throw error
+  })
+
+  spaceQueryCache.set(key, request)
+  return request
 }
 
 export async function deleteSpace(
@@ -86,6 +130,7 @@ export async function deleteSpace(
   const client = getGraphQLClient()
   const sdk = getSdk(client)
   const result = await sdk.DeleteSpace(variables)
+  invalidateCachedSpace(variables.key)
   return result.deleteSpace
 }
 

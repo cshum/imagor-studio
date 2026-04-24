@@ -108,6 +108,10 @@ const normalizePersistedFolderNodes = (folders: FolderNode[], spaceID?: string):
 
 const getResolvedSpaceCacheKey = (state: FolderTreeState, space?: FolderTreeSpaceInput) => {
   const normalizedSpace = normalizeFolderTreeSpace(space)
+  if (normalizedSpace?.spaceID) {
+    return `space:${normalizedSpace.spaceID}`
+  }
+
   if (!normalizedSpace?.spaceKey) {
     return DEFAULT_SPACE_CACHE_KEY
   }
@@ -706,7 +710,7 @@ const prepareFolderTreeSpace = async (space?: FolderTreeSpaceInput) => {
   const normalizedSpace = normalizeFolderTreeSpace(space)
   await initializationPromise
 
-  if (normalizedSpace?.spaceKey) {
+  if (normalizedSpace?.spaceKey || normalizedSpace?.spaceID) {
     await ensureResolvedSpaceCacheKey(normalizedSpace)
   }
 
@@ -951,22 +955,27 @@ export const loadHomeTitle = async (space?: FolderTreeSpaceInput) => {
     )
   }
 
-  if (normalizedSpace?.spaceKey) {
+  if (normalizedSpace?.spaceID || normalizedSpace?.spaceKey) {
     if (normalizedSpace.spaceName?.trim()) {
       applyHomeTitle(normalizedSpace.spaceName.trim())
       return
     }
 
-    try {
+    if (normalizedSpace.spaceKey) {
+      try {
       const resolvedSpace = await getSpace(normalizedSpace.spaceKey)
       const spaceName = resolvedSpace?.name?.trim()
 
       applyHomeTitle(spaceName || 'Home')
       return
-    } catch {
-      applyHomeTitle('Home')
-      return
+      } catch {
+        applyHomeTitle('Home')
+        return
+      }
     }
+
+    applyHomeTitle('Home')
+    return
   }
 
   try {

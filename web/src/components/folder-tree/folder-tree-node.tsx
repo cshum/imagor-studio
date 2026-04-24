@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Folder, MoreVertical } from 'lucide-react'
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -166,21 +166,19 @@ export function FolderTreeNode({
           onDragLeave={(e) => onDragLeave?.(e, folderPath)}
           onDrop={(e) => onDrop?.(e, folderPath)}
         >
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton
-              onClick={handleFolderClick}
-              isActive={isActive}
-              data-folder-key={folderPath}
-              data-folder-name={folder.name || 'Root'}
-              className={isDragOver ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950' : ''}
-            >
-              <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
-                <ChevronRight className='size-4 transition-transform' />
-              </span>
-              <Folder className='h-4 w-4' />
-              <span className='truncate'>{folder.name || 'Root'}</span>
-            </SidebarMenuButton>
-          </CollapsibleTrigger>
+          <SidebarMenuButton
+            onClick={handleFolderClick}
+            isActive={isActive}
+            data-folder-key={folderPath}
+            data-folder-name={folder.name || 'Root'}
+            className={isDragOver ? 'bg-blue-100 ring-2 ring-blue-500 dark:bg-blue-950' : ''}
+          >
+            <span onClick={handleExpandClick} className='-m-2 p-4 md:p-2'>
+              <ChevronRight className='size-4 transition-transform' />
+            </span>
+            <Folder className='h-4 w-4' />
+            <span className='truncate'>{folder.name || 'Root'}</span>
+          </SidebarMenuButton>
           {showDropdown && (isHovered || isDropdownOpen) && (
             <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen} modal={false}>
               <div

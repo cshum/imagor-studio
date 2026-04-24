@@ -50,9 +50,9 @@ const latestGalleryLoaderRequests = createLatestRequestTracker()
  * Loads images and folders from storage API with imagor-generated thumbnails
  */
 export const galleryLoader = async ({
-  params: { galleryKey, spaceKey, spaceID, spaceName },
+  params: { galleryKey, routeSpaceKey, spaceID, spaceName },
 }: {
-  params: { galleryKey: string; spaceKey?: string; spaceID?: string; spaceName?: string }
+  params: { galleryKey: string; routeSpaceKey?: string; spaceID?: string; spaceName?: string }
 }): Promise<GalleryLoaderData> => {
   const requestKey = `${spaceID || '__default__'}:${galleryKey}`
   const requestGeneration = latestGalleryLoaderRequests.begin(requestKey)
@@ -198,7 +198,7 @@ export const galleryLoader = async ({
     })
 
   const folderTreeState = folderTreeStore.getState()
-  const homeTitle = folderTreeState.homeTitle || spaceKey || 'Home'
+  const homeTitle = folderTreeState.homeTitle || routeSpaceKey || 'Home'
 
   // Use the actual folder name, or custom home title for root
   const galleryName = galleryKey === '' ? homeTitle : galleryKey.split('/').pop() || galleryKey
@@ -207,7 +207,7 @@ export const galleryLoader = async ({
   const breadcrumbs: BreadcrumbItem[] = [
     {
       label: homeTitle,
-      ...(galleryKey ? { href: spaceKey ? `/spaces/${spaceKey}` : '/' } : {}),
+      ...(galleryKey ? { href: routeSpaceKey ? `/spaces/${routeSpaceKey}` : '/' } : {}),
     },
   ]
 
@@ -216,7 +216,7 @@ export const galleryLoader = async ({
     const segments = galleryKey.split('/')
 
     // Base path for breadcrumb hrefs — space-scoped vs system gallery
-    const galleryBase = spaceKey ? `/spaces/${spaceKey}/gallery` : `/gallery`
+    const galleryBase = routeSpaceKey ? `/spaces/${routeSpaceKey}/gallery` : `/gallery`
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i]

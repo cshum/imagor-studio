@@ -294,7 +294,7 @@ const spaceRootRoute = createRoute({
     return galleryLoader({
       params: {
         galleryKey: '',
-        spaceKey: params.spaceKey,
+        routeSpaceKey: params.spaceKey,
         spaceID: space.id,
         spaceName: space.name,
       },
@@ -348,7 +348,14 @@ const spaceGalleryRoute = createRoute({
   },
   loader: ({ params, context }) => {
     const { space } = context
-    return galleryLoader({ params: { ...params, spaceID: space.id, spaceName: space.name } })
+    return galleryLoader({
+      params: {
+        galleryKey: params.galleryKey,
+        routeSpaceKey: params.spaceKey,
+        spaceID: space.id,
+        spaceName: space.name,
+      },
+    })
   },
   shouldReload: false,
 })
@@ -450,11 +457,14 @@ const createSpaceRoute = createRoute({
 const spaceSettingsLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   path: '/spaces/$spaceKey/settings',
-  beforeLoad: requireAccountAuth,
-  loader: ({ params: { spaceKey } }) => spaceSettingsLoader({ params: { spaceKey } }),
+  beforeLoad: async (context) => {
+    await requireAccountAuth(context)
+    return spaceSettingsLoader({ params: { routeSpaceKey: context.params.spaceKey } })
+  },
+  loader: ({ context }) => ({ breadcrumb: context.breadcrumb }),
   shouldReload: false,
   component: () => {
-    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    const { space } = spaceSettingsLayoutRoute.useRouteContext()
     return <SpaceSettingsLayout space={space} />
   },
 })
@@ -475,9 +485,9 @@ const spaceSettingsIndexRoute = createRoute({
 const generalSectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/general',
-  loader: async ({ params: { spaceKey } }) => {
+  loader: async ({ context }) => {
     try {
-      const space = await resolveSpace(spaceKey)
+      const { space } = context
       const entries = await getSpaceRegistry(space.id)
       const map: Record<string, string> = {}
       entries.forEach((e) => {
@@ -490,7 +500,7 @@ const generalSectionRoute = createRoute({
   },
   shouldReload: false,
   component: () => {
-    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    const { space } = spaceSettingsLayoutRoute.useRouteContext()
     const initialValues = generalSectionRoute.useLoaderData()
     return <GeneralSection space={space} initialValues={initialValues} />
   },
@@ -501,7 +511,7 @@ const storageSectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/storage',
   component: () => {
-    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    const { space } = spaceSettingsLayoutRoute.useRouteContext()
     return <StorageSection space={space} />
   },
 })
@@ -510,9 +520,9 @@ const storageSectionRoute = createRoute({
 const securitySectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/imagor',
-  loader: async ({ params: { spaceKey } }) => {
+  loader: async ({ context }) => {
     try {
-      const space = await resolveSpace(spaceKey)
+      const { space } = context
       const entries = await getSpaceRegistry(space.id)
       const map: Record<string, string> = {}
       entries.forEach((e) => {
@@ -525,7 +535,7 @@ const securitySectionRoute = createRoute({
   },
   shouldReload: false,
   component: () => {
-    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    const { space } = spaceSettingsLayoutRoute.useRouteContext()
     const initialValues = securitySectionRoute.useLoaderData()
     return <SecuritySection space={space} initialValues={initialValues} />
   },
@@ -544,9 +554,9 @@ const galleryRedirectRoute = createRoute({
 const membersSectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/members',
-  loader: async ({ params }) => {
+  loader: async ({ context }) => {
     try {
-      const space = await resolveSpace(params.spaceKey)
+      const { space } = context
       const [spaceMembers, invitations] = await Promise.all([
         listSpaceMembers(space.id),
         listSpaceInvitations(space.id),
@@ -559,7 +569,7 @@ const membersSectionRoute = createRoute({
   shouldReload: false,
   component: () => {
     const { spaceMembers, invitations } = membersSectionRoute.useLoaderData()
-    const { space } = spaceSettingsLayoutRoute.useLoaderData()
+    const { space } = spaceSettingsLayoutRoute.useRouteContext()
     return (
       <MembersSection
         spaceID={space.id}
