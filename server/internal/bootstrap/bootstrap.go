@@ -288,7 +288,12 @@ func initializeEmbeddedMode(cfg *config.Config, logger *zap.Logger) (*Services, 
 
 // initializeDatabase opens and configures the database connection
 func initializeDatabase(cfg *config.Config) (*bun.DB, error) {
-	return database.Connect(cfg.DatabaseURL)
+	return database.ConnectWithOptions(cfg.DatabaseURL, database.ConnectionOptions{
+		PostgresMaxOpenConns:    cfg.DBMaxOpenConns,
+		PostgresMaxIdleConns:    cfg.DBMaxIdleConns,
+		PostgresConnMaxLifetime: cfg.DBConnMaxLifetime,
+		PostgresConnMaxIdleTime: cfg.DBConnMaxIdleTime,
+	})
 }
 
 // runMigrationsIfNeeded executes database migrations using the migrator service

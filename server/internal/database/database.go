@@ -1,10 +1,12 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/uptrace/bun"
@@ -14,6 +16,20 @@ import (
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/driver/sqliteshim"
 )
+
+const (
+	DefaultPostgresMaxOpenConns    = 25
+	DefaultPostgresMaxIdleConns    = 5
+	DefaultPostgresConnMaxLifetime = 30 * time.Minute
+	DefaultPostgresConnMaxIdleTime = 5 * time.Minute
+)
+
+type ConnectionOptions struct {
+	PostgresMaxOpenConns    int
+	PostgresMaxIdleConns    int
+	PostgresConnMaxLifetime time.Duration
+	PostgresConnMaxIdleTime time.Duration
+}
 
 // Config holds database connection configuration
 type Config struct {
@@ -91,6 +107,12 @@ func ParseDatabaseURL(databaseURL string) (*Config, error) {
 
 // Connect creates a database connection based on the provided DATABASE_URL
 func Connect(databaseURL string) (*bun.DB, error) {
+	return ConnectWithOptions(databaseURL, ConnectionOptions{})
+}
+
+// ConnectWithOptions creates a database connection based on the provided
+// DATABASE_URL and optional pool tuning overrides.
+func ConnectWithOptions(databaseURL string, options ConnectionOptions) (*bun.DB, error) {
 	config, err := ParseDatabaseURL(databaseURL)
 	if err != nil {
 		return nil, err
@@ -100,7 +122,7 @@ func Connect(databaseURL string) (*bun.DB, error) {
 	case "sqlite":
 		return connectSQLite(config)
 	case "postgres":
-		return connectPostgreSQL(config)
+		return connectPostgreSQL(config, options)
 	case "mysql":
 		return connectMySQL(config)
 	default:
@@ -115,12 +137,42 @@ func connectSQLite(config *Config) (*bun.DB, error) {
 		return nil, fmt.Errorf("failed to open SQLite database: %w", err)
 	}
 
+	// SQLite performs best with one pooled connection per process in this app.
+	// That avoids cross-connection lock contention while still allowing request
+	// concurrency through the database/sql queue.
+	sqldb.SetMaxOpenConns(1)
+	sqldb.SetMaxIdleConns(1)
+
+	if _, err := sqldb.ExecContext(context.Background(), "PRAGMA foreign_keys = ON"); err != nil {
+		_ = sqldb.Close()
+		return nil, fmt.Errorf("failed to enable SQLite foreign keys: %w", err)
+	}
+	if _, err := sqldb.ExecContext(context.Background(), "PRAGMA busy_timeout = 5000"); err != nil {
+		_ = sqldb.Close()
+		return nil, fmt.Errorf("failed to configure SQLite busy timeout: %w", err)
+	}
+	if !isSQLiteMemoryPath(config.Path) {
+		if _, err := sqldb.ExecContext(context.Background(), "PRAGMA journal_mode = WAL"); err != nil {
+			_ = sqldb.Close()
+			return nil, fmt.Errorf("failed to enable SQLite WAL mode: %w", err)
+		}
+		if _, err := sqldb.ExecContext(context.Background(), "PRAGMA synchronous = NORMAL"); err != nil {
+			_ = sqldb.Close()
+			return nil, fmt.Errorf("failed to configure SQLite synchronous mode: %w", err)
+		}
+	}
+
 	db := bun.NewDB(sqldb, sqlitedialect.New())
 	return db, nil
 }
 
+func isSQLiteMemoryPath(path string) bool {
+	lowerPath := strings.ToLower(strings.TrimSpace(path))
+	return lowerPath == ":memory:" || strings.Contains(lowerPath, ":memory:") || strings.Contains(lowerPath, "mode=memory")
+}
+
 // connectPostgreSQL creates a PostgreSQL connection
-func connectPostgreSQL(config *Config) (*bun.DB, error) {
+func connectPostgreSQL(config *Config, options ConnectionOptions) (*bun.DB, error) {
 	// Build PostgreSQL DSN
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		config.Username,
@@ -136,8 +188,34 @@ func connectPostgreSQL(config *Config) (*bun.DB, error) {
 	}
 
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	applyPostgreSQLPoolDefaults(sqldb, options)
 	db := bun.NewDB(sqldb, pgdialect.New())
 	return db, nil
+}
+
+func applyPostgreSQLPoolDefaults(sqldb *sql.DB, options ConnectionOptions) {
+	if sqldb == nil {
+		return
+	}
+
+	sqldb.SetMaxOpenConns(withDefaultInt(options.PostgresMaxOpenConns, DefaultPostgresMaxOpenConns))
+	sqldb.SetMaxIdleConns(withDefaultInt(options.PostgresMaxIdleConns, DefaultPostgresMaxIdleConns))
+	sqldb.SetConnMaxLifetime(withDefaultDuration(options.PostgresConnMaxLifetime, DefaultPostgresConnMaxLifetime))
+	sqldb.SetConnMaxIdleTime(withDefaultDuration(options.PostgresConnMaxIdleTime, DefaultPostgresConnMaxIdleTime))
+}
+
+func withDefaultInt(value, defaultValue int) int {
+	if value > 0 {
+		return value
+	}
+	return defaultValue
+}
+
+func withDefaultDuration(value, defaultValue time.Duration) time.Duration {
+	if value > 0 {
+		return value
+	}
+	return defaultValue
 }
 
 // connectMySQL creates a MySQL connection

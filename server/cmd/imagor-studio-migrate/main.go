@@ -26,7 +26,12 @@ func main() {
 	}
 
 	// Connect to database
-	db, err := database.Connect(cfg.DatabaseURL)
+	db, err := database.ConnectWithOptions(cfg.DatabaseURL, database.ConnectionOptions{
+		PostgresMaxOpenConns:    cfg.DBMaxOpenConns,
+		PostgresMaxIdleConns:    cfg.DBMaxIdleConns,
+		PostgresConnMaxLifetime: cfg.DBConnMaxLifetime,
+		PostgresConnMaxIdleTime: cfg.DBConnMaxIdleTime,
+	})
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
