@@ -53,6 +53,16 @@ func TestProcessingUsageCleanupLoopConfig(t *testing.T) {
 	cloudConfig.ProcessingUsageBatchCleanupEnabled = false
 	_, _, ok = processingUsageCleanupLoopConfig(services, ModeCloud, cloudConfig)
 	assert.False(t, ok)
+
+	cloudConfig.ProcessingUsageBatchCleanupEnabled = true
+	cloudConfig.ProcessingUsageBatchCleanupRetention = 0
+	_, _, ok = processingUsageCleanupLoopConfig(services, ModeCloud, cloudConfig)
+	assert.False(t, ok)
+
+	cloudConfig.ProcessingUsageBatchCleanupRetention = 7 * 24 * time.Hour
+	cloudConfig.ProcessingUsageBatchCleanupInterval = -time.Hour
+	_, _, ok = processingUsageCleanupLoopConfig(services, ModeCloud, cloudConfig)
+	assert.False(t, ok)
 }
 
 func TestNewProcessingUsageCleanupSyncFunc(t *testing.T) {
@@ -69,4 +79,16 @@ func TestNewProcessingUsageCleanupSyncFunc(t *testing.T) {
 	require.NoError(t, cleanup())
 	assert.Equal(t, 1, store.called)
 	assert.Equal(t, now.Add(-retention), store.olderThan)
+}
+
+func TestNewProcessingUsageCleanupSyncFunc_PropagatesStoreError(t *testing.T) {
+	t.Parallel()
+
+	store := &cleanupRecordingStore{err: assert.AnError}
+	cleanup := newProcessingUsageCleanupSyncFunc(context.Background(), store, time.Hour, func() time.Time {
+		return time.Date(2026, 4, 26, 18, 0, 0, 0, time.UTC)
+	})
+
+	require.ErrorIs(t, cleanup(), assert.AnError)
+	assert.Equal(t, 1, store.called)
 }
