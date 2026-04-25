@@ -154,6 +154,21 @@ func fileAlreadyExistsError(operation string) error {
 	}
 }
 
+func (r *Resolver) cleanupHostedUploadFailure(ctx context.Context, stor storage.Storage, sp *space.Space, path string, cause error) {
+	if !r.tracksHostedStorage(sp) {
+		return
+	}
+	if err := stor.Delete(ctx, path); err != nil {
+		r.logger.Warn(
+			"Failed to clean up hosted upload after ledger error",
+			zap.Error(err),
+			zap.Error(cause),
+			zap.String("spaceID", sp.ID),
+			zap.String("path", path),
+		)
+	}
+}
+
 func (r *queryResolver) getEffectiveVideoThumbnailPosition(ctx context.Context, spaceConfig *space.Space) string {
 	defaultValue := "first_frame"
 	if r.config != nil {
@@ -249,6 +264,7 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceID 
 		if sizeBytes <= 0 {
 			info, err := stor.Stat(ctx, path)
 			if err != nil {
+				r.cleanupHostedUploadFailure(ctx, stor, sp, path, err)
 				r.logger.Error("Failed to stat uploaded hosted file", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path))
 				return false, fmt.Errorf("failed to stat uploaded file: %w", err)
 			}
@@ -256,10 +272,12 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceID 
 		}
 		expiresAt := time.Now().UTC().Add(hostedUploadIntentTTL)
 		if err := r.hostedStorageStore.BeginPendingUpload(ctx, sp.OrgID, sp.ID, path, expiresAt); err != nil {
+			r.cleanupHostedUploadFailure(ctx, stor, sp, path, err)
 			r.logger.Error("Failed to record pending hosted upload", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path))
 			return false, fmt.Errorf("failed to record upload intent: %w", err)
 		}
 		if _, err := r.hostedStorageStore.FinalizePendingUpload(ctx, sp.ID, path, sizeBytes); err != nil {
+			r.cleanupHostedUploadFailure(ctx, stor, sp, path, err)
 			r.logger.Error("Failed to finalize hosted upload", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path), zap.Int64("sizeBytes", sizeBytes))
 			return false, fmt.Errorf("failed to finalize upload: %w", err)
 		}

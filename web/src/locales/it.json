@@ -216,6 +216,8 @@
         "messages": {
           "uploadSuccess": "File caricati correttamente",
           "uploadFailed": "Impossibile caricare {{fileName}}",
+          "fileExists": "Impossibile caricare {{fileName}} perché esiste già un file con questo nome",
+          "fileTooLarge": "Impossibile caricare {{fileName}} perché è troppo grande per un caricamento singolo",
           "previewWarmupTitle": "Le anteprime si stanno preparando",
           "previewWarmupHint": "Le anteprime si stanno ancora preparando e di solito compaiono entro 30 secondi.",
           "previewWarmupDescription": "I tuoi file sono stati caricati correttamente. Le anteprime delle immagini di solito compaiono entro 30 secondi.",

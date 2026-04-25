@@ -216,6 +216,8 @@
         "messages": {
           "uploadSuccess": "Files uploaded successfully",
           "uploadFailed": "Failed to upload {{fileName}}",
+          "fileExists": "Cannot upload {{fileName}} because a file with this name already exists",
+          "fileTooLarge": "Cannot upload {{fileName}} because it is too large for single upload",
           "previewWarmupTitle": "Previews are getting ready",
           "previewWarmupHint": "Previews are still getting ready and usually appear within 30 seconds.",
           "previewWarmupDescription": "Your files were uploaded successfully. Image previews usually appear within 30 seconds.",

@@ -196,6 +196,8 @@
         "messages": {
           "uploadSuccess": "文件上传成功",
           "uploadFailed": "上传 {{fileName}} 失败",
+          "fileExists": "无法上传 {{fileName}}，因为已存在同名文件",
+          "fileTooLarge": "无法上传 {{fileName}}，因为它太大，无法使用单次上传",
           "previewWarmupTitle": "预览正在准备中",
           "previewWarmupHint": "预览仍在准备中，通常会在 30 秒内显示。",
           "previewWarmupDescription": "你的文件已上传成功。图片预览通常会在 30 秒内显示。",

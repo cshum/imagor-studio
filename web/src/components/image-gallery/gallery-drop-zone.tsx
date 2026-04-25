@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { uploadFile } from '@/api/storage-api'
 import { DropZoneOverlay } from '@/components/upload/drop-zone-overlay.tsx'
 import { DragDropFile, useDragDrop } from '@/hooks/use-drag-drop'
+import { extractErrorMessage, hasErrorCode } from '@/lib/error-utils'
 import { useAuth } from '@/stores/auth-store'
 
 export interface GalleryDropZoneProps {
@@ -35,7 +37,24 @@ export function GalleryDropZone({
   onFileSelect,
   onUploadStateChange,
 }: GalleryDropZoneProps) {
+  const { t } = useTranslation()
   const { authState } = useAuth()
+
+  const mapUploadErrorMessage = useCallback(
+    (file: File, error: unknown): string => {
+      if (hasErrorCode(error, 'FILE_ALREADY_EXISTS')) {
+        return t('pages.gallery.upload.messages.fileExists', { fileName: file.name })
+      }
+
+      const rawMessage = extractErrorMessage(error)
+      if (/file too large for single upload/i.test(rawMessage)) {
+        return t('pages.gallery.upload.messages.fileTooLarge', { fileName: file.name })
+      }
+
+      return t('pages.gallery.upload.messages.uploadFailed', { fileName: file.name })
+    },
+    [t],
+  )
 
   const handleFileUpload = useCallback(
     async (
@@ -46,11 +65,15 @@ export function GalleryDropZone({
     ): Promise<boolean> => {
       try {
         return await uploadFile(path, file, { signal, spaceID, onProgress })
-      } catch {
-        return false
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw error
+        }
+
+        throw new Error(mapUploadErrorMessage(file, error))
       }
     },
-    [spaceID],
+    [mapUploadErrorMessage, spaceID],
   )
 
   const {

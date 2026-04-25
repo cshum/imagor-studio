@@ -1,12 +1,12 @@
 import { ClientError } from 'graphql-request'
 
 import type {
-  CompleteUploadMutation,
-  CompleteUploadMutationVariables,
   BeginStorageUploadProbeMutation,
   BeginStorageUploadProbeMutationVariables,
   CompleteStorageUploadProbeMutation,
   CompleteStorageUploadProbeMutationVariables,
+  CompleteUploadMutation,
+  CompleteUploadMutationVariables,
   ConfigureFileStorageMutation,
   ConfigureFileStorageMutationVariables,
   ConfigureS3StorageMutation,
@@ -79,8 +79,12 @@ function isCompleteUploadUnavailable(error: unknown): boolean {
         .filter((message): message is string => Boolean(message)) ?? []
 
     if (
-      error.response.errors?.some((graphqlError) => graphqlError.extensions?.code === 'NOT_AVAILABLE') ||
-      errorMessages.some((message) => /(Cannot query field|Unknown argument|Unknown type|completeUpload)/i.test(message))
+      error.response.errors?.some(
+        (graphqlError) => graphqlError.extensions?.code === 'NOT_AVAILABLE',
+      ) ||
+      errorMessages.some((message) =>
+        /(Cannot query field|Unknown argument|Unknown type|completeUpload)/i.test(message),
+      )
     ) {
       return true
     }
@@ -139,8 +143,8 @@ async function uploadToPresignedUrl(
     xhr.responseType = 'text'
     xhr.setRequestHeader('Content-Type', contentType)
     for (const header of requiredHeaders) {
-  	    xhr.setRequestHeader(header.name, header.value)
-  	}
+      xhr.setRequestHeader(header.name, header.value)
+    }
 
     xhr.upload.onprogress = (event) => {
       if (!options.onProgress || !event.lengthComputable) {
@@ -246,14 +250,19 @@ export async function uploadFile(
       sizeBytes: file.size,
     })
 
-    await uploadToPresignedUrl(presignResult.uploadURL, file, presignResult.requiredHeaders ?? [], options)
-	  try {
-	    await completeUpload({ path, spaceID: options.spaceID })
-	  } catch (error) {
-	    if (!isCompleteUploadUnavailable(error)) {
-	      throw error
-	    }
-	  }
+    await uploadToPresignedUrl(
+      presignResult.uploadURL,
+      file,
+      presignResult.requiredHeaders ?? [],
+      options,
+    )
+    try {
+      await completeUpload({ path, spaceID: options.spaceID })
+    } catch (error) {
+      if (!isCompleteUploadUnavailable(error)) {
+        throw error
+      }
+    }
     return true
   } catch (error) {
     if (!isPresignedUploadUnsupported(error)) {
