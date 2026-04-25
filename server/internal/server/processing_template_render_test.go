@@ -15,6 +15,7 @@ import (
 )
 
 type processingTestSpaceConfig struct {
+	orgID             string
 	key               string
 	customDomain      string
 	signerAlgorithm   string
@@ -23,6 +24,7 @@ type processingTestSpaceConfig struct {
 	imagorCORSOrigins []string
 }
 
+func (c *processingTestSpaceConfig) GetOrgID() string           { return c.orgID }
 func (c *processingTestSpaceConfig) GetKey() string             { return c.key }
 func (c *processingTestSpaceConfig) GetPrefix() string          { return "" }
 func (c *processingTestSpaceConfig) GetBucket() string          { return "" }

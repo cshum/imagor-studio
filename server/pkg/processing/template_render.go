@@ -11,16 +11,6 @@ import (
 	"github.com/cshum/imagor/imagorpath"
 )
 
-const (
-	// InternalTemplatePreviewRenderPath is the private processing endpoint path
-	// management calls for synchronous template preview renders.
-	InternalTemplatePreviewRenderPath = "/internal/template-renders/preview"
-
-	// InternalAPISecretHeader carries the shared secret for internal management
-	// to processing requests.
-	InternalAPISecretHeader = "X-Internal-API-Secret"
-)
-
 // TemplatePreviewRenderRequest describes the synchronous preview render input
 // management can send to a processing node.
 type TemplatePreviewRenderRequest struct {

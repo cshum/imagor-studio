@@ -23,6 +23,15 @@ func newProcessingRootHandler(
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !shouldRedirectProcessingRootRequest(r) || trimmedAppURL == "" {
+			if spaceConfigStore != nil {
+				if sc := sharedprocessing.ResolveSpaceFromHost(spaceConfigStore, r.Host, baseDomain); sc != nil {
+					r = r.WithContext(sharedprocessing.WithRequestMetadata(r.Context(), sharedprocessing.RequestMetadata{
+						OrgID:   sc.GetOrgID(),
+						SpaceID: sc.GetKey(),
+						Class:   sharedprocessing.UsageClassBillableProduction,
+					}))
+				}
+			}
 			imagorHandler.ServeHTTP(w, r)
 			return
 		}

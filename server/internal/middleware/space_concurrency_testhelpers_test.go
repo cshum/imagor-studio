@@ -7,6 +7,7 @@ import (
 )
 
 type testSpaceConfig struct {
+	OrgID        string
 	Key          string
 	CustomDomain string
 	Suspended    bool
@@ -22,6 +23,7 @@ type testSpaceConfig struct {
 	ImagorSecret string
 }
 
+func (c *testSpaceConfig) GetOrgID() string           { return c.OrgID }
 func (c *testSpaceConfig) GetKey() string             { return c.Key }
 func (c *testSpaceConfig) GetPrefix() string          { return c.Prefix }
 func (c *testSpaceConfig) GetBucket() string          { return c.Bucket }

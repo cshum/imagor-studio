@@ -48,16 +48,17 @@ type OAuthConfig struct {
 }
 
 type CloudHTTPServices struct {
-	TokenManager       *auth.TokenManager
-	UserStore          shareduser.OAuthStore
-	OrgStore           org.OrgStore
-	SpaceStore         space.SpaceStore
-	SpaceInviteStore   space.SpaceInviteStore
-	HostedStorageStore HostedStorageStore
-	CloudConfig        CloudConfig
-	GlobalImagor       ImagorSigningConfig
-	InternalAPISecret  string
-	Logger             *zap.Logger
+	TokenManager         *auth.TokenManager
+	UserStore            shareduser.OAuthStore
+	OrgStore             org.OrgStore
+	SpaceStore           space.SpaceStore
+	SpaceInviteStore     space.SpaceInviteStore
+	HostedStorageStore   HostedStorageStore
+	ProcessingUsageStore ProcessingUsageStore
+	CloudConfig          CloudConfig
+	GlobalImagor         ImagorSigningConfig
+	InternalAPISecret    string
+	Logger               *zap.Logger
 }
 
 type HostedStorageObject struct {
@@ -81,13 +82,18 @@ type HostedStorageStore interface {
 	GetUsageBytes(ctx context.Context, orgID, spaceID string) (int64, error)
 }
 
+type ProcessingUsageStore interface {
+	ApplyUsageBatch(ctx context.Context, batch processing.UsageBatch) (*processing.UsageBatchApplyResult, error)
+	CleanupUsageBatches(ctx context.Context, olderThan time.Time) error
+}
+
 type ImagorSigningConfig struct {
 	Secret         string
 	SignerType     string
 	SignerTruncate int
 }
 
-type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (org.OrgStore, space.SpaceStore, space.SpaceInviteStore, HostedStorageStore, error)
+type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (org.OrgStore, space.SpaceStore, space.SpaceInviteStore, HostedStorageStore, ProcessingUsageStore, error)
 
 type InviteSenderFactory func(cfg InviteSenderConfig) (space.InviteSender, error)
 

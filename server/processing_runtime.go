@@ -22,13 +22,21 @@ func RunProcessingWithFactory(embedFS fs.FS, nodeCfg sharedprocessing.NodeConfig
 }
 
 func RunProcessingWithFactoryAndArgs(embedFS fs.FS, args []string, nodeCfg sharedprocessing.NodeConfig, runtimeFactory sharedprocessing.RuntimeFactory) {
+	RunProcessingWithFactoryAndArgsAndHooks(embedFS, args, nodeCfg, runtimeFactory, sharedprocessing.NodeHooks{})
+}
+
+func RunProcessingWithFactoryAndArgsAndHooks(embedFS fs.FS, args []string, nodeCfg sharedprocessing.NodeConfig, runtimeFactory sharedprocessing.RuntimeFactory, hooks sharedprocessing.NodeHooks) {
 	RunProcessingWithBuilderAndArgs(embedFS, args, func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error) {
-		return InitializeProcessingWithFactory(cfg, nodeCfg, logger, runtimeFactory)
+		return InitializeProcessingWithFactoryAndHooks(cfg, nodeCfg, logger, runtimeFactory, hooks)
 	})
 }
 
 func InitializeProcessingWithFactory(cfg *config.Config, nodeCfg sharedprocessing.NodeConfig, logger *zap.Logger, runtimeFactory sharedprocessing.RuntimeFactory) (*bootstrap.Services, error) {
 	return bootstrap.InitializeProcessingWithFactory(cfg, nodeCfg, logger, runtimeFactory)
+}
+
+func InitializeProcessingWithFactoryAndHooks(cfg *config.Config, nodeCfg sharedprocessing.NodeConfig, logger *zap.Logger, runtimeFactory sharedprocessing.RuntimeFactory, hooks sharedprocessing.NodeHooks) (*bootstrap.Services, error) {
+	return bootstrap.InitializeProcessingWithFactoryAndHooks(cfg, nodeCfg, logger, runtimeFactory, hooks)
 }
 
 func RunProcessingWithBuilder(embedFS fs.FS, build func(cfg *config.Config, logger *zap.Logger) (*bootstrap.Services, error)) {
