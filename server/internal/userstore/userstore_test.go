@@ -180,6 +180,9 @@ func TestUserStore_Create(t *testing.T) {
 
 			if tt.expectError {
 				assert.Error(t, err)
+				if tt.errorContains == "username already exists" {
+					assert.ErrorIs(t, err, ErrUsernameAlreadyExists)
+				}
 				if tt.errorContains != "" {
 					assert.Contains(t, err.Error(), tt.errorContains)
 				}

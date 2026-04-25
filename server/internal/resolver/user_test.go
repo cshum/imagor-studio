@@ -443,6 +443,18 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "Duplicate username returns conflict",
+			input: gql.UpdateProfileInput{
+				Username: stringPtr("takenuser"),
+			},
+			setupMocks: func() {
+				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
+				mockUserStore.On("UpdateUsername", ctx, "test-user-id", "takenuser").Return(userstore.ErrUsernameAlreadyExists)
+			},
+			expectError: true,
+			errorMsg:    "username already exists",
+		},
 	}
 
 	for _, tt := range tests {

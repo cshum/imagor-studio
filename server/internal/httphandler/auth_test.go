@@ -365,7 +365,7 @@ func TestRegister(t *testing.T) {
 				Password:    "password123",
 			},
 			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "newuser", "existinguser", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("username already exists"))
+				mockUserStore.On("Create", mock.Anything, "newuser", "existinguser", mock.AnythingOfType("string"), "user").Return(nil, userstore.ErrUsernameAlreadyExists)
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,

@@ -477,7 +477,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	// Create user
 	user, err := h.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role)
 	if err != nil {
-		if strings.Contains(err.Error(), "username already exists") {
+		if errors.Is(err, userstore.ErrUsernameAlreadyExists) {
 			return nil, apperror.Conflict("Username already exists", "username")
 		}
 		if strings.Contains(err.Error(), "already exists") {

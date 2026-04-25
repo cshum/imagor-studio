@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -206,7 +207,7 @@ func (r *mutationResolver) UpdateProfile(ctx context.Context, input gql.UpdatePr
 
 		err = r.userStore.UpdateUsername(ctx, targetUserID, normalizedUsername)
 		if err != nil {
-			if strings.Contains(strings.ToLower(err.Error()), "already exists") {
+			if errors.Is(err, userstore.ErrUsernameAlreadyExists) {
 				return nil, apperror.Conflict("username already exists", "username")
 			}
 			return nil, apperror.BadRequest(fmt.Sprintf("failed to update username: %v", err), nil, "username")
@@ -464,7 +465,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input gql.CreateUserI
 	// Create user
 	user, err := r.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, normalizedRole)
 	if err != nil {
-		if strings.Contains(err.Error(), "username already exists") {
+		if errors.Is(err, userstore.ErrUsernameAlreadyExists) {
 			return nil, apperror.Conflict("Username already exists", "username", "input.username")
 		}
 		r.logger.Error("Failed to create user", zap.Error(err))

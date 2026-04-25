@@ -57,6 +57,8 @@ type store struct {
 	logger *zap.Logger
 }
 
+var ErrUsernameAlreadyExists = errors.New("username already exists")
+
 func New(db *bun.DB, logger *zap.Logger) Store {
 	return &store{
 		db:     db,
@@ -157,7 +159,7 @@ func (s *store) Create(ctx context.Context, displayName, username, hashedPasswor
 		Exec(ctx)
 	if err != nil {
 		if isDuplicateUsernameError(err) {
-			return nil, fmt.Errorf("username already exists")
+			return nil, fmt.Errorf("%w", ErrUsernameAlreadyExists)
 		}
 		return nil, fmt.Errorf("error creating user: %w", err)
 	}
@@ -402,7 +404,7 @@ func (s *store) UpdateUsername(ctx context.Context, id string, username string) 
 		Exec(ctx)
 	if err != nil {
 		if isDuplicateUsernameError(err) {
-			return fmt.Errorf("username already exists")
+			return fmt.Errorf("%w", ErrUsernameAlreadyExists)
 		}
 		return fmt.Errorf("error updating username: %w", err)
 	}
