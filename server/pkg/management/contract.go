@@ -21,21 +21,24 @@ type CloudStoresConfig struct {
 }
 
 type CloudConfig struct {
-	InternalAPISecret      string
-	GoogleClientID         string
-	GoogleClientSecret     string
-	SESRegion              string
-	SESFromEmail           string
-	AppAPIURL              string
-	ProcessingURLTemplate  string
-	PlatformS3Bucket       string
-	PlatformS3Region       string
-	PlatformS3Endpoint     string
-	PlatformS3AccessKeyID  string
-	PlatformS3SecretKey    string
-	PlatformS3UsePathStyle bool
-	PlatformS3Prefix       string
-	PlatformConfigVersion  int64
+	InternalAPISecret                    string
+	GoogleClientID                       string
+	GoogleClientSecret                   string
+	SESRegion                            string
+	SESFromEmail                         string
+	AppAPIURL                            string
+	ProcessingURLTemplate                string
+	ProcessingUsageBatchCleanupEnabled   bool
+	ProcessingUsageBatchCleanupRetention time.Duration
+	ProcessingUsageBatchCleanupInterval  time.Duration
+	PlatformS3Bucket                     string
+	PlatformS3Region                     string
+	PlatformS3Endpoint                   string
+	PlatformS3AccessKeyID                string
+	PlatformS3SecretKey                  string
+	PlatformS3UsePathStyle               bool
+	PlatformS3Prefix                     string
+	PlatformConfigVersion                int64
 }
 
 type InviteSenderConfig = sharedinvite.Config

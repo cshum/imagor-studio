@@ -58,6 +58,25 @@ func startSyncLoop(ctx context.Context, interval time.Duration, logger *zap.Logg
 	}()
 }
 
+func processingUsageCleanupLoopConfig(services *bootstrap.Services, mode Mode, cloudConfig management.CloudConfig) (time.Duration, time.Duration, bool) {
+	if mode != ModeCloud || services == nil || services.ProcessingUsageStore == nil || !cloudConfig.ProcessingUsageBatchCleanupEnabled {
+		return 0, 0, false
+	}
+	if cloudConfig.ProcessingUsageBatchCleanupRetention <= 0 || cloudConfig.ProcessingUsageBatchCleanupInterval <= 0 {
+		return 0, 0, false
+	}
+	return cloudConfig.ProcessingUsageBatchCleanupInterval, cloudConfig.ProcessingUsageBatchCleanupRetention, true
+}
+
+func newProcessingUsageCleanupSyncFunc(ctx context.Context, store management.ProcessingUsageStore, retention time.Duration, now func() time.Time) func() error {
+	if now == nil {
+		now = time.Now
+	}
+	return func() error {
+		return store.CleanupUsageBatches(ctx, now().UTC().Add(-retention))
+	}
+}
+
 func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string, mode Mode) (*Server, error) {
 	// Initialize all services using bootstrap package
 	var (
@@ -279,6 +298,13 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		syncFuncs = append(syncFuncs, services.StorageProvider.ReloadFromRegistry)
 	}
 	startSyncLoop(syncCtx, 30*time.Second, services.Logger, syncFuncs...)
+	if cleanupInterval, cleanupRetention, ok := processingUsageCleanupLoopConfig(services, mode, cloudConfig); ok {
+		services.Logger.Info("processing usage batch cleanup loop enabled",
+			zap.Duration("interval", cleanupInterval),
+			zap.Duration("retention", cleanupRetention),
+		)
+		startSyncLoop(syncCtx, cleanupInterval, services.Logger, newProcessingUsageCleanupSyncFunc(syncCtx, services.ProcessingUsageStore, cleanupRetention, time.Now))
+	}
 
 	return &Server{
 		cfg:        cfg,
