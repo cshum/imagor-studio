@@ -15,7 +15,7 @@ func TestProcessingRootHandler_RedirectsBaseHostToAppHome(t *testing.T) {
 
 	handler := newProcessingRootHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
-	}), processingTestSpaceConfigReader{}, "https://studio.example.com/", ".imagor.app")
+	}), processingTestSpaceConfigReader{}, "https://studio.example.com/", ".imagor.app", "")
 
 	req := httptest.NewRequest(http.MethodGet, "http://processing.example.test/", nil)
 	req.Host = "processing.example.test"
@@ -35,7 +35,7 @@ func TestProcessingRootHandler_RedirectsSpaceSubdomainToSpaceHome(t *testing.T) 
 	}}
 	handler := newProcessingRootHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
-	}), store, "https://studio.example.com", ".imagor.app")
+	}), store, "https://studio.example.com", ".imagor.app", "")
 
 	req := httptest.NewRequest(http.MethodGet, "http://demo.imagor.app/", nil)
 	req.Host = "demo.imagor.app"
@@ -55,7 +55,7 @@ func TestProcessingRootHandler_RedirectsCustomDomainToSpaceHome(t *testing.T) {
 	}}
 	handler := newProcessingRootHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
-	}), store, "https://studio.example.com", ".imagor.app")
+	}), store, "https://studio.example.com", ".imagor.app", "")
 
 	req := httptest.NewRequest(http.MethodGet, "http://images.demo.test/", nil)
 	req.Host = "images.demo.test"
@@ -74,7 +74,7 @@ func TestProcessingRootHandler_PassesImagorRequestsThrough(t *testing.T) {
 	handler := newProcessingRootHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 		w.WriteHeader(http.StatusAccepted)
-	}), processingTestSpaceConfigReader{}, "https://studio.example.com", ".imagor.app")
+	}), processingTestSpaceConfigReader{}, "https://studio.example.com", ".imagor.app", "")
 
 	req := httptest.NewRequest(http.MethodGet, "http://demo.imagor.app/unsafe/300x200/test.jpg", nil)
 	req.Host = "demo.imagor.app"
@@ -93,7 +93,7 @@ func TestProcessingRootHandler_WithoutAppURLFallsBackToImagor(t *testing.T) {
 	handler := newProcessingRootHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 		w.WriteHeader(http.StatusNoContent)
-	}), processingTestSpaceConfigReader{}, "", ".imagor.app")
+	}), processingTestSpaceConfigReader{}, "", ".imagor.app", "")
 
 	req := httptest.NewRequest(http.MethodGet, "http://demo.imagor.app/", nil)
 	req.Host = "demo.imagor.app"
@@ -103,4 +103,84 @@ func TestProcessingRootHandler_WithoutAppURLFallsBackToImagor(t *testing.T) {
 
 	require.True(t, called)
 	assert.Equal(t, http.StatusNoContent, rec.Code)
+}
+
+func TestProcessingRootHandler_ClassifiesTaggedTrafficAsInternal(t *testing.T) {
+	t.Parallel()
+
+	store := processingTestSpaceConfigReader{spaces: map[string]sharedprocessing.SpaceConfig{
+		"demo": &processingTestSpaceConfig{key: "demo", orgID: "org-1"},
+	}}
+
+	var metadata sharedprocessing.RequestMetadata
+	var ok bool
+	handler := newProcessingRootHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		metadata, ok = sharedprocessing.RequestMetadataFromContext(r.Context())
+		w.WriteHeader(http.StatusAccepted)
+	}), store, "https://studio.example.com", ".imagor.app", "internal-secret")
+
+	token := sharedprocessing.SignInternalTraffic("300x200/test.jpg", "internal-secret")
+	req := httptest.NewRequest(http.MethodGet, "http://demo.imagor.app/unsafe/300x200/test.jpg?it="+token, nil)
+	req.Host = "demo.imagor.app"
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	require.True(t, ok)
+	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Equal(t, sharedprocessing.UsageClassInternalNonBillable, metadata.Class)
+	assert.Equal(t, "demo", metadata.SpaceID)
+	assert.Equal(t, "org-1", metadata.OrgID)
+}
+
+func TestProcessingRootHandler_LeavesUntaggedTrafficBillable(t *testing.T) {
+	t.Parallel()
+
+	store := processingTestSpaceConfigReader{spaces: map[string]sharedprocessing.SpaceConfig{
+		"demo": &processingTestSpaceConfig{key: "demo", orgID: "org-1"},
+	}}
+
+	var metadata sharedprocessing.RequestMetadata
+	var ok bool
+	handler := newProcessingRootHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		metadata, ok = sharedprocessing.RequestMetadataFromContext(r.Context())
+		w.WriteHeader(http.StatusAccepted)
+	}), store, "https://studio.example.com", ".imagor.app", "internal-secret")
+
+	req := httptest.NewRequest(http.MethodGet, "http://demo.imagor.app/unsafe/300x200/test.jpg", nil)
+	req.Host = "demo.imagor.app"
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	require.True(t, ok)
+	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Equal(t, sharedprocessing.UsageClassBillableProduction, metadata.Class)
+	assert.Equal(t, "demo", metadata.SpaceID)
+	assert.Equal(t, "org-1", metadata.OrgID)
+}
+
+func TestProcessingRootHandler_InvalidTaggedTrafficFallsBackToBillable(t *testing.T) {
+	t.Parallel()
+
+	store := processingTestSpaceConfigReader{spaces: map[string]sharedprocessing.SpaceConfig{
+		"demo": &processingTestSpaceConfig{key: "demo", orgID: "org-1"},
+	}}
+
+	var metadata sharedprocessing.RequestMetadata
+	var ok bool
+	handler := newProcessingRootHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		metadata, ok = sharedprocessing.RequestMetadataFromContext(r.Context())
+		w.WriteHeader(http.StatusAccepted)
+	}), store, "https://studio.example.com", ".imagor.app", "internal-secret")
+
+	req := httptest.NewRequest(http.MethodGet, "http://demo.imagor.app/unsafe/300x200/test.jpg?it=bad", nil)
+	req.Host = "demo.imagor.app"
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	require.True(t, ok)
+	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Equal(t, sharedprocessing.UsageClassBillableProduction, metadata.Class)
 }

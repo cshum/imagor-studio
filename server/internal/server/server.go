@@ -337,6 +337,7 @@ func registerProcessingOrSPA(
 			services.SpaceConfigStore,
 			cfg.AppUrl,
 			baseDomain,
+			services.ProcessingConfig.Runtime.InternalAPISecret,
 		))
 		return nil
 	}

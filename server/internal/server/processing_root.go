@@ -14,6 +14,7 @@ func newProcessingRootHandler(
 	spaceConfigStore sharedprocessing.SpaceConfigReader,
 	appURL string,
 	baseDomain string,
+	internalAPISecret string,
 ) http.Handler {
 	if imagorHandler == nil {
 		return http.NotFoundHandler()
@@ -25,10 +26,14 @@ func newProcessingRootHandler(
 		if !shouldRedirectProcessingRootRequest(r) || trimmedAppURL == "" {
 			if spaceConfigStore != nil {
 				if sc := sharedprocessing.ResolveSpaceFromHost(spaceConfigStore, r.Host, baseDomain); sc != nil {
+					usageClass := sharedprocessing.UsageClassBillableProduction
+					if sharedprocessing.VerifyInternalTrafficRequest(r, internalAPISecret) {
+						usageClass = sharedprocessing.UsageClassInternalNonBillable
+					}
 					r = r.WithContext(sharedprocessing.WithRequestMetadata(r.Context(), sharedprocessing.RequestMetadata{
 						OrgID:   sc.GetOrgID(),
 						SpaceID: sc.GetKey(),
-						Class:   sharedprocessing.UsageClassBillableProduction,
+						Class:   usageClass,
 					}))
 				}
 			}
@@ -46,7 +51,6 @@ func newProcessingRootHandler(
 		http.Redirect(w, r, trimmedAppURL, http.StatusFound)
 	})
 }
-
 func shouldRedirectProcessingRootRequest(r *http.Request) bool {
 	if r == nil {
 		return false

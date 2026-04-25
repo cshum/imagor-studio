@@ -561,8 +561,9 @@ func newTestResolver(
 	cfg ConfigProvider,
 	lc LicenseChecker,
 	logger *zap.Logger,
+	opts ...ResolverOption,
 ) *Resolver {
-	return NewResolver(sp, rs, us, ip, cfg, lc, logger, nil, nil, nil, nil)
+	return NewResolver(sp, rs, us, ip, cfg, lc, logger, nil, nil, nil, nil, opts...)
 }
 
 type MockHostedStorageStore struct {

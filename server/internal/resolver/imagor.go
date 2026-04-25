@@ -14,6 +14,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
 	"github.com/cshum/imagor-studio/server/internal/imagortemplate"
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
+	sharedprocessing "github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor/imagorpath"
 	"go.uber.org/zap"
@@ -126,6 +127,9 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 	if err != nil {
 		return "", fmt.Errorf("failed to generate imagor URL: %w", err)
 	}
+	if preview {
+		url = r.appendInternalTrafficSignature(url, res.ImagePath, params)
+	}
 	return absolutizeURL(r.processingOriginForResolvedSpace(ctx, spaceConfig), url), nil
 }
 
@@ -198,6 +202,19 @@ func absolutizeURL(baseOrigin, path string) string {
 		return path
 	}
 	return space.NormalizeOrigin(baseOrigin) + path
+}
+
+func (r *Resolver) appendInternalTrafficSignature(rawURL, imagePath string, params imagorpath.Params) string {
+	canonicalPath := canonicalImagorPath(imagePath, params)
+	return sharedprocessing.AppendInternalTrafficSignature(rawURL, canonicalPath, r.cloudConfig.InternalAPISecret)
+}
+
+func canonicalImagorPath(imagePath string, params imagorpath.Params) string {
+	params.Image = imagePath
+	if strings.Contains(imagePath, " ") || strings.ContainsAny(imagePath, "?#&()") {
+		params.Base64Image = true
+	}
+	return imagorpath.GeneratePath(params)
 }
 
 func (r *Resolver) processingOriginForSpace(ctx context.Context, spaceKey *string) string {
@@ -380,43 +397,43 @@ func (r *Resolver) generateThumbnailUrlsForResolvedSpace(ctx context.Context, im
 	}
 
 	// Generate different sized URLs using the imagor provider
-	gridURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
+	gridParams := imagorpath.Params{
 		Width:   300,
 		Height:  225,
 		Filters: buildFilters("80"),
-	}, spaceConfig)
-
-	previewURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
+	}
+	previewParams := imagorpath.Params{
 		Width:   1200,
 		Height:  900,
 		FitIn:   true,
 		Filters: buildFilters("90"),
-	}, spaceConfig)
-
-	fullURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
+	}
+	fullParams := imagorpath.Params{
 		Width:   2400,
 		Height:  1800,
 		FitIn:   true,
 		Filters: buildFilters("95"),
-	}, spaceConfig)
+	}
+	originalParams := imagorpath.Params{Filters: imagorpath.Filters{{Name: "raw"}}}
+	metaParams := imagorpath.Params{Meta: true}
 
-	// For original, use raw filter
-	originalURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
-		Filters: imagorpath.Filters{
-			{Name: "raw"},
-		},
-	}, spaceConfig)
-
-	// Generate meta URL for EXIF data
-	metaURL, _ := r.generateImagorURLForSpaceConfig(imagePath, imagorpath.Params{
-		Meta: true,
-	}, spaceConfig)
+	gridURL, _ := r.generateImagorURLForSpaceConfig(imagePath, gridParams, spaceConfig)
+	previewURL, _ := r.generateImagorURLForSpaceConfig(imagePath, previewParams, spaceConfig)
+	fullURL, _ := r.generateImagorURLForSpaceConfig(imagePath, fullParams, spaceConfig)
+	originalURL, _ := r.generateImagorURLForSpaceConfig(imagePath, originalParams, spaceConfig)
+	metaURL, _ := r.generateImagorURLForSpaceConfig(imagePath, metaParams, spaceConfig)
 
 	gridURL = absolutizeURL(processingOrigin, gridURL)
 	previewURL = absolutizeURL(processingOrigin, previewURL)
 	fullURL = absolutizeURL(processingOrigin, fullURL)
 	originalURL = absolutizeURL(processingOrigin, originalURL)
 	metaURL = absolutizeURL(processingOrigin, metaURL)
+
+	gridURL = r.appendInternalTrafficSignature(gridURL, imagePath, gridParams)
+	previewURL = r.appendInternalTrafficSignature(previewURL, imagePath, previewParams)
+	fullURL = r.appendInternalTrafficSignature(fullURL, imagePath, fullParams)
+	originalURL = r.appendInternalTrafficSignature(originalURL, imagePath, originalParams)
+	metaURL = r.appendInternalTrafficSignature(metaURL, imagePath, metaParams)
 
 	return &gql.ThumbnailUrls{
 		Grid:     &gridURL,

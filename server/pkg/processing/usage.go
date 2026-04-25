@@ -56,6 +56,9 @@ func MarkRecorded(ctx context.Context) (RequestMetadata, bool) {
 		return RequestMetadata{}, false
 	}
 	state.recorded = true
+	if state.metadata.Class == UsageClassInternalNonBillable {
+		return RequestMetadata{}, false
+	}
 	return state.metadata, true
 }
 

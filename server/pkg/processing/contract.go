@@ -49,6 +49,10 @@ const (
 	// InternalAPISecretHeader carries the shared secret for internal management
 	// to processing and processing to management requests.
 	InternalAPISecretHeader = "X-Internal-API-Secret"
+
+	// InternalTrafficQueryParam marks internally generated preview/browse traffic
+	// so processing usage can classify it as non-billable.
+	InternalTrafficQueryParam = "it"
 )
 
 type UsageClass string
