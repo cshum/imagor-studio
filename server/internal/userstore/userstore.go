@@ -58,6 +58,7 @@ type store struct {
 }
 
 var ErrUsernameAlreadyExists = errors.New("username already exists")
+var ErrEmailAlreadyExists = errors.New("email already exists")
 
 func New(db *bun.DB, logger *zap.Logger) Store {
 	return &store{
@@ -288,7 +289,7 @@ func (s *store) RequestEmailChange(ctx context.Context, id string, email string)
 		return nil, err
 	}
 	if existingUser != nil && existingUser.ID != id {
-		return nil, fmt.Errorf("email already exists")
+		return nil, fmt.Errorf("%w", ErrEmailAlreadyExists)
 	}
 
 	_, err = s.db.NewUpdate().

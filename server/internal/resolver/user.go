@@ -246,7 +246,7 @@ func (r *mutationResolver) RequestEmailChange(ctx context.Context, email string,
 	updatedUser, err := r.userStore.RequestEmailChange(ctx, targetUserID, email)
 	if err != nil {
 		switch {
-		case strings.Contains(err.Error(), "already exists"):
+		case errors.Is(err, userstore.ErrEmailAlreadyExists):
 			return nil, apperror.Conflict("email already exists", "email")
 		case strings.Contains(err.Error(), "cannot be empty"):
 			return nil, apperror.BadRequest("email is required", nil, "email")

@@ -558,6 +558,26 @@ func TestChangePassword_AdminOperation(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
+func TestRequestEmailChange_DuplicateEmailReturnsConflict(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	mockUserStore.On("RequestEmailChange", ctx, "test-user-id", "taken@example.com").Return(nil, userstore.ErrEmailAlreadyExists).Once()
+
+	result, err := resolver.Mutation().RequestEmailChange(ctx, "taken@example.com", nil)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "email already exists")
+
+	mockUserStore.AssertExpectations(t)
+}
+
 func TestChangePassword_ValidationErrors(t *testing.T) {
 	mockStorage := new(MockStorage)
 	mockRegistryStore := new(MockRegistryStore)
