@@ -342,7 +342,7 @@ func TestRegister(t *testing.T) {
 			expectError:    false,
 		},
 		{
-			name:   "DisplayName already exists",
+			name:   "Unexpected already exists error is internal",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "existinguser",
@@ -352,9 +352,9 @@ func TestRegister(t *testing.T) {
 			setupMocks: func() {
 				mockUserStore.On("Create", mock.Anything, "existinguser", "existinguser", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("displayName already exists"))
 			},
-			expectedStatus: http.StatusConflict,
+			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
-			errorCode:      "ALREADY_EXISTS",
+			errorCode:      "INTERNAL_SERVER_ERROR",
 		},
 		{
 			name:   "Email already exists",
