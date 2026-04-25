@@ -15,6 +15,7 @@ func TestOwnershipForMigration(t *testing.T) {
 		{name: "cloud invites", migration: "20260420_create_space_invitations.go", want: OwnershipCloud},
 		{name: "cloud invite space id", migration: "20260425_migrate_space_invitations_to_space_id.go", want: OwnershipCloud},
 		{name: "cloud hosted storage", migration: "20260426_create_hosted_storage_tables.go", want: OwnershipCloud},
+		{name: "cloud processing usage repair", migration: "20260427_ensure_processing_usage_tables.go", want: OwnershipCloud},
 		{name: "cloud members", migration: "20260419_create_space_members.go", want: OwnershipCloud},
 		{name: "shared oauth identities", migration: "20260417_create_oauth_identities.go", want: OwnershipShared},
 		{name: "shared pending email fields", migration: "20260421_add_pending_email_fields_to_users.go", want: OwnershipShared},
