@@ -1,7 +1,9 @@
 package management
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
@@ -46,15 +48,37 @@ type OAuthConfig struct {
 }
 
 type CloudHTTPServices struct {
-	TokenManager      *auth.TokenManager
-	UserStore         shareduser.OAuthStore
-	OrgStore          org.OrgStore
-	SpaceStore        space.SpaceStore
-	SpaceInviteStore  space.SpaceInviteStore
-	CloudConfig       CloudConfig
-	GlobalImagor      ImagorSigningConfig
-	InternalAPISecret string
-	Logger            *zap.Logger
+	TokenManager       *auth.TokenManager
+	UserStore          shareduser.OAuthStore
+	OrgStore           org.OrgStore
+	SpaceStore         space.SpaceStore
+	SpaceInviteStore   space.SpaceInviteStore
+	HostedStorageStore HostedStorageStore
+	CloudConfig        CloudConfig
+	GlobalImagor       ImagorSigningConfig
+	InternalAPISecret  string
+	Logger             *zap.Logger
+}
+
+type HostedStorageObject struct {
+	OrgID     string
+	SpaceID   string
+	ObjectKey string
+	Status    string
+	SizeBytes int64
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ExpiresAt time.Time
+}
+
+type HostedStorageStore interface {
+	BeginPendingUpload(ctx context.Context, orgID, spaceID, objectKey string, expiresAt time.Time) error
+	FinalizePendingUpload(ctx context.Context, spaceID, objectKey string, sizeBytes int64) (bool, error)
+	DeleteReadyObject(ctx context.Context, spaceID, objectKey string) (int64, error)
+	MoveReadyObject(ctx context.Context, spaceID, fromKey, toKey string) error
+	CopyReadyObject(ctx context.Context, sourceSpaceID, sourceKey, destOrgID, destSpaceID, destKey string) (int64, error)
+	GetObject(ctx context.Context, spaceID, objectKey string) (*HostedStorageObject, error)
+	GetUsageBytes(ctx context.Context, orgID, spaceID string) (int64, error)
 }
 
 type ImagorSigningConfig struct {
@@ -62,7 +86,8 @@ type ImagorSigningConfig struct {
 	SignerType     string
 	SignerTruncate int
 }
-type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (org.OrgStore, space.SpaceStore, space.SpaceInviteStore, error)
+
+type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (org.OrgStore, space.SpaceStore, space.SpaceInviteStore, HostedStorageStore, error)
 
 type InviteSenderFactory func(cfg InviteSenderConfig) (space.InviteSender, error)
 

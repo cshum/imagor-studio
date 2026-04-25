@@ -1,6 +1,8 @@
 import { ClientError } from 'graphql-request'
 
 import type {
+  CompleteUploadMutation,
+  CompleteUploadMutationVariables,
   BeginStorageUploadProbeMutation,
   BeginStorageUploadProbeMutationVariables,
   CompleteStorageUploadProbeMutation,
@@ -69,6 +71,24 @@ function isPresignedUploadUnsupported(error: unknown): boolean {
   return error instanceof Error && error.message.includes('does not support presigned uploads')
 }
 
+function isCompleteUploadUnavailable(error: unknown): boolean {
+  if (error instanceof ClientError) {
+    const errorMessages =
+      error.response.errors
+        ?.map((graphqlError) => graphqlError.message)
+        .filter((message): message is string => Boolean(message)) ?? []
+
+    if (
+      error.response.errors?.some((graphqlError) => graphqlError.extensions?.code === 'NOT_AVAILABLE') ||
+      errorMessages.some((message) => /(Cannot query field|Unknown argument|Unknown type|completeUpload)/i.test(message))
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
 function isBrowserProbeMutationUnavailable(error: unknown): boolean {
   if (!(error instanceof ClientError)) {
     return false
@@ -95,6 +115,7 @@ function isBrowserProbeMutationUnavailable(error: unknown): boolean {
 async function uploadToPresignedUrl(
   uploadURL: string,
   file: File,
+  requiredHeaders: Array<{ name: string; value: string }>,
   options: UploadFileOptions,
 ): Promise<void> {
   const contentType = getUploadContentType(file)
@@ -117,6 +138,9 @@ async function uploadToPresignedUrl(
     xhr.open('PUT', uploadURL)
     xhr.responseType = 'text'
     xhr.setRequestHeader('Content-Type', contentType)
+    for (const header of requiredHeaders) {
+  	    xhr.setRequestHeader(header.name, header.value)
+  	}
 
     xhr.upload.onprogress = (event) => {
       if (!options.onProgress || !event.lengthComputable) {
@@ -168,6 +192,14 @@ export async function requestUpload(
   return result.requestUpload
 }
 
+export async function completeUpload(
+  variables: CompleteUploadMutationVariables,
+): Promise<CompleteUploadMutation['completeUpload']> {
+  const sdk = getSdk(getGraphQLClient())
+  const result = await sdk.CompleteUpload(variables)
+  return result.completeUpload
+}
+
 /**
  * List files and folders in a directory
  */
@@ -214,7 +246,14 @@ export async function uploadFile(
       sizeBytes: file.size,
     })
 
-    await uploadToPresignedUrl(presignResult.uploadURL, file, options)
+    await uploadToPresignedUrl(presignResult.uploadURL, file, presignResult.requiredHeaders ?? [], options)
+	  try {
+	    await completeUpload({ path, spaceID: options.spaceID })
+	  } catch (error) {
+	    if (!isCompleteUploadUnavailable(error)) {
+	      throw error
+	    }
+	  }
     return true
   } catch (error) {
     if (!isPresignedUploadUnsupported(error)) {
@@ -387,7 +426,9 @@ export async function testStorageConfigWithBrowserProbe(
   }
 
   try {
-    await uploadToPresignedUrl(probe.uploadURL, probeFile, { signal: options.signal })
+    await uploadToPresignedUrl(probe.uploadURL, probeFile, [], {
+      signal: options.signal,
+    })
   } catch (error) {
     return {
       success: false,

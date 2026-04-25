@@ -13,6 +13,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
@@ -562,6 +563,48 @@ func newTestResolver(
 	logger *zap.Logger,
 ) *Resolver {
 	return NewResolver(sp, rs, us, ip, cfg, lc, logger, nil, nil, nil, nil)
+}
+
+type MockHostedStorageStore struct {
+	mock.Mock
+}
+
+func (m *MockHostedStorageStore) BeginPendingUpload(ctx context.Context, orgID, spaceID, objectKey string, expiresAt time.Time) error {
+	args := m.Called(ctx, orgID, spaceID, objectKey, expiresAt)
+	return args.Error(0)
+}
+
+func (m *MockHostedStorageStore) FinalizePendingUpload(ctx context.Context, spaceID, objectKey string, sizeBytes int64) (bool, error) {
+	args := m.Called(ctx, spaceID, objectKey, sizeBytes)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockHostedStorageStore) DeleteReadyObject(ctx context.Context, spaceID, objectKey string) (int64, error) {
+	args := m.Called(ctx, spaceID, objectKey)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockHostedStorageStore) MoveReadyObject(ctx context.Context, spaceID, fromKey, toKey string) error {
+	args := m.Called(ctx, spaceID, fromKey, toKey)
+	return args.Error(0)
+}
+
+func (m *MockHostedStorageStore) CopyReadyObject(ctx context.Context, sourceSpaceID, sourceKey, destOrgID, destSpaceID, destKey string) (int64, error) {
+	args := m.Called(ctx, sourceSpaceID, sourceKey, destOrgID, destSpaceID, destKey)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockHostedStorageStore) GetObject(ctx context.Context, spaceID, objectKey string) (*management.HostedStorageObject, error) {
+	args := m.Called(ctx, spaceID, objectKey)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*management.HostedStorageObject), args.Error(1)
+}
+
+func (m *MockHostedStorageStore) GetUsageBytes(ctx context.Context, orgID, spaceID string) (int64, error) {
+	args := m.Called(ctx, orgID, spaceID)
+	return args.Get(0).(int64), args.Error(1)
 }
 
 // createAdminContextWithOrg creates an admin context that carries an OrgID claim.

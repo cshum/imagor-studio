@@ -112,6 +112,7 @@ type ComplexityRoot struct {
 		BeginStorageUploadProbe       func(childComplexity int, input StorageConfigInput, contentType string, sizeBytes int) int
 		ChangePassword                func(childComplexity int, input ChangePasswordInput, userID *string) int
 		CompleteStorageUploadProbe    func(childComplexity int, input StorageConfigInput, probePath string, expectedContent string) int
+		CompleteUpload                func(childComplexity int, path string, spaceID *string) int
 		ConfigureFileStorage          func(childComplexity int, input FileStorageInput) int
 		ConfigureImagor               func(childComplexity int, input ImagorInput) int
 		ConfigureS3Storage            func(childComplexity int, input S3StorageInput) int
@@ -169,8 +170,9 @@ type ComplexityRoot struct {
 	}
 
 	PresignedUpload struct {
-		ExpiresAt func(childComplexity int) int
-		UploadURL func(childComplexity int) int
+		ExpiresAt       func(childComplexity int) int
+		RequiredHeaders func(childComplexity int) int
+		UploadURL       func(childComplexity int) int
 	}
 
 	Query struct {
@@ -307,6 +309,11 @@ type ComplexityRoot struct {
 		Preview  func(childComplexity int) int
 	}
 
+	UploadHeader struct {
+		Name  func(childComplexity int) int
+		Value func(childComplexity int) int
+	}
+
 	User struct {
 		AuthProviders func(childComplexity int) int
 		AvatarURL     func(childComplexity int) int
@@ -338,6 +345,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	UploadFile(ctx context.Context, path string, spaceID *string, content graphql.Upload) (bool, error)
 	RequestUpload(ctx context.Context, path string, spaceID *string, contentType string, sizeBytes int) (*PresignedUpload, error)
+	CompleteUpload(ctx context.Context, path string, spaceID *string) (bool, error)
 	DeleteFile(ctx context.Context, path string, spaceID *string) (bool, error)
 	CreateFolder(ctx context.Context, path string, spaceID *string) (bool, error)
 	CopyFile(ctx context.Context, sourcePath string, destPath string, spaceID *string) (bool, error)
@@ -737,6 +745,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CompleteStorageUploadProbe(childComplexity, args["input"].(StorageConfigInput), args["probePath"].(string), args["expectedContent"].(string)), true
+	case "Mutation.completeUpload":
+		if e.ComplexityRoot.Mutation.CompleteUpload == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_completeUpload_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CompleteUpload(childComplexity, args["path"].(string), args["spaceID"].(*string)), true
 	case "Mutation.configureFileStorage":
 		if e.ComplexityRoot.Mutation.ConfigureFileStorage == nil {
 			break
@@ -1209,6 +1228,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.PresignedUpload.ExpiresAt(childComplexity), true
+	case "PresignedUpload.requiredHeaders":
+		if e.ComplexityRoot.PresignedUpload.RequiredHeaders == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PresignedUpload.RequiredHeaders(childComplexity), true
 	case "PresignedUpload.uploadURL":
 		if e.ComplexityRoot.PresignedUpload.UploadURL == nil {
 			break
@@ -1865,6 +1890,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ThumbnailUrls.Preview(childComplexity), true
 
+	case "UploadHeader.name":
+		if e.ComplexityRoot.UploadHeader.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UploadHeader.Name(childComplexity), true
+	case "UploadHeader.value":
+		if e.ComplexityRoot.UploadHeader.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UploadHeader.Value(childComplexity), true
+
 	case "User.authProviders":
 		if e.ComplexityRoot.User.AuthProviders == nil {
 			break
@@ -2416,6 +2454,7 @@ type Mutation {
     contentType: String!
     sizeBytes: Int!
   ): PresignedUpload!
+  completeUpload(path: String!, spaceID: String): Boolean!
   deleteFile(path: String!, spaceID: String): Boolean!
   createFolder(path: String!, spaceID: String): Boolean!
   copyFile(sourcePath: String!, destPath: String!, spaceID: String): Boolean!
@@ -2500,6 +2539,12 @@ type StorageStatus {
 type PresignedUpload {
   uploadURL: String!
   expiresAt: String!
+  requiredHeaders: [UploadHeader!]!
+}
+
+type UploadHeader {
+  name: String!
+  value: String!
 }
 
 type FileStorageConfig {
@@ -2772,6 +2817,22 @@ func (ec *executionContext) field_Mutation_completeStorageUploadProbe_args(ctx c
 		return nil, err
 	}
 	args["expectedContent"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_completeUpload_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "path", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["path"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "spaceID", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["spaceID"] = arg1
 	return args, nil
 }
 
@@ -4956,6 +5017,8 @@ func (ec *executionContext) fieldContext_Mutation_requestUpload(ctx context.Cont
 				return ec.fieldContext_PresignedUpload_uploadURL(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_PresignedUpload_expiresAt(ctx, field)
+			case "requiredHeaders":
+				return ec.fieldContext_PresignedUpload_requiredHeaders(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PresignedUpload", field.Name)
 		},
@@ -4968,6 +5031,47 @@ func (ec *executionContext) fieldContext_Mutation_requestUpload(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_requestUpload_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_completeUpload(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_completeUpload,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CompleteUpload(ctx, fc.Args["path"].(string), fc.Args["spaceID"].(*string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_completeUpload(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_completeUpload_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7333,6 +7437,41 @@ func (ec *executionContext) fieldContext_PresignedUpload_expiresAt(_ context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PresignedUpload_requiredHeaders(ctx context.Context, field graphql.CollectedField, obj *PresignedUpload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PresignedUpload_requiredHeaders,
+		func(ctx context.Context) (any, error) {
+			return obj.RequiredHeaders, nil
+		},
+		nil,
+		ec.marshalNUploadHeader2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUploadHeaderᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PresignedUpload_requiredHeaders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PresignedUpload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_UploadHeader_name(ctx, field)
+			case "value":
+				return ec.fieldContext_UploadHeader_value(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UploadHeader", field.Name)
 		},
 	}
 	return fc, nil
@@ -10729,6 +10868,64 @@ func (ec *executionContext) _ThumbnailUrls_meta(ctx context.Context, field graph
 func (ec *executionContext) fieldContext_ThumbnailUrls_meta(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ThumbnailUrls",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadHeader_name(ctx context.Context, field graphql.CollectedField, obj *UploadHeader) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UploadHeader_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UploadHeader_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadHeader",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadHeader_value(ctx context.Context, field graphql.CollectedField, obj *UploadHeader) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UploadHeader_value,
+		func(ctx context.Context) (any, error) {
+			return obj.Value, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UploadHeader_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadHeader",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -14137,6 +14334,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "completeUpload":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_completeUpload(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "deleteFile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteFile(ctx, field)
@@ -14584,6 +14788,11 @@ func (ec *executionContext) _PresignedUpload(ctx context.Context, sel ast.Select
 			}
 		case "expiresAt":
 			out.Values[i] = ec._PresignedUpload_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requiredHeaders":
+			out.Values[i] = ec._PresignedUpload_requiredHeaders(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -15802,6 +16011,50 @@ func (ec *executionContext) _ThumbnailUrls(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var uploadHeaderImplementors = []string{"UploadHeader"}
+
+func (ec *executionContext) _UploadHeader(ctx context.Context, sel ast.SelectionSet, obj *UploadHeader) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, uploadHeaderImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UploadHeader")
+		case "name":
+			out.Values[i] = ec._UploadHeader_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "value":
+			out.Values[i] = ec._UploadHeader_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var userImplementors = []string{"User"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *User) graphql.Marshaler {
@@ -16850,6 +17103,32 @@ func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋg
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNUploadHeader2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUploadHeaderᚄ(ctx context.Context, sel ast.SelectionSet, v []*UploadHeader) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNUploadHeader2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUploadHeader(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNUploadHeader2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUploadHeader(ctx context.Context, sel ast.SelectionSet, v *UploadHeader) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UploadHeader(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v User) graphql.Marshaler {

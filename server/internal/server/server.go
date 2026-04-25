@@ -112,6 +112,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.InviteSender,
 		resolver.WithLocalTemplatePreviewRenderer(),
 		resolver.WithCloudConfig(cloudConfig),
+		resolver.WithHostedStorageStore(services.HostedStorageStore),
 		resolver.WithProcessingOriginResolver(processingOriginResolver),
 		templatePreviewRenderer,
 	)
@@ -173,14 +174,15 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
 
 	cloudServices := management.CloudHTTPServices{
-		TokenManager:      services.TokenManager,
-		UserStore:         services.UserStore,
-		OrgStore:          services.OrgStore,
-		SpaceStore:        services.SpaceStore,
-		SpaceInviteStore:  services.SpaceInviteStore,
-		CloudConfig:       cloudConfig,
-		InternalAPISecret: cloudConfig.InternalAPISecret,
-		Logger:            services.Logger,
+		TokenManager:       services.TokenManager,
+		UserStore:          services.UserStore,
+		OrgStore:           services.OrgStore,
+		SpaceStore:         services.SpaceStore,
+		SpaceInviteStore:   services.SpaceInviteStore,
+		HostedStorageStore: services.HostedStorageStore,
+		CloudConfig:        cloudConfig,
+		InternalAPISecret:  cloudConfig.InternalAPISecret,
+		Logger:             services.Logger,
 	}
 	if imagorCfg := services.ImagorProvider.Config(); imagorCfg != nil {
 		cloudServices.GlobalImagor = management.ImagorSigningConfig{

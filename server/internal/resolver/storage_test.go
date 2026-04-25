@@ -30,6 +30,15 @@ func (m *MockPresignableStorage) PresignedPutURL(ctx context.Context, key string
 	return args.String(0), args.Error(1)
 }
 
+type MockConditionalPresignableStorage struct {
+	MockPresignableStorage
+}
+
+func (m *MockConditionalPresignableStorage) PresignedPutURLNoOverwrite(ctx context.Context, key string, contentType string, sizeBytes int64, ttl time.Duration) (string, error) {
+	args := m.Called(ctx, key, contentType, sizeBytes, ttl)
+	return args.String(0), args.Error(1)
+}
+
 // MockedS3Resolver extends the regular resolver with mocked S3 validation
 type MockedS3Resolver struct {
 	*Resolver

@@ -173,6 +173,7 @@ export type Mutation = {
   beginStorageUploadProbe: StorageUploadProbe
   changePassword: Scalars['Boolean']['output']
   completeStorageUploadProbe: StorageTestResult
+  completeUpload: Scalars['Boolean']['output']
   configureFileStorage: StorageConfigResult
   configureImagor: ImagorConfigResult
   configureS3Storage: StorageConfigResult
@@ -241,6 +242,11 @@ export type MutationCompleteStorageUploadProbeArgs = {
   expectedContent: Scalars['String']['input']
   input: StorageConfigInput
   probePath: Scalars['String']['input']
+}
+
+export type MutationCompleteUploadArgs = {
+  path: Scalars['String']['input']
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationConfigureFileStorageArgs = {
@@ -447,6 +453,7 @@ export type Organization = {
 export type PresignedUpload = {
   __typename?: 'PresignedUpload'
   expiresAt: Scalars['String']['output']
+  requiredHeaders: Array<UploadHeader>
   uploadURL: Scalars['String']['output']
 }
 
@@ -728,6 +735,12 @@ export type ThumbnailUrls = {
 export type UpdateProfileInput = {
   displayName: InputMaybe<Scalars['String']['input']>
   username: InputMaybe<Scalars['String']['input']>
+}
+
+export type UploadHeader = {
+  __typename?: 'UploadHeader'
+  name: Scalars['String']['output']
+  value: Scalars['String']['output']
 }
 
 export type User = {
@@ -1417,8 +1430,20 @@ export type RequestUploadMutationVariables = Exact<{
 
 export type RequestUploadMutation = {
   __typename?: 'Mutation'
-  requestUpload: { __typename?: 'PresignedUpload'; uploadURL: string; expiresAt: string }
+  requestUpload: {
+    __typename?: 'PresignedUpload'
+    uploadURL: string
+    expiresAt: string
+    requiredHeaders: Array<{ __typename?: 'UploadHeader'; name: string; value: string }>
+  }
 }
+
+export type CompleteUploadMutationVariables = Exact<{
+  path: Scalars['String']['input']
+  spaceID?: InputMaybe<Scalars['String']['input']>
+}>
+
+export type CompleteUploadMutation = { __typename?: 'Mutation'; completeUpload: boolean }
 
 export type DeleteFileMutationVariables = Exact<{
   path: Scalars['String']['input']
@@ -4191,6 +4216,17 @@ export const RequestUploadDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'uploadURL' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'requiredHeaders' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -4199,6 +4235,52 @@ export const RequestUploadDocument = {
     },
   ],
 } as unknown as DocumentNode<RequestUploadMutation, RequestUploadMutationVariables>
+export const CompleteUploadDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CompleteUpload' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'path' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'completeUpload' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'path' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'path' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CompleteUploadMutation, CompleteUploadMutationVariables>
 export const DeleteFileDocument = {
   kind: 'Document',
   definitions: [

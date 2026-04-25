@@ -85,7 +85,17 @@ export const RequestUploadMutation = gql(`
     ) {
       uploadURL
       expiresAt
+      requiredHeaders {
+        name
+        value
+      }
     }
+  }
+`)
+
+export const CompleteUploadMutation = gql(`
+  mutation CompleteUpload($path: String!, $spaceID: String) {
+    completeUpload(path: $path, spaceID: $spaceID)
   }
 `)
 

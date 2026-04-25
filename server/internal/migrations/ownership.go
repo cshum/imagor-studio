@@ -21,4 +21,5 @@ var cloudMigrations = map[string]struct{}{
 	"20260419_create_space_members.go":                  {},
 	"20260420_create_space_invitations.go":              {},
 	"20260425_migrate_space_invitations_to_space_id.go": {},
+	"20260426_create_hosted_storage_tables.go":          {},
 }

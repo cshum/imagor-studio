@@ -2,13 +2,18 @@ package resolver
 
 import (
 	"context"
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/space"
+	storagepkg "github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -32,6 +37,34 @@ func newSpaceTestResolverWithCloudConfig(spaceStore space.SpaceStore, cloudConfi
 	mockStor := &MockStorage{}
 	sp := NewMockStorageProvider(mockStor)
 	return NewResolver(sp, nil, nil, nil, nil, nil, zap.NewNop(), nil, spaceStore, nil, nil, WithCloudConfig(cloudConfig))
+}
+
+func newSpaceTestResolverWithCloudConfigAndHostedStorage(spaceStore space.SpaceStore, cloudConfig management.CloudConfig, hostedStorageStore management.HostedStorageStore) *Resolver {
+	mockStor := &MockStorage{}
+	sp := NewMockStorageProvider(mockStor)
+	return NewResolver(sp, nil, nil, nil, nil, nil, zap.NewNop(), nil, spaceStore, nil, nil, WithCloudConfig(cloudConfig), WithHostedStorageStore(hostedStorageStore))
+}
+
+func newSpaceTestResolverWithHostedStorageAndSpaceStorage(spaceStore space.SpaceStore, cloudConfig management.CloudConfig, hostedStorageStore management.HostedStorageStore, spaceStorage storagepkg.Storage) *Resolver {
+	sp := NewMockStorageProvider(&MockStorage{})
+	return NewResolver(
+		sp,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		zap.NewNop(),
+		nil,
+		spaceStore,
+		nil,
+		nil,
+		WithCloudConfig(cloudConfig),
+		WithHostedStorageStore(hostedStorageStore),
+		WithSpaceStorageFactory(func(*space.Space) (storagepkg.Storage, error) {
+			return spaceStorage, nil
+		}),
+	)
 }
 
 func newSpaceRegistryTestResolver(spaceStore space.SpaceStore, registryStore registrystore.Store, cfg *config.Config) (*Resolver, *MockStorage) {
@@ -225,6 +258,348 @@ func TestGetSpaceStorage_PlatformManagedUsesCloudConfig(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, stor)
 	mockSpaceStore.AssertExpectations(t)
+}
+
+func TestRequestUpload_PlatformManagedRecordsPendingHostedUpload(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On(
+		"BeginPendingUpload",
+		mock.Anything,
+		"org-a",
+		"space-123",
+		"test.txt",
+		mock.MatchedBy(func(expiresAt time.Time) bool { return !expiresAt.IsZero() }),
+	).Return(nil).Once()
+
+	r := newSpaceTestResolverWithCloudConfigAndHostedStorage(mockSpaceStore, management.CloudConfig{
+		PlatformS3Bucket:       "platform-bucket",
+		PlatformS3Region:       "auto",
+		PlatformS3Endpoint:     "https://example.r2.cloudflarestorage.com",
+		PlatformS3AccessKeyID:  "platform-ak",
+		PlatformS3SecretKey:    "platform-sk",
+		PlatformS3UsePathStyle: false,
+		PlatformS3Prefix:       "spaces/{spaceID}",
+	}, mockHostedStorage)
+
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().RequestUpload(ctx, "test.txt", ptrStr("space-1"), "text/plain", 128)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.NotEmpty(t, result.UploadURL)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+}
+
+func TestRequestUpload_PlatformManagedUsesNoOverwritePresign(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On(
+		"BeginPendingUpload",
+		mock.Anything,
+		"org-a",
+		"space-123",
+		"test.txt",
+		mock.MatchedBy(func(expiresAt time.Time) bool { return !expiresAt.IsZero() }),
+	).Return(nil).Once()
+	mockSpaceStorage := &MockConditionalPresignableStorage{}
+	mockSpaceStorage.On("PresignedPutURLNoOverwrite", mock.Anything, "test.txt", "text/plain", int64(128), hostedUploadIntentTTL).
+		Return("https://example.com/upload", nil).Once()
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().RequestUpload(ctx, "test.txt", ptrStr("space-1"), "text/plain", 128)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "https://example.com/upload", result.UploadURL)
+	assert.Len(t, result.RequiredHeaders, 1)
+	assert.Equal(t, uploadHeaderIfNoneMatch, result.RequiredHeaders[0].Name)
+	assert.Equal(t, "*", result.RequiredHeaders[0].Value)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestUploadFile_PlatformManagedFinalizesHostedUpload(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On(
+		"BeginPendingUpload",
+		mock.Anything,
+		"org-a",
+		"space-123",
+		"test.txt",
+		mock.MatchedBy(func(expiresAt time.Time) bool { return !expiresAt.IsZero() }),
+	).Return(nil).Once()
+	mockHostedStorage.On("FinalizePendingUpload", mock.Anything, "space-123", "test.txt", int64(128)).Return(true, nil).Once()
+	mockSpaceStorage := &MockStorage{}
+	mockSpaceStorage.On("Stat", mock.Anything, "test.txt").Return(storagepkg.FileInfo{}, assert.AnError).Once()
+	mockSpaceStorage.On("Put", mock.Anything, "test.txt", mock.Anything).Return(nil).Once()
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	upload := graphql.Upload{File: strings.NewReader("test content"), Filename: "test.txt", Size: 128}
+	result, err := r.Mutation().UploadFile(ctx, "test.txt", ptrStr("space-1"), upload)
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestUploadFile_PlatformManagedRejectsOverwrite(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockSpaceStorage := &MockStorage{}
+	mockSpaceStorage.On("Stat", mock.Anything, "test.txt").Return(storagepkg.FileInfo{Path: "test.txt", Size: 128}, nil).Once()
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	upload := graphql.Upload{File: strings.NewReader("test content"), Filename: "test.txt", Size: 128}
+	result, err := r.Mutation().UploadFile(ctx, "test.txt", ptrStr("space-1"), upload)
+
+	assert.False(t, result)
+	assert.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok)
+	assert.Equal(t, apperror.ErrCodeFileAlreadyExists, gqlErr.Extensions["code"])
+	mockHostedStorage.AssertNotCalled(t, "BeginPendingUpload", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockHostedStorage.AssertNotCalled(t, "FinalizePendingUpload", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStorage.AssertNotCalled(t, "Put", mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStore.AssertExpectations(t)
+	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestCompleteUpload_PlatformManagedFinalizesHostedUpload(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On("FinalizePendingUpload", mock.Anything, "space-123", "test.txt", int64(128)).Return(true, nil).Once()
+	mockSpaceStorage := &MockStorage{}
+	mockSpaceStorage.On("Stat", mock.Anything, "test.txt").Return(storagepkg.FileInfo{Path: "test.txt", Size: 128}, nil).Once()
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().CompleteUpload(ctx, "test.txt", ptrStr("space-1"))
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestCompleteUpload_PlatformManagedIsIdempotent(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On("FinalizePendingUpload", mock.Anything, "space-123", "test.txt", int64(128)).Return(false, nil).Once()
+	mockSpaceStorage := &MockStorage{}
+	mockSpaceStorage.On("Stat", mock.Anything, "test.txt").Return(storagepkg.FileInfo{Path: "test.txt", Size: 128}, nil).Once()
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().CompleteUpload(ctx, "test.txt", ptrStr("space-1"))
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestCompleteUpload_BYOBSpaceNotAvailable(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModeBYOB,
+		StorageType: "s3",
+		Bucket:      "customer-bucket",
+		Region:      "us-east-1",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockSpaceStorage := &MockStorage{}
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().CompleteUpload(ctx, "test.txt", ptrStr("space-1"))
+
+	assert.False(t, result)
+	assert.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok)
+	assert.Equal(t, "NOT_AVAILABLE", gqlErr.Extensions["code"])
+	mockHostedStorage.AssertNotCalled(t, "FinalizePendingUpload", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStorage.AssertNotCalled(t, "Stat", mock.Anything, mock.Anything)
+	mockSpaceStore.AssertExpectations(t)
+}
+
+func TestDeleteFile_PlatformManagedDeletesHostedObject(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On("GetObject", mock.Anything, "space-123", "test.txt").Return(&management.HostedStorageObject{
+		OrgID:     "org-a",
+		SpaceID:   "space-123",
+		ObjectKey: "test.txt",
+		Status:    "ready",
+		SizeBytes: 128,
+	}, nil).Once()
+	mockHostedStorage.On("DeleteReadyObject", mock.Anything, "space-123", "test.txt").Return(int64(128), nil).Once()
+	mockSpaceStorage := &MockStorage{}
+	mockSpaceStorage.On("Delete", mock.Anything, "test.txt").Return(nil).Once()
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().DeleteFile(ctx, "test.txt", ptrStr("space-1"))
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestDeleteFile_PlatformManagedUntrackedObjectSkipsHostedLedger(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On("GetObject", mock.Anything, "space-123", "test.txt").Return((*management.HostedStorageObject)(nil), nil).Once()
+	mockSpaceStorage := &MockStorage{}
+	mockSpaceStorage.On("Delete", mock.Anything, "test.txt").Return(nil).Once()
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().DeleteFile(ctx, "test.txt", ptrStr("space-1"))
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+	mockHostedStorage.AssertNotCalled(t, "DeleteReadyObject", mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestCopyFile_PlatformManagedCopiesHostedObject(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On("GetObject", mock.Anything, "space-123", "source.txt").Return(&management.HostedStorageObject{
+		OrgID:     "org-a",
+		SpaceID:   "space-123",
+		ObjectKey: "source.txt",
+		Status:    "ready",
+		SizeBytes: 128,
+	}, nil).Once()
+	mockHostedStorage.On("CopyReadyObject", mock.Anything, "space-123", "source.txt", "org-a", "space-123", "dest.txt").Return(int64(128), nil).Once()
+	mockSpaceStorage := &MockStorage{}
+	mockSpaceStorage.On("Copy", mock.Anything, "source.txt", "dest.txt").Return(nil).Once()
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().CopyFile(ctx, "source.txt", "dest.txt", ptrStr("space-1"))
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestMoveFile_PlatformManagedMovesHostedObjectWithoutCopyOrDelete(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On("GetObject", mock.Anything, "space-123", "source.txt").Return(&management.HostedStorageObject{
+		OrgID:     "org-a",
+		SpaceID:   "space-123",
+		ObjectKey: "source.txt",
+		Status:    "ready",
+		SizeBytes: 128,
+	}, nil).Once()
+	mockHostedStorage.On("MoveReadyObject", mock.Anything, "space-123", "source.txt", "dest.txt").Return(nil).Once()
+	mockSpaceStorage := &MockStorage{}
+	mockSpaceStorage.On("Move", mock.Anything, "source.txt", "dest.txt").Return(nil).Once()
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().MoveFile(ctx, "source.txt", "dest.txt", ptrStr("space-1"))
+
+	assert.NoError(t, err)
+	assert.True(t, result)
+	mockHostedStorage.AssertNotCalled(t, "CopyReadyObject", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockHostedStorage.AssertNotCalled(t, "DeleteReadyObject", mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockSpaceStorage.AssertExpectations(t)
 }
 
 func TestGetEffectiveVideoThumbnailPosition_UsesSpaceOverride(t *testing.T) {

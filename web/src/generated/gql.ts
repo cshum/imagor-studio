@@ -55,7 +55,8 @@ type Documents = {
   '\n  query ListFiles(\n    $path: String!\n    $spaceID: String\n    $offset: Int\n    $limit: Int\n    $onlyFiles: Boolean\n    $onlyFolders: Boolean\n    $extensions: String\n    $showHidden: Boolean\n    $sortBy: SortOption\n    $sortOrder: SortOrder\n  ) {\n    listFiles(\n      path: $path\n      spaceID: $spaceID\n      offset: $offset\n      limit: $limit\n      onlyFiles: $onlyFiles\n      onlyFolders: $onlyFolders\n      extensions: $extensions\n      showHidden: $showHidden\n      sortBy: $sortBy\n      sortOrder: $sortOrder\n    ) {\n      items {\n        name\n        path\n        size\n        isDirectory\n        modifiedTime\n        thumbnailUrls {\n          grid\n          preview\n          full\n          original\n          meta\n        }\n      }\n      totalCount\n    }\n  }\n': typeof types.ListFilesDocument
   '\n  query StatFile($path: String!, $spaceID: String) {\n    statFile(path: $path, spaceID: $spaceID) {\n      name\n      path\n      size\n      isDirectory\n      modifiedTime\n      etag\n      thumbnailUrls {\n        grid\n        preview\n        full\n        original\n        meta\n      }\n    }\n  }\n': typeof types.StatFileDocument
   '\n  mutation UploadFile($path: String!, $spaceID: String, $content: Upload!) {\n    uploadFile(path: $path, spaceID: $spaceID, content: $content)\n  }\n': typeof types.UploadFileDocument
-  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n': typeof types.RequestUploadDocument
+  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n      requiredHeaders {\n        name\n        value\n      }\n    }\n  }\n': typeof types.RequestUploadDocument
+  '\n  mutation CompleteUpload($path: String!, $spaceID: String) {\n    completeUpload(path: $path, spaceID: $spaceID)\n  }\n': typeof types.CompleteUploadDocument
   '\n  mutation DeleteFile($path: String!, $spaceID: String) {\n    deleteFile(path: $path, spaceID: $spaceID)\n  }\n': typeof types.DeleteFileDocument
   '\n  mutation CreateFolder($path: String!, $spaceID: String) {\n    createFolder(path: $path, spaceID: $spaceID)\n  }\n': typeof types.CreateFolderDocument
   '\n  mutation CopyFile($sourcePath: String!, $destPath: String!, $spaceID: String) {\n    copyFile(sourcePath: $sourcePath, destPath: $destPath, spaceID: $spaceID)\n  }\n': typeof types.CopyFileDocument
@@ -161,8 +162,10 @@ const documents: Documents = {
     types.StatFileDocument,
   '\n  mutation UploadFile($path: String!, $spaceID: String, $content: Upload!) {\n    uploadFile(path: $path, spaceID: $spaceID, content: $content)\n  }\n':
     types.UploadFileDocument,
-  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n':
+  '\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n      requiredHeaders {\n        name\n        value\n      }\n    }\n  }\n':
     types.RequestUploadDocument,
+  '\n  mutation CompleteUpload($path: String!, $spaceID: String) {\n    completeUpload(path: $path, spaceID: $spaceID)\n  }\n':
+    types.CompleteUploadDocument,
   '\n  mutation DeleteFile($path: String!, $spaceID: String) {\n    deleteFile(path: $path, spaceID: $spaceID)\n  }\n':
     types.DeleteFileDocument,
   '\n  mutation CreateFolder($path: String!, $spaceID: String) {\n    createFolder(path: $path, spaceID: $spaceID)\n  }\n':
@@ -468,8 +471,14 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n',
-): (typeof documents)['\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n    }\n  }\n']
+  source: '\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n      requiredHeaders {\n        name\n        value\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation RequestUpload(\n    $path: String!\n    $spaceID: String\n    $contentType: String!\n    $sizeBytes: Int!\n  ) {\n    requestUpload(\n      path: $path\n      spaceID: $spaceID\n      contentType: $contentType\n      sizeBytes: $sizeBytes\n    ) {\n      uploadURL\n      expiresAt\n      requiredHeaders {\n        name\n        value\n      }\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation CompleteUpload($path: String!, $spaceID: String) {\n    completeUpload(path: $path, spaceID: $spaceID)\n  }\n',
+): (typeof documents)['\n  mutation CompleteUpload($path: String!, $spaceID: String) {\n    completeUpload(path: $path, spaceID: $spaceID)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -34,23 +34,24 @@ const (
 
 // Services contains all initialized application services
 type Services struct {
-	DB               *bun.DB
-	TokenManager     *auth.TokenManager
-	Storage          storage.Storage
-	StorageProvider  *storageprovider.Provider
-	ImagorProvider   *imagorprovider.Provider
-	RegistryStore    registrystore.Store
-	UserStore        userstore.Store
-	OrgStore         org.OrgStore                 // nil in self-hosted; set in cloud multi-tenant mode
-	SpaceStore       space.SpaceStore             // nil in self-hosted; set in cloud multi-tenant mode
-	SpaceInviteStore space.SpaceInviteStore       // nil when invitation storage is unavailable
-	InviteSender     space.InviteSender           // nil when invitation email is not configured
-	SpaceConfigStore processing.SpaceConfigReader // nil unless running a processing node; Start() called by server
-	ProcessingConfig *processing.NodeConfig       // nil unless running a processing node
-	LicenseService   *license.Service
-	Encryption       *encryption.Service
-	Config           *config.Config
-	Logger           *zap.Logger
+	DB                 *bun.DB
+	TokenManager       *auth.TokenManager
+	Storage            storage.Storage
+	StorageProvider    *storageprovider.Provider
+	ImagorProvider     *imagorprovider.Provider
+	RegistryStore      registrystore.Store
+	UserStore          userstore.Store
+	OrgStore           org.OrgStore                  // nil in self-hosted; set in cloud multi-tenant mode
+	SpaceStore         space.SpaceStore              // nil in self-hosted; set in cloud multi-tenant mode
+	SpaceInviteStore   space.SpaceInviteStore        // nil when invitation storage is unavailable
+	HostedStorageStore management.HostedStorageStore // nil unless cloud hosted-storage metering is enabled
+	InviteSender       space.InviteSender            // nil when invitation email is not configured
+	SpaceConfigStore   processing.SpaceConfigReader  // nil unless running a processing node; Start() called by server
+	ProcessingConfig   *processing.NodeConfig        // nil unless running a processing node
+	LicenseService     *license.Service
+	Encryption         *encryption.Service
+	Config             *config.Config
+	Logger             *zap.Logger
 }
 
 // Initialize sets up the database, runs migrations, and initializes all services.
@@ -147,12 +148,13 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	userStore := userstore.New(db, logger)
 
 	var (
-		orgStore         org.OrgStore
-		spaceStore       space.SpaceStore
-		spaceInviteStore space.SpaceInviteStore
+		orgStore           org.OrgStore
+		spaceStore         space.SpaceStore
+		spaceInviteStore   space.SpaceInviteStore
+		hostedStorageStore management.HostedStorageStore
 	)
 	if mode == ModeCloud && cloudStoresFactory != nil {
-		orgStore, spaceStore, spaceInviteStore, err = cloudStoresFactory(management.CloudStoresConfig{InternalAPISecret: cloudConfig.InternalAPISecret}, db, encryptionService, logger)
+		orgStore, spaceStore, spaceInviteStore, hostedStorageStore, err = cloudStoresFactory(management.CloudStoresConfig{InternalAPISecret: cloudConfig.InternalAPISecret}, db, encryptionService, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize cloud stores: %w", err)
 		}
@@ -198,22 +200,23 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 
 	initOK = true // all steps succeeded; db ownership transfers to Services
 	return &Services{
-		DB:               db,
-		TokenManager:     tokenManager,
-		Storage:          stor,
-		StorageProvider:  storageProvider,
-		ImagorProvider:   imagorProvider,
-		RegistryStore:    registryStore,
-		UserStore:        userStore,
-		OrgStore:         orgStore,
-		SpaceStore:       spaceStore,
-		SpaceInviteStore: spaceInviteStore,
-		InviteSender:     inviteSender,
-		SpaceConfigStore: spaceConfigStore,
-		LicenseService:   licenseService,
-		Encryption:       encryptionService,
-		Config:           enhancedCfg,
-		Logger:           logger,
+		DB:                 db,
+		TokenManager:       tokenManager,
+		Storage:            stor,
+		StorageProvider:    storageProvider,
+		ImagorProvider:     imagorProvider,
+		RegistryStore:      registryStore,
+		UserStore:          userStore,
+		OrgStore:           orgStore,
+		SpaceStore:         spaceStore,
+		SpaceInviteStore:   spaceInviteStore,
+		HostedStorageStore: hostedStorageStore,
+		InviteSender:       inviteSender,
+		SpaceConfigStore:   spaceConfigStore,
+		LicenseService:     licenseService,
+		Encryption:         encryptionService,
+		Config:             enhancedCfg,
+		Logger:             logger,
 	}, nil
 }
 

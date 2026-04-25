@@ -15,6 +15,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -22,6 +23,10 @@ import (
 )
 
 const maxSinglePutUploadBytes int64 = 5 * 1024 * 1024 * 1024
+
+const hostedUploadIntentTTL = 5 * time.Minute
+
+const uploadHeaderIfNoneMatch = "If-None-Match"
 
 func supportsPresignedUpload(stor storage.Storage) bool {
 	_, ok := stor.(storage.PresignableStorage)
@@ -88,6 +93,9 @@ func (r *Resolver) getAccessibleSpaceByID(ctx context.Context, spaceID *string) 
 }
 
 func (r *Resolver) storageFromSpaceConfig(sp *space.Space) (storage.Storage, error) {
+	if r.spaceStorageFactory != nil {
+		return r.spaceStorageFactory(sp)
+	}
 	effective := r.effectiveSpaceStorageConfig(sp)
 	p := storageprovider.New(r.logger, nil, nil)
 	return p.NewStorageFromSpaceConfig(
@@ -97,6 +105,53 @@ func (r *Resolver) storageFromSpaceConfig(sp *space.Space) (storage.Storage, err
 		effective.AccessKeyID, effective.SecretKey,
 		effective.UsePathStyle,
 	)
+}
+
+func (r *Resolver) resolveUploadStorageTarget(ctx context.Context, spaceID *string) (storage.Storage, *space.Space, error) {
+	if r.cloudEnabled() && spaceID != nil && *spaceID != "" {
+		sp, err := r.getAccessibleSpaceByID(ctx, spaceID)
+		if err != nil {
+			return nil, nil, err
+		}
+		stor, err := r.storageFromSpaceConfig(sp)
+		if err != nil {
+			return nil, nil, err
+		}
+		return stor, sp, nil
+	}
+
+	stor, err := r.getSpaceStorageByID(ctx, spaceID)
+	if err != nil {
+		return nil, nil, err
+	}
+	return stor, nil, nil
+}
+
+func (r *Resolver) tracksHostedStorage(sp *space.Space) bool {
+	return sp != nil && r.hostedStorageStore != nil && space.NormalizeStorageMode(sp.StorageMode) == space.StorageModePlatform
+}
+
+func (r *Resolver) getTrackedHostedObject(ctx context.Context, sp *space.Space, objectKey string) (*management.HostedStorageObject, error) {
+	if !r.tracksHostedStorage(sp) {
+		return nil, nil
+	}
+	obj, err := r.hostedStorageStore.GetObject(ctx, sp.ID, objectKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up hosted object: %w", err)
+	}
+	if obj == nil || obj.Status != "ready" {
+		return nil, nil
+	}
+	return obj, nil
+}
+
+func fileAlreadyExistsError(operation string) error {
+	return &gqlerror.Error{
+		Message: fmt.Sprintf("failed to %s: file already exists", operation),
+		Extensions: map[string]interface{}{
+			"code": apperror.ErrCodeFileAlreadyExists,
+		},
+	}
 }
 
 func (r *queryResolver) getEffectiveVideoThumbnailPosition(ctx context.Context, spaceConfig *space.Space) string {
@@ -174,15 +229,40 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceID 
 	if err := RequireWritePermission(ctx, path); err != nil {
 		return false, err
 	}
-	stor, err := r.getSpaceStorageByID(ctx, spaceID)
+	stor, sp, err := r.resolveUploadStorageTarget(ctx, spaceID)
 	if err != nil {
 		return false, err
+	}
+	if r.tracksHostedStorage(sp) {
+		if _, err := stor.Stat(ctx, path); err == nil {
+			return false, fileAlreadyExistsError("upload file")
+		}
 	}
 	r.logger.Debug("Uploading file", zap.String("path", path), zap.String("filename", content.Filename))
 
 	if err := stor.Put(ctx, path, content.File); err != nil {
 		r.logger.Error("Failed to upload file", zap.Error(err))
 		return false, fmt.Errorf("failed to upload file: %w", err)
+	}
+	if r.tracksHostedStorage(sp) {
+		sizeBytes := content.Size
+		if sizeBytes <= 0 {
+			info, err := stor.Stat(ctx, path)
+			if err != nil {
+				r.logger.Error("Failed to stat uploaded hosted file", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path))
+				return false, fmt.Errorf("failed to stat uploaded file: %w", err)
+			}
+			sizeBytes = info.Size
+		}
+		expiresAt := time.Now().UTC().Add(hostedUploadIntentTTL)
+		if err := r.hostedStorageStore.BeginPendingUpload(ctx, sp.OrgID, sp.ID, path, expiresAt); err != nil {
+			r.logger.Error("Failed to record pending hosted upload", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path))
+			return false, fmt.Errorf("failed to record upload intent: %w", err)
+		}
+		if _, err := r.hostedStorageStore.FinalizePendingUpload(ctx, sp.ID, path, sizeBytes); err != nil {
+			r.logger.Error("Failed to finalize hosted upload", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path), zap.Int64("sizeBytes", sizeBytes))
+			return false, fmt.Errorf("failed to finalize upload: %w", err)
+		}
 	}
 
 	return true, nil
@@ -208,7 +288,7 @@ func (r *mutationResolver) RequestUpload(ctx context.Context, path string, space
 		}
 	}
 
-	stor, err := r.getSpaceStorageByID(ctx, spaceID)
+	stor, sp, err := r.resolveUploadStorageTarget(ctx, spaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -226,17 +306,77 @@ func (r *mutationResolver) RequestUpload(ctx context.Context, path string, space
 		trimmedContentType = "application/octet-stream"
 	}
 
-	ttl := 5 * time.Minute
-	uploadURL, err := presignable.PresignedPutURL(ctx, path, trimmedContentType, int64(sizeBytes), ttl)
+	ttl := hostedUploadIntentTTL
+	uploadURL := ""
+	requiredHeaders := []*gql.UploadHeader{}
+	if r.tracksHostedStorage(sp) {
+		conditionalPresignable, ok := stor.(storage.ConditionalPresignableStorage)
+		if !ok {
+			return nil, &gqlerror.Error{
+				Message:    "current hosted storage backend does not support no-overwrite presigned uploads",
+				Extensions: map[string]interface{}{"code": "NOT_AVAILABLE"},
+			}
+		}
+		uploadURL, err = conditionalPresignable.PresignedPutURLNoOverwrite(ctx, path, trimmedContentType, int64(sizeBytes), ttl)
+		requiredHeaders = []*gql.UploadHeader{{Name: uploadHeaderIfNoneMatch, Value: "*"}}
+	} else {
+		uploadURL, err = presignable.PresignedPutURL(ctx, path, trimmedContentType, int64(sizeBytes), ttl)
+	}
 	if err != nil {
 		r.logger.Error("Failed to generate presigned upload URL", zap.Error(err), zap.String("path", path))
 		return nil, fmt.Errorf("failed to generate upload URL: %w", err)
 	}
 
+	if r.tracksHostedStorage(sp) {
+		expiresAt := time.Now().UTC().Add(ttl)
+		if err := r.hostedStorageStore.BeginPendingUpload(ctx, sp.OrgID, sp.ID, path, expiresAt); err != nil {
+			r.logger.Error("Failed to record pending hosted upload", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path))
+			return nil, fmt.Errorf("failed to record upload intent: %w", err)
+		}
+	}
+
 	return &gql.PresignedUpload{
-		UploadURL: uploadURL,
-		ExpiresAt: time.Now().UTC().Add(ttl).Format(time.RFC3339),
+		UploadURL:       uploadURL,
+		ExpiresAt:       time.Now().UTC().Add(ttl).Format(time.RFC3339),
+		RequiredHeaders: requiredHeaders,
 	}, nil
+}
+
+// CompleteUpload is the resolver for the completeUpload field.
+func (r *mutationResolver) CompleteUpload(ctx context.Context, path string, spaceID *string) (bool, error) {
+	if err := RequireWritePermission(ctx, path); err != nil {
+		return false, err
+	}
+
+	stor, sp, err := r.resolveUploadStorageTarget(ctx, spaceID)
+	if err != nil {
+		return false, err
+	}
+	if !r.tracksHostedStorage(sp) {
+		return false, &gqlerror.Error{
+			Message:    "completeUpload is only available for platform-managed hosted storage",
+			Extensions: map[string]interface{}{"code": "NOT_AVAILABLE"},
+		}
+	}
+
+	info, err := stor.Stat(ctx, path)
+	if err != nil {
+		r.logger.Error("Failed to stat uploaded file", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path))
+		return false, fmt.Errorf("failed to stat uploaded file: %w", err)
+	}
+	if info.IsDir {
+		return false, &gqlerror.Error{
+			Message:    "completeUpload only supports files",
+			Extensions: map[string]interface{}{"code": "BAD_USER_INPUT"},
+		}
+	}
+
+	if _, err := r.hostedStorageStore.FinalizePendingUpload(ctx, sp.ID, path, info.Size); err != nil {
+		r.logger.Error("Failed to finalize hosted upload", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path), zap.Int64("sizeBytes", info.Size))
+		return false, fmt.Errorf("failed to finalize upload: %w", err)
+	}
+
+	return true, nil
 }
 
 // DeleteFile is the resolver for the deleteFile field.
@@ -245,9 +385,21 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string, spaceID 
 	if err := RequireWritePermission(ctx, path); err != nil {
 		return false, err
 	}
-	stor, err := r.getSpaceStorageByID(ctx, spaceID)
+	stor, sp, err := r.resolveUploadStorageTarget(ctx, spaceID)
 	if err != nil {
 		return false, err
+	}
+	hostedObject, err := r.getTrackedHostedObject(ctx, sp, path)
+	if err != nil {
+		return false, err
+	}
+	var hostedPreviewObject *management.HostedStorageObject
+	previewPath := getPreviewPath(path)
+	if previewPath != "" {
+		hostedPreviewObject, err = r.getTrackedHostedObject(ctx, sp, previewPath)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	r.logger.Debug("Deleting file", zap.String("path", path))
@@ -257,15 +409,25 @@ func (r *mutationResolver) DeleteFile(ctx context.Context, path string, spaceID 
 		r.logger.Error("Failed to delete file", zap.Error(err))
 		return false, fmt.Errorf("failed to delete file: %w", err)
 	}
+	if hostedObject != nil {
+		if _, err := r.hostedStorageStore.DeleteReadyObject(ctx, sp.ID, path); err != nil {
+			r.logger.Error("Failed to delete hosted storage row", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("path", path))
+			return false, fmt.Errorf("failed to delete hosted storage object: %w", err)
+		}
+	}
 
 	// If it's a template file, also delete the preview image
-	if previewPath := getPreviewPath(path); previewPath != "" {
+	if previewPath != "" {
 		// Check if preview exists before attempting to delete
 		if _, err := stor.Stat(ctx, previewPath); err == nil {
 			r.logger.Debug("Deleting template preview", zap.String("path", previewPath))
 			if err := stor.Delete(ctx, previewPath); err != nil {
 				// Log warning but don't fail the operation
 				r.logger.Warn("Failed to delete template preview", zap.String("path", previewPath), zap.Error(err))
+			} else if hostedPreviewObject != nil {
+				if _, err := r.hostedStorageStore.DeleteReadyObject(ctx, sp.ID, previewPath); err != nil {
+					r.logger.Warn("Failed to delete hosted storage preview row", zap.String("spaceID", sp.ID), zap.String("path", previewPath), zap.Error(err))
+				}
 			}
 		}
 	}
@@ -303,7 +465,11 @@ func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, dest
 	if err := RequireWritePermission(ctx, destPath); err != nil {
 		return false, err
 	}
-	stor, err := r.getSpaceStorageByID(ctx, spaceID)
+	stor, sp, err := r.resolveUploadStorageTarget(ctx, spaceID)
+	if err != nil {
+		return false, err
+	}
+	hostedObject, err := r.getTrackedHostedObject(ctx, sp, sourcePath)
 	if err != nil {
 		return false, err
 	}
@@ -315,15 +481,16 @@ func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, dest
 
 		// Check if error is due to file already existing
 		if errors.Is(err, os.ErrExist) {
-			return false, &gqlerror.Error{
-				Message: "failed to copy file: file already exists",
-				Extensions: map[string]interface{}{
-					"code": apperror.ErrCodeFileAlreadyExists,
-				},
-			}
+			return false, fileAlreadyExistsError("copy file")
 		}
 
 		return false, fmt.Errorf("failed to copy file: %w", err)
+	}
+	if hostedObject != nil {
+		if _, err := r.hostedStorageStore.CopyReadyObject(ctx, sp.ID, sourcePath, sp.OrgID, sp.ID, destPath); err != nil {
+			r.logger.Error("Failed to copy hosted storage row", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("sourcePath", sourcePath), zap.String("destPath", destPath))
+			return false, fmt.Errorf("failed to copy hosted storage object: %w", err)
+		}
 	}
 
 	return true, nil
@@ -338,9 +505,21 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 	if err := RequireWritePermission(ctx, destPath); err != nil {
 		return false, err
 	}
-	stor, err := r.getSpaceStorageByID(ctx, spaceID)
+	stor, sp, err := r.resolveUploadStorageTarget(ctx, spaceID)
 	if err != nil {
 		return false, err
+	}
+	hostedObject, err := r.getTrackedHostedObject(ctx, sp, sourcePath)
+	if err != nil {
+		return false, err
+	}
+	var hostedPreviewObject *management.HostedStorageObject
+	sourcePreviewPath := getPreviewPath(sourcePath)
+	if sourcePreviewPath != "" {
+		hostedPreviewObject, err = r.getTrackedHostedObject(ctx, sp, sourcePreviewPath)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	r.logger.Debug("Moving file", zap.String("sourcePath", sourcePath), zap.String("destPath", destPath))
@@ -351,19 +530,20 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 
 		// Check if error is due to file already existing
 		if errors.Is(err, os.ErrExist) {
-			return false, &gqlerror.Error{
-				Message: "failed to move file: file already exists",
-				Extensions: map[string]interface{}{
-					"code": apperror.ErrCodeFileAlreadyExists,
-				},
-			}
+			return false, fileAlreadyExistsError("move file")
 		}
 
 		return false, fmt.Errorf("failed to move file: %w", err)
 	}
+	if hostedObject != nil {
+		if err := r.hostedStorageStore.MoveReadyObject(ctx, sp.ID, sourcePath, destPath); err != nil {
+			r.logger.Error("Failed to move hosted storage row", zap.Error(err), zap.String("spaceID", sp.ID), zap.String("sourcePath", sourcePath), zap.String("destPath", destPath))
+			return false, fmt.Errorf("failed to move hosted storage object: %w", err)
+		}
+	}
 
 	// If it's a template file, also move the preview image
-	if sourcePreviewPath := getPreviewPath(sourcePath); sourcePreviewPath != "" {
+	if sourcePreviewPath != "" {
 		// Check if preview exists before attempting to move
 		if _, err := stor.Stat(ctx, sourcePreviewPath); err == nil {
 			destPreviewPath := getPreviewPath(destPath)
@@ -377,6 +557,14 @@ func (r *mutationResolver) MoveFile(ctx context.Context, sourcePath string, dest
 					zap.String("source", sourcePreviewPath),
 					zap.String("dest", destPreviewPath),
 					zap.Error(err))
+			} else if hostedPreviewObject != nil {
+				if err := r.hostedStorageStore.MoveReadyObject(ctx, sp.ID, sourcePreviewPath, destPreviewPath); err != nil {
+					r.logger.Warn("Failed to move hosted storage preview row",
+						zap.String("spaceID", sp.ID),
+						zap.String("source", sourcePreviewPath),
+						zap.String("dest", destPreviewPath),
+						zap.Error(err))
+				}
 			}
 		}
 	}

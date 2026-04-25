@@ -174,6 +174,7 @@ export type Mutation = {
   beginStorageUploadProbe: StorageUploadProbe
   changePassword: Scalars['Boolean']['output']
   completeStorageUploadProbe: StorageTestResult
+  completeUpload: Scalars['Boolean']['output']
   configureFileStorage: StorageConfigResult
   configureImagor: ImagorConfigResult
   configureS3Storage: StorageConfigResult
@@ -242,6 +243,11 @@ export type MutationCompleteStorageUploadProbeArgs = {
   expectedContent: Scalars['String']['input']
   input: StorageConfigInput
   probePath: Scalars['String']['input']
+}
+
+export type MutationCompleteUploadArgs = {
+  path: Scalars['String']['input']
+  spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
 export type MutationConfigureFileStorageArgs = {
@@ -448,6 +454,7 @@ export type Organization = {
 export type PresignedUpload = {
   __typename?: 'PresignedUpload'
   expiresAt: Scalars['String']['output']
+  requiredHeaders: Array<UploadHeader>
   uploadURL: Scalars['String']['output']
 }
 
@@ -729,6 +736,12 @@ export type ThumbnailUrls = {
 export type UpdateProfileInput = {
   displayName: InputMaybe<Scalars['String']['input']>
   username: InputMaybe<Scalars['String']['input']>
+}
+
+export type UploadHeader = {
+  __typename?: 'UploadHeader'
+  name: Scalars['String']['output']
+  value: Scalars['String']['output']
 }
 
 export type User = {
@@ -1418,8 +1431,20 @@ export type RequestUploadMutationVariables = Exact<{
 
 export type RequestUploadMutation = {
   __typename?: 'Mutation'
-  requestUpload: { __typename?: 'PresignedUpload'; uploadURL: string; expiresAt: string }
+  requestUpload: {
+    __typename?: 'PresignedUpload'
+    uploadURL: string
+    expiresAt: string
+    requiredHeaders: Array<{ __typename?: 'UploadHeader'; name: string; value: string }>
+  }
 }
+
+export type CompleteUploadMutationVariables = Exact<{
+  path: Scalars['String']['input']
+  spaceID?: InputMaybe<Scalars['String']['input']>
+}>
+
+export type CompleteUploadMutation = { __typename?: 'Mutation'; completeUpload: boolean }
 
 export type DeleteFileMutationVariables = Exact<{
   path: Scalars['String']['input']
@@ -2319,7 +2344,16 @@ export const RequestUploadDocument = gql`
     ) {
       uploadURL
       expiresAt
+      requiredHeaders {
+        name
+        value
+      }
     }
+  }
+`
+export const CompleteUploadDocument = gql`
+  mutation CompleteUpload($path: String!, $spaceID: String) {
+    completeUpload(path: $path, spaceID: $spaceID)
   }
 `
 export const DeleteFileDocument = gql`
@@ -3220,6 +3254,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'RequestUpload',
+        'mutation',
+        variables,
+      )
+    },
+    CompleteUpload(
+      variables: CompleteUploadMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<CompleteUploadMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<CompleteUploadMutation>({
+            document: CompleteUploadDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'CompleteUpload',
         'mutation',
         variables,
       )
