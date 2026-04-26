@@ -16,9 +16,6 @@ import (
 
 func setupPostgresTestDB(t *testing.T) (*bun.DB, func()) {
 	t.Helper()
-	if os.Getenv("IMAGOR_RUN_POSTGRES_TESTS") != "1" {
-		t.Skip("set IMAGOR_RUN_POSTGRES_TESTS=1 to run Postgres integration tests")
-	}
 	if _, err := os.Stat("/var/run/docker.sock"); err != nil {
 		t.Skip("docker is not available")
 	}
