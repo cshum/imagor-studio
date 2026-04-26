@@ -5,7 +5,9 @@ import (
 	"context"
 	"io"
 	"net/http/httptest"
+	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -539,6 +541,19 @@ func TestS3Storage_CopyDestinationExists(t *testing.T) {
 	// Try to copy when destination exists
 	err = s3Storage.Copy(ctx, "source.txt", "dest.txt")
 	assert.Error(t, err)
+}
+
+func TestS3Storage_PresignedPutURLNoOverwrite_SignsIfNoneMatch(t *testing.T) {
+	s3Storage := setupFakeS3(t)
+	ctx := context.Background()
+
+	uploadURL, err := s3Storage.PresignedPutURLNoOverwrite(ctx, "dest.txt", "text/plain", 4, time.Minute)
+	require.NoError(t, err)
+
+	parsedURL, err := url.Parse(uploadURL)
+	require.NoError(t, err)
+	signedHeaders := parsedURL.Query().Get("X-Amz-SignedHeaders")
+	assert.True(t, strings.Contains(signedHeaders, "if-none-match"))
 }
 
 func TestS3Storage_MoveFile(t *testing.T) {

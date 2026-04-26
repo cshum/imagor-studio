@@ -27,6 +27,7 @@ type Mutation {
     contentType: String!
     sizeBytes: Int!
   ): PresignedUpload!
+  completeUpload(path: String!, spaceID: String): Boolean!
   deleteFile(path: String!, spaceID: String): Boolean!
   createFolder(path: String!, spaceID: String): Boolean!
   copyFile(sourcePath: String!, destPath: String!, spaceID: String): Boolean!
@@ -111,6 +112,12 @@ type StorageStatus {
 type PresignedUpload {
   uploadURL: String!
   expiresAt: String!
+  requiredHeaders: [UploadHeader!]!
+}
+
+type UploadHeader {
+  name: String!
+  value: String!
 }
 
 type FileStorageConfig {

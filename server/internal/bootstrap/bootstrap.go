@@ -34,23 +34,26 @@ const (
 
 // Services contains all initialized application services
 type Services struct {
-	DB               *bun.DB
-	TokenManager     *auth.TokenManager
-	Storage          storage.Storage
-	StorageProvider  *storageprovider.Provider
-	ImagorProvider   *imagorprovider.Provider
-	RegistryStore    registrystore.Store
-	UserStore        userstore.Store
-	OrgStore         org.OrgStore                 // nil in self-hosted; set in cloud multi-tenant mode
-	SpaceStore       space.SpaceStore             // nil in self-hosted; set in cloud multi-tenant mode
-	SpaceInviteStore space.SpaceInviteStore       // nil when invitation storage is unavailable
-	InviteSender     space.InviteSender           // nil when invitation email is not configured
-	SpaceConfigStore processing.SpaceConfigReader // nil unless running a processing node; Start() called by server
-	ProcessingConfig *processing.NodeConfig       // nil unless running a processing node
-	LicenseService   *license.Service
-	Encryption       *encryption.Service
-	Config           *config.Config
-	Logger           *zap.Logger
+	DB                      *bun.DB
+	TokenManager            *auth.TokenManager
+	Storage                 storage.Storage
+	StorageProvider         *storageprovider.Provider
+	ImagorProvider          *imagorprovider.Provider
+	RegistryStore           registrystore.Store
+	UserStore               userstore.Store
+	OrgStore                org.OrgStore                    // nil in self-hosted; set in cloud multi-tenant mode
+	SpaceStore              space.SpaceStore                // nil in self-hosted; set in cloud multi-tenant mode
+	SpaceInviteStore        space.SpaceInviteStore          // nil when invitation storage is unavailable
+	HostedStorageStore      management.HostedStorageStore   // nil unless cloud hosted-storage metering is enabled
+	ProcessingUsageStore    management.ProcessingUsageStore // nil unless cloud processing usage metering is enabled
+	ProcessingUsageRecorder processing.UsageRecorder        // nil unless running a processing node with usage flushing enabled
+	InviteSender            space.InviteSender              // nil when invitation email is not configured
+	SpaceConfigStore        processing.SpaceConfigReader    // nil unless running a processing node; Start() called by server
+	ProcessingConfig        *processing.NodeConfig          // nil unless running a processing node
+	LicenseService          *license.Service
+	Encryption              *encryption.Service
+	Config                  *config.Config
+	Logger                  *zap.Logger
 }
 
 // Initialize sets up the database, runs migrations, and initializes all services.
@@ -67,19 +70,19 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string, mode stri
 }
 
 func InitializeSelfHosted(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, management.CloudConfig{}, nil, nil)
+	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, management.CloudConfig{}, nil, nil, nil)
 }
 
 func InitializeCloud(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud, management.CloudConfig{}, nil, nil)
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, management.CloudConfig{}, nil, nil, nil)
 }
 
 func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args []string, cloudConfig management.CloudConfig, factories management.CloudFactories) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudConfig, factories.Stores, factories.InviteSender)
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudConfig, factories.Stores, factories.InviteSender, factories.AutoMigration)
 }
 
 // initializeRuntimeMode sets up runtime services for self-hosted or cloud management modes.
-func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudConfig management.CloudConfig, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) (*Services, error) {
+func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudConfig management.CloudConfig, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory, autoMigrationRunner management.AutoMigrationRunner) (*Services, error) {
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
 	}
@@ -98,7 +101,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	}()
 
 	// Run migrations based on database type and configuration
-	if err := runMigrationsIfNeeded(db, cfg, logger); err != nil {
+	if err := runMigrationsIfNeeded(db, cfg, logger, autoMigrationRunner); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
@@ -147,12 +150,14 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	userStore := userstore.New(db, logger)
 
 	var (
-		orgStore         org.OrgStore
-		spaceStore       space.SpaceStore
-		spaceInviteStore space.SpaceInviteStore
+		orgStore             org.OrgStore
+		spaceStore           space.SpaceStore
+		spaceInviteStore     space.SpaceInviteStore
+		hostedStorageStore   management.HostedStorageStore
+		processingUsageStore management.ProcessingUsageStore
 	)
 	if mode == ModeCloud && cloudStoresFactory != nil {
-		orgStore, spaceStore, spaceInviteStore, err = cloudStoresFactory(management.CloudStoresConfig{InternalAPISecret: cloudConfig.InternalAPISecret}, db, encryptionService, logger)
+		orgStore, spaceStore, spaceInviteStore, hostedStorageStore, processingUsageStore, err = cloudStoresFactory(management.CloudStoresConfig{InternalAPISecret: cloudConfig.InternalAPISecret}, db, encryptionService, logger)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize cloud stores: %w", err)
 		}
@@ -174,6 +179,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	}
 
 	var spaceConfigStore processing.SpaceConfigReader
+	var processingUsageRecorder processing.UsageRecorder
 	loader := imagorprovider.NewStorageLoader(storageProvider)
 
 	// Initialize imagor provider with the management-node loader.
@@ -198,22 +204,25 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 
 	initOK = true // all steps succeeded; db ownership transfers to Services
 	return &Services{
-		DB:               db,
-		TokenManager:     tokenManager,
-		Storage:          stor,
-		StorageProvider:  storageProvider,
-		ImagorProvider:   imagorProvider,
-		RegistryStore:    registryStore,
-		UserStore:        userStore,
-		OrgStore:         orgStore,
-		SpaceStore:       spaceStore,
-		SpaceInviteStore: spaceInviteStore,
-		InviteSender:     inviteSender,
-		SpaceConfigStore: spaceConfigStore,
-		LicenseService:   licenseService,
-		Encryption:       encryptionService,
-		Config:           enhancedCfg,
-		Logger:           logger,
+		DB:                      db,
+		TokenManager:            tokenManager,
+		Storage:                 stor,
+		StorageProvider:         storageProvider,
+		ImagorProvider:          imagorProvider,
+		RegistryStore:           registryStore,
+		UserStore:               userStore,
+		OrgStore:                orgStore,
+		SpaceStore:              spaceStore,
+		SpaceInviteStore:        spaceInviteStore,
+		HostedStorageStore:      hostedStorageStore,
+		ProcessingUsageStore:    processingUsageStore,
+		ProcessingUsageRecorder: processingUsageRecorder,
+		InviteSender:            inviteSender,
+		SpaceConfigStore:        spaceConfigStore,
+		LicenseService:          licenseService,
+		Encryption:              encryptionService,
+		Config:                  enhancedCfg,
+		Logger:                  logger,
 	}, nil
 }
 
@@ -285,11 +294,23 @@ func initializeEmbeddedMode(cfg *config.Config, logger *zap.Logger) (*Services, 
 
 // initializeDatabase opens and configures the database connection
 func initializeDatabase(cfg *config.Config) (*bun.DB, error) {
-	return database.Connect(cfg.DatabaseURL)
+	return database.ConnectWithOptions(cfg.DatabaseURL, database.ConnectionOptions{
+		PostgresMaxOpenConns:    cfg.DBMaxOpenConns,
+		PostgresMaxIdleConns:    cfg.DBMaxIdleConns,
+		PostgresConnMaxLifetime: cfg.DBConnMaxLifetime,
+		PostgresConnMaxIdleTime: cfg.DBConnMaxIdleTime,
+	})
 }
 
 // runMigrationsIfNeeded executes database migrations using the migrator service
-func runMigrationsIfNeeded(db *bun.DB, cfg *config.Config, logger *zap.Logger) error {
+func runMigrationsIfNeeded(db *bun.DB, cfg *config.Config, logger *zap.Logger, autoMigrationRunner management.AutoMigrationRunner) error {
+	if autoMigrationRunner != nil {
+		return autoMigrationRunner(db, management.AutoMigrationConfig{
+			DatabaseURL:      cfg.DatabaseURL,
+			ForceAutoMigrate: cfg.ForceAutoMigrate,
+		}, logger)
+	}
+
 	// Create migration service and use it for auto-migration logic
 	service := migrator.NewService(db, logger)
 	return service.ExecuteAutoMigration(cfg)

@@ -2,15 +2,20 @@ package resolver
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/cshum/imagor"
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
+	"github.com/cshum/imagor-studio/server/pkg/management"
+	sharedprocessing "github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor/imagorpath"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +33,9 @@ func TestGenerateImagorURL(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger,
+		WithCloudConfig(management.CloudConfig{InternalAPISecret: "internal-secret"}),
+	)
 
 	// Use authenticated context with write permissions
 	ctx := createReadWriteContext("test-user")
@@ -258,7 +265,9 @@ func TestGenerateThumbnailUrls(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	cfg := &config.Config{}
 	mockStorageProvider := NewMockStorageProvider(mockStorage)
-	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, mockImagorProvider, cfg, nil, logger,
+		WithCloudConfig(management.CloudConfig{InternalAPISecret: "internal-secret"}),
+	)
 
 	t.Run("GeneratesThumbnailUrls", func(t *testing.T) {
 		imagePath := "test/image.jpg"
@@ -311,6 +320,11 @@ func TestGenerateThumbnailUrls(t *testing.T) {
 		assert.NotNil(t, result.Full)
 		assert.NotNil(t, result.Original)
 		assert.NotNil(t, result.Meta)
+		assertInternalTrafficURL(t, *result.Grid, "/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", "internal-secret")
+		assertInternalTrafficURL(t, *result.Preview, "/imagor/fit-in/1200x900/filters:quality(90):format(webp)/test/image.jpg", "internal-secret")
+		assertInternalTrafficURL(t, *result.Full, "/imagor/fit-in/2400x1800/filters:quality(95):format(webp)/test/image.jpg", "internal-secret")
+		assertInternalTrafficURL(t, *result.Original, "/imagor/filters:raw()/test/image.jpg", "internal-secret")
+		assertInternalTrafficURL(t, *result.Meta, "/imagor/meta/test/image.jpg", "internal-secret")
 
 		mockImagorProvider.AssertExpectations(t)
 	})
@@ -781,6 +795,7 @@ func TestGenerateThumbnailUrlsForSpace_UsesVerifiedCustomDomain(t *testing.T) {
 		mockSpaceStore,
 		nil,
 		nil,
+		WithCloudConfig(management.CloudConfig{InternalAPISecret: "internal-secret"}),
 	)
 
 	imagePath := "test/image.jpg"
@@ -827,8 +842,8 @@ func TestGenerateThumbnailUrlsForSpace_UsesVerifiedCustomDomain(t *testing.T) {
 
 	result := resolver.generateThumbnailUrlsForSpace(context.Background(), imagePath, "first_frame", &spaceKey)
 	require.NotNil(t, result)
-	assert.Equal(t, "https://images.customer.test/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", *result.Grid)
-	assert.Equal(t, "https://images.customer.test/imagor/meta/test/image.jpg", *result.Meta)
+	assertInternalTrafficURL(t, *result.Grid, "/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", "internal-secret")
+	assertInternalTrafficURL(t, *result.Meta, "/imagor/meta/test/image.jpg", "internal-secret")
 	mockSpaceStore.AssertExpectations(t)
 	mockImagorProvider.AssertExpectations(t)
 }
@@ -858,6 +873,7 @@ func TestGenerateThumbnailUrlsForSpace_UsesProcessingTemplate(t *testing.T) {
 		mockSpaceStore,
 		nil,
 		nil,
+		WithCloudConfig(management.CloudConfig{InternalAPISecret: "internal-secret"}),
 		WithProcessingOriginResolver(space.ProcessingOriginResolverFunc(func(ctx context.Context, key string) string {
 			if key == spaceKey {
 				return "https://acme.imagor.app"
@@ -905,8 +921,8 @@ func TestGenerateThumbnailUrlsForSpace_UsesProcessingTemplate(t *testing.T) {
 
 	result := resolver.generateThumbnailUrlsForSpace(context.Background(), imagePath, "first_frame", &spaceKey)
 	require.NotNil(t, result)
-	assert.Equal(t, "https://acme.imagor.app/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", *result.Grid)
-	assert.Equal(t, "https://acme.imagor.app/imagor/filters:raw()/test/image.jpg", *result.Original)
+	assertInternalTrafficURL(t, *result.Grid, "/imagor/300x225/filters:quality(80):format(webp)/test/image.jpg", "internal-secret")
+	assertInternalTrafficURL(t, *result.Original, "/imagor/filters:raw()/test/image.jpg", "internal-secret")
 	mockImagorProvider.AssertExpectations(t)
 }
 
@@ -941,6 +957,7 @@ func TestGenerateThumbnailUrlsForResolvedSpace_UsesSpaceSigner(t *testing.T) {
 		mockSpaceStore,
 		nil,
 		nil,
+		WithCloudConfig(management.CloudConfig{InternalAPISecret: "internal-secret"}),
 		WithProcessingOriginResolver(space.ProcessingOriginResolverFunc(func(ctx context.Context, key string) string {
 			if key == spaceKey {
 				return "https://acme.imagor.app"
@@ -963,8 +980,274 @@ func TestGenerateThumbnailUrlsForResolvedSpace_UsesSpaceSigner(t *testing.T) {
 		},
 	}, imagorprovider.NewSigner(spaceConfig.ImagorSecret, spaceConfig.SignerAlgorithm, spaceConfig.SignerTruncate))
 
-	assert.Equal(t, "https://acme.imagor.app"+expectedGridPath, *result.Grid)
+	assertInternalTrafficURL(t, *result.Grid, expectedGridPath, "internal-secret")
 	mockImagorProvider.AssertNotCalled(t, "GenerateURL", mock.Anything, mock.Anything)
+}
+
+func TestGenerateImagorURLFromTemplate_PreviewTaggedButFinalUntouched(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+
+	templateJSON := `{
+		"version": "1.0",
+		"dimensionMode": "adaptive",
+		"transformations": {
+			"imagePath": "original/photo.jpg",
+			"originalDimensions": {"width": 800, "height": 600},
+			"width": 800,
+			"height": 600
+		}
+	}`
+
+	makeResolver := func(provider *MockImagorProvider) *Resolver {
+		mockStorage := new(MockStorage)
+		mockRegistryStore := new(MockRegistryStore)
+		mockUserStore := new(MockUserStore)
+		mockStorageProvider := NewMockStorageProvider(mockStorage)
+		return newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, provider, cfg, nil, logger,
+			WithCloudConfig(management.CloudConfig{InternalAPISecret: "internal-secret"}),
+		)
+	}
+
+	t.Run("preview urls carry internal marker", func(t *testing.T) {
+		mockImagorProvider := new(MockImagorProvider)
+		var captured imagorpath.Params
+		mockImagorProvider.On("GenerateURL", "original/photo.jpg", mock.MatchedBy(func(p imagorpath.Params) bool {
+			captured = p
+			return p.Width == 800 && p.Height == 600
+		})).Return("/imagor/original/photo.jpg", nil)
+
+		resolver := makeResolver(mockImagorProvider)
+		ctx := createAdminContext("test-admin")
+		preview := true
+		result, err := resolver.Mutation().GenerateImagorURLFromTemplate(
+			ctx,
+			templateJSON,
+			nil,
+			nil,
+			nil,
+			&preview,
+			nil,
+			nil,
+			nil,
+		)
+
+		require.NoError(t, err)
+		parsed, parseErr := url.Parse(result)
+		require.NoError(t, parseErr)
+		assert.Equal(t, "/imagor/original/photo.jpg", parsed.Path)
+		expectedToken := sharedprocessing.SignInternalTraffic(canonicalImagorPath("original/photo.jpg", captured), "internal-secret")
+		assert.Equal(t, expectedToken, parsed.Query().Get(sharedprocessing.InternalTrafficQueryParam))
+		mockImagorProvider.AssertExpectations(t)
+	})
+
+	t.Run("final urls stay unchanged", func(t *testing.T) {
+		mockImagorProvider := new(MockImagorProvider)
+		mockImagorProvider.On("GenerateURL", "original/photo.jpg", mock.MatchedBy(func(p imagorpath.Params) bool {
+			return p.Width == 800 && p.Height == 600
+		})).Return("/imagor/original/photo.jpg", nil)
+
+		resolver := makeResolver(mockImagorProvider)
+		ctx := createAdminContext("test-admin")
+		final := false
+		result, err := resolver.Mutation().GenerateImagorURLFromTemplate(
+			ctx,
+			templateJSON,
+			nil,
+			nil,
+			nil,
+			&final,
+			nil,
+			nil,
+			nil,
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, "/imagor/original/photo.jpg", result)
+		mockImagorProvider.AssertExpectations(t)
+	})
+}
+
+func TestGeneratedImagorURLs_DriveBillingClassification(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	const internalSecret = "internal-secret"
+	publicSigner := imagorpath.NewHMACSigner(sha256.New, 32, "public-secret")
+	signedPath := func(canonical string) string {
+		return "/" + publicSigner.Sign(canonical) + "/" + canonical
+	}
+
+	makeResolver := func(provider ImagorProvider) *Resolver {
+		mockStorage := new(MockStorage)
+		mockRegistryStore := new(MockRegistryStore)
+		mockUserStore := new(MockUserStore)
+		mockStorageProvider := NewMockStorageProvider(mockStorage)
+		return NewResolver(mockStorageProvider, mockRegistryStore, mockUserStore, provider, cfg, nil, logger, nil, nil, nil, nil,
+			WithCloudConfig(management.CloudConfig{InternalAPISecret: internalSecret}),
+		)
+	}
+	provider := &staticSignedImagorProvider{signPath: signedPath}
+
+	t.Run("thumbnail urls stay non billable", func(t *testing.T) {
+		imagePath := "test/image.jpg"
+
+		resolver := makeResolver(provider)
+		urls := resolver.generateThumbnailUrls(imagePath, "first_frame")
+		require.NotNil(t, urls)
+		require.NotNil(t, urls.Grid)
+		assertURLBillingClassification(t, *urls.Grid, internalSecret, false)
+	})
+
+	t.Run("template preview urls stay non billable", func(t *testing.T) {
+		templateJSON := `{
+			"version": "1.0",
+			"dimensionMode": "adaptive",
+			"transformations": {
+				"imagePath": "original/photo.jpg",
+				"originalDimensions": {"width": 800, "height": 600},
+				"width": 800,
+				"height": 600
+			}
+		}`
+
+		resolver := makeResolver(provider)
+		preview := true
+		result, err := resolver.Mutation().GenerateImagorURLFromTemplate(
+			createAdminContext("test-admin"),
+			templateJSON,
+			nil,
+			nil,
+			nil,
+			&preview,
+			nil,
+			nil,
+			nil,
+		)
+
+		require.NoError(t, err)
+		assertURLBillingClassification(t, result, internalSecret, false)
+	})
+
+	t.Run("copy urls stay billable", func(t *testing.T) {
+		resolver := makeResolver(provider)
+		result, err := resolver.Mutation().GenerateImagorURL(
+			createAdminContext("test-admin"),
+			"original/photo.jpg",
+			nil,
+			gql.ImagorParamsInput{Width: intPtr(800), Height: intPtr(600)},
+		)
+
+		require.NoError(t, err)
+		assertURLBillingClassification(t, result, internalSecret, true)
+	})
+
+	t.Run("final template urls stay billable", func(t *testing.T) {
+		templateJSON := `{
+			"version": "1.0",
+			"dimensionMode": "adaptive",
+			"transformations": {
+				"imagePath": "original/photo.jpg",
+				"originalDimensions": {"width": 800, "height": 600},
+				"width": 800,
+				"height": 600
+			}
+		}`
+
+		resolver := makeResolver(provider)
+		preview := false
+		result, err := resolver.Mutation().GenerateImagorURLFromTemplate(
+			createAdminContext("test-admin"),
+			templateJSON,
+			nil,
+			nil,
+			nil,
+			&preview,
+			nil,
+			nil,
+			nil,
+		)
+
+		require.NoError(t, err)
+		assertURLBillingClassification(t, result, internalSecret, true)
+	})
+}
+
+func assertInternalTrafficURL(t *testing.T, rawURL, expectedPath, secret string) {
+	t.Helper()
+
+	parsed, err := url.Parse(rawURL)
+	require.NoError(t, err)
+	assert.Equal(t, expectedPath, parsed.Path)
+	token := parsed.Query().Get(sharedprocessing.InternalTrafficQueryParam)
+	assert.NotEmpty(t, token)
+	assert.Equal(t, sharedprocessing.SignInternalTraffic(canonicalPayloadForInternalTrafficTest(expectedPath), secret), token)
+}
+
+func assertURLBillingClassification(t *testing.T, rawURL, secret string, wantBillable bool) {
+	t.Helper()
+
+	req := httptest.NewRequest(http.MethodGet, "http://demo.imagor.app"+rawURL, nil)
+	class := sharedprocessing.UsageClassBillableProduction
+	if sharedprocessing.VerifyInternalTrafficRequest(req, secret) {
+		class = sharedprocessing.UsageClassInternalNonBillable
+	}
+	ctx := sharedprocessing.WithRequestMetadata(context.Background(), sharedprocessing.RequestMetadata{
+		OrgID:   "org-1",
+		SpaceID: "demo",
+		Class:   class,
+	})
+	_, recorded := sharedprocessing.MarkRecorded(ctx)
+	assert.Equal(t, wantBillable, recorded)
+}
+
+type staticSignedImagorProvider struct {
+	signPath func(canonical string) string
+}
+
+func (p *staticSignedImagorProvider) Config() *imagorprovider.ImagorConfig {
+	return nil
+}
+
+func (p *staticSignedImagorProvider) Imagor() *imagor.Imagor {
+	return nil
+}
+
+func (p *staticSignedImagorProvider) GenerateURL(imagePath string, params imagorpath.Params) (string, error) {
+	canonical := canonicalImagorPath(imagePath, params)
+	return p.signPath(canonical), nil
+}
+
+func canonicalPayloadForInternalTrafficTest(path string) string {
+	trimmed := strings.TrimPrefix(path, "/")
+	trimmed = strings.TrimPrefix(trimmed, "imagor/")
+	trimmed = strings.TrimPrefix(trimmed, "/")
+	if hasCanonicalLeadingSegment(trimmed) {
+		return trimmed
+	}
+
+	if canonical, ok := sharedprocessing.CanonicalImagorPathFromRequestPath(path); ok {
+		return canonical
+	}
+
+	return trimmed
+}
+
+func hasCanonicalLeadingSegment(path string) bool {
+	segment, _, _ := strings.Cut(path, "/")
+	if segment == "" {
+		return false
+	}
+	if strings.HasPrefix(segment, "filters:") || strings.HasPrefix(segment, "b64:") {
+		return true
+	}
+	switch segment {
+	case "meta", "trim", "fit-in", "stretch", "left", "right", "top", "bottom", "center", "smart":
+		return true
+	}
+	if strings.Contains(segment, "x") {
+		return true
+	}
+	return false
 }
 
 // Helper function for creating float pointers (intPtr and stringPtr already exist in resolver_test.go)

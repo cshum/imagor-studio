@@ -9,14 +9,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/database"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/peterbourgon/ff/v3"
 )
 
 type Config struct {
-	Port        int
-	DatabaseURL string
-	StorageType string
+	Port              int
+	DatabaseURL       string
+	DBMaxOpenConns    int
+	DBMaxIdleConns    int
+	DBConnMaxLifetime time.Duration
+	DBConnMaxIdleTime time.Duration
+	StorageType       string
 
 	// JWT Configuration
 	JWTSecret     string
@@ -86,12 +91,16 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 	fs := flag.NewFlagSet("imagor-studio", flag.ContinueOnError)
 
 	var (
-		port          = fs.String("port", "8080", "port to listen on")
-		databaseURL   = fs.String("database-url", "sqlite:./imagor-studio.db", "database URL (sqlite:./path.db, postgres://user:pass@host:port/db, mysql://user:pass@host:port/db)")
-		storageType   = fs.String("storage-type", "", "storage type: file or s3 (auto-detected if not specified)")
-		jwtSecret     = fs.String("jwt-secret", "", "secret key for JWT signing")
-		jwtExpiration = fs.String("jwt-expiration", "168h", "JWT token expiration duration")
-		licenseKey    = fs.String("license-key", "", "license key for activation")
+		port              = fs.String("port", "8080", "port to listen on")
+		databaseURL       = fs.String("database-url", "sqlite:./imagor-studio.db", "database URL (sqlite:./path.db, postgres://user:pass@host:port/db, mysql://user:pass@host:port/db)")
+		dbMaxOpenConns    = fs.Int("db-max-open-conns", database.DefaultPostgresMaxOpenConns, "maximum number of open database connections for PostgreSQL")
+		dbMaxIdleConns    = fs.Int("db-max-idle-conns", database.DefaultPostgresMaxIdleConns, "maximum number of idle database connections for PostgreSQL")
+		dbConnMaxLifetime = fs.String("db-conn-max-lifetime", database.DefaultPostgresConnMaxLifetime.String(), "maximum lifetime of a PostgreSQL connection")
+		dbConnMaxIdleTime = fs.String("db-conn-max-idle-time", database.DefaultPostgresConnMaxIdleTime.String(), "maximum idle time of a PostgreSQL connection")
+		storageType       = fs.String("storage-type", "", "storage type: file or s3 (auto-detected if not specified)")
+		jwtSecret         = fs.String("jwt-secret", "", "secret key for JWT signing")
+		jwtExpiration     = fs.String("jwt-expiration", "168h", "JWT token expiration duration")
+		licenseKey        = fs.String("license-key", "", "license key for activation")
 
 		allowGuestMode   = fs.Bool("allow-guest-mode", false, "allow guest mode access")
 		embeddedMode     = fs.Bool("embedded-mode", false, "enable embedded mode (stateless, no database)")
@@ -180,6 +189,28 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		return nil, fmt.Errorf("invalid jwt-expiration: %w", err)
 	}
 
+	dbConnLifetime, err := time.ParseDuration(*dbConnMaxLifetime)
+	if err != nil {
+		return nil, fmt.Errorf("invalid db-conn-max-lifetime: %w", err)
+	}
+	if dbConnLifetime <= 0 {
+		return nil, fmt.Errorf("db-conn-max-lifetime must be greater than 0")
+	}
+
+	dbConnIdleTime, err := time.ParseDuration(*dbConnMaxIdleTime)
+	if err != nil {
+		return nil, fmt.Errorf("invalid db-conn-max-idle-time: %w", err)
+	}
+	if dbConnIdleTime <= 0 {
+		return nil, fmt.Errorf("db-conn-max-idle-time must be greater than 0")
+	}
+	if *dbMaxOpenConns <= 0 {
+		return nil, fmt.Errorf("db-max-open-conns must be greater than 0")
+	}
+	if *dbMaxIdleConns <= 0 {
+		return nil, fmt.Errorf("db-max-idle-conns must be greater than 0")
+	}
+
 	// Parse file permissions
 	mkdirPerm, err := strconv.ParseUint(*fileStorageMkdirPermissions, 8, 32)
 	if err != nil {
@@ -210,6 +241,10 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 	cfg := &Config{
 		Port:                        portInt,
 		DatabaseURL:                 *databaseURL,
+		DBMaxOpenConns:              *dbMaxOpenConns,
+		DBMaxIdleConns:              *dbMaxIdleConns,
+		DBConnMaxLifetime:           dbConnLifetime,
+		DBConnMaxIdleTime:           dbConnIdleTime,
 		JWTSecret:                   *jwtSecret,
 		JWTExpiration:               jwtExp,
 		LicenseKey:                  *licenseKey,

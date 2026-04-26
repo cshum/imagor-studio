@@ -102,6 +102,9 @@ type Provider struct {
 	// cfg is the current imagor signing configuration. Written in Initialize()
 	// and updated by Sync(). Protected by mu.
 	cfg *ImagorConfig
+
+	processorDecorator processing.ProcessorDecorator
+	extraProcessors    []imagor.Processor
 }
 
 // ProviderOption configures a Provider at construction time.
@@ -119,6 +122,18 @@ func WithSpaceConfigStore(store processing.SpaceConfigReader, baseDomain string)
 	return func(p *Provider) {
 		p.spaceConfigStore = store
 		p.baseDomain = baseDomain
+	}
+}
+
+func WithProcessorDecorator(decorator processing.ProcessorDecorator) ProviderOption {
+	return func(p *Provider) {
+		p.processorDecorator = decorator
+	}
+}
+
+func WithAdditionalProcessors(processors ...imagor.Processor) ProviderOption {
+	return func(p *Provider) {
+		p.extraProcessors = append([]imagor.Processor(nil), processors...)
 	}
 }
 
@@ -176,7 +191,7 @@ func (p *Provider) Initialize() error {
 // and stores it in p.app.
 func (p *Provider) createApp(cfg *ImagorConfig) error {
 	// Processor options — compiled in only when the vips build tag is set.
-	options := buildProcessors(p.logger, p.config)
+	options := buildProcessors(p.logger, p.config, p.processorDecorator, p.extraProcessors)
 
 	if p.spaceConfigStore != nil {
 		// ── Processing-node mode ─────────────────────────────────────────────
@@ -187,7 +202,7 @@ func (p *Provider) createApp(cfg *ImagorConfig) error {
 		fallbackSigner := signerFromConfig(cfg)
 
 		options = append(options, imagor.WithGetSigner(func(r *http.Request) imagorpath.Signer {
-			sc := resolveSpaceFromHost(store, r.Host, baseDomain)
+			sc := processing.ResolveSpaceFromHost(store, r.Host, baseDomain)
 			if isNilSpaceConfig(sc) {
 				p.logger.Warn("processing imagor request could not resolve space config",
 					zap.String("host", r.Host),
@@ -251,7 +266,7 @@ func (p *Provider) createApp(cfg *ImagorConfig) error {
 		}))
 
 		options = append(options, imagor.WithGetResultKey(func(r *http.Request, params imagorpath.Params) string {
-			sc := resolveSpaceFromHost(store, r.Host, baseDomain)
+			sc := processing.ResolveSpaceFromHost(store, r.Host, baseDomain)
 			if isNilSpaceConfig(sc) {
 				p.logger.Debug("processing imagor request skipped result key because no space config matched",
 					zap.String("host", r.Host),
@@ -366,27 +381,6 @@ func (p *Provider) Shutdown(ctx context.Context) error {
 }
 
 // ── Processing-node helpers ──────────────────────────────────────────────────
-
-// resolveSpaceFromHost maps a Host header to the corresponding SpaceConfig.
-// Subdomain routing: "acme.imagor.app" → strip ".imagor.app" → space key "acme".
-// Custom domain routing: "images.acme.com" → GetByHostname lookup.
-func resolveSpaceFromHost(store processing.SpaceConfigReader, host, baseDomain string) processing.SpaceConfig {
-	normalizedHost := normalizeHost(host)
-	normalizedBaseDomain := strings.TrimPrefix(strings.TrimSpace(baseDomain), ".")
-	if normalizedBaseDomain != "" && strings.HasSuffix(normalizedHost, "."+normalizedBaseDomain) {
-		spaceKey := strings.TrimSuffix(normalizedHost, "."+normalizedBaseDomain)
-		sc, ok := store.Get(spaceKey)
-		if !ok || isNilSpaceConfig(sc) {
-			return nil
-		}
-		return sc
-	}
-	sc, ok := store.GetByHostname(normalizedHost)
-	if !ok || isNilSpaceConfig(sc) {
-		return nil
-	}
-	return sc
-}
 
 func normalizeHost(host string) string {
 	trimmed := strings.TrimSpace(host)

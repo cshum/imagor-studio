@@ -161,8 +161,9 @@ type Organization struct {
 }
 
 type PresignedUpload struct {
-	UploadURL string `json:"uploadURL"`
-	ExpiresAt string `json:"expiresAt"`
+	UploadURL       string          `json:"uploadURL"`
+	ExpiresAt       string          `json:"expiresAt"`
+	RequiredHeaders []*UploadHeader `json:"requiredHeaders"`
 }
 
 type Query struct {
@@ -335,6 +336,11 @@ type ThumbnailUrls struct {
 type UpdateProfileInput struct {
 	DisplayName *string `json:"displayName,omitempty"`
 	Username    *string `json:"username,omitempty"`
+}
+
+type UploadHeader struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type User struct {

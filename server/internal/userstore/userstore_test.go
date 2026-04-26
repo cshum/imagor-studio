@@ -180,6 +180,9 @@ func TestUserStore_Create(t *testing.T) {
 
 			if tt.expectError {
 				assert.Error(t, err)
+				if tt.errorContains == "username already exists" {
+					assert.ErrorIs(t, err, ErrUsernameAlreadyExists)
+				}
 				if tt.errorContains != "" {
 					assert.Contains(t, err.Error(), tt.errorContains)
 				}
@@ -538,6 +541,44 @@ func TestUserStore_UpsertOAuth_OrphanedIdentity(t *testing.T) {
 		Scan(ctx, &identityCount)
 	require.NoError(t, err)
 	assert.Equal(t, 1, identityCount, "exactly one identity should exist after recovery")
+}
+
+func TestUserStore_RequestEmailChange(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	requester, err := store.Create(ctx, "requester", "requester", "hash1", "user")
+	require.NoError(t, err)
+	taken, err := store.Create(ctx, "taken", "taken", "hash2", "user")
+	require.NoError(t, err)
+
+	_, err = db.NewUpdate().
+		Model((*model.User)(nil)).
+		Set("email = ?", "taken@example.com").
+		Where("id = ?", taken.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	updated, err := store.RequestEmailChange(ctx, requester.ID, "next@example.com")
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+	require.NotNil(t, updated.PendingEmail)
+	assert.Equal(t, "next@example.com", *updated.PendingEmail)
+
+	updated, err = store.RequestEmailChange(ctx, requester.ID, "taken@example.com")
+	require.Error(t, err)
+	assert.Nil(t, updated)
+	assert.ErrorIs(t, err, ErrEmailAlreadyExists)
+	assert.Contains(t, err.Error(), "email already exists")
+
+	updated, err = store.RequestEmailChange(ctx, requester.ID, "   ")
+	require.Error(t, err)
+	assert.Nil(t, updated)
+	assert.Contains(t, err.Error(), "email cannot be empty")
 }
 
 func BenchmarkUserStore_Create(b *testing.B) {

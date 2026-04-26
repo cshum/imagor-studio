@@ -58,6 +58,25 @@ func startSyncLoop(ctx context.Context, interval time.Duration, logger *zap.Logg
 	}()
 }
 
+func processingUsageCleanupLoopConfig(services *bootstrap.Services, mode Mode, cloudConfig management.CloudConfig) (time.Duration, time.Duration, bool) {
+	if mode != ModeCloud || services == nil || services.ProcessingUsageStore == nil || !cloudConfig.ProcessingUsageBatchCleanupEnabled {
+		return 0, 0, false
+	}
+	if cloudConfig.ProcessingUsageBatchCleanupRetention <= 0 || cloudConfig.ProcessingUsageBatchCleanupInterval <= 0 {
+		return 0, 0, false
+	}
+	return cloudConfig.ProcessingUsageBatchCleanupInterval, cloudConfig.ProcessingUsageBatchCleanupRetention, true
+}
+
+func newProcessingUsageCleanupSyncFunc(ctx context.Context, store management.ProcessingUsageStore, retention time.Duration, now func() time.Time) func() error {
+	if now == nil {
+		now = time.Now
+	}
+	return func() error {
+		return store.CleanupUsageBatches(ctx, now().UTC().Add(-retention))
+	}
+}
+
 func New(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, args []string, mode Mode) (*Server, error) {
 	// Initialize all services using bootstrap package
 	var (
@@ -112,6 +131,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.InviteSender,
 		resolver.WithLocalTemplatePreviewRenderer(),
 		resolver.WithCloudConfig(cloudConfig),
+		resolver.WithHostedStorageStore(services.HostedStorageStore),
 		resolver.WithProcessingOriginResolver(processingOriginResolver),
 		templatePreviewRenderer,
 	)
@@ -173,14 +193,16 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	mux.HandleFunc("/api/auth/register-admin", authHandler.RegisterAdmin())
 
 	cloudServices := management.CloudHTTPServices{
-		TokenManager:      services.TokenManager,
-		UserStore:         services.UserStore,
-		OrgStore:          services.OrgStore,
-		SpaceStore:        services.SpaceStore,
-		SpaceInviteStore:  services.SpaceInviteStore,
-		CloudConfig:       cloudConfig,
-		InternalAPISecret: cloudConfig.InternalAPISecret,
-		Logger:            services.Logger,
+		TokenManager:         services.TokenManager,
+		UserStore:            services.UserStore,
+		OrgStore:             services.OrgStore,
+		SpaceStore:           services.SpaceStore,
+		SpaceInviteStore:     services.SpaceInviteStore,
+		HostedStorageStore:   services.HostedStorageStore,
+		ProcessingUsageStore: services.ProcessingUsageStore,
+		CloudConfig:          cloudConfig,
+		InternalAPISecret:    cloudConfig.InternalAPISecret,
+		Logger:               services.Logger,
 	}
 	if imagorCfg := services.ImagorProvider.Config(); imagorCfg != nil {
 		cloudServices.GlobalImagor = management.ImagorSigningConfig{
@@ -267,10 +289,22 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	// Build the sync functions list. StorageProvider is nil in processing mode
 	// (no management storage on processing nodes), so guard against nil.
 	syncFuncs := []func() error{services.ImagorProvider.Sync}
+	if services.ProcessingUsageRecorder != nil {
+		syncFuncs = append(syncFuncs, func() error {
+			return services.ProcessingUsageRecorder.Flush(syncCtx)
+		})
+	}
 	if services.StorageProvider != nil {
 		syncFuncs = append(syncFuncs, services.StorageProvider.ReloadFromRegistry)
 	}
 	startSyncLoop(syncCtx, 30*time.Second, services.Logger, syncFuncs...)
+	if cleanupInterval, cleanupRetention, ok := processingUsageCleanupLoopConfig(services, mode, cloudConfig); ok {
+		services.Logger.Info("processing usage batch cleanup loop enabled",
+			zap.Duration("interval", cleanupInterval),
+			zap.Duration("retention", cleanupRetention),
+		)
+		startSyncLoop(syncCtx, cleanupInterval, services.Logger, newProcessingUsageCleanupSyncFunc(syncCtx, services.ProcessingUsageStore, cleanupRetention, time.Now))
+	}
 
 	return &Server{
 		cfg:        cfg,
@@ -303,6 +337,7 @@ func registerProcessingOrSPA(
 			services.SpaceConfigStore,
 			cfg.AppUrl,
 			baseDomain,
+			services.ProcessingConfig.Runtime.InternalAPISecret,
 		))
 		return nil
 	}
@@ -327,6 +362,13 @@ func startProcessingSyncIfNeeded(ctx context.Context, services *bootstrap.Servic
 func (s *Server) Run() error {
 	s.services.Logger.Info("Server is running", zap.String("address", fmt.Sprintf("http://localhost%s", s.httpServer.Addr)))
 	return s.httpServer.ListenAndServe()
+}
+
+func (s *Server) Handler() http.Handler {
+	if s == nil || s.httpServer == nil {
+		return nil
+	}
+	return s.httpServer.Handler
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {

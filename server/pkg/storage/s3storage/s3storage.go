@@ -295,6 +295,24 @@ func (s *S3Storage) PresignedPutURL(ctx context.Context, key string, contentType
 	return req.URL, nil
 }
 
+func (s *S3Storage) PresignedPutURLNoOverwrite(ctx context.Context, key string, contentType string, sizeBytes int64, ttl time.Duration) (string, error) {
+	presignClient := s3.NewPresignClient(s.client)
+	input := &s3.PutObjectInput{
+		Bucket:        aws.String(s.bucket),
+		Key:           aws.String(s.fullPath(key)),
+		ContentType:   aws.String(contentType),
+		ContentLength: aws.Int64(sizeBytes),
+		IfNoneMatch:   aws.String("*"),
+	}
+
+	req, err := presignClient.PresignPutObject(ctx, input, s3.WithPresignExpires(ttl))
+	if err != nil {
+		return "", err
+	}
+
+	return req.URL, nil
+}
+
 func (s *S3Storage) CreateFolder(ctx context.Context, folder string) error {
 	fullPath := s.fullPath(folder)
 	if !strings.HasSuffix(fullPath, "/") {

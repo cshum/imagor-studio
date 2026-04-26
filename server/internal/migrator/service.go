@@ -33,44 +33,57 @@ func (s *Service) Close() error {
 
 // ExecuteAutoMigration handles auto-migration decision based on database type and configuration
 func (s *Service) ExecuteAutoMigration(cfg *config.Config) error {
+	_, err := s.ExecuteAutoMigrationFor(cfg.DatabaseURL, cfg.ForceAutoMigrate)
+	return err
+}
+
+// ExecuteAutoMigrationFor handles auto-migration decision for the provided database configuration.
+// It returns whether migrations were executed.
+func (s *Service) ExecuteAutoMigrationFor(databaseURL string, forceAutoMigrate bool) (bool, error) {
 	// Determine database type
-	dbType, err := database.GetDatabaseType(cfg.DatabaseURL)
+	dbType, err := database.GetDatabaseType(databaseURL)
 	if err != nil {
-		return fmt.Errorf("failed to determine database type: %w", err)
+		return false, fmt.Errorf("failed to determine database type: %w", err)
 	}
 
 	// Check if we should run auto-migration
-	shouldAutoMigrate := dbType == "sqlite" || cfg.ForceAutoMigrate
+	shouldAutoMigrate := dbType == "sqlite" || forceAutoMigrate
 
 	if shouldAutoMigrate {
 		s.logger.Info("Running auto-migration",
 			zap.String("databaseType", dbType),
-			zap.Bool("forceAutoMigrate", cfg.ForceAutoMigrate))
+			zap.Bool("forceAutoMigrate", forceAutoMigrate))
 
-		// Set command to "up" and execute
-		cfg.MigrateCommand = "up"
-		return s.Execute(cfg)
+		if err := s.ExecuteCommand(databaseURL, "up"); err != nil {
+			return false, err
+		}
+		return true, nil
 	} else {
 		s.logger.Info("Auto-migration disabled for database type",
 			zap.String("databaseType", dbType))
-		s.logger.Info("To run migrations manually, use: ./imagor-studio-migrate --migrate-command=up --database-url=\"" + cfg.DatabaseURL + "\"")
+		s.logger.Info("To run migrations manually, use: ./imagor-studio-migrate --migrate-command=up --database-url=\"" + databaseURL + "\"")
 		s.logger.Info("Or set FORCE_AUTO_MIGRATE=true environment variable to enable auto-migration")
-		return nil
+		return false, nil
 	}
 }
 
 // Execute runs the specified migration command
 func (s *Service) Execute(cfg *config.Config) error {
+	return s.ExecuteCommand(cfg.DatabaseURL, cfg.MigrateCommand)
+}
+
+// ExecuteCommand runs the specified migration command for the provided database configuration.
+func (s *Service) ExecuteCommand(databaseURL, command string) error {
 	// Validate command first
-	switch cfg.MigrateCommand {
+	switch command {
 	case "up", "down", "status", "reset":
 		// Valid command, continue
 	default:
-		return fmt.Errorf("invalid migration command: %s (valid: up, down, status, reset)", cfg.MigrateCommand)
+		return fmt.Errorf("invalid migration command: %s (valid: up, down, status, reset)", command)
 	}
 
 	// Check database type
-	_, err := database.GetDatabaseType(cfg.DatabaseURL)
+	_, err := database.GetDatabaseType(databaseURL)
 	if err != nil {
 		return fmt.Errorf("failed to determine database type: %w", err)
 	}
@@ -85,7 +98,7 @@ func (s *Service) Execute(cfg *config.Config) error {
 	}
 
 	// Execute command
-	switch cfg.MigrateCommand {
+	switch command {
 	case "up":
 		return s.migrateUp(migrator)
 	case "down":
@@ -96,7 +109,7 @@ func (s *Service) Execute(cfg *config.Config) error {
 		return s.migrateReset(migrator)
 	default:
 		// This should never happen due to validation above, but keeping for safety
-		return fmt.Errorf("unknown command: %s", cfg.MigrateCommand)
+		return fmt.Errorf("unknown command: %s", command)
 	}
 }
 
@@ -158,8 +171,7 @@ func (s *Service) migrateStatus(migrator *migrate.Migrator) error {
 		if m.GroupID > 0 {
 			status = "APPLIED"
 		}
-		ownership := migrations.OwnershipForMigration(m.Name)
-		fmt.Printf("%-50s %-8s %s\n", m.Name, ownership, status)
+		fmt.Printf("%-50s %s\n", m.Name, status)
 	}
 
 	return nil

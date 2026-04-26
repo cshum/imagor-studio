@@ -1,7 +1,9 @@
 package management
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
@@ -19,21 +21,24 @@ type CloudStoresConfig struct {
 }
 
 type CloudConfig struct {
-	InternalAPISecret      string
-	GoogleClientID         string
-	GoogleClientSecret     string
-	SESRegion              string
-	SESFromEmail           string
-	AppAPIURL              string
-	ProcessingURLTemplate  string
-	PlatformS3Bucket       string
-	PlatformS3Region       string
-	PlatformS3Endpoint     string
-	PlatformS3AccessKeyID  string
-	PlatformS3SecretKey    string
-	PlatformS3UsePathStyle bool
-	PlatformS3Prefix       string
-	PlatformConfigVersion  int64
+	InternalAPISecret                    string
+	GoogleClientID                       string
+	GoogleClientSecret                   string
+	SESRegion                            string
+	SESFromEmail                         string
+	AppAPIURL                            string
+	ProcessingURLTemplate                string
+	ProcessingUsageBatchCleanupEnabled   bool
+	ProcessingUsageBatchCleanupRetention time.Duration
+	ProcessingUsageBatchCleanupInterval  time.Duration
+	PlatformS3Bucket                     string
+	PlatformS3Region                     string
+	PlatformS3Endpoint                   string
+	PlatformS3AccessKeyID                string
+	PlatformS3SecretKey                  string
+	PlatformS3UsePathStyle               bool
+	PlatformS3Prefix                     string
+	PlatformConfigVersion                int64
 }
 
 type InviteSenderConfig = sharedinvite.Config
@@ -46,15 +51,43 @@ type OAuthConfig struct {
 }
 
 type CloudHTTPServices struct {
-	TokenManager      *auth.TokenManager
-	UserStore         shareduser.OAuthStore
-	OrgStore          org.OrgStore
-	SpaceStore        space.SpaceStore
-	SpaceInviteStore  space.SpaceInviteStore
-	CloudConfig       CloudConfig
-	GlobalImagor      ImagorSigningConfig
-	InternalAPISecret string
-	Logger            *zap.Logger
+	TokenManager         *auth.TokenManager
+	UserStore            shareduser.OAuthStore
+	OrgStore             org.OrgStore
+	SpaceStore           space.SpaceStore
+	SpaceInviteStore     space.SpaceInviteStore
+	HostedStorageStore   HostedStorageStore
+	ProcessingUsageStore ProcessingUsageStore
+	CloudConfig          CloudConfig
+	GlobalImagor         ImagorSigningConfig
+	InternalAPISecret    string
+	Logger               *zap.Logger
+}
+
+type HostedStorageObject struct {
+	OrgID     string
+	SpaceID   string
+	ObjectKey string
+	Status    string
+	SizeBytes int64
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ExpiresAt time.Time
+}
+
+type HostedStorageStore interface {
+	BeginPendingUpload(ctx context.Context, orgID, spaceID, objectKey string, expiresAt time.Time) error
+	FinalizePendingUpload(ctx context.Context, spaceID, objectKey string, sizeBytes int64) (bool, error)
+	DeleteReadyObject(ctx context.Context, spaceID, objectKey string) (int64, error)
+	MoveReadyObject(ctx context.Context, spaceID, fromKey, toKey string) error
+	CopyReadyObject(ctx context.Context, sourceSpaceID, sourceKey, destOrgID, destSpaceID, destKey string) (int64, error)
+	GetObject(ctx context.Context, spaceID, objectKey string) (*HostedStorageObject, error)
+	GetUsageBytes(ctx context.Context, orgID, spaceID string) (int64, error)
+}
+
+type ProcessingUsageStore interface {
+	ApplyUsageBatch(ctx context.Context, batch processing.UsageBatch) (*processing.UsageBatchApplyResult, error)
+	CleanupUsageBatches(ctx context.Context, olderThan time.Time) error
 }
 
 type ImagorSigningConfig struct {
@@ -62,7 +95,8 @@ type ImagorSigningConfig struct {
 	SignerType     string
 	SignerTruncate int
 }
-type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (org.OrgStore, space.SpaceStore, space.SpaceInviteStore, error)
+
+type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionService *encryption.Service, logger *zap.Logger) (org.OrgStore, space.SpaceStore, space.SpaceInviteStore, HostedStorageStore, ProcessingUsageStore, error)
 
 type InviteSenderFactory func(cfg InviteSenderConfig) (space.InviteSender, error)
 
@@ -76,10 +110,18 @@ type ProcessingOriginResolverFactory func(cfg CloudConfig, spaceStore space.Spac
 
 type TemplatePreviewRenderClientFactory func(cfg CloudConfig) processing.TemplatePreviewRenderClient
 
+type AutoMigrationConfig struct {
+	DatabaseURL      string
+	ForceAutoMigrate bool
+}
+
+type AutoMigrationRunner func(db *bun.DB, cfg AutoMigrationConfig, logger *zap.Logger) error
+
 type CloudFactories struct {
 	ConfigLoader             CloudConfigLoader
 	Stores                   CloudStoresFactory
 	InviteSender             InviteSenderFactory
+	AutoMigration            AutoMigrationRunner
 	AuthRoutes               AuthRoutesRegistrar
 	InternalRoutes           InternalRoutesRegistrar
 	ProcessingOriginResolver ProcessingOriginResolverFactory

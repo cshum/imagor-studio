@@ -80,6 +80,11 @@ func newProcessingTemplatePreviewRenderHandler(imagorHandler http.Handler, space
 			http.Error(w, fmt.Sprintf("failed to create imagor request: %v", err), http.StatusInternalServerError)
 			return
 		}
+		imagorReq = imagorReq.WithContext(sharedprocessing.WithRequestMetadata(imagorReq.Context(), sharedprocessing.RequestMetadata{
+			OrgID:   spaceConfig.GetOrgID(),
+			SpaceID: spaceConfig.GetKey(),
+			Class:   sharedprocessing.UsageClassInternalNonBillable,
+		}))
 		imagorReq.Host = host
 
 		recorder := httptest.NewRecorder()

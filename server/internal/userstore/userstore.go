@@ -11,7 +11,9 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/model"
 	shareduser "github.com/cshum/imagor-studio/server/pkg/user"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
+	"github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/driver/pgdriver"
 	"go.uber.org/zap"
 )
 
@@ -55,11 +57,36 @@ type store struct {
 	logger *zap.Logger
 }
 
+var ErrUsernameAlreadyExists = errors.New("username already exists")
+var ErrEmailAlreadyExists = errors.New("email already exists")
+
 func New(db *bun.DB, logger *zap.Logger) Store {
 	return &store{
 		db:     db,
 		logger: logger,
 	}
+}
+
+func isDuplicateUsernameError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var pgErr pgdriver.Error
+	if errors.As(err, &pgErr) {
+		if pgErr.IntegrityViolation() && pgErr.Field('C') == "23505" {
+			msg := strings.ToLower(pgErr.Error())
+			return strings.Contains(msg, "username")
+		}
+	}
+
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		return sqliteErr.Code == sqlite3.ErrConstraint && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique
+	}
+
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "username") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint"))
 }
 
 func (s *store) UpdateRole(ctx context.Context, id string, role string) error {
@@ -132,10 +159,8 @@ func (s *store) Create(ctx context.Context, displayName, username, hashedPasswor
 		Model(entry).
 		Exec(ctx)
 	if err != nil {
-		// Check for unique constraint violations
-		errStr := strings.ToLower(err.Error())
-		if strings.Contains(errStr, "username") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint")) {
-			return nil, fmt.Errorf("username already exists")
+		if isDuplicateUsernameError(err) {
+			return nil, fmt.Errorf("%w", ErrUsernameAlreadyExists)
 		}
 		return nil, fmt.Errorf("error creating user: %w", err)
 	}
@@ -264,7 +289,7 @@ func (s *store) RequestEmailChange(ctx context.Context, id string, email string)
 		return nil, err
 	}
 	if existingUser != nil && existingUser.ID != id {
-		return nil, fmt.Errorf("email already exists")
+		return nil, fmt.Errorf("%w", ErrEmailAlreadyExists)
 	}
 
 	_, err = s.db.NewUpdate().
@@ -379,10 +404,8 @@ func (s *store) UpdateUsername(ctx context.Context, id string, username string) 
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		// Check for unique constraint violations
-		errStr := strings.ToLower(err.Error())
-		if strings.Contains(errStr, "username") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint")) {
-			return fmt.Errorf("username already exists")
+		if isDuplicateUsernameError(err) {
+			return fmt.Errorf("%w", ErrUsernameAlreadyExists)
 		}
 		return fmt.Errorf("error updating username: %w", err)
 	}

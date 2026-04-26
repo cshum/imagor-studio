@@ -1,10 +1,12 @@
 package database
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun/driver/sqliteshim"
 )
 
 func TestParseDatabaseURL(t *testing.T) {
@@ -185,4 +187,15 @@ func TestConnect_UnsupportedDatabase(t *testing.T) {
 	_, err := Connect("unsupported://user:pass@localhost:1234/dbname")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported database type")
+}
+
+func TestApplyPostgreSQLPoolDefaults(t *testing.T) {
+	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = sqldb.Close() })
+
+	applyPostgreSQLPoolDefaults(sqldb, ConnectionOptions{})
+
+	stats := sqldb.Stats()
+	assert.Equal(t, DefaultPostgresMaxOpenConns, stats.MaxOpenConnections)
 }

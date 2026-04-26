@@ -443,6 +443,18 @@ func TestUpdateProfile_ValidationErrors(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "Duplicate username returns conflict",
+			input: gql.UpdateProfileInput{
+				Username: stringPtr("takenuser"),
+			},
+			setupMocks: func() {
+				mockUserStore.On("GetByID", ctx, "test-user-id").Return(currentUser, nil).Once()
+				mockUserStore.On("UpdateUsername", ctx, "test-user-id", "takenuser").Return(userstore.ErrUsernameAlreadyExists)
+			},
+			expectError: true,
+			errorMsg:    "username already exists",
+		},
 	}
 
 	for _, tt := range tests {
@@ -542,6 +554,26 @@ func TestChangePassword_AdminOperation(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.True(t, result)
+
+	mockUserStore.AssertExpectations(t)
+}
+
+func TestRequestEmailChange_DuplicateEmailReturnsConflict(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	mockUserStore.On("RequestEmailChange", ctx, "test-user-id", "taken@example.com").Return(nil, userstore.ErrEmailAlreadyExists).Once()
+
+	result, err := resolver.Mutation().RequestEmailChange(ctx, "taken@example.com", nil)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "email already exists")
 
 	mockUserStore.AssertExpectations(t)
 }

@@ -59,6 +59,7 @@ type Resolver struct {
 	// Only set for cloud multi-tenant deployments.
 	orgStore                 org.OrgStore
 	spaceStore               space.SpaceStore
+	hostedStorageStore       management.HostedStorageStore
 	processingOriginResolver space.ProcessingOriginResolver
 	templatePreviewRenderer  processing.TemplatePreviewRenderClient
 
@@ -66,6 +67,7 @@ type Resolver struct {
 	inviteSender     space.InviteSender
 
 	storageConfigValidator StorageConfigValidator
+	spaceStorageFactory    func(*space.Space) (storage.Storage, error)
 }
 
 type ResolverOption func(*Resolver)
@@ -82,6 +84,12 @@ func WithCloudConfig(cloudConfig management.CloudConfig) ResolverOption {
 	}
 }
 
+func WithHostedStorageStore(store management.HostedStorageStore) ResolverOption {
+	return func(r *Resolver) {
+		r.hostedStorageStore = store
+	}
+}
+
 func WithTemplatePreviewRenderer(renderer processing.TemplatePreviewRenderClient) ResolverOption {
 	return func(r *Resolver) {
 		r.templatePreviewRenderer = renderer
@@ -91,6 +99,12 @@ func WithTemplatePreviewRenderer(renderer processing.TemplatePreviewRenderClient
 func WithStorageConfigValidator(validator StorageConfigValidator) ResolverOption {
 	return func(r *Resolver) {
 		r.storageConfigValidator = validator
+	}
+}
+
+func WithSpaceStorageFactory(factory func(*space.Space) (storage.Storage, error)) ResolverOption {
+	return func(r *Resolver) {
+		r.spaceStorageFactory = factory
 	}
 }
 

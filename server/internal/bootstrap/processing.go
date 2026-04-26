@@ -17,11 +17,15 @@ import (
 type ProcessingRuntimeFactory = processing.RuntimeFactory
 
 func InitializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.NodeConfig, logger *zap.Logger, runtimeFactory ProcessingRuntimeFactory) (*Services, error) {
-	return initializeProcessingWithFactory(cfg, nodeCfg, logger, runtimeFactory)
+	return initializeProcessingWithFactory(cfg, nodeCfg, logger, runtimeFactory, processing.NodeHooks{})
+}
+
+func InitializeProcessingWithFactoryAndHooks(cfg *config.Config, nodeCfg processing.NodeConfig, logger *zap.Logger, runtimeFactory ProcessingRuntimeFactory, hooks processing.NodeHooks) (*Services, error) {
+	return initializeProcessingWithFactory(cfg, nodeCfg, logger, runtimeFactory, hooks)
 }
 
 // InitializeProcessing sets up services for a cloud processing node.
-func initializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.NodeConfig, logger *zap.Logger, runtimeFactory ProcessingRuntimeFactory) (*Services, error) {
+func initializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.NodeConfig, logger *zap.Logger, runtimeFactory ProcessingRuntimeFactory, hooks processing.NodeHooks) (*Services, error) {
 	if cfg.JWTSecret == "" {
 		return nil, fmt.Errorf("IMAGOR_JWT_SECRET is required in processing mode (no database to auto-generate it)")
 	}
@@ -44,6 +48,8 @@ func initializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.Node
 	imagorProvider := imagorprovider.New(
 		logger, registryStore, cfg, loader,
 		imagorprovider.WithSpaceConfigStore(spaceConfigStore, nodeCfg.Runtime.SpaceBaseDomain),
+		imagorprovider.WithProcessorDecorator(hooks.ProcessorDecorator),
+		imagorprovider.WithAdditionalProcessors(hooks.Processors...),
 	)
 	if err := imagorProvider.Initialize(); err != nil {
 		return nil, fmt.Errorf("failed to initialize imagor: %w", err)
@@ -57,22 +63,23 @@ func initializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.Node
 	)
 
 	return &Services{
-		DB:               nil,
-		TokenManager:     tokenManager,
-		Storage:          nil,
-		StorageProvider:  nil,
-		ImagorProvider:   imagorProvider,
-		RegistryStore:    registryStore,
-		UserStore:        userStore,
-		OrgStore:         orgStore,
-		SpaceStore:       spaceStore,
-		SpaceInviteStore: nil,
-		InviteSender:     nil,
-		SpaceConfigStore: spaceConfigStore,
-		ProcessingConfig: &nodeCfg,
-		LicenseService:   licenseService,
-		Encryption:       nil,
-		Config:           cfg,
-		Logger:           logger,
+		DB:                      nil,
+		TokenManager:            tokenManager,
+		Storage:                 nil,
+		StorageProvider:         nil,
+		ImagorProvider:          imagorProvider,
+		RegistryStore:           registryStore,
+		UserStore:               userStore,
+		OrgStore:                orgStore,
+		SpaceStore:              spaceStore,
+		SpaceInviteStore:        nil,
+		InviteSender:            nil,
+		SpaceConfigStore:        spaceConfigStore,
+		ProcessingUsageRecorder: hooks.UsageRecorder,
+		ProcessingConfig:        &nodeCfg,
+		LicenseService:          licenseService,
+		Encryption:              nil,
+		Config:                  cfg,
+		Logger:                  logger,
 	}, nil
 }

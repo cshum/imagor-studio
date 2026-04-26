@@ -34,6 +34,7 @@ func newMockRegistryStore() *mockRegistryStore {
 }
 
 type testSpaceConfig struct {
+	OrgID           string
 	Key             string
 	Prefix          string
 	Bucket          string
@@ -49,6 +50,7 @@ type testSpaceConfig struct {
 	ImagorSecret    string
 }
 
+func (c *testSpaceConfig) GetOrgID() string           { return c.OrgID }
 func (c *testSpaceConfig) GetKey() string             { return c.Key }
 func (c *testSpaceConfig) GetPrefix() string          { return c.Prefix }
 func (c *testSpaceConfig) GetBucket() string          { return c.Bucket }
@@ -716,7 +718,7 @@ func TestResolveSpaceFromHost_StripsPortForBaseDomainRouting(t *testing.T) {
 		byHostname: map[string]processing.SpaceConfig{},
 	}
 
-	sc := resolveSpaceFromHost(scs, "demo.imagor.test:8081", "imagor.test")
+	sc := processing.ResolveSpaceFromHost(scs, "demo.imagor.test:8081", "imagor.test")
 	require.NotNil(t, sc)
 	assert.Equal(t, "demo", sc.GetKey())
 }
@@ -730,7 +732,7 @@ func TestResolveSpaceFromHost_TypedNilReturnsNil(t *testing.T) {
 		byHostname: map[string]processing.SpaceConfig{},
 	}
 
-	sc := resolveSpaceFromHost(scs, "demo.imagor.test:8081", "imagor.test")
+	sc := processing.ResolveSpaceFromHost(scs, "demo.imagor.test:8081", "imagor.test")
 	assert.Nil(t, sc)
 	assert.True(t, isNilSpaceConfig(sc))
 }

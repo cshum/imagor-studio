@@ -12,9 +12,13 @@ Database configuration must be set via command line arguments or environment var
 
 ## Configuration
 
-| Flag             | Environment Variable | Default                     | Description                |
-| ---------------- | -------------------- | --------------------------- | -------------------------- |
-| `--database-url` | `DATABASE_URL`       | `sqlite:./imagor-studio.db` | Database connection string |
+| Flag                       | Environment Variable      | Default                     | Description                                                 |
+| -------------------------- | ------------------------- | --------------------------- | ----------------------------------------------------------- |
+| `--database-url`           | `DATABASE_URL`            | `sqlite:./imagor-studio.db` | Database connection string                                  |
+| `--db-max-open-conns`      | `DB_MAX_OPEN_CONNS`       | `25`                        | Maximum PostgreSQL open connections per app process         |
+| `--db-max-idle-conns`      | `DB_MAX_IDLE_CONNS`       | `5`                         | Maximum PostgreSQL idle connections per app process         |
+| `--db-conn-max-lifetime`   | `DB_CONN_MAX_LIFETIME`    | `30m`                       | Maximum PostgreSQL connection lifetime                      |
+| `--db-conn-max-idle-time`  | `DB_CONN_MAX_IDLE_TIME`   | `5m`                        | Maximum PostgreSQL connection idle time                     |
 
 ## Supported Databases
 
@@ -45,6 +49,17 @@ DATABASE_URL=sqlite::memory:
 
 Recommended for production multi-instance deployments.
 
+#### Connection Pool Defaults
+
+Imagor Studio uses conservative PostgreSQL pool defaults that work well for small to medium deployments:
+
+- `DB_MAX_OPEN_CONNS=25`
+- `DB_MAX_IDLE_CONNS=5`
+- `DB_CONN_MAX_LIFETIME=30m`
+- `DB_CONN_MAX_IDLE_TIME=5m`
+
+These are per-process settings. If you run multiple app replicas, size the total pool across all replicas against your PostgreSQL or RDS connection budget.
+
 #### Local PostgreSQL
 
 ```bash
@@ -61,6 +76,10 @@ DATABASE_URL=postgres://user:password@db.example.com:5432/imagor_studio?sslmode=
 
 ```bash
 DATABASE_URL=postgres://user:password@localhost:5432/imagor_studio?sslmode=disable&connect_timeout=10
+DB_MAX_OPEN_CONNS=25
+DB_MAX_IDLE_CONNS=5
+DB_CONN_MAX_LIFETIME=30m
+DB_CONN_MAX_IDLE_TIME=5m
 ```
 
 **Features:**

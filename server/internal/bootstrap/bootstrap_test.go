@@ -20,6 +20,15 @@ import (
 
 type stubSpaceConfigStore struct{}
 
+type stubUsageRecorder struct{}
+
+func (stubUsageRecorder) RecordProcessed(context.Context) {}
+func (stubUsageRecorder) Flush(context.Context) error     { return nil }
+
+type passthroughDecorator struct{}
+
+func (passthroughDecorator) WrapProcessor(next imagor.Processor) imagor.Processor { return next }
+
 func (stubSpaceConfigStore) Get(key string) (processing.SpaceConfig, bool) {
 	return nil, false
 }
@@ -382,6 +391,17 @@ func TestInitializeProcessingMode_LogsInfo(t *testing.T) {
 	svc, err := InitializeProcessingWithFactory(cfg, nodeCfg, logger, stubProcessingRuntimeFactory())
 	require.NoError(t, err)
 	assert.NotNil(t, svc)
+}
+
+func TestInitializeProcessingMode_WithHooks(t *testing.T) {
+	logger := zap.NewNop()
+	cfg := &config.Config{JWTSecret: "test-jwt-secret", JWTExpiration: time.Hour}
+	nodeCfg := processing.NodeConfig{Runtime: processing.RuntimeConfig{SpacesEndpoint: "http://management.example.test"}}
+	hooks := processing.NodeHooks{ProcessorDecorator: passthroughDecorator{}, UsageRecorder: stubUsageRecorder{}}
+	svc, err := InitializeProcessingWithFactoryAndHooks(cfg, nodeCfg, logger, stubProcessingRuntimeFactory(), hooks)
+	require.NoError(t, err)
+	assert.NotNil(t, svc)
+	assert.NotNil(t, svc.ProcessingUsageRecorder)
 }
 
 func TestImagorProviderIntegration(t *testing.T) {

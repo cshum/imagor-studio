@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/database"
 	"github.com/cshum/imagor-studio/server/internal/migrations"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
@@ -35,6 +36,32 @@ func TestLoadBasic(t *testing.T) {
 	assert.Equal(t, "MODIFIED_TIME", cfg.AppDefaultSortBy)
 	assert.Equal(t, "DESC", cfg.AppDefaultSortOrder)
 	assert.Equal(t, DefaultS3HTTPMaxIdleConnsPerHost, cfg.S3HTTPMaxIdleConnsPerHost)
+	assert.Equal(t, database.DefaultPostgresMaxOpenConns, cfg.DBMaxOpenConns)
+	assert.Equal(t, database.DefaultPostgresMaxIdleConns, cfg.DBMaxIdleConns)
+	assert.Equal(t, database.DefaultPostgresConnMaxLifetime, cfg.DBConnMaxLifetime)
+	assert.Equal(t, database.DefaultPostgresConnMaxIdleTime, cfg.DBConnMaxIdleTime)
+}
+
+func TestLoadWithDBPoolEnvVars(t *testing.T) {
+	os.Setenv("DB_MAX_OPEN_CONNS", "40")
+	os.Setenv("DB_MAX_IDLE_CONNS", "8")
+	os.Setenv("DB_CONN_MAX_LIFETIME", "45m")
+	os.Setenv("DB_CONN_MAX_IDLE_TIME", "10m")
+	defer func() {
+		os.Unsetenv("DB_MAX_OPEN_CONNS")
+		os.Unsetenv("DB_MAX_IDLE_CONNS")
+		os.Unsetenv("DB_CONN_MAX_LIFETIME")
+		os.Unsetenv("DB_CONN_MAX_IDLE_TIME")
+	}()
+
+	cfg, err := Load([]string{"--jwt-secret", "test-secret"}, nil)
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+
+	assert.Equal(t, 40, cfg.DBMaxOpenConns)
+	assert.Equal(t, 8, cfg.DBMaxIdleConns)
+	assert.Equal(t, 45*time.Minute, cfg.DBConnMaxLifetime)
+	assert.Equal(t, 10*time.Minute, cfg.DBConnMaxIdleTime)
 }
 
 func TestLoadWithS3HTTPMaxIdleConnsPerHostArg(t *testing.T) {
