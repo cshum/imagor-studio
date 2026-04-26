@@ -1,0 +1,75 @@
+package billing
+
+import "github.com/cshum/imagor-studio/server/pkg/org"
+
+const PlanFree = "free"
+
+// PlanEntitlements defines the billing and quota surface shared across SaaS runtime code.
+type PlanEntitlements struct {
+	MaxSpaces        int
+	StorageLimitGB   int64
+	TransformsLimit  int64
+	BYOBAllowed      bool
+	MaxCustomDomains int
+}
+
+var planEntitlements = map[string]PlanEntitlements{
+	PlanFree: {
+		MaxSpaces:        0,
+		StorageLimitGB:   0,
+		TransformsLimit:  0,
+		BYOBAllowed:      false,
+		MaxCustomDomains: 0,
+	},
+	org.PlanTrial: {
+		MaxSpaces:        1,
+		StorageLimitGB:   1,
+		TransformsLimit:  1000,
+		BYOBAllowed:      false,
+		MaxCustomDomains: 0,
+	},
+	org.PlanEarlyBird: {
+		MaxSpaces:        3,
+		StorageLimitGB:   10,
+		TransformsLimit:  10000,
+		BYOBAllowed:      true,
+		MaxCustomDomains: 0,
+	},
+	org.PlanStarter: {
+		MaxSpaces:        1,
+		StorageLimitGB:   20,
+		TransformsLimit:  25000,
+		BYOBAllowed:      true,
+		MaxCustomDomains: 0,
+	},
+	org.PlanPro: {
+		MaxSpaces:        3,
+		StorageLimitGB:   100,
+		TransformsLimit:  150000,
+		BYOBAllowed:      true,
+		MaxCustomDomains: 3,
+	},
+	org.PlanTeam: {
+		MaxSpaces:        10,
+		StorageLimitGB:   500,
+		TransformsLimit:  750000,
+		BYOBAllowed:      true,
+		MaxCustomDomains: 10,
+	},
+	org.PlanEnterprise: {
+		MaxSpaces:        -1,
+		StorageLimitGB:   -1,
+		TransformsLimit:  -1,
+		BYOBAllowed:      true,
+		MaxCustomDomains: -1,
+	},
+}
+
+// EntitlementsForPlan returns billing entitlements for a plan name.
+// Unknown plans fall back to the blocked/lapsed state.
+func EntitlementsForPlan(plan string) PlanEntitlements {
+	if entitlements, ok := planEntitlements[plan]; ok {
+		return entitlements
+	}
+	return planEntitlements[PlanFree]
+}
