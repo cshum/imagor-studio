@@ -23,7 +23,7 @@ This URL tells imagor to:
 - Apply contrast +5
 - Process `path/to/image.jpg`
 
-## Non-Destructive Workflow
+## Non-Destructive Editing
 
 Original files are never modified:
 

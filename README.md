@@ -3,12 +3,12 @@
 [![Test Status](https://github.com/cshum/imagor-studio/workflows/test/badge.svg)](https://github.com/cshum/imagor-studio/actions/workflows/test.yml)
 [![Docker Hub](https://img.shields.io/badge/docker-shumc/imagor--studio-blue.svg)](https://hub.docker.com/r/shumc/imagor-studio/)
 
-Self-hosted image gallery with built-in editing. Virtual scrolling, drag-and-drop management, multi-layer compositing, and template workflows.
+Self-hosted image gallery with built-in editing. High-performance browsing, drag-and-drop management, layered compositing, and reusable templates.
 
 - Virtual Scrolling Gallery — browse thousands of images instantly, no indexing or waiting
-- Image Editing — multi-layer compositing, template workflows with instant URL generation
+- Image Editing — layered compositing and instant URL generation
 - Drag-and-Drop Management — upload, organize, multi-select for bulk operations
-- Non-Destructive Workflow — originals untouched, all transformations via URL
+- Non-Destructive Editing — originals untouched, all transformations via URL
 
 ![Screenshots](assets/screenshots.jpg)
 

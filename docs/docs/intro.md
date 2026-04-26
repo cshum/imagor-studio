@@ -5,9 +5,9 @@ slug: /
 
 # Introduction
 
-**Imagor Studio** is an open source, self-hosted image gallery with built-in editing. No cloud subscriptions, no vendor lock-in - just tools that work the way you need them to.
+**Imagor Studio** is an open source, self-hosted image gallery with built-in editing. Self-host it on your own storage, stay close to the open source path, and keep control of your stack.
 
-Browse thousands of images instantly with virtual scrolling. Edit with multi-layer compositing and template workflows. All transformations are URL-based and non-destructive.
+Browse thousands of images instantly with virtual scrolling. Edit with layered compositing and reusable templates. All transformations are URL-based and non-destructive.
 
 ### Gallery
 
@@ -21,7 +21,7 @@ Browse and organize your image files with virtual scrolling, drag-and-drop manag
 
 ### Image Editing
 
-Image editing with real-time preview, multi-layer compositing, template workflows, color adjustments, effects, and cropping. All transformations are URL-based.
+Image editing with preview, layered compositing, reusable templates, color adjustments, effects, and cropping. All transformations are URL-based.
 
 <div className="screenshot-container">
 
@@ -29,9 +29,9 @@ Image editing with real-time preview, multi-layer compositing, template workflow
 
 </div>
 
-### Template Workflows
+### Reusable Templates
 
-Save editing workflows as reusable templates. Stored as portable JSON files, apply the same edits across your entire image library.
+Save layered edits as reusable templates. Stored as portable JSON files, apply the same edits across your entire image library.
 
 <div className="screenshot-container">
 
@@ -45,26 +45,26 @@ Save editing workflows as reusable templates. Stored as portable JSON files, app
 - **Virtual scrolling gallery** - Browse thousands of images instantly with efficient rendering
 - **URL-based transformations** - Non-destructive image processing powered by [imagor](https://github.com/cshum/imagor) and libvips
 - **Multi-layer compositing** - Stack and composite multiple images with independent transformations
-- **Template-driven workflows** - Save and reuse editing workflows in open JSON format
+- **Reusable templates** - Save and reuse layered edits in open JSON format
 - **Universal storage support** - Works with local filesystem, S3, MinIO, Cloudflare R2, and more
 
 ## What Makes Imagor Studio Special?
 
 We were serving millions of images but needed better tools for managing and editing them. When we looked at alternatives, they all wanted premium prices for basic features, or locked you into their cloud infrastructure.
 
-So we built Imagor Studio - open source, self-hosted, and designed for people who want control over their images and workflows.
+So we built Imagor Studio - open source, self-hosted, and designed for people who want control over their images, editing, and storage.
 
-### Non-Destructive Workflow
+### Non-Destructive Editing
 
 All image transformations are URL-based, meaning your original images remain untouched. Generate transformed versions on-the-fly without modifying source files.
 
 ### Universal Storage Support
 
-Works with local filesystems, S3-compatible storage, and more. Switch between storage backends without changing your workflow.
+Works with local filesystems, S3-compatible storage, and more. Switch between storage backends without changing how you manage your images.
 
 ### Built on imagor
 
-Imagor Studio is powered by [imagor](https://github.com/cshum/imagor), a fast and secure image processing server that provides URL-based image transformations. Imagor Studio extends imagor with a beautiful gallery interface and live editing capabilities, giving you the best of both worlds: imagor's powerful processing engine with an intuitive visual interface.
+Imagor Studio is powered by [imagor](https://github.com/cshum/imagor), a fast and secure image processing server that provides URL-based image transformations. Imagor Studio extends imagor with a gallery interface and built-in editing, giving you the best of both worlds: imagor's powerful processing engine with an intuitive visual interface.
 
 All image transformations benefit from imagor's high-performance architecture, comprehensive operation support, and proven reliability in production environments.
 

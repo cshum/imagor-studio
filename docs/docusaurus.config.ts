@@ -147,7 +147,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Built with ❤️ for creators. Copyright © ${new Date().getFullYear()} Adrian Shum.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Imagor Studio.`,
     },
     prism: {
       theme: prismThemes.github,

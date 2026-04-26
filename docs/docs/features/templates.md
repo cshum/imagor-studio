@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Templates
 
-Save and reuse your editing workflows with template-based image processing. Templates capture complete editing states in an open JSON format, enabling consistent results across your image library.
+Save and reuse layered edits with template-based image processing. Templates capture complete editing states in an open JSON format, enabling consistent results across your image library.
 
 ## What Are Templates?
 
@@ -14,7 +14,7 @@ Templates are `.imagor.json` files stored in an open, portable JSON format that 
 - Layer compositions and settings
 - Output format and quality settings
 
-Templates store transformation instructions, not the actual images. This approach enables you to apply the same editing workflow to different images while keeping your originals untouched.
+Templates store transformation instructions, not the actual images. This approach enables you to apply the same saved edits to different images while keeping your originals untouched.
 
 ## Open JSON Format
 
