@@ -8,6 +8,7 @@ export interface BreadcrumbItem {
   href?: string
   path?: string
   isActive?: boolean
+  preserveLabelInTitle?: boolean
 }
 
 interface RouteMatch {

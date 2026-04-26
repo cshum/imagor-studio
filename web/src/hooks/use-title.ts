@@ -19,7 +19,10 @@ export function useTitle(): void {
     const activeBreadcrumb = breadcrumbs[breadcrumbs.length - 1]
     const homeTitle = breadcrumbs[0].label
 
-    if (activeBreadcrumb?.label && activeBreadcrumb?.label !== homeTitle) {
+    if (
+      activeBreadcrumb?.label &&
+      (activeBreadcrumb.label !== homeTitle || activeBreadcrumb.preserveLabelInTitle)
+    ) {
       document.title = `${activeBreadcrumb.label} | ${appTitle}`
     } else {
       document.title = `${appTitle}`

@@ -210,6 +210,7 @@ export const galleryLoader = async ({
   const breadcrumbs: BreadcrumbItem[] = [
     {
       label: homeTitle,
+      ...(routeSpaceKey && galleryKey === '' ? { preserveLabelInTitle: true } : {}),
       ...(galleryKey ? { href: routeSpaceKey ? `/spaces/${routeSpaceKey}` : '/' } : {}),
     },
   ]
