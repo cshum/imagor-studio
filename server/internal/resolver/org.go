@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
-	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/management"
@@ -154,6 +153,37 @@ func (r *Resolver) applyHostedStorageUsage(gqlSpace *gql.Space, usageBytes int64
 		return
 	}
 	gqlSpace.StorageUsageBytes = &usageValue
+}
+
+func (r *Resolver) listHostedUsageBySpaceID(ctx context.Context, orgID string, spacesByKey map[string]*space.Space) map[string]int64 {
+	if r.hostedStorageStore == nil {
+		return map[string]int64{}
+	}
+	aggregator, ok := r.hostedStorageStore.(management.HostedStorageUsageAggregator)
+	if !ok {
+		return map[string]int64{}
+	}
+
+	spaceIDs := make([]string, 0, len(spacesByKey))
+	for _, s := range spacesByKey {
+		if space.NormalizeStorageMode(s.StorageMode) != space.StorageModePlatform {
+			continue
+		}
+		if orgID != "" && s.OrgID != orgID {
+			continue
+		}
+		spaceIDs = append(spaceIDs, s.ID)
+	}
+	if len(spaceIDs) == 0 {
+		return map[string]int64{}
+	}
+
+	hostedUsageBySpaceID, err := aggregator.ListUsageBytesBySpace(ctx, orgID, spaceIDs)
+	if err != nil {
+		r.logger.Warn("Spaces: failed to list hosted storage usage", zap.String("orgID", orgID), zap.Error(err))
+		return map[string]int64{}
+	}
+	return hostedUsageBySpaceID
 }
 
 func (r *Resolver) mapSpaceToGQLWithPermissionsOnly(ctx context.Context, s *space.Space) (*gql.Space, error) {
@@ -498,29 +528,7 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 		spacesByKey[s.Key] = s
 	}
 
-	hostedUsageBySpaceID := map[string]int64{}
-	if r.hostedStorageStore != nil {
-		aggregator, ok := r.hostedStorageStore.(management.HostedStorageUsageAggregator)
-		if ok {
-			spaceIDs := make([]string, 0, len(spacesByKey))
-			for _, s := range spacesByKey {
-				if space.NormalizeStorageMode(s.StorageMode) != space.StorageModePlatform {
-					continue
-				}
-				if orgID != "" && s.OrgID != orgID {
-					continue
-				}
-				spaceIDs = append(spaceIDs, s.ID)
-			}
-			if len(spaceIDs) > 0 {
-				hostedUsageBySpaceID, err = aggregator.ListUsageBytesBySpace(ctx, orgID, spaceIDs)
-				if err != nil {
-					r.logger.Warn("Spaces: failed to list hosted storage usage", zap.String("orgID", orgID), zap.Error(err))
-					hostedUsageBySpaceID = map[string]int64{}
-				}
-			}
-		}
-	}
+	hostedUsageBySpaceID := r.listHostedUsageBySpaceID(ctx, orgID, spacesByKey)
 
 	result := make([]*gql.Space, 0, len(spacesByKey))
 	for _, s := range spacesByKey {
@@ -917,19 +925,19 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 	if err != nil {
 		return nil, err
 	}
-	org, err := r.orgStore.GetByUserID(ctx, claims.UserID)
+	currentOrg, err := r.orgStore.GetByUserID(ctx, claims.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve organization: %w", err)
 	}
-	if org != nil {
-		limits := model.GetLimits(org.Plan)
+	if currentOrg != nil {
+		limits := org.GetLimits(currentOrg.Plan)
 		if limits.MaxMembers != -1 {
 			members, err := r.orgStore.ListMembers(ctx, orgID)
 			if err != nil {
 				return nil, fmt.Errorf("failed to check member count: %w", err)
 			}
 			if len(members) >= limits.MaxMembers {
-				return nil, fmt.Errorf("member limit (%d) reached for plan %q", limits.MaxMembers, org.Plan)
+				return nil, fmt.Errorf("member limit (%d) reached for plan %q", limits.MaxMembers, currentOrg.Plan)
 			}
 		}
 	}
@@ -998,14 +1006,14 @@ func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string
 	if err != nil {
 		return nil, err
 	}
-	org, err := r.orgStore.GetByUserID(ctx, claims.UserID)
+	currentOrg, err := r.orgStore.GetByUserID(ctx, claims.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve organization: %w", err)
 	}
-	if org != nil {
-		limits := model.GetLimits(org.Plan)
+	if currentOrg != nil {
+		limits := org.GetLimits(currentOrg.Plan)
 		if limits.MaxMembers != -1 && len(members) >= limits.MaxMembers {
-			return nil, fmt.Errorf("member limit (%d) reached for plan %q", limits.MaxMembers, org.Plan)
+			return nil, fmt.Errorf("member limit (%d) reached for plan %q", limits.MaxMembers, currentOrg.Plan)
 		}
 	}
 

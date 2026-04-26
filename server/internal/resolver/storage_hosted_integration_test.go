@@ -16,7 +16,6 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/space"
@@ -58,6 +57,35 @@ type integrationHostedStorageUsage struct {
 
 type integrationHostedStorageStore struct {
 	db *bun.DB
+}
+
+type integrationSpaceRow struct {
+	bun.BaseModel `bun:"table:spaces,alias:sp"`
+
+	ID                   string     `bun:"id,pk,type:text"`
+	OrgID                string     `bun:"org_id,notnull,default:''"`
+	Key                  string     `bun:"key,notnull,unique"`
+	Name                 string     `bun:"name,notnull,default:''"`
+	StorageMode          string     `bun:"storage_mode,notnull,default:'platform'"`
+	StorageType          string     `bun:"storage_type,notnull,default:'s3'"`
+	Bucket               string     `bun:"bucket,notnull,default:''"`
+	Prefix               string     `bun:"prefix,notnull,default:''"`
+	Region               string     `bun:"region,notnull,default:''"`
+	Endpoint             string     `bun:"endpoint,notnull,default:''"`
+	AccessKeyID          string     `bun:"access_key_id,notnull,default:''"`
+	SecretKey            string     `bun:"secret_key,notnull,default:''"`
+	UsePathStyle         bool       `bun:"use_path_style,notnull,default:false"`
+	CustomDomain         string     `bun:"custom_domain,nullzero,unique"`
+	CustomDomainVerified bool       `bun:"custom_domain_verified,notnull,default:false"`
+	Suspended            bool       `bun:"suspended,notnull,default:false"`
+	IsShared             bool       `bun:"is_shared,notnull,default:false"`
+	SignerAlgorithm      string     `bun:"signer_algorithm,notnull,default:'sha256'"`
+	SignerTruncate       int        `bun:"signer_truncate,notnull,default:32"`
+	ImagorSecret         string     `bun:"imagor_secret,notnull,default:''"`
+	ImagorCORSOrigins    string     `bun:"imagor_cors_origins,notnull,default:''"`
+	CreatedAt            time.Time  `bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt            time.Time  `bun:"updated_at,notnull,default:current_timestamp"`
+	DeletedAt            *time.Time `bun:"deleted_at,nullzero"`
 }
 
 func newIntegrationHostedStorageStore(db *bun.DB) management.HostedStorageStore {
@@ -326,7 +354,7 @@ func (s *integrationSpaceStore) GetByKey(ctx context.Context, key string) (*spac
 	return nil, errors.New("not implemented")
 }
 func (s *integrationSpaceStore) GetByID(ctx context.Context, id string) (*space.Space, error) {
-	var row model.Space
+	var row integrationSpaceRow
 	if err := s.db.NewSelect().Model(&row).Where("id = ? AND deleted_at IS NULL", id).Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -397,7 +425,7 @@ func newHostedResolverIntegrationDB(t *testing.T) *bun.DB {
 	t.Cleanup(func() { _ = sqldb.Close() })
 
 	db := bun.NewDB(sqldb, sqlitedialect.New())
-	_, err = db.NewCreateTable().Model((*model.Space)(nil)).IfNotExists().Exec(context.Background())
+	_, err = db.NewCreateTable().Model((*integrationSpaceRow)(nil)).IfNotExists().Exec(context.Background())
 	require.NoError(t, err)
 	_, err = db.NewCreateTable().Model((*integrationHostedStorageObject)(nil)).IfNotExists().Exec(context.Background())
 	require.NoError(t, err)
@@ -432,7 +460,7 @@ func setupHostedResolverIntegration(t *testing.T) (*Resolver, management.HostedS
 	db := newHostedResolverIntegrationDB(t)
 	spaceID := "space-123"
 	now := time.Now().UTC()
-	_, err = db.NewInsert().Model(&model.Space{
+	_, err = db.NewInsert().Model(&integrationSpaceRow{
 		ID:              spaceID,
 		OrgID:           "org-a",
 		Key:             "space-123",

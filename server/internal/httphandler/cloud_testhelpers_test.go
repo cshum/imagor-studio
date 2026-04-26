@@ -10,12 +10,37 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/pkg/org"
-	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
 )
+
+type testOrganizationRow struct {
+	bun.BaseModel `bun:"table:organizations,alias:o"`
+
+	ID                   string     `bun:"id,pk,type:text"`
+	OwnerID              string     `bun:"owner_id,notnull,type:text"`
+	Name                 string     `bun:"name,notnull"`
+	Slug                 string     `bun:"slug,notnull,unique"`
+	Plan                 string     `bun:"plan,notnull,default:'trial'"`
+	PlanStatus           string     `bun:"plan_status,notnull,default:'trialing'"`
+	StripeCustomerID     *string    `bun:"stripe_customer_id,unique"`
+	StripeSubscriptionID *string    `bun:"stripe_subscription_id,unique"`
+	BillingEmail         *string    `bun:"billing_email"`
+	TrialEndsAt          *time.Time `bun:"trial_ends_at"`
+	CreatedAt            time.Time  `bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt            time.Time  `bun:"updated_at,notnull,default:current_timestamp"`
+}
+
+type testOrgMemberRow struct {
+	bun.BaseModel `bun:"table:org_members,alias:om"`
+
+	OrgID     string    `bun:"org_id,pk,type:text"`
+	UserID    string    `bun:"user_id,pk,type:text"`
+	Role      string    `bun:"role,notnull,default:'owner'"`
+	CreatedAt time.Time `bun:"created_at,notnull,default:current_timestamp"`
+}
 
 type testOrgStore struct{ db *bun.DB }
 
@@ -25,8 +50,8 @@ func newTestOrgStore(db *bun.DB) org.OrgStore {
 
 func (s *testOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*org.Org, error) {
 	now := time.Now().UTC()
-	organization := &model.Organization{ID: uuid.GenerateUUID(), OwnerID: ownerID, Name: name, Slug: slug, Plan: model.PlanTrial, PlanStatus: model.PlanStatusTrialing, TrialEndsAt: trialEndsAt, CreatedAt: now, UpdatedAt: now}
-	member := &model.OrgMember{OrgID: organization.ID, UserID: ownerID, Role: "owner", CreatedAt: now}
+	organization := &testOrganizationRow{ID: uuid.GenerateUUID(), OwnerID: ownerID, Name: name, Slug: slug, Plan: org.PlanTrial, PlanStatus: org.PlanStatusTrialing, TrialEndsAt: trialEndsAt, CreatedAt: now, UpdatedAt: now}
+	member := &testOrgMemberRow{OrgID: organization.ID, UserID: ownerID, Role: "owner", CreatedAt: now}
 	if err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewInsert().Model(organization).Exec(ctx); err != nil {
 			return fmt.Errorf("insert organization: %w", err)
@@ -42,14 +67,14 @@ func (s *testOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug
 }
 
 func (s *testOrgStore) GetByUserID(ctx context.Context, userID string) (*org.Org, error) {
-	var member model.OrgMember
+	var member testOrgMemberRow
 	if err := s.db.NewSelect().Model(&member).Where("user_id = ?", userID).Limit(1).Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("get org_member for user %s: %w", userID, err)
 	}
-	var organization model.Organization
+	var organization testOrganizationRow
 	if err := s.db.NewSelect().Model(&organization).Where("id = ?", member.OrgID).Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -60,7 +85,7 @@ func (s *testOrgStore) GetByUserID(ctx context.Context, userID string) (*org.Org
 }
 
 func (s *testOrgStore) GetBySlug(ctx context.Context, slug string) (*org.Org, error) {
-	var organization model.Organization
+	var organization testOrganizationRow
 	if err := s.db.NewSelect().Model(&organization).Where("slug = ?", slug).Scan(ctx); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -100,7 +125,7 @@ func (s *testOrgStore) ListMembers(ctx context.Context, orgID string) ([]*org.Or
 }
 
 func (s *testOrgStore) AddMember(ctx context.Context, orgID, userID, role string) error {
-	member := &model.OrgMember{OrgID: orgID, UserID: userID, Role: role, CreatedAt: time.Now().UTC()}
+	member := &testOrgMemberRow{OrgID: orgID, UserID: userID, Role: role, CreatedAt: time.Now().UTC()}
 	if _, err := s.db.NewInsert().Model(member).Exec(ctx); err != nil {
 		return fmt.Errorf("add org member: %w", err)
 	}
@@ -121,7 +146,7 @@ func (s *testOrgStore) UpdateMemberRole(ctx context.Context, orgID, userID, role
 	return nil
 }
 
-func mapTestOrg(row *model.Organization) *org.Org {
+func mapTestOrg(row *testOrganizationRow) *org.Org {
 	result := &org.Org{ID: row.ID, OwnerID: row.OwnerID, Name: row.Name, Slug: row.Slug, Plan: row.Plan, PlanStatus: row.PlanStatus, TrialEndsAt: row.TrialEndsAt, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
 	if row.StripeCustomerID != nil {
 		result.StripeCustomerID = *row.StripeCustomerID
@@ -135,103 +160,6 @@ func mapTestOrg(row *model.Organization) *org.Org {
 	return result
 }
 
-type testSpaceStore struct{ db *bun.DB }
-
-func newTestSpaceStore(db *bun.DB) space.SpaceStore {
-	return &testSpaceStore{db: db}
-}
-
-func (s *testSpaceStore) Create(ctx context.Context, sp *space.Space) error {
-	now := time.Now().UTC()
-	row := &model.Space{ID: uuid.GenerateUUID(), OrgID: sp.OrgID, Key: sp.Key, Name: sp.Name, StorageType: sp.StorageType, Bucket: sp.Bucket, Prefix: sp.Prefix, Region: sp.Region, Endpoint: sp.Endpoint, AccessKeyID: sp.AccessKeyID, SecretKey: sp.SecretKey, UsePathStyle: sp.UsePathStyle, CustomDomain: sp.CustomDomain, CustomDomainVerified: sp.CustomDomainVerified, Suspended: sp.Suspended, IsShared: sp.IsShared, SignerAlgorithm: sp.SignerAlgorithm, SignerTruncate: sp.SignerTruncate, ImagorSecret: sp.ImagorSecret, ImagorCORSOrigins: sp.ImagorCORSOrigins, CreatedAt: now, UpdatedAt: now}
-	if row.StorageType == "" {
-		row.StorageType = "s3"
-	}
-	if row.SignerAlgorithm == "" {
-		row.SignerAlgorithm = "sha256"
-	}
-	_, err := s.db.NewInsert().Model(row).Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("create space: %w", err)
-	}
-	return nil
-}
-
-func (s *testSpaceStore) RenameKey(ctx context.Context, oldKey, newKey string) error {
-	_, err := s.db.NewUpdate().Model((*model.Space)(nil)).Set("key = ?", newKey).Set("updated_at = ?", time.Now().UTC()).Where("key = ? AND deleted_at IS NULL", oldKey).Exec(ctx)
-	return err
-}
-
-func (s *testSpaceStore) Upsert(ctx context.Context, sp *space.Space) error {
-	if existing, err := s.GetByKey(ctx, sp.Key); err != nil {
-		return err
-	} else if existing != nil {
-		_, err = s.db.NewUpdate().Model((*model.Space)(nil)).Set("org_id = ?", sp.OrgID).Set("name = ?", sp.Name).Set("updated_at = ?", time.Now().UTC()).Where("key = ?", sp.Key).Exec(ctx)
-		return err
-	}
-	return s.Create(ctx, sp)
-}
-
-func (s *testSpaceStore) SoftDelete(ctx context.Context, key string) error {
-	_, err := s.db.NewUpdate().Model((*model.Space)(nil)).Set("deleted_at = ?", time.Now().UTC()).Set("updated_at = ?", time.Now().UTC()).Where("key = ? AND deleted_at IS NULL", key).Exec(ctx)
-	return err
-}
-
-func (s *testSpaceStore) GetByKey(ctx context.Context, key string) (*space.Space, error) {
-	var row model.Space
-	if err := s.db.NewSelect().Model(&row).Where("key = ? AND deleted_at IS NULL", key).Scan(ctx); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &space.Space{ID: row.ID, OrgID: row.OrgID, Key: row.Key, Name: row.Name, StorageType: row.StorageType, Bucket: row.Bucket, Prefix: row.Prefix, Region: row.Region, Endpoint: row.Endpoint, AccessKeyID: row.AccessKeyID, SecretKey: row.SecretKey, UsePathStyle: row.UsePathStyle, CustomDomain: row.CustomDomain, CustomDomainVerified: row.CustomDomainVerified, Suspended: row.Suspended, IsShared: row.IsShared, SignerAlgorithm: row.SignerAlgorithm, SignerTruncate: row.SignerTruncate, ImagorSecret: row.ImagorSecret, ImagorCORSOrigins: row.ImagorCORSOrigins, UpdatedAt: row.UpdatedAt, DeletedAt: row.DeletedAt}, nil
-}
-
-func (s *testSpaceStore) GetByID(ctx context.Context, id string) (*space.Space, error) {
-	var row model.Space
-	if err := s.db.NewSelect().Model(&row).Where("id = ? AND deleted_at IS NULL", id).Scan(ctx); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &space.Space{ID: row.ID, OrgID: row.OrgID, Key: row.Key, Name: row.Name, StorageType: row.StorageType, Bucket: row.Bucket, Prefix: row.Prefix, Region: row.Region, Endpoint: row.Endpoint, AccessKeyID: row.AccessKeyID, SecretKey: row.SecretKey, UsePathStyle: row.UsePathStyle, CustomDomain: row.CustomDomain, CustomDomainVerified: row.CustomDomainVerified, Suspended: row.Suspended, IsShared: row.IsShared, SignerAlgorithm: row.SignerAlgorithm, SignerTruncate: row.SignerTruncate, ImagorSecret: row.ImagorSecret, ImagorCORSOrigins: row.ImagorCORSOrigins, UpdatedAt: row.UpdatedAt, DeletedAt: row.DeletedAt}, nil
-}
-
-func (s *testSpaceStore) List(ctx context.Context) ([]*space.Space, error) { return nil, nil }
-func (s *testSpaceStore) ListByOrgID(ctx context.Context, orgID string) ([]*space.Space, error) {
-	return nil, nil
-}
-func (s *testSpaceStore) ListByMemberUserID(ctx context.Context, userID string) ([]*space.Space, error) {
-	return nil, nil
-}
-func (s *testSpaceStore) Delta(ctx context.Context, since time.Time) (*space.DeltaResult, error) {
-	return nil, nil
-}
-func (s *testSpaceStore) KeyExists(ctx context.Context, key string) (bool, error) {
-	exists, err := s.db.NewSelect().Model((*model.Space)(nil)).Where("key = ?", key).Exists(ctx)
-	return exists, err
-}
-func (s *testSpaceStore) ListMembers(ctx context.Context, spaceID string) ([]*space.SpaceMemberView, error) {
-	return nil, nil
-}
-func (s *testSpaceStore) AddMember(ctx context.Context, spaceID, userID, role string) error {
-	_, err := s.db.NewInsert().Model(&model.SpaceMember{SpaceID: spaceID, UserID: userID, Role: role, CreatedAt: time.Now().UTC()}).Exec(ctx)
-	return err
-}
-func (s *testSpaceStore) RemoveMember(ctx context.Context, spaceID, userID string) error {
-	_, err := s.db.NewDelete().TableExpr("space_members").Where("space_id = ? AND user_id = ?", spaceID, userID).Exec(ctx)
-	return err
-}
-func (s *testSpaceStore) UpdateMemberRole(ctx context.Context, spaceID, userID, role string) error {
-	_, err := s.db.NewUpdate().TableExpr("space_members").Set("role = ?", role).Where("space_id = ? AND user_id = ?", spaceID, userID).Exec(ctx)
-	return err
-}
-func (s *testSpaceStore) HasMember(ctx context.Context, spaceID, userID string) (bool, error) {
-	return s.db.NewSelect().TableExpr("space_members").Where("space_id = ? AND user_id = ?", spaceID, userID).Exists(ctx)
-}
-
 func newOrgTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
@@ -240,10 +168,10 @@ func newOrgTestDB(t *testing.T) *bun.DB {
 	}
 	t.Cleanup(func() { _ = sqldb.Close() })
 	db := bun.NewDB(sqldb, sqlitedialect.New())
-	if _, err := db.NewCreateTable().Model((*model.Organization)(nil)).IfNotExists().Exec(context.Background()); err != nil {
+	if _, err := db.NewCreateTable().Model((*testOrganizationRow)(nil)).IfNotExists().Exec(context.Background()); err != nil {
 		t.Fatalf("create organizations table: %v", err)
 	}
-	if _, err := db.NewCreateTable().Model((*model.OrgMember)(nil)).IfNotExists().Exec(context.Background()); err != nil {
+	if _, err := db.NewCreateTable().Model((*testOrgMemberRow)(nil)).IfNotExists().Exec(context.Background()); err != nil {
 		t.Fatalf("create org_members table: %v", err)
 	}
 	if _, err := db.NewCreateTable().Model((*model.User)(nil)).IfNotExists().Exec(context.Background()); err != nil {
