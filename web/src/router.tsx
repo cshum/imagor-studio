@@ -544,8 +544,8 @@ const generalSectionRoute = createRoute({
   shouldReload: false,
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useRouteContext()
-    const initialValues = generalSectionRoute.useLoaderData()
-    return <GeneralSection space={space} initialValues={initialValues} />
+    const { registry } = generalSectionRoute.useLoaderData()
+    return <GeneralSection space={space} initialValues={registry} />
   },
 })
 
@@ -553,6 +553,7 @@ const generalSectionRoute = createRoute({
 const storageSectionRoute = createRoute({
   getParentRoute: () => spaceSettingsLayoutRoute,
   path: '/storage',
+  loader: async () => ({ breadcrumb: { translationKey: 'pages.spaceSettings.sections.storage' } }),
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useRouteContext()
     return <StorageSection space={space} />
@@ -567,8 +568,8 @@ const securitySectionRoute = createRoute({
   shouldReload: false,
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useRouteContext()
-    const initialValues = securitySectionRoute.useLoaderData()
-    return <SecuritySection space={space} initialValues={initialValues} />
+    const { registry } = securitySectionRoute.useLoaderData()
+    return <SecuritySection space={space} initialValues={registry} />
   },
 })
 

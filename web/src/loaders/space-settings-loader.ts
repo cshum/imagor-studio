@@ -1,5 +1,6 @@
 import { getSpaceRegistry, listSpaceInvitations, listSpaceMembers } from '@/api/org-api'
 import type { GetSpaceQuery } from '@/generated/graphql'
+import type { BreadcrumbItem } from '@/hooks/use-breadcrumb'
 
 type SpaceSettingsRouteContext = {
   space: NonNullable<GetSpaceQuery['space']>
@@ -9,9 +10,15 @@ export interface SpaceRegistryLoaderData {
   [key: string]: string
 }
 
+interface SpaceRegistrySectionLoaderData {
+  registry: SpaceRegistryLoaderData
+  breadcrumb: BreadcrumbItem
+}
+
 export interface SpaceMembersLoaderData {
   spaceMembers: Awaited<ReturnType<typeof listSpaceMembers>>
   invitations: Awaited<ReturnType<typeof listSpaceInvitations>>
+  breadcrumb: BreadcrumbItem
 }
 
 const getSpaceRegistryMap = async (spaceID: string): Promise<SpaceRegistryLoaderData> => {
@@ -27,16 +34,22 @@ export const spaceGeneralSectionLoader = async ({
   context,
 }: {
   context: SpaceSettingsRouteContext
-}): Promise<SpaceRegistryLoaderData> => {
-  return getSpaceRegistryMap(context.space.id)
+}): Promise<SpaceRegistrySectionLoaderData> => {
+  return {
+    registry: await getSpaceRegistryMap(context.space.id),
+    breadcrumb: { translationKey: 'pages.spaceSettings.sections.general' },
+  }
 }
 
 export const spaceSecuritySectionLoader = async ({
   context,
 }: {
   context: SpaceSettingsRouteContext
-}): Promise<SpaceRegistryLoaderData> => {
-  return getSpaceRegistryMap(context.space.id)
+}): Promise<SpaceRegistrySectionLoaderData> => {
+  return {
+    registry: await getSpaceRegistryMap(context.space.id),
+    breadcrumb: { translationKey: 'pages.spaceSettings.sections.imagor' },
+  }
 }
 
 export const spaceMembersSectionLoader = async ({
@@ -49,8 +62,16 @@ export const spaceMembersSectionLoader = async ({
       listSpaceMembers(context.space.id),
       listSpaceInvitations(context.space.id),
     ])
-    return { spaceMembers, invitations }
+    return {
+      spaceMembers,
+      invitations,
+      breadcrumb: { translationKey: 'pages.spaceSettings.sections.members' },
+    }
   } catch {
-    return { spaceMembers: [], invitations: [] }
+    return {
+      spaceMembers: [],
+      invitations: [],
+      breadcrumb: { translationKey: 'pages.spaceSettings.sections.members' },
+    }
   }
 }
