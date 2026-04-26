@@ -93,10 +93,6 @@ func TestAddOrgMember_Success(t *testing.T) {
 		Username: "charlie",
 	}, nil)
 
-	// Plan limit check: starter plan with 2 current members (max 5).
-	o := makeTestOrg("org-1", "user-1")
-	o.Plan = "starter"
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(o, nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "member"),
@@ -126,8 +122,6 @@ func TestAddOrgMember_UserNotFound(t *testing.T) {
 	r := newMemberResolver(orgStore, userStore)
 
 	userStore.On("GetByUsername", mock.Anything, "ghost").Return(nil, nil)
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-1"), nil)
-	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{}, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	_, err := r.Mutation().AddOrgMember(ctx, "ghost", "member")
@@ -135,7 +129,7 @@ func TestAddOrgMember_UserNotFound(t *testing.T) {
 	assert.Contains(t, err.Error(), "not found")
 }
 
-func TestAddOrgMember_PlanLimitReached(t *testing.T) {
+func TestAddOrgMember_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	userStore := &MockUserStore{}
 	r := newMemberResolver(orgStore, userStore)
@@ -144,18 +138,53 @@ func TestAddOrgMember_PlanLimitReached(t *testing.T) {
 		ID: "user-extra", Username: "extra",
 	}, nil)
 
-	// Trial plan: max 1 member. Already has 1.
-	o := makeTestOrg("org-1", "user-1")
-	o.Plan = "trial"
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(o, nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
+	orgStore.On("AddMember", mock.Anything, "org-1", "user-extra", "member").Return(nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-extra", "extra", "member"),
+	}, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
-	_, err := r.Mutation().AddOrgMember(ctx, "extra", "member")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "limit")
+	result, err := r.Mutation().AddOrgMember(ctx, "extra", "member")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "user-extra", result.UserID)
+	assert.Equal(t, "extra", result.Username)
+	assert.Equal(t, "member", result.Role)
+	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+}
+
+func TestAddOrgMemberByEmail_DoesNotEnforcePlanMemberLimit(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	userStore := &MockUserStore{}
+	r := newMemberResolver(orgStore, userStore)
+
+	userStore.On("GetByEmail", mock.Anything, "extra@example.com").Return(&userstore.User{
+		ID:       "user-extra",
+		Username: "extra",
+	}, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+	}, nil)
+	orgStore.On("AddMember", mock.Anything, "org-1", "user-extra", "member").Return(nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-extra", "extra", "member"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().AddOrgMemberByEmail(ctx, "extra@example.com", "member")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "user-extra", result.UserID)
+	assert.Equal(t, "extra", result.Username)
+	assert.Equal(t, "member", result.Role)
+	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
 }
 
 func TestAddOrgMember_RequiresAdmin(t *testing.T) {

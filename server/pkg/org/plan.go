@@ -1,11 +1,12 @@
 package org
 
-// No free tier — all orgs start on a 14-day trial.
+// Active SaaS plans plus legacy/internal states.
 const (
 	PlanTrial      = "trial"
 	PlanEarlyBird  = "early_bird"
 	PlanStarter    = "starter"
 	PlanPro        = "pro"
+	PlanTeam       = "team"
 	PlanEnterprise = "enterprise"
 )
 
@@ -21,16 +22,16 @@ const (
 type Limits struct {
 	MaxSpaces    int
 	MaxStorageGB int
-	MaxMembers   int
 }
 
 // PlanLimits maps plan names to resource quotas.
 var PlanLimits = map[string]Limits{
-	PlanTrial:      {MaxSpaces: 1, MaxStorageGB: 1, MaxMembers: 1},
-	PlanEarlyBird:  {MaxSpaces: 3, MaxStorageGB: 10, MaxMembers: 3},
-	PlanStarter:    {MaxSpaces: 5, MaxStorageGB: 25, MaxMembers: 5},
-	PlanPro:        {MaxSpaces: 20, MaxStorageGB: 100, MaxMembers: 20},
-	PlanEnterprise: {MaxSpaces: -1, MaxStorageGB: -1, MaxMembers: -1},
+	PlanTrial:      {MaxSpaces: 1, MaxStorageGB: 1},
+	PlanEarlyBird:  {MaxSpaces: 3, MaxStorageGB: 10},
+	PlanStarter:    {MaxSpaces: 1, MaxStorageGB: 20},
+	PlanPro:        {MaxSpaces: 3, MaxStorageGB: 100},
+	PlanTeam:       {MaxSpaces: 10, MaxStorageGB: 500},
+	PlanEnterprise: {MaxSpaces: -1, MaxStorageGB: -1},
 }
 
 // GetLimits returns limits for a plan, defaulting to trial limits.

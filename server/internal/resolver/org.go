@@ -898,7 +898,6 @@ func (r *queryResolver) OrgMembers(ctx context.Context) ([]*gql.OrgMember, error
 }
 
 // AddOrgMember adds a user (found by username) to the caller's org (admin only).
-// Enforces the plan's MaxMembers limit before inserting.
 func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, role string) (*gql.OrgMember, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
@@ -918,28 +917,6 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 	}
 	if user == nil {
 		return nil, fmt.Errorf("user %q not found", username)
-	}
-
-	// Enforce plan member limit.
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	currentOrg, err := r.orgStore.GetByUserID(ctx, claims.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve organization: %w", err)
-	}
-	if currentOrg != nil {
-		limits := org.GetLimits(currentOrg.Plan)
-		if limits.MaxMembers != -1 {
-			members, err := r.orgStore.ListMembers(ctx, orgID)
-			if err != nil {
-				return nil, fmt.Errorf("failed to check member count: %w", err)
-			}
-			if len(members) >= limits.MaxMembers {
-				return nil, fmt.Errorf("member limit (%d) reached for plan %q", limits.MaxMembers, currentOrg.Plan)
-			}
-		}
 	}
 
 	if err := r.orgStore.AddMember(ctx, orgID, user.ID, role); err != nil {
@@ -966,7 +943,6 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 }
 
 // AddOrgMemberByEmail adds an existing user (found by email) to the caller's org (admin only).
-// Enforces the plan's MaxMembers limit before inserting.
 func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string, role string) (*gql.OrgMember, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
@@ -999,21 +975,6 @@ func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string
 	for _, member := range members {
 		if member.UserID == user.ID {
 			return nil, fmt.Errorf("user is already a member of your organization")
-		}
-	}
-
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	currentOrg, err := r.orgStore.GetByUserID(ctx, claims.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve organization: %w", err)
-	}
-	if currentOrg != nil {
-		limits := org.GetLimits(currentOrg.Plan)
-		if limits.MaxMembers != -1 && len(members) >= limits.MaxMembers {
-			return nil, fmt.Errorf("member limit (%d) reached for plan %q", limits.MaxMembers, currentOrg.Plan)
 		}
 	}
 
