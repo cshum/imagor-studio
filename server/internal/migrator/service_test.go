@@ -147,3 +147,35 @@ func TestService_Execute(t *testing.T) {
 		})
 	}
 }
+
+func TestService_ExecuteCommand(t *testing.T) {
+	logger := zaptest.NewLogger(t)
+	db, err := database.Connect("sqlite::memory:")
+	if err != nil {
+		t.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	service := NewService(db, logger)
+	if err := service.ExecuteCommand("sqlite::memory:", "up"); err != nil {
+		t.Fatalf("ExecuteCommand() error = %v", err)
+	}
+}
+
+func TestService_ExecuteAutoMigrationFor(t *testing.T) {
+	logger := zaptest.NewLogger(t)
+	db, err := database.Connect("sqlite::memory:")
+	if err != nil {
+		t.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	service := NewService(db, logger)
+	executed, err := service.ExecuteAutoMigrationFor("sqlite::memory:", false)
+	if err != nil {
+		t.Fatalf("ExecuteAutoMigrationFor() error = %v", err)
+	}
+	if !executed {
+		t.Fatal("ExecuteAutoMigrationFor() executed = false, want true")
+	}
+}

@@ -110,10 +110,18 @@ type ProcessingOriginResolverFactory func(cfg CloudConfig, spaceStore space.Spac
 
 type TemplatePreviewRenderClientFactory func(cfg CloudConfig) processing.TemplatePreviewRenderClient
 
+type AutoMigrationConfig struct {
+	DatabaseURL      string
+	ForceAutoMigrate bool
+}
+
+type AutoMigrationRunner func(db *bun.DB, cfg AutoMigrationConfig, logger *zap.Logger) error
+
 type CloudFactories struct {
 	ConfigLoader             CloudConfigLoader
 	Stores                   CloudStoresFactory
 	InviteSender             InviteSenderFactory
+	AutoMigration            AutoMigrationRunner
 	AuthRoutes               AuthRoutesRegistrar
 	InternalRoutes           InternalRoutesRegistrar
 	ProcessingOriginResolver ProcessingOriginResolverFactory

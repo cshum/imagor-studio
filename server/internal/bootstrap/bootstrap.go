@@ -70,19 +70,19 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string, mode stri
 }
 
 func InitializeSelfHosted(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, management.CloudConfig{}, nil, nil)
+	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, management.CloudConfig{}, nil, nil, nil)
 }
 
 func InitializeCloud(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud, management.CloudConfig{}, nil, nil)
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, management.CloudConfig{}, nil, nil, nil)
 }
 
 func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args []string, cloudConfig management.CloudConfig, factories management.CloudFactories) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudConfig, factories.Stores, factories.InviteSender)
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudConfig, factories.Stores, factories.InviteSender, factories.AutoMigration)
 }
 
 // initializeRuntimeMode sets up runtime services for self-hosted or cloud management modes.
-func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudConfig management.CloudConfig, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory) (*Services, error) {
+func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudConfig management.CloudConfig, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory, autoMigrationRunner management.AutoMigrationRunner) (*Services, error) {
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
 	}
@@ -101,7 +101,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	}()
 
 	// Run migrations based on database type and configuration
-	if err := runMigrationsIfNeeded(db, cfg, logger); err != nil {
+	if err := runMigrationsIfNeeded(db, cfg, logger, autoMigrationRunner); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
@@ -303,7 +303,14 @@ func initializeDatabase(cfg *config.Config) (*bun.DB, error) {
 }
 
 // runMigrationsIfNeeded executes database migrations using the migrator service
-func runMigrationsIfNeeded(db *bun.DB, cfg *config.Config, logger *zap.Logger) error {
+func runMigrationsIfNeeded(db *bun.DB, cfg *config.Config, logger *zap.Logger, autoMigrationRunner management.AutoMigrationRunner) error {
+	if autoMigrationRunner != nil {
+		return autoMigrationRunner(db, management.AutoMigrationConfig{
+			DatabaseURL:      cfg.DatabaseURL,
+			ForceAutoMigrate: cfg.ForceAutoMigrate,
+		}, logger)
+	}
+
 	// Create migration service and use it for auto-migration logic
 	service := migrator.NewService(db, logger)
 	return service.ExecuteAutoMigration(cfg)

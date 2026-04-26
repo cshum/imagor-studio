@@ -13,7 +13,7 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-func TestProcessingUsageMigrationCreatesTables(t *testing.T) {
+func TestSharedMigrationsExcludeCloudTables(t *testing.T) {
 	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = sqldb.Close() })
@@ -24,9 +24,17 @@ func TestProcessingUsageMigrationCreatesTables(t *testing.T) {
 	_, err = migrator.Migrate(context.Background())
 	require.NoError(t, err)
 
-	assert.True(t, tableExists(t, db, "processing_usage"))
-	assert.True(t, tableExists(t, db, "processing_usage_batches"))
-	assert.True(t, indexExists(t, db, "idx_processing_usage_space_bucket"))
-	assert.True(t, indexExists(t, db, "idx_processing_usage_org_bucket"))
-	assert.True(t, indexExists(t, db, "idx_processing_usage_batches_received_at"))
+	assert.False(t, tableExists(t, db, "organizations"))
+	assert.False(t, tableExists(t, db, "spaces"))
+	assert.False(t, tableExists(t, db, "hosted_storage_objects"))
+	assert.False(t, tableExists(t, db, "processing_usage"))
+	assert.False(t, tableExists(t, db, "processing_usage_batches"))
+}
+
+func tableExists(t *testing.T, db *bun.DB, tableName string) bool {
+	t.Helper()
+	var count int
+	err := db.NewRaw("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?", tableName).Scan(context.Background(), &count)
+	require.NoError(t, err)
+	return count == 1
 }
