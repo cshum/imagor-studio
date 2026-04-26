@@ -85,6 +85,10 @@ type HostedStorageStore interface {
 	GetUsageBytes(ctx context.Context, orgID, spaceID string) (int64, error)
 }
 
+type HostedStorageUsageAggregator interface {
+	ListUsageBytesBySpace(ctx context.Context, orgID string, spaceIDs []string) (map[string]int64, error)
+}
+
 type ProcessingUsageStore interface {
 	ApplyUsageBatch(ctx context.Context, batch processing.UsageBatch) (*processing.UsageBatchApplyResult, error)
 	CleanupUsageBatches(ctx context.Context, olderThan time.Time) error

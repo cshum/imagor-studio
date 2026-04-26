@@ -728,6 +728,7 @@
         "managed": "託管儲存",
         "s3": "S3 儲存桶"
       },
+      "storageUsage": "已使用 {{size}}",
       "storageTypeDesc": {
         "managed": "儲存在 Imagor Studio 中，無需設定儲存桶。",
         "s3": "使用你自己的 S3 相容儲存桶。"

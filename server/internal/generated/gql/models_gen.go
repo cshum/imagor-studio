@@ -209,6 +209,7 @@ type Space struct {
 	OrgID                string `json:"orgId"`
 	Key                  string `json:"key"`
 	Name                 string `json:"name"`
+	StorageUsageBytes    *int   `json:"storageUsageBytes,omitempty"`
 	StorageMode          string `json:"storageMode"`
 	StorageType          string `json:"storageType"`
 	Bucket               string `json:"bucket"`

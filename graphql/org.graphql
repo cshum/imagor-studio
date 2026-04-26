@@ -15,6 +15,7 @@ type Space {
   orgId: ID!
   key: String!
   name: String!
+  storageUsageBytes: Int
   storageMode: String!
   storageType: String!
   bucket: String!

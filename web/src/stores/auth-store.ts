@@ -174,7 +174,7 @@ export const initAuth = async (
 
     if (currentAccessToken) {
       // Run token validation and first-run check in parallel — zero extra latency.
-      // Multi-tenant mode can be forced by env for SaaS builds, or discovered
+      // Multi-tenant mode can be forced by env, or discovered
       // from the backend during local/private development against cloud APIs.
       const [profile, firstRunResponse] = await Promise.all([
         getCurrentUser(currentAccessToken),

@@ -152,7 +152,7 @@ const spaceBaseLayoutRoute = createRoute({
 const rootPath = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   path: '/',
-  // In multi-tenant (SaaS) mode, render the spaces list at the base path (no sidebar).
+  // In multi-tenant mode, render the spaces list at the base path (no sidebar).
   // In self-hosted mode, render the root gallery wrapped in SidebarLayout.
   beforeLoad: async (context) => {
     const auth = getAuth()

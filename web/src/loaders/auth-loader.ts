@@ -129,7 +129,7 @@ export const requireAdminAccountAuth = async (context?: {
 
 /**
  * Admin-only auth check for self-hosted account routes.
- * SaaS users are redirected back to the profile page because these pages
+ * Multi-tenant users are redirected back to the profile page because these pages
  * are product-scoped to the self-hosted admin surface.
  */
 export const requireSelfHostedAdminAccountAuth = async (context?: {

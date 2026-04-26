@@ -22,6 +22,7 @@ export const LIST_SPACES = gql(`
       orgId
       key
       name
+      storageUsageBytes
       storageMode
       storageType
       bucket
@@ -51,6 +52,7 @@ export const GET_SPACE = gql(`
       orgId
       key
       name
+      storageUsageBytes
       storageMode
       storageType
       bucket

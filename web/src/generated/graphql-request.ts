@@ -612,6 +612,7 @@ export type Space = {
   signerTruncate: Scalars['Int']['output']
   storageMode: Scalars['String']['output']
   storageType: Scalars['String']['output']
+  storageUsageBytes: Maybe<Scalars['Int']['output']>
   suspended: Scalars['Boolean']['output']
   updatedAt: Scalars['String']['output']
   usePathStyle: Scalars['Boolean']['output']
@@ -856,6 +857,7 @@ export type ListSpacesQuery = {
     orgId: string
     key: string
     name: string
+    storageUsageBytes: number | null
     storageMode: string
     storageType: string
     bucket: string
@@ -889,6 +891,7 @@ export type GetSpaceQuery = {
     orgId: string
     key: string
     name: string
+    storageUsageBytes: number | null
     storageMode: string
     storageType: string
     bucket: string
@@ -1923,6 +1926,7 @@ export const ListSpacesDocument = gql`
       orgId
       key
       name
+      storageUsageBytes
       storageMode
       storageType
       bucket
@@ -1951,6 +1955,7 @@ export const GetSpaceDocument = gql`
       orgId
       key
       name
+      storageUsageBytes
       storageMode
       storageType
       bucket

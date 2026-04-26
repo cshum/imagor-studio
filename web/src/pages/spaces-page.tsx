@@ -30,6 +30,15 @@ interface SpacesPageProps {
   currentOrganizationId?: string | null
 }
 
+function formatBytes(bytes: number) {
+  if (bytes === 0) return '0 Bytes'
+  const units = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  const value = bytes / 1024 ** index
+  const digits = index === 0 ? 0 : 1
+  return `${value.toFixed(digits)} ${units[index]}`
+}
+
 export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
@@ -156,6 +165,14 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
           {spaces.map((space) => {
             const canManageSpace = space.canManage
             const isSharedSpace = !canManageSpace
+            const hostedUsageBytes =
+              space.storageMode === 'platform' ? space.storageUsageBytes : null
+            const storageBadgeLabel =
+              hostedUsageBytes !== null
+                ? t('pages.spaces.storageUsage', {
+                    size: formatBytes(hostedUsageBytes),
+                  })
+                : t(`pages.spaces.storageType.${space.storageType}`)
             return (
               <div
                 key={space.key}
@@ -208,7 +225,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                             : 'cursor-pointer'
                         }
                       >
-                        {t(`pages.spaces.storageType.${space.storageType}`)}
+                        {storageBadgeLabel}
                       </Badge>
                     </Link>
                     {canManageSpace && !space.canLeave ? (

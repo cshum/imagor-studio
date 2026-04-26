@@ -611,6 +611,7 @@ export type Space = {
   signerTruncate: Scalars['Int']['output']
   storageMode: Scalars['String']['output']
   storageType: Scalars['String']['output']
+  storageUsageBytes: Maybe<Scalars['Int']['output']>
   suspended: Scalars['Boolean']['output']
   updatedAt: Scalars['String']['output']
   usePathStyle: Scalars['Boolean']['output']
@@ -855,6 +856,7 @@ export type ListSpacesQuery = {
     orgId: string
     key: string
     name: string
+    storageUsageBytes: number | null
     storageMode: string
     storageType: string
     bucket: string
@@ -888,6 +890,7 @@ export type GetSpaceQuery = {
     orgId: string
     key: string
     name: string
+    storageUsageBytes: number | null
     storageMode: string
     storageType: string
     bucket: string
@@ -2197,6 +2200,7 @@ export const ListSpacesDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'key' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageUsageBytes' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageMode' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
@@ -2260,6 +2264,7 @@ export const GetSpaceDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'orgId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'key' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageUsageBytes' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageMode' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },

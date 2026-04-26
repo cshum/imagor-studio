@@ -4129,6 +4129,14 @@
             "deprecationReason": null
           },
           {
+            "name": "storageUsageBytes",
+            "description": null,
+            "args": [],
+            "type": { "kind": "SCALAR", "name": "Int", "ofType": null },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "suspended",
             "description": null,
             "args": [],

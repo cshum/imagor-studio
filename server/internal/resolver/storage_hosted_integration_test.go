@@ -260,6 +260,24 @@ func (s *integrationHostedStorageStore) GetUsageBytes(ctx context.Context, orgID
 	return usage.UsedBytes, nil
 }
 
+func (s *integrationHostedStorageStore) ListUsageBytesBySpace(ctx context.Context, orgID string, spaceIDs []string) (map[string]int64, error) {
+	if len(spaceIDs) == 0 {
+		return map[string]int64{}, nil
+	}
+	var usages []integrationHostedStorageUsage
+	if err := s.db.NewSelect().Model(&usages).Where("org_id = ?", orgID).Where("space_id IN (?)", bun.In(spaceIDs)).Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return map[string]int64{}, nil
+		}
+		return nil, err
+	}
+	result := make(map[string]int64, len(usages))
+	for _, usage := range usages {
+		result[usage.SpaceID] = usage.UsedBytes
+	}
+	return result, nil
+}
+
 func upsertIntegrationUsage(ctx context.Context, tx bun.Tx, orgID, spaceID string, delta int64, now time.Time) error {
 	var usage integrationHostedStorageUsage
 	err := tx.NewSelect().Model(&usage).Where("org_id = ? AND space_id = ?", orgID, spaceID).Scan(ctx)

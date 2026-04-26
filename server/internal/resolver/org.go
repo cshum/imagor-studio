@@ -11,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -38,6 +39,7 @@ func mapSpaceToGQL(s *space.Space) *gql.Space {
 		OrgID:                s.OrgID,
 		Key:                  s.Key,
 		Name:                 s.Name,
+		StorageUsageBytes:    nil,
 		StorageMode:          space.NormalizeStorageMode(s.StorageMode),
 		StorageType:          s.StorageType,
 		Bucket:               s.Bucket,
@@ -145,16 +147,43 @@ func (r *Resolver) isProtectedHostSpaceMember(ctx context.Context, space *space.
 	return false, nil
 }
 
-func (r *Resolver) mapSpaceToGQLWithPermissions(ctx context.Context, s *space.Space) (*gql.Space, error) {
-	space := mapSpaceToGQL(s)
+func (r *Resolver) applyHostedStorageUsage(gqlSpace *gql.Space, usageBytes int64, spaceID string) {
+	usageValue := int(usageBytes)
+	if int64(usageValue) != usageBytes {
+		r.logger.Warn("hosted storage usage exceeds GraphQL int range", zap.String("spaceID", spaceID), zap.Int64("usageBytes", usageBytes))
+		return
+	}
+	gqlSpace.StorageUsageBytes = &usageValue
+}
+
+func (r *Resolver) mapSpaceToGQLWithPermissionsOnly(ctx context.Context, s *space.Space) (*gql.Space, error) {
+	gqlSpace := mapSpaceToGQL(s)
 	permissions, err := r.getSpacePermissions(ctx, s)
 	if err != nil {
 		return nil, err
 	}
-	space.CanManage = permissions.CanManage
-	space.CanDelete = permissions.CanDelete
-	space.CanLeave = permissions.CanLeave
-	return space, nil
+	gqlSpace.CanManage = permissions.CanManage
+	gqlSpace.CanDelete = permissions.CanDelete
+	gqlSpace.CanLeave = permissions.CanLeave
+	return gqlSpace, nil
+}
+
+func (r *Resolver) mapSpaceToGQLWithPermissions(ctx context.Context, s *space.Space) (*gql.Space, error) {
+	gqlSpace, err := r.mapSpaceToGQLWithPermissionsOnly(ctx, s)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.hostedStorageStore != nil && space.NormalizeStorageMode(s.StorageMode) == space.StorageModePlatform {
+		usageBytes, usageErr := r.hostedStorageStore.GetUsageBytes(ctx, s.OrgID, s.ID)
+		if usageErr != nil {
+			r.logger.Warn("mapSpaceToGQLWithPermissions: failed to get hosted storage usage", zap.String("spaceID", s.ID), zap.Error(usageErr))
+		} else {
+			r.applyHostedStorageUsage(gqlSpace, usageBytes, s.ID)
+		}
+	}
+
+	return gqlSpace, nil
 }
 
 func mapSpaceMemberToGQL(m *space.SpaceMemberView) *gql.SpaceMember {
@@ -469,6 +498,30 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 		spacesByKey[s.Key] = s
 	}
 
+	hostedUsageBySpaceID := map[string]int64{}
+	if r.hostedStorageStore != nil {
+		aggregator, ok := r.hostedStorageStore.(management.HostedStorageUsageAggregator)
+		if ok {
+			spaceIDs := make([]string, 0, len(spacesByKey))
+			for _, s := range spacesByKey {
+				if space.NormalizeStorageMode(s.StorageMode) != space.StorageModePlatform {
+					continue
+				}
+				if orgID != "" && s.OrgID != orgID {
+					continue
+				}
+				spaceIDs = append(spaceIDs, s.ID)
+			}
+			if len(spaceIDs) > 0 {
+				hostedUsageBySpaceID, err = aggregator.ListUsageBytesBySpace(ctx, orgID, spaceIDs)
+				if err != nil {
+					r.logger.Warn("Spaces: failed to list hosted storage usage", zap.String("orgID", orgID), zap.Error(err))
+					hostedUsageBySpaceID = map[string]int64{}
+				}
+			}
+		}
+	}
+
 	result := make([]*gql.Space, 0, len(spacesByKey))
 	for _, s := range spacesByKey {
 		allowed, allowErr := r.canReadSpace(ctx, s)
@@ -478,9 +531,12 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 		if !allowed {
 			continue
 		}
-		mapped, mapErr := r.mapSpaceToGQLWithPermissions(ctx, s)
+		mapped, mapErr := r.mapSpaceToGQLWithPermissionsOnly(ctx, s)
 		if mapErr != nil {
 			return nil, mapErr
+		}
+		if usageBytes, ok := hostedUsageBySpaceID[s.ID]; ok {
+			r.applyHostedStorageUsage(mapped, usageBytes, s.ID)
 		}
 		result = append(result, mapped)
 	}

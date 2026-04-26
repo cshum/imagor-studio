@@ -740,6 +740,7 @@
         "managed": "Storage ospitato",
         "s3": "Bucket S3"
       },
+      "storageUsage": "{{size}} utilizzati",
       "storageTypeDesc": {
         "managed": "Archiviato in Imagor Studio. Nessuna configurazione del bucket richiesta.",
         "s3": "Usa il tuo bucket compatibile S3."

@@ -61,6 +61,12 @@ func newOrgResolver(orgStore *MockOrgStore, spaceStore *MockSpaceStore) *Resolve
 	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
 }
 
+func newOrgResolverWithHostedStorage(orgStore *MockOrgStore, spaceStore *MockSpaceStore, hostedStorageStore *MockHostedStorageStore) *Resolver {
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil, WithHostedStorageStore(hostedStorageStore))
+}
+
 func newOrgResolverWithRegistry(orgStore *MockOrgStore, spaceStore *MockSpaceStore, registryStore *MockRegistryStore) *Resolver {
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
@@ -180,6 +186,31 @@ func TestSpaces_IncludesGuestAccessibleSpaces(t *testing.T) {
 	assert.False(t, result[1].CanManage)
 	assert.True(t, result[1].CanLeave)
 	spaceStore.AssertExpectations(t)
+}
+
+func TestSpaces_ReturnsHostedStorageUsageForPlatformSpaces(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	hostedStorageStore := &MockHostedStorageStore{}
+	r := newOrgResolverWithHostedStorage(orgStore, spaceStore, hostedStorageStore)
+
+	hostedSpace := makeTestSpace("hosted", "org-1")
+	hostedSpace.StorageMode = space.StorageModePlatform
+	hostedSpace.StorageType = "managed"
+	byobSpace := makeTestSpace("byob", "org-1")
+	byobSpace.StorageMode = space.StorageModeBYOB
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{hostedSpace, byobSpace}, nil)
+	hostedStorageStore.On("ListUsageBytesBySpace", mock.Anything, "org-1", []string{"space-hosted"}).Return(map[string]int64{"space-hosted": 4096}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().Spaces(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	assert.Nil(t, result[0].StorageUsageBytes)
+	require.NotNil(t, result[1].StorageUsageBytes)
+	assert.Equal(t, 4096, *result[1].StorageUsageBytes)
+	spaceStore.AssertExpectations(t)
+	hostedStorageStore.AssertExpectations(t)
 }
 
 func TestSpaces_FallbackToOrgStore(t *testing.T) {

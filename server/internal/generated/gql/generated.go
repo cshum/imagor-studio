@@ -226,6 +226,7 @@ type ComplexityRoot struct {
 		SignerTruncate       func(childComplexity int) int
 		StorageMode          func(childComplexity int) int
 		StorageType          func(childComplexity int) int
+		StorageUsageBytes    func(childComplexity int) int
 		Suspended            func(childComplexity int) int
 		UpdatedAt            func(childComplexity int) int
 		UsePathStyle         func(childComplexity int) int
@@ -1573,6 +1574,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Space.StorageType(childComplexity), true
+	case "Space.storageUsageBytes":
+		if e.ComplexityRoot.Space.StorageUsageBytes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.StorageUsageBytes(childComplexity), true
 	case "Space.suspended":
 		if e.ComplexityRoot.Space.Suspended == nil {
 			break
@@ -2236,6 +2243,7 @@ type Space {
   orgId: ID!
   key: String!
   name: String!
+  storageUsageBytes: Int
   storageMode: String!
   storageType: String!
   bucket: String!
@@ -5747,6 +5755,8 @@ func (ec *executionContext) fieldContext_Mutation_createSpace(ctx context.Contex
 				return ec.fieldContext_Space_key(ctx, field)
 			case "name":
 				return ec.fieldContext_Space_name(ctx, field)
+			case "storageUsageBytes":
+				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -5834,6 +5844,8 @@ func (ec *executionContext) fieldContext_Mutation_updateSpace(ctx context.Contex
 				return ec.fieldContext_Space_key(ctx, field)
 			case "name":
 				return ec.fieldContext_Space_name(ctx, field)
+			case "storageUsageBytes":
+				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -7744,6 +7756,8 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 				return ec.fieldContext_Space_key(ctx, field)
 			case "name":
 				return ec.fieldContext_Space_name(ctx, field)
+			case "storageUsageBytes":
+				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -7820,6 +7834,8 @@ func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field 
 				return ec.fieldContext_Space_key(ctx, field)
 			case "name":
 				return ec.fieldContext_Space_name(ctx, field)
+			case "storageUsageBytes":
+				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -8905,6 +8921,35 @@ func (ec *executionContext) fieldContext_Space_name(_ context.Context, field gra
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_storageUsageBytes(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_storageUsageBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageUsageBytes, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_storageUsageBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15372,6 +15417,8 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "storageUsageBytes":
+			out.Values[i] = ec._Space_storageUsageBytes(ctx, field, obj)
 		case "storageMode":
 			out.Values[i] = ec._Space_storageMode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
