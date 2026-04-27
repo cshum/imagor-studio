@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { extractErrorInfo, extractErrorMessage } from './error-utils'
+import { extractErrorInfo, extractErrorMessage, isOrganizationRequiredError } from './error-utils'
 
 describe('error-utils', () => {
   it('sanitizes graphql-request dump-style messages', () => {
@@ -62,5 +62,21 @@ describe('error-utils', () => {
       reason: 'space_limit_reached',
       argumentName: undefined,
     })
+  })
+
+  it('detects organization_required errors', () => {
+    const error = {
+      response: {
+        status: 200,
+        errors: [
+          {
+            message: 'Organization is required',
+            extensions: { code: 'INVALID_INPUT', reason: 'organization_required' },
+          },
+        ],
+      },
+    }
+
+    expect(isOrganizationRequiredError(error)).toBe(true)
   })
 })

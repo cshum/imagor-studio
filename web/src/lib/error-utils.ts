@@ -88,6 +88,10 @@ export function hasErrorReason(error: unknown, reason: string): boolean {
   return extractErrorInfo(error).reason === reason
 }
 
+export function isOrganizationRequiredError(error: unknown): boolean {
+  return hasErrorReason(error, 'organization_required')
+}
+
 /**
  * Extract a clean error message from GraphQL error responses
  */

@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/multi-step-form'
 import { Separator } from '@/components/ui/separator'
 import { useBrand } from '@/hooks/use-brand'
-import { extractErrorInfo } from '@/lib/error-utils'
+import { extractErrorInfo, isOrganizationRequiredError } from '@/lib/error-utils'
 import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 import { formatStorageValidationError } from '@/lib/storage-validation-errors'
 import { useAuth } from '@/stores/auth-store'
@@ -494,6 +494,11 @@ export function CreateSpacePage() {
       await router.invalidate()
       await navigate({ to: '/spaces/$spaceKey', params: { spaceKey: values.key } })
     } catch (err) {
+      if (isOrganizationRequiredError(err)) {
+        await navigate({ to: '/account/workspace-required' })
+        return
+      }
+
       const errorInfo = extractErrorInfo(err)
       if (errorInfo.field === 'key') {
         // Duplicate key — navigate back to step 1 and show field error

@@ -495,6 +495,17 @@ func (r *Resolver) getUserOrgID(ctx context.Context) (string, error) {
 	return org.ID, nil
 }
 
+func (r *Resolver) requireUserOrgID(ctx context.Context) (string, error) {
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil {
+		return "", err
+	}
+	if orgID == "" {
+		return "", apperror.BadRequest("organization is required", map[string]interface{}{"reason": "organization_required"})
+	}
+	return orgID, nil
+}
+
 func (r *Resolver) canReadSpace(ctx context.Context, space *space.Space) (bool, error) {
 	orgID, err := r.getUserOrgID(ctx)
 	if err != nil {
@@ -988,7 +999,7 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 		return nil, err
 	}
 	if orgID == "" {
-		return nil, fmt.Errorf("no organization found")
+		return nil, apperror.BadRequest("organization is required", map[string]interface{}{"reason": "organization_required"})
 	}
 	session, err := r.billingService.CreateCheckoutSession(ctx, billing.CheckoutSessionInput{
 		OrgID:      orgID,
@@ -1021,12 +1032,9 @@ func (r *mutationResolver) CreateBillingPortalSession(ctx context.Context, retur
 	if err := validateBillingRedirectURL(returnURL, "billing_return_url_invalid"); err != nil {
 		return nil, err
 	}
-	orgID, err := r.getUserOrgID(ctx)
+	orgID, err := r.requireUserOrgID(ctx)
 	if err != nil {
 		return nil, err
-	}
-	if orgID == "" {
-		return nil, fmt.Errorf("no organization found")
 	}
 	session, err := r.billingService.CreatePortalSession(ctx, billing.PortalSessionInput{
 		OrgID:     orgID,
@@ -1049,32 +1057,9 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 	if r.spaceStore == nil {
 		return nil, fmt.Errorf("space management is not available in this deployment")
 	}
-	orgID, err := r.getUserOrgID(ctx)
+	orgID, err := r.requireUserOrgID(ctx)
 	if err != nil {
 		return nil, err
-	}
-	if orgID == "" {
-		if r.orgStore == nil {
-			return nil, fmt.Errorf("no organization found for current user")
-		}
-		// Auto-provision a personal org for this admin on their first space creation.
-		// Uses the first 8 chars of the user UUID as a unique org slug.
-		claims, claimsErr := auth.GetClaimsFromContext(ctx)
-		if claimsErr != nil {
-			return nil, claimsErr
-		}
-		n := 8
-		if len(claims.UserID) < n {
-			n = len(claims.UserID)
-		}
-		orgSlug := "org-" + claims.UserID[:n]
-		newOrg, createErr := r.orgStore.CreateWithMember(ctx, claims.UserID, "My Organization", orgSlug, nil)
-		if createErr != nil {
-			r.logger.Error("CreateSpace: failed to auto-create org", zap.Error(createErr))
-			return nil, fmt.Errorf("failed to create organization: %w", createErr)
-		}
-		r.logger.Info("Auto-created org for user", zap.String("userID", claims.UserID), zap.String("orgID", newOrg.ID))
-		orgID = newOrg.ID
 	}
 
 	sp := &space.Space{OrgID: orgID}
@@ -1383,9 +1368,9 @@ func (r *queryResolver) OrgMembers(ctx context.Context) ([]*gql.OrgMember, error
 	if !r.cloudEnabled() {
 		return []*gql.OrgMember{}, nil
 	}
-	orgID, err := r.getUserOrgID(ctx)
-	if err != nil || orgID == "" {
-		return []*gql.OrgMember{}, err
+	orgID, err := r.requireUserOrgID(ctx)
+	if err != nil {
+		return nil, err
 	}
 	members, err := r.orgStore.ListMembers(ctx, orgID)
 	if err != nil {
@@ -1446,9 +1431,9 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 	if !r.cloudEnabled() || r.userStore == nil {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
-	orgID, err := r.getUserOrgID(ctx)
-	if err != nil || orgID == "" {
-		return nil, fmt.Errorf("no organization found")
+	orgID, err := r.requireUserOrgID(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	// Look up user by username.
@@ -1496,9 +1481,9 @@ func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string
 	if !r.cloudEnabled() || r.userStore == nil {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
-	orgID, err := r.getUserOrgID(ctx)
-	if err != nil || orgID == "" {
-		return nil, fmt.Errorf("no organization found")
+	orgID, err := r.requireUserOrgID(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	normalizedEmail := strings.ToLower(strings.TrimSpace(email))
@@ -1557,9 +1542,9 @@ func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (
 	if !r.cloudEnabled() {
 		return false, fmt.Errorf("member management is not available in this deployment")
 	}
-	orgID, err := r.getUserOrgID(ctx)
-	if err != nil || orgID == "" {
-		return false, fmt.Errorf("no organization found")
+	orgID, err := r.requireUserOrgID(ctx)
+	if err != nil {
+		return false, err
 	}
 
 	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
@@ -1853,9 +1838,9 @@ func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID strin
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
-	orgID, err := r.getUserOrgID(ctx)
-	if err != nil || orgID == "" {
-		return nil, fmt.Errorf("no organization found")
+	orgID, err := r.requireUserOrgID(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	normalizedRole := strings.ToLower(strings.TrimSpace(role.String()))

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
 import { createBillingPortalSession, createCheckoutSession } from '@/api/org-api'
@@ -7,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { extractErrorInfo, isOrganizationRequiredError } from '@/lib/error-utils'
 import { getPlanEntitlements, isUnlimitedLimit } from '@/lib/plan-entitlements'
 import type { BillingLoaderData } from '@/loaders/account-loader'
 
@@ -48,6 +50,7 @@ function getProgressValue(current: number, max: number | null | undefined) {
 
 export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [pendingPlan, setPendingPlan] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
 
@@ -130,9 +133,12 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       })
       window.location.assign(session.url)
     } catch (error) {
-      toast.error(
-        `${t('pages.billing.messages.checkoutFailed')}: ${error instanceof Error ? error.message : String(error)}`,
-      )
+      if (isOrganizationRequiredError(error)) {
+        await navigate({ to: '/account/workspace-required' })
+        return
+      }
+
+      toast.error(`${t('pages.billing.messages.checkoutFailed')}: ${extractErrorInfo(error).message}`)
     } finally {
       setPendingPlan(null)
     }
@@ -144,9 +150,12 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       const session = await createBillingPortalSession({ returnURL: window.location.href })
       window.location.assign(session.url)
     } catch (error) {
-      toast.error(
-        `${t('pages.billing.messages.portalFailed')}: ${error instanceof Error ? error.message : String(error)}`,
-      )
+      if (isOrganizationRequiredError(error)) {
+        await navigate({ to: '/account/workspace-required' })
+        return
+      }
+
+      toast.error(`${t('pages.billing.messages.portalFailed')}: ${extractErrorInfo(error).message}`)
     } finally {
       setPortalLoading(false)
     }

@@ -339,6 +339,36 @@ func TestCreateBillingPortalSession_RejectsInvalidReturnURL(t *testing.T) {
 	assert.Equal(t, "billing_return_url_invalid", gqlErr.Extensions["reason"])
 }
 
+func TestCreateCheckoutSession_RequiresOrganization(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, &MockBillingService{})
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
+	ctx := createAdminContext("user-1")
+
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "organization_required", gqlErr.Extensions["reason"])
+	orgStore.AssertExpectations(t)
+}
+
+func TestCreateBillingPortalSession_RequiresOrganization(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, &MockBillingService{})
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
+	ctx := createAdminContext("user-1")
+
+	_, err := r.Mutation().CreateBillingPortalSession(ctx, "https://app.example/account")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "organization_required", gqlErr.Extensions["reason"])
+	orgStore.AssertExpectations(t)
+}
+
 func TestSpaces_ReturnsSpaces(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
@@ -874,38 +904,24 @@ func TestCreateSpace_DuplicateKey(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 }
 
-func TestCreateSpace_AutoCreatesOrg(t *testing.T) {
+func TestCreateSpace_RequiresOrganization(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
 
-	// No org in JWT → falls back to DB, finds nothing
 	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
-	// Auto-create fires: slug = "org-" + "user-1" (6 chars < 8, uses full string)
-	newOrg := makeTestOrg("org-auto", "user-1")
-	orgStore.On("CreateWithMember", mock.Anything, "user-1", "My Organization", "org-user-1", (*time.Time)(nil)).Return(newOrg, nil)
-
-	created := makeTestSpace("acme", "org-auto")
-	orgStore.On("GetByID", mock.Anything, "org-auto").Return(newOrg, nil).Once()
-	spaceStore.On("ListByOrgID", mock.Anything, "org-auto").Return([]*space.Space{}, nil).Once()
-	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
-		return s.Key == "acme" && s.OrgID == "org-auto"
-	})).Return(nil)
-	orgStore.On("ListMembers", mock.Anything, "org-auto").Return([]*org.OrgMemberView{
-		makeTestMember("user-1", "alice", "owner"),
-	}, nil)
-	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-1", "admin").Return(nil)
-	spaceStore.On("GetByKey", mock.Anything, "acme").Return(created, nil)
 
 	ctx := createAdminContext("user-1") // no org_id claim
 	input := gql.SpaceInput{Key: "acme", Name: "Acme"}
 	result, err := r.Mutation().CreateSpace(ctx, input)
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "acme", result.Key)
-	assert.Equal(t, "org-auto", result.OrgID)
+	assert.Nil(t, result)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "organization_required", gqlErr.Extensions["reason"])
 	orgStore.AssertExpectations(t)
-	spaceStore.AssertExpectations(t)
+	spaceStore.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
 }
 
 func TestCreateSpace_NoOrgAndNilOrgStore(t *testing.T) {
@@ -920,7 +936,10 @@ func TestCreateSpace_NoOrgAndNilOrgStore(t *testing.T) {
 	result, err := r.Mutation().CreateSpace(ctx, input)
 	assert.Nil(t, result)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no organization found")
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "organization_required", gqlErr.Extensions["reason"])
 }
 
 // ---------- UpdateSpace ------------------------------------------------------
