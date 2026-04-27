@@ -126,7 +126,7 @@ func TestMyOrganization_ReturnsOrg(t *testing.T) {
 	r := newOrgResolver(orgStore, spaceStore)
 
 	org := makeTestOrg("org-1", "user-1")
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(org, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(org, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().MyOrganization(ctx)
@@ -146,7 +146,7 @@ func TestMyOrganization_NoOrg(t *testing.T) {
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
 
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(nil, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().MyOrganization(ctx)
@@ -1566,7 +1566,7 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 		"user-1",
 		mock.AnythingOfType("time.Time"),
 	).Return(invitation, nil)
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(o, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(o, nil)
 	sender.On("SendSpaceInvitation", mock.Anything, mock.MatchedBy(func(params space.EmailParams) bool {
 		return params.ToEmail == "new@example.com" && params.OrgName == "Acme Org" && params.SpaceName == "Test Space" && params.InviteToken == "tok-123"
 	})).Return(nil)

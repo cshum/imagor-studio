@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -1116,6 +1117,52 @@ func TestRegister_MultiTenant_SelfHosted_NoOrgInJWT(t *testing.T) {
 	assert.Empty(t, claims.OrgID, "self-hosted JWT must not contain an org_id")
 
 	mockUserStore.AssertExpectations(t)
+}
+
+func TestProvisionWorkspaceMember_EmbedsProvidedOrgID(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), nil, nil, logger, AuthHandlerConfig{})
+
+	resp, err := handler.provisionWorkspaceMember(context.Background(), &userstore.User{
+		ID:          "member-user-1",
+		DisplayName: "memberuser",
+		Username:    "memberuser",
+		Role:        "user",
+	}, "org-join-1")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "org-join-1", claims.OrgID)
+}
+
+func TestProvisionWorkspaceMember_RequiresOrgID(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), nil, nil, logger, AuthHandlerConfig{})
+
+	resp, err := handler.provisionWorkspaceMember(context.Background(), &userstore.User{
+		ID:          "member-user-1",
+		DisplayName: "memberuser",
+		Username:    "memberuser",
+		Role:        "user",
+	}, "")
+	require.Nil(t, resp)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	require.NotNil(t, gqlErr.Extensions)
+	assert.Equal(t, apperror.ErrInternalServer, gqlErr.Extensions["code"])
+}
+
+func TestResolvePrimaryOrgID_ReturnsEmptyWhenLookupFails(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &errOrgStore{msg: "db unavailable"}, nil, logger, AuthHandlerConfig{})
+
+	orgID := handler.resolvePrimaryOrgID(context.Background(), "user-1")
+	assert.Empty(t, orgID)
 }
 
 // TestLogin_MultiTenant_UserWithNoOrg — user successfully authenticates but has no

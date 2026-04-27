@@ -238,17 +238,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			h.logger.Warn("Failed to update last login", zap.Error(err), zap.String("userID", user.ID))
 		}
 
-		// multi-tenant mode: look up org so we can embed org_id in the token.
-		orgID := ""
-		if h.cloudEnabled() {
-			org, err := h.orgStore.GetByUserID(r.Context(), user.ID)
-			if err != nil {
-				h.logger.Warn("Failed to look up org for user on login",
-					zap.String("userID", user.ID), zap.Error(err))
-			} else if org != nil {
-				orgID = org.ID
-			}
-		}
+		orgID := h.resolvePrimaryOrgID(r.Context(), user.ID)
 
 		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
 		if err != nil {
@@ -484,14 +474,22 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
-	// multi-tenant mode: auto-create a personal org for the new user (14-day trial).
+	return h.provisionWorkspaceOwner(ctx, user)
+}
+
+func (h *AuthHandler) provisionWorkspaceOwner(ctx context.Context, user *userstore.User) (*LoginResponse, error) {
+	if user == nil {
+		return nil, apperror.InternalServerError("Failed to create user")
+	}
+
+	// multi-tenant mode: direct signup provisions the initial workspace org for the user.
 	// Self-hosted: orgStore is nil — skip org creation.
 	orgID := ""
 	if h.cloudEnabled() {
 		trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
-		org, err := h.orgStore.CreateWithMember(ctx, user.ID, normalizedDisplayName, normalizedUsername, &trialEndsAt)
+		org, err := h.orgStore.CreateWithMember(ctx, user.ID, user.DisplayName, user.Username, &trialEndsAt)
 		if err != nil {
-			h.logger.Error("Failed to create personal org for new user",
+			h.logger.Error("Failed to provision workspace org for new user",
 				zap.String("userID", user.ID), zap.Error(err))
 			return nil, apperror.InternalServerError("Failed to initialize organization")
 		}
@@ -499,6 +497,32 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	}
 
 	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
+}
+
+func (h *AuthHandler) provisionWorkspaceMember(_ context.Context, user *userstore.User, orgID string) (*LoginResponse, error) {
+	if user == nil || strings.TrimSpace(orgID) == "" {
+		return nil, apperror.InternalServerError("Failed to initialize organization")
+	}
+
+	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
+}
+
+func (h *AuthHandler) resolvePrimaryOrgID(ctx context.Context, userID string) string {
+	if !h.cloudEnabled() {
+		return ""
+	}
+
+	org, err := h.orgStore.GetByUserID(ctx, userID)
+	if err != nil {
+		h.logger.Warn("Failed to look up org for user on login",
+			zap.String("userID", userID), zap.Error(err))
+		return ""
+	}
+	if org == nil {
+		return ""
+	}
+
+	return org.ID
 }
 
 func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role, orgID string) (*LoginResponse, error) {

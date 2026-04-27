@@ -619,16 +619,19 @@ func (r *mutationResolver) enforceSpaceQuota(ctx context.Context, orgID string) 
 
 // MyOrganization returns the organization for the currently authenticated user.
 func (r *queryResolver) MyOrganization(ctx context.Context) (*gql.Organization, error) {
-	if !r.cloudEnabled() {
+	if !r.cloudEnabled() || r.orgStore == nil {
 		return nil, nil
 	}
-	claims, err := auth.GetClaimsFromContext(ctx)
+	orgID, err := r.getUserOrgID(ctx)
 	if err != nil {
 		return nil, err
 	}
-	org, err := r.orgStore.GetByUserID(ctx, claims.UserID)
+	if orgID == "" {
+		return nil, nil
+	}
+	org, err := r.orgStore.GetByID(ctx, orgID)
 	if err != nil {
-		r.logger.Error("MyOrganization: failed to get org", zap.Error(err))
+		r.logger.Error("MyOrganization: failed to get org", zap.String("orgID", orgID), zap.Error(err))
 		return nil, fmt.Errorf("failed to retrieve organization: %w", err)
 	}
 	if org == nil {
@@ -1522,7 +1525,7 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceID string
 	}
 
 	orgName := "your organization"
-	org, orgErr := r.orgStore.GetByUserID(ctx, claims.UserID)
+	org, orgErr := r.orgStore.GetByID(ctx, s.OrgID)
 	if orgErr == nil && org != nil && org.Name != "" {
 		orgName = org.Name
 	}
