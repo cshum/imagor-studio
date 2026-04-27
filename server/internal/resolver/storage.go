@@ -15,6 +15,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registryutil"
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
@@ -169,6 +170,81 @@ func (r *Resolver) cleanupHostedUploadFailure(ctx context.Context, stor storage.
 	}
 }
 
+func (r *Resolver) getHostedStorageUsageBytes(ctx context.Context, orgID string) (int64, error) {
+	if r.spaceStore == nil || r.hostedStorageStore == nil {
+		return 0, nil
+	}
+
+	spaces, err := r.spaceStore.ListByOrgID(ctx, orgID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to list organization spaces: %w", err)
+	}
+
+	spaceIDs := make([]string, 0, len(spaces))
+	for _, sp := range spaces {
+		if sp == nil || space.NormalizeStorageMode(sp.StorageMode) != space.StorageModePlatform {
+			continue
+		}
+		spaceIDs = append(spaceIDs, sp.ID)
+	}
+	if len(spaceIDs) == 0 {
+		return 0, nil
+	}
+
+	if aggregator, ok := r.hostedStorageStore.(management.HostedStorageUsageAggregator); ok {
+		usageBySpace, err := aggregator.ListUsageBytesBySpace(ctx, orgID, spaceIDs)
+		if err != nil {
+			return 0, fmt.Errorf("failed to aggregate hosted storage usage: %w", err)
+		}
+		var total int64
+		for _, usageBytes := range usageBySpace {
+			total += usageBytes
+		}
+		return total, nil
+	}
+
+	var total int64
+	for _, spaceID := range spaceIDs {
+		usageBytes, err := r.hostedStorageStore.GetUsageBytes(ctx, orgID, spaceID)
+		if err != nil {
+			return 0, fmt.Errorf("failed to load hosted storage usage: %w", err)
+		}
+		total += usageBytes
+	}
+	return total, nil
+}
+
+func (r *Resolver) enforceHostedStorageQuota(ctx context.Context, sp *space.Space, incomingBytes int64) error {
+	if !r.tracksHostedStorage(sp) || incomingBytes <= 0 || r.orgStore == nil {
+		return nil
+	}
+
+	orgRecord, err := r.orgStore.GetByID(ctx, sp.OrgID)
+	if err != nil {
+		return fmt.Errorf("failed to load organization plan: %w", err)
+	}
+	if orgRecord == nil {
+		return fmt.Errorf("organization not found for hosted storage quota")
+	}
+
+	entitlements := billing.EntitlementsForPlan(orgRecord.Plan)
+	if entitlements.StorageLimitGB < 0 {
+		return nil
+	}
+
+	usedBytes, err := r.getHostedStorageUsageBytes(ctx, sp.OrgID)
+	if err != nil {
+		return err
+	}
+
+	limitBytes := entitlements.StorageLimitGB * 1024 * 1024 * 1024
+	if usedBytes+incomingBytes <= limitBytes {
+		return nil
+	}
+
+	return apperror.BadRequest("hosted storage quota exceeded", map[string]interface{}{"reason": "hosted_storage_quota_exceeded"})
+}
+
 func (r *queryResolver) getEffectiveVideoThumbnailPosition(ctx context.Context, spaceConfig *space.Space) string {
 	defaultValue := "first_frame"
 	if r.config != nil {
@@ -248,6 +324,9 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceID 
 	if err != nil {
 		return false, err
 	}
+	if err := r.enforceHostedStorageQuota(ctx, sp, content.Size); err != nil {
+		return false, err
+	}
 	if r.tracksHostedStorage(sp) {
 		if _, err := stor.Stat(ctx, path); err == nil {
 			return false, fileAlreadyExistsError("upload file")
@@ -308,6 +387,9 @@ func (r *mutationResolver) RequestUpload(ctx context.Context, path string, space
 
 	stor, sp, err := r.resolveUploadStorageTarget(ctx, spaceID)
 	if err != nil {
+		return nil, err
+	}
+	if err := r.enforceHostedStorageQuota(ctx, sp, int64(sizeBytes)); err != nil {
 		return nil, err
 	}
 
@@ -490,6 +572,11 @@ func (r *mutationResolver) CopyFile(ctx context.Context, sourcePath string, dest
 	hostedObject, err := r.getTrackedHostedObject(ctx, sp, sourcePath)
 	if err != nil {
 		return false, err
+	}
+	if hostedObject != nil {
+		if err := r.enforceHostedStorageQuota(ctx, sp, hostedObject.SizeBytes); err != nil {
+			return false, err
+		}
 	}
 
 	r.logger.Debug("Copying file", zap.String("sourcePath", sourcePath), zap.String("destPath", destPath))

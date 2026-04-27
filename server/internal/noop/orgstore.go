@@ -24,6 +24,10 @@ func (n *OrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.T
 	return nil, ErrCloudDisabled
 }
 
+func (n *OrgStore) GetByID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, ErrCloudDisabled
+}
+
 func (n *OrgStore) GetByUserID(_ context.Context, _ string) (*org.Org, error) {
 	return nil, ErrCloudDisabled
 }

@@ -345,6 +345,14 @@ func (m *MockOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug
 	return args.Get(0).(*org.Org), args.Error(1)
 }
 
+func (m *MockOrgStore) GetByID(ctx context.Context, id string) (*org.Org, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*org.Org), args.Error(1)
+}
+
 func (m *MockOrgStore) GetByUserID(ctx context.Context, userID string) (*org.Org, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {

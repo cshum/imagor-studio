@@ -66,6 +66,17 @@ func (s *testOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug
 	return mapTestOrg(organization), nil
 }
 
+func (s *testOrgStore) GetByID(ctx context.Context, id string) (*org.Org, error) {
+	var organization testOrganizationRow
+	if err := s.db.NewSelect().Model(&organization).Where("id = ?", id).Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get organization by id %s: %w", id, err)
+	}
+	return mapTestOrg(&organization), nil
+}
+
 func (s *testOrgStore) GetByUserID(ctx context.Context, userID string) (*org.Org, error) {
 	var member testOrgMemberRow
 	if err := s.db.NewSelect().Model(&member).Where("user_id = ?", userID).Limit(1).Scan(ctx); err != nil {

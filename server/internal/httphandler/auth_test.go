@@ -32,6 +32,9 @@ type errOrgStore struct{ msg string }
 func (e *errOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*org.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
+func (e *errOrgStore) GetByID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
 func (e *errOrgStore) GetByUserID(_ context.Context, _ string) (*org.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
@@ -60,6 +63,9 @@ func (e *errOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error 
 type nilOrgStore struct{}
 
 func (n *nilOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*org.Org, error) {
+	return nil, nil
+}
+func (n *nilOrgStore) GetByID(_ context.Context, _ string) (*org.Org, error) {
 	return nil, nil
 }
 func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*org.Org, error) {

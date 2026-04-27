@@ -34,6 +34,7 @@ type OrgMemberView struct {
 
 type OrgStore interface {
 	CreateWithMember(ctx context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*Org, error)
+	GetByID(ctx context.Context, id string) (*Org, error)
 	GetByUserID(ctx context.Context, userID string) (*Org, error)
 	GetBySlug(ctx context.Context, slug string) (*Org, error)
 	ListMembers(ctx context.Context, orgID string) ([]*OrgMemberView, error)

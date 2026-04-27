@@ -67,6 +67,28 @@ func newSpaceTestResolverWithHostedStorageAndSpaceStorage(spaceStore space.Space
 	)
 }
 
+func newSpaceTestResolverWithOrgHostedStorageAndSpaceStorage(orgStore *MockOrgStore, spaceStore space.SpaceStore, cloudConfig management.CloudConfig, hostedStorageStore management.HostedStorageStore, spaceStorage storagepkg.Storage) *Resolver {
+	sp := NewMockStorageProvider(&MockStorage{})
+	return NewResolver(
+		sp,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		zap.NewNop(),
+		orgStore,
+		spaceStore,
+		nil,
+		nil,
+		WithCloudConfig(cloudConfig),
+		WithHostedStorageStore(hostedStorageStore),
+		WithSpaceStorageFactory(func(*space.Space) (storagepkg.Storage, error) {
+			return spaceStorage, nil
+		}),
+	)
+}
+
 func newSpaceRegistryTestResolver(spaceStore space.SpaceStore, registryStore registrystore.Store, cfg *config.Config) (*Resolver, *MockStorage) {
 	mockStor := &MockStorage{}
 	sp := NewMockStorageProvider(mockStor)
@@ -333,6 +355,41 @@ func TestRequestUpload_PlatformManagedUsesNoOverwritePresign(t *testing.T) {
 	mockSpaceStore.AssertExpectations(t)
 	mockHostedStorage.AssertExpectations(t)
 	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestRequestUpload_PlatformManagedRejectsWhenHostedQuotaExceeded(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockOrgStore := &MockOrgStore{}
+	orgRecord := makeTestOrg("org-a", "user-1")
+	orgRecord.Plan = "starter"
+	mockOrgStore.On("GetByID", mock.Anything, "org-a").Return(orgRecord, nil).Once()
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockSpaceStore.On("ListByOrgID", mock.Anything, "org-a").Return([]*space.Space{spaceRecord}, nil).Once()
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On("ListUsageBytesBySpace", mock.Anything, "org-a", []string{"space-123"}).Return(map[string]int64{"space-123": 20 * 1024 * 1024 * 1024}, nil).Once()
+	mockSpaceStorage := &MockConditionalPresignableStorage{}
+
+	r := newSpaceTestResolverWithOrgHostedStorageAndSpaceStorage(mockOrgStore, mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().RequestUpload(ctx, "test.txt", ptrStr("space-1"), "text/plain", 128)
+
+	assert.Nil(t, result)
+	assert.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "hosted storage quota exceeded")
+	mockOrgStore.AssertExpectations(t)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockHostedStorage.AssertNotCalled(t, "BeginPendingUpload", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStorage.AssertNotCalled(t, "PresignedPutURLNoOverwrite", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestUploadFile_PlatformManagedFinalizesHostedUpload(t *testing.T) {
@@ -637,6 +694,48 @@ func TestCopyFile_PlatformManagedCopiesHostedObject(t *testing.T) {
 	mockSpaceStore.AssertExpectations(t)
 	mockHostedStorage.AssertExpectations(t)
 	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestCopyFile_PlatformManagedRejectsWhenHostedQuotaExceeded(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+	}
+	mockOrgStore := &MockOrgStore{}
+	orgRecord := makeTestOrg("org-a", "user-1")
+	orgRecord.Plan = "starter"
+	mockOrgStore.On("GetByID", mock.Anything, "org-a").Return(orgRecord, nil).Once()
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockSpaceStore.On("ListByOrgID", mock.Anything, "org-a").Return([]*space.Space{spaceRecord}, nil).Once()
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockHostedStorage.On("GetObject", mock.Anything, "space-123", "source.txt").Return(&management.HostedStorageObject{
+		OrgID:     "org-a",
+		SpaceID:   "space-123",
+		ObjectKey: "source.txt",
+		Status:    "ready",
+		SizeBytes: 128,
+	}, nil).Once()
+	mockHostedStorage.On("ListUsageBytesBySpace", mock.Anything, "org-a", []string{"space-123"}).Return(map[string]int64{"space-123": 20 * 1024 * 1024 * 1024}, nil).Once()
+	mockSpaceStorage := &MockStorage{}
+
+	r := newSpaceTestResolverWithOrgHostedStorageAndSpaceStorage(mockOrgStore, mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().CopyFile(ctx, "source.txt", "dest.txt", ptrStr("space-1"))
+
+	assert.False(t, result)
+	assert.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "hosted storage quota exceeded")
+	mockOrgStore.AssertExpectations(t)
+	mockSpaceStore.AssertExpectations(t)
+	mockHostedStorage.AssertExpectations(t)
+	mockHostedStorage.AssertNotCalled(t, "CopyReadyObject", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStorage.AssertNotCalled(t, "Copy", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestMoveFile_PlatformManagedMovesHostedObjectWithoutCopyOrDelete(t *testing.T) {
