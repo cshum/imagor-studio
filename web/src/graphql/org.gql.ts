@@ -214,6 +214,18 @@ export const LIST_ORG_MEMBERS = gql(`
   }
 `)
 
+export const LIST_ORG_INVITATIONS = gql(`
+  query ListOrgInvitations {
+    orgInvitations {
+      id
+      email
+      role
+      createdAt
+      expiresAt
+    }
+  }
+`)
+
 export const LIST_SPACE_MEMBERS = gql(`
   query ListSpaceMembers($spaceID: String!) {
     spaceMembers(spaceID: $spaceID) {
@@ -264,6 +276,34 @@ export const ADD_ORG_MEMBER_BY_EMAIL = gql(`
       role
       createdAt
     }
+  }
+`)
+
+export const INVITE_ORG_MEMBER = gql(`
+  mutation InviteOrgMember($email: String!, $role: OrgMemberAssignableRole!) {
+    inviteOrgMember(email: $email, role: $role) {
+      status
+      member {
+        userId
+        username
+        displayName
+        role
+        createdAt
+      }
+      invitation {
+        id
+        email
+        role
+        createdAt
+        expiresAt
+      }
+    }
+  }
+`)
+
+export const CANCEL_ORG_INVITATION = gql(`
+  mutation CancelOrgInvitation($invitationId: ID!) {
+    cancelOrgInvitation(invitationId: $invitationId)
   }
 `)
 

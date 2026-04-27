@@ -176,6 +176,7 @@ export type Mutation = {
   addOrgMemberByEmail: OrgMember
   addSpaceMember: SpaceMember
   beginStorageUploadProbe: StorageUploadProbe
+  cancelOrgInvitation: Scalars['Boolean']['output']
   changePassword: Scalars['Boolean']['output']
   completeStorageUploadProbe: StorageTestResult
   completeUpload: Scalars['Boolean']['output']
@@ -197,6 +198,7 @@ export type Mutation = {
   deleteUserRegistry: Scalars['Boolean']['output']
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
+  inviteOrgMember: OrgInviteResult
   inviteSpaceMember: SpaceInviteResult
   leaveOrganization: Scalars['Boolean']['output']
   leaveSpace: Scalars['Boolean']['output']
@@ -241,6 +243,10 @@ export type MutationBeginStorageUploadProbeArgs = {
   contentType: Scalars['String']['input']
   input: StorageConfigInput
   sizeBytes: Scalars['Int']['input']
+}
+
+export type MutationCancelOrgInvitationArgs = {
+  invitationId: Scalars['ID']['input']
 }
 
 export type MutationChangePasswordArgs = {
@@ -344,6 +350,11 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
   skipLayerId?: InputMaybe<Scalars['String']['input']>
   spaceID?: InputMaybe<Scalars['String']['input']>
   templateJson: Scalars['String']['input']
+}
+
+export type MutationInviteOrgMemberArgs = {
+  email: Scalars['String']['input']
+  role: OrgMemberAssignableRole
 }
 
 export type MutationInviteSpaceMemberArgs = {
@@ -453,6 +464,22 @@ export type MutationUploadFileArgs = {
   spaceID?: InputMaybe<Scalars['String']['input']>
 }
 
+export type OrgInvitation = {
+  __typename?: 'OrgInvitation'
+  createdAt: Scalars['String']['output']
+  email: Scalars['String']['output']
+  expiresAt: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  role: OrgMemberAssignableRole
+}
+
+export type OrgInviteResult = {
+  __typename?: 'OrgInviteResult'
+  invitation: Maybe<OrgInvitation>
+  member: Maybe<OrgMember>
+  status: Scalars['String']['output']
+}
+
 export type OrgMember = {
   __typename?: 'OrgMember'
   avatarUrl: Maybe<Scalars['String']['output']>
@@ -499,6 +526,7 @@ export type Query = {
   listUserRegistry: Array<UserRegistry>
   me: Maybe<User>
   myOrganization: Maybe<Organization>
+  orgInvitations: Array<OrgInvitation>
   orgMembers: Array<OrgMember>
   space: Maybe<Space>
   spaceInvitations: Array<SpaceInvitation>
@@ -1140,6 +1168,20 @@ export type ListOrgMembersQuery = {
   }>
 }
 
+export type ListOrgInvitationsQueryVariables = Exact<{ [key: string]: never }>
+
+export type ListOrgInvitationsQuery = {
+  __typename?: 'Query'
+  orgInvitations: Array<{
+    __typename?: 'OrgInvitation'
+    id: string
+    email: string
+    role: OrgMemberAssignableRole
+    createdAt: string
+    expiresAt: string
+  }>
+}
+
 export type ListSpaceMembersQueryVariables = Exact<{
   spaceID: Scalars['String']['input']
 }>
@@ -1210,6 +1252,41 @@ export type AddOrgMemberByEmailMutation = {
     createdAt: string
   }
 }
+
+export type InviteOrgMemberMutationVariables = Exact<{
+  email: Scalars['String']['input']
+  role: OrgMemberAssignableRole
+}>
+
+export type InviteOrgMemberMutation = {
+  __typename?: 'Mutation'
+  inviteOrgMember: {
+    __typename?: 'OrgInviteResult'
+    status: string
+    member: {
+      __typename?: 'OrgMember'
+      userId: string
+      username: string
+      displayName: string
+      role: OrgMemberRole
+      createdAt: string
+    } | null
+    invitation: {
+      __typename?: 'OrgInvitation'
+      id: string
+      email: string
+      role: OrgMemberAssignableRole
+      createdAt: string
+      expiresAt: string
+    } | null
+  }
+}
+
+export type CancelOrgInvitationMutationVariables = Exact<{
+  invitationId: Scalars['ID']['input']
+}>
+
+export type CancelOrgInvitationMutation = { __typename?: 'Mutation'; cancelOrgInvitation: boolean }
 
 export type AddSpaceMemberMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
@@ -2971,6 +3048,35 @@ export const ListOrgMembersDocument = {
     },
   ],
 } as unknown as DocumentNode<ListOrgMembersQuery, ListOrgMembersQueryVariables>
+export const ListOrgInvitationsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ListOrgInvitations' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'orgInvitations' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ListOrgInvitationsQuery, ListOrgInvitationsQueryVariables>
 export const ListSpaceMembersDocument = {
   kind: 'Document',
   definitions: [
@@ -3186,6 +3292,125 @@ export const AddOrgMemberByEmailDocument = {
     },
   ],
 } as unknown as DocumentNode<AddOrgMemberByEmailMutation, AddOrgMemberByEmailMutationVariables>
+export const InviteOrgMemberDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'InviteOrgMember' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'email' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'OrgMemberAssignableRole' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'inviteOrgMember' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'email' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'email' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'role' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'role' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'member' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'username' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'invitation' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'role' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<InviteOrgMemberMutation, InviteOrgMemberMutationVariables>
+export const CancelOrgInvitationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CancelOrgInvitation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'invitationId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cancelOrgInvitation' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'invitationId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'invitationId' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CancelOrgInvitationMutation, CancelOrgInvitationMutationVariables>
 export const AddSpaceMemberDocument = {
   kind: 'Document',
   definitions: [

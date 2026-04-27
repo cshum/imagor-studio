@@ -552,6 +552,16 @@ func mapSpaceInvitationToGQL(invitation *space.Invitation) *gql.SpaceInvitation 
 	}
 }
 
+func mapOrgInvitationToGQL(invitation *space.Invitation) *gql.OrgInvitation {
+	return &gql.OrgInvitation{
+		ID:        invitation.ID,
+		Email:     invitation.Email,
+		Role:      gql.OrgMemberAssignableRole(strings.ToLower(strings.TrimSpace(invitation.Role))),
+		CreatedAt: invitation.CreatedAt.UTC().Format(time.RFC3339),
+		ExpiresAt: invitation.ExpiresAt.UTC().Format(time.RFC3339),
+	}
+}
+
 // getUserOrgID returns the current org ID for the authenticated user.
 // For ordinary multi-tenant users, a claimed org_id is validated against the
 // current membership row so stale sessions do not retain org access after leave,
@@ -1447,6 +1457,25 @@ func (r *queryResolver) SpaceInvitations(ctx context.Context, spaceID string) ([
 	return result, nil
 }
 
+func (r *queryResolver) OrgInvitations(ctx context.Context) ([]*gql.OrgInvitation, error) {
+	if !r.cloudEnabled() || r.spaceInviteStore == nil {
+		return []*gql.OrgInvitation{}, nil
+	}
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
+	if err != nil {
+		return nil, err
+	}
+	invitations, err := r.spaceInviteStore.ListPendingByOrg(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list organization invitations: %w", err)
+	}
+	result := make([]*gql.OrgInvitation, 0, len(invitations))
+	for _, invitation := range invitations {
+		result = append(result, mapOrgInvitationToGQL(invitation))
+	}
+	return result, nil
+}
+
 // OrgMembers lists all members of the caller's organization.
 func (r *queryResolver) OrgMembers(ctx context.Context) ([]*gql.OrgMember, error) {
 	if !r.cloudEnabled() {
@@ -1603,6 +1632,114 @@ func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string
 		DisplayName: user.DisplayName,
 		Role:        mapOrgMemberRole(roleValue),
 	}, nil
+}
+
+func (r *mutationResolver) InviteOrgMember(ctx context.Context, email string, role gql.OrgMemberAssignableRole) (*gql.OrgInviteResult, error) {
+	if !r.cloudEnabled() || r.userStore == nil {
+		return nil, fmt.Errorf("member management is not available in this deployment")
+	}
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	normalizedEmail := strings.ToLower(strings.TrimSpace(email))
+	if normalizedEmail == "" {
+		return nil, fmt.Errorf("email is required")
+	}
+
+	roleValue := strings.ToLower(strings.TrimSpace(role.String()))
+	if roleValue != "admin" && roleValue != "member" {
+		return nil, apperror.BadRequest("organization member role must be admin or member", map[string]interface{}{"reason": "org_member_invalid_role"})
+	}
+
+	existingUser, err := r.userStore.GetByEmail(ctx, normalizedEmail)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up user by email: %w", err)
+	}
+	if existingUser != nil {
+		if err := r.ensureUserCanJoinOrganization(ctx, orgID, existingUser.ID); err != nil {
+			return nil, err
+		}
+		if err := r.orgStore.AddMember(ctx, orgID, existingUser.ID, roleValue); err != nil {
+			r.logger.Error("InviteOrgMember: add existing member failed", zap.String("orgID", orgID), zap.String("userID", existingUser.ID), zap.Error(err))
+			return nil, fmt.Errorf("failed to add member: %w", err)
+		}
+
+		memberList, listErr := r.orgStore.ListMembers(ctx, orgID)
+		if listErr == nil {
+			for _, member := range memberList {
+				if member.UserID == existingUser.ID {
+					return &gql.OrgInviteResult{Status: "added", Member: mapMemberToGQL(member)}, nil
+				}
+			}
+		}
+
+		return &gql.OrgInviteResult{
+			Status: "added",
+			Member: &gql.OrgMember{
+				UserID:      existingUser.ID,
+				Username:    existingUser.Username,
+				DisplayName: existingUser.DisplayName,
+				Email:       existingUser.Email,
+				AvatarURL:   existingUser.AvatarUrl,
+				Role:        mapOrgMemberRole(roleValue),
+			},
+		}, nil
+	}
+
+	if !r.inviteEnabled() {
+		return nil, fmt.Errorf("email invitations are not configured")
+	}
+
+	claims, claimsErr := auth.GetClaimsFromContext(ctx)
+	if claimsErr != nil {
+		return nil, claimsErr
+	}
+	invitation, err := r.spaceInviteStore.CreateOrRefreshPending(ctx, orgID, "", normalizedEmail, roleValue, claims.UserID, time.Now().UTC().Add(7*24*time.Hour))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create organization invitation: %w", err)
+	}
+
+	orgName := "your organization"
+	currentOrg, orgErr := r.orgStore.GetByID(ctx, orgID)
+	if orgErr == nil && currentOrg != nil && currentOrg.Name != "" {
+		orgName = currentOrg.Name
+	}
+	if err := r.inviteSender.SendOrganizationInvitation(ctx, space.EmailParams{
+		ToEmail:     normalizedEmail,
+		OrgName:     orgName,
+		InviteToken: invitation.Token,
+		Role:        roleValue,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to send organization invitation email: %w", err)
+	}
+
+	return &gql.OrgInviteResult{Status: "invited", Invitation: mapOrgInvitationToGQL(invitation)}, nil
+}
+
+func (r *mutationResolver) CancelOrgInvitation(ctx context.Context, invitationID string) (bool, error) {
+	if !r.cloudEnabled() || r.spaceInviteStore == nil {
+		return false, fmt.Errorf("member management is not available in this deployment")
+	}
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
+	if err != nil {
+		return false, err
+	}
+	invitations, err := r.spaceInviteStore.ListPendingByOrg(ctx, orgID)
+	if err != nil {
+		return false, fmt.Errorf("failed to list organization invitations: %w", err)
+	}
+	for _, invitation := range invitations {
+		if invitation == nil || invitation.ID != invitationID {
+			continue
+		}
+		if err := r.spaceInviteStore.DeletePending(ctx, invitationID); err != nil {
+			return false, fmt.Errorf("failed to cancel organization invitation: %w", err)
+		}
+		return true, nil
+	}
+	return false, apperror.BadRequest("organization invitation not found", map[string]interface{}{"reason": "org_invitation_not_found"})
 }
 
 // RemoveOrgMember removes a member from the caller's org (admin only).

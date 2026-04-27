@@ -145,6 +145,20 @@ type LicenseStatus struct {
 type Mutation struct {
 }
 
+type OrgInvitation struct {
+	ID        string                  `json:"id"`
+	Email     string                  `json:"email"`
+	Role      OrgMemberAssignableRole `json:"role"`
+	CreatedAt string                  `json:"createdAt"`
+	ExpiresAt string                  `json:"expiresAt"`
+}
+
+type OrgInviteResult struct {
+	Status     string         `json:"status"`
+	Member     *OrgMember     `json:"member,omitempty"`
+	Invitation *OrgInvitation `json:"invitation,omitempty"`
+}
+
 type OrgMember struct {
 	UserID      string        `json:"userId"`
 	Username    string        `json:"username"`

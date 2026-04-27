@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MoreHorizontal, UserMinus } from 'lucide-react'
+import { Clock3, MoreHorizontal, UserMinus } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
   addOrgMember,
-  addOrgMemberByEmail,
+  cancelOrgInvitation,
   getMyOrganization,
+  inviteOrgMember,
+  listOrgInvitations,
   listOrgMembers,
   removeOrgMember,
   transferOrganizationOwnership,
   updateOrgMemberRole,
+  type OrgInvitationItem,
   type OrgMemberItem,
 } from '@/api/org-api'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -97,7 +100,11 @@ export async function reloadOrganizationMembersData({
   currentRole?: string | null
   refreshAuthSession: () => Promise<unknown>
 }) {
-  const [nextOrganization, nextMembers] = await Promise.all([getMyOrganization(), listOrgMembers()])
+  const [nextOrganization, nextMembers, nextInvitations] = await Promise.all([
+    getMyOrganization(),
+    listOrgMembers(),
+    listOrgInvitations(),
+  ])
 
   if ((currentRole ?? null) !== (nextOrganization?.currentUserRole ?? null)) {
     await refreshAuthSession()
@@ -106,6 +113,7 @@ export async function reloadOrganizationMembersData({
   return {
     nextOrganization,
     nextMembers,
+    nextInvitations,
   }
 }
 
@@ -114,10 +122,12 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
   const { authState, refreshAuthSession } = useAuth()
   const [organization, setOrganization] = useState(loaderData.organization)
   const [members, setMembers] = useState(loaderData.members)
+  const [invitations, setInvitations] = useState<OrgInvitationItem[]>(loaderData.invitations)
   const [identifier, setIdentifier] = useState('')
   const [role, setRole] = useState<'admin' | 'member'>('member')
   const [isAdding, setIsAdding] = useState(false)
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null)
+  const [cancelingInvitationId, setCancelingInvitationId] = useState<string | null>(null)
   const [pendingRemoveUserId, setPendingRemoveUserId] = useState<string | null>(null)
   const [pendingTransferUserId, setPendingTransferUserId] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState(false)
@@ -133,13 +143,14 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
     organization?.currentUserRole === 'owner' || organization?.currentUserRole === 'admin'
 
   const reloadOrganizationMembers = async () => {
-    const { nextOrganization, nextMembers } = await reloadOrganizationMembersData({
+    const { nextOrganization, nextMembers, nextInvitations } = await reloadOrganizationMembersData({
       currentRole: organization?.currentUserRole,
       refreshAuthSession,
     })
 
     setOrganization(nextOrganization)
     setMembers(nextMembers)
+    setInvitations(nextInvitations)
   }
 
   const handleAddMember = async () => {
@@ -152,15 +163,24 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
     setIsAdding(true)
     try {
       if (nextIdentifier.includes('@')) {
-        await addOrgMemberByEmail({ email: nextIdentifier, role })
+        const result = await inviteOrgMember({ email: nextIdentifier, role })
+        toast.success(
+          result.status === 'invited'
+            ? t('pages.organizationMembers.messages.inviteSent')
+            : t('pages.organizationMembers.messages.memberAdded'),
+        )
+        setIdentifier('')
+        setRole('member')
+        if (result.status === 'added') {
+          await reloadOrganizationMembers()
+        }
       } else {
         await addOrgMember({ username: nextIdentifier, role })
+        toast.success(t('pages.organizationMembers.messages.memberAdded'))
+        setIdentifier('')
+        setRole('member')
+        await reloadOrganizationMembers()
       }
-
-      toast.success(t('pages.organizationMembers.messages.memberAdded'))
-      setIdentifier('')
-      setRole('member')
-      await reloadOrganizationMembers()
     } catch (error) {
       const message = getOrganizationMembersErrorMessage(error, t)
       toast.error(`${t('pages.organizationMembers.messages.memberAddFailed')}: ${message}`)
@@ -224,6 +244,21 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
 
   const requestTransferOwnership = (userId: string) => {
     window.setTimeout(() => setPendingTransferUserId(userId), 0)
+  }
+
+  const handleCancelInvitation = async (invitationId: string) => {
+  setCancelingInvitationId(invitationId)
+  try {
+    await cancelOrgInvitation({ invitationId })
+    toast.success(t('pages.organizationMembers.messages.inviteCanceled'))
+    setInvitations((current) => current.filter((invitation) => invitation.id !== invitationId))
+  } catch (error) {
+    toast.error(
+      `${t('pages.organizationMembers.messages.inviteCancelFailed')}: ${extractErrorMessage(error)}`,
+    )
+  } finally {
+    setCancelingInvitationId(null)
+  }
   }
 
   return (
@@ -488,6 +523,50 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
           </div>
         )}
       </SettingsSection>
+
+    {canAdministerOrganization ? (
+      <SettingsSection
+        title={`${t('pages.organizationMembers.pendingTitle')} (${invitations.length})`}
+        description={t('pages.organizationMembers.pendingDescription')}
+      >
+        {invitations.length === 0 ? (
+          <div className='rounded-lg border border-dashed p-6 text-center'>
+            <p className='font-medium'>{t('pages.organizationMembers.pendingEmpty')}</p>
+          </div>
+        ) : (
+          <div className='space-y-3'>
+            {invitations.map((invitation) => (
+              <div
+                key={invitation.id}
+                className='flex items-center justify-between gap-4 rounded-lg border px-4 py-3'
+              >
+                <div className='min-w-0'>
+                  <div className='flex items-center gap-2'>
+                    <p className='truncate text-sm font-medium'>{invitation.email}</p>
+                    <Badge variant='outline' className='h-5 px-2 text-[11px] font-medium'>
+                      {getRoleLabel(invitation.role, t)}
+                    </Badge>
+                  </div>
+                  <p className='text-muted-foreground flex items-center gap-1 text-xs'>
+                    <Clock3 className='h-3.5 w-3.5' />
+                    {t('pages.organizationMembers.pendingExpiresAt', {
+                      expiresAt: new Date(invitation.expiresAt).toLocaleDateString(),
+                    })}
+                  </p>
+                </div>
+                <ButtonWithLoading
+                  variant='outline'
+                  isLoading={cancelingInvitationId === invitation.id}
+                  onClick={() => handleCancelInvitation(invitation.id)}
+                >
+                  {t('pages.organizationMembers.cancelInvite')}
+                </ButtonWithLoading>
+              </div>
+            ))}
+          </div>
+        )}
+      </SettingsSection>
+    ) : null}
 
       <ResponsiveDialog
         open={pendingRemoveMember !== null}

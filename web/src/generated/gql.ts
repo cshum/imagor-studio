@@ -33,10 +33,13 @@ type Documents = {
   '\n  mutation DeleteSpaceRegistry($spaceID: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceID: $spaceID, keys: $keys)\n  }\n': typeof types.DeleteSpaceRegistryDocument
   '\n  query SpaceKeyExists($key: String!) {\n    spaceKeyExists(key: $key)\n  }\n': typeof types.SpaceKeyExistsDocument
   '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      createdAt\n    }\n  }\n': typeof types.ListOrgMembersDocument
+  '\n  query ListOrgInvitations {\n    orgInvitations {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n': typeof types.ListOrgInvitationsDocument
   '\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n': typeof types.ListSpaceMembersDocument
   '\n  query ListSpaceInvitations($spaceID: String!) {\n    spaceInvitations(spaceID: $spaceID) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n': typeof types.ListSpaceInvitationsDocument
   '\n  mutation AddOrgMember($username: String!, $role: OrgMemberAssignableRole!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddOrgMemberDocument
   '\n  mutation AddOrgMemberByEmail($email: String!, $role: OrgMemberAssignableRole!) {\n    addOrgMemberByEmail(email: $email, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddOrgMemberByEmailDocument
+  '\n  mutation InviteOrgMember($email: String!, $role: OrgMemberAssignableRole!) {\n    inviteOrgMember(email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n': typeof types.InviteOrgMemberDocument
+  '\n  mutation CancelOrgInvitation($invitationId: ID!) {\n    cancelOrgInvitation(invitationId: $invitationId)\n  }\n': typeof types.CancelOrgInvitationDocument
   '\n  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {\n    addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddSpaceMemberDocument
   '\n  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: SpaceMemberAssignableRole!) {\n    inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n': typeof types.InviteSpaceMemberDocument
   '\n  mutation RemoveOrgMember($userId: ID!) {\n    removeOrgMember(userId: $userId)\n  }\n': typeof types.RemoveOrgMemberDocument
@@ -124,6 +127,8 @@ const documents: Documents = {
     types.SpaceKeyExistsDocument,
   '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      createdAt\n    }\n  }\n':
     types.ListOrgMembersDocument,
+  '\n  query ListOrgInvitations {\n    orgInvitations {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n':
+    types.ListOrgInvitationsDocument,
   '\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n':
     types.ListSpaceMembersDocument,
   '\n  query ListSpaceInvitations($spaceID: String!) {\n    spaceInvitations(spaceID: $spaceID) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n':
@@ -132,6 +137,10 @@ const documents: Documents = {
     types.AddOrgMemberDocument,
   '\n  mutation AddOrgMemberByEmail($email: String!, $role: OrgMemberAssignableRole!) {\n    addOrgMemberByEmail(email: $email, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.AddOrgMemberByEmailDocument,
+  '\n  mutation InviteOrgMember($email: String!, $role: OrgMemberAssignableRole!) {\n    inviteOrgMember(email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n':
+    types.InviteOrgMemberDocument,
+  '\n  mutation CancelOrgInvitation($invitationId: ID!) {\n    cancelOrgInvitation(invitationId: $invitationId)\n  }\n':
+    types.CancelOrgInvitationDocument,
   '\n  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {\n    addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.AddSpaceMemberDocument,
   '\n  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: SpaceMemberAssignableRole!) {\n    inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n':
@@ -356,6 +365,12 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
+  source: '\n  query ListOrgInvitations {\n    orgInvitations {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n',
+): (typeof documents)['\n  query ListOrgInvitations {\n    orgInvitations {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
   source: '\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n',
 ): (typeof documents)['\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n']
 /**
@@ -376,6 +391,18 @@ export function gql(
 export function gql(
   source: '\n  mutation AddOrgMemberByEmail($email: String!, $role: OrgMemberAssignableRole!) {\n    addOrgMemberByEmail(email: $email, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
 ): (typeof documents)['\n  mutation AddOrgMemberByEmail($email: String!, $role: OrgMemberAssignableRole!) {\n    addOrgMemberByEmail(email: $email, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation InviteOrgMember($email: String!, $role: OrgMemberAssignableRole!) {\n    inviteOrgMember(email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation InviteOrgMember($email: String!, $role: OrgMemberAssignableRole!) {\n    inviteOrgMember(email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation CancelOrgInvitation($invitationId: ID!) {\n    cancelOrgInvitation(invitationId: $invitationId)\n  }\n',
+): (typeof documents)['\n  mutation CancelOrgInvitation($invitationId: ID!) {\n    cancelOrgInvitation(invitationId: $invitationId)\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

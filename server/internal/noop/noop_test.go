@@ -100,6 +100,11 @@ func TestNoopSpaceInviteStore_AllMethodsReturnError(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	t.Run("ListPendingByOrg", func(t *testing.T) {
+		_, err := s.ListPendingByOrg(ctx, "org")
+		require.Error(t, err)
+	})
+
 	t.Run("GetPendingByToken", func(t *testing.T) {
 		_, err := s.GetPendingByToken(ctx, "token")
 		require.Error(t, err)
@@ -107,6 +112,11 @@ func TestNoopSpaceInviteStore_AllMethodsReturnError(t *testing.T) {
 
 	t.Run("MarkAccepted", func(t *testing.T) {
 		err := s.MarkAccepted(ctx, "id", time.Now())
+		require.Error(t, err)
+	})
+
+	t.Run("DeletePending", func(t *testing.T) {
+		err := s.DeletePending(ctx, "id")
 		require.Error(t, err)
 	})
 

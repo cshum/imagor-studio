@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGetMyOrganization = vi.fn()
 const mockListOrgMembers = vi.fn()
+const mockListOrgInvitations = vi.fn()
 
 vi.mock('@/api/org-api', async () => {
   const actual = await vi.importActual<typeof import('@/api/org-api')>('@/api/org-api')
   return {
     ...actual,
     getMyOrganization: mockGetMyOrganization,
+    listOrgInvitations: mockListOrgInvitations,
     listOrgMembers: mockListOrgMembers,
   }
 })
@@ -45,6 +47,7 @@ describe('reloadOrganizationMembersData', () => {
         joinedAt: '2026-04-18T00:00:00Z',
       },
     ])
+    mockListOrgInvitations.mockResolvedValue([])
 
     const result = await reloadOrganizationMembersData({
       currentRole: 'owner',
@@ -54,6 +57,7 @@ describe('reloadOrganizationMembersData', () => {
     expect(refreshAuthSession).toHaveBeenCalledTimes(1)
     expect(result.nextOrganization?.currentUserRole).toBe('admin')
     expect(result.nextMembers).toHaveLength(1)
+    expect(result.nextInvitations).toEqual([])
   })
 
   it('does not refresh the auth session when the current user role is unchanged', async () => {
@@ -73,12 +77,23 @@ describe('reloadOrganizationMembersData', () => {
       updatedAt: '2026-04-18T00:00:00Z',
     })
     mockListOrgMembers.mockResolvedValue([])
+    mockListOrgInvitations.mockResolvedValue([
+      {
+        __typename: 'OrgInvitation',
+        id: 'invite-1',
+        email: 'new@example.com',
+        role: 'member',
+        createdAt: '2026-04-18T00:00:00Z',
+        expiresAt: '2026-04-25T00:00:00Z',
+      },
+    ])
 
-    await reloadOrganizationMembersData({
+    const result = await reloadOrganizationMembersData({
       currentRole: 'owner',
       refreshAuthSession,
     })
 
     expect(refreshAuthSession).not.toHaveBeenCalled()
+    expect(result.nextInvitations).toHaveLength(1)
   })
 })

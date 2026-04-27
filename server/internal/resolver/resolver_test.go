@@ -570,6 +570,14 @@ func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID
 	return args.Get(0).(*space.Invitation), args.Error(1)
 }
 
+func (m *MockSpaceInviteStore) ListPendingByOrg(ctx context.Context, orgID string) ([]*space.Invitation, error) {
+	args := m.Called(ctx, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*space.Invitation), args.Error(1)
+}
+
 func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceID string) ([]*space.Invitation, error) {
 	args := m.Called(ctx, orgID, spaceID)
 	if args.Get(0) == nil {
@@ -591,6 +599,11 @@ func (m *MockSpaceInviteStore) MarkAccepted(ctx context.Context, id string, acce
 	return args.Error(0)
 }
 
+func (m *MockSpaceInviteStore) DeletePending(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
 var _ space.SpaceInviteStore = (*MockSpaceInviteStore)(nil)
 
 type MockInviteSender struct {
@@ -598,6 +611,11 @@ type MockInviteSender struct {
 }
 
 func (m *MockInviteSender) SendSpaceInvitation(ctx context.Context, params space.EmailParams) error {
+	args := m.Called(ctx, params)
+	return args.Error(0)
+}
+
+func (m *MockInviteSender) SendOrganizationInvitation(ctx context.Context, params space.EmailParams) error {
 	args := m.Called(ctx, params)
 	return args.Error(0)
 }

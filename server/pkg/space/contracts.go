@@ -84,9 +84,11 @@ type Invitation struct {
 
 type SpaceInviteStore interface {
 	CreateOrRefreshPending(ctx context.Context, orgID, spaceID, email, role, invitedByUserID string, expiresAt time.Time) (*Invitation, error)
+	ListPendingByOrg(ctx context.Context, orgID string) ([]*Invitation, error)
 	ListPendingBySpace(ctx context.Context, orgID, spaceID string) ([]*Invitation, error)
 	GetPendingByToken(ctx context.Context, token string) (*Invitation, error)
 	MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error
+	DeletePending(ctx context.Context, id string) error
 }
 
 type EmailParams struct {
@@ -99,4 +101,5 @@ type EmailParams struct {
 
 type InviteSender interface {
 	SendSpaceInvitation(ctx context.Context, params EmailParams) error
+	SendOrganizationInvitation(ctx context.Context, params EmailParams) error
 }

@@ -2,7 +2,13 @@ import { redirect } from '@tanstack/react-router'
 
 import { getImagorStatus } from '@/api/imagor-api'
 import { getLicenseStatus, type LicenseStatus } from '@/api/license-api'
-import { getMyOrganization, getUsageSummary, listOrgMembers, listSpaces } from '@/api/org-api'
+import {
+  getMyOrganization,
+  getUsageSummary,
+  listOrgInvitations,
+  listOrgMembers,
+  listSpaces,
+} from '@/api/org-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
@@ -88,6 +94,7 @@ export interface OrgOverviewLoaderData {
 export interface OrgMembersLoaderData {
   organization: MyOrganizationQuery['myOrganization']
   members: ListOrgMembersQuery['orgMembers']
+  invitations: import('@/generated/graphql').ListOrgInvitationsQuery['orgInvitations']
   breadcrumb: BreadcrumbItem
 }
 
@@ -224,11 +231,16 @@ export const orgOverviewLoader = async (): Promise<OrgOverviewLoaderData> => {
 }
 
 export const orgMembersLoader = async (): Promise<OrgMembersLoaderData> => {
-  const [organization, members] = await Promise.all([getMyOrganization(), listOrgMembers()])
+  const [organization, members, invitations] = await Promise.all([
+    getMyOrganization(),
+    listOrgMembers(),
+    listOrgInvitations(),
+  ])
 
   return {
     organization,
     members,
+    invitations,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.organizationMembers',
     },

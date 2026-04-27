@@ -63,6 +63,12 @@ func newOrgResolver(orgStore *MockOrgStore, spaceStore *MockSpaceStore) *Resolve
 	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
 }
 
+func newOrgResolverWithInviteStore(orgStore *MockOrgStore, spaceStore *MockSpaceStore, inviteStore *MockSpaceInviteStore, inviteSender *MockInviteSender) *Resolver {
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, inviteStore, inviteSender)
+}
+
 func newOrgResolverWithHostedStorage(orgStore *MockOrgStore, spaceStore *MockSpaceStore, hostedStorageStore *MockHostedStorageStore) *Resolver {
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
@@ -1962,6 +1968,109 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 	userStore.AssertExpectations(t)
 	inviteStore.AssertExpectations(t)
 	sender.AssertExpectations(t)
+}
+
+func TestInviteOrgMember_CreatesPendingInvitationForExternalEmail(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	userStore := &MockUserStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	sender := &MockInviteSender{}
+	logger, _ := zap.NewDevelopment()
+	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, inviteStore, sender)
+
+	o := makeTestOrg("org-1", "user-1")
+	o.Name = "Acme Org"
+	invitation := &space.Invitation{
+		ID:        "org-invite-1",
+		OrgID:     "org-1",
+		SpaceID:   "",
+		Email:     "new@example.com",
+		Role:      "member",
+		Token:     "tok-org-123",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		ExpiresAt: time.Date(2026, 1, 8, 0, 0, 0, 0, time.UTC),
+	}
+
+	userStore.On("GetByEmail", mock.Anything, "new@example.com").Return((*userstore.User)(nil), nil)
+	inviteStore.On(
+		"CreateOrRefreshPending",
+		mock.Anything,
+		"org-1",
+		"",
+		"new@example.com",
+		"member",
+		"user-1",
+		mock.AnythingOfType("time.Time"),
+	).Return(invitation, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(o, nil)
+	sender.On("SendOrganizationInvitation", mock.Anything, mock.MatchedBy(func(params space.EmailParams) bool {
+		return params.ToEmail == "new@example.com" && params.OrgName == "Acme Org" && params.InviteToken == "tok-org-123" && params.Role == "member"
+	})).Return(nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().InviteOrgMember(ctx, "new@example.com", "member")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "invited", result.Status)
+	assert.Nil(t, result.Member)
+	require.NotNil(t, result.Invitation)
+	assert.Equal(t, "org-invite-1", result.Invitation.ID)
+	assert.Equal(t, "new@example.com", result.Invitation.Email)
+
+	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+	sender.AssertExpectations(t)
+}
+
+func TestOrgInvitations_ReturnsPendingInvites(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	r := newOrgResolverWithInviteStore(orgStore, spaceStore, inviteStore, nil)
+
+	inviteStore.On("ListPendingByOrg", mock.Anything, "org-1").Return([]*space.Invitation{{
+		ID:        "invite-1",
+		OrgID:     "org-1",
+		Email:     "new@example.com",
+		Role:      "member",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		ExpiresAt: time.Date(2026, 1, 8, 0, 0, 0, 0, time.UTC),
+	}}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().OrgInvitations(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	assert.Equal(t, "invite-1", result[0].ID)
+	assert.Equal(t, "new@example.com", result[0].Email)
+
+	orgStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+}
+
+func TestCancelOrgInvitation_DeletesPendingInvite(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	r := newOrgResolverWithInviteStore(orgStore, spaceStore, inviteStore, nil)
+
+	inviteStore.On("ListPendingByOrg", mock.Anything, "org-1").Return([]*space.Invitation{{
+		ID:    "invite-1",
+		OrgID: "org-1",
+		Email: "new@example.com",
+		Role:  "member",
+	}}, nil)
+	inviteStore.On("DeletePending", mock.Anything, "invite-1").Return(nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().CancelOrgInvitation(ctx, "invite-1")
+	require.NoError(t, err)
+	assert.True(t, ok)
+
+	orgStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
 }
 
 func TestRemoveSpaceMember_RejectsHostOrgOwner(t *testing.T) {

@@ -114,6 +114,7 @@ type ComplexityRoot struct {
 		AddOrgMemberByEmail           func(childComplexity int, email string, role OrgMemberAssignableRole) int
 		AddSpaceMember                func(childComplexity int, spaceID string, userID string, role SpaceMemberAssignableRole) int
 		BeginStorageUploadProbe       func(childComplexity int, input StorageConfigInput, contentType string, sizeBytes int) int
+		CancelOrgInvitation           func(childComplexity int, invitationID string) int
 		ChangePassword                func(childComplexity int, input ChangePasswordInput, userID *string) int
 		CompleteStorageUploadProbe    func(childComplexity int, input StorageConfigInput, probePath string, expectedContent string) int
 		CompleteUpload                func(childComplexity int, path string, spaceID *string) int
@@ -135,6 +136,7 @@ type ComplexityRoot struct {
 		DeleteUserRegistry            func(childComplexity int, key *string, keys []string, ownerID *string) int
 		GenerateImagorURL             func(childComplexity int, imagePath string, spaceID *string, params ImagorParamsInput) int
 		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, spaceID *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
+		InviteOrgMember               func(childComplexity int, email string, role OrgMemberAssignableRole) int
 		InviteSpaceMember             func(childComplexity int, spaceID string, email string, role SpaceMemberAssignableRole) int
 		LeaveOrganization             func(childComplexity int) int
 		LeaveSpace                    func(childComplexity int, spaceID string) int
@@ -157,6 +159,20 @@ type ComplexityRoot struct {
 		UpdateSpace                   func(childComplexity int, key string, input SpaceInput) int
 		UpdateSpaceMemberRole         func(childComplexity int, spaceID string, userID string, role SpaceMemberAssignableRole) int
 		UploadFile                    func(childComplexity int, path string, spaceID *string, content graphql.Upload) int
+	}
+
+	OrgInvitation struct {
+		CreatedAt func(childComplexity int) int
+		Email     func(childComplexity int) int
+		ExpiresAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Role      func(childComplexity int) int
+	}
+
+	OrgInviteResult struct {
+		Invitation func(childComplexity int) int
+		Member     func(childComplexity int) int
+		Status     func(childComplexity int) int
 	}
 
 	OrgMember struct {
@@ -197,6 +213,7 @@ type ComplexityRoot struct {
 		ListUserRegistry   func(childComplexity int, prefix *string, ownerID *string) int
 		Me                 func(childComplexity int) int
 		MyOrganization     func(childComplexity int) int
+		OrgInvitations     func(childComplexity int) int
 		OrgMembers         func(childComplexity int) int
 		Space              func(childComplexity int, key string) int
 		SpaceInvitations   func(childComplexity int, spaceID string) int
@@ -404,6 +421,8 @@ type MutationResolver interface {
 	DeleteSpaceRegistry(ctx context.Context, spaceID string, keys []string) (bool, error)
 	AddOrgMember(ctx context.Context, username string, role OrgMemberAssignableRole) (*OrgMember, error)
 	AddOrgMemberByEmail(ctx context.Context, email string, role OrgMemberAssignableRole) (*OrgMember, error)
+	InviteOrgMember(ctx context.Context, email string, role OrgMemberAssignableRole) (*OrgInviteResult, error)
+	CancelOrgInvitation(ctx context.Context, invitationID string) (bool, error)
 	AddSpaceMember(ctx context.Context, spaceID string, userID string, role SpaceMemberAssignableRole) (*SpaceMember, error)
 	InviteSpaceMember(ctx context.Context, spaceID string, email string, role SpaceMemberAssignableRole) (*SpaceInviteResult, error)
 	RemoveOrgMember(ctx context.Context, userID string) (bool, error)
@@ -432,6 +451,7 @@ type QueryResolver interface {
 	StorageStatus(ctx context.Context) (*StorageStatus, error)
 	ImagorStatus(ctx context.Context) (*ImagorStatus, error)
 	MyOrganization(ctx context.Context) (*Organization, error)
+	OrgInvitations(ctx context.Context) ([]*OrgInvitation, error)
 	Spaces(ctx context.Context) ([]*Space, error)
 	UsageSummary(ctx context.Context) (*UsageSummary, error)
 	Space(ctx context.Context, key string) (*Space, error)
@@ -771,6 +791,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.BeginStorageUploadProbe(childComplexity, args["input"].(StorageConfigInput), args["contentType"].(string), args["sizeBytes"].(int)), true
+	case "Mutation.cancelOrgInvitation":
+		if e.ComplexityRoot.Mutation.CancelOrgInvitation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_cancelOrgInvitation_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CancelOrgInvitation(childComplexity, args["invitationId"].(string)), true
 	case "Mutation.changePassword":
 		if e.ComplexityRoot.Mutation.ChangePassword == nil {
 			break
@@ -997,6 +1028,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.GenerateImagorURLFromTemplate(childComplexity, args["templateJson"].(string), args["spaceID"].(*string), args["imagePath"].(*string), args["contextPath"].([]string), args["forPreview"].(*bool), args["previewMaxDimensions"].(*DimensionsInput), args["skipLayerId"].(*string), args["appendFilters"].([]*ImagorFilterInput)), true
+	case "Mutation.inviteOrgMember":
+		if e.ComplexityRoot.Mutation.InviteOrgMember == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_inviteOrgMember_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.InviteOrgMember(childComplexity, args["email"].(string), args["role"].(OrgMemberAssignableRole)), true
 	case "Mutation.inviteSpaceMember":
 		if e.ComplexityRoot.Mutation.InviteSpaceMember == nil {
 			break
@@ -1235,6 +1277,56 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Mutation.UploadFile(childComplexity, args["path"].(string), args["spaceID"].(*string), args["content"].(graphql.Upload)), true
 
+	case "OrgInvitation.createdAt":
+		if e.ComplexityRoot.OrgInvitation.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.CreatedAt(childComplexity), true
+	case "OrgInvitation.email":
+		if e.ComplexityRoot.OrgInvitation.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.Email(childComplexity), true
+	case "OrgInvitation.expiresAt":
+		if e.ComplexityRoot.OrgInvitation.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.ExpiresAt(childComplexity), true
+	case "OrgInvitation.id":
+		if e.ComplexityRoot.OrgInvitation.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.ID(childComplexity), true
+	case "OrgInvitation.role":
+		if e.ComplexityRoot.OrgInvitation.Role == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.Role(childComplexity), true
+
+	case "OrgInviteResult.invitation":
+		if e.ComplexityRoot.OrgInviteResult.Invitation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInviteResult.Invitation(childComplexity), true
+	case "OrgInviteResult.member":
+		if e.ComplexityRoot.OrgInviteResult.Member == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInviteResult.Member(childComplexity), true
+	case "OrgInviteResult.status":
+		if e.ComplexityRoot.OrgInviteResult.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInviteResult.Status(childComplexity), true
+
 	case "OrgMember.avatarUrl":
 		if e.ComplexityRoot.OrgMember.AvatarURL == nil {
 			break
@@ -1432,6 +1524,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyOrganization(childComplexity), true
+	case "Query.orgInvitations":
+		if e.ComplexityRoot.Query.OrgInvitations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.OrgInvitations(childComplexity), true
 	case "Query.orgMembers":
 		if e.ComplexityRoot.Query.OrgMembers == nil {
 			break
@@ -2578,15 +2676,31 @@ type SpaceInvitation {
   expiresAt: String!
 }
 
+type OrgInvitation {
+  id: ID!
+  email: String!
+  role: OrgMemberAssignableRole!
+  createdAt: String!
+  expiresAt: String!
+}
+
 type SpaceInviteResult {
   status: String!
   member: SpaceMember
   invitation: SpaceInvitation
 }
 
+type OrgInviteResult {
+  status: String!
+  member: OrgMember
+  invitation: OrgInvitation
+}
+
 extend type Query {
   # Returns the organization for the currently authenticated user
   myOrganization: Organization
+  # Lists all pending email invitations for the caller's organization (admin only)
+  orgInvitations: [OrgInvitation!]!
   # Lists all active spaces for the caller's organization
   spaces: [Space!]!
   # Returns the current organization's plan limits and current usage summary
@@ -2624,6 +2738,10 @@ extend type Mutation {
   addOrgMember(username: String!, role: OrgMemberAssignableRole!): OrgMember!
   # Add an existing user to the caller's organization by email (admin only)
   addOrgMemberByEmail(email: String!, role: OrgMemberAssignableRole!): OrgMember!
+  # Invite a user to the caller's organization by email, or add them immediately if they already exist (admin only)
+  inviteOrgMember(email: String!, role: OrgMemberAssignableRole!): OrgInviteResult!
+  # Cancel a pending organization invitation (admin only)
+  cancelOrgInvitation(invitationId: ID!): Boolean!
   # Add an existing org member to a specific space (admin only)
   addSpaceMember(spaceID: String!, userId: ID!, role: SpaceMemberAssignableRole!): SpaceMember!
   # Invite a user to a specific space by email (admin only)
@@ -3066,6 +3184,17 @@ func (ec *executionContext) field_Mutation_beginStorageUploadProbe_args(ctx cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_cancelOrgInvitation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "invitationId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["invitationId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3398,6 +3527,22 @@ func (ec *executionContext) field_Mutation_generateImagorUrl_args(ctx context.Co
 		return nil, err
 	}
 	args["params"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_inviteOrgMember_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "email", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole)
+	if err != nil {
+		return nil, err
+	}
+	args["role"] = arg1
 	return args, nil
 }
 
@@ -6586,6 +6731,96 @@ func (ec *executionContext) fieldContext_Mutation_addOrgMemberByEmail(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_inviteOrgMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_inviteOrgMember,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().InviteOrgMember(ctx, fc.Args["email"].(string), fc.Args["role"].(OrgMemberAssignableRole))
+		},
+		nil,
+		ec.marshalNOrgInviteResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInviteResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_inviteOrgMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "status":
+				return ec.fieldContext_OrgInviteResult_status(ctx, field)
+			case "member":
+				return ec.fieldContext_OrgInviteResult_member(ctx, field)
+			case "invitation":
+				return ec.fieldContext_OrgInviteResult_invitation(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrgInviteResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_inviteOrgMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_cancelOrgInvitation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_cancelOrgInvitation,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CancelOrgInvitation(ctx, fc.Args["invitationId"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_cancelOrgInvitation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_cancelOrgInvitation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_addSpaceMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7591,6 +7826,266 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _OrgInvitation_id(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInvitation_email(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInvitation_role(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_role,
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
+		nil,
+		ec.marshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type OrgMemberAssignableRole does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInvitation_createdAt(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInvitation_expiresAt(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_expiresAt,
+		func(ctx context.Context) (any, error) {
+			return obj.ExpiresAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInviteResult_status(ctx context.Context, field graphql.CollectedField, obj *OrgInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInviteResult_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInviteResult_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInviteResult_member(ctx context.Context, field graphql.CollectedField, obj *OrgInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInviteResult_member,
+		func(ctx context.Context) (any, error) {
+			return obj.Member, nil
+		},
+		nil,
+		ec.marshalOOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInviteResult_member(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userId":
+				return ec.fieldContext_OrgMember_userId(ctx, field)
+			case "username":
+				return ec.fieldContext_OrgMember_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
+			case "role":
+				return ec.fieldContext_OrgMember_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_OrgMember_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrgMember", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInviteResult_invitation(ctx context.Context, field graphql.CollectedField, obj *OrgInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInviteResult_invitation,
+		func(ctx context.Context) (any, error) {
+			return obj.Invitation, nil
+		},
+		nil,
+		ec.marshalOOrgInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitation,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInviteResult_invitation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_OrgInvitation_id(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgInvitation_email(ctx, field)
+			case "role":
+				return ec.fieldContext_OrgInvitation_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_OrgInvitation_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_OrgInvitation_expiresAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrgInvitation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OrgMember_userId(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8380,6 +8875,47 @@ func (ec *executionContext) fieldContext_Query_myOrganization(_ context.Context,
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_orgInvitations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_orgInvitations,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().OrgInvitations(ctx)
+		},
+		nil,
+		ec.marshalNOrgInvitation2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitationᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_orgInvitations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_OrgInvitation_id(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgInvitation_email(ctx, field)
+			case "role":
+				return ec.fieldContext_OrgInvitation_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_OrgInvitation_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_OrgInvitation_expiresAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrgInvitation", field.Name)
 		},
 	}
 	return fc, nil
@@ -15751,6 +16287,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "inviteOrgMember":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_inviteOrgMember(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cancelOrgInvitation":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_cancelOrgInvitation(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "addSpaceMember":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addSpaceMember(ctx, field)
@@ -15898,6 +16448,108 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var orgInvitationImplementors = []string{"OrgInvitation"}
+
+func (ec *executionContext) _OrgInvitation(ctx context.Context, sel ast.SelectionSet, obj *OrgInvitation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, orgInvitationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OrgInvitation")
+		case "id":
+			out.Values[i] = ec._OrgInvitation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._OrgInvitation_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "role":
+			out.Values[i] = ec._OrgInvitation_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._OrgInvitation_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expiresAt":
+			out.Values[i] = ec._OrgInvitation_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var orgInviteResultImplementors = []string{"OrgInviteResult"}
+
+func (ec *executionContext) _OrgInviteResult(ctx context.Context, sel ast.SelectionSet, obj *OrgInviteResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, orgInviteResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OrgInviteResult")
+		case "status":
+			out.Values[i] = ec._OrgInviteResult_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "member":
+			out.Values[i] = ec._OrgInviteResult_member(ctx, field, obj)
+		case "invitation":
+			out.Values[i] = ec._OrgInviteResult_invitation(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16226,6 +16878,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_myOrganization(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "orgInvitations":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_orgInvitations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -18237,6 +18911,46 @@ func (ec *executionContext) marshalNLicenseStatus2ᚖgithubᚗcomᚋcshumᚋimag
 	return ec._LicenseStatus(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNOrgInvitation2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitationᚄ(ctx context.Context, sel ast.SelectionSet, v []*OrgInvitation) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNOrgInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitation(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNOrgInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitation(ctx context.Context, sel ast.SelectionSet, v *OrgInvitation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._OrgInvitation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNOrgInviteResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInviteResult(ctx context.Context, sel ast.SelectionSet, v OrgInviteResult) graphql.Marshaler {
+	return ec._OrgInviteResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOrgInviteResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInviteResult(ctx context.Context, sel ast.SelectionSet, v *OrgInviteResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._OrgInviteResult(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNOrgMember2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember(ctx context.Context, sel ast.SelectionSet, v OrgMember) graphql.Marshaler {
 	return ec._OrgMember(ctx, sel, &v)
 }
@@ -19042,6 +19756,20 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = ctx
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOOrgInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitation(ctx context.Context, sel ast.SelectionSet, v *OrgInvitation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._OrgInvitation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember(ctx context.Context, sel ast.SelectionSet, v *OrgMember) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._OrgMember(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *Organization) graphql.Marshaler {
