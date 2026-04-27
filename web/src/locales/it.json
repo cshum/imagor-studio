@@ -717,6 +717,22 @@
         "confirmPassword": "Conferma password"
       }
     },
+    "workspaceRequired": {
+      "eyebrow": "Workspace required",
+      "title": "This account is signed in, but it is not linked to a workspace yet.",
+      "description": "Imagor Studio needs an active workspace before the account area and space management surfaces can load.",
+      "invite": {
+        "title": "Join with an invite",
+        "description": "Open your workspace invitation link after sign-in, or ask a workspace admin to send you a fresh invite if the original one expired."
+      },
+      "nextSteps": {
+        "title": "What to do next",
+        "description": "If you expected a workspace to exist already, contact the team that manages your Imagor Studio account. Self-serve workspace creation is not available from this state yet."
+      },
+      "actions": {
+        "signOut": "Sign out"
+      }
+    },
     "spaces": {
       "title": "Spazi",
       "createSpace": "Crea spazio",

@@ -1,8 +1,10 @@
 import { redirect } from '@tanstack/react-router'
 
+import { getMyOrganization } from '@/api/org-api'
 import { authStore } from '@/stores/auth-store'
 
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+export const WORKSPACE_REQUIRED_PATH = '/account/workspace-required'
 
 /**
  * Helper function to create login redirect with current location
@@ -72,6 +74,59 @@ export const requireAccountAuth = async (context?: {
   }
 
   return currentAuth
+}
+
+const ensureOrganization = async () => {
+  const organization = await getMyOrganization()
+  if (!organization) {
+    throw redirect({ to: WORKSPACE_REQUIRED_PATH })
+  }
+  return organization
+}
+
+/**
+ * Authentication check for multi-tenant account pages that require an active organization.
+ */
+export const requireOrganizationAccountAuth = async (context?: {
+  location?: { pathname: string; search: Record<string, unknown> }
+}) => {
+  const auth = await requireAccountAuth(context)
+  if (auth.multiTenant) {
+    await ensureOrganization()
+  }
+  return auth
+}
+
+/**
+ * Admin account auth plus organization requirement for multi-tenant routes.
+ */
+export const requireOrganizationAdminAccountAuth = async (context?: {
+  location?: { pathname: string; search: Record<string, unknown> }
+}) => {
+  const auth = await requireAdminAccountAuth(context)
+  if (auth.multiTenant) {
+    await ensureOrganization()
+  }
+  return auth
+}
+
+/**
+ * Lets the workspace-required route redirect back into the app once an organization exists.
+ */
+export const redirectAuthenticatedUsersWithOrganization = async (context?: {
+  location?: { pathname: string; search: Record<string, unknown> }
+}) => {
+  const auth = await requireAccountAuth(context)
+  if (!auth.multiTenant) {
+    throw redirect({ to: '/' })
+  }
+
+  const organization = await getMyOrganization()
+  if (organization) {
+    throw redirect({ to: '/' })
+  }
+
+  return auth
 }
 
 /**

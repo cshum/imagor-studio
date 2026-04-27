@@ -37,6 +37,9 @@ import {
   requireAdminAccountAuth,
   requireAuth,
   requireImageEditorAuth,
+  redirectAuthenticatedUsersWithOrganization,
+  requireOrganizationAccountAuth,
+  requireOrganizationAdminAccountAuth,
   requireSelfHostedAdminAccountAuth,
   requireSelfHostedImageEditorAuth,
 } from '@/loaders/auth-loader.ts'
@@ -78,6 +81,7 @@ import { MembersSection } from '@/pages/space-settings/members'
 import { SecuritySection } from '@/pages/space-settings/security'
 import { StorageSection } from '@/pages/space-settings/storage'
 import { UsersPage } from '@/pages/users-page'
+import { WorkspaceRequiredPage } from '@/pages/workspace-required-page'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import { initializeFolderTreeCache } from '@/stores/folder-tree-store.ts'
 import { checkLicense, useLicense } from '@/stores/license-store'
@@ -163,7 +167,7 @@ const rootPath = createRoute({
     const auth = getAuth()
     if (auth.multiTenant) {
       // Spaces list requires admin in multi-tenant mode
-      return requireAdminAccountAuth(context)
+      return requireOrganizationAdminAccountAuth(context)
     }
   },
   component: () => {
@@ -507,7 +511,7 @@ const spaceGalleryCanvasEditorRoute = createRoute({
 const createSpaceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/account/spaces/new',
-  beforeLoad: requireAdminAccountAuth,
+  beforeLoad: requireOrganizationAdminAccountAuth,
   component: CreateSpacePage,
 })
 
@@ -616,6 +620,13 @@ const settingsLayoutRoute = createRoute({
   component: () => <Outlet />,
 })
 
+const workspaceRequiredRoute = createRoute({
+  getParentRoute: () => settingsLayoutRoute,
+  path: '/account/workspace-required',
+  beforeLoad: redirectAuthenticatedUsersWithOrganization,
+  component: WorkspaceRequiredPage,
+})
+
 // Redirect /account to /account/profile
 const accountRedirectRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
@@ -695,7 +706,7 @@ const accountOrganizationMembersRoute = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
-  beforeLoad: requireAccountAuth,
+  beforeLoad: requireOrganizationAccountAuth,
   component: () => <AccountLayout />,
 })
 
@@ -811,6 +822,7 @@ const routeTree = isEmbeddedMode
       spaceCanvasEditorRoute,
       spaceGalleryCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
+        workspaceRequiredRoute,
         rootPath.addChildren([rootImagePage]),
         spaceSettingsLayoutRoute.addChildren([
           spaceSettingsIndexRoute,
