@@ -70,6 +70,26 @@ interface GeneralSectionProps {
   initialValues: Record<string, string>
 }
 
+function getUpdateSpaceErrorMessage(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  errorInfo: ReturnType<typeof extractErrorInfo>,
+): string {
+  if (errorInfo.code === 'FORBIDDEN') {
+    return t('pages.spaceSettings.general.updateForbidden')
+  }
+  return errorInfo.message
+}
+
+function getDeleteSpaceErrorMessage(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  errorInfo: ReturnType<typeof extractErrorInfo>,
+): string {
+  if (errorInfo.code === 'FORBIDDEN') {
+    return t('pages.spaces.messages.deleteSpaceForbidden')
+  }
+  return errorInfo.message
+}
+
 export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
   const { t } = useTranslation()
   const router = useRouter()
@@ -184,7 +204,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
         identityForm.setError('key', { message: errorInfo.message })
         return
       }
-      toast.error(errorInfo.message)
+      toast.error(getUpdateSpaceErrorMessage(t, errorInfo))
     } finally {
       setIsSavingIdentity(false)
     }
@@ -231,7 +251,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
       await navigate({ to: '/' })
       await router.invalidate()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      toast.error(getDeleteSpaceErrorMessage(t, extractErrorInfo(err)))
     } finally {
       setIsDeleting(false)
       setIsDeleteDialogOpen(false)

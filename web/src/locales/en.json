@@ -780,9 +780,12 @@
         "spaceDeletedSuccess": "Space deleted successfully",
         "leftSpaceSuccess": "You left the shared space.",
         "createSpaceFailed": "Failed to create space",
+        "createSpaceForbidden": "You do not have permission to create spaces.",
         "keyAlreadyTaken": "URL slug is already taken",
+        "spaceLimitReached": "Your current plan has reached its space limit.",
         "updateSpaceFailed": "Failed to update space",
         "deleteSpaceFailed": "Failed to delete space",
+        "deleteSpaceForbidden": "Only organization admins can delete this space.",
         "leaveSpaceFailed": "Failed to leave shared space"
       },
       "validation": {
@@ -837,6 +840,7 @@
         "description": "Basic information about this space.",
         "name": "Display Name",
         "nameDescription": "The name shown in the navigation and spaces list.",
+        "updateForbidden": "You do not have permission to manage this space.",
         "customDomain": "Custom Domain",
         "customDomainDescription": "Custom domain for this space. If left empty, served at {{spaceKey}}.imagor.app.",
         "customDomainCurrentLabel": "Current Hostname",

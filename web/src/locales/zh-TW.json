@@ -771,9 +771,12 @@
         "spaceDeletedSuccess": "空間刪除成功",
         "leftSpaceSuccess": "您已離開共享空間。",
         "createSpaceFailed": "建立空間失敗",
+        "createSpaceForbidden": "您沒有建立空間的權限。",
         "keyAlreadyTaken": "URL 識別碼已被使用",
+        "spaceLimitReached": "您目前方案可建立的空間數量已達上限。",
         "updateSpaceFailed": "更新空間失敗",
         "deleteSpaceFailed": "刪除空間失敗",
+        "deleteSpaceForbidden": "只有組織管理員可以刪除此空間。",
         "leaveSpaceFailed": "離開共享空間失敗"
       },
       "validation": {
@@ -835,6 +838,7 @@
         "description": "此空間的基本資訊。",
         "name": "顯示名稱",
         "nameDescription": "導覽列中和空間清單中顯示的名稱。",
+        "updateForbidden": "您沒有管理此空間的權限。",
         "customDomain": "自訂網域",
         "customDomainDescription": "此空間的自訂網域。如果留空，將使用 {{spaceKey}}.imagor.app。",
         "customDomainCurrentLabel": "目前主機名稱",

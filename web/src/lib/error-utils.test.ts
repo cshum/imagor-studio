@@ -37,6 +37,29 @@ describe('error-utils', () => {
       message: 'Space key already taken',
       field: 'key',
       code: 'BAD_USER_INPUT',
+      reason: undefined,
+      argumentName: undefined,
+    })
+  })
+
+  it('extracts graphql error reasons when present', () => {
+    const error = {
+      response: {
+        status: 200,
+        errors: [
+          {
+            message: 'Space limit reached',
+            extensions: { code: 'INVALID_INPUT', reason: 'space_limit_reached' },
+          },
+        ],
+      },
+    }
+
+    expect(extractErrorInfo(error)).toEqual({
+      message: 'Space limit reached',
+      field: undefined,
+      code: 'INVALID_INPUT',
+      reason: 'space_limit_reached',
       argumentName: undefined,
     })
   })

@@ -35,6 +35,19 @@ import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 import { formatStorageValidationError } from '@/lib/storage-validation-errors'
 import { useAuth } from '@/stores/auth-store'
 
+function getCreateSpaceErrorMessage(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  errorInfo: ReturnType<typeof extractErrorInfo>,
+): string {
+  if (errorInfo.reason === 'space_limit_reached') {
+    return t('pages.spaces.messages.spaceLimitReached')
+  }
+  if (errorInfo.code === 'FORBIDDEN') {
+    return t('pages.spaces.messages.createSpaceForbidden')
+  }
+  return errorInfo.message
+}
+
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 function makeCreateSchema(t: (key: string) => string) {
@@ -478,7 +491,9 @@ export function CreateSpacePage() {
         form.setError('key', { message: t('pages.spaces.messages.keyAlreadyTaken') })
         setCurrentStep(1)
       } else {
-        toast.error(`${t('pages.spaces.messages.createSpaceFailed')}: ${errorInfo.message}`)
+        toast.error(
+          `${t('pages.spaces.messages.createSpaceFailed')}: ${getCreateSpaceErrorMessage(t, errorInfo)}`,
+        )
       }
     } finally {
       setIsSaving(false)

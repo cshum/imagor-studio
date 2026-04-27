@@ -780,9 +780,12 @@
         "spaceDeletedSuccess": "Spazio eliminato correttamente",
         "leftSpaceSuccess": "Hai lasciato lo spazio condiviso.",
         "createSpaceFailed": "Impossibile creare lo spazio",
+        "createSpaceForbidden": "Non hai i permessi per creare spazi.",
         "keyAlreadyTaken": "Lo slug URL è già in uso",
+        "spaceLimitReached": "Il tuo piano corrente ha raggiunto il limite di spazi.",
         "updateSpaceFailed": "Impossibile aggiornare lo spazio",
         "deleteSpaceFailed": "Impossibile eliminare lo spazio",
+        "deleteSpaceForbidden": "Solo gli amministratori dell'organizzazione possono eliminare questo spazio.",
         "leaveSpaceFailed": "Impossibile lasciare lo spazio condiviso"
       },
       "validation": {
@@ -837,6 +840,7 @@
         "description": "Informazioni di base su questo spazio.",
         "name": "Nome visualizzato",
         "nameDescription": "Il nome mostrato nella navigazione e nell'elenco spazi.",
+        "updateForbidden": "Non hai i permessi per gestire questo spazio.",
         "customDomain": "Dominio personalizzato",
         "customDomainDescription": "Dominio personalizzato per questo spazio. Se lasciato vuoto, verrà servito su {{spaceKey}}.imagor.app.",
         "customDomainCurrentLabel": "Hostname attuale",
