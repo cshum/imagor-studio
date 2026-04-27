@@ -72,6 +72,19 @@ type CloudHTTPServices struct {
 	Logger               *zap.Logger
 }
 
+type CloudWorkerServices struct {
+	DB                   *bun.DB
+	UserStore            shareduser.OAuthStore
+	OrgStore             org.OrgStore
+	SpaceStore           space.SpaceStore
+	SpaceInviteStore     space.SpaceInviteStore
+	HostedStorageStore   HostedStorageStore
+	ProcessingUsageStore ProcessingUsageStore
+	BillingService       billing.Service
+	CloudConfig          CloudConfig
+	Logger               *zap.Logger
+}
+
 type HostedStorageObject struct {
 	OrgID     string
 	SpaceID   string
@@ -125,6 +138,8 @@ type CloudConfigLoader func(args []string) (CloudConfig, error)
 type AuthRoutesRegistrar func(mux *http.ServeMux, cfg OAuthConfig, services CloudHTTPServices)
 
 type InternalRoutesRegistrar func(mux *http.ServeMux, services CloudHTTPServices)
+
+type CloudWorkerRunner func(ctx context.Context, services CloudWorkerServices, cfg CloudConfig) error
 
 type ProcessingOriginResolverFactory func(cfg CloudConfig, spaceStore space.SpaceStore) space.ProcessingOriginResolver
 
