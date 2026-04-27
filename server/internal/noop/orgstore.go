@@ -44,6 +44,10 @@ func (n *OrgStore) UpdateBillingState(_ context.Context, _ string, _ org.Billing
 	return nil, ErrCloudDisabled
 }
 
+func (n *OrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
+	return nil, ErrCloudDisabled
+}
+
 func (n *OrgStore) ListMembers(_ context.Context, _ string) ([]*org.OrgMemberView, error) {
 	return nil, ErrCloudDisabled
 }

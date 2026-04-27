@@ -151,6 +151,10 @@ func (s *testOrgStore) UpdateBillingState(ctx context.Context, orgID string, upd
 	return s.GetByID(ctx, orgID)
 }
 
+func (s *testOrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
+	return []string{}, nil
+}
+
 func (s *testOrgStore) ListMembers(ctx context.Context, orgID string) ([]*org.OrgMemberView, error) {
 	type memberRow struct {
 		OrgID       string    `bun:"org_id"`

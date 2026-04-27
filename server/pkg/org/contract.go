@@ -56,6 +56,7 @@ type OrgStore interface {
 	GetBySlug(ctx context.Context, slug string) (*Org, error)
 	GetByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*Org, error)
 	UpdateBillingState(ctx context.Context, orgID string, update BillingStateUpdate) (*Org, error)
+	ExpireTrials(ctx context.Context, now time.Time) ([]string, error)
 	ListMembers(ctx context.Context, orgID string) ([]*OrgMemberView, error)
 	AddMember(ctx context.Context, orgID, userID, role string) error
 	RemoveMember(ctx context.Context, orgID, userID string) error

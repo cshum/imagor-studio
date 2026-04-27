@@ -386,6 +386,19 @@ func (m *MockOrgStore) UpdateBillingState(ctx context.Context, orgID string, upd
 	return args.Get(0).(*org.Org), args.Error(1)
 }
 
+func (m *MockOrgStore) ExpireTrials(ctx context.Context, now time.Time) ([]string, error) {
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "ExpireTrials" {
+			args := m.Called(ctx, now)
+			if args.Get(0) == nil {
+				return nil, args.Error(1)
+			}
+			return args.Get(0).([]string), args.Error(1)
+		}
+	}
+	return []string{}, nil
+}
+
 func (m *MockOrgStore) ListMembers(ctx context.Context, orgID string) ([]*org.OrgMemberView, error) {
 	args := m.Called(ctx, orgID)
 	if args.Get(0) == nil {
@@ -429,6 +442,16 @@ func (m *MockSpaceStore) RenameKey(ctx context.Context, oldKey, newKey string) e
 func (m *MockSpaceStore) Upsert(ctx context.Context, s *space.Space) error {
 	args := m.Called(ctx, s)
 	return args.Error(0)
+}
+
+func (m *MockSpaceStore) SetSuspendedByOrgID(ctx context.Context, orgID string, suspended bool) error {
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "SetSuspendedByOrgID" {
+			args := m.Called(ctx, orgID, suspended)
+			return args.Error(0)
+		}
+	}
+	return nil
 }
 
 func (m *MockSpaceStore) SoftDelete(ctx context.Context, key string) error {

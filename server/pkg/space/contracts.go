@@ -52,6 +52,7 @@ type SpaceStore interface {
 	Create(ctx context.Context, s *Space) error
 	RenameKey(ctx context.Context, oldKey, newKey string) error
 	Upsert(ctx context.Context, s *Space) error
+	SetSuspendedByOrgID(ctx context.Context, orgID string, suspended bool) error
 	SoftDelete(ctx context.Context, key string) error
 	GetByKey(ctx context.Context, key string) (*Space, error)
 	GetByID(ctx context.Context, id string) (*Space, error)

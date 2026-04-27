@@ -145,7 +145,7 @@ type ProcessingOriginResolverFactory func(cfg CloudConfig, spaceStore space.Spac
 
 type TemplatePreviewRenderClientFactory func(cfg CloudConfig) processing.TemplatePreviewRenderClient
 
-type BillingServiceFactory func(cfg CloudConfig, logger *zap.Logger, orgStore org.OrgStore) (billing.Service, error)
+type BillingServiceFactory func(cfg CloudConfig, logger *zap.Logger, orgStore org.OrgStore, spaceStore space.SpaceStore) (billing.Service, error)
 
 type AutoMigrationConfig struct {
 	DatabaseURL      string

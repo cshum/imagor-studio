@@ -392,6 +392,34 @@ func TestRequestUpload_PlatformManagedRejectsWhenHostedQuotaExceeded(t *testing.
 	mockSpaceStorage.AssertNotCalled(t, "PresignedPutURLNoOverwrite", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
+func TestRequestUpload_SuspendedSpaceForbidden(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+		Suspended:   true,
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockSpaceStorage := &MockConditionalPresignableStorage{}
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().RequestUpload(ctx, "test.txt", ptrStr("space-1"), "text/plain", 128)
+
+	assert.Nil(t, result)
+	assert.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok)
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "space is suspended")
+	mockHostedStorage.AssertNotCalled(t, "BeginPendingUpload", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStorage.AssertNotCalled(t, "PresignedPutURLNoOverwrite", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStore.AssertExpectations(t)
+}
+
 func TestUploadFile_PlatformManagedFinalizesHostedUpload(t *testing.T) {
 	spaceRecord := &space.Space{
 		ID:          "space-123",
@@ -455,6 +483,37 @@ func TestUploadFile_PlatformManagedRejectsOverwrite(t *testing.T) {
 	mockSpaceStorage.AssertNotCalled(t, "Put", mock.Anything, mock.Anything, mock.Anything)
 	mockSpaceStore.AssertExpectations(t)
 	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestUploadFile_SuspendedSpaceForbidden(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+		Suspended:   true,
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockSpaceStorage := &MockStorage{}
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	upload := graphql.Upload{File: strings.NewReader("test content"), Filename: "test.txt", Size: 128}
+	result, err := r.Mutation().UploadFile(ctx, "test.txt", ptrStr("space-1"), upload)
+
+	assert.False(t, result)
+	assert.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok)
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "space is suspended")
+	mockHostedStorage.AssertNotCalled(t, "BeginPendingUpload", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockHostedStorage.AssertNotCalled(t, "FinalizePendingUpload", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStorage.AssertNotCalled(t, "Stat", mock.Anything, mock.Anything)
+	mockSpaceStorage.AssertNotCalled(t, "Put", mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStore.AssertExpectations(t)
 }
 
 func TestUploadFile_PlatformManagedBeginPendingFailureDeletesUploadedObject(t *testing.T) {
@@ -576,6 +635,34 @@ func TestCompleteUpload_PlatformManagedIsIdempotent(t *testing.T) {
 	mockSpaceStore.AssertExpectations(t)
 	mockHostedStorage.AssertExpectations(t)
 	mockSpaceStorage.AssertExpectations(t)
+}
+
+func TestCompleteUpload_SuspendedSpaceForbidden(t *testing.T) {
+	spaceRecord := &space.Space{
+		ID:          "space-123",
+		OrgID:       "org-a",
+		StorageMode: space.StorageModePlatform,
+		StorageType: "managed",
+		Suspended:   true,
+	}
+	mockSpaceStore := &MockSpaceStore{}
+	mockSpaceStore.On("GetByID", mock.Anything, "space-1").Return(spaceRecord, nil)
+	mockHostedStorage := &MockHostedStorageStore{}
+	mockSpaceStorage := &MockStorage{}
+
+	r := newSpaceTestResolverWithHostedStorageAndSpaceStorage(mockSpaceStore, management.CloudConfig{}, mockHostedStorage, mockSpaceStorage)
+	ctx := createAdminContextWithOrg("user-1", "org-a")
+	result, err := r.Mutation().CompleteUpload(ctx, "test.txt", ptrStr("space-1"))
+
+	assert.False(t, result)
+	assert.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok)
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "space is suspended")
+	mockHostedStorage.AssertNotCalled(t, "FinalizePendingUpload", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockSpaceStorage.AssertNotCalled(t, "Stat", mock.Anything, mock.Anything)
+	mockSpaceStore.AssertExpectations(t)
 }
 
 func TestCompleteUpload_BYOBSpaceNotAvailable(t *testing.T) {

@@ -128,6 +128,13 @@ func (r *Resolver) resolveUploadStorageTarget(ctx context.Context, spaceID *stri
 	return stor, nil, nil
 }
 
+func ensureSpaceUploadAllowed(sp *space.Space) error {
+	if sp == nil || !sp.Suspended {
+		return nil
+	}
+	return apperror.Forbidden("space is suspended")
+}
+
 func (r *Resolver) tracksHostedStorage(sp *space.Space) bool {
 	return sp != nil && r.hostedStorageStore != nil && space.NormalizeStorageMode(sp.StorageMode) == space.StorageModePlatform
 }
@@ -324,6 +331,9 @@ func (r *mutationResolver) UploadFile(ctx context.Context, path string, spaceID 
 	if err != nil {
 		return false, err
 	}
+	if err := ensureSpaceUploadAllowed(sp); err != nil {
+		return false, err
+	}
 	if err := r.enforceHostedStorageQuota(ctx, sp, content.Size); err != nil {
 		return false, err
 	}
@@ -389,6 +399,9 @@ func (r *mutationResolver) RequestUpload(ctx context.Context, path string, space
 	if err != nil {
 		return nil, err
 	}
+	if err := ensureSpaceUploadAllowed(sp); err != nil {
+		return nil, err
+	}
 	if err := r.enforceHostedStorageQuota(ctx, sp, int64(sizeBytes)); err != nil {
 		return nil, err
 	}
@@ -450,6 +463,9 @@ func (r *mutationResolver) CompleteUpload(ctx context.Context, path string, spac
 
 	stor, sp, err := r.resolveUploadStorageTarget(ctx, spaceID)
 	if err != nil {
+		return false, err
+	}
+	if err := ensureSpaceUploadAllowed(sp); err != nil {
 		return false, err
 	}
 	if !r.tracksHostedStorage(sp) {

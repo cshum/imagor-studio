@@ -30,6 +30,10 @@ func (n *SpaceStore) Upsert(_ context.Context, _ *space.Space) error {
 	return ErrCloudDisabled
 }
 
+func (n *SpaceStore) SetSuspendedByOrgID(_ context.Context, _ string, _ bool) error {
+	return ErrCloudDisabled
+}
+
 func (n *SpaceStore) RenameKey(_ context.Context, _, _ string) error {
 	return ErrCloudDisabled
 }

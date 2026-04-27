@@ -50,6 +50,10 @@ func (e *errOrgStore) UpdateBillingState(_ context.Context, _ string, _ org.Bill
 	return nil, fmt.Errorf("%s", e.msg)
 }
 
+func (e *errOrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+
 func (e *errOrgStore) ListMembers(_ context.Context, _ string) ([]*org.OrgMemberView, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
@@ -91,6 +95,10 @@ func (n *nilOrgStore) UpdateBillingState(_ context.Context, _ string, _ org.Bill
 	return nil, nil
 }
 
+func (n *nilOrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
+	return []string{}, nil
+}
+
 func (n *nilOrgStore) ListMembers(_ context.Context, _ string) ([]*org.OrgMemberView, error) {
 	return nil, nil
 }
@@ -112,10 +120,11 @@ type stubSpaceStore struct {
 	err        error
 }
 
-func (s *stubSpaceStore) Create(_ context.Context, _ *space.Space) error { return nil }
-func (s *stubSpaceStore) RenameKey(_ context.Context, _, _ string) error { return nil }
-func (s *stubSpaceStore) Upsert(_ context.Context, _ *space.Space) error { return nil }
-func (s *stubSpaceStore) SoftDelete(_ context.Context, _ string) error   { return nil }
+func (s *stubSpaceStore) Create(_ context.Context, _ *space.Space) error                { return nil }
+func (s *stubSpaceStore) RenameKey(_ context.Context, _, _ string) error                { return nil }
+func (s *stubSpaceStore) Upsert(_ context.Context, _ *space.Space) error                { return nil }
+func (s *stubSpaceStore) SetSuspendedByOrgID(_ context.Context, _ string, _ bool) error { return nil }
+func (s *stubSpaceStore) SoftDelete(_ context.Context, _ string) error                  { return nil }
 func (s *stubSpaceStore) GetByKey(_ context.Context, key string) (*space.Space, error) {
 	if s.err != nil {
 		return nil, s.err
