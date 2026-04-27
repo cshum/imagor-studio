@@ -35,7 +35,7 @@ type CloudConfig struct {
 	StripeTeamPriceID                    string
 	StripeBillingPortalConfigurationID   string
 	ProcessingURLTemplate                string
-	ProcessingUsageBatchCleanupEnabled   bool
+	ManagementJobsEnabled                bool
 	ProcessingUsageBatchCleanupRetention time.Duration
 	ProcessingUsageBatchCleanupInterval  time.Duration
 	PlatformS3Bucket                     string

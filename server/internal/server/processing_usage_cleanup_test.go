@@ -38,7 +38,7 @@ func TestProcessingUsageCleanupLoopConfig(t *testing.T) {
 	store := &cleanupRecordingStore{}
 	services := &bootstrap.Services{ProcessingUsageStore: store}
 	cloudConfig := management.CloudConfig{
-		ProcessingUsageBatchCleanupEnabled:   true,
+		ManagementJobsEnabled:                true,
 		ProcessingUsageBatchCleanupRetention: 7 * 24 * time.Hour,
 		ProcessingUsageBatchCleanupInterval:  24 * time.Hour,
 	}
@@ -54,11 +54,11 @@ func TestProcessingUsageCleanupLoopConfig(t *testing.T) {
 	_, _, ok = processingUsageCleanupLoopConfig(&bootstrap.Services{}, ModeCloud, cloudConfig)
 	assert.False(t, ok)
 
-	cloudConfig.ProcessingUsageBatchCleanupEnabled = false
+	cloudConfig.ManagementJobsEnabled = false
 	_, _, ok = processingUsageCleanupLoopConfig(services, ModeCloud, cloudConfig)
 	assert.False(t, ok)
 
-	cloudConfig.ProcessingUsageBatchCleanupEnabled = true
+	cloudConfig.ManagementJobsEnabled = true
 	cloudConfig.ProcessingUsageBatchCleanupRetention = 0
 	_, _, ok = processingUsageCleanupLoopConfig(services, ModeCloud, cloudConfig)
 	assert.False(t, ok)
