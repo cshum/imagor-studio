@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Progress } from '@/components/ui/progress'
 import {
   ResponsiveDialog,
   ResponsiveDialogDescription,
@@ -21,7 +22,6 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
-import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { GetUsageSummaryQuery, ListSpacesQuery } from '@/generated/graphql'
 import { isUnlimitedLimit } from '@/lib/plan-entitlements'
@@ -45,12 +45,12 @@ function formatBytes(bytes: number) {
 }
 
 function formatCount(value: number) {
-	return new Intl.NumberFormat().format(value)
+  return new Intl.NumberFormat().format(value)
 }
 
 function getProgressValue(current: number, max: number | null | undefined) {
-	if (max == null || max <= 0) return 0
-	return Math.min((current / max) * 100, 100)
+  if (max == null || max <= 0) return 0
+  return Math.min((current / max) * 100, 100)
 }
 
 function isUnlimitedOrMissing(value: number | null | undefined) {

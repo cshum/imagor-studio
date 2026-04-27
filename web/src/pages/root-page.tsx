@@ -49,7 +49,8 @@ export function RootPage({ loaderData }: RootPageProps) {
   if (auth.multiTenant) {
     const data = loaderData as Awaited<ReturnType<typeof spacesLoader>>
     const createSpaceDisabled =
-      data.usageSummary.maxSpaces !== null && data.usageSummary.usedSpaces >= data.usageSummary.maxSpaces
+      data.usageSummary.maxSpaces !== null &&
+      data.usageSummary.usedSpaces >= data.usageSummary.maxSpaces
 
     return (
       <SpacesLayout

@@ -8,8 +8,8 @@ import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
 import type {
   GetSpaceQuery,
-  ImagorStatusQuery,
   GetUsageSummaryQuery,
+  ImagorStatusQuery,
   ListSpacesQuery,
   ListSystemRegistryQuery,
   ListUsersQuery,

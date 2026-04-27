@@ -782,13 +782,13 @@
       },
       "usageSummaryTitle": "当前套餐用量",
       "usageSummaryDescription": "空间：{{spaces}}。平台存储：{{storage}}。",
-        "currentBillingPeriod": "当前计费周期：{{start}} 至 {{end}}",
-        "processingUsage": "{{count}} 次处理",
-        "usage": {
-          "spaceQuota": "空间额度",
-          "hostedStorage": "平台存储",
-          "processing": "处理量"
-        },
+      "currentBillingPeriod": "当前计费周期：{{start}} 至 {{end}}",
+      "processingUsage": "{{count}} 次处理",
+      "usage": {
+        "spaceQuota": "空间额度",
+        "hostedStorage": "平台存储",
+        "processing": "处理量"
+      },
       "configure": "配置",
       "creationPreview": {
         "appUrlLabel": "应用 URL",
