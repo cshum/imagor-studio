@@ -9,6 +9,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
@@ -65,6 +66,26 @@ func newOrgResolverWithHostedStorage(orgStore *MockOrgStore, spaceStore *MockSpa
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
 	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil, WithHostedStorageStore(hostedStorageStore))
+}
+
+func newOrgResolverWithUsageStores(orgStore *MockOrgStore, spaceStore *MockSpaceStore, hostedStorageStore *MockHostedStorageStore, processingUsageStore *MockProcessingUsageStore) *Resolver {
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	return NewResolver(
+		sp,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		logger,
+		orgStore,
+		spaceStore,
+		nil,
+		nil,
+		WithHostedStorageStore(hostedStorageStore),
+		WithProcessingUsageStore(processingUsageStore),
+	)
 }
 
 func newOrgResolverWithRegistry(orgStore *MockOrgStore, spaceStore *MockSpaceStore, registryStore *MockRegistryStore) *Resolver {
@@ -138,6 +159,97 @@ func TestSpaces_NilSpaceStore(t *testing.T) {
 	result, err := r.Query().Spaces(ctx)
 	require.NoError(t, err)
 	assert.Empty(t, result)
+}
+
+func TestSpaces_IncludesProcessingUsageForOwnOrgSpaces(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	hostedStorageStore := &MockHostedStorageStore{}
+	processingUsageStore := &MockProcessingUsageStore{}
+	r := newOrgResolverWithUsageStores(orgStore, spaceStore, hostedStorageStore, processingUsageStore)
+
+	orgSpace := makeTestSpace("alpha", "org-1")
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{orgSpace}, nil)
+	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*space.Space{}, nil)
+	hostedStorageStore.On("ListUsageBytesBySpace", mock.Anything, "org-1", []string{orgSpace.ID}).Return(map[string]int64{}, nil)
+	processingUsageStore.On("GetCurrentUsageSummary", mock.Anything, "org-1").Return(&management.ProcessingUsageSummary{
+		TotalProcessedCount: 45,
+		ProcessedCountBySpace: map[string]int64{
+			orgSpace.ID: 45,
+		},
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().Spaces(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	require.NotNil(t, result[0].ProcessingUsageCount)
+	assert.Equal(t, 45, *result[0].ProcessingUsageCount)
+
+	spaceStore.AssertExpectations(t)
+	hostedStorageStore.AssertExpectations(t)
+	processingUsageStore.AssertExpectations(t)
+}
+
+func TestUsageSummary_ReturnsPlanLimitsAndUsage(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	hostedStorageStore := &MockHostedStorageStore{}
+	processingUsageStore := &MockProcessingUsageStore{}
+	r := newOrgResolverWithUsageStores(orgStore, spaceStore, hostedStorageStore, processingUsageStore)
+
+	proOrg := makeTestOrg("org-1", "user-1")
+	proOrg.Plan = "pro"
+	spaceA := makeTestSpace("alpha", "org-1")
+	spaceB := makeTestSpace("beta", "org-1")
+	periodStart := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)
+	periodEnd := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(proOrg, nil)
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{spaceA, spaceB}, nil)
+	hostedStorageStore.On("ListUsageBytesBySpace", mock.Anything, "org-1", []string{spaceA.ID, spaceB.ID}).Return(map[string]int64{
+		spaceA.ID: 10,
+		spaceB.ID: 20,
+	}, nil)
+	processingUsageStore.On("GetCurrentUsageSummary", mock.Anything, "org-1").Return(&management.ProcessingUsageSummary{
+		PeriodStart:         periodStart,
+		PeriodEnd:           periodEnd,
+		TotalProcessedCount: 123,
+		ProcessedCountBySpace: map[string]int64{
+			spaceA.ID: 100,
+			spaceB.ID: 23,
+		},
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().UsageSummary(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, 2, result.UsedSpaces)
+	require.NotNil(t, result.MaxSpaces)
+	assert.Equal(t, 3, *result.MaxSpaces)
+	require.NotNil(t, result.StorageLimitGb)
+	assert.Equal(t, 100, *result.StorageLimitGb)
+	require.NotNil(t, result.TransformsLimit)
+	assert.Equal(t, 150000, *result.TransformsLimit)
+	require.NotNil(t, result.UsedHostedStorageBytes)
+	assert.Equal(t, 30, *result.UsedHostedStorageBytes)
+	require.NotNil(t, result.UsedTransforms)
+	assert.Equal(t, 123, *result.UsedTransforms)
+	require.NotNil(t, result.PeriodStart)
+	assert.Equal(t, periodStart.Format(time.RFC3339), *result.PeriodStart)
+	require.NotNil(t, result.PeriodEnd)
+	assert.Equal(t, periodEnd.Format(time.RFC3339), *result.PeriodEnd)
+	require.Len(t, result.Spaces, 2)
+	assert.Equal(t, "alpha", result.Spaces[0].Key)
+	require.NotNil(t, result.Spaces[0].ProcessingUsageCount)
+	assert.Equal(t, 100, *result.Spaces[0].ProcessingUsageCount)
+	assert.Equal(t, "beta", result.Spaces[1].Key)
+
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+	hostedStorageStore.AssertExpectations(t)
+	processingUsageStore.AssertExpectations(t)
 }
 
 func TestSpaces_ReturnsSpaces(t *testing.T) {

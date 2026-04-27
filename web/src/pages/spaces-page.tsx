@@ -23,11 +23,14 @@ import {
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ListSpacesQuery } from '@/generated/graphql'
+import { getPlanEntitlements, isUnlimitedLimit } from '@/lib/plan-entitlements'
 import { useAuth } from '@/stores/auth-store'
 
 interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']
   currentOrganizationId?: string | null
+  currentOrganizationPlan?: string | null
+  currentOrganizationPlanStatus?: string | null
 }
 
 function formatBytes(bytes: number) {
@@ -39,7 +42,11 @@ function formatBytes(bytes: number) {
   return `${value.toFixed(digits)} ${units[index]}`
 }
 
-export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesPageProps) {
+export function SpacesPage({
+  loaderData,
+  currentOrganizationId = null,
+  currentOrganizationPlan = null,
+}: SpacesPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const { authState } = useAuth()
@@ -50,6 +57,17 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
 
   const spaces = loaderData ?? []
   const hasSpaces = spaces.length > 0
+  const organizationSpaces = useMemo(
+    () =>
+      currentOrganizationId === null
+        ? spaces
+        : spaces.filter((space) => space.orgId === currentOrganizationId),
+    [currentOrganizationId, spaces],
+  )
+  const planEntitlements = useMemo(
+    () => getPlanEntitlements(currentOrganizationPlan),
+    [currentOrganizationPlan],
+  )
   const ownedCount = useMemo(
     () =>
       currentOrganizationId === null
@@ -64,6 +82,26 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
         : spaces.filter((space) => space.orgId !== currentOrganizationId).length,
     [currentOrganizationId, spaces],
   )
+  const hostedUsageBytes = useMemo(
+    () =>
+      organizationSpaces.reduce((total, space) => {
+        if (space.storageMode !== 'platform' || space.storageUsageBytes == null) {
+          return total
+        }
+        return total + space.storageUsageBytes
+      }, 0),
+    [organizationSpaces],
+  )
+  const createSpaceDisabled =
+    planEntitlements.maxSpaces >= 0 && ownedCount >= planEntitlements.maxSpaces
+  const spacesSummary = isUnlimitedLimit(planEntitlements.maxSpaces)
+    ? t('pages.spaces.stats.unlimited')
+    : `${ownedCount}/${planEntitlements.maxSpaces}`
+  const storageLimitBytes =
+    planEntitlements.storageLimitGB >= 0 ? planEntitlements.storageLimitGB * 1024 * 1024 * 1024 : -1
+  const hostedStorageSummary = isUnlimitedLimit(planEntitlements.storageLimitGB)
+    ? t('pages.spaces.stats.unlimited')
+    : `${formatBytes(hostedUsageBytes)} / ${formatBytes(storageLimitBytes)}`
 
   const handleLeaveSpace = async () => {
     if (!leaveSpaceItem) return
@@ -97,7 +135,7 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
   return (
     <div className='space-y-6'>
       {hasSpaces && (
-        <div className='grid gap-3 sm:grid-cols-3'>
+        <div className='grid gap-3 sm:grid-cols-4'>
           <div className='bg-muted/30 rounded-xl p-4'>
             <p className='text-muted-foreground text-xs font-medium uppercase'>
               {t('pages.spaces.stats.totalSpaces')}
@@ -116,6 +154,37 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
             </p>
             <p className='mt-2 text-2xl font-semibold'>{sharedCount}</p>
           </div>
+          <div className='bg-muted/30 rounded-xl p-4'>
+            <p className='text-muted-foreground text-xs font-medium uppercase'>
+              {t('pages.spaces.stats.spaceQuota')}
+            </p>
+            <p className='mt-2 text-2xl font-semibold'>{spacesSummary}</p>
+            <p className='text-muted-foreground mt-1 text-xs'>
+              {t(`pages.spaces.plan.${currentOrganizationPlan ?? 'free'}`)}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {currentOrganizationId !== null && (
+        <div className='bg-muted/30 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='space-y-1'>
+            <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
+            <p className='text-muted-foreground text-sm'>
+              {t('pages.spaces.usageSummaryDescription', {
+                spaces: spacesSummary,
+                storage: hostedStorageSummary,
+              })}
+            </p>
+            <p className='text-muted-foreground text-xs'>
+              {t('pages.spaces.processingUsageComingSoon')}
+            </p>
+          </div>
+          {createSpaceDisabled && (
+            <Badge variant='outline' className='w-fit'>
+              {t('pages.spaces.messages.spaceLimitReached')}
+            </Badge>
+          )}
         </div>
       )}
 
@@ -152,12 +221,19 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
           <p className='text-muted-foreground mt-2 max-w-sm text-sm'>
             {t('pages.spaces.startDescription')}
           </p>
-          <Button asChild className='mt-6'>
-            <Link to='/account/spaces/new'>
+          {createSpaceDisabled ? (
+            <Button disabled className='mt-6' title={t('pages.spaces.messages.spaceLimitReached')}>
               <Plus className='mr-2 h-4 w-4' />
               {t('pages.spaces.createSpace')}
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button asChild className='mt-6'>
+              <Link to='/account/spaces/new'>
+                <Plus className='mr-2 h-4 w-4' />
+                {t('pages.spaces.createSpace')}
+              </Link>
+            </Button>
+          )}
         </div>
       ) : (
         /* Card grid */

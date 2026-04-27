@@ -16,6 +16,7 @@ type Space {
   key: String!
   name: String!
   storageUsageBytes: Int
+  processingUsageCount: Int
   storageMode: String!
   storageType: String!
   bucket: String!
@@ -34,6 +35,26 @@ type Space {
   canDelete: Boolean!
   canLeave: Boolean!
   updatedAt: String!
+}
+
+type SpaceUsage {
+  spaceId: ID!
+  key: String!
+  name: String!
+  storageUsageBytes: Int
+  processingUsageCount: Int
+}
+
+type UsageSummary {
+  usedSpaces: Int!
+  maxSpaces: Int
+  usedHostedStorageBytes: Int
+  storageLimitGB: Int
+  usedTransforms: Int
+  transformsLimit: Int
+  periodStart: String
+  periodEnd: String
+  spaces: [SpaceUsage!]!
 }
 
 input SpaceInput {
@@ -98,6 +119,8 @@ extend type Query {
   myOrganization: Organization
   # Lists all active spaces for the caller's organization
   spaces: [Space!]!
+  # Returns the current organization's plan limits and current usage summary
+  usageSummary: UsageSummary!
   # Returns a single space by key (must belong to caller's org)
   space(key: String!): Space
   # Returns space-scoped registry entries, falling back to system:global defaults for unset keys (admin only)

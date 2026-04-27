@@ -788,6 +788,15 @@
         "deleteSpaceForbidden": "Only organization admins can delete this space.",
         "leaveSpaceFailed": "Failed to leave shared space"
       },
+      "plan": {
+        "free": "Free",
+        "trial": "Trial",
+        "early_bird": "Early Bird",
+        "starter": "Starter",
+        "pro": "Pro",
+        "team": "Team",
+        "enterprise": "Enterprise"
+      },
       "validation": {
         "keyFormat": "URL slug must contain only lowercase letters, numbers, and hyphens"
       },
@@ -796,8 +805,13 @@
         "managedStorage": "Managed Storage",
         "externalStorage": "External Storage",
         "yourSpaces": "Your Spaces",
-        "sharedWithYou": "Shared With You"
+        "sharedWithYou": "Shared With You",
+        "spaceQuota": "Space Quota",
+        "unlimited": "Unlimited"
       },
+      "usageSummaryTitle": "Current plan usage",
+      "usageSummaryDescription": "Spaces: {{spaces}}. Hosted storage: {{storage}}.",
+      "processingUsageComingSoon": "Processing usage will be shown here once the backend exposes a usage metric.",
       "configure": "Configure",
       "startDescription": "You can customize storage, delivery, and access as you grow.",
       "sharedLabel": "Shared",

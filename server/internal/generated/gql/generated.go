@@ -194,6 +194,7 @@ type ComplexityRoot struct {
 		Spaces             func(childComplexity int) int
 		StatFile           func(childComplexity int, path string, spaceID *string) int
 		StorageStatus      func(childComplexity int) int
+		UsageSummary       func(childComplexity int) int
 		User               func(childComplexity int, id string) int
 		Users              func(childComplexity int, offset *int, limit *int, search *string) int
 	}
@@ -221,6 +222,7 @@ type ComplexityRoot struct {
 		Name                 func(childComplexity int) int
 		OrgID                func(childComplexity int) int
 		Prefix               func(childComplexity int) int
+		ProcessingUsageCount func(childComplexity int) int
 		Region               func(childComplexity int) int
 		SignerAlgorithm      func(childComplexity int) int
 		SignerTruncate       func(childComplexity int) int
@@ -257,6 +259,14 @@ type ComplexityRoot struct {
 		RoleSource    func(childComplexity int) int
 		UserID        func(childComplexity int) int
 		Username      func(childComplexity int) int
+	}
+
+	SpaceUsage struct {
+		Key                  func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		ProcessingUsageCount func(childComplexity int) int
+		SpaceID              func(childComplexity int) int
+		StorageUsageBytes    func(childComplexity int) int
 	}
 
 	StorageConfigResult struct {
@@ -313,6 +323,18 @@ type ComplexityRoot struct {
 	UploadHeader struct {
 		Name  func(childComplexity int) int
 		Value func(childComplexity int) int
+	}
+
+	UsageSummary struct {
+		MaxSpaces              func(childComplexity int) int
+		PeriodEnd              func(childComplexity int) int
+		PeriodStart            func(childComplexity int) int
+		Spaces                 func(childComplexity int) int
+		StorageLimitGb         func(childComplexity int) int
+		TransformsLimit        func(childComplexity int) int
+		UsedHostedStorageBytes func(childComplexity int) int
+		UsedSpaces             func(childComplexity int) int
+		UsedTransforms         func(childComplexity int) int
 	}
 
 	User struct {
@@ -394,6 +416,7 @@ type QueryResolver interface {
 	ImagorStatus(ctx context.Context) (*ImagorStatus, error)
 	MyOrganization(ctx context.Context) (*Organization, error)
 	Spaces(ctx context.Context) ([]*Space, error)
+	UsageSummary(ctx context.Context) (*UsageSummary, error)
 	Space(ctx context.Context, key string) (*Space, error)
 	SpaceRegistry(ctx context.Context, spaceID string, keys []string) ([]*UserRegistry, error)
 	OrgMembers(ctx context.Context) ([]*OrgMember, error)
@@ -1406,6 +1429,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.StorageStatus(childComplexity), true
+	case "Query.usageSummary":
+		if e.ComplexityRoot.Query.UsageSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.UsageSummary(childComplexity), true
 	case "Query.user":
 		if e.ComplexityRoot.Query.User == nil {
 			break
@@ -1544,6 +1573,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Space.Prefix(childComplexity), true
+	case "Space.processingUsageCount":
+		if e.ComplexityRoot.Space.ProcessingUsageCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.ProcessingUsageCount(childComplexity), true
 	case "Space.region":
 		if e.ComplexityRoot.Space.Region == nil {
 			break
@@ -1709,6 +1744,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SpaceMember.Username(childComplexity), true
+
+	case "SpaceUsage.key":
+		if e.ComplexityRoot.SpaceUsage.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.Key(childComplexity), true
+	case "SpaceUsage.name":
+		if e.ComplexityRoot.SpaceUsage.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.Name(childComplexity), true
+	case "SpaceUsage.processingUsageCount":
+		if e.ComplexityRoot.SpaceUsage.ProcessingUsageCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.ProcessingUsageCount(childComplexity), true
+	case "SpaceUsage.spaceId":
+		if e.ComplexityRoot.SpaceUsage.SpaceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.SpaceID(childComplexity), true
+	case "SpaceUsage.storageUsageBytes":
+		if e.ComplexityRoot.SpaceUsage.StorageUsageBytes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.StorageUsageBytes(childComplexity), true
 
 	case "StorageConfigResult.message":
 		if e.ComplexityRoot.StorageConfigResult.Message == nil {
@@ -1909,6 +1975,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.UploadHeader.Value(childComplexity), true
+
+	case "UsageSummary.maxSpaces":
+		if e.ComplexityRoot.UsageSummary.MaxSpaces == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.MaxSpaces(childComplexity), true
+	case "UsageSummary.periodEnd":
+		if e.ComplexityRoot.UsageSummary.PeriodEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.PeriodEnd(childComplexity), true
+	case "UsageSummary.periodStart":
+		if e.ComplexityRoot.UsageSummary.PeriodStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.PeriodStart(childComplexity), true
+	case "UsageSummary.spaces":
+		if e.ComplexityRoot.UsageSummary.Spaces == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.Spaces(childComplexity), true
+	case "UsageSummary.storageLimitGB":
+		if e.ComplexityRoot.UsageSummary.StorageLimitGb == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.StorageLimitGb(childComplexity), true
+	case "UsageSummary.transformsLimit":
+		if e.ComplexityRoot.UsageSummary.TransformsLimit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.TransformsLimit(childComplexity), true
+	case "UsageSummary.usedHostedStorageBytes":
+		if e.ComplexityRoot.UsageSummary.UsedHostedStorageBytes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.UsedHostedStorageBytes(childComplexity), true
+	case "UsageSummary.usedSpaces":
+		if e.ComplexityRoot.UsageSummary.UsedSpaces == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.UsedSpaces(childComplexity), true
+	case "UsageSummary.usedTransforms":
+		if e.ComplexityRoot.UsageSummary.UsedTransforms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.UsedTransforms(childComplexity), true
 
 	case "User.authProviders":
 		if e.ComplexityRoot.User.AuthProviders == nil {
@@ -2244,6 +2365,7 @@ type Space {
   key: String!
   name: String!
   storageUsageBytes: Int
+  processingUsageCount: Int
   storageMode: String!
   storageType: String!
   bucket: String!
@@ -2262,6 +2384,26 @@ type Space {
   canDelete: Boolean!
   canLeave: Boolean!
   updatedAt: String!
+}
+
+type SpaceUsage {
+  spaceId: ID!
+  key: String!
+  name: String!
+  storageUsageBytes: Int
+  processingUsageCount: Int
+}
+
+type UsageSummary {
+  usedSpaces: Int!
+  maxSpaces: Int
+  usedHostedStorageBytes: Int
+  storageLimitGB: Int
+  usedTransforms: Int
+  transformsLimit: Int
+  periodStart: String
+  periodEnd: String
+  spaces: [SpaceUsage!]!
 }
 
 input SpaceInput {
@@ -2326,6 +2468,8 @@ extend type Query {
   myOrganization: Organization
   # Lists all active spaces for the caller's organization
   spaces: [Space!]!
+  # Returns the current organization's plan limits and current usage summary
+  usageSummary: UsageSummary!
   # Returns a single space by key (must belong to caller's org)
   space(key: String!): Space
   # Returns space-scoped registry entries, falling back to system:global defaults for unset keys (admin only)
@@ -5757,6 +5901,8 @@ func (ec *executionContext) fieldContext_Mutation_createSpace(ctx context.Contex
 				return ec.fieldContext_Space_name(ctx, field)
 			case "storageUsageBytes":
 				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_Space_processingUsageCount(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -5846,6 +5992,8 @@ func (ec *executionContext) fieldContext_Mutation_updateSpace(ctx context.Contex
 				return ec.fieldContext_Space_name(ctx, field)
 			case "storageUsageBytes":
 				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_Space_processingUsageCount(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -7758,6 +7906,8 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 				return ec.fieldContext_Space_name(ctx, field)
 			case "storageUsageBytes":
 				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_Space_processingUsageCount(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -7801,6 +7951,55 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_usageSummary(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_usageSummary,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().UsageSummary(ctx)
+		},
+		nil,
+		ec.marshalNUsageSummary2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUsageSummary,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_usageSummary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "usedSpaces":
+				return ec.fieldContext_UsageSummary_usedSpaces(ctx, field)
+			case "maxSpaces":
+				return ec.fieldContext_UsageSummary_maxSpaces(ctx, field)
+			case "usedHostedStorageBytes":
+				return ec.fieldContext_UsageSummary_usedHostedStorageBytes(ctx, field)
+			case "storageLimitGB":
+				return ec.fieldContext_UsageSummary_storageLimitGB(ctx, field)
+			case "usedTransforms":
+				return ec.fieldContext_UsageSummary_usedTransforms(ctx, field)
+			case "transformsLimit":
+				return ec.fieldContext_UsageSummary_transformsLimit(ctx, field)
+			case "periodStart":
+				return ec.fieldContext_UsageSummary_periodStart(ctx, field)
+			case "periodEnd":
+				return ec.fieldContext_UsageSummary_periodEnd(ctx, field)
+			case "spaces":
+				return ec.fieldContext_UsageSummary_spaces(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UsageSummary", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_space(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7836,6 +8035,8 @@ func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field 
 				return ec.fieldContext_Space_name(ctx, field)
 			case "storageUsageBytes":
 				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_Space_processingUsageCount(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -8955,6 +9156,35 @@ func (ec *executionContext) fieldContext_Space_storageUsageBytes(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Space_processingUsageCount(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_processingUsageCount,
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessingUsageCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_processingUsageCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Space_storageMode(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10033,6 +10263,151 @@ func (ec *executionContext) fieldContext_SpaceMember_createdAt(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _SpaceUsage_spaceId(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_spaceId,
+		func(ctx context.Context) (any, error) {
+			return obj.SpaceID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_spaceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceUsage_key(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_key,
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceUsage_name(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceUsage_storageUsageBytes(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_storageUsageBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageUsageBytes, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_storageUsageBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceUsage_processingUsageCount(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_processingUsageCount,
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessingUsageCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_processingUsageCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _StorageConfigResult_success(ctx context.Context, field graphql.CollectedField, obj *StorageConfigResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10976,6 +11351,279 @@ func (ec *executionContext) fieldContext_UploadHeader_value(_ context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_usedSpaces(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_usedSpaces,
+		func(ctx context.Context) (any, error) {
+			return obj.UsedSpaces, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_usedSpaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_maxSpaces(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_maxSpaces,
+		func(ctx context.Context) (any, error) {
+			return obj.MaxSpaces, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_maxSpaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_usedHostedStorageBytes(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_usedHostedStorageBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.UsedHostedStorageBytes, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_usedHostedStorageBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_storageLimitGB(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_storageLimitGB,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageLimitGb, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_storageLimitGB(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_usedTransforms(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_usedTransforms,
+		func(ctx context.Context) (any, error) {
+			return obj.UsedTransforms, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_usedTransforms(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_transformsLimit(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_transformsLimit,
+		func(ctx context.Context) (any, error) {
+			return obj.TransformsLimit, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_transformsLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_periodStart(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_periodStart,
+		func(ctx context.Context) (any, error) {
+			return obj.PeriodStart, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_periodStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_periodEnd(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_periodEnd,
+		func(ctx context.Context) (any, error) {
+			return obj.PeriodEnd, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_periodEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_spaces(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_spaces,
+		func(ctx context.Context) (any, error) {
+			return obj.Spaces, nil
+		},
+		nil,
+		ec.marshalNSpaceUsage2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsageᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_spaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "spaceId":
+				return ec.fieldContext_SpaceUsage_spaceId(ctx, field)
+			case "key":
+				return ec.fieldContext_SpaceUsage_key(ctx, field)
+			case "name":
+				return ec.fieldContext_SpaceUsage_name(ctx, field)
+			case "storageUsageBytes":
+				return ec.fieldContext_SpaceUsage_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_SpaceUsage_processingUsageCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SpaceUsage", field.Name)
 		},
 	}
 	return fc, nil
@@ -15009,6 +15657,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "usageSummary":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_usageSummary(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "space":
 			field := field
 
@@ -15419,6 +16089,8 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "storageUsageBytes":
 			out.Values[i] = ec._Space_storageUsageBytes(ctx, field, obj)
+		case "processingUsageCount":
+			out.Values[i] = ec._Space_processingUsageCount(ctx, field, obj)
 		case "storageMode":
 			out.Values[i] = ec._Space_storageMode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -15689,6 +16361,59 @@ func (ec *executionContext) _SpaceMember(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var spaceUsageImplementors = []string{"SpaceUsage"}
+
+func (ec *executionContext) _SpaceUsage(ctx context.Context, sel ast.SelectionSet, obj *SpaceUsage) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, spaceUsageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SpaceUsage")
+		case "spaceId":
+			out.Values[i] = ec._SpaceUsage_spaceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "key":
+			out.Values[i] = ec._SpaceUsage_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._SpaceUsage_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "storageUsageBytes":
+			out.Values[i] = ec._SpaceUsage_storageUsageBytes(ctx, field, obj)
+		case "processingUsageCount":
+			out.Values[i] = ec._SpaceUsage_processingUsageCount(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16076,6 +16801,64 @@ func (ec *executionContext) _UploadHeader(ctx context.Context, sel ast.Selection
 			}
 		case "value":
 			out.Values[i] = ec._UploadHeader_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var usageSummaryImplementors = []string{"UsageSummary"}
+
+func (ec *executionContext) _UsageSummary(ctx context.Context, sel ast.SelectionSet, obj *UsageSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, usageSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UsageSummary")
+		case "usedSpaces":
+			out.Values[i] = ec._UsageSummary_usedSpaces(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "maxSpaces":
+			out.Values[i] = ec._UsageSummary_maxSpaces(ctx, field, obj)
+		case "usedHostedStorageBytes":
+			out.Values[i] = ec._UsageSummary_usedHostedStorageBytes(ctx, field, obj)
+		case "storageLimitGB":
+			out.Values[i] = ec._UsageSummary_storageLimitGB(ctx, field, obj)
+		case "usedTransforms":
+			out.Values[i] = ec._UsageSummary_usedTransforms(ctx, field, obj)
+		case "transformsLimit":
+			out.Values[i] = ec._UsageSummary_transformsLimit(ctx, field, obj)
+		case "periodStart":
+			out.Values[i] = ec._UsageSummary_periodStart(ctx, field, obj)
+		case "periodEnd":
+			out.Values[i] = ec._UsageSummary_periodEnd(ctx, field, obj)
+		case "spaces":
+			out.Values[i] = ec._UsageSummary_spaces(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -17004,6 +17787,32 @@ func (ec *executionContext) marshalNSpaceMember2ᚖgithubᚗcomᚋcshumᚋimagor
 	return ec._SpaceMember(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNSpaceUsage2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsageᚄ(ctx context.Context, sel ast.SelectionSet, v []*SpaceUsage) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSpaceUsage2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsage(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSpaceUsage2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsage(ctx context.Context, sel ast.SelectionSet, v *SpaceUsage) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SpaceUsage(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigInput(ctx context.Context, v any) (StorageConfigInput, error) {
 	res, err := ec.unmarshalInputStorageConfigInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -17176,6 +17985,20 @@ func (ec *executionContext) marshalNUploadHeader2ᚖgithubᚗcomᚋcshumᚋimago
 		return graphql.Null
 	}
 	return ec._UploadHeader(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUsageSummary2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUsageSummary(ctx context.Context, sel ast.SelectionSet, v UsageSummary) graphql.Marshaler {
+	return ec._UsageSummary(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUsageSummary2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUsageSummary(ctx context.Context, sel ast.SelectionSet, v *UsageSummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UsageSummary(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v User) graphql.Marshaler {

@@ -181,6 +181,8 @@ export const usersLoader = async ({
 export interface SpacesLoaderData {
   spaces: ListSpacesQuery['spaces']
   currentOrganizationId: string | null
+  currentOrganizationPlan: string | null
+  currentOrganizationPlanStatus: string | null
   breadcrumb: BreadcrumbItem
 }
 
@@ -192,6 +194,8 @@ export const spacesLoader = async (): Promise<SpacesLoaderData> => {
   return {
     spaces,
     currentOrganizationId: organization?.id ?? null,
+    currentOrganizationPlan: organization?.plan ?? null,
+    currentOrganizationPlanStatus: organization?.planStatus ?? null,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.spaces',
     },

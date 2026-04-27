@@ -761,6 +761,15 @@
         "deleteSpaceForbidden": "只有组织管理员可以删除这个空间。",
         "leaveSpaceFailed": "离开共享空间失败"
       },
+      "plan": {
+        "free": "免费",
+        "trial": "试用",
+        "early_bird": "早鸟",
+        "starter": "Starter",
+        "pro": "Pro",
+        "team": "Team",
+        "enterprise": "Enterprise"
+      },
       "validation": {
         "keyFormat": "URL Slug 只能包含小写字母、数字和连字符"
       },
@@ -769,8 +778,13 @@
         "managedStorage": "平台存储",
         "externalStorage": "外部存储",
         "yourSpaces": "你的空间",
-        "sharedWithYou": "与你共享"
+        "sharedWithYou": "与你共享",
+        "spaceQuota": "空间额度",
+        "unlimited": "不限"
       },
+      "usageSummaryTitle": "当前套餐用量",
+      "usageSummaryDescription": "空间：{{spaces}}。平台存储：{{storage}}。",
+      "processingUsageComingSoon": "后端提供处理量指标后，会在这里显示处理用量。",
       "configure": "配置",
       "creationPreview": {
         "appUrlLabel": "应用 URL",

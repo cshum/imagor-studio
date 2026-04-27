@@ -89,9 +89,17 @@ type HostedStorageUsageAggregator interface {
 	ListUsageBytesBySpace(ctx context.Context, orgID string, spaceIDs []string) (map[string]int64, error)
 }
 
+type ProcessingUsageSummary struct {
+	PeriodStart           time.Time
+	PeriodEnd             time.Time
+	TotalProcessedCount   int64
+	ProcessedCountBySpace map[string]int64
+}
+
 type ProcessingUsageStore interface {
 	ApplyUsageBatch(ctx context.Context, batch processing.UsageBatch) (*processing.UsageBatchApplyResult, error)
 	CleanupUsageBatches(ctx context.Context, olderThan time.Time) error
+	GetCurrentUsageSummary(ctx context.Context, orgID string) (*ProcessingUsageSummary, error)
 }
 
 type ImagorSigningConfig struct {

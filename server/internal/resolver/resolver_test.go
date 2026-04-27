@@ -624,6 +624,31 @@ func (m *MockHostedStorageStore) ListUsageBytesBySpace(ctx context.Context, orgI
 	return args.Get(0).(map[string]int64), args.Error(1)
 }
 
+type MockProcessingUsageStore struct {
+	mock.Mock
+}
+
+func (m *MockProcessingUsageStore) ApplyUsageBatch(ctx context.Context, batch processing.UsageBatch) (*processing.UsageBatchApplyResult, error) {
+	args := m.Called(ctx, batch)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*processing.UsageBatchApplyResult), args.Error(1)
+}
+
+func (m *MockProcessingUsageStore) CleanupUsageBatches(ctx context.Context, olderThan time.Time) error {
+	args := m.Called(ctx, olderThan)
+	return args.Error(0)
+}
+
+func (m *MockProcessingUsageStore) GetCurrentUsageSummary(ctx context.Context, orgID string) (*management.ProcessingUsageSummary, error) {
+	args := m.Called(ctx, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*management.ProcessingUsageSummary), args.Error(1)
+}
+
 // createAdminContextWithOrg creates an admin context that carries an OrgID claim.
 func createAdminContextWithOrg(userID, orgID string) context.Context {
 	claims := &auth.Claims{

@@ -132,6 +132,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		resolver.WithLocalTemplatePreviewRenderer(),
 		resolver.WithCloudConfig(cloudConfig),
 		resolver.WithHostedStorageStore(services.HostedStorageStore),
+		resolver.WithProcessingUsageStore(services.ProcessingUsageStore),
 		resolver.WithProcessingOriginResolver(processingOriginResolver),
 		templatePreviewRenderer,
 	)

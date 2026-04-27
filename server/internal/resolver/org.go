@@ -41,6 +41,7 @@ func mapSpaceToGQL(s *space.Space) *gql.Space {
 		Key:                  s.Key,
 		Name:                 s.Name,
 		StorageUsageBytes:    nil,
+		ProcessingUsageCount: nil,
 		StorageMode:          space.NormalizeStorageMode(s.StorageMode),
 		StorageType:          s.StorageType,
 		Bucket:               s.Bucket,
@@ -149,12 +150,20 @@ func (r *Resolver) isProtectedHostSpaceMember(ctx context.Context, space *space.
 }
 
 func (r *Resolver) applyHostedStorageUsage(gqlSpace *gql.Space, usageBytes int64, spaceID string) {
-	usageValue := int(usageBytes)
-	if int64(usageValue) != usageBytes {
-		r.logger.Warn("hosted storage usage exceeds GraphQL int range", zap.String("spaceID", spaceID), zap.Int64("usageBytes", usageBytes))
-		return
+	gqlSpace.StorageUsageBytes = r.toGraphQLIntPtr(usageBytes, "hosted storage usage exceeds GraphQL int range", zap.String("spaceID", spaceID), zap.Int64("usageBytes", usageBytes))
+}
+
+func (r *Resolver) applyProcessingUsage(gqlSpace *gql.Space, processedCount int64, spaceID string) {
+	gqlSpace.ProcessingUsageCount = r.toGraphQLIntPtr(processedCount, "processing usage exceeds GraphQL int range", zap.String("spaceID", spaceID), zap.Int64("processedCount", processedCount))
+}
+
+func (r *Resolver) toGraphQLIntPtr(value int64, message string, fields ...zap.Field) *int {
+	converted := int(value)
+	if int64(converted) != value {
+		r.logger.Warn(message, fields...)
+		return nil
 	}
-	gqlSpace.StorageUsageBytes = &usageValue
+	return &converted
 }
 
 func (r *Resolver) listHostedUsageBySpaceID(ctx context.Context, orgID string, spacesByKey map[string]*space.Space) map[string]int64 {
@@ -188,6 +197,40 @@ func (r *Resolver) listHostedUsageBySpaceID(ctx context.Context, orgID string, s
 	return hostedUsageBySpaceID
 }
 
+func (r *Resolver) getCurrentProcessingUsageSummary(ctx context.Context, orgID string) *management.ProcessingUsageSummary {
+	if r.processingUsageStore == nil || orgID == "" {
+		return &management.ProcessingUsageSummary{ProcessedCountBySpace: map[string]int64{}}
+	}
+
+	summary, err := r.processingUsageStore.GetCurrentUsageSummary(ctx, orgID)
+	if err != nil {
+		r.logger.Warn("failed to get processing usage summary", zap.String("orgID", orgID), zap.Error(err))
+		return &management.ProcessingUsageSummary{ProcessedCountBySpace: map[string]int64{}}
+	}
+	if summary == nil {
+		return &management.ProcessingUsageSummary{ProcessedCountBySpace: map[string]int64{}}
+	}
+	if summary.ProcessedCountBySpace == nil {
+		summary.ProcessedCountBySpace = map[string]int64{}
+	}
+	return summary
+}
+
+func (r *Resolver) mapSpaceToUsageSummary(spaceRecord *space.Space, hostedUsageBySpaceID map[string]int64, processingUsageBySpaceID map[string]int64) *gql.SpaceUsage {
+	usageSummary := &gql.SpaceUsage{
+		SpaceID: spaceRecord.ID,
+		Key:     spaceRecord.Key,
+		Name:    spaceRecord.Name,
+	}
+	if usageBytes, ok := hostedUsageBySpaceID[spaceRecord.ID]; ok {
+		usageSummary.StorageUsageBytes = r.toGraphQLIntPtr(usageBytes, "hosted storage usage exceeds GraphQL int range", zap.String("spaceID", spaceRecord.ID), zap.Int64("usageBytes", usageBytes))
+	}
+	if processedCount, ok := processingUsageBySpaceID[spaceRecord.ID]; ok {
+		usageSummary.ProcessingUsageCount = r.toGraphQLIntPtr(processedCount, "processing usage exceeds GraphQL int range", zap.String("spaceID", spaceRecord.ID), zap.Int64("processedCount", processedCount))
+	}
+	return usageSummary
+}
+
 func (r *Resolver) mapSpaceToGQLWithPermissionsOnly(ctx context.Context, s *space.Space) (*gql.Space, error) {
 	gqlSpace := mapSpaceToGQL(s)
 	permissions, err := r.getSpacePermissions(ctx, s)
@@ -212,6 +255,13 @@ func (r *Resolver) mapSpaceToGQLWithPermissions(ctx context.Context, s *space.Sp
 			r.logger.Warn("mapSpaceToGQLWithPermissions: failed to get hosted storage usage", zap.String("spaceID", s.ID), zap.Error(usageErr))
 		} else {
 			r.applyHostedStorageUsage(gqlSpace, usageBytes, s.ID)
+		}
+	}
+
+	if s.OrgID != "" {
+		processingSummary := r.getCurrentProcessingUsageSummary(ctx, s.OrgID)
+		if processedCount, ok := processingSummary.ProcessedCountBySpace[s.ID]; ok {
+			r.applyProcessingUsage(gqlSpace, processedCount, s.ID)
 		}
 	}
 
@@ -580,6 +630,83 @@ func (r *queryResolver) MyOrganization(ctx context.Context) (*gql.Organization, 
 	return mapOrgToGQL(org), nil
 }
 
+func (r *queryResolver) UsageSummary(ctx context.Context) (*gql.UsageSummary, error) {
+	if !r.cloudEnabled() || r.orgStore == nil || r.spaceStore == nil {
+		return &gql.UsageSummary{UsedSpaces: 0, Spaces: []*gql.SpaceUsage{}}, nil
+	}
+
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if orgID == "" {
+		return &gql.UsageSummary{UsedSpaces: 0, Spaces: []*gql.SpaceUsage{}}, nil
+	}
+
+	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		r.logger.Error("UsageSummary: failed to get org", zap.String("orgID", orgID), zap.Error(err))
+		return nil, fmt.Errorf("failed to get organization: %w", err)
+	}
+	if currentOrg == nil {
+		return &gql.UsageSummary{UsedSpaces: 0, Spaces: []*gql.SpaceUsage{}}, nil
+	}
+
+	orgSpaces, err := r.spaceStore.ListByOrgID(ctx, orgID)
+	if err != nil {
+		r.logger.Error("UsageSummary: failed to list spaces", zap.String("orgID", orgID), zap.Error(err))
+		return nil, fmt.Errorf("failed to list spaces: %w", err)
+	}
+
+	spacesByKey := make(map[string]*space.Space, len(orgSpaces))
+	for _, s := range orgSpaces {
+		spacesByKey[s.Key] = s
+	}
+
+	hostedUsageBySpaceID := r.listHostedUsageBySpaceID(ctx, orgID, spacesByKey)
+	processingSummary := r.getCurrentProcessingUsageSummary(ctx, orgID)
+	entitlements := billing.EntitlementsForPlan(currentOrg.Plan)
+
+	totalHostedUsageBytes := int64(0)
+	for _, usageBytes := range hostedUsageBySpaceID {
+		totalHostedUsageBytes += usageBytes
+	}
+
+	spaceUsage := make([]*gql.SpaceUsage, 0, len(orgSpaces))
+	for _, s := range orgSpaces {
+		spaceUsage = append(spaceUsage, r.mapSpaceToUsageSummary(s, hostedUsageBySpaceID, processingSummary.ProcessedCountBySpace))
+	}
+	sort.Slice(spaceUsage, func(i, j int) bool {
+		return spaceUsage[i].Key < spaceUsage[j].Key
+	})
+
+	result := &gql.UsageSummary{
+		UsedSpaces:             len(orgSpaces),
+		UsedHostedStorageBytes: r.toGraphQLIntPtr(totalHostedUsageBytes, "hosted storage total exceeds GraphQL int range", zap.String("orgID", orgID), zap.Int64("usageBytes", totalHostedUsageBytes)),
+		UsedTransforms:         r.toGraphQLIntPtr(processingSummary.TotalProcessedCount, "processing usage total exceeds GraphQL int range", zap.String("orgID", orgID), zap.Int64("processedCount", processingSummary.TotalProcessedCount)),
+		Spaces:                 spaceUsage,
+	}
+	if entitlements.MaxSpaces >= 0 {
+		result.MaxSpaces = &entitlements.MaxSpaces
+	}
+	if entitlements.StorageLimitGB >= 0 {
+		result.StorageLimitGb = r.toGraphQLIntPtr(entitlements.StorageLimitGB, "storage limit exceeds GraphQL int range", zap.String("orgID", orgID), zap.Int64("storageLimitGB", entitlements.StorageLimitGB))
+	}
+	if entitlements.TransformsLimit >= 0 {
+		result.TransformsLimit = r.toGraphQLIntPtr(entitlements.TransformsLimit, "transforms limit exceeds GraphQL int range", zap.String("orgID", orgID), zap.Int64("transformsLimit", entitlements.TransformsLimit))
+	}
+	if !processingSummary.PeriodStart.IsZero() {
+		periodStart := processingSummary.PeriodStart.UTC().Format(time.RFC3339)
+		result.PeriodStart = &periodStart
+	}
+	if !processingSummary.PeriodEnd.IsZero() {
+		periodEnd := processingSummary.PeriodEnd.UTC().Format(time.RFC3339)
+		result.PeriodEnd = &periodEnd
+	}
+
+	return result, nil
+}
+
 // Spaces returns all active spaces for the authenticated user's organization.
 func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 	if !r.cloudEnabled() {
@@ -615,6 +742,7 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 	}
 
 	hostedUsageBySpaceID := r.listHostedUsageBySpaceID(ctx, orgID, spacesByKey)
+	processingSummary := r.getCurrentProcessingUsageSummary(ctx, orgID)
 
 	result := make([]*gql.Space, 0, len(spacesByKey))
 	for _, s := range spacesByKey {
@@ -631,6 +759,9 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 		}
 		if usageBytes, ok := hostedUsageBySpaceID[s.ID]; ok {
 			r.applyHostedStorageUsage(mapped, usageBytes, s.ID)
+		}
+		if processedCount, ok := processingSummary.ProcessedCountBySpace[s.ID]; ok && orgID != "" && s.OrgID == orgID {
+			r.applyProcessingUsage(mapped, processedCount, s.ID)
 		}
 		result = append(result, mapped)
 	}

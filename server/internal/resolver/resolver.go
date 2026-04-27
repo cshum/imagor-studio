@@ -60,6 +60,7 @@ type Resolver struct {
 	orgStore                 org.OrgStore
 	spaceStore               space.SpaceStore
 	hostedStorageStore       management.HostedStorageStore
+	processingUsageStore     management.ProcessingUsageStore
 	processingOriginResolver space.ProcessingOriginResolver
 	templatePreviewRenderer  processing.TemplatePreviewRenderClient
 
@@ -87,6 +88,12 @@ func WithCloudConfig(cloudConfig management.CloudConfig) ResolverOption {
 func WithHostedStorageStore(store management.HostedStorageStore) ResolverOption {
 	return func(r *Resolver) {
 		r.hostedStorageStore = store
+	}
+}
+
+func WithProcessingUsageStore(store management.ProcessingUsageStore) ResolverOption {
+	return func(r *Resolver) {
+		r.processingUsageStore = store
 	}
 }
 

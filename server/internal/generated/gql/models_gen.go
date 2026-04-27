@@ -210,6 +210,7 @@ type Space struct {
 	Key                  string `json:"key"`
 	Name                 string `json:"name"`
 	StorageUsageBytes    *int   `json:"storageUsageBytes,omitempty"`
+	ProcessingUsageCount *int   `json:"processingUsageCount,omitempty"`
 	StorageMode          string `json:"storageMode"`
 	StorageType          string `json:"storageType"`
 	Bucket               string `json:"bucket"`
@@ -277,6 +278,14 @@ type SpaceMember struct {
 	CreatedAt     string  `json:"createdAt"`
 }
 
+type SpaceUsage struct {
+	SpaceID              string `json:"spaceId"`
+	Key                  string `json:"key"`
+	Name                 string `json:"name"`
+	StorageUsageBytes    *int   `json:"storageUsageBytes,omitempty"`
+	ProcessingUsageCount *int   `json:"processingUsageCount,omitempty"`
+}
+
 type StorageConfigInput struct {
 	Type       StorageType       `json:"type"`
 	FileConfig *FileStorageInput `json:"fileConfig,omitempty"`
@@ -342,6 +351,18 @@ type UpdateProfileInput struct {
 type UploadHeader struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+type UsageSummary struct {
+	UsedSpaces             int           `json:"usedSpaces"`
+	MaxSpaces              *int          `json:"maxSpaces,omitempty"`
+	UsedHostedStorageBytes *int          `json:"usedHostedStorageBytes,omitempty"`
+	StorageLimitGb         *int          `json:"storageLimitGB,omitempty"`
+	UsedTransforms         *int          `json:"usedTransforms,omitempty"`
+	TransformsLimit        *int          `json:"transformsLimit,omitempty"`
+	PeriodStart            *string       `json:"periodStart,omitempty"`
+	PeriodEnd              *string       `json:"periodEnd,omitempty"`
+	Spaces                 []*SpaceUsage `json:"spaces"`
 }
 
 type User struct {

@@ -28,6 +28,10 @@ func (s *cleanupRecordingStore) CleanupUsageBatches(_ context.Context, olderThan
 	return s.err
 }
 
+func (s *cleanupRecordingStore) GetCurrentUsageSummary(context.Context, string) (*management.ProcessingUsageSummary, error) {
+	return &management.ProcessingUsageSummary{ProcessedCountBySpace: map[string]int64{}}, nil
+}
+
 func TestProcessingUsageCleanupLoopConfig(t *testing.T) {
 	t.Parallel()
 

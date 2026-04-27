@@ -779,6 +779,15 @@
         "deleteSpaceForbidden": "只有組織管理員可以刪除此空間。",
         "leaveSpaceFailed": "離開共享空間失敗"
       },
+      "plan": {
+        "free": "免費",
+        "trial": "試用",
+        "early_bird": "早鳥",
+        "starter": "Starter",
+        "pro": "Pro",
+        "team": "Team",
+        "enterprise": "Enterprise"
+      },
       "validation": {
         "keyFormat": "URL 識別碼只能包含小寫字母、數字和連字號"
       },
@@ -787,8 +796,13 @@
         "managedStorage": "託管儲存",
         "externalStorage": "外部儲存",
         "yourSpaces": "您的空間",
-        "sharedWithYou": "與您共享"
+        "sharedWithYou": "與您共享",
+        "spaceQuota": "空間額度",
+        "unlimited": "不限"
       },
+      "usageSummaryTitle": "目前方案用量",
+      "usageSummaryDescription": "空間：{{spaces}}。託管儲存：{{storage}}。",
+      "processingUsageComingSoon": "待後端提供處理量指標後，會在這裡顯示處理用量。",
       "configure": "設定",
       "creationPreview": {
         "appUrlLabel": "應用 URL",
