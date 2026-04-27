@@ -90,6 +90,25 @@ function getOrganizationMembersErrorMessage(error: unknown, t: (key: string) => 
   return errorInfo.message || extractErrorMessage(error)
 }
 
+export async function reloadOrganizationMembersData({
+  currentRole,
+  refreshAuthSession,
+}: {
+  currentRole?: string | null
+  refreshAuthSession: () => Promise<unknown>
+}) {
+  const [nextOrganization, nextMembers] = await Promise.all([getMyOrganization(), listOrgMembers()])
+
+  if ((currentRole ?? null) !== (nextOrganization?.currentUserRole ?? null)) {
+    await refreshAuthSession()
+  }
+
+  return {
+    nextOrganization,
+    nextMembers,
+  }
+}
+
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
   const { t } = useTranslation()
   const { authState, refreshAuthSession } = useAuth()
@@ -114,19 +133,13 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
     organization?.currentUserRole === 'owner' || organization?.currentUserRole === 'admin'
 
   const reloadOrganizationMembers = async () => {
-    const [nextOrganization, nextMembers] = await Promise.all([
-      getMyOrganization(),
-      listOrgMembers(),
-    ])
+    const { nextOrganization, nextMembers } = await reloadOrganizationMembersData({
+      currentRole: organization?.currentUserRole,
+      refreshAuthSession,
+    })
 
-    const currentRole = organization?.currentUserRole ?? null
-    const nextRole = nextOrganization?.currentUserRole ?? null
     setOrganization(nextOrganization)
     setMembers(nextMembers)
-
-    if (currentRole !== nextRole) {
-      await refreshAuthSession()
-    }
   }
 
   const handleAddMember = async () => {
