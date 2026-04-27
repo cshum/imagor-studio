@@ -175,7 +175,10 @@ export function SpacesPage({
   return (
     <div className='space-y-6'>
       {currentOrganizationId !== null && (
-        <div className='bg-muted/30 rounded-xl border p-4'>
+        <Link
+          to='/account/organization/billing'
+          className='bg-muted/30 block rounded-xl border p-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+        >
           <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <div className='space-y-1'>
               <div className='flex flex-wrap items-center gap-2'>
@@ -251,7 +254,7 @@ export function SpacesPage({
               <Progress value={getProgressValue(usedTransforms ?? 0, transformsLimit)} />
             </div>
           </div>
-        </div>
+        </Link>
       )}
 
       {/* Loading skeleton */}

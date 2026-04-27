@@ -38,20 +38,11 @@ function CreateSpacePageTrigger({ disabled }: { disabled: boolean }) {
 
 function SpacesPageActions({
   createSpaceDisabled,
-  isAdmin,
 }: {
   createSpaceDisabled: boolean
-  isAdmin: boolean
 }) {
-  const { t } = useTranslation()
-
   return (
     <div className='flex flex-wrap items-center gap-2'>
-      {isAdmin && (
-        <Link to='/account/organization/billing'>
-          <Button variant='outline'>{t('pages.spaces.manageOrganization')}</Button>
-        </Link>
-      )}
       <CreateSpacePageTrigger disabled={createSpaceDisabled} />
     </div>
   )
@@ -78,10 +69,7 @@ export function RootPage({ loaderData }: RootPageProps) {
         title={t('pages.spaces.title')}
         description={t('pages.spaces.description')}
         primaryAction={
-          <SpacesPageActions
-            createSpaceDisabled={createSpaceDisabled}
-            isAdmin={auth.profile?.role === 'admin'}
-          />
+          <SpacesPageActions createSpaceDisabled={createSpaceDisabled} />
         }
       >
         <SpacesPage
