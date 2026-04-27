@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -828,6 +829,19 @@ func validateBillablePlan(plan string) error {
 	return nil
 }
 
+func validateBillingRedirectURL(rawURL string, reason string) error {
+	parsed, err := url.Parse(strings.TrimSpace(rawURL))
+	if err != nil || parsed == nil || parsed.Scheme == "" || parsed.Host == "" {
+		return apperror.BadRequest("billing redirect URL must be an absolute http or https URL", map[string]interface{}{"reason": reason})
+	}
+	switch strings.ToLower(parsed.Scheme) {
+	case "http", "https":
+		return nil
+	default:
+		return apperror.BadRequest("billing redirect URL must be an absolute http or https URL", map[string]interface{}{"reason": reason})
+	}
+}
+
 func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan string, successURL string, cancelURL string) (*gql.BillingSession, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
@@ -843,6 +857,12 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 	}
 	if strings.TrimSpace(successURL) == "" || strings.TrimSpace(cancelURL) == "" {
 		return nil, apperror.BadRequest("success and cancel URLs are required", map[string]interface{}{"reason": "billing_redirect_urls_required"})
+	}
+	if err := validateBillingRedirectURL(successURL, "billing_redirect_url_invalid"); err != nil {
+		return nil, err
+	}
+	if err := validateBillingRedirectURL(cancelURL, "billing_redirect_url_invalid"); err != nil {
+		return nil, err
 	}
 	orgID, err := r.getUserOrgID(ctx)
 	if err != nil {
@@ -878,6 +898,9 @@ func (r *mutationResolver) CreateBillingPortalSession(ctx context.Context, retur
 	}
 	if strings.TrimSpace(returnURL) == "" {
 		return nil, apperror.BadRequest("return URL is required", map[string]interface{}{"reason": "billing_return_url_required"})
+	}
+	if err := validateBillingRedirectURL(returnURL, "billing_return_url_invalid"); err != nil {
+		return nil, err
 	}
 	orgID, err := r.getUserOrgID(ctx)
 	if err != nil {

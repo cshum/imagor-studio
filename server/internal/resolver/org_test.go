@@ -289,6 +289,17 @@ func TestCreateCheckoutSession_RejectsUnsupportedPlan(t *testing.T) {
 	assert.Equal(t, "unsupported_billing_plan", gqlErr.Extensions["reason"])
 }
 
+func TestCreateCheckoutSession_RejectsInvalidRedirectURL(t *testing.T) {
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, &MockBillingService{})
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "/relative/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "billing_redirect_url_invalid", gqlErr.Extensions["reason"])
+}
+
 func TestCreateBillingPortalSession_RequiresConfiguredBillingService(t *testing.T) {
 	r := newOrgResolver(&MockOrgStore{}, &MockSpaceStore{})
 	ctx := createAdminContextWithOrg("user-1", "org-1")
@@ -315,6 +326,17 @@ func TestCreateBillingPortalSession_CreatesPortalSession(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "https://billing.example/portal", result.URL)
 	billingService.AssertExpectations(t)
+}
+
+func TestCreateBillingPortalSession_RejectsInvalidReturnURL(t *testing.T) {
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, &MockBillingService{})
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+
+	_, err := r.Mutation().CreateBillingPortalSession(ctx, "javascript:alert(1)")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "billing_return_url_invalid", gqlErr.Extensions["reason"])
 }
 
 func TestSpaces_ReturnsSpaces(t *testing.T) {
