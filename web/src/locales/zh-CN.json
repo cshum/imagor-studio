@@ -768,7 +768,7 @@
         "trial": "试用",
         "starter": "Starter",
         "pro": "Pro",
-    		"team": "Team"
+        "team": "Team"
       },
       "validation": {
         "keyFormat": "URL Slug 只能包含小写字母、数字和连字符"

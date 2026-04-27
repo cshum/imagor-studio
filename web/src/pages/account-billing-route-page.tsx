@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import type { BillingLoaderData } from '@/loaders/account-loader'
 import { getPlanEntitlements, isUnlimitedLimit } from '@/lib/plan-entitlements'
+import type { BillingLoaderData } from '@/loaders/account-loader'
 
 interface AccountBillingRoutePageProps {
   loaderData: BillingLoaderData
@@ -80,7 +80,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       label: t('pages.billing.usage.hostedStorage'),
       used: usageSummary?.usedHostedStorageBytes ?? 0,
       limit:
-        usageSummary?.storageLimitGB != null ? usageSummary.storageLimitGB * 1024 * 1024 * 1024 : null,
+        usageSummary?.storageLimitGB != null
+          ? usageSummary.storageLimitGB * 1024 * 1024 * 1024
+          : null,
       displayValue:
         usageSummary?.storageLimitGB != null && !isUnlimitedLimit(usageSummary.storageLimitGB)
           ? `${formatBytes(usageSummary.usedHostedStorageBytes ?? 0)} / ${formatBytes(usageSummary.storageLimitGB * 1024 * 1024 * 1024)}`
@@ -210,7 +212,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                   </div>
                   <div className='flex items-center justify-between gap-4'>
                     <span>{t('pages.billing.planMetrics.processing')}</span>
-                    <span className='font-medium'>{formatNumber(entitlements.transformsLimit)}</span>
+                    <span className='font-medium'>
+                      {formatNumber(entitlements.transformsLimit)}
+                    </span>
                   </div>
                 </div>
 

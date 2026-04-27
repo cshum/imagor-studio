@@ -797,7 +797,7 @@
         "trial": "Prova",
         "starter": "Starter",
         "pro": "Pro",
-    		"team": "Team"
+        "team": "Team"
       },
       "validation": {
         "keyFormat": "Lo slug URL può contenere solo lettere minuscole, numeri e trattini"

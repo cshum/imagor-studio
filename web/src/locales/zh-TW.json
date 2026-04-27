@@ -788,7 +788,7 @@
         "trial": "試用",
         "starter": "Starter",
         "pro": "Pro",
-    		"team": "Team"
+        "team": "Team"
       },
       "validation": {
         "keyFormat": "URL 識別碼只能包含小寫字母、數字和連字號"

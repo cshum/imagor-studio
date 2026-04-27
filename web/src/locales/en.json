@@ -797,7 +797,7 @@
         "trial": "Trial",
         "starter": "Starter",
         "pro": "Pro",
-    		"team": "Team"
+        "team": "Team"
       },
       "validation": {
         "keyFormat": "URL slug must contain only lowercase letters, numbers, and hyphens"
