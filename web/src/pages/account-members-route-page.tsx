@@ -92,7 +92,7 @@ function getOrganizationMembersErrorMessage(error: unknown, t: (key: string) => 
 
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
   const { t } = useTranslation()
-  const { authState } = useAuth()
+  const { authState, refreshAuthSession } = useAuth()
   const [organization, setOrganization] = useState(loaderData.organization)
   const [members, setMembers] = useState(loaderData.members)
   const [identifier, setIdentifier] = useState('')
@@ -118,8 +118,15 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
       getMyOrganization(),
       listOrgMembers(),
     ])
+
+    const currentRole = organization?.currentUserRole ?? null
+    const nextRole = nextOrganization?.currentUserRole ?? null
     setOrganization(nextOrganization)
     setMembers(nextMembers)
+
+    if (currentRole !== nextRole) {
+      await refreshAuthSession()
+    }
   }
 
   const handleAddMember = async () => {

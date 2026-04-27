@@ -1,4 +1,4 @@
-import { checkFirstRun, embeddedGuestLogin, guestLogin } from '@/api/auth-api'
+import { checkFirstRun, embeddedGuestLogin, guestLogin, refreshToken } from '@/api/auth-api'
 import { getCurrentUser } from '@/api/user-api.ts'
 import type { MeQuery } from '@/generated/graphql'
 import i18n from '@/i18n'
@@ -256,6 +256,40 @@ export const logout = async (): Promise<Auth> => {
 }
 
 /**
+ * Refresh the current authenticated session token and profile.
+ * If refresh fails, the current session is cleared.
+ */
+export const refreshAuthSession = async (): Promise<Auth> => {
+  const currentAuth = authStore.getState()
+
+  if (currentAuth.state !== 'authenticated' || currentAuth.isEmbedded) {
+    return currentAuth
+  }
+
+  const currentToken = currentAuth.accessToken || getToken()
+  if (!currentToken) {
+    return authStore.dispatch({ type: 'LOGOUT' })
+  }
+
+  try {
+    const response = await refreshToken(currentToken)
+    const profile = await getCurrentUser(response.token)
+
+    return authStore.dispatch({
+      type: 'INIT',
+      payload: {
+        accessToken: response.token,
+        profile,
+      },
+    })
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Authentication failed'
+    authStore.dispatch({ type: 'SET_ERROR', payload: { error: errorMessage } })
+    return authStore.dispatch({ type: 'LOGOUT' })
+  }
+}
+
+/**
  * Get current auth state
  */
 export const getAuth = (): Auth => {
@@ -322,6 +356,7 @@ export const useAuth = () => {
   return {
     authState,
     initAuth,
+    refreshAuthSession,
     logout,
     clearAuthError,
   }
