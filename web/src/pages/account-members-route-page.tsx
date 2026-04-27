@@ -113,7 +113,10 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
   const currentUserIsOwner = currentUserId !== null && organization?.ownerUserId === currentUserId
 
   const reloadOrganizationMembers = async () => {
-    const [nextOrganization, nextMembers] = await Promise.all([getMyOrganization(), listOrgMembers()])
+    const [nextOrganization, nextMembers] = await Promise.all([
+      getMyOrganization(),
+      listOrgMembers(),
+    ])
     setOrganization(nextOrganization)
     setMembers(nextMembers)
   }
@@ -231,7 +234,9 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='member'>{t('pages.organizationMembers.roles.member')}</SelectItem>
+                <SelectItem value='member'>
+                  {t('pages.organizationMembers.roles.member')}
+                </SelectItem>
                 <SelectItem value='admin'>{t('pages.organizationMembers.roles.admin')}</SelectItem>
               </SelectContent>
             </Select>
@@ -328,11 +333,15 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                                   {t('pages.organizationMembers.actionsTitle')}
                                 </DropdownMenuLabel>
                                 {canTransferOwnership ? (
-                                  <DropdownMenuItem onClick={() => requestTransferOwnership(member.userId)}>
+                                  <DropdownMenuItem
+                                    onClick={() => requestTransferOwnership(member.userId)}
+                                  >
                                     {t('pages.organizationMembers.transferOwnership')}
                                   </DropdownMenuItem>
                                 ) : null}
-                                {canTransferOwnership && canManage ? <DropdownMenuSeparator /> : null}
+                                {canTransferOwnership && canManage ? (
+                                  <DropdownMenuSeparator />
+                                ) : null}
                                 {canManage ? (
                                   <>
                                     <DropdownMenuItem
@@ -415,7 +424,9 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                                 {t('pages.organizationMembers.actionsTitle')}
                               </DropdownMenuLabel>
                               {canTransferOwnership ? (
-                                <DropdownMenuItem onClick={() => requestTransferOwnership(member.userId)}>
+                                <DropdownMenuItem
+                                  onClick={() => requestTransferOwnership(member.userId)}
+                                >
                                   {t('pages.organizationMembers.transferOwnership')}
                                 </DropdownMenuItem>
                               ) : null}

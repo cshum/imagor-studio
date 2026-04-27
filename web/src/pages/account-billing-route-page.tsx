@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-import { createBillingPortalSession, createCheckoutSession, deleteOrganization } from '@/api/org-api'
+import {
+  createBillingPortalSession,
+  createCheckoutSession,
+  deleteOrganization,
+} from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -165,7 +169,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         return
       }
 
-      toast.error(`${t('pages.billing.messages.checkoutFailed')}: ${extractErrorInfo(error).message}`)
+      toast.error(
+        `${t('pages.billing.messages.checkoutFailed')}: ${extractErrorInfo(error).message}`,
+      )
     } finally {
       setPendingPlan(null)
     }
@@ -332,7 +338,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       </div>
 
       <div className='border-destructive/20 border-t pt-6'>
-        <h2 className='text-destructive text-base font-semibold'>{t('pages.billing.danger.title')}</h2>
+        <h2 className='text-destructive text-base font-semibold'>
+          {t('pages.billing.danger.title')}
+        </h2>
         <div className='mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
           <div className='min-w-0 space-y-2'>
             <p className='font-medium'>{t('pages.billing.danger.deleteTitle')}</p>
@@ -343,7 +351,11 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
               {t('pages.billing.danger.deleteChecklist')}
             </p>
           </div>
-          <Button variant='destructive' className='shrink-0' onClick={() => setDeleteDialogOpen(true)}>
+          <Button
+            variant='destructive'
+            className='shrink-0'
+            onClick={() => setDeleteDialogOpen(true)}
+          >
             {t('pages.billing.danger.deleteButton')}
           </Button>
         </div>

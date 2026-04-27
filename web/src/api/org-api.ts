@@ -171,7 +171,9 @@ export async function deleteSpace(
   return result.deleteSpace
 }
 
-export async function deleteOrganization(): Promise<DeleteOrganizationMutation['deleteOrganization']> {
+export async function deleteOrganization(): Promise<
+  DeleteOrganizationMutation['deleteOrganization']
+> {
   const client = getGraphQLClient()
   const sdk = getSdk(client)
   const result = await sdk.DeleteOrganization()

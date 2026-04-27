@@ -214,7 +214,7 @@ export function SpacesPage({
 
   return (
     <div className='space-y-6'>
-      {currentOrganizationId !== null && (
+      {currentOrganizationId !== null &&
         (canManageOrganization ? (
           <Link to='/account/organization/billing' className={usageSummaryCardClassName}>
             <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
@@ -272,7 +272,9 @@ export function SpacesPage({
                 <Progress
                   value={getProgressValue(usedSpaces, maxSpaces)}
                   className={spacesOverLimit ? 'bg-amber-500/15 dark:bg-amber-400/15' : undefined}
-                  indicatorClassName={spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined}
+                  indicatorClassName={
+                    spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined
+                  }
                 />
               </div>
 
@@ -281,7 +283,9 @@ export function SpacesPage({
                   <span className='font-medium'>{t('pages.spaces.usage.hostedStorage')}</span>
                   <span className='text-muted-foreground'>{hostedStorageSummary}</span>
                 </div>
-                <Progress value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)} />
+                <Progress
+                  value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)}
+                />
               </div>
 
               <div className='space-y-2'>
@@ -350,7 +354,9 @@ export function SpacesPage({
                 <Progress
                   value={getProgressValue(usedSpaces, maxSpaces)}
                   className={spacesOverLimit ? 'bg-amber-500/15 dark:bg-amber-400/15' : undefined}
-                  indicatorClassName={spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined}
+                  indicatorClassName={
+                    spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined
+                  }
                 />
               </div>
 
@@ -359,7 +365,9 @@ export function SpacesPage({
                   <span className='font-medium'>{t('pages.spaces.usage.hostedStorage')}</span>
                   <span className='text-muted-foreground'>{hostedStorageSummary}</span>
                 </div>
-                <Progress value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)} />
+                <Progress
+                  value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)}
+                />
               </div>
 
               <div className='space-y-2'>
@@ -371,8 +379,7 @@ export function SpacesPage({
               </div>
             </div>
           </div>
-        ))
-      )}
+        ))}
 
       {currentOrganizationId !== null && authState.profile?.id ? (
         <div className='flex justify-end'>

@@ -32,8 +32,8 @@ export function WorkspaceRequiredPage() {
 
       <main className='mx-auto flex min-h-screen max-w-5xl items-center px-4 pt-24 pb-10 sm:px-6'>
         <div className='grid w-full gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.85fr)]'>
-          <section className='rounded-3xl border bg-background/85 p-8 shadow-sm backdrop-blur sm:p-10'>
-            <div className='inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground'>
+          <section className='bg-background/85 rounded-3xl border p-8 shadow-sm backdrop-blur sm:p-10'>
+            <div className='text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium tracking-[0.18em] uppercase'>
               <Building2 className='h-3.5 w-3.5' />
               {t('pages.workspaceRequired.eyebrow')}
             </div>
@@ -54,10 +54,10 @@ export function WorkspaceRequiredPage() {
           </section>
 
           <aside className='space-y-4'>
-            <div className='rounded-3xl border bg-background/80 p-6 shadow-sm backdrop-blur'>
+            <div className='bg-background/80 rounded-3xl border p-6 shadow-sm backdrop-blur'>
               <div className='flex items-start gap-3'>
                 <div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl'>
-                  <Mail className='h-5 w-5 text-muted-foreground' />
+                  <Mail className='text-muted-foreground h-5 w-5' />
                 </div>
                 <div>
                   <h2 className='text-lg font-semibold'>
@@ -70,8 +70,10 @@ export function WorkspaceRequiredPage() {
               </div>
             </div>
 
-            <div className='rounded-3xl border bg-background/80 p-6 shadow-sm backdrop-blur'>
-              <h2 className='text-lg font-semibold'>{t('pages.workspaceRequired.nextSteps.title')}</h2>
+            <div className='bg-background/80 rounded-3xl border p-6 shadow-sm backdrop-blur'>
+              <h2 className='text-lg font-semibold'>
+                {t('pages.workspaceRequired.nextSteps.title')}
+              </h2>
               <p className='text-muted-foreground mt-2 text-sm leading-6'>
                 {t('pages.workspaceRequired.nextSteps.description')}
               </p>

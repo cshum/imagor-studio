@@ -33,10 +33,10 @@ import {
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import { authCallbackLoader } from '@/loaders/auth-callback-loader.ts'
 import {
+  redirectAuthenticatedUsersWithOrganization,
   requireAccountAuth,
   requireAuth,
   requireImageEditorAuth,
-  redirectAuthenticatedUsersWithOrganization,
   requireOrganizationAccountAuth,
   requireOrganizationAdminAccountAuth,
   requireSelfHostedAdminAccountAuth,
@@ -670,7 +670,12 @@ const accountOrganizationIndexRoute = createRoute({
   path: '/',
   beforeLoad: async (context) => {
     const auth = await requireOrganizationAccountAuth(context)
-    throw redirect({ to: auth.profile?.role === 'admin' ? '/account/organization/billing' : '/account/organization/members' })
+    throw redirect({
+      to:
+        auth.profile?.role === 'admin'
+          ? '/account/organization/billing'
+          : '/account/organization/members',
+    })
   },
 })
 
