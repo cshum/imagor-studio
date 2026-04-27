@@ -30,6 +30,8 @@ type OrgMemberView struct {
 	UserID      string
 	Username    string
 	DisplayName string
+	Email       *string
+	AvatarURL   *string
 	Role        string
 	CreatedAt   time.Time
 }

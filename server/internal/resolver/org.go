@@ -1143,6 +1143,8 @@ func mapMemberToGQL(m *org.OrgMemberView) *gql.OrgMember {
 		UserID:      m.UserID,
 		Username:    m.Username,
 		DisplayName: m.DisplayName,
+		Email:       m.Email,
+		AvatarURL:   m.AvatarURL,
 		Role:        m.Role,
 		CreatedAt:   m.CreatedAt.UTC().Format(time.RFC3339),
 	}
@@ -1227,6 +1229,23 @@ func (r *queryResolver) OrgMembers(ctx context.Context) ([]*gql.OrgMember, error
 	if err != nil {
 		r.logger.Error("OrgMembers: failed to list members", zap.String("orgID", orgID), zap.Error(err))
 		return nil, fmt.Errorf("failed to list org members: %w", err)
+	}
+	if r.userStore != nil {
+		for _, member := range members {
+			if member == nil || member.UserID == "" {
+				continue
+			}
+			userRecord, userErr := r.userStore.GetByID(ctx, member.UserID)
+			if userErr != nil {
+				r.logger.Warn("OrgMembers: failed to hydrate member profile", zap.String("orgID", orgID), zap.String("userID", member.UserID), zap.Error(userErr))
+				continue
+			}
+			if userRecord == nil {
+				continue
+			}
+			member.Email = userRecord.Email
+			member.AvatarURL = userRecord.AvatarUrl
+		}
 	}
 	result := make([]*gql.OrgMember, 0, len(members))
 	for _, m := range members {

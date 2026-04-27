@@ -205,6 +205,8 @@ export const LIST_ORG_MEMBERS = gql(`
       userId
       username
       displayName
+      email
+      avatarUrl
       role
       createdAt
     }

@@ -32,7 +32,7 @@ type Documents = {
   '\n  mutation SetSpaceRegistry($spaceID: String!, $entries: [RegistryEntryInput!]) {\n    setSpaceRegistry(spaceID: $spaceID, entries: $entries) {\n      key\n      value\n      isEncrypted\n    }\n  }\n': typeof types.SetSpaceRegistryDocument
   '\n  mutation DeleteSpaceRegistry($spaceID: String!, $keys: [String!]!) {\n    deleteSpaceRegistry(spaceID: $spaceID, keys: $keys)\n  }\n': typeof types.DeleteSpaceRegistryDocument
   '\n  query SpaceKeyExists($key: String!) {\n    spaceKeyExists(key: $key)\n  }\n': typeof types.SpaceKeyExistsDocument
-  '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.ListOrgMembersDocument
+  '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      createdAt\n    }\n  }\n': typeof types.ListOrgMembersDocument
   '\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n': typeof types.ListSpaceMembersDocument
   '\n  query ListSpaceInvitations($spaceID: String!) {\n    spaceInvitations(spaceID: $spaceID) {\n      id\n      email\n      role\n      createdAt\n      expiresAt\n    }\n  }\n': typeof types.ListSpaceInvitationsDocument
   '\n  mutation AddOrgMember($username: String!, $role: String!) {\n    addOrgMember(username: $username, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddOrgMemberDocument
@@ -119,7 +119,7 @@ const documents: Documents = {
     types.DeleteSpaceRegistryDocument,
   '\n  query SpaceKeyExists($key: String!) {\n    spaceKeyExists(key: $key)\n  }\n':
     types.SpaceKeyExistsDocument,
-  '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
+  '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      createdAt\n    }\n  }\n':
     types.ListOrgMembersDocument,
   '\n  query ListSpaceMembers($spaceID: String!) {\n    spaceMembers(spaceID: $spaceID) {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      roleSource\n      canChangeRole\n      canRemove\n      createdAt\n    }\n  }\n':
     types.ListSpaceMembersDocument,
@@ -342,8 +342,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
-): (typeof documents)['\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
+  source: '\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      createdAt\n    }\n  }\n',
+): (typeof documents)['\n  query ListOrgMembers {\n    orgMembers {\n      userId\n      username\n      displayName\n      email\n      avatarUrl\n      role\n      createdAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -87,6 +87,8 @@ type OrgMember {
   userId: ID!
   username: String!
   displayName: String!
+  email: String
+  avatarUrl: String
   role: String!
   createdAt: String!
 }

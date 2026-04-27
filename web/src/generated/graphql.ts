@@ -448,8 +448,10 @@ export type MutationUploadFileArgs = {
 
 export type OrgMember = {
   __typename?: 'OrgMember'
+  avatarUrl: Maybe<Scalars['String']['output']>
   createdAt: Scalars['String']['output']
   displayName: Scalars['String']['output']
+  email: Maybe<Scalars['String']['output']>
   role: Scalars['String']['output']
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
@@ -1112,6 +1114,8 @@ export type ListOrgMembersQuery = {
     userId: string
     username: string
     displayName: string
+    email: string | null
+    avatarUrl: string | null
     role: string
     createdAt: string
   }>
@@ -2913,6 +2917,8 @@ export const ListOrgMembersDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'username' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'email' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'avatarUrl' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'role' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
               ],

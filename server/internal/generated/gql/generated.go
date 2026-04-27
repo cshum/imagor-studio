@@ -157,8 +157,10 @@ type ComplexityRoot struct {
 	}
 
 	OrgMember struct {
+		AvatarURL   func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
 		DisplayName func(childComplexity int) int
+		Email       func(childComplexity int) int
 		Role        func(childComplexity int) int
 		UserID      func(childComplexity int) int
 		Username    func(childComplexity int) int
@@ -1203,6 +1205,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Mutation.UploadFile(childComplexity, args["path"].(string), args["spaceID"].(*string), args["content"].(graphql.Upload)), true
 
+	case "OrgMember.avatarUrl":
+		if e.ComplexityRoot.OrgMember.AvatarURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgMember.AvatarURL(childComplexity), true
 	case "OrgMember.createdAt":
 		if e.ComplexityRoot.OrgMember.CreatedAt == nil {
 			break
@@ -1215,6 +1223,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.OrgMember.DisplayName(childComplexity), true
+	case "OrgMember.email":
+		if e.ComplexityRoot.OrgMember.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgMember.Email(childComplexity), true
 	case "OrgMember.role":
 		if e.ComplexityRoot.OrgMember.Role == nil {
 			break
@@ -2473,6 +2487,8 @@ type OrgMember {
   userId: ID!
   username: String!
   displayName: String!
+  email: String
+  avatarUrl: String
   role: String!
   createdAt: String!
 }
@@ -6406,6 +6422,10 @@ func (ec *executionContext) fieldContext_Mutation_addOrgMember(ctx context.Conte
 				return ec.fieldContext_OrgMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -6459,6 +6479,10 @@ func (ec *executionContext) fieldContext_Mutation_addOrgMemberByEmail(ctx contex
 				return ec.fieldContext_OrgMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -6747,6 +6771,10 @@ func (ec *executionContext) fieldContext_Mutation_updateOrgMemberRole(ctx contex
 				return ec.fieldContext_OrgMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -7438,6 +7466,64 @@ func (ec *executionContext) _OrgMember_displayName(ctx context.Context, field gr
 }
 
 func (ec *executionContext) fieldContext_OrgMember_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgMember_email(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgMember_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgMember_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgMember_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgMember_avatarUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.AvatarURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgMember_avatarUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "OrgMember",
 		Field:      field,
@@ -8366,6 +8452,10 @@ func (ec *executionContext) fieldContext_Query_orgMembers(_ context.Context, fie
 				return ec.fieldContext_OrgMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -15605,6 +15695,10 @@ func (ec *executionContext) _OrgMember(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "email":
+			out.Values[i] = ec._OrgMember_email(ctx, field, obj)
+		case "avatarUrl":
+			out.Values[i] = ec._OrgMember_avatarUrl(ctx, field, obj)
 		case "role":
 			out.Values[i] = ec._OrgMember_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

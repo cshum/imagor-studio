@@ -39,17 +39,34 @@ func makeTestMember(userID, username, role string) *org.OrgMemberView {
 	}
 }
 
+func strPtr(value string) *string {
+	return &value
+}
+
 // ── OrgMembers ────────────────────────────────────────────────────────────────
 
 func TestOrgMembers_ReturnsMembers(t *testing.T) {
 	orgStore := &MockOrgStore{}
-	r := newMemberResolver(orgStore, nil)
+	userStore := &MockUserStore{}
+	r := newMemberResolver(orgStore, userStore)
 
 	members := []*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "member"),
 	}
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return(members, nil)
+	userStore.On("GetByID", mock.Anything, "user-1").Return(&userstore.User{
+		ID:        "user-1",
+		Username:  "alice",
+		Email:     strPtr("alice@example.com"),
+		AvatarUrl: strPtr("https://example.com/alice.png"),
+	}, nil)
+	userStore.On("GetByID", mock.Anything, "user-2").Return(&userstore.User{
+		ID:        "user-2",
+		Username:  "bob",
+		Email:     strPtr("bob@example.com"),
+		AvatarUrl: strPtr("https://example.com/bob.png"),
+	}, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().OrgMembers(ctx)
@@ -57,10 +74,13 @@ func TestOrgMembers_ReturnsMembers(t *testing.T) {
 	require.Len(t, result, 2)
 	assert.Equal(t, "user-1", result[0].UserID)
 	assert.Equal(t, "alice", result[0].Username)
+	assert.Equal(t, "alice@example.com", *result[0].Email)
+	assert.Equal(t, "https://example.com/alice.png", *result[0].AvatarURL)
 	assert.Equal(t, "owner", result[0].Role)
 	assert.Equal(t, "user-2", result[1].UserID)
 	assert.Equal(t, "bob", result[1].Username)
 	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
 }
 
 func TestOrgMembers_RequiresAdmin(t *testing.T) {

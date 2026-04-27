@@ -217,7 +217,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                   <div className='hidden grid-cols-[minmax(0,1fr)_44px] items-center gap-4 px-4 py-4 md:grid'>
                     <div className='flex min-w-0 items-center gap-3'>
                       <Avatar className='h-10 w-10'>
-                        <AvatarImage src={undefined} alt={getMemberLabel(member)} />
+                        <AvatarImage src={member.avatarUrl ?? undefined} alt={getMemberLabel(member)} />
                         <AvatarFallback className='text-sm font-semibold'>
                           {getInitials(getMemberLabel(member))}
                         </AvatarFallback>
@@ -240,7 +240,9 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                             </Badge>
                           ) : null}
                         </div>
-                        <p className='text-muted-foreground truncate text-xs'>@{member.username}</p>
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {member.email || `@${member.username}`}
+                        </p>
                         <p className='text-muted-foreground truncate text-xs'>
                           {t('pages.organizationMembers.joinedAt', {
                             date: formatJoinedAt(member.createdAt, i18n.language),
@@ -297,7 +299,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                   <div className='px-4 py-4 md:hidden'>
                     <div className='flex min-w-0 items-center gap-3'>
                       <Avatar className='h-10 w-10'>
-                        <AvatarImage src={undefined} alt={getMemberLabel(member)} />
+                        <AvatarImage src={member.avatarUrl ?? undefined} alt={getMemberLabel(member)} />
                         <AvatarFallback className='text-sm font-semibold'>
                           {getInitials(getMemberLabel(member))}
                         </AvatarFallback>
@@ -320,7 +322,9 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                             </Badge>
                           ) : null}
                         </div>
-                        <p className='text-muted-foreground truncate text-xs'>@{member.username}</p>
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {member.email || `@${member.username}`}
+                        </p>
                         <p className='text-muted-foreground truncate text-xs'>
                           {t('pages.organizationMembers.joinedAt', {
                             date: formatJoinedAt(member.createdAt, i18n.language),
