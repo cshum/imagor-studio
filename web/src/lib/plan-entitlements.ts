@@ -12,7 +12,7 @@ const planEntitlements: Record<string, PlanEntitlements> = {
     storageLimitGB: 0,
     transformsLimit: 0,
   },
-  // Internal transitional state while cloud signup still provisions trial orgs.
+  // Trial is an intentional cloud onboarding lifecycle state.
   trial: {
     maxSpaces: 1,
     storageLimitGB: 1,

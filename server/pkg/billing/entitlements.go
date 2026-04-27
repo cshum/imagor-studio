@@ -2,7 +2,7 @@ package billing
 
 import "github.com/cshum/imagor-studio/server/pkg/org"
 
-const PlanFree = "free"
+const PlanFree = org.PlanFree
 
 // PlanEntitlements defines the billing and quota surface shared across SaaS runtime code.
 type PlanEntitlements struct {
@@ -21,8 +21,7 @@ var planEntitlements = map[string]PlanEntitlements{
 		BYOBAllowed:      false,
 		MaxCustomDomains: 0,
 	},
-	// Trial remains as an internal transitional state until cloud signup and
-	// lifecycle policy are fully aligned to the paid-from-day-one packaging.
+	// Trial is an intentional cloud onboarding lifecycle state.
 	org.PlanTrial: {
 		MaxSpaces:        1,
 		StorageLimitGB:   1,
