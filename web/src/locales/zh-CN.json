@@ -9,6 +9,7 @@
       },
       "tabs": {
         "profile": "账户设置",
+        "billing": "计费",
         "system": "系统",
         "users": "用户",
         "spaces": "空间"
@@ -101,6 +102,8 @@
       "gallery": "图库",
       "profile": "个人资料",
       "account": "账户",
+      "billing": "计费",
+      "organizationMembers": "成员",
       "settings": "设置",
       "users": "用户",
       "admin": "系统",
@@ -780,6 +783,8 @@
         "unlimited": "不限"
       },
       "usageSummaryTitle": "当前套餐用量",
+      "managePlan": "计费",
+      "manageMembers": "成员",
       "usageSummaryMeta": "{{owned}} 个由你拥有 · {{shared}} 个与你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} 次处理",
@@ -807,6 +812,75 @@
         "name": "我的空间",
         "selectStorageType": "选择存储类型",
         "unchanged": "（保持不变）"
+      }
+    },
+    "billing": {
+      "title": "计费",
+      "titleDescription": "查看当前套餐、用量和升级选项。",
+      "currentPlan": "当前套餐",
+      "currentPlanDescription": "用量按计费周期统计，并会自动重置。",
+      "currentPlanBadge": "当前",
+      "currentPlanButton": "当前套餐",
+      "manageBilling": "管理计费",
+      "selectPlan": "选择套餐",
+      "unlimited": "不限",
+      "status": {
+        "trialing": "试用中",
+        "active": "生效中",
+        "past_due": "逾期",
+        "canceled": "已取消"
+      },
+      "usage": {
+        "spaces": "空间",
+        "hostedStorage": "平台存储",
+        "processing": "处理量"
+      },
+      "planMetrics": {
+        "spaces": "包含空间数",
+        "hostedStorage": "平台存储",
+        "processing": "每月处理量"
+      },
+      "planDescriptions": {
+        "starter": "适合单个生产工作空间，包含平台存储。",
+        "pro": "适合需要更多空间和更高处理额度的成长型团队。",
+        "team": "适合管理多个空间且处理量更高的大型组织。"
+      },
+      "messages": {
+        "checkoutFailed": "无法启动结账流程",
+        "portalFailed": "无法打开计费门户"
+      }
+    },
+    "organizationMembers": {
+      "title": "组织成员",
+      "titleDescription": "管理谁可以访问当前组织，以及谁可以管理共享空间。",
+      "addTitle": "添加成员",
+      "addDescription": "通过用户名或邮箱添加成员，并选择是否授予组织管理权限。",
+      "identifierPlaceholder": "用户名或邮箱",
+      "addButton": "添加成员",
+      "listTitle": "成员列表",
+      "listDescription": "可访问 {{name}} 的成员。",
+      "listDescriptionFallback": "可访问当前组织的成员。",
+      "actionsTitle": "成员操作",
+      "promoteToAdmin": "改为管理员",
+      "changeToMember": "改为成员",
+      "removeMember": "移除成员",
+      "removeTitle": "移除成员",
+      "removeDescription": "要将 {{name}} 从当前组织中移除吗？他们将失去通过组织继承的共享空间访问权限。",
+      "youBadge": "你",
+      "joinedAt": "加入于 {{date}}",
+      "roles": {
+        "owner": "所有者",
+        "admin": "管理员",
+        "member": "成员"
+      },
+      "messages": {
+        "identifierRequired": "请输入用户名或邮箱地址。",
+        "memberAdded": "成员已添加。",
+        "memberAddFailed": "添加成员失败",
+        "roleUpdated": "成员角色已更新。",
+        "roleUpdateFailed": "更新成员角色失败",
+        "memberRemoved": "成员已移除。",
+        "memberRemoveFailed": "移除成员失败"
       }
     },
     "spacePropagation": {

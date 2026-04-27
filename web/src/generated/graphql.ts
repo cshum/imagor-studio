@@ -29,6 +29,11 @@ export type AuthProvider = {
   provider: Scalars['String']['output']
 }
 
+export type BillingSession = {
+  __typename?: 'BillingSession'
+  url: Scalars['String']['output']
+}
+
 export type ChangePasswordInput = {
   currentPassword: InputMaybe<Scalars['String']['input']>
   newPassword: Scalars['String']['input']
@@ -178,6 +183,8 @@ export type Mutation = {
   configureImagor: ImagorConfigResult
   configureS3Storage: StorageConfigResult
   copyFile: Scalars['Boolean']['output']
+  createBillingPortalSession: BillingSession
+  createCheckoutSession: BillingSession
   createFolder: Scalars['Boolean']['output']
   createSpace: Space
   createUser: User
@@ -265,6 +272,16 @@ export type MutationCopyFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
   spaceID?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationCreateBillingPortalSessionArgs = {
+  returnURL: Scalars['String']['input']
+}
+
+export type MutationCreateCheckoutSessionArgs = {
+  cancelURL: Scalars['String']['input']
+  plan: Scalars['String']['input']
+  successURL: Scalars['String']['input']
 }
 
 export type MutationCreateFolderArgs = {
@@ -918,6 +935,26 @@ export type GetUsageSummaryQuery = {
     periodStart: string | null
     periodEnd: string | null
   }
+}
+
+export type CreateCheckoutSessionMutationVariables = Exact<{
+  plan: Scalars['String']['input']
+  successURL: Scalars['String']['input']
+  cancelURL: Scalars['String']['input']
+}>
+
+export type CreateCheckoutSessionMutation = {
+  __typename?: 'Mutation'
+  createCheckoutSession: { __typename?: 'BillingSession'; url: string }
+}
+
+export type CreateBillingPortalSessionMutationVariables = Exact<{
+  returnURL: Scalars['String']['input']
+}>
+
+export type CreateBillingPortalSessionMutation = {
+  __typename?: 'Mutation'
+  createBillingPortalSession: { __typename?: 'BillingSession'; url: string }
 }
 
 export type GetSpaceQueryVariables = Exact<{
@@ -2302,6 +2339,115 @@ export const GetUsageSummaryDocument = {
     },
   ],
 } as unknown as DocumentNode<GetUsageSummaryQuery, GetUsageSummaryQueryVariables>
+export const CreateCheckoutSessionDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateCheckoutSession' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'plan' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'successURL' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'cancelURL' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createCheckoutSession' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'plan' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'plan' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'successURL' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'successURL' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'cancelURL' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'cancelURL' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateCheckoutSessionMutation, CreateCheckoutSessionMutationVariables>
+export const CreateBillingPortalSessionDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateBillingPortalSession' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'returnURL' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createBillingPortalSession' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'returnURL' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'returnURL' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'url' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  CreateBillingPortalSessionMutation,
+  CreateBillingPortalSessionMutationVariables
+>
 export const GetSpaceDocument = {
   kind: 'Document',
   definitions: [

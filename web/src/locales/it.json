@@ -9,6 +9,7 @@
       },
       "tabs": {
         "profile": "Impostazioni account",
+        "billing": "Fatturazione",
         "system": "Sistema",
         "users": "Utenti",
         "spaces": "Spazi"
@@ -121,6 +122,8 @@
       "gallery": "Galleria",
       "profile": "Profilo",
       "account": "Account",
+      "billing": "Fatturazione",
+      "organizationMembers": "Membri",
       "settings": "Impostazioni",
       "users": "Utenti",
       "admin": "Sistema",
@@ -809,6 +812,8 @@
         "unlimited": "Illimitato"
       },
       "usageSummaryTitle": "Utilizzo del piano attuale",
+      "managePlan": "Fatturazione",
+      "manageMembers": "Membri",
       "usageSummaryMeta": "{{owned}} tuoi · {{shared}} condivisi",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} trasformazioni",
@@ -826,6 +831,75 @@
       "access": {
         "ownedByYou": "Di tua proprietà",
         "sharedWithYou": "Condiviso con te"
+      }
+    },
+    "billing": {
+      "title": "Fatturazione",
+      "titleDescription": "Controlla il piano attuale, l'utilizzo e le opzioni di upgrade.",
+      "currentPlan": "Piano attuale",
+      "currentPlanDescription": "L'utilizzo viene monitorato per periodo di fatturazione e si azzera automaticamente.",
+      "currentPlanBadge": "Attuale",
+      "currentPlanButton": "Piano attuale",
+      "manageBilling": "Gestisci fatturazione",
+      "selectPlan": "Scegli piano",
+      "unlimited": "Illimitato",
+      "status": {
+        "trialing": "Prova",
+        "active": "Attivo",
+        "past_due": "Scaduto",
+        "canceled": "Annullato"
+      },
+      "usage": {
+        "spaces": "Spazi",
+        "hostedStorage": "Storage gestito",
+        "processing": "Processing"
+      },
+      "planMetrics": {
+        "spaces": "Spazi inclusi",
+        "hostedStorage": "Storage gestito",
+        "processing": "Trasformazioni mensili"
+      },
+      "planDescriptions": {
+        "starter": "Per un singolo workspace di produzione con storage gestito incluso.",
+        "pro": "Per team in crescita che hanno bisogno di più spazi e più capacità di elaborazione.",
+        "team": "Per organizzazioni più grandi che gestiscono più spazi con volumi più alti."
+      },
+      "messages": {
+        "checkoutFailed": "Impossibile avviare il checkout",
+        "portalFailed": "Impossibile aprire il portale di fatturazione"
+      }
+    },
+    "organizationMembers": {
+      "title": "Membri dell'organizzazione",
+      "titleDescription": "Gestisci chi puo accedere all'organizzazione e amministrare gli spazi condivisi.",
+      "addTitle": "Aggiungi collaboratore",
+      "addDescription": "Invita tramite username o email e scegli se deve gestire l'organizzazione.",
+      "identifierPlaceholder": "username o email",
+      "addButton": "Aggiungi membro",
+      "listTitle": "Membri",
+      "listDescription": "Persone con accesso a {{name}}.",
+      "listDescriptionFallback": "Persone con accesso a questa organizzazione.",
+      "actionsTitle": "Azioni membro",
+      "promoteToAdmin": "Passa ad admin",
+      "changeToMember": "Passa a membro",
+      "removeMember": "Rimuovi membro",
+      "removeTitle": "Rimuovi membro",
+      "removeDescription": "Rimuovere {{name}} da questa organizzazione? Perdera l'accesso agli spazi condivisi ereditati dall'organizzazione.",
+      "youBadge": "Tu",
+      "joinedAt": "Entrato il {{date}}",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Membro"
+      },
+      "messages": {
+        "identifierRequired": "Inserisci uno username o un indirizzo email.",
+        "memberAdded": "Membro aggiunto.",
+        "memberAddFailed": "Impossibile aggiungere il membro",
+        "roleUpdated": "Ruolo del membro aggiornato.",
+        "roleUpdateFailed": "Impossibile aggiornare il ruolo del membro",
+        "memberRemoved": "Membro rimosso.",
+        "memberRemoveFailed": "Impossibile rimuovere il membro"
       }
     },
     "spacePropagation": {

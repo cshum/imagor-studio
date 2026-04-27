@@ -9,6 +9,7 @@
       },
       "tabs": {
         "profile": "Account settings",
+        "billing": "Billing",
         "system": "System",
         "users": "Users",
         "spaces": "Spaces"
@@ -121,6 +122,8 @@
       "gallery": "Gallery",
       "profile": "Profile",
       "account": "Account",
+      "billing": "Billing",
+      "organizationMembers": "Members",
       "settings": "Settings",
       "users": "Users",
       "admin": "System",
@@ -809,6 +812,8 @@
         "unlimited": "Unlimited"
       },
       "usageSummaryTitle": "Current plan usage",
+      "managePlan": "Billing",
+      "manageMembers": "Members",
       "usageSummaryMeta": "{{owned}} owned · {{shared}} shared",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} transforms",
@@ -826,6 +831,75 @@
       "access": {
         "ownedByYou": "Owned by you",
         "sharedWithYou": "Shared with you"
+      }
+    },
+    "billing": {
+      "title": "Billing",
+      "titleDescription": "Review your current plan, usage, and upgrade options.",
+      "currentPlan": "Current plan",
+      "currentPlanDescription": "Usage is tracked per billing period and resets automatically.",
+      "currentPlanBadge": "Current",
+      "currentPlanButton": "Current plan",
+      "manageBilling": "Manage billing",
+      "selectPlan": "Choose plan",
+      "unlimited": "Unlimited",
+      "status": {
+        "trialing": "Trialing",
+        "active": "Active",
+        "past_due": "Past due",
+        "canceled": "Canceled"
+      },
+      "usage": {
+        "spaces": "Spaces",
+        "hostedStorage": "Hosted storage",
+        "processing": "Processing"
+      },
+      "planMetrics": {
+        "spaces": "Included spaces",
+        "hostedStorage": "Hosted storage",
+        "processing": "Monthly transforms"
+      },
+      "planDescriptions": {
+        "starter": "For a single production workspace with hosted storage included.",
+        "pro": "For growing teams that need more spaces and processing headroom.",
+        "team": "For larger organizations managing multiple spaces at higher volume."
+      },
+      "messages": {
+        "checkoutFailed": "Failed to start checkout",
+        "portalFailed": "Failed to open billing portal"
+      }
+    },
+    "organizationMembers": {
+      "title": "Organization members",
+      "titleDescription": "Manage who can access this organization and administer shared spaces.",
+      "addTitle": "Add teammate",
+      "addDescription": "Invite by username or email and choose whether they should manage the organization.",
+      "identifierPlaceholder": "username or email",
+      "addButton": "Add member",
+      "listTitle": "Members",
+      "listDescription": "People with access to {{name}}.",
+      "listDescriptionFallback": "People with access to this organization.",
+      "actionsTitle": "Member actions",
+      "promoteToAdmin": "Change to admin",
+      "changeToMember": "Change to member",
+      "removeMember": "Remove member",
+      "removeTitle": "Remove member",
+      "removeDescription": "Remove {{name}} from this organization? They will lose access to shared spaces inherited from the organization.",
+      "youBadge": "You",
+      "joinedAt": "Joined {{date}}",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member"
+      },
+      "messages": {
+        "identifierRequired": "Enter a username or email address.",
+        "memberAdded": "Member added.",
+        "memberAddFailed": "Failed to add member",
+        "roleUpdated": "Member role updated.",
+        "roleUpdateFailed": "Failed to update member role",
+        "memberRemoved": "Member removed.",
+        "memberRemoveFailed": "Failed to remove member"
       }
     },
     "spacePropagation": {

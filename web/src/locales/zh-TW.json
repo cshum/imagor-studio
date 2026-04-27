@@ -9,6 +9,7 @@
       },
       "tabs": {
         "profile": "帳戶設定",
+        "billing": "計費",
         "system": "系統",
         "users": "使用者",
         "spaces": "空間"
@@ -121,6 +122,8 @@
       "gallery": "相簿",
       "profile": "個人資料",
       "account": "賬戶",
+      "billing": "計費",
+      "organizationMembers": "成員",
       "settings": "設定",
       "users": "使用者",
       "admin": "系統",
@@ -800,6 +803,8 @@
         "unlimited": "不限"
       },
       "usageSummaryTitle": "目前方案用量",
+      "managePlan": "計費",
+      "manageMembers": "成員",
       "usageSummaryMeta": "{{owned}} 個由你擁有 · {{shared}} 個與你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} 次處理",
@@ -827,6 +832,75 @@
         "name": "我的空間",
         "selectStorageType": "選擇儲存類型",
         "unchanged": "（保持不變）"
+      }
+    },
+    "billing": {
+      "title": "計費",
+      "titleDescription": "檢視目前方案、用量與升級選項。",
+      "currentPlan": "目前方案",
+      "currentPlanDescription": "用量會依計費週期統計，並自動重置。",
+      "currentPlanBadge": "目前",
+      "currentPlanButton": "目前方案",
+      "manageBilling": "管理計費",
+      "selectPlan": "選擇方案",
+      "unlimited": "不限",
+      "status": {
+        "trialing": "試用中",
+        "active": "生效中",
+        "past_due": "逾期",
+        "canceled": "已取消"
+      },
+      "usage": {
+        "spaces": "空間",
+        "hostedStorage": "託管儲存",
+        "processing": "處理量"
+      },
+      "planMetrics": {
+        "spaces": "包含空間數",
+        "hostedStorage": "託管儲存",
+        "processing": "每月處理量"
+      },
+      "planDescriptions": {
+        "starter": "適合單一正式工作空間，包含託管儲存。",
+        "pro": "適合需要更多空間與更高處理額度的成長型團隊。",
+        "team": "適合管理多個空間且處理量更高的大型組織。"
+      },
+      "messages": {
+        "checkoutFailed": "無法啟動結帳流程",
+        "portalFailed": "無法開啟計費入口"
+      }
+    },
+    "organizationMembers": {
+      "title": "組織成員",
+      "titleDescription": "管理誰可以存取目前組織，以及誰可以管理共享空間。",
+      "addTitle": "新增成員",
+      "addDescription": "透過使用者名稱或電子郵件新增成員，並選擇是否授予組織管理權限。",
+      "identifierPlaceholder": "使用者名稱或電子郵件",
+      "addButton": "新增成員",
+      "listTitle": "成員列表",
+      "listDescription": "可存取 {{name}} 的成員。",
+      "listDescriptionFallback": "可存取目前組織的成員。",
+      "actionsTitle": "成員操作",
+      "promoteToAdmin": "改為管理員",
+      "changeToMember": "改為成員",
+      "removeMember": "移除成員",
+      "removeTitle": "移除成員",
+      "removeDescription": "要將 {{name}} 從目前組織移除嗎？他們將失去透過組織繼承的共享空間存取權。",
+      "youBadge": "你",
+      "joinedAt": "加入於 {{date}}",
+      "roles": {
+        "owner": "擁有者",
+        "admin": "管理員",
+        "member": "成員"
+      },
+      "messages": {
+        "identifierRequired": "請輸入使用者名稱或電子郵件地址。",
+        "memberAdded": "成員已新增。",
+        "memberAddFailed": "新增成員失敗",
+        "roleUpdated": "成員角色已更新。",
+        "roleUpdateFailed": "更新成員角色失敗",
+        "memberRemoved": "成員已移除。",
+        "memberRemoveFailed": "移除成員失敗"
       }
     },
     "spacePropagation": {

@@ -22,6 +22,8 @@ type Documents = {
   '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n': typeof types.MyOrganizationDocument
   '\n  query ListSpaces {\n    spaces {\n      id\n      orgId\n      key\n      name\n      storageUsageBytes\n      processingUsageCount\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.ListSpacesDocument
   '\n  query GetUsageSummary {\n    usageSummary {\n      usedSpaces\n      maxSpaces\n      usedHostedStorageBytes\n      storageLimitGB\n      usedTransforms\n      transformsLimit\n      periodStart\n      periodEnd\n    }\n  }\n': typeof types.GetUsageSummaryDocument
+  '\n  mutation CreateCheckoutSession($plan: String!, $successURL: String!, $cancelURL: String!) {\n    createCheckoutSession(plan: $plan, successURL: $successURL, cancelURL: $cancelURL) {\n      url\n    }\n  }\n': typeof types.CreateCheckoutSessionDocument
+  '\n  mutation CreateBillingPortalSession($returnURL: String!) {\n    createBillingPortalSession(returnURL: $returnURL) {\n      url\n    }\n  }\n': typeof types.CreateBillingPortalSessionDocument
   '\n  query GetSpace($key: String!) {\n    space(key: $key) {\n      id\n      orgId\n      key\n      name\n      storageUsageBytes\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.GetSpaceDocument
   '\n  mutation CreateSpace($input: SpaceInput!) {\n    createSpace(input: $input) {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.CreateSpaceDocument
   '\n  mutation UpdateSpace($key: String!, $input: SpaceInput!) {\n    updateSpace(key: $key, input: $input) {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.UpdateSpaceDocument
@@ -97,6 +99,10 @@ const documents: Documents = {
     types.ListSpacesDocument,
   '\n  query GetUsageSummary {\n    usageSummary {\n      usedSpaces\n      maxSpaces\n      usedHostedStorageBytes\n      storageLimitGB\n      usedTransforms\n      transformsLimit\n      periodStart\n      periodEnd\n    }\n  }\n':
     types.GetUsageSummaryDocument,
+  '\n  mutation CreateCheckoutSession($plan: String!, $successURL: String!, $cancelURL: String!) {\n    createCheckoutSession(plan: $plan, successURL: $successURL, cancelURL: $cancelURL) {\n      url\n    }\n  }\n':
+    types.CreateCheckoutSessionDocument,
+  '\n  mutation CreateBillingPortalSession($returnURL: String!) {\n    createBillingPortalSession(returnURL: $returnURL) {\n      url\n    }\n  }\n':
+    types.CreateBillingPortalSessionDocument,
   '\n  query GetSpace($key: String!) {\n    space(key: $key) {\n      id\n      orgId\n      key\n      name\n      storageUsageBytes\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n':
     types.GetSpaceDocument,
   '\n  mutation CreateSpace($input: SpaceInput!) {\n    createSpace(input: $input) {\n      orgId\n      key\n      name\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n':
@@ -272,6 +278,18 @@ export function gql(
 export function gql(
   source: '\n  query GetUsageSummary {\n    usageSummary {\n      usedSpaces\n      maxSpaces\n      usedHostedStorageBytes\n      storageLimitGB\n      usedTransforms\n      transformsLimit\n      periodStart\n      periodEnd\n    }\n  }\n',
 ): (typeof documents)['\n  query GetUsageSummary {\n    usageSummary {\n      usedSpaces\n      maxSpaces\n      usedHostedStorageBytes\n      storageLimitGB\n      usedTransforms\n      transformsLimit\n      periodStart\n      periodEnd\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation CreateCheckoutSession($plan: String!, $successURL: String!, $cancelURL: String!) {\n    createCheckoutSession(plan: $plan, successURL: $successURL, cancelURL: $cancelURL) {\n      url\n    }\n  }\n',
+): (typeof documents)['\n  mutation CreateCheckoutSession($plan: String!, $successURL: String!, $cancelURL: String!) {\n    createCheckoutSession(plan: $plan, successURL: $successURL, cancelURL: $cancelURL) {\n      url\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation CreateBillingPortalSession($returnURL: String!) {\n    createBillingPortalSession(returnURL: $returnURL) {\n      url\n    }\n  }\n',
+): (typeof documents)['\n  mutation CreateBillingPortalSession($returnURL: String!) {\n    createBillingPortalSession(returnURL: $returnURL) {\n      url\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

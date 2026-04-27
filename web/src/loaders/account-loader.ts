@@ -2,7 +2,7 @@ import { redirect } from '@tanstack/react-router'
 
 import { getImagorStatus } from '@/api/imagor-api'
 import { getLicenseStatus, type LicenseStatus } from '@/api/license-api'
-import { getMyOrganization, getUsageSummary, listSpaces } from '@/api/org-api'
+import { getMyOrganization, getUsageSummary, listOrgMembers, listSpaces } from '@/api/org-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
@@ -10,9 +10,11 @@ import type {
   GetSpaceQuery,
   GetUsageSummaryQuery,
   ImagorStatusQuery,
+  ListOrgMembersQuery,
   ListSpacesQuery,
   ListSystemRegistryQuery,
   ListUsersQuery,
+  MyOrganizationQuery,
   StorageStatusQuery,
 } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
@@ -68,6 +70,18 @@ export interface AdminLicenseLoaderData {
 
 export interface UsersLoaderData {
   users: ListUsersQuery['users']
+  breadcrumb: BreadcrumbItem
+}
+
+export interface BillingLoaderData {
+  organization: MyOrganizationQuery['myOrganization']
+  usageSummary: GetUsageSummaryQuery['usageSummary']
+  breadcrumb: BreadcrumbItem
+}
+
+export interface OrgMembersLoaderData {
+  organization: MyOrganizationQuery['myOrganization']
+  members: ListOrgMembersQuery['orgMembers']
   breadcrumb: BreadcrumbItem
 }
 
@@ -175,6 +189,30 @@ export const usersLoader = async ({
     users,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.users',
+    },
+  }
+}
+
+export const billingLoader = async (): Promise<BillingLoaderData> => {
+  const [organization, usageSummary] = await Promise.all([getMyOrganization(), getUsageSummary()])
+
+  return {
+    organization,
+    usageSummary,
+    breadcrumb: {
+      translationKey: 'navigation.breadcrumbs.billing',
+    },
+  }
+}
+
+export const orgMembersLoader = async (): Promise<OrgMembersLoaderData> => {
+  const [organization, members] = await Promise.all([getMyOrganization(), listOrgMembers()])
+
+  return {
+    organization,
+    members,
+    breadcrumb: {
+      translationKey: 'navigation.breadcrumbs.organizationMembers',
     },
   }
 }

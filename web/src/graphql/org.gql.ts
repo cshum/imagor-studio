@@ -61,6 +61,22 @@ export const GET_USAGE_SUMMARY = gql(`
   }
 `)
 
+export const CREATE_CHECKOUT_SESSION = gql(`
+  mutation CreateCheckoutSession($plan: String!, $successURL: String!, $cancelURL: String!) {
+    createCheckoutSession(plan: $plan, successURL: $successURL, cancelURL: $cancelURL) {
+      url
+    }
+  }
+`)
+
+export const CREATE_BILLING_PORTAL_SESSION = gql(`
+  mutation CreateBillingPortalSession($returnURL: String!) {
+    createBillingPortalSession(returnURL: $returnURL) {
+      url
+    }
+  }
+`)
+
 export const GET_SPACE = gql(`
   query GetSpace($key: String!) {
     space(key: $key) {

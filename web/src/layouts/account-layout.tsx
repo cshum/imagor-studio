@@ -121,6 +121,14 @@ export function AccountLayout({ children }: PropsWithChildren) {
   const isMultiTenant = authState.multiTenant
   const showSidebar = !isMultiTenant
   const [mobileOpen, setMobileOpen] = useState(false)
+  const accountLinks = isMultiTenant
+    ? [
+        { label: t('layouts.account.tabs.billing'), href: '/account/billing' },
+        ...(isAdmin
+          ? [{ label: t('navigation.breadcrumbs.organizationMembers'), href: '/account/members' }]
+          : []),
+      ]
+    : []
 
   useScrollHandler(location.pathname)
 
@@ -253,6 +261,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
           appTitle={appTitle}
           breadcrumbs={breadcrumbs.map((c) => ({ label: c.label ?? '', href: c.href }))}
           mobileTrigger={triggerButton}
+          accountLinks={accountLinks}
         />
 
         <main className='relative min-h-screen pt-14'>

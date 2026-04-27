@@ -30,6 +30,11 @@ export type AuthProvider = {
   provider: Scalars['String']['output']
 }
 
+export type BillingSession = {
+  __typename?: 'BillingSession'
+  url: Scalars['String']['output']
+}
+
 export type ChangePasswordInput = {
   currentPassword: InputMaybe<Scalars['String']['input']>
   newPassword: Scalars['String']['input']
@@ -179,6 +184,8 @@ export type Mutation = {
   configureImagor: ImagorConfigResult
   configureS3Storage: StorageConfigResult
   copyFile: Scalars['Boolean']['output']
+  createBillingPortalSession: BillingSession
+  createCheckoutSession: BillingSession
   createFolder: Scalars['Boolean']['output']
   createSpace: Space
   createUser: User
@@ -266,6 +273,16 @@ export type MutationCopyFileArgs = {
   destPath: Scalars['String']['input']
   sourcePath: Scalars['String']['input']
   spaceID?: InputMaybe<Scalars['String']['input']>
+}
+
+export type MutationCreateBillingPortalSessionArgs = {
+  returnURL: Scalars['String']['input']
+}
+
+export type MutationCreateCheckoutSessionArgs = {
+  cancelURL: Scalars['String']['input']
+  plan: Scalars['String']['input']
+  successURL: Scalars['String']['input']
 }
 
 export type MutationCreateFolderArgs = {
@@ -919,6 +936,26 @@ export type GetUsageSummaryQuery = {
     periodStart: string | null
     periodEnd: string | null
   }
+}
+
+export type CreateCheckoutSessionMutationVariables = Exact<{
+  plan: Scalars['String']['input']
+  successURL: Scalars['String']['input']
+  cancelURL: Scalars['String']['input']
+}>
+
+export type CreateCheckoutSessionMutation = {
+  __typename?: 'Mutation'
+  createCheckoutSession: { __typename?: 'BillingSession'; url: string }
+}
+
+export type CreateBillingPortalSessionMutationVariables = Exact<{
+  returnURL: Scalars['String']['input']
+}>
+
+export type CreateBillingPortalSessionMutation = {
+  __typename?: 'Mutation'
+  createBillingPortalSession: { __typename?: 'BillingSession'; url: string }
 }
 
 export type GetSpaceQueryVariables = Exact<{
@@ -2005,6 +2042,20 @@ export const GetUsageSummaryDocument = gql`
     }
   }
 `
+export const CreateCheckoutSessionDocument = gql`
+  mutation CreateCheckoutSession($plan: String!, $successURL: String!, $cancelURL: String!) {
+    createCheckoutSession(plan: $plan, successURL: $successURL, cancelURL: $cancelURL) {
+      url
+    }
+  }
+`
+export const CreateBillingPortalSessionDocument = gql`
+  mutation CreateBillingPortalSession($returnURL: String!) {
+    createBillingPortalSession(returnURL: $returnURL) {
+      url
+    }
+  }
+`
 export const GetSpaceDocument = gql`
   query GetSpace($key: String!) {
     space(key: $key) {
@@ -2741,6 +2792,42 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
           }),
         'GetUsageSummary',
         'query',
+        variables,
+      )
+    },
+    CreateCheckoutSession(
+      variables: CreateCheckoutSessionMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<CreateCheckoutSessionMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<CreateCheckoutSessionMutation>({
+            document: CreateCheckoutSessionDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'CreateCheckoutSession',
+        'mutation',
+        variables,
+      )
+    },
+    CreateBillingPortalSession(
+      variables: CreateBillingPortalSessionMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<CreateBillingPortalSessionMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<CreateBillingPortalSessionMutation>({
+            document: CreateBillingPortalSessionDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'CreateBillingPortalSession',
+        'mutation',
         variables,
       )
     },

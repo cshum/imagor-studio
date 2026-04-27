@@ -391,6 +391,12 @@ export function CreateSpacePage() {
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
+  const accountLinks = authState.multiTenant
+    ? [
+        { label: t('layouts.account.tabs.billing'), href: '/account/billing' },
+        { label: t('navigation.breadcrumbs.organizationMembers'), href: '/account/members' },
+      ]
+    : []
 
   const handleLogout = async () => {
     await logout()
@@ -529,6 +535,7 @@ export function CreateSpacePage() {
           { label: t('navigation.breadcrumbs.spaces'), href: '/' },
           { label: t('pages.spaces.createNewSpace') },
         ]}
+        accountLinks={accountLinks}
       />
 
       {/* Wizard — pt-14 clears fixed header */}

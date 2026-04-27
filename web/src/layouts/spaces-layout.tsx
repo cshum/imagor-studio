@@ -22,6 +22,15 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
   const { authState, logout } = useAuth()
   const navigate = useNavigate()
   const { title: appTitle } = useBrand()
+  const isAdmin = authState.profile?.role === 'admin'
+  const accountLinks = authState.multiTenant
+    ? [
+        { label: t('layouts.account.tabs.billing'), href: '/account/billing' },
+        ...(isAdmin
+          ? [{ label: t('navigation.breadcrumbs.organizationMembers'), href: '/account/members' }]
+          : []),
+      ]
+    : []
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
@@ -40,6 +49,7 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
         onLogout={handleLogout}
         appTitle={appTitle}
         breadcrumbs={title ? [{ label: title }] : undefined}
+        accountLinks={accountLinks}
       />
 
       {/* Content area — pt-14 clears the fixed header */}

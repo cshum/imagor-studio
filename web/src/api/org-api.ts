@@ -5,6 +5,10 @@ import type {
   AddOrgMemberMutationVariables,
   AddSpaceMemberMutation,
   AddSpaceMemberMutationVariables,
+  CreateBillingPortalSessionMutation,
+  CreateBillingPortalSessionMutationVariables,
+  CreateCheckoutSessionMutation,
+  CreateCheckoutSessionMutationVariables,
   CreateSpaceMutation,
   CreateSpaceMutationVariables,
   DeleteSpaceMutation,
@@ -80,6 +84,24 @@ export async function getUsageSummary(): Promise<GetUsageSummaryQuery['usageSumm
   const sdk = getSdk(client)
   const result = await sdk.GetUsageSummary()
   return result.usageSummary
+}
+
+export async function createCheckoutSession(
+  variables: CreateCheckoutSessionMutationVariables,
+): Promise<CreateCheckoutSessionMutation['createCheckoutSession']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.CreateCheckoutSession(variables)
+  return result.createCheckoutSession
+}
+
+export async function createBillingPortalSession(
+  variables: CreateBillingPortalSessionMutationVariables,
+): Promise<CreateBillingPortalSessionMutation['createBillingPortalSession']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.CreateBillingPortalSession(variables)
+  return result.createBillingPortalSession
 }
 
 export async function createSpace(

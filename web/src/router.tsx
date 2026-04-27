@@ -24,6 +24,8 @@ import {
   adminImagorLoader,
   adminLicenseLoader,
   adminStorageLoader,
+  billingLoader,
+  orgMembersLoader,
   profileLoader,
   spaceSettingsLoader,
   usersLoader,
@@ -53,6 +55,8 @@ import {
   spaceMembersSectionLoader,
   spaceSecuritySectionLoader,
 } from '@/loaders/space-settings-loader'
+import { AccountBillingRoutePage } from '@/pages/account-billing-route-page'
+import { AccountMembersRoutePage } from '@/pages/account-members-route-page'
 import { AccountProfileRoutePage } from '@/pages/account-profile-route-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { AdminGeneralSection } from '@/pages/admin/general'
@@ -629,6 +633,27 @@ const accountProfileRoute = createRoute({
   },
 })
 
+const accountBillingRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/billing',
+  loader: billingLoader,
+  component: () => {
+    const loaderData = accountBillingRoute.useLoaderData()
+    return <AccountBillingRoutePage loaderData={loaderData} />
+  },
+})
+
+const accountMembersRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/members',
+  beforeLoad: requireAdminAccountAuth,
+  loader: orgMembersLoader,
+  component: () => {
+    const loaderData = accountMembersRoute.useLoaderData()
+    return <AccountMembersRoutePage loaderData={loaderData} />
+  },
+})
+
 const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
@@ -760,6 +785,8 @@ const routeTree = isEmbeddedMode
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
+          accountBillingRoute,
+          accountMembersRoute,
           accountAdminLayoutRoute.addChildren([
             accountAdminIndexRoute,
             accountAdminGeneralRoute,
