@@ -783,6 +783,7 @@
         "createSpaceForbidden": "You do not have permission to create spaces.",
         "keyAlreadyTaken": "URL slug is already taken",
         "spaceLimitReached": "Your current plan has reached its space limit.",
+        "overPlanLimit": "Over plan limit",
         "updateSpaceFailed": "Failed to update space",
         "deleteSpaceFailed": "Failed to delete space",
         "deleteSpaceForbidden": "Only organization admins can delete this space.",
@@ -816,7 +817,8 @@
       "usage": {
         "spaces": "Spaces",
         "hostedStorage": "Hosted storage",
-        "processing": "Processing"
+        "processing": "Processing",
+        "overLimit": "Over limit"
       },
       "configure": "Configure",
       "startDescription": "You can customize storage, delivery, and access as you grow.",

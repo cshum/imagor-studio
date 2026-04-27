@@ -113,6 +113,7 @@ export function SpacesPage({
   )
   const usedSpaces = usageSummary?.usedSpaces ?? ownedCount
   const maxSpaces = usageSummary?.maxSpaces ?? null
+  const spacesOverLimit = maxSpaces !== null && usedSpaces > maxSpaces
   const createSpaceDisabled = maxSpaces !== null && usedSpaces >= maxSpaces
   const spacesSummary = isUnlimitedOrMissing(maxSpaces)
     ? t('pages.spaces.stats.unlimited')
@@ -192,8 +193,13 @@ export function SpacesPage({
               )}
             </div>
             {createSpaceDisabled && (
-              <Badge variant='outline' className='w-fit'>
-                {t('pages.spaces.messages.spaceLimitReached')}
+              <Badge
+                variant='outline'
+                className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+              >
+                {spacesOverLimit
+                  ? t('pages.spaces.messages.overPlanLimit')
+                  : t('pages.spaces.messages.spaceLimitReached')}
               </Badge>
             )}
           </div>
@@ -202,9 +208,31 @@ export function SpacesPage({
             <div className='space-y-2'>
               <div className='flex items-center justify-between gap-3 text-sm'>
                 <span className='font-medium'>{t('pages.spaces.usage.spaces')}</span>
-                <span className='text-muted-foreground'>{spacesSummary}</span>
+                <div className='flex items-center gap-2'>
+                  {spacesOverLimit && (
+                    <Badge
+                      variant='outline'
+                      className='border-amber-500/30 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                    >
+                      {t('pages.spaces.usage.overLimit')}
+                    </Badge>
+                  )}
+                  <span
+                    className={
+                      spacesOverLimit
+                        ? 'text-amber-700 dark:text-amber-300'
+                        : 'text-muted-foreground'
+                    }
+                  >
+                    {spacesSummary}
+                  </span>
+                </div>
               </div>
-              <Progress value={getProgressValue(usedSpaces, maxSpaces)} />
+              <Progress
+                value={getProgressValue(usedSpaces, maxSpaces)}
+                className={spacesOverLimit ? 'bg-amber-500/15 dark:bg-amber-400/15' : undefined}
+                indicatorClassName={spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined}
+              />
             </div>
 
             <div className='space-y-2'>

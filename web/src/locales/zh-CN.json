@@ -754,6 +754,7 @@
         "createSpaceForbidden": "你没有创建空间的权限。",
         "keyAlreadyTaken": "URL Slug 已被使用",
         "spaceLimitReached": "你当前套餐可创建的空间数量已达上限。",
+        "overPlanLimit": "已超出套餐上限",
         "updateSpaceFailed": "更新空间失败",
         "deleteSpaceFailed": "删除空间失败",
         "deleteSpaceForbidden": "只有组织管理员可以删除这个空间。",
@@ -787,7 +788,8 @@
       "usage": {
         "spaces": "空间",
         "hostedStorage": "平台存储",
-        "processing": "处理量"
+        "processing": "处理量",
+        "overLimit": "超出上限"
       },
       "configure": "配置",
       "creationPreview": {

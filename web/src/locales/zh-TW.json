@@ -774,6 +774,7 @@
         "createSpaceForbidden": "您沒有建立空間的權限。",
         "keyAlreadyTaken": "URL 識別碼已被使用",
         "spaceLimitReached": "您目前方案可建立的空間數量已達上限。",
+        "overPlanLimit": "已超出方案上限",
         "updateSpaceFailed": "更新空間失敗",
         "deleteSpaceFailed": "刪除空間失敗",
         "deleteSpaceForbidden": "只有組織管理員可以刪除此空間。",
@@ -807,7 +808,8 @@
       "usage": {
         "spaces": "空間",
         "hostedStorage": "託管儲存",
-        "processing": "處理量"
+        "processing": "處理量",
+        "overLimit": "超出上限"
       },
       "configure": "設定",
       "creationPreview": {
