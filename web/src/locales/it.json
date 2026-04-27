@@ -879,6 +879,12 @@
       "listTitle": "Persone con accesso",
       "listDescription": "Persone con accesso a {{name}}.",
       "listDescriptionFallback": "Persone con accesso a questa organizzazione.",
+      "empty": "Nessuno ha ancora accesso",
+      "emptyDescription": "Aggiungi qui i collaboratori per dare loro accesso all'organizzazione e agli spazi condivisi.",
+      "listHeaders": {
+        "member": "Membro",
+        "action": "Azione"
+      },
       "actionsTitle": "Azioni",
       "promoteToAdmin": "Passa ad admin",
       "changeToMember": "Passa a membro",
@@ -886,7 +892,6 @@
       "removeTitle": "Rimuovi membro",
       "removeDescription": "Rimuovere {{name}} da questa organizzazione? Perdera l'accesso agli spazi condivisi ereditati dall'organizzazione.",
       "youBadge": "Tu",
-      "joinedAt": "Entrato il {{date}}",
       "roles": {
         "owner": "Owner",
         "admin": "Admin",

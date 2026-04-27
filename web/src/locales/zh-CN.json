@@ -860,6 +860,12 @@
       "listTitle": "可访问人员",
       "listDescription": "可访问 {{name}} 的成员。",
       "listDescriptionFallback": "可访问当前组织的成员。",
+      "empty": "还没有人拥有访问权限",
+      "emptyDescription": "在这里添加成员，以授予他们对当前组织及其共享空间的访问权限。",
+      "listHeaders": {
+        "member": "成员",
+        "action": "操作"
+      },
       "actionsTitle": "操作",
       "promoteToAdmin": "改为管理员",
       "changeToMember": "改为成员",
@@ -867,7 +873,6 @@
       "removeTitle": "移除成员",
       "removeDescription": "要将 {{name}} 从当前组织中移除吗？他们将失去通过组织继承的共享空间访问权限。",
       "youBadge": "你",
-      "joinedAt": "加入于 {{date}}",
       "roles": {
         "owner": "所有者",
         "admin": "管理员",

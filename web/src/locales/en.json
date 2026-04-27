@@ -879,6 +879,12 @@
       "listTitle": "People with access",
       "listDescription": "People with access to {{name}}.",
       "listDescriptionFallback": "People with access to this organization.",
+      "empty": "No people have access yet",
+      "emptyDescription": "Add teammates here to give them access to the organization and its shared spaces.",
+      "listHeaders": {
+        "member": "Member",
+        "action": "Action"
+      },
       "actionsTitle": "Actions",
       "promoteToAdmin": "Change to admin",
       "changeToMember": "Change to member",
@@ -886,7 +892,6 @@
       "removeTitle": "Remove member",
       "removeDescription": "Remove {{name}} from this organization? They will lose access to shared spaces inherited from the organization.",
       "youBadge": "You",
-      "joinedAt": "Joined {{date}}",
       "roles": {
         "owner": "Owner",
         "admin": "Admin",

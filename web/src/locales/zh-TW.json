@@ -880,6 +880,12 @@
       "listTitle": "可存取人員",
       "listDescription": "可存取 {{name}} 的成員。",
       "listDescriptionFallback": "可存取目前組織的成員。",
+      "empty": "目前還沒有人擁有存取權",
+      "emptyDescription": "在這裡新增成員，授予他們目前組織及其共享空間的存取權。",
+      "listHeaders": {
+        "member": "成員",
+        "action": "操作"
+      },
       "actionsTitle": "操作",
       "promoteToAdmin": "改為管理員",
       "changeToMember": "改為成員",
@@ -887,7 +893,6 @@
       "removeTitle": "移除成員",
       "removeDescription": "要將 {{name}} 從目前組織移除嗎？他們將失去透過組織繼承的共享空間存取權。",
       "youBadge": "你",
-      "joinedAt": "加入於 {{date}}",
       "roles": {
         "owner": "擁有者",
         "admin": "管理員",

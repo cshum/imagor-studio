@@ -65,16 +65,8 @@ function getRoleLabel(role: string, t: (key: string) => string) {
   return t('pages.organizationMembers.roles.member')
 }
 
-function formatJoinedAt(value: string, locale?: string) {
-  return new Intl.DateTimeFormat(locale, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(value))
-}
-
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { authState } = useAuth()
   const [members, setMembers] = useState(loaderData.members)
   const [identifier, setIdentifier] = useState('')
@@ -194,19 +186,27 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
       </SettingsSection>
 
       <SettingsSection
-        title={t('pages.organizationMembers.listTitle')}
+        title={`${t('pages.organizationMembers.listTitle')} (${members.length})`}
         description={
           organization?.name
             ? t('pages.organizationMembers.listDescription', { name: organization.name })
             : t('pages.organizationMembers.listDescriptionFallback')
         }
       >
-        <div className='overflow-hidden rounded-lg border'>
-          <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_44px] gap-4 border-b px-4 py-3 text-xs font-medium md:grid'>
-            <div>{t('pages.organizationMembers.listTitle')}</div>
-            <div className='text-right'>{t('pages.organizationMembers.actionsTitle')}</div>
+        {members.length === 0 ? (
+          <div className='rounded-lg border border-dashed p-6 text-center'>
+            <p className='font-medium'>{t('pages.organizationMembers.empty')}</p>
+            <p className='text-muted-foreground mt-1 text-sm'>
+              {t('pages.organizationMembers.emptyDescription')}
+            </p>
           </div>
-          <div className='divide-y'>
+        ) : (
+          <div className='overflow-hidden rounded-lg border'>
+            <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_44px] gap-4 border-b px-4 py-3 text-xs font-medium md:grid'>
+              <div>{t('pages.organizationMembers.listHeaders.member')}</div>
+              <div className='text-right'>{t('pages.organizationMembers.listHeaders.action')}</div>
+            </div>
+            <div className='divide-y'>
             {members.map((member) => {
               const isOwner = member.userId === organization?.ownerUserId || member.role === 'owner'
               const isCurrentUser = member.userId === currentUserId
@@ -242,11 +242,6 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                         </div>
                         <p className='text-muted-foreground truncate text-xs'>
                           {member.email || `@${member.username}`}
-                        </p>
-                        <p className='text-muted-foreground truncate text-xs'>
-                          {t('pages.organizationMembers.joinedAt', {
-                            date: formatJoinedAt(member.createdAt, i18n.language),
-                          })}
                         </p>
                       </div>
                     </div>
@@ -325,11 +320,6 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                         <p className='text-muted-foreground truncate text-xs'>
                           {member.email || `@${member.username}`}
                         </p>
-                        <p className='text-muted-foreground truncate text-xs'>
-                          {t('pages.organizationMembers.joinedAt', {
-                            date: formatJoinedAt(member.createdAt, i18n.language),
-                          })}
-                        </p>
                       </div>
                       {canManage ? (
                         <DropdownMenu>
@@ -376,8 +366,9 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                 </div>
               )
             })}
+            </div>
           </div>
-        </div>
+        )}
       </SettingsSection>
 
       <ResponsiveDialog
