@@ -21,13 +21,15 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
+import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { ListSpacesQuery } from '@/generated/graphql'
-import { getPlanEntitlements, isUnlimitedLimit } from '@/lib/plan-entitlements'
+import type { GetUsageSummaryQuery, ListSpacesQuery } from '@/generated/graphql'
+import { isUnlimitedLimit } from '@/lib/plan-entitlements'
 import { useAuth } from '@/stores/auth-store'
 
 interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']
+  usageSummary?: GetUsageSummaryQuery['usageSummary'] | null
   currentOrganizationId?: string | null
   currentOrganizationPlan?: string | null
   currentOrganizationPlanStatus?: string | null
@@ -42,8 +44,22 @@ function formatBytes(bytes: number) {
   return `${value.toFixed(digits)} ${units[index]}`
 }
 
+function formatCount(value: number) {
+	return new Intl.NumberFormat().format(value)
+}
+
+function getProgressValue(current: number, max: number | null | undefined) {
+	if (max == null || max <= 0) return 0
+	return Math.min((current / max) * 100, 100)
+}
+
+function isUnlimitedOrMissing(value: number | null | undefined) {
+  return value != null && isUnlimitedLimit(value)
+}
+
 export function SpacesPage({
   loaderData,
+  usageSummary = null,
   currentOrganizationId = null,
   currentOrganizationPlan = null,
 }: SpacesPageProps) {
@@ -63,10 +79,6 @@ export function SpacesPage({
         ? spaces
         : spaces.filter((space) => space.orgId === currentOrganizationId),
     [currentOrganizationId, spaces],
-  )
-  const planEntitlements = useMemo(
-    () => getPlanEntitlements(currentOrganizationPlan),
-    [currentOrganizationPlan],
   )
   const ownedCount = useMemo(
     () =>
@@ -92,16 +104,30 @@ export function SpacesPage({
       }, 0),
     [organizationSpaces],
   )
-  const createSpaceDisabled =
-    planEntitlements.maxSpaces >= 0 && ownedCount >= planEntitlements.maxSpaces
-  const spacesSummary = isUnlimitedLimit(planEntitlements.maxSpaces)
+  const usedSpaces = usageSummary?.usedSpaces ?? ownedCount
+  const maxSpaces = usageSummary?.maxSpaces ?? null
+  const createSpaceDisabled = maxSpaces !== null && usedSpaces >= maxSpaces
+  const spacesSummary = isUnlimitedOrMissing(maxSpaces)
     ? t('pages.spaces.stats.unlimited')
-    : `${ownedCount}/${planEntitlements.maxSpaces}`
-  const storageLimitBytes =
-    planEntitlements.storageLimitGB >= 0 ? planEntitlements.storageLimitGB * 1024 * 1024 * 1024 : -1
-  const hostedStorageSummary = isUnlimitedLimit(planEntitlements.storageLimitGB)
+    : `${usedSpaces}/${maxSpaces}`
+  const usedHostedStorageBytes = usageSummary?.usedHostedStorageBytes ?? hostedUsageBytes
+  const storageLimitGB = usageSummary?.storageLimitGB ?? null
+  const storageLimitBytes = storageLimitGB !== null ? storageLimitGB * 1024 * 1024 * 1024 : null
+  const hostedStorageSummary = isUnlimitedOrMissing(storageLimitGB)
     ? t('pages.spaces.stats.unlimited')
-    : `${formatBytes(hostedUsageBytes)} / ${formatBytes(storageLimitBytes)}`
+    : `${formatBytes(usedHostedStorageBytes ?? 0)} / ${formatBytes(storageLimitBytes ?? 0)}`
+  const usedTransforms = usageSummary?.usedTransforms ?? null
+  const transformsLimit = usageSummary?.transformsLimit ?? null
+  const processingSummary = isUnlimitedOrMissing(transformsLimit)
+    ? t('pages.spaces.stats.unlimited')
+    : `${formatCount(usedTransforms ?? 0)} / ${formatCount(transformsLimit ?? 0)}`
+  const usagePeriod =
+    usageSummary?.periodStart && usageSummary?.periodEnd
+      ? t('pages.spaces.currentBillingPeriod', {
+          start: new Date(usageSummary.periodStart).toLocaleDateString(),
+          end: new Date(usageSummary.periodEnd).toLocaleDateString(),
+        })
+      : null
 
   const handleLeaveSpace = async () => {
     if (!leaveSpaceItem) return
@@ -167,24 +193,50 @@ export function SpacesPage({
       )}
 
       {currentOrganizationId !== null && (
-        <div className='bg-muted/30 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between'>
-          <div className='space-y-1'>
-            <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
-            <p className='text-muted-foreground text-sm'>
-              {t('pages.spaces.usageSummaryDescription', {
-                spaces: spacesSummary,
-                storage: hostedStorageSummary,
-              })}
-            </p>
-            <p className='text-muted-foreground text-xs'>
-              {t('pages.spaces.processingUsageComingSoon')}
-            </p>
+        <div className='bg-muted/30 rounded-xl border p-4'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='space-y-1'>
+              <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
+              <p className='text-muted-foreground text-sm'>
+                {t('pages.spaces.usageSummaryDescription', {
+                  spaces: spacesSummary,
+                  storage: hostedStorageSummary,
+                })}
+              </p>
+              {usagePeriod && <p className='text-muted-foreground text-xs'>{usagePeriod}</p>}
+            </div>
+            {createSpaceDisabled && (
+              <Badge variant='outline' className='w-fit'>
+                {t('pages.spaces.messages.spaceLimitReached')}
+              </Badge>
+            )}
           </div>
-          {createSpaceDisabled && (
-            <Badge variant='outline' className='w-fit'>
-              {t('pages.spaces.messages.spaceLimitReached')}
-            </Badge>
-          )}
+
+          <div className='mt-4 grid gap-4 sm:grid-cols-3'>
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between gap-3 text-sm'>
+                <span className='font-medium'>{t('pages.spaces.usage.spaceQuota')}</span>
+                <span className='text-muted-foreground'>{spacesSummary}</span>
+              </div>
+              <Progress value={getProgressValue(usedSpaces, maxSpaces)} />
+            </div>
+
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between gap-3 text-sm'>
+                <span className='font-medium'>{t('pages.spaces.usage.hostedStorage')}</span>
+                <span className='text-muted-foreground'>{hostedStorageSummary}</span>
+              </div>
+              <Progress value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)} />
+            </div>
+
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between gap-3 text-sm'>
+                <span className='font-medium'>{t('pages.spaces.usage.processing')}</span>
+                <span className='text-muted-foreground'>{processingSummary}</span>
+              </div>
+              <Progress value={getProgressValue(usedTransforms ?? 0, transformsLimit)} />
+            </div>
+          </div>
         </div>
       )}
 
@@ -249,6 +301,12 @@ export function SpacesPage({
                     size: formatBytes(hostedUsageBytes),
                   })
                 : t(`pages.spaces.storageType.${space.storageType}`)
+            const processingUsageLabel =
+              space.processingUsageCount !== null
+                ? t('pages.spaces.processingUsage', {
+                    count: space.processingUsageCount,
+                  })
+                : null
             return (
               <div
                 key={space.key}
@@ -304,6 +362,11 @@ export function SpacesPage({
                         {storageBadgeLabel}
                       </Badge>
                     </Link>
+                    {processingUsageLabel && (
+                      <Badge variant='outline' className='pointer-events-auto'>
+                        {processingUsageLabel}
+                      </Badge>
+                    )}
                     {canManageSpace && !space.canLeave ? (
                       <Button
                         variant='ghost'

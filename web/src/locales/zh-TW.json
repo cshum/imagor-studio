@@ -802,7 +802,13 @@
       },
       "usageSummaryTitle": "目前方案用量",
       "usageSummaryDescription": "空間：{{spaces}}。託管儲存：{{storage}}。",
-      "processingUsageComingSoon": "待後端提供處理量指標後，會在這裡顯示處理用量。",
+      "currentBillingPeriod": "目前計費週期：{{start}} 至 {{end}}",
+      "processingUsage": "{{count}} 次處理",
+      "usage": {
+        "spaceQuota": "空間額度",
+        "hostedStorage": "託管儲存",
+        "processing": "處理量"
+      },
       "configure": "設定",
       "creationPreview": {
         "appUrlLabel": "應用 URL",

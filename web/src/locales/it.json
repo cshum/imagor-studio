@@ -811,7 +811,13 @@
       },
       "usageSummaryTitle": "Utilizzo del piano attuale",
       "usageSummaryDescription": "Spazi: {{spaces}}. Storage gestito: {{storage}}.",
-      "processingUsageComingSoon": "L'utilizzo di processing verrà mostrato qui quando il backend esporrà una metrica dedicata.",
+      "currentBillingPeriod": "Periodo di fatturazione corrente: {{start}} - {{end}}",
+      "processingUsage": "{{count}} trasformazioni",
+      "usage": {
+        "spaceQuota": "Quota spazi",
+        "hostedStorage": "Storage gestito",
+        "processing": "Processing"
+      },
       "configure": "Configura",
       "startDescription": "Puoi personalizzare storage, delivery e accesso man mano che cresci.",
       "sharedLabel": "Condiviso",

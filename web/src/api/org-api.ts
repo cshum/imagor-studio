@@ -13,6 +13,7 @@ import type {
   DeleteSpaceRegistryMutationVariables,
   GetSpaceQuery,
   GetSpaceRegistryQuery,
+  GetUsageSummaryQuery,
   InviteSpaceMemberMutation,
   InviteSpaceMemberMutationVariables,
   LeaveSpaceMutation,
@@ -72,6 +73,13 @@ export async function getMyOrganization(): Promise<MyOrganizationQuery['myOrgani
   const sdk = getSdk(client)
   const result = await sdk.MyOrganization()
   return result.myOrganization
+}
+
+export async function getUsageSummary(): Promise<GetUsageSummaryQuery['usageSummary']> {
+	const client = getGraphQLClient()
+	const sdk = getSdk(client)
+	const result = await sdk.GetUsageSummary()
+	return result.usageSummary
 }
 
 export async function createSpace(

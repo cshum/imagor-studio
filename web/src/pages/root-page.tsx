@@ -3,7 +3,6 @@ import { Link, Outlet } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { getPlanEntitlements } from '@/lib/plan-entitlements'
 import { SidebarLayout } from '@/layouts/sidebar-layout'
 import { SpacesLayout } from '@/layouts/spaces-layout'
 import { spacesLoader } from '@/loaders/account-loader'
@@ -49,10 +48,8 @@ export function RootPage({ loaderData }: RootPageProps) {
 
   if (auth.multiTenant) {
     const data = loaderData as Awaited<ReturnType<typeof spacesLoader>>
-    const entitlements = getPlanEntitlements(data.currentOrganizationPlan)
-    const ownedSpaces = data.spaces.filter((space) => space.orgId === data.currentOrganizationId)
     const createSpaceDisabled =
-      entitlements.maxSpaces >= 0 && ownedSpaces.length >= entitlements.maxSpaces
+      data.usageSummary.maxSpaces !== null && data.usageSummary.usedSpaces >= data.usageSummary.maxSpaces
 
     return (
       <SpacesLayout
@@ -62,6 +59,7 @@ export function RootPage({ loaderData }: RootPageProps) {
       >
         <SpacesPage
           loaderData={data.spaces}
+          usageSummary={data.usageSummary}
           currentOrganizationId={data.currentOrganizationId}
           currentOrganizationPlan={data.currentOrganizationPlan}
           currentOrganizationPlanStatus={data.currentOrganizationPlanStatus}

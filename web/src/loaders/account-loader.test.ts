@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getMyOrganization, getSpace, listSpaces } from '@/api/org-api'
+import { getMyOrganization, getSpace, getUsageSummary, listSpaces } from '@/api/org-api'
 import { spaceSettingsLoader, spacesLoader } from '@/loaders/account-loader'
 
 vi.mock('@/api/imagor-api', () => ({
@@ -14,6 +14,7 @@ vi.mock('@/api/license-api', () => ({
 vi.mock('@/api/org-api', () => ({
   getMyOrganization: vi.fn(),
   getSpace: vi.fn(),
+  getUsageSummary: vi.fn(),
   listSpaces: vi.fn(),
 }))
 
@@ -48,6 +49,7 @@ describe('account-loader', () => {
         key: 'acme',
         name: 'Acme',
         storageUsageBytes: 1024,
+        processingUsageCount: 10,
         storageMode: 'platform',
         storageType: 'managed',
         bucket: '',
@@ -78,6 +80,17 @@ describe('account-loader', () => {
       planStatus: 'active',
       createdAt: '2026-04-18T00:00:00Z',
       updatedAt: '2026-04-18T00:00:00Z',
+    })
+    vi.mocked(getUsageSummary).mockResolvedValue({
+      __typename: 'UsageSummary',
+      usedSpaces: 1,
+      maxSpaces: 1,
+      usedHostedStorageBytes: 1024,
+      storageLimitGB: 1,
+      usedTransforms: 10,
+      transformsLimit: 1000,
+      periodStart: '2026-04-01T00:00:00Z',
+      periodEnd: '2026-05-01T00:00:00Z',
     })
 
     const result = await spacesLoader()

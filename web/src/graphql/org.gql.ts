@@ -23,6 +23,7 @@ export const LIST_SPACES = gql(`
       key
       name
       storageUsageBytes
+      processingUsageCount
       storageMode
       storageType
       bucket
@@ -41,6 +42,21 @@ export const LIST_SPACES = gql(`
       canDelete
       canLeave
       updatedAt
+    }
+  }
+`)
+
+export const GET_USAGE_SUMMARY = gql(`
+  query GetUsageSummary {
+    usageSummary {
+      usedSpaces
+      maxSpaces
+      usedHostedStorageBytes
+      storageLimitGB
+      usedTransforms
+      transformsLimit
+      periodStart
+      periodEnd
     }
   }
 `)

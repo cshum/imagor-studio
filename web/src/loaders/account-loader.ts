@@ -2,13 +2,14 @@ import { redirect } from '@tanstack/react-router'
 
 import { getImagorStatus } from '@/api/imagor-api'
 import { getLicenseStatus, type LicenseStatus } from '@/api/license-api'
-import { getMyOrganization, listSpaces } from '@/api/org-api'
+import { getMyOrganization, getUsageSummary, listSpaces } from '@/api/org-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
 import type {
   GetSpaceQuery,
   ImagorStatusQuery,
+  GetUsageSummaryQuery,
   ListSpacesQuery,
   ListSystemRegistryQuery,
   ListUsersQuery,
@@ -180,6 +181,7 @@ export const usersLoader = async ({
 
 export interface SpacesLoaderData {
   spaces: ListSpacesQuery['spaces']
+  usageSummary: GetUsageSummaryQuery['usageSummary']
   currentOrganizationId: string | null
   currentOrganizationPlan: string | null
   currentOrganizationPlanStatus: string | null
@@ -190,9 +192,14 @@ export interface SpacesLoaderData {
  * Load spaces data for the spaces management page
  */
 export const spacesLoader = async (): Promise<SpacesLoaderData> => {
-  const [spaces, organization] = await Promise.all([listSpaces(), getMyOrganization()])
+  const [spaces, organization, usageSummary] = await Promise.all([
+    listSpaces(),
+    getMyOrganization(),
+    getUsageSummary(),
+  ])
   return {
     spaces,
+    usageSummary,
     currentOrganizationId: organization?.id ?? null,
     currentOrganizationPlan: organization?.plan ?? null,
     currentOrganizationPlanStatus: organization?.planStatus ?? null,

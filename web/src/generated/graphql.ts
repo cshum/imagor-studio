@@ -477,6 +477,7 @@ export type Query = {
   spaces: Array<Space>
   statFile: Maybe<FileStat>
   storageStatus: StorageStatus
+  usageSummary: UsageSummary
   user: Maybe<User>
   users: UserList
 }
@@ -606,6 +607,7 @@ export type Space = {
   name: Scalars['String']['output']
   orgId: Scalars['ID']['output']
   prefix: Scalars['String']['output']
+  processingUsageCount: Maybe<Scalars['Int']['output']>
   region: Scalars['String']['output']
   signerAlgorithm: Scalars['String']['output']
   signerTruncate: Scalars['Int']['output']
@@ -665,6 +667,15 @@ export type SpaceMember = {
   roleSource: Scalars['String']['output']
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
+}
+
+export type SpaceUsage = {
+  __typename?: 'SpaceUsage'
+  key: Scalars['String']['output']
+  name: Scalars['String']['output']
+  processingUsageCount: Maybe<Scalars['Int']['output']>
+  spaceId: Scalars['ID']['output']
+  storageUsageBytes: Maybe<Scalars['Int']['output']>
 }
 
 export type StorageConfigInput = {
@@ -742,6 +753,19 @@ export type UploadHeader = {
   __typename?: 'UploadHeader'
   name: Scalars['String']['output']
   value: Scalars['String']['output']
+}
+
+export type UsageSummary = {
+  __typename?: 'UsageSummary'
+  maxSpaces: Maybe<Scalars['Int']['output']>
+  periodEnd: Maybe<Scalars['String']['output']>
+  periodStart: Maybe<Scalars['String']['output']>
+  spaces: Array<SpaceUsage>
+  storageLimitGB: Maybe<Scalars['Int']['output']>
+  transformsLimit: Maybe<Scalars['Int']['output']>
+  usedHostedStorageBytes: Maybe<Scalars['Int']['output']>
+  usedSpaces: Scalars['Int']['output']
+  usedTransforms: Maybe<Scalars['Int']['output']>
 }
 
 export type User = {
@@ -857,6 +881,7 @@ export type ListSpacesQuery = {
     key: string
     name: string
     storageUsageBytes: number | null
+    processingUsageCount: number | null
     storageMode: string
     storageType: string
     bucket: string
@@ -876,6 +901,23 @@ export type ListSpacesQuery = {
     canLeave: boolean
     updatedAt: string
   }>
+}
+
+export type GetUsageSummaryQueryVariables = Exact<{ [key: string]: never }>
+
+export type GetUsageSummaryQuery = {
+  __typename?: 'Query'
+  usageSummary: {
+    __typename?: 'UsageSummary'
+    usedSpaces: number
+    maxSpaces: number | null
+    usedHostedStorageBytes: number | null
+    storageLimitGB: number | null
+    usedTransforms: number | null
+    transformsLimit: number | null
+    periodStart: string | null
+    periodEnd: string | null
+  }
 }
 
 export type GetSpaceQueryVariables = Exact<{
@@ -2201,6 +2243,7 @@ export const ListSpacesDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'key' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageUsageBytes' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'processingUsageCount' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageMode' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'storageType' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'bucket' } },
@@ -2227,6 +2270,38 @@ export const ListSpacesDocument = {
     },
   ],
 } as unknown as DocumentNode<ListSpacesQuery, ListSpacesQueryVariables>
+export const GetUsageSummaryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetUsageSummary' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'usageSummary' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'usedSpaces' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'maxSpaces' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'usedHostedStorageBytes' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'storageLimitGB' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'usedTransforms' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'transformsLimit' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'periodStart' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'periodEnd' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetUsageSummaryQuery, GetUsageSummaryQueryVariables>
 export const GetSpaceDocument = {
   kind: 'Document',
   definitions: [

@@ -73,12 +73,10 @@
     }
   },
   "forms": {
-    "placeholders": {
-      "enterUsername": "输入您的用户名",
-      "enterPassword": "输入您的密码",
-      "confirmPassword": "确认您的密码",
-      "enterName": "输入您的名称"
-    },
+    "enterUsername": "输入您的用户名",
+    "enterPassword": "输入您的密码",
+    "confirmPassword": "确认您的密码",
+    "enterName": "输入您的名称",
     "validation": {
       "required": "此字段为必填项",
       "invalidUsername": "请输入有效的用户名",
@@ -784,7 +782,13 @@
       },
       "usageSummaryTitle": "当前套餐用量",
       "usageSummaryDescription": "空间：{{spaces}}。平台存储：{{storage}}。",
-      "processingUsageComingSoon": "后端提供处理量指标后，会在这里显示处理用量。",
+        "currentBillingPeriod": "当前计费周期：{{start}} 至 {{end}}",
+        "processingUsage": "{{count}} 次处理",
+        "usage": {
+          "spaceQuota": "空间额度",
+          "hostedStorage": "平台存储",
+          "processing": "处理量"
+        },
       "configure": "配置",
       "creationPreview": {
         "appUrlLabel": "应用 URL",

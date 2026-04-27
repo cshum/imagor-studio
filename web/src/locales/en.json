@@ -811,7 +811,13 @@
       },
       "usageSummaryTitle": "Current plan usage",
       "usageSummaryDescription": "Spaces: {{spaces}}. Hosted storage: {{storage}}.",
-      "processingUsageComingSoon": "Processing usage will be shown here once the backend exposes a usage metric.",
+      "currentBillingPeriod": "Current billing period: {{start}} to {{end}}",
+      "processingUsage": "{{count}} transforms",
+      "usage": {
+        "spaceQuota": "Space quota",
+        "hostedStorage": "Hosted storage",
+        "processing": "Processing"
+      },
       "configure": "Configure",
       "startDescription": "You can customize storage, delivery, and access as you grow.",
       "sharedLabel": "Shared",
