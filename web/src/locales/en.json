@@ -792,11 +792,9 @@
       "plan": {
         "free": "Free",
         "trial": "Trial",
-        "early_bird": "Early Bird",
         "starter": "Starter",
         "pro": "Pro",
-        "team": "Team",
-        "enterprise": "Enterprise"
+    		"team": "Team"
       },
       "validation": {
         "keyFormat": "URL slug must contain only lowercase letters, numbers, and hyphens"

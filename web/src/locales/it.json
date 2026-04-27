@@ -792,11 +792,9 @@
       "plan": {
         "free": "Gratis",
         "trial": "Prova",
-        "early_bird": "Early Bird",
         "starter": "Starter",
         "pro": "Pro",
-        "team": "Team",
-        "enterprise": "Enterprise"
+    		"team": "Team"
       },
       "validation": {
         "keyFormat": "Lo slug URL può contenere solo lettere minuscole, numeri e trattini"

@@ -27,9 +27,9 @@ func TestGetLimits_UsesNormalizedPublishedPlans(t *testing.T) {
 	}
 }
 
-func TestGetLimits_UnknownPlanFallsBackToTrial(t *testing.T) {
+func TestGetLimits_UnknownPlanFallsBackToFree(t *testing.T) {
 	limits := GetLimits("unknown")
-	if limits != PlanLimits[PlanTrial] {
-		t.Fatalf("fallback limits = %+v, want %+v", limits, PlanLimits[PlanTrial])
+	if limits != PlanLimits[PlanFree] {
+		t.Fatalf("fallback limits = %+v, want %+v", limits, PlanLimits[PlanFree])
 	}
 }

@@ -21,18 +21,13 @@ var planEntitlements = map[string]PlanEntitlements{
 		BYOBAllowed:      false,
 		MaxCustomDomains: 0,
 	},
+	// Trial remains as an internal transitional state until cloud signup and
+	// lifecycle policy are fully aligned to the paid-from-day-one packaging.
 	org.PlanTrial: {
 		MaxSpaces:        1,
 		StorageLimitGB:   1,
 		TransformsLimit:  1000,
 		BYOBAllowed:      false,
-		MaxCustomDomains: 0,
-	},
-	org.PlanEarlyBird: {
-		MaxSpaces:        3,
-		StorageLimitGB:   10,
-		TransformsLimit:  10000,
-		BYOBAllowed:      true,
 		MaxCustomDomains: 0,
 	},
 	org.PlanStarter: {
@@ -55,13 +50,6 @@ var planEntitlements = map[string]PlanEntitlements{
 		TransformsLimit:  750000,
 		BYOBAllowed:      true,
 		MaxCustomDomains: 10,
-	},
-	org.PlanEnterprise: {
-		MaxSpaces:        -1,
-		StorageLimitGB:   -1,
-		TransformsLimit:  -1,
-		BYOBAllowed:      true,
-		MaxCustomDomains: -1,
 	},
 }
 

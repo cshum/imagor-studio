@@ -1,14 +1,16 @@
 package org
 
-// Active SaaS plans plus legacy/internal states.
+// Published SaaS plans.
 const (
-	PlanFree       = "free"
-	PlanTrial      = "trial"
-	PlanEarlyBird  = "early_bird"
-	PlanStarter    = "starter"
-	PlanPro        = "pro"
-	PlanTeam       = "team"
-	PlanEnterprise = "enterprise"
+	PlanStarter = "starter"
+	PlanPro     = "pro"
+	PlanTeam    = "team"
+)
+
+// Internal lifecycle states.
+const (
+	PlanFree  = "free"
+	PlanTrial = "trial"
 )
 
 // PlanStatus mirrors the subscription lifecycle.
@@ -25,20 +27,21 @@ type Limits struct {
 	MaxStorageGB int
 }
 
-// PlanLimits maps plan names to resource quotas.
+// PlanLimits maps plan names to coarse space/storage quotas.
+// Billing-sensitive entitlements such as transforms, BYOB, and custom domains
+// live in server/pkg/billing/entitlements.go.
 var PlanLimits = map[string]Limits{
-	PlanTrial:      {MaxSpaces: 1, MaxStorageGB: 1},
-	PlanEarlyBird:  {MaxSpaces: 3, MaxStorageGB: 10},
-	PlanStarter:    {MaxSpaces: 1, MaxStorageGB: 20},
-	PlanPro:        {MaxSpaces: 3, MaxStorageGB: 100},
-	PlanTeam:       {MaxSpaces: 10, MaxStorageGB: 500},
-	PlanEnterprise: {MaxSpaces: -1, MaxStorageGB: -1},
+	PlanFree:    {MaxSpaces: 0, MaxStorageGB: 0},
+	PlanTrial:   {MaxSpaces: 1, MaxStorageGB: 1},
+	PlanStarter: {MaxSpaces: 1, MaxStorageGB: 20},
+	PlanPro:     {MaxSpaces: 3, MaxStorageGB: 100},
+	PlanTeam:    {MaxSpaces: 10, MaxStorageGB: 500},
 }
 
-// GetLimits returns limits for a plan, defaulting to trial limits.
+// GetLimits returns limits for a plan, defaulting to the blocked/lapsed state.
 func GetLimits(plan string) Limits {
 	if limits, ok := PlanLimits[plan]; ok {
 		return limits
 	}
-	return PlanLimits[PlanTrial]
+	return PlanLimits[PlanFree]
 }

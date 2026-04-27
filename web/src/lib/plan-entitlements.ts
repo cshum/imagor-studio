@@ -12,15 +12,11 @@ const planEntitlements: Record<string, PlanEntitlements> = {
     storageLimitGB: 0,
     transformsLimit: 0,
   },
+  // Internal transitional state while cloud signup still provisions trial orgs.
   trial: {
     maxSpaces: 1,
     storageLimitGB: 1,
     transformsLimit: 1000,
-  },
-  early_bird: {
-    maxSpaces: 3,
-    storageLimitGB: 10,
-    transformsLimit: 10000,
   },
   starter: {
     maxSpaces: 1,
@@ -36,11 +32,6 @@ const planEntitlements: Record<string, PlanEntitlements> = {
     maxSpaces: 10,
     storageLimitGB: 500,
     transformsLimit: 750000,
-  },
-  enterprise: {
-    maxSpaces: -1,
-    storageLimitGB: -1,
-    transformsLimit: -1,
   },
 }
 
