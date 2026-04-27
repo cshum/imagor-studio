@@ -870,7 +870,7 @@
       }
     },
     "organizationMembers": {
-      "title": "Organization members",
+      "title": "Members",
       "titleDescription": "Manage access to this organization and its shared spaces.",
       "addTitle": "Add people",
       "addDescription": "Add by username or email, then choose whether they should manage the organization.",
