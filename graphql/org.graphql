@@ -197,6 +197,8 @@ extend type Mutation {
   removeSpaceMember(spaceID: String!, userId: ID!): Boolean!
   # Leave your current organization when you are not the owner and other members remain
   leaveOrganization: Boolean!
+  # Permanently delete the current organization after spaces are removed and paid billing is cleared (owner only)
+  deleteOrganization: Boolean!
   # Leave a shared space you were explicitly added to
   leaveSpace(spaceID: String!): Boolean!
   # Change a member's role within the organization (admin only)

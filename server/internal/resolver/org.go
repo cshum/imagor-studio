@@ -1633,6 +1633,54 @@ func (r *mutationResolver) LeaveOrganization(ctx context.Context) (bool, error) 
 	return true, nil
 }
 
+// DeleteOrganization permanently deletes the caller's organization when it is safe to do so.
+func (r *mutationResolver) DeleteOrganization(ctx context.Context) (bool, error) {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if !r.cloudEnabled() {
+		return false, fmt.Errorf("organization management is not available in this deployment")
+	}
+	orgID, err := r.requireUserOrgID(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		return false, fmt.Errorf("failed to load organization: %w", err)
+	}
+	if currentOrg == nil {
+		return false, fmt.Errorf("organization %q not found", orgID)
+	}
+	if currentOrg.OwnerID != claims.UserID {
+		return false, apperror.BadRequest("only the current organization owner can delete the organization", map[string]interface{}{"reason": "org_delete_current_owner_required"})
+	}
+
+	spaces, err := r.spaceStore.ListByOrgID(ctx, orgID)
+	if err != nil {
+		return false, fmt.Errorf("failed to list organization spaces: %w", err)
+	}
+	if len(spaces) > 0 {
+		return false, apperror.BadRequest("delete all spaces before deleting the organization", map[string]interface{}{"reason": "org_delete_has_spaces"})
+	}
+
+	isPaidPlan := currentOrg.Plan == org.PlanStarter || currentOrg.Plan == org.PlanPro || currentOrg.Plan == org.PlanTeam
+	hasActiveBilling := currentOrg.PlanStatus == org.PlanStatusActive || currentOrg.PlanStatus == org.PlanStatusPastDue
+	if isPaidPlan && hasActiveBilling && currentOrg.StripeSubscriptionID != "" {
+		return false, apperror.BadRequest("cancel paid billing before deleting the organization", map[string]interface{}{"reason": "org_delete_billing_active"})
+	}
+
+	if err := r.orgStore.Delete(ctx, orgID, claims.UserID); err != nil {
+		r.logger.Error("DeleteOrganization: failed", zap.String("orgID", orgID), zap.String("userID", claims.UserID), zap.Error(err))
+		return false, fmt.Errorf("failed to delete organization: %w", err)
+	}
+
+	r.logger.Info("Organization deleted", zap.String("orgID", orgID), zap.String("userID", claims.UserID))
+	return true, nil
+}
+
 // AddSpaceMember adds an existing org member to a space (space manager).
 func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceID string, userID string, role gql.SpaceMemberAssignableRole) (*gql.SpaceMember, error) {
 	if !r.cloudEnabled() {

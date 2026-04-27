@@ -128,6 +128,7 @@ type ComplexityRoot struct {
 		CreateUser                    func(childComplexity int, input CreateUserInput) int
 		DeactivateAccount             func(childComplexity int, userID *string) int
 		DeleteFile                    func(childComplexity int, path string, spaceID *string) int
+		DeleteOrganization            func(childComplexity int) int
 		DeleteSpace                   func(childComplexity int, key string) int
 		DeleteSpaceRegistry           func(childComplexity int, spaceID string, keys []string) int
 		DeleteSystemRegistry          func(childComplexity int, key *string, keys []string) int
@@ -407,6 +408,7 @@ type MutationResolver interface {
 	RemoveOrgMember(ctx context.Context, userID string) (bool, error)
 	RemoveSpaceMember(ctx context.Context, spaceID string, userID string) (bool, error)
 	LeaveOrganization(ctx context.Context) (bool, error)
+	DeleteOrganization(ctx context.Context) (bool, error)
 	LeaveSpace(ctx context.Context, spaceID string) (bool, error)
 	UpdateOrgMemberRole(ctx context.Context, userID string, role OrgMemberAssignableRole) (*OrgMember, error)
 	TransferOrganizationOwnership(ctx context.Context, userID string) (*Organization, error)
@@ -922,6 +924,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteFile(childComplexity, args["path"].(string), args["spaceID"].(*string)), true
+	case "Mutation.deleteOrganization":
+		if e.ComplexityRoot.Mutation.DeleteOrganization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteOrganization(childComplexity), true
 	case "Mutation.deleteSpace":
 		if e.ComplexityRoot.Mutation.DeleteSpace == nil {
 			break
@@ -2618,6 +2626,8 @@ extend type Mutation {
   removeSpaceMember(spaceID: String!, userId: ID!): Boolean!
   # Leave your current organization when you are not the owner and other members remain
   leaveOrganization: Boolean!
+  # Permanently delete the current organization after spaces are removed and paid billing is cleared (owner only)
+  deleteOrganization: Boolean!
   # Leave a shared space you were explicitly added to
   leaveSpace(spaceID: String!): Boolean!
   # Change a member's role within the organization (admin only)
@@ -6779,6 +6789,35 @@ func (ec *executionContext) _Mutation_leaveOrganization(ctx context.Context, fie
 }
 
 func (ec *executionContext) fieldContext_Mutation_leaveOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteOrganization,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().DeleteOrganization(ctx)
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15702,6 +15741,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "leaveOrganization":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_leaveOrganization(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteOrganization":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteOrganization(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

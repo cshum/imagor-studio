@@ -1007,6 +1007,89 @@ func TestTransferOrganizationOwnership_RequiresExistingMember(t *testing.T) {
 	orgStore.AssertExpectations(t)
 }
 
+func TestDeleteOrganization_Success(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
+	orgStore.On("Delete", mock.Anything, "org-1", "user-1").Return(nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_RequiresCurrentOwner(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_delete_current_owner_required", gqlErr.Extensions["reason"])
+	spaceStore.AssertNotCalled(t, "ListByOrgID", mock.Anything, mock.Anything)
+	orgStore.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_RejectsWhenSpacesRemain(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{makeTestSpace("alpha", "org-1")}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_delete_has_spaces", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_RejectsActivePaidBilling(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	paidOrg := makeTestOrg("org-1", "user-1")
+	paidOrg.Plan = org.PlanStarter
+	paidOrg.PlanStatus = org.PlanStatusActive
+	paidOrg.StripeSubscriptionID = "sub_123"
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(paidOrg, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_delete_billing_active", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
 // ---------- UpdateSpace ------------------------------------------------------
 
 func TestUpdateSpace_RequiresManagePermission(t *testing.T) {

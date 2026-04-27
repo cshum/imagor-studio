@@ -231,6 +231,18 @@ func (s *testOrgStore) TransferOwnership(ctx context.Context, orgID, currentOwne
 	})
 }
 
+func (s *testOrgStore) Delete(ctx context.Context, orgID, ownerID string) error {
+	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewDelete().TableExpr("org_members").Where("org_id = ?", orgID).Exec(ctx); err != nil {
+			return fmt.Errorf("delete org members: %w", err)
+		}
+		if _, err := tx.NewDelete().TableExpr("organizations").Where("id = ? AND owner_id = ?", orgID, ownerID).Exec(ctx); err != nil {
+			return fmt.Errorf("delete organization: %w", err)
+		}
+		return nil
+	})
+}
+
 func mapTestOrg(row *testOrganizationRow) *org.Org {
 	result := &org.Org{ID: row.ID, OwnerID: row.OwnerID, Name: row.Name, Slug: row.Slug, Plan: row.Plan, PlanStatus: row.PlanStatus, TrialEndsAt: row.TrialEndsAt, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
 	if row.StripeCustomerID != nil {

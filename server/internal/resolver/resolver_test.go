@@ -427,6 +427,11 @@ func (m *MockOrgStore) TransferOwnership(ctx context.Context, orgID, currentOwne
 	return args.Error(0)
 }
 
+func (m *MockOrgStore) Delete(ctx context.Context, orgID, ownerID string) error {
+	args := m.Called(ctx, orgID, ownerID)
+	return args.Error(0)
+}
+
 var _ org.OrgStore = (*MockOrgStore)(nil)
 
 // MockSpaceStore mocks the spacestore.Store interface.

@@ -75,6 +75,10 @@ func (e *errOrgStore) TransferOwnership(_ context.Context, _, _, _ string) error
 	return fmt.Errorf("%s", e.msg)
 }
 
+func (e *errOrgStore) Delete(_ context.Context, _, _ string) error {
+	return fmt.Errorf("%s", e.msg)
+}
+
 // nilOrgStore implements space.OrgStore but returns (nil, nil) on lookups —
 // simulates a user that exists but has no org yet.
 type nilOrgStore struct{}
@@ -121,6 +125,10 @@ func (n *nilOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error 
 }
 
 func (n *nilOrgStore) TransferOwnership(_ context.Context, _, _, _ string) error {
+	return nil
+}
+
+func (n *nilOrgStore) Delete(_ context.Context, _, _ string) error {
 	return nil
 }
 
