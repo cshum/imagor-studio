@@ -182,7 +182,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 
 	var billingService billing.Service
 	if mode == ModeCloud && billingServiceFactory != nil {
-		billingService, err = billingServiceFactory(cloudConfig, logger)
+		billingService, err = billingServiceFactory(cloudConfig, logger, orgStore)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize billing service: %w", err)
 		}

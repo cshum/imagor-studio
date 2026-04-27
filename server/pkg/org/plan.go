@@ -2,6 +2,7 @@ package org
 
 // Active SaaS plans plus legacy/internal states.
 const (
+	PlanFree       = "free"
 	PlanTrial      = "trial"
 	PlanEarlyBird  = "early_bird"
 	PlanStarter    = "starter"

@@ -106,6 +106,17 @@ func (s *testOrgStore) GetBySlug(ctx context.Context, slug string) (*org.Org, er
 	return mapTestOrg(&organization), nil
 }
 
+func (s *testOrgStore) GetByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*org.Org, error) {
+	var organization testOrganizationRow
+	if err := s.db.NewSelect().Model(&organization).Where("stripe_customer_id = ?", stripeCustomerID).Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get organization by stripe customer id %s: %w", stripeCustomerID, err)
+	}
+	return mapTestOrg(&organization), nil
+}
+
 func (s *testOrgStore) UpdateBillingState(ctx context.Context, orgID string, update org.BillingStateUpdate) (*org.Org, error) {
 	query := s.db.NewUpdate().Model((*testOrganizationRow)(nil)).Where("id = ?", orgID).Set("updated_at = ?", time.Now().UTC())
 	if update.Plan != nil {

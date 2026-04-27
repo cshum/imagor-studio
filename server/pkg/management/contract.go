@@ -28,6 +28,12 @@ type CloudConfig struct {
 	SESRegion                            string
 	SESFromEmail                         string
 	AppAPIURL                            string
+	StripeSecretKey                      string
+	StripeWebhookSecret                  string
+	StripeStarterPriceID                 string
+	StripeProPriceID                     string
+	StripeTeamPriceID                    string
+	StripeBillingPortalConfigurationID   string
 	ProcessingURLTemplate                string
 	ProcessingUsageBatchCleanupEnabled   bool
 	ProcessingUsageBatchCleanupRetention time.Duration
@@ -124,7 +130,7 @@ type ProcessingOriginResolverFactory func(cfg CloudConfig, spaceStore space.Spac
 
 type TemplatePreviewRenderClientFactory func(cfg CloudConfig) processing.TemplatePreviewRenderClient
 
-type BillingServiceFactory func(cfg CloudConfig, logger *zap.Logger) (billing.Service, error)
+type BillingServiceFactory func(cfg CloudConfig, logger *zap.Logger, orgStore org.OrgStore) (billing.Service, error)
 
 type AutoMigrationConfig struct {
 	DatabaseURL      string

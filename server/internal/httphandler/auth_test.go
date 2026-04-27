@@ -42,6 +42,10 @@ func (e *errOrgStore) GetBySlug(_ context.Context, _ string) (*org.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
 
+func (e *errOrgStore) GetByStripeCustomerID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+
 func (e *errOrgStore) UpdateBillingState(_ context.Context, _ string, _ org.BillingStateUpdate) (*org.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
@@ -76,6 +80,10 @@ func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*org.Org, error)
 	return nil, nil // no org found
 }
 func (n *nilOrgStore) GetBySlug(_ context.Context, _ string) (*org.Org, error) {
+	return nil, nil
+}
+
+func (n *nilOrgStore) GetByStripeCustomerID(_ context.Context, _ string) (*org.Org, error) {
 	return nil, nil
 }
 

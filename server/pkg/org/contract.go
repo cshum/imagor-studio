@@ -50,6 +50,7 @@ type OrgStore interface {
 	GetByID(ctx context.Context, id string) (*Org, error)
 	GetByUserID(ctx context.Context, userID string) (*Org, error)
 	GetBySlug(ctx context.Context, slug string) (*Org, error)
+	GetByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*Org, error)
 	UpdateBillingState(ctx context.Context, orgID string, update BillingStateUpdate) (*Org, error)
 	ListMembers(ctx context.Context, orgID string) ([]*OrgMemberView, error)
 	AddMember(ctx context.Context, orgID, userID, role string) error

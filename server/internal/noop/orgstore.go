@@ -36,6 +36,10 @@ func (n *OrgStore) GetBySlug(_ context.Context, _ string) (*org.Org, error) {
 	return nil, ErrCloudDisabled
 }
 
+func (n *OrgStore) GetByStripeCustomerID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, ErrCloudDisabled
+}
+
 func (n *OrgStore) UpdateBillingState(_ context.Context, _ string, _ org.BillingStateUpdate) (*org.Org, error) {
 	return nil, ErrCloudDisabled
 }
