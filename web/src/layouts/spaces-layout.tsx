@@ -23,9 +23,15 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
   const navigate = useNavigate()
   const { title: appTitle } = useBrand()
   const isAdmin = authState.profile?.role === 'admin'
-  const accountLinks = authState.multiTenant && isAdmin
-    ? [{ label: t('navigation.breadcrumbs.organization'), href: '/account/organization' }]
-    : []
+  const accountLinks =
+    authState.multiTenant && isAdmin
+      ? [
+          {
+            label: t('navigation.breadcrumbs.organization'),
+            href: '/account/organization/overview',
+          },
+        ]
+      : []
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')

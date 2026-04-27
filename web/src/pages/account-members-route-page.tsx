@@ -11,9 +11,9 @@ import {
   updateOrgMemberRole,
   type OrgMemberItem,
 } from '@/api/org-api'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { SettingsSection } from '@/components/ui/settings-section'
 import { extractErrorMessage } from '@/lib/error-utils'
 import type { OrgMembersLoaderData } from '@/loaders/account-loader'
 import { useAuth } from '@/stores/auth-store'
@@ -47,6 +48,15 @@ interface AccountMembersRoutePageProps {
 
 function getMemberLabel(member: Pick<OrgMemberItem, 'displayName' | 'username'>) {
   return member.displayName || member.username
+}
+
+function getInitials(value: string) {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
 }
 
 function getRoleLabel(role: string, t: (key: string) => string) {
@@ -156,12 +166,12 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('pages.organizationMembers.addTitle')}</CardTitle>
-          <CardDescription>{t('pages.organizationMembers.addDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent className='grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_auto]'>
+      <SettingsSection
+        title={t('pages.organizationMembers.addTitle')}
+        description={t('pages.organizationMembers.addDescription')}
+        contentClassName='border-t-0'
+      >
+        <div className='grid gap-3 py-1 md:grid-cols-[minmax(0,1fr)_180px_auto]'>
           <Input
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
@@ -180,91 +190,191 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
           <ButtonWithLoading isLoading={isAdding} onClick={handleAddMember}>
             {t('pages.organizationMembers.addButton')}
           </ButtonWithLoading>
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsSection>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('pages.organizationMembers.listTitle')}</CardTitle>
-          <CardDescription>
-            {organization?.name
-              ? t('pages.organizationMembers.listDescription', { name: organization.name })
-              : t('pages.organizationMembers.listDescriptionFallback')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-3'>
-          {members.map((member) => {
-            const isOwner = member.userId === organization?.ownerUserId || member.role === 'owner'
-            const isCurrentUser = member.userId === currentUserId
-            const canManage = !isOwner && !isCurrentUser
+      <SettingsSection
+        title={t('pages.organizationMembers.listTitle')}
+        description={
+          organization?.name
+            ? t('pages.organizationMembers.listDescription', { name: organization.name })
+            : t('pages.organizationMembers.listDescriptionFallback')
+        }
+      >
+        <div className='overflow-hidden rounded-lg border'>
+          <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_44px] gap-4 border-b px-4 py-3 text-xs font-medium md:grid'>
+            <div>{t('pages.organizationMembers.listTitle')}</div>
+            <div className='text-right'>{t('pages.organizationMembers.actionsTitle')}</div>
+          </div>
+          <div className='divide-y'>
+            {members.map((member) => {
+              const isOwner = member.userId === organization?.ownerUserId || member.role === 'owner'
+              const isCurrentUser = member.userId === currentUserId
+              const canManage = !isOwner && !isCurrentUser
 
-            return (
-              <div
-                key={member.userId}
-                className='flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'
-              >
-                <div className='min-w-0 space-y-1'>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <p className='truncate font-medium'>{getMemberLabel(member)}</p>
-                    <Badge variant={isOwner ? 'secondary' : 'outline'}>
-                      {getRoleLabel(member.role, t)}
-                    </Badge>
-                    {isCurrentUser && (
-                      <Badge variant='outline'>{t('pages.organizationMembers.youBadge')}</Badge>
-                    )}
+              return (
+                <div key={member.userId}>
+                  <div className='hidden grid-cols-[minmax(0,1fr)_44px] items-center gap-4 px-4 py-4 md:grid'>
+                    <div className='flex min-w-0 items-center gap-3'>
+                      <Avatar className='h-10 w-10'>
+                        <AvatarImage src={undefined} alt={getMemberLabel(member)} />
+                        <AvatarFallback className='text-sm font-semibold'>
+                          {getInitials(getMemberLabel(member))}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='min-w-0'>
+                        <div className='flex items-center gap-2'>
+                          <p className='truncate text-sm font-medium'>{getMemberLabel(member)}</p>
+                          <Badge
+                            variant={isOwner ? 'secondary' : 'outline'}
+                            className='h-5 px-2 text-[11px] font-medium'
+                          >
+                            {getRoleLabel(member.role, t)}
+                          </Badge>
+                          {isCurrentUser ? (
+                            <Badge
+                              variant='outline'
+                              className='inline-flex h-5 items-center px-2 text-[11px] font-medium'
+                            >
+                              {t('pages.organizationMembers.youBadge')}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <p className='text-muted-foreground truncate text-xs'>@{member.username}</p>
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {t('pages.organizationMembers.joinedAt', {
+                            date: formatJoinedAt(member.createdAt, i18n.language),
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      {canManage ? (
+                        <div className='flex justify-end'>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <ButtonWithLoading
+                                variant='ghost'
+                                size='icon'
+                                className='h-9 w-9'
+                                isLoading={updatingUserId === member.userId}
+                                disabled={isRemoving && pendingRemoveUserId === member.userId}
+                              >
+                                <MoreHorizontal className='h-4 w-4' />
+                              </ButtonWithLoading>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align='end'>
+                              <DropdownMenuLabel>
+                                {t('pages.organizationMembers.actionsTitle')}
+                              </DropdownMenuLabel>
+                              <DropdownMenuItem
+                                disabled={member.role === 'admin'}
+                                onClick={() => handleRoleChange(member.userId, 'admin')}
+                              >
+                                {t('pages.organizationMembers.promoteToAdmin')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                disabled={member.role === 'member'}
+                                onClick={() => handleRoleChange(member.userId, 'member')}
+                              >
+                                {t('pages.organizationMembers.changeToMember')}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className='text-destructive focus:text-destructive'
+                                onClick={() => setPendingRemoveUserId(member.userId)}
+                              >
+                                <UserMinus className='mr-2 h-4 w-4' />
+                                {t('pages.organizationMembers.removeMember')}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
-                  <p className='text-muted-foreground text-sm'>@{member.username}</p>
-                  <p className='text-muted-foreground text-xs'>
-                    {t('pages.organizationMembers.joinedAt', {
-                      date: formatJoinedAt(member.createdAt, i18n.language),
-                    })}
-                  </p>
-                </div>
 
-                {canManage ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <ButtonWithLoading
-                        variant='outline'
-                        size='icon'
-                        isLoading={updatingUserId === member.userId}
-                        disabled={isRemoving && pendingRemoveUserId === member.userId}
-                      >
-                        <MoreHorizontal className='h-4 w-4' />
-                      </ButtonWithLoading>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuLabel>
-                        {t('pages.organizationMembers.actionsTitle')}
-                      </DropdownMenuLabel>
-                      <DropdownMenuItem
-                        disabled={member.role === 'admin'}
-                        onClick={() => handleRoleChange(member.userId, 'admin')}
-                      >
-                        {t('pages.organizationMembers.promoteToAdmin')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={member.role === 'member'}
-                        onClick={() => handleRoleChange(member.userId, 'member')}
-                      >
-                        {t('pages.organizationMembers.changeToMember')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className='text-destructive focus:text-destructive'
-                        onClick={() => setPendingRemoveUserId(member.userId)}
-                      >
-                        <UserMinus className='mr-2 h-4 w-4' />
-                        {t('pages.organizationMembers.removeMember')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : null}
-              </div>
-            )
-          })}
-        </CardContent>
-      </Card>
+                  <div className='px-4 py-4 md:hidden'>
+                    <div className='flex min-w-0 items-center gap-3'>
+                      <Avatar className='h-10 w-10'>
+                        <AvatarImage src={undefined} alt={getMemberLabel(member)} />
+                        <AvatarFallback className='text-sm font-semibold'>
+                          {getInitials(getMemberLabel(member))}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='min-w-0 flex-1'>
+                        <div className='flex items-center gap-2'>
+                          <p className='truncate text-sm font-medium'>{getMemberLabel(member)}</p>
+                          <Badge
+                            variant={isOwner ? 'secondary' : 'outline'}
+                            className='h-5 px-2 text-[11px] font-medium'
+                          >
+                            {getRoleLabel(member.role, t)}
+                          </Badge>
+                          {isCurrentUser ? (
+                            <Badge
+                              variant='outline'
+                              className='inline-flex h-5 items-center px-2 text-[11px] font-medium'
+                            >
+                              {t('pages.organizationMembers.youBadge')}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <p className='text-muted-foreground truncate text-xs'>@{member.username}</p>
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {t('pages.organizationMembers.joinedAt', {
+                            date: formatJoinedAt(member.createdAt, i18n.language),
+                          })}
+                        </p>
+                      </div>
+                      {canManage ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <ButtonWithLoading
+                              variant='ghost'
+                              size='icon'
+                              className='h-9 w-9'
+                              isLoading={updatingUserId === member.userId}
+                              disabled={isRemoving && pendingRemoveUserId === member.userId}
+                            >
+                              <MoreHorizontal className='h-4 w-4' />
+                            </ButtonWithLoading>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuLabel>
+                              {t('pages.organizationMembers.actionsTitle')}
+                            </DropdownMenuLabel>
+                            <DropdownMenuItem
+                              disabled={member.role === 'admin'}
+                              onClick={() => handleRoleChange(member.userId, 'admin')}
+                            >
+                              {t('pages.organizationMembers.promoteToAdmin')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={member.role === 'member'}
+                              onClick={() => handleRoleChange(member.userId, 'member')}
+                            >
+                              {t('pages.organizationMembers.changeToMember')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className='text-destructive focus:text-destructive'
+                              onClick={() => setPendingRemoveUserId(member.userId)}
+                            >
+                              <UserMinus className='mr-2 h-4 w-4' />
+                              {t('pages.organizationMembers.removeMember')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </SettingsSection>
 
       <ResponsiveDialog
         open={pendingRemoveMember !== null}

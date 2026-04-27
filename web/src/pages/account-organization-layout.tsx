@@ -1,7 +1,12 @@
-import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { Link, Outlet, useLocation } from '@tanstack/react-router'
 
 const ORGANIZATION_TABS = [
+  {
+    id: 'overview',
+    path: '/account/organization/overview',
+    labelKey: 'navigation.breadcrumbs.organization',
+  },
   {
     id: 'billing',
     path: '/account/organization/billing',

@@ -392,9 +392,7 @@ export function CreateSpacePage() {
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
   const accountLinks = authState.multiTenant
-    ? [
-        { label: t('navigation.breadcrumbs.organization'), href: '/account/organization' },
-      ]
+    ? [{ label: t('navigation.breadcrumbs.organization'), href: '/account/organization/overview' }]
     : []
 
   const handleLogout = async () => {

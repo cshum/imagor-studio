@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { SettingRow } from '@/components/ui/setting-row'
+import { SettingsSection } from '@/components/ui/settings-section'
 import { getPlanEntitlements, isUnlimitedLimit } from '@/lib/plan-entitlements'
 import type { BillingLoaderData } from '@/loaders/account-loader'
 
@@ -39,19 +41,6 @@ function getProgressValue(current: number, max: number | null | undefined) {
   return Math.min((current / max) * 100, 100)
 }
 
-function formatUsagePeriod(start: string | null | undefined, end: string | null | undefined) {
-  if (!start || !end) {
-    return null
-  }
-
-  const formatter = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-  })
-
-  return `${formatter.format(new Date(start))} - ${formatter.format(new Date(end))}`
-}
-
 export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageProps) {
   const { t } = useTranslation()
   const [pendingPlan, setPendingPlan] = useState<string | null>(null)
@@ -60,8 +49,6 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const organization = loaderData.organization
   const usageSummary = loaderData.usageSummary
   const currentPlan = organization?.plan ?? 'free'
-  const currentStatus = organization?.planStatus ?? 'canceled'
-  const periodLabel = formatUsagePeriod(usageSummary?.periodStart, usageSummary?.periodEnd)
   const canOpenPortal = PAID_PLANS.includes(currentPlan as (typeof PAID_PLANS)[number])
 
   const usageItems = [
@@ -155,33 +142,28 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         )}
       </div>
 
-      <Card>
-        <CardHeader className='gap-3 sm:flex-row sm:items-start sm:justify-between'>
-          <div>
-            <CardTitle>{t('pages.billing.currentPlan')}</CardTitle>
-            <CardDescription>{t('pages.billing.currentPlanDescription')}</CardDescription>
-          </div>
-          <div className='flex flex-wrap items-center gap-2'>
-            <Badge variant='secondary'>{t(`pages.spaces.plan.${currentPlan}`)}</Badge>
-            <Badge variant='outline'>{t(`pages.billing.status.${currentStatus}`)}</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='grid gap-4 md:grid-cols-3'>
-            {usageItems.map((item) => (
-              <div key={item.key} className='space-y-2'>
-                <div className='flex items-center justify-between gap-3 text-sm'>
-                  <span className='font-medium'>{item.label}</span>
-                  <span className='text-muted-foreground'>{item.displayValue}</span>
-                </div>
-                <Progress value={getProgressValue(item.used, item.limit)} />
+      <SettingsSection
+        title={t('pages.organizationOverview.usageTitle')}
+        description={t('pages.organizationOverview.usageDescription')}
+        contentClassName='border-t-0'
+      >
+        {usageItems.map((item, index) => (
+          <SettingRow
+            key={item.key}
+            label={item.label}
+            description={t('pages.organizationOverview.usage.periodScoped')}
+            contentClassName='sm:max-w-md'
+            last={index === usageItems.length - 1}
+          >
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between gap-3 text-sm'>
+                <span className='text-muted-foreground'>{item.displayValue}</span>
               </div>
-            ))}
-          </div>
-
-          {periodLabel && <p className='text-muted-foreground text-xs'>{periodLabel}</p>}
-        </CardContent>
-      </Card>
+              <Progress value={getProgressValue(item.used, item.limit)} />
+            </div>
+          </SettingRow>
+        ))}
+      </SettingsSection>
 
       <div className='grid gap-4 xl:grid-cols-3'>
         {PAID_PLANS.map((plan) => {

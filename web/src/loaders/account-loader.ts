@@ -79,6 +79,12 @@ export interface BillingLoaderData {
   breadcrumb: BreadcrumbItem
 }
 
+export interface OrgOverviewLoaderData {
+  organization: MyOrganizationQuery['myOrganization']
+  usageSummary: GetUsageSummaryQuery['usageSummary']
+  breadcrumb: BreadcrumbItem
+}
+
 export interface OrgMembersLoaderData {
   organization: MyOrganizationQuery['myOrganization']
   members: ListOrgMembersQuery['orgMembers']
@@ -201,6 +207,18 @@ export const billingLoader = async (): Promise<BillingLoaderData> => {
     usageSummary,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.billing',
+    },
+  }
+}
+
+export const orgOverviewLoader = async (): Promise<OrgOverviewLoaderData> => {
+  const [organization, usageSummary] = await Promise.all([getMyOrganization(), getUsageSummary()])
+
+  return {
+    organization,
+    usageSummary,
+    breadcrumb: {
+      translationKey: 'navigation.breadcrumbs.organization',
     },
   }
 }

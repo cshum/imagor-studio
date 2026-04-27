@@ -813,8 +813,7 @@
         "unlimited": "Unlimited"
       },
       "usageSummaryTitle": "Current plan usage",
-      "managePlan": "Billing",
-      "manageMembers": "Members",
+      "manageOrganization": "Manage organization",
       "usageSummaryMeta": "{{owned}} owned · {{shared}} shared",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} transforms",
@@ -836,7 +835,7 @@
     },
     "billing": {
       "title": "Billing",
-      "titleDescription": "Review your current plan, usage, and upgrade options.",
+      "titleDescription": "Review current usage, manage billing, and change plans.",
       "currentPlan": "Current plan",
       "currentPlanDescription": "Usage is tracked per billing period and resets automatically.",
       "currentPlanBadge": "Current",
@@ -872,15 +871,15 @@
     },
     "organizationMembers": {
       "title": "Organization members",
-      "titleDescription": "Manage who can access this organization and administer shared spaces.",
-      "addTitle": "Add teammate",
-      "addDescription": "Invite by username or email and choose whether they should manage the organization.",
+      "titleDescription": "Manage access to this organization and its shared spaces.",
+      "addTitle": "Add people",
+      "addDescription": "Add by username or email, then choose whether they should manage the organization.",
       "identifierPlaceholder": "username or email",
-      "addButton": "Add member",
-      "listTitle": "Members",
+      "addButton": "Add",
+      "listTitle": "People with access",
       "listDescription": "People with access to {{name}}.",
       "listDescriptionFallback": "People with access to this organization.",
-      "actionsTitle": "Member actions",
+      "actionsTitle": "Actions",
       "promoteToAdmin": "Change to admin",
       "changeToMember": "Change to member",
       "removeMember": "Remove member",
@@ -901,6 +900,35 @@
         "roleUpdateFailed": "Failed to update member role",
         "memberRemoved": "Member removed.",
         "memberRemoveFailed": "Failed to remove member"
+      }
+    },
+    "organizationOverview": {
+      "title": "Organization",
+      "titleDescription": "Review your plan, usage, and organization administration in one place.",
+      "summaryDescription": "A quick view of the current organization state.",
+      "usageTitle": "Current usage",
+      "usageDescription": "Usage resets by billing period and applies across the organization.",
+      "unlimited": "Unlimited",
+      "notAvailable": "Not available",
+      "summaryCards": {
+        "planLabel": "Current plan",
+        "planDescription": "The subscription tier currently applied to this organization.",
+        "statusLabel": "Plan status",
+        "statusDescription": "Billing lifecycle state used to enforce access and limits.",
+        "organizationLabel": "Organization",
+        "organizationDescription": "The workspace that owns spaces, billing, and shared access.",
+        "billingPeriodLabel": "Billing period",
+        "billingPeriodDescription": "The current reporting window for usage-based limits."
+      },
+      "usage": {
+        "spaces": "Spaces",
+        "hostedStorage": "Hosted storage",
+        "processing": "Processing",
+        "periodScoped": "Usage is tracked against the current billing period."
+      },
+      "actions": {
+        "reviewBilling": "Review billing",
+        "manageMembers": "Manage members"
       }
     },
     "spacePropagation": {

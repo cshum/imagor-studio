@@ -784,8 +784,7 @@
         "unlimited": "不限"
       },
       "usageSummaryTitle": "当前套餐用量",
-      "managePlan": "计费",
-      "manageMembers": "成员",
+      "manageOrganization": "管理组织",
       "usageSummaryMeta": "{{owned}} 个由你拥有 · {{shared}} 个与你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} 次处理",
@@ -817,7 +816,7 @@
     },
     "billing": {
       "title": "计费",
-      "titleDescription": "查看当前套餐、用量和升级选项。",
+      "titleDescription": "查看当前用量、管理计费并调整方案。",
       "currentPlan": "当前套餐",
       "currentPlanDescription": "用量按计费周期统计，并会自动重置。",
       "currentPlanBadge": "当前",
@@ -853,15 +852,15 @@
     },
     "organizationMembers": {
       "title": "组织成员",
-      "titleDescription": "管理谁可以访问当前组织，以及谁可以管理共享空间。",
-      "addTitle": "添加成员",
-      "addDescription": "通过用户名或邮箱添加成员，并选择是否授予组织管理权限。",
+      "titleDescription": "管理谁可以访问当前组织及其共享空间。",
+      "addTitle": "添加人员",
+      "addDescription": "通过用户名或邮箱添加，然后选择是否授予组织管理权限。",
       "identifierPlaceholder": "用户名或邮箱",
-      "addButton": "添加成员",
-      "listTitle": "成员列表",
+      "addButton": "添加",
+      "listTitle": "可访问人员",
       "listDescription": "可访问 {{name}} 的成员。",
       "listDescriptionFallback": "可访问当前组织的成员。",
-      "actionsTitle": "成员操作",
+      "actionsTitle": "操作",
       "promoteToAdmin": "改为管理员",
       "changeToMember": "改为成员",
       "removeMember": "移除成员",
@@ -882,6 +881,35 @@
         "roleUpdateFailed": "更新成员角色失败",
         "memberRemoved": "成员已移除。",
         "memberRemoveFailed": "移除成员失败"
+      }
+    },
+    "organizationOverview": {
+      "title": "组织",
+      "titleDescription": "在一个位置查看套餐、用量和组织管理。",
+      "summaryDescription": "快速查看当前组织状态。",
+      "usageTitle": "当前用量",
+      "usageDescription": "用量按计费周期重置，并应用于整个组织。",
+      "unlimited": "不限",
+      "notAvailable": "不可用",
+      "summaryCards": {
+        "planLabel": "当前套餐",
+        "planDescription": "当前应用于此组织的订阅层级。",
+        "statusLabel": "套餐状态",
+        "statusDescription": "用于执行访问和额度限制的计费生命周期状态。",
+        "organizationLabel": "组织",
+        "organizationDescription": "拥有空间、计费和共享访问的工作区。",
+        "billingPeriodLabel": "计费周期",
+        "billingPeriodDescription": "当前用于统计用量限制的计费窗口。"
+      },
+      "usage": {
+        "spaces": "空间",
+        "hostedStorage": "平台存储",
+        "processing": "处理量",
+        "periodScoped": "用量按当前计费周期统计。"
+      },
+      "actions": {
+        "reviewBilling": "查看计费",
+        "manageMembers": "管理成员"
       }
     },
     "spacePropagation": {

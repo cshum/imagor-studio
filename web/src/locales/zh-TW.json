@@ -804,8 +804,7 @@
         "unlimited": "不限"
       },
       "usageSummaryTitle": "目前方案用量",
-      "managePlan": "計費",
-      "manageMembers": "成員",
+      "manageOrganization": "管理組織",
       "usageSummaryMeta": "{{owned}} 個由你擁有 · {{shared}} 個與你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} 次處理",
@@ -837,7 +836,7 @@
     },
     "billing": {
       "title": "計費",
-      "titleDescription": "檢視目前方案、用量與升級選項。",
+      "titleDescription": "檢視目前用量、管理計費並調整方案。",
       "currentPlan": "目前方案",
       "currentPlanDescription": "用量會依計費週期統計，並自動重置。",
       "currentPlanBadge": "目前",
@@ -873,15 +872,15 @@
     },
     "organizationMembers": {
       "title": "組織成員",
-      "titleDescription": "管理誰可以存取目前組織，以及誰可以管理共享空間。",
-      "addTitle": "新增成員",
-      "addDescription": "透過使用者名稱或電子郵件新增成員，並選擇是否授予組織管理權限。",
+      "titleDescription": "管理誰可以存取目前組織及其共享空間。",
+      "addTitle": "新增人員",
+      "addDescription": "透過使用者名稱或電子郵件新增，然後選擇是否授予組織管理權限。",
       "identifierPlaceholder": "使用者名稱或電子郵件",
-      "addButton": "新增成員",
-      "listTitle": "成員列表",
+      "addButton": "新增",
+      "listTitle": "可存取人員",
       "listDescription": "可存取 {{name}} 的成員。",
       "listDescriptionFallback": "可存取目前組織的成員。",
-      "actionsTitle": "成員操作",
+      "actionsTitle": "操作",
       "promoteToAdmin": "改為管理員",
       "changeToMember": "改為成員",
       "removeMember": "移除成員",
@@ -902,6 +901,35 @@
         "roleUpdateFailed": "更新成員角色失敗",
         "memberRemoved": "成員已移除。",
         "memberRemoveFailed": "移除成員失敗"
+      }
+    },
+    "organizationOverview": {
+      "title": "組織",
+      "titleDescription": "在同一處檢視方案、用量與組織管理。",
+      "summaryDescription": "快速檢視目前組織狀態。",
+      "usageTitle": "目前用量",
+      "usageDescription": "用量會依計費週期重置，並套用到整個組織。",
+      "unlimited": "不限",
+      "notAvailable": "不可用",
+      "summaryCards": {
+        "planLabel": "目前方案",
+        "planDescription": "目前套用到此組織的訂閱層級。",
+        "statusLabel": "方案狀態",
+        "statusDescription": "用於套用存取與額度限制的計費生命週期狀態。",
+        "organizationLabel": "組織",
+        "organizationDescription": "擁有空間、計費與共享存取的工作區。",
+        "billingPeriodLabel": "計費週期",
+        "billingPeriodDescription": "目前用於統計用量限制的計費視窗。"
+      },
+      "usage": {
+        "spaces": "空間",
+        "hostedStorage": "託管儲存",
+        "processing": "處理量",
+        "periodScoped": "用量會依目前計費週期統計。"
+      },
+      "actions": {
+        "reviewBilling": "檢視計費",
+        "manageMembers": "管理成員"
       }
     },
     "spacePropagation": {

@@ -26,6 +26,7 @@ import {
   adminStorageLoader,
   billingLoader,
   orgMembersLoader,
+  orgOverviewLoader,
   profileLoader,
   spaceSettingsLoader,
   usersLoader,
@@ -56,8 +57,9 @@ import {
   spaceSecuritySectionLoader,
 } from '@/loaders/space-settings-loader'
 import { AccountBillingRoutePage } from '@/pages/account-billing-route-page'
-import { AccountOrganizationLayout } from '@/pages/account-organization-layout'
 import { AccountMembersRoutePage } from '@/pages/account-members-route-page'
+import { AccountOrganizationLayout } from '@/pages/account-organization-layout'
+import { AccountOrganizationOverviewRoutePage } from '@/pages/account-organization-overview-route-page'
 import { AccountProfileRoutePage } from '@/pages/account-profile-route-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { AdminGeneralSection } from '@/pages/admin/general'
@@ -638,7 +640,7 @@ const accountLegacyBillingRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/billing',
   beforeLoad: () => {
-    throw redirect({ to: '/account/organization/billing' })
+    throw redirect({ to: '/account/organization/overview' })
   },
 })
 
@@ -646,7 +648,7 @@ const accountLegacyMembersRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/members',
   beforeLoad: () => {
-    throw redirect({ to: '/account/organization/members' })
+    throw redirect({ to: '/account/organization/overview' })
   },
 })
 
@@ -661,7 +663,17 @@ const accountOrganizationIndexRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/',
   beforeLoad: () => {
-    throw redirect({ to: '/account/organization/billing' })
+    throw redirect({ to: '/account/organization/overview' })
+  },
+})
+
+const accountOrganizationOverviewRoute = createRoute({
+  getParentRoute: () => accountOrganizationLayoutRoute,
+  path: '/overview',
+  loader: orgOverviewLoader,
+  component: () => {
+    const loaderData = accountOrganizationOverviewRoute.useLoaderData()
+    return <AccountOrganizationOverviewRoutePage loaderData={loaderData} />
   },
 })
 
@@ -820,6 +832,7 @@ const routeTree = isEmbeddedMode
           accountLegacyMembersRoute,
           accountOrganizationLayoutRoute.addChildren([
             accountOrganizationIndexRoute,
+            accountOrganizationOverviewRoute,
             accountOrganizationBillingRoute,
             accountOrganizationMembersRoute,
           ]),

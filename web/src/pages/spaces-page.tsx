@@ -192,28 +192,16 @@ export function SpacesPage({
                 </p>
               )}
             </div>
-            <div className='flex flex-wrap items-center gap-2'>
-              {authState.profile?.role === 'admin' && (
-                <Button asChild variant='outline' size='sm'>
-                  <Link to='/account/organization/billing'>{t('pages.spaces.managePlan')}</Link>
-                </Button>
-              )}
-              {authState.profile?.role === 'admin' && (
-                <Button asChild variant='outline' size='sm'>
-                  <Link to='/account/organization/members'>{t('pages.spaces.manageMembers')}</Link>
-                </Button>
-              )}
-              {createSpaceDisabled && (
-                <Badge
-                  variant='outline'
-                  className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
-                >
-                  {spacesOverLimit
-                    ? t('pages.spaces.messages.overPlanLimit')
-                    : t('pages.spaces.messages.spaceLimitReached')}
-                </Badge>
-              )}
-            </div>
+            {createSpaceDisabled && (
+              <Badge
+                variant='outline'
+                className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+              >
+                {spacesOverLimit
+                  ? t('pages.spaces.messages.overPlanLimit')
+                  : t('pages.spaces.messages.spaceLimitReached')}
+              </Badge>
+            )}
           </div>
 
           <div className='mt-4 grid gap-4 sm:grid-cols-3'>

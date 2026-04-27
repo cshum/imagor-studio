@@ -813,8 +813,7 @@
         "unlimited": "Illimitato"
       },
       "usageSummaryTitle": "Utilizzo del piano attuale",
-      "managePlan": "Fatturazione",
-      "manageMembers": "Membri",
+      "manageOrganization": "Gestisci organizzazione",
       "usageSummaryMeta": "{{owned}} tuoi · {{shared}} condivisi",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} trasformazioni",
@@ -836,7 +835,7 @@
     },
     "billing": {
       "title": "Fatturazione",
-      "titleDescription": "Controlla il piano attuale, l'utilizzo e le opzioni di upgrade.",
+      "titleDescription": "Controlla l'utilizzo attuale, gestisci la fatturazione e cambia piano.",
       "currentPlan": "Piano attuale",
       "currentPlanDescription": "L'utilizzo viene monitorato per periodo di fatturazione e si azzera automaticamente.",
       "currentPlanBadge": "Attuale",
@@ -872,15 +871,15 @@
     },
     "organizationMembers": {
       "title": "Membri dell'organizzazione",
-      "titleDescription": "Gestisci chi puo accedere all'organizzazione e amministrare gli spazi condivisi.",
-      "addTitle": "Aggiungi collaboratore",
-      "addDescription": "Invita tramite username o email e scegli se deve gestire l'organizzazione.",
+      "titleDescription": "Gestisci l'accesso a questa organizzazione e ai relativi spazi condivisi.",
+      "addTitle": "Aggiungi persone",
+      "addDescription": "Aggiungi tramite username o email, poi scegli se devono gestire l'organizzazione.",
       "identifierPlaceholder": "username o email",
-      "addButton": "Aggiungi membro",
-      "listTitle": "Membri",
+      "addButton": "Aggiungi",
+      "listTitle": "Persone con accesso",
       "listDescription": "Persone con accesso a {{name}}.",
       "listDescriptionFallback": "Persone con accesso a questa organizzazione.",
-      "actionsTitle": "Azioni membro",
+      "actionsTitle": "Azioni",
       "promoteToAdmin": "Passa ad admin",
       "changeToMember": "Passa a membro",
       "removeMember": "Rimuovi membro",
@@ -901,6 +900,35 @@
         "roleUpdateFailed": "Impossibile aggiornare il ruolo del membro",
         "memberRemoved": "Membro rimosso.",
         "memberRemoveFailed": "Impossibile rimuovere il membro"
+      }
+    },
+    "organizationOverview": {
+      "title": "Organizzazione",
+      "titleDescription": "Controlla piano, utilizzo e amministrazione dell'organizzazione in un unico punto.",
+      "summaryDescription": "Una vista rapida dello stato attuale dell'organizzazione.",
+      "usageTitle": "Utilizzo attuale",
+      "usageDescription": "L'utilizzo si azzera a ogni periodo di fatturazione e si applica a tutta l'organizzazione.",
+      "unlimited": "Illimitato",
+      "notAvailable": "Non disponibile",
+      "summaryCards": {
+        "planLabel": "Piano attuale",
+        "planDescription": "Il livello di abbonamento attualmente applicato a questa organizzazione.",
+        "statusLabel": "Stato del piano",
+        "statusDescription": "Lo stato del ciclo di fatturazione usato per applicare accesso e limiti.",
+        "organizationLabel": "Organizzazione",
+        "organizationDescription": "Lo spazio di lavoro che possiede spazi, fatturazione e accesso condiviso.",
+        "billingPeriodLabel": "Periodo di fatturazione",
+        "billingPeriodDescription": "La finestra attuale di rendicontazione per i limiti basati sull'utilizzo."
+      },
+      "usage": {
+        "spaces": "Spazi",
+        "hostedStorage": "Storage gestito",
+        "processing": "Processing",
+        "periodScoped": "L'utilizzo viene monitorato rispetto al periodo di fatturazione corrente."
+      },
+      "actions": {
+        "reviewBilling": "Controlla fatturazione",
+        "manageMembers": "Gestisci membri"
       }
     },
     "spacePropagation": {
