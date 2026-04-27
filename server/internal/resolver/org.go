@@ -10,6 +10,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
@@ -472,6 +473,55 @@ func normalizeCustomDomain(domain string) string {
 	return strings.TrimSuffix(trimmed, ".")
 }
 
+func (r *mutationResolver) enforceCustomDomainQuota(ctx context.Context, orgID string, before, after *space.Space) error {
+	if r.orgStore == nil || r.spaceStore == nil || after == nil {
+		return nil
+	}
+
+	previousDomain := ""
+	if before != nil {
+		previousDomain = normalizeCustomDomain(before.CustomDomain)
+	}
+	nextDomain := normalizeCustomDomain(after.CustomDomain)
+	if nextDomain == "" || nextDomain == previousDomain {
+		return nil
+	}
+
+	orgRecord, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		return fmt.Errorf("failed to load organization plan: %w", err)
+	}
+	if orgRecord == nil {
+		return fmt.Errorf("organization %q not found", orgID)
+	}
+
+	entitlements := billing.EntitlementsForPlan(orgRecord.Plan)
+	if entitlements.MaxCustomDomains < 0 {
+		return nil
+	}
+
+	spaces, err := r.spaceStore.ListByOrgID(ctx, orgID)
+	if err != nil {
+		return fmt.Errorf("failed to list organization spaces: %w", err)
+	}
+
+	count := 0
+	for _, existingSpace := range spaces {
+		if existingSpace == nil || normalizeCustomDomain(existingSpace.CustomDomain) == "" {
+			continue
+		}
+		if before != nil && existingSpace.ID == before.ID {
+			continue
+		}
+		count++
+	}
+	if count < entitlements.MaxCustomDomains {
+		return nil
+	}
+
+	return fmt.Errorf("custom domain limit (%d) reached for plan %q", entitlements.MaxCustomDomains, orgRecord.Plan)
+}
+
 // ---------- Query resolvers --------------------------------------------------
 
 // MyOrganization returns the organization for the currently authenticated user.
@@ -703,6 +753,9 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 	original := *existing
 	candidate := *existing
 	if err := applySpaceInput(&candidate, input); err != nil {
+		return nil, err
+	}
+	if err := r.enforceCustomDomainQuota(ctx, existing.OrgID, &original, &candidate); err != nil {
 		return nil, err
 	}
 	if shouldValidateUpdatedByobStorage(&original, &candidate, input) {
