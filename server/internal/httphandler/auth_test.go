@@ -866,6 +866,40 @@ func TestRefreshToken(t *testing.T) {
 	}
 }
 
+func TestRefreshToken_RecomputesCurrentOrgID(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{})
+
+	staleToken, err := tokenManager.GenerateTokenForUser("user1", "user", []string{"read", "write"}, "org-stale")
+	require.NoError(t, err)
+	mockUserStore.On("GetByID", mock.Anything, "user1").Return(&userstore.User{
+		ID:          "user1",
+		DisplayName: "testuser",
+		Username:    "testuser",
+		Role:        "user",
+		IsActive:    true,
+	}, nil).Once()
+
+	body, err := json.Marshal(RefreshTokenRequest{Token: staleToken})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/refresh", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+
+	handler.RefreshToken()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+	var refreshResp LoginResponse
+	err = json.Unmarshal(rr.Body.Bytes(), &refreshResp)
+	require.NoError(t, err)
+	claims, err := tokenManager.ValidateToken(refreshResp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "user1", claims.UserID)
+	assert.Empty(t, claims.OrgID)
+	mockUserStore.AssertExpectations(t)
+}
+
 func TestGuestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)

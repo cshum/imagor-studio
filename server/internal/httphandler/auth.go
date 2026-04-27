@@ -356,22 +356,11 @@ func (h *AuthHandler) RefreshToken() http.HandlerFunc {
 			return apperror.Unauthorized("User not found or inactive")
 		}
 
-		// Generate new token — RefreshToken propagates OrgID automatically
-		newToken, err := h.tokenManager.RefreshToken(claims)
+		currentOrgID := h.resolvePrimaryOrgID(r.Context(), claims.UserID)
+		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, currentOrgID)
 		if err != nil {
 			h.logger.Error("Failed to refresh token", zap.Error(err))
 			return apperror.InternalServerError("Failed to refresh token")
-		}
-
-		response := LoginResponse{
-			Token:     newToken,
-			ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
-			User: UserResponse{
-				ID:          user.ID,
-				DisplayName: user.DisplayName,
-				Username:    user.Username,
-				Role:        user.Role,
-			},
 		}
 
 		return WriteSuccess(w, response)

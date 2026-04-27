@@ -552,16 +552,27 @@ func mapSpaceInvitationToGQL(invitation *space.Invitation) *gql.SpaceInvitation 
 	}
 }
 
-// getUserOrgID returns the org ID for the authenticated user.
-// It prefers the OrgID embedded in the JWT claims (no DB round-trip);
-// falls back to a DB lookup via orgStore when the claim is absent.
+// getUserOrgID returns the current org ID for the authenticated user.
+// For ordinary multi-tenant users, a claimed org_id is validated against the
+// current membership row so stale sessions do not retain org access after leave,
+// removal, or deletion. Global admin/self-hosted paths keep the claim fast path.
 func (r *Resolver) getUserOrgID(ctx context.Context) (string, error) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return "", err
 	}
 	if claims.OrgID != "" {
-		return claims.OrgID, nil
+		if claims.Role == "admin" || r.orgStore == nil || !r.cloudEnabled() {
+			return claims.OrgID, nil
+		}
+		org, lookupErr := r.orgStore.GetByUserID(ctx, claims.UserID)
+		if lookupErr != nil {
+			return "", fmt.Errorf("get org for user: %w", lookupErr)
+		}
+		if org == nil {
+			return "", nil
+		}
+		return org.ID, nil
 	}
 	// Fallback: look up via orgStore (self-hosted or legacy token without org_id claim).
 	if r.orgStore == nil || !r.cloudEnabled() {

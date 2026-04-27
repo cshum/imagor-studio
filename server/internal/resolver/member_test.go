@@ -89,6 +89,7 @@ func TestOrgMembers_RequiresAdmin(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "member"),
@@ -267,6 +268,7 @@ func TestAddOrgMemberByEmail_RejectsUserInAnotherOrganization(t *testing.T) {
 func TestAddOrgMember_RequiresAdmin(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, &MockUserStore{})
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "member"),
@@ -365,6 +367,7 @@ func TestRemoveOrgMember_RejectsLastMemberRemoval(t *testing.T) {
 func TestRemoveOrgMember_RequiresAdmin(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "member"),
@@ -381,6 +384,7 @@ func TestLeaveOrganization_Success(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByUserID", mock.Anything, "user-2").Return(makeTestOrg("org-1", "user-1"), nil)
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
@@ -418,6 +422,7 @@ func TestLeaveOrganization_RejectsLastMember(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByUserID", mock.Anything, "user-2").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-2", "bob", "member"),
@@ -436,6 +441,7 @@ func TestLeaveOrganization_RejectsNonMember(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByUserID", mock.Anything, "user-9").Return(makeTestOrg("org-1", "user-1"), nil)
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
@@ -524,6 +530,7 @@ func TestUpdateOrgMemberRole_RejectsChangingOwnerRole(t *testing.T) {
 func TestUpdateOrgMemberRole_RequiresAdmin(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "member"),

@@ -148,6 +148,7 @@ func TestMyOrganization_ReturnsMembershipRoleForNonAdminToken(t *testing.T) {
 	r := newOrgResolver(orgStore, spaceStore)
 
 	orgRecord := makeTestOrg("org-1", "user-9")
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(orgRecord, nil)
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
@@ -170,6 +171,20 @@ func TestMyOrganization_NoOrg(t *testing.T) {
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(nil, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().MyOrganization(ctx)
+	require.NoError(t, err)
+	assert.Nil(t, result)
+	orgStore.AssertExpectations(t)
+}
+
+func TestMyOrganization_IgnoresStaleOrgClaimForNonAdminToken(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	result, err := r.Query().MyOrganization(ctx)
 	require.NoError(t, err)
 	assert.Nil(t, result)
@@ -416,6 +431,7 @@ func TestSpaces_ReturnsSameOrgSpacesForNonAdminMember(t *testing.T) {
 
 	s1 := makeTestSpace("acme", "org-1")
 	s2 := makeTestSpace("beta", "org-1")
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{s1, s2}, nil)
 	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*space.Space{}, nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
@@ -536,6 +552,7 @@ func TestSpace_ReturnsSameOrgSpaceForNonAdminMember(t *testing.T) {
 	r := newOrgResolver(orgStore, spaceStore)
 
 	s := makeTestSpace("acme", "org-1")
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(s, nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
 		OrgID:       "org-1",
@@ -682,6 +699,7 @@ func TestSpace_ReturnsPublicAccessSpaceForAuthenticatedNonMember(t *testing.T) {
 func TestCreateSpace_RequiresAdmin(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newOrgResolver(orgStore, &MockSpaceStore{})
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "member"),
@@ -707,6 +725,7 @@ func TestCreateSpace_AllowsOrganizationAdminWithNonAdminToken(t *testing.T) {
 	created.Bucket = ""
 	created.Region = ""
 	orgRecord := makeTestOrg("org-1", "user-9")
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(orgRecord, nil)
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "admin"),
@@ -1161,6 +1180,7 @@ func TestUpdateSpace_RequiresManagePermission(t *testing.T) {
 	r := newOrgResolver(orgStore, spaceStore)
 
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(makeTestSpace("acme", "org-1"), nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
 		OrgID:       "org-1",
 		UserID:      "user-1",
@@ -1525,6 +1545,7 @@ func TestDeleteSpace_RequiresDeletePermission(t *testing.T) {
 	r := newOrgResolver(orgStore, spaceStore)
 
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(makeTestSpace("acme", "org-1"), nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
 		OrgID:       "org-1",
 		UserID:      "user-1",
@@ -1715,6 +1736,7 @@ func TestSpaceMembers_RequiresManagePermission(t *testing.T) {
 
 	s := makeTestSpace("acme", "org-1")
 	spaceStore.On("GetByID", mock.Anything, s.ID).Return(s, nil).Once()
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
 		OrgID:       "org-1",
 		UserID:      "user-1",
@@ -1776,6 +1798,7 @@ func TestInviteSpaceMember_RequiresManagePermission(t *testing.T) {
 
 	s := makeTestSpace("acme", "org-1")
 	spaceStore.On("GetByID", mock.Anything, s.ID).Return(s, nil).Once()
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
 		OrgID:       "org-1",
 		UserID:      "user-1",
