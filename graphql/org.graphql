@@ -3,6 +3,7 @@ type Organization {
   name: String!
   slug: String!
   ownerUserId: String!
+  currentUserRole: OrgMemberRole!
   plan: String!
   planStatus: String!
   createdAt: String!

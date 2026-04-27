@@ -156,14 +156,15 @@ type OrgMember struct {
 }
 
 type Organization struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	OwnerUserID string `json:"ownerUserId"`
-	Plan        string `json:"plan"`
-	PlanStatus  string `json:"planStatus"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID              string        `json:"id"`
+	Name            string        `json:"name"`
+	Slug            string        `json:"slug"`
+	OwnerUserID     string        `json:"ownerUserId"`
+	CurrentUserRole OrgMemberRole `json:"currentUserRole"`
+	Plan            string        `json:"plan"`
+	PlanStatus      string        `json:"planStatus"`
+	CreatedAt       string        `json:"createdAt"`
+	UpdatedAt       string        `json:"updatedAt"`
 }
 
 type PresignedUpload struct {

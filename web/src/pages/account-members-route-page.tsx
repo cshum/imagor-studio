@@ -93,7 +93,6 @@ function getOrganizationMembersErrorMessage(error: unknown, t: (key: string) => 
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
   const { t } = useTranslation()
   const { authState } = useAuth()
-  const canAdministerOrganization = authState.profile?.role === 'admin'
   const [organization, setOrganization] = useState(loaderData.organization)
   const [members, setMembers] = useState(loaderData.members)
   const [identifier, setIdentifier] = useState('')
@@ -111,6 +110,8 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
   const pendingTransferMember =
     members.find((member) => member.userId === pendingTransferUserId) ?? null
   const currentUserIsOwner = currentUserId !== null && organization?.ownerUserId === currentUserId
+  const canAdministerOrganization =
+    organization?.currentUserRole === 'owner' || organization?.currentUserRole === 'admin'
 
   const reloadOrganizationMembers = async () => {
     const [nextOrganization, nextMembers] = await Promise.all([

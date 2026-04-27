@@ -472,6 +472,7 @@ export type OrgMemberRole = 'admin' | 'member' | 'owner'
 export type Organization = {
   __typename?: 'Organization'
   createdAt: Scalars['String']['output']
+  currentUserRole: OrgMemberRole
   id: Scalars['ID']['output']
   name: Scalars['String']['output']
   ownerUserId: Scalars['String']['output']
@@ -900,6 +901,7 @@ export type MyOrganizationQuery = {
     name: string
     slug: string
     ownerUserId: string
+    currentUserRole: OrgMemberRole
     plan: string
     planStatus: string
     createdAt: string
@@ -2034,6 +2036,7 @@ export const MyOrganizationDocument = gql`
       name
       slug
       ownerUserId
+      currentUserRole
       plan
       planStatus
       createdAt

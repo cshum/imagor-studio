@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 
-import { useAuth } from '@/stores/auth-store'
+interface AccountOrganizationLayoutProps {
+  currentUserRole?: string | null
+}
 
 const ORGANIZATION_TABS = [
   {
@@ -16,12 +18,11 @@ const ORGANIZATION_TABS = [
   },
 ] as const
 
-export function AccountOrganizationLayout() {
+export function AccountOrganizationLayout({ currentUserRole }: AccountOrganizationLayoutProps) {
   const { t } = useTranslation()
   const location = useLocation()
-  const { authState } = useAuth()
   const visibleTabs = ORGANIZATION_TABS.filter(
-    (tab) => tab.id !== 'billing' || authState.profile?.role === 'admin',
+    (tab) => tab.id !== 'billing' || currentUserRole === 'owner' || currentUserRole === 'admin',
   )
 
   const isActive = (path: string) =>

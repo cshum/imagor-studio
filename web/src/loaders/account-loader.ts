@@ -239,6 +239,7 @@ export interface SpacesLoaderData {
   spaces: ListSpacesQuery['spaces']
   usageSummary: GetUsageSummaryQuery['usageSummary']
   currentOrganizationId: string | null
+  currentOrganizationRole: string | null
   currentOrganizationPlan: string | null
   currentOrganizationPlanStatus: string | null
   breadcrumb: BreadcrumbItem
@@ -257,6 +258,7 @@ export const spacesLoader = async (): Promise<SpacesLoaderData> => {
     spaces,
     usageSummary,
     currentOrganizationId: organization?.id ?? null,
+    currentOrganizationRole: organization?.currentUserRole ?? null,
     currentOrganizationPlan: organization?.plan ?? null,
     currentOrganizationPlanStatus: organization?.planStatus ?? null,
     breadcrumb: {

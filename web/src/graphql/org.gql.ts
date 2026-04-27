@@ -7,6 +7,7 @@ export const MY_ORGANIZATION = gql(`
       name
       slug
       ownerUserId
+      currentUserRole
       plan
       planStatus
       createdAt

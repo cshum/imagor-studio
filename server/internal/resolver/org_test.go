@@ -136,8 +136,29 @@ func TestMyOrganization_ReturnsOrg(t *testing.T) {
 	assert.Equal(t, "Test Org", result.Name)
 	assert.Equal(t, "test-org", result.Slug)
 	assert.Equal(t, "user-1", result.OwnerUserID)
+	assert.Equal(t, gql.OrgMemberRoleOwner, result.CurrentUserRole)
 	assert.Equal(t, "starter", result.Plan)
 	assert.Equal(t, "active", result.PlanStatus)
+	orgStore.AssertExpectations(t)
+}
+
+func TestMyOrganization_ReturnsMembershipRoleForNonAdminToken(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgRecord := makeTestOrg("org-1", "user-9")
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "admin"),
+	}, nil).Once()
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Query().MyOrganization(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, gql.OrgMemberRoleAdmin, result.CurrentUserRole)
 	orgStore.AssertExpectations(t)
 }
 
@@ -659,14 +680,55 @@ func TestSpace_ReturnsPublicAccessSpaceForAuthenticatedNonMember(t *testing.T) {
 // ---------- CreateSpace ------------------------------------------------------
 
 func TestCreateSpace_RequiresAdmin(t *testing.T) {
-	r := newOrgResolver(&MockOrgStore{}, &MockSpaceStore{})
+	orgStore := &MockOrgStore{}
+	r := newOrgResolver(orgStore, &MockSpaceStore{})
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "member"),
+	}, nil).Once()
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	input := gql.SpaceInput{Key: "acme", Name: "Acme"}
 	result, err := r.Mutation().CreateSpace(ctx, input)
 	assert.Nil(t, result)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "permission")
+	assert.Contains(t, err.Error(), "organization admin access required")
+	orgStore.AssertExpectations(t)
+}
+
+func TestCreateSpace_AllowsOrganizationAdminWithNonAdminToken(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	created := makeTestSpace("acme", "org-1")
+	created.StorageMode = space.StorageModePlatform
+	created.StorageType = "managed"
+	created.Bucket = ""
+	created.Region = ""
+	orgRecord := makeTestOrg("org-1", "user-9")
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "admin"),
+	}, nil).Once()
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
+		return s.Key == "acme" && s.OrgID == "org-1" && s.Name == "Acme"
+	})).Return(nil)
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "admin"),
+	}, nil)
+	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-1", "admin").Return(nil)
+	spaceStore.On("GetByKey", mock.Anything, "acme").Return(created, nil)
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().CreateSpace(ctx, gql.SpaceInput{Key: "acme", Name: "Acme"})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "acme", result.Key)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
 }
 
 func TestCreateSpace_NilSpaceStore(t *testing.T) {
@@ -962,6 +1024,7 @@ func TestTransferOrganizationOwnership_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, "user-2", result.OwnerUserID)
+	assert.Equal(t, gql.OrgMemberRoleAdmin, result.CurrentUserRole)
 	orgStore.AssertExpectations(t)
 }
 

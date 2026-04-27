@@ -170,14 +170,15 @@ type ComplexityRoot struct {
 	}
 
 	Organization struct {
-		CreatedAt   func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Name        func(childComplexity int) int
-		OwnerUserID func(childComplexity int) int
-		Plan        func(childComplexity int) int
-		PlanStatus  func(childComplexity int) int
-		Slug        func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		CurrentUserRole func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Name            func(childComplexity int) int
+		OwnerUserID     func(childComplexity int) int
+		Plan            func(childComplexity int) int
+		PlanStatus      func(childComplexity int) int
+		Slug            func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
 	}
 
 	PresignedUpload struct {
@@ -1283,6 +1284,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Organization.CreatedAt(childComplexity), true
+	case "Organization.currentUserRole":
+		if e.ComplexityRoot.Organization.CurrentUserRole == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.CurrentUserRole(childComplexity), true
 	case "Organization.id":
 		if e.ComplexityRoot.Organization.ID == nil {
 			break
@@ -2432,6 +2439,7 @@ enum ImagorSignerType {
   name: String!
   slug: String!
   ownerUserId: String!
+  currentUserRole: OrgMemberRole!
   plan: String!
   planStatus: String!
   createdAt: String!
@@ -6961,6 +6969,8 @@ func (ec *executionContext) fieldContext_Mutation_transferOrganizationOwnership(
 				return ec.fieldContext_Organization_slug(ctx, field)
 			case "ownerUserId":
 				return ec.fieldContext_Organization_ownerUserId(ctx, field)
+			case "currentUserRole":
+				return ec.fieldContext_Organization_currentUserRole(ctx, field)
 			case "plan":
 				return ec.fieldContext_Organization_plan(ctx, field)
 			case "planStatus":
@@ -7900,6 +7910,35 @@ func (ec *executionContext) fieldContext_Organization_ownerUserId(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_currentUserRole(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_currentUserRole,
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentUserRole, nil
+		},
+		nil,
+		ec.marshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberRole,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_currentUserRole(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type OrgMemberRole does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_plan(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8329,6 +8368,8 @@ func (ec *executionContext) fieldContext_Query_myOrganization(_ context.Context,
 				return ec.fieldContext_Organization_slug(ctx, field)
 			case "ownerUserId":
 				return ec.fieldContext_Organization_ownerUserId(ctx, field)
+			case "currentUserRole":
+				return ec.fieldContext_Organization_currentUserRole(ctx, field)
 			case "plan":
 				return ec.fieldContext_Organization_plan(ctx, field)
 			case "planStatus":
@@ -15971,6 +16012,11 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 		case "ownerUserId":
 			out.Values[i] = ec._Organization_ownerUserId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentUserRole":
+			out.Values[i] = ec._Organization_currentUserRole(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

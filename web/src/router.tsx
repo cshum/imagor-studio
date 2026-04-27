@@ -19,6 +19,7 @@ import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { resolveSpace } from '@/lib/space'
+import { getMyOrganization } from '@/api/org-api'
 import {
   adminGeneralLoader,
   adminImagorLoader,
@@ -662,17 +663,22 @@ const accountOrganizationLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/organization',
   beforeLoad: requireOrganizationAccountAuth,
-  component: () => <AccountOrganizationLayout />,
+  loader: async () => getMyOrganization(),
+  component: () => {
+    const organization = accountOrganizationLayoutRoute.useLoaderData()
+    return <AccountOrganizationLayout currentUserRole={organization?.currentUserRole ?? null} />
+  },
 })
 
 const accountOrganizationIndexRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/',
   beforeLoad: async (context) => {
-    const auth = await requireOrganizationAccountAuth(context)
+    await requireOrganizationAccountAuth(context)
+    const organization = await getMyOrganization()
     throw redirect({
       to:
-        auth.profile?.role === 'admin'
+        organization?.currentUserRole === 'owner' || organization?.currentUserRole === 'admin'
           ? '/account/organization/billing'
           : '/account/organization/members',
     })

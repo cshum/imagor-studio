@@ -30,15 +30,79 @@ var billablePlans = map[string]struct{}{
 
 func mapOrgToGQL(o *org.Org) *gql.Organization {
 	return &gql.Organization{
-		ID:          o.ID,
-		Name:        o.Name,
-		Slug:        o.Slug,
-		OwnerUserID: o.OwnerID,
-		Plan:        o.Plan,
-		PlanStatus:  o.PlanStatus,
-		CreatedAt:   o.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:   o.UpdatedAt.Format(time.RFC3339),
+		ID:              o.ID,
+		Name:            o.Name,
+		Slug:            o.Slug,
+		OwnerUserID:     o.OwnerID,
+		CurrentUserRole: gql.OrgMemberRoleMember,
+		Plan:            o.Plan,
+		PlanStatus:      o.PlanStatus,
+		CreatedAt:       o.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:       o.UpdatedAt.Format(time.RFC3339),
 	}
+}
+
+func (r *Resolver) getCurrentOrganizationRole(ctx context.Context, orgID string) (string, error) {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	if orgID == "" || r.orgStore == nil {
+		return "", nil
+	}
+
+	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		return "", fmt.Errorf("failed to load organization: %w", err)
+	}
+	if currentOrg == nil {
+		return "", nil
+	}
+	if currentOrg.OwnerID == claims.UserID {
+		return "owner", nil
+	}
+
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		return "", fmt.Errorf("failed to list org members: %w", err)
+	}
+	for _, member := range members {
+		if member == nil || member.UserID != claims.UserID {
+			continue
+		}
+		role := strings.ToLower(strings.TrimSpace(member.Role))
+		if role == "owner" || role == "admin" || role == "member" {
+			return role, nil
+		}
+		return "member", nil
+	}
+
+	return "", nil
+}
+
+func (r *Resolver) requireOrganizationAdminPermission(ctx context.Context) (string, string, error) {
+	if !r.cloudEnabled() {
+		if err := RequireAdminPermission(ctx); err != nil {
+			return "", "", err
+		}
+		return "", "admin", nil
+	}
+
+	orgID, err := r.requireUserOrgID(ctx)
+	if err != nil {
+		return "", "", err
+	}
+	if RequireAdminPermission(ctx) == nil {
+		return orgID, "admin", nil
+	}
+	role, err := r.getCurrentOrganizationRole(ctx, orgID)
+	if err != nil {
+		return "", "", err
+	}
+	if role != "owner" && role != "admin" {
+		return "", "", apperror.Forbidden("organization admin access required")
+	}
+	return orgID, role, nil
 }
 
 func mapSpaceToGQL(s *space.Space) *gql.Space {
@@ -138,6 +202,24 @@ func (r *Resolver) getSpacePermissions(ctx context.Context, space *space.Space) 
 		permissions.CanManage = true
 		permissions.CanDelete = true
 		return permissions, nil
+	}
+	if sameOrg && r.orgStore != nil {
+		members, listErr := r.orgStore.ListMembers(ctx, orgID)
+		if listErr != nil {
+			return nil, fmt.Errorf("failed to list org members: %w", listErr)
+		}
+		for _, member := range members {
+			if member == nil || member.UserID != claims.UserID {
+				continue
+			}
+			permissions.MemberRole = strings.ToLower(strings.TrimSpace(member.Role))
+			if permissions.MemberRole == "owner" || permissions.MemberRole == "admin" {
+				permissions.CanRead = true
+				permissions.CanManage = true
+				permissions.CanDelete = true
+			}
+			return permissions, nil
+		}
 	}
 
 	if !r.cloudEnabled() {
@@ -515,9 +597,6 @@ func (r *Resolver) canReadSpace(ctx context.Context, space *space.Space) (bool, 
 	if sameOrg {
 		return true, nil
 	}
-	if sameOrg && RequireAdminPermission(ctx) == nil {
-		return true, nil
-	}
 	if !r.cloudEnabled() {
 		return false, nil
 	}
@@ -764,7 +843,13 @@ func (r *queryResolver) MyOrganization(ctx context.Context) (*gql.Organization, 
 	if org == nil {
 		return nil, nil
 	}
-	return mapOrgToGQL(org), nil
+	result := mapOrgToGQL(org)
+	role, roleErr := r.getCurrentOrganizationRole(ctx, orgID)
+	if roleErr != nil {
+		return nil, roleErr
+	}
+	result.CurrentUserRole = mapOrgMemberRole(role)
+	return result, nil
 }
 
 func (r *queryResolver) UsageSummary(ctx context.Context) (*gql.UsageSummary, error) {
@@ -910,11 +995,14 @@ func (r *queryResolver) Spaces(ctx context.Context) ([]*gql.Space, error) {
 
 // SpaceKeyExists reports whether the given key is already taken (admin only).
 func (r *queryResolver) SpaceKeyExists(ctx context.Context, key string) (bool, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return false, err
-	}
 	if !r.cloudEnabled() {
+		if err := RequireAdminPermission(ctx); err != nil {
+			return false, err
+		}
 		return false, nil
+	}
+	if _, _, err := r.requireOrganizationAdminPermission(ctx); err != nil {
+		return false, err
 	}
 	return r.spaceStore.KeyExists(ctx, key)
 }
@@ -973,11 +1061,12 @@ func validateBillingRedirectURL(rawURL string, reason string) error {
 }
 
 func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan string, successURL string, cancelURL string) (*gql.BillingSession, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
 	if !r.cloudEnabled() || r.orgStore == nil {
 		return nil, apperror.BadRequest("billing is not available in this deployment", map[string]interface{}{"reason": "billing_unavailable"})
+	}
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
+	if err != nil {
+		return nil, err
 	}
 	if r.billingService == nil {
 		return nil, apperror.BadRequest("billing is not configured", map[string]interface{}{"reason": "billing_unavailable"})
@@ -993,13 +1082,6 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 	}
 	if err := validateBillingRedirectURL(cancelURL, "billing_redirect_url_invalid"); err != nil {
 		return nil, err
-	}
-	orgID, err := r.getUserOrgID(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if orgID == "" {
-		return nil, apperror.BadRequest("organization is required", map[string]interface{}{"reason": "organization_required"})
 	}
 	session, err := r.billingService.CreateCheckoutSession(ctx, billing.CheckoutSessionInput{
 		OrgID:      orgID,
@@ -1017,11 +1099,12 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 }
 
 func (r *mutationResolver) CreateBillingPortalSession(ctx context.Context, returnURL string) (*gql.BillingSession, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
 	if !r.cloudEnabled() || r.orgStore == nil {
 		return nil, apperror.BadRequest("billing is not available in this deployment", map[string]interface{}{"reason": "billing_unavailable"})
+	}
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
+	if err != nil {
+		return nil, err
 	}
 	if r.billingService == nil {
 		return nil, apperror.BadRequest("billing is not configured", map[string]interface{}{"reason": "billing_unavailable"})
@@ -1030,10 +1113,6 @@ func (r *mutationResolver) CreateBillingPortalSession(ctx context.Context, retur
 		return nil, apperror.BadRequest("return URL is required", map[string]interface{}{"reason": "billing_return_url_required"})
 	}
 	if err := validateBillingRedirectURL(returnURL, "billing_return_url_invalid"); err != nil {
-		return nil, err
-	}
-	orgID, err := r.requireUserOrgID(ctx)
-	if err != nil {
 		return nil, err
 	}
 	session, err := r.billingService.CreatePortalSession(ctx, billing.PortalSessionInput{
@@ -1051,13 +1130,10 @@ func (r *mutationResolver) CreateBillingPortalSession(ctx context.Context, retur
 
 // CreateSpace creates a new space (admin only).
 func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput) (*gql.Space, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
 	if r.spaceStore == nil {
 		return nil, fmt.Errorf("space management is not available in this deployment")
 	}
-	orgID, err := r.requireUserOrgID(ctx)
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1422,13 +1498,10 @@ func (r *mutationResolver) ensureUserCanJoinOrganization(ctx context.Context, or
 
 // AddOrgMember adds a user (found by username) to the caller's org (admin only).
 func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, role gql.OrgMemberAssignableRole) (*gql.OrgMember, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
 	if !r.cloudEnabled() || r.userStore == nil {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
-	orgID, err := r.requireUserOrgID(ctx)
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1472,13 +1545,10 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 
 // AddOrgMemberByEmail adds an existing user (found by email) to the caller's org (admin only).
 func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string, role gql.OrgMemberAssignableRole) (*gql.OrgMember, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
 	if !r.cloudEnabled() || r.userStore == nil {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
-	orgID, err := r.requireUserOrgID(ctx)
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1526,9 +1596,6 @@ func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string
 
 // RemoveOrgMember removes a member from the caller's org (admin only).
 func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (bool, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return false, err
-	}
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return false, err
@@ -1539,7 +1606,7 @@ func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (
 	if !r.cloudEnabled() {
 		return false, fmt.Errorf("member management is not available in this deployment")
 	}
-	orgID, err := r.requireUserOrgID(ctx)
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -1930,13 +1997,10 @@ func (r *mutationResolver) LeaveSpace(ctx context.Context, spaceID string) (bool
 
 // UpdateOrgMemberRole changes a member's role within the caller's org (admin only).
 func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID string, role gql.OrgMemberAssignableRole) (*gql.OrgMember, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
-	orgID, err := r.requireUserOrgID(ctx)
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1983,13 +2047,10 @@ func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID strin
 }
 
 func (r *mutationResolver) TransferOrganizationOwnership(ctx context.Context, userID string) (*gql.Organization, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("member management is not available in this deployment")
 	}
-	orgID, err := r.requireUserOrgID(ctx)
+	orgID, _, err := r.requireOrganizationAdminPermission(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -2041,7 +2102,9 @@ func (r *mutationResolver) TransferOrganizationOwnership(ctx context.Context, us
 	}
 
 	r.logger.Info("Organization ownership transferred", zap.String("orgID", orgID), zap.String("previousOwnerID", claims.UserID), zap.String("newOwnerID", userID))
-	return mapOrgToGQL(updatedOrg), nil
+	result := mapOrgToGQL(updatedOrg)
+	result.CurrentUserRole = gql.OrgMemberRoleAdmin
+	return result, nil
 }
 
 // UpdateSpaceMemberRole changes a member's explicit role within a space (space manager).

@@ -123,11 +123,11 @@ export function AccountLayout({ children }: PropsWithChildren) {
   const showSidebar = !isMultiTenant
   const [mobileOpen, setMobileOpen] = useState(false)
   const accountLinks =
-    isMultiTenant && isAdmin
+    isMultiTenant
       ? [
           {
             label: t('navigation.breadcrumbs.organization'),
-            href: '/account/organization/billing',
+            href: '/account/organization',
             icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
           },
         ]

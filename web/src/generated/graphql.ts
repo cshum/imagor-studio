@@ -471,6 +471,7 @@ export type OrgMemberRole = 'admin' | 'member' | 'owner'
 export type Organization = {
   __typename?: 'Organization'
   createdAt: Scalars['String']['output']
+  currentUserRole: OrgMemberRole
   id: Scalars['ID']['output']
   name: Scalars['String']['output']
   ownerUserId: Scalars['String']['output']
@@ -899,6 +900,7 @@ export type MyOrganizationQuery = {
     name: string
     slug: string
     ownerUserId: string
+    currentUserRole: OrgMemberRole
     plan: string
     planStatus: string
     createdAt: string
@@ -2290,6 +2292,7 @@ export const MyOrganizationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'ownerUserId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'currentUserRole' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'plan' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'planStatus' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },

@@ -84,6 +84,8 @@ const ensureOrganization = async () => {
   return organization
 }
 
+const isOrganizationAdminRole = (role?: string | null) => role === 'owner' || role === 'admin'
+
 /**
  * Authentication check for multi-tenant account pages that require an active organization.
  */
@@ -103,10 +105,16 @@ export const requireOrganizationAccountAuth = async (context?: {
 export const requireOrganizationAdminAccountAuth = async (context?: {
   location?: { pathname: string; search: Record<string, unknown> }
 }) => {
-  const auth = await requireAdminAccountAuth(context)
-  if (auth.multiTenant) {
-    await ensureOrganization()
+  const auth = await requireAccountAuth(context)
+  if (!auth.multiTenant) {
+    return requireAdminAccountAuth(context)
   }
+
+  const organization = await ensureOrganization()
+  if (!isOrganizationAdminRole(organization.currentUserRole)) {
+    throw redirect({ to: '/account/organization/members' })
+  }
+
   return auth
 }
 

@@ -74,13 +74,12 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
-  const isAdmin = authState.profile?.role === 'admin'
   const accountLinks =
-    authState.multiTenant && isAdmin
+    authState.multiTenant
       ? [
           {
             label: t('navigation.breadcrumbs.organization'),
-            href: '/account/organization/billing',
+            href: '/account/organization',
             icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
           },
         ]

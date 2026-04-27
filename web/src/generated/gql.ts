@@ -19,7 +19,7 @@ type Documents = {
   '\n  mutation ConfigureImagor($input: ImagorInput!) {\n    configureImagor(input: $input) {\n      success\n      timestamp\n      message\n    }\n  }\n': typeof types.ConfigureImagorDocument
   '\n  mutation GenerateImagorUrl(\n    $imagePath: String!\n    $spaceID: String\n    $params: ImagorParamsInput!\n  ) {\n    generateImagorUrl(\n      imagePath: $imagePath\n      spaceID: $spaceID\n      params: $params\n    )\n  }\n': typeof types.GenerateImagorUrlDocument
   '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceID: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceID: $spaceID\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n': typeof types.GenerateImagorUrlFromTemplateDocument
-  '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n': typeof types.MyOrganizationDocument
+  '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      currentUserRole\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n': typeof types.MyOrganizationDocument
   '\n  query ListSpaces {\n    spaces {\n      id\n      orgId\n      key\n      name\n      storageUsageBytes\n      processingUsageCount\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n': typeof types.ListSpacesDocument
   '\n  query GetUsageSummary {\n    usageSummary {\n      usedSpaces\n      maxSpaces\n      usedHostedStorageBytes\n      storageLimitGB\n      usedTransforms\n      transformsLimit\n      periodStart\n      periodEnd\n    }\n  }\n': typeof types.GetUsageSummaryDocument
   '\n  mutation CreateCheckoutSession($plan: String!, $successURL: String!, $cancelURL: String!) {\n    createCheckoutSession(plan: $plan, successURL: $successURL, cancelURL: $cancelURL) {\n      url\n    }\n  }\n': typeof types.CreateCheckoutSessionDocument
@@ -96,7 +96,7 @@ const documents: Documents = {
     types.GenerateImagorUrlDocument,
   '\n  mutation GenerateImagorUrlFromTemplate(\n    $templateJson: String!\n    $spaceID: String\n    $contextPath: [String!]\n    $forPreview: Boolean\n    $previewMaxDimensions: DimensionsInput\n    $skipLayerId: String\n    $appendFilters: [ImagorFilterInput!]\n  ) {\n    generateImagorUrlFromTemplate(\n      templateJson: $templateJson\n      spaceID: $spaceID\n      contextPath: $contextPath\n      forPreview: $forPreview\n      previewMaxDimensions: $previewMaxDimensions\n      skipLayerId: $skipLayerId\n      appendFilters: $appendFilters\n    )\n  }\n':
     types.GenerateImagorUrlFromTemplateDocument,
-  '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n':
+  '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      currentUserRole\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n':
     types.MyOrganizationDocument,
   '\n  query ListSpaces {\n    spaces {\n      id\n      orgId\n      key\n      name\n      storageUsageBytes\n      processingUsageCount\n      storageMode\n      storageType\n      bucket\n      prefix\n      region\n      endpoint\n      usePathStyle\n      customDomain\n      customDomainVerified\n      suspended\n      isShared\n      signerAlgorithm\n      signerTruncate\n      imagorCORSOrigins\n      canManage\n      canDelete\n      canLeave\n      updatedAt\n    }\n  }\n':
     types.ListSpacesDocument,
@@ -272,8 +272,8 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n',
-): (typeof documents)['\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n']
+  source: '\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      currentUserRole\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n',
+): (typeof documents)['\n  query MyOrganization {\n    myOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      currentUserRole\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

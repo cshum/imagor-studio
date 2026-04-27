@@ -56,7 +56,8 @@ export function RootPage({ loaderData }: RootPageProps) {
 
   if (auth.multiTenant) {
     const data = loaderData as Awaited<ReturnType<typeof spacesLoader>>
-    const isOrgAdmin = auth.profile?.role === 'admin'
+    const isOrgAdmin =
+      data.currentOrganizationRole === 'owner' || data.currentOrganizationRole === 'admin'
     const createSpaceDisabled =
       data.usageSummary.maxSpaces !== null &&
       data.usageSummary.usedSpaces >= data.usageSummary.maxSpaces
