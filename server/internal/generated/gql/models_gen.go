@@ -146,13 +146,13 @@ type Mutation struct {
 }
 
 type OrgMember struct {
-	UserID      string  `json:"userId"`
-	Username    string  `json:"username"`
-	DisplayName string  `json:"displayName"`
-	Email       *string `json:"email,omitempty"`
-	AvatarURL   *string `json:"avatarUrl,omitempty"`
-	Role        string  `json:"role"`
-	CreatedAt   string  `json:"createdAt"`
+	UserID      string        `json:"userId"`
+	Username    string        `json:"username"`
+	DisplayName string        `json:"displayName"`
+	Email       *string       `json:"email,omitempty"`
+	AvatarURL   *string       `json:"avatarUrl,omitempty"`
+	Role        OrgMemberRole `json:"role"`
+	CreatedAt   string        `json:"createdAt"`
 }
 
 type Organization struct {
@@ -258,11 +258,11 @@ type SpaceInput struct {
 }
 
 type SpaceInvitation struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
-	CreatedAt string `json:"createdAt"`
-	ExpiresAt string `json:"expiresAt"`
+	ID        string                    `json:"id"`
+	Email     string                    `json:"email"`
+	Role      SpaceMemberAssignableRole `json:"role"`
+	CreatedAt string                    `json:"createdAt"`
+	ExpiresAt string                    `json:"expiresAt"`
 }
 
 type SpaceInviteResult struct {
@@ -272,16 +272,16 @@ type SpaceInviteResult struct {
 }
 
 type SpaceMember struct {
-	UserID        string  `json:"userId"`
-	Username      string  `json:"username"`
-	DisplayName   string  `json:"displayName"`
-	Email         *string `json:"email,omitempty"`
-	AvatarURL     *string `json:"avatarUrl,omitempty"`
-	Role          string  `json:"role"`
-	RoleSource    string  `json:"roleSource"`
-	CanChangeRole bool    `json:"canChangeRole"`
-	CanRemove     bool    `json:"canRemove"`
-	CreatedAt     string  `json:"createdAt"`
+	UserID        string                `json:"userId"`
+	Username      string                `json:"username"`
+	DisplayName   string                `json:"displayName"`
+	Email         *string               `json:"email,omitempty"`
+	AvatarURL     *string               `json:"avatarUrl,omitempty"`
+	Role          SpaceMemberRole       `json:"role"`
+	RoleSource    SpaceMemberRoleSource `json:"roleSource"`
+	CanChangeRole bool                  `json:"canChangeRole"`
+	CanRemove     bool                  `json:"canRemove"`
+	CreatedAt     string                `json:"createdAt"`
 }
 
 type SpaceUsage struct {
@@ -510,6 +510,118 @@ func (e ImagorSignerType) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type OrgMemberAssignableRole string
+
+const (
+	OrgMemberAssignableRoleAdmin  OrgMemberAssignableRole = "admin"
+	OrgMemberAssignableRoleMember OrgMemberAssignableRole = "member"
+)
+
+var AllOrgMemberAssignableRole = []OrgMemberAssignableRole{
+	OrgMemberAssignableRoleAdmin,
+	OrgMemberAssignableRoleMember,
+}
+
+func (e OrgMemberAssignableRole) IsValid() bool {
+	switch e {
+	case OrgMemberAssignableRoleAdmin, OrgMemberAssignableRoleMember:
+		return true
+	}
+	return false
+}
+
+func (e OrgMemberAssignableRole) String() string {
+	return string(e)
+}
+
+func (e *OrgMemberAssignableRole) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrgMemberAssignableRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrgMemberAssignableRole", str)
+	}
+	return nil
+}
+
+func (e OrgMemberAssignableRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *OrgMemberAssignableRole) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e OrgMemberAssignableRole) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type OrgMemberRole string
+
+const (
+	OrgMemberRoleOwner  OrgMemberRole = "owner"
+	OrgMemberRoleAdmin  OrgMemberRole = "admin"
+	OrgMemberRoleMember OrgMemberRole = "member"
+)
+
+var AllOrgMemberRole = []OrgMemberRole{
+	OrgMemberRoleOwner,
+	OrgMemberRoleAdmin,
+	OrgMemberRoleMember,
+}
+
+func (e OrgMemberRole) IsValid() bool {
+	switch e {
+	case OrgMemberRoleOwner, OrgMemberRoleAdmin, OrgMemberRoleMember:
+		return true
+	}
+	return false
+}
+
+func (e OrgMemberRole) String() string {
+	return string(e)
+}
+
+func (e *OrgMemberRole) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrgMemberRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrgMemberRole", str)
+	}
+	return nil
+}
+
+func (e OrgMemberRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *OrgMemberRole) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e OrgMemberRole) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type SortOption string
 
 const (
@@ -617,6 +729,173 @@ func (e *SortOrder) UnmarshalJSON(b []byte) error {
 }
 
 func (e SortOrder) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SpaceMemberAssignableRole string
+
+const (
+	SpaceMemberAssignableRoleAdmin  SpaceMemberAssignableRole = "admin"
+	SpaceMemberAssignableRoleMember SpaceMemberAssignableRole = "member"
+)
+
+var AllSpaceMemberAssignableRole = []SpaceMemberAssignableRole{
+	SpaceMemberAssignableRoleAdmin,
+	SpaceMemberAssignableRoleMember,
+}
+
+func (e SpaceMemberAssignableRole) IsValid() bool {
+	switch e {
+	case SpaceMemberAssignableRoleAdmin, SpaceMemberAssignableRoleMember:
+		return true
+	}
+	return false
+}
+
+func (e SpaceMemberAssignableRole) String() string {
+	return string(e)
+}
+
+func (e *SpaceMemberAssignableRole) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SpaceMemberAssignableRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SpaceMemberAssignableRole", str)
+	}
+	return nil
+}
+
+func (e SpaceMemberAssignableRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SpaceMemberAssignableRole) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SpaceMemberAssignableRole) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SpaceMemberRole string
+
+const (
+	SpaceMemberRoleOwner  SpaceMemberRole = "owner"
+	SpaceMemberRoleAdmin  SpaceMemberRole = "admin"
+	SpaceMemberRoleMember SpaceMemberRole = "member"
+)
+
+var AllSpaceMemberRole = []SpaceMemberRole{
+	SpaceMemberRoleOwner,
+	SpaceMemberRoleAdmin,
+	SpaceMemberRoleMember,
+}
+
+func (e SpaceMemberRole) IsValid() bool {
+	switch e {
+	case SpaceMemberRoleOwner, SpaceMemberRoleAdmin, SpaceMemberRoleMember:
+		return true
+	}
+	return false
+}
+
+func (e SpaceMemberRole) String() string {
+	return string(e)
+}
+
+func (e *SpaceMemberRole) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SpaceMemberRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SpaceMemberRole", str)
+	}
+	return nil
+}
+
+func (e SpaceMemberRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SpaceMemberRole) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SpaceMemberRole) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SpaceMemberRoleSource string
+
+const (
+	SpaceMemberRoleSourceOrganization SpaceMemberRoleSource = "organization"
+	SpaceMemberRoleSourceSpace        SpaceMemberRoleSource = "space"
+)
+
+var AllSpaceMemberRoleSource = []SpaceMemberRoleSource{
+	SpaceMemberRoleSourceOrganization,
+	SpaceMemberRoleSourceSpace,
+}
+
+func (e SpaceMemberRoleSource) IsValid() bool {
+	switch e {
+	case SpaceMemberRoleSourceOrganization, SpaceMemberRoleSourceSpace:
+		return true
+	}
+	return false
+}
+
+func (e SpaceMemberRoleSource) String() string {
+	return string(e)
+}
+
+func (e *SpaceMemberRoleSource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SpaceMemberRoleSource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SpaceMemberRoleSource", str)
+	}
+	return nil
+}
+
+func (e SpaceMemberRoleSource) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SpaceMemberRoleSource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SpaceMemberRoleSource) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

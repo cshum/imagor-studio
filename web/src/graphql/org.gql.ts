@@ -243,7 +243,7 @@ export const LIST_SPACE_INVITATIONS = gql(`
 `)
 
 export const ADD_ORG_MEMBER = gql(`
-  mutation AddOrgMember($username: String!, $role: String!) {
+  mutation AddOrgMember($username: String!, $role: OrgMemberAssignableRole!) {
     addOrgMember(username: $username, role: $role) {
       userId
       username
@@ -255,7 +255,7 @@ export const ADD_ORG_MEMBER = gql(`
 `)
 
 export const ADD_ORG_MEMBER_BY_EMAIL = gql(`
-  mutation AddOrgMemberByEmail($email: String!, $role: String!) {
+  mutation AddOrgMemberByEmail($email: String!, $role: OrgMemberAssignableRole!) {
     addOrgMemberByEmail(email: $email, role: $role) {
       userId
       username
@@ -267,7 +267,7 @@ export const ADD_ORG_MEMBER_BY_EMAIL = gql(`
 `)
 
 export const ADD_SPACE_MEMBER = gql(`
-  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: String!) {
+  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {
     addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {
       userId
       username
@@ -279,7 +279,7 @@ export const ADD_SPACE_MEMBER = gql(`
 `)
 
 export const INVITE_SPACE_MEMBER = gql(`
-  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: String!) {
+  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: SpaceMemberAssignableRole!) {
     inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {
       status
       member {
@@ -319,7 +319,7 @@ export const LEAVE_SPACE = gql(`
 `)
 
 export const UPDATE_ORG_MEMBER_ROLE = gql(`
-  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {
+  mutation UpdateOrgMemberRole($userId: ID!, $role: OrgMemberAssignableRole!) {
     updateOrgMemberRole(userId: $userId, role: $role) {
       userId
       username
@@ -331,7 +331,7 @@ export const UPDATE_ORG_MEMBER_ROLE = gql(`
 `)
 
 export const UPDATE_SPACE_MEMBER_ROLE = gql(`
-  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: String!) {
+  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {
     updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {
       userId
       username

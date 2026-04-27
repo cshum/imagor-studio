@@ -78,6 +78,35 @@ type spacePermissions struct {
 	MemberRole string
 }
 
+func mapOrgMemberRole(role string) gql.OrgMemberRole {
+	switch strings.ToLower(strings.TrimSpace(role)) {
+	case "owner":
+		return gql.OrgMemberRoleOwner
+	case "admin":
+		return gql.OrgMemberRoleAdmin
+	default:
+		return gql.OrgMemberRoleMember
+	}
+}
+
+func mapSpaceMemberRole(role string) gql.SpaceMemberRole {
+	switch strings.ToLower(strings.TrimSpace(role)) {
+	case "owner":
+		return gql.SpaceMemberRoleOwner
+	case "admin":
+		return gql.SpaceMemberRoleAdmin
+	default:
+		return gql.SpaceMemberRoleMember
+	}
+}
+
+func mapSpaceMemberRoleSource(source string) gql.SpaceMemberRoleSource {
+	if strings.EqualFold(strings.TrimSpace(source), "organization") {
+		return gql.SpaceMemberRoleSourceOrganization
+	}
+	return gql.SpaceMemberRoleSourceSpace
+}
+
 func normalizeSpaceMemberRole(role string) (string, error) {
 	switch strings.ToLower(strings.TrimSpace(role)) {
 	case "admin", "manager":
@@ -115,9 +144,39 @@ func (r *Resolver) getSpacePermissions(ctx context.Context, space *space.Space) 
 		return permissions, nil
 	}
 
-	members, err := r.spaceStore.ListMembers(ctx, space.ID)
+	if !sameOrg {
+		if r.spaceStore == nil {
+			return permissions, nil
+		}
+		members, err := r.spaceStore.ListMembers(ctx, space.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list space members: %w", err)
+		}
+		for _, member := range members {
+			if member.UserID != claims.UserID {
+				continue
+			}
+			role, roleErr := normalizeSpaceMemberRole(member.Role)
+			if roleErr != nil {
+				return nil, roleErr
+			}
+			permissions.MemberRole = role
+			permissions.CanRead = true
+			permissions.CanLeave = true
+			if role == "admin" {
+				permissions.CanManage = true
+			}
+			break
+		}
+		return permissions, nil
+	}
+	if r.orgStore == nil {
+		return permissions, nil
+	}
+
+	members, err := r.orgStore.ListMembers(ctx, orgID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list space members: %w", err)
+		return nil, fmt.Errorf("failed to list org members: %w", err)
 	}
 	for _, member := range members {
 		if member.UserID != claims.UserID {
@@ -195,6 +254,7 @@ func (r *Resolver) listHostedUsageBySpaceID(ctx context.Context, orgID string, s
 	if len(spaceIDs) == 0 {
 		return map[string]int64{}
 	}
+	sort.Strings(spaceIDs)
 
 	hostedUsageBySpaceID, err := aggregator.ListUsageBytesBySpace(ctx, orgID, spaceIDs)
 	if err != nil {
@@ -282,8 +342,8 @@ func mapSpaceMemberToGQL(m *space.SpaceMemberView) *gql.SpaceMember {
 		DisplayName:   m.DisplayName,
 		Email:         m.Email,
 		AvatarURL:     m.AvatarURL,
-		Role:          m.Role,
-		RoleSource:    "space",
+		Role:          mapSpaceMemberRole(m.Role),
+		RoleSource:    gql.SpaceMemberRoleSourceSpace,
 		CanChangeRole: false,
 		CanRemove:     false,
 		CreatedAt:     m.CreatedAt.UTC().Format(time.RFC3339),
@@ -297,8 +357,8 @@ func mapOrgMemberToSpaceAccess(m *org.OrgMemberView) *gql.SpaceMember {
 		DisplayName:   m.DisplayName,
 		Email:         m.Email,
 		AvatarURL:     m.AvatarURL,
-		Role:          m.Role,
-		RoleSource:    "organization",
+		Role:          mapSpaceMemberRole(m.Role),
+		RoleSource:    gql.SpaceMemberRoleSourceOrganization,
 		CanChangeRole: false,
 		CanRemove:     false,
 		CreatedAt:     m.CreatedAt.UTC().Format(time.RFC3339),
@@ -378,13 +438,13 @@ func (r *Resolver) mapSpaceMemberToGQLWithPermissions(ctx context.Context, space
 	return gqlMember, nil
 }
 
-func (r *Resolver) getProtectedSpaceRole(ctx context.Context, space *space.Space, userID string) (string, string) {
+func (r *Resolver) getProtectedSpaceRole(ctx context.Context, space *space.Space, userID string) (gql.SpaceMemberRole, gql.SpaceMemberRoleSource) {
 	if !r.cloudEnabled() {
-		return "member", "space"
+		return gql.SpaceMemberRoleMember, gql.SpaceMemberRoleSourceSpace
 	}
 	members, err := r.orgStore.ListMembers(ctx, space.OrgID)
 	if err != nil {
-		return "member", "space"
+		return gql.SpaceMemberRoleMember, gql.SpaceMemberRoleSourceSpace
 	}
 	for _, member := range members {
 		if member.UserID != userID {
@@ -392,19 +452,19 @@ func (r *Resolver) getProtectedSpaceRole(ctx context.Context, space *space.Space
 		}
 		switch member.Role {
 		case "owner":
-			return "owner", "organization"
+			return gql.SpaceMemberRoleOwner, gql.SpaceMemberRoleSourceOrganization
 		case "admin":
-			return "admin", "organization"
+			return gql.SpaceMemberRoleAdmin, gql.SpaceMemberRoleSourceOrganization
 		}
 	}
-	return "member", "space"
+	return gql.SpaceMemberRoleMember, gql.SpaceMemberRoleSourceSpace
 }
 
 func mapSpaceInvitationToGQL(invitation *space.Invitation) *gql.SpaceInvitation {
 	return &gql.SpaceInvitation{
 		ID:        invitation.ID,
 		Email:     invitation.Email,
-		Role:      invitation.Role,
+		Role:      gql.SpaceMemberAssignableRole(strings.ToLower(strings.TrimSpace(invitation.Role))),
 		CreatedAt: invitation.CreatedAt.UTC().Format(time.RFC3339),
 		ExpiresAt: invitation.ExpiresAt.UTC().Format(time.RFC3339),
 	}
@@ -1204,7 +1264,7 @@ func mapMemberToGQL(m *org.OrgMemberView) *gql.OrgMember {
 		DisplayName: m.DisplayName,
 		Email:       m.Email,
 		AvatarURL:   m.AvatarURL,
-		Role:        m.Role,
+		Role:        mapOrgMemberRole(m.Role),
 		CreatedAt:   m.CreatedAt.UTC().Format(time.RFC3339),
 	}
 }
@@ -1379,7 +1439,7 @@ func (r *mutationResolver) ensureUserCanJoinOrganization(ctx context.Context, or
 }
 
 // AddOrgMember adds a user (found by username) to the caller's org (admin only).
-func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, role string) (*gql.OrgMember, error) {
+func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, role gql.OrgMemberAssignableRole) (*gql.OrgMember, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
@@ -1404,11 +1464,12 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 		return nil, err
 	}
 
-	if err := r.orgStore.AddMember(ctx, orgID, user.ID, role); err != nil {
+	roleValue := role.String()
+	if err := r.orgStore.AddMember(ctx, orgID, user.ID, roleValue); err != nil {
 		r.logger.Error("AddOrgMember: failed", zap.String("orgID", orgID), zap.String("userID", user.ID), zap.Error(err))
 		return nil, fmt.Errorf("failed to add member: %w", err)
 	}
-	r.logger.Info("OrgMember added", zap.String("orgID", orgID), zap.String("username", username), zap.String("role", role))
+	r.logger.Info("OrgMember added", zap.String("orgID", orgID), zap.String("username", username), zap.String("role", roleValue))
 
 	// Reload to get joined username.
 	memberList, err := r.orgStore.ListMembers(ctx, orgID)
@@ -1423,12 +1484,12 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 	return &gql.OrgMember{
 		UserID:   user.ID,
 		Username: user.Username,
-		Role:     role,
+		Role:     mapOrgMemberRole(roleValue),
 	}, nil
 }
 
 // AddOrgMemberByEmail adds an existing user (found by email) to the caller's org (admin only).
-func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string, role string) (*gql.OrgMember, error) {
+func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string, role gql.OrgMemberAssignableRole) (*gql.OrgMember, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
@@ -1457,11 +1518,12 @@ func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string
 		return nil, err
 	}
 
-	if err := r.orgStore.AddMember(ctx, orgID, user.ID, role); err != nil {
+	roleValue := role.String()
+	if err := r.orgStore.AddMember(ctx, orgID, user.ID, roleValue); err != nil {
 		r.logger.Error("AddOrgMemberByEmail: failed", zap.String("orgID", orgID), zap.String("userID", user.ID), zap.Error(err))
 		return nil, fmt.Errorf("failed to add member: %w", err)
 	}
-	r.logger.Info("OrgMember added by email", zap.String("orgID", orgID), zap.String("email", normalizedEmail), zap.String("role", role))
+	r.logger.Info("OrgMember added by email", zap.String("orgID", orgID), zap.String("email", normalizedEmail), zap.String("role", roleValue))
 
 	memberList, err := r.orgStore.ListMembers(ctx, orgID)
 	if err == nil {
@@ -1476,7 +1538,7 @@ func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string
 		UserID:      user.ID,
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
-		Role:        role,
+		Role:        mapOrgMemberRole(roleValue),
 	}, nil
 }
 
@@ -1537,11 +1599,11 @@ func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (
 }
 
 // AddSpaceMember adds an existing org member to a space (space manager).
-func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceID string, userID string, role string) (*gql.SpaceMember, error) {
+func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceID string, userID string, role gql.SpaceMemberAssignableRole) (*gql.SpaceMember, error) {
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space member management is not available in this deployment")
 	}
-	normalizedRole, err := normalizeSpaceMemberRole(role)
+	normalizedRole, err := normalizeSpaceMemberRole(role.String())
 	if err != nil {
 		return nil, err
 	}
@@ -1587,14 +1649,14 @@ func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceID string, u
 			}
 		}
 	}
-	return &gql.SpaceMember{UserID: userID, Username: matched.Username, DisplayName: matched.DisplayName, Role: normalizedRole}, nil
+	return &gql.SpaceMember{UserID: userID, Username: matched.Username, DisplayName: matched.DisplayName, Role: mapSpaceMemberRole(normalizedRole)}, nil
 }
 
-func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceID string, email string, role string) (*gql.SpaceInviteResult, error) {
+func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceID string, email string, role gql.SpaceMemberAssignableRole) (*gql.SpaceInviteResult, error) {
 	if !r.cloudEnabled() || r.userStore == nil {
 		return nil, fmt.Errorf("space member management is not available in this deployment")
 	}
-	normalizedRole, err := normalizeSpaceMemberRole(role)
+	normalizedRole, err := normalizeSpaceMemberRole(role.String())
 	if err != nil {
 		return nil, err
 	}
@@ -1653,7 +1715,7 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceID string
 					}
 				}
 			}
-			return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: member.Username, DisplayName: member.DisplayName, Email: existingUser.Email, AvatarURL: existingUser.AvatarUrl, Role: normalizedRole}}, nil
+			return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: member.Username, DisplayName: member.DisplayName, Email: existingUser.Email, AvatarURL: existingUser.AvatarUrl, Role: mapSpaceMemberRole(normalizedRole)}}, nil
 		}
 
 		hasAccess, hasAccessErr := r.spaceStore.HasMember(ctx, s.ID, existingUser.ID)
@@ -1675,7 +1737,7 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceID string
 				}
 			}
 		}
-		return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: existingUser.Username, DisplayName: existingUser.DisplayName, Email: existingUser.Email, AvatarURL: existingUser.AvatarUrl, Role: normalizedRole}}, nil
+		return &gql.SpaceInviteResult{Status: "added", Member: &gql.SpaceMember{UserID: existingUser.ID, Username: existingUser.Username, DisplayName: existingUser.DisplayName, Email: existingUser.Email, AvatarURL: existingUser.AvatarUrl, Role: mapSpaceMemberRole(normalizedRole)}}, nil
 	}
 
 	if !r.inviteEnabled() {
@@ -1784,7 +1846,7 @@ func (r *mutationResolver) LeaveSpace(ctx context.Context, spaceID string) (bool
 }
 
 // UpdateOrgMemberRole changes a member's role within the caller's org (admin only).
-func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID string, role string) (*gql.OrgMember, error) {
+func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID string, role gql.OrgMemberAssignableRole) (*gql.OrgMember, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
 		return nil, err
 	}
@@ -1796,14 +1858,37 @@ func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID strin
 		return nil, fmt.Errorf("no organization found")
 	}
 
-	if err := r.orgStore.UpdateMemberRole(ctx, orgID, userID, role); err != nil {
+	normalizedRole := strings.ToLower(strings.TrimSpace(role.String()))
+	if normalizedRole != "admin" && normalizedRole != "member" {
+		return nil, apperror.BadRequest("organization member role must be admin or member", map[string]interface{}{"reason": "org_member_invalid_role"})
+	}
+
+	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load organization: %w", err)
+	}
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify org membership: %w", err)
+	}
+	for _, member := range members {
+		if member.UserID != userID {
+			continue
+		}
+		if (currentOrg != nil && currentOrg.OwnerID == userID) || member.Role == "owner" {
+			return nil, apperror.BadRequest("you cannot change the organization owner's role", map[string]interface{}{"reason": "org_member_update_owner_role"})
+		}
+		break
+	}
+
+	if err := r.orgStore.UpdateMemberRole(ctx, orgID, userID, normalizedRole); err != nil {
 		r.logger.Error("UpdateOrgMemberRole: failed", zap.String("orgID", orgID), zap.String("userID", userID), zap.Error(err))
 		return nil, fmt.Errorf("failed to update member role: %w", err)
 	}
-	r.logger.Info("OrgMember role updated", zap.String("orgID", orgID), zap.String("userID", userID), zap.String("role", role))
+	r.logger.Info("OrgMember role updated", zap.String("orgID", orgID), zap.String("userID", userID), zap.String("role", normalizedRole))
 
 	// Reload to return updated member.
-	members, err := r.orgStore.ListMembers(ctx, orgID)
+	members, err = r.orgStore.ListMembers(ctx, orgID)
 	if err == nil {
 		for _, m := range members {
 			if m.UserID == userID {
@@ -1811,11 +1896,11 @@ func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID strin
 			}
 		}
 	}
-	return &gql.OrgMember{UserID: userID, Role: role}, nil
+	return &gql.OrgMember{UserID: userID, Role: mapOrgMemberRole(normalizedRole)}, nil
 }
 
 // UpdateSpaceMemberRole changes a member's explicit role within a space (space manager).
-func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceID string, userID string, role string) (*gql.SpaceMember, error) {
+func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceID string, userID string, role gql.SpaceMemberAssignableRole) (*gql.SpaceMember, error) {
 	if !r.cloudEnabled() {
 		return nil, fmt.Errorf("space member management is not available in this deployment")
 	}
@@ -1826,7 +1911,7 @@ func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceID st
 	if claims.UserID == userID {
 		return nil, fmt.Errorf("you cannot change your own role in this space")
 	}
-	normalizedRole, err := normalizeSpaceMemberRole(role)
+	normalizedRole, err := normalizeSpaceMemberRole(role.String())
 	if err != nil {
 		return nil, err
 	}
@@ -1862,5 +1947,5 @@ func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceID st
 			}
 		}
 	}
-	return &gql.SpaceMember{UserID: userID, Role: normalizedRole}, nil
+	return &gql.SpaceMember{UserID: userID, Role: mapSpaceMemberRole(normalizedRole)}, nil
 }

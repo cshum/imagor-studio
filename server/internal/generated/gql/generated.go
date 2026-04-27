@@ -110,9 +110,9 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddOrgMember                  func(childComplexity int, username string, role string) int
-		AddOrgMemberByEmail           func(childComplexity int, email string, role string) int
-		AddSpaceMember                func(childComplexity int, spaceID string, userID string, role string) int
+		AddOrgMember                  func(childComplexity int, username string, role OrgMemberAssignableRole) int
+		AddOrgMemberByEmail           func(childComplexity int, email string, role OrgMemberAssignableRole) int
+		AddSpaceMember                func(childComplexity int, spaceID string, userID string, role SpaceMemberAssignableRole) int
 		BeginStorageUploadProbe       func(childComplexity int, input StorageConfigInput, contentType string, sizeBytes int) int
 		ChangePassword                func(childComplexity int, input ChangePasswordInput, userID *string) int
 		CompleteStorageUploadProbe    func(childComplexity int, input StorageConfigInput, probePath string, expectedContent string) int
@@ -134,7 +134,7 @@ type ComplexityRoot struct {
 		DeleteUserRegistry            func(childComplexity int, key *string, keys []string, ownerID *string) int
 		GenerateImagorURL             func(childComplexity int, imagePath string, spaceID *string, params ImagorParamsInput) int
 		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, spaceID *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
-		InviteSpaceMember             func(childComplexity int, spaceID string, email string, role string) int
+		InviteSpaceMember             func(childComplexity int, spaceID string, email string, role SpaceMemberAssignableRole) int
 		LeaveSpace                    func(childComplexity int, spaceID string) int
 		MoveFile                      func(childComplexity int, sourcePath string, destPath string, spaceID *string) int
 		ReactivateAccount             func(childComplexity int, userID string) int
@@ -149,10 +149,10 @@ type ComplexityRoot struct {
 		SetUserRegistry               func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		TestStorageConfig             func(childComplexity int, input StorageConfigInput) int
 		UnlinkAuthProvider            func(childComplexity int, provider string, userID *string) int
-		UpdateOrgMemberRole           func(childComplexity int, userID string, role string) int
+		UpdateOrgMemberRole           func(childComplexity int, userID string, role OrgMemberAssignableRole) int
 		UpdateProfile                 func(childComplexity int, input UpdateProfileInput, userID *string) int
 		UpdateSpace                   func(childComplexity int, key string, input SpaceInput) int
-		UpdateSpaceMemberRole         func(childComplexity int, spaceID string, userID string, role string) int
+		UpdateSpaceMemberRole         func(childComplexity int, spaceID string, userID string, role SpaceMemberAssignableRole) int
 		UploadFile                    func(childComplexity int, path string, spaceID *string, content graphql.Upload) int
 	}
 
@@ -398,15 +398,15 @@ type MutationResolver interface {
 	DeleteSpace(ctx context.Context, key string) (bool, error)
 	SetSpaceRegistry(ctx context.Context, spaceID string, entries []*RegistryEntryInput) ([]*UserRegistry, error)
 	DeleteSpaceRegistry(ctx context.Context, spaceID string, keys []string) (bool, error)
-	AddOrgMember(ctx context.Context, username string, role string) (*OrgMember, error)
-	AddOrgMemberByEmail(ctx context.Context, email string, role string) (*OrgMember, error)
-	AddSpaceMember(ctx context.Context, spaceID string, userID string, role string) (*SpaceMember, error)
-	InviteSpaceMember(ctx context.Context, spaceID string, email string, role string) (*SpaceInviteResult, error)
+	AddOrgMember(ctx context.Context, username string, role OrgMemberAssignableRole) (*OrgMember, error)
+	AddOrgMemberByEmail(ctx context.Context, email string, role OrgMemberAssignableRole) (*OrgMember, error)
+	AddSpaceMember(ctx context.Context, spaceID string, userID string, role SpaceMemberAssignableRole) (*SpaceMember, error)
+	InviteSpaceMember(ctx context.Context, spaceID string, email string, role SpaceMemberAssignableRole) (*SpaceInviteResult, error)
 	RemoveOrgMember(ctx context.Context, userID string) (bool, error)
 	RemoveSpaceMember(ctx context.Context, spaceID string, userID string) (bool, error)
 	LeaveSpace(ctx context.Context, spaceID string) (bool, error)
-	UpdateOrgMemberRole(ctx context.Context, userID string, role string) (*OrgMember, error)
-	UpdateSpaceMemberRole(ctx context.Context, spaceID string, userID string, role string) (*SpaceMember, error)
+	UpdateOrgMemberRole(ctx context.Context, userID string, role OrgMemberAssignableRole) (*OrgMember, error)
+	UpdateSpaceMemberRole(ctx context.Context, spaceID string, userID string, role SpaceMemberAssignableRole) (*SpaceMember, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
 	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
@@ -730,7 +730,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.AddOrgMember(childComplexity, args["username"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.AddOrgMember(childComplexity, args["username"].(string), args["role"].(OrgMemberAssignableRole)), true
 	case "Mutation.addOrgMemberByEmail":
 		if e.ComplexityRoot.Mutation.AddOrgMemberByEmail == nil {
 			break
@@ -741,7 +741,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.AddOrgMemberByEmail(childComplexity, args["email"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.AddOrgMemberByEmail(childComplexity, args["email"].(string), args["role"].(OrgMemberAssignableRole)), true
 	case "Mutation.addSpaceMember":
 		if e.ComplexityRoot.Mutation.AddSpaceMember == nil {
 			break
@@ -752,7 +752,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.AddSpaceMember(childComplexity, args["spaceID"].(string), args["userId"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.AddSpaceMember(childComplexity, args["spaceID"].(string), args["userId"].(string), args["role"].(SpaceMemberAssignableRole)), true
 	case "Mutation.beginStorageUploadProbe":
 		if e.ComplexityRoot.Mutation.BeginStorageUploadProbe == nil {
 			break
@@ -994,7 +994,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.InviteSpaceMember(childComplexity, args["spaceID"].(string), args["email"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.InviteSpaceMember(childComplexity, args["spaceID"].(string), args["email"].(string), args["role"].(SpaceMemberAssignableRole)), true
 	case "Mutation.leaveSpace":
 		if e.ComplexityRoot.Mutation.LeaveSpace == nil {
 			break
@@ -1159,7 +1159,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.UpdateOrgMemberRole(childComplexity, args["userId"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.UpdateOrgMemberRole(childComplexity, args["userId"].(string), args["role"].(OrgMemberAssignableRole)), true
 	case "Mutation.updateProfile":
 		if e.ComplexityRoot.Mutation.UpdateProfile == nil {
 			break
@@ -1192,7 +1192,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.UpdateSpaceMemberRole(childComplexity, args["spaceID"].(string), args["userId"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.UpdateSpaceMemberRole(childComplexity, args["spaceID"].(string), args["userId"].(string), args["role"].(SpaceMemberAssignableRole)), true
 	case "Mutation.uploadFile":
 		if e.ComplexityRoot.Mutation.UploadFile == nil {
 			break
@@ -2481,6 +2481,33 @@ input SpaceInput {
   imagorCORSOrigins: String
 }
 
+enum OrgMemberRole {
+  owner
+  admin
+  member
+}
+
+enum OrgMemberAssignableRole {
+  admin
+  member
+}
+
+enum SpaceMemberRole {
+  owner
+  admin
+  member
+}
+
+enum SpaceMemberAssignableRole {
+  admin
+  member
+}
+
+enum SpaceMemberRoleSource {
+  organization
+  space
+}
+
 # OrgMember represents a user's membership in an organization.
 # The username and displayName are denormalised from the users table for display purposes.
 type OrgMember {
@@ -2489,7 +2516,7 @@ type OrgMember {
   displayName: String!
   email: String
   avatarUrl: String
-  role: String!
+  role: OrgMemberRole!
   createdAt: String!
 }
 
@@ -2499,8 +2526,8 @@ type SpaceMember {
   displayName: String!
   email: String
   avatarUrl: String
-  role: String!
-  roleSource: String!
+  role: SpaceMemberRole!
+  roleSource: SpaceMemberRoleSource!
   canChangeRole: Boolean!
   canRemove: Boolean!
   createdAt: String!
@@ -2509,7 +2536,7 @@ type SpaceMember {
 type SpaceInvitation {
   id: ID!
   email: String!
-  role: String!
+  role: SpaceMemberAssignableRole!
   createdAt: String!
   expiresAt: String!
 }
@@ -2557,13 +2584,13 @@ extend type Mutation {
   # Delete space-scoped registry keys, reverting to system:global defaults (admin only)
   deleteSpaceRegistry(spaceID: String!, keys: [String!]): Boolean!
   # Add a user to the caller's organization by username (admin only)
-  addOrgMember(username: String!, role: String!): OrgMember!
+  addOrgMember(username: String!, role: OrgMemberAssignableRole!): OrgMember!
   # Add an existing user to the caller's organization by email (admin only)
-  addOrgMemberByEmail(email: String!, role: String!): OrgMember!
+  addOrgMemberByEmail(email: String!, role: OrgMemberAssignableRole!): OrgMember!
   # Add an existing org member to a specific space (admin only)
-  addSpaceMember(spaceID: String!, userId: ID!, role: String!): SpaceMember!
+  addSpaceMember(spaceID: String!, userId: ID!, role: SpaceMemberAssignableRole!): SpaceMember!
   # Invite a user to a specific space by email (admin only)
-  inviteSpaceMember(spaceID: String!, email: String!, role: String!): SpaceInviteResult!
+  inviteSpaceMember(spaceID: String!, email: String!, role: SpaceMemberAssignableRole!): SpaceInviteResult!
   # Remove a member from the organization by userId (admin only)
   removeOrgMember(userId: ID!): Boolean!
   # Remove a member from a specific space by userId (admin only)
@@ -2571,9 +2598,9 @@ extend type Mutation {
   # Leave a shared space you were explicitly added to
   leaveSpace(spaceID: String!): Boolean!
   # Change a member's role within the organization (admin only)
-  updateOrgMemberRole(userId: ID!, role: String!): OrgMember!
+  updateOrgMemberRole(userId: ID!, role: OrgMemberAssignableRole!): OrgMember!
   # Change a member's role within a specific space (admin only)
-  updateSpaceMemberRole(spaceID: String!, userId: ID!, role: String!): SpaceMember!
+  updateSpaceMemberRole(spaceID: String!, userId: ID!, role: SpaceMemberAssignableRole!): SpaceMember!
 }
 `, BuiltIn: false},
 	{Name: "../../../../graphql/registry.graphql", Input: `extend type Query {
@@ -2930,7 +2957,7 @@ func (ec *executionContext) field_Mutation_addOrgMemberByEmail_args(ctx context.
 		return nil, err
 	}
 	args["email"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -2946,7 +2973,7 @@ func (ec *executionContext) field_Mutation_addOrgMember_args(ctx context.Context
 		return nil, err
 	}
 	args["username"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -2967,7 +2994,7 @@ func (ec *executionContext) field_Mutation_addSpaceMember_args(ctx context.Conte
 		return nil, err
 	}
 	args["userId"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -3344,7 +3371,7 @@ func (ec *executionContext) field_Mutation_inviteSpaceMember_args(ctx context.Co
 		return nil, err
 	}
 	args["email"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -3584,7 +3611,7 @@ func (ec *executionContext) field_Mutation_updateOrgMemberRole_args(ctx context.
 		return nil, err
 	}
 	args["userId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -3621,7 +3648,7 @@ func (ec *executionContext) field_Mutation_updateSpaceMemberRole_args(ctx contex
 		return nil, err
 	}
 	args["userId"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -6399,7 +6426,7 @@ func (ec *executionContext) _Mutation_addOrgMember(ctx context.Context, field gr
 		ec.fieldContext_Mutation_addOrgMember,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().AddOrgMember(ctx, fc.Args["username"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().AddOrgMember(ctx, fc.Args["username"].(string), fc.Args["role"].(OrgMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember,
@@ -6456,7 +6483,7 @@ func (ec *executionContext) _Mutation_addOrgMemberByEmail(ctx context.Context, f
 		ec.fieldContext_Mutation_addOrgMemberByEmail,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().AddOrgMemberByEmail(ctx, fc.Args["email"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().AddOrgMemberByEmail(ctx, fc.Args["email"].(string), fc.Args["role"].(OrgMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember,
@@ -6513,7 +6540,7 @@ func (ec *executionContext) _Mutation_addSpaceMember(ctx context.Context, field 
 		ec.fieldContext_Mutation_addSpaceMember,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().AddSpaceMember(ctx, fc.Args["spaceID"].(string), fc.Args["userId"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().AddSpaceMember(ctx, fc.Args["spaceID"].(string), fc.Args["userId"].(string), fc.Args["role"].(SpaceMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNSpaceMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMember,
@@ -6576,7 +6603,7 @@ func (ec *executionContext) _Mutation_inviteSpaceMember(ctx context.Context, fie
 		ec.fieldContext_Mutation_inviteSpaceMember,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().InviteSpaceMember(ctx, fc.Args["spaceID"].(string), fc.Args["email"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().InviteSpaceMember(ctx, fc.Args["spaceID"].(string), fc.Args["email"].(string), fc.Args["role"].(SpaceMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNSpaceInviteResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceInviteResult,
@@ -6748,7 +6775,7 @@ func (ec *executionContext) _Mutation_updateOrgMemberRole(ctx context.Context, f
 		ec.fieldContext_Mutation_updateOrgMemberRole,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().UpdateOrgMemberRole(ctx, fc.Args["userId"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().UpdateOrgMemberRole(ctx, fc.Args["userId"].(string), fc.Args["role"].(OrgMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember,
@@ -6805,7 +6832,7 @@ func (ec *executionContext) _Mutation_updateSpaceMemberRole(ctx context.Context,
 		ec.fieldContext_Mutation_updateSpaceMemberRole,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().UpdateSpaceMemberRole(ctx, fc.Args["spaceID"].(string), fc.Args["userId"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().UpdateSpaceMemberRole(ctx, fc.Args["spaceID"].(string), fc.Args["userId"].(string), fc.Args["role"].(SpaceMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNSpaceMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMember,
@@ -7546,7 +7573,7 @@ func (ec *executionContext) _OrgMember_role(ctx context.Context, field graphql.C
 			return obj.Role, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberRole,
 		true,
 		true,
 	)
@@ -7559,7 +7586,7 @@ func (ec *executionContext) fieldContext_OrgMember_role(_ context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type OrgMemberRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10061,7 +10088,7 @@ func (ec *executionContext) _SpaceInvitation_role(ctx context.Context, field gra
 			return obj.Role, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole,
 		true,
 		true,
 	)
@@ -10074,7 +10101,7 @@ func (ec *executionContext) fieldContext_SpaceInvitation_role(_ context.Context,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type SpaceMemberAssignableRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10414,7 +10441,7 @@ func (ec *executionContext) _SpaceMember_role(ctx context.Context, field graphql
 			return obj.Role, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNSpaceMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRole,
 		true,
 		true,
 	)
@@ -10427,7 +10454,7 @@ func (ec *executionContext) fieldContext_SpaceMember_role(_ context.Context, fie
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type SpaceMemberRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10443,7 +10470,7 @@ func (ec *executionContext) _SpaceMember_roleSource(ctx context.Context, field g
 			return obj.RoleSource, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNSpaceMemberRoleSource2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRoleSource,
 		true,
 		true,
 	)
@@ -10456,7 +10483,7 @@ func (ec *executionContext) fieldContext_SpaceMember_roleSource(_ context.Contex
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type SpaceMemberRoleSource does not have child fields")
 		},
 	}
 	return fc, nil
@@ -18010,6 +18037,26 @@ func (ec *executionContext) marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagor�
 	return ec._OrgMember(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole(ctx context.Context, v any) (OrgMemberAssignableRole, error) {
+	var res OrgMemberAssignableRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole(ctx context.Context, sel ast.SelectionSet, v OrgMemberAssignableRole) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberRole(ctx context.Context, v any) (OrgMemberRole, error) {
+	var res OrgMemberRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberRole(ctx context.Context, sel ast.SelectionSet, v OrgMemberRole) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNPresignedUpload2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐPresignedUpload(ctx context.Context, sel ast.SelectionSet, v PresignedUpload) graphql.Marshaler {
 	return ec._PresignedUpload(ctx, sel, &v)
 }
@@ -18142,6 +18189,36 @@ func (ec *executionContext) marshalNSpaceMember2ᚖgithubᚗcomᚋcshumᚋimagor
 		return graphql.Null
 	}
 	return ec._SpaceMember(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole(ctx context.Context, v any) (SpaceMemberAssignableRole, error) {
+	var res SpaceMemberAssignableRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole(ctx context.Context, sel ast.SelectionSet, v SpaceMemberAssignableRole) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSpaceMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRole(ctx context.Context, v any) (SpaceMemberRole, error) {
+	var res SpaceMemberRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSpaceMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRole(ctx context.Context, sel ast.SelectionSet, v SpaceMemberRole) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSpaceMemberRoleSource2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRoleSource(ctx context.Context, v any) (SpaceMemberRoleSource, error) {
+	var res SpaceMemberRoleSource
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSpaceMemberRoleSource2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRoleSource(ctx context.Context, sel ast.SelectionSet, v SpaceMemberRoleSource) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNSpaceUsage2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsageᚄ(ctx context.Context, sel ast.SelectionSet, v []*SpaceUsage) graphql.Marshaler {

@@ -220,17 +220,17 @@ export type Mutation = {
 }
 
 export type MutationAddOrgMemberArgs = {
-  role: Scalars['String']['input']
+  role: OrgMemberAssignableRole
   username: Scalars['String']['input']
 }
 
 export type MutationAddOrgMemberByEmailArgs = {
   email: Scalars['String']['input']
-  role: Scalars['String']['input']
+  role: OrgMemberAssignableRole
 }
 
 export type MutationAddSpaceMemberArgs = {
-  role: Scalars['String']['input']
+  role: SpaceMemberAssignableRole
   spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
 }
@@ -346,7 +346,7 @@ export type MutationGenerateImagorUrlFromTemplateArgs = {
 
 export type MutationInviteSpaceMemberArgs = {
   email: Scalars['String']['input']
-  role: Scalars['String']['input']
+  role: SpaceMemberAssignableRole
   spaceID: Scalars['String']['input']
 }
 
@@ -421,7 +421,7 @@ export type MutationUnlinkAuthProviderArgs = {
 }
 
 export type MutationUpdateOrgMemberRoleArgs = {
-  role: Scalars['String']['input']
+  role: OrgMemberAssignableRole
   userId: Scalars['ID']['input']
 }
 
@@ -436,7 +436,7 @@ export type MutationUpdateSpaceArgs = {
 }
 
 export type MutationUpdateSpaceMemberRoleArgs = {
-  role: Scalars['String']['input']
+  role: SpaceMemberAssignableRole
   spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
 }
@@ -453,10 +453,14 @@ export type OrgMember = {
   createdAt: Scalars['String']['output']
   displayName: Scalars['String']['output']
   email: Maybe<Scalars['String']['output']>
-  role: Scalars['String']['output']
+  role: OrgMemberRole
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
 }
+
+export type OrgMemberAssignableRole = 'admin' | 'member'
+
+export type OrgMemberRole = 'admin' | 'member' | 'owner'
 
 export type Organization = {
   __typename?: 'Organization'
@@ -665,7 +669,7 @@ export type SpaceInvitation = {
   email: Scalars['String']['output']
   expiresAt: Scalars['String']['output']
   id: Scalars['ID']['output']
-  role: Scalars['String']['output']
+  role: SpaceMemberAssignableRole
 }
 
 export type SpaceInviteResult = {
@@ -683,11 +687,17 @@ export type SpaceMember = {
   createdAt: Scalars['String']['output']
   displayName: Scalars['String']['output']
   email: Maybe<Scalars['String']['output']>
-  role: Scalars['String']['output']
-  roleSource: Scalars['String']['output']
+  role: SpaceMemberRole
+  roleSource: SpaceMemberRoleSource
   userId: Scalars['ID']['output']
   username: Scalars['String']['output']
 }
+
+export type SpaceMemberAssignableRole = 'admin' | 'member'
+
+export type SpaceMemberRole = 'admin' | 'member' | 'owner'
+
+export type SpaceMemberRoleSource = 'organization' | 'space'
 
 export type SpaceUsage = {
   __typename?: 'SpaceUsage'
@@ -1117,7 +1127,7 @@ export type ListOrgMembersQuery = {
     displayName: string
     email: string | null
     avatarUrl: string | null
-    role: string
+    role: OrgMemberRole
     createdAt: string
   }>
 }
@@ -1135,8 +1145,8 @@ export type ListSpaceMembersQuery = {
     displayName: string
     email: string | null
     avatarUrl: string | null
-    role: string
-    roleSource: string
+    role: SpaceMemberRole
+    roleSource: SpaceMemberRoleSource
     canChangeRole: boolean
     canRemove: boolean
     createdAt: string
@@ -1153,7 +1163,7 @@ export type ListSpaceInvitationsQuery = {
     __typename?: 'SpaceInvitation'
     id: string
     email: string
-    role: string
+    role: SpaceMemberAssignableRole
     createdAt: string
     expiresAt: string
   }>
@@ -1161,7 +1171,7 @@ export type ListSpaceInvitationsQuery = {
 
 export type AddOrgMemberMutationVariables = Exact<{
   username: Scalars['String']['input']
-  role: Scalars['String']['input']
+  role: OrgMemberAssignableRole
 }>
 
 export type AddOrgMemberMutation = {
@@ -1171,14 +1181,14 @@ export type AddOrgMemberMutation = {
     userId: string
     username: string
     displayName: string
-    role: string
+    role: OrgMemberRole
     createdAt: string
   }
 }
 
 export type AddOrgMemberByEmailMutationVariables = Exact<{
   email: Scalars['String']['input']
-  role: Scalars['String']['input']
+  role: OrgMemberAssignableRole
 }>
 
 export type AddOrgMemberByEmailMutation = {
@@ -1188,7 +1198,7 @@ export type AddOrgMemberByEmailMutation = {
     userId: string
     username: string
     displayName: string
-    role: string
+    role: OrgMemberRole
     createdAt: string
   }
 }
@@ -1196,7 +1206,7 @@ export type AddOrgMemberByEmailMutation = {
 export type AddSpaceMemberMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
-  role: Scalars['String']['input']
+  role: SpaceMemberAssignableRole
 }>
 
 export type AddSpaceMemberMutation = {
@@ -1206,7 +1216,7 @@ export type AddSpaceMemberMutation = {
     userId: string
     username: string
     displayName: string
-    role: string
+    role: SpaceMemberRole
     createdAt: string
   }
 }
@@ -1214,7 +1224,7 @@ export type AddSpaceMemberMutation = {
 export type InviteSpaceMemberMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
   email: Scalars['String']['input']
-  role: Scalars['String']['input']
+  role: SpaceMemberAssignableRole
 }>
 
 export type InviteSpaceMemberMutation = {
@@ -1227,14 +1237,14 @@ export type InviteSpaceMemberMutation = {
       userId: string
       username: string
       displayName: string
-      role: string
+      role: SpaceMemberRole
       createdAt: string
     } | null
     invitation: {
       __typename?: 'SpaceInvitation'
       id: string
       email: string
-      role: string
+      role: SpaceMemberAssignableRole
       createdAt: string
       expiresAt: string
     } | null
@@ -1262,7 +1272,7 @@ export type LeaveSpaceMutation = { __typename?: 'Mutation'; leaveSpace: boolean 
 
 export type UpdateOrgMemberRoleMutationVariables = Exact<{
   userId: Scalars['ID']['input']
-  role: Scalars['String']['input']
+  role: OrgMemberAssignableRole
 }>
 
 export type UpdateOrgMemberRoleMutation = {
@@ -1272,7 +1282,7 @@ export type UpdateOrgMemberRoleMutation = {
     userId: string
     username: string
     displayName: string
-    role: string
+    role: OrgMemberRole
     createdAt: string
   }
 }
@@ -1280,7 +1290,7 @@ export type UpdateOrgMemberRoleMutation = {
 export type UpdateSpaceMemberRoleMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
-  role: Scalars['String']['input']
+  role: SpaceMemberAssignableRole
 }>
 
 export type UpdateSpaceMemberRoleMutation = {
@@ -1290,7 +1300,7 @@ export type UpdateSpaceMemberRoleMutation = {
     userId: string
     username: string
     displayName: string
-    role: string
+    role: SpaceMemberRole
     createdAt: string
   }
 }
@@ -2215,7 +2225,7 @@ export const ListSpaceInvitationsDocument = gql`
   }
 `
 export const AddOrgMemberDocument = gql`
-  mutation AddOrgMember($username: String!, $role: String!) {
+  mutation AddOrgMember($username: String!, $role: OrgMemberAssignableRole!) {
     addOrgMember(username: $username, role: $role) {
       userId
       username
@@ -2226,7 +2236,7 @@ export const AddOrgMemberDocument = gql`
   }
 `
 export const AddOrgMemberByEmailDocument = gql`
-  mutation AddOrgMemberByEmail($email: String!, $role: String!) {
+  mutation AddOrgMemberByEmail($email: String!, $role: OrgMemberAssignableRole!) {
     addOrgMemberByEmail(email: $email, role: $role) {
       userId
       username
@@ -2237,7 +2247,7 @@ export const AddOrgMemberByEmailDocument = gql`
   }
 `
 export const AddSpaceMemberDocument = gql`
-  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: String!) {
+  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {
     addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {
       userId
       username
@@ -2248,7 +2258,11 @@ export const AddSpaceMemberDocument = gql`
   }
 `
 export const InviteSpaceMemberDocument = gql`
-  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: String!) {
+  mutation InviteSpaceMember(
+    $spaceID: String!
+    $email: String!
+    $role: SpaceMemberAssignableRole!
+  ) {
     inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {
       status
       member {
@@ -2284,7 +2298,7 @@ export const LeaveSpaceDocument = gql`
   }
 `
 export const UpdateOrgMemberRoleDocument = gql`
-  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {
+  mutation UpdateOrgMemberRole($userId: ID!, $role: OrgMemberAssignableRole!) {
     updateOrgMemberRole(userId: $userId, role: $role) {
       userId
       username
@@ -2295,7 +2309,11 @@ export const UpdateOrgMemberRoleDocument = gql`
   }
 `
 export const UpdateSpaceMemberRoleDocument = gql`
-  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: String!) {
+  mutation UpdateSpaceMemberRole(
+    $spaceID: String!
+    $userId: ID!
+    $role: SpaceMemberAssignableRole!
+  ) {
     updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {
       userId
       username

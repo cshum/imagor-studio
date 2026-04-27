@@ -8,7 +8,6 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
-	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -1383,11 +1382,7 @@ func TestSpaceRegistry_NonAdminDenied(t *testing.T) {
 
 	ctx := createReadWriteContextWithOrg("regular-user-id", "org-1")
 	spaceRecord := makeTestSpace("my-space", "org-1")
-	spaceOwnerID := registrystore.SpaceOwnerID(spaceRecord.ID)
 	spaceStore.On("GetByID", ctx, spaceRecord.ID).Return(spaceRecord, nil)
-	spaceStore.On("ListMembers", ctx, spaceRecord.ID).Return([]*space.SpaceMemberView{}, nil)
-	mockRegistryStore.On("Get", ctx, spaceOwnerID, "config.allow_guest_mode").Return(nil, nil)
-	spaceStore.On("HasMember", ctx, spaceRecord.ID, "regular-user-id").Return(false, nil)
 
 	_, err := resolver.Query().SpaceRegistry(ctx, spaceRecord.ID, []string{"config.app_home_title"})
 

@@ -1145,7 +1145,7 @@
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": { "kind": "ENUM", "name": "OrgMemberAssignableRole", "ofType": null }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -1194,7 +1194,7 @@
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": { "kind": "ENUM", "name": "OrgMemberAssignableRole", "ofType": null }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -1219,7 +1219,7 @@
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": { "kind": "ENUM", "name": "SpaceMemberAssignableRole", "ofType": null }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -2073,7 +2073,7 @@
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": { "kind": "ENUM", "name": "SpaceMemberAssignableRole", "ofType": null }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -2640,7 +2640,7 @@
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": { "kind": "ENUM", "name": "OrgMemberAssignableRole", "ofType": null }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -2747,7 +2747,7 @@
                 "type": {
                   "kind": "NON_NULL",
                   "name": null,
-                  "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+                  "ofType": { "kind": "ENUM", "name": "SpaceMemberAssignableRole", "ofType": null }
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -2890,7 +2890,7 @@
             "type": {
               "kind": "NON_NULL",
               "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+              "ofType": { "kind": "ENUM", "name": "OrgMemberRole", "ofType": null }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -2923,6 +2923,55 @@
         "inputFields": null,
         "interfaces": [],
         "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "OrgMemberAssignableRole",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "admin",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "member",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "OrgMemberRole",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "admin",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "member",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          { "name": "owner", "description": null, "isDeprecated": false, "deprecationReason": null }
+        ],
         "possibleTypes": null
       },
       {
@@ -4529,7 +4578,7 @@
             "type": {
               "kind": "NON_NULL",
               "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+              "ofType": { "kind": "ENUM", "name": "SpaceMemberAssignableRole", "ofType": null }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -4657,7 +4706,7 @@
             "type": {
               "kind": "NON_NULL",
               "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+              "ofType": { "kind": "ENUM", "name": "SpaceMemberRole", "ofType": null }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -4669,7 +4718,7 @@
             "type": {
               "kind": "NON_NULL",
               "name": null,
-              "ofType": { "kind": "SCALAR", "name": "String", "ofType": null }
+              "ofType": { "kind": "ENUM", "name": "SpaceMemberRoleSource", "ofType": null }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -4702,6 +4751,74 @@
         "inputFields": null,
         "interfaces": [],
         "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "SpaceMemberAssignableRole",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "admin",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "member",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "SpaceMemberRole",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "admin",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "member",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          { "name": "owner", "description": null, "isDeprecated": false, "deprecationReason": null }
+        ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "SpaceMemberRoleSource",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "organization",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          { "name": "space", "description": null, "isDeprecated": false, "deprecationReason": null }
+        ],
         "possibleTypes": null
       },
       {

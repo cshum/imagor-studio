@@ -367,6 +367,13 @@ func TestSpaces_ReturnsSameOrgSpacesForNonAdminMember(t *testing.T) {
 	s2 := makeTestSpace("beta", "org-1")
 	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{s1, s2}, nil)
 	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*space.Space{}, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil)
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	result, err := r.Query().Spaces(ctx)
@@ -377,6 +384,7 @@ func TestSpaces_ReturnsSameOrgSpacesForNonAdminMember(t *testing.T) {
 	assert.False(t, result[0].CanManage)
 	assert.False(t, result[0].CanDelete)
 	assert.False(t, result[0].CanLeave)
+	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -478,6 +486,13 @@ func TestSpace_ReturnsSameOrgSpaceForNonAdminMember(t *testing.T) {
 
 	s := makeTestSpace("acme", "org-1")
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(s, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil)
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	result, err := r.Query().Space(ctx, "acme")
@@ -488,6 +503,7 @@ func TestSpace_ReturnsSameOrgSpaceForNonAdminMember(t *testing.T) {
 	assert.False(t, result.CanManage)
 	assert.False(t, result.CanDelete)
 	assert.False(t, result.CanLeave)
+	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -910,10 +926,18 @@ func TestCreateSpace_NoOrgAndNilOrgStore(t *testing.T) {
 // ---------- UpdateSpace ------------------------------------------------------
 
 func TestUpdateSpace_RequiresManagePermission(t *testing.T) {
+	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
-	r := newOrgResolver(&MockOrgStore{}, spaceStore)
+	r := newOrgResolver(orgStore, spaceStore)
 
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(makeTestSpace("acme", "org-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil)
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	input := gql.SpaceInput{Key: "acme", Name: "New Name"}
@@ -924,6 +948,7 @@ func TestUpdateSpace_RequiresManagePermission(t *testing.T) {
 	assert.True(t, ok, "expected *gqlerror.Error")
 	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
 	assert.Contains(t, gqlErr.Message, "space manager access required")
+	orgStore.AssertExpectations(t)
 	spaceStore.AssertNotCalled(t, "Upsert", mock.Anything, mock.Anything)
 	spaceStore.AssertExpectations(t)
 }
@@ -1265,10 +1290,18 @@ func TestUpdateSpace_RenamesKeyAndMigratesDependencies(t *testing.T) {
 // ---------- DeleteSpace ------------------------------------------------------
 
 func TestDeleteSpace_RequiresDeletePermission(t *testing.T) {
+	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
-	r := newOrgResolver(&MockOrgStore{}, spaceStore)
+	r := newOrgResolver(orgStore, spaceStore)
 
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(makeTestSpace("acme", "org-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil)
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	ok, err := r.Mutation().DeleteSpace(ctx, "acme")
@@ -1278,6 +1311,7 @@ func TestDeleteSpace_RequiresDeletePermission(t *testing.T) {
 	assert.True(t, ok, "expected *gqlerror.Error")
 	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
 	assert.Contains(t, gqlErr.Message, "owning organization admins")
+	orgStore.AssertExpectations(t)
 }
 
 func TestDeleteSpace_NotFound(t *testing.T) {
@@ -1389,22 +1423,22 @@ func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result, 4)
 	assert.Equal(t, "user-1", result[0].UserID)
-	assert.Equal(t, "owner", result[0].Role)
-	assert.Equal(t, "organization", result[0].RoleSource)
+	assert.Equal(t, gql.SpaceMemberRoleOwner, result[0].Role)
+	assert.Equal(t, gql.SpaceMemberRoleSourceOrganization, result[0].RoleSource)
 	assert.False(t, result[0].CanChangeRole)
 	assert.False(t, result[0].CanRemove)
 	assert.Equal(t, "user-2", result[1].UserID)
-	assert.Equal(t, "admin", result[1].Role)
-	assert.Equal(t, "organization", result[1].RoleSource)
+	assert.Equal(t, gql.SpaceMemberRoleAdmin, result[1].Role)
+	assert.Equal(t, gql.SpaceMemberRoleSourceOrganization, result[1].RoleSource)
 	assert.False(t, result[1].CanChangeRole)
 	assert.False(t, result[1].CanRemove)
 	assert.Equal(t, "user-3", result[2].UserID)
-	assert.Equal(t, "admin", result[2].Role)
-	assert.Equal(t, "space", result[2].RoleSource)
+	assert.Equal(t, gql.SpaceMemberRoleAdmin, result[2].Role)
+	assert.Equal(t, gql.SpaceMemberRoleSourceSpace, result[2].RoleSource)
 	assert.True(t, result[2].CanChangeRole)
 	assert.True(t, result[2].CanRemove)
 	assert.Equal(t, "user-9", result[3].UserID)
-	assert.Equal(t, "space", result[3].RoleSource)
+	assert.Equal(t, gql.SpaceMemberRoleSourceSpace, result[3].RoleSource)
 	assert.True(t, result[3].CanChangeRole)
 	assert.True(t, result[3].CanRemove)
 	orgStore.AssertExpectations(t)
@@ -1436,8 +1470,8 @@ func TestSpaceMembers_CollapsesRedundantOrgMemberDirectAccess(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result, 2)
 	assert.Equal(t, "user-3", result[1].UserID)
-	assert.Equal(t, "organization", result[1].RoleSource)
-	assert.Equal(t, "member", result[1].Role)
+	assert.Equal(t, gql.SpaceMemberRoleSourceOrganization, result[1].RoleSource)
+	assert.Equal(t, gql.SpaceMemberRoleMember, result[1].Role)
 	assert.False(t, result[1].CanChangeRole)
 	assert.False(t, result[1].CanRemove)
 	orgStore.AssertExpectations(t)
@@ -1445,11 +1479,19 @@ func TestSpaceMembers_CollapsesRedundantOrgMemberDirectAccess(t *testing.T) {
 }
 
 func TestSpaceMembers_RequiresManagePermission(t *testing.T) {
+	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
-	r := newOrgResolver(&MockOrgStore{}, spaceStore)
+	r := newOrgResolver(orgStore, spaceStore)
 
 	s := makeTestSpace("acme", "org-1")
 	spaceStore.On("GetByID", mock.Anything, s.ID).Return(s, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil).Once()
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	result, err := r.Query().SpaceMembers(ctx, s.ID)
@@ -1460,6 +1502,7 @@ func TestSpaceMembers_RequiresManagePermission(t *testing.T) {
 	assert.True(t, ok, "expected *gqlerror.Error")
 	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
 	assert.Contains(t, gqlErr.Message, "space manager access required")
+	orgStore.AssertExpectations(t)
 	spaceStore.AssertNotCalled(t, "ListMembers", mock.Anything, mock.Anything)
 	spaceStore.AssertExpectations(t)
 }
@@ -1503,6 +1546,13 @@ func TestInviteSpaceMember_RequiresManagePermission(t *testing.T) {
 
 	s := makeTestSpace("acme", "org-1")
 	spaceStore.On("GetByID", mock.Anything, s.ID).Return(s, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil).Once()
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	result, err := r.Mutation().InviteSpaceMember(ctx, s.ID, "guest@example.com", "member")
@@ -1513,7 +1563,7 @@ func TestInviteSpaceMember_RequiresManagePermission(t *testing.T) {
 	assert.True(t, ok, "expected *gqlerror.Error")
 	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
 	assert.Contains(t, gqlErr.Message, "space manager access required")
-	orgStore.AssertNotCalled(t, "ListMembers", mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
 	userStore.AssertNotCalled(t, "GetByEmail", mock.Anything, mock.Anything)
 	spaceStore.AssertExpectations(t)
 }

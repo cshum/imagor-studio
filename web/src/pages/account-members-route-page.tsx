@@ -65,10 +65,7 @@ function getRoleLabel(role: string, t: (key: string) => string) {
   return t('pages.organizationMembers.roles.member')
 }
 
-function getOrganizationMembersErrorMessage(
-  error: unknown,
-  t: (key: string) => string,
-): string {
+function getOrganizationMembersErrorMessage(error: unknown, t: (key: string) => string): string {
   const errorInfo = extractErrorInfo(error)
 
   switch (errorInfo.reason) {
@@ -129,9 +126,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
       await reloadMembers()
     } catch (error) {
       const message = getOrganizationMembersErrorMessage(error, t)
-      toast.error(
-        `${t('pages.organizationMembers.messages.memberAddFailed')}: ${message}`,
-      )
+      toast.error(`${t('pages.organizationMembers.messages.memberAddFailed')}: ${message}`)
     } finally {
       setIsAdding(false)
     }
@@ -163,9 +158,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
       await reloadMembers()
     } catch (error) {
       const message = getOrganizationMembersErrorMessage(error, t)
-      toast.error(
-        `${t('pages.organizationMembers.messages.memberRemoveFailed')}: ${message}`,
-      )
+      toast.error(`${t('pages.organizationMembers.messages.memberRemoveFailed')}: ${message}`)
     } finally {
       setIsRemoving(false)
     }
