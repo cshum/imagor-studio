@@ -16,6 +16,7 @@ type Org struct {
 
 	StripeCustomerID     string
 	StripeSubscriptionID string
+	LastStripeEventAt    *time.Time
 	BillingEmail         string
 	TrialEndsAt          *time.Time
 
@@ -37,6 +38,7 @@ type BillingStateUpdate struct {
 	PlanStatus                *string
 	StripeCustomerID          *string
 	StripeSubscriptionID      *string
+	LastStripeEventAt         *time.Time
 	BillingEmail              *string
 	TrialEndsAt               *time.Time
 	ClearStripeCustomerID     bool
