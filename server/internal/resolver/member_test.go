@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -196,6 +197,9 @@ func TestAddOrgMember_RejectsUserInAnotherOrganization(t *testing.T) {
 	assert.Nil(t, result)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "already belongs to another organization")
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "org_member_other_organization", gqlErr.Extensions["reason"])
 	orgStore.AssertNotCalled(t, "AddMember", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	orgStore.AssertExpectations(t)
 	userStore.AssertExpectations(t)
@@ -265,6 +269,11 @@ func TestRemoveOrgMember_Success(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
 	orgStore.On("RemoveMember", mock.Anything, "org-1", "user-2").Return(nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
@@ -278,6 +287,11 @@ func TestRemoveOrgMember_StoreError(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
 	orgStore.On("RemoveMember", mock.Anything, "org-1", "user-2").
 		Return(assert.AnError)
 
@@ -285,6 +299,53 @@ func TestRemoveOrgMember_StoreError(t *testing.T) {
 	ok, err := r.Mutation().RemoveOrgMember(ctx, "user-2")
 	assert.False(t, ok)
 	require.Error(t, err)
+}
+
+func TestRemoveOrgMember_RejectsSelfRemoval(t *testing.T) {
+	r := newMemberResolver(&MockOrgStore{}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().RemoveOrgMember(ctx, "user-1")
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot remove yourself")
+}
+
+func TestRemoveOrgMember_RejectsOwnerRemoval(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-2"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "admin"),
+		makeTestMember("user-2", "bob", "owner"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().RemoveOrgMember(ctx, "user-2")
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot remove the organization owner")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestRemoveOrgMember_RejectsLastMemberRemoval(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().RemoveOrgMember(ctx, "user-2")
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot remove the last organization member")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
 }
 
 func TestRemoveOrgMember_RequiresAdmin(t *testing.T) {

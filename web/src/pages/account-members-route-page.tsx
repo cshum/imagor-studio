@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { SettingsSection } from '@/components/ui/settings-section'
-import { extractErrorMessage } from '@/lib/error-utils'
+import { extractErrorInfo, extractErrorMessage } from '@/lib/error-utils'
 import type { OrgMembersLoaderData } from '@/loaders/account-loader'
 import { useAuth } from '@/stores/auth-store'
 
@@ -63,6 +63,28 @@ function getRoleLabel(role: string, t: (key: string) => string) {
   if (role === 'owner') return t('pages.organizationMembers.roles.owner')
   if (role === 'admin') return t('pages.organizationMembers.roles.admin')
   return t('pages.organizationMembers.roles.member')
+}
+
+function getOrganizationMembersErrorMessage(
+  error: unknown,
+  t: (key: string) => string,
+): string {
+  const errorInfo = extractErrorInfo(error)
+
+  switch (errorInfo.reason) {
+    case 'org_member_other_organization':
+      return t('pages.organizationMembers.messages.errors.otherOrganization')
+    case 'org_member_already_member':
+      return t('pages.organizationMembers.messages.errors.alreadyMember')
+    case 'org_member_remove_self':
+      return t('pages.organizationMembers.messages.errors.cannotRemoveYourself')
+    case 'org_member_remove_owner':
+      return t('pages.organizationMembers.messages.errors.cannotRemoveOwner')
+    case 'org_member_remove_last_member':
+      return t('pages.organizationMembers.messages.errors.cannotRemoveLastMember')
+  }
+
+  return errorInfo.message || extractErrorMessage(error)
 }
 
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
@@ -106,8 +128,9 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
       setRole('member')
       await reloadMembers()
     } catch (error) {
+      const message = getOrganizationMembersErrorMessage(error, t)
       toast.error(
-        `${t('pages.organizationMembers.messages.memberAddFailed')}: ${extractErrorMessage(error)}`,
+        `${t('pages.organizationMembers.messages.memberAddFailed')}: ${message}`,
       )
     } finally {
       setIsAdding(false)
@@ -139,8 +162,9 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
       setPendingRemoveUserId(null)
       await reloadMembers()
     } catch (error) {
+      const message = getOrganizationMembersErrorMessage(error, t)
       toast.error(
-        `${t('pages.organizationMembers.messages.memberRemoveFailed')}: ${extractErrorMessage(error)}`,
+        `${t('pages.organizationMembers.messages.memberRemoveFailed')}: ${message}`,
       )
     } finally {
       setIsRemoving(false)

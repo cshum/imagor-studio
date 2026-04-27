@@ -1362,7 +1362,7 @@ func (r *mutationResolver) ensureUserCanJoinOrganization(ctx context.Context, or
 		return fmt.Errorf("failed to verify existing organization membership: %w", err)
 	}
 	if currentOrg != nil && currentOrg.ID != orgID {
-		return fmt.Errorf("user already belongs to another organization")
+		return apperror.BadRequest("user already belongs to another organization", map[string]interface{}{"reason": "org_member_other_organization"})
 	}
 
 	members, err := r.orgStore.ListMembers(ctx, orgID)
@@ -1371,7 +1371,7 @@ func (r *mutationResolver) ensureUserCanJoinOrganization(ctx context.Context, or
 	}
 	for _, member := range members {
 		if member.UserID == userID {
-			return fmt.Errorf("user is already a member of your organization")
+			return apperror.BadRequest("user is already a member of your organization", map[string]interface{}{"reason": "org_member_already_member"})
 		}
 	}
 
@@ -1485,12 +1485,47 @@ func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (
 	if err := RequireAdminPermission(ctx); err != nil {
 		return false, err
 	}
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if claims.UserID == userID {
+		return false, apperror.BadRequest("you cannot remove yourself from the organization", map[string]interface{}{"reason": "org_member_remove_self"})
+	}
 	if !r.cloudEnabled() {
 		return false, fmt.Errorf("member management is not available in this deployment")
 	}
 	orgID, err := r.getUserOrgID(ctx)
 	if err != nil || orgID == "" {
 		return false, fmt.Errorf("no organization found")
+	}
+
+	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		return false, fmt.Errorf("failed to load organization: %w", err)
+	}
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		return false, fmt.Errorf("failed to verify org membership: %w", err)
+	}
+
+	isOwner := currentOrg != nil && currentOrg.OwnerID == userID
+	isMember := false
+	for _, member := range members {
+		if member.UserID != userID {
+			continue
+		}
+		isMember = true
+		if member.Role == "owner" {
+			isOwner = true
+		}
+		break
+	}
+	if isOwner {
+		return false, apperror.BadRequest("you cannot remove the organization owner", map[string]interface{}{"reason": "org_member_remove_owner"})
+	}
+	if isMember && len(members) <= 1 {
+		return false, apperror.BadRequest("you cannot remove the last organization member", map[string]interface{}{"reason": "org_member_remove_last_member"})
 	}
 
 	if err := r.orgStore.RemoveMember(ctx, orgID, userID); err != nil {

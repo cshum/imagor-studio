@@ -907,7 +907,14 @@
         "roleUpdated": "Ruolo del membro aggiornato.",
         "roleUpdateFailed": "Impossibile aggiornare il ruolo del membro",
         "memberRemoved": "Membro rimosso.",
-        "memberRemoveFailed": "Impossibile rimuovere il membro"
+        "memberRemoveFailed": "Impossibile rimuovere il membro",
+        "errors": {
+          "otherOrganization": "Questo account appartiene gia a un'altra organizzazione.",
+          "alreadyMember": "Questo account e gia membro della tua organizzazione.",
+          "cannotRemoveYourself": "Non puoi rimuovere te stesso dall'organizzazione.",
+          "cannotRemoveOwner": "Non puoi rimuovere il proprietario dell'organizzazione.",
+          "cannotRemoveLastMember": "Non puoi rimuovere l'ultimo membro dell'organizzazione."
+        }
       }
     },
     "organizationOverview": {

@@ -908,7 +908,14 @@
         "roleUpdated": "成員角色已更新。",
         "roleUpdateFailed": "更新成員角色失敗",
         "memberRemoved": "成員已移除。",
-        "memberRemoveFailed": "移除成員失敗"
+        "memberRemoveFailed": "移除成員失敗",
+        "errors": {
+          "otherOrganization": "此帳戶已屬於其他組織。",
+          "alreadyMember": "此帳戶已是目前組織成員。",
+          "cannotRemoveYourself": "你不能將自己移出組織。",
+          "cannotRemoveOwner": "你不能移除組織擁有者。",
+          "cannotRemoveLastMember": "你不能移除組織中的最後一名成員。"
+        }
       }
     },
     "organizationOverview": {

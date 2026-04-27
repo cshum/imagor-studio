@@ -907,7 +907,14 @@
         "roleUpdated": "Member role updated.",
         "roleUpdateFailed": "Failed to update member role",
         "memberRemoved": "Member removed.",
-        "memberRemoveFailed": "Failed to remove member"
+        "memberRemoveFailed": "Failed to remove member",
+        "errors": {
+          "otherOrganization": "This account already belongs to another organization.",
+          "alreadyMember": "This account is already a member of your organization.",
+          "cannotRemoveYourself": "You cannot remove yourself from the organization.",
+          "cannotRemoveOwner": "You cannot remove the organization owner.",
+          "cannotRemoveLastMember": "You cannot remove the last organization member."
+        }
       }
     },
     "organizationOverview": {
