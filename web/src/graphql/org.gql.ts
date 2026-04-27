@@ -312,6 +312,12 @@ export const LEAVE_ORGANIZATION = gql(`
   }
 `)
 
+export const DELETE_ORGANIZATION = gql(`
+  mutation DeleteOrganization {
+    deleteOrganization
+  }
+`)
+
 export const REMOVE_SPACE_MEMBER = gql(`
   mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {
     removeSpaceMember(spaceID: $spaceID, userId: $userId)

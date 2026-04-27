@@ -3,14 +3,23 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 
-import { createBillingPortalSession, createCheckoutSession } from '@/api/org-api'
+import { createBillingPortalSession, createCheckoutSession, deleteOrganization } from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { extractErrorInfo, isOrganizationRequiredError } from '@/lib/error-utils'
 import { getPlanEntitlements, isUnlimitedLimit } from '@/lib/plan-entitlements'
 import type { BillingLoaderData } from '@/loaders/account-loader'
+import { useAuth } from '@/stores/auth-store'
 
 interface AccountBillingRoutePageProps {
   loaderData: BillingLoaderData
@@ -48,11 +57,29 @@ function getProgressValue(current: number, max: number | null | undefined) {
   return Math.min((current / max) * 100, 100)
 }
 
+function getDeleteOrganizationErrorMessage(error: unknown, t: (key: string) => string): string {
+  const errorInfo = extractErrorInfo(error)
+
+  switch (errorInfo.reason) {
+    case 'org_delete_current_owner_required':
+      return t('pages.billing.danger.errors.ownerRequired')
+    case 'org_delete_has_spaces':
+      return t('pages.billing.danger.errors.deleteSpacesFirst')
+    case 'org_delete_billing_active':
+      return t('pages.billing.danger.errors.cancelBillingFirst')
+    default:
+      return errorInfo.message
+  }
+}
+
 export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const [pendingPlan, setPendingPlan] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const organization = loaderData.organization
   const usageSummary = loaderData.usageSummary
@@ -158,6 +185,22 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       toast.error(`${t('pages.billing.messages.portalFailed')}: ${extractErrorInfo(error).message}`)
     } finally {
       setPortalLoading(false)
+    }
+  }
+
+  const handleDeleteOrganization = async () => {
+    setDeleteLoading(true)
+    try {
+      await deleteOrganization()
+      await logout()
+      toast.success(t('pages.billing.danger.messages.deleted'))
+      await navigate({ to: '/login' })
+    } catch (error) {
+      toast.error(
+        `${t('pages.billing.danger.messages.deleteFailed')}: ${getDeleteOrganizationErrorMessage(error, t)}`,
+      )
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -287,6 +330,53 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           )
         })}
       </div>
+
+      <div className='border-destructive/20 border-t pt-6'>
+        <h2 className='text-destructive text-base font-semibold'>{t('pages.billing.danger.title')}</h2>
+        <div className='mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+          <div className='min-w-0 space-y-2'>
+            <p className='font-medium'>{t('pages.billing.danger.deleteTitle')}</p>
+            <p className='text-muted-foreground text-sm'>
+              {t('pages.billing.danger.deleteDescription')}
+            </p>
+            <p className='text-muted-foreground text-sm'>
+              {t('pages.billing.danger.deleteChecklist')}
+            </p>
+          </div>
+          <Button variant='destructive' className='shrink-0' onClick={() => setDeleteDialogOpen(true)}>
+            {t('pages.billing.danger.deleteButton')}
+          </Button>
+        </div>
+      </div>
+
+      <ResponsiveDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.billing.danger.confirmTitle')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.billing.danger.confirmDescription', {
+              name: organization?.name ?? t('pages.billing.danger.organizationFallback'),
+            })}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+          <Button
+            variant='outline'
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={deleteLoading}
+            className='w-full sm:w-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+          <ButtonWithLoading
+            variant='destructive'
+            isLoading={deleteLoading}
+            onClick={handleDeleteOrganization}
+            className='w-full sm:w-auto'
+          >
+            {t('pages.billing.danger.deleteButton')}
+          </ButtonWithLoading>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialog>
     </div>
   )
 }

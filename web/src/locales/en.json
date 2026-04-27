@@ -893,6 +893,25 @@
         "pro": "For growing teams that need more spaces and processing headroom.",
         "team": "For larger organizations managing multiple spaces at higher volume."
       },
+      "danger": {
+        "title": "Danger zone",
+        "deleteTitle": "Delete organization",
+        "deleteDescription": "Permanently delete this organization and its shared access configuration.",
+        "deleteChecklist": "Before deletion, remove every space and cancel paid billing if a subscription is still active.",
+        "deleteButton": "Delete organization",
+        "confirmTitle": "Delete organization",
+        "confirmDescription": "Delete {{name}} permanently? This cannot be undone and you will need to sign in again afterwards.",
+        "organizationFallback": "this organization",
+        "messages": {
+          "deleted": "Organization deleted. Sign in again to continue.",
+          "deleteFailed": "Failed to delete organization"
+        },
+        "errors": {
+          "ownerRequired": "Only the current organization owner can delete the organization.",
+          "deleteSpacesFirst": "Delete all spaces before deleting the organization.",
+          "cancelBillingFirst": "Cancel paid billing before deleting the organization."
+        }
+      },
       "messages": {
         "checkoutFailed": "Failed to start checkout",
         "portalFailed": "Failed to open billing portal"

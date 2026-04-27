@@ -191,6 +191,7 @@ export type Mutation = {
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
   deleteFile: Scalars['Boolean']['output']
+  deleteOrganization: Scalars['Boolean']['output']
   deleteSpace: Scalars['Boolean']['output']
   deleteSpaceRegistry: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
@@ -1267,6 +1268,10 @@ export type LeaveOrganizationMutationVariables = Exact<{ [key: string]: never }>
 
 export type LeaveOrganizationMutation = { __typename?: 'Mutation'; leaveOrganization: boolean }
 
+export type DeleteOrganizationMutationVariables = Exact<{ [key: string]: never }>
+
+export type DeleteOrganizationMutation = { __typename?: 'Mutation'; deleteOrganization: boolean }
+
 export type RemoveSpaceMemberMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
@@ -2316,6 +2321,11 @@ export const LeaveOrganizationDocument = gql`
     leaveOrganization
   }
 `
+export const DeleteOrganizationDocument = gql`
+  mutation DeleteOrganization {
+    deleteOrganization
+  }
+`
 export const RemoveSpaceMemberDocument = gql`
   mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {
     removeSpaceMember(spaceID: $spaceID, userId: $userId)
@@ -3195,6 +3205,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'LeaveOrganization',
+        'mutation',
+        variables,
+      )
+    },
+    DeleteOrganization(
+      variables?: DeleteOrganizationMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<DeleteOrganizationMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<DeleteOrganizationMutation>({
+            document: DeleteOrganizationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'DeleteOrganization',
         'mutation',
         variables,
       )

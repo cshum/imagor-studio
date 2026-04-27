@@ -11,6 +11,7 @@ import type {
   CreateCheckoutSessionMutationVariables,
   CreateSpaceMutation,
   CreateSpaceMutationVariables,
+  DeleteOrganizationMutation,
   DeleteSpaceMutation,
   DeleteSpaceMutationVariables,
   DeleteSpaceRegistryMutation,
@@ -168,6 +169,13 @@ export async function deleteSpace(
   const result = await sdk.DeleteSpace(variables)
   invalidateCachedSpace(variables.key)
   return result.deleteSpace
+}
+
+export async function deleteOrganization(): Promise<DeleteOrganizationMutation['deleteOrganization']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.DeleteOrganization()
+  return result.deleteOrganization
 }
 
 export async function getSpaceRegistry(

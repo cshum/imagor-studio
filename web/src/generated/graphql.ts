@@ -190,6 +190,7 @@ export type Mutation = {
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
   deleteFile: Scalars['Boolean']['output']
+  deleteOrganization: Scalars['Boolean']['output']
   deleteSpace: Scalars['Boolean']['output']
   deleteSpaceRegistry: Scalars['Boolean']['output']
   deleteSystemRegistry: Scalars['Boolean']['output']
@@ -1265,6 +1266,10 @@ export type RemoveOrgMemberMutation = { __typename?: 'Mutation'; removeOrgMember
 export type LeaveOrganizationMutationVariables = Exact<{ [key: string]: never }>
 
 export type LeaveOrganizationMutation = { __typename?: 'Mutation'; leaveOrganization: boolean }
+
+export type DeleteOrganizationMutationVariables = Exact<{ [key: string]: never }>
+
+export type DeleteOrganizationMutation = { __typename?: 'Mutation'; deleteOrganization: boolean }
 
 export type RemoveSpaceMemberMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
@@ -3396,6 +3401,20 @@ export const LeaveOrganizationDocument = {
     },
   ],
 } as unknown as DocumentNode<LeaveOrganizationMutation, LeaveOrganizationMutationVariables>
+export const DeleteOrganizationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DeleteOrganization' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [{ kind: 'Field', name: { kind: 'Name', value: 'deleteOrganization' } }],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DeleteOrganizationMutation, DeleteOrganizationMutationVariables>
 export const RemoveSpaceMemberDocument = {
   kind: 'Document',
   definitions: [
