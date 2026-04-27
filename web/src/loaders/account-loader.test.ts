@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getMyOrganization, getSpace, getUsageSummary, listSpaces } from '@/api/org-api'
-import { spaceSettingsLoader, spacesLoader } from '@/loaders/account-loader'
+const mockGetMyOrganization = vi.fn()
+const mockGetSpace = vi.fn()
+const mockGetUsageSummary = vi.fn()
+const mockListOrgInvitations = vi.fn()
+const mockListOrgMembers = vi.fn()
+const mockListSpaces = vi.fn()
 
 vi.mock('@/api/imagor-api', () => ({
   getImagorStatus: vi.fn(),
@@ -11,12 +15,18 @@ vi.mock('@/api/license-api', () => ({
   getLicenseStatus: vi.fn(),
 }))
 
-vi.mock('@/api/org-api', () => ({
-  getMyOrganization: vi.fn(),
-  getSpace: vi.fn(),
-  getUsageSummary: vi.fn(),
-  listSpaces: vi.fn(),
-}))
+vi.mock('@/api/org-api', async () => {
+  const actual = await vi.importActual<typeof import('@/api/org-api')>('@/api/org-api')
+  return {
+    ...actual,
+    getMyOrganization: mockGetMyOrganization,
+    getSpace: mockGetSpace,
+    getUsageSummary: mockGetUsageSummary,
+    listOrgInvitations: mockListOrgInvitations,
+    listOrgMembers: mockListOrgMembers,
+    listSpaces: mockListSpaces,
+  }
+})
 
 vi.mock('@/api/registry-api', () => ({
   getSystemRegistryObject: vi.fn(),
@@ -41,7 +51,9 @@ describe('account-loader', () => {
   })
 
   it('includes current organization id in spaces loader data', async () => {
-    vi.mocked(listSpaces).mockResolvedValue([
+    const { spacesLoader } = await import('@/loaders/account-loader')
+
+    mockListSpaces.mockResolvedValue([
       {
         __typename: 'Space',
         id: 'space-acme',
@@ -70,7 +82,7 @@ describe('account-loader', () => {
         updatedAt: '2026-04-18T00:00:00Z',
       },
     ])
-    vi.mocked(getMyOrganization).mockResolvedValue({
+    mockGetMyOrganization.mockResolvedValue({
       __typename: 'Organization',
       id: 'org-1',
       name: 'Acme Org',
@@ -82,7 +94,7 @@ describe('account-loader', () => {
       createdAt: '2026-04-18T00:00:00Z',
       updatedAt: '2026-04-18T00:00:00Z',
     })
-    vi.mocked(getUsageSummary).mockResolvedValue({
+    mockGetUsageSummary.mockResolvedValue({
       __typename: 'UsageSummary',
       usedSpaces: 1,
       maxSpaces: 1,
@@ -101,7 +113,9 @@ describe('account-loader', () => {
   })
 
   it('allows loading settings for a space owned by the current organization', async () => {
-    vi.mocked(getSpace).mockResolvedValue({
+    const { spaceSettingsLoader } = await import('@/loaders/account-loader')
+
+    mockGetSpace.mockResolvedValue({
       __typename: 'Space',
       id: 'space-acme',
       orgId: 'org-1',
@@ -127,7 +141,7 @@ describe('account-loader', () => {
       canLeave: false,
       updatedAt: '2026-04-18T00:00:00Z',
     })
-    vi.mocked(getMyOrganization).mockResolvedValue({
+    mockGetMyOrganization.mockResolvedValue({
       __typename: 'Organization',
       id: 'org-1',
       name: 'Acme Org',
@@ -147,7 +161,9 @@ describe('account-loader', () => {
   })
 
   it('allows shared managers into space settings', async () => {
-    vi.mocked(getSpace).mockResolvedValue({
+    const { spaceSettingsLoader } = await import('@/loaders/account-loader')
+
+    mockGetSpace.mockResolvedValue({
       __typename: 'Space',
       id: 'space-shared-manage',
       orgId: 'org-host',
@@ -180,7 +196,9 @@ describe('account-loader', () => {
   })
 
   it('redirects shared members away from settings when they cannot manage', async () => {
-    vi.mocked(getSpace).mockResolvedValue({
+    const { spaceSettingsLoader } = await import('@/loaders/account-loader')
+
+    mockGetSpace.mockResolvedValue({
       __typename: 'Space',
       id: 'space-shared-readonly',
       orgId: 'org-host',
@@ -220,5 +238,61 @@ describe('account-loader', () => {
         },
       })
     }
+  })
+
+  it('does not request pending invitations for non-admin members', async () => {
+    const { orgMembersLoader } = await import('@/loaders/account-loader')
+
+    mockGetMyOrganization.mockResolvedValue({
+      __typename: 'Organization',
+      id: 'org-1',
+      name: 'Acme Org',
+      slug: 'acme',
+      ownerUserId: 'user-9',
+      currentUserRole: 'member',
+      plan: 'trial',
+      planStatus: 'active',
+      createdAt: '2026-04-18T00:00:00Z',
+      updatedAt: '2026-04-18T00:00:00Z',
+    })
+    mockListOrgMembers.mockResolvedValue([])
+
+    const result = await orgMembersLoader()
+
+    expect(mockListOrgInvitations).not.toHaveBeenCalled()
+    expect(result.invitations).toEqual([])
+  })
+
+  it('requests pending invitations for organization admins', async () => {
+    const { orgMembersLoader } = await import('@/loaders/account-loader')
+
+    mockGetMyOrganization.mockResolvedValue({
+      __typename: 'Organization',
+      id: 'org-1',
+      name: 'Acme Org',
+      slug: 'acme',
+      ownerUserId: 'user-1',
+      currentUserRole: 'admin',
+      plan: 'trial',
+      planStatus: 'active',
+      createdAt: '2026-04-18T00:00:00Z',
+      updatedAt: '2026-04-18T00:00:00Z',
+    })
+    mockListOrgMembers.mockResolvedValue([])
+    mockListOrgInvitations.mockResolvedValue([
+      {
+        __typename: 'OrgInvitation',
+        id: 'invite-1',
+        email: 'pending@example.com',
+        role: 'member',
+        createdAt: '2026-04-18T00:00:00Z',
+        expiresAt: '2026-04-25T00:00:00Z',
+      },
+    ])
+
+    const result = await orgMembersLoader()
+
+    expect(mockListOrgInvitations).toHaveBeenCalledTimes(1)
+    expect(result.invitations).toHaveLength(1)
   })
 })

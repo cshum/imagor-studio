@@ -230,11 +230,13 @@ export const orgOverviewLoader = async (): Promise<OrgOverviewLoaderData> => {
   }
 }
 
+const isOrganizationAdminRole = (role?: string | null) => role === 'owner' || role === 'admin'
+
 export const orgMembersLoader = async (): Promise<OrgMembersLoaderData> => {
-  const [organization, members, invitations] = await Promise.all([
-    getMyOrganization(),
+  const organization = await getMyOrganization()
+  const [members, invitations] = await Promise.all([
     listOrgMembers(),
-    listOrgInvitations(),
+    isOrganizationAdminRole(organization?.currentUserRole) ? listOrgInvitations() : Promise.resolve([]),
   ])
 
   return {
