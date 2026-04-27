@@ -135,6 +135,7 @@ type ComplexityRoot struct {
 		GenerateImagorURL             func(childComplexity int, imagePath string, spaceID *string, params ImagorParamsInput) int
 		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, spaceID *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
 		InviteSpaceMember             func(childComplexity int, spaceID string, email string, role SpaceMemberAssignableRole) int
+		LeaveOrganization             func(childComplexity int) int
 		LeaveSpace                    func(childComplexity int, spaceID string) int
 		MoveFile                      func(childComplexity int, sourcePath string, destPath string, spaceID *string) int
 		ReactivateAccount             func(childComplexity int, userID string) int
@@ -148,6 +149,7 @@ type ComplexityRoot struct {
 		SetSystemRegistry             func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
 		SetUserRegistry               func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		TestStorageConfig             func(childComplexity int, input StorageConfigInput) int
+		TransferOrganizationOwnership func(childComplexity int, userID string) int
 		UnlinkAuthProvider            func(childComplexity int, provider string, userID *string) int
 		UpdateOrgMemberRole           func(childComplexity int, userID string, role OrgMemberAssignableRole) int
 		UpdateProfile                 func(childComplexity int, input UpdateProfileInput, userID *string) int
@@ -404,8 +406,10 @@ type MutationResolver interface {
 	InviteSpaceMember(ctx context.Context, spaceID string, email string, role SpaceMemberAssignableRole) (*SpaceInviteResult, error)
 	RemoveOrgMember(ctx context.Context, userID string) (bool, error)
 	RemoveSpaceMember(ctx context.Context, spaceID string, userID string) (bool, error)
+	LeaveOrganization(ctx context.Context) (bool, error)
 	LeaveSpace(ctx context.Context, spaceID string) (bool, error)
 	UpdateOrgMemberRole(ctx context.Context, userID string, role OrgMemberAssignableRole) (*OrgMember, error)
+	TransferOrganizationOwnership(ctx context.Context, userID string) (*Organization, error)
 	UpdateSpaceMemberRole(ctx context.Context, spaceID string, userID string, role SpaceMemberAssignableRole) (*SpaceMember, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
 	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
@@ -995,6 +999,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.InviteSpaceMember(childComplexity, args["spaceID"].(string), args["email"].(string), args["role"].(SpaceMemberAssignableRole)), true
+	case "Mutation.leaveOrganization":
+		if e.ComplexityRoot.Mutation.LeaveOrganization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.LeaveOrganization(childComplexity), true
 	case "Mutation.leaveSpace":
 		if e.ComplexityRoot.Mutation.LeaveSpace == nil {
 			break
@@ -1138,6 +1148,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.TestStorageConfig(childComplexity, args["input"].(StorageConfigInput)), true
+	case "Mutation.transferOrganizationOwnership":
+		if e.ComplexityRoot.Mutation.TransferOrganizationOwnership == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_transferOrganizationOwnership_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.TransferOrganizationOwnership(childComplexity, args["userId"].(string)), true
 	case "Mutation.unlinkAuthProvider":
 		if e.ComplexityRoot.Mutation.UnlinkAuthProvider == nil {
 			break
@@ -2595,10 +2616,14 @@ extend type Mutation {
   removeOrgMember(userId: ID!): Boolean!
   # Remove a member from a specific space by userId (admin only)
   removeSpaceMember(spaceID: String!, userId: ID!): Boolean!
+  # Leave your current organization when you are not the owner and other members remain
+  leaveOrganization: Boolean!
   # Leave a shared space you were explicitly added to
   leaveSpace(spaceID: String!): Boolean!
   # Change a member's role within the organization (admin only)
   updateOrgMemberRole(userId: ID!, role: OrgMemberAssignableRole!): OrgMember!
+  # Transfer organization ownership to an existing organization member (owner only)
+  transferOrganizationOwnership(userId: ID!): Organization!
   # Change a member's role within a specific space (admin only)
   updateSpaceMemberRole(spaceID: String!, userId: ID!, role: SpaceMemberAssignableRole!): SpaceMember!
 }
@@ -3584,6 +3609,17 @@ func (ec *executionContext) field_Mutation_testStorageConfig_args(ctx context.Co
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_transferOrganizationOwnership_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
 	return args, nil
 }
 
@@ -6726,6 +6762,35 @@ func (ec *executionContext) fieldContext_Mutation_removeSpaceMember(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_leaveOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_leaveOrganization,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().LeaveOrganization(ctx)
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_leaveOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_leaveSpace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6818,6 +6883,65 @@ func (ec *executionContext) fieldContext_Mutation_updateOrgMemberRole(ctx contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateOrgMemberRole_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_transferOrganizationOwnership(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_transferOrganizationOwnership,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().TransferOrganizationOwnership(ctx, fc.Args["userId"].(string))
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_transferOrganizationOwnership(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Organization_slug(ctx, field)
+			case "ownerUserId":
+				return ec.fieldContext_Organization_ownerUserId(ctx, field)
+			case "plan":
+				return ec.fieldContext_Organization_plan(ctx, field)
+			case "planStatus":
+				return ec.fieldContext_Organization_planStatus(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_transferOrganizationOwnership_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -15575,6 +15699,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "leaveOrganization":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_leaveOrganization(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "leaveSpace":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_leaveSpace(ctx, field)
@@ -15585,6 +15716,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateOrgMemberRole":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateOrgMemberRole(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "transferOrganizationOwnership":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_transferOrganizationOwnership(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -18055,6 +18193,20 @@ func (ec *executionContext) unmarshalNOrgMemberRole2githubᚗcomᚋcshumᚋimago
 
 func (ec *executionContext) marshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberRole(ctx context.Context, sel ast.SelectionSet, v OrgMemberRole) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNOrganization2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v Organization) graphql.Marshaler {
+	return ec._Organization(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *Organization) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Organization(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPresignedUpload2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐPresignedUpload(ctx context.Context, sel ast.SelectionSet, v PresignedUpload) graphql.Marshaler {

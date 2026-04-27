@@ -356,6 +356,82 @@ func TestRemoveOrgMember_RequiresAdmin(t *testing.T) {
 	require.Error(t, err)
 }
 
+// ── LeaveOrganization ────────────────────────────────────────────────────────
+
+func TestLeaveOrganization_Success(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+	orgStore.On("RemoveMember", mock.Anything, "org-1", "user-2").Return(nil)
+
+	ctx := createReadWriteContextWithOrg("user-2", "org-1")
+	ok, err := r.Mutation().LeaveOrganization(ctx)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	orgStore.AssertExpectations(t)
+}
+
+func TestLeaveOrganization_RejectsOwner(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().LeaveOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "transfer organization ownership before leaving")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestLeaveOrganization_RejectsLastMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
+	ctx := createReadWriteContextWithOrg("user-2", "org-1")
+	ok, err := r.Mutation().LeaveOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot leave the last organization member")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestLeaveOrganization_RejectsNonMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
+	ctx := createReadWriteContextWithOrg("user-9", "org-1")
+	ok, err := r.Mutation().LeaveOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not a member of this organization")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
 // ── UpdateOrgMemberRole ───────────────────────────────────────────────────────
 
 func TestUpdateOrgMemberRole_Success(t *testing.T) {

@@ -63,3 +63,7 @@ func (n *OrgStore) RemoveMember(_ context.Context, _, _ string) error {
 func (n *OrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
 	return ErrCloudDisabled
 }
+
+func (n *OrgStore) TransferOwnership(_ context.Context, _, _, _ string) error {
+	return ErrCloudDisabled
+}

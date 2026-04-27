@@ -942,6 +942,71 @@ func TestCreateSpace_NoOrgAndNilOrgStore(t *testing.T) {
 	assert.Equal(t, "organization_required", gqlErr.Extensions["reason"])
 }
 
+func TestTransferOrganizationOwnership_Success(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	currentOrg := makeTestOrg("org-1", "user-1")
+	updatedOrg := makeTestOrg("org-1", "user-2")
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(currentOrg, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "admin"),
+	}, nil).Once()
+	orgStore.On("TransferOwnership", mock.Anything, "org-1", "user-1", "user-2").Return(nil).Once()
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(updatedOrg, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().TransferOrganizationOwnership(ctx, "user-2")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "user-2", result.OwnerUserID)
+	orgStore.AssertExpectations(t)
+}
+
+func TestTransferOrganizationOwnership_RequiresCurrentOwner(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	currentOrg := makeTestOrg("org-1", "user-9")
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(currentOrg, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().TransferOrganizationOwnership(ctx, "user-2")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	orgStore.AssertNotCalled(t, "TransferOwnership", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestTransferOrganizationOwnership_RequiresExistingMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	currentOrg := makeTestOrg("org-1", "user-1")
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(currentOrg, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+	}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().TransferOrganizationOwnership(ctx, "user-2")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_transfer_target_not_member", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "TransferOwnership", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
 // ---------- UpdateSpace ------------------------------------------------------
 
 func TestUpdateSpace_RequiresManagePermission(t *testing.T) {

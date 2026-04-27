@@ -20,6 +20,7 @@ import type {
   GetUsageSummaryQuery,
   InviteSpaceMemberMutation,
   InviteSpaceMemberMutationVariables,
+  LeaveOrganizationMutation,
   LeaveSpaceMutation,
   LeaveSpaceMutationVariables,
   ListOrgMembersQuery,
@@ -34,6 +35,8 @@ import type {
   SetSpaceRegistryMutation,
   SetSpaceRegistryMutationVariables,
   SpaceKeyExistsQuery,
+  TransferOrganizationOwnershipMutation,
+  TransferOrganizationOwnershipMutationVariables,
   UpdateOrgMemberRoleMutation,
   UpdateOrgMemberRoleMutationVariables,
   UpdateSpaceMemberRoleMutation,
@@ -294,6 +297,13 @@ export async function removeOrgMember(
   return result.removeOrgMember
 }
 
+export async function leaveOrganization(): Promise<LeaveOrganizationMutation['leaveOrganization']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.LeaveOrganization()
+  return result.leaveOrganization
+}
+
 export async function removeSpaceMember(
   variables: RemoveSpaceMemberMutationVariables,
 ): Promise<RemoveSpaceMemberMutation['removeSpaceMember']> {
@@ -319,6 +329,15 @@ export async function updateOrgMemberRole(
   const sdk = getSdk(client)
   const result = await sdk.UpdateOrgMemberRole(variables)
   return result.updateOrgMemberRole
+}
+
+export async function transferOrganizationOwnership(
+  variables: TransferOrganizationOwnershipMutationVariables,
+): Promise<TransferOrganizationOwnershipMutation['transferOrganizationOwnership']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.TransferOrganizationOwnership(variables)
+  return result.transferOrganizationOwnership
 }
 
 export async function updateSpaceMemberRole(

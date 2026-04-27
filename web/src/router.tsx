@@ -166,8 +166,7 @@ const rootPath = createRoute({
   beforeLoad: async (context) => {
     const auth = getAuth()
     if (auth.multiTenant) {
-      // Spaces list requires admin in multi-tenant mode
-      return requireOrganizationAdminAccountAuth(context)
+      return requireOrganizationAccountAuth(context)
     }
   },
   component: () => {

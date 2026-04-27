@@ -198,6 +198,7 @@ export type Mutation = {
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
   inviteSpaceMember: SpaceInviteResult
+  leaveOrganization: Scalars['Boolean']['output']
   leaveSpace: Scalars['Boolean']['output']
   moveFile: Scalars['Boolean']['output']
   reactivateAccount: Scalars['Boolean']['output']
@@ -211,6 +212,7 @@ export type Mutation = {
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
+  transferOrganizationOwnership: Organization
   unlinkAuthProvider: Scalars['Boolean']['output']
   updateOrgMemberRole: OrgMember
   updateProfile: User
@@ -413,6 +415,10 @@ export type MutationSetUserRegistryArgs = {
 
 export type MutationTestStorageConfigArgs = {
   input: StorageConfigInput
+}
+
+export type MutationTransferOrganizationOwnershipArgs = {
+  userId: Scalars['ID']['input']
 }
 
 export type MutationUnlinkAuthProviderArgs = {
@@ -1257,6 +1263,10 @@ export type RemoveOrgMemberMutationVariables = Exact<{
 
 export type RemoveOrgMemberMutation = { __typename?: 'Mutation'; removeOrgMember: boolean }
 
+export type LeaveOrganizationMutationVariables = Exact<{ [key: string]: never }>
+
+export type LeaveOrganizationMutation = { __typename?: 'Mutation'; leaveOrganization: boolean }
+
 export type RemoveSpaceMemberMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
@@ -1284,6 +1294,20 @@ export type UpdateOrgMemberRoleMutation = {
     displayName: string
     role: OrgMemberRole
     createdAt: string
+  }
+}
+
+export type TransferOrganizationOwnershipMutationVariables = Exact<{
+  userId: Scalars['ID']['input']
+}>
+
+export type TransferOrganizationOwnershipMutation = {
+  __typename?: 'Mutation'
+  transferOrganizationOwnership: {
+    __typename?: 'Organization'
+    id: string
+    ownerUserId: string
+    updatedAt: string
   }
 }
 
@@ -2287,6 +2311,11 @@ export const RemoveOrgMemberDocument = gql`
     removeOrgMember(userId: $userId)
   }
 `
+export const LeaveOrganizationDocument = gql`
+  mutation LeaveOrganization {
+    leaveOrganization
+  }
+`
 export const RemoveSpaceMemberDocument = gql`
   mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {
     removeSpaceMember(spaceID: $spaceID, userId: $userId)
@@ -2305,6 +2334,15 @@ export const UpdateOrgMemberRoleDocument = gql`
       displayName
       role
       createdAt
+    }
+  }
+`
+export const TransferOrganizationOwnershipDocument = gql`
+  mutation TransferOrganizationOwnership($userId: ID!) {
+    transferOrganizationOwnership(userId: $userId) {
+      id
+      ownerUserId
+      updatedAt
     }
   }
 `
@@ -3143,6 +3181,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
         variables,
       )
     },
+    LeaveOrganization(
+      variables?: LeaveOrganizationMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<LeaveOrganizationMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<LeaveOrganizationMutation>({
+            document: LeaveOrganizationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'LeaveOrganization',
+        'mutation',
+        variables,
+      )
+    },
     RemoveSpaceMember(
       variables: RemoveSpaceMemberMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -3193,6 +3249,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'UpdateOrgMemberRole',
+        'mutation',
+        variables,
+      )
+    },
+    TransferOrganizationOwnership(
+      variables: TransferOrganizationOwnershipMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<TransferOrganizationOwnershipMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<TransferOrganizationOwnershipMutation>({
+            document: TransferOrganizationOwnershipDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'TransferOrganizationOwnership',
         'mutation',
         variables,
       )

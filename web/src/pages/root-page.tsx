@@ -56,6 +56,7 @@ export function RootPage({ loaderData }: RootPageProps) {
 
   if (auth.multiTenant) {
     const data = loaderData as Awaited<ReturnType<typeof spacesLoader>>
+    const isOrgAdmin = auth.profile?.role === 'admin'
     const createSpaceDisabled =
       data.usageSummary.maxSpaces !== null &&
       data.usageSummary.usedSpaces >= data.usageSummary.maxSpaces
@@ -64,7 +65,9 @@ export function RootPage({ loaderData }: RootPageProps) {
       <SpacesLayout
         title={t('pages.spaces.title')}
         description={t('pages.spaces.description')}
-        primaryAction={<SpacesPageActions createSpaceDisabled={createSpaceDisabled} />}
+        primaryAction={
+          isOrgAdmin ? <SpacesPageActions createSpaceDisabled={createSpaceDisabled} /> : undefined
+        }
       >
         <SpacesPage
           loaderData={data.spaces}
@@ -72,6 +75,8 @@ export function RootPage({ loaderData }: RootPageProps) {
           currentOrganizationId={data.currentOrganizationId}
           currentOrganizationPlan={data.currentOrganizationPlan}
           currentOrganizationPlanStatus={data.currentOrganizationPlanStatus}
+          canCreateSpace={isOrgAdmin}
+          canManageOrganization={isOrgAdmin}
         />
       </SpacesLayout>
     )

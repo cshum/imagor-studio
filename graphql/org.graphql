@@ -195,10 +195,14 @@ extend type Mutation {
   removeOrgMember(userId: ID!): Boolean!
   # Remove a member from a specific space by userId (admin only)
   removeSpaceMember(spaceID: String!, userId: ID!): Boolean!
+  # Leave your current organization when you are not the owner and other members remain
+  leaveOrganization: Boolean!
   # Leave a shared space you were explicitly added to
   leaveSpace(spaceID: String!): Boolean!
   # Change a member's role within the organization (admin only)
   updateOrgMemberRole(userId: ID!, role: OrgMemberAssignableRole!): OrgMember!
+  # Transfer organization ownership to an existing organization member (owner only)
+  transferOrganizationOwnership(userId: ID!): Organization!
   # Change a member's role within a specific space (admin only)
   updateSpaceMemberRole(spaceID: String!, userId: ID!, role: SpaceMemberAssignableRole!): SpaceMember!
 }

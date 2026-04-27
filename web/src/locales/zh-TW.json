@@ -793,6 +793,7 @@
         "spaceUpdatedSuccess": "空間更新成功",
         "spaceDeletedSuccess": "空間刪除成功",
         "leftSpaceSuccess": "您已離開共享空間。",
+        "leftOrganizationSuccess": "你已離開組織。請重新登入以繼續。",
         "createSpaceFailed": "建立空間失敗",
         "createSpaceForbidden": "您沒有建立空間的權限。",
         "keyAlreadyTaken": "URL 識別碼已被使用",
@@ -801,7 +802,10 @@
         "updateSpaceFailed": "更新空間失敗",
         "deleteSpaceFailed": "刪除空間失敗",
         "deleteSpaceForbidden": "只有組織管理員可以刪除此空間。",
-        "leaveSpaceFailed": "離開共享空間失敗"
+        "leaveSpaceFailed": "離開共享空間失敗",
+        "leaveOrganizationFailed": "離開組織失敗",
+        "cannotLeaveOrganizationAsOwner": "請先轉移組織擁有權再離開。",
+        "cannotLeaveOrganizationAsLastMember": "你不能離開組織中的最後一名成員。"
       },
       "plan": {
         "free": "免費",
@@ -824,6 +828,9 @@
       },
       "usageSummaryTitle": "目前方案用量",
       "manageOrganization": "組織",
+      "leaveOrganization": "離開組織",
+      "leaveOrganizationTitle": "離開組織",
+      "leaveOrganizationDescription": "要離開目前組織嗎？你將失去其共享空間的存取權，並需要重新登入。",
       "usageSummaryMeta": "{{owned}} 個由你擁有 · {{shared}} 個與你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} 次處理",
@@ -906,11 +913,14 @@
         "action": "操作"
       },
       "actionsTitle": "操作",
+      "transferOwnership": "轉移擁有權",
       "promoteToAdmin": "改為管理員",
       "changeToMember": "改為成員",
       "removeMember": "移除成員",
       "removeTitle": "移除成員",
       "removeDescription": "要將 {{name}} 從目前組織移除嗎？他們將失去透過組織繼承的共享空間存取權。",
+      "transferTitle": "轉移組織擁有權",
+      "transferDescription": "要將組織擁有權轉移給 {{name}} 嗎？你仍會以管理員身分留在組織中。",
       "youBadge": "你",
       "roles": {
         "owner": "擁有者",
@@ -925,12 +935,16 @@
         "roleUpdateFailed": "更新成員角色失敗",
         "memberRemoved": "成員已移除。",
         "memberRemoveFailed": "移除成員失敗",
+        "ownershipTransferred": "組織擁有權已轉移。",
+        "ownershipTransferFailed": "轉移組織擁有權失敗",
         "errors": {
           "otherOrganization": "此帳戶已屬於其他組織。",
           "alreadyMember": "此帳戶已是目前組織成員。",
           "cannotRemoveYourself": "你不能將自己移出組織。",
           "cannotRemoveOwner": "你不能移除組織擁有者。",
-          "cannotRemoveLastMember": "你不能移除組織中的最後一名成員。"
+          "cannotRemoveLastMember": "你不能移除組織中的最後一名成員。",
+          "mustBeCurrentOwner": "只有目前組織擁有者才能轉移擁有權。",
+          "targetMustAlreadyBeMember": "只能將擁有權轉移給現有的組織成員。"
         }
       }
     },

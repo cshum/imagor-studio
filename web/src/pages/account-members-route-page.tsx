@@ -6,8 +6,10 @@ import { toast } from 'sonner'
 import {
   addOrgMember,
   addOrgMemberByEmail,
+  getMyOrganization,
   listOrgMembers,
   removeOrgMember,
+  transferOrganizationOwnership,
   updateOrgMemberRole,
   type OrgMemberItem,
 } from '@/api/org-api'
@@ -79,6 +81,10 @@ function getOrganizationMembersErrorMessage(error: unknown, t: (key: string) => 
       return t('pages.organizationMembers.messages.errors.cannotRemoveOwner')
     case 'org_member_remove_last_member':
       return t('pages.organizationMembers.messages.errors.cannotRemoveLastMember')
+    case 'org_transfer_current_owner_required':
+      return t('pages.organizationMembers.messages.errors.mustBeCurrentOwner')
+    case 'org_transfer_target_not_member':
+      return t('pages.organizationMembers.messages.errors.targetMustAlreadyBeMember')
   }
 
   return errorInfo.message || extractErrorMessage(error)
@@ -87,21 +93,27 @@ function getOrganizationMembersErrorMessage(error: unknown, t: (key: string) => 
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
   const { t } = useTranslation()
   const { authState } = useAuth()
+  const [organization, setOrganization] = useState(loaderData.organization)
   const [members, setMembers] = useState(loaderData.members)
   const [identifier, setIdentifier] = useState('')
   const [role, setRole] = useState<'admin' | 'member'>('member')
   const [isAdding, setIsAdding] = useState(false)
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null)
   const [pendingRemoveUserId, setPendingRemoveUserId] = useState<string | null>(null)
+  const [pendingTransferUserId, setPendingTransferUserId] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState(false)
+  const [isTransferring, setIsTransferring] = useState(false)
 
   const currentUserId = authState.profile?.id ?? null
-  const organization = loaderData.organization
   const pendingRemoveMember =
     members.find((member) => member.userId === pendingRemoveUserId) ?? null
+  const pendingTransferMember =
+    members.find((member) => member.userId === pendingTransferUserId) ?? null
+  const currentUserIsOwner = currentUserId !== null && organization?.ownerUserId === currentUserId
 
-  const reloadMembers = async () => {
-    const nextMembers = await listOrgMembers()
+  const reloadOrganizationMembers = async () => {
+    const [nextOrganization, nextMembers] = await Promise.all([getMyOrganization(), listOrgMembers()])
+    setOrganization(nextOrganization)
     setMembers(nextMembers)
   }
 
@@ -123,7 +135,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
       toast.success(t('pages.organizationMembers.messages.memberAdded'))
       setIdentifier('')
       setRole('member')
-      await reloadMembers()
+      await reloadOrganizationMembers()
     } catch (error) {
       const message = getOrganizationMembersErrorMessage(error, t)
       toast.error(`${t('pages.organizationMembers.messages.memberAddFailed')}: ${message}`)
@@ -137,7 +149,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
     try {
       await updateOrgMemberRole({ userId, role: nextRole })
       toast.success(t('pages.organizationMembers.messages.roleUpdated'))
-      await reloadMembers()
+      await reloadOrganizationMembers()
     } catch (error) {
       toast.error(
         `${t('pages.organizationMembers.messages.roleUpdateFailed')}: ${extractErrorMessage(error)}`,
@@ -155,7 +167,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
       await removeOrgMember({ userId: pendingRemoveUserId })
       toast.success(t('pages.organizationMembers.messages.memberRemoved'))
       setPendingRemoveUserId(null)
-      await reloadMembers()
+      await reloadOrganizationMembers()
     } catch (error) {
       const message = getOrganizationMembersErrorMessage(error, t)
       toast.error(`${t('pages.organizationMembers.messages.memberRemoveFailed')}: ${message}`)
@@ -166,6 +178,27 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
 
   const requestRemoveMember = (userId: string) => {
     window.setTimeout(() => setPendingRemoveUserId(userId), 0)
+  }
+
+  const handleTransferOwnership = async () => {
+    if (!pendingTransferUserId) return
+
+    setIsTransferring(true)
+    try {
+      await transferOrganizationOwnership({ userId: pendingTransferUserId })
+      toast.success(t('pages.organizationMembers.messages.ownershipTransferred'))
+      setPendingTransferUserId(null)
+      await reloadOrganizationMembers()
+    } catch (error) {
+      const message = getOrganizationMembersErrorMessage(error, t)
+      toast.error(`${t('pages.organizationMembers.messages.ownershipTransferFailed')}: ${message}`)
+    } finally {
+      setIsTransferring(false)
+    }
+  }
+
+  const requestTransferOwnership = (userId: string) => {
+    window.setTimeout(() => setPendingTransferUserId(userId), 0)
   }
 
   return (
@@ -233,6 +266,8 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                   member.userId === organization?.ownerUserId || member.role === 'owner'
                 const isCurrentUser = member.userId === currentUserId
                 const canManage = !isOwner && !isCurrentUser
+                const canTransferOwnership = currentUserIsOwner && !isOwner && !isCurrentUser
+                const canShowActions = canManage || canTransferOwnership
 
                 return (
                   <div key={member.userId}>
@@ -271,7 +306,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                         </div>
                       </div>
                       <div>
-                        {canManage ? (
+                        {canShowActions ? (
                           <div className='flex justify-end'>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -289,26 +324,36 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                                 <DropdownMenuLabel>
                                   {t('pages.organizationMembers.actionsTitle')}
                                 </DropdownMenuLabel>
-                                <DropdownMenuItem
-                                  disabled={member.role === 'admin'}
-                                  onClick={() => handleRoleChange(member.userId, 'admin')}
-                                >
-                                  {t('pages.organizationMembers.promoteToAdmin')}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  disabled={member.role === 'member'}
-                                  onClick={() => handleRoleChange(member.userId, 'member')}
-                                >
-                                  {t('pages.organizationMembers.changeToMember')}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className='text-destructive focus:text-destructive'
-                                  onClick={() => requestRemoveMember(member.userId)}
-                                >
-                                  <UserMinus className='mr-2 h-4 w-4' />
-                                  {t('pages.organizationMembers.removeMember')}
-                                </DropdownMenuItem>
+                                {canTransferOwnership ? (
+                                  <DropdownMenuItem onClick={() => requestTransferOwnership(member.userId)}>
+                                    {t('pages.organizationMembers.transferOwnership')}
+                                  </DropdownMenuItem>
+                                ) : null}
+                                {canTransferOwnership && canManage ? <DropdownMenuSeparator /> : null}
+                                {canManage ? (
+                                  <>
+                                    <DropdownMenuItem
+                                      disabled={member.role === 'admin'}
+                                      onClick={() => handleRoleChange(member.userId, 'admin')}
+                                    >
+                                      {t('pages.organizationMembers.promoteToAdmin')}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      disabled={member.role === 'member'}
+                                      onClick={() => handleRoleChange(member.userId, 'member')}
+                                    >
+                                      {t('pages.organizationMembers.changeToMember')}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className='text-destructive focus:text-destructive'
+                                      onClick={() => requestRemoveMember(member.userId)}
+                                    >
+                                      <UserMinus className='mr-2 h-4 w-4' />
+                                      {t('pages.organizationMembers.removeMember')}
+                                    </DropdownMenuItem>
+                                  </>
+                                ) : null}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -349,7 +394,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                             {member.email || `@${member.username}`}
                           </p>
                         </div>
-                        {canManage ? (
+                        {canShowActions ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <ButtonWithLoading
@@ -366,26 +411,36 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                               <DropdownMenuLabel>
                                 {t('pages.organizationMembers.actionsTitle')}
                               </DropdownMenuLabel>
-                              <DropdownMenuItem
-                                disabled={member.role === 'admin'}
-                                onClick={() => handleRoleChange(member.userId, 'admin')}
-                              >
-                                {t('pages.organizationMembers.promoteToAdmin')}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                disabled={member.role === 'member'}
-                                onClick={() => handleRoleChange(member.userId, 'member')}
-                              >
-                                {t('pages.organizationMembers.changeToMember')}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className='text-destructive focus:text-destructive'
-                                onClick={() => requestRemoveMember(member.userId)}
-                              >
-                                <UserMinus className='mr-2 h-4 w-4' />
-                                {t('pages.organizationMembers.removeMember')}
-                              </DropdownMenuItem>
+                              {canTransferOwnership ? (
+                                <DropdownMenuItem onClick={() => requestTransferOwnership(member.userId)}>
+                                  {t('pages.organizationMembers.transferOwnership')}
+                                </DropdownMenuItem>
+                              ) : null}
+                              {canTransferOwnership && canManage ? <DropdownMenuSeparator /> : null}
+                              {canManage ? (
+                                <>
+                                  <DropdownMenuItem
+                                    disabled={member.role === 'admin'}
+                                    onClick={() => handleRoleChange(member.userId, 'admin')}
+                                  >
+                                    {t('pages.organizationMembers.promoteToAdmin')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    disabled={member.role === 'member'}
+                                    onClick={() => handleRoleChange(member.userId, 'member')}
+                                  >
+                                    {t('pages.organizationMembers.changeToMember')}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className='text-destructive focus:text-destructive'
+                                    onClick={() => requestRemoveMember(member.userId)}
+                                  >
+                                    <UserMinus className='mr-2 h-4 w-4' />
+                                    {t('pages.organizationMembers.removeMember')}
+                                  </DropdownMenuItem>
+                                </>
+                              ) : null}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         ) : null}
@@ -423,6 +478,30 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
             onClick={handleRemoveMember}
           >
             {t('pages.organizationMembers.removeMember')}
+          </ButtonWithLoading>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog
+        open={pendingTransferMember !== null}
+        onOpenChange={(open) => !open && setPendingTransferUserId(null)}
+      >
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>
+            {t('pages.organizationMembers.transferTitle')}
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.organizationMembers.transferDescription', {
+              name: pendingTransferMember ? getMemberLabel(pendingTransferMember) : '',
+            })}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter>
+          <ButtonWithLoading variant='outline' onClick={() => setPendingTransferUserId(null)}>
+            {t('common.buttons.cancel')}
+          </ButtonWithLoading>
+          <ButtonWithLoading isLoading={isTransferring} onClick={handleTransferOwnership}>
+            {t('pages.organizationMembers.transferOwnership')}
           </ButtonWithLoading>
         </ResponsiveDialogFooter>
       </ResponsiveDialog>

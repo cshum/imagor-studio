@@ -206,6 +206,31 @@ func (s *testOrgStore) UpdateMemberRole(ctx context.Context, orgID, userID, role
 	return nil
 }
 
+func (s *testOrgStore) TransferOwnership(ctx context.Context, orgID, currentOwnerID, newOwnerID string) error {
+	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewUpdate().TableExpr("organizations").
+			Set("owner_id = ?", newOwnerID).
+			Set("updated_at = ?", time.Now().UTC()).
+			Where("id = ? AND owner_id = ?", orgID, currentOwnerID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("update organization owner: %w", err)
+		}
+		if _, err := tx.NewUpdate().TableExpr("org_members").
+			Set("role = ?", "admin").
+			Where("org_id = ? AND user_id = ?", orgID, currentOwnerID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("demote previous owner: %w", err)
+		}
+		if _, err := tx.NewUpdate().TableExpr("org_members").
+			Set("role = ?", "owner").
+			Where("org_id = ? AND user_id = ?", orgID, newOwnerID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("promote new owner: %w", err)
+		}
+		return nil
+	})
+}
+
 func mapTestOrg(row *testOrganizationRow) *org.Org {
 	result := &org.Org{ID: row.ID, OwnerID: row.OwnerID, Name: row.Name, Slug: row.Slug, Plan: row.Plan, PlanStatus: row.PlanStatus, TrialEndsAt: row.TrialEndsAt, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
 	if row.StripeCustomerID != nil {

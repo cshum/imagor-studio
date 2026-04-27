@@ -775,6 +775,7 @@
         "spaceUpdatedSuccess": "空间更新成功",
         "spaceDeletedSuccess": "空间删除成功",
         "leftSpaceSuccess": "你已离开共享空间。",
+        "leftOrganizationSuccess": "你已离开组织。请重新登录以继续。",
         "createSpaceFailed": "创建空间失败",
         "createSpaceForbidden": "你没有创建空间的权限。",
         "keyAlreadyTaken": "URL Slug 已被使用",
@@ -783,7 +784,10 @@
         "updateSpaceFailed": "更新空间失败",
         "deleteSpaceFailed": "删除空间失败",
         "deleteSpaceForbidden": "只有组织管理员可以删除这个空间。",
-        "leaveSpaceFailed": "离开共享空间失败"
+        "leaveSpaceFailed": "离开共享空间失败",
+        "leaveOrganizationFailed": "离开组织失败",
+        "cannotLeaveOrganizationAsOwner": "请先转移组织所有权再离开。",
+        "cannotLeaveOrganizationAsLastMember": "你不能离开组织中的最后一名成员。"
       },
       "plan": {
         "free": "免费",
@@ -806,6 +810,9 @@
       },
       "usageSummaryTitle": "当前套餐用量",
       "manageOrganization": "组织",
+      "leaveOrganization": "离开组织",
+      "leaveOrganizationTitle": "离开组织",
+      "leaveOrganizationDescription": "要离开当前组织吗？你将失去其共享空间的访问权限，并需要重新登录。",
       "usageSummaryMeta": "{{owned}} 个由你拥有 · {{shared}} 个与你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} 次处理",
@@ -888,11 +895,14 @@
         "action": "操作"
       },
       "actionsTitle": "操作",
+      "transferOwnership": "转移所有权",
       "promoteToAdmin": "改为管理员",
       "changeToMember": "改为成员",
       "removeMember": "移除成员",
       "removeTitle": "移除成员",
       "removeDescription": "要将 {{name}} 从当前组织中移除吗？他们将失去通过组织继承的共享空间访问权限。",
+      "transferTitle": "转移组织所有权",
+      "transferDescription": "要将组织所有权转移给 {{name}} 吗？你仍将以管理员身份留在组织中。",
       "youBadge": "你",
       "roles": {
         "owner": "所有者",
@@ -907,12 +917,16 @@
         "roleUpdateFailed": "更新成员角色失败",
         "memberRemoved": "成员已移除。",
         "memberRemoveFailed": "移除成员失败",
+        "ownershipTransferred": "组织所有权已转移。",
+        "ownershipTransferFailed": "转移组织所有权失败",
         "errors": {
           "otherOrganization": "该账户已属于其他组织。",
           "alreadyMember": "该账户已是当前组织成员。",
           "cannotRemoveYourself": "你不能将自己移出组织。",
           "cannotRemoveOwner": "你不能移除组织所有者。",
-          "cannotRemoveLastMember": "你不能移除组织中的最后一名成员。"
+          "cannotRemoveLastMember": "你不能移除组织中的最后一名成员。",
+          "mustBeCurrentOwner": "只有当前组织所有者才能转移所有权。",
+          "targetMustAlreadyBeMember": "只能将所有权转移给现有组织成员。"
         }
       }
     },

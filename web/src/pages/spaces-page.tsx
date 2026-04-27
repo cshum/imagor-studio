@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useRouter } from '@tanstack/react-router'
+import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { Cloud, Database, LayoutGrid, LogOut, MoreHorizontal, Plus, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { leaveSpace, type SpaceItem } from '@/api/org-api'
+import { leaveOrganization, leaveSpace, type SpaceItem } from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { GetUsageSummaryQuery, ListSpacesQuery } from '@/generated/graphql'
+import { extractErrorInfo } from '@/lib/error-utils'
 import { isUnlimitedLimit } from '@/lib/plan-entitlements'
 import { useAuth } from '@/stores/auth-store'
 
@@ -33,6 +34,8 @@ interface SpacesPageProps {
   currentOrganizationId?: string | null
   currentOrganizationPlan?: string | null
   currentOrganizationPlanStatus?: string | null
+  canCreateSpace?: boolean
+  canManageOrganization?: boolean
 }
 
 function formatBytes(bytes: number) {
@@ -64,17 +67,35 @@ function isUnlimitedOrMissing(value: number | null | undefined) {
   return value != null && isUnlimitedLimit(value)
 }
 
+function getLeaveOrganizationErrorMessage(error: unknown, t: (key: string) => string): string {
+  const errorInfo = extractErrorInfo(error)
+
+  switch (errorInfo.reason) {
+    case 'org_leave_owner_must_transfer':
+      return t('pages.spaces.messages.cannotLeaveOrganizationAsOwner')
+    case 'org_leave_last_member':
+      return t('pages.spaces.messages.cannotLeaveOrganizationAsLastMember')
+    default:
+      return errorInfo.message || String(error)
+  }
+}
+
 export function SpacesPage({
   loaderData,
   usageSummary = null,
   currentOrganizationId = null,
   currentOrganizationPlan = null,
+  canCreateSpace = false,
+  canManageOrganization = false,
 }: SpacesPageProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const router = useRouter()
-  const { authState } = useAuth()
+  const { authState, logout } = useAuth()
   const [leaveSpaceItem, setLeaveSpaceItem] = useState<SpaceItem | null>(null)
   const [isLeaving, setIsLeaving] = useState(false)
+  const [leaveOrganizationOpen, setLeaveOrganizationOpen] = useState(false)
+  const [isLeavingOrganization, setIsLeavingOrganization] = useState(false)
   const [openMenuSpaceKey, setOpenMenuSpaceKey] = useState<string | null>(null)
   const leaveDialogTimerRef = useRef<number | null>(null)
 
@@ -142,6 +163,9 @@ export function SpacesPage({
         shared: sharedCount,
       })
     : null
+  const usageSummaryCardClassName = canManageOrganization
+    ? 'bg-muted/30 hover:bg-muted/50 focus-visible:ring-ring block rounded-xl border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+    : 'bg-muted/30 rounded-xl border p-4'
 
   const handleLeaveSpace = async () => {
     if (!leaveSpaceItem) return
@@ -161,6 +185,22 @@ export function SpacesPage({
     }
   }
 
+  const handleLeaveOrganization = async () => {
+    setIsLeavingOrganization(true)
+    try {
+      await leaveOrganization()
+      await logout()
+      toast.success(t('pages.spaces.messages.leftOrganizationSuccess'))
+      await navigate({ to: '/login' })
+    } catch (error) {
+      toast.error(
+        `${t('pages.spaces.messages.leaveOrganizationFailed')}: ${getLeaveOrganizationErrorMessage(error, t)}`,
+      )
+    } finally {
+      setIsLeavingOrganization(false)
+    }
+  }
+
   const requestLeaveSpace = (space: SpaceItem) => {
     setOpenMenuSpaceKey(null)
     if (leaveDialogTimerRef.current !== null) {
@@ -175,87 +215,177 @@ export function SpacesPage({
   return (
     <div className='space-y-6'>
       {currentOrganizationId !== null && (
-        <Link
-          to='/account/organization/billing'
-          className='bg-muted/30 hover:bg-muted/50 focus-visible:ring-ring block rounded-xl border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-        >
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-            <div className='space-y-1'>
-              <div className='flex flex-wrap items-center gap-2'>
-                <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
-                <Badge variant='secondary'>
-                  {t(`pages.spaces.plan.${currentOrganizationPlan ?? 'free'}`)}
-                </Badge>
+        (canManageOrganization ? (
+          <Link to='/account/organization/billing' className={usageSummaryCardClassName}>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <div className='space-y-1'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
+                  <Badge variant='secondary'>
+                    {t(`pages.spaces.plan.${currentOrganizationPlan ?? 'free'}`)}
+                  </Badge>
+                </div>
+                {(usageMeta || usagePeriod) && (
+                  <p className='text-muted-foreground text-xs'>
+                    {usageMeta}
+                    {usageMeta && usagePeriod ? ' · ' : ''}
+                    {usagePeriod}
+                  </p>
+                )}
               </div>
-              {(usageMeta || usagePeriod) && (
-                <p className='text-muted-foreground text-xs'>
-                  {usageMeta}
-                  {usageMeta && usagePeriod ? ' · ' : ''}
-                  {usagePeriod}
-                </p>
+              {createSpaceDisabled && (
+                <Badge
+                  variant='outline'
+                  className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                >
+                  {spacesOverLimit
+                    ? t('pages.spaces.messages.overPlanLimit')
+                    : t('pages.spaces.messages.spaceLimitReached')}
+                </Badge>
               )}
             </div>
-            {createSpaceDisabled && (
-              <Badge
-                variant='outline'
-                className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
-              >
-                {spacesOverLimit
-                  ? t('pages.spaces.messages.overPlanLimit')
-                  : t('pages.spaces.messages.spaceLimitReached')}
-              </Badge>
-            )}
-          </div>
 
-          <div className='mt-4 grid gap-4 sm:grid-cols-3'>
-            <div className='space-y-2'>
-              <div className='flex items-center justify-between gap-3 text-sm'>
-                <span className='font-medium'>{t('pages.spaces.usage.spaces')}</span>
-                <div className='flex items-center gap-2'>
-                  {spacesOverLimit && (
-                    <Badge
-                      variant='outline'
-                      className='border-amber-500/30 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+            <div className='mt-4 grid gap-4 sm:grid-cols-3'>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.spaces')}</span>
+                  <div className='flex items-center gap-2'>
+                    {spacesOverLimit && (
+                      <Badge
+                        variant='outline'
+                        className='border-amber-500/30 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                      >
+                        {t('pages.spaces.usage.overLimit')}
+                      </Badge>
+                    )}
+                    <span
+                      className={
+                        spacesOverLimit
+                          ? 'text-amber-700 dark:text-amber-300'
+                          : 'text-muted-foreground'
+                      }
                     >
-                      {t('pages.spaces.usage.overLimit')}
-                    </Badge>
-                  )}
-                  <span
-                    className={
-                      spacesOverLimit
-                        ? 'text-amber-700 dark:text-amber-300'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    {spacesSummary}
-                  </span>
+                      {spacesSummary}
+                    </span>
+                  </div>
                 </div>
+                <Progress
+                  value={getProgressValue(usedSpaces, maxSpaces)}
+                  className={spacesOverLimit ? 'bg-amber-500/15 dark:bg-amber-400/15' : undefined}
+                  indicatorClassName={spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined}
+                />
               </div>
-              <Progress
-                value={getProgressValue(usedSpaces, maxSpaces)}
-                className={spacesOverLimit ? 'bg-amber-500/15 dark:bg-amber-400/15' : undefined}
-                indicatorClassName={spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined}
-              />
+
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.hostedStorage')}</span>
+                  <span className='text-muted-foreground'>{hostedStorageSummary}</span>
+                </div>
+                <Progress value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)} />
+              </div>
+
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.processing')}</span>
+                  <span className='text-muted-foreground'>{processingSummary}</span>
+                </div>
+                <Progress value={getProgressValue(usedTransforms ?? 0, transformsLimit)} />
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div className={usageSummaryCardClassName}>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <div className='space-y-1'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
+                  <Badge variant='secondary'>
+                    {t(`pages.spaces.plan.${currentOrganizationPlan ?? 'free'}`)}
+                  </Badge>
+                </div>
+                {(usageMeta || usagePeriod) && (
+                  <p className='text-muted-foreground text-xs'>
+                    {usageMeta}
+                    {usageMeta && usagePeriod ? ' · ' : ''}
+                    {usagePeriod}
+                  </p>
+                )}
+              </div>
+              {createSpaceDisabled && (
+                <Badge
+                  variant='outline'
+                  className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                >
+                  {spacesOverLimit
+                    ? t('pages.spaces.messages.overPlanLimit')
+                    : t('pages.spaces.messages.spaceLimitReached')}
+                </Badge>
+              )}
             </div>
 
-            <div className='space-y-2'>
-              <div className='flex items-center justify-between gap-3 text-sm'>
-                <span className='font-medium'>{t('pages.spaces.usage.hostedStorage')}</span>
-                <span className='text-muted-foreground'>{hostedStorageSummary}</span>
+            <div className='mt-4 grid gap-4 sm:grid-cols-3'>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.spaces')}</span>
+                  <div className='flex items-center gap-2'>
+                    {spacesOverLimit && (
+                      <Badge
+                        variant='outline'
+                        className='border-amber-500/30 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                      >
+                        {t('pages.spaces.usage.overLimit')}
+                      </Badge>
+                    )}
+                    <span
+                      className={
+                        spacesOverLimit
+                          ? 'text-amber-700 dark:text-amber-300'
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      {spacesSummary}
+                    </span>
+                  </div>
+                </div>
+                <Progress
+                  value={getProgressValue(usedSpaces, maxSpaces)}
+                  className={spacesOverLimit ? 'bg-amber-500/15 dark:bg-amber-400/15' : undefined}
+                  indicatorClassName={spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined}
+                />
               </div>
-              <Progress value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)} />
-            </div>
 
-            <div className='space-y-2'>
-              <div className='flex items-center justify-between gap-3 text-sm'>
-                <span className='font-medium'>{t('pages.spaces.usage.processing')}</span>
-                <span className='text-muted-foreground'>{processingSummary}</span>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.hostedStorage')}</span>
+                  <span className='text-muted-foreground'>{hostedStorageSummary}</span>
+                </div>
+                <Progress value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)} />
               </div>
-              <Progress value={getProgressValue(usedTransforms ?? 0, transformsLimit)} />
+
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.processing')}</span>
+                  <span className='text-muted-foreground'>{processingSummary}</span>
+                </div>
+                <Progress value={getProgressValue(usedTransforms ?? 0, transformsLimit)} />
+              </div>
             </div>
           </div>
-        </Link>
+        ))
       )}
+
+      {currentOrganizationId !== null && authState.profile?.id ? (
+        <div className='flex justify-end'>
+          <ButtonWithLoading
+            variant='outline'
+            className='text-destructive hover:text-destructive'
+            onClick={() => setLeaveOrganizationOpen(true)}
+          >
+            <LogOut className='mr-2 h-4 w-4' />
+            {t('pages.spaces.leaveOrganization')}
+          </ButtonWithLoading>
+        </div>
+      ) : null}
 
       {/* Loading skeleton */}
       {!loaderData ? (
@@ -283,26 +413,36 @@ export function SpacesPage({
           <div className='bg-muted flex h-14 w-14 items-center justify-center rounded-full'>
             <LayoutGrid className='text-muted-foreground h-7 w-7' />
           </div>
-          <h3 className='mt-4 text-base font-semibold'>{t('pages.spaces.noSpacesFound')}</h3>
+          <h3 className='mt-4 text-base font-semibold'>
+            {t(canCreateSpace ? 'pages.spaces.noSpacesFound' : 'pages.spaces.noSpacesAvailable')}
+          </h3>
           <p className='text-muted-foreground mt-1.5 max-w-xs text-sm'>
-            {t('pages.spaces.emptyDescription')}
+            {t(
+              canCreateSpace
+                ? 'pages.spaces.emptyDescription'
+                : 'pages.spaces.emptyDescriptionMember',
+            )}
           </p>
           <p className='text-muted-foreground mt-2 max-w-sm text-sm'>
-            {t('pages.spaces.startDescription')}
+            {t(
+              canCreateSpace
+                ? 'pages.spaces.startDescription'
+                : 'pages.spaces.startDescriptionMember',
+            )}
           </p>
-          {createSpaceDisabled ? (
+          {canCreateSpace && createSpaceDisabled ? (
             <Button disabled className='mt-6' title={t('pages.spaces.messages.spaceLimitReached')}>
               <Plus className='mr-2 h-4 w-4' />
               {t('pages.spaces.createSpace')}
             </Button>
-          ) : (
+          ) : canCreateSpace ? (
             <Button asChild className='mt-6'>
               <Link to='/account/spaces/new'>
                 <Plus className='mr-2 h-4 w-4' />
                 {t('pages.spaces.createSpace')}
               </Link>
             </Button>
-          )}
+          ) : null}
         </div>
       ) : (
         /* Card grid */
@@ -485,6 +625,36 @@ export function SpacesPage({
             className='w-full sm:w-auto'
           >
             {t('pages.spaces.leaveSpace')}
+          </ButtonWithLoading>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog
+        open={leaveOrganizationOpen}
+        onOpenChange={(open) => !open && setLeaveOrganizationOpen(false)}
+      >
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.spaces.leaveOrganizationTitle')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.spaces.leaveOrganizationDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+          <Button
+            variant='outline'
+            onClick={() => setLeaveOrganizationOpen(false)}
+            disabled={isLeavingOrganization}
+            className='w-full sm:w-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+          <ButtonWithLoading
+            variant='destructive'
+            onClick={handleLeaveOrganization}
+            isLoading={isLeavingOrganization}
+            className='w-full sm:w-auto'
+          >
+            {t('pages.spaces.leaveOrganization')}
           </ButtonWithLoading>
         </ResponsiveDialogFooter>
       </ResponsiveDialog>

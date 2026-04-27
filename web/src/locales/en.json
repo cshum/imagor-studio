@@ -751,8 +751,10 @@
         "back": "Back"
       },
       "noSpacesFound": "Create your first space",
+      "noSpacesAvailable": "No spaces available yet",
       "description": "Manage workspaces for your organization.",
       "emptyDescription": "Create an image workspace for your team.",
+      "emptyDescriptionMember": "You do not have access to any spaces yet.",
       "settings": "Settings",
       "spaceCount": "{{count}} space(s)",
       "openGallery": "Open Gallery",
@@ -802,6 +804,7 @@
         "spaceUpdatedSuccess": "Space updated successfully",
         "spaceDeletedSuccess": "Space deleted successfully",
         "leftSpaceSuccess": "You left the shared space.",
+        "leftOrganizationSuccess": "You left the organization. Sign in again to continue.",
         "createSpaceFailed": "Failed to create space",
         "createSpaceForbidden": "You do not have permission to create spaces.",
         "keyAlreadyTaken": "URL slug is already taken",
@@ -810,7 +813,10 @@
         "updateSpaceFailed": "Failed to update space",
         "deleteSpaceFailed": "Failed to delete space",
         "deleteSpaceForbidden": "Only organization admins can delete this space.",
-        "leaveSpaceFailed": "Failed to leave shared space"
+        "leaveSpaceFailed": "Failed to leave shared space",
+        "leaveOrganizationFailed": "Failed to leave organization",
+        "cannotLeaveOrganizationAsOwner": "Transfer organization ownership before leaving.",
+        "cannotLeaveOrganizationAsLastMember": "You cannot leave the last organization member."
       },
       "plan": {
         "free": "Free",
@@ -833,6 +839,9 @@
       },
       "usageSummaryTitle": "Current plan usage",
       "manageOrganization": "Organization",
+      "leaveOrganization": "Leave organization",
+      "leaveOrganizationTitle": "Leave organization",
+      "leaveOrganizationDescription": "Leave your current organization? You will lose access to its shared spaces and will need to sign in again.",
       "usageSummaryMeta": "{{owned}} owned · {{shared}} shared",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} transforms",
@@ -844,6 +853,7 @@
       },
       "configure": "Configure",
       "startDescription": "You can customize storage, delivery, and access as you grow.",
+      "startDescriptionMember": "Ask an organization admin to create a space or share an existing space with you.",
       "sharedLabel": "Shared",
       "leaveSpace": "Leave",
       "leaveSpaceDescription": "Leave this shared space",
@@ -905,11 +915,14 @@
         "action": "Action"
       },
       "actionsTitle": "Actions",
+      "transferOwnership": "Transfer ownership",
       "promoteToAdmin": "Change to admin",
       "changeToMember": "Change to member",
       "removeMember": "Remove member",
       "removeTitle": "Remove member",
       "removeDescription": "Remove {{name}} from this organization? They will lose access to shared spaces inherited from the organization.",
+      "transferTitle": "Transfer organization ownership",
+      "transferDescription": "Transfer organization ownership to {{name}}? You will remain in the organization as an admin.",
       "youBadge": "You",
       "roles": {
         "owner": "Owner",
@@ -924,12 +937,16 @@
         "roleUpdateFailed": "Failed to update member role",
         "memberRemoved": "Member removed.",
         "memberRemoveFailed": "Failed to remove member",
+        "ownershipTransferred": "Organization ownership transferred.",
+        "ownershipTransferFailed": "Failed to transfer organization ownership",
         "errors": {
           "otherOrganization": "This account already belongs to another organization.",
           "alreadyMember": "This account is already a member of your organization.",
           "cannotRemoveYourself": "You cannot remove yourself from the organization.",
           "cannotRemoveOwner": "You cannot remove the organization owner.",
-          "cannotRemoveLastMember": "You cannot remove the last organization member."
+          "cannotRemoveLastMember": "You cannot remove the last organization member.",
+          "mustBeCurrentOwner": "Only the current organization owner can transfer ownership.",
+          "targetMustAlreadyBeMember": "Ownership can only be transferred to an existing organization member."
         }
       }
     },

@@ -802,6 +802,7 @@
         "spaceUpdatedSuccess": "Spazio aggiornato correttamente",
         "spaceDeletedSuccess": "Spazio eliminato correttamente",
         "leftSpaceSuccess": "Hai lasciato lo spazio condiviso.",
+        "leftOrganizationSuccess": "Hai lasciato l'organizzazione. Accedi di nuovo per continuare.",
         "createSpaceFailed": "Impossibile creare lo spazio",
         "createSpaceForbidden": "Non hai i permessi per creare spazi.",
         "keyAlreadyTaken": "Lo slug URL è già in uso",
@@ -810,7 +811,10 @@
         "updateSpaceFailed": "Impossibile aggiornare lo spazio",
         "deleteSpaceFailed": "Impossibile eliminare lo spazio",
         "deleteSpaceForbidden": "Solo gli amministratori dell'organizzazione possono eliminare questo spazio.",
-        "leaveSpaceFailed": "Impossibile lasciare lo spazio condiviso"
+        "leaveSpaceFailed": "Impossibile lasciare lo spazio condiviso",
+        "leaveOrganizationFailed": "Impossibile lasciare l'organizzazione",
+        "cannotLeaveOrganizationAsOwner": "Trasferisci la proprieta dell'organizzazione prima di uscire.",
+        "cannotLeaveOrganizationAsLastMember": "Non puoi lasciare l'ultimo membro dell'organizzazione."
       },
       "plan": {
         "free": "Gratis",
@@ -833,6 +837,9 @@
       },
       "usageSummaryTitle": "Utilizzo del piano attuale",
       "manageOrganization": "Organizzazione",
+      "leaveOrganization": "Lascia organizzazione",
+      "leaveOrganizationTitle": "Lascia organizzazione",
+      "leaveOrganizationDescription": "Lasciare l'organizzazione corrente? Perderai l'accesso ai suoi spazi condivisi e dovrai accedere di nuovo.",
       "usageSummaryMeta": "{{owned}} tuoi · {{shared}} condivisi",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} trasformazioni",
@@ -905,11 +912,14 @@
         "action": "Azione"
       },
       "actionsTitle": "Azioni",
+      "transferOwnership": "Trasferisci proprieta",
       "promoteToAdmin": "Passa ad admin",
       "changeToMember": "Passa a membro",
       "removeMember": "Rimuovi membro",
       "removeTitle": "Rimuovi membro",
       "removeDescription": "Rimuovere {{name}} da questa organizzazione? Perdera l'accesso agli spazi condivisi ereditati dall'organizzazione.",
+      "transferTitle": "Trasferisci la proprieta dell'organizzazione",
+      "transferDescription": "Trasferire la proprieta dell'organizzazione a {{name}}? Rimarrai nell'organizzazione come admin.",
       "youBadge": "Tu",
       "roles": {
         "owner": "Owner",
@@ -924,12 +934,16 @@
         "roleUpdateFailed": "Impossibile aggiornare il ruolo del membro",
         "memberRemoved": "Membro rimosso.",
         "memberRemoveFailed": "Impossibile rimuovere il membro",
+        "ownershipTransferred": "Proprieta dell'organizzazione trasferita.",
+        "ownershipTransferFailed": "Impossibile trasferire la proprieta dell'organizzazione",
         "errors": {
           "otherOrganization": "Questo account appartiene gia a un'altra organizzazione.",
           "alreadyMember": "Questo account e gia membro della tua organizzazione.",
           "cannotRemoveYourself": "Non puoi rimuovere te stesso dall'organizzazione.",
           "cannotRemoveOwner": "Non puoi rimuovere il proprietario dell'organizzazione.",
-          "cannotRemoveLastMember": "Non puoi rimuovere l'ultimo membro dell'organizzazione."
+          "cannotRemoveLastMember": "Non puoi rimuovere l'ultimo membro dell'organizzazione.",
+          "mustBeCurrentOwner": "Solo l'attuale proprietario dell'organizzazione puo trasferire la proprieta.",
+          "targetMustAlreadyBeMember": "La proprieta puo essere trasferita solo a un membro esistente dell'organizzazione."
         }
       }
     },

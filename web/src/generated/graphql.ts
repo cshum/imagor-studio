@@ -197,6 +197,7 @@ export type Mutation = {
   generateImagorUrl: Scalars['String']['output']
   generateImagorUrlFromTemplate: Scalars['String']['output']
   inviteSpaceMember: SpaceInviteResult
+  leaveOrganization: Scalars['Boolean']['output']
   leaveSpace: Scalars['Boolean']['output']
   moveFile: Scalars['Boolean']['output']
   reactivateAccount: Scalars['Boolean']['output']
@@ -210,6 +211,7 @@ export type Mutation = {
   setSystemRegistry: Array<SystemRegistry>
   setUserRegistry: Array<UserRegistry>
   testStorageConfig: StorageTestResult
+  transferOrganizationOwnership: Organization
   unlinkAuthProvider: Scalars['Boolean']['output']
   updateOrgMemberRole: OrgMember
   updateProfile: User
@@ -412,6 +414,10 @@ export type MutationSetUserRegistryArgs = {
 
 export type MutationTestStorageConfigArgs = {
   input: StorageConfigInput
+}
+
+export type MutationTransferOrganizationOwnershipArgs = {
+  userId: Scalars['ID']['input']
 }
 
 export type MutationUnlinkAuthProviderArgs = {
@@ -1256,6 +1262,10 @@ export type RemoveOrgMemberMutationVariables = Exact<{
 
 export type RemoveOrgMemberMutation = { __typename?: 'Mutation'; removeOrgMember: boolean }
 
+export type LeaveOrganizationMutationVariables = Exact<{ [key: string]: never }>
+
+export type LeaveOrganizationMutation = { __typename?: 'Mutation'; leaveOrganization: boolean }
+
 export type RemoveSpaceMemberMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
@@ -1283,6 +1293,20 @@ export type UpdateOrgMemberRoleMutation = {
     displayName: string
     role: OrgMemberRole
     createdAt: string
+  }
+}
+
+export type TransferOrganizationOwnershipMutationVariables = Exact<{
+  userId: Scalars['ID']['input']
+}>
+
+export type TransferOrganizationOwnershipMutation = {
+  __typename?: 'Mutation'
+  transferOrganizationOwnership: {
+    __typename?: 'Organization'
+    id: string
+    ownerUserId: string
+    updatedAt: string
   }
 }
 
@@ -3358,6 +3382,20 @@ export const RemoveOrgMemberDocument = {
     },
   ],
 } as unknown as DocumentNode<RemoveOrgMemberMutation, RemoveOrgMemberMutationVariables>
+export const LeaveOrganizationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'LeaveOrganization' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [{ kind: 'Field', name: { kind: 'Name', value: 'leaveOrganization' } }],
+      },
+    },
+  ],
+} as unknown as DocumentNode<LeaveOrganizationMutation, LeaveOrganizationMutationVariables>
 export const RemoveSpaceMemberDocument = {
   kind: 'Document',
   definitions: [
@@ -3502,6 +3540,53 @@ export const UpdateOrgMemberRoleDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateOrgMemberRoleMutation, UpdateOrgMemberRoleMutationVariables>
+export const TransferOrganizationOwnershipDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'TransferOrganizationOwnership' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transferOrganizationOwnership' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'userId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'ownerUserId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  TransferOrganizationOwnershipMutation,
+  TransferOrganizationOwnershipMutationVariables
+>
 export const UpdateSpaceMemberRoleDocument = {
   kind: 'Document',
   definitions: [

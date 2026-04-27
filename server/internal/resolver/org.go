@@ -1583,6 +1583,59 @@ func (r *mutationResolver) RemoveOrgMember(ctx context.Context, userID string) (
 	return true, nil
 }
 
+// LeaveOrganization removes the caller from their current organization when safe.
+func (r *mutationResolver) LeaveOrganization(ctx context.Context) (bool, error) {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if !r.cloudEnabled() {
+		return false, fmt.Errorf("member management is not available in this deployment")
+	}
+	orgID, err := r.requireUserOrgID(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		return false, fmt.Errorf("failed to load organization: %w", err)
+	}
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		return false, fmt.Errorf("failed to verify org membership: %w", err)
+	}
+
+	callerIsOwner := currentOrg != nil && currentOrg.OwnerID == claims.UserID
+	callerIsMember := false
+	for _, member := range members {
+		if member.UserID != claims.UserID {
+			continue
+		}
+		callerIsMember = true
+		if member.Role == "owner" {
+			callerIsOwner = true
+		}
+		break
+	}
+	if !callerIsMember {
+		return false, apperror.BadRequest("you are not a member of this organization", map[string]interface{}{"reason": "org_leave_not_member"})
+	}
+	if callerIsOwner {
+		return false, apperror.BadRequest("you must transfer organization ownership before leaving", map[string]interface{}{"reason": "org_leave_owner_must_transfer"})
+	}
+	if len(members) <= 1 {
+		return false, apperror.BadRequest("you cannot leave the last organization member", map[string]interface{}{"reason": "org_leave_last_member"})
+	}
+
+	if err := r.orgStore.RemoveMember(ctx, orgID, claims.UserID); err != nil {
+		r.logger.Error("LeaveOrganization: failed", zap.String("orgID", orgID), zap.String("userID", claims.UserID), zap.Error(err))
+		return false, fmt.Errorf("failed to leave organization: %w", err)
+	}
+	r.logger.Info("OrgMember left organization", zap.String("orgID", orgID), zap.String("userID", claims.UserID))
+	return true, nil
+}
+
 // AddSpaceMember adds an existing org member to a space (space manager).
 func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceID string, userID string, role gql.SpaceMemberAssignableRole) (*gql.SpaceMember, error) {
 	if !r.cloudEnabled() {
@@ -1882,6 +1935,68 @@ func (r *mutationResolver) UpdateOrgMemberRole(ctx context.Context, userID strin
 		}
 	}
 	return &gql.OrgMember{UserID: userID, Role: mapOrgMemberRole(normalizedRole)}, nil
+}
+
+func (r *mutationResolver) TransferOrganizationOwnership(ctx context.Context, userID string) (*gql.Organization, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if !r.cloudEnabled() {
+		return nil, fmt.Errorf("member management is not available in this deployment")
+	}
+	orgID, err := r.requireUserOrgID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if claims.UserID == userID {
+		return nil, apperror.BadRequest("organization owner is already assigned to this user", map[string]interface{}{"reason": "org_transfer_same_owner"})
+	}
+
+	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load organization: %w", err)
+	}
+	if currentOrg == nil {
+		return nil, fmt.Errorf("organization %q not found", orgID)
+	}
+	if currentOrg.OwnerID != claims.UserID {
+		return nil, apperror.Forbidden("organization owner access required")
+	}
+
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify org membership: %w", err)
+	}
+	targetIsMember := false
+	for _, member := range members {
+		if member.UserID == userID {
+			targetIsMember = true
+			break
+		}
+	}
+	if !targetIsMember {
+		return nil, apperror.BadRequest("new owner must already belong to this organization", map[string]interface{}{"reason": "org_transfer_target_not_member"})
+	}
+
+	if err := r.orgStore.TransferOwnership(ctx, orgID, claims.UserID, userID); err != nil {
+		r.logger.Error("TransferOrganizationOwnership: failed", zap.String("orgID", orgID), zap.String("currentOwnerID", claims.UserID), zap.String("newOwnerID", userID), zap.Error(err))
+		return nil, fmt.Errorf("failed to transfer organization ownership: %w", err)
+	}
+
+	updatedOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reload organization: %w", err)
+	}
+	if updatedOrg == nil {
+		return nil, fmt.Errorf("organization transferred but could not be reloaded")
+	}
+
+	r.logger.Info("Organization ownership transferred", zap.String("orgID", orgID), zap.String("previousOwnerID", claims.UserID), zap.String("newOwnerID", userID))
+	return mapOrgToGQL(updatedOrg), nil
 }
 
 // UpdateSpaceMemberRole changes a member's explicit role within a space (space manager).

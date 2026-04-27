@@ -63,4 +63,5 @@ type OrgStore interface {
 	AddMember(ctx context.Context, orgID, userID, role string) error
 	RemoveMember(ctx context.Context, orgID, userID string) error
 	UpdateMemberRole(ctx context.Context, orgID, userID, role string) error
+	TransferOwnership(ctx context.Context, orgID, currentOwnerID, newOwnerID string) error
 }

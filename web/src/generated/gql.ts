@@ -40,9 +40,11 @@ type Documents = {
   '\n  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {\n    addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.AddSpaceMemberDocument
   '\n  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: SpaceMemberAssignableRole!) {\n    inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {\n      status\n      member {\n        userId\n        username\n        displayName\n        role\n        createdAt\n      }\n      invitation {\n        id\n        email\n        role\n        createdAt\n        expiresAt\n      }\n    }\n  }\n': typeof types.InviteSpaceMemberDocument
   '\n  mutation RemoveOrgMember($userId: ID!) {\n    removeOrgMember(userId: $userId)\n  }\n': typeof types.RemoveOrgMemberDocument
+  '\n  mutation LeaveOrganization {\n    leaveOrganization\n  }\n': typeof types.LeaveOrganizationDocument
   '\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n': typeof types.RemoveSpaceMemberDocument
   '\n  mutation LeaveSpace($spaceID: String!) {\n    leaveSpace(spaceID: $spaceID)\n  }\n': typeof types.LeaveSpaceDocument
   '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: OrgMemberAssignableRole!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateOrgMemberRoleDocument
+  '\n  mutation TransferOrganizationOwnership($userId: ID!) {\n    transferOrganizationOwnership(userId: $userId) {\n      id\n      ownerUserId\n      updatedAt\n    }\n  }\n': typeof types.TransferOrganizationOwnershipDocument
   '\n  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {\n    updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateSpaceMemberRoleDocument
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n': typeof types.RegistryInfoFragmentDoc
   '\n  fragment SystemRegistryInfo on SystemRegistry {\n    key\n    value\n    isEncrypted\n    isOverriddenByConfig\n  }\n': typeof types.SystemRegistryInfoFragmentDoc
@@ -135,12 +137,15 @@ const documents: Documents = {
     types.InviteSpaceMemberDocument,
   '\n  mutation RemoveOrgMember($userId: ID!) {\n    removeOrgMember(userId: $userId)\n  }\n':
     types.RemoveOrgMemberDocument,
+  '\n  mutation LeaveOrganization {\n    leaveOrganization\n  }\n': types.LeaveOrganizationDocument,
   '\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n':
     types.RemoveSpaceMemberDocument,
   '\n  mutation LeaveSpace($spaceID: String!) {\n    leaveSpace(spaceID: $spaceID)\n  }\n':
     types.LeaveSpaceDocument,
   '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: OrgMemberAssignableRole!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.UpdateOrgMemberRoleDocument,
+  '\n  mutation TransferOrganizationOwnership($userId: ID!) {\n    transferOrganizationOwnership(userId: $userId) {\n      id\n      ownerUserId\n      updatedAt\n    }\n  }\n':
+    types.TransferOrganizationOwnershipDocument,
   '\n  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {\n    updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n':
     types.UpdateSpaceMemberRoleDocument,
   '\n  fragment RegistryInfo on UserRegistry {\n    key\n    value\n    isEncrypted\n  }\n':
@@ -390,6 +395,12 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
+  source: '\n  mutation LeaveOrganization {\n    leaveOrganization\n  }\n',
+): (typeof documents)['\n  mutation LeaveOrganization {\n    leaveOrganization\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
   source: '\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n',
 ): (typeof documents)['\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n']
 /**
@@ -404,6 +415,12 @@ export function gql(
 export function gql(
   source: '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: OrgMemberAssignableRole!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n',
 ): (typeof documents)['\n  mutation UpdateOrgMemberRole($userId: ID!, $role: OrgMemberAssignableRole!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation TransferOrganizationOwnership($userId: ID!) {\n    transferOrganizationOwnership(userId: $userId) {\n      id\n      ownerUserId\n      updatedAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation TransferOrganizationOwnership($userId: ID!) {\n    transferOrganizationOwnership(userId: $userId) {\n      id\n      ownerUserId\n      updatedAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
