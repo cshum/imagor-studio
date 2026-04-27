@@ -101,7 +101,9 @@ vi.mock('@/components/ui/input', () => ({
 
 vi.mock('@/components/ui/responsive-dialog', () => ({
   ResponsiveDialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  ResponsiveDialogDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ResponsiveDialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   ResponsiveDialogFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   ResponsiveDialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   ResponsiveDialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -190,7 +192,9 @@ describe('AccountMembersRoutePage pending invitations', () => {
     await waitFor(() => {
       expect(screen.queryByText('pending@example.com')).toBeNull()
     })
-    expect(mockToastSuccess).toHaveBeenCalledWith('pages.organizationMembers.messages.inviteCanceled')
+    expect(mockToastSuccess).toHaveBeenCalledWith(
+      'pages.organizationMembers.messages.inviteCanceled',
+    )
   })
 
   it('treats an already-removed org invite as a successful cancel', async () => {
@@ -256,7 +260,9 @@ describe('AccountMembersRoutePage pending invitations', () => {
     await waitFor(() => {
       expect(screen.queryByText('pending@example.com')).toBeNull()
     })
-    expect(mockToastSuccess).toHaveBeenCalledWith('pages.organizationMembers.messages.inviteCanceled')
+    expect(mockToastSuccess).toHaveBeenCalledWith(
+      'pages.organizationMembers.messages.inviteCanceled',
+    )
     expect(mockToastError).not.toHaveBeenCalled()
   })
 
@@ -309,9 +315,12 @@ describe('AccountMembersRoutePage pending invitations', () => {
       />,
     )
 
-    fireEvent.change(screen.getByPlaceholderText('pages.organizationMembers.identifierPlaceholder'), {
-      target: { value: 'new@example.com' },
-    })
+    fireEvent.change(
+      screen.getByPlaceholderText('pages.organizationMembers.identifierPlaceholder'),
+      {
+        target: { value: 'new@example.com' },
+      },
+    )
     fireEvent.click(screen.getByText('pages.organizationMembers.addButton'))
 
     await waitFor(() => {
@@ -322,5 +331,6 @@ describe('AccountMembersRoutePage pending invitations', () => {
     expect(mockListOrgInvitations).not.toHaveBeenCalled()
     expect(mockRefreshAuthSession).not.toHaveBeenCalled()
     expect(mockToastSuccess).toHaveBeenCalledWith('pages.organizationMembers.messages.inviteSent')
+    expect(screen.getByText('new@example.com')).toBeTruthy()
   })
 })

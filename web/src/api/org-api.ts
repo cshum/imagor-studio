@@ -1,12 +1,12 @@
 import type {
   AddOrgMemberByEmailMutation,
   AddOrgMemberByEmailMutationVariables,
-  CancelOrgInvitationMutation,
-  CancelOrgInvitationMutationVariables,
   AddOrgMemberMutation,
   AddOrgMemberMutationVariables,
   AddSpaceMemberMutation,
   AddSpaceMemberMutationVariables,
+  CancelOrgInvitationMutation,
+  CancelOrgInvitationMutationVariables,
   CreateBillingPortalSessionMutation,
   CreateBillingPortalSessionMutationVariables,
   CreateCheckoutSessionMutation,
@@ -28,8 +28,8 @@ import type {
   LeaveOrganizationMutation,
   LeaveSpaceMutation,
   LeaveSpaceMutationVariables,
-  ListOrgMembersQuery,
   ListOrgInvitationsQuery,
+  ListOrgMembersQuery,
   ListSpaceInvitationsQuery,
   ListSpaceMembersQuery,
   ListSpacesQuery,
@@ -252,10 +252,10 @@ export async function listOrgMembers(): Promise<ListOrgMembersQuery['orgMembers'
 }
 
 export async function listOrgInvitations(): Promise<ListOrgInvitationsQuery['orgInvitations']> {
-	const client = getGraphQLClient()
-	const sdk = getSdk(client)
-	const result = await sdk.ListOrgInvitations()
-	return result.orgInvitations
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.ListOrgInvitations()
+  return result.orgInvitations
 }
 
 export async function addOrgMember(

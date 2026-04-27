@@ -9,6 +9,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
+import { getMyOrganization } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
@@ -19,7 +20,6 @@ import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { resolveSpace } from '@/lib/space'
-import { getMyOrganization } from '@/api/org-api'
 import {
   adminGeneralLoader,
   adminImagorLoader,

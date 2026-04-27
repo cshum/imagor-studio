@@ -23,16 +23,15 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
   const { authState, logout } = useAuth()
   const navigate = useNavigate()
   const { title: appTitle } = useBrand()
-  const accountLinks =
-    authState.multiTenant
-      ? [
-          {
-            label: t('navigation.breadcrumbs.organization'),
-            href: '/account/organization',
-            icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
-          },
-        ]
-      : []
+  const accountLinks = authState.multiTenant
+    ? [
+        {
+          label: t('navigation.breadcrumbs.organization'),
+          href: '/account/organization',
+          icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
+        },
+      ]
+    : []
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')

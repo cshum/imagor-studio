@@ -173,6 +173,14 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
         setRole('member')
         if (result.status === 'added') {
           await reloadOrganizationMembers()
+        } else if (result.invitation) {
+          const invitation = result.invitation
+          setInvitations((current) => {
+            const nextInvitations = current.filter(
+              (currentInvitation) => currentInvitation.id !== invitation.id,
+            )
+            return [...nextInvitations, invitation]
+          })
         }
       } else {
         await addOrgMember({ username: nextIdentifier, role })
@@ -531,49 +539,49 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
         )}
       </SettingsSection>
 
-    {canAdministerOrganization ? (
-      <SettingsSection
-        title={`${t('pages.organizationMembers.pendingTitle')} (${invitations.length})`}
-        description={t('pages.organizationMembers.pendingDescription')}
-      >
-        {invitations.length === 0 ? (
-          <div className='rounded-lg border border-dashed p-6 text-center'>
-            <p className='font-medium'>{t('pages.organizationMembers.pendingEmpty')}</p>
-          </div>
-        ) : (
-          <div className='space-y-3'>
-            {invitations.map((invitation) => (
-              <div
-                key={invitation.id}
-                className='flex items-center justify-between gap-4 rounded-lg border px-4 py-3'
-              >
-                <div className='min-w-0'>
-                  <div className='flex items-center gap-2'>
-                    <p className='truncate text-sm font-medium'>{invitation.email}</p>
-                    <Badge variant='outline' className='h-5 px-2 text-[11px] font-medium'>
-                      {getRoleLabel(invitation.role, t)}
-                    </Badge>
-                  </div>
-                  <p className='text-muted-foreground flex items-center gap-1 text-xs'>
-                    <Clock3 className='h-3.5 w-3.5' />
-                    {t('pages.organizationMembers.pendingExpiresAt', {
-                      expiresAt: new Date(invitation.expiresAt).toLocaleDateString(),
-                    })}
-                  </p>
-                </div>
-                <ButtonWithLoading
-                  variant='outline'
-                  isLoading={cancelingInvitationId === invitation.id}
-                  onClick={() => handleCancelInvitation(invitation.id)}
+      {canAdministerOrganization ? (
+        <SettingsSection
+          title={`${t('pages.organizationMembers.pendingTitle')} (${invitations.length})`}
+          description={t('pages.organizationMembers.pendingDescription')}
+        >
+          {invitations.length === 0 ? (
+            <div className='rounded-lg border border-dashed p-6 text-center'>
+              <p className='font-medium'>{t('pages.organizationMembers.pendingEmpty')}</p>
+            </div>
+          ) : (
+            <div className='space-y-3'>
+              {invitations.map((invitation) => (
+                <div
+                  key={invitation.id}
+                  className='flex items-center justify-between gap-4 rounded-lg border px-4 py-3'
                 >
-                  {t('pages.organizationMembers.cancelInvite')}
-                </ButtonWithLoading>
-              </div>
-            ))}
-          </div>
-        )}
-      </SettingsSection>
-    ) : null}
+                  <div className='min-w-0'>
+                    <div className='flex items-center gap-2'>
+                      <p className='truncate text-sm font-medium'>{invitation.email}</p>
+                      <Badge variant='outline' className='h-5 px-2 text-[11px] font-medium'>
+                        {getRoleLabel(invitation.role, t)}
+                      </Badge>
+                    </div>
+                    <p className='text-muted-foreground flex items-center gap-1 text-xs'>
+                      <Clock3 className='h-3.5 w-3.5' />
+                      {t('pages.organizationMembers.pendingExpiresAt', {
+                        expiresAt: new Date(invitation.expiresAt).toLocaleDateString(),
+                      })}
+                    </p>
+                  </div>
+                  <ButtonWithLoading
+                    variant='outline'
+                    isLoading={cancelingInvitationId === invitation.id}
+                    onClick={() => handleCancelInvitation(invitation.id)}
+                  >
+                    {t('pages.organizationMembers.cancelInvite')}
+                  </ButtonWithLoading>
+                </div>
+              ))}
+            </div>
+          )}
+        </SettingsSection>
+      ) : null}
 
       <ResponsiveDialog
         open={pendingRemoveMember !== null}
