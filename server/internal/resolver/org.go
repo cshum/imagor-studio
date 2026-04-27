@@ -9,6 +9,7 @@ import (
 
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
+	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/management"
@@ -519,7 +520,42 @@ func (r *mutationResolver) enforceCustomDomainQuota(ctx context.Context, orgID s
 		return nil
 	}
 
-	return fmt.Errorf("custom domain limit (%d) reached for plan %q", entitlements.MaxCustomDomains, orgRecord.Plan)
+	return apperror.BadRequest(
+		fmt.Sprintf("custom domain limit (%d) reached for plan %q", entitlements.MaxCustomDomains, orgRecord.Plan),
+		map[string]interface{}{"reason": "custom_domain_limit_reached"},
+	)
+}
+
+func (r *mutationResolver) enforceSpaceQuota(ctx context.Context, orgID string) error {
+	if r.orgStore == nil || r.spaceStore == nil || orgID == "" {
+		return nil
+	}
+
+	orgRecord, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		return fmt.Errorf("failed to load organization plan: %w", err)
+	}
+	if orgRecord == nil {
+		return fmt.Errorf("organization %q not found", orgID)
+	}
+
+	entitlements := billing.EntitlementsForPlan(orgRecord.Plan)
+	if entitlements.MaxSpaces < 0 {
+		return nil
+	}
+
+	spaces, err := r.spaceStore.ListByOrgID(ctx, orgID)
+	if err != nil {
+		return fmt.Errorf("failed to list organization spaces: %w", err)
+	}
+	if len(spaces) < entitlements.MaxSpaces {
+		return nil
+	}
+
+	return apperror.BadRequest(
+		fmt.Sprintf("space limit (%d) reached for plan %q", entitlements.MaxSpaces, orgRecord.Plan),
+		map[string]interface{}{"reason": "space_limit_reached"},
+	)
 }
 
 // ---------- Query resolvers --------------------------------------------------
@@ -683,6 +719,9 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 	if err := applySpaceInput(sp, input); err != nil {
 		return nil, err
 	}
+	if err := r.enforceCustomDomainQuota(ctx, orgID, nil, sp); err != nil {
+		return nil, err
+	}
 	if sp.StorageMode == space.StorageModeBYOB && sp.StorageType == "s3" {
 		testResult := r.validateStorageConfig(ctx, storageConfigInputFromSpace(sp))
 		if !testResult.Success {
@@ -691,6 +730,9 @@ func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput
 			}
 			return nil, fmt.Errorf("invalid BYOB storage configuration: %s", testResult.Message)
 		}
+	}
+	if err := r.enforceSpaceQuota(ctx, orgID); err != nil {
+		return nil, err
 	}
 
 	if err := r.spaceStore.Create(ctx, sp); err != nil {
@@ -748,7 +790,7 @@ func (r *mutationResolver) UpdateSpace(ctx context.Context, key string, input gq
 		return nil, err
 	}
 	if !permissions.CanManage {
-		return nil, fmt.Errorf("forbidden: space manager access required")
+		return nil, apperror.Forbidden("space manager access required")
 	}
 	original := *existing
 	candidate := *existing
@@ -839,7 +881,7 @@ func (r *mutationResolver) DeleteSpace(ctx context.Context, key string) (bool, e
 		return false, err
 	}
 	if !permissions.CanDelete {
-		return false, fmt.Errorf("forbidden: only the owning organization admins can delete this space")
+		return false, apperror.Forbidden("only the owning organization admins can delete this space")
 	}
 
 	if err := r.spaceStore.SoftDelete(ctx, key); err != nil {
@@ -880,7 +922,7 @@ func (r *queryResolver) SpaceMembers(ctx context.Context, spaceID string) ([]*gq
 		return nil, err
 	}
 	if !permissions.CanManage {
-		return nil, fmt.Errorf("forbidden: space manager access required")
+		return nil, apperror.Forbidden("space manager access required")
 	}
 	members, err := r.spaceStore.ListMembers(ctx, space.ID)
 	if err != nil {
@@ -913,7 +955,7 @@ func (r *queryResolver) SpaceInvitations(ctx context.Context, spaceID string) ([
 		return nil, err
 	}
 	if !permissions.CanManage {
-		return nil, fmt.Errorf("forbidden: space manager access required")
+		return nil, apperror.Forbidden("space manager access required")
 	}
 	invitations, err := r.spaceInviteStore.ListPendingBySpace(ctx, space.OrgID, space.ID)
 	if err != nil {
@@ -1096,7 +1138,7 @@ func (r *mutationResolver) AddSpaceMember(ctx context.Context, spaceID string, u
 		return nil, err
 	}
 	if !permissions.CanManage {
-		return nil, fmt.Errorf("forbidden: space manager access required")
+		return nil, apperror.Forbidden("space manager access required")
 	}
 	members, err := r.orgStore.ListMembers(ctx, space.OrgID)
 	if err != nil {
@@ -1146,7 +1188,7 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceID string
 		return nil, err
 	}
 	if !permissions.CanManage {
-		return nil, fmt.Errorf("forbidden: space manager access required")
+		return nil, apperror.Forbidden("space manager access required")
 	}
 
 	normalizedEmail := strings.ToLower(strings.TrimSpace(email))
@@ -1259,7 +1301,7 @@ func (r *mutationResolver) RemoveSpaceMember(ctx context.Context, spaceID string
 		return false, err
 	}
 	if !permissions.CanManage {
-		return false, fmt.Errorf("forbidden: space manager access required")
+		return false, apperror.Forbidden("space manager access required")
 	}
 	protectedMember, err := r.isProtectedHostSpaceMember(ctx, s, userID)
 	if err != nil {
@@ -1368,7 +1410,7 @@ func (r *mutationResolver) UpdateSpaceMemberRole(ctx context.Context, spaceID st
 		return nil, err
 	}
 	if !permissions.CanManage {
-		return nil, fmt.Errorf("forbidden: space manager access required")
+		return nil, apperror.Forbidden("space manager access required")
 	}
 	protectedMember, err := r.isProtectedHostSpaceMember(ctx, space, userID)
 	if err != nil {
