@@ -81,7 +81,6 @@ interface MembersSectionProps {
   spaceID: string
   initialMembers: SpaceMemberItem[]
   initialInvitations: SpaceInvitationItem[]
-  isShared: boolean
   canLeave?: boolean
 }
 
@@ -89,7 +88,6 @@ export function MembersSection({
   spaceID,
   initialMembers,
   initialInvitations,
-  isShared,
   canLeave = false,
 }: MembersSectionProps) {
   const { t } = useTranslation()
@@ -110,7 +108,8 @@ export function MembersSection({
 
   const currentUserId = authState.profile?.id ?? null
   const pendingMember = members.find((member) => member.userId === pendingRemoveId)
-  const sectionTitle = t('pages.spaceSettings.sections.members')
+  const organizationMembers = members.filter((member) => member.roleSource === 'organization')
+  const directMembers = members.filter((member) => member.roleSource !== 'organization')
 
   const reload = async () => {
     setIsLoading(true)
@@ -382,79 +381,140 @@ export function MembersSection({
       </div>
     )
 
-  const membersContent = isLoading ? (
+  const renderMembersList = (
+    sectionMembers: SpaceMemberItem[],
+    options?: { emptyState?: React.ReactNode; showActions?: boolean },
+  ) =>
+    isLoading ? (
     <Card>
       <CardContent className='p-4'>
         <p className='text-muted-foreground text-sm'>{t('common.status.loading')}</p>
       </CardContent>
     </Card>
-  ) : members.length === 0 ? (
-    <Card className='border-dashed'>
-      <CardContent className='p-6 text-center'>
-        <p className='font-medium'>{t('pages.spaceSettings.members.empty')}</p>
-        <p className='text-muted-foreground mt-1 text-sm'>
-          {t('pages.spaceSettings.members.emptyDescription')}
-        </p>
-      </CardContent>
-    </Card>
-  ) : (
-    <Card>
-      <CardContent className='p-0'>
-        <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[minmax(0,1fr)_44px] gap-4 border-b px-4 py-3 text-xs font-medium md:grid'>
-          <div>{t('pages.spaceSettings.members.listHeaders.member')}</div>
-          <div className='text-right'>{t('pages.spaceSettings.members.listHeaders.action')}</div>
-        </div>
-        <div className='divide-y'>
-          {members.map((member) => {
-            const memberLabel = getMemberLabel(member)
-            const isCurrentUser = member.userId === currentUserId
-            const desktopMenuId = `${member.userId}-desktop`
-            const mobileMenuId = `${member.userId}-mobile`
+    ) : sectionMembers.length === 0 ? (
+      options?.emptyState ?? null
+    ) : (
+      <Card>
+        <CardContent className='p-0'>
+          <div
+            className={`bg-muted/50 text-muted-foreground hidden gap-4 border-b px-4 py-3 text-xs font-medium md:grid ${options?.showActions === false ? 'grid-cols-[minmax(0,1fr)]' : 'grid-cols-[minmax(0,1fr)_44px]'}`}
+          >
+            <div>{t('pages.spaceSettings.members.listHeaders.member')}</div>
+            {options?.showActions === false ? null : (
+              <div className='text-right'>{t('pages.spaceSettings.members.listHeaders.action')}</div>
+            )}
+          </div>
+          <div className='divide-y'>
+            {sectionMembers.map((member) => {
+              const memberLabel = getMemberLabel(member)
+              const isCurrentUser = member.userId === currentUserId
+              const desktopMenuId = `${member.userId}-desktop`
+              const mobileMenuId = `${member.userId}-mobile`
 
-            return (
-              <div key={member.userId}>
-                <div className='hidden grid-cols-[minmax(0,1fr)_44px] items-center gap-4 px-4 py-4 md:grid'>
-                  <div className='flex min-w-0 items-center gap-3'>
-                    <Avatar className='h-10 w-10'>
-                      <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
-                      <AvatarFallback className='text-sm font-semibold'>
-                        {getInitials(memberLabel)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className='min-w-0'>
-                      <div className='flex items-center gap-2'>
-                        <p className='truncate text-sm font-medium'>{memberLabel}</p>
-                        {member.role === 'admin' || member.role === 'owner' ? (
-                          <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
-                            {getRoleBadgeLabel(member, t)}
-                          </Badge>
-                        ) : null}
-                        {isCurrentUser ? (
-                          <Badge
-                            variant='outline'
-                            className='inline-flex h-5 items-center gap-1 px-2 text-[11px] font-medium'
-                          >
-                            <UserRound className='h-3 w-3' />
-                            {t('pages.spaceSettings.members.removeSelfDisabled')}
-                          </Badge>
+              return (
+                <div key={member.userId}>
+                  <div
+                    className={`hidden items-center gap-4 px-4 py-4 md:grid ${options?.showActions === false ? 'grid-cols-[minmax(0,1fr)]' : 'grid-cols-[minmax(0,1fr)_44px]'}`}
+                  >
+                    <div className='flex min-w-0 items-center gap-3'>
+                      <Avatar className='h-10 w-10'>
+                        <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
+                        <AvatarFallback className='text-sm font-semibold'>
+                          {getInitials(memberLabel)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='min-w-0'>
+                        <div className='flex items-center gap-2'>
+                          <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                          {member.role === 'admin' || member.role === 'owner' ? (
+                            <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
+                              {getRoleBadgeLabel(member, t)}
+                            </Badge>
+                          ) : null}
+                          {isCurrentUser ? (
+                            <Badge
+                              variant='outline'
+                              className='inline-flex h-5 items-center gap-1 px-2 text-[11px] font-medium'
+                            >
+                              <UserRound className='h-3 w-3' />
+                              {t('pages.spaceSettings.members.removeSelfDisabled')}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {member.email || `@${member.username}`}
+                        </p>
+                        {getRoleDescription(member, t) ? (
+                          <p className='text-muted-foreground truncate text-xs'>
+                            {getRoleDescription(member, t)}
+                          </p>
                         ) : null}
                       </div>
-                      <p className='text-muted-foreground truncate text-xs'>
-                        {member.email || `@${member.username}`}
-                      </p>
-                      {getRoleDescription(member, t) ? (
-                        <p className='text-muted-foreground truncate text-xs'>
-                          {getRoleDescription(member, t)}
-                        </p>
-                      ) : null}
                     </div>
+                    {options?.showActions === false ? null : (
+                      <div>
+                        {!hasMemberActions(member) ? null : (
+                          <div className='flex justify-end'>
+                            <DropdownMenu
+                              open={openMenuMemberId === desktopMenuId}
+                              onOpenChange={(open) => setOpenMenuMemberId(open ? desktopMenuId : null)}
+                            >
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant='ghost'
+                                  size='icon'
+                                  className='h-9 w-9'
+                                  aria-label={t('common.buttons.more')}
+                                >
+                                  <MoreHorizontal className='h-4 w-4' />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              {renderMemberActions(member, desktopMenuId)}
+                            </DropdownMenu>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    {!hasMemberActions(member) ? null : (
-                      <div className='flex justify-end'>
+                  <div className='px-4 py-4 md:hidden'>
+                    <div className='flex min-w-0 items-center gap-3'>
+                      <Avatar className='h-10 w-10'>
+                        <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
+                        <AvatarFallback className='text-sm font-semibold'>
+                          {getInitials(memberLabel)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='min-w-0 flex-1'>
+                        <div className='flex items-center gap-2'>
+                          <p className='truncate text-sm font-medium'>{memberLabel}</p>
+                          {member.role === 'admin' || member.role === 'owner' ? (
+                            <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
+                              {getRoleBadgeLabel(member, t)}
+                            </Badge>
+                          ) : null}
+                          {isCurrentUser ? (
+                            <Badge
+                              variant='outline'
+                              className='inline-flex h-5 items-center gap-1 px-2 text-[11px] font-medium'
+                            >
+                              <UserRound className='h-3 w-3' />
+                              {t('pages.spaceSettings.members.removeSelfDisabled')}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {member.email || `@${member.username}`}
+                        </p>
+                        {getRoleDescription(member, t) ? (
+                          <p className='text-muted-foreground truncate text-xs'>
+                            {getRoleDescription(member, t)}
+                          </p>
+                        ) : null}
+                      </div>
+                      {!hasMemberActions(member) ? null : (
                         <DropdownMenu
-                          open={openMenuMemberId === desktopMenuId}
-                          onOpenChange={(open) => setOpenMenuMemberId(open ? desktopMenuId : null)}
+                          open={openMenuMemberId === mobileMenuId}
+                          onOpenChange={(open) => setOpenMenuMemberId(open ? mobileMenuId : null)}
                         >
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -466,71 +526,26 @@ export function MembersSection({
                               <MoreHorizontal className='h-4 w-4' />
                             </Button>
                           </DropdownMenuTrigger>
-                          {renderMemberActions(member, desktopMenuId)}
+                          {renderMemberActions(member, mobileMenuId)}
                         </DropdownMenu>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className='px-4 py-4 md:hidden'>
-                  <div className='flex min-w-0 items-center gap-3'>
-                    <Avatar className='h-10 w-10'>
-                      <AvatarImage src={member.avatarUrl ?? undefined} alt={memberLabel} />
-                      <AvatarFallback className='text-sm font-semibold'>
-                        {getInitials(memberLabel)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className='min-w-0 flex-1'>
-                      <div className='flex items-center gap-2'>
-                        <p className='truncate text-sm font-medium'>{memberLabel}</p>
-                        {member.role === 'admin' || member.role === 'owner' ? (
-                          <Badge variant='secondary' className='h-5 px-2 text-[11px] font-medium'>
-                            {getRoleBadgeLabel(member, t)}
-                          </Badge>
-                        ) : null}
-                        {isCurrentUser ? (
-                          <Badge
-                            variant='outline'
-                            className='inline-flex h-5 items-center gap-1 px-2 text-[11px] font-medium'
-                          >
-                            <UserRound className='h-3 w-3' />
-                            {t('pages.spaceSettings.members.removeSelfDisabled')}
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <p className='text-muted-foreground truncate text-xs'>
-                        {member.email || `@${member.username}`}
-                      </p>
-                      {getRoleDescription(member, t) ? (
-                        <p className='text-muted-foreground truncate text-xs'>
-                          {getRoleDescription(member, t)}
-                        </p>
-                      ) : null}
+                      )}
                     </div>
-                    {!hasMemberActions(member) ? null : (
-                      <DropdownMenu
-                        open={openMenuMemberId === mobileMenuId}
-                        onOpenChange={(open) => setOpenMenuMemberId(open ? mobileMenuId : null)}
-                      >
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='h-9 w-9'
-                            aria-label={t('common.buttons.more')}
-                          >
-                            <MoreHorizontal className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        {renderMemberActions(member, mobileMenuId)}
-                      </DropdownMenu>
-                    )}
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    )
+
+  const directMembersEmptyState = (
+    <Card className='border-dashed'>
+      <CardContent className='p-6 text-center'>
+        <p className='font-medium'>{t('pages.spaceSettings.members.empty')}</p>
+        <p className='text-muted-foreground mt-1 text-sm'>
+          {t('pages.spaceSettings.members.emptyDescription')}
+        </p>
       </CardContent>
     </Card>
   )
@@ -538,16 +553,23 @@ export function MembersSection({
   return (
     <>
       <div className='space-y-5'>
-        {isShared ? (
-          <div className='text-muted-foreground rounded-lg border px-4 py-3 text-sm leading-6'>
-            <span className='text-foreground font-medium'>
-              {t('pages.spaceSettings.members.sharedTitle')}:
-            </span>
-            {t('pages.spaceSettings.members.sharedDescription')}
-          </div>
-        ) : null}
+        <div className='space-y-2'>
+          <h3 className='text-base font-semibold'>
+            {t('pages.spaceSettings.members.sharedTitle')} ({organizationMembers.length})
+          </h3>
+          <p className='text-muted-foreground text-sm'>
+            {t('pages.spaceSettings.members.sharedManageHint')}
+          </p>
+          {renderMembersList(organizationMembers, { showActions: false })}
+        </div>
 
         <div className='space-y-2'>
+          <h3 className='text-base font-semibold'>
+            {t('pages.spaceSettings.members.accessLabel')} ({directMembers.length})
+          </h3>
+          <p className='text-muted-foreground text-sm'>
+            {t('pages.spaceSettings.members.accessDescription')}
+          </p>
           <div className='flex flex-col gap-2 lg:flex-row'>
             <Input
               value={inviteEmail}
@@ -573,13 +595,7 @@ export function MembersSection({
             </ButtonWithLoading>
           </div>
           {inviteFieldError ? <p className='text-destructive text-sm'>{inviteFieldError}</p> : null}
-        </div>
-
-        <div className='space-y-2'>
-          <h3 className='text-base font-semibold'>
-            {sectionTitle} ({members.length})
-          </h3>
-          {membersContent}
+          {renderMembersList(directMembers, { emptyState: directMembersEmptyState })}
         </div>
 
         {invitationsContent ? (
@@ -601,11 +617,9 @@ export function MembersSection({
             {t('pages.spaceSettings.members.removeTitle')}
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            {t('pages.spaceSettings.members.removeDescription')}{' '}
-            <strong className='text-foreground'>
-              {pendingMember?.displayName || pendingMember?.username}
-            </strong>
-            ?
+            {t('pages.spaceSettings.members.removeDescription', {
+              name: pendingMember?.displayName || pendingMember?.username || '',
+            })}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>

@@ -117,8 +117,13 @@
     "authCallback": {
       "title": "欢迎回来",
       "subtitle": "我们无法完成您的登录，请重试。",
+      "title": "欢迎回来",
+      "subtitle": "我们无法完成您的登录，请重试。",
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
+      "errors": {
+        "inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。"
+      },
       "errorNoToken": "未收到认证令牌",
       "backToLogin": "返回登录"
     },
@@ -925,7 +930,7 @@
     },
     "spaceSettings": {
       "sections": {
-        "members": "成员",
+        "members": "访问",
         "storage": "存储",
         "imagor": "Imagor 图像处理",
         "general": "常规",
@@ -1009,18 +1014,20 @@
           "default": "目前无法分享此空间，请稍后再试。"
         },
         "memberPlaceholder": "选择队友",
-        "memberPlaceholderEmpty": "您组织中的成员都已经拥有明确访问权限",
-        "sharedTitle": "组织范围访问",
-        "sharedDescription": "此组织中的所有成员都可以查看和复制此空间。下方列表显示的是被直接加入此空间的人员，而组织管理员仍负责设置和分享管理。",
-        "emptyDescription": "目前还没有人被直接加入这个空间。组织管理员仍然保有继承而来的访问权限。",
+        "memberPlaceholderEmpty": "组织成员都已经拥有访问权限",
+        "sharedTitle": "组织成员",
+        "sharedDescription": "从组织继承。",
+        "sharedManageHint": "请在组织访问页面管理。",
+        "emptyDescription": "邀请来宾或添加空间角色。",
         "addSuccess": "成员添加成功。",
         "inviteSent": "邀请邮件已发送。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成员已移除。",
         "removeSelfDisabled": "你",
         "removeSelfNotAllowed": "你不能将自己从这个空间移除。",
-        "empty": "这个空间还没有直接成员。",
-        "accessLabel": "共享访问",
+        "empty": "还没有直接访问。",
+        "accessLabel": "直接访问",
+        "accessDescription": "来宾和额外的空间角色。",
         "pendingTitle": "待处理邀请",
         "listHeaders": {
           "member": "成员",
@@ -1031,8 +1038,8 @@
           "role": "角色",
           "expires": "到期时间"
         },
-        "removeTitle": "移除成员",
-        "removeDescription": "确定要移除",
+        "removeTitle": "移除直接访问",
+        "removeDescription": "要移除 {{name}} 的直接访问权限吗？组织成员仍会保留继承而来的访问权限。",
         "roleSectionLabel": "更改角色",
         "promoteToManager": "改为管理员",
         "changeToMember": "改为成员",

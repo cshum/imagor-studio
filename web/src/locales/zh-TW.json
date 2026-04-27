@@ -139,6 +139,9 @@
       "subtitle": "我們無法完成您的登入，請再試一次。",
       "failed": "驗證失敗",
       "errorOAuth": "驗證失敗：{{error}}",
+      "errors": {
+        "inviteOrgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。"
+      },
       "errorNoToken": "未收到驗證令牌",
       "backToLogin": "返回登入"
     },
@@ -945,7 +948,7 @@
     },
     "spaceSettings": {
       "sections": {
-        "members": "成員",
+        "members": "存取",
         "storage": "儲存",
         "imagor": "Imagor 圖像處理",
         "general": "一般",
@@ -1029,19 +1032,21 @@
           "default": "目前無法分享這個空間，請稍後再試。"
         },
         "memberPlaceholder": "選擇隊友",
-        "memberPlaceholderEmpty": "您的組織成員都已具有明確存取權",
-        "sharedTitle": "組織層級存取權",
-        "sharedDescription": "此組織中的所有成員都可以檢視並複製這個空間。下方清單顯示的是被直接加入這個空間的人員，而組織管理員仍負責設定與分享管理。",
-        "emptyDescription": "目前還沒有人被直接加入這個空間。組織管理員仍保有繼承而來的存取權。",
+        "memberPlaceholderEmpty": "組織成員都已具有存取權",
+        "sharedTitle": "組織成員",
+        "sharedDescription": "從組織繼承。",
+        "sharedManageHint": "請在組織存取頁面管理。",
+        "emptyDescription": "邀請來賓或新增空間角色。",
         "addSuccess": "成員新增成功。",
         "inviteSent": "邀請郵件已送出。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成員已移除。",
         "removeSelfDisabled": "您",
         "removeSelfNotAllowed": "您不能將自己從這個空間移除。",
-        "empty": "這個空間尚無直接成員。",
-        "accessLabel": "共享存取",
-        "pendingTitle": "待接受的邀請",
+        "empty": "尚無直接存取權。",
+        "accessLabel": "直接存取",
+        "accessDescription": "來賓與額外的空間角色。",
+        "pendingTitle": "待處理邀請",
         "listHeaders": {
           "member": "成員",
           "action": "操作"
@@ -1051,8 +1056,8 @@
           "role": "角色",
           "expires": "到期日"
         },
-        "removeTitle": "移除成員",
-        "removeDescription": "確定要移除",
+        "removeTitle": "移除直接存取權",
+        "removeDescription": "要移除 {{name}} 的直接存取權嗎？組織成員仍會保留繼承而來的存取權。",
         "roleSectionLabel": "變更角色",
         "promoteToManager": "改為管理員",
         "changeToMember": "改為成員",

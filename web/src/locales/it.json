@@ -139,6 +139,9 @@
       "subtitle": "Non siamo riusciti a completare l'accesso. Riprova.",
       "failed": "Autenticazione non riuscita",
       "errorOAuth": "Autenticazione non riuscita: {{error}}",
+      "errors": {
+        "inviteOrgConflict": "Questo account appartiene gia a un'altra organizzazione. Usa un account diverso oppure lascia prima la tua organizzazione attuale."
+      },
       "errorNoToken": "Nessun token di autenticazione ricevuto",
       "backToLogin": "Torna al login"
     },
@@ -950,7 +953,7 @@
         "general": "Generale",
         "storage": "Storage",
         "dangerZone": "Zona di pericolo",
-        "members": "Membri",
+        "members": "Accesso",
         "imagor": "Imagor"
       },
       "gallery": {
@@ -1036,19 +1039,21 @@
           "default": "Impossibile condividere questo spazio in questo momento. Riprova."
         },
         "memberPlaceholder": "Scegli un collega",
-        "memberPlaceholderEmpty": "Tutti i membri della tua organizzazione hanno già accesso esplicito",
-        "sharedTitle": "Accesso a livello organizzazione",
-        "sharedDescription": "Tutti i membri di questa organizzazione possono visualizzare e copiare questo spazio. L'elenco qui sotto mostra chi è stato aggiunto direttamente, mentre gli amministratori dell'organizzazione continuano a gestire impostazioni e condivisione.",
-        "emptyDescription": "Nessuno è stato ancora aggiunto direttamente a questo spazio. Gli amministratori dell'organizzazione hanno comunque accesso ereditato.",
-        "accessLabel": "Accesso condiviso",
+        "memberPlaceholderEmpty": "Tutti i membri della tua organizzazione hanno già accesso",
+        "sharedTitle": "Membri dell'organizzazione",
+        "sharedDescription": "Ereditato dall'organizzazione.",
+        "sharedManageHint": "Gestisci nell'accesso Organizzazione.",
+        "emptyDescription": "Invita un ospite o assegna un ruolo dello spazio.",
+        "accessLabel": "Accesso diretto",
+        "accessDescription": "Ospiti e ruoli aggiuntivi dello spazio.",
         "addSuccess": "Membro aggiunto correttamente.",
         "inviteSent": "Email di invito inviata.",
         "roleUpdated": "Ruolo aggiornato.",
         "removeSuccess": "Membro rimosso.",
         "removeSelfDisabled": "Tu",
         "removeSelfNotAllowed": "Non puoi rimuovere te stesso da questo spazio.",
-        "empty": "Nessun membro diretto dello spazio.",
-        "pendingTitle": "Inviti in attesa",
+        "empty": "Nessun accesso diretto.",
+        "pendingTitle": "Inviti in sospeso",
         "listHeaders": {
           "member": "Membro",
           "action": "Azione"
@@ -1058,8 +1063,8 @@
           "role": "Ruolo",
           "expires": "Scade"
         },
-        "removeTitle": "Rimuovi membro",
-        "removeDescription": "Sei sicuro di voler rimuovere",
+        "removeTitle": "Rimuovi accesso diretto",
+        "removeDescription": "Rimuovere l'accesso diretto per {{name}}? I membri dell'organizzazione manterranno comunque l'accesso ereditato.",
         "roleSectionLabel": "Cambia ruolo",
         "promoteToManager": "Cambia in admin",
         "changeToMember": "Cambia in membro",

@@ -139,6 +139,9 @@
       "subtitle": "We couldn't complete your sign-in. Please try again.",
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
+      "errors": {
+        "inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first."
+      },
       "errorNoToken": "No authentication token received",
       "backToLogin": "Back to login"
     },
@@ -950,7 +953,7 @@
         "general": "General",
         "storage": "Storage",
         "dangerZone": "Danger Zone",
-        "members": "Members",
+        "members": "Access",
         "imagor": "Imagor"
       },
       "gallery": {
@@ -1036,19 +1039,21 @@
           "default": "Could not share this space right now. Please try again."
         },
         "memberPlaceholder": "Choose a teammate",
-        "memberPlaceholderEmpty": "Everyone in your organisation already has explicit access",
-        "sharedTitle": "Organisation-wide access",
-        "sharedDescription": "Everyone in this organisation can view and copy this space. The list below shows people who were added directly to this space, while organisation admins still manage settings and sharing.",
-        "emptyDescription": "No one has been added directly to this space yet. Organisation admins still have inherited access.",
-        "accessLabel": "Shared access",
+        "memberPlaceholderEmpty": "Everyone in your organisation already has access",
+        "sharedTitle": "Organization members",
+        "sharedDescription": "Inherited from your organization.",
+        "sharedManageHint": "Manage in Organization access.",
+        "emptyDescription": "Invite a guest or add a space role.",
+        "accessLabel": "Direct access",
+        "accessDescription": "Guests and extra space roles.",
         "addSuccess": "Member added successfully.",
         "inviteSent": "Invitation email sent.",
         "roleUpdated": "Role updated.",
         "removeSuccess": "Member removed.",
         "removeSelfDisabled": "You",
         "removeSelfNotAllowed": "You cannot remove yourself from this space.",
-        "empty": "No direct space members yet.",
-        "pendingTitle": "Pending invitations",
+        "empty": "No direct access yet.",
+        "pendingTitle": "Pending invites",
         "listHeaders": {
           "member": "Member",
           "action": "Action"
@@ -1058,8 +1063,8 @@
           "role": "Role",
           "expires": "Expires"
         },
-        "removeTitle": "Remove Member",
-        "removeDescription": "Are you sure you want to remove",
+        "removeTitle": "Remove Direct Access",
+        "removeDescription": "Remove direct access for {{name}}? Organization members will still keep their inherited access.",
         "roleSectionLabel": "Change role",
         "promoteToManager": "Change to admin",
         "changeToMember": "Change to member",

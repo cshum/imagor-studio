@@ -15,13 +15,21 @@ export function AuthCallbackPage() {
   const { t } = useTranslation()
   const params = new URLSearchParams(window.location.search)
   const errorParam = params.get('error')
+  const errorMessageKey =
+    errorParam === 'invite_org_conflict'
+      ? 'pages.authCallback.errors.inviteOrgConflict'
+      : null
 
   const title = t('pages.authCallback.title')
-  const message = errorParam
-    ? t('pages.authCallback.errorOAuth', { error: errorParam.replace(/_/g, ' ') })
-    : !params.get('token')
-      ? t('pages.authCallback.errorNoToken')
-      : t('pages.authCallback.failed')
+  let message = t('pages.authCallback.failed')
+
+  if (errorParam) {
+    message = errorMessageKey
+      ? t(errorMessageKey)
+      : t('pages.authCallback.errorOAuth', { error: errorParam.replace(/_/g, ' ') })
+  } else if (!params.get('token')) {
+    message = t('pages.authCallback.errorNoToken')
+  }
 
   return (
     <div className='min-h-screen-safe flex flex-col'>

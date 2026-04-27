@@ -358,6 +358,28 @@ func TestSpaces_ReturnsSpaces(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 }
 
+func TestSpaces_ReturnsSameOrgSpacesForNonAdminMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	s1 := makeTestSpace("acme", "org-1")
+	s2 := makeTestSpace("beta", "org-1")
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{s1, s2}, nil)
+	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*space.Space{}, nil)
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Query().Spaces(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	assert.Equal(t, "acme", result[0].Key)
+	assert.Equal(t, "beta", result[1].Key)
+	assert.False(t, result[0].CanManage)
+	assert.False(t, result[0].CanDelete)
+	assert.False(t, result[0].CanLeave)
+	spaceStore.AssertExpectations(t)
+}
+
 func TestSpaces_IncludesGuestAccessibleSpaces(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
@@ -446,6 +468,26 @@ func TestSpace_ReturnsSpace(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "acme", result.Key)
 	assert.Equal(t, "org-1", result.OrgID)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestSpace_ReturnsSameOrgSpaceForNonAdminMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	s := makeTestSpace("acme", "org-1")
+	spaceStore.On("GetByKey", mock.Anything, "acme").Return(s, nil)
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Query().Space(ctx, "acme")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "acme", result.Key)
+	assert.Equal(t, "org-1", result.OrgID)
+	assert.False(t, result.CanManage)
+	assert.False(t, result.CanDelete)
+	assert.False(t, result.CanLeave)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -1321,17 +1363,17 @@ func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
 	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{
 		{
 			SpaceID:     "space-1",
-			UserID:      "user-1",
-			Username:    "alice",
-			DisplayName: "Alice",
+			UserID:      "user-3",
+			Username:    "charlie",
+			DisplayName: "Charlie",
 			Role:        "admin",
 			CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			SpaceID:     "space-1",
-			UserID:      "user-3",
-			Username:    "charlie",
-			DisplayName: "Charlie",
+			UserID:      "user-9",
+			Username:    "guest",
+			DisplayName: "Guest User",
 			Role:        "member",
 			CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
@@ -1340,20 +1382,64 @@ func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "admin"),
 		makeTestMember("user-3", "charlie", "member"),
-	}, nil).Times(3)
+	}, nil)
 
 	ctx := createAdminContextWithOrg("user-2", "org-1")
 	result, err := r.Query().SpaceMembers(ctx, s.ID)
 	require.NoError(t, err)
-	require.Len(t, result, 2)
+	require.Len(t, result, 4)
 	assert.Equal(t, "user-1", result[0].UserID)
 	assert.Equal(t, "owner", result[0].Role)
 	assert.Equal(t, "organization", result[0].RoleSource)
 	assert.False(t, result[0].CanChangeRole)
 	assert.False(t, result[0].CanRemove)
+	assert.Equal(t, "user-2", result[1].UserID)
+	assert.Equal(t, "admin", result[1].Role)
+	assert.Equal(t, "organization", result[1].RoleSource)
+	assert.False(t, result[1].CanChangeRole)
+	assert.False(t, result[1].CanRemove)
+	assert.Equal(t, "user-3", result[2].UserID)
+	assert.Equal(t, "admin", result[2].Role)
+	assert.Equal(t, "space", result[2].RoleSource)
+	assert.True(t, result[2].CanChangeRole)
+	assert.True(t, result[2].CanRemove)
+	assert.Equal(t, "user-9", result[3].UserID)
+	assert.Equal(t, "space", result[3].RoleSource)
+	assert.True(t, result[3].CanChangeRole)
+	assert.True(t, result[3].CanRemove)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestSpaceMembers_CollapsesRedundantOrgMemberDirectAccess(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	s := makeTestSpace("acme", "org-1")
+	spaceStore.On("GetByID", mock.Anything, s.ID).Return(s, nil)
+	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
+		SpaceID:     "space-1",
+		UserID:      "user-3",
+		Username:    "charlie",
+		DisplayName: "Charlie",
+		Role:        "member",
+		CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	}}, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-3", "charlie", "member"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().SpaceMembers(ctx, s.ID)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
 	assert.Equal(t, "user-3", result[1].UserID)
-	assert.True(t, result[1].CanChangeRole)
-	assert.True(t, result[1].CanRemove)
+	assert.Equal(t, "organization", result[1].RoleSource)
+	assert.Equal(t, "member", result[1].Role)
+	assert.False(t, result[1].CanChangeRole)
+	assert.False(t, result[1].CanRemove)
 	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 }
@@ -1378,7 +1464,7 @@ func TestSpaceMembers_RequiresManagePermission(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 }
 
-func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
+func TestInviteSpaceMember_RejectsExistingOrgMemberByEmail(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
 	userStore := &MockUserStore{}
@@ -1396,25 +1482,12 @@ func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
 		Username:    "bob",
 		DisplayName: "Bob",
 	}, nil)
-	spaceStore.On("HasMember", mock.Anything, "space-acme", "user-2").Return(false, nil)
-	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-2", "member").Return(nil)
-	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
-		SpaceID:     "space-1",
-		UserID:      "user-2",
-		Username:    "bob",
-		DisplayName: "Bob",
-		Role:        "member",
-		CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
-	}}, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Mutation().InviteSpaceMember(ctx, s.ID, "Bob@Example.com", "member")
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "added", result.Status)
-	require.NotNil(t, result.Member)
-	assert.Equal(t, "user-2", result.Member.UserID)
-	assert.Nil(t, result.Invitation)
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already has access")
 
 	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
