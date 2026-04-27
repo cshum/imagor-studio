@@ -112,6 +112,7 @@ func TestAddOrgMember_Success(t *testing.T) {
 		ID:       "user-3",
 		Username: "charlie",
 	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-3").Return((*org.Org)(nil), nil)
 
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
@@ -157,6 +158,7 @@ func TestAddOrgMember_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 	userStore.On("GetByUsername", mock.Anything, "extra").Return(&model.User{
 		ID: "user-extra", Username: "extra",
 	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-extra").Return((*org.Org)(nil), nil)
 
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
@@ -178,6 +180,27 @@ func TestAddOrgMember_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 	userStore.AssertExpectations(t)
 }
 
+func TestAddOrgMember_RejectsUserInAnotherOrganization(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	userStore := &MockUserStore{}
+	r := newMemberResolver(orgStore, userStore)
+
+	userStore.On("GetByUsername", mock.Anything, "extra").Return(&model.User{
+		ID:       "user-extra",
+		Username: "extra",
+	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-extra").Return(makeTestOrg("org-2", "user-extra"), nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().AddOrgMember(ctx, "extra", "member")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already belongs to another organization")
+	orgStore.AssertNotCalled(t, "AddMember", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+}
+
 func TestAddOrgMemberByEmail_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	userStore := &MockUserStore{}
@@ -187,6 +210,7 @@ func TestAddOrgMemberByEmail_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 		ID:       "user-extra",
 		Username: "extra",
 	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-extra").Return((*org.Org)(nil), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
@@ -203,6 +227,27 @@ func TestAddOrgMemberByEmail_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 	assert.Equal(t, "user-extra", result.UserID)
 	assert.Equal(t, "extra", result.Username)
 	assert.Equal(t, "member", result.Role)
+	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+}
+
+func TestAddOrgMemberByEmail_RejectsUserInAnotherOrganization(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	userStore := &MockUserStore{}
+	r := newMemberResolver(orgStore, userStore)
+
+	userStore.On("GetByEmail", mock.Anything, "extra@example.com").Return(&userstore.User{
+		ID:       "user-extra",
+		Username: "extra",
+	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-extra").Return(makeTestOrg("org-2", "user-extra"), nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().AddOrgMemberByEmail(ctx, "extra@example.com", "member")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already belongs to another organization")
+	orgStore.AssertNotCalled(t, "AddMember", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	orgStore.AssertExpectations(t)
 	userStore.AssertExpectations(t)
 }

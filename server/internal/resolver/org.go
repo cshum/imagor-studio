@@ -1356,6 +1356,28 @@ func (r *queryResolver) OrgMembers(ctx context.Context) ([]*gql.OrgMember, error
 	return result, nil
 }
 
+func (r *mutationResolver) ensureUserCanJoinOrganization(ctx context.Context, orgID, userID string) error {
+	currentOrg, err := r.orgStore.GetByUserID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to verify existing organization membership: %w", err)
+	}
+	if currentOrg != nil && currentOrg.ID != orgID {
+		return fmt.Errorf("user already belongs to another organization")
+	}
+
+	members, err := r.orgStore.ListMembers(ctx, orgID)
+	if err != nil {
+		return fmt.Errorf("failed to verify org membership: %w", err)
+	}
+	for _, member := range members {
+		if member.UserID == userID {
+			return fmt.Errorf("user is already a member of your organization")
+		}
+	}
+
+	return nil
+}
+
 // AddOrgMember adds a user (found by username) to the caller's org (admin only).
 func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, role string) (*gql.OrgMember, error) {
 	if err := RequireAdminPermission(ctx); err != nil {
@@ -1376,6 +1398,10 @@ func (r *mutationResolver) AddOrgMember(ctx context.Context, username string, ro
 	}
 	if user == nil {
 		return nil, fmt.Errorf("user %q not found", username)
+	}
+
+	if err := r.ensureUserCanJoinOrganization(ctx, orgID, user.ID); err != nil {
+		return nil, err
 	}
 
 	if err := r.orgStore.AddMember(ctx, orgID, user.ID, role); err != nil {
@@ -1427,14 +1453,8 @@ func (r *mutationResolver) AddOrgMemberByEmail(ctx context.Context, email string
 		return nil, fmt.Errorf("user with email %q not found", normalizedEmail)
 	}
 
-	members, err := r.orgStore.ListMembers(ctx, orgID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to verify org membership: %w", err)
-	}
-	for _, member := range members {
-		if member.UserID == user.ID {
-			return nil, fmt.Errorf("user is already a member of your organization")
-		}
+	if err := r.ensureUserCanJoinOrganization(ctx, orgID, user.ID); err != nil {
+		return nil, err
 	}
 
 	if err := r.orgStore.AddMember(ctx, orgID, user.ID, role); err != nil {

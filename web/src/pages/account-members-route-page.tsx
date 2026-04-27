@@ -147,6 +147,10 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
     }
   }
 
+  const requestRemoveMember = (userId: string) => {
+    window.setTimeout(() => setPendingRemoveUserId(userId), 0)
+  }
+
   return (
     <div className='space-y-8'>
       <div>
@@ -283,7 +287,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   className='text-destructive focus:text-destructive'
-                                  onClick={() => setPendingRemoveUserId(member.userId)}
+                                  onClick={() => requestRemoveMember(member.userId)}
                                 >
                                   <UserMinus className='mr-2 h-4 w-4' />
                                   {t('pages.organizationMembers.removeMember')}
@@ -360,7 +364,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className='text-destructive focus:text-destructive'
-                                onClick={() => setPendingRemoveUserId(member.userId)}
+                                onClick={() => requestRemoveMember(member.userId)}
                               >
                                 <UserMinus className='mr-2 h-4 w-4' />
                                 {t('pages.organizationMembers.removeMember')}
