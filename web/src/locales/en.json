@@ -122,6 +122,7 @@
       "gallery": "Gallery",
       "profile": "Profile",
       "account": "Account",
+      "organization": "Organization",
       "billing": "Billing",
       "organizationMembers": "Members",
       "settings": "Settings",

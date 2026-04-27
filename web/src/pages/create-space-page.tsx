@@ -393,8 +393,7 @@ export function CreateSpacePage() {
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
   const accountLinks = authState.multiTenant
     ? [
-        { label: t('layouts.account.tabs.billing'), href: '/account/billing' },
-        { label: t('navigation.breadcrumbs.organizationMembers'), href: '/account/members' },
+        { label: t('navigation.breadcrumbs.organization'), href: '/account/organization' },
       ]
     : []
 

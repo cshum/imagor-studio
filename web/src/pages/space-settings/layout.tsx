@@ -74,13 +74,8 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
   const isAdmin = authState.profile?.role === 'admin'
-  const accountLinks = authState.multiTenant
-    ? [
-        { label: t('layouts.account.tabs.billing'), href: '/account/billing' },
-        ...(isAdmin
-          ? [{ label: t('navigation.breadcrumbs.organizationMembers'), href: '/account/members' }]
-          : []),
-      ]
+  const accountLinks = authState.multiTenant && isAdmin
+    ? [{ label: t('navigation.breadcrumbs.organization'), href: '/account/organization' }]
     : []
 
   const handleLogout = async () => {

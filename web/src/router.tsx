@@ -56,6 +56,7 @@ import {
   spaceSecuritySectionLoader,
 } from '@/loaders/space-settings-loader'
 import { AccountBillingRoutePage } from '@/pages/account-billing-route-page'
+import { AccountOrganizationLayout } from '@/pages/account-organization-layout'
 import { AccountMembersRoutePage } from '@/pages/account-members-route-page'
 import { AccountProfileRoutePage } from '@/pages/account-profile-route-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
@@ -633,23 +634,53 @@ const accountProfileRoute = createRoute({
   },
 })
 
-const accountBillingRoute = createRoute({
+const accountLegacyBillingRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/billing',
+  beforeLoad: () => {
+    throw redirect({ to: '/account/organization/billing' })
+  },
+})
+
+const accountLegacyMembersRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/members',
+  beforeLoad: () => {
+    throw redirect({ to: '/account/organization/members' })
+  },
+})
+
+const accountOrganizationLayoutRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/organization',
+  beforeLoad: requireAdminAccountAuth,
+  component: () => <AccountOrganizationLayout />,
+})
+
+const accountOrganizationIndexRoute = createRoute({
+  getParentRoute: () => accountOrganizationLayoutRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/account/organization/billing' })
+  },
+})
+
+const accountOrganizationBillingRoute = createRoute({
+  getParentRoute: () => accountOrganizationLayoutRoute,
+  path: '/billing',
   loader: billingLoader,
   component: () => {
-    const loaderData = accountBillingRoute.useLoaderData()
+    const loaderData = accountOrganizationBillingRoute.useLoaderData()
     return <AccountBillingRoutePage loaderData={loaderData} />
   },
 })
 
-const accountMembersRoute = createRoute({
-  getParentRoute: () => accountLayoutRoute,
-  path: '/account/members',
-  beforeLoad: requireAdminAccountAuth,
+const accountOrganizationMembersRoute = createRoute({
+  getParentRoute: () => accountOrganizationLayoutRoute,
+  path: '/members',
   loader: orgMembersLoader,
   component: () => {
-    const loaderData = accountMembersRoute.useLoaderData()
+    const loaderData = accountOrganizationMembersRoute.useLoaderData()
     return <AccountMembersRoutePage loaderData={loaderData} />
   },
 })
@@ -785,8 +816,13 @@ const routeTree = isEmbeddedMode
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
-          accountBillingRoute,
-          accountMembersRoute,
+          accountLegacyBillingRoute,
+          accountLegacyMembersRoute,
+          accountOrganizationLayoutRoute.addChildren([
+            accountOrganizationIndexRoute,
+            accountOrganizationBillingRoute,
+            accountOrganizationMembersRoute,
+          ]),
           accountAdminLayoutRoute.addChildren([
             accountAdminIndexRoute,
             accountAdminGeneralRoute,

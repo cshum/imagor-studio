@@ -193,12 +193,14 @@ export function SpacesPage({
               )}
             </div>
             <div className='flex flex-wrap items-center gap-2'>
-              <Button asChild variant='outline' size='sm'>
-                <Link to='/account/billing'>{t('pages.spaces.managePlan')}</Link>
-              </Button>
               {authState.profile?.role === 'admin' && (
                 <Button asChild variant='outline' size='sm'>
-                  <Link to='/account/members'>{t('pages.spaces.manageMembers')}</Link>
+                  <Link to='/account/organization/billing'>{t('pages.spaces.managePlan')}</Link>
+                </Button>
+              )}
+              {authState.profile?.role === 'admin' && (
+                <Button asChild variant='outline' size='sm'>
+                  <Link to='/account/organization/members'>{t('pages.spaces.manageMembers')}</Link>
                 </Button>
               )}
               {createSpaceDisabled && (

@@ -121,13 +121,8 @@ export function AccountLayout({ children }: PropsWithChildren) {
   const isMultiTenant = authState.multiTenant
   const showSidebar = !isMultiTenant
   const [mobileOpen, setMobileOpen] = useState(false)
-  const accountLinks = isMultiTenant
-    ? [
-        { label: t('layouts.account.tabs.billing'), href: '/account/billing' },
-        ...(isAdmin
-          ? [{ label: t('navigation.breadcrumbs.organizationMembers'), href: '/account/members' }]
-          : []),
-      ]
+  const accountLinks = isMultiTenant && isAdmin
+    ? [{ label: t('navigation.breadcrumbs.organization'), href: '/account/organization' }]
     : []
 
   useScrollHandler(location.pathname)
