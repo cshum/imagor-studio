@@ -813,7 +813,7 @@
         "unlimited": "Illimitato"
       },
       "usageSummaryTitle": "Utilizzo del piano attuale",
-      "manageOrganization": "Gestisci organizzazione",
+      "manageOrganization": "Organizzazione",
       "usageSummaryMeta": "{{owned}} tuoi · {{shared}} condivisi",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} trasformazioni",

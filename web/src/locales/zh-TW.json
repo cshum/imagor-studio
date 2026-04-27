@@ -804,7 +804,7 @@
         "unlimited": "不限"
       },
       "usageSummaryTitle": "目前方案用量",
-      "manageOrganization": "管理組織",
+      "manageOrganization": "組織",
       "usageSummaryMeta": "{{owned}} 個由你擁有 · {{shared}} 個與你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} 次處理",

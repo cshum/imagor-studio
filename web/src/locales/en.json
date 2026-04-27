@@ -813,7 +813,7 @@
         "unlimited": "Unlimited"
       },
       "usageSummaryTitle": "Current plan usage",
-      "manageOrganization": "Manage organization",
+      "manageOrganization": "Organization",
       "usageSummaryMeta": "{{owned}} owned · {{shared}} shared",
       "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} transforms",

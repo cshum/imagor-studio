@@ -48,7 +48,7 @@ function SpacesPageActions({
   return (
     <div className='flex flex-wrap items-center gap-2'>
       {isAdmin && (
-        <Link to='/account/organization/overview'>
+        <Link to='/account/organization/billing'>
           <Button variant='outline'>{t('pages.spaces.manageOrganization')}</Button>
         </Link>
       )}
