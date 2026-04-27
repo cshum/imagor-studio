@@ -57,6 +57,10 @@ type UsageSummary {
   spaces: [SpaceUsage!]!
 }
 
+type BillingSession {
+  url: String!
+}
+
 input SpaceInput {
   key: String!
   name: String!
@@ -136,6 +140,10 @@ extend type Query {
 }
 
 extend type Mutation {
+  # Create a checkout session for a paid plan (admin only)
+  createCheckoutSession(plan: String!, successURL: String!, cancelURL: String!): BillingSession!
+  # Create a customer billing portal session (admin only)
+  createBillingPortalSession(returnURL: String!): BillingSession!
   # Create a new space (admin only)
   createSpace(input: SpaceInput!): Space!
   # Update an existing space by key (admin only)

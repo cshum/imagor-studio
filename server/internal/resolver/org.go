@@ -19,6 +19,12 @@ import (
 	"go.uber.org/zap"
 )
 
+var billablePlans = map[string]struct{}{
+	org.PlanStarter: {},
+	org.PlanPro:     {},
+	org.PlanTeam:    {},
+}
+
 // ---------- helpers ----------------------------------------------------------
 
 func mapOrgToGQL(o *org.Org) *gql.Organization {
@@ -809,6 +815,89 @@ func (r *queryResolver) Space(ctx context.Context, key string) (*gql.Space, erro
 }
 
 // ---------- Mutation resolvers -----------------------------------------------
+
+func mapBillingSessionToGQL(session *billing.Session) *gql.BillingSession {
+	return &gql.BillingSession{URL: session.URL}
+}
+
+func validateBillablePlan(plan string) error {
+	plan = strings.TrimSpace(plan)
+	if _, ok := billablePlans[plan]; !ok {
+		return apperror.BadRequest("unsupported billing plan", map[string]interface{}{"reason": "unsupported_billing_plan"})
+	}
+	return nil
+}
+
+func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan string, successURL string, cancelURL string) (*gql.BillingSession, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if !r.cloudEnabled() || r.orgStore == nil {
+		return nil, apperror.BadRequest("billing is not available in this deployment", map[string]interface{}{"reason": "billing_unavailable"})
+	}
+	if r.billingService == nil {
+		return nil, apperror.BadRequest("billing is not configured", map[string]interface{}{"reason": "billing_unavailable"})
+	}
+	if err := validateBillablePlan(plan); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(successURL) == "" || strings.TrimSpace(cancelURL) == "" {
+		return nil, apperror.BadRequest("success and cancel URLs are required", map[string]interface{}{"reason": "billing_redirect_urls_required"})
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if orgID == "" {
+		return nil, fmt.Errorf("no organization found")
+	}
+	session, err := r.billingService.CreateCheckoutSession(ctx, billing.CheckoutSessionInput{
+		OrgID:      orgID,
+		Plan:       strings.TrimSpace(plan),
+		SuccessURL: strings.TrimSpace(successURL),
+		CancelURL:  strings.TrimSpace(cancelURL),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create checkout session: %w", err)
+	}
+	if session == nil || strings.TrimSpace(session.URL) == "" {
+		return nil, fmt.Errorf("billing service returned an empty checkout session")
+	}
+	return mapBillingSessionToGQL(session), nil
+}
+
+func (r *mutationResolver) CreateBillingPortalSession(ctx context.Context, returnURL string) (*gql.BillingSession, error) {
+	if err := RequireAdminPermission(ctx); err != nil {
+		return nil, err
+	}
+	if !r.cloudEnabled() || r.orgStore == nil {
+		return nil, apperror.BadRequest("billing is not available in this deployment", map[string]interface{}{"reason": "billing_unavailable"})
+	}
+	if r.billingService == nil {
+		return nil, apperror.BadRequest("billing is not configured", map[string]interface{}{"reason": "billing_unavailable"})
+	}
+	if strings.TrimSpace(returnURL) == "" {
+		return nil, apperror.BadRequest("return URL is required", map[string]interface{}{"reason": "billing_return_url_required"})
+	}
+	orgID, err := r.getUserOrgID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if orgID == "" {
+		return nil, fmt.Errorf("no organization found")
+	}
+	session, err := r.billingService.CreatePortalSession(ctx, billing.PortalSessionInput{
+		OrgID:     orgID,
+		ReturnURL: strings.TrimSpace(returnURL),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create billing portal session: %w", err)
+	}
+	if session == nil || strings.TrimSpace(session.URL) == "" {
+		return nil, fmt.Errorf("billing service returned an empty portal session")
+	}
+	return mapBillingSessionToGQL(session), nil
+}
 
 // CreateSpace creates a new space (admin only).
 func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput) (*gql.Space, error) {

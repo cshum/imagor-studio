@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
 	sharedinvite "github.com/cshum/imagor-studio/server/pkg/invite"
 	"github.com/cshum/imagor-studio/server/pkg/org"
@@ -58,6 +59,7 @@ type CloudHTTPServices struct {
 	SpaceInviteStore     space.SpaceInviteStore
 	HostedStorageStore   HostedStorageStore
 	ProcessingUsageStore ProcessingUsageStore
+	BillingService       billing.Service
 	CloudConfig          CloudConfig
 	GlobalImagor         ImagorSigningConfig
 	InternalAPISecret    string
@@ -122,6 +124,8 @@ type ProcessingOriginResolverFactory func(cfg CloudConfig, spaceStore space.Spac
 
 type TemplatePreviewRenderClientFactory func(cfg CloudConfig) processing.TemplatePreviewRenderClient
 
+type BillingServiceFactory func(cfg CloudConfig, logger *zap.Logger) (billing.Service, error)
+
 type AutoMigrationConfig struct {
 	DatabaseURL      string
 	ForceAutoMigrate bool
@@ -138,4 +142,5 @@ type CloudFactories struct {
 	InternalRoutes           InternalRoutesRegistrar
 	ProcessingOriginResolver ProcessingOriginResolverFactory
 	TemplatePreviewRenderer  TemplatePreviewRenderClientFactory
+	BillingService           BillingServiceFactory
 }

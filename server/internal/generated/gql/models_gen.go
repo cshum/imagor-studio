@@ -15,6 +15,10 @@ type AuthProvider struct {
 	LinkedAt string  `json:"linkedAt"`
 }
 
+type BillingSession struct {
+	URL string `json:"url"`
+}
+
 type ChangePasswordInput struct {
 	CurrentPassword *string `json:"currentPassword,omitempty"`
 	NewPassword     string  `json:"newPassword"`

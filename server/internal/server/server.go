@@ -133,6 +133,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		resolver.WithCloudConfig(cloudConfig),
 		resolver.WithHostedStorageStore(services.HostedStorageStore),
 		resolver.WithProcessingUsageStore(services.ProcessingUsageStore),
+		resolver.WithBillingService(services.BillingService),
 		resolver.WithProcessingOriginResolver(processingOriginResolver),
 		templatePreviewRenderer,
 	)
@@ -201,6 +202,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		SpaceInviteStore:     services.SpaceInviteStore,
 		HostedStorageStore:   services.HostedStorageStore,
 		ProcessingUsageStore: services.ProcessingUsageStore,
+		BillingService:       services.BillingService,
 		CloudConfig:          cloudConfig,
 		InternalAPISecret:    cloudConfig.InternalAPISecret,
 		Logger:               services.Logger,

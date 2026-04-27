@@ -9,6 +9,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
@@ -86,6 +87,12 @@ func newOrgResolverWithUsageStores(orgStore *MockOrgStore, spaceStore *MockSpace
 		WithHostedStorageStore(hostedStorageStore),
 		WithProcessingUsageStore(processingUsageStore),
 	)
+}
+
+func newOrgResolverWithBilling(orgStore *MockOrgStore, spaceStore *MockSpaceStore, billingService *MockBillingService) *Resolver {
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil, WithBillingService(billingService))
 }
 
 func newOrgResolverWithRegistry(orgStore *MockOrgStore, spaceStore *MockSpaceStore, registryStore *MockRegistryStore) *Resolver {
@@ -250,6 +257,64 @@ func TestUsageSummary_ReturnsPlanLimitsAndUsage(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 	hostedStorageStore.AssertExpectations(t)
 	processingUsageStore.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_CreatesBillingSession(t *testing.T) {
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+
+	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
+		OrgID:      "org-1",
+		Plan:       "pro",
+		SuccessURL: "https://app.example/success",
+		CancelURL:  "https://app.example/cancel",
+	}).Return(&billing.Session{URL: "https://checkout.example/session"}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "https://app.example/success", "https://app.example/cancel")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "https://checkout.example/session", result.URL)
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_RejectsUnsupportedPlan(t *testing.T) {
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, &MockBillingService{})
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "trial", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "unsupported_billing_plan", gqlErr.Extensions["reason"])
+}
+
+func TestCreateBillingPortalSession_RequiresConfiguredBillingService(t *testing.T) {
+	r := newOrgResolver(&MockOrgStore{}, &MockSpaceStore{})
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+
+	_, err := r.Mutation().CreateBillingPortalSession(ctx, "https://app.example/account")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "billing_unavailable", gqlErr.Extensions["reason"])
+}
+
+func TestCreateBillingPortalSession_CreatesPortalSession(t *testing.T) {
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+
+	billingService.On("CreatePortalSession", mock.Anything, billing.PortalSessionInput{
+		OrgID:     "org-1",
+		ReturnURL: "https://app.example/account",
+	}).Return(&billing.Session{URL: "https://billing.example/portal"}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().CreateBillingPortalSession(ctx, "https://app.example/account")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "https://billing.example/portal", result.URL)
+	billingService.AssertExpectations(t)
 }
 
 func TestSpaces_ReturnsSpaces(t *testing.T) {

@@ -13,6 +13,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
@@ -647,6 +648,31 @@ func (m *MockProcessingUsageStore) GetCurrentUsageSummary(ctx context.Context, o
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*management.ProcessingUsageSummary), args.Error(1)
+}
+
+type MockBillingService struct {
+	mock.Mock
+}
+
+func (m *MockBillingService) CreateCheckoutSession(ctx context.Context, input billing.CheckoutSessionInput) (*billing.Session, error) {
+	args := m.Called(ctx, input)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*billing.Session), args.Error(1)
+}
+
+func (m *MockBillingService) CreatePortalSession(ctx context.Context, input billing.PortalSessionInput) (*billing.Session, error) {
+	args := m.Called(ctx, input)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*billing.Session), args.Error(1)
+}
+
+func (m *MockBillingService) HandleWebhook(ctx context.Context, payload []byte, signature string) error {
+	args := m.Called(ctx, payload, signature)
+	return args.Error(0)
 }
 
 // createAdminContextWithOrg creates an admin context that carries an OrgID claim.

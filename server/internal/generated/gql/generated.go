@@ -40,6 +40,10 @@ type ComplexityRoot struct {
 		Provider func(childComplexity int) int
 	}
 
+	BillingSession struct {
+		URL func(childComplexity int) int
+	}
+
 	EmailChangeRequestResult struct {
 		Email                func(childComplexity int) int
 		VerificationRequired func(childComplexity int) int
@@ -117,6 +121,8 @@ type ComplexityRoot struct {
 		ConfigureImagor               func(childComplexity int, input ImagorInput) int
 		ConfigureS3Storage            func(childComplexity int, input S3StorageInput) int
 		CopyFile                      func(childComplexity int, sourcePath string, destPath string, spaceID *string) int
+		CreateBillingPortalSession    func(childComplexity int, returnURL string) int
+		CreateCheckoutSession         func(childComplexity int, plan string, successURL string, cancelURL string) int
 		CreateFolder                  func(childComplexity int, path string, spaceID *string) int
 		CreateSpace                   func(childComplexity int, input SpaceInput) int
 		CreateUser                    func(childComplexity int, input CreateUserInput) int
@@ -383,6 +389,8 @@ type MutationResolver interface {
 	ConfigureImagor(ctx context.Context, input ImagorInput) (*ImagorConfigResult, error)
 	GenerateImagorURL(ctx context.Context, imagePath string, spaceID *string, params ImagorParamsInput) (string, error)
 	GenerateImagorURLFromTemplate(ctx context.Context, templateJSON string, spaceID *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) (string, error)
+	CreateCheckoutSession(ctx context.Context, plan string, successURL string, cancelURL string) (*BillingSession, error)
+	CreateBillingPortalSession(ctx context.Context, returnURL string) (*BillingSession, error)
 	CreateSpace(ctx context.Context, input SpaceInput) (*Space, error)
 	UpdateSpace(ctx context.Context, key string, input SpaceInput) (*Space, error)
 	DeleteSpace(ctx context.Context, key string) (bool, error)
@@ -465,6 +473,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AuthProvider.Provider(childComplexity), true
+
+	case "BillingSession.url":
+		if e.ComplexityRoot.BillingSession.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingSession.URL(childComplexity), true
 
 	case "EmailChangeRequestResult.email":
 		if e.ComplexityRoot.EmailChangeRequestResult.Email == nil {
@@ -824,6 +839,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CopyFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string), args["spaceID"].(*string)), true
+	case "Mutation.createBillingPortalSession":
+		if e.ComplexityRoot.Mutation.CreateBillingPortalSession == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createBillingPortalSession_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateBillingPortalSession(childComplexity, args["returnURL"].(string)), true
+	case "Mutation.createCheckoutSession":
+		if e.ComplexityRoot.Mutation.CreateCheckoutSession == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCheckoutSession_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateCheckoutSession(childComplexity, args["plan"].(string), args["successURL"].(string), args["cancelURL"].(string)), true
 	case "Mutation.createFolder":
 		if e.ComplexityRoot.Mutation.CreateFolder == nil {
 			break
@@ -2406,6 +2443,10 @@ type UsageSummary {
   spaces: [SpaceUsage!]!
 }
 
+type BillingSession {
+  url: String!
+}
+
 input SpaceInput {
   key: String!
   name: String!
@@ -2485,6 +2526,10 @@ extend type Query {
 }
 
 extend type Mutation {
+  # Create a checkout session for a paid plan (admin only)
+  createCheckoutSession(plan: String!, successURL: String!, cancelURL: String!): BillingSession!
+  # Create a customer billing portal session (admin only)
+  createBillingPortalSession(returnURL: String!): BillingSession!
   # Create a new space (admin only)
   createSpace(input: SpaceInput!): Space!
   # Update an existing space by key (admin only)
@@ -3039,6 +3084,38 @@ func (ec *executionContext) field_Mutation_copyFile_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["spaceID"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createBillingPortalSession_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "returnURL", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["returnURL"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createCheckoutSession_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "plan", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["plan"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "successURL", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["successURL"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "cancelURL", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["cancelURL"] = arg2
 	return args, nil
 }
 
@@ -3941,6 +4018,35 @@ func (ec *executionContext) _AuthProvider_linkedAt(ctx context.Context, field gr
 func (ec *executionContext) fieldContext_AuthProvider_linkedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AuthProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BillingSession_url(ctx context.Context, field graphql.CollectedField, obj *BillingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BillingSession_url,
+		func(ctx context.Context) (any, error) {
+			return obj.URL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BillingSession_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BillingSession",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5860,6 +5966,96 @@ func (ec *executionContext) fieldContext_Mutation_generateImagorUrlFromTemplate(
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_generateImagorUrlFromTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createCheckoutSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createCheckoutSession,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateCheckoutSession(ctx, fc.Args["plan"].(string), fc.Args["successURL"].(string), fc.Args["cancelURL"].(string))
+		},
+		nil,
+		ec.marshalNBillingSession2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createCheckoutSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "url":
+				return ec.fieldContext_BillingSession_url(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BillingSession", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createCheckoutSession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createBillingPortalSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createBillingPortalSession,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateBillingPortalSession(ctx, fc.Args["returnURL"].(string))
+		},
+		nil,
+		ec.marshalNBillingSession2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createBillingPortalSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "url":
+				return ec.fieldContext_BillingSession_url(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BillingSession", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createBillingPortalSession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -14525,6 +14721,45 @@ func (ec *executionContext) _AuthProvider(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var billingSessionImplementors = []string{"BillingSession"}
+
+func (ec *executionContext) _BillingSession(ctx context.Context, sel ast.SelectionSet, obj *BillingSession) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, billingSessionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BillingSession")
+		case "url":
+			out.Values[i] = ec._BillingSession_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var emailChangeRequestResultImplementors = []string{"EmailChangeRequestResult"}
 
 func (ec *executionContext) _EmailChangeRequestResult(ctx context.Context, sel ast.SelectionSet, obj *EmailChangeRequestResult) graphql.Marshaler {
@@ -15128,6 +15363,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "generateImagorUrlFromTemplate":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_generateImagorUrlFromTemplate(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createCheckoutSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createCheckoutSession(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createBillingPortalSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createBillingPortalSession(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -17427,6 +17676,20 @@ func (ec *executionContext) marshalNAuthProvider2ᚖgithubᚗcomᚋcshumᚋimago
 		return graphql.Null
 	}
 	return ec._AuthProvider(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBillingSession2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession(ctx context.Context, sel ast.SelectionSet, v BillingSession) graphql.Marshaler {
+	return ec._BillingSession(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBillingSession2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession(ctx context.Context, sel ast.SelectionSet, v *BillingSession) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BillingSession(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
