@@ -106,6 +106,40 @@ func (s *testOrgStore) GetBySlug(ctx context.Context, slug string) (*org.Org, er
 	return mapTestOrg(&organization), nil
 }
 
+func (s *testOrgStore) UpdateBillingState(ctx context.Context, orgID string, update org.BillingStateUpdate) (*org.Org, error) {
+	query := s.db.NewUpdate().Model((*testOrganizationRow)(nil)).Where("id = ?", orgID).Set("updated_at = ?", time.Now().UTC())
+	if update.Plan != nil {
+		query = query.Set("plan = ?", *update.Plan)
+	}
+	if update.PlanStatus != nil {
+		query = query.Set("plan_status = ?", *update.PlanStatus)
+	}
+	if update.ClearStripeCustomerID {
+		query = query.Set("stripe_customer_id = NULL")
+	} else if update.StripeCustomerID != nil {
+		query = query.Set("stripe_customer_id = ?", *update.StripeCustomerID)
+	}
+	if update.ClearStripeSubscriptionID {
+		query = query.Set("stripe_subscription_id = NULL")
+	} else if update.StripeSubscriptionID != nil {
+		query = query.Set("stripe_subscription_id = ?", *update.StripeSubscriptionID)
+	}
+	if update.ClearBillingEmail {
+		query = query.Set("billing_email = NULL")
+	} else if update.BillingEmail != nil {
+		query = query.Set("billing_email = ?", *update.BillingEmail)
+	}
+	if update.ClearTrialEndsAt {
+		query = query.Set("trial_ends_at = NULL")
+	} else if update.TrialEndsAt != nil {
+		query = query.Set("trial_ends_at = ?", *update.TrialEndsAt)
+	}
+	if _, err := query.Exec(ctx); err != nil {
+		return nil, fmt.Errorf("update organization billing state: %w", err)
+	}
+	return s.GetByID(ctx, orgID)
+}
+
 func (s *testOrgStore) ListMembers(ctx context.Context, orgID string) ([]*org.OrgMemberView, error) {
 	type memberRow struct {
 		OrgID       string    `bun:"org_id"`

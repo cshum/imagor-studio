@@ -370,6 +370,14 @@ func (m *MockOrgStore) GetBySlug(ctx context.Context, slug string) (*org.Org, er
 	return args.Get(0).(*org.Org), args.Error(1)
 }
 
+func (m *MockOrgStore) UpdateBillingState(ctx context.Context, orgID string, update org.BillingStateUpdate) (*org.Org, error) {
+	args := m.Called(ctx, orgID, update)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*org.Org), args.Error(1)
+}
+
 func (m *MockOrgStore) ListMembers(ctx context.Context, orgID string) ([]*org.OrgMemberView, error) {
 	args := m.Called(ctx, orgID)
 	if args.Get(0) == nil {

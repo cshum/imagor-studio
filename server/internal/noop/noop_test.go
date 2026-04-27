@@ -43,6 +43,11 @@ func TestNoopOrgStore_AllMethodsReturnError(t *testing.T) {
 		_, err := s.GetBySlug(ctx, "some-slug")
 		require.Error(t, err)
 	})
+
+	t.Run("UpdateBillingState", func(t *testing.T) {
+		_, err := s.UpdateBillingState(ctx, "org-id", org.BillingStateUpdate{})
+		require.Error(t, err)
+	})
 }
 
 // ── SpaceStore ────────────────────────────────────────────────────────────────
