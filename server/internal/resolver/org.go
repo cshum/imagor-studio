@@ -1360,11 +1360,8 @@ func (r *queryResolver) SpaceInvitations(ctx context.Context, spaceID string) ([
 	return result, nil
 }
 
-// OrgMembers lists all members of the caller's organization (admin only).
+// OrgMembers lists all members of the caller's organization.
 func (r *queryResolver) OrgMembers(ctx context.Context) ([]*gql.OrgMember, error) {
-	if err := RequireAdminPermission(ctx); err != nil {
-		return nil, err
-	}
 	if !r.cloudEnabled() {
 		return []*gql.OrgMember{}, nil
 	}

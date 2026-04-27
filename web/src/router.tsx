@@ -34,7 +34,6 @@ import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import { authCallbackLoader } from '@/loaders/auth-callback-loader.ts'
 import {
   requireAccountAuth,
-  requireAdminAccountAuth,
   requireAuth,
   requireImageEditorAuth,
   redirectAuthenticatedUsersWithOrganization,
@@ -662,15 +661,16 @@ const accountLegacyMembersRoute = createRoute({
 const accountOrganizationLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/organization',
-  beforeLoad: requireAdminAccountAuth,
+  beforeLoad: requireOrganizationAccountAuth,
   component: () => <AccountOrganizationLayout />,
 })
 
 const accountOrganizationIndexRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/',
-  beforeLoad: () => {
-    throw redirect({ to: '/account/organization/billing' })
+  beforeLoad: async (context) => {
+    const auth = await requireOrganizationAccountAuth(context)
+    throw redirect({ to: auth.profile?.role === 'admin' ? '/account/organization/billing' : '/account/organization/members' })
   },
 })
 
@@ -685,6 +685,7 @@ const accountOrganizationOverviewRoute = createRoute({
 const accountOrganizationBillingRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/billing',
+  beforeLoad: requireOrganizationAdminAccountAuth,
   loader: billingLoader,
   component: () => {
     const loaderData = accountOrganizationBillingRoute.useLoaderData()

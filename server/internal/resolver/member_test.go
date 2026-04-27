@@ -89,9 +89,16 @@ func TestOrgMembers_RequiresAdmin(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
-	_, err := r.Query().OrgMembers(ctx)
-	require.Error(t, err)
+	result, err := r.Query().OrgMembers(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	orgStore.AssertExpectations(t)
 }
 
 func TestOrgMembers_NilOrgStore_ReturnsEmpty(t *testing.T) {

@@ -93,6 +93,7 @@ function getOrganizationMembersErrorMessage(error: unknown, t: (key: string) => 
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
   const { t } = useTranslation()
   const { authState } = useAuth()
+  const canAdministerOrganization = authState.profile?.role === 'admin'
   const [organization, setOrganization] = useState(loaderData.organization)
   const [members, setMembers] = useState(loaderData.members)
   const [identifier, setIdentifier] = useState('')
@@ -212,32 +213,34 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
         </p>
       </div>
 
-      <SettingsSection
-        title={t('pages.organizationMembers.addTitle')}
-        description={t('pages.organizationMembers.addDescription')}
-        contentClassName='border-t-0'
-      >
-        <div className='grid gap-3 py-1 md:grid-cols-[minmax(0,1fr)_180px_auto]'>
-          <Input
-            value={identifier}
-            onChange={(event) => setIdentifier(event.target.value)}
-            placeholder={t('pages.organizationMembers.identifierPlaceholder')}
-            disabled={isAdding}
-          />
-          <Select value={role} onValueChange={(value: 'admin' | 'member') => setRole(value)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='member'>{t('pages.organizationMembers.roles.member')}</SelectItem>
-              <SelectItem value='admin'>{t('pages.organizationMembers.roles.admin')}</SelectItem>
-            </SelectContent>
-          </Select>
-          <ButtonWithLoading isLoading={isAdding} onClick={handleAddMember}>
-            {t('pages.organizationMembers.addButton')}
-          </ButtonWithLoading>
-        </div>
-      </SettingsSection>
+      {canAdministerOrganization ? (
+        <SettingsSection
+          title={t('pages.organizationMembers.addTitle')}
+          description={t('pages.organizationMembers.addDescription')}
+          contentClassName='border-t-0'
+        >
+          <div className='grid gap-3 py-1 md:grid-cols-[minmax(0,1fr)_180px_auto]'>
+            <Input
+              value={identifier}
+              onChange={(event) => setIdentifier(event.target.value)}
+              placeholder={t('pages.organizationMembers.identifierPlaceholder')}
+              disabled={isAdding}
+            />
+            <Select value={role} onValueChange={(value: 'admin' | 'member') => setRole(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='member'>{t('pages.organizationMembers.roles.member')}</SelectItem>
+                <SelectItem value='admin'>{t('pages.organizationMembers.roles.admin')}</SelectItem>
+              </SelectContent>
+            </Select>
+            <ButtonWithLoading isLoading={isAdding} onClick={handleAddMember}>
+              {t('pages.organizationMembers.addButton')}
+            </ButtonWithLoading>
+          </div>
+        </SettingsSection>
+      ) : null}
 
       <SettingsSection
         title={`${t('pages.organizationMembers.listTitle')} (${members.length})`}
@@ -265,7 +268,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
                 const isOwner =
                   member.userId === organization?.ownerUserId || member.role === 'owner'
                 const isCurrentUser = member.userId === currentUserId
-                const canManage = !isOwner && !isCurrentUser
+                const canManage = canAdministerOrganization && !isOwner && !isCurrentUser
                 const canTransferOwnership = currentUserIsOwner && !isOwner && !isCurrentUser
                 const canShowActions = canManage || canTransferOwnership
 

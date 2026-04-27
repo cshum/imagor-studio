@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 
+import { useAuth } from '@/stores/auth-store'
+
 const ORGANIZATION_TABS = [
   {
     id: 'billing',
@@ -17,6 +19,10 @@ const ORGANIZATION_TABS = [
 export function AccountOrganizationLayout() {
   const { t } = useTranslation()
   const location = useLocation()
+  const { authState } = useAuth()
+  const visibleTabs = ORGANIZATION_TABS.filter(
+    (tab) => tab.id !== 'billing' || authState.profile?.role === 'admin',
+  )
 
   const isActive = (path: string) =>
     location.pathname === path || location.pathname.startsWith(path + '/')
@@ -25,7 +31,7 @@ export function AccountOrganizationLayout() {
     <div className='space-y-6'>
       <div className='border-b'>
         <div className='flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-          {ORGANIZATION_TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <Link
               key={tab.id}
               to={tab.path}
