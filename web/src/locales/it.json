@@ -810,11 +810,11 @@
         "unlimited": "Illimitato"
       },
       "usageSummaryTitle": "Utilizzo del piano attuale",
-      "usageSummaryDescription": "Spazi: {{spaces}}. Storage gestito: {{storage}}.",
-      "currentBillingPeriod": "Periodo di fatturazione corrente: {{start}} - {{end}}",
+      "usageSummaryMeta": "{{owned}} tuoi · {{shared}} condivisi",
+      "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} trasformazioni",
       "usage": {
-        "spaceQuota": "Quota spazi",
+        "spaces": "Spazi",
         "hostedStorage": "Storage gestito",
         "processing": "Processing"
       },

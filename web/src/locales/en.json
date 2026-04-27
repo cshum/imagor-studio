@@ -810,11 +810,11 @@
         "unlimited": "Unlimited"
       },
       "usageSummaryTitle": "Current plan usage",
-      "usageSummaryDescription": "Spaces: {{spaces}}. Hosted storage: {{storage}}.",
-      "currentBillingPeriod": "Current billing period: {{start}} to {{end}}",
+      "usageSummaryMeta": "{{owned}} owned · {{shared}} shared",
+      "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} transforms",
       "usage": {
-        "spaceQuota": "Space quota",
+        "spaces": "Spaces",
         "hostedStorage": "Hosted storage",
         "processing": "Processing"
       },

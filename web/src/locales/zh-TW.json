@@ -801,11 +801,11 @@
         "unlimited": "不限"
       },
       "usageSummaryTitle": "目前方案用量",
-      "usageSummaryDescription": "空間：{{spaces}}。託管儲存：{{storage}}。",
-      "currentBillingPeriod": "目前計費週期：{{start}} 至 {{end}}",
+      "usageSummaryMeta": "{{owned}} 個由你擁有 · {{shared}} 個與你共享",
+      "currentBillingPeriod": "{{start}} - {{end}}",
       "processingUsage": "{{count}} 次處理",
       "usage": {
-        "spaceQuota": "空間額度",
+        "spaces": "空間",
         "hostedStorage": "託管儲存",
         "processing": "處理量"
       },

@@ -48,6 +48,13 @@ function formatCount(value: number) {
   return new Intl.NumberFormat().format(value)
 }
 
+function formatUsagePeriodDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date(value))
+}
+
 function getProgressValue(current: number, max: number | null | undefined) {
   if (max == null || max <= 0) return 0
   return Math.min((current / max) * 100, 100)
@@ -124,10 +131,16 @@ export function SpacesPage({
   const usagePeriod =
     usageSummary?.periodStart && usageSummary?.periodEnd
       ? t('pages.spaces.currentBillingPeriod', {
-          start: new Date(usageSummary.periodStart).toLocaleDateString(),
-          end: new Date(usageSummary.periodEnd).toLocaleDateString(),
+          start: formatUsagePeriodDate(usageSummary.periodStart),
+          end: formatUsagePeriodDate(usageSummary.periodEnd),
         })
       : null
+  const usageMeta = hasSpaces
+    ? t('pages.spaces.usageSummaryMeta', {
+        owned: ownedCount,
+        shared: sharedCount,
+      })
+    : null
 
   const handleLeaveSpace = async () => {
     if (!leaveSpaceItem) return
@@ -160,50 +173,23 @@ export function SpacesPage({
 
   return (
     <div className='space-y-6'>
-      {hasSpaces && (
-        <div className='grid gap-3 sm:grid-cols-4'>
-          <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.totalSpaces')}
-            </p>
-            <p className='mt-2 text-2xl font-semibold'>{spaces.length}</p>
-          </div>
-          <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.yourSpaces')}
-            </p>
-            <p className='mt-2 text-2xl font-semibold'>{ownedCount}</p>
-          </div>
-          <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.sharedWithYou')}
-            </p>
-            <p className='mt-2 text-2xl font-semibold'>{sharedCount}</p>
-          </div>
-          <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.spaceQuota')}
-            </p>
-            <p className='mt-2 text-2xl font-semibold'>{spacesSummary}</p>
-            <p className='text-muted-foreground mt-1 text-xs'>
-              {t(`pages.spaces.plan.${currentOrganizationPlan ?? 'free'}`)}
-            </p>
-          </div>
-        </div>
-      )}
-
       {currentOrganizationId !== null && (
         <div className='bg-muted/30 rounded-xl border p-4'>
           <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <div className='space-y-1'>
-              <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
-              <p className='text-muted-foreground text-sm'>
-                {t('pages.spaces.usageSummaryDescription', {
-                  spaces: spacesSummary,
-                  storage: hostedStorageSummary,
-                })}
-              </p>
-              {usagePeriod && <p className='text-muted-foreground text-xs'>{usagePeriod}</p>}
+              <div className='flex flex-wrap items-center gap-2'>
+                <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
+                <Badge variant='secondary'>
+                  {t(`pages.spaces.plan.${currentOrganizationPlan ?? 'free'}`)}
+                </Badge>
+              </div>
+              {(usageMeta || usagePeriod) && (
+                <p className='text-muted-foreground text-xs'>
+                  {usageMeta}
+                  {usageMeta && usagePeriod ? ' · ' : ''}
+                  {usagePeriod}
+                </p>
+              )}
             </div>
             {createSpaceDisabled && (
               <Badge variant='outline' className='w-fit'>
@@ -215,7 +201,7 @@ export function SpacesPage({
           <div className='mt-4 grid gap-4 sm:grid-cols-3'>
             <div className='space-y-2'>
               <div className='flex items-center justify-between gap-3 text-sm'>
-                <span className='font-medium'>{t('pages.spaces.usage.spaceQuota')}</span>
+                <span className='font-medium'>{t('pages.spaces.usage.spaces')}</span>
                 <span className='text-muted-foreground'>{spacesSummary}</span>
               </div>
               <Progress value={getProgressValue(usedSpaces, maxSpaces)} />
