@@ -236,7 +236,9 @@ export const orgMembersLoader = async (): Promise<OrgMembersLoaderData> => {
   const organization = await getMyOrganization()
   const [members, invitations] = await Promise.all([
     listOrgMembers(),
-    isOrganizationAdminRole(organization?.currentUserRole) ? listOrgInvitations() : Promise.resolve([]),
+    isOrganizationAdminRole(organization?.currentUserRole)
+      ? listOrgInvitations()
+      : Promise.resolve([]),
   ])
 
   return {
