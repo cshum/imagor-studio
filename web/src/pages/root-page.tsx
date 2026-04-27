@@ -36,11 +36,7 @@ function CreateSpacePageTrigger({ disabled }: { disabled: boolean }) {
   )
 }
 
-function SpacesPageActions({
-  createSpaceDisabled,
-}: {
-  createSpaceDisabled: boolean
-}) {
+function SpacesPageActions({ createSpaceDisabled }: { createSpaceDisabled: boolean }) {
   return (
     <div className='flex flex-wrap items-center gap-2'>
       <CreateSpacePageTrigger disabled={createSpaceDisabled} />
@@ -68,9 +64,7 @@ export function RootPage({ loaderData }: RootPageProps) {
       <SpacesLayout
         title={t('pages.spaces.title')}
         description={t('pages.spaces.description')}
-        primaryAction={
-          <SpacesPageActions createSpaceDisabled={createSpaceDisabled} />
-        }
+        primaryAction={<SpacesPageActions createSpaceDisabled={createSpaceDisabled} />}
       >
         <SpacesPage
           loaderData={data.spaces}

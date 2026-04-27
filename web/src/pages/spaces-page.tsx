@@ -177,7 +177,7 @@ export function SpacesPage({
       {currentOrganizationId !== null && (
         <Link
           to='/account/organization/billing'
-          className='bg-muted/30 block rounded-xl border p-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+          className='bg-muted/30 hover:bg-muted/50 focus-visible:ring-ring block rounded-xl border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
         >
           <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <div className='space-y-1'>

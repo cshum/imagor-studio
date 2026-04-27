@@ -386,13 +386,13 @@ export function MembersSection({
     options?: { emptyState?: React.ReactNode; showActions?: boolean },
   ) =>
     isLoading ? (
-    <Card>
-      <CardContent className='p-4'>
-        <p className='text-muted-foreground text-sm'>{t('common.status.loading')}</p>
-      </CardContent>
-    </Card>
+      <Card>
+        <CardContent className='p-4'>
+          <p className='text-muted-foreground text-sm'>{t('common.status.loading')}</p>
+        </CardContent>
+      </Card>
     ) : sectionMembers.length === 0 ? (
-      options?.emptyState ?? null
+      (options?.emptyState ?? null)
     ) : (
       <Card>
         <CardContent className='p-0'>
@@ -401,7 +401,9 @@ export function MembersSection({
           >
             <div>{t('pages.spaceSettings.members.listHeaders.member')}</div>
             {options?.showActions === false ? null : (
-              <div className='text-right'>{t('pages.spaceSettings.members.listHeaders.action')}</div>
+              <div className='text-right'>
+                {t('pages.spaceSettings.members.listHeaders.action')}
+              </div>
             )}
           </div>
           <div className='divide-y'>
@@ -457,7 +459,9 @@ export function MembersSection({
                           <div className='flex justify-end'>
                             <DropdownMenu
                               open={openMenuMemberId === desktopMenuId}
-                              onOpenChange={(open) => setOpenMenuMemberId(open ? desktopMenuId : null)}
+                              onOpenChange={(open) =>
+                                setOpenMenuMemberId(open ? desktopMenuId : null)
+                              }
                             >
                               <DropdownMenuTrigger asChild>
                                 <Button

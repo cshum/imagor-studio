@@ -62,8 +62,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     maxSpaces != null && !isUnlimitedLimit(maxSpaces) && usedSpaces > maxSpaces
   const storageLimitGB = usageSummary?.storageLimitGB ?? null
   const usedHostedStorageBytes = usageSummary?.usedHostedStorageBytes ?? 0
-  const storageLimitBytes =
-    storageLimitGB != null ? storageLimitGB * 1024 * 1024 * 1024 : null
+  const storageLimitBytes = storageLimitGB != null ? storageLimitGB * 1024 * 1024 * 1024 : null
   const storageOverLimit =
     storageLimitGB != null &&
     storageLimitBytes != null &&
@@ -211,7 +210,11 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                     </Badge>
                   )}
                   <span
-                    className={item.overLimit ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'}
+                    className={
+                      item.overLimit
+                        ? 'text-amber-700 dark:text-amber-300'
+                        : 'text-muted-foreground'
+                    }
                   >
                     {item.displayValue}
                   </span>
