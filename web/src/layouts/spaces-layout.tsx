@@ -1,6 +1,7 @@
 import { PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useNavigate } from '@tanstack/react-router'
+import { Building2 } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
 import { useBrand } from '@/hooks/use-brand'
@@ -28,7 +29,8 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
       ? [
           {
             label: t('navigation.breadcrumbs.organization'),
-            href: '/account/organization/overview',
+            href: '/account/organization/billing',
+            icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
           },
         ]
       : []

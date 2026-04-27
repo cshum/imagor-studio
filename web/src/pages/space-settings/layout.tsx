@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   ArrowLeft,
+  Building2,
   Clock3,
   Cloud,
   Cpu,
@@ -79,7 +80,8 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
       ? [
           {
             label: t('navigation.breadcrumbs.organization'),
-            href: '/account/organization/overview',
+            href: '/account/organization/billing',
+            icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
           },
         ]
       : []

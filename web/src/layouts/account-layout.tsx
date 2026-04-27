@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
+  Building2,
   Cpu,
   HardDrive,
   KeyRound,
@@ -126,7 +127,8 @@ export function AccountLayout({ children }: PropsWithChildren) {
       ? [
           {
             label: t('navigation.breadcrumbs.organization'),
-            href: '/account/organization/overview',
+            href: '/account/organization/billing',
+            icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
           },
         ]
       : []
