@@ -192,4 +192,135 @@ describe('AccountMembersRoutePage pending invitations', () => {
     })
     expect(mockToastSuccess).toHaveBeenCalledWith('pages.organizationMembers.messages.inviteCanceled')
   })
+
+  it('treats an already-removed org invite as a successful cancel', async () => {
+    const { AccountMembersRoutePage } = await import('./account-members-route-page')
+    mockCancelOrgInvitation.mockRejectedValue({
+      response: {
+        errors: [
+          {
+            message: 'organization invitation not found',
+            extensions: { reason: 'org_invitation_not_found' },
+          },
+        ],
+      },
+    })
+
+    render(
+      <AccountMembersRoutePage
+        loaderData={{
+          breadcrumb: { translationKey: 'navigation.breadcrumbs.organizationMembers' },
+          invitations: [
+            {
+              __typename: 'OrgInvitation',
+              id: 'invite-1',
+              email: 'pending@example.com',
+              role: 'member',
+              createdAt: '2026-04-18T00:00:00Z',
+              expiresAt: '2026-04-25T00:00:00Z',
+            },
+          ],
+          members: [
+            {
+              __typename: 'OrgMember',
+              userId: 'user-1',
+              username: 'alice',
+              displayName: 'Alice',
+              email: 'alice@example.com',
+              avatarUrl: null,
+              role: 'owner',
+              createdAt: '2026-04-18T00:00:00Z',
+            },
+          ],
+          organization: {
+            __typename: 'Organization',
+            id: 'org-1',
+            name: 'Acme Org',
+            slug: 'acme',
+            ownerUserId: 'user-1',
+            currentUserRole: 'owner',
+            plan: 'trial',
+            planStatus: 'active',
+            createdAt: '2026-04-18T00:00:00Z',
+            updatedAt: '2026-04-18T00:00:00Z',
+          },
+        }}
+      />,
+    )
+
+    fireEvent.click(screen.getByText('pages.organizationMembers.cancelInvite'))
+
+    await waitFor(() => {
+      expect(mockCancelOrgInvitation).toHaveBeenCalledWith({ invitationId: 'invite-1' })
+    })
+    await waitFor(() => {
+      expect(screen.queryByText('pending@example.com')).toBeNull()
+    })
+    expect(mockToastSuccess).toHaveBeenCalledWith('pages.organizationMembers.messages.inviteCanceled')
+    expect(mockToastError).not.toHaveBeenCalled()
+  })
+
+  it('does not reload organization data after sending a new org invitation', async () => {
+    const { AccountMembersRoutePage } = await import('./account-members-route-page')
+    mockInviteOrgMember.mockResolvedValue({
+      __typename: 'OrgInviteResult',
+      status: 'invited',
+      invitation: {
+        __typename: 'OrgInvitation',
+        id: 'invite-2',
+        email: 'new@example.com',
+        role: 'member',
+        createdAt: '2026-04-18T00:00:00Z',
+        expiresAt: '2026-04-25T00:00:00Z',
+      },
+      member: null,
+    })
+
+    render(
+      <AccountMembersRoutePage
+        loaderData={{
+          breadcrumb: { translationKey: 'navigation.breadcrumbs.organizationMembers' },
+          invitations: [],
+          members: [
+            {
+              __typename: 'OrgMember',
+              userId: 'user-1',
+              username: 'alice',
+              displayName: 'Alice',
+              email: 'alice@example.com',
+              avatarUrl: null,
+              role: 'owner',
+              createdAt: '2026-04-18T00:00:00Z',
+            },
+          ],
+          organization: {
+            __typename: 'Organization',
+            id: 'org-1',
+            name: 'Acme Org',
+            slug: 'acme',
+            ownerUserId: 'user-1',
+            currentUserRole: 'owner',
+            plan: 'trial',
+            planStatus: 'active',
+            createdAt: '2026-04-18T00:00:00Z',
+            updatedAt: '2026-04-18T00:00:00Z',
+          },
+        }}
+      />,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('pages.organizationMembers.identifierPlaceholder'), {
+      target: { value: 'new@example.com' },
+    })
+    fireEvent.click(screen.getByText('pages.organizationMembers.addButton'))
+
+    await waitFor(() => {
+      expect(mockInviteOrgMember).toHaveBeenCalledWith({ email: 'new@example.com', role: 'member' })
+    })
+    expect(mockGetMyOrganization).not.toHaveBeenCalled()
+    expect(mockListOrgMembers).not.toHaveBeenCalled()
+    expect(mockListOrgInvitations).not.toHaveBeenCalled()
+    expect(mockRefreshAuthSession).not.toHaveBeenCalled()
+    expect(mockToastSuccess).toHaveBeenCalledWith('pages.organizationMembers.messages.inviteSent')
+  })
 })

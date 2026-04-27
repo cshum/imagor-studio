@@ -2073,6 +2073,33 @@ func TestCancelOrgInvitation_DeletesPendingInvite(t *testing.T) {
 	inviteStore.AssertExpectations(t)
 }
 
+func TestCancelOrgInvitation_ReturnsNotFoundReasonForMissingInvite(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	r := newOrgResolverWithInviteStore(orgStore, spaceStore, inviteStore, nil)
+
+	inviteStore.On("ListPendingByOrg", mock.Anything, "org-1").Return([]*space.Invitation{{
+		ID:    "invite-1",
+		OrgID: "org-1",
+		Email: "new@example.com",
+		Role:  "member",
+	}}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().CancelOrgInvitation(ctx, "invite-missing")
+	assert.False(t, ok)
+	require.Error(t, err)
+
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "org_invitation_not_found", gqlErr.Extensions["reason"])
+
+	inviteStore.AssertNotCalled(t, "DeletePending", mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+}
+
 func TestRemoveSpaceMember_RejectsHostOrgOwner(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}

@@ -247,18 +247,25 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
   }
 
   const handleCancelInvitation = async (invitationId: string) => {
-  setCancelingInvitationId(invitationId)
-  try {
-    await cancelOrgInvitation({ invitationId })
-    toast.success(t('pages.organizationMembers.messages.inviteCanceled'))
-    setInvitations((current) => current.filter((invitation) => invitation.id !== invitationId))
-  } catch (error) {
-    toast.error(
-      `${t('pages.organizationMembers.messages.inviteCancelFailed')}: ${extractErrorMessage(error)}`,
-    )
-  } finally {
-    setCancelingInvitationId(null)
-  }
+    setCancelingInvitationId(invitationId)
+    try {
+      await cancelOrgInvitation({ invitationId })
+      toast.success(t('pages.organizationMembers.messages.inviteCanceled'))
+      setInvitations((current) => current.filter((invitation) => invitation.id !== invitationId))
+    } catch (error) {
+      const errorInfo = extractErrorInfo(error)
+      if (errorInfo.reason === 'org_invitation_not_found') {
+        toast.success(t('pages.organizationMembers.messages.inviteCanceled'))
+        setInvitations((current) => current.filter((invitation) => invitation.id !== invitationId))
+        return
+      }
+
+      toast.error(
+        `${t('pages.organizationMembers.messages.inviteCancelFailed')}: ${errorInfo.message || extractErrorMessage(error)}`,
+      )
+    } finally {
+      setCancelingInvitationId(null)
+    }
   }
 
   return (
