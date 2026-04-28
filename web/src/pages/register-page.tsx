@@ -255,6 +255,7 @@ export function RegisterPage() {
         </ul>
       }
       formTitle={t('auth.register.formTitle')}
+      showLegalLinks={authState.multiTenant}
     >
       {pendingVerification ? (
         <div className='space-y-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-6'>

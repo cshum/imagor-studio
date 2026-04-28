@@ -73,6 +73,7 @@ import { CreateSpacePage } from '@/pages/create-space-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
+import { PrivacyPage, TermsPage } from '@/pages/legal-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { RegisterPage } from '@/pages/register-page.tsx'
 import { RegisterVerifyPage } from '@/pages/register-verify-page.tsx'
@@ -116,6 +117,18 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   component: LoginPage,
+})
+
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/privacy',
+  component: PrivacyPage,
+})
+
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/terms',
+  component: TermsPage,
 })
 
 const registerRoute = createRoute({
@@ -814,6 +827,7 @@ const accountUsersRoute = createRoute({
 
 // Check if embedded mode is enabled via environment variable
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
 
 // Embedded mode route - single root route with URL parameters
 const embeddedEditorRoute = createRoute({
@@ -834,6 +848,7 @@ const routeTree = isEmbeddedMode
     rootRoute.addChildren([embeddedEditorRoute])
   : // Normal mode: full route tree
     rootRoute.addChildren([
+      ...(isMultiTenantMode ? [privacyRoute, termsRoute] : []),
       loginRoute,
       registerRoute,
       registerVerifyRoute,

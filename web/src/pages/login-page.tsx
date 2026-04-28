@@ -238,6 +238,7 @@ export function LoginPage() {
         </ul>
       }
       formTitle={t('auth.login.formTitle')}
+      showLegalLinks={isMultiTenant}
     >
       {googleEnabled ? (
         <Button
