@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -383,26 +384,37 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Username:    "testuser",
+				Email:       "test@example.com",
 				Password:    "password123",
 			},
 			setupMocks: func(mockUserStore *MockUserStore) {
-				mockUserStore.On("Create", mock.Anything, "testuser", "testuser", mock.AnythingOfType("string"), "user").Return(&userstore.User{
+				mockUserStore.On(
+					"CreateWithEmail",
+					mock.Anything,
+					"testuser",
+					mock.MatchedBy(func(username string) bool {
+						return strings.HasPrefix(username, "u-") && len(username) == 14
+					}),
+					mock.AnythingOfType("string"),
+					"user",
+					"test@example.com",
+				).Return(&userstore.User{
 					ID:          "user-123",
 					DisplayName: "testuser",
-					Username:    "testuser",
+					Username:    "u-generated-1",
 					Role:        "user",
 					IsActive:    true,
+					Email:       ptrToString("test@example.com"),
 				}, nil)
 			},
 			expectedStatus: http.StatusCreated,
 			expectError:    false,
 			expectedUserID: "user-123",
 			expectedName:   "testuser",
-			expectedUser:   "testuser",
+			expectedUser:   "u-generated-1",
 		},
 		{
-			name:   "Valid registration with email",
+			name:   "Valid registration with provided username still works",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
@@ -432,11 +444,21 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "existinguser",
-				Username:    "existinguser",
+				Email:       "existing@example.com",
 				Password:    "password123",
 			},
 			setupMocks: func(mockUserStore *MockUserStore) {
-				mockUserStore.On("Create", mock.Anything, "existinguser", "existinguser", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("displayName already exists"))
+				mockUserStore.On(
+					"CreateWithEmail",
+					mock.Anything,
+					"existinguser",
+					mock.MatchedBy(func(username string) bool {
+						return strings.HasPrefix(username, "u-") && len(username) == 14
+					}),
+					mock.AnythingOfType("string"),
+					"user",
+					"existing@example.com",
+				).Return(nil, fmt.Errorf("displayName already exists"))
 			},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
@@ -447,11 +469,12 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "newuser",
+				Email:       "newuser@example.com",
 				Username:    "existinguser",
 				Password:    "password123",
 			},
 			setupMocks: func(mockUserStore *MockUserStore) {
-				mockUserStore.On("Create", mock.Anything, "newuser", "existinguser", mock.AnythingOfType("string"), "user").Return(nil, userstore.ErrUsernameAlreadyExists)
+				mockUserStore.On("CreateWithEmail", mock.Anything, "newuser", "existinguser", mock.AnythingOfType("string"), "user", "newuser@example.com").Return(nil, userstore.ErrUsernameAlreadyExists)
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
@@ -463,11 +486,20 @@ func TestRegister(t *testing.T) {
 			body: RegisterRequest{
 				DisplayName: "newuser",
 				Email:       "taken@example.com",
-				Username:    "newuser",
 				Password:    "password123",
 			},
 			setupMocks: func(mockUserStore *MockUserStore) {
-				mockUserStore.On("CreateWithEmail", mock.Anything, "newuser", "newuser", mock.AnythingOfType("string"), "user", "taken@example.com").Return(nil, userstore.ErrEmailAlreadyExists)
+				mockUserStore.On(
+					"CreateWithEmail",
+					mock.Anything,
+					"newuser",
+					mock.MatchedBy(func(username string) bool {
+						return strings.HasPrefix(username, "u-") && len(username) == 14
+					}),
+					mock.AnythingOfType("string"),
+					"user",
+					"taken@example.com",
+				).Return(nil, userstore.ErrEmailAlreadyExists)
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
@@ -479,7 +511,6 @@ func TestRegister(t *testing.T) {
 			body: RegisterRequest{
 				DisplayName: "testuser",
 				Email:       "not-an-email",
-				Username:    "testuser",
 				Password:    "password123",
 			},
 			setupMocks:     func(*MockUserStore) {},
@@ -492,7 +523,7 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Username:    "testuser",
+				Email:       "test@example.com",
 				Password:    "short",
 			},
 			setupMocks:     func(*MockUserStore) {},
@@ -505,7 +536,7 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "",
-				Username:    "testuser",
+				Email:       "test@example.com",
 				Password:    "password123",
 			},
 			setupMocks:     func(*MockUserStore) {},
@@ -514,11 +545,10 @@ func TestRegister(t *testing.T) {
 			errorCode:      "INVALID_INPUT",
 		},
 		{
-			name:   "Missing username",
+			name:   "Missing email",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Username:    "",
 				Password:    "password123",
 			},
 			setupMocks:     func(*MockUserStore) {},
@@ -1159,14 +1189,24 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, AuthHandlerConfig{})
 
 	const userID = "saas-reg-user-1"
-	mockUserStore.On("Create", mock.Anything, "saasuser", "saasuser", mock.AnythingOfType("string"), "user").
+	mockUserStore.On(
+		"CreateWithEmail",
+		mock.Anything,
+		"saasuser",
+		mock.MatchedBy(func(username string) bool {
+			return strings.HasPrefix(username, "u-") && len(username) == 14
+		}),
+		mock.AnythingOfType("string"),
+		"user",
+		"saasuser@example.com",
+	).
 		Return(&userstore.User{
-			ID: userID, DisplayName: "saasuser", Username: "saasuser", Role: "user", IsActive: true,
+			ID: userID, DisplayName: "saasuser", Username: "u-saasuser001", Role: "user", IsActive: true,
 		}, nil)
 
 	body, err := json.Marshal(RegisterRequest{
 		DisplayName: "saasuser",
-		Username:    "saasuser",
+		Email:       "saasuser@example.com",
 		Password:    "password123",
 	})
 	require.NoError(t, err)
@@ -1191,7 +1231,7 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, org, "org should have been created on signup")
 	assert.Equal(t, claims.OrgID, org.ID, "JWT org_id must match the created org")
-	assert.Equal(t, "saasuser", org.Slug)
+	assert.Equal(t, "u-saasuser001", org.Slug)
 	assert.Equal(t, userID, org.OwnerID)
 
 	mockUserStore.AssertExpectations(t)
@@ -1249,10 +1289,20 @@ func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
 	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "DB connection refused"}, nil, logger, AuthHandlerConfig{})
 
 	const userID = "saas-fail-user-1"
-	mockUserStore.On("Create", mock.Anything, "failuser", "failuser", mock.AnythingOfType("string"), "user").
-		Return(&userstore.User{ID: userID, DisplayName: "failuser", Username: "failuser", Role: "user", IsActive: true}, nil)
+	mockUserStore.On(
+		"CreateWithEmail",
+		mock.Anything,
+		"failuser",
+		mock.MatchedBy(func(username string) bool {
+			return strings.HasPrefix(username, "u-") && len(username) == 14
+		}),
+		mock.AnythingOfType("string"),
+		"user",
+		"failuser@example.com",
+	).
+		Return(&userstore.User{ID: userID, DisplayName: "failuser", Username: "u-failuser001", Role: "user", IsActive: true}, nil)
 
-	body, _ := json.Marshal(RegisterRequest{DisplayName: "failuser", Username: "failuser", Password: "password123"})
+	body, _ := json.Marshal(RegisterRequest{DisplayName: "failuser", Email: "failuser@example.com", Password: "password123"})
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
 	handler.Register()(rr, req)

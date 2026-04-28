@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, Navigate, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
 
-import { type AuthApiError, getAuthProviders, getGoogleLoginUrl, register } from '@/api/auth-api'
+import { getAuthProviders, getGoogleLoginUrl, register, type AuthApiError } from '@/api/auth-api'
 import { AuthPageShell } from '@/components/auth-page-shell'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -25,7 +25,6 @@ import { initializeLocale } from '@/stores/locale-store'
 type RegisterFormValues = {
   displayName: string
   email: string
-  username: string
   password: string
   confirmPassword: string
 }
@@ -56,8 +55,6 @@ const GoogleIcon = () => (
   </svg>
 )
 
-const usernamePattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/
-
 export function RegisterPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
@@ -77,12 +74,6 @@ export function RegisterPage() {
         .min(3, t('forms.validation.displayNameMinLength'))
         .max(100, t('forms.validation.displayNameMaxLength')),
       email: z.string().trim().refine(isValidEmail, t('pages.profile.invalidEmail')),
-      username: z
-        .string()
-        .trim()
-        .min(3, t('forms.validation.usernameMinLength'))
-        .max(30, t('forms.validation.usernameMaxLength'))
-        .regex(usernamePattern, t('forms.validation.usernamePattern')),
       password: z
         .string()
         .min(8, t('forms.validation.passwordMinLength'))
@@ -104,7 +95,6 @@ export function RegisterPage() {
     defaultValues: {
       displayName: '',
       email: '',
-      username: '',
       password: '',
       confirmPassword: '',
     },
@@ -141,7 +131,6 @@ export function RegisterPage() {
       const response = await register({
         displayName: values.displayName.trim(),
         email: values.email.trim(),
-        username: values.username.trim(),
         password: values.password,
       })
 
@@ -151,7 +140,11 @@ export function RegisterPage() {
     } catch (error) {
       const apiError = error as AuthApiError
 
-      if (apiError.field === 'displayName' || apiError.field === 'email' || apiError.field === 'username' || apiError.field === 'password') {
+      if (
+        apiError.field === 'displayName' ||
+        apiError.field === 'email' ||
+        apiError.field === 'password'
+      ) {
         form.setError(apiError.field, { message: apiError.message })
         return
       }
@@ -237,23 +230,6 @@ export function RegisterPage() {
                   <Input
                     type='email'
                     placeholder={t('auth.register.emailPlaceholder')}
-                    disabled={form.formState.isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='username'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.admin.username')}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t('forms.placeholders.enterUsername')}
                     disabled={form.formState.isSubmitting}
                     {...field}
                   />

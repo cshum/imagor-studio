@@ -7,8 +7,8 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   displayName: string
-  email?: string
-  username: string
+  email: string
+  username?: string
   password: string
 }
 
@@ -18,10 +18,14 @@ export type AuthApiError = Error & {
 }
 
 function createAuthApiError(errorData: unknown, fallback: string): AuthApiError {
-  const payload = typeof errorData === 'object' && errorData !== null ? (errorData as Record<string, unknown>) : {}
-  const details = typeof payload.details === 'object' && payload.details !== null
-    ? (payload.details as Record<string, unknown>)
-    : undefined
+  const payload =
+    typeof errorData === 'object' && errorData !== null
+      ? (errorData as Record<string, unknown>)
+      : {}
+  const details =
+    typeof payload.details === 'object' && payload.details !== null
+      ? (payload.details as Record<string, unknown>)
+      : undefined
   const error = new Error(
     typeof payload.error === 'string' ? payload.error : fallback,
   ) as AuthApiError
@@ -113,7 +117,7 @@ export async function register(credentials: RegisterRequest): Promise<LoginRespo
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+    throw createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`)
   }
 
   return response.json()

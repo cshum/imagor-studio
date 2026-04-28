@@ -11,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/model"
 	shareduser "github.com/cshum/imagor-studio/server/pkg/user"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
+	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -579,10 +580,8 @@ func (s *store) UpsertOAuth(ctx context.Context, provider, providerID, email, di
 		}
 
 		if !userFound {
-			// OAuth users never log in by username — generate a guaranteed-unique slug
-			// derived from a UUID so there are no collisions and no awkward short usernames
-			// (e.g. "me" from me@example.com).
-			username := "u-" + uuid.GenerateUUID()[:12]
+			// OAuth users never log in by username, so generate a stable internal handle.
+			username := validation.GenerateSystemUsername()
 
 			if displayName == "" {
 				displayName = username

@@ -70,7 +70,7 @@ func (h *AuthHandler) cloudEnabled() bool {
 type RegisterRequest struct {
 	DisplayName string `json:"displayName"`
 	Email       string `json:"email,omitempty"`
-	Username    string `json:"username"`
+	Username    string `json:"username,omitempty"`
 	Password    string `json:"password"`
 }
 
@@ -458,8 +458,20 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 }
 
 func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role string) (*LoginResponse, error) {
+	isPublicSignup := role == "user" && h.cloudEnabled()
+	if isPublicSignup {
+		if strings.TrimSpace(req.Email) == "" {
+			return nil, apperror.BadRequest("Email is required", map[string]interface{}{
+				"field": "email",
+			})
+		}
+		if strings.TrimSpace(req.Username) == "" {
+			req.Username = validation.GenerateSystemUsername()
+		}
+	}
+
 	// Validate input with field-specific errors
-	if err := h.validateRegisterRequest(&req); err != nil {
+	if err := h.validateRegisterRequest(&req, !isPublicSignup); err != nil {
 		return nil, err
 	}
 
@@ -582,7 +594,7 @@ func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role, 
 	}, nil
 }
 
-func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
+func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest, requireUsername bool) error {
 	// Validate displayName
 	if err := validation.ValidateDisplayName(req.DisplayName); err != nil {
 		return apperror.BadRequest("Invalid display name", map[string]interface{}{
@@ -590,11 +602,12 @@ func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
 		})
 	}
 
-	// Validate username
-	if err := validation.ValidateUsername(req.Username); err != nil {
-		return apperror.BadRequest("Invalid username", map[string]interface{}{
-			"field": "username",
-		})
+	if requireUsername || strings.TrimSpace(req.Username) != "" {
+		if err := validation.ValidateUsername(req.Username); err != nil {
+			return apperror.BadRequest("Invalid username", map[string]interface{}{
+				"field": "username",
+			})
+		}
 	}
 
 	if strings.TrimSpace(req.Email) != "" {

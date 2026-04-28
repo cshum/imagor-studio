@@ -5,6 +5,8 @@ import (
 	"net/mail"
 	"regexp"
 	"strings"
+
+	"github.com/cshum/imagor-studio/server/pkg/uuid"
 )
 
 // ValidateDisplayName validates a displayName according to common rules
@@ -92,4 +94,9 @@ func ValidateEmail(email string) error {
 // NormalizeEmail normalizes an email address.
 func NormalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
+}
+
+// GenerateSystemUsername returns a guaranteed-unique internal username.
+func GenerateSystemUsername() string {
+	return "u-" + uuid.GenerateUUID()[:12]
 }
