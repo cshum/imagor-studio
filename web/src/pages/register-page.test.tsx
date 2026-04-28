@@ -134,9 +134,7 @@ describe('RegisterPage pending verification', () => {
     })
 
     expect(screen.getByText('auth.register.pendingTitle')).toBeTruthy()
-    expect(
-      screen.getByText('auth.register.pendingDescription:o***@example.com'),
-    ).toBeTruthy()
+    expect(screen.getByText('auth.register.pendingDescription:o***@example.com')).toBeTruthy()
 
     fireEvent.click(screen.getByText('auth.register.resendAction'))
 
