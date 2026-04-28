@@ -295,6 +295,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
         >
           <div className='grid gap-3 py-1 md:grid-cols-[minmax(0,1fr)_180px_auto]'>
             <Input
+              className='h-10'
               value={identifier}
               onChange={(event) => setIdentifier(event.target.value)}
               placeholder={t('pages.organizationMembers.identifierPlaceholder')}
@@ -548,7 +549,9 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
         >
           {invitations.length === 0 ? (
             <div className='rounded-lg border border-dashed p-6 text-center'>
-              <p className='font-medium'>{t('pages.organizationMembers.pendingEmpty')}</p>
+              <p className='text-muted-foreground text-sm'>
+                {t('pages.organizationMembers.pendingEmpty')}
+              </p>
             </div>
           ) : (
             <div className='space-y-3'>

@@ -936,7 +936,7 @@
       "listDescription": "Persone con accesso a {{name}}.",
       "listDescriptionFallback": "Persone con accesso a questa organizzazione.",
       "pendingDescription": "Inviti inviati ma non ancora accettati.",
-      "pendingEmpty": "Nessun invito organizzazione in sospeso.",
+      "pendingEmpty": "Al momento non ci sono inviti in sospeso.",
       "pendingExpiresAt": "Scade il {{expiresAt}}",
       "empty": "Nessuno ha ancora accesso",
       "emptyDescription": "Aggiungi qui i collaboratori per dare loro accesso all'organizzazione e agli spazi condivisi.",

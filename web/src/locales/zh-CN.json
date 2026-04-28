@@ -919,7 +919,7 @@
       "listDescription": "可访问 {{name}} 的成员。",
       "listDescriptionFallback": "可访问当前组织的成员。",
       "pendingDescription": "已发送但尚未接受的邀请。",
-      "pendingEmpty": "当前没有待处理的组织邀请。",
+      "pendingEmpty": "当前没有待回复的邀请。",
       "pendingExpiresAt": "将于 {{expiresAt}} 过期",
       "empty": "还没有人拥有访问权限",
       "emptyDescription": "在这里添加成员，以授予他们对当前组织及其共享空间的访问权限。",

@@ -939,7 +939,7 @@
       "listDescription": "People with access to {{name}}.",
       "listDescriptionFallback": "People with access to this organization.",
       "pendingDescription": "Invitations that have been sent but not accepted yet.",
-      "pendingEmpty": "No pending organization invites.",
+      "pendingEmpty": "No invites pending right now.",
       "pendingExpiresAt": "Expires {{expiresAt}}",
       "empty": "No people have access yet",
       "emptyDescription": "Add teammates here to give them access to the organization and its shared spaces.",

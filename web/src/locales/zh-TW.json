@@ -937,7 +937,7 @@
       "listDescription": "可存取 {{name}} 的成員。",
       "listDescriptionFallback": "可存取目前組織的成員。",
       "pendingDescription": "已寄出但尚未接受的邀請。",
-      "pendingEmpty": "目前沒有待處理的組織邀請。",
+      "pendingEmpty": "目前沒有待回覆的邀請。",
       "pendingExpiresAt": "將於 {{expiresAt}} 到期",
       "empty": "目前還沒有人擁有存取權",
       "emptyDescription": "在這裡新增成員，授予他們目前組織及其共享空間的存取權。",
