@@ -9,6 +9,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
+import { getMyOrganization } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
@@ -24,17 +25,21 @@ import {
   adminImagorLoader,
   adminLicenseLoader,
   adminStorageLoader,
+  billingLoader,
+  orgMembersLoader,
   profileLoader,
-  spaceSettingsLoader,
+  resolveSpaceSettingsRouteContext,
   usersLoader,
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import { authCallbackLoader } from '@/loaders/auth-callback-loader.ts'
 import {
+  redirectAuthenticatedUsersWithOrganization,
   requireAccountAuth,
-  requireAdminAccountAuth,
   requireAuth,
   requireImageEditorAuth,
+  requireOrganizationAccountAuth,
+  requireOrganizationAdminAccountAuth,
   requireSelfHostedAdminAccountAuth,
   requireSelfHostedImageEditorAuth,
 } from '@/loaders/auth-loader.ts'
@@ -53,6 +58,9 @@ import {
   spaceMembersSectionLoader,
   spaceSecuritySectionLoader,
 } from '@/loaders/space-settings-loader'
+import { AccountBillingRoutePage } from '@/pages/account-billing-route-page'
+import { AccountMembersRoutePage } from '@/pages/account-members-route-page'
+import { AccountOrganizationLayout } from '@/pages/account-organization-layout'
 import { AccountProfileRoutePage } from '@/pages/account-profile-route-page'
 import { AdminSetupPage } from '@/pages/admin-setup-page'
 import { AdminGeneralSection } from '@/pages/admin/general'
@@ -65,7 +73,10 @@ import { CreateSpacePage } from '@/pages/create-space-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
+import { PrivacyPage, TermsPage } from '@/pages/legal-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
+import { RegisterPage } from '@/pages/register-page.tsx'
+import { RegisterVerifyPage } from '@/pages/register-verify-page.tsx'
 import { RootPage } from '@/pages/root-page'
 import { GeneralSection } from '@/pages/space-settings/general'
 import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
@@ -73,6 +84,7 @@ import { MembersSection } from '@/pages/space-settings/members'
 import { SecuritySection } from '@/pages/space-settings/security'
 import { StorageSection } from '@/pages/space-settings/storage'
 import { UsersPage } from '@/pages/users-page'
+import { WorkspaceRequiredPage } from '@/pages/workspace-required-page'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import { initializeFolderTreeCache } from '@/stores/folder-tree-store.ts'
 import { checkLicense, useLicense } from '@/stores/license-store'
@@ -105,6 +117,30 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   component: LoginPage,
+})
+
+const privacyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/privacy',
+  component: PrivacyPage,
+})
+
+const termsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/terms',
+  component: TermsPage,
+})
+
+const registerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/register',
+  component: RegisterPage,
+})
+
+const registerVerifyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/register/verify',
+  component: RegisterVerifyPage,
 })
 
 const authCallbackRoute = createRoute({
@@ -157,8 +193,7 @@ const rootPath = createRoute({
   beforeLoad: async (context) => {
     const auth = getAuth()
     if (auth.multiTenant) {
-      // Spaces list requires admin in multi-tenant mode
-      return requireAdminAccountAuth(context)
+      return requireOrganizationAccountAuth(context)
     }
   },
   component: () => {
@@ -502,7 +537,7 @@ const spaceGalleryCanvasEditorRoute = createRoute({
 const createSpaceRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/account/spaces/new',
-  beforeLoad: requireAdminAccountAuth,
+  beforeLoad: requireOrganizationAdminAccountAuth,
   component: CreateSpacePage,
 })
 
@@ -514,7 +549,7 @@ const spaceSettingsLayoutRoute = createRoute({
   path: '/spaces/$spaceKey/settings',
   beforeLoad: async (context) => {
     await requireAccountAuth(context)
-    return spaceSettingsLoader({ params: { routeSpaceKey: context.params.spaceKey } })
+    return resolveSpaceSettingsRouteContext({ params: { routeSpaceKey: context.params.spaceKey } })
   },
   loader: ({ context }) => ({ breadcrumb: context.breadcrumb }),
   shouldReload: false,
@@ -596,7 +631,6 @@ const membersSectionRoute = createRoute({
         spaceID={space.id}
         initialMembers={spaceMembers}
         initialInvitations={invitations}
-        isShared={space.isShared}
         canLeave={space.canLeave}
       />
     )
@@ -610,6 +644,13 @@ const settingsLayoutRoute = createRoute({
   id: 'settings-layout',
   beforeLoad: requireAuth,
   component: () => <Outlet />,
+})
+
+const workspaceRequiredRoute = createRoute({
+  getParentRoute: () => settingsLayoutRoute,
+  path: '/account/workspace-required',
+  beforeLoad: redirectAuthenticatedUsersWithOrganization,
+  component: WorkspaceRequiredPage,
 })
 
 // Redirect /account to /account/profile
@@ -629,10 +670,81 @@ const accountProfileRoute = createRoute({
   },
 })
 
+const accountLegacyBillingRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/billing',
+  beforeLoad: () => {
+    throw redirect({ to: '/account/organization/billing' })
+  },
+})
+
+const accountLegacyMembersRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/members',
+  beforeLoad: () => {
+    throw redirect({ to: '/account/organization/members' })
+  },
+})
+
+const accountOrganizationLayoutRoute = createRoute({
+  getParentRoute: () => accountLayoutRoute,
+  path: '/account/organization',
+  beforeLoad: requireOrganizationAccountAuth,
+  loader: async () => getMyOrganization(),
+  component: () => {
+    const organization = accountOrganizationLayoutRoute.useLoaderData()
+    return <AccountOrganizationLayout currentUserRole={organization?.currentUserRole ?? null} />
+  },
+})
+
+const accountOrganizationIndexRoute = createRoute({
+  getParentRoute: () => accountOrganizationLayoutRoute,
+  path: '/',
+  beforeLoad: async (context) => {
+    await requireOrganizationAccountAuth(context)
+    const organization = await getMyOrganization()
+    throw redirect({
+      to:
+        organization?.currentUserRole === 'owner' || organization?.currentUserRole === 'admin'
+          ? '/account/organization/billing'
+          : '/account/organization/members',
+    })
+  },
+})
+
+const accountOrganizationOverviewRoute = createRoute({
+  getParentRoute: () => accountOrganizationLayoutRoute,
+  path: '/overview',
+  beforeLoad: () => {
+    throw redirect({ to: '/account/organization/billing' })
+  },
+})
+
+const accountOrganizationBillingRoute = createRoute({
+  getParentRoute: () => accountOrganizationLayoutRoute,
+  path: '/billing',
+  beforeLoad: requireOrganizationAdminAccountAuth,
+  loader: billingLoader,
+  component: () => {
+    const loaderData = accountOrganizationBillingRoute.useLoaderData()
+    return <AccountBillingRoutePage loaderData={loaderData} />
+  },
+})
+
+const accountOrganizationMembersRoute = createRoute({
+  getParentRoute: () => accountOrganizationLayoutRoute,
+  path: '/members',
+  loader: orgMembersLoader,
+  component: () => {
+    const loaderData = accountOrganizationMembersRoute.useLoaderData()
+    return <AccountMembersRoutePage loaderData={loaderData} />
+  },
+})
+
 const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
-  beforeLoad: requireAccountAuth,
+  beforeLoad: requireOrganizationAccountAuth,
   component: () => <AccountLayout />,
 })
 
@@ -715,6 +827,7 @@ const accountUsersRoute = createRoute({
 
 // Check if embedded mode is enabled via environment variable
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
+const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
 
 // Embedded mode route - single root route with URL parameters
 const embeddedEditorRoute = createRoute({
@@ -735,7 +848,10 @@ const routeTree = isEmbeddedMode
     rootRoute.addChildren([embeddedEditorRoute])
   : // Normal mode: full route tree
     rootRoute.addChildren([
+      ...(isMultiTenantMode ? [privacyRoute, termsRoute] : []),
       loginRoute,
+      registerRoute,
+      registerVerifyRoute,
       authCallbackRoute,
       adminSetupRoute,
       createSpaceRoute,
@@ -748,6 +864,7 @@ const routeTree = isEmbeddedMode
       spaceCanvasEditorRoute,
       spaceGalleryCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
+        workspaceRequiredRoute,
         rootPath.addChildren([rootImagePage]),
         spaceSettingsLayoutRoute.addChildren([
           spaceSettingsIndexRoute,
@@ -760,6 +877,14 @@ const routeTree = isEmbeddedMode
         accountLayoutRoute.addChildren([
           accountRedirectRoute,
           accountProfileRoute,
+          accountLegacyBillingRoute,
+          accountLegacyMembersRoute,
+          accountOrganizationLayoutRoute.addChildren([
+            accountOrganizationIndexRoute,
+            accountOrganizationOverviewRoute,
+            accountOrganizationBillingRoute,
+            accountOrganizationMembersRoute,
+          ]),
           accountAdminLayoutRoute.addChildren([
             accountAdminIndexRoute,
             accountAdminGeneralRoute,

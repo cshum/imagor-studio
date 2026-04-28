@@ -45,9 +45,10 @@ var (
 	ErrValidationFailed = ErrorInfo{"VALIDATION_FAILED", http.StatusBadRequest}
 	ErrInvalidInput     = ErrorInfo{"INVALID_INPUT", http.StatusBadRequest}
 
-	ErrNotFound      = ErrorInfo{"NOT_FOUND", http.StatusNotFound}
-	ErrAlreadyExists = ErrorInfo{"ALREADY_EXISTS", http.StatusConflict}
-	ErrConflict      = ErrorInfo{"CONFLICT", http.StatusConflict}
+	ErrNotFound        = ErrorInfo{"NOT_FOUND", http.StatusNotFound}
+	ErrAlreadyExists   = ErrorInfo{"ALREADY_EXISTS", http.StatusConflict}
+	ErrConflict        = ErrorInfo{"CONFLICT", http.StatusConflict}
+	ErrTooManyRequests = ErrorInfo{"TOO_MANY_REQUESTS", http.StatusTooManyRequests}
 
 	ErrInternalServer     = ErrorInfo{"INTERNAL_SERVER_ERROR", http.StatusInternalServerError}
 	ErrServiceUnavailable = ErrorInfo{"SERVICE_UNAVAILABLE", http.StatusServiceUnavailable}
@@ -163,6 +164,20 @@ func NotFound(message string, field ...string) error {
 func Conflict(message string, field ...string) error {
 	extensions := map[string]interface{}{
 		"code": ErrAlreadyExists,
+	}
+	addFieldInfo(extensions, field...)
+	return &gqlerror.Error{
+		Message:    message,
+		Extensions: extensions,
+	}
+}
+
+func TooManyRequests(message string, details map[string]interface{}, field ...string) error {
+	extensions := map[string]interface{}{
+		"code": ErrTooManyRequests,
+	}
+	for k, v := range details {
+		extensions[k] = v
 	}
 	addFieldInfo(extensions, field...)
 	return &gqlerror.Error{

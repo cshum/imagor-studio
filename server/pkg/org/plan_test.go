@@ -11,7 +11,7 @@ func TestGetLimits_UsesNormalizedPublishedPlans(t *testing.T) {
 	}{
 		{name: "starter", plan: PlanStarter, wantSpaces: 1, wantStorage: 20},
 		{name: "pro", plan: PlanPro, wantSpaces: 3, wantStorage: 100},
-		{name: "team", plan: PlanTeam, wantSpaces: 10, wantStorage: 500},
+		{name: "team", plan: PlanTeam, wantSpaces: 20, wantStorage: 1000},
 	}
 
 	for _, tt := range tests {
@@ -27,9 +27,9 @@ func TestGetLimits_UsesNormalizedPublishedPlans(t *testing.T) {
 	}
 }
 
-func TestGetLimits_UnknownPlanFallsBackToTrial(t *testing.T) {
+func TestGetLimits_UnknownPlanFallsBackToFree(t *testing.T) {
 	limits := GetLimits("unknown")
-	if limits != PlanLimits[PlanTrial] {
-		t.Fatalf("fallback limits = %+v, want %+v", limits, PlanLimits[PlanTrial])
+	if limits != PlanLimits[PlanFree] {
+		t.Fatalf("fallback limits = %+v, want %+v", limits, PlanLimits[PlanFree])
 	}
 }

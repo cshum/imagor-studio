@@ -9,6 +9,7 @@
       },
       "tabs": {
         "profile": "帳戶設定",
+        "billing": "計費",
         "system": "系統",
         "users": "使用者",
         "spaces": "空間"
@@ -42,7 +43,7 @@
       "users": "使用者",
       "signOut": "登出",
       "login": "登入",
-      "accountSettings": "帳戶設定",
+      "accountSettings": "帳戶",
       "settings": "設定"
     },
     "status": {
@@ -70,13 +71,52 @@
   },
   "auth": {
     "login": {
-      "title": "歡迎回來",
-      "subtitle": "輸入您的憑據以訪問 Imagor Studio",
+      "eyebrow": "Imagor Studio",
+      "title": "適合團隊的高效能圖片處理",
+      "subtitle": "在同一個地方管理圖片儲存、交付與存取權限。",
+      "formTitle": "登入",
+      "formSubtitleCloud": "請使用團隊邀請您的帳號登入。",
+      "formSubtitleSelfHosted": "請使用您的帳號憑證登入。",
+      "googleCta": "使用 Google 繼續",
+      "credentialsDividerCloud": "或使用電子郵件與密碼",
+      "credentialsDividerSelfHosted": "或使用使用者名稱與密碼",
+      "identifierLabelCloud": "電子郵件",
+      "identifierLabelSelfHosted": "使用者名稱",
+      "identifierPlaceholderCloud": "name@example.com",
+      "identifierPlaceholderSelfHosted": "輸入您的使用者名稱",
+      "inviteHint": "使用您的團隊帳號登入，以存取共享空間、交付設定與儲存配置。",
+      "highlights": {
+        "storage": "依團隊或環境控管儲存與交付",
+        "delivery": "無須共用憑證即可管理圖片基礎架構",
+        "access": "在同一處檢視、編輯並整理圖片與範本"
+      },
       "signIn": "登入",
-      "loginFailed": "使用者名稱或密碼無效。請重試。"
+      "loginFailed": "登入憑證無效。請再試一次。",
+      "createAccountPrompt": "第一次使用？",
+      "createAccountLink": "建立帳戶"
+    },
+    "register": {
+      "formTitle": "建立帳戶",
+      "googleCta": "使用 Google 繼續",
+      "credentialsDivider": "或使用電子郵件與密碼建立帳戶",
+      "emailPlaceholder": "name@example.com",
+      "pendingTitle": "請檢查您的電子郵件",
+      "pendingDescription": "我們已將確認連結寄到 {{email}}。開啟連結以完成帳戶建立。",
+      "resendAction": "重新寄送驗證郵件",
+      "resendCountdown": "可於 {{seconds}} 秒後重新寄送",
+      "resendSuccess": "我們已重新寄出驗證郵件。",
+      "resendCooldown": "請等待 {{seconds}} 秒後再要求新的驗證郵件。",
+      "resendFailed": "重新寄送驗證郵件失敗，請再試一次。",
+      "submit": "建立帳戶",
+      "useDifferentEmail": "改用其他電子郵件",
+      "signInPrompt": "已經有帳戶了？",
+      "signInLink": "登入",
+      "failed": "建立帳戶失敗。請再試一次。"
     },
     "validation": {
-      "usernameRequired": "請輸入有效的使用者名稱",
+      "identifierRequiredCloud": "請輸入電子郵件或使用者名稱",
+      "invalidEmailOrUsername": "請輸入有效的電子郵件或使用者名稱",
+      "usernameRequired": "請輸入使用者名稱",
       "usernameMinLength": "使用者名稱至少需要 3 個字元",
       "usernameMaxLength": "使用者名稱最多 30 個字元",
       "passwordRequired": "密碼為必填項",
@@ -121,6 +161,9 @@
       "gallery": "相簿",
       "profile": "個人資料",
       "account": "賬戶",
+      "organization": "組織",
+      "billing": "計費",
+      "organizationMembers": "成員",
       "settings": "設定",
       "users": "使用者",
       "admin": "系統",
@@ -131,11 +174,30 @@
   },
   "pages": {
     "authCallback": {
-      "title": "歡迎回來",
+      "title": "登入中斷",
       "subtitle": "我們無法完成您的登入，請再試一次。",
       "failed": "驗證失敗",
       "errorOAuth": "驗證失敗：{{error}}",
+      "errors": {
+        "inviteOrgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。"
+      },
       "errorNoToken": "未收到驗證令牌",
+      "backToLogin": "返回登入"
+    },
+    "registerVerify": {
+      "title": "正在確認您的帳戶",
+      "subtitle": "請稍候，我們正在完成您的登入。",
+      "verifying": "正在驗證您的電子郵件確認連結。",
+      "errorTitle": "我們無法確認您的帳戶",
+      "errorSubtitle": "此確認連結可能已失效或過期。",
+      "missingToken": "此確認連結缺少驗證令牌。",
+      "failed": "我們無法驗證您的帳戶。請重新要求新的確認郵件。",
+      "resendDescription": "我們可以重新寄送一封新的確認郵件到 {{email}}。",
+      "resendAction": "重新寄送確認郵件",
+      "resendCountdown": "可在 {{seconds}} 秒後重新寄送",
+      "resendSuccess": "我們已寄出新的確認郵件。",
+      "resendCooldown": "請稍候後再要求新的確認郵件。",
+      "resendFailed": "重新寄送確認郵件失敗，請再試一次。",
       "backToLogin": "返回登入"
     },
     "error": {
@@ -143,8 +205,8 @@
       "notFoundTitle": "找不到空間",
       "forbiddenTitle": "拒絕存取",
       "defaultDescription": "載入頁面時發生錯誤。請嘗試返回首頁。",
-      "notFoundDescription": "找不到該空間。請檢查連結，或返回您的工作區。",
-      "forbiddenDescription": "您已登入，但此空間未開放給您的帳戶。請聯絡空間管理員取得存取權，或返回您的工作區。"
+      "notFoundDescription": "找不到該空間。請檢查連結，或返回您的空間列表。",
+      "forbiddenDescription": "您已登入，但此空間未開放給您的帳戶。請聯絡空間管理員取得存取權，或返回您的空間列表。"
     },
     "gallery": {
       "title": "相簿",
@@ -710,18 +772,34 @@
       },
       "createUser": "建立使用者"
     },
+    "workspaceRequired": {
+      "eyebrow": "需要組織存取權",
+      "title": "此帳戶已登入，但尚未取得任何組織存取權。",
+      "description": "Imagor Studio 需要組織存取權，才能載入帳戶區域與空間管理功能。",
+      "invite": {
+        "title": "透過邀請加入",
+        "description": "登入後開啟您的邀請連結；如果原邀請已過期，請聯絡組織管理員重新寄送。"
+      },
+      "nextSteps": {
+        "title": "接下來怎麼做",
+        "description": "如果您原本就應該有存取權，請聯絡管理 Imagor Studio 組織的團隊。此狀態下暫不提供自助設定。"
+      },
+      "actions": {
+        "signOut": "登出"
+      }
+    },
     "spaces": {
       "title": "空間",
       "createSpace": "建立空間",
       "createNewSpace": "建立新空間",
-      "createSpaceDescription": "將新空間加入您的組織。每個空間都有自己的儲存與 imagor 設定。",
+      "createSpaceDescription": "建立專屬圖片工作空間，擁有自己的儲存、交付設定與存取權限。",
       "editSpace": "編輯空間",
       "editSpaceDescription": "更新空間設定。變更會立即套用。",
       "deleteSpace": "刪除空間",
       "deleteSpaceDescription": "您確定要永久刪除空間",
       "createSpaceButton": "建立空間",
       "updateSpaceButton": "更新空間",
-      "noSpacesFound": "建立您的第一個空間",
+      "noSpacesFound": "建立你的第一個圖片工作空間",
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
@@ -753,8 +831,8 @@
         "customDomain": "自訂網域",
         "imagorSecret": "Imagor 金鑰"
       },
-      "description": "管理您組織的工作空間。",
-      "emptyDescription": "為您的團隊建立一個圖片工作區。",
+      "description": "為你的團隊、品牌或環境建立並管理圖片工作空間。",
+      "emptyDescription": "建立你的第一個圖片工作空間，用於上傳、處理與交付圖片。",
       "settings": "設定",
       "spaceCount": "{{count}} 個空間",
       "openGallery": "開啟相簿",
@@ -764,17 +842,32 @@
         "next": "下一步",
         "back": "上一步"
       },
-      "createSpaceDescription": "為您的團隊建立一個專屬圖片工作空間。",
+      "createSpaceDescription": "建立專屬圖片工作空間，擁有自己的儲存、交付設定與存取權限。",
       "messages": {
         "spaceCreatedSuccess": "空間建立成功",
         "spaceUpdatedSuccess": "空間更新成功",
         "spaceDeletedSuccess": "空間刪除成功",
         "leftSpaceSuccess": "您已離開共享空間。",
+        "leftOrganizationSuccess": "你已離開組織。請重新登入以繼續。",
         "createSpaceFailed": "建立空間失敗",
+        "createSpaceForbidden": "您沒有建立空間的權限。",
         "keyAlreadyTaken": "URL 識別碼已被使用",
+        "spaceLimitReached": "您目前方案可建立的空間數量已達上限。",
+        "overPlanLimit": "已超出方案上限",
         "updateSpaceFailed": "更新空間失敗",
         "deleteSpaceFailed": "刪除空間失敗",
-        "leaveSpaceFailed": "離開共享空間失敗"
+        "deleteSpaceForbidden": "只有組織管理員可以刪除此空間。",
+        "leaveSpaceFailed": "離開共享空間失敗",
+        "leaveOrganizationFailed": "離開組織失敗",
+        "cannotLeaveOrganizationAsOwner": "請先轉移組織擁有權再離開。",
+        "cannotLeaveOrganizationAsLastMember": "你不能離開組織中的最後一名成員。"
+      },
+      "plan": {
+        "free": "免費",
+        "trial": "試用",
+        "starter": "Starter",
+        "pro": "Pro",
+        "team": "Team"
       },
       "validation": {
         "keyFormat": "URL 識別碼只能包含小寫字母、數字和連字號"
@@ -784,7 +877,23 @@
         "managedStorage": "託管儲存",
         "externalStorage": "外部儲存",
         "yourSpaces": "您的空間",
-        "sharedWithYou": "與您共享"
+        "sharedWithYou": "與您共享",
+        "spaceQuota": "空間額度",
+        "unlimited": "不限"
+      },
+      "usageSummaryTitle": "方案用量",
+      "manageOrganization": "組織",
+      "leaveOrganization": "離開組織",
+      "leaveOrganizationTitle": "離開組織",
+      "leaveOrganizationDescription": "要離開目前組織嗎？你將失去其共享空間的存取權，並需要重新登入。",
+      "usageSummaryMeta": "{{owned}} 個由你擁有 · {{shared}} 個與你共享",
+      "currentBillingPeriod": "{{start}} - {{end}}",
+      "processingUsage": "{{count}} 次處理",
+      "usage": {
+        "spaces": "空間",
+        "hostedStorage": "託管儲存",
+        "processing": "處理量",
+        "overLimit": "超出上限"
       },
       "configure": "設定",
       "creationPreview": {
@@ -806,6 +915,161 @@
         "unchanged": "（保持不變）"
       }
     },
+    "billing": {
+      "title": "計費",
+      "titleDescription": "選擇最適合團隊儲存、處理與交付圖片方式的方案。",
+      "currentPlan": "目前方案",
+      "currentPlanDescription": "用量會依計費週期統計，並自動重置。",
+      "currentPlanBadge": "目前",
+      "currentPlanButton": "目前方案",
+      "manageBilling": "管理計費",
+      "selectPlan": "選擇方案",
+      "priceSuffix": "/月",
+      "unlimited": "不限",
+      "customDomainsIncluded": "含 {{count}} 個",
+      "customDomainsUnavailable": "不包含",
+      "status": {
+        "trialing": "試用中",
+        "active": "生效中",
+        "past_due": "逾期",
+        "canceled": "已取消"
+      },
+      "usage": {
+        "spaces": "空間",
+        "hostedStorage": "託管儲存",
+        "processing": "處理量"
+      },
+      "planMetrics": {
+        "spaces": "包含空間數",
+        "hostedStorage": "託管儲存",
+        "processing": "每月處理量",
+        "customDomains": "自訂網域"
+      },
+      "planDescriptions": {
+        "starter": "適合要上線單一正式圖片處理流程，並直接使用託管儲存的團隊。",
+        "pro": "適合管理多條圖片流程、需要自訂網域與更高月處理量的成長團隊。",
+        "team": "適合跨多個團隊或品牌管理共享圖片營運的大型組織。"
+      },
+      "sharedFeaturesTitle": "所有付費方案另外皆包含",
+      "sharedFeatures": {
+        "collaboration": "共享空間存取",
+        "orgSharing": "團隊邀請與共享存取",
+        "byob": "連接自己的 S3 相容儲存桶"
+      },
+      "danger": {
+        "title": "危險區域",
+        "deleteTitle": "刪除組織",
+        "deleteDescription": "永久刪除此組織，並移除仍綁定於此組織的組織層級存取權。",
+        "deleteChecklist": "刪除前，請先移除所有空間。如果仍有啟用中的付費訂閱，請先取消計費。",
+        "deleteButton": "刪除組織",
+        "confirmTitle": "刪除組織",
+        "confirmDescription": "要永久刪除 {{name}} 嗎？此操作無法復原，之後你需要重新登入。",
+        "organizationFallback": "此組織",
+        "messages": {
+          "deleted": "組織已刪除。請重新登入以繼續。",
+          "deleteFailed": "無法刪除組織"
+        },
+        "errors": {
+          "ownerRequired": "只有目前的組織擁有者可以刪除組織。",
+          "deleteSpacesFirst": "刪除組織前，請先刪除所有空間。",
+          "cancelBillingFirst": "刪除組織前，請先取消付費計費。"
+        }
+      },
+      "messages": {
+        "checkoutFailed": "無法啟動結帳流程",
+        "portalFailed": "無法開啟計費入口"
+      }
+    },
+    "organizationMembers": {
+      "title": "組織成員",
+      "titleDescription": "管理誰可以存取目前組織及其共享空間。",
+      "addTitle": "新增人員",
+      "addDescription": "透過使用者名稱新增既有成員，或向新成員寄送電子郵件邀請，然後選擇是否授予組織管理權限。",
+      "identifierPlaceholder": "使用者名稱或電子郵件",
+      "addButton": "新增",
+      "listTitle": "可存取人員",
+      "pendingTitle": "待處理邀請",
+      "listDescription": "可存取 {{name}} 的成員。",
+      "listDescriptionFallback": "可存取目前組織的成員。",
+      "pendingDescription": "已寄出但尚未接受的邀請。",
+      "pendingEmpty": "目前沒有待回覆的邀請。",
+      "pendingExpiresAt": "將於 {{expiresAt}} 到期",
+      "empty": "目前還沒有人擁有存取權",
+      "emptyDescription": "在這裡新增成員，授予他們目前組織及其共享空間的存取權。",
+      "listHeaders": {
+        "member": "成員",
+        "action": "操作"
+      },
+      "actionsTitle": "操作",
+      "transferOwnership": "轉移擁有權",
+      "promoteToAdmin": "改為管理員",
+      "changeToMember": "改為成員",
+      "removeMember": "移除成員",
+      "cancelInvite": "取消邀請",
+      "removeTitle": "移除成員",
+      "removeDescription": "要將 {{name}} 從目前組織移除嗎？他們將失去透過組織繼承的共享空間存取權。",
+      "transferTitle": "轉移組織擁有權",
+      "transferDescription": "要將組織擁有權轉移給 {{name}} 嗎？你仍會以管理員身分留在組織中。",
+      "youBadge": "你",
+      "roles": {
+        "owner": "擁有者",
+        "admin": "管理員",
+        "member": "成員"
+      },
+      "messages": {
+        "identifierRequired": "請輸入使用者名稱或電子郵件地址。",
+        "identifierInvalidEmail": "請輸入有效的電子郵件地址。",
+        "memberAdded": "成員已新增。",
+        "inviteSent": "邀請郵件已送出。",
+        "inviteCanceled": "邀請已取消。",
+        "inviteCancelFailed": "取消邀請失敗",
+        "memberAddFailed": "新增成員失敗",
+        "roleUpdated": "成員角色已更新。",
+        "roleUpdateFailed": "更新成員角色失敗",
+        "memberRemoved": "成員已移除。",
+        "memberRemoveFailed": "移除成員失敗",
+        "ownershipTransferred": "組織擁有權已轉移。",
+        "ownershipTransferFailed": "轉移組織擁有權失敗",
+        "errors": {
+          "otherOrganization": "此帳戶已屬於其他組織。",
+          "alreadyMember": "此帳戶已是目前組織成員。",
+          "cannotRemoveYourself": "你不能將自己移出組織。",
+          "cannotRemoveOwner": "你不能移除組織擁有者。",
+          "cannotRemoveLastMember": "你不能移除組織中的最後一名成員。",
+          "mustBeCurrentOwner": "只有目前組織擁有者才能轉移擁有權。",
+          "targetMustAlreadyBeMember": "只能將擁有權轉移給現有的組織成員。"
+        }
+      }
+    },
+    "organizationOverview": {
+      "title": "組織",
+      "titleDescription": "在同一處檢視方案、用量與組織管理。",
+      "summaryDescription": "快速檢視目前組織狀態。",
+      "usageTitle": "目前用量",
+      "usageDescription": "用量會依計費週期重置，並套用到整個組織。",
+      "unlimited": "不限",
+      "notAvailable": "不可用",
+      "summaryCards": {
+        "planLabel": "目前方案",
+        "planDescription": "目前套用到此組織的訂閱層級。",
+        "statusLabel": "方案狀態",
+        "statusDescription": "用於套用存取與額度限制的計費生命週期狀態。",
+        "organizationLabel": "組織",
+        "organizationDescription": "擁有空間、計費與共享存取的組織。",
+        "billingPeriodLabel": "計費週期",
+        "billingPeriodDescription": "目前用於統計用量限制的計費視窗。"
+      },
+      "usage": {
+        "spaces": "空間",
+        "hostedStorage": "託管儲存",
+        "processing": "處理量",
+        "periodScoped": "用量會依目前計費週期統計。"
+      },
+      "actions": {
+        "reviewBilling": "檢視計費",
+        "manageMembers": "管理成員"
+      }
+    },
     "spacePropagation": {
       "title": "變更正在傳播中",
       "description": "這些變更通常會在 30 秒內生效。",
@@ -814,7 +1078,7 @@
     },
     "spaceSettings": {
       "sections": {
-        "members": "成員",
+        "members": "存取",
         "storage": "儲存",
         "imagor": "Imagor 圖像處理",
         "general": "一般",
@@ -835,6 +1099,7 @@
         "description": "此空間的基本資訊。",
         "name": "顯示名稱",
         "nameDescription": "導覽列中和空間清單中顯示的名稱。",
+        "updateForbidden": "您沒有管理此空間的權限。",
         "customDomain": "自訂網域",
         "customDomainDescription": "此空間的自訂網域。如果留空，將使用 {{spaceKey}}.imagor.app。",
         "customDomainCurrentLabel": "目前主機名稱",
@@ -897,19 +1162,21 @@
           "default": "目前無法分享這個空間，請稍後再試。"
         },
         "memberPlaceholder": "選擇隊友",
-        "memberPlaceholderEmpty": "您的組織成員都已具有明確存取權",
-        "sharedTitle": "組織層級存取權",
-        "sharedDescription": "此組織中的所有成員都可以檢視並複製這個空間。下方清單顯示的是被直接加入這個空間的人員，而組織管理員仍負責設定與分享管理。",
-        "emptyDescription": "目前還沒有人被直接加入這個空間。組織管理員仍保有繼承而來的存取權。",
+        "memberPlaceholderEmpty": "組織成員都已具有存取權",
+        "sharedTitle": "組織成員",
+        "sharedDescription": "從組織繼承。",
+        "sharedManageHint": "請在組織存取頁面管理。",
+        "emptyDescription": "邀請來賓或新增空間角色。",
         "addSuccess": "成員新增成功。",
         "inviteSent": "邀請郵件已送出。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成員已移除。",
         "removeSelfDisabled": "您",
         "removeSelfNotAllowed": "您不能將自己從這個空間移除。",
-        "empty": "這個空間尚無直接成員。",
-        "accessLabel": "共享存取",
-        "pendingTitle": "待接受的邀請",
+        "empty": "尚無直接存取權。",
+        "accessLabel": "直接存取",
+        "accessDescription": "來賓與額外的空間角色。",
+        "pendingTitle": "待處理邀請",
         "listHeaders": {
           "member": "成員",
           "action": "操作"
@@ -919,8 +1186,8 @@
           "role": "角色",
           "expires": "到期日"
         },
-        "removeTitle": "移除成員",
-        "removeDescription": "確定要移除",
+        "removeTitle": "移除直接存取權",
+        "removeDescription": "要移除 {{name}} 的直接存取權嗎？組織成員仍會保留繼承而來的存取權。",
         "roleSectionLabel": "變更角色",
         "promoteToManager": "改為管理員",
         "changeToMember": "改為成員",

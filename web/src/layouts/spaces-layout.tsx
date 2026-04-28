@@ -1,6 +1,7 @@
 import { PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useNavigate } from '@tanstack/react-router'
+import { Building2 } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
 import { useBrand } from '@/hooks/use-brand'
@@ -22,6 +23,15 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
   const { authState, logout } = useAuth()
   const navigate = useNavigate()
   const { title: appTitle } = useBrand()
+  const accountLinks = authState.multiTenant
+    ? [
+        {
+          label: t('navigation.breadcrumbs.organization'),
+          href: '/account/organization',
+          icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
+        },
+      ]
+    : []
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
@@ -40,6 +50,7 @@ export function SpacesLayout({ children, title, description, primaryAction }: Sp
         onLogout={handleLogout}
         appTitle={appTitle}
         breadcrumbs={title ? [{ label: title }] : undefined}
+        accountLinks={accountLinks}
       />
 
       {/* Content area — pt-14 clears the fixed header */}

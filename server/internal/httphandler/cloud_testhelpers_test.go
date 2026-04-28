@@ -66,6 +66,17 @@ func (s *testOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug
 	return mapTestOrg(organization), nil
 }
 
+func (s *testOrgStore) GetByID(ctx context.Context, id string) (*org.Org, error) {
+	var organization testOrganizationRow
+	if err := s.db.NewSelect().Model(&organization).Where("id = ?", id).Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get organization by id %s: %w", id, err)
+	}
+	return mapTestOrg(&organization), nil
+}
+
 func (s *testOrgStore) GetByUserID(ctx context.Context, userID string) (*org.Org, error) {
 	var member testOrgMemberRow
 	if err := s.db.NewSelect().Model(&member).Where("user_id = ?", userID).Limit(1).Scan(ctx); err != nil {
@@ -93,6 +104,55 @@ func (s *testOrgStore) GetBySlug(ctx context.Context, slug string) (*org.Org, er
 		return nil, fmt.Errorf("get organization by slug %s: %w", slug, err)
 	}
 	return mapTestOrg(&organization), nil
+}
+
+func (s *testOrgStore) GetByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*org.Org, error) {
+	var organization testOrganizationRow
+	if err := s.db.NewSelect().Model(&organization).Where("stripe_customer_id = ?", stripeCustomerID).Scan(ctx); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get organization by stripe customer id %s: %w", stripeCustomerID, err)
+	}
+	return mapTestOrg(&organization), nil
+}
+
+func (s *testOrgStore) UpdateBillingState(ctx context.Context, orgID string, update org.BillingStateUpdate) (*org.Org, error) {
+	query := s.db.NewUpdate().Model((*testOrganizationRow)(nil)).Where("id = ?", orgID).Set("updated_at = ?", time.Now().UTC())
+	if update.Plan != nil {
+		query = query.Set("plan = ?", *update.Plan)
+	}
+	if update.PlanStatus != nil {
+		query = query.Set("plan_status = ?", *update.PlanStatus)
+	}
+	if update.ClearStripeCustomerID {
+		query = query.Set("stripe_customer_id = NULL")
+	} else if update.StripeCustomerID != nil {
+		query = query.Set("stripe_customer_id = ?", *update.StripeCustomerID)
+	}
+	if update.ClearStripeSubscriptionID {
+		query = query.Set("stripe_subscription_id = NULL")
+	} else if update.StripeSubscriptionID != nil {
+		query = query.Set("stripe_subscription_id = ?", *update.StripeSubscriptionID)
+	}
+	if update.ClearBillingEmail {
+		query = query.Set("billing_email = NULL")
+	} else if update.BillingEmail != nil {
+		query = query.Set("billing_email = ?", *update.BillingEmail)
+	}
+	if update.ClearTrialEndsAt {
+		query = query.Set("trial_ends_at = NULL")
+	} else if update.TrialEndsAt != nil {
+		query = query.Set("trial_ends_at = ?", *update.TrialEndsAt)
+	}
+	if _, err := query.Exec(ctx); err != nil {
+		return nil, fmt.Errorf("update organization billing state: %w", err)
+	}
+	return s.GetByID(ctx, orgID)
+}
+
+func (s *testOrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
+	return []string{}, nil
 }
 
 func (s *testOrgStore) ListMembers(ctx context.Context, orgID string) ([]*org.OrgMemberView, error) {
@@ -144,6 +204,43 @@ func (s *testOrgStore) UpdateMemberRole(ctx context.Context, orgID, userID, role
 		return fmt.Errorf("update org member role: %w", err)
 	}
 	return nil
+}
+
+func (s *testOrgStore) TransferOwnership(ctx context.Context, orgID, currentOwnerID, newOwnerID string) error {
+	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewUpdate().TableExpr("organizations").
+			Set("owner_id = ?", newOwnerID).
+			Set("updated_at = ?", time.Now().UTC()).
+			Where("id = ? AND owner_id = ?", orgID, currentOwnerID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("update organization owner: %w", err)
+		}
+		if _, err := tx.NewUpdate().TableExpr("org_members").
+			Set("role = ?", "admin").
+			Where("org_id = ? AND user_id = ?", orgID, currentOwnerID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("demote previous owner: %w", err)
+		}
+		if _, err := tx.NewUpdate().TableExpr("org_members").
+			Set("role = ?", "owner").
+			Where("org_id = ? AND user_id = ?", orgID, newOwnerID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("promote new owner: %w", err)
+		}
+		return nil
+	})
+}
+
+func (s *testOrgStore) Delete(ctx context.Context, orgID, ownerID string) error {
+	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewDelete().TableExpr("org_members").Where("org_id = ?", orgID).Exec(ctx); err != nil {
+			return fmt.Errorf("delete org members: %w", err)
+		}
+		if _, err := tx.NewDelete().TableExpr("organizations").Where("id = ? AND owner_id = ?", orgID, ownerID).Exec(ctx); err != nil {
+			return fmt.Errorf("delete organization: %w", err)
+		}
+		return nil
+	})
 }
 
 func mapTestOrg(row *testOrganizationRow) *org.Org {

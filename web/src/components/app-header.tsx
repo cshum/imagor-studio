@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
-import { Check, Languages, LogOut, MoreVertical, Settings } from 'lucide-react'
+import { Building2, Check, Languages, LogOut, MoreVertical, UserRound } from 'lucide-react'
 
 import { ModeToggle } from '@/components/mode-toggle.tsx'
 import {
@@ -61,6 +61,12 @@ export interface AppHeaderBreadcrumb {
   href?: string
 }
 
+export interface AppHeaderMenuLink {
+  label: string
+  href: string
+  icon?: React.ReactNode
+}
+
 interface AppHeaderProps {
   // ── Left side ─────────────────────────────────────────────────────────────
   /** Bold app logo text */
@@ -83,6 +89,7 @@ interface AppHeaderProps {
   menuTriggerStyle?: 'avatar' | 'overflow'
   onLogout: () => void | Promise<void>
   profileLink?: string
+  accountLinks?: AppHeaderMenuLink[]
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -97,6 +104,7 @@ export function AppHeader({
   menuTriggerStyle = 'avatar',
   onLogout,
   profileLink = '/account/profile',
+  accountLinks = [],
 }: AppHeaderProps) {
   const { t, i18n } = useTranslation()
   const accountSettingsText = t('common.navigation.accountSettings')
@@ -200,10 +208,18 @@ export function AppHeader({
                 </DropdownMenuLabel>
                 <DropdownMenuItem className='cursor-pointer' asChild>
                   <Link to={profileLink} className='flex items-center'>
-                    <Settings className='text-muted-foreground mr-3 h-4 w-4' />
+                    <UserRound className='text-muted-foreground mr-3 h-4 w-4' />
                     {accountSettingsText}
                   </Link>
                 </DropdownMenuItem>
+                {accountLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} className='cursor-pointer' asChild>
+                    <Link to={link.href} className='flex items-center'>
+                      {link.icon ?? <Building2 className='text-muted-foreground mr-3 h-4 w-4' />}
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>

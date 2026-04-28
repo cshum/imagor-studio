@@ -7,8 +7,38 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   displayName: string
-  username: string
+  email: string
+  username?: string
   password: string
+}
+
+export type AuthApiError = Error & {
+  code?: string
+  field?: string
+  status?: number
+}
+
+function createAuthApiError(errorData: unknown, fallback: string): AuthApiError {
+  const payload =
+    typeof errorData === 'object' && errorData !== null
+      ? (errorData as Record<string, unknown>)
+      : {}
+  const details =
+    typeof payload.details === 'object' && payload.details !== null
+      ? (payload.details as Record<string, unknown>)
+      : undefined
+  const error = new Error(
+    typeof payload.error === 'string' ? payload.error : fallback,
+  ) as AuthApiError
+
+  if (typeof payload.code === 'string') {
+    error.code = payload.code
+  }
+  if (typeof details?.field === 'string') {
+    error.field = details.field
+  }
+
+  return error
 }
 
 export interface RegisterAdminRequest {
@@ -29,6 +59,24 @@ export interface LoginResponse {
   }
   pathPrefix?: string
 }
+
+export interface PublicSignupVerificationResponse {
+  email: string
+  verificationRequired: boolean
+  cooldownSeconds: number
+  expiresInSeconds: number
+  maskedDestination: string
+}
+
+export type RegisterResult =
+  | {
+      kind: 'authenticated'
+      response: LoginResponse
+    }
+  | {
+      kind: 'verification-required'
+      response: PublicSignupVerificationResponse
+    }
 
 export interface FirstRunResponse {
   isFirstRun: boolean
@@ -53,7 +101,7 @@ export async function checkFirstRun(): Promise<FirstRunResponse> {
   const response = await fetch(`${BASE_URL}/api/auth/first-run`)
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+    throw createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`)
   }
   return response.json()
 }
@@ -70,7 +118,7 @@ export async function registerAdmin(credentials: RegisterAdminRequest): Promise<
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+    throw createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`)
   }
 
   return response.json()
@@ -88,7 +136,94 @@ export async function register(credentials: RegisterRequest): Promise<LoginRespo
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+    throw createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+function withStatus(error: AuthApiError, status: number): AuthApiError {
+  error.status = status
+  return error
+}
+
+function isVerificationSignupUnavailable(error: AuthApiError): boolean {
+  return (
+    error.status === 404 ||
+    (error.status === 403 &&
+      error.message === 'Email verification sign-up is not available in this deployment.')
+  )
+}
+
+export async function registerWithVerificationFallback(
+  credentials: RegisterRequest,
+): Promise<RegisterResult> {
+  const response = await fetch(`${BASE_URL}/api/auth/register/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      displayName: credentials.displayName,
+      email: credentials.email,
+      password: credentials.password,
+    }),
+  })
+
+  if (response.ok) {
+    return {
+      kind: 'verification-required',
+      response: await response.json(),
+    }
+  }
+
+  const errorData = await response.json().catch(() => ({}))
+  const error = withStatus(
+    createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+    response.status,
+  )
+
+  if (isVerificationSignupUnavailable(error)) {
+    return {
+      kind: 'authenticated',
+      response: await register(credentials),
+    }
+  }
+
+  throw error
+}
+
+export async function verifyPublicSignup(token: string): Promise<LoginResponse> {
+  const response = await fetch(`${BASE_URL}/api/auth/register/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
+  }
+
+  return response.json()
+}
+
+export async function resendPublicSignupVerification(
+  email: string,
+): Promise<PublicSignupVerificationResponse> {
+  const response = await fetch(`${BASE_URL}/api/auth/register/resend`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
   }
 
   return response.json()
@@ -106,7 +241,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+    throw createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`)
   }
 
   return response.json()

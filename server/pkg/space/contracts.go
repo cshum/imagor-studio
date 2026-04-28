@@ -52,6 +52,7 @@ type SpaceStore interface {
 	Create(ctx context.Context, s *Space) error
 	RenameKey(ctx context.Context, oldKey, newKey string) error
 	Upsert(ctx context.Context, s *Space) error
+	SetSuspendedByOrgID(ctx context.Context, orgID string, suspended bool) error
 	SoftDelete(ctx context.Context, key string) error
 	GetByKey(ctx context.Context, key string) (*Space, error)
 	GetByID(ctx context.Context, id string) (*Space, error)
@@ -83,9 +84,11 @@ type Invitation struct {
 
 type SpaceInviteStore interface {
 	CreateOrRefreshPending(ctx context.Context, orgID, spaceID, email, role, invitedByUserID string, expiresAt time.Time) (*Invitation, error)
+	ListPendingByOrg(ctx context.Context, orgID string) ([]*Invitation, error)
 	ListPendingBySpace(ctx context.Context, orgID, spaceID string) ([]*Invitation, error)
 	GetPendingByToken(ctx context.Context, token string) (*Invitation, error)
 	MarkAccepted(ctx context.Context, id string, acceptedAt time.Time) error
+	DeletePending(ctx context.Context, id string) error
 }
 
 type EmailParams struct {
@@ -98,4 +101,5 @@ type EmailParams struct {
 
 type InviteSender interface {
 	SendSpaceInvitation(ctx context.Context, params EmailParams) error
+	SendOrganizationInvitation(ctx context.Context, params EmailParams) error
 }

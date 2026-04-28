@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
+  Building2,
   Cpu,
   HardDrive,
   KeyRound,
@@ -121,6 +122,15 @@ export function AccountLayout({ children }: PropsWithChildren) {
   const isMultiTenant = authState.multiTenant
   const showSidebar = !isMultiTenant
   const [mobileOpen, setMobileOpen] = useState(false)
+  const accountLinks = isMultiTenant
+    ? [
+        {
+          label: t('navigation.breadcrumbs.organization'),
+          href: '/account/organization',
+          icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
+        },
+      ]
+    : []
 
   useScrollHandler(location.pathname)
 
@@ -253,6 +263,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
           appTitle={appTitle}
           breadcrumbs={breadcrumbs.map((c) => ({ label: c.label ?? '', href: c.href }))}
           mobileTrigger={triggerButton}
+          accountLinks={accountLinks}
         />
 
         <main className='relative min-h-screen pt-14'>

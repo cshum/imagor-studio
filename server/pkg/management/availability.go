@@ -42,5 +42,5 @@ func CloudEnabled(orgStore org.OrgStore, spaceStore space.SpaceStore) bool {
 }
 
 func InviteEnabled(orgStore org.OrgStore, spaceStore space.SpaceStore, inviteStore space.SpaceInviteStore, inviteSender space.InviteSender) bool {
-	return inviteStore != nil && ((CloudEnabled(orgStore, spaceStore) && inviteSender != nil) || (OrgEnabled(orgStore) && SpaceEnabled(spaceStore)))
+	return inviteStore != nil && inviteSender != nil && CloudEnabled(orgStore, spaceStore)
 }

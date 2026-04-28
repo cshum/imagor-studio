@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Progress } from '@/components/ui/progress'
 import {
   ResponsiveDialog,
   ResponsiveDialogDescription,
@@ -22,12 +23,18 @@ import {
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { ListSpacesQuery } from '@/generated/graphql'
+import type { GetUsageSummaryQuery, ListSpacesQuery } from '@/generated/graphql'
+import { isUnlimitedLimit } from '@/lib/plan-entitlements'
 import { useAuth } from '@/stores/auth-store'
 
 interface SpacesPageProps {
   loaderData?: ListSpacesQuery['spaces']
+  usageSummary?: GetUsageSummaryQuery['usageSummary'] | null
   currentOrganizationId?: string | null
+  currentOrganizationPlan?: string | null
+  currentOrganizationPlanStatus?: string | null
+  canCreateSpace?: boolean
+  canManageOrganization?: boolean
 }
 
 function formatBytes(bytes: number) {
@@ -39,7 +46,34 @@ function formatBytes(bytes: number) {
   return `${value.toFixed(digits)} ${units[index]}`
 }
 
-export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesPageProps) {
+function formatCount(value: number) {
+  return new Intl.NumberFormat().format(value)
+}
+
+function formatUsagePeriodDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date(value))
+}
+
+function getProgressValue(current: number, max: number | null | undefined) {
+  if (max == null || max <= 0) return 0
+  return Math.min((current / max) * 100, 100)
+}
+
+function isUnlimitedOrMissing(value: number | null | undefined) {
+  return value != null && isUnlimitedLimit(value)
+}
+
+export function SpacesPage({
+  loaderData,
+  usageSummary = null,
+  currentOrganizationId = null,
+  currentOrganizationPlan = null,
+  canCreateSpace = false,
+  canManageOrganization = false,
+}: SpacesPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const { authState } = useAuth()
@@ -50,6 +84,13 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
 
   const spaces = loaderData ?? []
   const hasSpaces = spaces.length > 0
+  const organizationSpaces = useMemo(
+    () =>
+      currentOrganizationId === null
+        ? spaces
+        : spaces.filter((space) => space.orgId === currentOrganizationId),
+    [currentOrganizationId, spaces],
+  )
   const ownedCount = useMemo(
     () =>
       currentOrganizationId === null
@@ -64,6 +105,50 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
         : spaces.filter((space) => space.orgId !== currentOrganizationId).length,
     [currentOrganizationId, spaces],
   )
+  const hostedUsageBytes = useMemo(
+    () =>
+      organizationSpaces.reduce((total, space) => {
+        if (space.storageMode !== 'platform' || space.storageUsageBytes == null) {
+          return total
+        }
+        return total + space.storageUsageBytes
+      }, 0),
+    [organizationSpaces],
+  )
+  const usedSpaces = usageSummary?.usedSpaces ?? ownedCount
+  const maxSpaces = usageSummary?.maxSpaces ?? null
+  const spacesOverLimit = maxSpaces !== null && usedSpaces > maxSpaces
+  const createSpaceDisabled = maxSpaces !== null && usedSpaces >= maxSpaces
+  const spacesSummary = isUnlimitedOrMissing(maxSpaces)
+    ? t('pages.spaces.stats.unlimited')
+    : `${usedSpaces}/${maxSpaces}`
+  const usedHostedStorageBytes = usageSummary?.usedHostedStorageBytes ?? hostedUsageBytes
+  const storageLimitGB = usageSummary?.storageLimitGB ?? null
+  const storageLimitBytes = storageLimitGB !== null ? storageLimitGB * 1024 * 1024 * 1024 : null
+  const hostedStorageSummary = isUnlimitedOrMissing(storageLimitGB)
+    ? t('pages.spaces.stats.unlimited')
+    : `${formatBytes(usedHostedStorageBytes ?? 0)} / ${formatBytes(storageLimitBytes ?? 0)}`
+  const usedTransforms = usageSummary?.usedTransforms ?? null
+  const transformsLimit = usageSummary?.transformsLimit ?? null
+  const processingSummary = isUnlimitedOrMissing(transformsLimit)
+    ? t('pages.spaces.stats.unlimited')
+    : `${formatCount(usedTransforms ?? 0)} / ${formatCount(transformsLimit ?? 0)}`
+  const usagePeriod =
+    usageSummary?.periodStart && usageSummary?.periodEnd
+      ? t('pages.spaces.currentBillingPeriod', {
+          start: formatUsagePeriodDate(usageSummary.periodStart),
+          end: formatUsagePeriodDate(usageSummary.periodEnd),
+        })
+      : null
+  const usageMeta = hasSpaces
+    ? t('pages.spaces.usageSummaryMeta', {
+        owned: ownedCount,
+        shared: sharedCount,
+      })
+    : null
+  const usageSummaryCardClassName = canManageOrganization
+    ? 'bg-muted/30 hover:bg-muted/50 focus-visible:ring-ring block rounded-lg border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+    : 'bg-muted/30 rounded-lg border p-4'
 
   const handleLeaveSpace = async () => {
     if (!leaveSpaceItem) return
@@ -96,34 +181,178 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
 
   return (
     <div className='space-y-6'>
-      {hasSpaces && (
-        <div className='grid gap-3 sm:grid-cols-3'>
-          <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.totalSpaces')}
-            </p>
-            <p className='mt-2 text-2xl font-semibold'>{spaces.length}</p>
+      {currentOrganizationId !== null &&
+        (canManageOrganization ? (
+          <Link to='/account/organization/billing' className={usageSummaryCardClassName}>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <div className='space-y-1'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
+                  <Badge variant='secondary'>
+                    {t(`pages.spaces.plan.${currentOrganizationPlan ?? 'free'}`)}
+                  </Badge>
+                </div>
+                {(usageMeta || usagePeriod) && (
+                  <p className='text-muted-foreground text-xs'>
+                    {usageMeta}
+                    {usageMeta && usagePeriod ? ' · ' : ''}
+                    {usagePeriod}
+                  </p>
+                )}
+              </div>
+              {createSpaceDisabled && (
+                <Badge
+                  variant='outline'
+                  className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                >
+                  {spacesOverLimit
+                    ? t('pages.spaces.messages.overPlanLimit')
+                    : t('pages.spaces.messages.spaceLimitReached')}
+                </Badge>
+              )}
+            </div>
+
+            <div className='mt-4 grid gap-4 sm:grid-cols-3'>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.spaces')}</span>
+                  <div className='flex items-center gap-2'>
+                    {spacesOverLimit && (
+                      <Badge
+                        variant='outline'
+                        className='border-amber-500/30 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                      >
+                        {t('pages.spaces.usage.overLimit')}
+                      </Badge>
+                    )}
+                    <span
+                      className={
+                        spacesOverLimit
+                          ? 'text-amber-700 dark:text-amber-300'
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      {spacesSummary}
+                    </span>
+                  </div>
+                </div>
+                <Progress
+                  value={getProgressValue(usedSpaces, maxSpaces)}
+                  className={spacesOverLimit ? 'bg-amber-500/15 dark:bg-amber-400/15' : undefined}
+                  indicatorClassName={
+                    spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined
+                  }
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.hostedStorage')}</span>
+                  <span className='text-muted-foreground'>{hostedStorageSummary}</span>
+                </div>
+                <Progress
+                  value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)}
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.processing')}</span>
+                  <span className='text-muted-foreground'>{processingSummary}</span>
+                </div>
+                <Progress value={getProgressValue(usedTransforms ?? 0, transformsLimit)} />
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div className={usageSummaryCardClassName}>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <div className='space-y-1'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
+                  <Badge variant='secondary'>
+                    {t(`pages.spaces.plan.${currentOrganizationPlan ?? 'free'}`)}
+                  </Badge>
+                </div>
+                {(usageMeta || usagePeriod) && (
+                  <p className='text-muted-foreground text-xs'>
+                    {usageMeta}
+                    {usageMeta && usagePeriod ? ' · ' : ''}
+                    {usagePeriod}
+                  </p>
+                )}
+              </div>
+              {createSpaceDisabled && (
+                <Badge
+                  variant='outline'
+                  className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                >
+                  {spacesOverLimit
+                    ? t('pages.spaces.messages.overPlanLimit')
+                    : t('pages.spaces.messages.spaceLimitReached')}
+                </Badge>
+              )}
+            </div>
+
+            <div className='mt-4 grid gap-4 sm:grid-cols-3'>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.spaces')}</span>
+                  <div className='flex items-center gap-2'>
+                    {spacesOverLimit && (
+                      <Badge
+                        variant='outline'
+                        className='border-amber-500/30 bg-amber-500/10 px-1.5 py-0 text-[10px] text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                      >
+                        {t('pages.spaces.usage.overLimit')}
+                      </Badge>
+                    )}
+                    <span
+                      className={
+                        spacesOverLimit
+                          ? 'text-amber-700 dark:text-amber-300'
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      {spacesSummary}
+                    </span>
+                  </div>
+                </div>
+                <Progress
+                  value={getProgressValue(usedSpaces, maxSpaces)}
+                  className={spacesOverLimit ? 'bg-amber-500/15 dark:bg-amber-400/15' : undefined}
+                  indicatorClassName={
+                    spacesOverLimit ? 'bg-amber-500 dark:bg-amber-400' : undefined
+                  }
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.hostedStorage')}</span>
+                  <span className='text-muted-foreground'>{hostedStorageSummary}</span>
+                </div>
+                <Progress
+                  value={getProgressValue(usedHostedStorageBytes ?? 0, storageLimitBytes)}
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-3 text-sm'>
+                  <span className='font-medium'>{t('pages.spaces.usage.processing')}</span>
+                  <span className='text-muted-foreground'>{processingSummary}</span>
+                </div>
+                <Progress value={getProgressValue(usedTransforms ?? 0, transformsLimit)} />
+              </div>
+            </div>
           </div>
-          <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.yourSpaces')}
-            </p>
-            <p className='mt-2 text-2xl font-semibold'>{ownedCount}</p>
-          </div>
-          <div className='bg-muted/30 rounded-xl p-4'>
-            <p className='text-muted-foreground text-xs font-medium uppercase'>
-              {t('pages.spaces.stats.sharedWithYou')}
-            </p>
-            <p className='mt-2 text-2xl font-semibold'>{sharedCount}</p>
-          </div>
-        </div>
-      )}
+        ))}
 
       {/* Loading skeleton */}
       {!loaderData ? (
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+        <div className='grid grid-cols-1 gap-4'>
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className='space-y-4 rounded-xl border p-5'>
+            <div key={i} className='space-y-4 rounded-lg border p-5'>
               <div className='flex items-center gap-3'>
                 <Skeleton className='h-10 w-10 rounded-lg' />
                 <div className='flex-1 space-y-2'>
@@ -141,27 +370,44 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
         </div>
       ) : spaces.length === 0 ? (
         /* Empty state */
-        <div className='flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center'>
+        <div className='flex flex-col items-center justify-center rounded-lg border border-dashed py-20 text-center'>
           <div className='bg-muted flex h-14 w-14 items-center justify-center rounded-full'>
             <LayoutGrid className='text-muted-foreground h-7 w-7' />
           </div>
-          <h3 className='mt-4 text-base font-semibold'>{t('pages.spaces.noSpacesFound')}</h3>
+          <h3 className='mt-4 text-base font-semibold'>
+            {t(canCreateSpace ? 'pages.spaces.noSpacesFound' : 'pages.spaces.noSpacesAvailable')}
+          </h3>
           <p className='text-muted-foreground mt-1.5 max-w-xs text-sm'>
-            {t('pages.spaces.emptyDescription')}
+            {t(
+              canCreateSpace
+                ? 'pages.spaces.emptyDescription'
+                : 'pages.spaces.emptyDescriptionMember',
+            )}
           </p>
-          <p className='text-muted-foreground mt-2 max-w-sm text-sm'>
-            {t('pages.spaces.startDescription')}
+          <p className='text-muted-foreground mt-2 max-w-lg text-sm'>
+            {t(
+              canCreateSpace
+                ? 'pages.spaces.startDescription'
+                : 'pages.spaces.startDescriptionMember',
+            )}
           </p>
-          <Button asChild className='mt-6'>
-            <Link to='/account/spaces/new'>
+          {canCreateSpace && createSpaceDisabled ? (
+            <Button disabled className='mt-6' title={t('pages.spaces.messages.spaceLimitReached')}>
               <Plus className='mr-2 h-4 w-4' />
               {t('pages.spaces.createSpace')}
-            </Link>
-          </Button>
+            </Button>
+          ) : canCreateSpace ? (
+            <Button asChild className='mt-6'>
+              <Link to='/account/spaces/new'>
+                <Plus className='mr-2 h-4 w-4' />
+                {t('pages.spaces.createSpace')}
+              </Link>
+            </Button>
+          ) : null}
         </div>
       ) : (
-        /* Card grid */
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+        /* Space list */
+        <div className='grid grid-cols-1 gap-4'>
           {spaces.map((space) => {
             const canManageSpace = space.canManage
             const isSharedSpace = !canManageSpace
@@ -173,16 +419,22 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                     size: formatBytes(hostedUsageBytes),
                   })
                 : t(`pages.spaces.storageType.${space.storageType}`)
+            const processingUsageLabel =
+              space.processingUsageCount !== null
+                ? t('pages.spaces.processingUsage', {
+                    count: space.processingUsageCount,
+                  })
+                : null
             return (
               <div
                 key={space.key}
-                className='group bg-card hover:border-border hover:bg-accent/20 dark:hover:border-border/80 dark:hover:bg-accent/30 relative flex flex-col rounded-xl border p-5 transition-[background-color,border-color,box-shadow] hover:shadow-md'
+                className='group bg-card hover:border-border hover:bg-accent/20 dark:hover:border-border/80 dark:hover:bg-accent/30 relative flex flex-col rounded-lg border p-5 transition-[background-color,border-color,box-shadow] hover:shadow-md'
               >
                 <Link
                   to='/spaces/$spaceKey'
                   params={{ spaceKey: space.key }}
                   aria-label={`${t('pages.spaces.openGallery')}: ${space.name}`}
-                  className='focus-visible:ring-ring absolute inset-0 z-10 rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+                  className='focus-visible:ring-ring absolute inset-0 z-10 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
                 />
 
                 {/* Card header row */}
@@ -228,6 +480,11 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
                         {storageBadgeLabel}
                       </Badge>
                     </Link>
+                    {processingUsageLabel && (
+                      <Badge variant='outline' className='pointer-events-auto'>
+                        {processingUsageLabel}
+                      </Badge>
+                    )}
                     {canManageSpace && !space.canLeave ? (
                       <Button
                         variant='ghost'
@@ -294,14 +551,6 @@ export function SpacesPage({ loaderData, currentOrganizationId = null }: SpacesP
           })}
         </div>
       )}
-
-      {/* Space count footer */}
-      {loaderData && spaces.length > 0 && (
-        <p className='text-muted-foreground text-sm'>
-          {t('pages.spaces.spaceCount', { count: spaces.length })}
-        </p>
-      )}
-
       <ResponsiveDialog
         open={leaveSpaceItem !== null}
         onOpenChange={(open) => !open && setLeaveSpaceItem(null)}

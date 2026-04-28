@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
 	sharedinvite "github.com/cshum/imagor-studio/server/pkg/invite"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
+	sharedsignup "github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	shareduser "github.com/cshum/imagor-studio/server/pkg/user"
 	"github.com/uptrace/bun"
@@ -27,8 +29,14 @@ type CloudConfig struct {
 	SESRegion                            string
 	SESFromEmail                         string
 	AppAPIURL                            string
+	StripeSecretKey                      string
+	StripeWebhookSecret                  string
+	StripeStarterPriceID                 string
+	StripeProPriceID                     string
+	StripeTeamPriceID                    string
+	StripeBillingPortalConfigurationID   string
 	ProcessingURLTemplate                string
-	ProcessingUsageBatchCleanupEnabled   bool
+	ManagementJobsEnabled                bool
 	ProcessingUsageBatchCleanupRetention time.Duration
 	ProcessingUsageBatchCleanupInterval  time.Duration
 	PlatformS3Bucket                     string
@@ -42,6 +50,15 @@ type CloudConfig struct {
 }
 
 type InviteSenderConfig = sharedinvite.Config
+
+type SignupVerificationConfig = sharedsignup.Config
+
+type SignupVerificationServices struct {
+	DB        *bun.DB
+	UserStore shareduser.PasswordSignupStore
+	OrgStore  org.OrgStore
+	Logger    *zap.Logger
+}
 
 type OAuthConfig struct {
 	GoogleClientID     string
@@ -58,9 +75,25 @@ type CloudHTTPServices struct {
 	SpaceInviteStore     space.SpaceInviteStore
 	HostedStorageStore   HostedStorageStore
 	ProcessingUsageStore ProcessingUsageStore
+	BillingService       billing.Service
+	SignupVerification   sharedsignup.Runtime
 	CloudConfig          CloudConfig
 	GlobalImagor         ImagorSigningConfig
 	InternalAPISecret    string
+	Logger               *zap.Logger
+}
+
+type CloudWorkerServices struct {
+	DB                   *bun.DB
+	UserStore            shareduser.OAuthStore
+	OrgStore             org.OrgStore
+	SpaceStore           space.SpaceStore
+	SpaceInviteStore     space.SpaceInviteStore
+	HostedStorageStore   HostedStorageStore
+	ProcessingUsageStore ProcessingUsageStore
+	BillingService       billing.Service
+	SignupVerification   sharedsignup.Runtime
+	CloudConfig          CloudConfig
 	Logger               *zap.Logger
 }
 
@@ -89,9 +122,17 @@ type HostedStorageUsageAggregator interface {
 	ListUsageBytesBySpace(ctx context.Context, orgID string, spaceIDs []string) (map[string]int64, error)
 }
 
+type ProcessingUsageSummary struct {
+	PeriodStart           time.Time
+	PeriodEnd             time.Time
+	TotalProcessedCount   int64
+	ProcessedCountBySpace map[string]int64
+}
+
 type ProcessingUsageStore interface {
 	ApplyUsageBatch(ctx context.Context, batch processing.UsageBatch) (*processing.UsageBatchApplyResult, error)
 	CleanupUsageBatches(ctx context.Context, olderThan time.Time) error
+	GetCurrentUsageSummary(ctx context.Context, orgID string) (*ProcessingUsageSummary, error)
 }
 
 type ImagorSigningConfig struct {
@@ -104,15 +145,21 @@ type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionServic
 
 type InviteSenderFactory func(cfg InviteSenderConfig) (space.InviteSender, error)
 
+type SignupVerificationFactory func(cfg SignupVerificationConfig, services SignupVerificationServices) (sharedsignup.Runtime, error)
+
 type CloudConfigLoader func(args []string) (CloudConfig, error)
 
 type AuthRoutesRegistrar func(mux *http.ServeMux, cfg OAuthConfig, services CloudHTTPServices)
 
 type InternalRoutesRegistrar func(mux *http.ServeMux, services CloudHTTPServices)
 
+type CloudWorkerRunner func(ctx context.Context, services CloudWorkerServices, cfg CloudConfig) error
+
 type ProcessingOriginResolverFactory func(cfg CloudConfig, spaceStore space.SpaceStore) space.ProcessingOriginResolver
 
 type TemplatePreviewRenderClientFactory func(cfg CloudConfig) processing.TemplatePreviewRenderClient
+
+type BillingServiceFactory func(cfg CloudConfig, logger *zap.Logger, orgStore org.OrgStore, spaceStore space.SpaceStore) (billing.Service, error)
 
 type AutoMigrationConfig struct {
 	DatabaseURL      string
@@ -125,9 +172,11 @@ type CloudFactories struct {
 	ConfigLoader             CloudConfigLoader
 	Stores                   CloudStoresFactory
 	InviteSender             InviteSenderFactory
+	SignupVerification       SignupVerificationFactory
 	AutoMigration            AutoMigrationRunner
 	AuthRoutes               AuthRoutesRegistrar
 	InternalRoutes           InternalRoutesRegistrar
 	ProcessingOriginResolver ProcessingOriginResolverFactory
 	TemplatePreviewRenderer  TemplatePreviewRenderClientFactory
+	BillingService           BillingServiceFactory
 }

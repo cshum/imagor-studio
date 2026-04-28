@@ -3,7 +3,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { CheckCircle2, Cloud, Database, Lock } from 'lucide-react'
+import { Building2, CheckCircle2, Cloud, Database, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -30,10 +30,23 @@ import {
 } from '@/components/ui/multi-step-form'
 import { Separator } from '@/components/ui/separator'
 import { useBrand } from '@/hooks/use-brand'
-import { extractErrorInfo } from '@/lib/error-utils'
+import { extractErrorInfo, isOrganizationRequiredError } from '@/lib/error-utils'
 import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 import { formatStorageValidationError } from '@/lib/storage-validation-errors'
 import { useAuth } from '@/stores/auth-store'
+
+function getCreateSpaceErrorMessage(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  errorInfo: ReturnType<typeof extractErrorInfo>,
+): string {
+  if (errorInfo.reason === 'space_limit_reached') {
+    return t('pages.spaces.messages.spaceLimitReached')
+  }
+  if (errorInfo.code === 'FORBIDDEN') {
+    return t('pages.spaces.messages.createSpaceForbidden')
+  }
+  return errorInfo.message
+}
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -125,6 +138,12 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
     }
   }
 
+  const clearFieldError = (name: keyof CreateFormData) => {
+    if (form.getFieldState(name).error) {
+      form.clearErrors(name)
+    }
+  }
+
   return (
     <div className='space-y-6'>
       <FormField
@@ -139,6 +158,7 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
                 {...field}
                 autoFocus
                 onChange={(e) => {
+                  clearFieldError('name')
                   field.onChange(e)
                   const keyValue = form.getValues('key')
                   if (!keyValue || keyValue === slugify(field.value)) {
@@ -158,7 +178,15 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
           <FormItem>
             <FormLabel>{t('pages.spaces.formLabels.key')}</FormLabel>
             <FormControl>
-              <Input placeholder='my-space' {...field} className='font-mono' />
+              <Input
+                placeholder='my-space'
+                {...field}
+                className='font-mono'
+                onChange={(e) => {
+                  clearFieldError('key')
+                  field.onChange(e)
+                }}
+              />
             </FormControl>
             <FormDescription>{t('pages.spaces.keyDescription')}</FormDescription>
             <FormMessage />
@@ -206,6 +234,12 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
   const selectedStorageType = useWatch({ control: form.control, name: 'storageType' })
   const isByob = selectedStorageType === 's3'
 
+  const clearFieldError = (name: keyof CreateFormData) => {
+    if (form.getFieldState(name).error) {
+      form.clearErrors(name)
+    }
+  }
+
   return (
     <div className='space-y-6'>
       <FormField
@@ -222,7 +256,10 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                     key={type}
                     type='button'
                     disabled={isSaving}
-                    onClick={() => field.onChange(type)}
+                    onClick={() => {
+                      clearFieldError('storageType')
+                      field.onChange(type)
+                    }}
                     className={[
                       'relative rounded-lg border p-4 text-left',
                       isSelected
@@ -265,7 +302,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.bucket')} *</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={isSaving} />
+                    <Input
+                      {...field}
+                      disabled={isSaving}
+                      onChange={(e) => {
+                        clearFieldError('bucket')
+                        field.onChange(e)
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -278,7 +322,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.region')} *</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={isSaving} />
+                    <Input
+                      {...field}
+                      disabled={isSaving}
+                      onChange={(e) => {
+                        clearFieldError('region')
+                        field.onChange(e)
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -292,7 +343,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isSaving} />
+                  <Input
+                    {...field}
+                    disabled={isSaving}
+                    onChange={(e) => {
+                      clearFieldError('endpoint')
+                      field.onChange(e)
+                    }}
+                  />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.endpointDescription')}
@@ -308,7 +366,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isSaving} />
+                  <Input
+                    {...field}
+                    disabled={isSaving}
+                    onChange={(e) => {
+                      clearFieldError('prefix')
+                      field.onChange(e)
+                    }}
+                  />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.prefixDescription')}
@@ -325,7 +390,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.accessKeyId')} *</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={isSaving} />
+                    <Input
+                      {...field}
+                      disabled={isSaving}
+                      onChange={(e) => {
+                        clearFieldError('accessKeyId')
+                        field.onChange(e)
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -338,7 +410,15 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.secretKey')} *</FormLabel>
                   <FormControl>
-                    <Input type='password' {...field} disabled={isSaving} />
+                    <Input
+                      type='password'
+                      {...field}
+                      disabled={isSaving}
+                      onChange={(e) => {
+                        clearFieldError('secretKey')
+                        field.onChange(e)
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -378,6 +458,15 @@ export function CreateSpacePage() {
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
+  const accountLinks = authState.multiTenant
+    ? [
+        {
+          label: t('navigation.breadcrumbs.organization'),
+          href: '/account/organization/billing',
+          icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
+        },
+      ]
+    : []
 
   const handleLogout = async () => {
     await logout()
@@ -472,13 +561,20 @@ export function CreateSpacePage() {
       await router.invalidate()
       await navigate({ to: '/spaces/$spaceKey', params: { spaceKey: values.key } })
     } catch (err) {
+      if (isOrganizationRequiredError(err)) {
+        await navigate({ to: '/account/workspace-required' })
+        return
+      }
+
       const errorInfo = extractErrorInfo(err)
       if (errorInfo.field === 'key') {
         // Duplicate key — navigate back to step 1 and show field error
         form.setError('key', { message: t('pages.spaces.messages.keyAlreadyTaken') })
         setCurrentStep(1)
       } else {
-        toast.error(`${t('pages.spaces.messages.createSpaceFailed')}: ${errorInfo.message}`)
+        toast.error(
+          `${t('pages.spaces.messages.createSpaceFailed')}: ${getCreateSpaceErrorMessage(t, errorInfo)}`,
+        )
       }
     } finally {
       setIsSaving(false)
@@ -514,6 +610,7 @@ export function CreateSpacePage() {
           { label: t('navigation.breadcrumbs.spaces'), href: '/' },
           { label: t('pages.spaces.createNewSpace') },
         ]}
+        accountLinks={accountLinks}
       />
 
       {/* Wizard — pt-14 clears fixed header */}

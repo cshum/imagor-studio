@@ -17,10 +17,12 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/storageprovider"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/encryption"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
+	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/uptrace/bun"
@@ -46,8 +48,10 @@ type Services struct {
 	SpaceInviteStore        space.SpaceInviteStore          // nil when invitation storage is unavailable
 	HostedStorageStore      management.HostedStorageStore   // nil unless cloud hosted-storage metering is enabled
 	ProcessingUsageStore    management.ProcessingUsageStore // nil unless cloud processing usage metering is enabled
+	BillingService          billing.Service                 // nil unless cloud billing integration is enabled
 	ProcessingUsageRecorder processing.UsageRecorder        // nil unless running a processing node with usage flushing enabled
 	InviteSender            space.InviteSender              // nil when invitation email is not configured
+	SignupVerification      signup.Runtime                  // nil until a cloud signup verification runtime is injected
 	SpaceConfigStore        processing.SpaceConfigReader    // nil unless running a processing node; Start() called by server
 	ProcessingConfig        *processing.NodeConfig          // nil unless running a processing node
 	LicenseService          *license.Service
@@ -70,19 +74,19 @@ func Initialize(cfg *config.Config, logger *zap.Logger, args []string, mode stri
 }
 
 func InitializeSelfHosted(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, management.CloudConfig{}, nil, nil, nil)
+	return initializeRuntimeMode(cfg, logger, args, ModeSelfHosted, management.CloudConfig{}, nil, nil, nil, nil, nil)
 }
 
 func InitializeCloud(cfg *config.Config, logger *zap.Logger, args []string) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud, management.CloudConfig{}, nil, nil, nil)
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, management.CloudConfig{}, nil, nil, nil, nil, nil)
 }
 
 func InitializeCloudWithFactories(cfg *config.Config, logger *zap.Logger, args []string, cloudConfig management.CloudConfig, factories management.CloudFactories) (*Services, error) {
-	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudConfig, factories.Stores, factories.InviteSender, factories.AutoMigration)
+	return initializeRuntimeMode(cfg, logger, args, ModeCloud, cloudConfig, factories.Stores, factories.InviteSender, factories.SignupVerification, factories.AutoMigration, factories.BillingService)
 }
 
 // initializeRuntimeMode sets up runtime services for self-hosted or cloud management modes.
-func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudConfig management.CloudConfig, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory, autoMigrationRunner management.AutoMigrationRunner) (*Services, error) {
+func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string, mode string, cloudConfig management.CloudConfig, cloudStoresFactory management.CloudStoresFactory, inviteSenderFactory management.InviteSenderFactory, signupVerificationFactory management.SignupVerificationFactory, autoMigrationRunner management.AutoMigrationRunner, billingServiceFactory management.BillingServiceFactory) (*Services, error) {
 	if cfg.EmbeddedMode {
 		return initializeEmbeddedMode(cfg, logger)
 	}
@@ -167,7 +171,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 
 	var inviteSender space.InviteSender
 	if mode == ModeCloud && inviteSenderFactory != nil {
-		inviteSender, err = inviteSenderFactory(management.InviteSenderConfig{SESFromEmail: cloudConfig.SESFromEmail, SESRegion: cloudConfig.SESRegion, AWSRegion: enhancedCfg.AWSRegion, AppURL: enhancedCfg.AppUrl, AppAPIURL: cloudConfig.AppAPIURL})
+		inviteSender, err = inviteSenderFactory(management.InviteSenderConfig{SESFromEmail: cloudConfig.SESFromEmail, SESRegion: cloudConfig.SESRegion, AWSRegion: enhancedCfg.AWSRegion, AppURL: enhancedCfg.AppUrl, AppAPIURL: cloudConfig.AppAPIURL, AppTitle: enhancedCfg.AppTitle})
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
 		}
@@ -175,6 +179,37 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 		inviteSender, err = managementruntime.InitializeInviteSender(enhancedCfg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
+		}
+	}
+
+	var signupVerification signup.Runtime
+	if mode == ModeCloud && signupVerificationFactory != nil {
+		signupVerification, err = signupVerificationFactory(
+			management.SignupVerificationConfig{
+				SESFromEmail: cloudConfig.SESFromEmail,
+				SESRegion:    cloudConfig.SESRegion,
+				AWSRegion:    enhancedCfg.AWSRegion,
+				AppURL:       enhancedCfg.AppUrl,
+				AppAPIURL:    cloudConfig.AppAPIURL,
+				AppTitle:     enhancedCfg.AppTitle,
+			},
+			management.SignupVerificationServices{
+				DB:        db,
+				UserStore: userStore,
+				OrgStore:  orgStore,
+				Logger:    logger,
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize signup verification runtime: %w", err)
+		}
+	}
+
+	var billingService billing.Service
+	if mode == ModeCloud && billingServiceFactory != nil {
+		billingService, err = billingServiceFactory(cloudConfig, logger, orgStore, spaceStore)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize billing service: %w", err)
 		}
 	}
 
@@ -216,8 +251,10 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 		SpaceInviteStore:        spaceInviteStore,
 		HostedStorageStore:      hostedStorageStore,
 		ProcessingUsageStore:    processingUsageStore,
+		BillingService:          billingService,
 		ProcessingUsageRecorder: processingUsageRecorder,
 		InviteSender:            inviteSender,
+		SignupVerification:      signupVerification,
 		SpaceConfigStore:        spaceConfigStore,
 		LicenseService:          licenseService,
 		Encryption:              encryptionService,
@@ -276,19 +313,20 @@ func initializeEmbeddedMode(cfg *config.Config, logger *zap.Logger) (*Services, 
 	)
 
 	return &Services{
-		DB:               nil, // No database in embedded mode
-		TokenManager:     tokenManager,
-		Storage:          stor,
-		StorageProvider:  storageProvider,
-		ImagorProvider:   imagorProvider,
-		RegistryStore:    registryStore,
-		UserStore:        userStore,
-		SpaceInviteStore: nil,
-		InviteSender:     nil,
-		LicenseService:   licenseService,
-		Encryption:       nil, // No encryption service in embedded mode
-		Config:           cfg,
-		Logger:           logger,
+		DB:                 nil, // No database in embedded mode
+		TokenManager:       tokenManager,
+		Storage:            stor,
+		StorageProvider:    storageProvider,
+		ImagorProvider:     imagorProvider,
+		RegistryStore:      registryStore,
+		UserStore:          userStore,
+		SpaceInviteStore:   nil,
+		InviteSender:       nil,
+		SignupVerification: nil,
+		LicenseService:     licenseService,
+		Encryption:         nil, // No encryption service in embedded mode
+		Config:             cfg,
+		Logger:             logger,
 	}, nil
 }
 

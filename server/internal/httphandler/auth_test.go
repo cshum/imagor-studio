@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,10 +17,12 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -32,10 +35,25 @@ type errOrgStore struct{ msg string }
 func (e *errOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*org.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
+func (e *errOrgStore) GetByID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
 func (e *errOrgStore) GetByUserID(_ context.Context, _ string) (*org.Org, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
 func (e *errOrgStore) GetBySlug(_ context.Context, _ string) (*org.Org, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) GetByStripeCustomerID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) UpdateBillingState(_ context.Context, _ string, _ org.BillingStateUpdate) (*org.Org, error) {
+	return nil, fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
 	return nil, fmt.Errorf("%s", e.msg)
 }
 
@@ -55,6 +73,14 @@ func (e *errOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error 
 	return fmt.Errorf("%s", e.msg)
 }
 
+func (e *errOrgStore) TransferOwnership(_ context.Context, _, _, _ string) error {
+	return fmt.Errorf("%s", e.msg)
+}
+
+func (e *errOrgStore) Delete(_ context.Context, _, _ string) error {
+	return fmt.Errorf("%s", e.msg)
+}
+
 // nilOrgStore implements space.OrgStore but returns (nil, nil) on lookups —
 // simulates a user that exists but has no org yet.
 type nilOrgStore struct{}
@@ -62,11 +88,26 @@ type nilOrgStore struct{}
 func (n *nilOrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.Time) (*org.Org, error) {
 	return nil, nil
 }
+func (n *nilOrgStore) GetByID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, nil
+}
 func (n *nilOrgStore) GetByUserID(_ context.Context, _ string) (*org.Org, error) {
 	return nil, nil // no org found
 }
 func (n *nilOrgStore) GetBySlug(_ context.Context, _ string) (*org.Org, error) {
 	return nil, nil
+}
+
+func (n *nilOrgStore) GetByStripeCustomerID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, nil
+}
+
+func (n *nilOrgStore) UpdateBillingState(_ context.Context, _ string, _ org.BillingStateUpdate) (*org.Org, error) {
+	return nil, nil
+}
+
+func (n *nilOrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
+	return []string{}, nil
 }
 
 func (n *nilOrgStore) ListMembers(_ context.Context, _ string) ([]*org.OrgMemberView, error) {
@@ -85,15 +126,24 @@ func (n *nilOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error 
 	return nil
 }
 
+func (n *nilOrgStore) TransferOwnership(_ context.Context, _, _, _ string) error {
+	return nil
+}
+
+func (n *nilOrgStore) Delete(_ context.Context, _, _ string) error {
+	return nil
+}
+
 type stubSpaceStore struct {
 	spaceByKey map[string]*space.Space
 	err        error
 }
 
-func (s *stubSpaceStore) Create(_ context.Context, _ *space.Space) error { return nil }
-func (s *stubSpaceStore) RenameKey(_ context.Context, _, _ string) error { return nil }
-func (s *stubSpaceStore) Upsert(_ context.Context, _ *space.Space) error { return nil }
-func (s *stubSpaceStore) SoftDelete(_ context.Context, _ string) error   { return nil }
+func (s *stubSpaceStore) Create(_ context.Context, _ *space.Space) error                { return nil }
+func (s *stubSpaceStore) RenameKey(_ context.Context, _, _ string) error                { return nil }
+func (s *stubSpaceStore) Upsert(_ context.Context, _ *space.Space) error                { return nil }
+func (s *stubSpaceStore) SetSuspendedByOrgID(_ context.Context, _ string, _ bool) error { return nil }
+func (s *stubSpaceStore) SoftDelete(_ context.Context, _ string) error                  { return nil }
 func (s *stubSpaceStore) GetByKey(_ context.Context, key string) (*space.Space, error) {
 	if s.err != nil {
 		return nil, s.err
@@ -180,6 +230,14 @@ func (m *MockUserStore) GetByUsername(ctx context.Context, username string) (*mo
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
+func (m *MockUserStore) CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*userstore.User, error) {
+	args := m.Called(ctx, displayName, username, hashedPassword, role, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
 func (m *MockUserStore) UpdateLastLogin(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
@@ -226,6 +284,11 @@ func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) e
 	return args.Error(0)
 }
 
+func (m *MockUserStore) SetEmailVerified(ctx context.Context, id string, verified bool) error {
+	args := m.Called(ctx, id, verified)
+	return args.Error(0)
+}
+
 func (m *MockUserStore) List(ctx context.Context, offset, limit int, search string) ([]*userstore.User, int, error) {
 	args := m.Called(ctx, offset, limit, search)
 	if args.Get(0) == nil {
@@ -257,6 +320,34 @@ func (m *MockUserStore) UpdateRole(ctx context.Context, id string, role string) 
 
 type MockRegistryStore struct {
 	mock.Mock
+}
+
+type MockSignupRuntime struct {
+	mock.Mock
+}
+
+func (m *MockSignupRuntime) StartPublicSignup(ctx context.Context, params signup.StartPublicSignupParams) (*signup.StartPublicSignupResult, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.StartPublicSignupResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) VerifyPublicSignup(ctx context.Context, token string) (*signup.VerifyPublicSignupResult, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.VerifyPublicSignupResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) ResendPublicSignupVerification(ctx context.Context, email string) (*signup.StartPublicSignupResult, error) {
+	args := m.Called(ctx, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.StartPublicSignupResult), args.Error(1)
 }
 
 func (m *MockRegistryStore) List(ctx context.Context, ownerID string, prefix *string) ([]*registrystore.Registry, error) {
@@ -309,77 +400,167 @@ func (m *MockRegistryStore) DeleteMulti(ctx context.Context, ownerID string, key
 func TestRegister(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
-	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, AuthHandlerConfig{})
 
 	tests := []struct {
 		name           string
 		method         string
 		body           interface{}
-		setupMocks     func()
+		setupMocks     func(*MockUserStore)
 		expectedStatus int
 		expectError    bool
 		errorCode      string
+		expectedUserID string
+		expectedName   string
+		expectedUser   string
 	}{
 		{
 			name:   "Valid registration",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Username:    "testuser",
+				Email:       "test@example.com",
 				Password:    "password123",
 			},
-			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "testuser", "testuser", mock.AnythingOfType("string"), "user").Return(&userstore.User{
+			setupMocks: func(mockUserStore *MockUserStore) {
+				mockUserStore.On(
+					"CreateWithEmail",
+					mock.Anything,
+					"testuser",
+					mock.MatchedBy(func(username string) bool {
+						return strings.HasPrefix(username, "u-") && len(username) == 14
+					}),
+					mock.AnythingOfType("string"),
+					"user",
+					"test@example.com",
+				).Return(&userstore.User{
 					ID:          "user-123",
 					DisplayName: "testuser",
-					Username:    "testuser",
+					Username:    "u-generated-1",
 					Role:        "user",
 					IsActive:    true,
+					Email:       ptrToString("test@example.com"),
 				}, nil)
 			},
 			expectedStatus: http.StatusCreated,
 			expectError:    false,
+			expectedUserID: "user-123",
+			expectedName:   "testuser",
+			expectedUser:   "u-generated-1",
+		},
+		{
+			name:   "Valid registration with provided username still works",
+			method: http.MethodPost,
+			body: RegisterRequest{
+				DisplayName: "testuser",
+				Email:       "test@example.com",
+				Username:    "testuser",
+				Password:    "password123",
+			},
+			setupMocks: func(mockUserStore *MockUserStore) {
+				mockUserStore.On("CreateWithEmail", mock.Anything, "testuser", "testuser", mock.AnythingOfType("string"), "user", "test@example.com").Return(&userstore.User{
+					ID:            "user-456",
+					DisplayName:   "testuser",
+					Username:      "testuser",
+					Role:          "user",
+					IsActive:      true,
+					Email:         ptrToString("test@example.com"),
+					EmailVerified: true,
+				}, nil)
+			},
+			expectedStatus: http.StatusCreated,
+			expectError:    false,
+			expectedUserID: "user-456",
+			expectedName:   "testuser",
+			expectedUser:   "testuser",
 		},
 		{
 			name:   "Unexpected already exists error is internal",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "existinguser",
-				Username:    "existinguser",
+				Email:       "existing@example.com",
 				Password:    "password123",
 			},
-			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "existinguser", "existinguser", mock.AnythingOfType("string"), "user").Return(nil, fmt.Errorf("displayName already exists"))
+			setupMocks: func(mockUserStore *MockUserStore) {
+				mockUserStore.On(
+					"CreateWithEmail",
+					mock.Anything,
+					"existinguser",
+					mock.MatchedBy(func(username string) bool {
+						return strings.HasPrefix(username, "u-") && len(username) == 14
+					}),
+					mock.AnythingOfType("string"),
+					"user",
+					"existing@example.com",
+				).Return(nil, fmt.Errorf("displayName already exists"))
 			},
 			expectedStatus: http.StatusInternalServerError,
 			expectError:    true,
 			errorCode:      "INTERNAL_SERVER_ERROR",
 		},
 		{
-			name:   "Email already exists",
+			name:   "Username already exists",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "newuser",
+				Email:       "newuser@example.com",
 				Username:    "existinguser",
 				Password:    "password123",
 			},
-			setupMocks: func() {
-				mockUserStore.On("Create", mock.Anything, "newuser", "existinguser", mock.AnythingOfType("string"), "user").Return(nil, userstore.ErrUsernameAlreadyExists)
+			setupMocks: func(mockUserStore *MockUserStore) {
+				mockUserStore.On("CreateWithEmail", mock.Anything, "newuser", "existinguser", mock.AnythingOfType("string"), "user", "newuser@example.com").Return(nil, userstore.ErrUsernameAlreadyExists)
 			},
 			expectedStatus: http.StatusConflict,
 			expectError:    true,
 			errorCode:      "ALREADY_EXISTS",
 		},
 		{
+			name:   "Email already exists",
+			method: http.MethodPost,
+			body: RegisterRequest{
+				DisplayName: "newuser",
+				Email:       "taken@example.com",
+				Password:    "password123",
+			},
+			setupMocks: func(mockUserStore *MockUserStore) {
+				mockUserStore.On(
+					"CreateWithEmail",
+					mock.Anything,
+					"newuser",
+					mock.MatchedBy(func(username string) bool {
+						return strings.HasPrefix(username, "u-") && len(username) == 14
+					}),
+					mock.AnythingOfType("string"),
+					"user",
+					"taken@example.com",
+				).Return(nil, userstore.ErrEmailAlreadyExists)
+			},
+			expectedStatus: http.StatusConflict,
+			expectError:    true,
+			errorCode:      "ALREADY_EXISTS",
+		},
+		{
+			name:   "Invalid email",
+			method: http.MethodPost,
+			body: RegisterRequest{
+				DisplayName: "testuser",
+				Email:       "not-an-email",
+				Password:    "password123",
+			},
+			setupMocks:     func(*MockUserStore) {},
+			expectedStatus: http.StatusBadRequest,
+			expectError:    true,
+			errorCode:      "INVALID_INPUT",
+		},
+		{
 			name:   "Invalid password too short",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Username:    "testuser",
+				Email:       "test@example.com",
 				Password:    "short",
 			},
-			setupMocks:     func() {},
+			setupMocks:     func(*MockUserStore) {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
 			errorCode:      "INVALID_INPUT",
@@ -389,23 +570,22 @@ func TestRegister(t *testing.T) {
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "",
-				Username:    "testuser",
+				Email:       "test@example.com",
 				Password:    "password123",
 			},
-			setupMocks:     func() {},
+			setupMocks:     func(*MockUserStore) {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
 			errorCode:      "INVALID_INPUT",
 		},
 		{
-			name:   "Missing username",
+			name:   "Missing email",
 			method: http.MethodPost,
 			body: RegisterRequest{
 				DisplayName: "testuser",
-				Username:    "",
 				Password:    "password123",
 			},
-			setupMocks:     func() {},
+			setupMocks:     func(*MockUserStore) {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
 			errorCode:      "INVALID_INPUT",
@@ -418,7 +598,7 @@ func TestRegister(t *testing.T) {
 				Username:    "invalid-username!",
 				Password:    "password123",
 			},
-			setupMocks:     func() {},
+			setupMocks:     func(*MockUserStore) {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
 			errorCode:      "INVALID_INPUT",
@@ -427,7 +607,7 @@ func TestRegister(t *testing.T) {
 			name:           "Invalid method",
 			method:         http.MethodGet,
 			body:           nil,
-			setupMocks:     func() {},
+			setupMocks:     func(*MockUserStore) {},
 			expectedStatus: http.StatusMethodNotAllowed,
 			expectError:    true,
 			errorCode:      "METHOD_NOT_ALLOWED",
@@ -436,7 +616,7 @@ func TestRegister(t *testing.T) {
 			name:           "Invalid JSON body",
 			method:         http.MethodPost,
 			body:           "invalid json",
-			setupMocks:     func() {},
+			setupMocks:     func(*MockUserStore) {},
 			expectedStatus: http.StatusBadRequest,
 			expectError:    true,
 			errorCode:      "INVALID_INPUT",
@@ -445,8 +625,10 @@ func TestRegister(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockUserStore.ExpectedCalls = nil
-			tt.setupMocks()
+			mockUserStore := new(MockUserStore)
+			os := newTestOrgStore(newOrgTestDB(t))
+			handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, AuthHandlerConfig{})
+			tt.setupMocks(mockUserStore)
 
 			var body []byte
 			if tt.body != nil {
@@ -478,14 +660,14 @@ func TestRegister(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotEmpty(t, loginResp.Token)
 				assert.Greater(t, loginResp.ExpiresIn, int64(0))
-				assert.Equal(t, "testuser", loginResp.User.DisplayName)
-				assert.Equal(t, "testuser", loginResp.User.Username)
+				assert.Equal(t, tt.expectedName, loginResp.User.DisplayName)
+				assert.Equal(t, tt.expectedUser, loginResp.User.Username)
 				assert.Equal(t, "user", loginResp.User.Role)
 
 				// Verify the token is valid
 				claims, err := tokenManager.ValidateToken(loginResp.Token)
 				require.NoError(t, err)
-				assert.Equal(t, "user-123", claims.UserID)
+				assert.Equal(t, tt.expectedUserID, claims.UserID)
 				assert.Equal(t, "user", claims.Role)
 				assert.Contains(t, claims.Scopes, "read")
 				assert.Contains(t, claims.Scopes, "write")
@@ -494,6 +676,32 @@ func TestRegister(t *testing.T) {
 			mockUserStore.AssertExpectations(t)
 		})
 	}
+}
+
+func TestRegister_SelfHostedForbidden(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, nil, nil, logger, AuthHandlerConfig{})
+
+	body, err := json.Marshal(RegisterRequest{
+		DisplayName: "selfhosted",
+		Email:       "selfhosted@example.com",
+		Username:    "selfhosted",
+		Password:    "password123",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Register()(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	var errResp apperror.ErrorResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
+	assert.Equal(t, "FORBIDDEN", errResp.Code)
+	mockUserStore.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	mockUserStore.AssertNotCalled(t, "CreateWithEmail", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestLogin(t *testing.T) {
@@ -524,6 +732,33 @@ func TestLogin(t *testing.T) {
 			},
 			setupMocks: func() {
 				mockUserStore.On("GetByUsername", mock.Anything, "testuser").Return(&model.User{
+					ID:             "user-123",
+					DisplayName:    "testuser",
+					Username:       "testuser",
+					HashedPassword: hashedPassword,
+					Role:           "user",
+					IsActive:       true,
+				}, nil)
+				mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectError:    false,
+		},
+		{
+			name:   "Valid login with email",
+			method: http.MethodPost,
+			body: LoginRequest{
+				Username: " TestUser@Example.com ",
+				Password: "password123",
+			},
+			setupMocks: func() {
+				mockUserStore.On("GetByEmail", mock.Anything, "testuser@example.com").Return(&userstore.User{
+					ID:          "user-123",
+					DisplayName: "testuser",
+					Username:    "testuser",
+					Role:        "user",
+				}, nil)
+				mockUserStore.On("GetByIDWithPassword", mock.Anything, "user-123").Return(&model.User{
 					ID:             "user-123",
 					DisplayName:    "testuser",
 					Username:       "testuser",
@@ -818,6 +1053,40 @@ func TestRefreshToken(t *testing.T) {
 	}
 }
 
+func TestRefreshToken_RecomputesCurrentOrgID(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{})
+
+	staleToken, err := tokenManager.GenerateTokenForUser("user1", "user", []string{"read", "write"}, "org-stale")
+	require.NoError(t, err)
+	mockUserStore.On("GetByID", mock.Anything, "user1").Return(&userstore.User{
+		ID:          "user1",
+		DisplayName: "testuser",
+		Username:    "testuser",
+		Role:        "user",
+		IsActive:    true,
+	}, nil).Once()
+
+	body, err := json.Marshal(RefreshTokenRequest{Token: staleToken})
+	require.NoError(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/refresh", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+
+	handler.RefreshToken()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+	var refreshResp LoginResponse
+	err = json.Unmarshal(rr.Body.Bytes(), &refreshResp)
+	require.NoError(t, err)
+	claims, err := tokenManager.ValidateToken(refreshResp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "user1", claims.UserID)
+	assert.Empty(t, claims.OrgID)
+	mockUserStore.AssertExpectations(t)
+}
+
 func TestGuestLogin(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
@@ -954,14 +1223,24 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	handler := NewAuthHandler(tokenManager, mockUserStore, os, nil, logger, AuthHandlerConfig{})
 
 	const userID = "saas-reg-user-1"
-	mockUserStore.On("Create", mock.Anything, "saasuser", "saasuser", mock.AnythingOfType("string"), "user").
+	mockUserStore.On(
+		"CreateWithEmail",
+		mock.Anything,
+		"saasuser",
+		mock.MatchedBy(func(username string) bool {
+			return strings.HasPrefix(username, "u-") && len(username) == 14
+		}),
+		mock.AnythingOfType("string"),
+		"user",
+		"saasuser@example.com",
+	).
 		Return(&userstore.User{
-			ID: userID, DisplayName: "saasuser", Username: "saasuser", Role: "user", IsActive: true,
+			ID: userID, DisplayName: "saasuser", Username: "u-saasuser001", Role: "user", IsActive: true,
 		}, nil)
 
 	body, err := json.Marshal(RegisterRequest{
 		DisplayName: "saasuser",
-		Username:    "saasuser",
+		Email:       "saasuser@example.com",
 		Password:    "password123",
 	})
 	require.NoError(t, err)
@@ -986,7 +1265,7 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, org, "org should have been created on signup")
 	assert.Equal(t, claims.OrgID, org.ID, "JWT org_id must match the created org")
-	assert.Equal(t, "saasuser", org.Slug)
+	assert.Equal(t, "u-saasuser001", org.Slug)
 	assert.Equal(t, userID, org.OwnerID)
 
 	mockUserStore.AssertExpectations(t)
@@ -1044,10 +1323,20 @@ func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
 	handler := NewAuthHandler(tokenManager, mockUserStore, &errOrgStore{msg: "DB connection refused"}, nil, logger, AuthHandlerConfig{})
 
 	const userID = "saas-fail-user-1"
-	mockUserStore.On("Create", mock.Anything, "failuser", "failuser", mock.AnythingOfType("string"), "user").
-		Return(&userstore.User{ID: userID, DisplayName: "failuser", Username: "failuser", Role: "user", IsActive: true}, nil)
+	mockUserStore.On(
+		"CreateWithEmail",
+		mock.Anything,
+		"failuser",
+		mock.MatchedBy(func(username string) bool {
+			return strings.HasPrefix(username, "u-") && len(username) == 14
+		}),
+		mock.AnythingOfType("string"),
+		"user",
+		"failuser@example.com",
+	).
+		Return(&userstore.User{ID: userID, DisplayName: "failuser", Username: "u-failuser001", Role: "user", IsActive: true}, nil)
 
-	body, _ := json.Marshal(RegisterRequest{DisplayName: "failuser", Username: "failuser", Password: "password123"})
+	body, _ := json.Marshal(RegisterRequest{DisplayName: "failuser", Email: "failuser@example.com", Password: "password123"})
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
 	handler.Register()(rr, req)
@@ -1060,31 +1349,198 @@ func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
-// TestRegister_MultiTenant_SelfHosted_NoOrgInJWT — when orgStore is nil (self-hosted
-// deployment) the JWT must NOT carry an org_id.
-func TestRegister_MultiTenant_SelfHosted_NoOrgInJWT(t *testing.T) {
+func TestStartPublicSignup(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
-	mockUserStore := new(MockUserStore)
-	handler := NewAuthHandler(tokenManager, mockUserStore, nil /* no orgStore */, nil, logger, AuthHandlerConfig{})
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
 
-	mockUserStore.On("Create", mock.Anything, "selfhosted", "selfhosted", mock.AnythingOfType("string"), "user").
-		Return(&userstore.User{ID: "sh-1", DisplayName: "selfhosted", Username: "selfhosted", Role: "user", IsActive: true}, nil)
+	mockSignupRuntime.On("StartPublicSignup", mock.Anything, signup.StartPublicSignupParams{
+		DisplayName: "saas user",
+		Email:       "saasuser@example.com",
+		Password:    "password123",
+	}).Return(&signup.StartPublicSignupResult{
+		Email:                "saasuser@example.com",
+		VerificationRequired: true,
+		CooldownSeconds:      60,
+		ExpiresInSeconds:     900,
+		MaskedDestination:    "s***@example.com",
+	}, nil)
 
-	body, _ := json.Marshal(RegisterRequest{DisplayName: "selfhosted", Username: "selfhosted", Password: "password123"})
-	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
+	body, err := json.Marshal(StartPublicSignupRequest{
+		DisplayName: "saas user",
+		Email:       "saasuser@example.com",
+		Password:    "password123",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/start", bytes.NewReader(body))
 	rr := httptest.NewRecorder()
-	handler.Register()(rr, req)
+	handler.StartPublicSignup()(rr, req)
 
 	require.Equal(t, http.StatusCreated, rr.Code)
+	var resp signup.StartPublicSignupResult
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	assert.True(t, resp.VerificationRequired)
+	assert.Equal(t, "saasuser@example.com", resp.Email)
+
+	mockSignupRuntime.AssertExpectations(t)
+}
+
+func TestStartPublicSignup_CooldownActive(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("StartPublicSignup", mock.Anything, signup.StartPublicSignupParams{
+		DisplayName: "saas user",
+		Email:       "saasuser@example.com",
+		Password:    "password123",
+	}).Return(nil, signup.ErrVerificationCooldownActive)
+
+	body, err := json.Marshal(StartPublicSignupRequest{
+		DisplayName: "saas user",
+		Email:       "saasuser@example.com",
+		Password:    "password123",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/start", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.StartPublicSignup()(rr, req)
+
+	require.Equal(t, http.StatusTooManyRequests, rr.Code)
+	var errResp apperror.ErrorResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
+	assert.Equal(t, "TOO_MANY_REQUESTS", errResp.Code)
+
+	mockSignupRuntime.AssertExpectations(t)
+}
+
+func TestVerifyPublicSignup(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("VerifyPublicSignup", mock.Anything, "verify-token").Return(&signup.VerifyPublicSignupResult{
+		UserID: "verified-user-1",
+		OrgID:  "verified-org-1",
+	}, nil)
+	mockUserStore.On("GetByID", mock.Anything, "verified-user-1").Return(&userstore.User{
+		ID:          "verified-user-1",
+		DisplayName: "verified user",
+		Username:    "verifieduser",
+		Role:        "user",
+		IsActive:    true,
+	}, nil)
+
+	body, err := json.Marshal(VerifyPublicSignupRequest{Token: "verify-token"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/verify", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.VerifyPublicSignup()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
 	var resp LoginResponse
 	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "verified-org-1", claims.OrgID)
+
+	mockSignupRuntime.AssertExpectations(t)
+	mockUserStore.AssertExpectations(t)
+}
+
+func TestResendPublicSignupVerification_RequiresRuntime(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{})
+
+	body, err := json.Marshal(ResendPublicSignupVerificationRequest{Email: "saasuser@example.com"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/resend", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.ResendPublicSignupVerification()(rr, req)
+
+	require.Equal(t, http.StatusForbidden, rr.Code)
+}
+
+func TestResendPublicSignupVerification_CooldownActive(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("ResendPublicSignupVerification", mock.Anything, "saasuser@example.com").Return(nil, signup.ErrVerificationCooldownActive)
+
+	body, err := json.Marshal(ResendPublicSignupVerificationRequest{Email: "saasuser@example.com"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/resend", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.ResendPublicSignupVerification()(rr, req)
+
+	require.Equal(t, http.StatusTooManyRequests, rr.Code)
+	var errResp apperror.ErrorResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
+	assert.Equal(t, "TOO_MANY_REQUESTS", errResp.Code)
+
+	mockSignupRuntime.AssertExpectations(t)
+}
+
+func ptrToString(value string) *string {
+	return &value
+}
+
+func TestProvisionWorkspaceMember_EmbedsProvidedOrgID(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), nil, nil, logger, AuthHandlerConfig{})
+
+	resp, err := handler.provisionWorkspaceMember(context.Background(), &userstore.User{
+		ID:          "member-user-1",
+		DisplayName: "memberuser",
+		Username:    "memberuser",
+		Role:        "user",
+	}, "org-join-1")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
 
 	claims, err := tokenManager.ValidateToken(resp.Token)
 	require.NoError(t, err)
-	assert.Empty(t, claims.OrgID, "self-hosted JWT must not contain an org_id")
+	assert.Equal(t, "org-join-1", claims.OrgID)
+}
 
-	mockUserStore.AssertExpectations(t)
+func TestProvisionWorkspaceMember_RequiresOrgID(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), nil, nil, logger, AuthHandlerConfig{})
+
+	resp, err := handler.provisionWorkspaceMember(context.Background(), &userstore.User{
+		ID:          "member-user-1",
+		DisplayName: "memberuser",
+		Username:    "memberuser",
+		Role:        "user",
+	}, "")
+	require.Nil(t, resp)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	require.NotNil(t, gqlErr.Extensions)
+	assert.Equal(t, apperror.ErrInternalServer, gqlErr.Extensions["code"])
+}
+
+func TestResolvePrimaryOrgID_ReturnsEmptyWhenLookupFails(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &errOrgStore{msg: "db unavailable"}, nil, logger, AuthHandlerConfig{})
+
+	orgID := handler.resolvePrimaryOrgID(context.Background(), "user-1")
+	assert.Empty(t, orgID)
 }
 
 // TestLogin_MultiTenant_UserWithNoOrg — user successfully authenticates but has no

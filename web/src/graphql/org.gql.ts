@@ -7,6 +7,7 @@ export const MY_ORGANIZATION = gql(`
       name
       slug
       ownerUserId
+      currentUserRole
       plan
       planStatus
       createdAt
@@ -23,6 +24,7 @@ export const LIST_SPACES = gql(`
       key
       name
       storageUsageBytes
+      processingUsageCount
       storageMode
       storageType
       bucket
@@ -41,6 +43,37 @@ export const LIST_SPACES = gql(`
       canDelete
       canLeave
       updatedAt
+    }
+  }
+`)
+
+export const GET_USAGE_SUMMARY = gql(`
+  query GetUsageSummary {
+    usageSummary {
+      usedSpaces
+      maxSpaces
+      usedHostedStorageBytes
+      storageLimitGB
+      usedTransforms
+      transformsLimit
+      periodStart
+      periodEnd
+    }
+  }
+`)
+
+export const CREATE_CHECKOUT_SESSION = gql(`
+  mutation CreateCheckoutSession($plan: String!, $successURL: String!, $cancelURL: String!) {
+    createCheckoutSession(plan: $plan, successURL: $successURL, cancelURL: $cancelURL) {
+      url
+    }
+  }
+`)
+
+export const CREATE_BILLING_PORTAL_SESSION = gql(`
+  mutation CreateBillingPortalSession($returnURL: String!) {
+    createBillingPortalSession(returnURL: $returnURL) {
+      url
     }
   }
 `)
@@ -173,8 +206,22 @@ export const LIST_ORG_MEMBERS = gql(`
       userId
       username
       displayName
+      email
+      avatarUrl
       role
       createdAt
+    }
+  }
+`)
+
+export const LIST_ORG_INVITATIONS = gql(`
+  query ListOrgInvitations {
+    orgInvitations {
+      id
+      email
+      role
+      createdAt
+      expiresAt
     }
   }
 `)
@@ -209,7 +256,7 @@ export const LIST_SPACE_INVITATIONS = gql(`
 `)
 
 export const ADD_ORG_MEMBER = gql(`
-  mutation AddOrgMember($username: String!, $role: String!) {
+  mutation AddOrgMember($username: String!, $role: OrgMemberAssignableRole!) {
     addOrgMember(username: $username, role: $role) {
       userId
       username
@@ -221,7 +268,7 @@ export const ADD_ORG_MEMBER = gql(`
 `)
 
 export const ADD_ORG_MEMBER_BY_EMAIL = gql(`
-  mutation AddOrgMemberByEmail($email: String!, $role: String!) {
+  mutation AddOrgMemberByEmail($email: String!, $role: OrgMemberAssignableRole!) {
     addOrgMemberByEmail(email: $email, role: $role) {
       userId
       username
@@ -232,8 +279,36 @@ export const ADD_ORG_MEMBER_BY_EMAIL = gql(`
   }
 `)
 
+export const INVITE_ORG_MEMBER = gql(`
+  mutation InviteOrgMember($email: String!, $role: OrgMemberAssignableRole!) {
+    inviteOrgMember(email: $email, role: $role) {
+      status
+      member {
+        userId
+        username
+        displayName
+        role
+        createdAt
+      }
+      invitation {
+        id
+        email
+        role
+        createdAt
+        expiresAt
+      }
+    }
+  }
+`)
+
+export const CANCEL_ORG_INVITATION = gql(`
+  mutation CancelOrgInvitation($invitationId: ID!) {
+    cancelOrgInvitation(invitationId: $invitationId)
+  }
+`)
+
 export const ADD_SPACE_MEMBER = gql(`
-  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: String!) {
+  mutation AddSpaceMember($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {
     addSpaceMember(spaceID: $spaceID, userId: $userId, role: $role) {
       userId
       username
@@ -245,7 +320,7 @@ export const ADD_SPACE_MEMBER = gql(`
 `)
 
 export const INVITE_SPACE_MEMBER = gql(`
-  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: String!) {
+  mutation InviteSpaceMember($spaceID: String!, $email: String!, $role: SpaceMemberAssignableRole!) {
     inviteSpaceMember(spaceID: $spaceID, email: $email, role: $role) {
       status
       member {
@@ -272,6 +347,18 @@ export const REMOVE_ORG_MEMBER = gql(`
   }
 `)
 
+export const LEAVE_ORGANIZATION = gql(`
+  mutation LeaveOrganization {
+    leaveOrganization
+  }
+`)
+
+export const DELETE_ORGANIZATION = gql(`
+  mutation DeleteOrganization {
+    deleteOrganization
+  }
+`)
+
 export const REMOVE_SPACE_MEMBER = gql(`
   mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {
     removeSpaceMember(spaceID: $spaceID, userId: $userId)
@@ -285,7 +372,7 @@ export const LEAVE_SPACE = gql(`
 `)
 
 export const UPDATE_ORG_MEMBER_ROLE = gql(`
-  mutation UpdateOrgMemberRole($userId: ID!, $role: String!) {
+  mutation UpdateOrgMemberRole($userId: ID!, $role: OrgMemberAssignableRole!) {
     updateOrgMemberRole(userId: $userId, role: $role) {
       userId
       username
@@ -296,8 +383,18 @@ export const UPDATE_ORG_MEMBER_ROLE = gql(`
   }
 `)
 
+export const TRANSFER_ORGANIZATION_OWNERSHIP = gql(`
+  mutation TransferOrganizationOwnership($userId: ID!) {
+    transferOrganizationOwnership(userId: $userId) {
+      id
+      ownerUserId
+      updatedAt
+    }
+  }
+`)
+
 export const UPDATE_SPACE_MEMBER_ROLE = gql(`
-  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: String!) {
+  mutation UpdateSpaceMemberRole($spaceID: String!, $userId: ID!, $role: SpaceMemberAssignableRole!) {
     updateSpaceMemberRole(spaceID: $spaceID, userId: $userId, role: $role) {
       userId
       username

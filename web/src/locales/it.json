@@ -9,6 +9,7 @@
       },
       "tabs": {
         "profile": "Impostazioni account",
+        "billing": "Fatturazione",
         "system": "Sistema",
         "users": "Utenti",
         "spaces": "Spazi"
@@ -46,7 +47,7 @@
       "users": "Utenti",
       "signOut": "Esci",
       "login": "Accedi",
-      "accountSettings": "Impostazioni account",
+      "accountSettings": "Account",
       "settings": "Impostazioni"
     },
     "status": {
@@ -70,13 +71,52 @@
   },
   "auth": {
     "login": {
-      "title": "Bentornato",
-      "subtitle": "Inserisci le tue credenziali per accedere a Imagor Studio",
+      "eyebrow": "Imagor Studio",
+      "title": "Elaborazione immagini ad alte prestazioni per i team",
+      "subtitle": "Gestisci storage, delivery e accessi delle immagini da un unico posto.",
+      "formTitle": "Accedi",
+      "formSubtitleCloud": "Accedi con l'account con cui il tuo team ti ha invitato.",
+      "formSubtitleSelfHosted": "Accedi con le credenziali del tuo account.",
+      "googleCta": "Continua con Google",
+      "credentialsDividerCloud": "oppure usa email e password",
+      "credentialsDividerSelfHosted": "oppure usa nome utente e password",
+      "identifierLabelCloud": "Email",
+      "identifierLabelSelfHosted": "Nome utente",
+      "identifierPlaceholderCloud": "name@example.com",
+      "identifierPlaceholderSelfHosted": "Inserisci il tuo nome utente",
+      "inviteHint": "Usa il tuo account di team per accedere a spazi condivisi, impostazioni di delivery e configurazione dello storage.",
+      "highlights": {
+        "storage": "Controlla storage e delivery per team o ambiente",
+        "delivery": "Gestisci l'infrastruttura immagini senza condividere credenziali",
+        "access": "Rivedi, modifica e organizza immagini e template in un unico posto"
+      },
       "signIn": "Accedi",
-      "loginFailed": "Nome utente o password non validi. Riprova."
+      "loginFailed": "Credenziali non valide. Riprova.",
+      "createAccountPrompt": "Sei nuovo qui?",
+      "createAccountLink": "Crea un account"
+    },
+    "register": {
+      "formTitle": "Crea account",
+      "googleCta": "Continua con Google",
+      "credentialsDivider": "oppure crea un account con email e password",
+      "emailPlaceholder": "name@example.com",
+      "pendingTitle": "Controlla la tua email",
+      "pendingDescription": "Abbiamo inviato un link di conferma a {{email}}. Aprilo per completare la creazione dell'account.",
+      "resendAction": "Invia di nuovo l'email di verifica",
+      "resendCountdown": "Nuovo invio disponibile tra {{seconds}}s",
+      "resendSuccess": "Abbiamo inviato una nuova email di verifica.",
+      "resendCooldown": "Attendi {{seconds}} secondi prima di richiedere un'altra email di verifica.",
+      "resendFailed": "Invio dell'email di verifica non riuscito. Riprova.",
+      "submit": "Crea account",
+      "useDifferentEmail": "Usa un'altra email",
+      "signInPrompt": "Hai già un account?",
+      "signInLink": "Accedi",
+      "failed": "Impossibile creare l'account. Riprova."
     },
     "validation": {
-      "usernameRequired": "Inserisci un nome utente valido",
+      "identifierRequiredCloud": "Email o nome utente obbligatori",
+      "invalidEmailOrUsername": "Inserisci un'email o un nome utente validi",
+      "usernameRequired": "Il nome utente è obbligatorio",
       "usernameMinLength": "Il nome utente deve contenere almeno 3 caratteri",
       "usernameMaxLength": "Il nome utente deve contenere al massimo 30 caratteri",
       "passwordRequired": "La password è obbligatoria",
@@ -121,6 +161,9 @@
       "gallery": "Galleria",
       "profile": "Profilo",
       "account": "Account",
+      "organization": "Organizzazione",
+      "billing": "Fatturazione",
+      "organizationMembers": "Membri",
       "settings": "Impostazioni",
       "users": "Utenti",
       "admin": "Sistema",
@@ -131,11 +174,30 @@
   },
   "pages": {
     "authCallback": {
-      "title": "Bentornato",
+      "title": "Accesso interrotto",
       "subtitle": "Non siamo riusciti a completare l'accesso. Riprova.",
       "failed": "Autenticazione non riuscita",
       "errorOAuth": "Autenticazione non riuscita: {{error}}",
+      "errors": {
+        "inviteOrgConflict": "Questo account appartiene gia a un'altra organizzazione. Usa un account diverso oppure lascia prima la tua organizzazione attuale."
+      },
       "errorNoToken": "Nessun token di autenticazione ricevuto",
+      "backToLogin": "Torna al login"
+    },
+    "registerVerify": {
+      "title": "Conferma del tuo account in corso",
+      "subtitle": "Attendi mentre completiamo il tuo accesso.",
+      "verifying": "Stiamo verificando il link di conferma email.",
+      "errorTitle": "Non siamo riusciti a confermare il tuo account",
+      "errorSubtitle": "Il link di conferma potrebbe non essere valido o essere scaduto.",
+      "missingToken": "Nel link di conferma manca il token di verifica.",
+      "failed": "Non siamo riusciti a verificare il tuo account. Richiedi una nuova email di conferma.",
+      "resendDescription": "Possiamo inviare un nuovo link di conferma a {{email}}.",
+      "resendAction": "Invia di nuovo l'email di conferma",
+      "resendCountdown": "Nuovo invio disponibile tra {{seconds}} s",
+      "resendSuccess": "Abbiamo inviato una nuova email di conferma.",
+      "resendCooldown": "Attendi prima di richiedere un'altra email di conferma.",
+      "resendFailed": "Invio della email di conferma non riuscito. Riprova.",
       "backToLogin": "Torna al login"
     },
     "error": {
@@ -143,8 +205,8 @@
       "notFoundTitle": "Spazio non trovato",
       "forbiddenTitle": "Accesso negato",
       "defaultDescription": "Si è verificato un errore durante il caricamento della pagina. Prova a tornare alla home.",
-      "notFoundDescription": "Non siamo riusciti a trovare quello spazio. Controlla il link oppure torna al tuo workspace.",
-      "forbiddenDescription": "Hai effettuato l'accesso, ma questo spazio non è disponibile per il tuo account. Chiedi l'accesso a un amministratore dello spazio oppure torna al tuo workspace."
+      "notFoundDescription": "Non siamo riusciti a trovare quello spazio. Controlla il link oppure torna ai tuoi spazi.",
+      "forbiddenDescription": "Hai effettuato l'accesso, ma questo spazio non è disponibile per il tuo account. Chiedi l'accesso a un amministratore dello spazio oppure torna ai tuoi spazi."
     },
     "gallery": {
       "title": "Galleria",
@@ -710,11 +772,27 @@
         "confirmPassword": "Conferma password"
       }
     },
+    "workspaceRequired": {
+      "eyebrow": "Accesso all'organizzazione richiesto",
+      "title": "Questo account ha eseguito l'accesso, ma non ha ancora accesso a un'organizzazione.",
+      "description": "Imagor Studio richiede l'accesso a un'organizzazione prima di caricare l'area account e la gestione degli spazi.",
+      "invite": {
+        "title": "Accedi con un invito",
+        "description": "Apri il link di invito dopo l'accesso, oppure chiedi a un amministratore dell'organizzazione di inviartene uno nuovo se il precedente è scaduto."
+      },
+      "nextSteps": {
+        "title": "Cosa fare ora",
+        "description": "Se ti aspettavi di avere già accesso, contatta il team che gestisce la tua organizzazione in Imagor Studio. La configurazione self-service non è disponibile in questo stato."
+      },
+      "actions": {
+        "signOut": "Esci"
+      }
+    },
     "spaces": {
       "title": "Spazi",
       "createSpace": "Crea spazio",
       "createNewSpace": "Crea nuovo spazio",
-      "createSpaceDescription": "Crea uno spazio immagini dedicato per il tuo team.",
+      "createSpaceDescription": "Crea un workspace immagini dedicato con storage, impostazioni di delivery e accesso separati.",
       "editSpace": "Modifica spazio",
       "editSpaceDescription": "Aggiorna la configurazione dello spazio. Le modifiche saranno applicate immediatamente.",
       "deleteSpace": "Elimina spazio",
@@ -727,9 +805,9 @@
         "next": "Avanti",
         "back": "Indietro"
       },
-      "noSpacesFound": "Crea il tuo primo spazio",
-      "description": "Gestisci gli spazi di lavoro della tua organizzazione.",
-      "emptyDescription": "Crea un workspace immagini per il tuo team.",
+      "noSpacesFound": "Crea il tuo primo workspace immagini",
+      "description": "Crea e gestisci workspace immagini per ogni team, brand o ambiente.",
+      "emptyDescription": "Lancia il tuo primo workspace immagini per upload, trasformazioni e distribuzione.",
       "settings": "Settings",
       "spaceCount": "{{count}} spazio/i",
       "openGallery": "Apri galleria",
@@ -779,11 +857,26 @@
         "spaceUpdatedSuccess": "Spazio aggiornato correttamente",
         "spaceDeletedSuccess": "Spazio eliminato correttamente",
         "leftSpaceSuccess": "Hai lasciato lo spazio condiviso.",
+        "leftOrganizationSuccess": "Hai lasciato l'organizzazione. Accedi di nuovo per continuare.",
         "createSpaceFailed": "Impossibile creare lo spazio",
+        "createSpaceForbidden": "Non hai i permessi per creare spazi.",
         "keyAlreadyTaken": "Lo slug URL è già in uso",
+        "spaceLimitReached": "Il tuo piano corrente ha raggiunto il limite di spazi.",
+        "overPlanLimit": "Oltre il limite del piano",
         "updateSpaceFailed": "Impossibile aggiornare lo spazio",
         "deleteSpaceFailed": "Impossibile eliminare lo spazio",
-        "leaveSpaceFailed": "Impossibile lasciare lo spazio condiviso"
+        "deleteSpaceForbidden": "Solo gli amministratori dell'organizzazione possono eliminare questo spazio.",
+        "leaveSpaceFailed": "Impossibile lasciare lo spazio condiviso",
+        "leaveOrganizationFailed": "Impossibile lasciare l'organizzazione",
+        "cannotLeaveOrganizationAsOwner": "Trasferisci la proprieta dell'organizzazione prima di uscire.",
+        "cannotLeaveOrganizationAsLastMember": "Non puoi lasciare l'ultimo membro dell'organizzazione."
+      },
+      "plan": {
+        "free": "Gratis",
+        "trial": "Prova",
+        "starter": "Starter",
+        "pro": "Pro",
+        "team": "Team"
       },
       "validation": {
         "keyFormat": "Lo slug URL può contenere solo lettere minuscole, numeri e trattini"
@@ -793,7 +886,23 @@
         "managedStorage": "Storage gestito",
         "externalStorage": "Storage esterno",
         "yourSpaces": "I tuoi spazi",
-        "sharedWithYou": "Condivisi con te"
+        "sharedWithYou": "Condivisi con te",
+        "spaceQuota": "Quota spazi",
+        "unlimited": "Illimitato"
+      },
+      "usageSummaryTitle": "Utilizzo del piano",
+      "manageOrganization": "Organizzazione",
+      "leaveOrganization": "Lascia organizzazione",
+      "leaveOrganizationTitle": "Lascia organizzazione",
+      "leaveOrganizationDescription": "Lasciare l'organizzazione corrente? Perderai l'accesso ai suoi spazi condivisi e dovrai accedere di nuovo.",
+      "usageSummaryMeta": "{{owned}} tuoi · {{shared}} condivisi",
+      "currentBillingPeriod": "{{start}} - {{end}}",
+      "processingUsage": "{{count}} trasformazioni",
+      "usage": {
+        "spaces": "Spazi",
+        "hostedStorage": "Storage gestito",
+        "processing": "Processing",
+        "overLimit": "Oltre il limite"
       },
       "configure": "Configura",
       "startDescription": "Puoi personalizzare storage, delivery e accesso man mano che cresci.",
@@ -803,6 +912,161 @@
       "access": {
         "ownedByYou": "Di tua proprietà",
         "sharedWithYou": "Condiviso con te"
+      }
+    },
+    "billing": {
+      "title": "Fatturazione",
+      "titleDescription": "Scegli il piano più adatto a come il tuo team archivia, elabora e distribuisce le immagini.",
+      "currentPlan": "Piano attuale",
+      "currentPlanDescription": "L'utilizzo viene monitorato per periodo di fatturazione e si azzera automaticamente.",
+      "currentPlanBadge": "Attuale",
+      "currentPlanButton": "Piano attuale",
+      "manageBilling": "Gestisci fatturazione",
+      "selectPlan": "Scegli piano",
+      "priceSuffix": "/mese",
+      "unlimited": "Illimitato",
+      "customDomainsIncluded": "{{count}} inclusi",
+      "customDomainsUnavailable": "Non inclusi",
+      "status": {
+        "trialing": "Prova",
+        "active": "Attivo",
+        "past_due": "Scaduto",
+        "canceled": "Annullato"
+      },
+      "usage": {
+        "spaces": "Spazi",
+        "hostedStorage": "Storage gestito",
+        "processing": "Processing"
+      },
+      "planMetrics": {
+        "spaces": "Spazi inclusi",
+        "hostedStorage": "Storage gestito",
+        "processing": "Trasformazioni mensili",
+        "customDomains": "Domini personalizzati"
+      },
+      "planDescriptions": {
+        "starter": "Per team che vogliono lanciare una pipeline immagini di produzione con storage ospitato incluso.",
+        "pro": "Per team in crescita che gestiscono più flussi immagini, domini personalizzati e volumi mensili più alti.",
+        "team": "Per organizzazioni che gestiscono operazioni immagini condivise tra più team o brand."
+      },
+      "sharedFeaturesTitle": "Ogni piano a pagamento include anche",
+      "sharedFeatures": {
+        "collaboration": "Accesso condiviso agli spazi",
+        "orgSharing": "Inviti del team e accesso condiviso",
+        "byob": "Collega il tuo bucket S3"
+      },
+      "danger": {
+        "title": "Zona di pericolo",
+        "deleteTitle": "Elimina organizzazione",
+        "deleteDescription": "Elimina definitivamente questa organizzazione e revoca l'accesso a livello di organizzazione ancora collegato ad essa.",
+        "deleteChecklist": "Prima dell'eliminazione, rimuovi tutti gli spazi. Se un abbonamento a pagamento è ancora attivo, annulla prima la fatturazione.",
+        "deleteButton": "Elimina organizzazione",
+        "confirmTitle": "Elimina organizzazione",
+        "confirmDescription": "Eliminare definitivamente {{name}}? L'operazione non può essere annullata e in seguito dovrai accedere di nuovo.",
+        "organizationFallback": "questa organizzazione",
+        "messages": {
+          "deleted": "Organizzazione eliminata. Accedi di nuovo per continuare.",
+          "deleteFailed": "Impossibile eliminare l'organizzazione"
+        },
+        "errors": {
+          "ownerRequired": "Solo l'attuale proprietario dell'organizzazione può eliminare l'organizzazione.",
+          "deleteSpacesFirst": "Elimina tutti gli spazi prima di eliminare l'organizzazione.",
+          "cancelBillingFirst": "Annulla la fatturazione a pagamento prima di eliminare l'organizzazione."
+        }
+      },
+      "messages": {
+        "checkoutFailed": "Impossibile avviare il checkout",
+        "portalFailed": "Impossibile aprire il portale di fatturazione"
+      }
+    },
+    "organizationMembers": {
+      "title": "Membri dell'organizzazione",
+      "titleDescription": "Gestisci l'accesso a questa organizzazione e ai relativi spazi condivisi.",
+      "addTitle": "Aggiungi persone",
+      "addDescription": "Aggiungi le persone esistenti tramite username, oppure invia un invito email a quelle nuove e scegli se devono gestire l'organizzazione.",
+      "identifierPlaceholder": "username o email",
+      "addButton": "Aggiungi",
+      "listTitle": "Persone con accesso",
+      "pendingTitle": "Inviti in sospeso",
+      "listDescription": "Persone con accesso a {{name}}.",
+      "listDescriptionFallback": "Persone con accesso a questa organizzazione.",
+      "pendingDescription": "Inviti inviati ma non ancora accettati.",
+      "pendingEmpty": "Al momento non ci sono inviti in sospeso.",
+      "pendingExpiresAt": "Scade il {{expiresAt}}",
+      "empty": "Nessuno ha ancora accesso",
+      "emptyDescription": "Aggiungi qui i collaboratori per dare loro accesso all'organizzazione e agli spazi condivisi.",
+      "listHeaders": {
+        "member": "Membro",
+        "action": "Azione"
+      },
+      "actionsTitle": "Azioni",
+      "transferOwnership": "Trasferisci proprieta",
+      "promoteToAdmin": "Passa ad admin",
+      "changeToMember": "Passa a membro",
+      "removeMember": "Rimuovi membro",
+      "cancelInvite": "Annulla invito",
+      "removeTitle": "Rimuovi membro",
+      "removeDescription": "Rimuovere {{name}} da questa organizzazione? Perdera l'accesso agli spazi condivisi ereditati dall'organizzazione.",
+      "transferTitle": "Trasferisci la proprieta dell'organizzazione",
+      "transferDescription": "Trasferire la proprieta dell'organizzazione a {{name}}? Rimarrai nell'organizzazione come admin.",
+      "youBadge": "Tu",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Membro"
+      },
+      "messages": {
+        "identifierRequired": "Inserisci uno username o un indirizzo email.",
+        "identifierInvalidEmail": "Inserisci un indirizzo email valido.",
+        "memberAdded": "Membro aggiunto.",
+        "inviteSent": "Email di invito inviata.",
+        "inviteCanceled": "Invito annullato.",
+        "inviteCancelFailed": "Impossibile annullare l'invito",
+        "memberAddFailed": "Impossibile aggiungere il membro",
+        "roleUpdated": "Ruolo del membro aggiornato.",
+        "roleUpdateFailed": "Impossibile aggiornare il ruolo del membro",
+        "memberRemoved": "Membro rimosso.",
+        "memberRemoveFailed": "Impossibile rimuovere il membro",
+        "ownershipTransferred": "Proprieta dell'organizzazione trasferita.",
+        "ownershipTransferFailed": "Impossibile trasferire la proprieta dell'organizzazione",
+        "errors": {
+          "otherOrganization": "Questo account appartiene gia a un'altra organizzazione.",
+          "alreadyMember": "Questo account e gia membro della tua organizzazione.",
+          "cannotRemoveYourself": "Non puoi rimuovere te stesso dall'organizzazione.",
+          "cannotRemoveOwner": "Non puoi rimuovere il proprietario dell'organizzazione.",
+          "cannotRemoveLastMember": "Non puoi rimuovere l'ultimo membro dell'organizzazione.",
+          "mustBeCurrentOwner": "Solo l'attuale proprietario dell'organizzazione puo trasferire la proprieta.",
+          "targetMustAlreadyBeMember": "La proprieta puo essere trasferita solo a un membro esistente dell'organizzazione."
+        }
+      }
+    },
+    "organizationOverview": {
+      "title": "Organizzazione",
+      "titleDescription": "Controlla piano, utilizzo e amministrazione dell'organizzazione in un unico punto.",
+      "summaryDescription": "Una vista rapida dello stato attuale dell'organizzazione.",
+      "usageTitle": "Utilizzo attuale",
+      "usageDescription": "L'utilizzo si azzera a ogni periodo di fatturazione e si applica a tutta l'organizzazione.",
+      "unlimited": "Illimitato",
+      "notAvailable": "Non disponibile",
+      "summaryCards": {
+        "planLabel": "Piano attuale",
+        "planDescription": "Il livello di abbonamento attualmente applicato a questa organizzazione.",
+        "statusLabel": "Stato del piano",
+        "statusDescription": "Lo stato del ciclo di fatturazione usato per applicare accesso e limiti.",
+        "organizationLabel": "Organizzazione",
+        "organizationDescription": "L'organizzazione che possiede spazi, fatturazione e accesso condiviso.",
+        "billingPeriodLabel": "Periodo di fatturazione",
+        "billingPeriodDescription": "La finestra attuale di rendicontazione per i limiti basati sull'utilizzo."
+      },
+      "usage": {
+        "spaces": "Spazi",
+        "hostedStorage": "Storage gestito",
+        "processing": "Processing",
+        "periodScoped": "L'utilizzo viene monitorato rispetto al periodo di fatturazione corrente."
+      },
+      "actions": {
+        "reviewBilling": "Controlla fatturazione",
+        "manageMembers": "Gestisci membri"
       }
     },
     "spacePropagation": {
@@ -819,7 +1083,7 @@
         "general": "Generale",
         "storage": "Storage",
         "dangerZone": "Zona di pericolo",
-        "members": "Membri",
+        "members": "Accesso",
         "imagor": "Imagor"
       },
       "gallery": {
@@ -837,6 +1101,7 @@
         "description": "Informazioni di base su questo spazio.",
         "name": "Nome visualizzato",
         "nameDescription": "Il nome mostrato nella navigazione e nell'elenco spazi.",
+        "updateForbidden": "Non hai i permessi per gestire questo spazio.",
         "customDomain": "Dominio personalizzato",
         "customDomainDescription": "Dominio personalizzato per questo spazio. Se lasciato vuoto, verrà servito su {{spaceKey}}.imagor.app.",
         "customDomainCurrentLabel": "Hostname attuale",
@@ -904,19 +1169,21 @@
           "default": "Impossibile condividere questo spazio in questo momento. Riprova."
         },
         "memberPlaceholder": "Scegli un collega",
-        "memberPlaceholderEmpty": "Tutti i membri della tua organizzazione hanno già accesso esplicito",
-        "sharedTitle": "Accesso a livello organizzazione",
-        "sharedDescription": "Tutti i membri di questa organizzazione possono visualizzare e copiare questo spazio. L'elenco qui sotto mostra chi è stato aggiunto direttamente, mentre gli amministratori dell'organizzazione continuano a gestire impostazioni e condivisione.",
-        "emptyDescription": "Nessuno è stato ancora aggiunto direttamente a questo spazio. Gli amministratori dell'organizzazione hanno comunque accesso ereditato.",
-        "accessLabel": "Accesso condiviso",
+        "memberPlaceholderEmpty": "Tutti i membri della tua organizzazione hanno già accesso",
+        "sharedTitle": "Membri dell'organizzazione",
+        "sharedDescription": "Ereditato dall'organizzazione.",
+        "sharedManageHint": "Gestisci nell'accesso Organizzazione.",
+        "emptyDescription": "Invita un ospite o assegna un ruolo dello spazio.",
+        "accessLabel": "Accesso diretto",
+        "accessDescription": "Ospiti e ruoli aggiuntivi dello spazio.",
         "addSuccess": "Membro aggiunto correttamente.",
         "inviteSent": "Email di invito inviata.",
         "roleUpdated": "Ruolo aggiornato.",
         "removeSuccess": "Membro rimosso.",
         "removeSelfDisabled": "Tu",
         "removeSelfNotAllowed": "Non puoi rimuovere te stesso da questo spazio.",
-        "empty": "Nessun membro diretto dello spazio.",
-        "pendingTitle": "Inviti in attesa",
+        "empty": "Nessun accesso diretto.",
+        "pendingTitle": "Inviti in sospeso",
         "listHeaders": {
           "member": "Membro",
           "action": "Azione"
@@ -926,8 +1193,8 @@
           "role": "Ruolo",
           "expires": "Scade"
         },
-        "removeTitle": "Rimuovi membro",
-        "removeDescription": "Sei sicuro di voler rimuovere",
+        "removeTitle": "Rimuovi accesso diretto",
+        "removeDescription": "Rimuovere l'accesso diretto per {{name}}? I membri dell'organizzazione manterranno comunque l'accesso ereditato.",
         "roleSectionLabel": "Cambia ruolo",
         "promoteToManager": "Cambia in admin",
         "changeToMember": "Cambia in membro",

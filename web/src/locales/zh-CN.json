@@ -9,6 +9,7 @@
       },
       "tabs": {
         "profile": "账户设置",
+        "billing": "计费",
         "system": "系统",
         "users": "用户",
         "spaces": "空间"
@@ -46,7 +47,7 @@
       "users": "用户",
       "signOut": "退出登录",
       "login": "登录",
-      "accountSettings": "账户设置",
+      "accountSettings": "账户",
       "settings": "设置"
     },
     "status": {
@@ -73,12 +74,10 @@
     }
   },
   "forms": {
-    "placeholders": {
-      "enterUsername": "输入您的用户名",
-      "enterPassword": "输入您的密码",
-      "confirmPassword": "确认您的密码",
-      "enterName": "输入您的名称"
-    },
+    "enterUsername": "输入您的用户名",
+    "enterPassword": "输入您的密码",
+    "confirmPassword": "确认您的密码",
+    "enterName": "输入您的名称",
     "validation": {
       "required": "此字段为必填项",
       "invalidUsername": "请输入有效的用户名",
@@ -103,6 +102,9 @@
       "gallery": "图库",
       "profile": "个人资料",
       "account": "账户",
+      "organization": "组织",
+      "billing": "计费",
+      "organizationMembers": "成员",
       "settings": "设置",
       "users": "用户",
       "admin": "系统",
@@ -113,11 +115,30 @@
   },
   "pages": {
     "authCallback": {
-      "title": "欢迎回来",
+      "title": "登录中断",
       "subtitle": "我们无法完成您的登录，请重试。",
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
+      "errors": {
+        "inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。"
+      },
       "errorNoToken": "未收到认证令牌",
+      "backToLogin": "返回登录"
+    },
+    "registerVerify": {
+      "title": "正在确认您的账户",
+      "subtitle": "请稍候，我们正在完成您的登录。",
+      "verifying": "正在验证您的邮箱确认链接。",
+      "errorTitle": "我们无法确认您的账户",
+      "errorSubtitle": "该确认链接可能无效或已过期。",
+      "missingToken": "该确认链接缺少验证令牌。",
+      "failed": "我们无法验证您的账户。请重新请求一封新的确认邮件。",
+      "resendDescription": "我们可以向 {{email}} 重新发送一封新的确认邮件。",
+      "resendAction": "重新发送确认邮件",
+      "resendCountdown": "可在 {{seconds}} 秒后重新发送",
+      "resendSuccess": "我们已发送一封新的确认邮件。",
+      "resendCooldown": "请稍候后再请求新的确认邮件。",
+      "resendFailed": "重新发送确认邮件失败，请重试。",
       "backToLogin": "返回登录"
     },
     "error": {
@@ -125,8 +146,8 @@
       "notFoundTitle": "未找到空间",
       "forbiddenTitle": "无权访问",
       "defaultDescription": "加载页面时出错。请尝试返回首页。",
-      "notFoundDescription": "我们找不到该空间。请检查链接，或返回您的工作区。",
-      "forbiddenDescription": "您已登录，但您的账户无权访问此空间。请联系空间管理员获取权限，或返回您的工作区。"
+      "notFoundDescription": "我们找不到该空间。请检查链接，或返回您的空间列表。",
+      "forbiddenDescription": "您已登录，但您的账户无权访问此空间。请联系空间管理员获取权限，或返回您的空间列表。"
     },
     "gallery": {
       "title": "图库",
@@ -692,18 +713,34 @@
         "confirmPassword": "确认密码"
       }
     },
+    "workspaceRequired": {
+      "eyebrow": "需要组织访问权限",
+      "title": "该账户已登录，但尚未获得任何组织访问权限。",
+      "description": "Imagor Studio 需要组织访问权限后，才能加载账户区域和空间管理功能。",
+      "invite": {
+        "title": "通过邀请加入",
+        "description": "登录后打开你的邀请链接；如果原邀请已过期，请联系组织管理员重新发送。"
+      },
+      "nextSteps": {
+        "title": "接下来怎么做",
+        "description": "如果你原本就应该拥有访问权限，请联系管理 Imagor Studio 组织的团队。当前状态下暂不支持自助设置。"
+      },
+      "actions": {
+        "signOut": "退出登录"
+      }
+    },
     "spaces": {
       "title": "空间",
       "createSpace": "创建空间",
       "createNewSpace": "创建新空间",
-      "createSpaceDescription": "向你的组织添加一个新空间。每个空间都有自己的存储和 imagor 配置。",
+      "createSpaceDescription": "创建专属图片工作空间，拥有自己的存储、交付设置和访问权限。",
       "editSpace": "编辑空间",
       "editSpaceDescription": "更新空间配置。更改会立即生效。",
       "deleteSpace": "删除空间",
       "deleteSpaceDescription": "您确定要永久删除空间",
       "createSpaceButton": "创建空间",
       "updateSpaceButton": "更新空间",
-      "noSpacesFound": "创建您的第一个空间",
+      "noSpacesFound": "创建你的第一个图片工作空间",
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
@@ -735,8 +772,8 @@
         "customDomain": "自定义域名",
         "imagorSecret": "Imagor 密钥"
       },
-      "description": "管理您组织的工作空间。",
-      "emptyDescription": "为您的团队创建一个图片工作区。",
+      "description": "为你的团队、品牌或环境创建并管理图片工作空间。",
+      "emptyDescription": "创建你的第一个图片工作空间，用于上传、处理和交付图片。",
       "settings": "设置",
       "spaceCount": "{{count}} 个空间",
       "openGallery": "打开图库",
@@ -746,17 +783,32 @@
         "next": "下一步",
         "back": "上一步"
       },
-      "createSpaceDescription": "为你的团队创建一个专属图片工作空间。",
+      "createSpaceDescription": "创建专属图片工作空间，拥有自己的存储、交付设置和访问权限。",
       "messages": {
         "spaceCreatedSuccess": "空间创建成功",
         "spaceUpdatedSuccess": "空间更新成功",
         "spaceDeletedSuccess": "空间删除成功",
         "leftSpaceSuccess": "你已离开共享空间。",
+        "leftOrganizationSuccess": "你已离开组织。请重新登录以继续。",
         "createSpaceFailed": "创建空间失败",
+        "createSpaceForbidden": "你没有创建空间的权限。",
         "keyAlreadyTaken": "URL Slug 已被使用",
+        "spaceLimitReached": "你当前套餐可创建的空间数量已达上限。",
+        "overPlanLimit": "已超出套餐上限",
         "updateSpaceFailed": "更新空间失败",
         "deleteSpaceFailed": "删除空间失败",
-        "leaveSpaceFailed": "离开共享空间失败"
+        "deleteSpaceForbidden": "只有组织管理员可以删除这个空间。",
+        "leaveSpaceFailed": "离开共享空间失败",
+        "leaveOrganizationFailed": "离开组织失败",
+        "cannotLeaveOrganizationAsOwner": "请先转移组织所有权再离开。",
+        "cannotLeaveOrganizationAsLastMember": "你不能离开组织中的最后一名成员。"
+      },
+      "plan": {
+        "free": "免费",
+        "trial": "试用",
+        "starter": "Starter",
+        "pro": "Pro",
+        "team": "Team"
       },
       "validation": {
         "keyFormat": "URL Slug 只能包含小写字母、数字和连字符"
@@ -766,7 +818,23 @@
         "managedStorage": "平台存储",
         "externalStorage": "外部存储",
         "yourSpaces": "你的空间",
-        "sharedWithYou": "与你共享"
+        "sharedWithYou": "与你共享",
+        "spaceQuota": "空间额度",
+        "unlimited": "不限"
+      },
+      "usageSummaryTitle": "套餐用量",
+      "manageOrganization": "组织",
+      "leaveOrganization": "离开组织",
+      "leaveOrganizationTitle": "离开组织",
+      "leaveOrganizationDescription": "要离开当前组织吗？你将失去其共享空间的访问权限，并需要重新登录。",
+      "usageSummaryMeta": "{{owned}} 个由你拥有 · {{shared}} 个与你共享",
+      "currentBillingPeriod": "{{start}} - {{end}}",
+      "processingUsage": "{{count}} 次处理",
+      "usage": {
+        "spaces": "空间",
+        "hostedStorage": "平台存储",
+        "processing": "处理量",
+        "overLimit": "超出上限"
       },
       "configure": "配置",
       "creationPreview": {
@@ -788,6 +856,161 @@
         "unchanged": "（保持不变）"
       }
     },
+    "billing": {
+      "title": "计费",
+      "titleDescription": "选择最适合团队存储、处理和交付图片方式的套餐。",
+      "currentPlan": "当前套餐",
+      "currentPlanDescription": "用量按计费周期统计，并会自动重置。",
+      "currentPlanBadge": "当前",
+      "currentPlanButton": "当前套餐",
+      "manageBilling": "管理计费",
+      "selectPlan": "选择套餐",
+      "priceSuffix": "/月",
+      "unlimited": "不限",
+      "customDomainsIncluded": "含 {{count}} 个",
+      "customDomainsUnavailable": "不包含",
+      "status": {
+        "trialing": "试用中",
+        "active": "生效中",
+        "past_due": "逾期",
+        "canceled": "已取消"
+      },
+      "usage": {
+        "spaces": "空间",
+        "hostedStorage": "平台存储",
+        "processing": "处理量"
+      },
+      "planMetrics": {
+        "spaces": "包含空间数",
+        "hostedStorage": "平台存储",
+        "processing": "每月处理量",
+        "customDomains": "自定义域名"
+      },
+      "planDescriptions": {
+        "starter": "适合要上线单个正式图片处理流程，并直接使用平台存储的团队。",
+        "pro": "适合管理多条图片流程、需要自定义域名和更高月处理量的成长团队。",
+        "team": "适合跨多个团队或品牌管理共享图片运营的大型组织。"
+      },
+      "sharedFeaturesTitle": "所有付费套餐另外均包含",
+      "sharedFeatures": {
+        "collaboration": "共享空间访问",
+        "orgSharing": "团队邀请与共享访问",
+        "byob": "连接自己的 S3 兼容存储桶"
+      },
+      "danger": {
+        "title": "危险区域",
+        "deleteTitle": "删除组织",
+        "deleteDescription": "永久删除此组织，并移除仍绑定在该组织上的组织级访问权限。",
+        "deleteChecklist": "删除前，请先移除所有空间。如果仍有启用中的付费订阅，请先取消计费。",
+        "deleteButton": "删除组织",
+        "confirmTitle": "删除组织",
+        "confirmDescription": "要永久删除 {{name}} 吗？此操作无法撤销，之后你需要重新登录。",
+        "organizationFallback": "此组织",
+        "messages": {
+          "deleted": "组织已删除。请重新登录以继续。",
+          "deleteFailed": "无法删除组织"
+        },
+        "errors": {
+          "ownerRequired": "只有当前组织所有者可以删除组织。",
+          "deleteSpacesFirst": "删除组织前，请先删除所有空间。",
+          "cancelBillingFirst": "删除组织前，请先取消付费计费。"
+        }
+      },
+      "messages": {
+        "checkoutFailed": "无法启动结账流程",
+        "portalFailed": "无法打开计费门户"
+      }
+    },
+    "organizationMembers": {
+      "title": "组织成员",
+      "titleDescription": "管理谁可以访问当前组织及其共享空间。",
+      "addTitle": "添加人员",
+      "addDescription": "通过用户名添加已有成员，或向新成员发送电子邮件邀请，并选择是否授予组织管理权限。",
+      "identifierPlaceholder": "用户名或邮箱",
+      "addButton": "添加",
+      "listTitle": "可访问人员",
+      "pendingTitle": "待处理邀请",
+      "listDescription": "可访问 {{name}} 的成员。",
+      "listDescriptionFallback": "可访问当前组织的成员。",
+      "pendingDescription": "已发送但尚未接受的邀请。",
+      "pendingEmpty": "当前没有待回复的邀请。",
+      "pendingExpiresAt": "将于 {{expiresAt}} 过期",
+      "empty": "还没有人拥有访问权限",
+      "emptyDescription": "在这里添加成员，以授予他们对当前组织及其共享空间的访问权限。",
+      "listHeaders": {
+        "member": "成员",
+        "action": "操作"
+      },
+      "actionsTitle": "操作",
+      "transferOwnership": "转移所有权",
+      "promoteToAdmin": "改为管理员",
+      "changeToMember": "改为成员",
+      "removeMember": "移除成员",
+      "cancelInvite": "取消邀请",
+      "removeTitle": "移除成员",
+      "removeDescription": "要将 {{name}} 从当前组织中移除吗？他们将失去通过组织继承的共享空间访问权限。",
+      "transferTitle": "转移组织所有权",
+      "transferDescription": "要将组织所有权转移给 {{name}} 吗？你仍将以管理员身份留在组织中。",
+      "youBadge": "你",
+      "roles": {
+        "owner": "所有者",
+        "admin": "管理员",
+        "member": "成员"
+      },
+      "messages": {
+        "identifierRequired": "请输入用户名或邮箱地址。",
+        "identifierInvalidEmail": "请输入有效的邮箱地址。",
+        "memberAdded": "成员已添加。",
+        "inviteSent": "邀请邮件已发送。",
+        "inviteCanceled": "邀请已取消。",
+        "inviteCancelFailed": "取消邀请失败",
+        "memberAddFailed": "添加成员失败",
+        "roleUpdated": "成员角色已更新。",
+        "roleUpdateFailed": "更新成员角色失败",
+        "memberRemoved": "成员已移除。",
+        "memberRemoveFailed": "移除成员失败",
+        "ownershipTransferred": "组织所有权已转移。",
+        "ownershipTransferFailed": "转移组织所有权失败",
+        "errors": {
+          "otherOrganization": "该账户已属于其他组织。",
+          "alreadyMember": "该账户已是当前组织成员。",
+          "cannotRemoveYourself": "你不能将自己移出组织。",
+          "cannotRemoveOwner": "你不能移除组织所有者。",
+          "cannotRemoveLastMember": "你不能移除组织中的最后一名成员。",
+          "mustBeCurrentOwner": "只有当前组织所有者才能转移所有权。",
+          "targetMustAlreadyBeMember": "只能将所有权转移给现有组织成员。"
+        }
+      }
+    },
+    "organizationOverview": {
+      "title": "组织",
+      "titleDescription": "在一个位置查看套餐、用量和组织管理。",
+      "summaryDescription": "快速查看当前组织状态。",
+      "usageTitle": "当前用量",
+      "usageDescription": "用量按计费周期重置，并应用于整个组织。",
+      "unlimited": "不限",
+      "notAvailable": "不可用",
+      "summaryCards": {
+        "planLabel": "当前套餐",
+        "planDescription": "当前应用于此组织的订阅层级。",
+        "statusLabel": "套餐状态",
+        "statusDescription": "用于执行访问和额度限制的计费生命周期状态。",
+        "organizationLabel": "组织",
+        "organizationDescription": "拥有空间、计费和共享访问的组织。",
+        "billingPeriodLabel": "计费周期",
+        "billingPeriodDescription": "当前用于统计用量限制的计费窗口。"
+      },
+      "usage": {
+        "spaces": "空间",
+        "hostedStorage": "平台存储",
+        "processing": "处理量",
+        "periodScoped": "用量按当前计费周期统计。"
+      },
+      "actions": {
+        "reviewBilling": "查看计费",
+        "manageMembers": "管理成员"
+      }
+    },
     "spacePropagation": {
       "title": "更改正在传播",
       "description": "这些更改通常会在 30 秒内生效。",
@@ -796,7 +1019,7 @@
     },
     "spaceSettings": {
       "sections": {
-        "members": "成员",
+        "members": "访问",
         "storage": "存储",
         "imagor": "Imagor 图像处理",
         "general": "常规",
@@ -817,6 +1040,7 @@
         "description": "此空间的基本信息。",
         "name": "显示名称",
         "nameDescription": "导航栏和空间列表中显示的名称。",
+        "updateForbidden": "你没有管理这个空间的权限。",
         "customDomain": "自定义域名",
         "customDomainDescription": "此空间的自定义域名。如果留空，将使用 {{spaceKey}}.imagor.app。",
         "customDomainCurrentLabel": "当前主机名",
@@ -879,18 +1103,20 @@
           "default": "目前无法分享此空间，请稍后再试。"
         },
         "memberPlaceholder": "选择队友",
-        "memberPlaceholderEmpty": "您组织中的成员都已经拥有明确访问权限",
-        "sharedTitle": "组织范围访问",
-        "sharedDescription": "此组织中的所有成员都可以查看和复制此空间。下方列表显示的是被直接加入此空间的人员，而组织管理员仍负责设置和分享管理。",
-        "emptyDescription": "目前还没有人被直接加入这个空间。组织管理员仍然保有继承而来的访问权限。",
+        "memberPlaceholderEmpty": "组织成员都已经拥有访问权限",
+        "sharedTitle": "组织成员",
+        "sharedDescription": "从组织继承。",
+        "sharedManageHint": "请在组织访问页面管理。",
+        "emptyDescription": "邀请来宾或添加空间角色。",
         "addSuccess": "成员添加成功。",
         "inviteSent": "邀请邮件已发送。",
         "roleUpdated": "角色已更新。",
         "removeSuccess": "成员已移除。",
         "removeSelfDisabled": "你",
         "removeSelfNotAllowed": "你不能将自己从这个空间移除。",
-        "empty": "这个空间还没有直接成员。",
-        "accessLabel": "共享访问",
+        "empty": "还没有直接访问。",
+        "accessLabel": "直接访问",
+        "accessDescription": "来宾和额外的空间角色。",
         "pendingTitle": "待处理邀请",
         "listHeaders": {
           "member": "成员",
@@ -901,8 +1127,8 @@
           "role": "角色",
           "expires": "到期时间"
         },
-        "removeTitle": "移除成员",
-        "removeDescription": "确定要移除",
+        "removeTitle": "移除直接访问",
+        "removeDescription": "要移除 {{name}} 的直接访问权限吗？组织成员仍会保留继承而来的访问权限。",
         "roleSectionLabel": "更改角色",
         "promoteToManager": "改为管理员",
         "changeToMember": "改为成员",
@@ -1224,13 +1450,52 @@
   },
   "auth": {
     "login": {
-      "title": "欢迎回来",
-      "subtitle": "输入您的凭据以访问 Imagor Studio",
+      "eyebrow": "Imagor Studio",
+      "title": "适合团队的高性能图片处理",
+      "subtitle": "在一个地方管理图片存储、交付和访问权限。",
+      "formTitle": "登录",
+      "formSubtitleCloud": "请使用团队邀请你的账号登录。",
+      "formSubtitleSelfHosted": "请使用你的账户凭证登录。",
+      "googleCta": "使用 Google 继续",
+      "credentialsDividerCloud": "或使用邮箱和密码",
+      "credentialsDividerSelfHosted": "或使用用户名和密码",
+      "identifierLabelCloud": "邮箱",
+      "identifierLabelSelfHosted": "用户名",
+      "identifierPlaceholderCloud": "name@example.com",
+      "identifierPlaceholderSelfHosted": "输入你的用户名",
+      "inviteHint": "使用你的团队账号登录，以访问共享空间、交付设置和存储配置。",
+      "highlights": {
+        "storage": "按团队或环境控制存储与交付",
+        "delivery": "无需共享凭证即可管理图片基础设施",
+        "access": "在一个地方审阅、编辑并整理图片与模板"
+      },
       "signIn": "登录",
-      "loginFailed": "用户名或密码无效，请重试。"
+      "loginFailed": "登录凭证无效，请重试。",
+      "createAccountPrompt": "第一次使用？",
+      "createAccountLink": "创建账户"
+    },
+    "register": {
+      "formTitle": "创建账户",
+      "googleCta": "使用 Google 继续",
+      "credentialsDivider": "或使用邮箱和密码创建账户",
+      "emailPlaceholder": "name@example.com",
+      "pendingTitle": "请检查您的电子邮件",
+      "pendingDescription": "我们已将确认链接发送到 {{email}}。打开链接以完成账户创建。",
+      "resendAction": "重新发送验证邮件",
+      "resendCountdown": "可在 {{seconds}} 秒后重新发送",
+      "resendSuccess": "我们已重新发送验证邮件。",
+      "resendCooldown": "请等待 {{seconds}} 秒后再请求新的验证邮件。",
+      "resendFailed": "重新发送验证邮件失败，请重试。",
+      "submit": "创建账户",
+      "useDifferentEmail": "改用其他电子邮件",
+      "signInPrompt": "已经有账户了？",
+      "signInLink": "登录",
+      "failed": "创建账户失败，请重试。"
     },
     "validation": {
-      "usernameRequired": "请输入有效的用户名",
+      "identifierRequiredCloud": "请输入邮箱或用户名",
+      "invalidEmailOrUsername": "请输入有效的邮箱或用户名",
+      "usernameRequired": "请输入用户名",
       "usernameMinLength": "用户名至少需要 3 个字符",
       "usernameMaxLength": "用户名最多 30 个字符",
       "passwordRequired": "密码为必填项",

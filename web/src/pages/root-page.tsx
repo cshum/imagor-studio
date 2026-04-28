@@ -14,8 +14,18 @@ import { getAuth } from '@/stores/auth-store'
 
 // ── Create-space trigger (used in the spaces list header) ─────────────────────
 
-function CreateSpacePageTrigger() {
+function CreateSpacePageTrigger({ disabled }: { disabled: boolean }) {
   const { t } = useTranslation()
+
+  if (disabled) {
+    return (
+      <Button disabled title={t('pages.spaces.messages.spaceLimitReached')}>
+        <Plus className='mr-2 h-4 w-4' />
+        {t('pages.spaces.createSpace')}
+      </Button>
+    )
+  }
+
   return (
     <Link to='/account/spaces/new'>
       <Button>
@@ -23,6 +33,14 @@ function CreateSpacePageTrigger() {
         {t('pages.spaces.createSpace')}
       </Button>
     </Link>
+  )
+}
+
+function SpacesPageActions({ createSpaceDisabled }: { createSpaceDisabled: boolean }) {
+  return (
+    <div className='flex flex-wrap items-center gap-2'>
+      <CreateSpacePageTrigger disabled={createSpaceDisabled} />
+    </div>
   )
 }
 
@@ -38,13 +56,29 @@ export function RootPage({ loaderData }: RootPageProps) {
 
   if (auth.multiTenant) {
     const data = loaderData as Awaited<ReturnType<typeof spacesLoader>>
+    const isOrgAdmin =
+      data.currentOrganizationRole === 'owner' || data.currentOrganizationRole === 'admin'
+    const createSpaceDisabled =
+      data.usageSummary.maxSpaces !== null &&
+      data.usageSummary.usedSpaces >= data.usageSummary.maxSpaces
+
     return (
       <SpacesLayout
         title={t('pages.spaces.title')}
         description={t('pages.spaces.description')}
-        primaryAction={<CreateSpacePageTrigger />}
+        primaryAction={
+          isOrgAdmin ? <SpacesPageActions createSpaceDisabled={createSpaceDisabled} /> : undefined
+        }
       >
-        <SpacesPage loaderData={data.spaces} currentOrganizationId={data.currentOrganizationId} />
+        <SpacesPage
+          loaderData={data.spaces}
+          usageSummary={data.usageSummary}
+          currentOrganizationId={data.currentOrganizationId}
+          currentOrganizationPlan={data.currentOrganizationPlan}
+          currentOrganizationPlanStatus={data.currentOrganizationPlanStatus}
+          canCreateSpace={isOrgAdmin}
+          canManageOrganization={isOrgAdmin}
+        />
       </SpacesLayout>
     )
   }

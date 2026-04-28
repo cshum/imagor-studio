@@ -2,16 +2,13 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Navigate, useNavigate, useSearch } from '@tanstack/react-router'
+import { Link, Navigate, useNavigate, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 
 import { getAuthProviders, getGoogleLoginUrl, login } from '@/api/auth-api'
-import { BrandBar } from '@/components/brand-bar'
-import { LicenseBadge } from '@/components/license/license-badge.tsx'
-import { ModeToggle } from '@/components/mode-toggle'
+import { AuthPageShell } from '@/components/auth-page-shell'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -21,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { isValidEmail } from '@/lib/email'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { initializeLocale } from '@/stores/locale-store'
 
@@ -55,12 +53,15 @@ const GoogleIcon = () => (
   </svg>
 )
 
+const usernamePattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/
+
 export function LoginPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
   const navigate = useNavigate()
   const search = useSearch({ from: '/login' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
+  const isMultiTenant = authState.multiTenant
 
   // Helper function to validate redirect URL for security
   const isValidRedirectUrl = (url: string): boolean => {
@@ -69,17 +70,64 @@ export function LoginPage() {
     return url.startsWith('/') && !url.startsWith('//')
   }
 
+  const identifierRequiredMessage = isMultiTenant
+    ? t('auth.validation.identifierRequiredCloud')
+    : t('auth.validation.usernameRequired')
+
   // Create translation-aware validation schema
   const loginSchema = z.object({
     username: z
       .string()
-      .min(3, t('auth.validation.usernameMinLength'))
-      .max(30, t('auth.validation.usernameMaxLength')),
-    password: z.string().min(1, t('auth.validation.passwordRequired')),
+      .trim()
+      .superRefine((value, ctx) => {
+        if (!value) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: identifierRequiredMessage,
+          })
+          return
+        }
+
+        if (isMultiTenant && value.includes('@')) {
+          if (!isValidEmail(value)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t('auth.validation.invalidEmailOrUsername'),
+            })
+          }
+          return
+        }
+
+        if (value.length < 3) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('auth.validation.usernameMinLength'),
+          })
+        }
+
+        if (value.length > 30) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('auth.validation.usernameMaxLength'),
+          })
+        }
+
+        if (!usernamePattern.test(value)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: isMultiTenant
+              ? t('auth.validation.invalidEmailOrUsername')
+              : t('auth.validation.invalidUsername'),
+          })
+        }
+      }),
+    password: z.string().trim().min(1, t('auth.validation.passwordRequired')),
   })
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
     defaultValues: {
       username: '',
       password: '',
@@ -117,7 +165,10 @@ export function LoginPage() {
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
-      const response = await login(values)
+      const response = await login({
+        username: values.username.trim(),
+        password: values.password,
+      })
       await initAuth(response.token)
 
       // Reload user's language preference after login
@@ -156,101 +207,125 @@ export function LoginPage() {
     window.location.href = getGoogleLoginUrl()
   }
 
+  const credentialsDividerKey = isMultiTenant
+    ? 'auth.login.credentialsDividerCloud'
+    : 'auth.login.credentialsDividerSelfHosted'
+  const identifierLabelKey = isMultiTenant
+    ? 'auth.login.identifierLabelCloud'
+    : 'auth.login.identifierLabelSelfHosted'
+  const identifierPlaceholderKey = isMultiTenant
+    ? 'auth.login.identifierPlaceholderCloud'
+    : 'auth.login.identifierPlaceholderSelfHosted'
+  const productHighlights = [
+    t('auth.login.highlights.storage'),
+    t('auth.login.highlights.delivery'),
+    t('auth.login.highlights.access'),
+  ]
+
   return (
-    <div className='min-h-screen-safe flex flex-col'>
-      <BrandBar rightSlot={<ModeToggle />} />
+    <AuthPageShell
+      eyebrow={t('auth.login.eyebrow')}
+      heroTitle={t('auth.login.title')}
+      heroBody={
+        <ul className='mt-6 space-y-4'>
+          {productHighlights.map((highlight) => (
+            <li key={highlight}>
+              <p className='text-foreground/90 text-sm leading-6 font-medium sm:text-base'>
+                {highlight}
+              </p>
+            </li>
+          ))}
+        </ul>
+      }
+      formTitle={t('auth.login.formTitle')}
+      showLegalLinks={isMultiTenant}
+    >
+      {googleEnabled ? (
+        <Button
+          type='button'
+          variant='outline'
+          className='h-11 w-full text-sm font-medium'
+          onClick={handleGoogleLogin}
+        >
+          <GoogleIcon />
+          {t('auth.login.googleCta')}
+        </Button>
+      ) : null}
 
-      {/* Content */}
-      <div className='relative flex flex-1 items-start justify-center py-6 md:items-center'>
-        <LicenseBadge />
-        <Card className='w-full max-w-md'>
-          <CardHeader className='space-y-1 text-center'>
-            <CardTitle className='text-2xl font-semibold tracking-tight'>
-              {t('auth.login.title')}
-            </CardTitle>
-            <CardDescription className='text-muted-foreground'>
-              {t('auth.login.subtitle')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                <FormField
-                  control={form.control}
-                  name='username'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('common.labels.username')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='text'
-                          placeholder={t('forms.placeholders.enterUsername')}
-                          disabled={form.formState.isSubmitting}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='password'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('common.labels.password')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='password'
-                          placeholder={t('forms.placeholders.enterPassword')}
-                          disabled={form.formState.isSubmitting}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {form.formState.errors.root && (
-                  <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
-                    {form.formState.errors.root.message}
-                  </div>
-                )}
-                <ButtonWithLoading
-                  type='submit'
-                  className='w-full'
-                  isLoading={form.formState.isSubmitting}
-                >
-                  {t('auth.login.signIn')}
-                </ButtonWithLoading>
-              </form>
-            </Form>
+      {googleEnabled ? (
+        <div className='relative'>
+          <div className='absolute inset-0 flex items-center'>
+            <span className='border-border w-full border-t' />
+          </div>
+          <div className='relative flex justify-center text-xs font-medium'>
+            <span className='bg-background text-muted-foreground px-3'>
+              {t(credentialsDividerKey)}
+            </span>
+          </div>
+        </div>
+      ) : null}
 
-            {googleEnabled && (
-              <>
-                <div className='relative my-4'>
-                  <div className='absolute inset-0 flex items-center'>
-                    <span className='border-border w-full border-t' />
-                  </div>
-                  <div className='relative flex justify-center text-xs uppercase'>
-                    <span className='bg-card text-muted-foreground px-2'>or</span>
-                  </div>
-                </div>
-
-                <Button
-                  type='button'
-                  variant='outline'
-                  className='w-full'
-                  onClick={handleGoogleLogin}
-                >
-                  <GoogleIcon />
-                  Continue with Google
-                </Button>
-              </>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <FormField
+            control={form.control}
+            name='username'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t(identifierLabelKey)}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='text'
+                    placeholder={t(identifierPlaceholderKey)}
+                    disabled={form.formState.isSubmitting}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          />
+          <FormField
+            control={form.control}
+            name='password'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('common.labels.password')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='password'
+                    placeholder={t('forms.placeholders.enterPassword')}
+                    disabled={form.formState.isSubmitting}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form.formState.errors.root && (
+            <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+              {form.formState.errors.root.message}
+            </div>
+          )}
+          <ButtonWithLoading
+            type='submit'
+            className='h-11 w-full'
+            isLoading={form.formState.isSubmitting}
+          >
+            {t('auth.login.signIn')}
+          </ButtonWithLoading>
+        </form>
+      </Form>
+
+      {isMultiTenant ? (
+        <p className='text-muted-foreground text-center text-sm'>
+          {t('auth.login.createAccountPrompt')}{' '}
+          <Link to='/register' className='text-foreground font-medium underline underline-offset-4'>
+            {t('auth.login.createAccountLink')}
+          </Link>
+        </p>
+      ) : null}
+    </AuthPageShell>
   )
 }

@@ -6,9 +6,16 @@ export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   value?: number
   max?: number
   className?: string
+  indicatorClassName?: string
 }
 
-export function Progress({ value = 0, max = 100, className, ...props }: ProgressProps) {
+export function Progress({
+  value = 0,
+  max = 100,
+  className,
+  indicatorClassName,
+  ...props
+}: ProgressProps) {
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100)
 
   return (
@@ -17,7 +24,10 @@ export function Progress({ value = 0, max = 100, className, ...props }: Progress
       {...props}
     >
       <div
-        className='bg-primary h-full w-full flex-1 transition-all duration-200 ease-out'
+        className={cn(
+          'bg-primary h-full w-full flex-1 transition-all duration-200 ease-out',
+          indicatorClassName,
+        )}
         style={{ transform: `translateX(-${100 - percentage}%)` }}
       />
     </div>

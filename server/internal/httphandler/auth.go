@@ -9,12 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
@@ -30,12 +32,14 @@ type AuthHandler struct {
 	logger        *zap.Logger
 	embeddedMode  bool
 	multiTenant   bool
+	signupRuntime signup.Runtime
 }
 
 type AuthHandlerConfig struct {
-	EmbeddedMode bool
-	MultiTenant  bool
-	SpaceStore   space.SpaceStore
+	EmbeddedMode  bool
+	MultiTenant   bool
+	SpaceStore    space.SpaceStore
+	SignupRuntime signup.Runtime
 }
 
 type GuestLoginRequest struct {
@@ -59,6 +63,7 @@ func NewAuthHandler(
 		logger:        logger,
 		embeddedMode:  cfg.EmbeddedMode,
 		multiTenant:   cfg.MultiTenant,
+		signupRuntime: cfg.SignupRuntime,
 	}
 }
 
@@ -68,7 +73,8 @@ func (h *AuthHandler) cloudEnabled() bool {
 
 type RegisterRequest struct {
 	DisplayName string `json:"displayName"`
-	Username    string `json:"username"`
+	Email       string `json:"email,omitempty"`
+	Username    string `json:"username,omitempty"`
 	Password    string `json:"password"`
 }
 
@@ -76,7 +82,7 @@ type RegisterAdminRequest struct {
 	DisplayName     string `json:"displayName"`
 	Username        string `json:"username"`
 	Password        string `json:"password"`
-	DefaultLanguage string `json:"defaultLanguage"` // Optional - defaults to "en" if not provided
+	DefaultLanguage string `json:"defaultLanguage"`
 }
 
 type LoginRequest struct {
@@ -106,6 +112,20 @@ type FirstRunResponse struct {
 
 type RefreshTokenRequest struct {
 	Token string `json:"token"`
+}
+
+type StartPublicSignupRequest struct {
+	DisplayName string `json:"displayName"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+}
+
+type VerifyPublicSignupRequest struct {
+	Token string `json:"token"`
+}
+
+type ResendPublicSignupVerificationRequest struct {
+	Email string `json:"email"`
 }
 
 func (h *AuthHandler) CheckFirstRun() http.HandlerFunc {
@@ -184,6 +204,10 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 
 func (h *AuthHandler) Register() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.cloudEnabled() {
+			return apperror.Forbidden("Public sign-up is not available in this deployment.")
+		}
+
 		var req RegisterRequest
 		if err := DecodeJSON(r, &req); err != nil {
 			return err
@@ -195,6 +219,134 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 		}
 
 		return WriteCreated(w, response)
+	})
+}
+
+func (h *AuthHandler) StartPublicSignup() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.cloudEnabled() {
+			return apperror.Forbidden("Public sign-up is not available in this deployment.")
+		}
+		if h.signupRuntime == nil {
+			return apperror.Forbidden("Email verification sign-up is not available in this deployment.")
+		}
+
+		var req StartPublicSignupRequest
+		if err := DecodeJSON(r, &req); err != nil {
+			return err
+		}
+
+		validationRequest := RegisterRequest{
+			DisplayName: req.DisplayName,
+			Email:       req.Email,
+			Password:    req.Password,
+		}
+		if err := h.validateRegisterRequest(&validationRequest, false); err != nil {
+			return err
+		}
+
+		result, err := h.signupRuntime.StartPublicSignup(r.Context(), signup.StartPublicSignupParams{
+			DisplayName: validation.NormalizeDisplayName(req.DisplayName),
+			Email:       validation.NormalizeEmail(req.Email),
+			Password:    req.Password,
+		})
+		if err != nil {
+			if errors.Is(err, signup.ErrEmailAlreadyExists) {
+				return apperror.Conflict("Email already exists", "email")
+			}
+			if errors.Is(err, signup.ErrVerificationCooldownActive) {
+				return apperror.TooManyRequests("Please wait before requesting another verification email", map[string]interface{}{"field": "email"}, "email")
+			}
+			h.logger.Error("Failed to start public sign-up verification", zap.Error(err))
+			return apperror.InternalServerError("Failed to start sign-up")
+		}
+
+		return WriteCreated(w, result)
+	})
+}
+
+func (h *AuthHandler) VerifyPublicSignup() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.cloudEnabled() {
+			return apperror.Forbidden("Public sign-up is not available in this deployment.")
+		}
+		if h.signupRuntime == nil {
+			return apperror.Forbidden("Email verification sign-up is not available in this deployment.")
+		}
+
+		var req VerifyPublicSignupRequest
+		if err := DecodeJSON(r, &req); err != nil {
+			return err
+		}
+		if strings.TrimSpace(req.Token) == "" {
+			return apperror.BadRequest("Verification token is required", map[string]interface{}{"field": "token"})
+		}
+
+		result, err := h.signupRuntime.VerifyPublicSignup(r.Context(), strings.TrimSpace(req.Token))
+		if err != nil {
+			if errors.Is(err, signup.ErrVerificationTokenInvalid) {
+				return apperror.BadRequest("Verification link is invalid or has expired", map[string]interface{}{"field": "token"})
+			}
+			if errors.Is(err, signup.ErrEmailAlreadyExists) {
+				return apperror.Conflict("Email already exists", "email")
+			}
+			h.logger.Error("Failed to verify public sign-up", zap.Error(err))
+			return apperror.InternalServerError("Failed to verify sign-up")
+		}
+
+		user, err := h.userStore.GetByID(r.Context(), result.UserID)
+		if err != nil {
+			h.logger.Error("Failed to load verified user", zap.String("userID", result.UserID), zap.Error(err))
+			return apperror.InternalServerError("Failed to complete sign-up")
+		}
+		if user == nil {
+			return apperror.InternalServerError("Failed to complete sign-up")
+		}
+
+		orgID := strings.TrimSpace(result.OrgID)
+		if orgID == "" {
+			orgID = h.resolvePrimaryOrgID(r.Context(), result.UserID)
+		}
+
+		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
+		if err != nil {
+			return err
+		}
+
+		return WriteSuccess(w, response)
+	})
+}
+
+func (h *AuthHandler) ResendPublicSignupVerification() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.cloudEnabled() {
+			return apperror.Forbidden("Public sign-up is not available in this deployment.")
+		}
+		if h.signupRuntime == nil {
+			return apperror.Forbidden("Email verification sign-up is not available in this deployment.")
+		}
+
+		var req ResendPublicSignupVerificationRequest
+		if err := DecodeJSON(r, &req); err != nil {
+			return err
+		}
+		if err := validation.ValidateEmail(req.Email); err != nil {
+			return apperror.BadRequest("Invalid email", map[string]interface{}{"field": "email"})
+		}
+
+		result, err := h.signupRuntime.ResendPublicSignupVerification(r.Context(), validation.NormalizeEmail(req.Email))
+		if err != nil {
+			if errors.Is(err, signup.ErrPendingSignupNotFound) {
+				return apperror.BadRequest("No pending sign-up found for this email", map[string]interface{}{"field": "email"})
+			}
+			if errors.Is(err, signup.ErrVerificationCooldownActive) {
+				return apperror.TooManyRequests("Please wait before requesting another verification email", map[string]interface{}{"field": "email"}, "email")
+			}
+			h.logger.Error("Failed to resend public sign-up verification", zap.Error(err))
+			return apperror.InternalServerError("Failed to resend sign-up verification")
+		}
+
+		return WriteSuccess(w, result)
 	})
 }
 
@@ -213,11 +365,26 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			return apperror.BadRequest("Password is required", nil)
 		}
 
-		// Normalize username
-		username := validation.NormalizeUsername(req.Username)
+		identifier := strings.TrimSpace(req.Username)
 
-		// Get user by username
-		user, err := h.userStore.GetByUsername(r.Context(), username)
+		var user *model.User
+		var err error
+
+		if strings.Contains(identifier, "@") {
+			email := strings.ToLower(identifier)
+			emailUser, lookupErr := h.userStore.GetByEmail(r.Context(), email)
+			if lookupErr != nil {
+				h.logger.Error("Failed to get user", zap.Error(lookupErr))
+				return apperror.InternalServerError("Database connection failed")
+			}
+
+			if emailUser != nil {
+				user, err = h.userStore.GetByIDWithPassword(r.Context(), emailUser.ID)
+			}
+		} else {
+			username := validation.NormalizeUsername(identifier)
+			user, err = h.userStore.GetByUsername(r.Context(), username)
+		}
 		if err != nil {
 			h.logger.Error("Failed to get user", zap.Error(err))
 			return apperror.InternalServerError("Database connection failed")
@@ -238,17 +405,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			h.logger.Warn("Failed to update last login", zap.Error(err), zap.String("userID", user.ID))
 		}
 
-		// multi-tenant mode: look up org so we can embed org_id in the token.
-		orgID := ""
-		if h.cloudEnabled() {
-			org, err := h.orgStore.GetByUserID(r.Context(), user.ID)
-			if err != nil {
-				h.logger.Warn("Failed to look up org for user on login",
-					zap.String("userID", user.ID), zap.Error(err))
-			} else if org != nil {
-				orgID = org.ID
-			}
-		}
+		orgID := h.resolvePrimaryOrgID(r.Context(), user.ID)
 
 		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
 		if err != nil {
@@ -366,22 +523,11 @@ func (h *AuthHandler) RefreshToken() http.HandlerFunc {
 			return apperror.Unauthorized("User not found or inactive")
 		}
 
-		// Generate new token — RefreshToken propagates OrgID automatically
-		newToken, err := h.tokenManager.RefreshToken(claims)
+		currentOrgID := h.resolvePrimaryOrgID(r.Context(), claims.UserID)
+		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, currentOrgID)
 		if err != nil {
 			h.logger.Error("Failed to refresh token", zap.Error(err))
 			return apperror.InternalServerError("Failed to refresh token")
-		}
-
-		response := LoginResponse{
-			Token:     newToken,
-			ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
-			User: UserResponse{
-				ID:          user.ID,
-				DisplayName: user.DisplayName,
-				Username:    user.Username,
-				Role:        user.Role,
-			},
 		}
 
 		return WriteSuccess(w, response)
@@ -458,12 +604,25 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 }
 
 func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role string) (*LoginResponse, error) {
+	isPublicSignup := role == "user" && h.cloudEnabled()
+	if isPublicSignup {
+		if strings.TrimSpace(req.Email) == "" {
+			return nil, apperror.BadRequest("Email is required", map[string]interface{}{
+				"field": "email",
+			})
+		}
+		if strings.TrimSpace(req.Username) == "" {
+			req.Username = validation.GenerateSystemUsername()
+		}
+	}
+
 	// Validate input with field-specific errors
-	if err := h.validateRegisterRequest(&req); err != nil {
+	if err := h.validateRegisterRequest(&req, !isPublicSignup); err != nil {
 		return nil, err
 	}
 
 	// Normalize inputs
+	normalizedEmail := validation.NormalizeEmail(req.Email)
 	normalizedUsername := validation.NormalizeUsername(req.Username)
 	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
 
@@ -475,23 +634,45 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	}
 
 	// Create user
-	user, err := h.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role)
+	var user *userstore.User
+	if normalizedEmail != "" {
+		if creator, ok := h.userStore.(interface {
+			CreateWithEmail(context.Context, string, string, string, string, string) (*userstore.User, error)
+		}); ok {
+			user, err = creator.CreateWithEmail(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role, normalizedEmail)
+		} else {
+			return nil, apperror.InternalServerError("Failed to create user")
+		}
+	} else {
+		user, err = h.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role)
+	}
 	if err != nil {
 		if errors.Is(err, userstore.ErrUsernameAlreadyExists) {
 			return nil, apperror.Conflict("Username already exists", "username")
+		}
+		if errors.Is(err, userstore.ErrEmailAlreadyExists) {
+			return nil, apperror.Conflict("Email already exists", "email")
 		}
 		h.logger.Error("Failed to create user", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
-	// multi-tenant mode: auto-create a personal org for the new user (14-day trial).
+	return h.provisionWorkspaceOwner(ctx, user)
+}
+
+func (h *AuthHandler) provisionWorkspaceOwner(ctx context.Context, user *userstore.User) (*LoginResponse, error) {
+	if user == nil {
+		return nil, apperror.InternalServerError("Failed to create user")
+	}
+
+	// multi-tenant mode: direct signup provisions the initial workspace org for the user.
 	// Self-hosted: orgStore is nil — skip org creation.
 	orgID := ""
 	if h.cloudEnabled() {
 		trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
-		org, err := h.orgStore.CreateWithMember(ctx, user.ID, normalizedDisplayName, normalizedUsername, &trialEndsAt)
+		org, err := h.orgStore.CreateWithMember(ctx, user.ID, user.DisplayName, user.Username, &trialEndsAt)
 		if err != nil {
-			h.logger.Error("Failed to create personal org for new user",
+			h.logger.Error("Failed to provision workspace org for new user",
 				zap.String("userID", user.ID), zap.Error(err))
 			return nil, apperror.InternalServerError("Failed to initialize organization")
 		}
@@ -499,6 +680,32 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	}
 
 	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
+}
+
+func (h *AuthHandler) provisionWorkspaceMember(_ context.Context, user *userstore.User, orgID string) (*LoginResponse, error) {
+	if user == nil || strings.TrimSpace(orgID) == "" {
+		return nil, apperror.InternalServerError("Failed to initialize organization")
+	}
+
+	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
+}
+
+func (h *AuthHandler) resolvePrimaryOrgID(ctx context.Context, userID string) string {
+	if !h.cloudEnabled() {
+		return ""
+	}
+
+	org, err := h.orgStore.GetByUserID(ctx, userID)
+	if err != nil {
+		h.logger.Warn("Failed to look up org for user on login",
+			zap.String("userID", userID), zap.Error(err))
+		return ""
+	}
+	if org == nil {
+		return ""
+	}
+
+	return org.ID
 }
 
 func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role, orgID string) (*LoginResponse, error) {
@@ -533,7 +740,7 @@ func (h *AuthHandler) generateAuthResponse(userID, displayName, username, role, 
 	}, nil
 }
 
-func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
+func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest, requireUsername bool) error {
 	// Validate displayName
 	if err := validation.ValidateDisplayName(req.DisplayName); err != nil {
 		return apperror.BadRequest("Invalid display name", map[string]interface{}{
@@ -541,11 +748,20 @@ func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
 		})
 	}
 
-	// Validate username
-	if err := validation.ValidateUsername(req.Username); err != nil {
-		return apperror.BadRequest("Invalid username", map[string]interface{}{
-			"field": "username",
-		})
+	if requireUsername || strings.TrimSpace(req.Username) != "" {
+		if err := validation.ValidateUsername(req.Username); err != nil {
+			return apperror.BadRequest("Invalid username", map[string]interface{}{
+				"field": "username",
+			})
+		}
+	}
+
+	if strings.TrimSpace(req.Email) != "" {
+		if err := validation.ValidateEmail(req.Email); err != nil {
+			return apperror.BadRequest("Invalid email", map[string]interface{}{
+				"field": "email",
+			})
+		}
 	}
 
 	// Validate password

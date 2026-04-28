@@ -11,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/model"
 	shareduser "github.com/cshum/imagor-studio/server/pkg/user"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
+	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -23,6 +24,7 @@ type AuthProvider = shareduser.AuthProvider
 
 type Store interface {
 	Create(ctx context.Context, displayName, username, hashedPassword, role string) (*User, error)
+	CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
 	GetByIDAdmin(ctx context.Context, id string) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
@@ -36,6 +38,7 @@ type Store interface {
 	ListAuthProviders(ctx context.Context, id string) ([]*AuthProvider, error)
 	UnlinkAuthProvider(ctx context.Context, id string, provider string) error
 	SetActive(ctx context.Context, id string, active bool) error
+	SetEmailVerified(ctx context.Context, id string, verified bool) error
 	List(ctx context.Context, offset, limit int, search string) ([]*User, int, error)
 	UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*User, error)
 	UpdateRole(ctx context.Context, id string, role string) error
@@ -89,6 +92,28 @@ func isDuplicateUsernameError(err error) bool {
 	return strings.Contains(errStr, "username") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint"))
 }
 
+func isDuplicateEmailError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var pgErr pgdriver.Error
+	if errors.As(err, &pgErr) {
+		if pgErr.IntegrityViolation() && pgErr.Field('C') == "23505" {
+			msg := strings.ToLower(pgErr.Error())
+			return strings.Contains(msg, "email")
+		}
+	}
+
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		return sqliteErr.Code == sqlite3.ErrConstraint && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique
+	}
+
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "email") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint"))
+}
+
 func (s *store) UpdateRole(ctx context.Context, id string, role string) error {
 	role = strings.TrimSpace(role)
 	if role == "" {
@@ -124,6 +149,19 @@ func modelUserToStore(user model.User) *User {
 }
 
 func (s *store) Create(ctx context.Context, displayName, username, hashedPassword, role string) (*User, error) {
+	return s.create(ctx, displayName, username, hashedPassword, role, nil)
+}
+
+func (s *store) CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*User, error) {
+	normalizedEmail := strings.TrimSpace(email)
+	if normalizedEmail == "" {
+		return nil, fmt.Errorf("email cannot be empty")
+	}
+
+	return s.create(ctx, displayName, username, hashedPassword, role, &normalizedEmail)
+}
+
+func (s *store) create(ctx context.Context, displayName, username, hashedPassword, role string, email *string) (*User, error) {
 	// Validate inputs
 	displayName = strings.TrimSpace(displayName)
 	username = strings.TrimSpace(username)
@@ -151,6 +189,8 @@ func (s *store) Create(ctx context.Context, displayName, username, hashedPasswor
 		HashedPassword: hashedPassword,
 		Role:           role,
 		IsActive:       true,
+		Email:          email,
+		EmailVerified:  false,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -162,10 +202,26 @@ func (s *store) Create(ctx context.Context, displayName, username, hashedPasswor
 		if isDuplicateUsernameError(err) {
 			return nil, fmt.Errorf("%w", ErrUsernameAlreadyExists)
 		}
+		if isDuplicateEmailError(err) {
+			return nil, fmt.Errorf("%w", ErrEmailAlreadyExists)
+		}
 		return nil, fmt.Errorf("error creating user: %w", err)
 	}
 
 	return modelUserToStore(*entry), nil
+}
+
+func (s *store) SetEmailVerified(ctx context.Context, id string, verified bool) error {
+	_, err := s.db.NewUpdate().
+		Model((*model.User)(nil)).
+		Set("email_verified = ?", verified).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error updating email verification state: %w", err)
+	}
+	return nil
 }
 
 func (s *store) GetByEmail(ctx context.Context, email string) (*User, error) {
@@ -539,10 +595,8 @@ func (s *store) UpsertOAuth(ctx context.Context, provider, providerID, email, di
 		}
 
 		if !userFound {
-			// OAuth users never log in by username — generate a guaranteed-unique slug
-			// derived from a UUID so there are no collisions and no awkward short usernames
-			// (e.g. "me" from me@example.com).
-			username := "u-" + uuid.GenerateUUID()[:12]
+			// OAuth users never log in by username, so generate a stable internal handle.
+			username := validation.GenerateSystemUsername()
 
 			if displayName == "" {
 				displayName = username

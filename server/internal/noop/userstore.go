@@ -22,6 +22,10 @@ func (n *UserStore) Create(ctx context.Context, displayName, username, hashedPas
 	return nil, ErrEmbeddedMode
 }
 
+func (n *UserStore) CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*userstore.User, error) {
+	return nil, ErrEmbeddedMode
+}
+
 func (n *UserStore) GetByID(ctx context.Context, id string) (*userstore.User, error) {
 	return nil, ErrEmbeddedMode
 }
@@ -71,6 +75,10 @@ func (n *UserStore) UnlinkAuthProvider(ctx context.Context, id string, provider 
 }
 
 func (n *UserStore) SetActive(ctx context.Context, id string, active bool) error {
+	return ErrEmbeddedMode
+}
+
+func (n *UserStore) SetEmailVerified(ctx context.Context, id string, verified bool) error {
 	return ErrEmbeddedMode
 }
 

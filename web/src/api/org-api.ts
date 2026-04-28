@@ -5,18 +5,30 @@ import type {
   AddOrgMemberMutationVariables,
   AddSpaceMemberMutation,
   AddSpaceMemberMutationVariables,
+  CancelOrgInvitationMutation,
+  CancelOrgInvitationMutationVariables,
+  CreateBillingPortalSessionMutation,
+  CreateBillingPortalSessionMutationVariables,
+  CreateCheckoutSessionMutation,
+  CreateCheckoutSessionMutationVariables,
   CreateSpaceMutation,
   CreateSpaceMutationVariables,
+  DeleteOrganizationMutation,
   DeleteSpaceMutation,
   DeleteSpaceMutationVariables,
   DeleteSpaceRegistryMutation,
   DeleteSpaceRegistryMutationVariables,
   GetSpaceQuery,
   GetSpaceRegistryQuery,
+  GetUsageSummaryQuery,
+  InviteOrgMemberMutation,
+  InviteOrgMemberMutationVariables,
   InviteSpaceMemberMutation,
   InviteSpaceMemberMutationVariables,
+  LeaveOrganizationMutation,
   LeaveSpaceMutation,
   LeaveSpaceMutationVariables,
+  ListOrgInvitationsQuery,
   ListOrgMembersQuery,
   ListSpaceInvitationsQuery,
   ListSpaceMembersQuery,
@@ -29,6 +41,8 @@ import type {
   SetSpaceRegistryMutation,
   SetSpaceRegistryMutationVariables,
   SpaceKeyExistsQuery,
+  TransferOrganizationOwnershipMutation,
+  TransferOrganizationOwnershipMutationVariables,
   UpdateOrgMemberRoleMutation,
   UpdateOrgMemberRoleMutationVariables,
   UpdateSpaceMemberRoleMutation,
@@ -72,6 +86,31 @@ export async function getMyOrganization(): Promise<MyOrganizationQuery['myOrgani
   const sdk = getSdk(client)
   const result = await sdk.MyOrganization()
   return result.myOrganization
+}
+
+export async function getUsageSummary(): Promise<GetUsageSummaryQuery['usageSummary']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.GetUsageSummary()
+  return result.usageSummary
+}
+
+export async function createCheckoutSession(
+  variables: CreateCheckoutSessionMutationVariables,
+): Promise<CreateCheckoutSessionMutation['createCheckoutSession']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.CreateCheckoutSession(variables)
+  return result.createCheckoutSession
+}
+
+export async function createBillingPortalSession(
+  variables: CreateBillingPortalSessionMutationVariables,
+): Promise<CreateBillingPortalSessionMutation['createBillingPortalSession']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.CreateBillingPortalSession(variables)
+  return result.createBillingPortalSession
 }
 
 export async function createSpace(
@@ -137,6 +176,15 @@ export async function deleteSpace(
   return result.deleteSpace
 }
 
+export async function deleteOrganization(): Promise<
+  DeleteOrganizationMutation['deleteOrganization']
+> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.DeleteOrganization()
+  return result.deleteOrganization
+}
+
 export async function getSpaceRegistry(
   spaceID: string,
   keys?: string[],
@@ -190,8 +238,10 @@ export async function checkSpaceKey(key: string): Promise<SpaceKeyExistsQuery['s
 // ── Org member management ────────────────────────────────────────────────────
 
 export type OrgMemberItem = ListOrgMembersQuery['orgMembers'][number]
+export type OrgInvitationItem = ListOrgInvitationsQuery['orgInvitations'][number]
 export type SpaceMemberItem = ListSpaceMembersQuery['spaceMembers'][number]
 export type SpaceInvitationItem = ListSpaceInvitationsQuery['spaceInvitations'][number]
+export type OrgInviteResultItem = InviteOrgMemberMutation['inviteOrgMember']
 export type SpaceInviteResultItem = InviteSpaceMemberMutation['inviteSpaceMember']
 
 export async function listOrgMembers(): Promise<ListOrgMembersQuery['orgMembers']> {
@@ -199,6 +249,13 @@ export async function listOrgMembers(): Promise<ListOrgMembersQuery['orgMembers'
   const sdk = getSdk(client)
   const result = await sdk.ListOrgMembers()
   return result.orgMembers
+}
+
+export async function listOrgInvitations(): Promise<ListOrgInvitationsQuery['orgInvitations']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.ListOrgInvitations()
+  return result.orgInvitations
 }
 
 export async function addOrgMember(
@@ -217,6 +274,24 @@ export async function addOrgMemberByEmail(
   const sdk = getSdk(client)
   const result = await sdk.AddOrgMemberByEmail(variables)
   return result.addOrgMemberByEmail
+}
+
+export async function inviteOrgMember(
+  variables: InviteOrgMemberMutationVariables,
+): Promise<InviteOrgMemberMutation['inviteOrgMember']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.InviteOrgMember(variables)
+  return result.inviteOrgMember
+}
+
+export async function cancelOrgInvitation(
+  variables: CancelOrgInvitationMutationVariables,
+): Promise<CancelOrgInvitationMutation['cancelOrgInvitation']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.CancelOrgInvitation(variables)
+  return result.cancelOrgInvitation
 }
 
 export async function listSpaceMembers(
@@ -264,6 +339,13 @@ export async function removeOrgMember(
   return result.removeOrgMember
 }
 
+export async function leaveOrganization(): Promise<LeaveOrganizationMutation['leaveOrganization']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.LeaveOrganization()
+  return result.leaveOrganization
+}
+
 export async function removeSpaceMember(
   variables: RemoveSpaceMemberMutationVariables,
 ): Promise<RemoveSpaceMemberMutation['removeSpaceMember']> {
@@ -289,6 +371,15 @@ export async function updateOrgMemberRole(
   const sdk = getSdk(client)
   const result = await sdk.UpdateOrgMemberRole(variables)
   return result.updateOrgMemberRole
+}
+
+export async function transferOrganizationOwnership(
+  variables: TransferOrganizationOwnershipMutationVariables,
+): Promise<TransferOrganizationOwnershipMutation['transferOrganizationOwnership']> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.TransferOrganizationOwnership(variables)
+  return result.transferOrganizationOwnership
 }
 
 export async function updateSpaceMemberRole(

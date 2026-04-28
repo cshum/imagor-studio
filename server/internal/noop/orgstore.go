@@ -24,11 +24,27 @@ func (n *OrgStore) CreateWithMember(_ context.Context, _, _, _ string, _ *time.T
 	return nil, ErrCloudDisabled
 }
 
+func (n *OrgStore) GetByID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, ErrCloudDisabled
+}
+
 func (n *OrgStore) GetByUserID(_ context.Context, _ string) (*org.Org, error) {
 	return nil, ErrCloudDisabled
 }
 
 func (n *OrgStore) GetBySlug(_ context.Context, _ string) (*org.Org, error) {
+	return nil, ErrCloudDisabled
+}
+
+func (n *OrgStore) GetByStripeCustomerID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, ErrCloudDisabled
+}
+
+func (n *OrgStore) UpdateBillingState(_ context.Context, _ string, _ org.BillingStateUpdate) (*org.Org, error) {
+	return nil, ErrCloudDisabled
+}
+
+func (n *OrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
 	return nil, ErrCloudDisabled
 }
 
@@ -45,5 +61,13 @@ func (n *OrgStore) RemoveMember(_ context.Context, _, _ string) error {
 }
 
 func (n *OrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return ErrCloudDisabled
+}
+
+func (n *OrgStore) TransferOwnership(_ context.Context, _, _, _ string) error {
+	return ErrCloudDisabled
+}
+
+func (n *OrgStore) Delete(_ context.Context, _, _ string) error {
 	return ErrCloudDisabled
 }

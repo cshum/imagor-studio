@@ -9,6 +9,7 @@
       },
       "tabs": {
         "profile": "Account settings",
+        "billing": "Billing",
         "system": "System",
         "users": "Users",
         "spaces": "Spaces"
@@ -46,7 +47,7 @@
       "users": "Users",
       "signOut": "Sign Out",
       "login": "Login",
-      "accountSettings": "Account Settings",
+      "accountSettings": "Account",
       "settings": "Settings"
     },
     "status": {
@@ -70,13 +71,48 @@
   },
   "auth": {
     "login": {
-      "title": "Welcome back",
-      "subtitle": "Enter your credentials to access Imagor Studio",
+      "eyebrow": "Imagor Studio",
+      "title": "High-performance image processing for teams",
+      "formTitle": "Sign in",
+      "googleCta": "Continue with Google",
+      "credentialsDividerCloud": "Or use email and password",
+      "credentialsDividerSelfHosted": "Or use username and password",
+      "identifierLabelCloud": "Email",
+      "identifierLabelSelfHosted": "Username",
+      "identifierPlaceholderCloud": "name@example.com",
+      "identifierPlaceholderSelfHosted": "Enter your username",
+      "highlights": {
+        "storage": "Control storage and delivery by team or environment",
+        "delivery": "Manage image infrastructure without sharing credentials",
+        "access": "Review, edit, and organize images and templates in one place"
+      },
       "signIn": "Sign In",
-      "loginFailed": "Invalid username or password. Please try again."
+      "loginFailed": "Invalid credentials. Please try again.",
+      "createAccountPrompt": "New here?",
+      "createAccountLink": "Create an account"
+    },
+    "register": {
+      "formTitle": "Create account",
+      "googleCta": "Continue with Google",
+      "credentialsDivider": "Or create an account with email and password",
+      "emailPlaceholder": "name@example.com",
+      "pendingTitle": "Check your email",
+      "pendingDescription": "We sent a confirmation link to {{email}}. Open it to finish creating your account.",
+      "resendAction": "Resend verification email",
+      "resendCountdown": "Resend available in {{seconds}}s",
+      "resendSuccess": "We sent a fresh verification email.",
+      "resendCooldown": "Please wait {{seconds}}s before requesting another verification email.",
+      "resendFailed": "Failed to resend verification email. Please try again.",
+      "submit": "Create account",
+      "useDifferentEmail": "Use a different email",
+      "signInPrompt": "Already have an account?",
+      "signInLink": "Sign in",
+      "failed": "Failed to create account. Please try again."
     },
     "validation": {
-      "usernameRequired": "Please enter a valid username",
+      "identifierRequiredCloud": "Email or username is required",
+      "invalidEmailOrUsername": "Please enter a valid email or username",
+      "usernameRequired": "Username is required",
       "usernameMinLength": "Username must be at least 3 characters",
       "usernameMaxLength": "Username must be at most 30 characters",
       "passwordRequired": "Password is required",
@@ -121,6 +157,9 @@
       "gallery": "Gallery",
       "profile": "Profile",
       "account": "Account",
+      "organization": "Organization",
+      "billing": "Billing",
+      "organizationMembers": "Members",
       "settings": "Settings",
       "users": "Users",
       "admin": "System",
@@ -131,11 +170,30 @@
   },
   "pages": {
     "authCallback": {
-      "title": "Welcome back",
+      "title": "Sign-in interrupted",
       "subtitle": "We couldn't complete your sign-in. Please try again.",
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
+      "errors": {
+        "inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first."
+      },
       "errorNoToken": "No authentication token received",
+      "backToLogin": "Back to login"
+    },
+    "registerVerify": {
+      "title": "Confirming your account",
+      "subtitle": "Please wait while we finish signing you in.",
+      "verifying": "Verifying your email confirmation link.",
+      "errorTitle": "We couldn't confirm your account",
+      "errorSubtitle": "The confirmation link may be invalid or expired.",
+      "missingToken": "The confirmation link is missing its verification token.",
+      "failed": "We couldn't verify your account. Please request a new confirmation email.",
+      "resendDescription": "We can send a fresh confirmation link to {{email}}.",
+      "resendAction": "Resend confirmation email",
+      "resendCountdown": "Resend available in {{seconds}}s",
+      "resendSuccess": "We sent a fresh confirmation email.",
+      "resendCooldown": "Please wait before requesting another confirmation email.",
+      "resendFailed": "Failed to resend the confirmation email. Please try again.",
       "backToLogin": "Back to login"
     },
     "error": {
@@ -143,8 +201,8 @@
       "notFoundTitle": "Space not found",
       "forbiddenTitle": "Access denied",
       "defaultDescription": "There was an error loading the page. Please try going back to the home page.",
-      "notFoundDescription": "We couldn't find that space. Check the link or return to your workspace.",
-      "forbiddenDescription": "You're signed in, but this space is not available to your account. Ask a space admin for access or return to your workspace."
+      "notFoundDescription": "We couldn't find that space. Check the link or return to your spaces.",
+      "forbiddenDescription": "You're signed in, but this space is not available to your account. Ask a space admin for access or return to your spaces."
     },
     "gallery": {
       "title": "Gallery",
@@ -710,11 +768,27 @@
         "confirmPassword": "Confirm password"
       }
     },
+    "workspaceRequired": {
+      "eyebrow": "Organization access required",
+      "title": "This account is signed in, but it does not have organization access yet.",
+      "description": "Imagor Studio needs organization access before account and space management can load.",
+      "invite": {
+        "title": "Join with an invite",
+        "description": "Open your invitation link after sign-in, or ask an organization admin to send a fresh invite if the original one expired."
+      },
+      "nextSteps": {
+        "title": "What to do next",
+        "description": "If you expected access already, contact the team that manages your Imagor Studio organization. Self-serve setup is not available from this state yet."
+      },
+      "actions": {
+        "signOut": "Sign out"
+      }
+    },
     "spaces": {
       "title": "Spaces",
       "createSpace": "Create Space",
       "createNewSpace": "Create New Space",
-      "createSpaceDescription": "Create a dedicated image workspace for your team.",
+      "createSpaceDescription": "Create an image processing space with its own storage, delivery configuration, and access controls.",
       "editSpace": "Edit Space",
       "editSpaceDescription": "Update space configuration. Changes will be applied immediately.",
       "deleteSpace": "Delete Space",
@@ -727,9 +801,11 @@
         "next": "Next",
         "back": "Back"
       },
-      "noSpacesFound": "Create your first space",
-      "description": "Manage workspaces for your organization.",
-      "emptyDescription": "Create an image workspace for your team.",
+      "noSpacesFound": "Create your first image processing space",
+      "noSpacesAvailable": "No spaces available yet",
+      "description": "Process, deliver, and manage images by team, brand, or environment.",
+      "emptyDescription": "Launch your first image processing space for uploads, transforms, and delivery.",
+      "emptyDescriptionMember": "You do not have access to any image processing spaces yet.",
       "settings": "Settings",
       "spaceCount": "{{count}} space(s)",
       "openGallery": "Open Gallery",
@@ -779,11 +855,26 @@
         "spaceUpdatedSuccess": "Space updated successfully",
         "spaceDeletedSuccess": "Space deleted successfully",
         "leftSpaceSuccess": "You left the shared space.",
+        "leftOrganizationSuccess": "You left the organization. Sign in again to continue.",
         "createSpaceFailed": "Failed to create space",
+        "createSpaceForbidden": "You do not have permission to create spaces.",
         "keyAlreadyTaken": "URL slug is already taken",
+        "spaceLimitReached": "Your current plan has reached its space limit.",
+        "overPlanLimit": "Over plan limit",
         "updateSpaceFailed": "Failed to update space",
         "deleteSpaceFailed": "Failed to delete space",
-        "leaveSpaceFailed": "Failed to leave shared space"
+        "deleteSpaceForbidden": "Only organization admins can delete this space.",
+        "leaveSpaceFailed": "Failed to leave shared space",
+        "leaveOrganizationFailed": "Failed to leave organization",
+        "cannotLeaveOrganizationAsOwner": "Transfer organization ownership before leaving.",
+        "cannotLeaveOrganizationAsLastMember": "You cannot leave the last organization member."
+      },
+      "plan": {
+        "free": "Free",
+        "trial": "Trial",
+        "starter": "Starter",
+        "pro": "Pro",
+        "team": "Team"
       },
       "validation": {
         "keyFormat": "URL slug must contain only lowercase letters, numbers, and hyphens"
@@ -793,16 +884,188 @@
         "managedStorage": "Managed Storage",
         "externalStorage": "External Storage",
         "yourSpaces": "Your Spaces",
-        "sharedWithYou": "Shared With You"
+        "sharedWithYou": "Shared With You",
+        "spaceQuota": "Space Quota",
+        "unlimited": "Unlimited"
+      },
+      "usageSummaryTitle": "Plan usage",
+      "manageOrganization": "Organization",
+      "leaveOrganization": "Leave organization",
+      "leaveOrganizationTitle": "Leave organization",
+      "leaveOrganizationDescription": "Leave your current organization? You will lose access to its shared spaces and will need to sign in again.",
+      "usageSummaryMeta": "{{owned}} owned · {{shared}} shared",
+      "currentBillingPeriod": "{{start}} - {{end}}",
+      "processingUsage": "{{count}} transforms",
+      "usage": {
+        "spaces": "Spaces",
+        "hostedStorage": "Hosted storage",
+        "processing": "Processing",
+        "overLimit": "Over limit"
       },
       "configure": "Configure",
       "startDescription": "You can customize storage, delivery, and access as you grow.",
+      "startDescriptionMember": "Ask an organization admin to create a space or share an existing space with you.",
       "sharedLabel": "Shared",
       "leaveSpace": "Leave",
       "leaveSpaceDescription": "Leave this shared space",
       "access": {
         "ownedByYou": "Owned by you",
         "sharedWithYou": "Shared with you"
+      }
+    },
+    "billing": {
+      "title": "Billing",
+      "titleDescription": "Choose the plan that fits how your team stores, processes, and delivers images.",
+      "currentPlan": "Current plan",
+      "currentPlanDescription": "Usage is tracked per billing period and resets automatically.",
+      "currentPlanBadge": "Current",
+      "currentPlanButton": "Current plan",
+      "manageBilling": "Manage billing",
+      "selectPlan": "Choose plan",
+      "priceSuffix": "/mo",
+      "unlimited": "Unlimited",
+      "customDomainsIncluded": "{{count}} included",
+      "customDomainsUnavailable": "Not included",
+      "status": {
+        "trialing": "Trialing",
+        "active": "Active",
+        "past_due": "Past due",
+        "canceled": "Canceled"
+      },
+      "usage": {
+        "spaces": "Spaces",
+        "hostedStorage": "Hosted storage",
+        "processing": "Processing"
+      },
+      "planMetrics": {
+        "spaces": "Included spaces",
+        "hostedStorage": "Hosted storage",
+        "processing": "Monthly transforms",
+        "customDomains": "Custom domains"
+      },
+      "planDescriptions": {
+        "starter": "For teams launching one production image pipeline with hosted storage included.",
+        "pro": "For growing teams running multiple image workflows with custom domains and higher monthly volume.",
+        "team": "For organizations managing shared image operations across multiple teams or brands."
+      },
+      "sharedFeaturesTitle": "Every paid plan also includes",
+      "sharedFeatures": {
+        "collaboration": "Shared space access",
+        "orgSharing": "Team invites and shared access",
+        "byob": "Connect your own S3 bucket"
+      },
+      "danger": {
+        "title": "Danger zone",
+        "deleteTitle": "Delete organization",
+        "deleteDescription": "Permanently delete this organization and revoke the remaining organization-level access tied to it.",
+        "deleteChecklist": "Before deletion, remove every space. If a paid subscription is still active, cancel billing first.",
+        "deleteButton": "Delete organization",
+        "confirmTitle": "Delete organization",
+        "confirmDescription": "Delete {{name}} permanently? This cannot be undone and you will need to sign in again afterwards.",
+        "organizationFallback": "this organization",
+        "messages": {
+          "deleted": "Organization deleted. Sign in again to continue.",
+          "deleteFailed": "Failed to delete organization"
+        },
+        "errors": {
+          "ownerRequired": "Only the current organization owner can delete the organization.",
+          "deleteSpacesFirst": "Delete all spaces before deleting the organization.",
+          "cancelBillingFirst": "Cancel paid billing before deleting the organization."
+        }
+      },
+      "messages": {
+        "checkoutFailed": "Failed to start checkout",
+        "portalFailed": "Failed to open billing portal"
+      }
+    },
+    "organizationMembers": {
+      "title": "Members",
+      "titleDescription": "Manage access to this organization and its shared spaces.",
+      "addTitle": "Add people",
+      "addDescription": "Add existing people by username, or send an email invite to new people and choose whether they should manage the organization.",
+      "identifierPlaceholder": "username or email",
+      "addButton": "Add",
+      "listTitle": "People with access",
+      "pendingTitle": "Pending invites",
+      "listDescription": "People with access to {{name}}.",
+      "listDescriptionFallback": "People with access to this organization.",
+      "pendingDescription": "Invitations that have been sent but not accepted yet.",
+      "pendingEmpty": "No invites pending right now.",
+      "pendingExpiresAt": "Expires {{expiresAt}}",
+      "empty": "No people have access yet",
+      "emptyDescription": "Add teammates here to give them access to the organization and its shared spaces.",
+      "listHeaders": {
+        "member": "Member",
+        "action": "Action"
+      },
+      "actionsTitle": "Actions",
+      "transferOwnership": "Transfer ownership",
+      "promoteToAdmin": "Change to admin",
+      "changeToMember": "Change to member",
+      "removeMember": "Remove member",
+      "cancelInvite": "Cancel invite",
+      "removeTitle": "Remove member",
+      "removeDescription": "Remove {{name}} from this organization? They will lose access to shared spaces inherited from the organization.",
+      "transferTitle": "Transfer organization ownership",
+      "transferDescription": "Transfer organization ownership to {{name}}? You will remain in the organization as an admin.",
+      "youBadge": "You",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member"
+      },
+      "messages": {
+        "identifierRequired": "Enter a username or email address.",
+        "identifierInvalidEmail": "Enter a valid email address.",
+        "memberAdded": "Member added.",
+        "inviteSent": "Invitation email sent.",
+        "inviteCanceled": "Invitation canceled.",
+        "inviteCancelFailed": "Failed to cancel invitation",
+        "memberAddFailed": "Failed to add member",
+        "roleUpdated": "Member role updated.",
+        "roleUpdateFailed": "Failed to update member role",
+        "memberRemoved": "Member removed.",
+        "memberRemoveFailed": "Failed to remove member",
+        "ownershipTransferred": "Organization ownership transferred.",
+        "ownershipTransferFailed": "Failed to transfer organization ownership",
+        "errors": {
+          "otherOrganization": "This account already belongs to another organization.",
+          "alreadyMember": "This account is already a member of your organization.",
+          "cannotRemoveYourself": "You cannot remove yourself from the organization.",
+          "cannotRemoveOwner": "You cannot remove the organization owner.",
+          "cannotRemoveLastMember": "You cannot remove the last organization member.",
+          "mustBeCurrentOwner": "Only the current organization owner can transfer ownership.",
+          "targetMustAlreadyBeMember": "Ownership can only be transferred to an existing organization member."
+        }
+      }
+    },
+    "organizationOverview": {
+      "title": "Organization",
+      "titleDescription": "Review your plan, usage, and organization administration in one place.",
+      "summaryDescription": "A quick view of the current organization state.",
+      "usageTitle": "Current usage",
+      "usageDescription": "Usage resets by billing period and applies across the organization.",
+      "unlimited": "Unlimited",
+      "notAvailable": "Not available",
+      "summaryCards": {
+        "planLabel": "Current plan",
+        "planDescription": "The subscription tier currently applied to this organization.",
+        "statusLabel": "Plan status",
+        "statusDescription": "Billing lifecycle state used to enforce access and limits.",
+        "organizationLabel": "Organization",
+        "organizationDescription": "The organization that owns spaces, billing, and shared access.",
+        "billingPeriodLabel": "Billing period",
+        "billingPeriodDescription": "The current reporting window for usage-based limits."
+      },
+      "usage": {
+        "spaces": "Spaces",
+        "hostedStorage": "Hosted storage",
+        "processing": "Processing",
+        "periodScoped": "Usage is tracked against the current billing period."
+      },
+      "actions": {
+        "reviewBilling": "Review billing",
+        "manageMembers": "Manage members"
       }
     },
     "spacePropagation": {
@@ -819,7 +1082,7 @@
         "general": "General",
         "storage": "Storage",
         "dangerZone": "Danger Zone",
-        "members": "Members",
+        "members": "Access",
         "imagor": "Imagor"
       },
       "gallery": {
@@ -837,6 +1100,7 @@
         "description": "Basic information about this space.",
         "name": "Display Name",
         "nameDescription": "The name shown in the navigation and spaces list.",
+        "updateForbidden": "You do not have permission to manage this space.",
         "customDomain": "Custom Domain",
         "customDomainDescription": "Custom domain for this space. If left empty, served at {{spaceKey}}.imagor.app.",
         "customDomainCurrentLabel": "Current Hostname",
@@ -904,19 +1168,21 @@
           "default": "Could not share this space right now. Please try again."
         },
         "memberPlaceholder": "Choose a teammate",
-        "memberPlaceholderEmpty": "Everyone in your organisation already has explicit access",
-        "sharedTitle": "Organisation-wide access",
-        "sharedDescription": "Everyone in this organisation can view and copy this space. The list below shows people who were added directly to this space, while organisation admins still manage settings and sharing.",
-        "emptyDescription": "No one has been added directly to this space yet. Organisation admins still have inherited access.",
-        "accessLabel": "Shared access",
+        "memberPlaceholderEmpty": "Everyone in your organisation already has access",
+        "sharedTitle": "Organization members",
+        "sharedDescription": "Inherited from your organization.",
+        "sharedManageHint": "Manage in Organization access.",
+        "emptyDescription": "Invite a guest or add a space role.",
+        "accessLabel": "Direct access",
+        "accessDescription": "Guests and extra space roles.",
         "addSuccess": "Member added successfully.",
         "inviteSent": "Invitation email sent.",
         "roleUpdated": "Role updated.",
         "removeSuccess": "Member removed.",
         "removeSelfDisabled": "You",
         "removeSelfNotAllowed": "You cannot remove yourself from this space.",
-        "empty": "No direct space members yet.",
-        "pendingTitle": "Pending invitations",
+        "empty": "No direct access yet.",
+        "pendingTitle": "Pending invites",
         "listHeaders": {
           "member": "Member",
           "action": "Action"
@@ -926,8 +1192,8 @@
           "role": "Role",
           "expires": "Expires"
         },
-        "removeTitle": "Remove Member",
-        "removeDescription": "Are you sure you want to remove",
+        "removeTitle": "Remove Direct Access",
+        "removeDescription": "Remove direct access for {{name}}? Organization members will still keep their inherited access.",
         "roleSectionLabel": "Change role",
         "promoteToManager": "Change to admin",
         "changeToMember": "Change to member",

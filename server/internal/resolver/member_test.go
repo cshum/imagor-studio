@@ -4,12 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/zap"
 )
 
@@ -39,17 +41,34 @@ func makeTestMember(userID, username, role string) *org.OrgMemberView {
 	}
 }
 
+func strPtr(value string) *string {
+	return &value
+}
+
 // ── OrgMembers ────────────────────────────────────────────────────────────────
 
 func TestOrgMembers_ReturnsMembers(t *testing.T) {
 	orgStore := &MockOrgStore{}
-	r := newMemberResolver(orgStore, nil)
+	userStore := &MockUserStore{}
+	r := newMemberResolver(orgStore, userStore)
 
 	members := []*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "member"),
 	}
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return(members, nil)
+	userStore.On("GetByID", mock.Anything, "user-1").Return(&userstore.User{
+		ID:        "user-1",
+		Username:  "alice",
+		Email:     strPtr("alice@example.com"),
+		AvatarUrl: strPtr("https://example.com/alice.png"),
+	}, nil)
+	userStore.On("GetByID", mock.Anything, "user-2").Return(&userstore.User{
+		ID:        "user-2",
+		Username:  "bob",
+		Email:     strPtr("bob@example.com"),
+		AvatarUrl: strPtr("https://example.com/bob.png"),
+	}, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().OrgMembers(ctx)
@@ -57,19 +76,30 @@ func TestOrgMembers_ReturnsMembers(t *testing.T) {
 	require.Len(t, result, 2)
 	assert.Equal(t, "user-1", result[0].UserID)
 	assert.Equal(t, "alice", result[0].Username)
-	assert.Equal(t, "owner", result[0].Role)
+	assert.Equal(t, "alice@example.com", *result[0].Email)
+	assert.Equal(t, "https://example.com/alice.png", *result[0].AvatarURL)
+	assert.Equal(t, gql.OrgMemberRoleOwner, result[0].Role)
 	assert.Equal(t, "user-2", result[1].UserID)
 	assert.Equal(t, "bob", result[1].Username)
 	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
 }
 
 func TestOrgMembers_RequiresAdmin(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
-	_, err := r.Query().OrgMembers(ctx)
-	require.Error(t, err)
+	result, err := r.Query().OrgMembers(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	orgStore.AssertExpectations(t)
 }
 
 func TestOrgMembers_NilOrgStore_ReturnsEmpty(t *testing.T) {
@@ -92,6 +122,7 @@ func TestAddOrgMember_Success(t *testing.T) {
 		ID:       "user-3",
 		Username: "charlie",
 	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-3").Return((*org.Org)(nil), nil)
 
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
@@ -111,7 +142,7 @@ func TestAddOrgMember_Success(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "user-3", result.UserID)
 	assert.Equal(t, "charlie", result.Username)
-	assert.Equal(t, "member", result.Role)
+	assert.Equal(t, gql.OrgMemberRoleMember, result.Role)
 	orgStore.AssertExpectations(t)
 	userStore.AssertExpectations(t)
 }
@@ -137,6 +168,7 @@ func TestAddOrgMember_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 	userStore.On("GetByUsername", mock.Anything, "extra").Return(&model.User{
 		ID: "user-extra", Username: "extra",
 	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-extra").Return((*org.Org)(nil), nil)
 
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
@@ -153,7 +185,31 @@ func TestAddOrgMember_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "user-extra", result.UserID)
 	assert.Equal(t, "extra", result.Username)
-	assert.Equal(t, "member", result.Role)
+	assert.Equal(t, gql.OrgMemberRoleMember, result.Role)
+	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+}
+
+func TestAddOrgMember_RejectsUserInAnotherOrganization(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	userStore := &MockUserStore{}
+	r := newMemberResolver(orgStore, userStore)
+
+	userStore.On("GetByUsername", mock.Anything, "extra").Return(&model.User{
+		ID:       "user-extra",
+		Username: "extra",
+	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-extra").Return(makeTestOrg("org-2", "user-extra"), nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().AddOrgMember(ctx, "extra", "member")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already belongs to another organization")
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "org_member_other_organization", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "AddMember", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	orgStore.AssertExpectations(t)
 	userStore.AssertExpectations(t)
 }
@@ -167,6 +223,7 @@ func TestAddOrgMemberByEmail_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 		ID:       "user-extra",
 		Username: "extra",
 	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-extra").Return((*org.Org)(nil), nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
@@ -182,16 +239,44 @@ func TestAddOrgMemberByEmail_DoesNotEnforcePlanMemberLimit(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "user-extra", result.UserID)
 	assert.Equal(t, "extra", result.Username)
-	assert.Equal(t, "member", result.Role)
+	assert.Equal(t, gql.OrgMemberRoleMember, result.Role)
+	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+}
+
+func TestAddOrgMemberByEmail_RejectsUserInAnotherOrganization(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	userStore := &MockUserStore{}
+	r := newMemberResolver(orgStore, userStore)
+
+	userStore.On("GetByEmail", mock.Anything, "extra@example.com").Return(&userstore.User{
+		ID:       "user-extra",
+		Username: "extra",
+	}, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-extra").Return(makeTestOrg("org-2", "user-extra"), nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().AddOrgMemberByEmail(ctx, "extra@example.com", "member")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already belongs to another organization")
+	orgStore.AssertNotCalled(t, "AddMember", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	orgStore.AssertExpectations(t)
 	userStore.AssertExpectations(t)
 }
 
 func TestAddOrgMember_RequiresAdmin(t *testing.T) {
-	r := newMemberResolver(&MockOrgStore{}, &MockUserStore{})
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, &MockUserStore{})
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "member"),
+	}, nil).Once()
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	_, err := r.Mutation().AddOrgMember(ctx, "someone", "member")
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "organization admin access required")
 }
 
 // ── RemoveOrgMember ───────────────────────────────────────────────────────────
@@ -200,6 +285,11 @@ func TestRemoveOrgMember_Success(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
 	orgStore.On("RemoveMember", mock.Anything, "org-1", "user-2").Return(nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
@@ -213,6 +303,11 @@ func TestRemoveOrgMember_StoreError(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
 	orgStore.On("RemoveMember", mock.Anything, "org-1", "user-2").
 		Return(assert.AnError)
 
@@ -222,11 +317,144 @@ func TestRemoveOrgMember_StoreError(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestRemoveOrgMember_RequiresAdmin(t *testing.T) {
+func TestRemoveOrgMember_RejectsSelfRemoval(t *testing.T) {
 	r := newMemberResolver(&MockOrgStore{}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().RemoveOrgMember(ctx, "user-1")
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot remove yourself")
+}
+
+func TestRemoveOrgMember_RejectsOwnerRemoval(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-2"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "admin"),
+		makeTestMember("user-2", "bob", "owner"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().RemoveOrgMember(ctx, "user-2")
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot remove the organization owner")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestRemoveOrgMember_RejectsLastMemberRemoval(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().RemoveOrgMember(ctx, "user-2")
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot remove the last organization member")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestRemoveOrgMember_RequiresAdmin(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "member"),
+	}, nil).Once()
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	_, err := r.Mutation().RemoveOrgMember(ctx, "user-2")
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "organization admin access required")
+}
+
+// ── LeaveOrganization ────────────────────────────────────────────────────────
+
+func TestLeaveOrganization_Success(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByUserID", mock.Anything, "user-2").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+	orgStore.On("RemoveMember", mock.Anything, "org-1", "user-2").Return(nil)
+
+	ctx := createReadWriteContextWithOrg("user-2", "org-1")
+	ok, err := r.Mutation().LeaveOrganization(ctx)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	orgStore.AssertExpectations(t)
+}
+
+func TestLeaveOrganization_RejectsOwner(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().LeaveOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "transfer organization ownership before leaving")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestLeaveOrganization_RejectsLastMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByUserID", mock.Anything, "user-2").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
+	ctx := createReadWriteContextWithOrg("user-2", "org-1")
+	ok, err := r.Mutation().LeaveOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot leave the last organization member")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestLeaveOrganization_RejectsNonMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByUserID", mock.Anything, "user-9").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil)
+
+	ctx := createReadWriteContextWithOrg("user-9", "org-1")
+	ok, err := r.Mutation().LeaveOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not a member of this organization")
+	orgStore.AssertNotCalled(t, "RemoveMember", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
 }
 
 // ── UpdateOrgMemberRole ───────────────────────────────────────────────────────
@@ -235,6 +463,11 @@ func TestUpdateOrgMemberRole_Success(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil).Once()
 	orgStore.On("UpdateMemberRole", mock.Anything, "org-1", "user-2", "admin").Return(nil)
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
@@ -247,7 +480,7 @@ func TestUpdateOrgMemberRole_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, "user-2", result.UserID)
-	assert.Equal(t, "admin", result.Role)
+	assert.Equal(t, gql.OrgMemberRoleAdmin, result.Role)
 	orgStore.AssertExpectations(t)
 }
 
@@ -255,17 +488,55 @@ func TestUpdateOrgMemberRole_StoreError(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	r := newMemberResolver(orgStore, nil)
 
-	orgStore.On("UpdateMemberRole", mock.Anything, "org-1", "user-2", "owner").
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "member"),
+	}, nil).Once()
+	orgStore.On("UpdateMemberRole", mock.Anything, "org-1", "user-2", "admin").
 		Return(assert.AnError)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
-	_, err := r.Mutation().UpdateOrgMemberRole(ctx, "user-2", "owner")
+	_, err := r.Mutation().UpdateOrgMemberRole(ctx, "user-2", "admin")
 	require.Error(t, err)
 }
 
-func TestUpdateOrgMemberRole_RequiresAdmin(t *testing.T) {
+func TestUpdateOrgMemberRole_RejectsInvalidRole(t *testing.T) {
 	r := newMemberResolver(&MockOrgStore{}, nil)
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().UpdateOrgMemberRole(ctx, "user-2", "owner")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "role must be admin or member")
+}
+
+func TestUpdateOrgMemberRole_RejectsChangingOwnerRole(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-2"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "admin"),
+		makeTestMember("user-2", "bob", "owner"),
+	}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().UpdateOrgMemberRole(ctx, "user-2", "member")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot change the organization owner's role")
+	orgStore.AssertNotCalled(t, "UpdateMemberRole", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestUpdateOrgMemberRole_RequiresAdmin(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newMemberResolver(orgStore, nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "member"),
+	}, nil).Once()
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	_, err := r.Mutation().UpdateOrgMemberRole(ctx, "user-2", "admin")
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "organization admin access required")
 }

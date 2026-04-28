@@ -347,6 +347,9 @@ func (s *integrationSpaceStore) RenameKey(ctx context.Context, oldKey, newKey st
 func (s *integrationSpaceStore) Upsert(ctx context.Context, sp *space.Space) error {
 	return errors.New("not implemented")
 }
+func (s *integrationSpaceStore) SetSuspendedByOrgID(ctx context.Context, orgID string, suspended bool) error {
+	return errors.New("not implemented")
+}
 func (s *integrationSpaceStore) SoftDelete(ctx context.Context, key string) error {
 	return errors.New("not implemented")
 }

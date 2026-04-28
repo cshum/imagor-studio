@@ -2,8 +2,11 @@ package validation
 
 import (
 	"fmt"
+	"net/mail"
 	"regexp"
 	"strings"
+
+	"github.com/cshum/imagor-studio/server/pkg/uuid"
 )
 
 // ValidateDisplayName validates a displayName according to common rules
@@ -70,4 +73,30 @@ func NormalizeUsername(username string) string {
 // NormalizeDisplayName normalizes a displayName
 func NormalizeDisplayName(displayName string) string {
 	return strings.TrimSpace(displayName)
+}
+
+// ValidateEmail validates an email address according to common rules.
+func ValidateEmail(email string) error {
+	email = strings.TrimSpace(email)
+
+	if email == "" {
+		return fmt.Errorf("email is required")
+	}
+
+	parsed, err := mail.ParseAddress(email)
+	if err != nil || parsed.Address != email {
+		return fmt.Errorf("email must be a valid email address")
+	}
+
+	return nil
+}
+
+// NormalizeEmail normalizes an email address.
+func NormalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
+
+// GenerateSystemUsername returns a guaranteed-unique internal username.
+func GenerateSystemUsername() string {
+	return "u-" + uuid.GenerateUUID()[:12]
 }

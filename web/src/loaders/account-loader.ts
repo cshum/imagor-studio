@@ -2,16 +2,25 @@ import { redirect } from '@tanstack/react-router'
 
 import { getImagorStatus } from '@/api/imagor-api'
 import { getLicenseStatus, type LicenseStatus } from '@/api/license-api'
-import { getMyOrganization, listSpaces } from '@/api/org-api'
+import {
+  getMyOrganization,
+  getUsageSummary,
+  listOrgInvitations,
+  listOrgMembers,
+  listSpaces,
+} from '@/api/org-api'
 import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
 import type {
   GetSpaceQuery,
+  GetUsageSummaryQuery,
   ImagorStatusQuery,
+  ListOrgMembersQuery,
   ListSpacesQuery,
   ListSystemRegistryQuery,
   ListUsersQuery,
+  MyOrganizationQuery,
   StorageStatusQuery,
 } from '@/generated/graphql'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
@@ -67,6 +76,25 @@ export interface AdminLicenseLoaderData {
 
 export interface UsersLoaderData {
   users: ListUsersQuery['users']
+  breadcrumb: BreadcrumbItem
+}
+
+export interface BillingLoaderData {
+  organization: MyOrganizationQuery['myOrganization']
+  usageSummary: GetUsageSummaryQuery['usageSummary']
+  breadcrumb: BreadcrumbItem
+}
+
+export interface OrgOverviewLoaderData {
+  organization: MyOrganizationQuery['myOrganization']
+  usageSummary: GetUsageSummaryQuery['usageSummary']
+  breadcrumb: BreadcrumbItem
+}
+
+export interface OrgMembersLoaderData {
+  organization: MyOrganizationQuery['myOrganization']
+  members: ListOrgMembersQuery['orgMembers']
+  invitations: import('@/generated/graphql').ListOrgInvitationsQuery['orgInvitations']
   breadcrumb: BreadcrumbItem
 }
 
@@ -178,9 +206,58 @@ export const usersLoader = async ({
   }
 }
 
+export const billingLoader = async (): Promise<BillingLoaderData> => {
+  const [organization, usageSummary] = await Promise.all([getMyOrganization(), getUsageSummary()])
+
+  return {
+    organization,
+    usageSummary,
+    breadcrumb: {
+      translationKey: 'navigation.breadcrumbs.billing',
+    },
+  }
+}
+
+export const orgOverviewLoader = async (): Promise<OrgOverviewLoaderData> => {
+  const [organization, usageSummary] = await Promise.all([getMyOrganization(), getUsageSummary()])
+
+  return {
+    organization,
+    usageSummary,
+    breadcrumb: {
+      translationKey: 'navigation.breadcrumbs.organization',
+    },
+  }
+}
+
+const isOrganizationAdminRole = (role?: string | null) => role === 'owner' || role === 'admin'
+
+export const orgMembersLoader = async (): Promise<OrgMembersLoaderData> => {
+  const organization = await getMyOrganization()
+  const [members, invitations] = await Promise.all([
+    listOrgMembers(),
+    isOrganizationAdminRole(organization?.currentUserRole)
+      ? listOrgInvitations()
+      : Promise.resolve([]),
+  ])
+
+  return {
+    organization,
+    members,
+    invitations,
+    breadcrumb: {
+      translationKey: 'navigation.breadcrumbs.organizationMembers',
+    },
+  }
+}
+
 export interface SpacesLoaderData {
   spaces: ListSpacesQuery['spaces']
+  usageSummary: GetUsageSummaryQuery['usageSummary']
   currentOrganizationId: string | null
+  currentOrganizationRole: string | null
+  currentOrganizationPlan: string | null
+  currentOrganizationPlanStatus: string | null
   breadcrumb: BreadcrumbItem
 }
 
@@ -188,29 +265,37 @@ export interface SpacesLoaderData {
  * Load spaces data for the spaces management page
  */
 export const spacesLoader = async (): Promise<SpacesLoaderData> => {
-  const [spaces, organization] = await Promise.all([listSpaces(), getMyOrganization()])
+  const [spaces, organization, usageSummary] = await Promise.all([
+    listSpaces(),
+    getMyOrganization(),
+    getUsageSummary(),
+  ])
   return {
     spaces,
+    usageSummary,
     currentOrganizationId: organization?.id ?? null,
+    currentOrganizationRole: organization?.currentUserRole ?? null,
+    currentOrganizationPlan: organization?.plan ?? null,
+    currentOrganizationPlanStatus: organization?.planStatus ?? null,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.spaces',
     },
   }
 }
 
-export interface SpaceSettingsLoaderData {
+export interface SpaceSettingsRouteContextData {
   space: NonNullable<GetSpaceQuery['space']>
   breadcrumb: BreadcrumbItem
 }
 
 /**
- * Load a single space for the space settings page
+ * Resolve the shared space context for the space settings route tree.
  */
-export const spaceSettingsLoader = async ({
+export const resolveSpaceSettingsRouteContext = async ({
   params,
 }: {
   params: { routeSpaceKey: string }
-}): Promise<SpaceSettingsLoaderData> => {
+}): Promise<SpaceSettingsRouteContextData> => {
   const space = await resolveSpace(params.routeSpaceKey)
   if (!space.canManage) {
     throw redirect({ to: '/spaces/$spaceKey', params: { spaceKey: params.routeSpaceKey } })

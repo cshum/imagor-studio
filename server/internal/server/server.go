@@ -20,6 +20,8 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 	"go.uber.org/zap"
 )
 
@@ -28,6 +30,8 @@ type Mode string
 const (
 	ModeSelfHosted Mode = "selfhosted"
 	ModeCloud      Mode = "cloud"
+
+	processingUsageCleanupAdvisoryLockKey int64 = 714001
 )
 
 type Server struct {
@@ -59,7 +63,7 @@ func startSyncLoop(ctx context.Context, interval time.Duration, logger *zap.Logg
 }
 
 func processingUsageCleanupLoopConfig(services *bootstrap.Services, mode Mode, cloudConfig management.CloudConfig) (time.Duration, time.Duration, bool) {
-	if mode != ModeCloud || services == nil || services.ProcessingUsageStore == nil || !cloudConfig.ProcessingUsageBatchCleanupEnabled {
+	if mode != ModeCloud || services == nil || services.ProcessingUsageStore == nil || !cloudConfig.ManagementJobsEnabled {
 		return 0, 0, false
 	}
 	if cloudConfig.ProcessingUsageBatchCleanupRetention <= 0 || cloudConfig.ProcessingUsageBatchCleanupInterval <= 0 {
@@ -74,6 +78,41 @@ func newProcessingUsageCleanupSyncFunc(ctx context.Context, store management.Pro
 	}
 	return func() error {
 		return store.CleanupUsageBatches(ctx, now().UTC().Add(-retention))
+	}
+}
+
+func newPostgresAdvisoryLockSyncFunc(ctx context.Context, db *bun.DB, logger *zap.Logger, lockKey int64, jobName string, syncFunc func() error) func() error {
+	if syncFunc == nil || db == nil || db.Dialect().Name() != dialect.PG {
+		return syncFunc
+	}
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+
+	return func() error {
+		var locked bool
+		if err := db.NewRaw(`SELECT pg_try_advisory_lock(?)`, lockKey).Scan(ctx, &locked); err != nil {
+			return fmt.Errorf("acquire advisory lock for %s: %w", jobName, err)
+		}
+		if !locked {
+			logger.Debug("Skipping background job; advisory lock is held by another node",
+				zap.String("job", jobName),
+				zap.Int64("lockKey", lockKey),
+			)
+			return nil
+		}
+
+		defer func() {
+			if _, err := db.ExecContext(ctx, `SELECT pg_advisory_unlock(?)`, lockKey); err != nil {
+				logger.Warn("Failed to release background job advisory lock",
+					zap.String("job", jobName),
+					zap.Int64("lockKey", lockKey),
+					zap.Error(err),
+				)
+			}
+		}()
+
+		return syncFunc()
 	}
 }
 
@@ -132,6 +171,8 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		resolver.WithLocalTemplatePreviewRenderer(),
 		resolver.WithCloudConfig(cloudConfig),
 		resolver.WithHostedStorageStore(services.HostedStorageStore),
+		resolver.WithProcessingUsageStore(services.ProcessingUsageStore),
+		resolver.WithBillingService(services.BillingService),
 		resolver.WithProcessingOriginResolver(processingOriginResolver),
 		templatePreviewRenderer,
 	)
@@ -159,9 +200,10 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.RegistryStore,
 		services.Logger,
 		httphandler.AuthHandlerConfig{
-			EmbeddedMode: cfg.EmbeddedMode,
-			MultiTenant:  multiTenant,
-			SpaceStore:   services.SpaceStore,
+			EmbeddedMode:  cfg.EmbeddedMode,
+			MultiTenant:   multiTenant,
+			SpaceStore:    services.SpaceStore,
+			SignupRuntime: services.SignupVerification,
 		},
 	)
 
@@ -183,6 +225,9 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 
 	// Auth endpoints (no auth required)
 	mux.HandleFunc("/api/auth/register", authHandler.Register())
+	mux.HandleFunc("/api/auth/register/start", authHandler.StartPublicSignup())
+	mux.HandleFunc("/api/auth/register/verify", authHandler.VerifyPublicSignup())
+	mux.HandleFunc("/api/auth/register/resend", authHandler.ResendPublicSignupVerification())
 	mux.HandleFunc("/api/auth/login", authHandler.Login())
 	mux.HandleFunc("/api/auth/refresh", authHandler.RefreshToken())
 	mux.HandleFunc("/api/auth/guest", authHandler.GuestLogin())
@@ -200,6 +245,8 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		SpaceInviteStore:     services.SpaceInviteStore,
 		HostedStorageStore:   services.HostedStorageStore,
 		ProcessingUsageStore: services.ProcessingUsageStore,
+		BillingService:       services.BillingService,
+		SignupVerification:   services.SignupVerification,
 		CloudConfig:          cloudConfig,
 		InternalAPISecret:    cloudConfig.InternalAPISecret,
 		Logger:               services.Logger,
@@ -299,11 +346,19 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	}
 	startSyncLoop(syncCtx, 30*time.Second, services.Logger, syncFuncs...)
 	if cleanupInterval, cleanupRetention, ok := processingUsageCleanupLoopConfig(services, mode, cloudConfig); ok {
+		cleanupSyncFunc := newPostgresAdvisoryLockSyncFunc(
+			syncCtx,
+			services.DB,
+			services.Logger,
+			processingUsageCleanupAdvisoryLockKey,
+			"processing_usage_batch_cleanup",
+			newProcessingUsageCleanupSyncFunc(syncCtx, services.ProcessingUsageStore, cleanupRetention, time.Now),
+		)
 		services.Logger.Info("processing usage batch cleanup loop enabled",
 			zap.Duration("interval", cleanupInterval),
 			zap.Duration("retention", cleanupRetention),
 		)
-		startSyncLoop(syncCtx, cleanupInterval, services.Logger, newProcessingUsageCleanupSyncFunc(syncCtx, services.ProcessingUsageStore, cleanupRetention, time.Now))
+		startSyncLoop(syncCtx, cleanupInterval, services.Logger, cleanupSyncFunc)
 	}
 
 	return &Server{

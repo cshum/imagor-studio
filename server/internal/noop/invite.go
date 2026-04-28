@@ -19,6 +19,10 @@ func (n *SpaceInviteStore) CreateOrRefreshPending(_ context.Context, _, _, _, _,
 	return nil, ErrCloudDisabled
 }
 
+func (n *SpaceInviteStore) ListPendingByOrg(_ context.Context, _ string) ([]*space.Invitation, error) {
+	return nil, ErrCloudDisabled
+}
+
 func (n *SpaceInviteStore) ListPendingBySpace(_ context.Context, _, _ string) ([]*space.Invitation, error) {
 	return nil, ErrCloudDisabled
 }
@@ -31,6 +35,10 @@ func (n *SpaceInviteStore) MarkAccepted(_ context.Context, _ string, _ time.Time
 	return ErrCloudDisabled
 }
 
+func (n *SpaceInviteStore) DeletePending(_ context.Context, _ string) error {
+	return ErrCloudDisabled
+}
+
 type InviteSender struct{}
 
 var _ space.InviteSender = (*InviteSender)(nil)
@@ -40,5 +48,9 @@ func NewInviteSender() *InviteSender { return &InviteSender{} }
 func NewSelfHostedInviteSender() *InviteSender { return &InviteSender{} }
 
 func (n *InviteSender) SendSpaceInvitation(_ context.Context, _ space.EmailParams) error {
+	return ErrCloudDisabled
+}
+
+func (n *InviteSender) SendOrganizationInvitation(_ context.Context, _ space.EmailParams) error {
 	return ErrCloudDisabled
 }

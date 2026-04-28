@@ -9,6 +9,8 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
+	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
@@ -61,10 +63,42 @@ func newOrgResolver(orgStore *MockOrgStore, spaceStore *MockSpaceStore) *Resolve
 	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
 }
 
+func newOrgResolverWithInviteStore(orgStore *MockOrgStore, spaceStore *MockSpaceStore, inviteStore *MockSpaceInviteStore, inviteSender *MockInviteSender) *Resolver {
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, inviteStore, inviteSender)
+}
+
 func newOrgResolverWithHostedStorage(orgStore *MockOrgStore, spaceStore *MockSpaceStore, hostedStorageStore *MockHostedStorageStore) *Resolver {
 	logger, _ := zap.NewDevelopment()
 	sp := NewMockStorageProvider(nil)
 	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil, WithHostedStorageStore(hostedStorageStore))
+}
+
+func newOrgResolverWithUsageStores(orgStore *MockOrgStore, spaceStore *MockSpaceStore, hostedStorageStore *MockHostedStorageStore, processingUsageStore *MockProcessingUsageStore) *Resolver {
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	return NewResolver(
+		sp,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		logger,
+		orgStore,
+		spaceStore,
+		nil,
+		nil,
+		WithHostedStorageStore(hostedStorageStore),
+		WithProcessingUsageStore(processingUsageStore),
+	)
+}
+
+func newOrgResolverWithBilling(orgStore *MockOrgStore, spaceStore *MockSpaceStore, billingService *MockBillingService) *Resolver {
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	return NewResolver(sp, nil, nil, nil, nil, nil, logger, orgStore, spaceStore, nil, nil, WithBillingService(billingService))
 }
 
 func newOrgResolverWithRegistry(orgStore *MockOrgStore, spaceStore *MockSpaceStore, registryStore *MockRegistryStore) *Resolver {
@@ -98,7 +132,7 @@ func TestMyOrganization_ReturnsOrg(t *testing.T) {
 	r := newOrgResolver(orgStore, spaceStore)
 
 	org := makeTestOrg("org-1", "user-1")
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(org, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(org, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Query().MyOrganization(ctx)
@@ -108,8 +142,30 @@ func TestMyOrganization_ReturnsOrg(t *testing.T) {
 	assert.Equal(t, "Test Org", result.Name)
 	assert.Equal(t, "test-org", result.Slug)
 	assert.Equal(t, "user-1", result.OwnerUserID)
+	assert.Equal(t, gql.OrgMemberRoleOwner, result.CurrentUserRole)
 	assert.Equal(t, "starter", result.Plan)
 	assert.Equal(t, "active", result.PlanStatus)
+	orgStore.AssertExpectations(t)
+}
+
+func TestMyOrganization_ReturnsMembershipRoleForNonAdminToken(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgRecord := makeTestOrg("org-1", "user-9")
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(orgRecord, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "admin"),
+	}, nil).Once()
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Query().MyOrganization(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, gql.OrgMemberRoleAdmin, result.CurrentUserRole)
 	orgStore.AssertExpectations(t)
 }
 
@@ -118,9 +174,23 @@ func TestMyOrganization_NoOrg(t *testing.T) {
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
 
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(nil, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().MyOrganization(ctx)
+	require.NoError(t, err)
+	assert.Nil(t, result)
+	orgStore.AssertExpectations(t)
+}
+
+func TestMyOrganization_IgnoresStaleOrgClaimForNonAdminToken(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	result, err := r.Query().MyOrganization(ctx)
 	require.NoError(t, err)
 	assert.Nil(t, result)
@@ -140,6 +210,207 @@ func TestSpaces_NilSpaceStore(t *testing.T) {
 	assert.Empty(t, result)
 }
 
+func TestSpaces_IncludesProcessingUsageForOwnOrgSpaces(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	hostedStorageStore := &MockHostedStorageStore{}
+	processingUsageStore := &MockProcessingUsageStore{}
+	r := newOrgResolverWithUsageStores(orgStore, spaceStore, hostedStorageStore, processingUsageStore)
+
+	orgSpace := makeTestSpace("alpha", "org-1")
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{orgSpace}, nil)
+	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*space.Space{}, nil)
+	hostedStorageStore.On("ListUsageBytesBySpace", mock.Anything, "org-1", []string{orgSpace.ID}).Return(map[string]int64{}, nil)
+	processingUsageStore.On("GetCurrentUsageSummary", mock.Anything, "org-1").Return(&management.ProcessingUsageSummary{
+		TotalProcessedCount: 45,
+		ProcessedCountBySpace: map[string]int64{
+			orgSpace.ID: 45,
+		},
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().Spaces(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	require.NotNil(t, result[0].ProcessingUsageCount)
+	assert.Equal(t, 45, *result[0].ProcessingUsageCount)
+
+	spaceStore.AssertExpectations(t)
+	hostedStorageStore.AssertExpectations(t)
+	processingUsageStore.AssertExpectations(t)
+}
+
+func TestUsageSummary_ReturnsPlanLimitsAndUsage(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	hostedStorageStore := &MockHostedStorageStore{}
+	processingUsageStore := &MockProcessingUsageStore{}
+	r := newOrgResolverWithUsageStores(orgStore, spaceStore, hostedStorageStore, processingUsageStore)
+
+	proOrg := makeTestOrg("org-1", "user-1")
+	proOrg.Plan = "pro"
+	spaceA := makeTestSpace("alpha", "org-1")
+	spaceB := makeTestSpace("beta", "org-1")
+	periodStart := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)
+	periodEnd := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(proOrg, nil)
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{spaceA, spaceB}, nil)
+	hostedStorageStore.On("ListUsageBytesBySpace", mock.Anything, "org-1", []string{spaceA.ID, spaceB.ID}).Return(map[string]int64{
+		spaceA.ID: 10,
+		spaceB.ID: 20,
+	}, nil)
+	processingUsageStore.On("GetCurrentUsageSummary", mock.Anything, "org-1").Return(&management.ProcessingUsageSummary{
+		PeriodStart:         periodStart,
+		PeriodEnd:           periodEnd,
+		TotalProcessedCount: 123,
+		ProcessedCountBySpace: map[string]int64{
+			spaceA.ID: 100,
+			spaceB.ID: 23,
+		},
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().UsageSummary(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, 2, result.UsedSpaces)
+	require.NotNil(t, result.MaxSpaces)
+	assert.Equal(t, 3, *result.MaxSpaces)
+	require.NotNil(t, result.StorageLimitGb)
+	assert.Equal(t, 100, *result.StorageLimitGb)
+	require.NotNil(t, result.TransformsLimit)
+	assert.Equal(t, 150000, *result.TransformsLimit)
+	require.NotNil(t, result.UsedHostedStorageBytes)
+	assert.Equal(t, 30, *result.UsedHostedStorageBytes)
+	require.NotNil(t, result.UsedTransforms)
+	assert.Equal(t, 123, *result.UsedTransforms)
+	require.NotNil(t, result.PeriodStart)
+	assert.Equal(t, periodStart.Format(time.RFC3339), *result.PeriodStart)
+	require.NotNil(t, result.PeriodEnd)
+	assert.Equal(t, periodEnd.Format(time.RFC3339), *result.PeriodEnd)
+	require.Len(t, result.Spaces, 2)
+	assert.Equal(t, "alpha", result.Spaces[0].Key)
+	require.NotNil(t, result.Spaces[0].ProcessingUsageCount)
+	assert.Equal(t, 100, *result.Spaces[0].ProcessingUsageCount)
+	assert.Equal(t, "beta", result.Spaces[1].Key)
+
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+	hostedStorageStore.AssertExpectations(t)
+	processingUsageStore.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_CreatesBillingSession(t *testing.T) {
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+
+	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
+		OrgID:      "org-1",
+		Plan:       "pro",
+		SuccessURL: "https://app.example/success",
+		CancelURL:  "https://app.example/cancel",
+	}).Return(&billing.Session{URL: "https://checkout.example/session"}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "https://app.example/success", "https://app.example/cancel")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "https://checkout.example/session", result.URL)
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_RejectsUnsupportedPlan(t *testing.T) {
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, &MockBillingService{})
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "trial", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "unsupported_billing_plan", gqlErr.Extensions["reason"])
+}
+
+func TestCreateCheckoutSession_RejectsInvalidRedirectURL(t *testing.T) {
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, &MockBillingService{})
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "/relative/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "billing_redirect_url_invalid", gqlErr.Extensions["reason"])
+}
+
+func TestCreateBillingPortalSession_RequiresConfiguredBillingService(t *testing.T) {
+	r := newOrgResolver(&MockOrgStore{}, &MockSpaceStore{})
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+
+	_, err := r.Mutation().CreateBillingPortalSession(ctx, "https://app.example/account")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "billing_unavailable", gqlErr.Extensions["reason"])
+}
+
+func TestCreateBillingPortalSession_CreatesPortalSession(t *testing.T) {
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+
+	billingService.On("CreatePortalSession", mock.Anything, billing.PortalSessionInput{
+		OrgID:     "org-1",
+		ReturnURL: "https://app.example/account",
+	}).Return(&billing.Session{URL: "https://billing.example/portal"}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().CreateBillingPortalSession(ctx, "https://app.example/account")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "https://billing.example/portal", result.URL)
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateBillingPortalSession_RejectsInvalidReturnURL(t *testing.T) {
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, &MockBillingService{})
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+
+	_, err := r.Mutation().CreateBillingPortalSession(ctx, "javascript:alert(1)")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "billing_return_url_invalid", gqlErr.Extensions["reason"])
+}
+
+func TestCreateCheckoutSession_RequiresOrganization(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, &MockBillingService{})
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
+	ctx := createAdminContext("user-1")
+
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "organization_required", gqlErr.Extensions["reason"])
+	orgStore.AssertExpectations(t)
+}
+
+func TestCreateBillingPortalSession_RequiresOrganization(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, &MockBillingService{})
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
+	ctx := createAdminContext("user-1")
+
+	_, err := r.Mutation().CreateBillingPortalSession(ctx, "https://app.example/account")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "organization_required", gqlErr.Extensions["reason"])
+	orgStore.AssertExpectations(t)
+}
+
 func TestSpaces_ReturnsSpaces(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
@@ -156,6 +427,37 @@ func TestSpaces_ReturnsSpaces(t *testing.T) {
 	require.Len(t, result, 2)
 	assert.Equal(t, "acme", result[0].Key)
 	assert.Equal(t, "beta", result[1].Key)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestSpaces_ReturnsSameOrgSpacesForNonAdminMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	s1 := makeTestSpace("acme", "org-1")
+	s2 := makeTestSpace("beta", "org-1")
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{s1, s2}, nil)
+	spaceStore.On("ListByMemberUserID", mock.Anything, "user-1").Return([]*space.Space{}, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil)
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Query().Spaces(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	assert.Equal(t, "acme", result[0].Key)
+	assert.Equal(t, "beta", result[1].Key)
+	assert.False(t, result[0].CanManage)
+	assert.False(t, result[0].CanDelete)
+	assert.False(t, result[0].CanLeave)
+	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -247,6 +549,35 @@ func TestSpace_ReturnsSpace(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "acme", result.Key)
 	assert.Equal(t, "org-1", result.OrgID)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestSpace_ReturnsSameOrgSpaceForNonAdminMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	s := makeTestSpace("acme", "org-1")
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	spaceStore.On("GetByKey", mock.Anything, "acme").Return(s, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil)
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Query().Space(ctx, "acme")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "acme", result.Key)
+	assert.Equal(t, "org-1", result.OrgID)
+	assert.False(t, result.CanManage)
+	assert.False(t, result.CanDelete)
+	assert.False(t, result.CanLeave)
+	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -372,14 +703,57 @@ func TestSpace_ReturnsPublicAccessSpaceForAuthenticatedNonMember(t *testing.T) {
 // ---------- CreateSpace ------------------------------------------------------
 
 func TestCreateSpace_RequiresAdmin(t *testing.T) {
-	r := newOrgResolver(&MockOrgStore{}, &MockSpaceStore{})
+	orgStore := &MockOrgStore{}
+	r := newOrgResolver(orgStore, &MockSpaceStore{})
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "member"),
+	}, nil).Once()
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	input := gql.SpaceInput{Key: "acme", Name: "Acme"}
 	result, err := r.Mutation().CreateSpace(ctx, input)
 	assert.Nil(t, result)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "permission")
+	assert.Contains(t, err.Error(), "organization admin access required")
+	orgStore.AssertExpectations(t)
+}
+
+func TestCreateSpace_AllowsOrganizationAdminWithNonAdminToken(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	created := makeTestSpace("acme", "org-1")
+	created.StorageMode = space.StorageModePlatform
+	created.StorageType = "managed"
+	created.Bucket = ""
+	created.Region = ""
+	orgRecord := makeTestOrg("org-1", "user-9")
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(orgRecord, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "admin"),
+	}, nil).Once()
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
+		return s.Key == "acme" && s.OrgID == "org-1" && s.Name == "Acme"
+	})).Return(nil)
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "admin"),
+	}, nil)
+	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-1", "admin").Return(nil)
+	spaceStore.On("GetByKey", mock.Anything, "acme").Return(created, nil)
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().CreateSpace(ctx, gql.SpaceInput{Key: "acme", Name: "Acme"})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "acme", result.Key)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
 }
 
 func TestCreateSpace_NilSpaceStore(t *testing.T) {
@@ -404,9 +778,12 @@ func TestCreateSpace_Success(t *testing.T) {
 	created.StorageType = "managed"
 	created.Bucket = ""
 	created.Region = ""
+	orgRecord := makeTestOrg("org-1", "user-1")
 	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme" && s.OrgID == "org-1" && s.Name == "Acme" && s.StorageMode == space.StorageModePlatform && s.StorageType == "managed"
 	})).Return(nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
@@ -420,6 +797,65 @@ func TestCreateSpace_Success(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "acme", result.Key)
 	assert.Equal(t, "org-1", result.OrgID)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestCreateSpace_RejectsCustomDomainWhenPlanLimitReached(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgRecord := makeTestOrg("org-1", "user-1")
+	orgRecord.Plan = org.PlanStarter
+	other := makeTestSpace("brand", "org-1")
+	other.CustomDomain = "images.other.test"
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{other}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	customDomain := "images.new.test"
+	input := gql.SpaceInput{Key: "acme", Name: "Acme", CustomDomain: &customDomain}
+	result, err := r.Mutation().CreateSpace(ctx, input)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "custom_domain_limit_reached", gqlErr.Extensions["reason"])
+	assert.Contains(t, gqlErr.Message, "custom domain limit")
+	spaceStore.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestCreateSpace_RejectsWhenPlanSpaceLimitReached(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgRecord := makeTestOrg("org-1", "user-1")
+	orgRecord.Plan = org.PlanStarter
+	existing := makeTestSpace("brand", "org-1")
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{existing}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	input := gql.SpaceInput{Key: "acme", Name: "Acme"}
+	result, err := r.Mutation().CreateSpace(ctx, input)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "space_limit_reached", gqlErr.Extensions["reason"])
+	assert.Contains(t, gqlErr.Message, "space limit")
+	spaceStore.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -477,9 +913,12 @@ func TestCreateSpace_DerivesStorageModeFromType(t *testing.T) {
 	created := makeTestSpace("acme", "org-1")
 	created.StorageMode = space.StorageModeBYOB
 	created.StorageType = "s3"
+	orgRecord := makeTestOrg("org-1", "user-1")
 	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme" && s.StorageMode == space.StorageModeBYOB && s.StorageType == "s3" && s.Bucket == "bucket" && s.Region == "us-east-1"
 	})).Return(nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
 	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
 		makeTestMember("user-1", "alice", "owner"),
 	}, nil)
@@ -535,7 +974,10 @@ func TestCreateSpace_DuplicateKey(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
+	orgRecord := makeTestOrg("org-1", "user-1")
 
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
 	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme"
 	})).Return(apperror.Conflict(`space key "acme" is already taken`, "key"))
@@ -549,36 +991,24 @@ func TestCreateSpace_DuplicateKey(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 }
 
-func TestCreateSpace_AutoCreatesOrg(t *testing.T) {
+func TestCreateSpace_RequiresOrganization(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
 
-	// No org in JWT → falls back to DB, finds nothing
 	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil)
-	// Auto-create fires: slug = "org-" + "user-1" (6 chars < 8, uses full string)
-	newOrg := makeTestOrg("org-auto", "user-1")
-	orgStore.On("CreateWithMember", mock.Anything, "user-1", "My Organization", "org-user-1", (*time.Time)(nil)).Return(newOrg, nil)
-
-	created := makeTestSpace("acme", "org-auto")
-	spaceStore.On("Create", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
-		return s.Key == "acme" && s.OrgID == "org-auto"
-	})).Return(nil)
-	orgStore.On("ListMembers", mock.Anything, "org-auto").Return([]*org.OrgMemberView{
-		makeTestMember("user-1", "alice", "owner"),
-	}, nil)
-	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-1", "admin").Return(nil)
-	spaceStore.On("GetByKey", mock.Anything, "acme").Return(created, nil)
 
 	ctx := createAdminContext("user-1") // no org_id claim
 	input := gql.SpaceInput{Key: "acme", Name: "Acme"}
 	result, err := r.Mutation().CreateSpace(ctx, input)
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "acme", result.Key)
-	assert.Equal(t, "org-auto", result.OrgID)
+	assert.Nil(t, result)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "organization_required", gqlErr.Extensions["reason"])
 	orgStore.AssertExpectations(t)
-	spaceStore.AssertExpectations(t)
+	spaceStore.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
 }
 
 func TestCreateSpace_NoOrgAndNilOrgStore(t *testing.T) {
@@ -593,23 +1023,190 @@ func TestCreateSpace_NoOrgAndNilOrgStore(t *testing.T) {
 	result, err := r.Mutation().CreateSpace(ctx, input)
 	assert.Nil(t, result)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no organization found")
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "organization_required", gqlErr.Extensions["reason"])
+}
+
+func TestTransferOrganizationOwnership_Success(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	currentOrg := makeTestOrg("org-1", "user-1")
+	updatedOrg := makeTestOrg("org-1", "user-2")
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(currentOrg, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-2", "bob", "admin"),
+	}, nil).Once()
+	orgStore.On("TransferOwnership", mock.Anything, "org-1", "user-1", "user-2").Return(nil).Once()
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(updatedOrg, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().TransferOrganizationOwnership(ctx, "user-2")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "user-2", result.OwnerUserID)
+	assert.Equal(t, gql.OrgMemberRoleAdmin, result.CurrentUserRole)
+	orgStore.AssertExpectations(t)
+}
+
+func TestTransferOrganizationOwnership_RequiresCurrentOwner(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	currentOrg := makeTestOrg("org-1", "user-9")
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(currentOrg, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().TransferOrganizationOwnership(ctx, "user-2")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	orgStore.AssertNotCalled(t, "TransferOwnership", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestTransferOrganizationOwnership_RequiresExistingMember(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	currentOrg := makeTestOrg("org-1", "user-1")
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(currentOrg, nil).Once()
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+	}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().TransferOrganizationOwnership(ctx, "user-2")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_transfer_target_not_member", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "TransferOwnership", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_Success(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
+	orgStore.On("Delete", mock.Anything, "org-1", "user-1").Return(nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	require.NoError(t, err)
+	assert.True(t, ok)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_RequiresCurrentOwner(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-9"), nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_delete_current_owner_required", gqlErr.Extensions["reason"])
+	spaceStore.AssertNotCalled(t, "ListByOrgID", mock.Anything, mock.Anything)
+	orgStore.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_RejectsWhenSpacesRemain(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{makeTestSpace("alpha", "org-1")}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_delete_has_spaces", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_RejectsActivePaidBilling(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	paidOrg := makeTestOrg("org-1", "user-1")
+	paidOrg.Plan = org.PlanStarter
+	paidOrg.PlanStatus = org.PlanStatusActive
+	paidOrg.StripeSubscriptionID = "sub_123"
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(paidOrg, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_delete_billing_active", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
 }
 
 // ---------- UpdateSpace ------------------------------------------------------
 
 func TestUpdateSpace_RequiresManagePermission(t *testing.T) {
+	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
-	r := newOrgResolver(&MockOrgStore{}, spaceStore)
+	r := newOrgResolver(orgStore, spaceStore)
 
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(makeTestSpace("acme", "org-1"), nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil)
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	input := gql.SpaceInput{Key: "acme", Name: "New Name"}
 	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
 	assert.Nil(t, result)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "space manager")
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "space manager access required")
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertNotCalled(t, "Upsert", mock.Anything, mock.Anything)
+	spaceStore.AssertExpectations(t)
 }
 
 func TestUpdateSpace_NotFound(t *testing.T) {
@@ -667,11 +1264,15 @@ func TestUpdateSpace_ResetsCustomDomainVerificationWhenDomainChanges(t *testing.
 	existing := makeTestSpace("acme", "org-1")
 	existing.CustomDomain = "images.old.test"
 	existing.CustomDomainVerified = true
+	orgRecord := makeTestOrg("org-1", "user-1")
+	orgRecord.Plan = org.PlanPro
 	updated := makeTestSpace("acme", "org-1")
 	updated.CustomDomain = "images.new.test"
 	updated.CustomDomainVerified = false
 
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(existing, nil).Once()
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{existing}, nil).Once()
 	spaceStore.On("Upsert", mock.Anything, mock.MatchedBy(func(s *space.Space) bool {
 		return s.Key == "acme" && s.CustomDomain == "images.new.test" && !s.CustomDomainVerified
 	})).Return(nil)
@@ -685,6 +1286,7 @@ func TestUpdateSpace_ResetsCustomDomainVerificationWhenDomainChanges(t *testing.
 	require.NotNil(t, result)
 	assert.Equal(t, "images.new.test", result.CustomDomain)
 	assert.False(t, result.CustomDomainVerified)
+	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -714,6 +1316,38 @@ func TestUpdateSpace_KeepsCustomDomainVerificationWhenDomainIsUnchanged(t *testi
 	require.NotNil(t, result)
 	assert.Equal(t, "images.demo.test", result.CustomDomain)
 	assert.True(t, result.CustomDomainVerified)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestUpdateSpace_RejectsCustomDomainWhenPlanLimitReached(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	existing := makeTestSpace("acme", "org-1")
+	other := makeTestSpace("brand", "org-1")
+	other.CustomDomain = "images.other.test"
+	orgRecord := makeTestOrg("org-1", "user-1")
+	orgRecord.Plan = "starter"
+
+	spaceStore.On("GetByKey", mock.Anything, "acme").Return(existing, nil).Once()
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(orgRecord, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{existing, other}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	customDomain := "images.new.test"
+	input := gql.SpaceInput{Key: "acme", Name: "Acme", CustomDomain: &customDomain}
+	result, err := r.Mutation().UpdateSpace(ctx, "acme", input)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "custom_domain_limit_reached", gqlErr.Extensions["reason"])
+	assert.Contains(t, gqlErr.Message, "custom domain limit")
+	spaceStore.AssertNotCalled(t, "Upsert", mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 }
 
@@ -912,16 +1546,29 @@ func TestUpdateSpace_RenamesKeyAndMigratesDependencies(t *testing.T) {
 // ---------- DeleteSpace ------------------------------------------------------
 
 func TestDeleteSpace_RequiresDeletePermission(t *testing.T) {
+	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
-	r := newOrgResolver(&MockOrgStore{}, spaceStore)
+	r := newOrgResolver(orgStore, spaceStore)
 
 	spaceStore.On("GetByKey", mock.Anything, "acme").Return(makeTestSpace("acme", "org-1"), nil)
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil)
 
 	ctx := createReadWriteContextWithOrg("user-1", "org-1")
 	ok, err := r.Mutation().DeleteSpace(ctx, "acme")
 	assert.False(t, ok)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "owning organization admins")
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "owning organization admins")
+	orgStore.AssertExpectations(t)
 }
 
 func TestDeleteSpace_NotFound(t *testing.T) {
@@ -967,7 +1614,10 @@ func TestDeleteSpace_WrongOrg(t *testing.T) {
 	ok, err := r.Mutation().DeleteSpace(ctx, "acme")
 	assert.False(t, ok)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "owning organization admins")
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "owning organization admins")
 	spaceStore.AssertNotCalled(t, "SoftDelete")
 }
 
@@ -1004,17 +1654,17 @@ func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
 	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{
 		{
 			SpaceID:     "space-1",
-			UserID:      "user-1",
-			Username:    "alice",
-			DisplayName: "Alice",
+			UserID:      "user-3",
+			Username:    "charlie",
+			DisplayName: "Charlie",
 			Role:        "admin",
 			CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			SpaceID:     "space-1",
-			UserID:      "user-3",
-			Username:    "charlie",
-			DisplayName: "Charlie",
+			UserID:      "user-9",
+			Username:    "guest",
+			DisplayName: "Guest User",
 			Role:        "member",
 			CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
 		},
@@ -1023,25 +1673,99 @@ func TestSpaceMembers_ExposeRowActionCapabilities(t *testing.T) {
 		makeTestMember("user-1", "alice", "owner"),
 		makeTestMember("user-2", "bob", "admin"),
 		makeTestMember("user-3", "charlie", "member"),
-	}, nil).Times(3)
+	}, nil)
 
 	ctx := createAdminContextWithOrg("user-2", "org-1")
 	result, err := r.Query().SpaceMembers(ctx, s.ID)
 	require.NoError(t, err)
-	require.Len(t, result, 2)
+	require.Len(t, result, 4)
 	assert.Equal(t, "user-1", result[0].UserID)
-	assert.Equal(t, "owner", result[0].Role)
-	assert.Equal(t, "organization", result[0].RoleSource)
+	assert.Equal(t, gql.SpaceMemberRoleOwner, result[0].Role)
+	assert.Equal(t, gql.SpaceMemberRoleSourceOrganization, result[0].RoleSource)
 	assert.False(t, result[0].CanChangeRole)
 	assert.False(t, result[0].CanRemove)
-	assert.Equal(t, "user-3", result[1].UserID)
-	assert.True(t, result[1].CanChangeRole)
-	assert.True(t, result[1].CanRemove)
+	assert.Equal(t, "user-2", result[1].UserID)
+	assert.Equal(t, gql.SpaceMemberRoleAdmin, result[1].Role)
+	assert.Equal(t, gql.SpaceMemberRoleSourceOrganization, result[1].RoleSource)
+	assert.False(t, result[1].CanChangeRole)
+	assert.False(t, result[1].CanRemove)
+	assert.Equal(t, "user-3", result[2].UserID)
+	assert.Equal(t, gql.SpaceMemberRoleAdmin, result[2].Role)
+	assert.Equal(t, gql.SpaceMemberRoleSourceSpace, result[2].RoleSource)
+	assert.True(t, result[2].CanChangeRole)
+	assert.True(t, result[2].CanRemove)
+	assert.Equal(t, "user-9", result[3].UserID)
+	assert.Equal(t, gql.SpaceMemberRoleSourceSpace, result[3].RoleSource)
+	assert.True(t, result[3].CanChangeRole)
+	assert.True(t, result[3].CanRemove)
 	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 }
 
-func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
+func TestSpaceMembers_CollapsesRedundantOrgMemberDirectAccess(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	s := makeTestSpace("acme", "org-1")
+	spaceStore.On("GetByID", mock.Anything, s.ID).Return(s, nil)
+	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
+		SpaceID:     "space-1",
+		UserID:      "user-3",
+		Username:    "charlie",
+		DisplayName: "Charlie",
+		Role:        "member",
+		CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	}}, nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{
+		makeTestMember("user-1", "alice", "owner"),
+		makeTestMember("user-3", "charlie", "member"),
+	}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().SpaceMembers(ctx, s.ID)
+	require.NoError(t, err)
+	require.Len(t, result, 2)
+	assert.Equal(t, "user-3", result[1].UserID)
+	assert.Equal(t, gql.SpaceMemberRoleSourceOrganization, result[1].RoleSource)
+	assert.Equal(t, gql.SpaceMemberRoleMember, result[1].Role)
+	assert.False(t, result[1].CanChangeRole)
+	assert.False(t, result[1].CanRemove)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestSpaceMembers_RequiresManagePermission(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	s := makeTestSpace("acme", "org-1")
+	spaceStore.On("GetByID", mock.Anything, s.ID).Return(s, nil).Once()
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil).Once()
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Query().SpaceMembers(ctx, s.ID)
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "space manager access required")
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertNotCalled(t, "ListMembers", mock.Anything, mock.Anything)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestInviteSpaceMember_RejectsExistingOrgMemberByEmail(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
 	userStore := &MockUserStore{}
@@ -1059,29 +1783,48 @@ func TestInviteSpaceMember_AddsExistingOrgMemberByEmail(t *testing.T) {
 		Username:    "bob",
 		DisplayName: "Bob",
 	}, nil)
-	spaceStore.On("HasMember", mock.Anything, "space-acme", "user-2").Return(false, nil)
-	spaceStore.On("AddMember", mock.Anything, "space-acme", "user-2", "member").Return(nil)
-	spaceStore.On("ListMembers", mock.Anything, "space-acme").Return([]*space.SpaceMemberView{{
-		SpaceID:     "space-1",
-		UserID:      "user-2",
-		Username:    "bob",
-		DisplayName: "Bob",
-		Role:        "member",
-		CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
-	}}, nil)
 
 	ctx := createAdminContextWithOrg("user-1", "org-1")
 	result, err := r.Mutation().InviteSpaceMember(ctx, s.ID, "Bob@Example.com", "member")
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "added", result.Status)
-	require.NotNil(t, result.Member)
-	assert.Equal(t, "user-2", result.Member.UserID)
-	assert.Nil(t, result.Invitation)
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already has access")
 
 	orgStore.AssertExpectations(t)
 	spaceStore.AssertExpectations(t)
 	userStore.AssertExpectations(t)
+}
+
+func TestInviteSpaceMember_RequiresManagePermission(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	userStore := &MockUserStore{}
+	logger, _ := zap.NewDevelopment()
+	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, nil, nil)
+
+	s := makeTestSpace("acme", "org-1")
+	spaceStore.On("GetByID", mock.Anything, s.ID).Return(s, nil).Once()
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-9"), nil)
+	orgStore.On("ListMembers", mock.Anything, "org-1").Return([]*org.OrgMemberView{{
+		OrgID:       "org-1",
+		UserID:      "user-1",
+		Username:    "alice",
+		DisplayName: "Alice",
+		Role:        "member",
+	}}, nil).Once()
+
+	ctx := createReadWriteContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().InviteSpaceMember(ctx, s.ID, "guest@example.com", "member")
+
+	assert.Nil(t, result)
+	require.Error(t, err)
+	gqlErr, ok := err.(*gqlerror.Error)
+	assert.True(t, ok, "expected *gqlerror.Error")
+	assert.Equal(t, apperror.ErrForbidden, gqlErr.Extensions["code"])
+	assert.Contains(t, gqlErr.Message, "space manager access required")
+	orgStore.AssertExpectations(t)
+	userStore.AssertNotCalled(t, "GetByEmail", mock.Anything, mock.Anything)
+	spaceStore.AssertExpectations(t)
 }
 
 func TestInviteSpaceMember_AddsExistingExternalAccountAsGuest(t *testing.T) {
@@ -1205,7 +1948,7 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 		"user-1",
 		mock.AnythingOfType("time.Time"),
 	).Return(invitation, nil)
-	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(o, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(o, nil)
 	sender.On("SendSpaceInvitation", mock.Anything, mock.MatchedBy(func(params space.EmailParams) bool {
 		return params.ToEmail == "new@example.com" && params.OrgName == "Acme Org" && params.SpaceName == "Test Space" && params.InviteToken == "tok-123"
 	})).Return(nil)
@@ -1225,6 +1968,159 @@ func TestInviteSpaceMember_CreatesPendingInvitationForExternalEmail(t *testing.T
 	userStore.AssertExpectations(t)
 	inviteStore.AssertExpectations(t)
 	sender.AssertExpectations(t)
+}
+
+func TestInviteOrgMember_CreatesPendingInvitationForExternalEmail(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	userStore := &MockUserStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	sender := &MockInviteSender{}
+	logger, _ := zap.NewDevelopment()
+	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, inviteStore, sender)
+
+	o := makeTestOrg("org-1", "user-1")
+	o.Name = "Acme Org"
+	invitation := &space.Invitation{
+		ID:        "org-invite-1",
+		OrgID:     "org-1",
+		SpaceID:   "",
+		Email:     "new@example.com",
+		Role:      "member",
+		Token:     "tok-org-123",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		ExpiresAt: time.Date(2026, 1, 8, 0, 0, 0, 0, time.UTC),
+	}
+
+	userStore.On("GetByEmail", mock.Anything, "new@example.com").Return((*userstore.User)(nil), nil)
+	inviteStore.On(
+		"CreateOrRefreshPending",
+		mock.Anything,
+		"org-1",
+		"",
+		"new@example.com",
+		"member",
+		"user-1",
+		mock.AnythingOfType("time.Time"),
+	).Return(invitation, nil)
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(o, nil)
+	sender.On("SendOrganizationInvitation", mock.Anything, mock.MatchedBy(func(params space.EmailParams) bool {
+		return params.ToEmail == "new@example.com" && params.OrgName == "Acme Org" && params.InviteToken == "tok-org-123" && params.Role == "member"
+	})).Return(nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().InviteOrgMember(ctx, "new@example.com", "member")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "invited", result.Status)
+	assert.Nil(t, result.Member)
+	require.NotNil(t, result.Invitation)
+	assert.Equal(t, "org-invite-1", result.Invitation.ID)
+	assert.Equal(t, "new@example.com", result.Invitation.Email)
+
+	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+	sender.AssertExpectations(t)
+}
+
+func TestInviteOrgMember_RejectsWhenInviteSenderIsMissing(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	userStore := &MockUserStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	logger, _ := zap.NewDevelopment()
+	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, inviteStore, nil)
+
+	userStore.On("GetByEmail", mock.Anything, "new@example.com").Return((*userstore.User)(nil), nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().InviteOrgMember(ctx, "new@example.com", "member")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "email invitations are not configured")
+
+	inviteStore.AssertNotCalled(t, "CreateOrRefreshPending", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+}
+
+func TestOrgInvitations_ReturnsPendingInvites(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	r := newOrgResolverWithInviteStore(orgStore, spaceStore, inviteStore, nil)
+
+	inviteStore.On("ListPendingByOrg", mock.Anything, "org-1").Return([]*space.Invitation{{
+		ID:        "invite-1",
+		OrgID:     "org-1",
+		Email:     "new@example.com",
+		Role:      "member",
+		CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		ExpiresAt: time.Date(2026, 1, 8, 0, 0, 0, 0, time.UTC),
+	}}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().OrgInvitations(ctx)
+	require.NoError(t, err)
+	require.Len(t, result, 1)
+	assert.Equal(t, "invite-1", result[0].ID)
+	assert.Equal(t, "new@example.com", result[0].Email)
+
+	orgStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+}
+
+func TestCancelOrgInvitation_DeletesPendingInvite(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	r := newOrgResolverWithInviteStore(orgStore, spaceStore, inviteStore, nil)
+
+	inviteStore.On("ListPendingByOrg", mock.Anything, "org-1").Return([]*space.Invitation{{
+		ID:    "invite-1",
+		OrgID: "org-1",
+		Email: "new@example.com",
+		Role:  "member",
+	}}, nil)
+	inviteStore.On("DeletePending", mock.Anything, "invite-1").Return(nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().CancelOrgInvitation(ctx, "invite-1")
+	require.NoError(t, err)
+	assert.True(t, ok)
+
+	orgStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+}
+
+func TestCancelOrgInvitation_ReturnsNotFoundReasonForMissingInvite(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	r := newOrgResolverWithInviteStore(orgStore, spaceStore, inviteStore, nil)
+
+	inviteStore.On("ListPendingByOrg", mock.Anything, "org-1").Return([]*space.Invitation{{
+		ID:    "invite-1",
+		OrgID: "org-1",
+		Email: "new@example.com",
+		Role:  "member",
+	}}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().CancelOrgInvitation(ctx, "invite-missing")
+	assert.False(t, ok)
+	require.Error(t, err)
+
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, "org_invitation_not_found", gqlErr.Extensions["reason"])
+
+	inviteStore.AssertNotCalled(t, "DeletePending", mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
 }
 
 func TestRemoveSpaceMember_RejectsHostOrgOwner(t *testing.T) {

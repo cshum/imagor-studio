@@ -5,6 +5,7 @@ export interface ErrorInfo {
   message: string
   field?: string
   code?: string
+  reason?: string
   argumentName?: string
 }
 
@@ -13,6 +14,7 @@ interface GraphQLErrorLike {
   extensions?: {
     field?: string
     code?: string
+    reason?: string
     argumentName?: string
   }
 }
@@ -82,6 +84,14 @@ export function hasErrorCode(error: unknown, code: string): boolean {
   return extractErrorInfo(error).code === code
 }
 
+export function hasErrorReason(error: unknown, reason: string): boolean {
+  return extractErrorInfo(error).reason === reason
+}
+
+export function isOrganizationRequiredError(error: unknown): boolean {
+  return hasErrorReason(error, 'organization_required')
+}
+
 /**
  * Extract a clean error message from GraphQL error responses
  */
@@ -120,6 +130,7 @@ export function extractErrorInfo(error: unknown): ErrorInfo {
       message: firstError.message,
       field: firstError.extensions?.field,
       code: firstError.extensions?.code,
+      reason: firstError.extensions?.reason,
       argumentName: firstError.extensions?.argumentName,
     }
   }

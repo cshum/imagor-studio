@@ -9,6 +9,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/license"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
@@ -60,6 +61,8 @@ type Resolver struct {
 	orgStore                 org.OrgStore
 	spaceStore               space.SpaceStore
 	hostedStorageStore       management.HostedStorageStore
+	processingUsageStore     management.ProcessingUsageStore
+	billingService           billing.Service
 	processingOriginResolver space.ProcessingOriginResolver
 	templatePreviewRenderer  processing.TemplatePreviewRenderClient
 
@@ -87,6 +90,18 @@ func WithCloudConfig(cloudConfig management.CloudConfig) ResolverOption {
 func WithHostedStorageStore(store management.HostedStorageStore) ResolverOption {
 	return func(r *Resolver) {
 		r.hostedStorageStore = store
+	}
+}
+
+func WithProcessingUsageStore(store management.ProcessingUsageStore) ResolverOption {
+	return func(r *Resolver) {
+		r.processingUsageStore = store
+	}
+}
+
+func WithBillingService(service billing.Service) ResolverOption {
+	return func(r *Resolver) {
+		r.billingService = service
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/billing"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
@@ -81,6 +82,14 @@ type MockUserStore struct {
 
 func (m *MockUserStore) Create(ctx context.Context, displayName, username, hashedPassword, role string) (*userstore.User, error) {
 	args := m.Called(ctx, displayName, username, hashedPassword, role)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
+func (m *MockUserStore) CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*userstore.User, error) {
+	args := m.Called(ctx, displayName, username, hashedPassword, role, email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -162,6 +171,11 @@ func (m *MockUserStore) UnlinkAuthProvider(ctx context.Context, id string, provi
 
 func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) error {
 	args := m.Called(ctx, id, active)
+	return args.Error(0)
+}
+
+func (m *MockUserStore) SetEmailVerified(ctx context.Context, id string, verified bool) error {
+	args := m.Called(ctx, id, verified)
 	return args.Error(0)
 }
 
@@ -345,6 +359,14 @@ func (m *MockOrgStore) CreateWithMember(ctx context.Context, ownerID, name, slug
 	return args.Get(0).(*org.Org), args.Error(1)
 }
 
+func (m *MockOrgStore) GetByID(ctx context.Context, id string) (*org.Org, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*org.Org), args.Error(1)
+}
+
 func (m *MockOrgStore) GetByUserID(ctx context.Context, userID string) (*org.Org, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
@@ -359,6 +381,35 @@ func (m *MockOrgStore) GetBySlug(ctx context.Context, slug string) (*org.Org, er
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*org.Org), args.Error(1)
+}
+
+func (m *MockOrgStore) GetByStripeCustomerID(ctx context.Context, stripeCustomerID string) (*org.Org, error) {
+	args := m.Called(ctx, stripeCustomerID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*org.Org), args.Error(1)
+}
+
+func (m *MockOrgStore) UpdateBillingState(ctx context.Context, orgID string, update org.BillingStateUpdate) (*org.Org, error) {
+	args := m.Called(ctx, orgID, update)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*org.Org), args.Error(1)
+}
+
+func (m *MockOrgStore) ExpireTrials(ctx context.Context, now time.Time) ([]string, error) {
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "ExpireTrials" {
+			args := m.Called(ctx, now)
+			if args.Get(0) == nil {
+				return nil, args.Error(1)
+			}
+			return args.Get(0).([]string), args.Error(1)
+		}
+	}
+	return []string{}, nil
 }
 
 func (m *MockOrgStore) ListMembers(ctx context.Context, orgID string) ([]*org.OrgMemberView, error) {
@@ -384,6 +435,16 @@ func (m *MockOrgStore) UpdateMemberRole(ctx context.Context, orgID, userID, role
 	return args.Error(0)
 }
 
+func (m *MockOrgStore) TransferOwnership(ctx context.Context, orgID, currentOwnerID, newOwnerID string) error {
+	args := m.Called(ctx, orgID, currentOwnerID, newOwnerID)
+	return args.Error(0)
+}
+
+func (m *MockOrgStore) Delete(ctx context.Context, orgID, ownerID string) error {
+	args := m.Called(ctx, orgID, ownerID)
+	return args.Error(0)
+}
+
 var _ org.OrgStore = (*MockOrgStore)(nil)
 
 // MockSpaceStore mocks the spacestore.Store interface.
@@ -404,6 +465,16 @@ func (m *MockSpaceStore) RenameKey(ctx context.Context, oldKey, newKey string) e
 func (m *MockSpaceStore) Upsert(ctx context.Context, s *space.Space) error {
 	args := m.Called(ctx, s)
 	return args.Error(0)
+}
+
+func (m *MockSpaceStore) SetSuspendedByOrgID(ctx context.Context, orgID string, suspended bool) error {
+	for _, expected := range m.ExpectedCalls {
+		if expected.Method == "SetSuspendedByOrgID" {
+			args := m.Called(ctx, orgID, suspended)
+			return args.Error(0)
+		}
+	}
+	return nil
 }
 
 func (m *MockSpaceStore) SoftDelete(ctx context.Context, key string) error {
@@ -512,6 +583,14 @@ func (m *MockSpaceInviteStore) CreateOrRefreshPending(ctx context.Context, orgID
 	return args.Get(0).(*space.Invitation), args.Error(1)
 }
 
+func (m *MockSpaceInviteStore) ListPendingByOrg(ctx context.Context, orgID string) ([]*space.Invitation, error) {
+	args := m.Called(ctx, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*space.Invitation), args.Error(1)
+}
+
 func (m *MockSpaceInviteStore) ListPendingBySpace(ctx context.Context, orgID, spaceID string) ([]*space.Invitation, error) {
 	args := m.Called(ctx, orgID, spaceID)
 	if args.Get(0) == nil {
@@ -533,6 +612,11 @@ func (m *MockSpaceInviteStore) MarkAccepted(ctx context.Context, id string, acce
 	return args.Error(0)
 }
 
+func (m *MockSpaceInviteStore) DeletePending(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
 var _ space.SpaceInviteStore = (*MockSpaceInviteStore)(nil)
 
 type MockInviteSender struct {
@@ -540,6 +624,11 @@ type MockInviteSender struct {
 }
 
 func (m *MockInviteSender) SendSpaceInvitation(ctx context.Context, params space.EmailParams) error {
+	args := m.Called(ctx, params)
+	return args.Error(0)
+}
+
+func (m *MockInviteSender) SendOrganizationInvitation(ctx context.Context, params space.EmailParams) error {
 	args := m.Called(ctx, params)
 	return args.Error(0)
 }
@@ -614,6 +703,56 @@ func (m *MockHostedStorageStore) ListUsageBytesBySpace(ctx context.Context, orgI
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(map[string]int64), args.Error(1)
+}
+
+type MockProcessingUsageStore struct {
+	mock.Mock
+}
+
+func (m *MockProcessingUsageStore) ApplyUsageBatch(ctx context.Context, batch processing.UsageBatch) (*processing.UsageBatchApplyResult, error) {
+	args := m.Called(ctx, batch)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*processing.UsageBatchApplyResult), args.Error(1)
+}
+
+func (m *MockProcessingUsageStore) CleanupUsageBatches(ctx context.Context, olderThan time.Time) error {
+	args := m.Called(ctx, olderThan)
+	return args.Error(0)
+}
+
+func (m *MockProcessingUsageStore) GetCurrentUsageSummary(ctx context.Context, orgID string) (*management.ProcessingUsageSummary, error) {
+	args := m.Called(ctx, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*management.ProcessingUsageSummary), args.Error(1)
+}
+
+type MockBillingService struct {
+	mock.Mock
+}
+
+func (m *MockBillingService) CreateCheckoutSession(ctx context.Context, input billing.CheckoutSessionInput) (*billing.Session, error) {
+	args := m.Called(ctx, input)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*billing.Session), args.Error(1)
+}
+
+func (m *MockBillingService) CreatePortalSession(ctx context.Context, input billing.PortalSessionInput) (*billing.Session, error) {
+	args := m.Called(ctx, input)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*billing.Session), args.Error(1)
+}
+
+func (m *MockBillingService) HandleWebhook(ctx context.Context, payload []byte, signature string) error {
+	args := m.Called(ctx, payload, signature)
+	return args.Error(0)
 }
 
 // createAdminContextWithOrg creates an admin context that carries an OrgID claim.

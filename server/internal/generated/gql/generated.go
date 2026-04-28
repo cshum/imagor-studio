@@ -40,6 +40,10 @@ type ComplexityRoot struct {
 		Provider func(childComplexity int) int
 	}
 
+	BillingSession struct {
+		URL func(childComplexity int) int
+	}
+
 	EmailChangeRequestResult struct {
 		Email                func(childComplexity int) int
 		VerificationRequired func(childComplexity int) int
@@ -106,10 +110,11 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddOrgMember                  func(childComplexity int, username string, role string) int
-		AddOrgMemberByEmail           func(childComplexity int, email string, role string) int
-		AddSpaceMember                func(childComplexity int, spaceID string, userID string, role string) int
+		AddOrgMember                  func(childComplexity int, username string, role OrgMemberAssignableRole) int
+		AddOrgMemberByEmail           func(childComplexity int, email string, role OrgMemberAssignableRole) int
+		AddSpaceMember                func(childComplexity int, spaceID string, userID string, role SpaceMemberAssignableRole) int
 		BeginStorageUploadProbe       func(childComplexity int, input StorageConfigInput, contentType string, sizeBytes int) int
+		CancelOrgInvitation           func(childComplexity int, invitationID string) int
 		ChangePassword                func(childComplexity int, input ChangePasswordInput, userID *string) int
 		CompleteStorageUploadProbe    func(childComplexity int, input StorageConfigInput, probePath string, expectedContent string) int
 		CompleteUpload                func(childComplexity int, path string, spaceID *string) int
@@ -117,18 +122,23 @@ type ComplexityRoot struct {
 		ConfigureImagor               func(childComplexity int, input ImagorInput) int
 		ConfigureS3Storage            func(childComplexity int, input S3StorageInput) int
 		CopyFile                      func(childComplexity int, sourcePath string, destPath string, spaceID *string) int
+		CreateBillingPortalSession    func(childComplexity int, returnURL string) int
+		CreateCheckoutSession         func(childComplexity int, plan string, successURL string, cancelURL string) int
 		CreateFolder                  func(childComplexity int, path string, spaceID *string) int
 		CreateSpace                   func(childComplexity int, input SpaceInput) int
 		CreateUser                    func(childComplexity int, input CreateUserInput) int
 		DeactivateAccount             func(childComplexity int, userID *string) int
 		DeleteFile                    func(childComplexity int, path string, spaceID *string) int
+		DeleteOrganization            func(childComplexity int) int
 		DeleteSpace                   func(childComplexity int, key string) int
 		DeleteSpaceRegistry           func(childComplexity int, spaceID string, keys []string) int
 		DeleteSystemRegistry          func(childComplexity int, key *string, keys []string) int
 		DeleteUserRegistry            func(childComplexity int, key *string, keys []string, ownerID *string) int
 		GenerateImagorURL             func(childComplexity int, imagePath string, spaceID *string, params ImagorParamsInput) int
 		GenerateImagorURLFromTemplate func(childComplexity int, templateJSON string, spaceID *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) int
-		InviteSpaceMember             func(childComplexity int, spaceID string, email string, role string) int
+		InviteOrgMember               func(childComplexity int, email string, role OrgMemberAssignableRole) int
+		InviteSpaceMember             func(childComplexity int, spaceID string, email string, role SpaceMemberAssignableRole) int
+		LeaveOrganization             func(childComplexity int) int
 		LeaveSpace                    func(childComplexity int, spaceID string) int
 		MoveFile                      func(childComplexity int, sourcePath string, destPath string, spaceID *string) int
 		ReactivateAccount             func(childComplexity int, userID string) int
@@ -142,31 +152,49 @@ type ComplexityRoot struct {
 		SetSystemRegistry             func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput) int
 		SetUserRegistry               func(childComplexity int, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) int
 		TestStorageConfig             func(childComplexity int, input StorageConfigInput) int
+		TransferOrganizationOwnership func(childComplexity int, userID string) int
 		UnlinkAuthProvider            func(childComplexity int, provider string, userID *string) int
-		UpdateOrgMemberRole           func(childComplexity int, userID string, role string) int
+		UpdateOrgMemberRole           func(childComplexity int, userID string, role OrgMemberAssignableRole) int
 		UpdateProfile                 func(childComplexity int, input UpdateProfileInput, userID *string) int
 		UpdateSpace                   func(childComplexity int, key string, input SpaceInput) int
-		UpdateSpaceMemberRole         func(childComplexity int, spaceID string, userID string, role string) int
+		UpdateSpaceMemberRole         func(childComplexity int, spaceID string, userID string, role SpaceMemberAssignableRole) int
 		UploadFile                    func(childComplexity int, path string, spaceID *string, content graphql.Upload) int
 	}
 
+	OrgInvitation struct {
+		CreatedAt func(childComplexity int) int
+		Email     func(childComplexity int) int
+		ExpiresAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Role      func(childComplexity int) int
+	}
+
+	OrgInviteResult struct {
+		Invitation func(childComplexity int) int
+		Member     func(childComplexity int) int
+		Status     func(childComplexity int) int
+	}
+
 	OrgMember struct {
+		AvatarURL   func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
 		DisplayName func(childComplexity int) int
+		Email       func(childComplexity int) int
 		Role        func(childComplexity int) int
 		UserID      func(childComplexity int) int
 		Username    func(childComplexity int) int
 	}
 
 	Organization struct {
-		CreatedAt   func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Name        func(childComplexity int) int
-		OwnerUserID func(childComplexity int) int
-		Plan        func(childComplexity int) int
-		PlanStatus  func(childComplexity int) int
-		Slug        func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		CurrentUserRole func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Name            func(childComplexity int) int
+		OwnerUserID     func(childComplexity int) int
+		Plan            func(childComplexity int) int
+		PlanStatus      func(childComplexity int) int
+		Slug            func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
 	}
 
 	PresignedUpload struct {
@@ -185,6 +213,7 @@ type ComplexityRoot struct {
 		ListUserRegistry   func(childComplexity int, prefix *string, ownerID *string) int
 		Me                 func(childComplexity int) int
 		MyOrganization     func(childComplexity int) int
+		OrgInvitations     func(childComplexity int) int
 		OrgMembers         func(childComplexity int) int
 		Space              func(childComplexity int, key string) int
 		SpaceInvitations   func(childComplexity int, spaceID string) int
@@ -194,6 +223,7 @@ type ComplexityRoot struct {
 		Spaces             func(childComplexity int) int
 		StatFile           func(childComplexity int, path string, spaceID *string) int
 		StorageStatus      func(childComplexity int) int
+		UsageSummary       func(childComplexity int) int
 		User               func(childComplexity int, id string) int
 		Users              func(childComplexity int, offset *int, limit *int, search *string) int
 	}
@@ -221,6 +251,7 @@ type ComplexityRoot struct {
 		Name                 func(childComplexity int) int
 		OrgID                func(childComplexity int) int
 		Prefix               func(childComplexity int) int
+		ProcessingUsageCount func(childComplexity int) int
 		Region               func(childComplexity int) int
 		SignerAlgorithm      func(childComplexity int) int
 		SignerTruncate       func(childComplexity int) int
@@ -257,6 +288,14 @@ type ComplexityRoot struct {
 		RoleSource    func(childComplexity int) int
 		UserID        func(childComplexity int) int
 		Username      func(childComplexity int) int
+	}
+
+	SpaceUsage struct {
+		Key                  func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		ProcessingUsageCount func(childComplexity int) int
+		SpaceID              func(childComplexity int) int
+		StorageUsageBytes    func(childComplexity int) int
 	}
 
 	StorageConfigResult struct {
@@ -315,6 +354,18 @@ type ComplexityRoot struct {
 		Value func(childComplexity int) int
 	}
 
+	UsageSummary struct {
+		MaxSpaces              func(childComplexity int) int
+		PeriodEnd              func(childComplexity int) int
+		PeriodStart            func(childComplexity int) int
+		Spaces                 func(childComplexity int) int
+		StorageLimitGb         func(childComplexity int) int
+		TransformsLimit        func(childComplexity int) int
+		UsedHostedStorageBytes func(childComplexity int) int
+		UsedSpaces             func(childComplexity int) int
+		UsedTransforms         func(childComplexity int) int
+	}
+
 	User struct {
 		AuthProviders func(childComplexity int) int
 		AvatarURL     func(childComplexity int) int
@@ -361,20 +412,27 @@ type MutationResolver interface {
 	ConfigureImagor(ctx context.Context, input ImagorInput) (*ImagorConfigResult, error)
 	GenerateImagorURL(ctx context.Context, imagePath string, spaceID *string, params ImagorParamsInput) (string, error)
 	GenerateImagorURLFromTemplate(ctx context.Context, templateJSON string, spaceID *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) (string, error)
+	CreateCheckoutSession(ctx context.Context, plan string, successURL string, cancelURL string) (*BillingSession, error)
+	CreateBillingPortalSession(ctx context.Context, returnURL string) (*BillingSession, error)
 	CreateSpace(ctx context.Context, input SpaceInput) (*Space, error)
 	UpdateSpace(ctx context.Context, key string, input SpaceInput) (*Space, error)
 	DeleteSpace(ctx context.Context, key string) (bool, error)
 	SetSpaceRegistry(ctx context.Context, spaceID string, entries []*RegistryEntryInput) ([]*UserRegistry, error)
 	DeleteSpaceRegistry(ctx context.Context, spaceID string, keys []string) (bool, error)
-	AddOrgMember(ctx context.Context, username string, role string) (*OrgMember, error)
-	AddOrgMemberByEmail(ctx context.Context, email string, role string) (*OrgMember, error)
-	AddSpaceMember(ctx context.Context, spaceID string, userID string, role string) (*SpaceMember, error)
-	InviteSpaceMember(ctx context.Context, spaceID string, email string, role string) (*SpaceInviteResult, error)
+	AddOrgMember(ctx context.Context, username string, role OrgMemberAssignableRole) (*OrgMember, error)
+	AddOrgMemberByEmail(ctx context.Context, email string, role OrgMemberAssignableRole) (*OrgMember, error)
+	InviteOrgMember(ctx context.Context, email string, role OrgMemberAssignableRole) (*OrgInviteResult, error)
+	CancelOrgInvitation(ctx context.Context, invitationID string) (bool, error)
+	AddSpaceMember(ctx context.Context, spaceID string, userID string, role SpaceMemberAssignableRole) (*SpaceMember, error)
+	InviteSpaceMember(ctx context.Context, spaceID string, email string, role SpaceMemberAssignableRole) (*SpaceInviteResult, error)
 	RemoveOrgMember(ctx context.Context, userID string) (bool, error)
 	RemoveSpaceMember(ctx context.Context, spaceID string, userID string) (bool, error)
+	LeaveOrganization(ctx context.Context) (bool, error)
+	DeleteOrganization(ctx context.Context) (bool, error)
 	LeaveSpace(ctx context.Context, spaceID string) (bool, error)
-	UpdateOrgMemberRole(ctx context.Context, userID string, role string) (*OrgMember, error)
-	UpdateSpaceMemberRole(ctx context.Context, spaceID string, userID string, role string) (*SpaceMember, error)
+	UpdateOrgMemberRole(ctx context.Context, userID string, role OrgMemberAssignableRole) (*OrgMember, error)
+	TransferOrganizationOwnership(ctx context.Context, userID string) (*Organization, error)
+	UpdateSpaceMemberRole(ctx context.Context, spaceID string, userID string, role SpaceMemberAssignableRole) (*SpaceMember, error)
 	SetUserRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput, ownerID *string) ([]*UserRegistry, error)
 	DeleteUserRegistry(ctx context.Context, key *string, keys []string, ownerID *string) (bool, error)
 	SetSystemRegistry(ctx context.Context, entry *RegistryEntryInput, entries []*RegistryEntryInput) ([]*SystemRegistry, error)
@@ -393,7 +451,9 @@ type QueryResolver interface {
 	StorageStatus(ctx context.Context) (*StorageStatus, error)
 	ImagorStatus(ctx context.Context) (*ImagorStatus, error)
 	MyOrganization(ctx context.Context) (*Organization, error)
+	OrgInvitations(ctx context.Context) ([]*OrgInvitation, error)
 	Spaces(ctx context.Context) ([]*Space, error)
+	UsageSummary(ctx context.Context) (*UsageSummary, error)
 	Space(ctx context.Context, key string) (*Space, error)
 	SpaceRegistry(ctx context.Context, spaceID string, keys []string) ([]*UserRegistry, error)
 	OrgMembers(ctx context.Context) ([]*OrgMember, error)
@@ -442,6 +502,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AuthProvider.Provider(childComplexity), true
+
+	case "BillingSession.url":
+		if e.ComplexityRoot.BillingSession.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BillingSession.URL(childComplexity), true
 
 	case "EmailChangeRequestResult.email":
 		if e.ComplexityRoot.EmailChangeRequestResult.Email == nil {
@@ -690,7 +757,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.AddOrgMember(childComplexity, args["username"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.AddOrgMember(childComplexity, args["username"].(string), args["role"].(OrgMemberAssignableRole)), true
 	case "Mutation.addOrgMemberByEmail":
 		if e.ComplexityRoot.Mutation.AddOrgMemberByEmail == nil {
 			break
@@ -701,7 +768,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.AddOrgMemberByEmail(childComplexity, args["email"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.AddOrgMemberByEmail(childComplexity, args["email"].(string), args["role"].(OrgMemberAssignableRole)), true
 	case "Mutation.addSpaceMember":
 		if e.ComplexityRoot.Mutation.AddSpaceMember == nil {
 			break
@@ -712,7 +779,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.AddSpaceMember(childComplexity, args["spaceID"].(string), args["userId"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.AddSpaceMember(childComplexity, args["spaceID"].(string), args["userId"].(string), args["role"].(SpaceMemberAssignableRole)), true
 	case "Mutation.beginStorageUploadProbe":
 		if e.ComplexityRoot.Mutation.BeginStorageUploadProbe == nil {
 			break
@@ -724,6 +791,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.BeginStorageUploadProbe(childComplexity, args["input"].(StorageConfigInput), args["contentType"].(string), args["sizeBytes"].(int)), true
+	case "Mutation.cancelOrgInvitation":
+		if e.ComplexityRoot.Mutation.CancelOrgInvitation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_cancelOrgInvitation_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CancelOrgInvitation(childComplexity, args["invitationId"].(string)), true
 	case "Mutation.changePassword":
 		if e.ComplexityRoot.Mutation.ChangePassword == nil {
 			break
@@ -801,6 +879,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CopyFile(childComplexity, args["sourcePath"].(string), args["destPath"].(string), args["spaceID"].(*string)), true
+	case "Mutation.createBillingPortalSession":
+		if e.ComplexityRoot.Mutation.CreateBillingPortalSession == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createBillingPortalSession_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateBillingPortalSession(childComplexity, args["returnURL"].(string)), true
+	case "Mutation.createCheckoutSession":
+		if e.ComplexityRoot.Mutation.CreateCheckoutSession == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCheckoutSession_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateCheckoutSession(childComplexity, args["plan"].(string), args["successURL"].(string), args["cancelURL"].(string)), true
 	case "Mutation.createFolder":
 		if e.ComplexityRoot.Mutation.CreateFolder == nil {
 			break
@@ -856,6 +956,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteFile(childComplexity, args["path"].(string), args["spaceID"].(*string)), true
+	case "Mutation.deleteOrganization":
+		if e.ComplexityRoot.Mutation.DeleteOrganization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteOrganization(childComplexity), true
 	case "Mutation.deleteSpace":
 		if e.ComplexityRoot.Mutation.DeleteSpace == nil {
 			break
@@ -922,6 +1028,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.GenerateImagorURLFromTemplate(childComplexity, args["templateJson"].(string), args["spaceID"].(*string), args["imagePath"].(*string), args["contextPath"].([]string), args["forPreview"].(*bool), args["previewMaxDimensions"].(*DimensionsInput), args["skipLayerId"].(*string), args["appendFilters"].([]*ImagorFilterInput)), true
+	case "Mutation.inviteOrgMember":
+		if e.ComplexityRoot.Mutation.InviteOrgMember == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_inviteOrgMember_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.InviteOrgMember(childComplexity, args["email"].(string), args["role"].(OrgMemberAssignableRole)), true
 	case "Mutation.inviteSpaceMember":
 		if e.ComplexityRoot.Mutation.InviteSpaceMember == nil {
 			break
@@ -932,7 +1049,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.InviteSpaceMember(childComplexity, args["spaceID"].(string), args["email"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.InviteSpaceMember(childComplexity, args["spaceID"].(string), args["email"].(string), args["role"].(SpaceMemberAssignableRole)), true
+	case "Mutation.leaveOrganization":
+		if e.ComplexityRoot.Mutation.LeaveOrganization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.LeaveOrganization(childComplexity), true
 	case "Mutation.leaveSpace":
 		if e.ComplexityRoot.Mutation.LeaveSpace == nil {
 			break
@@ -1076,6 +1199,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.TestStorageConfig(childComplexity, args["input"].(StorageConfigInput)), true
+	case "Mutation.transferOrganizationOwnership":
+		if e.ComplexityRoot.Mutation.TransferOrganizationOwnership == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_transferOrganizationOwnership_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.TransferOrganizationOwnership(childComplexity, args["userId"].(string)), true
 	case "Mutation.unlinkAuthProvider":
 		if e.ComplexityRoot.Mutation.UnlinkAuthProvider == nil {
 			break
@@ -1097,7 +1231,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.UpdateOrgMemberRole(childComplexity, args["userId"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.UpdateOrgMemberRole(childComplexity, args["userId"].(string), args["role"].(OrgMemberAssignableRole)), true
 	case "Mutation.updateProfile":
 		if e.ComplexityRoot.Mutation.UpdateProfile == nil {
 			break
@@ -1130,7 +1264,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.UpdateSpaceMemberRole(childComplexity, args["spaceID"].(string), args["userId"].(string), args["role"].(string)), true
+		return e.ComplexityRoot.Mutation.UpdateSpaceMemberRole(childComplexity, args["spaceID"].(string), args["userId"].(string), args["role"].(SpaceMemberAssignableRole)), true
 	case "Mutation.uploadFile":
 		if e.ComplexityRoot.Mutation.UploadFile == nil {
 			break
@@ -1143,6 +1277,62 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Mutation.UploadFile(childComplexity, args["path"].(string), args["spaceID"].(*string), args["content"].(graphql.Upload)), true
 
+	case "OrgInvitation.createdAt":
+		if e.ComplexityRoot.OrgInvitation.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.CreatedAt(childComplexity), true
+	case "OrgInvitation.email":
+		if e.ComplexityRoot.OrgInvitation.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.Email(childComplexity), true
+	case "OrgInvitation.expiresAt":
+		if e.ComplexityRoot.OrgInvitation.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.ExpiresAt(childComplexity), true
+	case "OrgInvitation.id":
+		if e.ComplexityRoot.OrgInvitation.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.ID(childComplexity), true
+	case "OrgInvitation.role":
+		if e.ComplexityRoot.OrgInvitation.Role == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInvitation.Role(childComplexity), true
+
+	case "OrgInviteResult.invitation":
+		if e.ComplexityRoot.OrgInviteResult.Invitation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInviteResult.Invitation(childComplexity), true
+	case "OrgInviteResult.member":
+		if e.ComplexityRoot.OrgInviteResult.Member == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInviteResult.Member(childComplexity), true
+	case "OrgInviteResult.status":
+		if e.ComplexityRoot.OrgInviteResult.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgInviteResult.Status(childComplexity), true
+
+	case "OrgMember.avatarUrl":
+		if e.ComplexityRoot.OrgMember.AvatarURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgMember.AvatarURL(childComplexity), true
 	case "OrgMember.createdAt":
 		if e.ComplexityRoot.OrgMember.CreatedAt == nil {
 			break
@@ -1155,6 +1345,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.OrgMember.DisplayName(childComplexity), true
+	case "OrgMember.email":
+		if e.ComplexityRoot.OrgMember.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.OrgMember.Email(childComplexity), true
 	case "OrgMember.role":
 		if e.ComplexityRoot.OrgMember.Role == nil {
 			break
@@ -1180,6 +1376,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Organization.CreatedAt(childComplexity), true
+	case "Organization.currentUserRole":
+		if e.ComplexityRoot.Organization.CurrentUserRole == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.CurrentUserRole(childComplexity), true
 	case "Organization.id":
 		if e.ComplexityRoot.Organization.ID == nil {
 			break
@@ -1322,6 +1524,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyOrganization(childComplexity), true
+	case "Query.orgInvitations":
+		if e.ComplexityRoot.Query.OrgInvitations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.OrgInvitations(childComplexity), true
 	case "Query.orgMembers":
 		if e.ComplexityRoot.Query.OrgMembers == nil {
 			break
@@ -1406,6 +1614,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.StorageStatus(childComplexity), true
+	case "Query.usageSummary":
+		if e.ComplexityRoot.Query.UsageSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.UsageSummary(childComplexity), true
 	case "Query.user":
 		if e.ComplexityRoot.Query.User == nil {
 			break
@@ -1544,6 +1758,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Space.Prefix(childComplexity), true
+	case "Space.processingUsageCount":
+		if e.ComplexityRoot.Space.ProcessingUsageCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.ProcessingUsageCount(childComplexity), true
 	case "Space.region":
 		if e.ComplexityRoot.Space.Region == nil {
 			break
@@ -1709,6 +1929,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SpaceMember.Username(childComplexity), true
+
+	case "SpaceUsage.key":
+		if e.ComplexityRoot.SpaceUsage.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.Key(childComplexity), true
+	case "SpaceUsage.name":
+		if e.ComplexityRoot.SpaceUsage.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.Name(childComplexity), true
+	case "SpaceUsage.processingUsageCount":
+		if e.ComplexityRoot.SpaceUsage.ProcessingUsageCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.ProcessingUsageCount(childComplexity), true
+	case "SpaceUsage.spaceId":
+		if e.ComplexityRoot.SpaceUsage.SpaceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.SpaceID(childComplexity), true
+	case "SpaceUsage.storageUsageBytes":
+		if e.ComplexityRoot.SpaceUsage.StorageUsageBytes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SpaceUsage.StorageUsageBytes(childComplexity), true
 
 	case "StorageConfigResult.message":
 		if e.ComplexityRoot.StorageConfigResult.Message == nil {
@@ -1909,6 +2160,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.UploadHeader.Value(childComplexity), true
+
+	case "UsageSummary.maxSpaces":
+		if e.ComplexityRoot.UsageSummary.MaxSpaces == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.MaxSpaces(childComplexity), true
+	case "UsageSummary.periodEnd":
+		if e.ComplexityRoot.UsageSummary.PeriodEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.PeriodEnd(childComplexity), true
+	case "UsageSummary.periodStart":
+		if e.ComplexityRoot.UsageSummary.PeriodStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.PeriodStart(childComplexity), true
+	case "UsageSummary.spaces":
+		if e.ComplexityRoot.UsageSummary.Spaces == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.Spaces(childComplexity), true
+	case "UsageSummary.storageLimitGB":
+		if e.ComplexityRoot.UsageSummary.StorageLimitGb == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.StorageLimitGb(childComplexity), true
+	case "UsageSummary.transformsLimit":
+		if e.ComplexityRoot.UsageSummary.TransformsLimit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.TransformsLimit(childComplexity), true
+	case "UsageSummary.usedHostedStorageBytes":
+		if e.ComplexityRoot.UsageSummary.UsedHostedStorageBytes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.UsedHostedStorageBytes(childComplexity), true
+	case "UsageSummary.usedSpaces":
+		if e.ComplexityRoot.UsageSummary.UsedSpaces == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.UsedSpaces(childComplexity), true
+	case "UsageSummary.usedTransforms":
+		if e.ComplexityRoot.UsageSummary.UsedTransforms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UsageSummary.UsedTransforms(childComplexity), true
 
 	case "User.authProviders":
 		if e.ComplexityRoot.User.AuthProviders == nil {
@@ -2231,6 +2537,7 @@ enum ImagorSignerType {
   name: String!
   slug: String!
   ownerUserId: String!
+  currentUserRole: OrgMemberRole!
   plan: String!
   planStatus: String!
   createdAt: String!
@@ -2244,6 +2551,7 @@ type Space {
   key: String!
   name: String!
   storageUsageBytes: Int
+  processingUsageCount: Int
   storageMode: String!
   storageType: String!
   bucket: String!
@@ -2262,6 +2570,30 @@ type Space {
   canDelete: Boolean!
   canLeave: Boolean!
   updatedAt: String!
+}
+
+type SpaceUsage {
+  spaceId: ID!
+  key: String!
+  name: String!
+  storageUsageBytes: Int
+  processingUsageCount: Int
+}
+
+type UsageSummary {
+  usedSpaces: Int!
+  maxSpaces: Int
+  usedHostedStorageBytes: Int
+  storageLimitGB: Int
+  usedTransforms: Int
+  transformsLimit: Int
+  periodStart: String
+  periodEnd: String
+  spaces: [SpaceUsage!]!
+}
+
+type BillingSession {
+  url: String!
 }
 
 input SpaceInput {
@@ -2284,13 +2616,42 @@ input SpaceInput {
   imagorCORSOrigins: String
 }
 
+enum OrgMemberRole {
+  owner
+  admin
+  member
+}
+
+enum OrgMemberAssignableRole {
+  admin
+  member
+}
+
+enum SpaceMemberRole {
+  owner
+  admin
+  member
+}
+
+enum SpaceMemberAssignableRole {
+  admin
+  member
+}
+
+enum SpaceMemberRoleSource {
+  organization
+  space
+}
+
 # OrgMember represents a user's membership in an organization.
 # The username and displayName are denormalised from the users table for display purposes.
 type OrgMember {
   userId: ID!
   username: String!
   displayName: String!
-  role: String!
+  email: String
+  avatarUrl: String
+  role: OrgMemberRole!
   createdAt: String!
 }
 
@@ -2300,8 +2661,8 @@ type SpaceMember {
   displayName: String!
   email: String
   avatarUrl: String
-  role: String!
-  roleSource: String!
+  role: SpaceMemberRole!
+  roleSource: SpaceMemberRoleSource!
   canChangeRole: Boolean!
   canRemove: Boolean!
   createdAt: String!
@@ -2310,7 +2671,15 @@ type SpaceMember {
 type SpaceInvitation {
   id: ID!
   email: String!
-  role: String!
+  role: SpaceMemberAssignableRole!
+  createdAt: String!
+  expiresAt: String!
+}
+
+type OrgInvitation {
+  id: ID!
+  email: String!
+  role: OrgMemberAssignableRole!
   createdAt: String!
   expiresAt: String!
 }
@@ -2321,11 +2690,21 @@ type SpaceInviteResult {
   invitation: SpaceInvitation
 }
 
+type OrgInviteResult {
+  status: String!
+  member: OrgMember
+  invitation: OrgInvitation
+}
+
 extend type Query {
   # Returns the organization for the currently authenticated user
   myOrganization: Organization
+  # Lists all pending email invitations for the caller's organization (admin only)
+  orgInvitations: [OrgInvitation!]!
   # Lists all active spaces for the caller's organization
   spaces: [Space!]!
+  # Returns the current organization's plan limits and current usage summary
+  usageSummary: UsageSummary!
   # Returns a single space by key (must belong to caller's org)
   space(key: String!): Space
   # Returns space-scoped registry entries, falling back to system:global defaults for unset keys (admin only)
@@ -2341,6 +2720,10 @@ extend type Query {
 }
 
 extend type Mutation {
+  # Create a checkout session for a paid plan (admin only)
+  createCheckoutSession(plan: String!, successURL: String!, cancelURL: String!): BillingSession!
+  # Create a customer billing portal session (admin only)
+  createBillingPortalSession(returnURL: String!): BillingSession!
   # Create a new space (admin only)
   createSpace(input: SpaceInput!): Space!
   # Update an existing space by key (admin only)
@@ -2352,23 +2735,33 @@ extend type Mutation {
   # Delete space-scoped registry keys, reverting to system:global defaults (admin only)
   deleteSpaceRegistry(spaceID: String!, keys: [String!]): Boolean!
   # Add a user to the caller's organization by username (admin only)
-  addOrgMember(username: String!, role: String!): OrgMember!
+  addOrgMember(username: String!, role: OrgMemberAssignableRole!): OrgMember!
   # Add an existing user to the caller's organization by email (admin only)
-  addOrgMemberByEmail(email: String!, role: String!): OrgMember!
+  addOrgMemberByEmail(email: String!, role: OrgMemberAssignableRole!): OrgMember!
+  # Invite a user to the caller's organization by email, or add them immediately if they already exist (admin only)
+  inviteOrgMember(email: String!, role: OrgMemberAssignableRole!): OrgInviteResult!
+  # Cancel a pending organization invitation (admin only)
+  cancelOrgInvitation(invitationId: ID!): Boolean!
   # Add an existing org member to a specific space (admin only)
-  addSpaceMember(spaceID: String!, userId: ID!, role: String!): SpaceMember!
+  addSpaceMember(spaceID: String!, userId: ID!, role: SpaceMemberAssignableRole!): SpaceMember!
   # Invite a user to a specific space by email (admin only)
-  inviteSpaceMember(spaceID: String!, email: String!, role: String!): SpaceInviteResult!
+  inviteSpaceMember(spaceID: String!, email: String!, role: SpaceMemberAssignableRole!): SpaceInviteResult!
   # Remove a member from the organization by userId (admin only)
   removeOrgMember(userId: ID!): Boolean!
   # Remove a member from a specific space by userId (admin only)
   removeSpaceMember(spaceID: String!, userId: ID!): Boolean!
+  # Leave your current organization when you are not the owner and other members remain
+  leaveOrganization: Boolean!
+  # Permanently delete the current organization after spaces are removed and paid billing is cleared (owner only)
+  deleteOrganization: Boolean!
   # Leave a shared space you were explicitly added to
   leaveSpace(spaceID: String!): Boolean!
   # Change a member's role within the organization (admin only)
-  updateOrgMemberRole(userId: ID!, role: String!): OrgMember!
+  updateOrgMemberRole(userId: ID!, role: OrgMemberAssignableRole!): OrgMember!
+  # Transfer organization ownership to an existing organization member (owner only)
+  transferOrganizationOwnership(userId: ID!): Organization!
   # Change a member's role within a specific space (admin only)
-  updateSpaceMemberRole(spaceID: String!, userId: ID!, role: String!): SpaceMember!
+  updateSpaceMemberRole(spaceID: String!, userId: ID!, role: SpaceMemberAssignableRole!): SpaceMember!
 }
 `, BuiltIn: false},
 	{Name: "../../../../graphql/registry.graphql", Input: `extend type Query {
@@ -2725,7 +3118,7 @@ func (ec *executionContext) field_Mutation_addOrgMemberByEmail_args(ctx context.
 		return nil, err
 	}
 	args["email"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -2741,7 +3134,7 @@ func (ec *executionContext) field_Mutation_addOrgMember_args(ctx context.Context
 		return nil, err
 	}
 	args["username"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -2762,7 +3155,7 @@ func (ec *executionContext) field_Mutation_addSpaceMember_args(ctx context.Conte
 		return nil, err
 	}
 	args["userId"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -2788,6 +3181,17 @@ func (ec *executionContext) field_Mutation_beginStorageUploadProbe_args(ctx cont
 		return nil, err
 	}
 	args["sizeBytes"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_cancelOrgInvitation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "invitationId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["invitationId"] = arg0
 	return args, nil
 }
 
@@ -2895,6 +3299,38 @@ func (ec *executionContext) field_Mutation_copyFile_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["spaceID"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createBillingPortalSession_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "returnURL", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["returnURL"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createCheckoutSession_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "plan", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["plan"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "successURL", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["successURL"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "cancelURL", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["cancelURL"] = arg2
 	return args, nil
 }
 
@@ -3094,6 +3530,22 @@ func (ec *executionContext) field_Mutation_generateImagorUrl_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_inviteOrgMember_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "email", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole)
+	if err != nil {
+		return nil, err
+	}
+	args["role"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_inviteSpaceMember_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3107,7 +3559,7 @@ func (ec *executionContext) field_Mutation_inviteSpaceMember_args(ctx context.Co
 		return nil, err
 	}
 	args["email"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -3323,6 +3775,17 @@ func (ec *executionContext) field_Mutation_testStorageConfig_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_transferOrganizationOwnership_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_unlinkAuthProvider_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3347,7 +3810,7 @@ func (ec *executionContext) field_Mutation_updateOrgMemberRole_args(ctx context.
 		return nil, err
 	}
 	args["userId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -3384,7 +3847,7 @@ func (ec *executionContext) field_Mutation_updateSpaceMemberRole_args(ctx contex
 		return nil, err
 	}
 	args["userId"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNString2string)
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole)
 	if err != nil {
 		return nil, err
 	}
@@ -3797,6 +4260,35 @@ func (ec *executionContext) _AuthProvider_linkedAt(ctx context.Context, field gr
 func (ec *executionContext) fieldContext_AuthProvider_linkedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "AuthProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BillingSession_url(ctx context.Context, field graphql.CollectedField, obj *BillingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_BillingSession_url,
+		func(ctx context.Context) (any, error) {
+			return obj.URL, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_BillingSession_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BillingSession",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5722,6 +6214,96 @@ func (ec *executionContext) fieldContext_Mutation_generateImagorUrlFromTemplate(
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createCheckoutSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createCheckoutSession,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateCheckoutSession(ctx, fc.Args["plan"].(string), fc.Args["successURL"].(string), fc.Args["cancelURL"].(string))
+		},
+		nil,
+		ec.marshalNBillingSession2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createCheckoutSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "url":
+				return ec.fieldContext_BillingSession_url(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BillingSession", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createCheckoutSession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createBillingPortalSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createBillingPortalSession,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateBillingPortalSession(ctx, fc.Args["returnURL"].(string))
+		},
+		nil,
+		ec.marshalNBillingSession2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createBillingPortalSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "url":
+				return ec.fieldContext_BillingSession_url(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BillingSession", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createBillingPortalSession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createSpace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5757,6 +6339,8 @@ func (ec *executionContext) fieldContext_Mutation_createSpace(ctx context.Contex
 				return ec.fieldContext_Space_name(ctx, field)
 			case "storageUsageBytes":
 				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_Space_processingUsageCount(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -5846,6 +6430,8 @@ func (ec *executionContext) fieldContext_Mutation_updateSpace(ctx context.Contex
 				return ec.fieldContext_Space_name(ctx, field)
 			case "storageUsageBytes":
 				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_Space_processingUsageCount(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -6039,7 +6625,7 @@ func (ec *executionContext) _Mutation_addOrgMember(ctx context.Context, field gr
 		ec.fieldContext_Mutation_addOrgMember,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().AddOrgMember(ctx, fc.Args["username"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().AddOrgMember(ctx, fc.Args["username"].(string), fc.Args["role"].(OrgMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember,
@@ -6062,6 +6648,10 @@ func (ec *executionContext) fieldContext_Mutation_addOrgMember(ctx context.Conte
 				return ec.fieldContext_OrgMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -6092,7 +6682,7 @@ func (ec *executionContext) _Mutation_addOrgMemberByEmail(ctx context.Context, f
 		ec.fieldContext_Mutation_addOrgMemberByEmail,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().AddOrgMemberByEmail(ctx, fc.Args["email"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().AddOrgMemberByEmail(ctx, fc.Args["email"].(string), fc.Args["role"].(OrgMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember,
@@ -6115,6 +6705,10 @@ func (ec *executionContext) fieldContext_Mutation_addOrgMemberByEmail(ctx contex
 				return ec.fieldContext_OrgMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -6137,6 +6731,96 @@ func (ec *executionContext) fieldContext_Mutation_addOrgMemberByEmail(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_inviteOrgMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_inviteOrgMember,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().InviteOrgMember(ctx, fc.Args["email"].(string), fc.Args["role"].(OrgMemberAssignableRole))
+		},
+		nil,
+		ec.marshalNOrgInviteResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInviteResult,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_inviteOrgMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "status":
+				return ec.fieldContext_OrgInviteResult_status(ctx, field)
+			case "member":
+				return ec.fieldContext_OrgInviteResult_member(ctx, field)
+			case "invitation":
+				return ec.fieldContext_OrgInviteResult_invitation(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrgInviteResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_inviteOrgMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_cancelOrgInvitation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_cancelOrgInvitation,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CancelOrgInvitation(ctx, fc.Args["invitationId"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_cancelOrgInvitation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_cancelOrgInvitation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_addSpaceMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6145,7 +6829,7 @@ func (ec *executionContext) _Mutation_addSpaceMember(ctx context.Context, field 
 		ec.fieldContext_Mutation_addSpaceMember,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().AddSpaceMember(ctx, fc.Args["spaceID"].(string), fc.Args["userId"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().AddSpaceMember(ctx, fc.Args["spaceID"].(string), fc.Args["userId"].(string), fc.Args["role"].(SpaceMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNSpaceMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMember,
@@ -6208,7 +6892,7 @@ func (ec *executionContext) _Mutation_inviteSpaceMember(ctx context.Context, fie
 		ec.fieldContext_Mutation_inviteSpaceMember,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().InviteSpaceMember(ctx, fc.Args["spaceID"].(string), fc.Args["email"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().InviteSpaceMember(ctx, fc.Args["spaceID"].(string), fc.Args["email"].(string), fc.Args["role"].(SpaceMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNSpaceInviteResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceInviteResult,
@@ -6331,6 +7015,64 @@ func (ec *executionContext) fieldContext_Mutation_removeSpaceMember(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_leaveOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_leaveOrganization,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().LeaveOrganization(ctx)
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_leaveOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteOrganization,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().DeleteOrganization(ctx)
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_leaveSpace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6380,7 +7122,7 @@ func (ec *executionContext) _Mutation_updateOrgMemberRole(ctx context.Context, f
 		ec.fieldContext_Mutation_updateOrgMemberRole,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().UpdateOrgMemberRole(ctx, fc.Args["userId"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().UpdateOrgMemberRole(ctx, fc.Args["userId"].(string), fc.Args["role"].(OrgMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember,
@@ -6403,6 +7145,10 @@ func (ec *executionContext) fieldContext_Mutation_updateOrgMemberRole(ctx contex
 				return ec.fieldContext_OrgMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -6425,6 +7171,67 @@ func (ec *executionContext) fieldContext_Mutation_updateOrgMemberRole(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_transferOrganizationOwnership(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_transferOrganizationOwnership,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().TransferOrganizationOwnership(ctx, fc.Args["userId"].(string))
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_transferOrganizationOwnership(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Organization_slug(ctx, field)
+			case "ownerUserId":
+				return ec.fieldContext_Organization_ownerUserId(ctx, field)
+			case "currentUserRole":
+				return ec.fieldContext_Organization_currentUserRole(ctx, field)
+			case "plan":
+				return ec.fieldContext_Organization_plan(ctx, field)
+			case "planStatus":
+				return ec.fieldContext_Organization_planStatus(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_transferOrganizationOwnership_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_updateSpaceMemberRole(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6433,7 +7240,7 @@ func (ec *executionContext) _Mutation_updateSpaceMemberRole(ctx context.Context,
 		ec.fieldContext_Mutation_updateSpaceMemberRole,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().UpdateSpaceMemberRole(ctx, fc.Args["spaceID"].(string), fc.Args["userId"].(string), fc.Args["role"].(string))
+			return ec.Resolvers.Mutation().UpdateSpaceMemberRole(ctx, fc.Args["spaceID"].(string), fc.Args["userId"].(string), fc.Args["role"].(SpaceMemberAssignableRole))
 		},
 		nil,
 		ec.marshalNSpaceMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMember,
@@ -7019,6 +7826,266 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _OrgInvitation_id(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInvitation_email(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInvitation_role(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_role,
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
+		nil,
+		ec.marshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type OrgMemberAssignableRole does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInvitation_createdAt(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInvitation_expiresAt(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInvitation_expiresAt,
+		func(ctx context.Context) (any, error) {
+			return obj.ExpiresAt, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInvitation_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInvitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInviteResult_status(ctx context.Context, field graphql.CollectedField, obj *OrgInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInviteResult_status,
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInviteResult_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInviteResult_member(ctx context.Context, field graphql.CollectedField, obj *OrgInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInviteResult_member,
+		func(ctx context.Context) (any, error) {
+			return obj.Member, nil
+		},
+		nil,
+		ec.marshalOOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInviteResult_member(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userId":
+				return ec.fieldContext_OrgMember_userId(ctx, field)
+			case "username":
+				return ec.fieldContext_OrgMember_username(ctx, field)
+			case "displayName":
+				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
+			case "role":
+				return ec.fieldContext_OrgMember_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_OrgMember_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrgMember", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgInviteResult_invitation(ctx context.Context, field graphql.CollectedField, obj *OrgInviteResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgInviteResult_invitation,
+		func(ctx context.Context) (any, error) {
+			return obj.Invitation, nil
+		},
+		nil,
+		ec.marshalOOrgInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitation,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgInviteResult_invitation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgInviteResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_OrgInvitation_id(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgInvitation_email(ctx, field)
+			case "role":
+				return ec.fieldContext_OrgInvitation_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_OrgInvitation_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_OrgInvitation_expiresAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrgInvitation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OrgMember_userId(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7106,6 +8173,64 @@ func (ec *executionContext) fieldContext_OrgMember_displayName(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _OrgMember_email(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgMember_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgMember_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrgMember_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_OrgMember_avatarUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.AvatarURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_OrgMember_avatarUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrgMember",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OrgMember_role(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7116,7 +8241,7 @@ func (ec *executionContext) _OrgMember_role(ctx context.Context, field graphql.C
 			return obj.Role, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberRole,
 		true,
 		true,
 	)
@@ -7129,7 +8254,7 @@ func (ec *executionContext) fieldContext_OrgMember_role(_ context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type OrgMemberRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7275,6 +8400,35 @@ func (ec *executionContext) fieldContext_Organization_ownerUserId(_ context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_currentUserRole(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_currentUserRole,
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentUserRole, nil
+		},
+		nil,
+		ec.marshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberRole,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_currentUserRole(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type OrgMemberRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7709,6 +8863,8 @@ func (ec *executionContext) fieldContext_Query_myOrganization(_ context.Context,
 				return ec.fieldContext_Organization_slug(ctx, field)
 			case "ownerUserId":
 				return ec.fieldContext_Organization_ownerUserId(ctx, field)
+			case "currentUserRole":
+				return ec.fieldContext_Organization_currentUserRole(ctx, field)
 			case "plan":
 				return ec.fieldContext_Organization_plan(ctx, field)
 			case "planStatus":
@@ -7719,6 +8875,47 @@ func (ec *executionContext) fieldContext_Query_myOrganization(_ context.Context,
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_orgInvitations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_orgInvitations,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().OrgInvitations(ctx)
+		},
+		nil,
+		ec.marshalNOrgInvitation2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitationᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_orgInvitations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_OrgInvitation_id(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgInvitation_email(ctx, field)
+			case "role":
+				return ec.fieldContext_OrgInvitation_role(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_OrgInvitation_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_OrgInvitation_expiresAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrgInvitation", field.Name)
 		},
 	}
 	return fc, nil
@@ -7758,6 +8955,8 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 				return ec.fieldContext_Space_name(ctx, field)
 			case "storageUsageBytes":
 				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_Space_processingUsageCount(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -7801,6 +9000,55 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_usageSummary(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_usageSummary,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().UsageSummary(ctx)
+		},
+		nil,
+		ec.marshalNUsageSummary2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUsageSummary,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_usageSummary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "usedSpaces":
+				return ec.fieldContext_UsageSummary_usedSpaces(ctx, field)
+			case "maxSpaces":
+				return ec.fieldContext_UsageSummary_maxSpaces(ctx, field)
+			case "usedHostedStorageBytes":
+				return ec.fieldContext_UsageSummary_usedHostedStorageBytes(ctx, field)
+			case "storageLimitGB":
+				return ec.fieldContext_UsageSummary_storageLimitGB(ctx, field)
+			case "usedTransforms":
+				return ec.fieldContext_UsageSummary_usedTransforms(ctx, field)
+			case "transformsLimit":
+				return ec.fieldContext_UsageSummary_transformsLimit(ctx, field)
+			case "periodStart":
+				return ec.fieldContext_UsageSummary_periodStart(ctx, field)
+			case "periodEnd":
+				return ec.fieldContext_UsageSummary_periodEnd(ctx, field)
+			case "spaces":
+				return ec.fieldContext_UsageSummary_spaces(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UsageSummary", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_space(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7836,6 +9084,8 @@ func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field 
 				return ec.fieldContext_Space_name(ctx, field)
 			case "storageUsageBytes":
 				return ec.fieldContext_Space_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_Space_processingUsageCount(ctx, field)
 			case "storageMode":
 				return ec.fieldContext_Space_storageMode(ctx, field)
 			case "storageType":
@@ -7969,6 +9219,10 @@ func (ec *executionContext) fieldContext_Query_orgMembers(_ context.Context, fie
 				return ec.fieldContext_OrgMember_username(ctx, field)
 			case "displayName":
 				return ec.fieldContext_OrgMember_displayName(ctx, field)
+			case "email":
+				return ec.fieldContext_OrgMember_email(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_OrgMember_avatarUrl(ctx, field)
 			case "role":
 				return ec.fieldContext_OrgMember_role(ctx, field)
 			case "createdAt":
@@ -8955,6 +10209,35 @@ func (ec *executionContext) fieldContext_Space_storageUsageBytes(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Space_processingUsageCount(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_processingUsageCount,
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessingUsageCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_processingUsageCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Space_storageMode(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9545,7 +10828,7 @@ func (ec *executionContext) _SpaceInvitation_role(ctx context.Context, field gra
 			return obj.Role, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole,
 		true,
 		true,
 	)
@@ -9558,7 +10841,7 @@ func (ec *executionContext) fieldContext_SpaceInvitation_role(_ context.Context,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type SpaceMemberAssignableRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9898,7 +11181,7 @@ func (ec *executionContext) _SpaceMember_role(ctx context.Context, field graphql
 			return obj.Role, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNSpaceMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRole,
 		true,
 		true,
 	)
@@ -9911,7 +11194,7 @@ func (ec *executionContext) fieldContext_SpaceMember_role(_ context.Context, fie
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type SpaceMemberRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9927,7 +11210,7 @@ func (ec *executionContext) _SpaceMember_roleSource(ctx context.Context, field g
 			return obj.RoleSource, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNSpaceMemberRoleSource2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRoleSource,
 		true,
 		true,
 	)
@@ -9940,7 +11223,7 @@ func (ec *executionContext) fieldContext_SpaceMember_roleSource(_ context.Contex
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type SpaceMemberRoleSource does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10028,6 +11311,151 @@ func (ec *executionContext) fieldContext_SpaceMember_createdAt(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceUsage_spaceId(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_spaceId,
+		func(ctx context.Context) (any, error) {
+			return obj.SpaceID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_spaceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceUsage_key(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_key,
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceUsage_name(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceUsage_storageUsageBytes(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_storageUsageBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageUsageBytes, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_storageUsageBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SpaceUsage_processingUsageCount(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SpaceUsage_processingUsageCount,
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessingUsageCount, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SpaceUsage_processingUsageCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SpaceUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10976,6 +12404,279 @@ func (ec *executionContext) fieldContext_UploadHeader_value(_ context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_usedSpaces(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_usedSpaces,
+		func(ctx context.Context) (any, error) {
+			return obj.UsedSpaces, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_usedSpaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_maxSpaces(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_maxSpaces,
+		func(ctx context.Context) (any, error) {
+			return obj.MaxSpaces, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_maxSpaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_usedHostedStorageBytes(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_usedHostedStorageBytes,
+		func(ctx context.Context) (any, error) {
+			return obj.UsedHostedStorageBytes, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_usedHostedStorageBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_storageLimitGB(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_storageLimitGB,
+		func(ctx context.Context) (any, error) {
+			return obj.StorageLimitGb, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_storageLimitGB(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_usedTransforms(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_usedTransforms,
+		func(ctx context.Context) (any, error) {
+			return obj.UsedTransforms, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_usedTransforms(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_transformsLimit(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_transformsLimit,
+		func(ctx context.Context) (any, error) {
+			return obj.TransformsLimit, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_transformsLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_periodStart(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_periodStart,
+		func(ctx context.Context) (any, error) {
+			return obj.PeriodStart, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_periodStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_periodEnd(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_periodEnd,
+		func(ctx context.Context) (any, error) {
+			return obj.PeriodEnd, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_periodEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UsageSummary_spaces(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UsageSummary_spaces,
+		func(ctx context.Context) (any, error) {
+			return obj.Spaces, nil
+		},
+		nil,
+		ec.marshalNSpaceUsage2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsageᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UsageSummary_spaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "spaceId":
+				return ec.fieldContext_SpaceUsage_spaceId(ctx, field)
+			case "key":
+				return ec.fieldContext_SpaceUsage_key(ctx, field)
+			case "name":
+				return ec.fieldContext_SpaceUsage_name(ctx, field)
+			case "storageUsageBytes":
+				return ec.fieldContext_SpaceUsage_storageUsageBytes(ctx, field)
+			case "processingUsageCount":
+				return ec.fieldContext_SpaceUsage_processingUsageCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SpaceUsage", field.Name)
 		},
 	}
 	return fc, nil
@@ -13877,6 +15578,45 @@ func (ec *executionContext) _AuthProvider(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var billingSessionImplementors = []string{"BillingSession"}
+
+func (ec *executionContext) _BillingSession(ctx context.Context, sel ast.SelectionSet, obj *BillingSession) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, billingSessionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BillingSession")
+		case "url":
+			out.Values[i] = ec._BillingSession_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var emailChangeRequestResultImplementors = []string{"EmailChangeRequestResult"}
 
 func (ec *executionContext) _EmailChangeRequestResult(ctx context.Context, sel ast.SelectionSet, obj *EmailChangeRequestResult) graphql.Marshaler {
@@ -14484,6 +16224,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createCheckoutSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createCheckoutSession(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createBillingPortalSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createBillingPortalSession(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createSpace":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createSpace(ctx, field)
@@ -14533,6 +16287,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "inviteOrgMember":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_inviteOrgMember(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cancelOrgInvitation":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_cancelOrgInvitation(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "addSpaceMember":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addSpaceMember(ctx, field)
@@ -14561,6 +16329,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "leaveOrganization":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_leaveOrganization(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteOrganization":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteOrganization(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "leaveSpace":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_leaveSpace(ctx, field)
@@ -14571,6 +16353,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateOrgMemberRole":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateOrgMemberRole(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "transferOrganizationOwnership":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_transferOrganizationOwnership(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -14682,6 +16471,108 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var orgInvitationImplementors = []string{"OrgInvitation"}
+
+func (ec *executionContext) _OrgInvitation(ctx context.Context, sel ast.SelectionSet, obj *OrgInvitation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, orgInvitationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OrgInvitation")
+		case "id":
+			out.Values[i] = ec._OrgInvitation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._OrgInvitation_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "role":
+			out.Values[i] = ec._OrgInvitation_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._OrgInvitation_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expiresAt":
+			out.Values[i] = ec._OrgInvitation_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var orgInviteResultImplementors = []string{"OrgInviteResult"}
+
+func (ec *executionContext) _OrgInviteResult(ctx context.Context, sel ast.SelectionSet, obj *OrgInviteResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, orgInviteResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OrgInviteResult")
+		case "status":
+			out.Values[i] = ec._OrgInviteResult_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "member":
+			out.Values[i] = ec._OrgInviteResult_member(ctx, field, obj)
+		case "invitation":
+			out.Values[i] = ec._OrgInviteResult_invitation(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var orgMemberImplementors = []string{"OrgMember"}
 
 func (ec *executionContext) _OrgMember(ctx context.Context, sel ast.SelectionSet, obj *OrgMember) graphql.Marshaler {
@@ -14708,6 +16599,10 @@ func (ec *executionContext) _OrgMember(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "email":
+			out.Values[i] = ec._OrgMember_email(ctx, field, obj)
+		case "avatarUrl":
+			out.Values[i] = ec._OrgMember_avatarUrl(ctx, field, obj)
 		case "role":
 			out.Values[i] = ec._OrgMember_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -14769,6 +16664,11 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 		case "ownerUserId":
 			out.Values[i] = ec._Organization_ownerUserId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentUserRole":
+			out.Values[i] = ec._Organization_currentUserRole(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -14987,6 +16887,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "orgInvitations":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_orgInvitations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "spaces":
 			field := field
 
@@ -14997,6 +16919,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_spaces(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "usageSummary":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_usageSummary(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -15419,6 +17363,8 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "storageUsageBytes":
 			out.Values[i] = ec._Space_storageUsageBytes(ctx, field, obj)
+		case "processingUsageCount":
+			out.Values[i] = ec._Space_processingUsageCount(ctx, field, obj)
 		case "storageMode":
 			out.Values[i] = ec._Space_storageMode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -15689,6 +17635,59 @@ func (ec *executionContext) _SpaceMember(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var spaceUsageImplementors = []string{"SpaceUsage"}
+
+func (ec *executionContext) _SpaceUsage(ctx context.Context, sel ast.SelectionSet, obj *SpaceUsage) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, spaceUsageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SpaceUsage")
+		case "spaceId":
+			out.Values[i] = ec._SpaceUsage_spaceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "key":
+			out.Values[i] = ec._SpaceUsage_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._SpaceUsage_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "storageUsageBytes":
+			out.Values[i] = ec._SpaceUsage_storageUsageBytes(ctx, field, obj)
+		case "processingUsageCount":
+			out.Values[i] = ec._SpaceUsage_processingUsageCount(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16076,6 +18075,64 @@ func (ec *executionContext) _UploadHeader(ctx context.Context, sel ast.Selection
 			}
 		case "value":
 			out.Values[i] = ec._UploadHeader_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var usageSummaryImplementors = []string{"UsageSummary"}
+
+func (ec *executionContext) _UsageSummary(ctx context.Context, sel ast.SelectionSet, obj *UsageSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, usageSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UsageSummary")
+		case "usedSpaces":
+			out.Values[i] = ec._UsageSummary_usedSpaces(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "maxSpaces":
+			out.Values[i] = ec._UsageSummary_maxSpaces(ctx, field, obj)
+		case "usedHostedStorageBytes":
+			out.Values[i] = ec._UsageSummary_usedHostedStorageBytes(ctx, field, obj)
+		case "storageLimitGB":
+			out.Values[i] = ec._UsageSummary_storageLimitGB(ctx, field, obj)
+		case "usedTransforms":
+			out.Values[i] = ec._UsageSummary_usedTransforms(ctx, field, obj)
+		case "transformsLimit":
+			out.Values[i] = ec._UsageSummary_transformsLimit(ctx, field, obj)
+		case "periodStart":
+			out.Values[i] = ec._UsageSummary_periodStart(ctx, field, obj)
+		case "periodEnd":
+			out.Values[i] = ec._UsageSummary_periodEnd(ctx, field, obj)
+		case "spaces":
+			out.Values[i] = ec._UsageSummary_spaces(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -16646,6 +18703,20 @@ func (ec *executionContext) marshalNAuthProvider2ᚖgithubᚗcomᚋcshumᚋimago
 	return ec._AuthProvider(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNBillingSession2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession(ctx context.Context, sel ast.SelectionSet, v BillingSession) graphql.Marshaler {
+	return ec._BillingSession(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBillingSession2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession(ctx context.Context, sel ast.SelectionSet, v *BillingSession) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BillingSession(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -16840,6 +18911,46 @@ func (ec *executionContext) marshalNLicenseStatus2ᚖgithubᚗcomᚋcshumᚋimag
 	return ec._LicenseStatus(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNOrgInvitation2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitationᚄ(ctx context.Context, sel ast.SelectionSet, v []*OrgInvitation) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNOrgInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitation(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNOrgInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitation(ctx context.Context, sel ast.SelectionSet, v *OrgInvitation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._OrgInvitation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNOrgInviteResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInviteResult(ctx context.Context, sel ast.SelectionSet, v OrgInviteResult) graphql.Marshaler {
+	return ec._OrgInviteResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOrgInviteResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInviteResult(ctx context.Context, sel ast.SelectionSet, v *OrgInviteResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._OrgInviteResult(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNOrgMember2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember(ctx context.Context, sel ast.SelectionSet, v OrgMember) graphql.Marshaler {
 	return ec._OrgMember(ctx, sel, &v)
 }
@@ -16868,6 +18979,40 @@ func (ec *executionContext) marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagor�
 		return graphql.Null
 	}
 	return ec._OrgMember(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole(ctx context.Context, v any) (OrgMemberAssignableRole, error) {
+	var res OrgMemberAssignableRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrgMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberAssignableRole(ctx context.Context, sel ast.SelectionSet, v OrgMemberAssignableRole) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberRole(ctx context.Context, v any) (OrgMemberRole, error) {
+	var res OrgMemberRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberRole(ctx context.Context, sel ast.SelectionSet, v OrgMemberRole) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNOrganization2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v Organization) graphql.Marshaler {
+	return ec._Organization(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *Organization) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Organization(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPresignedUpload2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐPresignedUpload(ctx context.Context, sel ast.SelectionSet, v PresignedUpload) graphql.Marshaler {
@@ -17002,6 +19147,62 @@ func (ec *executionContext) marshalNSpaceMember2ᚖgithubᚗcomᚋcshumᚋimagor
 		return graphql.Null
 	}
 	return ec._SpaceMember(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole(ctx context.Context, v any) (SpaceMemberAssignableRole, error) {
+	var res SpaceMemberAssignableRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSpaceMemberAssignableRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberAssignableRole(ctx context.Context, sel ast.SelectionSet, v SpaceMemberAssignableRole) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSpaceMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRole(ctx context.Context, v any) (SpaceMemberRole, error) {
+	var res SpaceMemberRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSpaceMemberRole2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRole(ctx context.Context, sel ast.SelectionSet, v SpaceMemberRole) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSpaceMemberRoleSource2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRoleSource(ctx context.Context, v any) (SpaceMemberRoleSource, error) {
+	var res SpaceMemberRoleSource
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSpaceMemberRoleSource2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberRoleSource(ctx context.Context, sel ast.SelectionSet, v SpaceMemberRoleSource) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNSpaceUsage2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsageᚄ(ctx context.Context, sel ast.SelectionSet, v []*SpaceUsage) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSpaceUsage2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsage(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSpaceUsage2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsage(ctx context.Context, sel ast.SelectionSet, v *SpaceUsage) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SpaceUsage(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigInput(ctx context.Context, v any) (StorageConfigInput, error) {
@@ -17176,6 +19377,20 @@ func (ec *executionContext) marshalNUploadHeader2ᚖgithubᚗcomᚋcshumᚋimago
 		return graphql.Null
 	}
 	return ec._UploadHeader(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUsageSummary2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUsageSummary(ctx context.Context, sel ast.SelectionSet, v UsageSummary) graphql.Marshaler {
+	return ec._UsageSummary(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUsageSummary2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUsageSummary(ctx context.Context, sel ast.SelectionSet, v *UsageSummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UsageSummary(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v User) graphql.Marshaler {
@@ -17541,6 +19756,20 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = ctx
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOOrgInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitation(ctx context.Context, sel ast.SelectionSet, v *OrgInvitation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._OrgInvitation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember(ctx context.Context, sel ast.SelectionSet, v *OrgMember) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._OrgMember(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *Organization) graphql.Marshaler {
