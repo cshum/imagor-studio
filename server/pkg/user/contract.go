@@ -26,6 +26,13 @@ type AuthProvider struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+type PasswordSignupStore interface {
+	CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetByID(ctx context.Context, id string) (*User, error)
+	SetActive(ctx context.Context, id string, active bool) error
+}
+
 type OAuthStore interface {
 	UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*User, error)
 	UpdateRole(ctx context.Context, id string, role string) error

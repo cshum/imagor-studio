@@ -74,6 +74,7 @@ func initializeProcessingWithFactory(cfg *config.Config, nodeCfg processing.Node
 		SpaceStore:              spaceStore,
 		SpaceInviteStore:        nil,
 		InviteSender:            nil,
+		SignupVerification:      nil,
 		SpaceConfigStore:        spaceConfigStore,
 		ProcessingUsageRecorder: hooks.UsageRecorder,
 		ProcessingConfig:        &nodeCfg,

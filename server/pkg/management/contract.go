@@ -11,6 +11,7 @@ import (
 	sharedinvite "github.com/cshum/imagor-studio/server/pkg/invite"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
+	sharedsignup "github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	shareduser "github.com/cshum/imagor-studio/server/pkg/user"
 	"github.com/uptrace/bun"
@@ -50,6 +51,15 @@ type CloudConfig struct {
 
 type InviteSenderConfig = sharedinvite.Config
 
+type SignupVerificationConfig = sharedsignup.Config
+
+type SignupVerificationServices struct {
+	DB        *bun.DB
+	UserStore shareduser.PasswordSignupStore
+	OrgStore  org.OrgStore
+	Logger    *zap.Logger
+}
+
 type OAuthConfig struct {
 	GoogleClientID     string
 	GoogleClientSecret string
@@ -66,6 +76,7 @@ type CloudHTTPServices struct {
 	HostedStorageStore   HostedStorageStore
 	ProcessingUsageStore ProcessingUsageStore
 	BillingService       billing.Service
+	SignupVerification   sharedsignup.Runtime
 	CloudConfig          CloudConfig
 	GlobalImagor         ImagorSigningConfig
 	InternalAPISecret    string
@@ -81,6 +92,7 @@ type CloudWorkerServices struct {
 	HostedStorageStore   HostedStorageStore
 	ProcessingUsageStore ProcessingUsageStore
 	BillingService       billing.Service
+	SignupVerification   sharedsignup.Runtime
 	CloudConfig          CloudConfig
 	Logger               *zap.Logger
 }
@@ -133,6 +145,8 @@ type CloudStoresFactory func(cfg CloudStoresConfig, db *bun.DB, encryptionServic
 
 type InviteSenderFactory func(cfg InviteSenderConfig) (space.InviteSender, error)
 
+type SignupVerificationFactory func(cfg SignupVerificationConfig, services SignupVerificationServices) (sharedsignup.Runtime, error)
+
 type CloudConfigLoader func(args []string) (CloudConfig, error)
 
 type AuthRoutesRegistrar func(mux *http.ServeMux, cfg OAuthConfig, services CloudHTTPServices)
@@ -158,6 +172,7 @@ type CloudFactories struct {
 	ConfigLoader             CloudConfigLoader
 	Stores                   CloudStoresFactory
 	InviteSender             InviteSenderFactory
+	SignupVerification       SignupVerificationFactory
 	AutoMigration            AutoMigrationRunner
 	AuthRoutes               AuthRoutesRegistrar
 	InternalRoutes           InternalRoutesRegistrar

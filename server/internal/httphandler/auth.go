@@ -16,6 +16,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
@@ -31,12 +32,14 @@ type AuthHandler struct {
 	logger        *zap.Logger
 	embeddedMode  bool
 	multiTenant   bool
+	signupRuntime signup.Runtime
 }
 
 type AuthHandlerConfig struct {
-	EmbeddedMode bool
-	MultiTenant  bool
-	SpaceStore   space.SpaceStore
+	EmbeddedMode  bool
+	MultiTenant   bool
+	SpaceStore    space.SpaceStore
+	SignupRuntime signup.Runtime
 }
 
 type GuestLoginRequest struct {
@@ -60,6 +63,7 @@ func NewAuthHandler(
 		logger:        logger,
 		embeddedMode:  cfg.EmbeddedMode,
 		multiTenant:   cfg.MultiTenant,
+		signupRuntime: cfg.SignupRuntime,
 	}
 }
 
@@ -78,7 +82,7 @@ type RegisterAdminRequest struct {
 	DisplayName     string `json:"displayName"`
 	Username        string `json:"username"`
 	Password        string `json:"password"`
-	DefaultLanguage string `json:"defaultLanguage"` // Optional - defaults to "en" if not provided
+	DefaultLanguage string `json:"defaultLanguage"`
 }
 
 type LoginRequest struct {
@@ -108,6 +112,20 @@ type FirstRunResponse struct {
 
 type RefreshTokenRequest struct {
 	Token string `json:"token"`
+}
+
+type StartPublicSignupRequest struct {
+	DisplayName string `json:"displayName"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+}
+
+type VerifyPublicSignupRequest struct {
+	Token string `json:"token"`
+}
+
+type ResendPublicSignupVerificationRequest struct {
+	Email string `json:"email"`
 }
 
 func (h *AuthHandler) CheckFirstRun() http.HandlerFunc {
@@ -201,6 +219,128 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 		}
 
 		return WriteCreated(w, response)
+	})
+}
+
+func (h *AuthHandler) StartPublicSignup() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.cloudEnabled() {
+			return apperror.Forbidden("Public sign-up is not available in this deployment.")
+		}
+		if h.signupRuntime == nil {
+			return apperror.Forbidden("Email verification sign-up is not available in this deployment.")
+		}
+
+		var req StartPublicSignupRequest
+		if err := DecodeJSON(r, &req); err != nil {
+			return err
+		}
+
+		validationRequest := RegisterRequest{
+			DisplayName: req.DisplayName,
+			Email:       req.Email,
+			Password:    req.Password,
+		}
+		if err := h.validateRegisterRequest(&validationRequest, false); err != nil {
+			return err
+		}
+
+		result, err := h.signupRuntime.StartPublicSignup(r.Context(), signup.StartPublicSignupParams{
+			DisplayName: validation.NormalizeDisplayName(req.DisplayName),
+			Email:       validation.NormalizeEmail(req.Email),
+			Password:    req.Password,
+		})
+		if err != nil {
+			if errors.Is(err, signup.ErrEmailAlreadyExists) {
+				return apperror.Conflict("Email already exists", "email")
+			}
+			h.logger.Error("Failed to start public sign-up verification", zap.Error(err))
+			return apperror.InternalServerError("Failed to start sign-up")
+		}
+
+		return WriteCreated(w, result)
+	})
+}
+
+func (h *AuthHandler) VerifyPublicSignup() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.cloudEnabled() {
+			return apperror.Forbidden("Public sign-up is not available in this deployment.")
+		}
+		if h.signupRuntime == nil {
+			return apperror.Forbidden("Email verification sign-up is not available in this deployment.")
+		}
+
+		var req VerifyPublicSignupRequest
+		if err := DecodeJSON(r, &req); err != nil {
+			return err
+		}
+		if strings.TrimSpace(req.Token) == "" {
+			return apperror.BadRequest("Verification token is required", map[string]interface{}{"field": "token"})
+		}
+
+		result, err := h.signupRuntime.VerifyPublicSignup(r.Context(), strings.TrimSpace(req.Token))
+		if err != nil {
+			if errors.Is(err, signup.ErrVerificationTokenInvalid) {
+				return apperror.BadRequest("Verification link is invalid or has expired", map[string]interface{}{"field": "token"})
+			}
+			if errors.Is(err, signup.ErrEmailAlreadyExists) {
+				return apperror.Conflict("Email already exists", "email")
+			}
+			h.logger.Error("Failed to verify public sign-up", zap.Error(err))
+			return apperror.InternalServerError("Failed to verify sign-up")
+		}
+
+		user, err := h.userStore.GetByID(r.Context(), result.UserID)
+		if err != nil {
+			h.logger.Error("Failed to load verified user", zap.String("userID", result.UserID), zap.Error(err))
+			return apperror.InternalServerError("Failed to complete sign-up")
+		}
+		if user == nil {
+			return apperror.InternalServerError("Failed to complete sign-up")
+		}
+
+		orgID := strings.TrimSpace(result.OrgID)
+		if orgID == "" {
+			orgID = h.resolvePrimaryOrgID(r.Context(), result.UserID)
+		}
+
+		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
+		if err != nil {
+			return err
+		}
+
+		return WriteSuccess(w, response)
+	})
+}
+
+func (h *AuthHandler) ResendPublicSignupVerification() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.cloudEnabled() {
+			return apperror.Forbidden("Public sign-up is not available in this deployment.")
+		}
+		if h.signupRuntime == nil {
+			return apperror.Forbidden("Email verification sign-up is not available in this deployment.")
+		}
+
+		var req ResendPublicSignupVerificationRequest
+		if err := DecodeJSON(r, &req); err != nil {
+			return err
+		}
+		if err := validation.ValidateEmail(req.Email); err != nil {
+			return apperror.BadRequest("Invalid email", map[string]interface{}{"field": "email"})
+		}
+
+		result, err := h.signupRuntime.ResendPublicSignupVerification(r.Context(), validation.NormalizeEmail(req.Email))
+		if err != nil {
+			if errors.Is(err, signup.ErrPendingSignupNotFound) {
+				return apperror.BadRequest("No pending sign-up found for this email", map[string]interface{}{"field": "email"})
+			}
+			h.logger.Error("Failed to resend public sign-up verification", zap.Error(err))
+			return apperror.InternalServerError("Failed to resend sign-up verification")
+		}
+
+		return WriteSuccess(w, result)
 	})
 }
 

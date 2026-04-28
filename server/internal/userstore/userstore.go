@@ -24,6 +24,7 @@ type AuthProvider = shareduser.AuthProvider
 
 type Store interface {
 	Create(ctx context.Context, displayName, username, hashedPassword, role string) (*User, error)
+	CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
 	GetByIDAdmin(ctx context.Context, id string) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)

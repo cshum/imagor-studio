@@ -17,6 +17,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -314,6 +315,34 @@ func (m *MockUserStore) UpdateRole(ctx context.Context, id string, role string) 
 
 type MockRegistryStore struct {
 	mock.Mock
+}
+
+type MockSignupRuntime struct {
+	mock.Mock
+}
+
+func (m *MockSignupRuntime) StartPublicSignup(ctx context.Context, params signup.StartPublicSignupParams) (*signup.StartPublicSignupResult, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.StartPublicSignupResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) VerifyPublicSignup(ctx context.Context, token string) (*signup.VerifyPublicSignupResult, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.VerifyPublicSignupResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) ResendPublicSignupVerification(ctx context.Context, email string) (*signup.StartPublicSignupResult, error) {
+	args := m.Called(ctx, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.StartPublicSignupResult), args.Error(1)
 }
 
 func (m *MockRegistryStore) List(ctx context.Context, ownerID string, prefix *string) ([]*registrystore.Registry, error) {
@@ -1313,6 +1342,96 @@ func TestRegister_MultiTenant_OrgCreationFails(t *testing.T) {
 	assert.Equal(t, "INTERNAL_SERVER_ERROR", errResp.Code)
 
 	mockUserStore.AssertExpectations(t)
+}
+
+func TestStartPublicSignup(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("StartPublicSignup", mock.Anything, signup.StartPublicSignupParams{
+		DisplayName: "saas user",
+		Email:       "saasuser@example.com",
+		Password:    "password123",
+	}).Return(&signup.StartPublicSignupResult{
+		Email:                "saasuser@example.com",
+		VerificationRequired: true,
+		CooldownSeconds:      60,
+		ExpiresInSeconds:     900,
+		MaskedDestination:    "s***@example.com",
+	}, nil)
+
+	body, err := json.Marshal(StartPublicSignupRequest{
+		DisplayName: "saas user",
+		Email:       "saasuser@example.com",
+		Password:    "password123",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/start", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.StartPublicSignup()(rr, req)
+
+	require.Equal(t, http.StatusCreated, rr.Code)
+	var resp signup.StartPublicSignupResult
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	assert.True(t, resp.VerificationRequired)
+	assert.Equal(t, "saasuser@example.com", resp.Email)
+
+	mockSignupRuntime.AssertExpectations(t)
+}
+
+func TestVerifyPublicSignup(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	mockUserStore := new(MockUserStore)
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("VerifyPublicSignup", mock.Anything, "verify-token").Return(&signup.VerifyPublicSignupResult{
+		UserID: "verified-user-1",
+		OrgID:  "verified-org-1",
+	}, nil)
+	mockUserStore.On("GetByID", mock.Anything, "verified-user-1").Return(&userstore.User{
+		ID:          "verified-user-1",
+		DisplayName: "verified user",
+		Username:    "verifieduser",
+		Role:        "user",
+		IsActive:    true,
+	}, nil)
+
+	body, err := json.Marshal(VerifyPublicSignupRequest{Token: "verify-token"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/verify", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.VerifyPublicSignup()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "verified-org-1", claims.OrgID)
+
+	mockSignupRuntime.AssertExpectations(t)
+	mockUserStore.AssertExpectations(t)
+}
+
+func TestResendPublicSignupVerification_RequiresRuntime(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{})
+
+	body, err := json.Marshal(ResendPublicSignupVerificationRequest{Email: "saasuser@example.com"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/resend", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.ResendPublicSignupVerification()(rr, req)
+
+	require.Equal(t, http.StatusForbidden, rr.Code)
 }
 
 func ptrToString(value string) *string {

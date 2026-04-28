@@ -200,9 +200,10 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.RegistryStore,
 		services.Logger,
 		httphandler.AuthHandlerConfig{
-			EmbeddedMode: cfg.EmbeddedMode,
-			MultiTenant:  multiTenant,
-			SpaceStore:   services.SpaceStore,
+			EmbeddedMode:  cfg.EmbeddedMode,
+			MultiTenant:   multiTenant,
+			SpaceStore:    services.SpaceStore,
+			SignupRuntime: services.SignupVerification,
 		},
 	)
 
@@ -224,6 +225,9 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 
 	// Auth endpoints (no auth required)
 	mux.HandleFunc("/api/auth/register", authHandler.Register())
+	mux.HandleFunc("/api/auth/register/start", authHandler.StartPublicSignup())
+	mux.HandleFunc("/api/auth/register/verify", authHandler.VerifyPublicSignup())
+	mux.HandleFunc("/api/auth/register/resend", authHandler.ResendPublicSignupVerification())
 	mux.HandleFunc("/api/auth/login", authHandler.Login())
 	mux.HandleFunc("/api/auth/refresh", authHandler.RefreshToken())
 	mux.HandleFunc("/api/auth/guest", authHandler.GuestLogin())
@@ -242,6 +246,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		HostedStorageStore:   services.HostedStorageStore,
 		ProcessingUsageStore: services.ProcessingUsageStore,
 		BillingService:       services.BillingService,
+		SignupVerification:   services.SignupVerification,
 		CloudConfig:          cloudConfig,
 		InternalAPISecret:    cloudConfig.InternalAPISecret,
 		Logger:               services.Logger,

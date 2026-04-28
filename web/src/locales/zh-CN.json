@@ -125,6 +125,16 @@
       "errorNoToken": "未收到认证令牌",
       "backToLogin": "返回登录"
     },
+    "registerVerify": {
+      "title": "正在确认您的账户",
+      "subtitle": "请稍候，我们正在完成您的登录。",
+      "verifying": "正在验证您的邮箱确认链接。",
+      "errorTitle": "我们无法确认您的账户",
+      "errorSubtitle": "该确认链接可能无效或已过期。",
+      "missingToken": "该确认链接缺少验证令牌。",
+      "failed": "我们无法验证您的账户。请重新请求一封新的确认邮件。",
+      "backToLogin": "返回登录"
+    },
     "error": {
       "defaultTitle": "出现了一些问题",
       "notFoundTitle": "未找到空间",
@@ -1463,7 +1473,10 @@
       "googleCta": "使用 Google 继续",
       "credentialsDivider": "或使用邮箱和密码创建账户",
       "emailPlaceholder": "name@example.com",
+      "pendingTitle": "请检查您的电子邮件",
+      "pendingDescription": "我们已将确认链接发送到 {{email}}。打开链接以完成账户创建。",
       "submit": "创建账户",
+      "useDifferentEmail": "改用其他电子邮件",
       "signInPrompt": "已经有账户了？",
       "signInLink": "登录",
       "failed": "创建账户失败，请重试。"

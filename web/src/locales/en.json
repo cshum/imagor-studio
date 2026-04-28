@@ -96,7 +96,10 @@
       "googleCta": "Continue with Google",
       "credentialsDivider": "Or create an account with email and password",
       "emailPlaceholder": "name@example.com",
+      "pendingTitle": "Check your email",
+      "pendingDescription": "We sent a confirmation link to {{email}}. Open it to finish creating your account.",
       "submit": "Create account",
+      "useDifferentEmail": "Use a different email",
       "signInPrompt": "Already have an account?",
       "signInLink": "Sign in",
       "failed": "Failed to create account. Please try again."
@@ -170,6 +173,16 @@
         "inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first."
       },
       "errorNoToken": "No authentication token received",
+      "backToLogin": "Back to login"
+    },
+    "registerVerify": {
+      "title": "Confirming your account",
+      "subtitle": "Please wait while we finish signing you in.",
+      "verifying": "Verifying your email confirmation link.",
+      "errorTitle": "We couldn't confirm your account",
+      "errorSubtitle": "The confirmation link may be invalid or expired.",
+      "missingToken": "The confirmation link is missing its verification token.",
+      "failed": "We couldn't verify your account. Please request a new confirmation email.",
       "backToLogin": "Back to login"
     },
     "error": {

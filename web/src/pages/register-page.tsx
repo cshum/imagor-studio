@@ -5,7 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, Navigate, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
 
-import { getAuthProviders, getGoogleLoginUrl, register, type AuthApiError } from '@/api/auth-api'
+import {
+  getAuthProviders,
+  getGoogleLoginUrl,
+  registerWithVerificationFallback,
+  type AuthApiError,
+  type PublicSignupVerificationResponse,
+} from '@/api/auth-api'
 import { AuthPageShell } from '@/components/auth-page-shell'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -60,6 +66,8 @@ export function RegisterPage() {
   const { authState } = useAuth()
   const navigate = useNavigate()
   const [googleEnabled, setGoogleEnabled] = useState(false)
+  const [pendingVerification, setPendingVerification] =
+    useState<PublicSignupVerificationResponse | null>(null)
   const productHighlights = [
     t('auth.login.highlights.storage'),
     t('auth.login.highlights.delivery'),
@@ -128,13 +136,24 @@ export function RegisterPage() {
 
   const onSubmit = async (values: RegisterFormValues) => {
     try {
-      const response = await register({
+      const result = await registerWithVerificationFallback({
         displayName: values.displayName.trim(),
         email: values.email.trim(),
         password: values.password,
       })
 
-      await initAuth(response.token)
+      if (result.kind === 'verification-required') {
+        setPendingVerification(result.response)
+        form.reset({
+          displayName: values.displayName.trim(),
+          email: values.email.trim(),
+          password: '',
+          confirmPassword: '',
+        })
+        return
+      }
+
+      await initAuth(result.response.token)
       await initializeLocale()
       navigate({ to: '/' })
     } catch (error) {
@@ -176,6 +195,29 @@ export function RegisterPage() {
       }
       formTitle={t('auth.register.formTitle')}
     >
+      {pendingVerification ? (
+        <div className='space-y-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-6'>
+          <div className='space-y-2'>
+            <h2 className='text-foreground text-lg font-semibold'>
+              {t('auth.register.pendingTitle')}
+            </h2>
+            <p className='text-muted-foreground text-sm leading-6'>
+              {t('auth.register.pendingDescription', {
+                email: pendingVerification.maskedDestination || pendingVerification.email,
+              })}
+            </p>
+          </div>
+          <Button
+            type='button'
+            variant='outline'
+            className='w-full'
+            onClick={() => setPendingVerification(null)}
+          >
+            {t('auth.register.useDifferentEmail')}
+          </Button>
+        </div>
+      ) : (
+        <>
       {googleEnabled ? (
         <Button
           type='button'
@@ -288,6 +330,8 @@ export function RegisterPage() {
           </ButtonWithLoading>
         </form>
       </Form>
+        </>
+      )}
 
       <p className='text-muted-foreground text-center text-sm'>
         {t('auth.register.signInPrompt')}{' '}
