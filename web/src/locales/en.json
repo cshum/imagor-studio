@@ -71,8 +71,21 @@
   },
   "auth": {
     "login": {
-      "title": "Welcome back",
-      "subtitle": "Enter your credentials to access Imagor Studio",
+      "eyebrow": "Imagor Studio for Teams",
+      "title": "High-performance image processing for teams",
+      "formTitle": "Sign in",
+      "googleCta": "Continue with Google",
+      "credentialsDividerCloud": "Or use email and password",
+      "credentialsDividerSelfHosted": "Or use username and password",
+      "identifierLabelCloud": "Email",
+      "identifierLabelSelfHosted": "Username",
+      "identifierPlaceholderCloud": "Enter your email",
+      "identifierPlaceholderSelfHosted": "Enter your username",
+      "highlights": {
+        "storage": "Organize storage and delivery by team or environment",
+        "delivery": "Manage image infrastructure without sharing credentials",
+        "access": "Review, edit, and organize images and templates in one place"
+      },
       "signIn": "Sign In",
       "loginFailed": "Invalid username or password. Please try again."
     },
@@ -737,7 +750,7 @@
       "title": "Spaces",
       "createSpace": "Create Space",
       "createNewSpace": "Create New Space",
-      "createSpaceDescription": "Create an image workspace with its own storage, delivery configuration, and access controls.",
+      "createSpaceDescription": "Create an image processing space with its own storage, delivery configuration, and access controls.",
       "editSpace": "Edit Space",
       "editSpaceDescription": "Update space configuration. Changes will be applied immediately.",
       "deleteSpace": "Delete Space",
@@ -750,11 +763,11 @@
         "next": "Next",
         "back": "Back"
       },
-      "noSpacesFound": "Create your first image workspace",
+      "noSpacesFound": "Create your first image processing space",
       "noSpacesAvailable": "No spaces available yet",
-      "description": "Create and manage image workspaces for each team, brand, or environment.",
-      "emptyDescription": "Launch your first image workspace for uploads, transforms, and delivery.",
-      "emptyDescriptionMember": "You do not have access to any image workspaces yet.",
+      "description": "Process, deliver, and manage images by team, brand, or environment.",
+      "emptyDescription": "Launch your first image processing space for uploads, transforms, and delivery.",
+      "emptyDescriptionMember": "You do not have access to any image processing spaces yet.",
       "settings": "Settings",
       "spaceCount": "{{count}} space(s)",
       "openGallery": "Open Gallery",

@@ -61,6 +61,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const search = useSearch({ from: '/login' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
+  const isMultiTenant = authState.multiTenant
 
   // Helper function to validate redirect URL for security
   const isValidRedirectUrl = (url: string): boolean => {
@@ -156,100 +157,146 @@ export function LoginPage() {
     window.location.href = getGoogleLoginUrl()
   }
 
+  const credentialsDividerKey = isMultiTenant
+    ? 'auth.login.credentialsDividerCloud'
+    : 'auth.login.credentialsDividerSelfHosted'
+  const identifierLabelKey = isMultiTenant
+    ? 'auth.login.identifierLabelCloud'
+    : 'auth.login.identifierLabelSelfHosted'
+  const identifierPlaceholderKey = isMultiTenant
+    ? 'auth.login.identifierPlaceholderCloud'
+    : 'auth.login.identifierPlaceholderSelfHosted'
+  const productHighlights = [
+    t('auth.login.highlights.storage'),
+    t('auth.login.highlights.delivery'),
+    t('auth.login.highlights.access'),
+  ]
+
   return (
-    <div className='min-h-screen-safe flex flex-col'>
-      <BrandBar rightSlot={<ModeToggle />} />
+    <div className='bg-background min-h-screen-safe relative flex flex-col overflow-hidden'>
+      <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.16),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_30%)]' />
+      <BrandBar
+        rightSlot={
+          <div className='flex items-center gap-2'>
+            <LicenseBadge />
+            <ModeToggle />
+          </div>
+        }
+      />
 
-      {/* Content */}
-      <div className='relative flex flex-1 items-start justify-center py-6 md:items-center'>
-        <LicenseBadge />
-        <Card className='w-full max-w-md'>
-          <CardHeader className='space-y-1 text-center'>
-            <CardTitle className='text-2xl font-semibold tracking-tight'>
-              {t('auth.login.title')}
-            </CardTitle>
-            <CardDescription className='text-muted-foreground'>
-              {t('auth.login.subtitle')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-                <FormField
-                  control={form.control}
-                  name='username'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('common.labels.username')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='text'
-                          placeholder={t('forms.placeholders.enterUsername')}
-                          disabled={form.formState.isSubmitting}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='password'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('common.labels.password')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='password'
-                          placeholder={t('forms.placeholders.enterPassword')}
-                          disabled={form.formState.isSubmitting}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {form.formState.errors.root && (
-                  <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
-                    {form.formState.errors.root.message}
-                  </div>
-                )}
-                <ButtonWithLoading
-                  type='submit'
-                  className='w-full'
-                  isLoading={form.formState.isSubmitting}
-                >
-                  {t('auth.login.signIn')}
-                </ButtonWithLoading>
-              </form>
-            </Form>
+      <div className='relative flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:px-8'>
+        <div className='grid w-full max-w-6xl gap-8 lg:grid-cols-[minmax(0,1.1fr)_440px] lg:gap-12'>
+          <section className='flex flex-col justify-center rounded-[2rem] border border-border/50 bg-gradient-to-br from-sky-500/10 via-background to-amber-500/10 p-8 shadow-sm backdrop-blur sm:p-10 lg:min-h-[640px]'>
+            <div className='max-w-xl'>
+              <p className='text-muted-foreground text-sm font-medium tracking-[0.08em]'>
+                {t('auth.login.eyebrow')}
+              </p>
+              <h1 className='mt-4 max-w-lg text-4xl font-semibold tracking-tight text-balance sm:text-5xl'>
+                {t('auth.login.title')}
+              </h1>
 
-            {googleEnabled && (
-              <>
-                <div className='relative my-4'>
-                  <div className='absolute inset-0 flex items-center'>
-                    <span className='border-border w-full border-t' />
-                  </div>
-                  <div className='relative flex justify-center text-xs uppercase'>
-                    <span className='bg-card text-muted-foreground px-2'>or</span>
-                  </div>
-                </div>
+              <ul className='mt-6 space-y-3'>
+                {productHighlights.map((highlight) => (
+                  <li key={highlight} className='flex items-start gap-3'>
+                    <span className='mt-2 h-1.5 w-1.5 rounded-full bg-sky-500' />
+                    <p className='text-foreground/90 text-sm font-medium leading-6 sm:text-base'>
+                      {highlight}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
 
-                <Button
-                  type='button'
-                  variant='outline'
-                  className='w-full'
-                  onClick={handleGoogleLogin}
-                >
-                  <GoogleIcon />
-                  Continue with Google
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
+          <section className='flex items-center justify-center'>
+            <Card className='w-full max-w-md border-border/60 shadow-xl shadow-black/5'>
+              <CardHeader className='space-y-1 text-center'>
+                <CardTitle className='text-2xl font-semibold tracking-tight'>
+                  {t('auth.login.formTitle')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-5'>
+                {googleEnabled ? (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='h-11 w-full text-sm font-medium'
+                    onClick={handleGoogleLogin}
+                  >
+                    <GoogleIcon />
+                    {t('auth.login.googleCta')}
+                  </Button>
+                ) : null}
+
+                {googleEnabled ? (
+                  <div className='relative'>
+                    <div className='absolute inset-0 flex items-center'>
+                      <span className='border-border w-full border-t' />
+                    </div>
+                    <div className='relative flex justify-center text-xs font-medium'>
+                      <span className='bg-card text-muted-foreground px-3'>
+                        {t(credentialsDividerKey)}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+                    <FormField
+                      control={form.control}
+                      name='username'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t(identifierLabelKey)}</FormLabel>
+                          <FormControl>
+                            <Input
+                              type='text'
+                              placeholder={t(identifierPlaceholderKey)}
+                              disabled={form.formState.isSubmitting}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name='password'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('common.labels.password')}</FormLabel>
+                          <FormControl>
+                            <Input
+                              type='password'
+                              placeholder={t('forms.placeholders.enterPassword')}
+                              disabled={form.formState.isSubmitting}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {form.formState.errors.root && (
+                      <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+                        {form.formState.errors.root.message}
+                      </div>
+                    )}
+                    <ButtonWithLoading
+                      type='submit'
+                      className='h-11 w-full'
+                      isLoading={form.formState.isSubmitting}
+                    >
+                      {t('auth.login.signIn')}
+                    </ButtonWithLoading>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </section>
+        </div>
       </div>
     </div>
   )
