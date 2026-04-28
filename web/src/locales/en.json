@@ -71,7 +71,7 @@
   },
   "auth": {
     "login": {
-      "eyebrow": "Imagor Studio for Teams",
+      "eyebrow": "Imagor Studio",
       "title": "High-performance image processing for teams",
       "formTitle": "Sign in",
       "googleCta": "Continue with Google",
@@ -82,7 +82,7 @@
       "identifierPlaceholderCloud": "Enter your email",
       "identifierPlaceholderSelfHosted": "Enter your username",
       "highlights": {
-        "storage": "Organize storage and delivery by team or environment",
+        "storage": "Control storage and delivery by team or environment",
         "delivery": "Manage image infrastructure without sharing credentials",
         "access": "Review, edit, and organize images and templates in one place"
       },

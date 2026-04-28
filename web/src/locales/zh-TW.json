@@ -71,7 +71,7 @@
   },
   "auth": {
     "login": {
-      "eyebrow": "Imagor Studio 團隊協作",
+      "eyebrow": "Imagor Studio",
       "title": "登入您的工作空間",
       "subtitle": "在同一個地方管理圖片儲存、交付與存取權限。",
       "formTitle": "登入",

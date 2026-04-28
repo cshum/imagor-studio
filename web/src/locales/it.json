@@ -71,7 +71,7 @@
   },
   "auth": {
     "login": {
-      "eyebrow": "Imagor Studio per team",
+      "eyebrow": "Imagor Studio",
       "title": "Accedi al tuo workspace",
       "subtitle": "Gestisci storage, delivery e accessi delle immagini da un unico posto.",
       "formTitle": "Accedi",

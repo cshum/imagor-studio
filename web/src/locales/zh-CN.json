@@ -1436,7 +1436,7 @@
   },
   "auth": {
     "login": {
-      "eyebrow": "Imagor Studio 团队协作",
+      "eyebrow": "Imagor Studio",
       "title": "登录到你的工作空间",
       "subtitle": "在一个地方管理图片存储、交付和访问权限。",
       "formTitle": "登录",
