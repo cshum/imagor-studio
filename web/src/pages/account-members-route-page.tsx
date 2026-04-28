@@ -325,6 +325,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
             ? t('pages.organizationMembers.listDescription', { name: organization.name })
             : t('pages.organizationMembers.listDescriptionFallback')
         }
+        contentClassName='border-t-0'
       >
         {members.length === 0 ? (
           <div className='rounded-lg border border-dashed p-6 text-center'>
@@ -543,6 +544,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
         <SettingsSection
           title={`${t('pages.organizationMembers.pendingTitle')} (${invitations.length})`}
           description={t('pages.organizationMembers.pendingDescription')}
+          contentClassName='border-t-0'
         >
           {invitations.length === 0 ? (
             <div className='rounded-lg border border-dashed p-6 text-center'>
