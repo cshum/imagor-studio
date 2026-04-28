@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { BrandBar } from '@/components/brand-bar'
+import { LanguageSelector } from '@/components/language-selector'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
 
@@ -25,6 +26,7 @@ export function AuthPageShell({
         rightSlot={
           <div className='flex items-center gap-2'>
             <LicenseBadge />
+            <LanguageSelector />
             <ModeToggle />
           </div>
         }
