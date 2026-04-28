@@ -72,7 +72,7 @@
   "auth": {
     "login": {
       "eyebrow": "Imagor Studio",
-      "title": "登入您的工作空間",
+      "title": "適合團隊的高效能圖片處理",
       "subtitle": "在同一個地方管理圖片儲存、交付與存取權限。",
       "formTitle": "登入",
       "formSubtitleCloud": "請使用團隊邀請您的帳號登入。",
@@ -86,9 +86,9 @@
       "identifierPlaceholderSelfHosted": "輸入您的使用者名稱",
       "inviteHint": "使用您的團隊帳號登入，以存取共享空間、交付設定與儲存配置。",
       "highlights": {
-        "storage": "依工作空間分開管理儲存",
-        "delivery": "為每個環境設定交付方式",
-        "access": "跨團隊控管存取權限"
+        "storage": "依團隊或環境控管儲存與交付",
+        "delivery": "無須共用憑證即可管理圖片基礎架構",
+        "access": "在同一處檢視、編輯並整理圖片與範本"
       },
       "signIn": "登入",
       "loginFailed": "登入憑證無效。請再試一次。",

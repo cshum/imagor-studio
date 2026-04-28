@@ -72,7 +72,7 @@
   "auth": {
     "login": {
       "eyebrow": "Imagor Studio",
-      "title": "Accedi al tuo workspace",
+      "title": "Elaborazione immagini ad alte prestazioni per i team",
       "subtitle": "Gestisci storage, delivery e accessi delle immagini da un unico posto.",
       "formTitle": "Accedi",
       "formSubtitleCloud": "Accedi con l'account con cui il tuo team ti ha invitato.",
@@ -86,9 +86,9 @@
       "identifierPlaceholderSelfHosted": "Inserisci il tuo nome utente",
       "inviteHint": "Usa il tuo account di team per accedere a spazi condivisi, impostazioni di delivery e configurazione dello storage.",
       "highlights": {
-        "storage": "Separa lo storage per workspace",
-        "delivery": "Configura la delivery per ogni ambiente",
-        "access": "Controlla gli accessi tra team"
+        "storage": "Controlla storage e delivery per team o ambiente",
+        "delivery": "Gestisci l'infrastruttura immagini senza condividere credenziali",
+        "access": "Rivedi, modifica e organizza immagini e template in un unico posto"
       },
       "signIn": "Accedi",
       "loginFailed": "Credenziali non valide. Riprova.",
