@@ -7,7 +7,6 @@ import { z } from 'zod'
 
 import { getAuthProviders, getGoogleLoginUrl, login } from '@/api/auth-api'
 import { AuthPageShell } from '@/components/auth-page-shell'
-import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -321,10 +320,7 @@ export function LoginPage() {
       {isMultiTenant ? (
         <p className='text-muted-foreground text-center text-sm'>
           {t('auth.login.createAccountPrompt')}{' '}
-          <Link
-            to='/register'
-            className='text-foreground font-medium underline underline-offset-4'
-          >
+          <Link to='/register' className='text-foreground font-medium underline underline-offset-4'>
             {t('auth.login.createAccountLink')}
           </Link>
         </p>
