@@ -192,6 +192,12 @@
       "errorSubtitle": "Il link di conferma potrebbe non essere valido o essere scaduto.",
       "missingToken": "Nel link di conferma manca il token di verifica.",
       "failed": "Non siamo riusciti a verificare il tuo account. Richiedi una nuova email di conferma.",
+      "resendDescription": "Possiamo inviare un nuovo link di conferma a {{email}}.",
+      "resendAction": "Invia di nuovo l'email di conferma",
+      "resendCountdown": "Nuovo invio disponibile tra {{seconds}} s",
+      "resendSuccess": "Abbiamo inviato una nuova email di conferma.",
+      "resendCooldown": "Attendi prima di richiedere un'altra email di conferma.",
+      "resendFailed": "Invio della email di conferma non riuscito. Riprova.",
       "backToLogin": "Torna al login"
     },
     "error": {

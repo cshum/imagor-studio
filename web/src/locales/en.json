@@ -188,6 +188,12 @@
       "errorSubtitle": "The confirmation link may be invalid or expired.",
       "missingToken": "The confirmation link is missing its verification token.",
       "failed": "We couldn't verify your account. Please request a new confirmation email.",
+      "resendDescription": "We can send a fresh confirmation link to {{email}}.",
+      "resendAction": "Resend confirmation email",
+      "resendCountdown": "Resend available in {{seconds}}s",
+      "resendSuccess": "We sent a fresh confirmation email.",
+      "resendCooldown": "Please wait before requesting another confirmation email.",
+      "resendFailed": "Failed to resend the confirmation email. Please try again.",
       "backToLogin": "Back to login"
     },
     "error": {

@@ -192,6 +192,12 @@
       "errorSubtitle": "此確認連結可能已失效或過期。",
       "missingToken": "此確認連結缺少驗證令牌。",
       "failed": "我們無法驗證您的帳戶。請重新要求新的確認郵件。",
+      "resendDescription": "我們可以重新寄送一封新的確認郵件到 {{email}}。",
+      "resendAction": "重新寄送確認郵件",
+      "resendCountdown": "可在 {{seconds}} 秒後重新寄送",
+      "resendSuccess": "我們已寄出新的確認郵件。",
+      "resendCooldown": "請稍候後再要求新的確認郵件。",
+      "resendFailed": "重新寄送確認郵件失敗，請再試一次。",
       "backToLogin": "返回登入"
     },
     "error": {

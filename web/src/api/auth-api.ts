@@ -200,7 +200,10 @@ export async function verifyPublicSignup(token: string): Promise<LoginResponse> 
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`)
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
   }
 
   return response.json()

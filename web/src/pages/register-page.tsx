@@ -306,118 +306,118 @@ export function RegisterPage() {
         </div>
       ) : (
         <>
-      {googleEnabled ? (
-        <Button
-          type='button'
-          variant='outline'
-          className='h-11 w-full text-sm font-medium'
-          onClick={handleGoogleSignup}
-        >
-          <GoogleIcon />
-          {t('auth.register.googleCta')}
-        </Button>
-      ) : null}
+          {googleEnabled ? (
+            <Button
+              type='button'
+              variant='outline'
+              className='h-11 w-full text-sm font-medium'
+              onClick={handleGoogleSignup}
+            >
+              <GoogleIcon />
+              {t('auth.register.googleCta')}
+            </Button>
+          ) : null}
 
-      {googleEnabled ? (
-        <div className='relative'>
-          <div className='absolute inset-0 flex items-center'>
-            <span className='border-border w-full border-t' />
-          </div>
-          <div className='relative flex justify-center text-xs font-medium'>
-            <span className='bg-background text-muted-foreground px-3'>
-              {t('auth.register.credentialsDivider')}
-            </span>
-          </div>
-        </div>
-      ) : null}
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-          <FormField
-            control={form.control}
-            name='displayName'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.profile.displayName')}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t('pages.profile.displayNamePlaceholder')}
-                    disabled={form.formState.isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='email'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.profile.email')}</FormLabel>
-                <FormControl>
-                  <Input
-                    type='email'
-                    placeholder={t('auth.register.emailPlaceholder')}
-                    disabled={form.formState.isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='password'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('common.labels.password')}</FormLabel>
-                <FormControl>
-                  <Input
-                    type='password'
-                    placeholder={t('forms.placeholders.enterPassword')}
-                    disabled={form.formState.isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='confirmPassword'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('pages.admin.confirmPassword')}</FormLabel>
-                <FormControl>
-                  <Input
-                    type='password'
-                    placeholder={t('forms.placeholders.confirmPassword')}
-                    disabled={form.formState.isSubmitting}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {form.formState.errors.root && (
-            <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
-              {form.formState.errors.root.message}
+          {googleEnabled ? (
+            <div className='relative'>
+              <div className='absolute inset-0 flex items-center'>
+                <span className='border-border w-full border-t' />
+              </div>
+              <div className='relative flex justify-center text-xs font-medium'>
+                <span className='bg-background text-muted-foreground px-3'>
+                  {t('auth.register.credentialsDivider')}
+                </span>
+              </div>
             </div>
-          )}
-          <ButtonWithLoading
-            type='submit'
-            className='h-11 w-full'
-            isLoading={form.formState.isSubmitting}
-          >
-            {t('auth.register.submit')}
-          </ButtonWithLoading>
-        </form>
-      </Form>
+          ) : null}
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+              <FormField
+                control={form.control}
+                name='displayName'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('pages.profile.displayName')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('pages.profile.displayNamePlaceholder')}
+                        disabled={form.formState.isSubmitting}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('pages.profile.email')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='email'
+                        placeholder={t('auth.register.emailPlaceholder')}
+                        disabled={form.formState.isSubmitting}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('common.labels.password')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='password'
+                        placeholder={t('forms.placeholders.enterPassword')}
+                        disabled={form.formState.isSubmitting}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='confirmPassword'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('pages.admin.confirmPassword')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='password'
+                        placeholder={t('forms.placeholders.confirmPassword')}
+                        disabled={form.formState.isSubmitting}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.formState.errors.root && (
+                <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+                  {form.formState.errors.root.message}
+                </div>
+              )}
+              <ButtonWithLoading
+                type='submit'
+                className='h-11 w-full'
+                isLoading={form.formState.isSubmitting}
+              >
+                {t('auth.register.submit')}
+              </ButtonWithLoading>
+            </form>
+          </Form>
         </>
       )}
 
