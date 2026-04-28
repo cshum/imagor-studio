@@ -737,7 +737,7 @@
       "title": "Spaces",
       "createSpace": "Create Space",
       "createNewSpace": "Create New Space",
-      "createSpaceDescription": "Create a dedicated image workspace with its own storage, delivery settings, and access.",
+      "createSpaceDescription": "Create an image workspace with its own storage, delivery configuration, and access controls.",
       "editSpace": "Edit Space",
       "editSpaceDescription": "Update space configuration. Changes will be applied immediately.",
       "deleteSpace": "Delete Space",
