@@ -182,9 +182,9 @@ export function LoginPage() {
         }
       />
 
-      <div className='relative flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:px-8'>
+      <div className='relative flex flex-1 items-start justify-center px-4 py-6 sm:px-6 sm:py-8 lg:items-center lg:px-8'>
         <div className='grid w-full max-w-6xl gap-10 lg:grid-cols-[minmax(0,1.1fr)_440px] lg:gap-14'>
-          <section className='relative flex flex-col justify-center px-2 py-6 sm:px-4 sm:py-8 lg:min-h-[640px] lg:px-0'>
+          <section className='relative hidden flex-col justify-center px-2 py-6 sm:px-4 sm:py-8 lg:flex lg:min-h-[640px] lg:px-0'>
             <div className='max-w-xl'>
               <p className='text-muted-foreground text-sm font-medium tracking-[0.08em]'>
                 {t('auth.login.eyebrow')}
@@ -197,7 +197,7 @@ export function LoginPage() {
                 {productHighlights.map((highlight) => (
                   <li key={highlight} className='flex items-start gap-3'>
                     <span className='mt-2 h-1.5 w-1.5 rounded-full bg-sky-500' />
-                    <p className='text-foreground/90 text-sm font-medium leading-6 sm:text-base'>
+                    <p className='text-foreground/90 text-sm leading-6 font-medium sm:text-base'>
                       {highlight}
                     </p>
                   </li>
@@ -206,9 +206,18 @@ export function LoginPage() {
             </div>
           </section>
 
-          <section className='flex px-2 py-6 sm:px-4 sm:py-8 lg:min-h-[640px] lg:border-l lg:border-border/40 lg:pl-14'>
+          <section className='lg:border-border/40 flex px-2 py-4 sm:px-4 sm:py-6 lg:min-h-[640px] lg:border-l lg:pl-14'>
             <div className='flex w-full items-center justify-center'>
               <div className='w-full max-w-md space-y-5'>
+                <div className='space-y-3 lg:hidden'>
+                  <p className='text-muted-foreground text-sm font-medium tracking-[0.08em]'>
+                    {t('auth.login.eyebrow')}
+                  </p>
+                  <h1 className='max-w-sm text-2xl font-semibold tracking-tight text-balance'>
+                    {t('auth.login.title')}
+                  </h1>
+                </div>
+
                 <div className='space-y-1 text-center'>
                   <h2 className='text-2xl font-semibold tracking-tight'>
                     {t('auth.login.formTitle')}
