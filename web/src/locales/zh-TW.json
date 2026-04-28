@@ -891,6 +891,25 @@
         "pro": "適合需要更多空間與更高處理額度的成長型團隊。",
         "team": "適合管理多個空間且處理量更高的大型組織。"
       },
+      "danger": {
+        "title": "危險區域",
+        "deleteTitle": "刪除組織",
+        "deleteDescription": "永久刪除此組織，並移除仍綁定於此組織的組織層級存取權。",
+        "deleteChecklist": "刪除前，請先移除所有空間。如果仍有啟用中的付費訂閱，請先取消計費。",
+        "deleteButton": "刪除組織",
+        "confirmTitle": "刪除組織",
+        "confirmDescription": "要永久刪除 {{name}} 嗎？此操作無法復原，之後你需要重新登入。",
+        "organizationFallback": "此組織",
+        "messages": {
+          "deleted": "組織已刪除。請重新登入以繼續。",
+          "deleteFailed": "無法刪除組織"
+        },
+        "errors": {
+          "ownerRequired": "只有目前的組織擁有者可以刪除組織。",
+          "deleteSpacesFirst": "刪除組織前，請先刪除所有空間。",
+          "cancelBillingFirst": "刪除組織前，請先取消付費計費。"
+        }
+      },
       "messages": {
         "checkoutFailed": "無法啟動結帳流程",
         "portalFailed": "無法開啟計費入口"

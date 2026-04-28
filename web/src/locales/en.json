@@ -896,8 +896,8 @@
       "danger": {
         "title": "Danger zone",
         "deleteTitle": "Delete organization",
-        "deleteDescription": "Permanently delete this organization and its shared access configuration.",
-        "deleteChecklist": "Before deletion, remove every space and cancel paid billing if a subscription is still active.",
+        "deleteDescription": "Permanently delete this organization and revoke the remaining organization-level access tied to it.",
+        "deleteChecklist": "Before deletion, remove every space. If a paid subscription is still active, cancel billing first.",
         "deleteButton": "Delete organization",
         "confirmTitle": "Delete organization",
         "confirmDescription": "Delete {{name}} permanently? This cannot be undone and you will need to sign in again afterwards.",

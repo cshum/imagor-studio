@@ -873,6 +873,25 @@
         "pro": "适合需要更多空间和更高处理额度的成长型团队。",
         "team": "适合管理多个空间且处理量更高的大型组织。"
       },
+      "danger": {
+        "title": "危险区域",
+        "deleteTitle": "删除组织",
+        "deleteDescription": "永久删除此组织，并移除仍绑定在该组织上的组织级访问权限。",
+        "deleteChecklist": "删除前，请先移除所有空间。如果仍有启用中的付费订阅，请先取消计费。",
+        "deleteButton": "删除组织",
+        "confirmTitle": "删除组织",
+        "confirmDescription": "要永久删除 {{name}} 吗？此操作无法撤销，之后你需要重新登录。",
+        "organizationFallback": "此组织",
+        "messages": {
+          "deleted": "组织已删除。请重新登录以继续。",
+          "deleteFailed": "无法删除组织"
+        },
+        "errors": {
+          "ownerRequired": "只有当前组织所有者可以删除组织。",
+          "deleteSpacesFirst": "删除组织前，请先删除所有空间。",
+          "cancelBillingFirst": "删除组织前，请先取消付费计费。"
+        }
+      },
       "messages": {
         "checkoutFailed": "无法启动结账流程",
         "portalFailed": "无法打开计费门户"

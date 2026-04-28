@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useRouter } from '@tanstack/react-router'
+import { Link, useRouter } from '@tanstack/react-router'
 import { Cloud, Database, LayoutGrid, LogOut, MoreHorizontal, Plus, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { leaveOrganization, leaveSpace, type SpaceItem } from '@/api/org-api'
+import { leaveSpace, type SpaceItem } from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { GetUsageSummaryQuery, ListSpacesQuery } from '@/generated/graphql'
-import { extractErrorInfo } from '@/lib/error-utils'
 import { isUnlimitedLimit } from '@/lib/plan-entitlements'
 import { useAuth } from '@/stores/auth-store'
 
@@ -67,19 +66,6 @@ function isUnlimitedOrMissing(value: number | null | undefined) {
   return value != null && isUnlimitedLimit(value)
 }
 
-function getLeaveOrganizationErrorMessage(error: unknown, t: (key: string) => string): string {
-  const errorInfo = extractErrorInfo(error)
-
-  switch (errorInfo.reason) {
-    case 'org_leave_owner_must_transfer':
-      return t('pages.spaces.messages.cannotLeaveOrganizationAsOwner')
-    case 'org_leave_last_member':
-      return t('pages.spaces.messages.cannotLeaveOrganizationAsLastMember')
-    default:
-      return errorInfo.message || String(error)
-  }
-}
-
 export function SpacesPage({
   loaderData,
   usageSummary = null,
@@ -89,13 +75,10 @@ export function SpacesPage({
   canManageOrganization = false,
 }: SpacesPageProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const router = useRouter()
-  const { authState, logout } = useAuth()
+  const { authState } = useAuth()
   const [leaveSpaceItem, setLeaveSpaceItem] = useState<SpaceItem | null>(null)
   const [isLeaving, setIsLeaving] = useState(false)
-  const [leaveOrganizationOpen, setLeaveOrganizationOpen] = useState(false)
-  const [isLeavingOrganization, setIsLeavingOrganization] = useState(false)
   const [openMenuSpaceKey, setOpenMenuSpaceKey] = useState<string | null>(null)
   const leaveDialogTimerRef = useRef<number | null>(null)
 
@@ -182,22 +165,6 @@ export function SpacesPage({
       )
     } finally {
       setIsLeaving(false)
-    }
-  }
-
-  const handleLeaveOrganization = async () => {
-    setIsLeavingOrganization(true)
-    try {
-      await leaveOrganization()
-      await logout()
-      toast.success(t('pages.spaces.messages.leftOrganizationSuccess'))
-      await navigate({ to: '/login' })
-    } catch (error) {
-      toast.error(
-        `${t('pages.spaces.messages.leaveOrganizationFailed')}: ${getLeaveOrganizationErrorMessage(error, t)}`,
-      )
-    } finally {
-      setIsLeavingOrganization(false)
     }
   }
 
@@ -380,19 +347,6 @@ export function SpacesPage({
             </div>
           </div>
         ))}
-
-      {currentOrganizationId !== null && authState.profile?.id ? (
-        <div className='flex justify-end'>
-          <ButtonWithLoading
-            variant='outline'
-            className='text-destructive hover:text-destructive'
-            onClick={() => setLeaveOrganizationOpen(true)}
-          >
-            <LogOut className='mr-2 h-4 w-4' />
-            {t('pages.spaces.leaveOrganization')}
-          </ButtonWithLoading>
-        </div>
-      ) : null}
 
       {/* Loading skeleton */}
       {!loaderData ? (
@@ -632,36 +586,6 @@ export function SpacesPage({
             className='w-full sm:w-auto'
           >
             {t('pages.spaces.leaveSpace')}
-          </ButtonWithLoading>
-        </ResponsiveDialogFooter>
-      </ResponsiveDialog>
-
-      <ResponsiveDialog
-        open={leaveOrganizationOpen}
-        onOpenChange={(open) => !open && setLeaveOrganizationOpen(false)}
-      >
-        <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{t('pages.spaces.leaveOrganizationTitle')}</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            {t('pages.spaces.leaveOrganizationDescription')}
-          </ResponsiveDialogDescription>
-        </ResponsiveDialogHeader>
-        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
-          <Button
-            variant='outline'
-            onClick={() => setLeaveOrganizationOpen(false)}
-            disabled={isLeavingOrganization}
-            className='w-full sm:w-auto'
-          >
-            {t('common.buttons.cancel')}
-          </Button>
-          <ButtonWithLoading
-            variant='destructive'
-            onClick={handleLeaveOrganization}
-            isLoading={isLeavingOrganization}
-            className='w-full sm:w-auto'
-          >
-            {t('pages.spaces.leaveOrganization')}
           </ButtonWithLoading>
         </ResponsiveDialogFooter>
       </ResponsiveDialog>

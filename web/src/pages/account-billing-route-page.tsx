@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
@@ -84,6 +85,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const [portalLoading, setPortalLoading] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [dangerZoneOpen, setDangerZoneOpen] = useState(false)
 
   const organization = loaderData.organization
   const usageSummary = loaderData.usageSummary
@@ -238,7 +240,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
             <div className='flex flex-wrap items-center gap-2'>
               <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
               <Badge variant='secondary'>{t(`pages.spaces.plan.${currentPlan}`)}</Badge>
-              <Badge variant='outline'>{t(`pages.billing.status.${currentStatus}`)}</Badge>
+              {currentStatus !== 'trialing' ? (
+                <Badge variant='outline'>{t(`pages.billing.status.${currentStatus}`)}</Badge>
+              ) : null}
             </div>
             {usagePeriod && <p className='text-muted-foreground text-xs'>{usagePeriod}</p>}
           </div>
@@ -338,27 +342,41 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       </div>
 
       <div className='border-destructive/20 border-t pt-6'>
-        <h2 className='text-destructive text-base font-semibold'>
+        <Button
+          type='button'
+          variant='ghost'
+          size='sm'
+          className='text-destructive -ml-2'
+          onClick={() => setDangerZoneOpen((open) => !open)}
+        >
+          {dangerZoneOpen ? (
+            <ChevronDown className='mr-2 h-3.5 w-3.5' />
+          ) : (
+            <ChevronRight className='mr-2 h-3.5 w-3.5' />
+          )}
           {t('pages.billing.danger.title')}
-        </h2>
-        <div className='mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-          <div className='min-w-0 space-y-2'>
-            <p className='font-medium'>{t('pages.billing.danger.deleteTitle')}</p>
-            <p className='text-muted-foreground text-sm'>
-              {t('pages.billing.danger.deleteDescription')}
-            </p>
-            <p className='text-muted-foreground text-sm'>
-              {t('pages.billing.danger.deleteChecklist')}
-            </p>
+        </Button>
+
+        {dangerZoneOpen ? (
+          <div className='mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+            <div className='min-w-0 space-y-2'>
+              <p className='font-medium'>{t('pages.billing.danger.deleteTitle')}</p>
+              <p className='text-muted-foreground text-sm'>
+                {t('pages.billing.danger.deleteDescription')}
+              </p>
+              <p className='text-muted-foreground text-sm'>
+                {t('pages.billing.danger.deleteChecklist')}
+              </p>
+            </div>
+            <Button
+              variant='destructive'
+              className='shrink-0'
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              {t('pages.billing.danger.deleteButton')}
+            </Button>
           </div>
-          <Button
-            variant='destructive'
-            className='shrink-0'
-            onClick={() => setDeleteDialogOpen(true)}
-          >
-            {t('pages.billing.danger.deleteButton')}
-          </Button>
-        </div>
+        ) : null}
       </div>
 
       <ResponsiveDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

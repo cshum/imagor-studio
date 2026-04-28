@@ -890,6 +890,25 @@
         "pro": "Per team in crescita che hanno bisogno di più spazi e più capacità di elaborazione.",
         "team": "Per organizzazioni più grandi che gestiscono più spazi con volumi più alti."
       },
+      "danger": {
+        "title": "Zona di pericolo",
+        "deleteTitle": "Elimina organizzazione",
+        "deleteDescription": "Elimina definitivamente questa organizzazione e revoca l'accesso a livello di organizzazione ancora collegato ad essa.",
+        "deleteChecklist": "Prima dell'eliminazione, rimuovi tutti gli spazi. Se un abbonamento a pagamento è ancora attivo, annulla prima la fatturazione.",
+        "deleteButton": "Elimina organizzazione",
+        "confirmTitle": "Elimina organizzazione",
+        "confirmDescription": "Eliminare definitivamente {{name}}? L'operazione non può essere annullata e in seguito dovrai accedere di nuovo.",
+        "organizationFallback": "questa organizzazione",
+        "messages": {
+          "deleted": "Organizzazione eliminata. Accedi di nuovo per continuare.",
+          "deleteFailed": "Impossibile eliminare l'organizzazione"
+        },
+        "errors": {
+          "ownerRequired": "Solo l'attuale proprietario dell'organizzazione può eliminare l'organizzazione.",
+          "deleteSpacesFirst": "Elimina tutti gli spazi prima di eliminare l'organizzazione.",
+          "cancelBillingFirst": "Annulla la fatturazione a pagamento prima di eliminare l'organizzazione."
+        }
+      },
       "messages": {
         "checkoutFailed": "Impossibile avviare il checkout",
         "portalFailed": "Impossibile aprire il portale di fatturazione"
