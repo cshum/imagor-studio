@@ -75,7 +75,7 @@
       "title": "High-performance image processing for teams",
       "formTitle": "Sign in",
       "googleCta": "Continue with Google",
-      "credentialsDividerCloud": "Or use email and password",
+      "credentialsDividerCloud": "Or use email or username and password",
       "credentialsDividerSelfHosted": "Or use username and password",
       "identifierLabelCloud": "Email or username",
       "identifierLabelSelfHosted": "Username",
@@ -87,7 +87,19 @@
         "access": "Review, edit, and organize images and templates in one place"
       },
       "signIn": "Sign In",
-      "loginFailed": "Invalid credentials. Please try again."
+      "loginFailed": "Invalid credentials. Please try again.",
+      "createAccountPrompt": "New here?",
+      "createAccountLink": "Create an account"
+    },
+    "register": {
+      "formTitle": "Create account",
+      "googleCta": "Continue with Google",
+      "credentialsDivider": "Or create an account with email and password",
+      "emailPlaceholder": "name@example.com",
+      "submit": "Create account",
+      "signInPrompt": "Already have an account?",
+      "signInLink": "Sign in",
+      "failed": "Failed to create account. Please try again."
     },
     "validation": {
       "identifierRequiredCloud": "Email or username is required",

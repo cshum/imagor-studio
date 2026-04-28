@@ -1441,7 +1441,7 @@
       "formSubtitleCloud": "请使用团队邀请你的账号登录。",
       "formSubtitleSelfHosted": "请使用你的账户凭证登录。",
       "googleCta": "使用 Google 继续",
-      "credentialsDividerCloud": "或使用邮箱和密码",
+      "credentialsDividerCloud": "或使用邮箱或用户名和密码",
       "credentialsDividerSelfHosted": "或使用用户名和密码",
       "identifierLabelCloud": "邮箱或用户名",
       "identifierLabelSelfHosted": "用户名",
@@ -1454,7 +1454,19 @@
         "access": "跨团队管理访问权限"
       },
       "signIn": "登录",
-      "loginFailed": "登录凭证无效，请重试。"
+      "loginFailed": "登录凭证无效，请重试。",
+      "createAccountPrompt": "第一次使用？",
+      "createAccountLink": "创建账户"
+    },
+    "register": {
+      "formTitle": "创建账户",
+      "googleCta": "使用 Google 继续",
+      "credentialsDivider": "或使用邮箱和密码创建账户",
+      "emailPlaceholder": "name@example.com",
+      "submit": "创建账户",
+      "signInPrompt": "已经有账户了？",
+      "signInLink": "登录",
+      "failed": "创建账户失败，请重试。"
     },
     "validation": {
       "identifierRequiredCloud": "请输入邮箱或用户名",

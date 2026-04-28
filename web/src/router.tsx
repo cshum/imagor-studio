@@ -74,6 +74,7 @@ import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
+import { RegisterPage } from '@/pages/register-page.tsx'
 import { RootPage } from '@/pages/root-page'
 import { GeneralSection } from '@/pages/space-settings/general'
 import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
@@ -114,6 +115,12 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   component: LoginPage,
+})
+
+const registerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/register',
+  component: RegisterPage,
 })
 
 const authCallbackRoute = createRoute({
@@ -821,6 +828,7 @@ const routeTree = isEmbeddedMode
   : // Normal mode: full route tree
     rootRoute.addChildren([
       loginRoute,
+      registerRoute,
       authCallbackRoute,
       adminSetupRoute,
       createSpaceRoute,

@@ -69,6 +69,7 @@ func (h *AuthHandler) cloudEnabled() bool {
 
 type RegisterRequest struct {
 	DisplayName string `json:"displayName"`
+	Email       string `json:"email,omitempty"`
 	Username    string `json:"username"`
 	Password    string `json:"password"`
 }
@@ -185,6 +186,10 @@ func (h *AuthHandler) RegisterAdmin() http.HandlerFunc {
 
 func (h *AuthHandler) Register() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.cloudEnabled() {
+			return apperror.Forbidden("Public sign-up is not available in this deployment.")
+		}
+
 		var req RegisterRequest
 		if err := DecodeJSON(r, &req); err != nil {
 			return err
@@ -459,6 +464,7 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	}
 
 	// Normalize inputs
+	normalizedEmail := validation.NormalizeEmail(req.Email)
 	normalizedUsername := validation.NormalizeUsername(req.Username)
 	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
 
@@ -470,10 +476,24 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	}
 
 	// Create user
-	user, err := h.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role)
+	var user *userstore.User
+	if normalizedEmail != "" {
+		if creator, ok := h.userStore.(interface {
+			CreateWithEmail(context.Context, string, string, string, string, string) (*userstore.User, error)
+		}); ok {
+			user, err = creator.CreateWithEmail(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role, normalizedEmail)
+		} else {
+			return nil, apperror.InternalServerError("Failed to create user")
+		}
+	} else {
+		user, err = h.userStore.Create(ctx, normalizedDisplayName, normalizedUsername, hashedPassword, role)
+	}
 	if err != nil {
 		if errors.Is(err, userstore.ErrUsernameAlreadyExists) {
 			return nil, apperror.Conflict("Username already exists", "username")
+		}
+		if errors.Is(err, userstore.ErrEmailAlreadyExists) {
+			return nil, apperror.Conflict("Email already exists", "email")
 		}
 		h.logger.Error("Failed to create user", zap.Error(err))
 		return nil, apperror.InternalServerError("Failed to create user")
@@ -575,6 +595,14 @@ func (h *AuthHandler) validateRegisterRequest(req *RegisterRequest) error {
 		return apperror.BadRequest("Invalid username", map[string]interface{}{
 			"field": "username",
 		})
+	}
+
+	if strings.TrimSpace(req.Email) != "" {
+		if err := validation.ValidateEmail(req.Email); err != nil {
+			return apperror.BadRequest("Invalid email", map[string]interface{}{
+				"field": "email",
+			})
+		}
 	}
 
 	// Validate password

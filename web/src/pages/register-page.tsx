@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, Navigate, useNavigate, useSearch } from '@tanstack/react-router'
+import { Link, Navigate, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
 
-import { getAuthProviders, getGoogleLoginUrl, login } from '@/api/auth-api'
+import { type AuthApiError, getAuthProviders, getGoogleLoginUrl, register } from '@/api/auth-api'
 import { AuthPageShell } from '@/components/auth-page-shell'
-import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
@@ -23,9 +22,12 @@ import { isValidEmail } from '@/lib/email'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { initializeLocale } from '@/stores/locale-store'
 
-type LoginFormValues = {
+type RegisterFormValues = {
+  displayName: string
+  email: string
   username: string
   password: string
+  confirmPassword: string
 }
 
 const GoogleIcon = () => (
@@ -56,82 +58,55 @@ const GoogleIcon = () => (
 
 const usernamePattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/
 
-export function LoginPage() {
+export function RegisterPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
   const navigate = useNavigate()
-  const search = useSearch({ from: '/login' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
-  const isMultiTenant = authState.multiTenant
+  const productHighlights = [
+    t('auth.login.highlights.storage'),
+    t('auth.login.highlights.delivery'),
+    t('auth.login.highlights.access'),
+  ]
 
-  // Helper function to validate redirect URL for security
-  const isValidRedirectUrl = (url: string): boolean => {
-    // Only allow relative URLs that start with /
-    // This prevents open redirect vulnerabilities
-    return url.startsWith('/') && !url.startsWith('//')
-  }
+  const registerSchema = z
+    .object({
+      displayName: z
+        .string()
+        .trim()
+        .min(3, t('forms.validation.displayNameMinLength'))
+        .max(100, t('forms.validation.displayNameMaxLength')),
+      email: z.string().trim().refine(isValidEmail, t('pages.profile.invalidEmail')),
+      username: z
+        .string()
+        .trim()
+        .min(3, t('forms.validation.usernameMinLength'))
+        .max(30, t('forms.validation.usernameMaxLength'))
+        .regex(usernamePattern, t('forms.validation.usernamePattern')),
+      password: z
+        .string()
+        .min(8, t('forms.validation.passwordMinLength'))
+        .max(72, t('forms.validation.passwordMaxLength')),
+      confirmPassword: z
+        .string()
+        .min(8, t('forms.validation.confirmPasswordMinLength'))
+        .max(72, t('forms.validation.confirmPasswordMaxLength')),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('forms.validation.passwordsDoNotMatch'),
+      path: ['confirmPassword'],
+    })
 
-  const identifierRequiredMessage = isMultiTenant
-    ? t('auth.validation.identifierRequiredCloud')
-    : t('auth.validation.usernameRequired')
-
-  // Create translation-aware validation schema
-  const loginSchema = z.object({
-    username: z
-      .string()
-      .trim()
-      .superRefine((value, ctx) => {
-        if (!value) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: identifierRequiredMessage,
-          })
-          return
-        }
-
-        if (isMultiTenant && value.includes('@')) {
-          if (!isValidEmail(value)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: t('auth.validation.invalidEmailOrUsername'),
-            })
-          }
-          return
-        }
-
-        if (value.length < 3) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('auth.validation.usernameMinLength'),
-          })
-        }
-
-        if (value.length > 30) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: t('auth.validation.usernameMaxLength'),
-          })
-        }
-
-        if (!usernamePattern.test(value)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: isMultiTenant
-              ? t('auth.validation.invalidEmailOrUsername')
-              : t('auth.validation.invalidUsername'),
-          })
-        }
-      }),
-    password: z.string().trim().min(1, t('auth.validation.passwordRequired')),
-  })
-
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
     defaultValues: {
+      displayName: '',
+      email: '',
       username: '',
       password: '',
+      confirmPassword: '',
     },
   })
 
@@ -145,83 +120,51 @@ export function LoginPage() {
       })
   }, [])
 
-  // Redirect embedded guests to homepage to avoid login UI
   if (authState.isEmbedded) {
     return <Navigate to='/' replace />
   }
 
-  // If already authenticated, redirect to intended destination or gallery
-  if (authState.state === 'authenticated') {
-    const redirectParam = search.redirect as string | undefined
-    if (redirectParam && isValidRedirectUrl(redirectParam)) {
-      return <Navigate to={redirectParam} replace />
-    }
-    return <Navigate to='/' replace />
-  }
-
-  // If first run, redirect to admin setup
   if (authState.isFirstRun) {
     return <Navigate to='/admin-setup' replace />
   }
 
-  const onSubmit = async (values: LoginFormValues) => {
+  if (!authState.multiTenant) {
+    return <Navigate to='/login' replace />
+  }
+
+  if (authState.state === 'authenticated') {
+    return <Navigate to='/' replace />
+  }
+
+  const onSubmit = async (values: RegisterFormValues) => {
     try {
-      const response = await login({
+      const response = await register({
+        displayName: values.displayName.trim(),
+        email: values.email.trim(),
         username: values.username.trim(),
         password: values.password,
       })
+
       await initAuth(response.token)
-
-      // Reload user's language preference after login
       await initializeLocale()
+      navigate({ to: '/' })
+    } catch (error) {
+      const apiError = error as AuthApiError
 
-      // Handle redirect after successful login
-      const redirectParam = search.redirect as string | undefined
-      if (redirectParam && isValidRedirectUrl(redirectParam)) {
-        navigate({ to: redirectParam })
+      if (apiError.field === 'displayName' || apiError.field === 'email' || apiError.field === 'username' || apiError.field === 'password') {
+        form.setError(apiError.field, { message: apiError.message })
         return
       }
 
-      // Default redirect to home if no valid redirect parameter
-      navigate({ to: '/' })
-    } catch (err) {
-      // Map specific error messages to translations
-      let errorMessage = t('auth.login.loginFailed') // Default fallback
-
-      if (err instanceof Error) {
-        // Check if this is a login credential error
-        if (err.message === 'LOGIN_FAILED') {
-          errorMessage = t('auth.login.loginFailed')
-        } else {
-          // For system errors, show the technical message
-          errorMessage = err.message
-        }
-      }
-
       form.setError('root', {
-        message: errorMessage,
+        message: apiError.message || t('auth.register.failed'),
       })
     }
   }
 
-  const handleGoogleLogin = () => {
+  const handleGoogleSignup = () => {
     window.location.href = getGoogleLoginUrl()
   }
-
-  const credentialsDividerKey = isMultiTenant
-    ? 'auth.login.credentialsDividerCloud'
-    : 'auth.login.credentialsDividerSelfHosted'
-  const identifierLabelKey = isMultiTenant
-    ? 'auth.login.identifierLabelCloud'
-    : 'auth.login.identifierLabelSelfHosted'
-  const identifierPlaceholderKey = isMultiTenant
-    ? 'auth.login.identifierPlaceholderCloud'
-    : 'auth.login.identifierPlaceholderSelfHosted'
-  const productHighlights = [
-    t('auth.login.highlights.storage'),
-    t('auth.login.highlights.delivery'),
-    t('auth.login.highlights.access'),
-  ]
 
   return (
     <AuthPageShell
@@ -238,17 +181,17 @@ export function LoginPage() {
           ))}
         </ul>
       }
-      formTitle={t('auth.login.formTitle')}
+      formTitle={t('auth.register.formTitle')}
     >
       {googleEnabled ? (
         <Button
           type='button'
           variant='outline'
           className='h-11 w-full text-sm font-medium'
-          onClick={handleGoogleLogin}
+          onClick={handleGoogleSignup}
         >
           <GoogleIcon />
-          {t('auth.login.googleCta')}
+          {t('auth.register.googleCta')}
         </Button>
       ) : null}
 
@@ -259,7 +202,7 @@ export function LoginPage() {
           </div>
           <div className='relative flex justify-center text-xs font-medium'>
             <span className='bg-background text-muted-foreground px-3'>
-              {t(credentialsDividerKey)}
+              {t('auth.register.credentialsDivider')}
             </span>
           </div>
         </div>
@@ -269,14 +212,48 @@ export function LoginPage() {
         <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
           <FormField
             control={form.control}
+            name='displayName'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('pages.profile.displayName')}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={t('pages.profile.displayNamePlaceholder')}
+                    disabled={form.formState.isSubmitting}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('pages.profile.email')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='email'
+                    placeholder={t('auth.register.emailPlaceholder')}
+                    disabled={form.formState.isSubmitting}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name='username'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t(identifierLabelKey)}</FormLabel>
+                <FormLabel>{t('pages.admin.username')}</FormLabel>
                 <FormControl>
                   <Input
-                    type='text'
-                    placeholder={t(identifierPlaceholderKey)}
+                    placeholder={t('forms.placeholders.enterUsername')}
                     disabled={form.formState.isSubmitting}
                     {...field}
                   />
@@ -303,6 +280,24 @@ export function LoginPage() {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name='confirmPassword'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('pages.admin.confirmPassword')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='password'
+                    placeholder={t('forms.placeholders.confirmPassword')}
+                    disabled={form.formState.isSubmitting}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           {form.formState.errors.root && (
             <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
               {form.formState.errors.root.message}
@@ -313,22 +308,17 @@ export function LoginPage() {
             className='h-11 w-full'
             isLoading={form.formState.isSubmitting}
           >
-            {t('auth.login.signIn')}
+            {t('auth.register.submit')}
           </ButtonWithLoading>
         </form>
       </Form>
 
-      {isMultiTenant ? (
-        <p className='text-muted-foreground text-center text-sm'>
-          {t('auth.login.createAccountPrompt')}{' '}
-          <Link
-            to='/register'
-            className='text-foreground font-medium underline underline-offset-4'
-          >
-            {t('auth.login.createAccountLink')}
-          </Link>
-        </p>
-      ) : null}
+      <p className='text-muted-foreground text-center text-sm'>
+        {t('auth.register.signInPrompt')}{' '}
+        <Link to='/login' className='text-foreground font-medium underline underline-offset-4'>
+          {t('auth.register.signInLink')}
+        </Link>
+      </p>
     </AuthPageShell>
   )
 }

@@ -7,8 +7,33 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   displayName: string
+  email?: string
   username: string
   password: string
+}
+
+export type AuthApiError = Error & {
+  code?: string
+  field?: string
+}
+
+function createAuthApiError(errorData: unknown, fallback: string): AuthApiError {
+  const payload = typeof errorData === 'object' && errorData !== null ? (errorData as Record<string, unknown>) : {}
+  const details = typeof payload.details === 'object' && payload.details !== null
+    ? (payload.details as Record<string, unknown>)
+    : undefined
+  const error = new Error(
+    typeof payload.error === 'string' ? payload.error : fallback,
+  ) as AuthApiError
+
+  if (typeof payload.code === 'string') {
+    error.code = payload.code
+  }
+  if (typeof details?.field === 'string') {
+    error.field = details.field
+  }
+
+  return error
 }
 
 export interface RegisterAdminRequest {
@@ -53,7 +78,7 @@ export async function checkFirstRun(): Promise<FirstRunResponse> {
   const response = await fetch(`${BASE_URL}/api/auth/first-run`)
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+    throw createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`)
   }
   return response.json()
 }
@@ -70,7 +95,7 @@ export async function registerAdmin(credentials: RegisterAdminRequest): Promise<
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+    throw createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`)
   }
 
   return response.json()
@@ -106,7 +131,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+    throw createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`)
   }
 
   return response.json()

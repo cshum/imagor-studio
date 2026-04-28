@@ -78,7 +78,7 @@
       "formSubtitleCloud": "請使用團隊邀請您的帳號登入。",
       "formSubtitleSelfHosted": "請使用您的帳號憑證登入。",
       "googleCta": "使用 Google 繼續",
-      "credentialsDividerCloud": "或使用電子郵件與密碼",
+      "credentialsDividerCloud": "或使用電子郵件或使用者名稱與密碼",
       "credentialsDividerSelfHosted": "或使用使用者名稱與密碼",
       "identifierLabelCloud": "電子郵件或使用者名稱",
       "identifierLabelSelfHosted": "使用者名稱",
@@ -91,7 +91,19 @@
         "access": "跨團隊控管存取權限"
       },
       "signIn": "登入",
-      "loginFailed": "登入憑證無效。請再試一次。"
+      "loginFailed": "登入憑證無效。請再試一次。",
+      "createAccountPrompt": "第一次使用？",
+      "createAccountLink": "建立帳戶"
+    },
+    "register": {
+      "formTitle": "建立帳戶",
+      "googleCta": "使用 Google 繼續",
+      "credentialsDivider": "或使用電子郵件與密碼建立帳戶",
+      "emailPlaceholder": "name@example.com",
+      "submit": "建立帳戶",
+      "signInPrompt": "已經有帳戶了？",
+      "signInLink": "登入",
+      "failed": "建立帳戶失敗。請再試一次。"
     },
     "validation": {
       "identifierRequiredCloud": "請輸入電子郵件或使用者名稱",

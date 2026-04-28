@@ -89,6 +89,28 @@ func isDuplicateUsernameError(err error) bool {
 	return strings.Contains(errStr, "username") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint"))
 }
 
+func isDuplicateEmailError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var pgErr pgdriver.Error
+	if errors.As(err, &pgErr) {
+		if pgErr.IntegrityViolation() && pgErr.Field('C') == "23505" {
+			msg := strings.ToLower(pgErr.Error())
+			return strings.Contains(msg, "email")
+		}
+	}
+
+	var sqliteErr sqlite3.Error
+	if errors.As(err, &sqliteErr) {
+		return sqliteErr.Code == sqlite3.ErrConstraint && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique
+	}
+
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "email") && (strings.Contains(errStr, "unique") || strings.Contains(errStr, "constraint"))
+}
+
 func (s *store) UpdateRole(ctx context.Context, id string, role string) error {
 	role = strings.TrimSpace(role)
 	if role == "" {
@@ -124,6 +146,19 @@ func modelUserToStore(user model.User) *User {
 }
 
 func (s *store) Create(ctx context.Context, displayName, username, hashedPassword, role string) (*User, error) {
+	return s.create(ctx, displayName, username, hashedPassword, role, nil)
+}
+
+func (s *store) CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*User, error) {
+	normalizedEmail := strings.TrimSpace(email)
+	if normalizedEmail == "" {
+		return nil, fmt.Errorf("email cannot be empty")
+	}
+
+	return s.create(ctx, displayName, username, hashedPassword, role, &normalizedEmail)
+}
+
+func (s *store) create(ctx context.Context, displayName, username, hashedPassword, role string, email *string) (*User, error) {
 	// Validate inputs
 	displayName = strings.TrimSpace(displayName)
 	username = strings.TrimSpace(username)
@@ -151,6 +186,8 @@ func (s *store) Create(ctx context.Context, displayName, username, hashedPasswor
 		HashedPassword: hashedPassword,
 		Role:           role,
 		IsActive:       true,
+		Email:          email,
+		EmailVerified:  email != nil,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -161,6 +198,9 @@ func (s *store) Create(ctx context.Context, displayName, username, hashedPasswor
 	if err != nil {
 		if isDuplicateUsernameError(err) {
 			return nil, fmt.Errorf("%w", ErrUsernameAlreadyExists)
+		}
+		if isDuplicateEmailError(err) {
+			return nil, fmt.Errorf("%w", ErrEmailAlreadyExists)
 		}
 		return nil, fmt.Errorf("error creating user: %w", err)
 	}

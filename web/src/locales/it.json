@@ -78,7 +78,7 @@
       "formSubtitleCloud": "Accedi con l'account con cui il tuo team ti ha invitato.",
       "formSubtitleSelfHosted": "Accedi con le credenziali del tuo account.",
       "googleCta": "Continua con Google",
-      "credentialsDividerCloud": "oppure usa email e password",
+      "credentialsDividerCloud": "oppure usa email o nome utente e password",
       "credentialsDividerSelfHosted": "oppure usa nome utente e password",
       "identifierLabelCloud": "Email o nome utente",
       "identifierLabelSelfHosted": "Nome utente",
@@ -91,7 +91,19 @@
         "access": "Controlla gli accessi tra team"
       },
       "signIn": "Accedi",
-      "loginFailed": "Credenziali non valide. Riprova."
+      "loginFailed": "Credenziali non valide. Riprova.",
+      "createAccountPrompt": "Sei nuovo qui?",
+      "createAccountLink": "Crea un account"
+    },
+    "register": {
+      "formTitle": "Crea account",
+      "googleCta": "Continua con Google",
+      "credentialsDivider": "oppure crea un account con email e password",
+      "emailPlaceholder": "name@example.com",
+      "submit": "Crea account",
+      "signInPrompt": "Hai già un account?",
+      "signInLink": "Accedi",
+      "failed": "Impossibile creare l'account. Riprova."
     },
     "validation": {
       "identifierRequiredCloud": "Email o nome utente obbligatori",
