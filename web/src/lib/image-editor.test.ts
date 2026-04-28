@@ -4257,6 +4257,26 @@ describe('TextLayer support', () => {
     })
   })
 
+  describe('getImagorTransformationsPath()', () => {
+    it('omits the source image path and keeps transformations', () => {
+      const nestedPathEditor = new ImageEditor({
+        imagePath: 'gallery/folder/ChatGPT Image Apr 24, 2026, 12_05_07 AM.png',
+        originalDimensions: {
+          width: 1920,
+          height: 1080,
+        },
+      })
+      nestedPathEditor.initialize({})
+      nestedPathEditor.updateParams({ width: 800, height: 600, fitIn: true, brightness: 10 })
+
+      const path = nestedPathEditor.getImagorTransformationsPath()
+
+      expect(path).toBe('/fit-in/800x600/filters:brightness(10)/')
+      expect(path).not.toContain('gallery/folder')
+      expect(path).not.toContain('ChatGPT Image Apr 24, 2026, 12_05_07 AM.png')
+    })
+  })
+
   describe('setTextEditingLayerId (skipLayerId)', () => {
     it('suppresses the layer being inline-edited from the preview path', () => {
       editor.addLayer(makeTextLayer({ id: 'edit-me' }))

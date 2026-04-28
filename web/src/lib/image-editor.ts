@@ -1,5 +1,5 @@
 import { generateImagorUrlFromTemplate } from '@/api/imagor-api'
-import { editorStateToImagorPath } from '@/lib/imagor-path'
+import { editorStateToImagorPath, editorStateToImagorTransformationsPath } from '@/lib/imagor-path'
 
 export interface ImageDimensions {
   width: number
@@ -1185,6 +1185,14 @@ export class ImageEditor {
    */
   getImagorPath(): string {
     return editorStateToImagorPath(this.state, this.config.imagePath, 1, false)
+  }
+
+  /**
+   * Get the live Imagor transformations path (synchronous)
+   * Returns only the transformation segment, without the source image path.
+   */
+  getImagorTransformationsPath(): string {
+    return editorStateToImagorTransformationsPath(this.state, this.config.imagePath, 1, false)
   }
 
   /**
