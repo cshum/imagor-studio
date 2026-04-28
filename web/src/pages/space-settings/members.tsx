@@ -544,14 +544,12 @@ export function MembersSection({
     )
 
   const directMembersEmptyState = (
-    <Card className='border-dashed'>
-      <CardContent className='p-6 text-center'>
-        <p className='font-medium'>{t('pages.spaceSettings.members.empty')}</p>
-        <p className='text-muted-foreground mt-1 text-sm'>
-          {t('pages.spaceSettings.members.emptyDescription')}
-        </p>
-      </CardContent>
-    </Card>
+    <div className='rounded-lg border border-dashed p-6 text-center'>
+      <p className='font-medium'>{t('pages.spaceSettings.members.empty')}</p>
+      <p className='text-muted-foreground mt-1 text-sm'>
+        {t('pages.spaceSettings.members.emptyDescription')}
+      </p>
+    </div>
   )
 
   return (
