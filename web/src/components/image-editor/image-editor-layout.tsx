@@ -205,6 +205,7 @@ export function ImageEditorLayout({
           onCopyUrl={onCopyUrl}
           onSaveTemplate={onSaveTemplateAs}
           onApplyTemplate={onApplyTemplate}
+          showDownload={false}
           onLanguageChange={onLanguageChange}
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
