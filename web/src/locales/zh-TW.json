@@ -1435,7 +1435,10 @@
       "title": "圖層",
       "addLayer": "新增圖層",
       "addImage": "圖片",
+      "addImageAction": "新增圖片",
       "addText": "文字",
+      "addTextAction": "新增文字",
+      "pressKey": "按 {{key}}",
       "addColor": "顏色",
       "addGroup": "群組",
       "colorLayer": "顏色",
@@ -1501,6 +1504,7 @@
       "setColor": "設定顏色",
       "replaceImageError": "替換圖片失敗",
       "addImageLayer": "新增圖片圖層",
+      "addTextLayer": "新增文字圖層",
       "addImageLayerDescription": "從您的儲存空間選擇圖片以新增為新圖層。",
       "selectImageToReplace": "選擇要替換的圖片",
       "selectImageToReplaceDescription": "選擇新圖片以替換目前圖片。"

@@ -1377,7 +1377,10 @@
       "title": "图层",
       "addLayer": "添加图层",
       "addImage": "图片",
+      "addImageAction": "添加图片",
       "addText": "文字",
+      "addTextAction": "添加文字",
+      "pressKey": "按 {{key}}",
       "addColor": "颜色",
       "addGroup": "群组",
       "colorLayer": "颜色",
@@ -1443,6 +1446,7 @@
       "setColor": "设置颜色",
       "replaceImageError": "替换图片失败",
       "addImageLayer": "添加图片图层",
+      "addTextLayer": "添加文字图层",
       "addImageLayerDescription": "从您的存储空间选择图片以添加为新图层。",
       "selectImageToReplace": "选择要替换的图片",
       "selectImageToReplaceDescription": "选择新图片以替换当前图片。"
