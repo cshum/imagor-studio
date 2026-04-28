@@ -31,6 +31,17 @@ interface AccountBillingRoutePageProps {
 }
 
 const PAID_PLANS = ['starter', 'pro', 'team'] as const
+const PLAN_PRICES: Record<(typeof PAID_PLANS)[number], string> = {
+  starter: '$19',
+  pro: '$69',
+  team: '$199',
+}
+
+const PLAN_CUSTOM_DOMAIN_ALLOWANCE: Record<(typeof PAID_PLANS)[number], number> = {
+  starter: 0,
+  pro: 3,
+  team: 10,
+}
 
 function formatBytes(bytes: number) {
   if (bytes <= 0) return '0 Bytes'
@@ -299,6 +310,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           const buttonLabel = isCurrentPlan
             ? t('pages.billing.currentPlanButton')
             : t('pages.billing.selectPlan')
+          const customDomainAllowance = PLAN_CUSTOM_DOMAIN_ALLOWANCE[plan]
 
           return (
             <Card key={plan} className={isCurrentPlan ? 'border-primary shadow-sm' : undefined}>
@@ -308,6 +320,12 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                   {isCurrentPlan && <Badge>{t('pages.billing.currentPlanBadge')}</Badge>}
                 </div>
                 <CardDescription>{t(`pages.billing.planDescriptions.${plan}`)}</CardDescription>
+                <div className='flex items-end gap-1 pt-1'>
+                  <span className='text-2xl font-semibold tracking-tight'>{PLAN_PRICES[plan]}</span>
+                  <span className='text-muted-foreground text-sm'>
+                    {t('pages.billing.priceSuffix')}
+                  </span>
+                </div>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='space-y-2 text-sm'>
@@ -325,6 +343,16 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                       {formatNumber(entitlements.transformsLimit)}
                     </span>
                   </div>
+                  <div className='flex items-center justify-between gap-4'>
+                    <span>{t('pages.billing.planMetrics.customDomains')}</span>
+                    <span className='font-medium'>
+                      {customDomainAllowance > 0
+                        ? t('pages.billing.customDomainsIncluded', {
+                            count: customDomainAllowance,
+                          })
+                        : t('pages.billing.customDomainsUnavailable')}
+                    </span>
+                  </div>
                 </div>
 
                 <ButtonWithLoading
@@ -339,6 +367,15 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
             </Card>
           )
         })}
+      </div>
+
+      <div className='bg-muted/20 rounded-xl border p-4'>
+        <p className='text-sm font-medium'>{t('pages.billing.sharedFeaturesTitle')}</p>
+        <div className='text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm'>
+          <span>{t('pages.billing.sharedFeatures.collaboration')}</span>
+          <span>{t('pages.billing.sharedFeatures.orgSharing')}</span>
+          <span>{t('pages.billing.sharedFeatures.byob')}</span>
+        </div>
       </div>
 
       <div className='border-t pt-6'>

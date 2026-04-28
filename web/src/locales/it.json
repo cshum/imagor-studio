@@ -737,7 +737,7 @@
       "title": "Spazi",
       "createSpace": "Crea spazio",
       "createNewSpace": "Crea nuovo spazio",
-      "createSpaceDescription": "Crea uno spazio immagini dedicato per il tuo team.",
+      "createSpaceDescription": "Crea un workspace immagini dedicato con storage, impostazioni di delivery e accesso separati.",
       "editSpace": "Modifica spazio",
       "editSpaceDescription": "Aggiorna la configurazione dello spazio. Le modifiche saranno applicate immediatamente.",
       "deleteSpace": "Elimina spazio",
@@ -750,9 +750,9 @@
         "next": "Avanti",
         "back": "Indietro"
       },
-      "noSpacesFound": "Crea il tuo primo spazio",
-      "description": "Gestisci gli spazi di lavoro della tua organizzazione.",
-      "emptyDescription": "Crea un workspace immagini per il tuo team.",
+      "noSpacesFound": "Crea il tuo primo workspace immagini",
+      "description": "Crea e gestisci workspace immagini per ogni team, brand o ambiente.",
+      "emptyDescription": "Lancia il tuo primo workspace immagini per upload, trasformazioni e distribuzione.",
       "settings": "Settings",
       "spaceCount": "{{count}} spazio/i",
       "openGallery": "Apri galleria",
@@ -835,7 +835,7 @@
         "spaceQuota": "Quota spazi",
         "unlimited": "Illimitato"
       },
-      "usageSummaryTitle": "Utilizzo del piano attuale",
+      "usageSummaryTitle": "Utilizzo del piano tra i tuoi workspace",
       "manageOrganization": "Organizzazione",
       "leaveOrganization": "Lascia organizzazione",
       "leaveOrganizationTitle": "Lascia organizzazione",
@@ -861,14 +861,17 @@
     },
     "billing": {
       "title": "Fatturazione",
-      "titleDescription": "Controlla l'utilizzo attuale, gestisci la fatturazione e cambia piano.",
+      "titleDescription": "Scegli il piano più adatto a come il tuo team archivia, elabora e distribuisce le immagini.",
       "currentPlan": "Piano attuale",
       "currentPlanDescription": "L'utilizzo viene monitorato per periodo di fatturazione e si azzera automaticamente.",
       "currentPlanBadge": "Attuale",
       "currentPlanButton": "Piano attuale",
       "manageBilling": "Gestisci fatturazione",
       "selectPlan": "Scegli piano",
+      "priceSuffix": "/mese",
       "unlimited": "Illimitato",
+      "customDomainsIncluded": "{{count}} inclusi",
+      "customDomainsUnavailable": "Non inclusi",
       "status": {
         "trialing": "Prova",
         "active": "Attivo",
@@ -883,12 +886,19 @@
       "planMetrics": {
         "spaces": "Spazi inclusi",
         "hostedStorage": "Storage gestito",
-        "processing": "Trasformazioni mensili"
+        "processing": "Trasformazioni mensili",
+        "customDomains": "Domini personalizzati"
       },
       "planDescriptions": {
-        "starter": "Per un singolo workspace di produzione con storage gestito incluso.",
-        "pro": "Per team in crescita che hanno bisogno di più spazi e più capacità di elaborazione.",
-        "team": "Per organizzazioni più grandi che gestiscono più spazi con volumi più alti."
+        "starter": "Per team che vogliono lanciare un workspace immagini di produzione con storage ospitato incluso.",
+        "pro": "Per team in crescita che gestiscono più flussi immagini, domini personalizzati e volumi mensili più alti.",
+        "team": "Per organizzazioni che gestiscono operazioni immagini condivise tra più team o brand."
+      },
+      "sharedFeaturesTitle": "Ogni piano a pagamento include anche",
+      "sharedFeatures": {
+        "collaboration": "Accesso condiviso al workspace",
+        "orgSharing": "Inviti del team e accesso condiviso",
+        "byob": "Collega il tuo bucket S3"
       },
       "danger": {
         "title": "Zona di pericolo",

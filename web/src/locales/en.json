@@ -737,7 +737,7 @@
       "title": "Spaces",
       "createSpace": "Create Space",
       "createNewSpace": "Create New Space",
-      "createSpaceDescription": "Create a dedicated image workspace for your team.",
+      "createSpaceDescription": "Create a dedicated image workspace with its own storage, delivery settings, and access.",
       "editSpace": "Edit Space",
       "editSpaceDescription": "Update space configuration. Changes will be applied immediately.",
       "deleteSpace": "Delete Space",
@@ -750,11 +750,11 @@
         "next": "Next",
         "back": "Back"
       },
-      "noSpacesFound": "Create your first space",
+      "noSpacesFound": "Create your first image workspace",
       "noSpacesAvailable": "No spaces available yet",
-      "description": "Manage workspaces for your organization.",
-      "emptyDescription": "Create an image workspace for your team.",
-      "emptyDescriptionMember": "You do not have access to any spaces yet.",
+      "description": "Create and manage image workspaces for each team, brand, or environment.",
+      "emptyDescription": "Launch your first image workspace for uploads, transforms, and delivery.",
+      "emptyDescriptionMember": "You do not have access to any image workspaces yet.",
       "settings": "Settings",
       "spaceCount": "{{count}} space(s)",
       "openGallery": "Open Gallery",
@@ -837,7 +837,7 @@
         "spaceQuota": "Space Quota",
         "unlimited": "Unlimited"
       },
-      "usageSummaryTitle": "Current plan usage",
+      "usageSummaryTitle": "Plan usage across your workspaces",
       "manageOrganization": "Organization",
       "leaveOrganization": "Leave organization",
       "leaveOrganizationTitle": "Leave organization",
@@ -864,14 +864,17 @@
     },
     "billing": {
       "title": "Billing",
-      "titleDescription": "Review current usage, manage billing, and change plans.",
+      "titleDescription": "Choose the plan that fits how your team stores, processes, and delivers images.",
       "currentPlan": "Current plan",
       "currentPlanDescription": "Usage is tracked per billing period and resets automatically.",
       "currentPlanBadge": "Current",
       "currentPlanButton": "Current plan",
       "manageBilling": "Manage billing",
       "selectPlan": "Choose plan",
+      "priceSuffix": "/mo",
       "unlimited": "Unlimited",
+      "customDomainsIncluded": "{{count}} included",
+      "customDomainsUnavailable": "Not included",
       "status": {
         "trialing": "Trialing",
         "active": "Active",
@@ -886,12 +889,19 @@
       "planMetrics": {
         "spaces": "Included spaces",
         "hostedStorage": "Hosted storage",
-        "processing": "Monthly transforms"
+        "processing": "Monthly transforms",
+        "customDomains": "Custom domains"
       },
       "planDescriptions": {
-        "starter": "For a single production workspace with hosted storage included.",
-        "pro": "For growing teams that need more spaces and processing headroom.",
-        "team": "For larger organizations managing multiple spaces at higher volume."
+        "starter": "For teams launching one production image workspace with hosted storage included.",
+        "pro": "For growing teams running multiple image workflows with custom domains and higher monthly volume.",
+        "team": "For organizations managing shared image operations across multiple teams or brands."
+      },
+      "sharedFeaturesTitle": "Every paid plan also includes",
+      "sharedFeatures": {
+        "collaboration": "Shared workspace access",
+        "orgSharing": "Team invites and shared access",
+        "byob": "Connect your own S3 bucket"
       },
       "danger": {
         "title": "Danger zone",

@@ -737,14 +737,14 @@
       "title": "空間",
       "createSpace": "建立空間",
       "createNewSpace": "建立新空間",
-      "createSpaceDescription": "將新空間加入您的組織。每個空間都有自己的儲存與 imagor 設定。",
+      "createSpaceDescription": "建立專屬圖片工作空間，擁有自己的儲存、交付設定與存取權限。",
       "editSpace": "編輯空間",
       "editSpaceDescription": "更新空間設定。變更會立即套用。",
       "deleteSpace": "刪除空間",
       "deleteSpaceDescription": "您確定要永久刪除空間",
       "createSpaceButton": "建立空間",
       "updateSpaceButton": "更新空間",
-      "noSpacesFound": "建立您的第一個空間",
+      "noSpacesFound": "建立你的第一個圖片工作空間",
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
@@ -776,8 +776,8 @@
         "customDomain": "自訂網域",
         "imagorSecret": "Imagor 金鑰"
       },
-      "description": "管理您組織的工作空間。",
-      "emptyDescription": "為您的團隊建立一個圖片工作區。",
+      "description": "為你的團隊、品牌或環境建立並管理圖片工作空間。",
+      "emptyDescription": "建立你的第一個圖片工作空間，用於上傳、處理與交付圖片。",
       "settings": "設定",
       "spaceCount": "{{count}} 個空間",
       "openGallery": "開啟相簿",
@@ -787,7 +787,7 @@
         "next": "下一步",
         "back": "上一步"
       },
-      "createSpaceDescription": "為您的團隊建立一個專屬圖片工作空間。",
+      "createSpaceDescription": "建立專屬圖片工作空間，擁有自己的儲存、交付設定與存取權限。",
       "messages": {
         "spaceCreatedSuccess": "空間建立成功",
         "spaceUpdatedSuccess": "空間更新成功",
@@ -826,7 +826,7 @@
         "spaceQuota": "空間額度",
         "unlimited": "不限"
       },
-      "usageSummaryTitle": "目前方案用量",
+      "usageSummaryTitle": "跨工作空間的方案用量",
       "manageOrganization": "組織",
       "leaveOrganization": "離開組織",
       "leaveOrganizationTitle": "離開組織",
@@ -862,14 +862,17 @@
     },
     "billing": {
       "title": "計費",
-      "titleDescription": "檢視目前用量、管理計費並調整方案。",
+      "titleDescription": "選擇最適合團隊儲存、處理與交付圖片方式的方案。",
       "currentPlan": "目前方案",
       "currentPlanDescription": "用量會依計費週期統計，並自動重置。",
       "currentPlanBadge": "目前",
       "currentPlanButton": "目前方案",
       "manageBilling": "管理計費",
       "selectPlan": "選擇方案",
+      "priceSuffix": "/月",
       "unlimited": "不限",
+      "customDomainsIncluded": "含 {{count}} 個",
+      "customDomainsUnavailable": "不包含",
       "status": {
         "trialing": "試用中",
         "active": "生效中",
@@ -884,12 +887,19 @@
       "planMetrics": {
         "spaces": "包含空間數",
         "hostedStorage": "託管儲存",
-        "processing": "每月處理量"
+        "processing": "每月處理量",
+        "customDomains": "自訂網域"
       },
       "planDescriptions": {
-        "starter": "適合單一正式工作空間，包含託管儲存。",
-        "pro": "適合需要更多空間與更高處理額度的成長型團隊。",
-        "team": "適合管理多個空間且處理量更高的大型組織。"
+        "starter": "適合要上線單一正式圖片工作空間，並直接使用託管儲存的團隊。",
+        "pro": "適合管理多條圖片流程、需要自訂網域與更高月處理量的成長團隊。",
+        "team": "適合跨多個團隊或品牌管理共享圖片營運的大型組織。"
+      },
+      "sharedFeaturesTitle": "所有付費方案另外皆包含",
+      "sharedFeatures": {
+        "collaboration": "共享工作空間存取",
+        "orgSharing": "團隊邀請與共享存取",
+        "byob": "連接自己的 S3 相容儲存桶"
       },
       "danger": {
         "title": "危險區域",

@@ -384,7 +384,7 @@ export function SpacesPage({
                 : 'pages.spaces.emptyDescriptionMember',
             )}
           </p>
-          <p className='text-muted-foreground mt-2 max-w-sm text-sm'>
+          <p className='text-muted-foreground mt-2 max-w-lg text-sm'>
             {t(
               canCreateSpace
                 ? 'pages.spaces.startDescription'

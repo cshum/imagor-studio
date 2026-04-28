@@ -719,14 +719,14 @@
       "title": "空间",
       "createSpace": "创建空间",
       "createNewSpace": "创建新空间",
-      "createSpaceDescription": "向你的组织添加一个新空间。每个空间都有自己的存储和 imagor 配置。",
+      "createSpaceDescription": "创建专属图片工作空间，拥有自己的存储、交付设置和访问权限。",
       "editSpace": "编辑空间",
       "editSpaceDescription": "更新空间配置。更改会立即生效。",
       "deleteSpace": "删除空间",
       "deleteSpaceDescription": "您确定要永久删除空间",
       "createSpaceButton": "创建空间",
       "updateSpaceButton": "更新空间",
-      "noSpacesFound": "创建您的第一个空间",
+      "noSpacesFound": "创建你的第一个图片工作空间",
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
@@ -758,8 +758,8 @@
         "customDomain": "自定义域名",
         "imagorSecret": "Imagor 密钥"
       },
-      "description": "管理您组织的工作空间。",
-      "emptyDescription": "为您的团队创建一个图片工作区。",
+      "description": "为你的团队、品牌或环境创建并管理图片工作空间。",
+      "emptyDescription": "创建你的第一个图片工作空间，用于上传、处理和交付图片。",
       "settings": "设置",
       "spaceCount": "{{count}} 个空间",
       "openGallery": "打开图库",
@@ -769,7 +769,7 @@
         "next": "下一步",
         "back": "上一步"
       },
-      "createSpaceDescription": "为你的团队创建一个专属图片工作空间。",
+      "createSpaceDescription": "创建专属图片工作空间，拥有自己的存储、交付设置和访问权限。",
       "messages": {
         "spaceCreatedSuccess": "空间创建成功",
         "spaceUpdatedSuccess": "空间更新成功",
@@ -808,7 +808,7 @@
         "spaceQuota": "空间额度",
         "unlimited": "不限"
       },
-      "usageSummaryTitle": "当前套餐用量",
+      "usageSummaryTitle": "跨工作空间的套餐用量",
       "manageOrganization": "组织",
       "leaveOrganization": "离开组织",
       "leaveOrganizationTitle": "离开组织",
@@ -844,14 +844,17 @@
     },
     "billing": {
       "title": "计费",
-      "titleDescription": "查看当前用量、管理计费并调整方案。",
+      "titleDescription": "选择最适合团队存储、处理和交付图片方式的套餐。",
       "currentPlan": "当前套餐",
       "currentPlanDescription": "用量按计费周期统计，并会自动重置。",
       "currentPlanBadge": "当前",
       "currentPlanButton": "当前套餐",
       "manageBilling": "管理计费",
       "selectPlan": "选择套餐",
+      "priceSuffix": "/月",
       "unlimited": "不限",
+      "customDomainsIncluded": "含 {{count}} 个",
+      "customDomainsUnavailable": "不包含",
       "status": {
         "trialing": "试用中",
         "active": "生效中",
@@ -866,12 +869,19 @@
       "planMetrics": {
         "spaces": "包含空间数",
         "hostedStorage": "平台存储",
-        "processing": "每月处理量"
+        "processing": "每月处理量",
+        "customDomains": "自定义域名"
       },
       "planDescriptions": {
-        "starter": "适合单个生产工作空间，包含平台存储。",
-        "pro": "适合需要更多空间和更高处理额度的成长型团队。",
-        "team": "适合管理多个空间且处理量更高的大型组织。"
+        "starter": "适合要上线单个正式图片工作空间，并直接使用平台存储的团队。",
+        "pro": "适合管理多条图片流程、需要自定义域名和更高月处理量的成长团队。",
+        "team": "适合跨多个团队或品牌管理共享图片运营的大型组织。"
+      },
+      "sharedFeaturesTitle": "所有付费套餐另外均包含",
+      "sharedFeatures": {
+        "collaboration": "共享工作空间访问",
+        "orgSharing": "团队邀请与共享访问",
+        "byob": "连接自己的 S3 兼容存储桶"
       },
       "danger": {
         "title": "危险区域",
