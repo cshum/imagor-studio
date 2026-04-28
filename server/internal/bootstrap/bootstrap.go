@@ -171,7 +171,7 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 
 	var inviteSender space.InviteSender
 	if mode == ModeCloud && inviteSenderFactory != nil {
-		inviteSender, err = inviteSenderFactory(management.InviteSenderConfig{SESFromEmail: cloudConfig.SESFromEmail, SESRegion: cloudConfig.SESRegion, AWSRegion: enhancedCfg.AWSRegion, AppURL: enhancedCfg.AppUrl, AppAPIURL: cloudConfig.AppAPIURL, AppTitle: enhancedCfg.AppTitle})
+		inviteSender, err = inviteSenderFactory(management.InviteSenderConfig{SESFromEmail: cloudConfig.SESFromEmail, SESRegion: cloudConfig.SESRegion, AWSRegion: enhancedCfg.AWSRegion, AWSAccessKeyID: enhancedCfg.AWSAccessKeyID, AWSSecretAccessKey: enhancedCfg.AWSSecretAccessKey, AWSSessionToken: enhancedCfg.AWSSessionToken, AppURL: enhancedCfg.AppUrl, AppAPIURL: cloudConfig.AppAPIURL, AppTitle: enhancedCfg.AppTitle})
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize invitation email sender: %w", err)
 		}
@@ -186,12 +186,15 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 	if mode == ModeCloud && signupVerificationFactory != nil {
 		signupVerification, err = signupVerificationFactory(
 			management.SignupVerificationConfig{
-				SESFromEmail: cloudConfig.SESFromEmail,
-				SESRegion:    cloudConfig.SESRegion,
-				AWSRegion:    enhancedCfg.AWSRegion,
-				AppURL:       enhancedCfg.AppUrl,
-				AppAPIURL:    cloudConfig.AppAPIURL,
-				AppTitle:     enhancedCfg.AppTitle,
+				SESFromEmail:       cloudConfig.SESFromEmail,
+				SESRegion:          cloudConfig.SESRegion,
+				AWSRegion:          enhancedCfg.AWSRegion,
+				AWSAccessKeyID:     enhancedCfg.AWSAccessKeyID,
+				AWSSecretAccessKey: enhancedCfg.AWSSecretAccessKey,
+				AWSSessionToken:    enhancedCfg.AWSSessionToken,
+				AppURL:             enhancedCfg.AppUrl,
+				AppAPIURL:          cloudConfig.AppAPIURL,
+				AppTitle:           enhancedCfg.AppTitle,
 			},
 			management.SignupVerificationServices{
 				DB:        db,

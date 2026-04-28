@@ -3,12 +3,15 @@ package signup
 import "context"
 
 type Config struct {
-	SESFromEmail string
-	SESRegion    string
-	AWSRegion    string
-	AppURL       string
-	AppAPIURL    string
-	AppTitle     string
+	SESFromEmail       string
+	SESRegion          string
+	AWSRegion          string
+	AWSAccessKeyID     string
+	AWSSecretAccessKey string
+	AWSSessionToken    string
+	AppURL             string
+	AppAPIURL          string
+	AppTitle           string
 }
 
 type StartPublicSignupParams struct {
