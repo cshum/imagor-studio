@@ -113,7 +113,7 @@ describe('account-loader', () => {
   })
 
   it('allows loading settings for a space owned by the current organization', async () => {
-    const { spaceSettingsLoader } = await import('@/loaders/account-loader')
+    const { resolveSpaceSettingsRouteContext } = await import('@/loaders/account-loader')
 
     mockGetSpace.mockResolvedValue({
       __typename: 'Space',
@@ -154,14 +154,14 @@ describe('account-loader', () => {
       updatedAt: '2026-04-18T00:00:00Z',
     })
 
-    const result = await spaceSettingsLoader({ params: { routeSpaceKey: 'acme' } })
+    const result = await resolveSpaceSettingsRouteContext({ params: { routeSpaceKey: 'acme' } })
 
     expect(result.space.key).toBe('acme')
     expect(result.breadcrumb.label).toBe('Acme')
   })
 
   it('allows shared managers into space settings', async () => {
-    const { spaceSettingsLoader } = await import('@/loaders/account-loader')
+    const { resolveSpaceSettingsRouteContext } = await import('@/loaders/account-loader')
 
     mockGetSpace.mockResolvedValue({
       __typename: 'Space',
@@ -190,13 +190,13 @@ describe('account-loader', () => {
       updatedAt: '2026-04-18T00:00:00Z',
     })
 
-    const result = await spaceSettingsLoader({ params: { routeSpaceKey: 'shared' } })
+    const result = await resolveSpaceSettingsRouteContext({ params: { routeSpaceKey: 'shared' } })
 
     expect(result.space.key).toBe('shared')
   })
 
   it('redirects shared members away from settings when they cannot manage', async () => {
-    const { spaceSettingsLoader } = await import('@/loaders/account-loader')
+    const { resolveSpaceSettingsRouteContext } = await import('@/loaders/account-loader')
 
     mockGetSpace.mockResolvedValue({
       __typename: 'Space',
@@ -226,7 +226,7 @@ describe('account-loader', () => {
     })
 
     try {
-      await spaceSettingsLoader({ params: { routeSpaceKey: 'shared' } })
+      await resolveSpaceSettingsRouteContext({ params: { routeSpaceKey: 'shared' } })
       throw new Error('expected loader to redirect')
     } catch (error) {
       expect(error).toBeInstanceOf(Response)

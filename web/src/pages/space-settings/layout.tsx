@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
+import { Link, Outlet, useMatches, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   ArrowLeft,
   Building2,
@@ -60,12 +60,18 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
   const { authState, logout } = useAuth()
   const { title: appTitle } = useBrand()
   const navigate = useNavigate()
+  const matches = useMatches()
   const [mobileOpen, setMobileOpen] = useState(false)
   const { location } = useRouterState()
   const propagationNotice = useSpacePropagationNotice(space.key, location.pathname)
 
-  // Extract active section from the last URL segment
-  const pathSegments = location.pathname.split('/')
+  // Use the committed route match pathname so the settings shell does not
+  // briefly lose its active section while navigating away on a slow network.
+  const activePathname = (matches[matches.length - 1] as { pathname?: string } | undefined)
+    ?.pathname
+    ? String((matches[matches.length - 1] as { pathname?: string }).pathname)
+    : location.pathname
+  const pathSegments = activePathname.split('/')
   const activeSection = pathSegments[pathSegments.length - 1] ?? 'general'
 
   useEffect(() => {

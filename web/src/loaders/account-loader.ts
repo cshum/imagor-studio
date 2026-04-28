@@ -283,19 +283,19 @@ export const spacesLoader = async (): Promise<SpacesLoaderData> => {
   }
 }
 
-export interface SpaceSettingsLoaderData {
+export interface SpaceSettingsRouteContextData {
   space: NonNullable<GetSpaceQuery['space']>
   breadcrumb: BreadcrumbItem
 }
 
 /**
- * Load a single space for the space settings page
+ * Resolve the shared space context for the space settings route tree.
  */
-export const spaceSettingsLoader = async ({
+export const resolveSpaceSettingsRouteContext = async ({
   params,
 }: {
   params: { routeSpaceKey: string }
-}): Promise<SpaceSettingsLoaderData> => {
+}): Promise<SpaceSettingsRouteContextData> => {
   const space = await resolveSpace(params.routeSpaceKey)
   if (!space.canManage) {
     throw redirect({ to: '/spaces/$spaceKey', params: { spaceKey: params.routeSpaceKey } })

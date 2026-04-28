@@ -28,7 +28,7 @@ import {
   billingLoader,
   orgMembersLoader,
   profileLoader,
-  spaceSettingsLoader,
+  resolveSpaceSettingsRouteContext,
   usersLoader,
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
@@ -522,7 +522,7 @@ const spaceSettingsLayoutRoute = createRoute({
   path: '/spaces/$spaceKey/settings',
   beforeLoad: async (context) => {
     await requireAccountAuth(context)
-    return spaceSettingsLoader({ params: { routeSpaceKey: context.params.spaceKey } })
+    return resolveSpaceSettingsRouteContext({ params: { routeSpaceKey: context.params.spaceKey } })
   },
   loader: ({ context }) => ({ breadcrumb: context.breadcrumb }),
   shouldReload: false,
