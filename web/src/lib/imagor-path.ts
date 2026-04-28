@@ -119,7 +119,7 @@ export function editorStateToImagorPath(
   forPreview = false,
   skipLayerId?: string,
 ): string {
-  const parts = buildImagorPathParts(state, imagePath, scaleFactor, forPreview, skipLayerId)
+  const parts = buildImagorPathParts(state, scaleFactor, forPreview, skipLayerId)
 
   // Apply base64 encoding to image path if needed.
   const finalImagePath = needsBase64Encoding(imagePath) ? encodeImagePath(imagePath) : imagePath
@@ -135,12 +135,11 @@ export function editorStateToImagorPath(
  */
 export function editorStateToImagorTransformationsPath(
   state: Partial<ImageEditorState>,
-  imagePath: string,
   scaleFactor: number,
   forPreview = false,
   skipLayerId?: string,
 ): string {
-  const parts = buildImagorPathParts(state, imagePath, scaleFactor, forPreview, skipLayerId)
+  const parts = buildImagorPathParts(state, scaleFactor, forPreview, skipLayerId)
   return parts.length > 0 ? `/${parts.join('/')}/` : '/'
 }
 
@@ -151,7 +150,6 @@ export function editorStateToImagorTransformationsPath(
  */
 function buildImagorPathParts(
   state: Partial<ImageEditorState>,
-  imagePath: string,
   scaleFactor: number,
   forPreview = false,
   skipLayerId?: string,
