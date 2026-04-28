@@ -37,7 +37,7 @@ const planEntitlements: Record<string, PlanEntitlements> = {
     maxSpaces: 20,
     storageLimitGB: 1000,
     transformsLimit: 1500000,
-    maxCustomDomains: 25,
+    maxCustomDomains: 20,
   },
 }
 

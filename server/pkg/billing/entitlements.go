@@ -48,7 +48,7 @@ var planEntitlements = map[string]PlanEntitlements{
 		StorageLimitGB:   1000,
 		TransformsLimit:  1500000,
 		BYOBAllowed:      true,
-		MaxCustomDomains: 25,
+		MaxCustomDomains: 20,
 	},
 }
 

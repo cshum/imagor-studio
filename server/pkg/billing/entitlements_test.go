@@ -18,7 +18,7 @@ func TestEntitlementsForPlan_UsesPublishedPlans(t *testing.T) {
 	}{
 		{name: "starter", plan: org.PlanStarter, wantSpaces: 1, wantStorage: 20, wantTransforms: 25000, wantBYOB: true, wantCustomDomains: 0},
 		{name: "pro", plan: org.PlanPro, wantSpaces: 3, wantStorage: 100, wantTransforms: 150000, wantBYOB: true, wantCustomDomains: 3},
-		{name: "team", plan: org.PlanTeam, wantSpaces: 20, wantStorage: 1000, wantTransforms: 1500000, wantBYOB: true, wantCustomDomains: 25},
+		{name: "team", plan: org.PlanTeam, wantSpaces: 20, wantStorage: 1000, wantTransforms: 1500000, wantBYOB: true, wantCustomDomains: 20},
 	}
 
 	for _, tt := range tests {
