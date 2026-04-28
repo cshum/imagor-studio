@@ -8,6 +8,7 @@ type Config struct {
 	AWSRegion    string
 	AppURL       string
 	AppAPIURL    string
+	AppTitle     string
 }
 
 type StartPublicSignupParams struct {
