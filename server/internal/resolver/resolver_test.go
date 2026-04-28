@@ -88,6 +88,14 @@ func (m *MockUserStore) Create(ctx context.Context, displayName, username, hashe
 	return args.Get(0).(*userstore.User), args.Error(1)
 }
 
+func (m *MockUserStore) CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*userstore.User, error) {
+	args := m.Called(ctx, displayName, username, hashedPassword, role, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
 func (m *MockUserStore) GetByID(ctx context.Context, id string) (*userstore.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -163,6 +171,11 @@ func (m *MockUserStore) UnlinkAuthProvider(ctx context.Context, id string, provi
 
 func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) error {
 	args := m.Called(ctx, id, active)
+	return args.Error(0)
+}
+
+func (m *MockUserStore) SetEmailVerified(ctx context.Context, id string, verified bool) error {
+	args := m.Called(ctx, id, verified)
 	return args.Error(0)
 }
 
