@@ -138,6 +138,12 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
     }
   }
 
+  const clearFieldError = (name: keyof CreateFormData) => {
+    if (form.getFieldState(name).error) {
+      form.clearErrors(name)
+    }
+  }
+
   return (
     <div className='space-y-6'>
       <FormField
@@ -152,6 +158,7 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
                 {...field}
                 autoFocus
                 onChange={(e) => {
+                  clearFieldError('name')
                   field.onChange(e)
                   const keyValue = form.getValues('key')
                   if (!keyValue || keyValue === slugify(field.value)) {
@@ -171,7 +178,15 @@ function IdentityStep({ form, onNext, next }: IdentityStepProps) {
           <FormItem>
             <FormLabel>{t('pages.spaces.formLabels.key')}</FormLabel>
             <FormControl>
-              <Input placeholder='my-space' {...field} className='font-mono' />
+              <Input
+                placeholder='my-space'
+                {...field}
+                className='font-mono'
+                onChange={(e) => {
+                  clearFieldError('key')
+                  field.onChange(e)
+                }}
+              />
             </FormControl>
             <FormDescription>{t('pages.spaces.keyDescription')}</FormDescription>
             <FormMessage />
@@ -219,6 +234,12 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
   const selectedStorageType = useWatch({ control: form.control, name: 'storageType' })
   const isByob = selectedStorageType === 's3'
 
+  const clearFieldError = (name: keyof CreateFormData) => {
+    if (form.getFieldState(name).error) {
+      form.clearErrors(name)
+    }
+  }
+
   return (
     <div className='space-y-6'>
       <FormField
@@ -235,7 +256,10 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                     key={type}
                     type='button'
                     disabled={isSaving}
-                    onClick={() => field.onChange(type)}
+                    onClick={() => {
+                      clearFieldError('storageType')
+                      field.onChange(type)
+                    }}
                     className={[
                       'relative rounded-lg border p-4 text-left',
                       isSelected
@@ -278,7 +302,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.bucket')} *</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={isSaving} />
+                    <Input
+                      {...field}
+                      disabled={isSaving}
+                      onChange={(e) => {
+                        clearFieldError('bucket')
+                        field.onChange(e)
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -291,7 +322,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.region')} *</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={isSaving} />
+                    <Input
+                      {...field}
+                      disabled={isSaving}
+                      onChange={(e) => {
+                        clearFieldError('region')
+                        field.onChange(e)
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -305,7 +343,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.endpoint')}</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isSaving} />
+                  <Input
+                    {...field}
+                    disabled={isSaving}
+                    onChange={(e) => {
+                      clearFieldError('endpoint')
+                      field.onChange(e)
+                    }}
+                  />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.endpointDescription')}
@@ -321,7 +366,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
               <FormItem>
                 <FormLabel>{t('pages.spaceSettings.storage.prefix')}</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isSaving} />
+                  <Input
+                    {...field}
+                    disabled={isSaving}
+                    onChange={(e) => {
+                      clearFieldError('prefix')
+                      field.onChange(e)
+                    }}
+                  />
                 </FormControl>
                 <FormDescription>
                   {t('pages.spaceSettings.storage.prefixDescription')}
@@ -338,7 +390,14 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.accessKeyId')} *</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={isSaving} />
+                    <Input
+                      {...field}
+                      disabled={isSaving}
+                      onChange={(e) => {
+                        clearFieldError('accessKeyId')
+                        field.onChange(e)
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -351,7 +410,15 @@ function StorageStep({ form, isSaving, onSubmit, back }: StorageStepProps) {
                 <FormItem>
                   <FormLabel>{t('pages.spaceSettings.storage.secretKey')} *</FormLabel>
                   <FormControl>
-                    <Input type='password' {...field} disabled={isSaving} />
+                    <Input
+                      type='password'
+                      {...field}
+                      disabled={isSaving}
+                      onChange={(e) => {
+                        clearFieldError('secretKey')
+                        field.onChange(e)
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
