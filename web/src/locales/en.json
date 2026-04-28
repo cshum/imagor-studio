@@ -965,6 +965,7 @@
       },
       "messages": {
         "identifierRequired": "Enter a username or email address.",
+        "identifierInvalidEmail": "Enter a valid email address.",
         "memberAdded": "Member added.",
         "inviteSent": "Invitation email sent.",
         "inviteCanceled": "Invitation canceled.",

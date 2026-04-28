@@ -117,6 +117,10 @@ export async function reloadOrganizationMembersData({
   }
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
   const { t } = useTranslation()
   const { authState, refreshAuthSession } = useAuth()
@@ -124,6 +128,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
   const [members, setMembers] = useState(loaderData.members)
   const [invitations, setInvitations] = useState<OrgInvitationItem[]>(loaderData.invitations)
   const [identifier, setIdentifier] = useState('')
+  const [identifierFieldError, setIdentifierFieldError] = useState<string | null>(null)
   const [role, setRole] = useState<'admin' | 'member'>('member')
   const [isAdding, setIsAdding] = useState(false)
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null)
@@ -156,10 +161,16 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
   const handleAddMember = async () => {
     const nextIdentifier = identifier.trim()
     if (!nextIdentifier) {
-      toast.error(t('pages.organizationMembers.messages.identifierRequired'))
+      setIdentifierFieldError(t('pages.organizationMembers.messages.identifierRequired'))
       return
     }
 
+    if (nextIdentifier.includes('@') && !isValidEmail(nextIdentifier)) {
+      setIdentifierFieldError(t('pages.organizationMembers.messages.identifierInvalidEmail'))
+      return
+    }
+
+    setIdentifierFieldError(null)
     setIsAdding(true)
     try {
       if (nextIdentifier.includes('@')) {
@@ -170,6 +181,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
             : t('pages.organizationMembers.messages.memberAdded'),
         )
         setIdentifier('')
+        setIdentifierFieldError(null)
         setRole('member')
         if (result.status === 'added') {
           await reloadOrganizationMembers()
@@ -186,6 +198,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
         await addOrgMember({ username: nextIdentifier, role })
         toast.success(t('pages.organizationMembers.messages.memberAdded'))
         setIdentifier('')
+        setIdentifierFieldError(null)
         setRole('member')
         await reloadOrganizationMembers()
       }
@@ -294,13 +307,24 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
           contentClassName='border-t-0'
         >
           <div className='grid gap-3 py-1 md:grid-cols-[minmax(0,1fr)_180px_auto]'>
-            <Input
-              className='h-10'
-              value={identifier}
-              onChange={(event) => setIdentifier(event.target.value)}
-              placeholder={t('pages.organizationMembers.identifierPlaceholder')}
-              disabled={isAdding}
-            />
+            <div className='md:col-span-1'>
+              <Input
+                className='h-10'
+                value={identifier}
+                onChange={(event) => {
+                  setIdentifier(event.target.value)
+                  if (identifierFieldError) {
+                    setIdentifierFieldError(null)
+                  }
+                }}
+                placeholder={t('pages.organizationMembers.identifierPlaceholder')}
+                disabled={isAdding}
+                aria-invalid={identifierFieldError ? 'true' : 'false'}
+              />
+              {identifierFieldError ? (
+                <p className='text-destructive mt-2 text-sm'>{identifierFieldError}</p>
+              ) : null}
+            </div>
             <Select value={role} onValueChange={(value: 'admin' | 'member') => setRole(value)}>
               <SelectTrigger>
                 <SelectValue />

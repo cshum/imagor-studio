@@ -963,6 +963,7 @@
       },
       "messages": {
         "identifierRequired": "請輸入使用者名稱或電子郵件地址。",
+        "identifierInvalidEmail": "請輸入有效的電子郵件地址。",
         "memberAdded": "成員已新增。",
         "inviteSent": "邀請郵件已送出。",
         "inviteCanceled": "邀請已取消。",

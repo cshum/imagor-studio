@@ -962,6 +962,7 @@
       },
       "messages": {
         "identifierRequired": "Inserisci uno username o un indirizzo email.",
+        "identifierInvalidEmail": "Inserisci un indirizzo email valido.",
         "memberAdded": "Membro aggiunto.",
         "inviteSent": "Email di invito inviata.",
         "inviteCanceled": "Invito annullato.",

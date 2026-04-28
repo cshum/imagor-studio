@@ -945,6 +945,7 @@
       },
       "messages": {
         "identifierRequired": "请输入用户名或邮箱地址。",
+        "identifierInvalidEmail": "请输入有效的邮箱地址。",
         "memberAdded": "成员已添加。",
         "inviteSent": "邀请邮件已发送。",
         "inviteCanceled": "邀请已取消。",

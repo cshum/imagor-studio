@@ -2024,6 +2024,29 @@ func TestInviteOrgMember_CreatesPendingInvitationForExternalEmail(t *testing.T) 
 	sender.AssertExpectations(t)
 }
 
+func TestInviteOrgMember_RejectsWhenInviteSenderIsMissing(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	userStore := &MockUserStore{}
+	inviteStore := &MockSpaceInviteStore{}
+	logger, _ := zap.NewDevelopment()
+	r := NewResolver(NewMockStorageProvider(nil), nil, userStore, nil, nil, nil, logger, orgStore, spaceStore, inviteStore, nil)
+
+	userStore.On("GetByEmail", mock.Anything, "new@example.com").Return((*userstore.User)(nil), nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().InviteOrgMember(ctx, "new@example.com", "member")
+	assert.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "email invitations are not configured")
+
+	inviteStore.AssertNotCalled(t, "CreateOrRefreshPending", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+	inviteStore.AssertExpectations(t)
+}
+
 func TestOrgInvitations_ReturnsPendingInvites(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
