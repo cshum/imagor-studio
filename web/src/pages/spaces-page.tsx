@@ -551,14 +551,6 @@ export function SpacesPage({
           })}
         </div>
       )}
-
-      {/* Space count footer */}
-      {loaderData && spaces.length > 0 && (
-        <p className='text-muted-foreground text-sm'>
-          {t('pages.spaces.spaceCount', { count: spaces.length })}
-        </p>
-      )}
-
       <ResponsiveDialog
         open={leaveSpaceItem !== null}
         onOpenChange={(open) => !open && setLeaveSpaceItem(null)}
