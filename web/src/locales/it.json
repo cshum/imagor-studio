@@ -78,7 +78,7 @@
       "formSubtitleCloud": "Accedi con l'account con cui il tuo team ti ha invitato.",
       "formSubtitleSelfHosted": "Accedi con le credenziali del tuo account.",
       "googleCta": "Continua con Google",
-      "credentialsDividerCloud": "oppure usa email o nome utente e password",
+      "credentialsDividerCloud": "oppure usa email e password",
       "credentialsDividerSelfHosted": "oppure usa nome utente e password",
       "identifierLabelCloud": "Email o nome utente",
       "identifierLabelSelfHosted": "Nome utente",

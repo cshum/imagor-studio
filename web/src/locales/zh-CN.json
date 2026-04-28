@@ -1441,7 +1441,7 @@
       "formSubtitleCloud": "请使用团队邀请你的账号登录。",
       "formSubtitleSelfHosted": "请使用你的账户凭证登录。",
       "googleCta": "使用 Google 继续",
-      "credentialsDividerCloud": "或使用邮箱或用户名和密码",
+      "credentialsDividerCloud": "或使用邮箱和密码",
       "credentialsDividerSelfHosted": "或使用用户名和密码",
       "identifierLabelCloud": "邮箱或用户名",
       "identifierLabelSelfHosted": "用户名",

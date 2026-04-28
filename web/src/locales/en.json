@@ -75,7 +75,7 @@
       "title": "High-performance image processing for teams",
       "formTitle": "Sign in",
       "googleCta": "Continue with Google",
-      "credentialsDividerCloud": "Or use email or username and password",
+      "credentialsDividerCloud": "Or use email and password",
       "credentialsDividerSelfHosted": "Or use username and password",
       "identifierLabelCloud": "Email or username",
       "identifierLabelSelfHosted": "Username",
