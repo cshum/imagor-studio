@@ -827,7 +827,6 @@ const accountUsersRoute = createRoute({
 
 // Check if embedded mode is enabled via environment variable
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
-const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
 
 // Embedded mode route - single root route with URL parameters
 const embeddedEditorRoute = createRoute({
@@ -848,7 +847,8 @@ const routeTree = isEmbeddedMode
     rootRoute.addChildren([embeddedEditorRoute])
   : // Normal mode: full route tree
     rootRoute.addChildren([
-      ...(isMultiTenantMode ? [privacyRoute, termsRoute] : []),
+      privacyRoute,
+      termsRoute,
       loginRoute,
       registerRoute,
       registerVerifyRoute,
