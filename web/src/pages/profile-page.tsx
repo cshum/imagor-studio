@@ -30,6 +30,7 @@ import {
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
 import { useFormErrors } from '@/hooks/use-form-errors'
+import { isValidEmail, normalizeEmail } from '@/lib/email'
 import type { ProfileLoaderData } from '@/loaders/account-loader'
 import { initAuth, useAuth } from '@/stores/auth-store'
 
@@ -67,7 +68,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   })
 
   const emailSchema = z.object({
-    email: z.string().email(t('pages.profile.invalidEmail')),
+    email: z.string().trim().refine(isValidEmail, t('pages.profile.invalidEmail')),
   })
 
   type ProfileForm = z.infer<typeof profileSchema>
@@ -180,7 +181,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const onEmailSubmit = async (values: EmailForm) => {
     setIsUpdatingEmail(true)
     try {
-      const result = await requestEmailChange(values.email)
+      const result = await requestEmailChange(normalizeEmail(values.email))
       await initAuth()
       emailForm.reset({ email: result.email })
       setEmailDialogOpen(false)

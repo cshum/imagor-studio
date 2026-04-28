@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { isValidEmail } from '@/lib/email'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { initializeLocale } from '@/stores/locale-store'
 
@@ -77,48 +78,51 @@ export function LoginPage() {
 
   // Create translation-aware validation schema
   const loginSchema = z.object({
-    username: z.string().trim().superRefine((value, ctx) => {
-      if (!value) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: identifierRequiredMessage,
-        })
-        return
-      }
-
-      if (isMultiTenant && value.includes('@')) {
-        if (!z.email().safeParse(value).success) {
+    username: z
+      .string()
+      .trim()
+      .superRefine((value, ctx) => {
+        if (!value) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: t('auth.validation.invalidEmailOrUsername'),
+            message: identifierRequiredMessage,
+          })
+          return
+        }
+
+        if (isMultiTenant && value.includes('@')) {
+          if (!isValidEmail(value)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: t('auth.validation.invalidEmailOrUsername'),
+            })
+          }
+          return
+        }
+
+        if (value.length < 3) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('auth.validation.usernameMinLength'),
           })
         }
-        return
-      }
 
-      if (value.length < 3) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: t('auth.validation.usernameMinLength'),
-        })
-      }
+        if (value.length > 30) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('auth.validation.usernameMaxLength'),
+          })
+        }
 
-      if (value.length > 30) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: t('auth.validation.usernameMaxLength'),
-        })
-      }
-
-      if (!usernamePattern.test(value)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: isMultiTenant
-            ? t('auth.validation.invalidEmailOrUsername')
-            : t('auth.validation.invalidUsername'),
-        })
-      }
-    }),
+        if (!usernamePattern.test(value)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: isMultiTenant
+              ? t('auth.validation.invalidEmailOrUsername')
+              : t('auth.validation.invalidUsername'),
+          })
+        }
+      }),
     password: z.string().trim().min(1, t('auth.validation.passwordRequired')),
   })
 

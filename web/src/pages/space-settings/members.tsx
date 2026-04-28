@@ -35,6 +35,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
+import { isValidEmail, normalizeEmail } from '@/lib/email'
 import { extractErrorMessage } from '@/lib/error-utils'
 import { useAuth } from '@/stores/auth-store'
 
@@ -184,7 +185,6 @@ export function MembersSection({
 
   const handleInvite = async () => {
     const normalizedEmail = inviteEmail.trim()
-    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
 
     setInviteFieldError(null)
 
@@ -193,14 +193,14 @@ export function MembersSection({
       return
     }
 
-    if (!isValidEmail) {
+    if (!isValidEmail(normalizedEmail)) {
       setInviteFieldError(t('pages.spaceSettings.members.inviteErrors.invalidEmail'))
       return
     }
 
     setIsInviting(true)
     try {
-      await shareWithEmail(normalizedEmail)
+      await shareWithEmail(normalizeEmail(normalizedEmail))
     } catch (err) {
       const mappedError = mapInviteError(extractErrorMessage(err))
       if (mappedError.kind === 'field') {

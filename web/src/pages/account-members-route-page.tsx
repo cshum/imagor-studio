@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { SettingsSection } from '@/components/ui/settings-section'
+import { isValidEmail, normalizeEmail } from '@/lib/email'
 import { extractErrorInfo, extractErrorMessage } from '@/lib/error-utils'
 import type { OrgMembersLoaderData } from '@/loaders/account-loader'
 import { useAuth } from '@/stores/auth-store'
@@ -131,10 +132,6 @@ export async function reloadOrganizationMembersData({
   }
 }
 
-function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-}
-
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
   const { t } = useTranslation()
   const { authState, refreshAuthSession } = useAuth()
@@ -188,7 +185,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
     setIsAdding(true)
     try {
       if (nextIdentifier.includes('@')) {
-        const result = await inviteOrgMember({ email: nextIdentifier, role })
+        const result = await inviteOrgMember({ email: normalizeEmail(nextIdentifier), role })
         toast.success(
           result.status === 'invited'
             ? t('pages.organizationMembers.messages.inviteSent')
