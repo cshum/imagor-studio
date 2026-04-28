@@ -75,11 +75,11 @@
       "title": "High-performance image processing for teams",
       "formTitle": "Sign in",
       "googleCta": "Continue with Google",
-      "credentialsDividerCloud": "Or use email and password",
+      "credentialsDividerCloud": "Or use email or username and password",
       "credentialsDividerSelfHosted": "Or use username and password",
-      "identifierLabelCloud": "Email",
+      "identifierLabelCloud": "Email or username",
       "identifierLabelSelfHosted": "Username",
-      "identifierPlaceholderCloud": "Enter your email",
+      "identifierPlaceholderCloud": "Enter your email or username",
       "identifierPlaceholderSelfHosted": "Enter your username",
       "highlights": {
         "storage": "Control storage and delivery by team or environment",
@@ -87,10 +87,12 @@
         "access": "Review, edit, and organize images and templates in one place"
       },
       "signIn": "Sign In",
-      "loginFailed": "Invalid username or password. Please try again."
+      "loginFailed": "Invalid credentials. Please try again."
     },
     "validation": {
-      "usernameRequired": "Please enter a valid username",
+      "identifierRequiredCloud": "Email or username is required",
+      "invalidEmailOrUsername": "Please enter a valid email or username",
+      "usernameRequired": "Username is required",
       "usernameMinLength": "Username must be at least 3 characters",
       "usernameMaxLength": "Username must be at most 30 characters",
       "passwordRequired": "Password is required",

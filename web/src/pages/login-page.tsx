@@ -54,6 +54,8 @@ const GoogleIcon = () => (
   </svg>
 )
 
+const usernamePattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/
+
 export function LoginPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
@@ -69,17 +71,61 @@ export function LoginPage() {
     return url.startsWith('/') && !url.startsWith('//')
   }
 
+  const identifierRequiredMessage = isMultiTenant
+    ? t('auth.validation.identifierRequiredCloud')
+    : t('auth.validation.usernameRequired')
+
   // Create translation-aware validation schema
   const loginSchema = z.object({
-    username: z
-      .string()
-      .min(3, t('auth.validation.usernameMinLength'))
-      .max(30, t('auth.validation.usernameMaxLength')),
-    password: z.string().min(1, t('auth.validation.passwordRequired')),
+    username: z.string().trim().superRefine((value, ctx) => {
+      if (!value) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: identifierRequiredMessage,
+        })
+        return
+      }
+
+      if (isMultiTenant && value.includes('@')) {
+        if (!z.email().safeParse(value).success) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: t('auth.validation.invalidEmailOrUsername'),
+          })
+        }
+        return
+      }
+
+      if (value.length < 3) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t('auth.validation.usernameMinLength'),
+        })
+      }
+
+      if (value.length > 30) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t('auth.validation.usernameMaxLength'),
+        })
+      }
+
+      if (!usernamePattern.test(value)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: isMultiTenant
+            ? t('auth.validation.invalidEmailOrUsername')
+            : t('auth.validation.invalidUsername'),
+        })
+      }
+    }),
+    password: z.string().trim().min(1, t('auth.validation.passwordRequired')),
   })
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       username: '',
       password: '',
@@ -117,7 +163,10 @@ export function LoginPage() {
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
-      const response = await login(values)
+      const response = await login({
+        username: values.username.trim(),
+        password: values.password,
+      })
       await initAuth(response.token)
 
       // Reload user's language preference after login

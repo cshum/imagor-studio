@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cshum/imagor-studio/server/internal/model"
 	"github.com/cshum/imagor-studio/server/internal/registrystore"
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
@@ -213,11 +214,26 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			return apperror.BadRequest("Password is required", nil)
 		}
 
-		// Normalize username
-		username := validation.NormalizeUsername(req.Username)
+		identifier := strings.TrimSpace(req.Username)
 
-		// Get user by username
-		user, err := h.userStore.GetByUsername(r.Context(), username)
+		var user *model.User
+		var err error
+
+		if strings.Contains(identifier, "@") {
+			email := strings.ToLower(identifier)
+			emailUser, lookupErr := h.userStore.GetByEmail(r.Context(), email)
+			if lookupErr != nil {
+				h.logger.Error("Failed to get user", zap.Error(lookupErr))
+				return apperror.InternalServerError("Database connection failed")
+			}
+
+			if emailUser != nil {
+				user, err = h.userStore.GetByIDWithPassword(r.Context(), emailUser.ID)
+			}
+		} else {
+			username := validation.NormalizeUsername(identifier)
+			user, err = h.userStore.GetByUsername(r.Context(), username)
+		}
 		if err != nil {
 			h.logger.Error("Failed to get user", zap.Error(err))
 			return apperror.InternalServerError("Database connection failed")

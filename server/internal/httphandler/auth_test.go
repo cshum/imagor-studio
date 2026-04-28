@@ -585,6 +585,33 @@ func TestLogin(t *testing.T) {
 			expectError:    false,
 		},
 		{
+			name:   "Valid login with email",
+			method: http.MethodPost,
+			body: LoginRequest{
+				Username: " TestUser@Example.com ",
+				Password: "password123",
+			},
+			setupMocks: func() {
+				mockUserStore.On("GetByEmail", mock.Anything, "testuser@example.com").Return(&userstore.User{
+					ID:          "user-123",
+					DisplayName: "testuser",
+					Username:    "testuser",
+					Role:        "user",
+				}, nil)
+				mockUserStore.On("GetByIDWithPassword", mock.Anything, "user-123").Return(&model.User{
+					ID:             "user-123",
+					DisplayName:    "testuser",
+					Username:       "testuser",
+					HashedPassword: hashedPassword,
+					Role:           "user",
+					IsActive:       true,
+				}, nil)
+				mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectError:    false,
+		},
+		{
 			name:   "Valid login with admin role",
 			method: http.MethodPost,
 			body: LoginRequest{

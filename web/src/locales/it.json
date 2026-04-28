@@ -78,11 +78,11 @@
       "formSubtitleCloud": "Accedi con l'account con cui il tuo team ti ha invitato.",
       "formSubtitleSelfHosted": "Accedi con le credenziali del tuo account.",
       "googleCta": "Continua con Google",
-      "credentialsDividerCloud": "oppure usa email e password",
+      "credentialsDividerCloud": "oppure usa email o nome utente e password",
       "credentialsDividerSelfHosted": "oppure usa nome utente e password",
-      "identifierLabelCloud": "Email",
+      "identifierLabelCloud": "Email o nome utente",
       "identifierLabelSelfHosted": "Nome utente",
-      "identifierPlaceholderCloud": "Inserisci la tua email",
+      "identifierPlaceholderCloud": "Inserisci la tua email o il nome utente",
       "identifierPlaceholderSelfHosted": "Inserisci il tuo nome utente",
       "inviteHint": "Usa il tuo account di team per accedere a spazi condivisi, impostazioni di delivery e configurazione dello storage.",
       "highlights": {
@@ -91,10 +91,12 @@
         "access": "Controlla gli accessi tra team"
       },
       "signIn": "Accedi",
-      "loginFailed": "Nome utente o password non validi. Riprova."
+      "loginFailed": "Credenziali non valide. Riprova."
     },
     "validation": {
-      "usernameRequired": "Inserisci un nome utente valido",
+      "identifierRequiredCloud": "Email o nome utente obbligatori",
+      "invalidEmailOrUsername": "Inserisci un'email o un nome utente validi",
+      "usernameRequired": "Il nome utente è obbligatorio",
       "usernameMinLength": "Il nome utente deve contenere almeno 3 caratteri",
       "usernameMaxLength": "Il nome utente deve contenere al massimo 30 caratteri",
       "passwordRequired": "La password è obbligatoria",
