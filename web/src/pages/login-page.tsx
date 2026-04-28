@@ -126,7 +126,7 @@ export function LoginPage() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    mode: 'onBlur',
+    mode: 'onSubmit',
     reValidateMode: 'onChange',
     defaultValues: {
       username: '',
