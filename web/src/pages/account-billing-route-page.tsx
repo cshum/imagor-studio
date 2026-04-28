@@ -239,7 +239,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         )}
       </div>
 
-      <div className='bg-muted/30 rounded-xl border p-4'>
+      <div className='bg-muted/30 rounded-lg border p-4'>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div className='space-y-1'>
             <div className='flex flex-wrap items-center gap-2'>
@@ -363,7 +363,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         })}
       </div>
 
-      <div className='bg-muted/20 rounded-xl border p-4'>
+      <div className='bg-muted/20 rounded-lg border p-4'>
         <p className='text-sm font-medium'>{t('pages.billing.sharedFeaturesTitle')}</p>
         <div className='text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm'>
           <span>{t('pages.billing.sharedFeatures.collaboration')}</span>

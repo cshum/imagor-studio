@@ -147,8 +147,8 @@ export function SpacesPage({
       })
     : null
   const usageSummaryCardClassName = canManageOrganization
-    ? 'bg-muted/30 hover:bg-muted/50 focus-visible:ring-ring block rounded-xl border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-    : 'bg-muted/30 rounded-xl border p-4'
+    ? 'bg-muted/30 hover:bg-muted/50 focus-visible:ring-ring block rounded-lg border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+    : 'bg-muted/30 rounded-lg border p-4'
 
   const handleLeaveSpace = async () => {
     if (!leaveSpaceItem) return
@@ -352,7 +352,7 @@ export function SpacesPage({
       {!loaderData ? (
         <div className='grid grid-cols-1 gap-4'>
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className='space-y-4 rounded-xl border p-5'>
+            <div key={i} className='space-y-4 rounded-lg border p-5'>
               <div className='flex items-center gap-3'>
                 <Skeleton className='h-10 w-10 rounded-lg' />
                 <div className='flex-1 space-y-2'>
@@ -370,7 +370,7 @@ export function SpacesPage({
         </div>
       ) : spaces.length === 0 ? (
         /* Empty state */
-        <div className='flex flex-col items-center justify-center rounded-xl border border-dashed py-20 text-center'>
+        <div className='flex flex-col items-center justify-center rounded-lg border border-dashed py-20 text-center'>
           <div className='bg-muted flex h-14 w-14 items-center justify-center rounded-full'>
             <LayoutGrid className='text-muted-foreground h-7 w-7' />
           </div>
@@ -428,13 +428,13 @@ export function SpacesPage({
             return (
               <div
                 key={space.key}
-                className='group bg-card hover:border-border hover:bg-accent/20 dark:hover:border-border/80 dark:hover:bg-accent/30 relative flex flex-col rounded-xl border p-5 transition-[background-color,border-color,box-shadow] hover:shadow-md'
+                className='group bg-card hover:border-border hover:bg-accent/20 dark:hover:border-border/80 dark:hover:bg-accent/30 relative flex flex-col rounded-lg border p-5 transition-[background-color,border-color,box-shadow] hover:shadow-md'
               >
                 <Link
                   to='/spaces/$spaceKey'
                   params={{ spaceKey: space.key }}
                   aria-label={`${t('pages.spaces.openGallery')}: ${space.name}`}
-                  className='focus-visible:ring-ring absolute inset-0 z-10 rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+                  className='focus-visible:ring-ring absolute inset-0 z-10 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
                 />
 
                 {/* Card header row */}
