@@ -3,6 +3,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useRouter } from '@tanstack/react-router'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -94,6 +95,7 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const navigate = useNavigate()
+  const [dangerZoneOpen, setDangerZoneOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const languageCodes = getLanguageCodes()
@@ -566,25 +568,38 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
       </SettingsSection>
 
       {space.canDelete ? (
-        <div className='border-destructive/20 mt-10 border-t pt-6'>
-          <h3 className='text-destructive text-base font-semibold'>
+        <div className='mt-10 border-t pt-6'>
+          <Button
+            type='button'
+            variant='ghost'
+            size='sm'
+            className='text-destructive -ml-2'
+            onClick={() => setDangerZoneOpen((open) => !open)}
+          >
+            {dangerZoneOpen ? (
+              <ChevronDown className='mr-2 h-3.5 w-3.5' />
+            ) : (
+              <ChevronRight className='mr-2 h-3.5 w-3.5' />
+            )}
             {t('pages.spaceSettings.sections.dangerZone')}
-          </h3>
-          <div className='mt-4 flex items-start justify-between gap-4'>
-            <div className='min-w-0'>
-              <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
-              <p className='text-muted-foreground mt-1 text-sm'>
-                {t('pages.spaceSettings.danger.deleteDescription')}
-              </p>
+          </Button>
+          {dangerZoneOpen ? (
+            <div className='mt-4 flex items-start justify-between gap-4'>
+              <div className='min-w-0'>
+                <p className='font-medium'>{t('pages.spaceSettings.danger.deleteTitle')}</p>
+                <p className='text-muted-foreground mt-1 text-sm'>
+                  {t('pages.spaceSettings.danger.deleteDescription')}
+                </p>
+              </div>
+              <Button
+                variant='destructive'
+                className='shrink-0'
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                {t('pages.spaceSettings.danger.deleteButton')}
+              </Button>
             </div>
-            <Button
-              variant='destructive'
-              className='shrink-0'
-              onClick={() => setIsDeleteDialogOpen(true)}
-            >
-              {t('pages.spaceSettings.danger.deleteButton')}
-            </Button>
-          </div>
+          ) : null}
         </div>
       ) : null}
 

@@ -341,7 +341,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         })}
       </div>
 
-      <div className='border-destructive/20 border-t pt-6'>
+      <div className='border-t pt-6'>
         <Button
           type='button'
           variant='ghost'
