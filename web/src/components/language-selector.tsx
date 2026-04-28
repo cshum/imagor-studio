@@ -25,7 +25,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageCh
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='ghost' size='icon' className='h-12 w-12 sm:h-10 sm:w-10'>
+        <Button variant='ghost' size='icon' className='h-10 w-10 rounded-full'>
           <Languages className='h-4 w-4' />
           <span className='sr-only'>{t('common.language.title')}</span>
         </Button>
