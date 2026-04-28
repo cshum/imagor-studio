@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockCancelOrgInvitation = vi.fn()
 const mockGetMyOrganization = vi.fn()
+const mockAddOrgMember = vi.fn()
 const mockInviteOrgMember = vi.fn()
 const mockListOrgInvitations = vi.fn()
 const mockListOrgMembers = vi.fn()
@@ -53,6 +54,7 @@ vi.mock('@/api/org-api', async () => {
   const actual = await vi.importActual<typeof import('@/api/org-api')>('@/api/org-api')
   return {
     ...actual,
+    addOrgMember: mockAddOrgMember,
     cancelOrgInvitation: mockCancelOrgInvitation,
     getMyOrganization: mockGetMyOrganization,
     inviteOrgMember: mockInviteOrgMember,
@@ -332,5 +334,127 @@ describe('AccountMembersRoutePage pending invitations', () => {
     expect(mockRefreshAuthSession).not.toHaveBeenCalled()
     expect(mockToastSuccess).toHaveBeenCalledWith('pages.organizationMembers.messages.inviteSent')
     expect(screen.getByText('new@example.com')).toBeTruthy()
+  })
+
+  it('shows org conflict inline instead of toast when inviting by email', async () => {
+    const { AccountMembersRoutePage } = await import('./account-members-route-page')
+    mockInviteOrgMember.mockRejectedValue({
+      response: {
+        errors: [
+          {
+            message: 'user belongs to another organization',
+            extensions: { reason: 'org_member_other_organization' },
+          },
+        ],
+      },
+    })
+
+    const { container } = render(
+      <AccountMembersRoutePage
+        loaderData={{
+          breadcrumb: { translationKey: 'navigation.breadcrumbs.organizationMembers' },
+          invitations: [],
+          members: [
+            {
+              __typename: 'OrgMember',
+              userId: 'user-1',
+              username: 'alice',
+              displayName: 'Alice',
+              email: 'alice@example.com',
+              avatarUrl: null,
+              role: 'owner',
+              createdAt: '2026-04-18T00:00:00Z',
+            },
+          ],
+          organization: {
+            __typename: 'Organization',
+            id: 'org-1',
+            name: 'Acme Org',
+            slug: 'acme',
+            ownerUserId: 'user-1',
+            currentUserRole: 'owner',
+            plan: 'trial',
+            planStatus: 'active',
+            createdAt: '2026-04-18T00:00:00Z',
+            updatedAt: '2026-04-18T00:00:00Z',
+          },
+        }}
+      />,
+    )
+
+    fireEvent.change(
+      screen.getByPlaceholderText('pages.organizationMembers.identifierPlaceholder'),
+      { target: { value: 'new@example.com' } },
+    )
+    fireEvent.click(screen.getByText('pages.organizationMembers.addButton'))
+
+    await waitFor(() => {
+      expect(mockInviteOrgMember).toHaveBeenCalledWith({ email: 'new@example.com', role: 'member' })
+    })
+    expect(mockToastError).not.toHaveBeenCalled()
+    expect(
+      screen.getByText('pages.organizationMembers.messages.errors.otherOrganization'),
+    ).toBeTruthy()
+    expect(container.querySelector('[aria-invalid="true"]')).toBeTruthy()
+  })
+
+  it('shows already-member inline instead of toast when adding by username', async () => {
+    const { AccountMembersRoutePage } = await import('./account-members-route-page')
+    mockAddOrgMember.mockRejectedValue({
+      response: {
+        errors: [
+          {
+            message: 'user already belongs to organization',
+            extensions: { reason: 'org_member_already_member' },
+          },
+        ],
+      },
+    })
+
+    const { container } = render(
+      <AccountMembersRoutePage
+        loaderData={{
+          breadcrumb: { translationKey: 'navigation.breadcrumbs.organizationMembers' },
+          invitations: [],
+          members: [
+            {
+              __typename: 'OrgMember',
+              userId: 'user-1',
+              username: 'alice',
+              displayName: 'Alice',
+              email: 'alice@example.com',
+              avatarUrl: null,
+              role: 'owner',
+              createdAt: '2026-04-18T00:00:00Z',
+            },
+          ],
+          organization: {
+            __typename: 'Organization',
+            id: 'org-1',
+            name: 'Acme Org',
+            slug: 'acme',
+            ownerUserId: 'user-1',
+            currentUserRole: 'owner',
+            plan: 'trial',
+            planStatus: 'active',
+            createdAt: '2026-04-18T00:00:00Z',
+            updatedAt: '2026-04-18T00:00:00Z',
+          },
+        }}
+      />,
+    )
+
+    fireEvent.change(
+      screen.getByPlaceholderText('pages.organizationMembers.identifierPlaceholder'),
+      { target: { value: 'alice' } },
+    )
+    fireEvent.click(screen.getByText('pages.organizationMembers.addButton'))
+
+    await waitFor(() => {
+      expect(mockAddOrgMember).toHaveBeenCalledWith({ username: 'alice', role: 'member' })
+    })
+    expect(mockToastError).not.toHaveBeenCalled()
+    expect(screen.getByText('pages.organizationMembers.messages.errors.alreadyMember')).toBeTruthy()
+    expect(container.querySelector('[aria-invalid="true"]')).toBeTruthy()
   })
 })

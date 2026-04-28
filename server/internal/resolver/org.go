@@ -1691,6 +1691,9 @@ func (r *mutationResolver) InviteOrgMember(ctx context.Context, email string, ro
 	if !r.inviteEnabled() {
 		return nil, fmt.Errorf("email invitations are not configured")
 	}
+	if r.spaceInviteStore == nil || r.inviteSender == nil {
+		return nil, fmt.Errorf("email invitations are not configured")
+	}
 
 	claims, claimsErr := auth.GetClaimsFromContext(ctx)
 	if claimsErr != nil {
@@ -2039,6 +2042,9 @@ func (r *mutationResolver) InviteSpaceMember(ctx context.Context, spaceID string
 	}
 
 	if !r.inviteEnabled() {
+		return nil, fmt.Errorf("email invitations are not configured")
+	}
+	if r.spaceInviteStore == nil || r.inviteSender == nil {
 		return nil, fmt.Errorf("email invitations are not configured")
 	}
 

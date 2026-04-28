@@ -93,6 +93,20 @@ function getOrganizationMembersErrorMessage(error: unknown, t: (key: string) => 
   return errorInfo.message || extractErrorMessage(error)
 }
 
+function getIdentifierFieldErrorMessage(error: unknown, t: (key: string) => string): string | null {
+  const errorInfo = extractErrorInfo(error)
+
+  if (errorInfo.reason === 'org_member_other_organization') {
+    return t('pages.organizationMembers.messages.errors.otherOrganization')
+  }
+
+  if (errorInfo.reason === 'org_member_already_member') {
+    return t('pages.organizationMembers.messages.errors.alreadyMember')
+  }
+
+  return null
+}
+
 export async function reloadOrganizationMembersData({
   currentRole,
   refreshAuthSession,
@@ -203,6 +217,12 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
         await reloadOrganizationMembers()
       }
     } catch (error) {
+      const identifierErrorMessage = getIdentifierFieldErrorMessage(error, t)
+      if (identifierErrorMessage) {
+        setIdentifierFieldError(identifierErrorMessage)
+        return
+      }
+
       const message = getOrganizationMembersErrorMessage(error, t)
       toast.error(`${t('pages.organizationMembers.messages.memberAddFailed')}: ${message}`)
     } finally {
