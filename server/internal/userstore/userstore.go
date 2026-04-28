@@ -38,6 +38,7 @@ type Store interface {
 	ListAuthProviders(ctx context.Context, id string) ([]*AuthProvider, error)
 	UnlinkAuthProvider(ctx context.Context, id string, provider string) error
 	SetActive(ctx context.Context, id string, active bool) error
+	SetEmailVerified(ctx context.Context, id string, verified bool) error
 	List(ctx context.Context, offset, limit int, search string) ([]*User, int, error)
 	UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*User, error)
 	UpdateRole(ctx context.Context, id string, role string) error
@@ -189,7 +190,7 @@ func (s *store) create(ctx context.Context, displayName, username, hashedPasswor
 		Role:           role,
 		IsActive:       true,
 		Email:          email,
-		EmailVerified:  email != nil,
+		EmailVerified:  false,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -208,6 +209,19 @@ func (s *store) create(ctx context.Context, displayName, username, hashedPasswor
 	}
 
 	return modelUserToStore(*entry), nil
+}
+
+func (s *store) SetEmailVerified(ctx context.Context, id string, verified bool) error {
+	_, err := s.db.NewUpdate().
+		Model((*model.User)(nil)).
+		Set("email_verified = ?", verified).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error updating email verification state: %w", err)
+	}
+	return nil
 }
 
 func (s *store) GetByEmail(ctx context.Context, email string) (*User, error) {

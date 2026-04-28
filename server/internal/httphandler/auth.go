@@ -254,6 +254,9 @@ func (h *AuthHandler) StartPublicSignup() http.HandlerFunc {
 			if errors.Is(err, signup.ErrEmailAlreadyExists) {
 				return apperror.Conflict("Email already exists", "email")
 			}
+			if errors.Is(err, signup.ErrVerificationCooldownActive) {
+				return apperror.TooManyRequests("Please wait before requesting another verification email", map[string]interface{}{"field": "email"}, "email")
+			}
 			h.logger.Error("Failed to start public sign-up verification", zap.Error(err))
 			return apperror.InternalServerError("Failed to start sign-up")
 		}
@@ -335,6 +338,9 @@ func (h *AuthHandler) ResendPublicSignupVerification() http.HandlerFunc {
 		if err != nil {
 			if errors.Is(err, signup.ErrPendingSignupNotFound) {
 				return apperror.BadRequest("No pending sign-up found for this email", map[string]interface{}{"field": "email"})
+			}
+			if errors.Is(err, signup.ErrVerificationCooldownActive) {
+				return apperror.TooManyRequests("Please wait before requesting another verification email", map[string]interface{}{"field": "email"}, "email")
 			}
 			h.logger.Error("Failed to resend public sign-up verification", zap.Error(err))
 			return apperror.InternalServerError("Failed to resend sign-up verification")

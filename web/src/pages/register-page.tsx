@@ -9,6 +9,7 @@ import {
   getAuthProviders,
   getGoogleLoginUrl,
   registerWithVerificationFallback,
+  resendPublicSignupVerification,
   type AuthApiError,
   type PublicSignupVerificationResponse,
 } from '@/api/auth-api'
@@ -68,6 +69,10 @@ export function RegisterPage() {
   const [googleEnabled, setGoogleEnabled] = useState(false)
   const [pendingVerification, setPendingVerification] =
     useState<PublicSignupVerificationResponse | null>(null)
+  const [resendCooldownRemaining, setResendCooldownRemaining] = useState(0)
+  const [resendState, setResendState] = useState<'idle' | 'success' | 'error'>('idle')
+  const [resendMessage, setResendMessage] = useState<string | null>(null)
+  const [isResending, setIsResending] = useState(false)
   const productHighlights = [
     t('auth.login.highlights.storage'),
     t('auth.login.highlights.delivery'),
@@ -117,6 +122,29 @@ export function RegisterPage() {
         // If providers endpoint fails, just don't show OAuth buttons
       })
   }, [])
+
+  useEffect(() => {
+    if (!pendingVerification) {
+      setResendCooldownRemaining(0)
+      return
+    }
+
+    setResendCooldownRemaining(Math.max(0, pendingVerification.cooldownSeconds))
+  }, [pendingVerification])
+
+  useEffect(() => {
+    if (resendCooldownRemaining <= 0) {
+      return
+    }
+
+    const timer = window.setInterval(() => {
+      setResendCooldownRemaining((current) => (current <= 1 ? 0 : current - 1))
+    }, 1000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [resendCooldownRemaining])
 
   if (authState.isEmbedded) {
     return <Navigate to='/' replace />
@@ -178,6 +206,39 @@ export function RegisterPage() {
     window.location.href = getGoogleLoginUrl()
   }
 
+  const handleResendVerification = async () => {
+    if (!pendingVerification || resendCooldownRemaining > 0 || isResending) {
+      return
+    }
+
+    setIsResending(true)
+    setResendState('idle')
+    setResendMessage(null)
+
+    try {
+      const response = await resendPublicSignupVerification(pendingVerification.email)
+      setPendingVerification(response)
+      setResendState('success')
+      setResendMessage(t('auth.register.resendSuccess'))
+    } catch (error) {
+      const apiError = error as AuthApiError
+      if (apiError.status === 429) {
+        setResendState('error')
+        setResendMessage(
+          t('auth.register.resendCooldown', {
+            seconds: resendCooldownRemaining || pendingVerification.cooldownSeconds,
+          }),
+        )
+        return
+      }
+
+      setResendState('error')
+      setResendMessage(apiError.message || t('auth.register.resendFailed'))
+    } finally {
+      setIsResending(false)
+    }
+  }
+
   return (
     <AuthPageShell
       eyebrow={t('auth.login.eyebrow')}
@@ -207,11 +268,38 @@ export function RegisterPage() {
               })}
             </p>
           </div>
+          {resendMessage ? (
+            <div
+              className={
+                resendState === 'error'
+                  ? 'bg-destructive/15 text-destructive rounded-md p-3 text-sm'
+                  : 'rounded-md bg-emerald-500/15 p-3 text-sm text-emerald-700'
+              }
+            >
+              {resendMessage}
+            </div>
+          ) : null}
+          <ButtonWithLoading
+            type='button'
+            variant='outline'
+            className='w-full'
+            isLoading={isResending}
+            disabled={isResending || resendCooldownRemaining > 0}
+            onClick={handleResendVerification}
+          >
+            {resendCooldownRemaining > 0
+              ? t('auth.register.resendCountdown', { seconds: resendCooldownRemaining })
+              : t('auth.register.resendAction')}
+          </ButtonWithLoading>
           <Button
             type='button'
             variant='outline'
             className='w-full'
-            onClick={() => setPendingVerification(null)}
+            onClick={() => {
+              setPendingVerification(null)
+              setResendState('idle')
+              setResendMessage(null)
+            }}
           >
             {t('auth.register.useDifferentEmail')}
           </Button>

@@ -206,6 +206,26 @@ export async function verifyPublicSignup(token: string): Promise<LoginResponse> 
   return response.json()
 }
 
+export async function resendPublicSignupVerification(
+  email: string,
+): Promise<PublicSignupVerificationResponse> {
+  const response = await fetch(`${BASE_URL}/api/auth/register/resend`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
+  }
+
+  return response.json()
+}
+
 /**
  * Login with username and password
  */

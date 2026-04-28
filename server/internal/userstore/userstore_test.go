@@ -202,6 +202,30 @@ func TestUserStore_Create(t *testing.T) {
 	}
 }
 
+func TestUserStore_CreateWithEmail_StartsUnverified_AndCanBeVerified(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	createdUser, err := store.CreateWithEmail(ctx, "emailuser", "emailuser", "hashedpassword123", "user", "emailuser@example.com")
+	require.NoError(t, err)
+	require.NotNil(t, createdUser)
+	require.NotNil(t, createdUser.Email)
+	assert.Equal(t, "emailuser@example.com", *createdUser.Email)
+	assert.False(t, createdUser.EmailVerified)
+
+	err = store.SetEmailVerified(ctx, createdUser.ID, true)
+	require.NoError(t, err)
+
+	verifiedUser, err := store.GetByID(ctx, createdUser.ID)
+	require.NoError(t, err)
+	require.NotNil(t, verifiedUser)
+	assert.True(t, verifiedUser.EmailVerified)
+}
+
 func TestUserStore_GetByUsername(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()

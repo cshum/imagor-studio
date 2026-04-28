@@ -31,6 +31,7 @@ type PasswordSignupStore interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
 	SetActive(ctx context.Context, id string, active bool) error
+	SetEmailVerified(ctx context.Context, id string, verified bool) error
 }
 
 type OAuthStore interface {

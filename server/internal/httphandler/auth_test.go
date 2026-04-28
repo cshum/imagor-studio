@@ -284,6 +284,11 @@ func (m *MockUserStore) SetActive(ctx context.Context, id string, active bool) e
 	return args.Error(0)
 }
 
+func (m *MockUserStore) SetEmailVerified(ctx context.Context, id string, verified bool) error {
+	args := m.Called(ctx, id, verified)
+	return args.Error(0)
+}
+
 func (m *MockUserStore) List(ctx context.Context, offset, limit int, search string) ([]*userstore.User, int, error) {
 	args := m.Called(ctx, offset, limit, search)
 	if args.Get(0) == nil {
@@ -1382,6 +1387,37 @@ func TestStartPublicSignup(t *testing.T) {
 	mockSignupRuntime.AssertExpectations(t)
 }
 
+func TestStartPublicSignup_CooldownActive(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("StartPublicSignup", mock.Anything, signup.StartPublicSignupParams{
+		DisplayName: "saas user",
+		Email:       "saasuser@example.com",
+		Password:    "password123",
+	}).Return(nil, signup.ErrVerificationCooldownActive)
+
+	body, err := json.Marshal(StartPublicSignupRequest{
+		DisplayName: "saas user",
+		Email:       "saasuser@example.com",
+		Password:    "password123",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/start", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.StartPublicSignup()(rr, req)
+
+	require.Equal(t, http.StatusTooManyRequests, rr.Code)
+	var errResp apperror.ErrorResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
+	assert.Equal(t, "TOO_MANY_REQUESTS", errResp.Code)
+
+	mockSignupRuntime.AssertExpectations(t)
+}
+
 func TestVerifyPublicSignup(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
@@ -1432,6 +1468,29 @@ func TestResendPublicSignupVerification_RequiresRuntime(t *testing.T) {
 	handler.ResendPublicSignupVerification()(rr, req)
 
 	require.Equal(t, http.StatusForbidden, rr.Code)
+}
+
+func TestResendPublicSignupVerification_CooldownActive(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("ResendPublicSignupVerification", mock.Anything, "saasuser@example.com").Return(nil, signup.ErrVerificationCooldownActive)
+
+	body, err := json.Marshal(ResendPublicSignupVerificationRequest{Email: "saasuser@example.com"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register/resend", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.ResendPublicSignupVerification()(rr, req)
+
+	require.Equal(t, http.StatusTooManyRequests, rr.Code)
+	var errResp apperror.ErrorResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
+	assert.Equal(t, "TOO_MANY_REQUESTS", errResp.Code)
+
+	mockSignupRuntime.AssertExpectations(t)
 }
 
 func ptrToString(value string) *string {
