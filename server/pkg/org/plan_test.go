@@ -11,7 +11,7 @@ func TestGetLimits_UsesNormalizedPublishedPlans(t *testing.T) {
 	}{
 		{name: "starter", plan: PlanStarter, wantSpaces: 1, wantStorage: 20},
 		{name: "pro", plan: PlanPro, wantSpaces: 3, wantStorage: 100},
-		{name: "team", plan: PlanTeam, wantSpaces: 10, wantStorage: 500},
+		{name: "team", plan: PlanTeam, wantSpaces: 20, wantStorage: 1000},
 	}
 
 	for _, tt := range tests {

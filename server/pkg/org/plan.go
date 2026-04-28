@@ -35,7 +35,7 @@ var PlanLimits = map[string]Limits{
 	PlanTrial:   {MaxSpaces: 1, MaxStorageGB: 1},
 	PlanStarter: {MaxSpaces: 1, MaxStorageGB: 20},
 	PlanPro:     {MaxSpaces: 3, MaxStorageGB: 100},
-	PlanTeam:    {MaxSpaces: 10, MaxStorageGB: 500},
+	PlanTeam:    {MaxSpaces: 20, MaxStorageGB: 1000},
 }
 
 // GetLimits returns limits for a plan, defaulting to the blocked/lapsed state.

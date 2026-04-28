@@ -44,11 +44,11 @@ var planEntitlements = map[string]PlanEntitlements{
 		MaxCustomDomains: 3,
 	},
 	org.PlanTeam: {
-		MaxSpaces:        10,
-		StorageLimitGB:   500,
-		TransformsLimit:  750000,
+		MaxSpaces:        20,
+		StorageLimitGB:   1000,
+		TransformsLimit:  1500000,
 		BYOBAllowed:      true,
-		MaxCustomDomains: 10,
+		MaxCustomDomains: 25,
 	},
 }
 

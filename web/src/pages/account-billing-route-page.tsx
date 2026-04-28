@@ -37,12 +37,6 @@ const PLAN_PRICES: Record<(typeof PAID_PLANS)[number], string> = {
   team: '$199',
 }
 
-const PLAN_CUSTOM_DOMAIN_ALLOWANCE: Record<(typeof PAID_PLANS)[number], number> = {
-  starter: 0,
-  pro: 3,
-  team: 10,
-}
-
 function formatBytes(bytes: number) {
   if (bytes <= 0) return '0 Bytes'
 
@@ -310,7 +304,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           const buttonLabel = isCurrentPlan
             ? t('pages.billing.currentPlanButton')
             : t('pages.billing.selectPlan')
-          const customDomainAllowance = PLAN_CUSTOM_DOMAIN_ALLOWANCE[plan]
+          const customDomainAllowance = entitlements.maxCustomDomains
 
           return (
             <Card key={plan} className={isCurrentPlan ? 'border-primary shadow-sm' : undefined}>
