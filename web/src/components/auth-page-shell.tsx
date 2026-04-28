@@ -47,15 +47,6 @@ export function AuthPageShell({
           <section className='lg:border-border/40 flex px-2 py-4 sm:px-4 sm:py-6 lg:min-h-[640px] lg:border-l lg:pl-14'>
             <div className='flex w-full items-center justify-center'>
               <div className='w-full max-w-md space-y-5'>
-                <div className='space-y-3 lg:hidden'>
-                  <p className='text-muted-foreground text-sm font-medium tracking-[0.08em]'>
-                    {eyebrow}
-                  </p>
-                  <h1 className='max-w-sm text-2xl font-semibold tracking-tight text-balance'>
-                    {heroTitle}
-                  </h1>
-                </div>
-
                 <div className='space-y-1 text-center'>
                   <h2 className='text-2xl font-semibold tracking-tight'>{formTitle}</h2>
                 </div>
