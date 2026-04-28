@@ -1107,7 +1107,7 @@
         "customDomainCurrentLabel": "Hostname attuale",
         "customDomainDefaultLabel": "Host predefinito",
         "customDomainActiveDescription": "Questo hostname è attivo per gli URL immagine generati.",
-        "customDomainComingSoonCompact": "Disponibile presto nei piani Team.",
+        "customDomainComingSoonCompact": "Disponibile presto nei piani Pro.",
         "customDomainFeedbackRequestedCompact": "Interesse registrato{{dateSuffix}}.",
         "customDomainFeedbackSaved": "Grazie. Abbiamo registrato il tuo interesse per la beta del dominio personalizzato.",
         "customDomainFeedbackUpdateButton": "Aggiorna interesse",

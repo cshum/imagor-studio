@@ -119,6 +119,43 @@ export function editorStateToImagorPath(
   forPreview = false,
   skipLayerId?: string,
 ): string {
+  const parts = buildImagorPathParts(state, imagePath, scaleFactor, forPreview, skipLayerId)
+
+  // Apply base64 encoding to image path if needed.
+  const finalImagePath = needsBase64Encoding(imagePath) ? encodeImagePath(imagePath) : imagePath
+
+  return parts.length > 0 ? `/${parts.join('/')}/${finalImagePath}` : `/${finalImagePath}`
+}
+
+/**
+ * Convert editor state to an imagor transformations-only path.
+ *
+ * This omits the trailing source image path so UI surfaces can show just the
+ * transformation segment being applied.
+ */
+export function editorStateToImagorTransformationsPath(
+  state: Partial<ImageEditorState>,
+  imagePath: string,
+  scaleFactor: number,
+  forPreview = false,
+  skipLayerId?: string,
+): string {
+  const parts = buildImagorPathParts(state, imagePath, scaleFactor, forPreview, skipLayerId)
+  return parts.length > 0 ? `/${parts.join('/')}/` : '/'
+}
+
+/**
+ * Convert editor state to imagor path parts.
+ *
+ * Shared by full-path and transformations-only serializers so they stay in sync.
+ */
+function buildImagorPathParts(
+  state: Partial<ImageEditorState>,
+  imagePath: string,
+  scaleFactor: number,
+  forPreview = false,
+  skipLayerId?: string,
+): string[] {
   const parts: string[] = []
 
   // Add crop if present (before resize).
@@ -398,8 +435,5 @@ export function editorStateToImagorPath(
     parts.push(`filters:${filters.join(':')}`)
   }
 
-  // Apply base64 encoding to image path if needed.
-  const finalImagePath = needsBase64Encoding(imagePath) ? encodeImagePath(imagePath) : imagePath
-
-  return parts.length > 0 ? `/${parts.join('/')}/${finalImagePath}` : `/${finalImagePath}`
+  return parts
 }

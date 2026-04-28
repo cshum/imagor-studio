@@ -1105,7 +1105,7 @@
         "customDomainCurrentLabel": "目前主機名稱",
         "customDomainDefaultLabel": "預設主機",
         "customDomainActiveDescription": "這個主機名稱目前用於生成圖片 URL。",
-        "customDomainComingSoonCompact": "團隊方案即將推出。",
+        "customDomainComingSoonCompact": "即將於 Pro 方案提供。",
         "customDomainFeedbackRequestedCompact": "已記錄您的興趣{{dateSuffix}}。",
         "customDomainFeedbackSaved": "感謝您，我們已記錄您對自訂網域 beta 的興趣。",
         "customDomainFeedbackUpdateButton": "更新興趣",

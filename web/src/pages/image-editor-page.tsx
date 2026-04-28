@@ -115,7 +115,7 @@ export function ImageEditorPage({
     height: number
   } | null>(() => imageEditor.getContextParentDimensions())
   const [previewUrl, setPreviewUrl] = useState<string>()
-  const [imagorPath, setImagorPath] = useState<string>(imageEditor.getImagorPath())
+  const [imagorPath, setImagorPath] = useState<string>(imageEditor.getImagorTransformationsPath())
   const [error, setError] = useState<Error | null>(null)
   const [previewMaxDimensions, setPreviewMaxDimensions] = useState<{
     width: number
@@ -288,7 +288,7 @@ export function ImageEditorPage({
 
   // Update Imagor path whenever params change
   useEffect(() => {
-    setImagorPath(imageEditor.getImagorPath())
+    setImagorPath(imageEditor.getImagorTransformationsPath())
   }, [imageEditor, params])
 
   // Handle shift key pressed state

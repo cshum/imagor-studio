@@ -1046,7 +1046,7 @@
         "customDomainCurrentLabel": "当前主机名",
         "customDomainDefaultLabel": "默认主机",
         "customDomainActiveDescription": "此主机名当前用于生成图片 URL。",
-        "customDomainComingSoonCompact": "团队方案即将推出。",
+        "customDomainComingSoonCompact": "即将在 Pro 方案提供。",
         "customDomainFeedbackRequestedCompact": "已记录您的兴趣{{dateSuffix}}。",
         "customDomainFeedbackSaved": "感谢，我们已记录您对自定义域名 beta 的意向。",
         "customDomainFeedbackUpdateButton": "更新意向",
