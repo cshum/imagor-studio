@@ -193,10 +193,9 @@ export function LoginPage() {
                 {t('auth.login.title')}
               </h1>
 
-              <ul className='mt-6 space-y-3'>
+              <ul className='mt-6 space-y-4'>
                 {productHighlights.map((highlight) => (
-                  <li key={highlight} className='flex items-start gap-3'>
-                    <span className='mt-2 h-1.5 w-1.5 rounded-full bg-sky-500' />
+                  <li key={highlight}>
                     <p className='text-foreground/90 text-sm leading-6 font-medium sm:text-base'>
                       {highlight}
                     </p>
