@@ -11,7 +11,6 @@ import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -174,7 +173,6 @@ export function LoginPage() {
 
   return (
     <div className='bg-background min-h-screen-safe relative flex flex-col overflow-hidden'>
-      <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.16),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.12),transparent_30%)]' />
       <BrandBar
         rightSlot={
           <div className='flex items-center gap-2'>
@@ -185,8 +183,8 @@ export function LoginPage() {
       />
 
       <div className='relative flex flex-1 items-center justify-center px-4 py-8 sm:px-6 lg:px-8'>
-        <div className='grid w-full max-w-6xl gap-8 lg:grid-cols-[minmax(0,1.1fr)_440px] lg:gap-12'>
-          <section className='flex flex-col justify-center rounded-[2rem] border border-border/50 bg-gradient-to-br from-sky-500/10 via-background to-amber-500/10 p-8 shadow-sm backdrop-blur sm:p-10 lg:min-h-[640px]'>
+        <div className='grid w-full max-w-6xl gap-10 lg:grid-cols-[minmax(0,1.1fr)_440px] lg:gap-14'>
+          <section className='relative flex flex-col justify-center px-2 py-6 sm:px-4 sm:py-8 lg:min-h-[640px] lg:px-0'>
             <div className='max-w-xl'>
               <p className='text-muted-foreground text-sm font-medium tracking-[0.08em]'>
                 {t('auth.login.eyebrow')}
@@ -208,14 +206,15 @@ export function LoginPage() {
             </div>
           </section>
 
-          <section className='flex items-center justify-center'>
-            <Card className='w-full max-w-md border-border/60 shadow-xl shadow-black/5'>
-              <CardHeader className='space-y-1 text-center'>
-                <CardTitle className='text-2xl font-semibold tracking-tight'>
-                  {t('auth.login.formTitle')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-5'>
+          <section className='flex px-2 py-6 sm:px-4 sm:py-8 lg:min-h-[640px] lg:border-l lg:border-border/40 lg:pl-14'>
+            <div className='flex w-full items-center justify-center'>
+              <div className='w-full max-w-md space-y-5'>
+                <div className='space-y-1 text-center'>
+                  <h2 className='text-2xl font-semibold tracking-tight'>
+                    {t('auth.login.formTitle')}
+                  </h2>
+                </div>
+
                 {googleEnabled ? (
                   <Button
                     type='button'
@@ -234,7 +233,7 @@ export function LoginPage() {
                       <span className='border-border w-full border-t' />
                     </div>
                     <div className='relative flex justify-center text-xs font-medium'>
-                      <span className='bg-card text-muted-foreground px-3'>
+                      <span className='bg-background text-muted-foreground px-3'>
                         {t(credentialsDividerKey)}
                       </span>
                     </div>
@@ -293,8 +292,8 @@ export function LoginPage() {
                     </ButtonWithLoading>
                   </form>
                 </Form>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </section>
         </div>
       </div>
