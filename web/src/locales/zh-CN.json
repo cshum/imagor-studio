@@ -115,9 +115,7 @@
   },
   "pages": {
     "authCallback": {
-      "title": "欢迎回来",
-      "subtitle": "我们无法完成您的登录，请重试。",
-      "title": "欢迎回来",
+      "title": "登录中断",
       "subtitle": "我们无法完成您的登录，请重试。",
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
@@ -132,8 +130,8 @@
       "notFoundTitle": "未找到空间",
       "forbiddenTitle": "无权访问",
       "defaultDescription": "加载页面时出错。请尝试返回首页。",
-      "notFoundDescription": "我们找不到该空间。请检查链接，或返回您的工作区。",
-      "forbiddenDescription": "您已登录，但您的账户无权访问此空间。请联系空间管理员获取权限，或返回您的工作区。"
+      "notFoundDescription": "我们找不到该空间。请检查链接，或返回您的空间列表。",
+      "forbiddenDescription": "您已登录，但您的账户无权访问此空间。请联系空间管理员获取权限，或返回您的空间列表。"
     },
     "gallery": {
       "title": "图库",
@@ -700,19 +698,19 @@
       }
     },
     "workspaceRequired": {
-      "eyebrow": "Workspace required",
-      "title": "This account is signed in, but it is not linked to a workspace yet.",
-      "description": "Imagor Studio needs an active workspace before the account area and space management surfaces can load.",
+      "eyebrow": "需要组织访问权限",
+      "title": "该账户已登录，但尚未获得任何组织访问权限。",
+      "description": "Imagor Studio 需要组织访问权限后，才能加载账户区域和空间管理功能。",
       "invite": {
-        "title": "Join with an invite",
-        "description": "Open your workspace invitation link after sign-in, or ask a workspace admin to send you a fresh invite if the original one expired."
+        "title": "通过邀请加入",
+        "description": "登录后打开你的邀请链接；如果原邀请已过期，请联系组织管理员重新发送。"
       },
       "nextSteps": {
-        "title": "What to do next",
-        "description": "If you expected a workspace to exist already, contact the team that manages your Imagor Studio account. Self-serve workspace creation is not available from this state yet."
+        "title": "接下来怎么做",
+        "description": "如果你原本就应该拥有访问权限，请联系管理 Imagor Studio 组织的团队。当前状态下暂不支持自助设置。"
       },
       "actions": {
-        "signOut": "Sign out"
+        "signOut": "退出登录"
       }
     },
     "spaces": {
@@ -873,13 +871,13 @@
         "customDomains": "自定义域名"
       },
       "planDescriptions": {
-        "starter": "适合要上线单个正式图片工作空间，并直接使用平台存储的团队。",
+        "starter": "适合要上线单个正式图片处理流程，并直接使用平台存储的团队。",
         "pro": "适合管理多条图片流程、需要自定义域名和更高月处理量的成长团队。",
         "team": "适合跨多个团队或品牌管理共享图片运营的大型组织。"
       },
       "sharedFeaturesTitle": "所有付费套餐另外均包含",
       "sharedFeatures": {
-        "collaboration": "共享工作空间访问",
+        "collaboration": "共享空间访问",
         "orgSharing": "团队邀请与共享访问",
         "byob": "连接自己的 S3 兼容存储桶"
       },
@@ -982,7 +980,7 @@
         "statusLabel": "套餐状态",
         "statusDescription": "用于执行访问和额度限制的计费生命周期状态。",
         "organizationLabel": "组织",
-        "organizationDescription": "拥有空间、计费和共享访问的工作区。",
+        "organizationDescription": "拥有空间、计费和共享访问的组织。",
         "billingPeriodLabel": "计费周期",
         "billingPeriodDescription": "当前用于统计用量限制的计费窗口。"
       },

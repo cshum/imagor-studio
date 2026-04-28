@@ -152,7 +152,7 @@
   },
   "pages": {
     "authCallback": {
-      "title": "Bentornato",
+      "title": "Accesso interrotto",
       "subtitle": "Non siamo riusciti a completare l'accesso. Riprova.",
       "failed": "Autenticazione non riuscita",
       "errorOAuth": "Autenticazione non riuscita: {{error}}",
@@ -167,8 +167,8 @@
       "notFoundTitle": "Spazio non trovato",
       "forbiddenTitle": "Accesso negato",
       "defaultDescription": "Si è verificato un errore durante il caricamento della pagina. Prova a tornare alla home.",
-      "notFoundDescription": "Non siamo riusciti a trovare quello spazio. Controlla il link oppure torna al tuo workspace.",
-      "forbiddenDescription": "Hai effettuato l'accesso, ma questo spazio non è disponibile per il tuo account. Chiedi l'accesso a un amministratore dello spazio oppure torna al tuo workspace."
+      "notFoundDescription": "Non siamo riusciti a trovare quello spazio. Controlla il link oppure torna ai tuoi spazi.",
+      "forbiddenDescription": "Hai effettuato l'accesso, ma questo spazio non è disponibile per il tuo account. Chiedi l'accesso a un amministratore dello spazio oppure torna ai tuoi spazi."
     },
     "gallery": {
       "title": "Galleria",
@@ -735,19 +735,19 @@
       }
     },
     "workspaceRequired": {
-      "eyebrow": "Workspace required",
-      "title": "This account is signed in, but it is not linked to a workspace yet.",
-      "description": "Imagor Studio needs an active workspace before the account area and space management surfaces can load.",
+      "eyebrow": "Accesso all'organizzazione richiesto",
+      "title": "Questo account ha eseguito l'accesso, ma non ha ancora accesso a un'organizzazione.",
+      "description": "Imagor Studio richiede l'accesso a un'organizzazione prima di caricare l'area account e la gestione degli spazi.",
       "invite": {
-        "title": "Join with an invite",
-        "description": "Open your workspace invitation link after sign-in, or ask a workspace admin to send you a fresh invite if the original one expired."
+        "title": "Accedi con un invito",
+        "description": "Apri il link di invito dopo l'accesso, oppure chiedi a un amministratore dell'organizzazione di inviartene uno nuovo se il precedente è scaduto."
       },
       "nextSteps": {
-        "title": "What to do next",
-        "description": "If you expected a workspace to exist already, contact the team that manages your Imagor Studio account. Self-serve workspace creation is not available from this state yet."
+        "title": "Cosa fare ora",
+        "description": "Se ti aspettavi di avere già accesso, contatta il team che gestisce la tua organizzazione in Imagor Studio. La configurazione self-service non è disponibile in questo stato."
       },
       "actions": {
-        "signOut": "Sign out"
+        "signOut": "Esci"
       }
     },
     "spaces": {
@@ -907,13 +907,13 @@
         "customDomains": "Domini personalizzati"
       },
       "planDescriptions": {
-        "starter": "Per team che vogliono lanciare un workspace immagini di produzione con storage ospitato incluso.",
+        "starter": "Per team che vogliono lanciare una pipeline immagini di produzione con storage ospitato incluso.",
         "pro": "Per team in crescita che gestiscono più flussi immagini, domini personalizzati e volumi mensili più alti.",
         "team": "Per organizzazioni che gestiscono operazioni immagini condivise tra più team o brand."
       },
       "sharedFeaturesTitle": "Ogni piano a pagamento include anche",
       "sharedFeatures": {
-        "collaboration": "Accesso condiviso al workspace",
+        "collaboration": "Accesso condiviso agli spazi",
         "orgSharing": "Inviti del team e accesso condiviso",
         "byob": "Collega il tuo bucket S3"
       },
@@ -1016,7 +1016,7 @@
         "statusLabel": "Stato del piano",
         "statusDescription": "Lo stato del ciclo di fatturazione usato per applicare accesso e limiti.",
         "organizationLabel": "Organizzazione",
-        "organizationDescription": "Lo spazio di lavoro che possiede spazi, fatturazione e accesso condiviso.",
+        "organizationDescription": "L'organizzazione che possiede spazi, fatturazione e accesso condiviso.",
         "billingPeriodLabel": "Periodo di fatturazione",
         "billingPeriodDescription": "La finestra attuale di rendicontazione per i limiti basati sull'utilizzo."
       },

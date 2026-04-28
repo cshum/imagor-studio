@@ -148,7 +148,7 @@
   },
   "pages": {
     "authCallback": {
-      "title": "Welcome back",
+      "title": "Sign-in interrupted",
       "subtitle": "We couldn't complete your sign-in. Please try again.",
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
@@ -163,8 +163,8 @@
       "notFoundTitle": "Space not found",
       "forbiddenTitle": "Access denied",
       "defaultDescription": "There was an error loading the page. Please try going back to the home page.",
-      "notFoundDescription": "We couldn't find that space. Check the link or return to your workspace.",
-      "forbiddenDescription": "You're signed in, but this space is not available to your account. Ask a space admin for access or return to your workspace."
+      "notFoundDescription": "We couldn't find that space. Check the link or return to your spaces.",
+      "forbiddenDescription": "You're signed in, but this space is not available to your account. Ask a space admin for access or return to your spaces."
     },
     "gallery": {
       "title": "Gallery",
@@ -731,16 +731,16 @@
       }
     },
     "workspaceRequired": {
-      "eyebrow": "Workspace required",
-      "title": "This account is signed in, but it is not linked to a workspace yet.",
-      "description": "Imagor Studio needs an active workspace before the account area and space management surfaces can load.",
+      "eyebrow": "Organization access required",
+      "title": "This account is signed in, but it does not have organization access yet.",
+      "description": "Imagor Studio needs organization access before account and space management can load.",
       "invite": {
         "title": "Join with an invite",
-        "description": "Open your workspace invitation link after sign-in, or ask a workspace admin to send you a fresh invite if the original one expired."
+        "description": "Open your invitation link after sign-in, or ask an organization admin to send a fresh invite if the original one expired."
       },
       "nextSteps": {
         "title": "What to do next",
-        "description": "If you expected a workspace to exist already, contact the team that manages your Imagor Studio account. Self-serve workspace creation is not available from this state yet."
+        "description": "If you expected access already, contact the team that manages your Imagor Studio organization. Self-serve setup is not available from this state yet."
       },
       "actions": {
         "signOut": "Sign out"
@@ -906,13 +906,13 @@
         "customDomains": "Custom domains"
       },
       "planDescriptions": {
-        "starter": "For teams launching one production image workspace with hosted storage included.",
+        "starter": "For teams launching one production image pipeline with hosted storage included.",
         "pro": "For growing teams running multiple image workflows with custom domains and higher monthly volume.",
         "team": "For organizations managing shared image operations across multiple teams or brands."
       },
       "sharedFeaturesTitle": "Every paid plan also includes",
       "sharedFeatures": {
-        "collaboration": "Shared workspace access",
+        "collaboration": "Shared space access",
         "orgSharing": "Team invites and shared access",
         "byob": "Connect your own S3 bucket"
       },
@@ -1015,7 +1015,7 @@
         "statusLabel": "Plan status",
         "statusDescription": "Billing lifecycle state used to enforce access and limits.",
         "organizationLabel": "Organization",
-        "organizationDescription": "The workspace that owns spaces, billing, and shared access.",
+        "organizationDescription": "The organization that owns spaces, billing, and shared access.",
         "billingPeriodLabel": "Billing period",
         "billingPeriodDescription": "The current reporting window for usage-based limits."
       },

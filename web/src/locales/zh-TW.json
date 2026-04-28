@@ -152,7 +152,7 @@
   },
   "pages": {
     "authCallback": {
-      "title": "歡迎回來",
+      "title": "登入中斷",
       "subtitle": "我們無法完成您的登入，請再試一次。",
       "failed": "驗證失敗",
       "errorOAuth": "驗證失敗：{{error}}",
@@ -167,8 +167,8 @@
       "notFoundTitle": "找不到空間",
       "forbiddenTitle": "拒絕存取",
       "defaultDescription": "載入頁面時發生錯誤。請嘗試返回首頁。",
-      "notFoundDescription": "找不到該空間。請檢查連結，或返回您的工作區。",
-      "forbiddenDescription": "您已登入，但此空間未開放給您的帳戶。請聯絡空間管理員取得存取權，或返回您的工作區。"
+      "notFoundDescription": "找不到該空間。請檢查連結，或返回您的空間列表。",
+      "forbiddenDescription": "您已登入，但此空間未開放給您的帳戶。請聯絡空間管理員取得存取權，或返回您的空間列表。"
     },
     "gallery": {
       "title": "相簿",
@@ -735,19 +735,19 @@
       "createUser": "建立使用者"
     },
     "workspaceRequired": {
-      "eyebrow": "Workspace required",
-      "title": "This account is signed in, but it is not linked to a workspace yet.",
-      "description": "Imagor Studio needs an active workspace before the account area and space management surfaces can load.",
+      "eyebrow": "需要組織存取權",
+      "title": "此帳戶已登入，但尚未取得任何組織存取權。",
+      "description": "Imagor Studio 需要組織存取權，才能載入帳戶區域與空間管理功能。",
       "invite": {
-        "title": "Join with an invite",
-        "description": "Open your workspace invitation link after sign-in, or ask a workspace admin to send you a fresh invite if the original one expired."
+        "title": "透過邀請加入",
+        "description": "登入後開啟您的邀請連結；如果原邀請已過期，請聯絡組織管理員重新寄送。"
       },
       "nextSteps": {
-        "title": "What to do next",
-        "description": "If you expected a workspace to exist already, contact the team that manages your Imagor Studio account. Self-serve workspace creation is not available from this state yet."
+        "title": "接下來怎麼做",
+        "description": "如果您原本就應該有存取權，請聯絡管理 Imagor Studio 組織的團隊。此狀態下暫不提供自助設定。"
       },
       "actions": {
-        "signOut": "Sign out"
+        "signOut": "登出"
       }
     },
     "spaces": {
@@ -908,13 +908,13 @@
         "customDomains": "自訂網域"
       },
       "planDescriptions": {
-        "starter": "適合要上線單一正式圖片工作空間，並直接使用託管儲存的團隊。",
+        "starter": "適合要上線單一正式圖片處理流程，並直接使用託管儲存的團隊。",
         "pro": "適合管理多條圖片流程、需要自訂網域與更高月處理量的成長團隊。",
         "team": "適合跨多個團隊或品牌管理共享圖片營運的大型組織。"
       },
       "sharedFeaturesTitle": "所有付費方案另外皆包含",
       "sharedFeatures": {
-        "collaboration": "共享工作空間存取",
+        "collaboration": "共享空間存取",
         "orgSharing": "團隊邀請與共享存取",
         "byob": "連接自己的 S3 相容儲存桶"
       },
@@ -1017,7 +1017,7 @@
         "statusLabel": "方案狀態",
         "statusDescription": "用於套用存取與額度限制的計費生命週期狀態。",
         "organizationLabel": "組織",
-        "organizationDescription": "擁有空間、計費與共享存取的工作區。",
+        "organizationDescription": "擁有空間、計費與共享存取的組織。",
         "billingPeriodLabel": "計費週期",
         "billingPeriodDescription": "目前用於統計用量限制的計費視窗。"
       },
