@@ -1192,7 +1192,7 @@ export class ImageEditor {
    * Returns only the transformation segment, without the source image path.
    */
   getImagorTransformationsPath(): string {
-    return editorStateToImagorTransformationsPath(this.state, this.config.imagePath, 1, false)
+    return editorStateToImagorTransformationsPath(this.state, 1, false)
   }
 
   /**

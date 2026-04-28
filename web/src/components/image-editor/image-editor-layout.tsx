@@ -112,6 +112,7 @@ export function ImageEditorLayout({
   const { title: appTitle, url: appUrl } = useBrand()
   const { authState } = useAuth()
   const useInternalBrandLink = authState.multiTenant && appUrl === 'https://imagor.net'
+  const statusBarImagorPath = imagorPath === '/' ? '' : imagorPath
 
   // Prevent macOS document-level bounce while editor is open,
   // without affecting inner scrollable panels or other pages.
@@ -204,6 +205,7 @@ export function ImageEditorLayout({
           onCopyUrl={onCopyUrl}
           onSaveTemplate={onSaveTemplateAs}
           onApplyTemplate={onApplyTemplate}
+          showDownload={false}
           onLanguageChange={onLanguageChange}
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
@@ -377,7 +379,7 @@ export function ImageEditorLayout({
         {/* Status bar */}
         <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
           <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
-            {imagorPath}
+            {statusBarImagorPath}
           </code>
         </div>
 
@@ -449,7 +451,7 @@ export function ImageEditorLayout({
       {/* Status bar */}
       <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
         <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
-          {imagorPath}
+          {statusBarImagorPath}
         </code>
       </div>
 

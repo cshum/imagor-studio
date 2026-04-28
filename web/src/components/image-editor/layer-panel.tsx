@@ -21,7 +21,6 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  ChevronDown,
   Eye,
   EyeOff,
   Folder,
@@ -30,7 +29,6 @@ import {
   Lock,
   MoreVertical,
   Paintbrush,
-  Plus,
   Type,
   Unlock,
 } from 'lucide-react'
@@ -63,10 +61,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { getFileDisplayName } from '@/lib/file-utils'
 import type { ImageEditor, ImageLayer, Layer } from '@/lib/image-editor'
 import { colorToImagePath, getColorFromPath, isColorLayer, isGroupLayer } from '@/lib/image-editor'
-import { cn } from '@/lib/utils'
+import { cn, getKeyboardShortcut } from '@/lib/utils'
 
 interface LayerPanelProps {
   imageEditor: ImageEditor
@@ -492,53 +491,79 @@ export function LayerPanel({
 
   return (
     <div className='flex h-full flex-col'>
-      {/* Add Layer dropdown */}
+      {/* Add Layer quick actions */}
       <div className='px-1 pb-2'>
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant='outline'
-              className='w-full'
-              disabled={visualCropEnabled || !!textEditingLayerId}
-            >
-              <Plus className='mr-1 h-4 w-4' />
-              {t('imageEditor.layers.addLayer')}
-              <ChevronDown className='ml-auto h-4 w-4' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align='start'
-            style={{ minWidth: 'var(--radix-dropdown-menu-trigger-width)' }}
-          >
-            <DropdownMenuItem onSelect={() => setTimeout(onAddImageLayer, 0)}>
-              <div className='flex flex-1 items-center'>
-                <Image className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.addImage')}
-              </div>
-              <DropdownMenuShortcut>⌘⇧I</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setTimeout(onAddGroupLayer, 0)}>
-              <div className='flex flex-1 items-center'>
-                <Folder className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.addGroup')}
-              </div>
-              <DropdownMenuShortcut>⌘G</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setTimeout(onAddTextLayer, 0)}>
-              <div className='flex flex-1 items-center'>
-                <Type className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.addText')}
-              </div>
-              <DropdownMenuShortcut>T</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setTimeout(onAddColorLayer, 0)}>
-              <div className='flex flex-1 items-center'>
-                <Paintbrush className='mr-2 h-4 w-4' />
-                {t('imageEditor.layers.addColor')}
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <TooltipProvider disableHoverableContent>
+          <div className='flex w-full'>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='outline'
+                  className='min-w-0 flex-[1.15] rounded-r-none border-r-0 px-2 text-xs sm:px-3 sm:text-sm'
+                  disabled={visualCropEnabled || !!textEditingLayerId}
+                  onClick={onAddImageLayer}
+                  title={`${t('imageEditor.layers.addImageAction')} (${getKeyboardShortcut('I', { ctrl: true, shift: true })})`}
+                >
+                  <Image className='mr-1 h-4 w-4 shrink-0 sm:mr-1.5' />
+                  <span className='min-w-0 truncate'>{t('imageEditor.layers.addImage')}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side='top'>
+                {t('imageEditor.layers.addImageAction')} (
+                {getKeyboardShortcut('I', { ctrl: true, shift: true })})
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='outline'
+                  className='min-w-0 flex-1 rounded-none border-r-0 px-2 text-xs sm:px-3 sm:text-sm'
+                  disabled={visualCropEnabled || !!textEditingLayerId}
+                  onClick={onAddTextLayer}
+                  title={`${t('imageEditor.layers.addTextAction')} (${getKeyboardShortcut('T', {})})`}
+                >
+                  <Type className='mr-1 h-4 w-4 shrink-0 sm:mr-1.5' />
+                  <span className='min-w-0 truncate'>{t('imageEditor.layers.addText')}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side='top'>
+                {t('imageEditor.layers.addTextAction')} ({getKeyboardShortcut('T', {})})
+              </TooltipContent>
+            </Tooltip>
+
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='outline'
+                  size='icon'
+                  className='rounded-l-none'
+                  disabled={visualCropEnabled || !!textEditingLayerId}
+                  title={t('imageEditor.layers.addLayer')}
+                >
+                  <MoreVertical className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem onSelect={() => setTimeout(onAddGroupLayer, 0)}>
+                  <div className='flex flex-1 items-center'>
+                    <Folder className='mr-2 h-4 w-4' />
+                    {t('imageEditor.layers.addGroup')}
+                  </div>
+                  <DropdownMenuShortcut>
+                    {getKeyboardShortcut('G', { ctrl: true })}
+                  </DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setTimeout(onAddColorLayer, 0)}>
+                  <div className='flex flex-1 items-center'>
+                    <Paintbrush className='mr-2 h-4 w-4' />
+                    {t('imageEditor.layers.addColor')}
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Layer list (scrollable) */}

@@ -24,6 +24,7 @@ interface EditorMenuDropdownProps {
   onCopyUrl: () => void
   onSaveTemplate: () => void
   onApplyTemplate?: () => void
+  showDownload?: boolean
   onLanguageChange: (languageCode: string) => void
   onToggleSectionVisibility: (sectionKey: SectionKey) => void
   editorOpenSections: EditorSections
@@ -42,6 +43,7 @@ export function EditorMenuDropdown({
   onCopyUrl,
   onSaveTemplate,
   onApplyTemplate,
+  showDownload = true,
   onLanguageChange,
   onToggleSectionVisibility,
   editorOpenSections,
@@ -73,10 +75,12 @@ export function EditorMenuDropdown({
             <Redo2 className='mr-3 h-4 w-4' />
             {t('imageEditor.page.redo')}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onDownload}>
-            <Download className='mr-3 h-4 w-4' />
-            {t('imageEditor.page.download')}
-          </DropdownMenuItem>
+          {showDownload && (
+            <DropdownMenuItem onClick={onDownload}>
+              <Download className='mr-3 h-4 w-4' />
+              {t('imageEditor.page.download')}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={onCopyUrl}>
             <Copy className='mr-3 h-4 w-4' />
             {t('imageEditor.page.copyUrl')}
@@ -113,10 +117,12 @@ export function EditorMenuDropdown({
       {/* Main actions (Desktop/Tablet) */}
       {!includeUndoRedo && (
         <>
-          <DropdownMenuItem onClick={onDownload}>
-            <Download className='mr-3 h-4 w-4' />
-            {t('imageEditor.page.download')}
-          </DropdownMenuItem>
+          {showDownload && (
+            <DropdownMenuItem onClick={onDownload}>
+              <Download className='mr-3 h-4 w-4' />
+              {t('imageEditor.page.download')}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={onCopyUrl}>
             <Copy className='mr-3 h-4 w-4' />
             {t('imageEditor.page.copyUrl')}
