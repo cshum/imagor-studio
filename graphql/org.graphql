@@ -32,6 +32,7 @@ type Space {
   signerAlgorithm: String!
   signerTruncate: Int!
   imagorCORSOrigins: String!
+  hasCustomImagorSecret: Boolean!
   canManage: Boolean!
   canDelete: Boolean!
   canLeave: Boolean!

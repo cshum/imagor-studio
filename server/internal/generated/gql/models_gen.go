@@ -226,30 +226,31 @@ type SaveTemplateInput struct {
 }
 
 type Space struct {
-	ID                   string `json:"id"`
-	OrgID                string `json:"orgId"`
-	Key                  string `json:"key"`
-	Name                 string `json:"name"`
-	StorageUsageBytes    *int   `json:"storageUsageBytes,omitempty"`
-	ProcessingUsageCount *int   `json:"processingUsageCount,omitempty"`
-	StorageMode          string `json:"storageMode"`
-	StorageType          string `json:"storageType"`
-	Bucket               string `json:"bucket"`
-	Prefix               string `json:"prefix"`
-	Region               string `json:"region"`
-	Endpoint             string `json:"endpoint"`
-	UsePathStyle         bool   `json:"usePathStyle"`
-	CustomDomain         string `json:"customDomain"`
-	CustomDomainVerified bool   `json:"customDomainVerified"`
-	Suspended            bool   `json:"suspended"`
-	IsShared             bool   `json:"isShared"`
-	SignerAlgorithm      string `json:"signerAlgorithm"`
-	SignerTruncate       int    `json:"signerTruncate"`
-	ImagorCORSOrigins    string `json:"imagorCORSOrigins"`
-	CanManage            bool   `json:"canManage"`
-	CanDelete            bool   `json:"canDelete"`
-	CanLeave             bool   `json:"canLeave"`
-	UpdatedAt            string `json:"updatedAt"`
+	ID                    string `json:"id"`
+	OrgID                 string `json:"orgId"`
+	Key                   string `json:"key"`
+	Name                  string `json:"name"`
+	StorageUsageBytes     *int   `json:"storageUsageBytes,omitempty"`
+	ProcessingUsageCount  *int   `json:"processingUsageCount,omitempty"`
+	StorageMode           string `json:"storageMode"`
+	StorageType           string `json:"storageType"`
+	Bucket                string `json:"bucket"`
+	Prefix                string `json:"prefix"`
+	Region                string `json:"region"`
+	Endpoint              string `json:"endpoint"`
+	UsePathStyle          bool   `json:"usePathStyle"`
+	CustomDomain          string `json:"customDomain"`
+	CustomDomainVerified  bool   `json:"customDomainVerified"`
+	Suspended             bool   `json:"suspended"`
+	IsShared              bool   `json:"isShared"`
+	SignerAlgorithm       string `json:"signerAlgorithm"`
+	SignerTruncate        int    `json:"signerTruncate"`
+	ImagorCORSOrigins     string `json:"imagorCORSOrigins"`
+	HasCustomImagorSecret bool   `json:"hasCustomImagorSecret"`
+	CanManage             bool   `json:"canManage"`
+	CanDelete             bool   `json:"canDelete"`
+	CanLeave              bool   `json:"canLeave"`
+	UpdatedAt             string `json:"updatedAt"`
 }
 
 type SpaceInput struct {

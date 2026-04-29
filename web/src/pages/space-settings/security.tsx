@@ -7,12 +7,20 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { setSpaceRegistryObject, updateSpace } from '@/api/org-api'
+import type { UpdateSpaceMutationVariables } from '@/generated/graphql'
 import { ImagorUrlSigningDescription } from '@/components/imagor/imagor-url-signing-description'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
+import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { SecretField } from '@/components/ui/secret-field'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import {
   Select,
   SelectContent,
@@ -33,30 +41,52 @@ interface SecuritySectionProps {
   initialValues: Record<string, string>
 }
 
-const corsSchema = z.object({
-  imagorSecret: z.string().optional(),
+const settingsSchema = z.object({
   signerType: z.enum(['SHA1', 'SHA256', 'SHA512']),
   signerTruncate: z.number().int().min(0),
   imagorCORSOrigins: z.string().optional(),
 })
-type ImagorFormData = z.infer<typeof corsSchema>
+
+type SettingsFormData = z.infer<typeof settingsSchema>
+
+function normalizeSignerType(value: string | null | undefined): SettingsFormData['signerType'] {
+  const normalized = value?.toUpperCase() ?? 'SHA256'
+  if (normalized === 'SHA1' || normalized === 'SHA256' || normalized === 'SHA512') {
+    return normalized
+  }
+  return 'SHA256'
+}
+
+function generateUrlSigningSecret(): string {
+  const randomBytes = new Uint8Array(32)
+  crypto.getRandomValues(randomBytes)
+  return btoa(String.fromCharCode(...randomBytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+}
 
 export function SecuritySection({ space, initialValues }: SecuritySectionProps) {
   const { t } = useTranslation()
   const router = useRouter()
+  const [secretDialogOpen, setSecretDialogOpen] = useState(false)
   const [showSecret, setShowSecret] = useState(false)
-  const form = useForm<ImagorFormData>({
-    resolver: zodResolver(corsSchema),
+  const [isResettingSecret, setIsResettingSecret] = useState(false)
+  const form = useForm<SettingsFormData>({
+    resolver: zodResolver(settingsSchema),
     defaultValues: {
-      imagorSecret: '',
-      signerType:
-        space.signerAlgorithm === 'SHA1' ||
-        space.signerAlgorithm === 'SHA256' ||
-        space.signerAlgorithm === 'SHA512'
-          ? space.signerAlgorithm
-          : 'SHA256',
+      signerType: normalizeSignerType(space.signerAlgorithm),
       signerTruncate: space.signerTruncate ?? 32,
       imagorCORSOrigins: space.imagorCORSOrigins ?? '',
+    },
+  })
+  const secretSchema = z.object({
+    imagorSecret: z.string().trim().min(1, t('pages.spaceSettings.imagor.customSecretRequired')),
+  })
+  const secretForm = useForm<{ imagorSecret: string }>({
+    resolver: zodResolver(secretSchema),
+    defaultValues: {
+      imagorSecret: '',
     },
   })
 
@@ -81,28 +111,48 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
     },
   ]
 
-  const handleSave = async (values: ImagorFormData) => {
+  const saveImagorSettings = async ({
+    signerAlgorithm,
+    signerTruncate,
+    imagorCORSOrigins,
+    imagorSecret,
+  }: {
+    signerAlgorithm?: string
+    signerTruncate?: number | null
+    imagorCORSOrigins?: string
+    imagorSecret?: string
+  }) => {
+    const input = {
+      key: space.key,
+      name: space.name,
+      storageMode: null,
+      storageType: null,
+      bucket: null,
+      region: null,
+      endpoint: null,
+      prefix: null,
+      accessKeyId: null,
+      secretKey: null,
+      usePathStyle: null,
+      customDomain: null,
+      isShared: null,
+      ...(signerAlgorithm !== undefined ? { signerAlgorithm } : {}),
+      ...(signerTruncate !== undefined ? { signerTruncate } : {}),
+      ...(imagorSecret !== undefined ? { imagorSecret } : {}),
+      ...(imagorCORSOrigins !== undefined ? { imagorCORSOrigins } : {}),
+    } as UpdateSpaceMutationVariables['input']
+
     await updateSpace({
       key: space.key,
-      input: {
-        key: space.key,
-        name: space.name,
-        storageMode: null,
-        storageType: null,
-        bucket: null,
-        region: null,
-        endpoint: null,
-        prefix: null,
-        accessKeyId: null,
-        secretKey: null,
-        usePathStyle: null,
-        customDomain: null,
-        isShared: null,
-        signerAlgorithm: values.signerType.toLowerCase(),
-        signerTruncate: values.signerTruncate ?? null,
-        imagorSecret: values.imagorSecret?.trim() || null,
-        imagorCORSOrigins: values.imagorCORSOrigins?.trim() ?? '',
-      },
+      input,
+    })
+  }
+
+  const handleSave = async (values: SettingsFormData) => {
+    await saveImagorSettings({
+      signerAlgorithm: values.signerType.toLowerCase(),
+      signerTruncate: values.signerTruncate ?? null,
+      imagorCORSOrigins: values.imagorCORSOrigins?.trim() ?? '',
     })
 
     rememberSpacePropagationNotice({
@@ -112,10 +162,58 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
     })
 
     toast.success(t('pages.spaceSettings.imagor.saved'))
-    form.setValue('imagorSecret', '')
-    setShowSecret(false)
     await router.invalidate()
   }
+
+  const handleOpenSecretDialog = () => {
+    secretForm.reset({ imagorSecret: '' })
+    setShowSecret(false)
+    setSecretDialogOpen(true)
+  }
+
+  const handleSaveCustomSecret = async (values: { imagorSecret: string }) => {
+    await saveImagorSettings({ imagorSecret: values.imagorSecret.trim() })
+
+    rememberSpacePropagationNotice({
+      action: 'updated',
+      savedAt: Date.now(),
+      spaceKey: space.key,
+    })
+
+    toast.success(t('pages.spaceSettings.imagor.customSecretSaved'))
+    secretForm.reset({ imagorSecret: '' })
+    setShowSecret(false)
+    setSecretDialogOpen(false)
+    await router.invalidate()
+  }
+
+  const handleUseWorkspaceDefault = async () => {
+    setIsResettingSecret(true)
+    try {
+      await saveImagorSettings({ imagorSecret: '' })
+
+      rememberSpacePropagationNotice({
+        action: 'updated',
+        savedAt: Date.now(),
+        spaceKey: space.key,
+      })
+
+      toast.success(t('pages.spaceSettings.imagor.workspaceDefaultRestored'))
+      await router.invalidate()
+    } finally {
+      setIsResettingSecret(false)
+    }
+  }
+
+  const handleGenerateSecret = () => {
+    secretForm.setValue('imagorSecret', generateUrlSigningSecret(), {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+    setShowSecret(true)
+  }
+
+  const hasCustomImagorSecret = space.hasCustomImagorSecret
 
   return (
     <>
@@ -126,31 +224,32 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
             description={<ImagorUrlSigningDescription />}
             className='mb-8'
           >
-            <FormField
-              control={form.control}
-              name='imagorSecret'
-              render={({ field }) => (
-                <FormItem>
-                  <SettingRow
-                    label={t('pages.imagor.secret')}
-                    description={t('pages.imagor.secretDescription')}
+            <SettingRow
+              label={t('pages.spaceSettings.imagor.urlSigningSecret')}
+              description={
+                hasCustomImagorSecret
+                  ? t('pages.spaceSettings.imagor.customSecretConfiguredDescription')
+                  : t('pages.spaceSettings.imagor.workspaceDefaultDescription')
+              }
+            >
+              <div className='flex justify-end gap-2'>
+                {hasCustomImagorSecret && (
+                  <ButtonWithLoading
+                    type='button'
+                    variant='outline'
+                    isLoading={isResettingSecret}
+                    onClick={handleUseWorkspaceDefault}
                   >
-                    <SecretField
-                      show={showSecret}
-                      onShow={() => setShowSecret(true)}
-                      onHide={() => {
-                        setShowSecret(false)
-                        field.onChange('')
-                      }}
-                      updateLabel={t('common.buttons.update')}
-                      cancelLabel={t('common.buttons.cancel')}
-                      renderInput={() => <Input type='password' autoFocus {...field} />}
-                    />
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
-                </FormItem>
-              )}
-            />
+                    {t('pages.spaceSettings.imagor.useWorkspaceDefault')}
+                  </ButtonWithLoading>
+                )}
+                <Button type='button' variant='outline' onClick={handleOpenSecretDialog}>
+                  {hasCustomImagorSecret
+                    ? t('pages.spaceSettings.imagor.replaceCustomSecret')
+                    : t('pages.spaceSettings.imagor.setCustomSecret')}
+                </Button>
+              </div>
+            </SettingRow>
 
             <FormField
               control={form.control}
@@ -158,19 +257,33 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
               render={({ field }) => (
                 <FormItem>
                   <SettingRow
-                    label={t('pages.imagor.signerType')}
-                    description={t('pages.imagor.signerTypeDescription')}
+                    label={t('pages.spaceSettings.imagor.signerAlgorithm')}
+                    description={t(
+                      hasCustomImagorSecret
+                        ? 'pages.spaceSettings.imagor.signerAlgorithmDescription'
+                        : 'pages.spaceSettings.imagor.signerAlgorithmInheritedDescription',
+                    )}
                   >
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={!hasCustomImagorSecret}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value='SHA1'>{t('pages.imagor.algorithmSha1')}</SelectItem>
-                        <SelectItem value='SHA256'>{t('pages.imagor.algorithmSha256')}</SelectItem>
-                        <SelectItem value='SHA512'>{t('pages.imagor.algorithmSha512')}</SelectItem>
+                        <SelectItem value='SHA1'>
+                          {t('pages.spaceSettings.imagor.algorithmSha1')}
+                        </SelectItem>
+                        <SelectItem value='SHA256'>
+                          {t('pages.spaceSettings.imagor.algorithmSha256')}
+                        </SelectItem>
+                        <SelectItem value='SHA512'>
+                          {t('pages.spaceSettings.imagor.algorithmSha512')}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage className='mt-1.5' />
@@ -185,8 +298,12 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
               render={({ field }) => (
                 <FormItem>
                   <SettingRow
-                    label={t('pages.imagor.signerTruncate')}
-                    description={t('pages.imagor.signerTruncateDescription')}
+                    label={t('pages.spaceSettings.imagor.signerTruncate')}
+                    description={t(
+                      hasCustomImagorSecret
+                        ? 'pages.spaceSettings.imagor.signerTruncateDescription'
+                        : 'pages.spaceSettings.imagor.signerTruncateInheritedDescription',
+                    )}
                     last
                   >
                     <FormControl>
@@ -201,6 +318,7 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
                         onBlur={field.onBlur}
                         name={field.name}
                         ref={field.ref}
+                        disabled={!hasCustomImagorSecret}
                       />
                     </FormControl>
                     <FormMessage className='mt-1.5' />
@@ -250,6 +368,73 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
         initialValues={initialValues}
         saveCallback={(changedValues) => setSpaceRegistryObject(space.key, changedValues)}
       />
+
+      <ResponsiveDialog
+        open={secretDialogOpen}
+        onOpenChange={(open) => {
+          setSecretDialogOpen(open)
+          if (!open) {
+            secretForm.reset({ imagorSecret: '' })
+            setShowSecret(false)
+          }
+        }}
+        contentClassName='sm:max-w-md'
+      >
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{t('pages.spaceSettings.imagor.urlSigningSecret')}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.spaceSettings.imagor.secretDialogFieldDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+
+        <Form {...secretForm}>
+          <form onSubmit={secretForm.handleSubmit(handleSaveCustomSecret)} className='space-y-4'>
+            <FormField
+              control={secretForm.control}
+              name='imagorSecret'
+              render={({ field }) => (
+                <FormItem>
+                  <div className='space-y-2'>
+                    <div className='flex items-center gap-2'>
+                      <Input type={showSecret ? 'text' : 'password'} autoFocus {...field} />
+                      <Button
+                        type='button'
+                        variant='outline'
+                        className='shrink-0'
+                        onClick={() => setShowSecret((value) => !value)}
+                      >
+                        {showSecret
+                          ? t('pages.spaceSettings.imagor.hideSecret')
+                          : t('pages.spaceSettings.imagor.showSecret')}
+                      </Button>
+                    </div>
+                    <div className='flex justify-end'>
+                      <Button type='button' variant='outline' onClick={handleGenerateSecret}>
+                        {t('pages.spaceSettings.imagor.generateSecret')}
+                      </Button>
+                    </div>
+                  </div>
+                  <FormMessage className='mt-1.5' />
+                </FormItem>
+              )}
+            />
+
+            <ResponsiveDialogFooter>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setSecretDialogOpen(false)}
+                disabled={secretForm.formState.isSubmitting}
+              >
+                {t('common.buttons.cancel')}
+              </Button>
+              <ButtonWithLoading type='submit' isLoading={secretForm.formState.isSubmitting}>
+                {t('common.buttons.save')}
+              </ButtonWithLoading>
+            </ResponsiveDialogFooter>
+          </form>
+        </Form>
+      </ResponsiveDialog>
     </>
   )
 }
