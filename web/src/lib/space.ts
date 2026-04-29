@@ -7,6 +7,7 @@ export interface SpaceIdentity {
   spaceKey: string
   spaceID: string
   spaceName?: string
+  canManage?: boolean
 }
 
 export async function resolveSpace(spaceKey: string): Promise<ResolvedSpace> {
@@ -17,10 +18,13 @@ export async function resolveSpace(spaceKey: string): Promise<ResolvedSpace> {
   return space
 }
 
-export function getSpaceIdentity(space: Pick<ResolvedSpace, 'id' | 'key' | 'name'>): SpaceIdentity {
+export function getSpaceIdentity(
+  space: Pick<ResolvedSpace, 'id' | 'key' | 'name' | 'canManage'>,
+): SpaceIdentity {
   return {
     spaceKey: space.key,
     spaceID: space.id,
     spaceName: space.name,
+    canManage: space.canManage,
   }
 }

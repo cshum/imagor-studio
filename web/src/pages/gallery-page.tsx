@@ -965,19 +965,21 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
           <ArrowLeft className='text-muted-foreground mr-3 h-4 w-4' />
           {t('pages.spaceSettings.backToSpaces')}
         </DropdownMenuItem>
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={(event) => {
-            event.preventDefault()
-            navigate({
-              to: '/spaces/$spaceKey/settings/general',
-              params: { spaceKey: routeSpaceKey },
-            })
-          }}
-        >
-          <Settings className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.spaceSettings.spaceSettings')}
-        </DropdownMenuItem>
+        {space?.canManage ? (
+          <DropdownMenuItem
+            className='hover:cursor-pointer'
+            onSelect={(event) => {
+              event.preventDefault()
+              navigate({
+                to: '/spaces/$spaceKey/settings/general',
+                params: { spaceKey: routeSpaceKey },
+              })
+            }}
+          >
+            <Settings className='text-muted-foreground mr-3 h-4 w-4' />
+            {t('pages.spaceSettings.spaceSettings')}
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuSeparator />
       </>
     ) : null

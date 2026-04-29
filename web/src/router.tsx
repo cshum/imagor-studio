@@ -19,7 +19,7 @@ import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
-import { resolveSpace } from '@/lib/space'
+import { getSpaceIdentity, resolveSpace } from '@/lib/space'
 import {
   adminGeneralLoader,
   adminImagorLoader,
@@ -178,7 +178,7 @@ const spaceBaseLayoutRoute = createRoute({
   component: () => {
     const { space } = spaceBaseLayoutRoute.useRouteContext()
     return (
-      <SidebarLayout space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}>
+      <SidebarLayout space={getSpaceIdentity(space)}>
         <Outlet />
       </SidebarLayout>
     )
@@ -321,7 +321,7 @@ const spaceRootRoute = createRoute({
       <GalleryPage
         galleryLoaderData={galleryLoaderData}
         galleryKey=''
-        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+        space={getSpaceIdentity(space)}
       >
         <Outlet />
       </GalleryPage>
@@ -362,7 +362,7 @@ const spaceRootImagePage = createRoute({
         galleryLoaderData={galleryLoaderData}
         galleryKey=''
         imageKey={imageKey}
-        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+        space={getSpaceIdentity(space)}
       />
     )
   },
@@ -380,7 +380,7 @@ const spaceGalleryRoute = createRoute({
       <GalleryPage
         galleryLoaderData={galleryLoaderData}
         galleryKey={galleryKey}
-        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+        space={getSpaceIdentity(space)}
       >
         <Outlet />
       </GalleryPage>
@@ -419,7 +419,7 @@ const spaceImagePage = createRoute({
         galleryLoaderData={galleryLoaderData}
         galleryKey={galleryKey}
         imageKey={imageKey}
-        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+        space={getSpaceIdentity(space)}
       />
     )
   },
@@ -443,13 +443,7 @@ const spaceImageEditorRoute = createRoute({
   component: () => {
     const loaderData = spaceImageEditorRoute.useLoaderData()
     const { space } = spaceImageEditorRoute.useRouteContext()
-    return (
-      <ImageEditorPage
-        loaderData={loaderData}
-        galleryKey=''
-        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
-      />
-    )
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' space={getSpaceIdentity(space)} />
   },
 })
 
@@ -474,7 +468,7 @@ const spaceGalleryImageEditorRoute = createRoute({
       <ImageEditorPage
         loaderData={loaderData}
         galleryKey={galleryKey}
-        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+        space={getSpaceIdentity(space)}
       />
     )
   },
@@ -496,13 +490,7 @@ const spaceCanvasEditorRoute = createRoute({
   component: () => {
     const loaderData = spaceCanvasEditorRoute.useLoaderData()
     const { space } = spaceCanvasEditorRoute.useRouteContext()
-    return (
-      <ImageEditorPage
-        loaderData={loaderData}
-        galleryKey=''
-        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
-      />
-    )
+    return <ImageEditorPage loaderData={loaderData} galleryKey='' space={getSpaceIdentity(space)} />
   },
 })
 
@@ -527,7 +515,7 @@ const spaceGalleryCanvasEditorRoute = createRoute({
       <ImageEditorPage
         loaderData={loaderData}
         galleryKey={galleryKey}
-        space={{ spaceKey: space.key, spaceID: space.id, spaceName: space.name }}
+        space={getSpaceIdentity(space)}
       />
     )
   },
