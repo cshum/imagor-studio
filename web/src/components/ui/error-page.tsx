@@ -2,13 +2,13 @@ import { useTranslation } from 'react-i18next'
 import { AlertTriangle, Home, ShieldAlert } from 'lucide-react'
 
 import { BrandBar } from '@/components/brand-bar'
+import { LanguageSelector } from '@/components/language-selector'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
 import { extractErrorInfo } from '@/lib/error-utils'
 import { getAuth } from '@/stores/auth-store'
 
 import { Button } from './button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card'
 
 interface ErrorPageProps {
   error?: Error | string
@@ -50,43 +50,63 @@ export function ErrorPage({ error, title, description }: ErrorPageProps) {
   const errorMessage = typeof error === 'string' ? error : errorInfo.message
   const HeroIcon = isForbidden ? ShieldAlert : AlertTriangle
   const iconClassName = isForbidden ? 'text-amber-700' : 'text-red-600'
-  const iconBackgroundClassName = isForbidden ? 'bg-amber-100' : 'bg-red-100'
-  const titleClassName = isForbidden ? 'text-zinc-950' : 'text-red-900'
+  const iconBackgroundClassName = isForbidden
+    ? 'bg-amber-500/12 text-amber-700'
+    : 'bg-red-500/12 text-red-600'
+  const eyebrow = isForbidden ? 'Access restricted' : isNotFound ? 'Page not found' : 'Service error'
 
   return (
-    <div className='min-h-screen-safe flex flex-col'>
-      <BrandBar rightSlot={<ModeToggle />} />
+    <div className='bg-background min-h-screen-safe flex flex-col overflow-hidden'>
+      <BrandBar
+        rightSlot={
+          <div className='flex items-center gap-1.5 sm:gap-2'>
+            <LicenseBadge />
+            <LanguageSelector />
+            <ModeToggle />
+          </div>
+        }
+      />
 
-      {/* Content */}
-      <div className='relative flex flex-1 items-start justify-center bg-zinc-50 px-4 py-6 md:items-center dark:bg-zinc-950'>
-        <LicenseBadge />
-        <Card className='w-full max-w-xl border-zinc-200 bg-white/95 shadow-lg backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95'>
-          <CardHeader className='text-center'>
+      <div className='flex flex-1 items-start justify-center px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-20'>
+        <div className='w-full max-w-2xl'>
+          <div className='space-y-6'>
             <div
-              className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full ${iconBackgroundClassName}`}
+              className={`flex h-12 w-12 items-center justify-center rounded-full ${iconBackgroundClassName}`}
             >
               <HeroIcon className={`h-6 w-6 ${iconClassName}`} />
             </div>
-            <CardTitle className={titleClassName}>{resolvedTitle}</CardTitle>
-            <CardDescription className='mx-auto max-w-md text-sm text-zinc-600 dark:text-zinc-300'>
-              {resolvedDescription}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-4'>
-            {errorMessage && import.meta.env.DEV && (
-              <div className='rounded-md bg-red-50 p-3'>
-                <p className='text-sm font-medium text-red-800'>Error Details:</p>
-                <p className='mt-1 font-mono text-xs text-red-700'>{errorMessage}</p>
+
+            <div className='space-y-3'>
+              <p className='text-muted-foreground text-sm font-medium tracking-[0.08em]'>
+                {eyebrow}
+              </p>
+              <h1 className='max-w-2xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl'>
+                {resolvedTitle}
+              </h1>
+              <p className='text-foreground/75 max-w-xl text-base leading-7 sm:text-lg'>
+                {resolvedDescription}
+              </p>
+            </div>
+
+            {errorMessage && import.meta.env.DEV ? (
+              <div className='border-border/60 bg-muted/30 border px-4 py-3'>
+                <p className='text-foreground text-sm font-medium'>Error details</p>
+                <p className='text-muted-foreground mt-2 break-words font-mono text-xs leading-6'>
+                  {errorMessage}
+                </p>
               </div>
-            )}
-            {!isEmbeddedMode && (
-              <Button onClick={handleGoHome} className='w-full'>
-                <Home className='mr-2 h-4 w-4' />
-                {actionLabel}
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+            ) : null}
+
+            {!isEmbeddedMode ? (
+              <div className='pt-2'>
+                <Button onClick={handleGoHome} className='h-11 min-w-40'>
+                  <Home className='mr-2 h-4 w-4' />
+                  {actionLabel}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
     </div>
   )
