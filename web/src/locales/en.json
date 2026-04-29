@@ -194,6 +194,7 @@
       "resendSuccess": "We sent a fresh confirmation email.",
       "resendCooldown": "Please wait before requesting another confirmation email.",
       "resendFailed": "Failed to resend the confirmation email. Please try again.",
+      "signInInsteadDescription": "There is no pending confirmation left for {{email}}. If you already completed sign-up, sign in instead.",
       "backToLogin": "Back to login"
     },
     "error": {

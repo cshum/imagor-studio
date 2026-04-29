@@ -31,6 +31,7 @@ describe('registerVerifyLoader', () => {
     await expect(registerVerifyLoader()).resolves.toEqual({
       errorMessage: 'The confirmation link is missing its verification token.',
       verificationEmail: null,
+      canResend: false,
     })
   })
 
@@ -80,6 +81,26 @@ describe('registerVerifyLoader', () => {
     await expect(registerVerifyLoader()).resolves.toEqual({
       errorMessage: 'Verification link expired',
       verificationEmail: 'owner@example.com',
+      canResend: true,
+    })
+  })
+
+  it('does not offer resend when the email already exists but there is no authenticated session', async () => {
+    const { registerVerifyLoader } = await import('./register-verify-loader')
+    window.history.replaceState(
+      {},
+      '',
+      '/register/verify?token=used-token&email=owner%40example.com',
+    )
+    mockVerifyPublicSignup.mockRejectedValue(
+      Object.assign(new Error('Email already exists'), { status: 409 }),
+    )
+    mockInitAuth.mockResolvedValue({ state: 'unauthenticated', accessToken: null })
+
+    await expect(registerVerifyLoader()).resolves.toEqual({
+      errorMessage: 'Email already exists',
+      verificationEmail: 'owner@example.com',
+      canResend: false,
     })
   })
 })

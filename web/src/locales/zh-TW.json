@@ -198,6 +198,7 @@
       "resendSuccess": "我們已寄出新的確認郵件。",
       "resendCooldown": "請稍候後再要求新的確認郵件。",
       "resendFailed": "重新寄送確認郵件失敗，請再試一次。",
+      "signInInsteadDescription": "{{email}} 目前已經沒有待完成的確認步驟。如果您已完成註冊，請直接登入。",
       "backToLogin": "返回登入"
     },
     "error": {

@@ -1,13 +1,18 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mockNavigate = vi.fn()
 const mockUseLoaderData = vi.fn()
 const mockResendPublicSignupVerification = vi.fn()
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, values?: Record<string, string | number>) => {
+      if (key === 'pages.registerVerify.errorSubtitle') {
+        return 'The confirmation link may be invalid or expired.'
+      }
+      if (key === 'pages.registerVerify.signInInsteadDescription' && values?.email) {
+        return `pages.registerVerify.signInInsteadDescription:${values.email}`
+      }
       if (values?.email) {
         return `${key}:${values.email}`
       }
@@ -20,7 +25,6 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => mockNavigate,
   useLoaderData: () => mockUseLoaderData(),
 }))
 
@@ -66,6 +70,7 @@ describe('RegisterVerifyPage', () => {
     mockUseLoaderData.mockReturnValue({
       errorMessage: 'Verification link expired',
       verificationEmail: 'owner@example.com',
+      canResend: true,
     })
   })
 
@@ -78,6 +83,7 @@ describe('RegisterVerifyPage', () => {
     mockUseLoaderData.mockReturnValue({
       errorMessage: 'pages.registerVerify.missingToken',
       verificationEmail: null,
+      canResend: false,
     })
 
     render(<RegisterVerifyPage />)
@@ -99,7 +105,7 @@ describe('RegisterVerifyPage', () => {
 
     render(<RegisterVerifyPage />)
 
-    expect(screen.getByText('Verification link expired')).toBeTruthy()
+    expect(screen.queryByText('Verification link expired')).toBeNull()
     expect(
       screen.getByText('pages.registerVerify.resendDescription:owner@example.com'),
     ).toBeTruthy()
@@ -110,6 +116,43 @@ describe('RegisterVerifyPage', () => {
       expect(mockResendPublicSignupVerification).toHaveBeenCalledWith('owner@example.com')
     })
     expect(screen.getByText('pages.registerVerify.resendSuccess')).toBeTruthy()
+  })
+
+  it('shows a non-redundant error detail when it adds new information', async () => {
+    const { RegisterVerifyPage } = await import('./register-verify-page')
+    mockUseLoaderData.mockReturnValue({
+      errorMessage: 'No pending sign-up found for this email',
+      verificationEmail: 'owner@example.com',
+      canResend: false,
+    })
+
+    render(<RegisterVerifyPage />)
+
+    expect(
+      screen.getByText('pages.registerVerify.signInInsteadDescription:owner@example.com'),
+    ).toBeTruthy()
+    expect(screen.queryByText('No pending sign-up found for this email')).toBeNull()
+    expect(screen.queryByText('pages.registerVerify.resendAction')).toBeNull()
+  })
+
+  it('removes resend recovery when the backend reports no pending sign-up', async () => {
+    const { RegisterVerifyPage } = await import('./register-verify-page')
+    mockResendPublicSignupVerification.mockRejectedValue(
+      Object.assign(new Error('No pending sign-up found for this email'), { status: 400 }),
+    )
+
+    render(<RegisterVerifyPage />)
+
+    fireEvent.click(screen.getByText('pages.registerVerify.resendAction'))
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('pages.registerVerify.signInInsteadDescription:owner@example.com'),
+      ).toBeTruthy()
+    })
+    expect(screen.queryByText('pages.registerVerify.resendAction')).toBeNull()
+    expect(screen.queryByText(/pages\.registerVerify\.resendDescription/)).toBeNull()
+    expect(screen.queryByText('No pending sign-up found for this email')).toBeNull()
   })
 
   it('renders the full-page pending state without the old card layout', async () => {
@@ -123,15 +166,12 @@ describe('RegisterVerifyPage', () => {
     expect(screen.queryByText('pages.registerVerify.errorTitle')).toBeNull()
   })
 
-  it('navigates home from the error actions', async () => {
+  it('shows back to login as the only secondary action', async () => {
     const { RegisterVerifyPage } = await import('./register-verify-page')
 
     render(<RegisterVerifyPage />)
 
-    fireEvent.click(screen.getByText('common.navigation.home'))
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith({ to: '/' })
-    })
+    expect(screen.getByText('pages.registerVerify.backToLogin')).toBeTruthy()
+    expect(screen.queryByText('common.navigation.home')).toBeNull()
   })
 })

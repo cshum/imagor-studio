@@ -198,6 +198,7 @@
       "resendSuccess": "Abbiamo inviato una nuova email di conferma.",
       "resendCooldown": "Attendi prima di richiedere un'altra email di conferma.",
       "resendFailed": "Invio della email di conferma non riuscito. Riprova.",
+      "signInInsteadDescription": "Non c\u2019è pi\u00f9 una conferma in sospeso per {{email}}. Se hai gi\u00e0 completato la registrazione, accedi invece di richiedere un nuovo link.",
       "backToLogin": "Torna al login"
     },
     "error": {

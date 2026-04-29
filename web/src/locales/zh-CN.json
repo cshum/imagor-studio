@@ -150,6 +150,7 @@
       "resendSuccess": "我们已发送一封新的确认邮件。",
       "resendCooldown": "请稍候后再请求新的确认邮件。",
       "resendFailed": "重新发送确认邮件失败，请重试。",
+      "signInInsteadDescription": "{{email}} 当前已经没有待完成的确认步骤。如果您已经完成注册，请直接登录。",
       "backToLogin": "返回登录"
     },
     "error": {

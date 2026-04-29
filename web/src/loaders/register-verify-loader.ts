@@ -6,6 +6,23 @@ import { getAuth, initAuth } from '@/stores/auth-store'
 export interface RegisterVerifyLoaderData {
   errorMessage: string
   verificationEmail: string | null
+  canResend: boolean
+}
+
+function canResendVerification(error: AuthApiError | null, email: string | null): boolean {
+  if (!email) {
+    return false
+  }
+
+  if (!error) {
+    return false
+  }
+
+  if (error.status === 409) {
+    return false
+  }
+
+  return error.status === 400 || error.status === undefined
 }
 
 export const registerVerifyLoader = async (): Promise<RegisterVerifyLoaderData> => {
@@ -17,6 +34,7 @@ export const registerVerifyLoader = async (): Promise<RegisterVerifyLoaderData> 
     return {
       errorMessage: 'The confirmation link is missing its verification token.',
       verificationEmail: email,
+      canResend: Boolean(email),
     }
   }
 
@@ -40,6 +58,7 @@ export const registerVerifyLoader = async (): Promise<RegisterVerifyLoaderData> 
         apiError.message ||
         'We could not verify your account. Please request a new confirmation email.',
       verificationEmail: email,
+      canResend: canResendVerification(apiError, email),
     }
   }
 
