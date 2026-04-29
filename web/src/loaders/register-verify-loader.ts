@@ -10,7 +10,7 @@ export interface RegisterVerifyLoaderData {
 }
 
 function isValidRedirectPath(path: string | undefined): path is string {
-  return Boolean(path) && path.startsWith('/') && !path.startsWith('//')
+  return typeof path === 'string' && path.startsWith('/') && !path.startsWith('//')
 }
 
 function canResendVerification(error: AuthApiError | null, email: string | null): boolean {
