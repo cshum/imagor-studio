@@ -186,6 +186,38 @@ func (s *stubSpaceStore) RemoveMember(_ context.Context, _, _ string) error     
 func (s *stubSpaceStore) UpdateMemberRole(_ context.Context, _, _, _ string) error { return nil }
 func (s *stubSpaceStore) HasMember(_ context.Context, _, _ string) (bool, error)   { return false, nil }
 
+type stubInviteStore struct {
+	invite           *space.Invitation
+	err              error
+	acceptedInviteID string
+	acceptedAt       *time.Time
+}
+
+func (s *stubInviteStore) CreateOrRefreshPending(_ context.Context, _, _, _, _, _ string, _ time.Time) (*space.Invitation, error) {
+	return nil, nil
+}
+func (s *stubInviteStore) ListPendingByOrg(_ context.Context, _ string) ([]*space.Invitation, error) {
+	return nil, nil
+}
+func (s *stubInviteStore) ListPendingBySpace(_ context.Context, _, _ string) ([]*space.Invitation, error) {
+	return nil, nil
+}
+func (s *stubInviteStore) GetPendingByToken(_ context.Context, _ string) (*space.Invitation, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.invite, nil
+}
+func (s *stubInviteStore) MarkAccepted(_ context.Context, id string, acceptedAt time.Time) error {
+	if s.err != nil {
+		return s.err
+	}
+	s.acceptedInviteID = id
+	s.acceptedAt = &acceptedAt
+	return nil
+}
+func (s *stubInviteStore) DeletePending(_ context.Context, _ string) error { return nil }
+
 type MockUserStore struct {
 	mock.Mock
 }
@@ -922,6 +954,130 @@ func TestLogin(t *testing.T) {
 			mockUserStore.AssertExpectations(t)
 		})
 	}
+}
+
+func TestLogin_AcceptsPendingInvite(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	inviteStore := &stubInviteStore{
+		invite: &space.Invitation{
+			ID:        "invite-1",
+			OrgID:     "org-invite",
+			SpaceID:   "space-1",
+			Email:     "testuser@example.com",
+			Role:      "editor",
+			ExpiresAt: time.Now().UTC().Add(time.Hour),
+		},
+	}
+	spaceStore := &stubSpaceStore{}
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{
+		SpaceStore:  spaceStore,
+		InviteStore: inviteStore,
+	})
+
+	hashedPassword, err := auth.HashPassword("password123")
+	require.NoError(t, err)
+	email := "testuser@example.com"
+	mockUserStore.On("GetByEmail", mock.Anything, "testuser@example.com").Return(&userstore.User{
+		ID:          "user-123",
+		DisplayName: "testuser",
+		Username:    "testuser",
+		Role:        "user",
+		Email:       &email,
+	}, nil).Once()
+	mockUserStore.On("GetByIDWithPassword", mock.Anything, "user-123").Return(&model.User{
+		ID:             "user-123",
+		DisplayName:    "testuser",
+		Username:       "testuser",
+		Role:           "user",
+		IsActive:       true,
+		HashedPassword: hashedPassword,
+		Email:          &email,
+	}, nil).Once()
+	mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil).Once()
+
+	body, err := json.Marshal(LoginRequest{
+		Username:    "testuser@example.com",
+		Password:    "password123",
+		InviteToken: "invite-token",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+
+	handler.Login()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+	var loginResp LoginResponse
+	err = json.Unmarshal(rr.Body.Bytes(), &loginResp)
+	require.NoError(t, err)
+	claims, err := tokenManager.ValidateToken(loginResp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "org-invite", claims.OrgID)
+	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
+	assert.NotNil(t, inviteStore.acceptedAt)
+	mockUserStore.AssertExpectations(t)
+}
+
+func TestLogin_RejectsInviteEmailMismatch(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	inviteStore := &stubInviteStore{
+		invite: &space.Invitation{
+			ID:        "invite-1",
+			OrgID:     "org-invite",
+			Email:     "someoneelse@example.com",
+			Role:      "editor",
+			ExpiresAt: time.Now().UTC().Add(time.Hour),
+		},
+	}
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{
+		InviteStore: inviteStore,
+	})
+
+	hashedPassword, err := auth.HashPassword("password123")
+	require.NoError(t, err)
+	email := "testuser@example.com"
+	mockUserStore.On("GetByEmail", mock.Anything, "testuser@example.com").Return(&userstore.User{
+		ID:          "user-123",
+		DisplayName: "testuser",
+		Username:    "testuser",
+		Role:        "user",
+		Email:       &email,
+	}, nil).Once()
+	mockUserStore.On("GetByIDWithPassword", mock.Anything, "user-123").Return(&model.User{
+		ID:             "user-123",
+		DisplayName:    "testuser",
+		Username:       "testuser",
+		Role:           "user",
+		IsActive:       true,
+		HashedPassword: hashedPassword,
+		Email:          &email,
+	}, nil).Once()
+	mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil).Once()
+
+	body, err := json.Marshal(LoginRequest{
+		Username:    "testuser@example.com",
+		Password:    "password123",
+		InviteToken: "invite-token",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+
+	handler.Login()(rr, req)
+
+	require.Equal(t, http.StatusBadRequest, rr.Code)
+	var errResp apperror.ErrorResponse
+	err = json.Unmarshal(rr.Body.Bytes(), &errResp)
+	require.NoError(t, err)
+	assert.Equal(t, "INVALID_INPUT", errResp.Code)
+	assert.Empty(t, inviteStore.acceptedInviteID)
+	mockUserStore.AssertExpectations(t)
 }
 
 func TestRefreshToken(t *testing.T) {

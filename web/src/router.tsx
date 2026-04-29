@@ -51,6 +51,7 @@ import {
 } from '@/loaders/embedded-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
+import { joinInviteLoader } from '@/loaders/join-invite-loader.ts'
 import { registerVerifyLoader } from '@/loaders/register-verify-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { rootPageLoader } from '@/loaders/root-page-loader'
@@ -74,6 +75,7 @@ import { CreateSpacePage } from '@/pages/create-space-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
+import { JoinInvitePage } from '@/pages/join-invite-page.tsx'
 import { PrivacyPage, TermsPage } from '@/pages/legal-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { RegisterPage } from '@/pages/register-page.tsx'
@@ -117,7 +119,22 @@ const rootRoute = createRootRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
+    invite_token: typeof search.invite_token === 'string' ? search.invite_token : '',
+  }),
   component: LoginPage,
+})
+
+const joinRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/join',
+  validateSearch: (search: Record<string, unknown>) => ({
+    invite_token: typeof search.invite_token === 'string' ? search.invite_token : '',
+  }),
+  loaderDeps: ({ search: { invite_token } }) => ({ inviteToken: invite_token }),
+  loader: ({ deps }) => joinInviteLoader(deps.inviteToken),
+  component: JoinInvitePage,
 })
 
 const privacyRoute = createRoute({
@@ -135,6 +152,9 @@ const termsRoute = createRoute({
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
+  validateSearch: (search: Record<string, unknown>) => ({
+    invite_token: typeof search.invite_token === 'string' ? search.invite_token : '',
+  }),
   component: RegisterPage,
 })
 
@@ -841,6 +861,7 @@ const routeTree = isEmbeddedMode
       privacyRoute,
       termsRoute,
       loginRoute,
+      joinRoute,
       registerRoute,
       registerVerifyRoute,
       authCallbackRoute,

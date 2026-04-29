@@ -203,6 +203,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 			EmbeddedMode:  cfg.EmbeddedMode,
 			MultiTenant:   multiTenant,
 			SpaceStore:    services.SpaceStore,
+			InviteStore:   services.SpaceInviteStore,
 			SignupRuntime: services.SignupVerification,
 		},
 	)

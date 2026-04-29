@@ -168,6 +168,7 @@ export function LoginPage() {
       const response = await login({
         username: values.username.trim(),
         password: values.password,
+        inviteToken: typeof search.invite_token === 'string' ? search.invite_token : undefined,
       })
       await initAuth(response.token)
 
@@ -204,7 +205,8 @@ export function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = getGoogleLoginUrl()
+    const inviteToken = typeof search.invite_token === 'string' ? search.invite_token : undefined
+    window.location.href = getGoogleLoginUrl(inviteToken)
   }
 
   const credentialsDividerKey = isMultiTenant

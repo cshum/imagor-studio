@@ -791,6 +791,20 @@
         "signOut": "登出"
       }
     },
+    "joinInvite": {
+      "eyebrow": "組織邀請",
+      "heroTitle": "選擇加入方式",
+      "heroDescription": "使用此邀請加入既有組織。從這個流程註冊時，你會加入受邀工作區，而不是建立新的組織。",
+      "formTitle": "透過邀請加入",
+      "invitedTo": "你已受邀加入 {{organization}}",
+      "organizationDescription": "此邀請已寄送到 {{email}}，角色為 {{role}}。",
+      "spaceDescription": "此邀請已寄送到 {{email}}，角色為 {{role}}，目標空間為 {{space}}。",
+      "googleAction": "使用 Google 繼續",
+      "emailAction": "使用電子郵件繼續",
+      "secondaryHelp": "Google 登入會直接使用此邀請。電子郵件註冊會先驗證你的信箱，然後再加入受邀組織。",
+      "loginInstead": "已經有帳號？前往登入",
+      "invalidTitle": "此邀請目前無法使用"
+    },
     "spaces": {
       "title": "空間",
       "createSpace": "建立空間",

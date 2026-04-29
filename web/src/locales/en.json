@@ -787,6 +787,20 @@
         "signOut": "Sign out"
       }
     },
+    "joinInvite": {
+      "eyebrow": "Organization invitation",
+      "heroTitle": "Choose how you want to join",
+      "heroDescription": "Use this invitation to join an existing organization. Signing up from this flow will join the invited workspace instead of creating a separate organization.",
+      "formTitle": "Join with an invitation",
+      "invitedTo": "You were invited to join {{organization}}",
+      "organizationDescription": "This invitation was sent to {{email}} with the {{role}} role.",
+      "spaceDescription": "This invitation was sent to {{email}} with the {{role}} role for the {{space}} space.",
+      "googleAction": "Continue with Google",
+      "emailAction": "Continue with email",
+      "secondaryHelp": "Google sign-in uses the invitation directly. Email sign-up verifies your address first and then joins the invited organization.",
+      "loginInstead": "Already have an account? Sign in",
+      "invalidTitle": "This invitation is unavailable"
+    },
     "spaces": {
       "title": "Spaces",
       "createSpace": "Create Space",

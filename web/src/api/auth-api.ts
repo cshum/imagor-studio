@@ -3,6 +3,7 @@ import { getBaseUrl } from '@/lib/api-utils'
 export interface LoginRequest {
   username: string
   password: string
+  inviteToken?: string
 }
 
 export interface RegisterRequest {
@@ -10,6 +11,7 @@ export interface RegisterRequest {
   email: string
   username?: string
   password: string
+  inviteToken?: string
 }
 
 export type AuthApiError = Error & {
@@ -165,6 +167,7 @@ export async function registerWithVerificationFallback(
       displayName: credentials.displayName,
       email: credentials.email,
       password: credentials.password,
+      inviteToken: credentials.inviteToken,
     }),
   })
 
@@ -182,6 +185,9 @@ export async function registerWithVerificationFallback(
   )
 
   if (isVerificationSignupUnavailable(error)) {
+    if (credentials.inviteToken?.trim()) {
+      throw error
+    }
     return {
       kind: 'authenticated',
       response: await register(credentials),
@@ -307,13 +313,42 @@ export interface AuthProvidersResponse {
   providers: string[]
 }
 
+export interface InvitationResolutionResponse {
+  organizationName: string
+  spaceName?: string
+  invitedEmail: string
+  role: string
+}
+
 /**
  * Returns the URL to redirect the browser to for Google OAuth login.
  * Uses the configured API base URL so it works correctly in dev (VITE_API_BASE_URL=http://localhost:8080)
  * and in production (same-host, empty base URL → relative /api/... path).
  */
-export function getGoogleLoginUrl(): string {
+export function getGoogleLoginUrl(inviteToken?: string): string {
+  if (inviteToken?.trim()) {
+    const query = new URLSearchParams({ invite_token: inviteToken.trim() })
+    return `${BASE_URL}/api/auth/google/login?${query.toString()}`
+  }
+
   return `${BASE_URL}/api/auth/google/login`
+}
+
+export async function resolveInvitation(
+  inviteToken: string,
+): Promise<InvitationResolutionResponse> {
+  const query = new URLSearchParams({ invite_token: inviteToken })
+  const response = await fetch(`${BASE_URL}/api/invitations/resolve?${query.toString()}`)
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
+  }
+
+  return response.json()
 }
 
 /**

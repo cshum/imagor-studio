@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, Navigate, useNavigate } from '@tanstack/react-router'
+import { Link, Navigate, useNavigate, useSearch } from '@tanstack/react-router'
 import { MailCheck } from 'lucide-react'
 import { z } from 'zod'
 
@@ -67,6 +67,7 @@ export function RegisterPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
   const navigate = useNavigate()
+  const search = useSearch({ from: '/register' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
   const [pendingVerification, setPendingVerification] =
     useState<PublicSignupVerificationResponse | null>(null)
@@ -119,6 +120,7 @@ export function RegisterPage() {
       pendingVerification.email?.trim() ||
       form.getValues('email').trim()
     : ''
+  const inviteToken = typeof search.invite_token === 'string' ? search.invite_token.trim() : ''
 
   useEffect(() => {
     getAuthProviders()
@@ -175,6 +177,7 @@ export function RegisterPage() {
         displayName: values.displayName.trim(),
         email: values.email.trim(),
         password: values.password,
+        inviteToken: inviteToken || undefined,
       })
 
       if (result.kind === 'verification-required') {
@@ -210,7 +213,7 @@ export function RegisterPage() {
   }
 
   const handleGoogleSignup = () => {
-    window.location.href = getGoogleLoginUrl()
+    window.location.href = getGoogleLoginUrl(inviteToken || undefined)
   }
 
   const handleResendVerification = async () => {

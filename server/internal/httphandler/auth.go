@@ -28,6 +28,7 @@ type AuthHandler struct {
 	userStore     userstore.Store
 	orgStore      org.OrgStore
 	spaceStore    space.SpaceStore
+	inviteStore   space.SpaceInviteStore
 	registryStore registrystore.Store
 	logger        *zap.Logger
 	embeddedMode  bool
@@ -39,6 +40,7 @@ type AuthHandlerConfig struct {
 	EmbeddedMode  bool
 	MultiTenant   bool
 	SpaceStore    space.SpaceStore
+	InviteStore   space.SpaceInviteStore
 	SignupRuntime signup.Runtime
 }
 
@@ -59,6 +61,7 @@ func NewAuthHandler(
 		userStore:     userStore,
 		orgStore:      orgStore,
 		spaceStore:    cfg.SpaceStore,
+		inviteStore:   cfg.InviteStore,
 		registryStore: registryStore,
 		logger:        logger,
 		embeddedMode:  cfg.EmbeddedMode,
@@ -86,8 +89,9 @@ type RegisterAdminRequest struct {
 }
 
 type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	InviteToken string `json:"inviteToken,omitempty"`
 }
 
 type LoginResponse struct {
@@ -118,6 +122,7 @@ type StartPublicSignupRequest struct {
 	DisplayName string `json:"displayName"`
 	Email       string `json:"email"`
 	Password    string `json:"password"`
+	InviteToken string `json:"inviteToken,omitempty"`
 }
 
 type VerifyPublicSignupRequest struct {
@@ -249,10 +254,17 @@ func (h *AuthHandler) StartPublicSignup() http.HandlerFunc {
 			DisplayName: validation.NormalizeDisplayName(req.DisplayName),
 			Email:       validation.NormalizeEmail(req.Email),
 			Password:    req.Password,
+			InviteToken: strings.TrimSpace(req.InviteToken),
 		})
 		if err != nil {
 			if errors.Is(err, signup.ErrEmailAlreadyExists) {
 				return apperror.Conflict("Email already exists", "email")
+			}
+			if errors.Is(err, signup.ErrInviteTokenInvalid) {
+				return apperror.BadRequest("Invitation is no longer valid", map[string]interface{}{"field": "inviteToken"})
+			}
+			if errors.Is(err, signup.ErrInviteEmailMismatch) {
+				return apperror.BadRequest("This invitation was sent to a different email address", map[string]interface{}{"field": "email"})
 			}
 			if errors.Is(err, signup.ErrVerificationCooldownActive) {
 				return apperror.TooManyRequests("Please wait before requesting another verification email", map[string]interface{}{"field": "email"}, "email")
@@ -286,6 +298,9 @@ func (h *AuthHandler) VerifyPublicSignup() http.HandlerFunc {
 		if err != nil {
 			if errors.Is(err, signup.ErrVerificationTokenInvalid) {
 				return apperror.BadRequest("Verification link is invalid or has expired", map[string]interface{}{"field": "token"})
+			}
+			if errors.Is(err, signup.ErrInviteTokenInvalid) {
+				return apperror.BadRequest("Invitation is no longer valid", map[string]interface{}{"field": "inviteToken"})
 			}
 			if errors.Is(err, signup.ErrEmailAlreadyExists) {
 				return apperror.Conflict("Email already exists", "email")
@@ -405,7 +420,10 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			h.logger.Warn("Failed to update last login", zap.Error(err), zap.String("userID", user.ID))
 		}
 
-		orgID := h.resolvePrimaryOrgID(r.Context(), user.ID)
+		orgID, err := h.resolveLoginOrgID(r.Context(), user, strings.TrimSpace(req.InviteToken))
+		if err != nil {
+			return err
+		}
 
 		response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
 		if err != nil {
@@ -688,6 +706,62 @@ func (h *AuthHandler) provisionWorkspaceMember(_ context.Context, user *userstor
 	}
 
 	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
+}
+
+func (h *AuthHandler) resolveLoginOrgID(ctx context.Context, user *model.User, inviteToken string) (string, error) {
+	orgID := h.resolvePrimaryOrgID(ctx, user.ID)
+	if inviteToken == "" || h.inviteStore == nil || !h.cloudEnabled() {
+		return orgID, nil
+	}
+
+	invitation, err := h.inviteStore.GetPendingByToken(ctx, inviteToken)
+	if err != nil {
+		h.logger.Error("Failed to resolve invitation on login", zap.String("userID", user.ID), zap.Error(err))
+		return "", apperror.InternalServerError("Failed to complete sign-in")
+	}
+	if invitation == nil || invitation.AcceptedAt != nil || invitation.ExpiresAt.Before(time.Now().UTC()) {
+		return "", apperror.BadRequest("Invitation is no longer valid", map[string]interface{}{"field": "inviteToken"})
+	}
+
+	userEmail := ""
+	if user.Email != nil {
+		userEmail = validation.NormalizeEmail(*user.Email)
+	}
+	if userEmail == "" || userEmail != validation.NormalizeEmail(invitation.Email) {
+		return "", apperror.BadRequest("This invitation was sent to a different email address", map[string]interface{}{"field": "username"})
+	}
+
+	if orgID != "" && orgID != invitation.OrgID {
+		return "", apperror.Conflict("This invitation belongs to a different organization", "inviteToken")
+	}
+
+	if err := h.orgStore.AddMember(ctx, invitation.OrgID, user.ID, invitation.Role); err != nil {
+		h.logger.Error("Failed to add invited organization member on login",
+			zap.String("userID", user.ID),
+			zap.String("orgID", invitation.OrgID),
+			zap.Error(err))
+		return "", apperror.InternalServerError("Failed to complete sign-in")
+	}
+
+	if invitation.SpaceID != "" && h.spaceStore != nil {
+		if err := h.spaceStore.AddMember(ctx, invitation.SpaceID, user.ID, invitation.Role); err != nil {
+			h.logger.Error("Failed to add invited space member on login",
+				zap.String("userID", user.ID),
+				zap.String("spaceID", invitation.SpaceID),
+				zap.Error(err))
+			return "", apperror.InternalServerError("Failed to complete sign-in")
+		}
+	}
+
+	if err := h.inviteStore.MarkAccepted(ctx, invitation.ID, time.Now().UTC()); err != nil {
+		h.logger.Error("Failed to mark invitation accepted on login",
+			zap.String("userID", user.ID),
+			zap.String("inviteID", invitation.ID),
+			zap.Error(err))
+		return "", apperror.InternalServerError("Failed to complete sign-in")
+	}
+
+	return invitation.OrgID, nil
 }
 
 func (h *AuthHandler) resolvePrimaryOrgID(ctx context.Context, userID string) string {

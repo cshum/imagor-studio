@@ -741,6 +741,20 @@
         "signOut": "退出登录"
       }
     },
+    "joinInvite": {
+      "eyebrow": "组织邀请",
+      "heroTitle": "选择加入方式",
+      "heroDescription": "使用此邀请加入现有组织。通过此流程注册时，你会加入被邀请的工作区，而不是创建一个新的组织。",
+      "formTitle": "通过邀请加入",
+      "invitedTo": "你已被邀请加入 {{organization}}",
+      "organizationDescription": "此邀请已发送到 {{email}}，角色为 {{role}}。",
+      "spaceDescription": "此邀请已发送到 {{email}}，角色为 {{role}}，目标空间为 {{space}}。",
+      "googleAction": "使用 Google 继续",
+      "emailAction": "使用邮箱继续",
+      "secondaryHelp": "Google 登录会直接使用此邀请。邮箱注册会先验证你的邮箱地址，然后再加入被邀请的组织。",
+      "loginInstead": "已有账号？去登录",
+      "invalidTitle": "此邀请当前不可用"
+    },
     "spaces": {
       "title": "空间",
       "createSpace": "创建空间",

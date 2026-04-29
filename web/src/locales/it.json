@@ -791,6 +791,20 @@
         "signOut": "Esci"
       }
     },
+    "joinInvite": {
+      "eyebrow": "Invito organizzazione",
+      "heroTitle": "Scegli come vuoi partecipare",
+      "heroDescription": "Usa questo invito per entrare in un'organizzazione esistente. La registrazione da questo flusso ti unirà al workspace invitato invece di crearne uno separato.",
+      "formTitle": "Partecipa con un invito",
+      "invitedTo": "Sei stato invitato a partecipare a {{organization}}",
+      "organizationDescription": "Questo invito è stato inviato a {{email}} con il ruolo {{role}}.",
+      "spaceDescription": "Questo invito è stato inviato a {{email}} con il ruolo {{role}} per lo spazio {{space}}.",
+      "googleAction": "Continua con Google",
+      "emailAction": "Continua con email",
+      "secondaryHelp": "L'accesso con Google usa direttamente l'invito. La registrazione email verifica prima l'indirizzo e poi ti unisce all'organizzazione invitante.",
+      "loginInstead": "Hai già un account? Accedi",
+      "invalidTitle": "Questo invito non è disponibile"
+    },
     "spaces": {
       "title": "Spazi",
       "createSpace": "Crea spazio",

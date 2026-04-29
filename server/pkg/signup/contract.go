@@ -18,6 +18,7 @@ type StartPublicSignupParams struct {
 	DisplayName string
 	Email       string
 	Password    string
+	InviteToken string
 }
 
 type StartPublicSignupResult struct {
