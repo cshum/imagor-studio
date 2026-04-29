@@ -562,11 +562,15 @@ const spaceSettingsLayoutRoute = createRoute({
     await requireAccountAuth(context)
     return resolveSpaceSettingsRouteContext({ params: { routeSpaceKey: context.params.spaceKey } })
   },
-  loader: ({ context }) => ({ breadcrumb: context.breadcrumb }),
+  loader: async ({ context }) => ({
+    breadcrumb: context.breadcrumb,
+    organization: await getMyOrganization(),
+  }),
   shouldReload: false,
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useRouteContext()
-    return <SpaceSettingsLayout space={space} />
+    const { organization } = spaceSettingsLayoutRoute.useLoaderData()
+    return <SpaceSettingsLayout space={space} showOrganizationLink={Boolean(organization)} />
   },
 })
 
@@ -756,7 +760,11 @@ const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
   beforeLoad: requireAccountAuth,
-  component: () => <AccountLayout />,
+  loader: async () => getMyOrganization(),
+  component: () => {
+    const organization = accountLayoutRoute.useLoaderData()
+    return <AccountLayout showOrganizationLink={Boolean(organization)} />
+  },
 })
 
 // ─── Admin: layout route + per-section child routes ─────────────────────────

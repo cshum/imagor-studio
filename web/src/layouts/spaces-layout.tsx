@@ -16,14 +16,21 @@ interface SpacesLayoutProps extends PropsWithChildren {
   title?: string
   description?: string
   primaryAction?: React.ReactNode
+  showOrganizationLink?: boolean
 }
 
-export function SpacesLayout({ children, title, description, primaryAction }: SpacesLayoutProps) {
+export function SpacesLayout({
+  children,
+  title,
+  description,
+  primaryAction,
+  showOrganizationLink = false,
+}: SpacesLayoutProps) {
   const { t } = useTranslation()
   const { authState, logout } = useAuth()
   const navigate = useNavigate()
   const { title: appTitle } = useBrand()
-  const accountLinks = authState.multiTenant
+  const accountLinks = authState.multiTenant && showOrganizationLink
     ? [
         {
           label: t('navigation.breadcrumbs.organization'),

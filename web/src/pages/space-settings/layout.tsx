@@ -53,9 +53,13 @@ export type SectionId = 'general' | 'storage' | 'imagor' | 'members'
 
 interface SpaceSettingsLayoutProps {
   space: SpaceSettingsData
+  showOrganizationLink?: boolean
 }
 
-export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
+export function SpaceSettingsLayout({
+  space,
+  showOrganizationLink = false,
+}: SpaceSettingsLayoutProps) {
   const { t } = useTranslation()
   const { authState, logout } = useAuth()
   const { title: appTitle } = useBrand()
@@ -80,7 +84,7 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
-  const accountLinks = authState.multiTenant
+  const accountLinks = authState.multiTenant && showOrganizationLink
     ? [
         {
           label: t('navigation.breadcrumbs.organization'),

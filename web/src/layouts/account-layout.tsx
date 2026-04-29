@@ -111,7 +111,10 @@ const NAV_GROUPS = (
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function AccountLayout({ children }: PropsWithChildren) {
+export function AccountLayout({
+  children,
+  showOrganizationLink = false,
+}: PropsWithChildren<{ showOrganizationLink?: boolean }>) {
   const { t } = useTranslation()
   const { authState, logout } = useAuth()
   const location = useLocation()
@@ -122,7 +125,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
   const isMultiTenant = authState.multiTenant
   const showSidebar = !isMultiTenant
   const [mobileOpen, setMobileOpen] = useState(false)
-  const accountLinks = isMultiTenant
+  const accountLinks = isMultiTenant && showOrganizationLink
     ? [
         {
           label: t('navigation.breadcrumbs.organization'),
