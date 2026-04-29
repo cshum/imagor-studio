@@ -1679,6 +1679,18 @@
             "deprecationReason": null
           },
           {
+            "name": "createOrganization",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": { "kind": "OBJECT", "name": "Organization", "ofType": null }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "createSpace",
             "description": null,
             "args": [

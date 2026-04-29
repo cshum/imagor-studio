@@ -783,9 +783,13 @@
       },
       "nextSteps": {
         "title": "What to do next",
-        "description": "If you expected access already, contact the team that manages your Imagor Studio organization. Self-serve setup is not available from this state yet."
+        "description": "Create a new personal organization to continue, or join an existing one from an invite if you are supposed to work inside another team."
       },
       "actions": {
+        "createOrganization": "Create organization",
+        "creatingOrganization": "Creating organization...",
+        "createSuccess": "Organization created",
+        "createError": "Failed to create organization",
         "signOut": "Sign out"
       }
     },

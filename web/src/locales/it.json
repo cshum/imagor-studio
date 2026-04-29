@@ -787,9 +787,13 @@
       },
       "nextSteps": {
         "title": "Cosa fare ora",
-        "description": "Se ti aspettavi di avere già accesso, contatta il team che gestisce la tua organizzazione in Imagor Studio. La configurazione self-service non è disponibile in questo stato."
+        "description": "Crea una nuova organizzazione personale per continuare oppure unisciti a una esistente tramite invito se devi lavorare nel team di qualcun altro."
       },
       "actions": {
+        "createOrganization": "Crea organizzazione",
+        "creatingOrganization": "Creazione organizzazione...",
+        "createSuccess": "Organizzazione creata",
+        "createError": "Impossibile creare l'organizzazione",
         "signOut": "Esci"
       }
     },

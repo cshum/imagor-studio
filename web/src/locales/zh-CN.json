@@ -736,9 +736,13 @@
       },
       "nextSteps": {
         "title": "接下来怎么做",
-        "description": "如果你原本就应该拥有访问权限，请联系管理 Imagor Studio 组织的团队。当前状态下暂不支持自助设置。"
+        "description": "你可以先创建一个新的个人组织继续使用；如果你本应加入别人的团队，也可以通过邀请加入现有组织。"
       },
       "actions": {
+        "createOrganization": "创建组织",
+        "creatingOrganization": "正在创建组织...",
+        "createSuccess": "组织已创建",
+        "createError": "创建组织失败",
         "signOut": "退出登录"
       }
     },

@@ -187,6 +187,7 @@ export type Mutation = {
   createBillingPortalSession: BillingSession
   createCheckoutSession: BillingSession
   createFolder: Scalars['Boolean']['output']
+  createOrganization: Organization
   createSpace: Space
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
@@ -1352,6 +1353,24 @@ export type LeaveOrganizationMutation = { __typename?: 'Mutation'; leaveOrganiza
 export type DeleteOrganizationMutationVariables = Exact<{ [key: string]: never }>
 
 export type DeleteOrganizationMutation = { __typename?: 'Mutation'; deleteOrganization: boolean }
+
+export type CreateOrganizationMutationVariables = Exact<{ [key: string]: never }>
+
+export type CreateOrganizationMutation = {
+  __typename?: 'Mutation'
+  createOrganization: {
+    __typename?: 'Organization'
+    id: string
+    name: string
+    slug: string
+    ownerUserId: string
+    currentUserRole: OrgMemberRole
+    plan: string
+    planStatus: string
+    createdAt: string
+    updatedAt: string
+  }
+}
 
 export type RemoveSpaceMemberMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
@@ -3648,6 +3667,39 @@ export const DeleteOrganizationDocument = {
     },
   ],
 } as unknown as DocumentNode<DeleteOrganizationMutation, DeleteOrganizationMutationVariables>
+export const CreateOrganizationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateOrganization' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createOrganization' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'ownerUserId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'currentUserRole' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plan' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'planStatus' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateOrganizationMutation, CreateOrganizationMutationVariables>
 export const RemoveSpaceMemberDocument = {
   kind: 'Document',
   definitions: [

@@ -1178,6 +1178,60 @@ func TestDeleteOrganization_RejectsActivePaidBilling(t *testing.T) {
 	spaceStore.AssertExpectations(t)
 }
 
+func TestCreateOrganization_Success(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	userStore := &MockUserStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+	r.userStore = userStore
+
+	userStore.On("GetByID", mock.Anything, "user-1").Return(&userstore.User{
+		ID:          "user-1",
+		DisplayName: "Alice Example",
+		Username:    "alice",
+	}, nil).Once()
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(nil, nil).Once()
+	orgStore.On("CreateWithMember", mock.Anything, "user-1", "Alice Example", "alice", mock.AnythingOfType("*time.Time")).Return(&org.Org{
+		ID:         "org-1",
+		Name:       "Alice Example",
+		Slug:       "alice",
+		OwnerID:    "user-1",
+		Plan:       org.PlanFree,
+		PlanStatus: org.PlanStatusTrialing,
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}, nil).Once()
+
+	ctx := createReadWriteContext("user-1")
+	created, err := r.Mutation().CreateOrganization(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, created)
+	assert.Equal(t, "org-1", created.ID)
+	assert.Equal(t, gql.OrgMemberRoleOwner, created.CurrentUserRole)
+	orgStore.AssertExpectations(t)
+	userStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestCreateOrganization_RejectsWhenOrganizationAlreadyExists(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	orgStore.On("GetByUserID", mock.Anything, "user-1").Return(makeTestOrg("org-1", "user-1"), nil).Once()
+
+	ctx := createReadWriteContext("user-1")
+	created, err := r.Mutation().CreateOrganization(ctx)
+	assert.Nil(t, created)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrAlreadyExists, gqlErr.Extensions["code"])
+	orgStore.AssertNotCalled(t, "CreateWithMember", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
 // ---------- UpdateSpace ------------------------------------------------------
 
 func TestUpdateSpace_RequiresManagePermission(t *testing.T) {

@@ -787,9 +787,13 @@
       },
       "nextSteps": {
         "title": "接下來怎麼做",
-        "description": "如果您原本就應該有存取權，請聯絡管理 Imagor Studio 組織的團隊。此狀態下暫不提供自助設定。"
+        "description": "你可以先建立新的個人組織繼續使用；如果你原本應該加入別人的團隊，也可以透過邀請加入現有組織。"
       },
       "actions": {
+        "createOrganization": "建立組織",
+        "creatingOrganization": "正在建立組織...",
+        "createSuccess": "組織已建立",
+        "createError": "建立組織失敗",
         "signOut": "登出"
       }
     },

@@ -1150,6 +1150,46 @@ func (r *mutationResolver) CreateBillingPortalSession(ctx context.Context, retur
 	return mapBillingSessionToGQL(session), nil
 }
 
+// CreateOrganization provisions a personal organization for the current user when none exists yet.
+func (r *mutationResolver) CreateOrganization(ctx context.Context) (*gql.Organization, error) {
+	if !r.cloudEnabled() {
+		return nil, fmt.Errorf("organization management is not available in this deployment")
+	}
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	existingOrgID, err := r.getUserOrgID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check organization membership: %w", err)
+	}
+	if existingOrgID != "" {
+		return nil, apperror.Conflict("organization already exists for this account", "organization")
+	}
+	user, err := r.userStore.GetByID(ctx, claims.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load user: %w", err)
+	}
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+	orgName := strings.TrimSpace(user.DisplayName)
+	if orgName == "" {
+		orgName = strings.TrimSpace(user.Username)
+	}
+	trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
+	createdOrg, err := r.orgStore.CreateWithMember(ctx, user.ID, orgName, user.Username, &trialEndsAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create organization: %w", err)
+	}
+	if createdOrg == nil {
+		return nil, fmt.Errorf("organization was not created")
+	}
+	result := mapOrgToGQL(createdOrg)
+	result.CurrentUserRole = gql.OrgMemberRoleOwner
+	return result, nil
+}
+
 // CreateSpace creates a new space (admin only).
 func (r *mutationResolver) CreateSpace(ctx context.Context, input gql.SpaceInput) (*gql.Space, error) {
 	if r.spaceStore == nil {
