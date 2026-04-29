@@ -84,15 +84,16 @@ export function SpaceSettingsLayout({
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
-  const accountLinks = authState.multiTenant && showOrganizationLink
-    ? [
-        {
-          label: t('navigation.breadcrumbs.organization'),
-          href: '/account/organization',
-          icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
-        },
-      ]
-    : []
+  const accountLinks =
+    authState.multiTenant && showOrganizationLink
+      ? [
+          {
+            label: t('navigation.breadcrumbs.organization'),
+            href: '/account/organization',
+            icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
+          },
+        ]
+      : []
 
   const handleLogout = async () => {
     await logout()

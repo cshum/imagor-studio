@@ -125,15 +125,16 @@ export function AccountLayout({
   const isMultiTenant = authState.multiTenant
   const showSidebar = !isMultiTenant
   const [mobileOpen, setMobileOpen] = useState(false)
-  const accountLinks = isMultiTenant && showOrganizationLink
-    ? [
-        {
-          label: t('navigation.breadcrumbs.organization'),
-          href: '/account/organization',
-          icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
-        },
-      ]
-    : []
+  const accountLinks =
+    isMultiTenant && showOrganizationLink
+      ? [
+          {
+            label: t('navigation.breadcrumbs.organization'),
+            href: '/account/organization',
+            icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
+          },
+        ]
+      : []
 
   useScrollHandler(location.pathname)
 
