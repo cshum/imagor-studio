@@ -112,6 +112,59 @@ describe('account-loader', () => {
     expect(result.spaces).toHaveLength(1)
   })
 
+  it('allows spaces loader to return direct-member spaces for authenticated users with no organization', async () => {
+    const { spacesLoader } = await import('@/loaders/account-loader')
+
+    mockListSpaces.mockResolvedValue([
+      {
+        __typename: 'Space',
+        id: 'space-shared',
+        orgId: 'org-host',
+        key: 'shared-space',
+        name: 'Shared Space',
+        storageUsageBytes: 256,
+        processingUsageCount: 3,
+        storageMode: 'platform',
+        storageType: 'managed',
+        bucket: '',
+        prefix: '',
+        region: '',
+        endpoint: '',
+        usePathStyle: false,
+        customDomain: '',
+        customDomainVerified: false,
+        suspended: false,
+        isShared: false,
+        signerAlgorithm: 'sha256',
+        signerTruncate: 32,
+        imagorCORSOrigins: '',
+        canManage: false,
+        canDelete: false,
+        canLeave: true,
+        updatedAt: '2026-04-18T00:00:00Z',
+      },
+    ])
+    mockGetMyOrganization.mockResolvedValue(null)
+    mockGetUsageSummary.mockResolvedValue({
+      __typename: 'UsageSummary',
+      usedSpaces: 0,
+      maxSpaces: null,
+      usedHostedStorageBytes: 0,
+      storageLimitGB: null,
+      usedTransforms: 0,
+      transformsLimit: null,
+      periodStart: null,
+      periodEnd: null,
+    })
+
+    const result = await spacesLoader()
+
+    expect(result.currentOrganizationId).toBeNull()
+    expect(result.currentOrganizationRole).toBeNull()
+    expect(result.spaces).toHaveLength(1)
+    expect(result.spaces[0]?.key).toBe('shared-space')
+  })
+
   it('allows loading settings for a space owned by the current organization', async () => {
     const { resolveSpaceSettingsRouteContext } = await import('@/loaders/account-loader')
 

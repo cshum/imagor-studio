@@ -740,19 +740,22 @@ func (h *AuthHandler) resolveLoginOrgID(ctx context.Context, user *model.User, i
 		return "", "", apperror.BadRequest("This invitation was sent to a different email address", map[string]interface{}{"field": "username"})
 	}
 
-	if orgID != "" && orgID != invitation.OrgID {
+	isSpaceInvite := strings.TrimSpace(invitation.SpaceID) != ""
+	if !isSpaceInvite && orgID != "" && orgID != invitation.OrgID {
 		return "", "", apperror.Conflict("This invitation belongs to a different organization", "inviteToken")
 	}
 
-	if err := h.orgStore.AddMember(ctx, invitation.OrgID, user.ID, invitation.Role); err != nil {
-		h.logger.Error("Failed to add invited organization member on login",
-			zap.String("userID", user.ID),
-			zap.String("orgID", invitation.OrgID),
-			zap.Error(err))
-		return "", "", apperror.InternalServerError("Failed to complete sign-in")
+	if !isSpaceInvite {
+		if err := h.orgStore.AddMember(ctx, invitation.OrgID, user.ID, invitation.Role); err != nil {
+			h.logger.Error("Failed to add invited organization member on login",
+				zap.String("userID", user.ID),
+				zap.String("orgID", invitation.OrgID),
+				zap.Error(err))
+			return "", "", apperror.InternalServerError("Failed to complete sign-in")
+		}
 	}
 
-	if invitation.SpaceID != "" && h.spaceStore != nil {
+	if isSpaceInvite && h.spaceStore != nil {
 		if err := h.spaceStore.AddMember(ctx, invitation.SpaceID, user.ID, invitation.Role); err != nil {
 			h.logger.Error("Failed to add invited space member on login",
 				zap.String("userID", user.ID),
@@ -768,6 +771,10 @@ func (h *AuthHandler) resolveLoginOrgID(ctx context.Context, user *model.User, i
 			zap.String("inviteID", invitation.ID),
 			zap.Error(err))
 		return "", "", apperror.InternalServerError("Failed to complete sign-in")
+	}
+
+	if isSpaceInvite {
+		return orgID, redirectPath, nil
 	}
 
 	return invitation.OrgID, redirectPath, nil

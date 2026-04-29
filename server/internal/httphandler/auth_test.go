@@ -1021,7 +1021,7 @@ func TestLogin_AcceptsPendingInvite(t *testing.T) {
 	require.NoError(t, err)
 	claims, err := tokenManager.ValidateToken(loginResp.Token)
 	require.NoError(t, err)
-	assert.Equal(t, "org-invite", claims.OrgID)
+	assert.Empty(t, claims.OrgID)
 	assert.Equal(t, "/spaces/acme-space", loginResp.RedirectPath)
 	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
 	assert.NotNil(t, inviteStore.acceptedAt)

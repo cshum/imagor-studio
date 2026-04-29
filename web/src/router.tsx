@@ -216,7 +216,7 @@ const rootPath = createRoute({
   beforeLoad: async (context) => {
     const auth = getAuth()
     if (auth.multiTenant) {
-      return requireOrganizationAccountAuth(context)
+      return requireAccountAuth(context)
     }
   },
   component: () => {
