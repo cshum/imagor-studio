@@ -424,8 +424,12 @@ export function SpacesPage({
               isLoading={isCreatingOrganization}
               onClick={handleCreateOrganization}
             >
-              <Plus className='mr-2 h-4 w-4' />
-              {t('pages.workspaceRequired.actions.createOrganization')}
+              <span className='flex items-center justify-center gap-2'>
+                <Plus className='h-4 w-4 shrink-0 self-start' />
+                <span className='whitespace-nowrap'>
+                  {t('pages.workspaceRequired.actions.createOrganization')}
+                </span>
+              </span>
             </ButtonWithLoading>
           ) : canCreateSpace && createSpaceDisabled ? (
             <Button disabled className='mt-6' title={t('pages.spaces.messages.spaceLimitReached')}>
