@@ -80,4 +80,28 @@ describe('auth api login', () => {
       }),
     )
   })
+
+  it('preserves invite reason details on API errors', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: async () => ({
+        error: 'This invitation was sent to a different email address',
+        code: 'INVALID_INPUT',
+        details: {
+          field: 'inviteToken',
+          reason: 'invite_email_mismatch',
+        },
+      }),
+    })
+
+    const { acceptInvitation } = await import('./auth-api')
+
+    await expect(acceptInvitation('invite-token-123', 'access-token-abc')).rejects.toMatchObject({
+      code: 'INVALID_INPUT',
+      field: 'inviteToken',
+      reason: 'invite_email_mismatch',
+    })
+  })
 })

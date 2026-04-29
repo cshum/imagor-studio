@@ -177,7 +177,8 @@
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
       "errors": {
-        "inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first."
+  		"inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first.",
+  		"inviteEmailMismatch": "This invitation was sent to a different email address. Sign in with the invited account instead."
       },
       "errorNoToken": "No authentication token received",
       "backToLogin": "Back to login"
@@ -803,6 +804,11 @@
       "acceptingDescription": "We are adding this account to the invited organization now.",
       "acceptFailedTitle": "We could not complete this invitation",
       "acceptFailed": "Try opening the invitation again or sign in with the invited account.",
+      "errors": {
+        "invalid": "This invitation is no longer valid. Ask the sender to create a new one.",
+        "emailMismatch": "This invitation was sent to a different email address. Sign in with the invited account instead.",
+        "orgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first."
+      },
       "invalidTitle": "This invitation is unavailable"
     },
     "spaces": {

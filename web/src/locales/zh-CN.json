@@ -131,7 +131,8 @@
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
       "errors": {
-        "inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。"
+  		"inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。",
+  		"inviteEmailMismatch": "此邀请发送到了其他邮箱地址。请改用受邀账户登录。"
       },
       "errorNoToken": "未收到认证令牌",
       "backToLogin": "返回登录"
@@ -757,6 +758,11 @@
       "acceptingDescription": "我们正在将此账户加入受邀组织。",
       "acceptFailedTitle": "无法完成此邀请",
       "acceptFailed": "请重新打开邀请链接，或使用受邀账户登录。",
+      "errors": {
+        "invalid": "此邀请已失效。请让发送者重新创建邀请。",
+        "emailMismatch": "此邀请发送到了其他邮箱地址。请改用受邀账户登录。",
+        "orgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。"
+      },
       "invalidTitle": "此邀请当前不可用"
     },
     "spaces": {

@@ -16,7 +16,11 @@ export function AuthCallbackPage() {
   const params = new URLSearchParams(window.location.search)
   const errorParam = params.get('error')
   const errorMessageKey =
-    errorParam === 'invite_org_conflict' ? 'pages.authCallback.errors.inviteOrgConflict' : null
+    errorParam === 'invite_org_conflict'
+      ? 'pages.authCallback.errors.inviteOrgConflict'
+      : errorParam === 'invite_email_mismatch'
+        ? 'pages.authCallback.errors.inviteEmailMismatch'
+        : null
 
   const title = t('pages.authCallback.title')
   let message = t('pages.authCallback.failed')

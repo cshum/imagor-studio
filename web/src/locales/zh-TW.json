@@ -181,7 +181,8 @@
       "failed": "驗證失敗",
       "errorOAuth": "驗證失敗：{{error}}",
       "errors": {
-        "inviteOrgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。"
+  		"inviteOrgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。",
+  		"inviteEmailMismatch": "此邀請寄送到其他電子郵件地址。請改用受邀帳戶登入。"
       },
       "errorNoToken": "未收到驗證令牌",
       "backToLogin": "返回登入"
@@ -807,6 +808,11 @@
       "acceptingDescription": "我們正在將此帳戶加入受邀組織。",
       "acceptFailedTitle": "無法完成此邀請",
       "acceptFailed": "請重新開啟邀請連結，或使用受邀帳戶登入。",
+      "errors": {
+        "invalid": "此邀請已失效。請請對方重新建立邀請。",
+        "emailMismatch": "此邀請寄送到其他電子郵件地址。請改用受邀帳戶登入。",
+        "orgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。"
+      },
       "invalidTitle": "此邀請目前無法使用"
     },
     "spaces": {

@@ -43,13 +43,14 @@ type JoinInviteLoaderResult = {
   } | null
   inviteToken: string
   errorMessage: string | null
+  errorReason: string | null
 }
 
 export function JoinInvitePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState, initAuth } = useAuth()
-  const { invitation, inviteToken, errorMessage } = useLoaderData({ from: '/join' }) as JoinInviteLoaderResult
+  const { invitation, inviteToken, errorMessage, errorReason } = useLoaderData({ from: '/join' }) as JoinInviteLoaderResult
   const [acceptState, setAcceptState] = useState<'idle' | 'loading' | 'failed'>('idle')
   const [acceptError, setAcceptError] = useState<string | null>(null)
 
@@ -58,6 +59,20 @@ export function JoinInvitePage() {
       return redirectPath
     }
     return '/'
+  }
+
+  const resolveInviteErrorMessage = (reason: string | null, fallback: string | null): string => {
+    switch (reason) {
+      case 'invite_email_mismatch':
+        return t('pages.joinInvite.errors.emailMismatch')
+      case 'invite_org_conflict':
+        return t('pages.joinInvite.errors.orgConflict')
+      case 'invite_invalid':
+      case 'invite_missing_token':
+        return t('pages.joinInvite.errors.invalid')
+      default:
+        return fallback || t('pages.joinInvite.acceptFailed')
+    }
   }
 
   const handleGoogle = () => {
@@ -85,8 +100,9 @@ export function JoinInvitePage() {
         if (cancelled) {
           return
         }
+        const apiError = error as { reason?: string; message?: string }
         setAcceptState('failed')
-        setAcceptError(error instanceof Error ? error.message : t('pages.joinInvite.acceptFailed'))
+        setAcceptError(resolveInviteErrorMessage(apiError.reason || null, error instanceof Error ? error.message : null))
       }
     }
 
@@ -153,7 +169,9 @@ export function JoinInvitePage() {
       {authState.state === 'authenticated' ? null : errorMessage ? (
         <div className='bg-muted/50 rounded-2xl border p-4'>
           <p className='text-sm font-semibold'>{t('pages.joinInvite.invalidTitle')}</p>
-          <p className='text-muted-foreground mt-2 text-sm leading-6'>{errorMessage}</p>
+          <p className='text-muted-foreground mt-2 text-sm leading-6'>
+            {resolveInviteErrorMessage(errorReason, errorMessage)}
+          </p>
         </div>
       ) : (
         <div className='space-y-3'>

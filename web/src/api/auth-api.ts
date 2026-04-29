@@ -17,6 +17,7 @@ export interface RegisterRequest {
 export type AuthApiError = Error & {
   code?: string
   field?: string
+  reason?: string
   status?: number
 }
 
@@ -38,6 +39,9 @@ function createAuthApiError(errorData: unknown, fallback: string): AuthApiError 
   }
   if (typeof details?.field === 'string') {
     error.field = details.field
+  }
+  if (typeof details?.reason === 'string') {
+    error.reason = details.reason
   }
 
   return error
