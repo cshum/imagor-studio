@@ -439,6 +439,7 @@
       "changeEmailTitle": "更改電子郵件",
       "changeEmailDescription": "更新您的登入電子郵件地址。",
       "emailChangeHelp": "在新地址確認之前，我們會繼續保留您目前的電子郵件。",
+      "emailChangeUnchanged": "請輸入不同的電子郵件地址以更新您的登入電子郵件。",
       "requestEmailChange": "更新電子郵件",
       "emailChangeRequestedSuccess": "已成功提交電子郵件變更要求",
       "emailChangeRequestFailed": "提交電子郵件變更要求失敗",

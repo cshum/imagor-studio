@@ -388,6 +388,7 @@
       "changeEmailTitle": "更改电子邮件",
       "changeEmailDescription": "更新您的登录电子邮件地址。",
       "emailChangeHelp": "在新地址确认之前，我们会继续保留您当前的电子邮件。",
+      "emailChangeUnchanged": "请输入不同的电子邮件地址以更新您的登录电子邮件。",
       "requestEmailChange": "更新电子邮件",
       "emailChangeRequestedSuccess": "已成功提交电子邮件更改请求",
       "emailChangeRequestFailed": "提交电子邮件更改请求失败",

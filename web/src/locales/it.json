@@ -439,6 +439,7 @@
       "changeEmailTitle": "Cambia email",
       "changeEmailDescription": "Aggiorna il tuo indirizzo email di accesso.",
       "emailChangeHelp": "Manterremo la tua email attuale finché il nuovo indirizzo non sarà confermato.",
+      "emailChangeUnchanged": "Inserisci un indirizzo email diverso per aggiornare la tua email di accesso.",
       "requestEmailChange": "Aggiorna email",
       "emailChangeRequestedSuccess": "Richiesta di modifica email inviata correttamente",
       "emailChangeRequestFailed": "Impossibile richiedere la modifica email",

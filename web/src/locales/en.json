@@ -435,6 +435,7 @@
       "changeEmailTitle": "Change email",
       "changeEmailDescription": "Update your sign-in email address.",
       "emailChangeHelp": "We'll keep your current email until the new address is confirmed.",
+      "emailChangeUnchanged": "Enter a different email address to update your sign-in email.",
       "requestEmailChange": "Update Email",
       "emailChangeRequestedSuccess": "Email change requested successfully",
       "emailChangeRequestFailed": "Failed to request email change",

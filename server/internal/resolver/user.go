@@ -266,6 +266,8 @@ func (r *mutationResolver) RequestEmailChange(ctx context.Context, email string,
 			return nil, apperror.Conflict("email already exists", "email")
 		case strings.Contains(err.Error(), "cannot be empty"):
 			return nil, apperror.BadRequest("email is required", nil, "email")
+		case strings.Contains(err.Error(), "unchanged"):
+			return nil, apperror.BadRequest("email must be different from your current sign-in email", map[string]interface{}{"field": "email"}, "email")
 		case errors.Is(err, signup.ErrEmailChangeVerificationCooldownActive):
 			return nil, apperror.TooManyRequests("Please wait before requesting another verification email", map[string]interface{}{"field": "email"}, "email")
 		default:

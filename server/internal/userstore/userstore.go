@@ -342,6 +342,20 @@ func (s *store) RequestEmailChange(ctx context.Context, id string, email string)
 		return nil, fmt.Errorf("email cannot be empty")
 	}
 
+	currentUser, err := s.GetByIDAdmin(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if currentUser == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+	if currentUser.Email != nil && strings.EqualFold(strings.TrimSpace(*currentUser.Email), email) {
+		return nil, fmt.Errorf("email is unchanged")
+	}
+	if currentUser.PendingEmail != nil && strings.EqualFold(strings.TrimSpace(*currentUser.PendingEmail), email) {
+		return nil, fmt.Errorf("email is unchanged")
+	}
+
 	existingUser, err := s.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
