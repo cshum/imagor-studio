@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const mockNavigate = vi.fn()
 const mockRegisterWithVerificationFallback = vi.fn()
 const mockResendPublicSignupVerification = vi.fn()
+const mockResolveInvitation = vi.fn()
 const mockGetAuthProviders = vi.fn()
 const mockInitAuth = vi.fn()
 const mockInitializeLocale = vi.fn()
@@ -43,6 +44,7 @@ vi.mock('@/api/auth-api', () => ({
   getGoogleLoginUrl: (inviteToken?: string) =>
     inviteToken ? `/api/auth/google/login?invite_token=${inviteToken}` : '/api/auth/google/login',
   registerWithVerificationFallback: mockRegisterWithVerificationFallback,
+  resolveInvitation: (...args: any[]) => mockResolveInvitation(...args),
   resendPublicSignupVerification: mockResendPublicSignupVerification,
 }))
 
@@ -79,6 +81,11 @@ describe('RegisterPage pending verification', () => {
     vi.useRealTimers()
     vi.clearAllMocks()
     mockGetAuthProviders.mockResolvedValue({ providers: [] })
+    mockResolveInvitation.mockResolvedValue({
+      organizationName: 'Acme Org',
+      invitedEmail: 'invitee@example.com',
+      role: 'member',
+    })
     mockUseSearch.mockReturnValue({ invite_token: '' })
     mockUseAuth.mockReturnValue({
       authState: {
@@ -332,5 +339,22 @@ describe('RegisterPage pending verification', () => {
         inviteToken: 'invite-token-123',
       })
     })
+  })
+
+  it('locks the invited email when the register page is opened from an invite link', async () => {
+    const { RegisterPage } = await import('./register-page')
+
+    mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
+
+    render(<RegisterPage />)
+
+    await waitFor(() => {
+      expect(mockResolveInvitation).toHaveBeenCalledWith('invite-token-123')
+    })
+
+    const emailInput = screen.getByLabelText('pages.profile.email') as HTMLInputElement
+    expect(emailInput.value).toBe('invitee@example.com')
+    expect(emailInput.readOnly).toBe(true)
+    expect(screen.getByText('auth.register.invitedEmailHint:invitee@example.com')).toBeTruthy()
   })
 })

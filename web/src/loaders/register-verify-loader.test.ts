@@ -58,7 +58,10 @@ describe('registerVerifyLoader', () => {
       '',
       '/register/verify?token=valid-token&email=owner%40example.com',
     )
-    mockVerifyPublicSignup.mockResolvedValue({ token: 'jwt-token', redirectPath: '/spaces/acme-space' })
+    mockVerifyPublicSignup.mockResolvedValue({
+      token: 'jwt-token',
+      redirectPath: '/spaces/acme-space',
+    })
     mockInitAuth.mockResolvedValue({ state: 'authenticated', accessToken: 'jwt-token' })
 
     await expect(registerVerifyLoader()).rejects.toMatchObject({ to: '/spaces/acme-space' })

@@ -100,6 +100,7 @@
       "googleCta": "Continua con Google",
       "credentialsDivider": "oppure crea un account con email e password",
       "emailPlaceholder": "name@example.com",
+      "invitedEmailHint": "Questo invito e bloccato per {{email}}.",
       "pendingEyebrow": "Conferma email",
       "pendingTitle": "Controlla la tua email",
       "pendingDescription": "Abbiamo inviato un link di conferma a {{email}}. Aprilo per completare la creazione dell'account.",
@@ -181,8 +182,8 @@
       "failed": "Autenticazione non riuscita",
       "errorOAuth": "Autenticazione non riuscita: {{error}}",
       "errors": {
-  		"inviteOrgConflict": "Questo account appartiene gia a un'altra organizzazione. Usa un account diverso oppure lascia prima la tua organizzazione attuale.",
-  		"inviteEmailMismatch": "Questo invito e stato inviato a un altro indirizzo email. Accedi invece con l'account invitato."
+        "inviteOrgConflict": "Questo account appartiene gia a un'altra organizzazione. Usa un account diverso oppure lascia prima la tua organizzazione attuale.",
+        "inviteEmailMismatch": "Questo invito e stato inviato a un altro indirizzo email. Accedi invece con l'account invitato."
       },
       "errorNoToken": "Nessun token di autenticazione ricevuto",
       "backToLogin": "Torna al login"

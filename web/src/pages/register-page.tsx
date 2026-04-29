@@ -11,6 +11,7 @@ import {
   getGoogleLoginUrl,
   registerWithVerificationFallback,
   resendPublicSignupVerification,
+  resolveInvitation,
   type AuthApiError,
   type PublicSignupVerificationResponse,
 } from '@/api/auth-api'
@@ -20,6 +21,7 @@ import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -75,6 +77,7 @@ export function RegisterPage() {
   const [resendState, setResendState] = useState<'idle' | 'success' | 'error'>('idle')
   const [resendMessage, setResendMessage] = useState<string | null>(null)
   const [isResending, setIsResending] = useState(false)
+  const [lockedInviteEmail, setLockedInviteEmail] = useState<string | null>(null)
   const productHighlights = [
     t('auth.login.highlights.storage'),
     t('auth.login.highlights.delivery'),
@@ -131,6 +134,42 @@ export function RegisterPage() {
         // If providers endpoint fails, just don't show OAuth buttons
       })
   }, [])
+
+  useEffect(() => {
+    if (!inviteToken) {
+      setLockedInviteEmail(null)
+      return
+    }
+
+    let cancelled = false
+
+    resolveInvitation(inviteToken)
+      .then((invitation) => {
+        if (cancelled) {
+          return
+        }
+
+        const invitedEmail = invitation.invitedEmail.trim()
+        setLockedInviteEmail(invitedEmail)
+        form.setValue('email', invitedEmail, {
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: true,
+        })
+        form.clearErrors('email')
+      })
+      .catch(() => {
+        if (cancelled) {
+          return
+        }
+
+        setLockedInviteEmail(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [form, inviteToken])
 
   useEffect(() => {
     if (!pendingVerification) {
@@ -383,9 +422,15 @@ export function RegisterPage() {
                         type='email'
                         placeholder={t('auth.register.emailPlaceholder')}
                         disabled={form.formState.isSubmitting}
+                        readOnly={Boolean(lockedInviteEmail)}
                         {...field}
                       />
                     </FormControl>
+                    {lockedInviteEmail ? (
+                      <FormDescription>
+                        {t('auth.register.invitedEmailHint', { email: lockedInviteEmail })}
+                      </FormDescription>
+                    ) : null}
                     <FormMessage />
                   </FormItem>
                 )}

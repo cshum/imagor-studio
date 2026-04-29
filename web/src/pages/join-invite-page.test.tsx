@@ -113,11 +113,11 @@ describe('JoinInvitePage', () => {
 
     render(<JoinInvitePage />)
 
-    expect(screen.getByRole('link', { name: 'pages.joinInvite.emailAction' }).getAttribute('href')).toBe(
-      '/register?invite_token=invite-token-123',
-    )
-    expect(screen.getByRole('link', { name: 'pages.joinInvite.loginInstead' }).getAttribute('href')).toBe(
-      '/login?invite_token=invite-token-123',
-    )
+    expect(
+      screen.getByRole('link', { name: 'pages.joinInvite.emailAction' }).getAttribute('href'),
+    ).toBe('/register?invite_token=invite-token-123')
+    expect(
+      screen.getByRole('link', { name: 'pages.joinInvite.loginInstead' }).getAttribute('href'),
+    ).toBe('/login?invite_token=invite-token-123')
   })
 })

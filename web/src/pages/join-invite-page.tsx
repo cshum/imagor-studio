@@ -50,7 +50,9 @@ export function JoinInvitePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { authState, initAuth } = useAuth()
-  const { invitation, inviteToken, errorMessage, errorReason } = useLoaderData({ from: '/join' }) as JoinInviteLoaderResult
+  const { invitation, inviteToken, errorMessage, errorReason } = useLoaderData({
+    from: '/join',
+  }) as JoinInviteLoaderResult
   const [acceptState, setAcceptState] = useState<'idle' | 'loading' | 'failed'>('idle')
   const [acceptError, setAcceptError] = useState<string | null>(null)
 
@@ -80,7 +82,12 @@ export function JoinInvitePage() {
   }
 
   useEffect(() => {
-    if (authState.state !== 'authenticated' || !authState.accessToken || !inviteToken || errorMessage) {
+    if (
+      authState.state !== 'authenticated' ||
+      !authState.accessToken ||
+      !inviteToken ||
+      errorMessage
+    ) {
       return
     }
 
@@ -102,7 +109,12 @@ export function JoinInvitePage() {
         }
         const apiError = error as { reason?: string; message?: string }
         setAcceptState('failed')
-        setAcceptError(resolveInviteErrorMessage(apiError.reason || null, error instanceof Error ? error.message : null))
+        setAcceptError(
+          resolveInviteErrorMessage(
+            apiError.reason || null,
+            error instanceof Error ? error.message : null,
+          ),
+        )
       }
     }
 
@@ -180,7 +192,12 @@ export function JoinInvitePage() {
             {t('pages.joinInvite.googleAction')}
           </Button>
 
-          <Button asChild type='button' variant='outline' className='h-11 w-full text-sm font-medium'>
+          <Button
+            asChild
+            type='button'
+            variant='outline'
+            className='h-11 w-full text-sm font-medium'
+          >
             <Link to='/register' search={{ invite_token: inviteToken }}>
               <Mail className='mr-2 h-4 w-4' />
               {t('pages.joinInvite.emailAction')}
@@ -203,7 +220,6 @@ export function JoinInvitePage() {
           </div>
         </div>
       )}
-
     </AuthPageShell>
   )
 }

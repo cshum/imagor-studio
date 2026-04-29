@@ -131,8 +131,8 @@
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
       "errors": {
-  		"inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。",
-  		"inviteEmailMismatch": "此邀请发送到了其他邮箱地址。请改用受邀账户登录。"
+        "inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。",
+        "inviteEmailMismatch": "此邀请发送到了其他邮箱地址。请改用受邀账户登录。"
       },
       "errorNoToken": "未收到认证令牌",
       "backToLogin": "返回登录"
@@ -1541,6 +1541,7 @@
       "googleCta": "使用 Google 继续",
       "credentialsDivider": "或使用邮箱和密码创建账户",
       "emailPlaceholder": "name@example.com",
+      "invitedEmailHint": "此邀请仅限 {{email}} 使用。",
       "pendingEyebrow": "邮箱确认",
       "pendingTitle": "请检查您的电子邮件",
       "pendingDescription": "我们已将确认链接发送到 {{email}}。打开链接以完成账户创建。",

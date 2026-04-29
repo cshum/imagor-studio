@@ -20,7 +20,11 @@ describe('authCallbackLoader', () => {
   it('redirects to the invite target when redirect_path is present on a successful callback', async () => {
     const { authCallbackLoader } = await import('./auth-callback-loader')
     mockGetAuth.mockReturnValue({ state: 'authenticated' })
-    window.history.replaceState({}, '', '/auth/callback?token=jwt-token&redirect_path=%2Fspaces%2Facme-space')
+    window.history.replaceState(
+      {},
+      '',
+      '/auth/callback?token=jwt-token&redirect_path=%2Fspaces%2Facme-space',
+    )
 
     try {
       authCallbackLoader()
@@ -33,7 +37,11 @@ describe('authCallbackLoader', () => {
   it('falls back to home when redirect_path is missing or unsafe', async () => {
     const { authCallbackLoader } = await import('./auth-callback-loader')
     mockGetAuth.mockReturnValue({ state: 'authenticated' })
-    window.history.replaceState({}, '', '/auth/callback?token=jwt-token&redirect_path=%2F%2Fevil.example')
+    window.history.replaceState(
+      {},
+      '',
+      '/auth/callback?token=jwt-token&redirect_path=%2F%2Fevil.example',
+    )
 
     try {
       authCallbackLoader()

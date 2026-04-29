@@ -356,7 +356,10 @@ export async function resolveInvitation(
   return response.json()
 }
 
-export async function acceptInvitation(inviteToken: string, accessToken: string): Promise<LoginResponse> {
+export async function acceptInvitation(
+  inviteToken: string,
+  accessToken: string,
+): Promise<LoginResponse> {
   const response = await fetch(`${BASE_URL}/api/invitations/accept`, {
     method: 'POST',
     headers: {

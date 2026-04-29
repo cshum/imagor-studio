@@ -96,6 +96,7 @@
       "googleCta": "Continue with Google",
       "credentialsDivider": "Or create an account with email and password",
       "emailPlaceholder": "name@example.com",
+      "invitedEmailHint": "This invitation is locked to {{email}}.",
       "pendingEyebrow": "Email confirmation",
       "pendingTitle": "Check your email",
       "pendingDescription": "We sent a confirmation link to {{email}}. Open it to finish creating your account.",
@@ -177,8 +178,8 @@
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
       "errors": {
-  		"inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first.",
-  		"inviteEmailMismatch": "This invitation was sent to a different email address. Sign in with the invited account instead."
+        "inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first.",
+        "inviteEmailMismatch": "This invitation was sent to a different email address. Sign in with the invited account instead."
       },
       "errorNoToken": "No authentication token received",
       "backToLogin": "Back to login"

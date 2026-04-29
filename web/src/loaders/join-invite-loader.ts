@@ -1,4 +1,8 @@
-import { resolveInvitation, type AuthApiError, type InvitationResolutionResponse } from '@/api/auth-api'
+import {
+  resolveInvitation,
+  type AuthApiError,
+  type InvitationResolutionResponse,
+} from '@/api/auth-api'
 
 export interface JoinInviteLoaderData {
   inviteToken: string
