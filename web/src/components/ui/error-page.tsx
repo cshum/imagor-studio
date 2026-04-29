@@ -53,7 +53,11 @@ export function ErrorPage({ error, title, description }: ErrorPageProps) {
   const iconBackgroundClassName = isForbidden
     ? 'bg-amber-500/12 text-amber-700'
     : 'bg-red-500/12 text-red-600'
-  const eyebrow = isForbidden ? 'Access restricted' : isNotFound ? 'Page not found' : 'Service error'
+  const eyebrow = isForbidden
+    ? 'Access restricted'
+    : isNotFound
+      ? 'Page not found'
+      : 'Service error'
 
   return (
     <div className='bg-background min-h-screen-safe flex flex-col overflow-hidden'>
@@ -91,7 +95,7 @@ export function ErrorPage({ error, title, description }: ErrorPageProps) {
             {errorMessage && import.meta.env.DEV ? (
               <div className='border-border/60 bg-muted/30 border px-4 py-3'>
                 <p className='text-foreground text-sm font-medium'>Error details</p>
-                <p className='text-muted-foreground mt-2 break-words font-mono text-xs leading-6'>
+                <p className='text-muted-foreground mt-2 font-mono text-xs leading-6 break-words'>
                   {errorMessage}
                 </p>
               </div>

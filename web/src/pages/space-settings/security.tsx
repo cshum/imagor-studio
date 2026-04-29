@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 import * as z from 'zod'
 
 import { setSpaceRegistryObject, updateSpace } from '@/api/org-api'
-import type { UpdateSpaceMutationVariables } from '@/generated/graphql'
 import { ImagorUrlSigningDescription } from '@/components/imagor/imagor-url-signing-description'
 import { SystemSettingsForm, type SystemSetting } from '@/components/system-settings-form'
 import { Button } from '@/components/ui/button'
@@ -30,6 +29,7 @@ import {
 } from '@/components/ui/select'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
+import type { UpdateSpaceMutationVariables } from '@/generated/graphql'
 import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 
 import type { SpaceSettingsData } from './shared'
@@ -381,7 +381,9 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
         contentClassName='sm:max-w-lg'
       >
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{t('pages.spaceSettings.imagor.urlSigningSecret')}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>
+            {t('pages.spaceSettings.imagor.urlSigningSecret')}
+          </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             {t('pages.spaceSettings.imagor.secretDialogFieldDescription')}
           </ResponsiveDialogDescription>
@@ -399,7 +401,7 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
                       <Input
                         type={showSecret ? 'text' : 'password'}
                         autoFocus
-                        className='h-10 rounded-r-none'
+                        className='relative z-10 h-10 rounded-r-none'
                         {...field}
                       />
                       <Button
