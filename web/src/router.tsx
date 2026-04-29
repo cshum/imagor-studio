@@ -705,9 +705,12 @@ const accountOrganizationLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/organization',
   beforeLoad: requireOrganizationAccountAuth,
-  loader: async () => getMyOrganization(),
+  loader: async () => ({
+    breadcrumb: { translationKey: 'navigation.breadcrumbs.organization' },
+    organization: await getMyOrganization(),
+  }),
   component: () => {
-    const organization = accountOrganizationLayoutRoute.useLoaderData()
+    const { organization } = accountOrganizationLayoutRoute.useLoaderData()
     return <AccountOrganizationLayout currentUserRole={organization?.currentUserRole ?? null} />
   },
 })
