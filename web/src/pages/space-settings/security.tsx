@@ -20,6 +20,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from '@/components/ui/responsive-dialog'
+import { copyToClipboard } from '@/lib/browser-utils'
 import {
   Select,
   SelectContent,
@@ -69,6 +70,8 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
   const { t } = useTranslation()
   const router = useRouter()
   const [secretDialogOpen, setSecretDialogOpen] = useState(false)
+  const [confirmResetDialogOpen, setConfirmResetDialogOpen] = useState(false)
+  const [hasGeneratedSecret, setHasGeneratedSecret] = useState(false)
   const [showSecret, setShowSecret] = useState(false)
   const [isResettingSecret, setIsResettingSecret] = useState(false)
   const form = useForm<SettingsFormData>({
@@ -174,6 +177,7 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
       signerType: normalizeSignerType(space.signerAlgorithm),
       signerTruncate: space.signerTruncate ?? 32,
     })
+    setHasGeneratedSecret(false)
     setShowSecret(false)
     setSecretDialogOpen(true)
   }
@@ -196,7 +200,12 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
     })
 
     toast.success(t('pages.spaceSettings.imagor.customSecretSaved'))
-    secretForm.reset({ imagorSecret: '' })
+    secretForm.reset({
+      imagorSecret: '',
+      signerType: values.signerType,
+      signerTruncate: values.signerTruncate,
+    })
+    setHasGeneratedSecret(false)
     setShowSecret(false)
     setSecretDialogOpen(false)
     await router.invalidate()
@@ -214,6 +223,7 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
       })
 
       toast.success(t('pages.spaceSettings.imagor.workspaceDefaultRestored'))
+      setConfirmResetDialogOpen(false)
       await router.invalidate()
     } finally {
       setIsResettingSecret(false)
@@ -225,7 +235,22 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
       shouldDirty: true,
       shouldValidate: true,
     })
+    setHasGeneratedSecret(true)
     setShowSecret(true)
+  }
+
+  const handleCopySecret = async () => {
+    const secret = secretForm.getValues('imagorSecret').trim()
+    if (!secret) {
+      return
+    }
+
+    const copied = await copyToClipboard(secret)
+    if (copied) {
+      toast.success(t('pages.spaceSettings.imagor.secretCopied'))
+    } else {
+      toast.error(t('pages.spaceSettings.imagor.secretCopyFailed'))
+    }
   }
 
   const hasCustomImagorSecret = space.hasCustomImagorSecret
@@ -262,7 +287,7 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
                     type='button'
                     variant='outline'
                     isLoading={isResettingSecret}
-                    onClick={handleUseWorkspaceDefault}
+                    onClick={() => setConfirmResetDialogOpen(true)}
                   >
                     {t('pages.spaceSettings.imagor.useWorkspaceDefault')}
                   </ButtonWithLoading>
@@ -347,6 +372,7 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
               signerType: normalizeSignerType(space.signerAlgorithm),
               signerTruncate: space.signerTruncate ?? 32,
             })
+            setHasGeneratedSecret(false)
             setShowSecret(false)
           }
         }}
@@ -354,10 +380,10 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
       >
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>
-            {t('pages.spaceSettings.imagor.urlSigningSecret')}
+            {t('pages.spaceSettings.imagor.customSigningDialogTitle')}
           </ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            {t('pages.spaceSettings.imagor.secretDialogFieldDescription')}
+            {t('pages.spaceSettings.imagor.customSigningDialogDescription')}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
@@ -375,16 +401,24 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
                         autoFocus
                         className='relative z-10 h-10 rounded-r-none'
                         {...field}
+                        onChange={(event) => {
+                          setHasGeneratedSecret(false)
+                          field.onChange(event)
+                        }}
                       />
                       <Button
                         type='button'
                         variant='outline'
                         className='h-10 shrink-0 rounded-l-none border-l-0'
-                        onClick={() => setShowSecret((value) => !value)}
+                        onClick={
+                          hasGeneratedSecret ? handleCopySecret : () => setShowSecret((value) => !value)
+                        }
                       >
-                        {showSecret
-                          ? t('pages.spaceSettings.imagor.hideSecret')
-                          : t('pages.spaceSettings.imagor.showSecret')}
+                        {hasGeneratedSecret
+                          ? t('pages.spaceSettings.imagor.copySecret')
+                          : showSecret
+                            ? t('pages.spaceSettings.imagor.hideSecret')
+                            : t('pages.spaceSettings.imagor.showSecret')}
                       </Button>
                     </div>
                     <Button
@@ -486,6 +520,37 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
             </ResponsiveDialogFooter>
           </form>
         </Form>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog open={confirmResetDialogOpen} onOpenChange={setConfirmResetDialogOpen}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>
+            {t('pages.spaceSettings.imagor.resetConfirmTitle')}
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {t('pages.spaceSettings.imagor.resetConfirmDescription')}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => setConfirmResetDialogOpen(false)}
+            disabled={isResettingSecret}
+            className='w-full sm:w-auto'
+          >
+            {t('common.buttons.cancel')}
+          </Button>
+          <ButtonWithLoading
+            type='button'
+            variant='destructive'
+            isLoading={isResettingSecret}
+            onClick={handleUseWorkspaceDefault}
+            className='w-full sm:w-auto'
+          >
+            {t('pages.spaceSettings.imagor.useWorkspaceDefault')}
+          </ButtonWithLoading>
+        </ResponsiveDialogFooter>
       </ResponsiveDialog>
     </>
   )
