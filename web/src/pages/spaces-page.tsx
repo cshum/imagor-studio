@@ -198,6 +198,29 @@ export function SpacesPage({
 
   return (
     <div className='space-y-6'>
+      {needsOrganizationRecovery && hasSpaces ? (
+        <div className='bg-muted/30 flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='space-y-1'>
+            <h2 className='text-sm font-semibold'>{t('pages.spaces.noOrganizationBannerTitle')}</h2>
+            <p className='text-muted-foreground text-sm'>
+              {t('pages.spaces.noOrganizationBannerDescription')}
+            </p>
+          </div>
+          <ButtonWithLoading
+            className='shrink-0'
+            isLoading={isCreatingOrganization}
+            onClick={handleCreateOrganization}
+          >
+            <span className='flex items-center justify-center gap-2'>
+              <Plus className='h-4 w-4 shrink-0' />
+              <span className='whitespace-nowrap'>
+                {t('pages.workspaceRequired.actions.createOrganization')}
+              </span>
+            </span>
+          </ButtonWithLoading>
+        </div>
+      ) : null}
+
       {currentOrganizationId !== null &&
         (canManageOrganization ? (
           <Link to='/account/organization/billing' className={usageSummaryCardClassName}>

@@ -107,4 +107,60 @@ describe('SpacesPage', () => {
     expect(mockInvalidate).toHaveBeenCalled()
     expect(mockToastSuccess).toHaveBeenCalledWith('pages.workspaceRequired.actions.createSuccess')
   })
+
+  it('offers create-organization recovery when shared spaces exist but no organization remains', async () => {
+    const { SpacesPage } = await import('./spaces-page')
+
+    mockCreateOrganization.mockResolvedValue({ id: 'org-1' })
+    mockRefreshAuthSession.mockResolvedValue(undefined)
+    mockInvalidate.mockResolvedValue(undefined)
+
+    render(
+      <SpacesPage
+        loaderData={[
+          {
+            __typename: 'Space',
+            id: 'space-1',
+            orgId: 'org-shared',
+            key: 'shared-space',
+            name: 'Shared Space',
+            storageUsageBytes: 0,
+            processingUsageCount: 0,
+            storageMode: 'platform',
+            storageType: 'managed',
+            bucket: '',
+            prefix: '',
+            region: '',
+            endpoint: '',
+            usePathStyle: false,
+            customDomain: '',
+            customDomainVerified: false,
+            suspended: false,
+            isShared: true,
+            signerAlgorithm: '',
+            signerTruncate: 0,
+            imagorCORSOrigins: '',
+            hasCustomImagorSecret: false,
+            canManage: false,
+            canDelete: false,
+            canLeave: true,
+            updatedAt: '2026-04-30T00:00:00Z',
+          },
+        ]}
+        usageSummary={null}
+        currentOrganizationId={null}
+        canCreateSpace={false}
+        canManageOrganization={false}
+      />,
+    )
+
+    await act(async () => {
+      await mockButtonWithLoading.mock.calls[0][0].onClick()
+    })
+
+    expect(mockCreateOrganization).toHaveBeenCalled()
+    expect(mockRefreshAuthSession).toHaveBeenCalled()
+    expect(mockInvalidate).toHaveBeenCalled()
+    expect(mockToastSuccess).toHaveBeenCalledWith('pages.workspaceRequired.actions.createSuccess')
+  })
 })

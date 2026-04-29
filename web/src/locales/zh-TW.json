@@ -833,6 +833,8 @@
       "updateSpaceButton": "更新空間",
       "noSpacesFound": "建立你的第一個圖片工作空間",
       "noOrganizationTitle": "先建立組織再開始使用",
+      "noOrganizationBannerTitle": "建立你自己的組織",
+      "noOrganizationBannerDescription": "你仍可繼續使用共享空間，但這個帳號已經沒有個人組織。建立一個組織即可恢復你自己的工作區與管理流程。",
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {

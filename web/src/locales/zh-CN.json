@@ -782,6 +782,8 @@
       "updateSpaceButton": "更新空间",
       "noSpacesFound": "创建你的第一个图片工作空间",
       "noOrganizationTitle": "先创建组织再开始使用",
+      "noOrganizationBannerTitle": "创建你自己的组织",
+      "noOrganizationBannerDescription": "你仍可继续使用共享空间，但这个账号已经没有个人组织。创建一个组织即可恢复你自己的工作区和管理功能。",
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {

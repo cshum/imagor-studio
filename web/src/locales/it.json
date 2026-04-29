@@ -839,6 +839,8 @@
       },
       "noSpacesFound": "Crea il tuo primo workspace immagini",
       "noOrganizationTitle": "Crea un'organizzazione per iniziare",
+      "noOrganizationBannerTitle": "Crea la tua organizzazione",
+      "noOrganizationBannerDescription": "Hai ancora accesso agli spazi condivisi, ma questo account non ha piu un'organizzazione personale. Creane una per ripristinare il tuo workspace e i flussi di amministrazione.",
       "description": "Crea e gestisci workspace immagini per ogni team, brand o ambiente.",
       "emptyDescription": "Lancia il tuo primo workspace immagini per upload, trasformazioni e distribuzione.",
       "emptyDescriptionNoOrganization": "Questo account non ha ancora un'organizzazione personale.",

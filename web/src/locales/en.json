@@ -835,6 +835,8 @@
       },
       "noSpacesFound": "Create your first image processing space",
       "noOrganizationTitle": "Create an organization to get started",
+      "noOrganizationBannerTitle": "Create your own organization",
+      "noOrganizationBannerDescription": "You still have access to shared spaces, but this account no longer has a personal organization. Create one to restore your own workspace and admin flows.",
       "noSpacesAvailable": "No spaces available yet",
       "description": "Process, deliver, and manage images by team, brand, or environment.",
       "emptyDescription": "Launch your first image processing space for uploads, transforms, and delivery.",
