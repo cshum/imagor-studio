@@ -9,6 +9,7 @@ const mockGetAuthProviders = vi.fn()
 const mockInitAuth = vi.fn()
 const mockInitializeLocale = vi.fn()
 const mockUseAuth = vi.fn()
+const mockInvalidate = vi.fn()
 const mockUseSearch = vi.fn()
 
 vi.mock('react-i18next', () => ({
@@ -36,6 +37,7 @@ vi.mock('@tanstack/react-router', () => ({
   ),
   Navigate: ({ to }: { to: string }) => <div>{`Navigate:${to}`}</div>,
   useNavigate: () => mockNavigate,
+  useRouter: () => ({ invalidate: mockInvalidate }),
   useSearch: () => mockUseSearch(),
 }))
 

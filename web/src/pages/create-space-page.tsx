@@ -470,6 +470,7 @@ export function CreateSpacePage() {
 
   const handleLogout = async () => {
     await logout()
+    await router.invalidate()
     navigate({ to: '/login' })
   }
 

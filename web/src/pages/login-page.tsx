@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, Navigate, useNavigate, useSearch } from '@tanstack/react-router'
+import { Link, Navigate, useNavigate, useRouter, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 
 import { getAuthProviders, getGoogleLoginUrl, login } from '@/api/auth-api'
@@ -59,6 +59,7 @@ export function LoginPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
   const search = useSearch({ from: '/login' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
   const isMultiTenant = authState.multiTenant
@@ -178,6 +179,7 @@ export function LoginPage() {
         inviteToken: typeof search.invite_token === 'string' ? search.invite_token : undefined,
       })
       await initAuth(response.token)
+      await router.invalidate()
 
       // Reload user's language preference after login
       await initializeLocale()

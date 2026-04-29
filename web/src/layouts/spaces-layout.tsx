@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Outlet, useNavigate } from '@tanstack/react-router'
+import { Outlet, useNavigate, useRouter } from '@tanstack/react-router'
 import { Building2 } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
@@ -29,6 +29,7 @@ export function SpacesLayout({
   const { t } = useTranslation()
   const { authState, logout } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
   const { title: appTitle } = useBrand()
   const accountLinks =
     authState.multiTenant && showOrganizationLink
@@ -46,6 +47,7 @@ export function SpacesLayout({
 
   const handleLogout = async () => {
     await logout()
+    await router.invalidate()
     navigate({ to: '/login' })
   }
 

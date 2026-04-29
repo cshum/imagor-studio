@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Navigate, useLoaderData, useNavigate } from '@tanstack/react-router'
+import { Link, Navigate, useLoaderData, useNavigate, useRouter } from '@tanstack/react-router'
 import { ArrowRight, Mail } from 'lucide-react'
 
 import { acceptInvitation, getGoogleLoginUrl } from '@/api/auth-api'
@@ -49,6 +49,7 @@ type JoinInviteLoaderResult = {
 export function JoinInvitePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { authState, initAuth } = useAuth()
   const { invitation, inviteToken, errorMessage, errorReason } = useLoaderData({
     from: '/join',
@@ -102,6 +103,7 @@ export function JoinInvitePage() {
           return
         }
         await initAuth(response.token)
+        await router.invalidate()
         navigate({ to: resolveRedirectPath(response.redirectPath) })
       } catch (error) {
         if (cancelled) {

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 const mockNavigate = vi.fn()
 const mockLogout = vi.fn()
+const mockInvalidate = vi.fn()
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -13,15 +14,16 @@ vi.mock('react-i18next', () => ({
 vi.mock('@tanstack/react-router', () => ({
   Outlet: () => null,
   useNavigate: () => mockNavigate,
+  useRouter: () => ({ invalidate: mockInvalidate }),
 }))
 
 vi.mock('@/components/app-header.tsx', () => ({
-  AppHeader: ({ accountLinks }: { accountLinks?: Array<{ label: string }> }) => (
+  AppHeader: vi.fn(({ accountLinks }: { accountLinks?: Array<{ label: string }> }) => (
     <div>
       <div>app-header</div>
       <div>{accountLinks?.map((link) => link.label).join(',') ?? ''}</div>
     </div>
-  ),
+  )),
 }))
 
 vi.mock('@/hooks/use-brand', () => ({
@@ -58,5 +60,22 @@ describe('SpacesLayout', () => {
     render(<SpacesLayout title='Spaces' showOrganizationLink />)
 
     expect(screen.getByText('navigation.breadcrumbs.organization')).toBeTruthy()
+  })
+
+  it('invalidates the router cache before navigating to login on logout', async () => {
+    const { SpacesLayout } = await import('./spaces-layout')
+
+    render(<SpacesLayout title='Spaces' showOrganizationLink />)
+
+    const { AppHeader } = await import('@/components/app-header.tsx')
+    const headerCalls = vi.mocked(AppHeader).mock.calls
+    const headerCall = headerCalls[headerCalls.length - 1]
+    expect(headerCall?.[0]).toBeTruthy()
+
+    await headerCall?.[0].onLogout()
+
+    expect(mockLogout).toHaveBeenCalled()
+    expect(mockInvalidate).toHaveBeenCalled()
+    expect(mockNavigate).toHaveBeenCalledWith({ to: '/login' })
   })
 })

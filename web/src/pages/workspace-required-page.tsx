@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { Building2, LogOut, Mail } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header'
@@ -10,6 +10,7 @@ import { useAuth } from '@/stores/auth-store'
 export function WorkspaceRequiredPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { title: appTitle } = useBrand()
   const { authState, logout } = useAuth()
 
@@ -18,6 +19,7 @@ export function WorkspaceRequiredPage() {
 
   const handleSignOut = async () => {
     await logout()
+    await router.invalidate()
     navigate({ to: '/login' })
   }
 

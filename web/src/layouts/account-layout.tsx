@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
+import { Link, Outlet, useLocation, useNavigate, useRouter } from '@tanstack/react-router'
 import {
   ArrowLeft,
   Building2,
@@ -119,6 +119,7 @@ export function AccountLayout({
   const { authState, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { title: appTitle } = useBrand()
   const breadcrumbs = useBreadcrumb()
   const isAdmin = authState.profile?.role === 'admin'
@@ -166,6 +167,7 @@ export function AccountLayout({
 
   const handleLogout = async () => {
     await logout()
+    await router.invalidate()
     navigate({ to: '/login' })
   }
 

@@ -239,7 +239,7 @@ export function RegisterPage() {
       }
 
       await initAuth(result.response.token)
-  await router.invalidate()
+      await router.invalidate()
       await initializeLocale()
       navigate({ to: resolveRedirectPath(result.response.redirectPath) })
     } catch (error) {

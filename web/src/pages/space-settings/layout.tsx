@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Outlet, useMatches, useNavigate, useRouterState } from '@tanstack/react-router'
+import {
+  Link,
+  Outlet,
+  useMatches,
+  useNavigate,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router'
 import {
   ArrowLeft,
   Building2,
@@ -64,6 +71,7 @@ export function SpaceSettingsLayout({
   const { authState, logout } = useAuth()
   const { title: appTitle } = useBrand()
   const navigate = useNavigate()
+  const router = useRouter()
   const matches = useMatches()
   const [mobileOpen, setMobileOpen] = useState(false)
   const { location } = useRouterState()
@@ -97,6 +105,7 @@ export function SpaceSettingsLayout({
 
   const handleLogout = async () => {
     await logout()
+    await router.invalidate()
     navigate({ to: '/login' })
   }
 
