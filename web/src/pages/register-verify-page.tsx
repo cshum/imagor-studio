@@ -192,7 +192,7 @@ export function RegisterVerifyPage() {
             <div
               className={
                 resendState === 'error'
-                  ? 'bg-destructive/15 text-destructive rounded-md px-3 py-2 text-sm'
+                  ? 'bg-destructive/5 text-destructive rounded-md px-3 py-2 text-sm'
                   : 'bg-background text-foreground/80 rounded-md border px-3 py-2 text-sm'
               }
             >

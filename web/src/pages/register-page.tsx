@@ -332,7 +332,7 @@ export function RegisterPage() {
             <div
               className={
                 resendState === 'error'
-                  ? 'bg-destructive/15 text-destructive rounded-md p-3 text-sm'
+                  ? 'bg-destructive/5 text-destructive rounded-md p-3 text-sm'
                   : 'bg-background text-foreground/80 rounded-md border p-3 text-sm'
               }
             >
@@ -472,7 +472,7 @@ export function RegisterPage() {
                 )}
               />
               {form.formState.errors.root && (
-                <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+                <div className='bg-destructive/5 text-destructive rounded-md p-3 text-sm'>
                   {form.formState.errors.root.message}
                 </div>
               )}

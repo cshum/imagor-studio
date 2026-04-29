@@ -578,7 +578,7 @@ export function AdminStorageSection({ storageStatus }: AdminStorageSectionProps)
                 'rounded-md p-3 text-sm',
                 testResult.success
                   ? 'bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200'
-                  : 'bg-destructive/10 text-destructive',
+                  : 'bg-destructive/5 text-destructive',
               ].join(' ')}
             >
               {testResult.message}

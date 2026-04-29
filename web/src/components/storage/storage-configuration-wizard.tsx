@@ -281,9 +281,7 @@ export function StorageConfigurationWizard({
       </div>
 
       {error && (
-        <div className='text-destructive bg-destructive/10 mt-6 rounded-md p-3 text-sm'>
-          {error}
-        </div>
+        <div className='text-destructive bg-destructive/5 mt-6 rounded-md p-3 text-sm'>{error}</div>
       )}
 
       <div className='mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end'>

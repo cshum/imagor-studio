@@ -312,7 +312,7 @@ export function LoginPage() {
             )}
           />
           {form.formState.errors.root && (
-            <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+            <div className='bg-destructive/5 text-destructive rounded-md p-3 text-sm'>
               {form.formState.errors.root.message}
             </div>
           )}
