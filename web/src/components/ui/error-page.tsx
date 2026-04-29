@@ -6,7 +6,6 @@ import { LanguageSelector } from '@/components/language-selector'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
 import { extractErrorInfo } from '@/lib/error-utils'
-import { getAuth } from '@/stores/auth-store'
 
 import { Button } from './button'
 
@@ -20,7 +19,6 @@ const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
 
 export function ErrorPage({ error, title, description }: ErrorPageProps) {
   const { t } = useTranslation()
-  const auth = getAuth()
   const errorInfo = extractErrorInfo(error)
   const isForbidden = errorInfo.code === 'FORBIDDEN'
   const isNotFound = errorInfo.code === 'NOT_FOUND' || /not found/i.test(errorInfo.message)
@@ -39,9 +37,7 @@ export function ErrorPage({ error, title, description }: ErrorPageProps) {
       : isNotFound
         ? t('pages.error.notFoundDescription')
         : t('pages.error.defaultDescription'))
-  const actionLabel = auth.multiTenant
-    ? t('pages.spaceSettings.backToSpaces')
-    : t('common.navigation.home')
+  const actionLabel = t('common.navigation.home')
 
   const handleGoHome = () => {
     window.location.href = '/'

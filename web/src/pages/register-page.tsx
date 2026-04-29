@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, Navigate, useNavigate } from '@tanstack/react-router'
+import { MailCheck } from 'lucide-react'
 import { z } from 'zod'
 
 import {
@@ -112,6 +113,12 @@ export function RegisterPage() {
       confirmPassword: '',
     },
   })
+
+  const pendingVerificationDestination = pendingVerification
+    ? pendingVerification.maskedDestination?.trim() ||
+      pendingVerification.email?.trim() ||
+      form.getValues('email').trim()
+    : ''
 
   useEffect(() => {
     getAuthProviders()
@@ -258,52 +265,63 @@ export function RegisterPage() {
       showLegalLinks={authState.multiTenant}
     >
       {pendingVerification ? (
-        <div className='space-y-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-6'>
-          <div className='space-y-2'>
-            <h2 className='text-foreground text-lg font-semibold'>
-              {t('auth.register.pendingTitle')}
-            </h2>
-            <p className='text-muted-foreground text-sm leading-6'>
-              {t('auth.register.pendingDescription', {
-                email: pendingVerification.maskedDestination || pendingVerification.email,
-              })}
-            </p>
+        <div className='space-y-5 rounded-2xl border border-border/60 bg-muted/20 p-6'>
+          <div className='space-y-4'>
+            <div className='bg-background text-foreground flex h-12 w-12 items-center justify-center rounded-full border'>
+              <MailCheck className='h-6 w-6' />
+            </div>
+            <div className='space-y-2'>
+              <p className='text-muted-foreground text-xs font-medium tracking-[0.08em] uppercase'>
+                {t('auth.register.pendingEyebrow')}
+              </p>
+              <h2 className='text-foreground text-lg font-semibold'>
+                {t('auth.register.pendingTitle')}
+              </h2>
+              <p className='text-muted-foreground text-sm leading-6'>
+                {pendingVerificationDestination
+                  ? t('auth.register.pendingDescription', {
+                      email: pendingVerificationDestination,
+                    })
+                  : t('auth.register.pendingDescriptionFallback')}
+              </p>
+            </div>
           </div>
           {resendMessage ? (
             <div
               className={
                 resendState === 'error'
                   ? 'bg-destructive/15 text-destructive rounded-md p-3 text-sm'
-                  : 'rounded-md bg-emerald-500/15 p-3 text-sm text-emerald-700'
+                  : 'bg-background text-foreground/80 rounded-md border p-3 text-sm'
               }
             >
               {resendMessage}
             </div>
           ) : null}
-          <ButtonWithLoading
-            type='button'
-            variant='outline'
-            className='w-full'
-            isLoading={isResending}
-            disabled={isResending || resendCooldownRemaining > 0}
-            onClick={handleResendVerification}
-          >
-            {resendCooldownRemaining > 0
-              ? t('auth.register.resendCountdown', { seconds: resendCooldownRemaining })
-              : t('auth.register.resendAction')}
-          </ButtonWithLoading>
-          <Button
-            type='button'
-            variant='outline'
-            className='w-full'
-            onClick={() => {
-              setPendingVerification(null)
-              setResendState('idle')
-              setResendMessage(null)
-            }}
-          >
-            {t('auth.register.useDifferentEmail')}
-          </Button>
+          <div className='flex flex-wrap items-center gap-2'>
+            <ButtonWithLoading
+              type='button'
+              className='min-w-56'
+              isLoading={isResending}
+              disabled={isResending || resendCooldownRemaining > 0}
+              onClick={handleResendVerification}
+            >
+              {resendCooldownRemaining > 0
+                ? t('auth.register.resendCountdown', { seconds: resendCooldownRemaining })
+                : t('auth.register.resendAction')}
+            </ButtonWithLoading>
+            <Button
+              type='button'
+              variant='outline'
+              className='min-w-44'
+              onClick={() => {
+                setPendingVerification(null)
+                setResendState('idle')
+                setResendMessage(null)
+              }}
+            >
+              {t('auth.register.useDifferentEmail')}
+            </Button>
+          </div>
         </div>
       ) : (
         <>

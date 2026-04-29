@@ -12,6 +12,9 @@ const mockUseAuth = vi.fn()
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, values?: Record<string, string | number>) => {
+      if (key === 'auth.register.pendingDescriptionFallback') {
+        return 'auth.register.pendingDescriptionFallback'
+      }
       if (values?.email) {
         return `${key}:${values.email}`
       }
@@ -245,5 +248,43 @@ describe('RegisterPage pending verification', () => {
       expect(mockResendPublicSignupVerification).toHaveBeenCalledWith('owner@example.com')
     })
     expect(screen.getByText('auth.register.resendCooldown:0')).toBeTruthy()
+  })
+
+  it('falls back to the submitted email when the masked destination is blank', async () => {
+    const { RegisterPage } = await import('./register-page')
+
+    mockRegisterWithVerificationFallback.mockResolvedValue({
+      kind: 'verification-required',
+      response: {
+        email: '',
+        verificationRequired: true,
+        cooldownSeconds: 0,
+        expiresInSeconds: 900,
+        maskedDestination: '',
+      },
+    })
+
+    render(<RegisterPage />)
+
+    fireEvent.change(screen.getByLabelText('pages.profile.displayName'), {
+      target: { value: 'Acme Owner' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.profile.email'), {
+      target: { value: 'owner@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'Password123!' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.admin.confirmPassword'), {
+      target: { value: 'Password123!' },
+    })
+
+    fireEvent.click(screen.getByText('auth.register.submit'))
+
+    await waitFor(() => {
+      expect(mockRegisterWithVerificationFallback).toHaveBeenCalled()
+    })
+
+    expect(screen.getByText('auth.register.pendingDescription:owner@example.com')).toBeTruthy()
   })
 })
