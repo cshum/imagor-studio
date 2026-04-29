@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, Navigate, useNavigate, useSearch } from '@tanstack/react-router'
+import { Link, Navigate, useNavigate, useRouter, useSearch } from '@tanstack/react-router'
 import { MailCheck } from 'lucide-react'
 import { z } from 'zod'
 
@@ -69,6 +69,7 @@ export function RegisterPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
   const search = useSearch({ from: '/register' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
   const [pendingVerification, setPendingVerification] =
@@ -210,6 +211,13 @@ export function RegisterPage() {
     return <Navigate to='/' replace />
   }
 
+  const resolveRedirectPath = (redirectPath?: string): string => {
+    if (redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')) {
+      return redirectPath
+    }
+    return '/'
+  }
+
   const onSubmit = async (values: RegisterFormValues) => {
     try {
       const result = await registerWithVerificationFallback({
@@ -231,8 +239,9 @@ export function RegisterPage() {
       }
 
       await initAuth(result.response.token)
+  await router.invalidate()
       await initializeLocale()
-      navigate({ to: '/' })
+      navigate({ to: resolveRedirectPath(result.response.redirectPath) })
     } catch (error) {
       const apiError = error as AuthApiError
 

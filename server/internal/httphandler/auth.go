@@ -80,6 +80,7 @@ type RegisterRequest struct {
 	Email       string `json:"email,omitempty"`
 	Username    string `json:"username,omitempty"`
 	Password    string `json:"password"`
+	InviteToken string `json:"inviteToken,omitempty"`
 }
 
 type RegisterAdminRequest struct {
@@ -647,6 +648,16 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 	normalizedEmail := validation.NormalizeEmail(req.Email)
 	normalizedUsername := validation.NormalizeUsername(req.Username)
 	normalizedDisplayName := validation.NormalizeDisplayName(req.DisplayName)
+	inviteToken := strings.TrimSpace(req.InviteToken)
+
+	var invite *space.Invitation
+	if isPublicSignup && inviteToken != "" {
+		resolvedInvite, err := h.resolveSignupInvitation(ctx, inviteToken, normalizedEmail)
+		if err != nil {
+			return nil, err
+		}
+		invite = resolvedInvite
+	}
 
 	// Hash password
 	hashedPassword, err := auth.HashPassword(req.Password)
@@ -679,7 +690,31 @@ func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role 
 		return nil, apperror.InternalServerError("Failed to create user")
 	}
 
+	if invite != nil {
+		return h.provisionInvitedSignup(ctx, user, normalizedEmail, invite)
+	}
+
 	return h.provisionWorkspaceOwner(ctx, user)
+}
+
+func (h *AuthHandler) resolveSignupInvitation(ctx context.Context, inviteToken, normalizedEmail string) (*space.Invitation, error) {
+	if !h.cloudEnabled() || h.inviteStore == nil {
+		return nil, apperror.BadRequest("Invitation is no longer valid", map[string]interface{}{"field": "inviteToken"})
+	}
+
+	invitation, err := h.inviteStore.GetPendingByToken(ctx, inviteToken)
+	if err != nil {
+		h.logger.Error("Failed to resolve invitation on register", zap.Error(err))
+		return nil, apperror.InternalServerError("Failed to complete sign-up")
+	}
+	if invitation == nil || invitation.AcceptedAt != nil || invitation.ExpiresAt.Before(time.Now().UTC()) {
+		return nil, apperror.BadRequest("Invitation is no longer valid", map[string]interface{}{"field": "inviteToken"})
+	}
+	if normalizedEmail == "" || normalizedEmail != validation.NormalizeEmail(invitation.Email) {
+		return nil, apperror.BadRequest("This invitation was sent to a different email address", map[string]interface{}{"field": "email"})
+	}
+
+	return invitation, nil
 }
 
 func (h *AuthHandler) provisionWorkspaceOwner(ctx context.Context, user *userstore.User) (*LoginResponse, error) {
@@ -702,6 +737,65 @@ func (h *AuthHandler) provisionWorkspaceOwner(ctx context.Context, user *usersto
 	}
 
 	return h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
+}
+
+func (h *AuthHandler) provisionInvitedSignup(ctx context.Context, user *userstore.User, email string, invitation *space.Invitation) (*LoginResponse, error) {
+	if user == nil || invitation == nil {
+		return nil, apperror.InternalServerError("Failed to complete sign-up")
+	}
+	if err := h.userStore.SetEmailVerified(ctx, user.ID, true); err != nil {
+		h.logger.Error("Failed to mark invited signup email verified", zap.String("userID", user.ID), zap.Error(err))
+		return nil, apperror.InternalServerError("Failed to complete sign-up")
+	}
+
+	redirectPath, err := h.resolveInvitationRedirectPath(ctx, invitation)
+	if err != nil {
+		h.logger.Error("Failed to resolve invitation redirect path on register", zap.String("userID", user.ID), zap.Error(err))
+		return nil, apperror.InternalServerError("Failed to complete sign-up")
+	}
+
+	orgID := ""
+	isSpaceInvite := strings.TrimSpace(invitation.SpaceID) != ""
+	if isSpaceInvite {
+		workspaceOrgID, orgErr := h.ensureWorkspaceOrgID(ctx, &model.User{
+			ID:          user.ID,
+			DisplayName: user.DisplayName,
+			Username:    user.Username,
+			Role:        user.Role,
+			Email:       user.Email,
+		})
+		if orgErr != nil {
+			h.logger.Error("Failed to provision workspace org for invited signup", zap.String("userID", user.ID), zap.Error(orgErr))
+			return nil, apperror.InternalServerError("Failed to complete sign-up")
+		}
+		orgID = workspaceOrgID
+		if h.spaceStore == nil {
+			return nil, apperror.InternalServerError("Failed to complete sign-up")
+		}
+		if err := h.spaceStore.AddMember(ctx, invitation.SpaceID, user.ID, invitation.Role); err != nil {
+			h.logger.Error("Failed to add invited space member on register", zap.String("userID", user.ID), zap.String("spaceID", invitation.SpaceID), zap.Error(err))
+			return nil, apperror.InternalServerError("Failed to complete sign-up")
+		}
+	} else {
+		if err := h.orgStore.AddMember(ctx, invitation.OrgID, user.ID, invitation.Role); err != nil {
+			h.logger.Error("Failed to add invited organization member on register", zap.String("userID", user.ID), zap.String("orgID", invitation.OrgID), zap.Error(err))
+			return nil, apperror.InternalServerError("Failed to complete sign-up")
+		}
+		orgID = invitation.OrgID
+	}
+
+	if err := h.inviteStore.MarkAccepted(ctx, invitation.ID, time.Now().UTC()); err != nil {
+		h.logger.Error("Failed to mark invitation accepted on register", zap.String("userID", user.ID), zap.String("inviteID", invitation.ID), zap.Error(err))
+		return nil, apperror.InternalServerError("Failed to complete sign-up")
+	}
+
+	response, err := h.generateAuthResponse(user.ID, user.DisplayName, user.Username, user.Role, orgID)
+	if err != nil {
+		return nil, err
+	}
+	response.RedirectPath = redirectPath
+
+	return response, nil
 }
 
 func (h *AuthHandler) provisionWorkspaceMember(_ context.Context, user *userstore.User, orgID string) (*LoginResponse, error) {

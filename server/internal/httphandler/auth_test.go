@@ -1494,6 +1494,74 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
+func TestRegister_MultiTenant_SpaceInviteSkipsVerificationAndRedirects(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	orgStore := &provisioningOrgStore{}
+	inviteStore := &stubInviteStore{
+		invite: &space.Invitation{
+			ID:        "invite-1",
+			OrgID:     "org-host",
+			SpaceID:   "space-123",
+			Email:     "invitee@example.com",
+			Role:      "member",
+			ExpiresAt: time.Now().UTC().Add(time.Hour),
+		},
+	}
+	spaceStore := &stubSpaceStore{
+		spaceByKey: map[string]*space.Space{
+			"acme-space": {ID: "space-123", Key: "acme-space", Name: "Acme Space"},
+		},
+	}
+	handler := NewAuthHandler(tokenManager, mockUserStore, orgStore, nil, logger, AuthHandlerConfig{
+		SpaceStore:  spaceStore,
+		InviteStore: inviteStore,
+	})
+
+	const userID = "saas-invite-user-1"
+	inviteEmail := "invitee@example.com"
+	mockUserStore.On(
+		"CreateWithEmail",
+		mock.Anything,
+		"invitee",
+		mock.MatchedBy(func(username string) bool {
+			return strings.HasPrefix(username, "u-") && len(username) == 14
+		}),
+		mock.AnythingOfType("string"),
+		"user",
+		"invitee@example.com",
+	).Return(&userstore.User{
+		ID: userID, DisplayName: "invitee", Username: "u-invitee001", Role: "user", IsActive: true, Email: &inviteEmail,
+	}, nil)
+	mockUserStore.On("SetEmailVerified", mock.Anything, userID, true).Return(nil).Once()
+
+	body, err := json.Marshal(RegisterRequest{
+		DisplayName: "invitee",
+		Email:       "invitee@example.com",
+		Password:    "password123",
+		InviteToken: "invite-token",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Register()(rr, req)
+
+	require.Equal(t, http.StatusCreated, rr.Code)
+
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	assert.Equal(t, "/spaces/acme-space", resp.RedirectPath)
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "org-provisioned", claims.OrgID)
+	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
+	assert.NotNil(t, inviteStore.acceptedAt)
+
+	mockUserStore.AssertExpectations(t)
+}
+
 // TestLogin_MultiTenant_EmbeddsOrgID verifies that logging in with a wired orgStore
 // embeds the user's org_id in the returned JWT.
 func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {

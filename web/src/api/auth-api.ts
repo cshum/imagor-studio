@@ -165,6 +165,13 @@ function isVerificationSignupUnavailable(error: AuthApiError): boolean {
 export async function registerWithVerificationFallback(
   credentials: RegisterRequest,
 ): Promise<RegisterResult> {
+  if (credentials.inviteToken?.trim()) {
+    return {
+      kind: 'authenticated',
+      response: await register(credentials),
+    }
+  }
+
   const response = await fetch(`${BASE_URL}/api/auth/register/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

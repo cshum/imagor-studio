@@ -357,4 +357,48 @@ describe('RegisterPage pending verification', () => {
     expect(emailInput.readOnly).toBe(true)
     expect(screen.getByText('auth.register.invitedEmailHint:invitee@example.com')).toBeTruthy()
   })
+
+  it('signs in immediately and redirects to the invite target for invite-driven email signup', async () => {
+    const { RegisterPage } = await import('./register-page')
+
+    mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
+    mockRegisterWithVerificationFallback.mockResolvedValue({
+      kind: 'authenticated',
+      response: {
+        token: 'jwt-token',
+        expiresIn: 3600,
+        redirectPath: '/spaces/acme-space',
+        user: {
+          id: 'user-123',
+          displayName: 'Invited User',
+          username: 'inviteduser',
+          role: 'user',
+        },
+      },
+    })
+
+    render(<RegisterPage />)
+
+    await waitFor(() => {
+      expect(mockResolveInvitation).toHaveBeenCalledWith('invite-token-123')
+    })
+
+    fireEvent.change(screen.getByLabelText('pages.profile.displayName'), {
+      target: { value: 'Invited User' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'Password123!' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.admin.confirmPassword'), {
+      target: { value: 'Password123!' },
+    })
+
+    fireEvent.click(screen.getByText('auth.register.submit'))
+
+    await waitFor(() => {
+      expect(mockInitAuth).toHaveBeenCalledWith('jwt-token')
+    })
+    expect(mockInitializeLocale).toHaveBeenCalled()
+    expect(mockNavigate).toHaveBeenCalledWith({ to: '/spaces/acme-space' })
+  })
 })

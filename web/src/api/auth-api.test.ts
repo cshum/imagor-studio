@@ -104,4 +104,47 @@ describe('auth api login', () => {
       reason: 'invite_email_mismatch',
     })
   })
+
+  it('uses direct register for invite-driven signup instead of verification start', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        token: 'token-789',
+        expiresIn: 3600,
+        redirectPath: '/spaces/acme-space',
+        user: {
+          id: 'user-123',
+          displayName: 'Invited User',
+          username: 'inviteduser',
+          role: 'user',
+        },
+      }),
+    })
+
+    const { registerWithVerificationFallback } = await import('./auth-api')
+
+    const result = await registerWithVerificationFallback({
+      displayName: 'Invited User',
+      email: 'invitee@example.com',
+      password: 'Password123!',
+      inviteToken: 'invite-token-123',
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/auth\/register$/),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          displayName: 'Invited User',
+          email: 'invitee@example.com',
+          password: 'Password123!',
+          inviteToken: 'invite-token-123',
+        }),
+      }),
+    )
+    expect(result).toMatchObject({
+      kind: 'authenticated',
+      response: { redirectPath: '/spaces/acme-space' },
+    })
+  })
 })
