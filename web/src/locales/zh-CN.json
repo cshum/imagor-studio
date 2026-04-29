@@ -1139,8 +1139,7 @@
           "member": "成员"
         },
         "roleSource": {
-          "organization": "继承自组织",
-          "space": "此空间授予"
+          "organization": "继承自组织"
         }
       },
       "imagor": {

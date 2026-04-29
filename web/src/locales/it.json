@@ -1205,8 +1205,7 @@
           "member": "Membro"
         },
         "roleSource": {
-          "organization": "Ereditato dall'organizzazione",
-          "space": "Concesso per questo spazio"
+          "organization": "Ereditato dall'organizzazione"
         }
       },
       "placeholders": {

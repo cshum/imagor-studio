@@ -1204,8 +1204,7 @@
           "member": "Member"
         },
         "roleSource": {
-          "organization": "Inherited from organization",
-          "space": "Granted for this space"
+          "organization": "Inherited from organization"
         }
       },
       "placeholders": {

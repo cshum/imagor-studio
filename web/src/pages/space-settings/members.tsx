@@ -72,9 +72,6 @@ function getRoleDescription(
   if (member.roleSource === 'organization') {
     return t('pages.spaceSettings.members.roleSource.organization')
   }
-  if (member.role === 'admin') {
-    return t('pages.spaceSettings.members.roleSource.space')
-  }
   return null
 }
 

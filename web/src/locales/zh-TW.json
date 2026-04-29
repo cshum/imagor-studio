@@ -1198,8 +1198,7 @@
           "member": "成員"
         },
         "roleSource": {
-          "organization": "繼承自組織",
-          "space": "此空間授予"
+          "organization": "繼承自組織"
         }
       },
       "imagor": {
