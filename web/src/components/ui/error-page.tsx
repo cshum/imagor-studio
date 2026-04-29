@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, Home, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, Home, ShieldAlert, type LucideIcon } from 'lucide-react'
 
 import { BrandBar } from '@/components/brand-bar'
 import { LanguageSelector } from '@/components/language-selector'
@@ -13,11 +13,21 @@ interface ErrorPageProps {
   error?: Error | string
   title?: string
   description?: string
+  actionLabel?: string
+  actionHref?: string
+  actionIcon?: LucideIcon
 }
 
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
 
-export function ErrorPage({ error, title, description }: ErrorPageProps) {
+export function ErrorPage({
+  error,
+  title,
+  description,
+  actionLabel,
+  actionHref,
+  actionIcon: ActionIcon = Home,
+}: ErrorPageProps) {
   const { t } = useTranslation()
   const errorInfo = extractErrorInfo(error)
   const isForbidden = errorInfo.code === 'FORBIDDEN'
@@ -37,10 +47,20 @@ export function ErrorPage({ error, title, description }: ErrorPageProps) {
       : isNotFound
         ? t('pages.error.notFoundDescription')
         : t('pages.error.defaultDescription'))
-  const actionLabel = t('common.navigation.home')
+  const resolvedActionLabel = actionLabel ?? t('common.navigation.home')
+  const shouldShowAction = actionHref ? true : !isEmbeddedMode
 
   const handleGoHome = () => {
     window.location.href = '/'
+  }
+
+  const handleAction = () => {
+    if (actionHref) {
+      window.location.href = actionHref
+      return
+    }
+
+    handleGoHome()
   }
 
   const errorMessage = typeof error === 'string' ? error : errorInfo.message
@@ -97,11 +117,11 @@ export function ErrorPage({ error, title, description }: ErrorPageProps) {
               </div>
             ) : null}
 
-            {!isEmbeddedMode ? (
+            {shouldShowAction ? (
               <div className='pt-2'>
-                <Button onClick={handleGoHome} className='h-11 min-w-40'>
-                  <Home className='mr-2 h-4 w-4' />
-                  {actionLabel}
+                <Button onClick={handleAction} className='h-11 min-w-40'>
+                  <ActionIcon className='mr-2 h-4 w-4' />
+                  {resolvedActionLabel}
                 </Button>
               </div>
             ) : null}
