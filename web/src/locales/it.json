@@ -838,8 +838,10 @@
         "back": "Indietro"
       },
       "noSpacesFound": "Crea il tuo primo workspace immagini",
+      "noOrganizationTitle": "Crea un'organizzazione per iniziare",
       "description": "Crea e gestisci workspace immagini per ogni team, brand o ambiente.",
       "emptyDescription": "Lancia il tuo primo workspace immagini per upload, trasformazioni e distribuzione.",
+      "emptyDescriptionNoOrganization": "Questo account non ha ancora un'organizzazione personale.",
       "settings": "Settings",
       "spaceCount": "{{count}} spazio/i",
       "openGallery": "Apri galleria",
@@ -938,6 +940,7 @@
       },
       "configure": "Configura",
       "startDescription": "Puoi personalizzare storage, delivery e accesso man mano che cresci.",
+      "startDescriptionNoOrganization": "Crea subito un'organizzazione personale, poi torna qui per creare spazi o ricevere accesso a quelli esistenti.",
       "sharedLabel": "Condiviso",
       "leaveSpace": "Esci",
       "leaveSpaceDescription": "Lascia questo spazio condiviso",

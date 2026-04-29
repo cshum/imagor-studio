@@ -781,6 +781,7 @@
       "createSpaceButton": "创建空间",
       "updateSpaceButton": "更新空间",
       "noSpacesFound": "创建你的第一个图片工作空间",
+      "noOrganizationTitle": "先创建组织再开始使用",
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
@@ -814,6 +815,7 @@
       },
       "description": "为你的团队、品牌或环境创建并管理图片工作空间。",
       "emptyDescription": "创建你的第一个图片工作空间，用于上传、处理和交付图片。",
+      "emptyDescriptionNoOrganization": "此账户还没有个人组织。",
       "settings": "设置",
       "spaceCount": "{{count}} 个空间",
       "openGallery": "打开图库",
@@ -882,6 +884,7 @@
         "processingHostLabel": "默认主机"
       },
       "startDescription": "您可以随着成长逐步自定义存储、交付和访问权限。",
+      "startDescriptionNoOrganization": "现在先创建一个个人组织，然后回到这里创建空间或接收现有空间的访问权限。",
       "sharedLabel": "共享",
       "leaveSpace": "离开",
       "leaveSpaceDescription": "离开这个共享空间",
