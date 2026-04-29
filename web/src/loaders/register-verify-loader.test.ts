@@ -51,6 +51,19 @@ describe('registerVerifyLoader', () => {
     expect(mockInitAuth).toHaveBeenCalledWith('jwt-token')
   })
 
+  it('redirects to the invite target after successful verification when a redirect path is provided', async () => {
+    const { registerVerifyLoader } = await import('./register-verify-loader')
+    window.history.replaceState(
+      {},
+      '',
+      '/register/verify?token=valid-token&email=owner%40example.com',
+    )
+    mockVerifyPublicSignup.mockResolvedValue({ token: 'jwt-token', redirectPath: '/spaces/acme-space' })
+    mockInitAuth.mockResolvedValue({ state: 'authenticated', accessToken: 'jwt-token' })
+
+    await expect(registerVerifyLoader()).rejects.toMatchObject({ to: '/spaces/acme-space' })
+  })
+
   it('redirects home when the token is already consumed but the session is already authenticated', async () => {
     const { registerVerifyLoader } = await import('./register-verify-loader')
     window.history.replaceState(

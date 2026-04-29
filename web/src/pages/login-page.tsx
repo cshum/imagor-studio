@@ -70,6 +70,13 @@ export function LoginPage() {
     return url.startsWith('/') && !url.startsWith('//')
   }
 
+  const resolvePostLoginRedirect = (redirectPath?: string): string => {
+    if (redirectPath && isValidRedirectUrl(redirectPath)) {
+      return redirectPath
+    }
+    return '/'
+  }
+
   const identifierRequiredMessage = isMultiTenant
     ? t('auth.validation.identifierRequiredCloud')
     : t('auth.validation.usernameRequired')
@@ -182,8 +189,7 @@ export function LoginPage() {
         return
       }
 
-      // Default redirect to home if no valid redirect parameter
-      navigate({ to: '/' })
+      navigate({ to: resolvePostLoginRedirect(response.redirectPath) })
     } catch (err) {
       // Map specific error messages to translations
       let errorMessage = t('auth.login.loginFailed') // Default fallback

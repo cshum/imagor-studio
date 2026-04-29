@@ -970,7 +970,13 @@ func TestLogin_AcceptsPendingInvite(t *testing.T) {
 			ExpiresAt: time.Now().UTC().Add(time.Hour),
 		},
 	}
-	spaceStore := &stubSpaceStore{}
+	spaceStore := &stubSpaceStore{spaceByKey: map[string]*space.Space{
+		"acme-space": {
+			ID:   "space-1",
+			Key:  "acme-space",
+			Name: "Acme Space",
+		},
+	}}
 	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{
 		SpaceStore:  spaceStore,
 		InviteStore: inviteStore,
@@ -1016,6 +1022,7 @@ func TestLogin_AcceptsPendingInvite(t *testing.T) {
 	claims, err := tokenManager.ValidateToken(loginResp.Token)
 	require.NoError(t, err)
 	assert.Equal(t, "org-invite", claims.OrgID)
+	assert.Equal(t, "/spaces/acme-space", loginResp.RedirectPath)
 	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
 	assert.NotNil(t, inviteStore.acceptedAt)
 	mockUserStore.AssertExpectations(t)

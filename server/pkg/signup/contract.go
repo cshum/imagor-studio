@@ -30,8 +30,9 @@ type StartPublicSignupResult struct {
 }
 
 type VerifyPublicSignupResult struct {
-	UserID string
-	OrgID  string
+	UserID       string
+	OrgID        string
+	RedirectPath string
 }
 
 type Runtime interface {

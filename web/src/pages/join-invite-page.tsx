@@ -53,6 +53,13 @@ export function JoinInvitePage() {
   const [acceptState, setAcceptState] = useState<'idle' | 'loading' | 'failed'>('idle')
   const [acceptError, setAcceptError] = useState<string | null>(null)
 
+  const resolveRedirectPath = (redirectPath?: string): string => {
+    if (redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')) {
+      return redirectPath
+    }
+    return '/'
+  }
+
   const handleGoogle = () => {
     window.location.href = getGoogleLoginUrl(inviteToken)
   }
@@ -73,7 +80,7 @@ export function JoinInvitePage() {
           return
         }
         await initAuth(response.token)
-        navigate({ to: '/' })
+        navigate({ to: resolveRedirectPath(response.redirectPath) })
       } catch (error) {
         if (cancelled) {
           return

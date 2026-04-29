@@ -9,6 +9,10 @@ export interface RegisterVerifyLoaderData {
   canResend: boolean
 }
 
+function isValidRedirectPath(path: string | undefined): path is string {
+  return Boolean(path) && path.startsWith('/') && !path.startsWith('//')
+}
+
 function canResendVerification(error: AuthApiError | null, email: string | null): boolean {
   if (!email) {
     return false
@@ -63,5 +67,5 @@ export const registerVerifyLoader = async (): Promise<RegisterVerifyLoaderData> 
   }
 
   await initAuth(response.token)
-  throw redirect({ to: '/' })
+  throw redirect({ to: isValidRedirectPath(response.redirectPath) ? response.redirectPath : '/' })
 }

@@ -53,6 +53,7 @@ export interface RegisterAdminRequest {
 export interface LoginResponse {
   token: string
   expiresIn: number
+  redirectPath?: string
   user: {
     id: string
     displayName: string
