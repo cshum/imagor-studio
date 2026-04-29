@@ -252,9 +252,7 @@ export async function resendPublicSignupVerification(
   return response.json()
 }
 
-export async function verifyEmailChange(
-  token: string,
-): Promise<EmailChangeVerificationResponse> {
+export async function verifyEmailChange(token: string): Promise<EmailChangeVerificationResponse> {
   const response = await fetch(`${BASE_URL}/api/auth/account/email/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

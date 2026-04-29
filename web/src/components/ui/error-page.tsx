@@ -70,10 +70,10 @@ export function ErrorPage({
     ? 'bg-amber-500/12 text-amber-700'
     : 'bg-red-500/12 text-red-600'
   const eyebrow = isForbidden
-    ? 'Access restricted'
+    ? t('pages.error.eyebrowForbidden')
     : isNotFound
-      ? 'Page not found'
-      : 'Service error'
+      ? t('pages.error.eyebrowNotFound')
+      : t('pages.error.eyebrowDefault')
 
   return (
     <div className='bg-background min-h-screen-safe flex flex-col overflow-hidden'>

@@ -245,10 +245,10 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
               !canManageEmailInApp && authProviders.length > 0
                 ? t('pages.profile.emailChangeManaged')
                 : pendingEmail
-                ? t('pages.profile.emailChangePending')
-                : emailVerified
-                  ? t('pages.profile.emailVerified')
-                  : t('pages.profile.emailVerificationPending')
+                  ? t('pages.profile.emailChangePending')
+                  : emailVerified
+                    ? t('pages.profile.emailVerified')
+                    : t('pages.profile.emailVerificationPending')
             }
             contentClassName='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-end sm:max-w-none'
           >

@@ -100,7 +100,7 @@ export function RegisterVerifyPendingPage() {
 
   return (
     <RegisterVerifyLayout
-      eyebrow='Account confirmation'
+      eyebrow={t('pages.registerVerify.pendingEyebrow')}
       title={t('pages.registerVerify.title')}
       description={t('pages.registerVerify.subtitle')}
       icon={<LoaderCircle className='h-6 w-6 animate-spin' />}
@@ -165,7 +165,7 @@ export function RegisterVerifyPage() {
 
   return (
     <RegisterVerifyLayout
-      eyebrow='Service error'
+      eyebrow={t('pages.registerVerify.errorEyebrow')}
       title={t('pages.registerVerify.errorTitle')}
       description={t('pages.registerVerify.errorSubtitle')}
       icon={<AlertTriangle className='h-6 w-6 text-red-600' />}

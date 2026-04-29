@@ -185,9 +185,11 @@
       "backToLogin": "Back to login"
     },
     "registerVerify": {
+      "pendingEyebrow": "Account confirmation",
       "title": "Confirming your account",
       "subtitle": "Please wait while we finish signing you in.",
       "verifying": "Verifying your email confirmation link.",
+      "errorEyebrow": "Service error",
       "errorTitle": "We couldn't confirm your account",
       "errorSubtitle": "The confirmation link may be invalid or expired.",
       "missingToken": "The confirmation link is missing its verification token.",
@@ -218,6 +220,9 @@
       "backToProfile": "Back to profile"
     },
     "error": {
+      "eyebrowDefault": "Service error",
+      "eyebrowNotFound": "Page not found",
+      "eyebrowForbidden": "Access restricted",
       "defaultTitle": "Something went wrong",
       "notFoundTitle": "Space not found",
       "forbiddenTitle": "Access denied",

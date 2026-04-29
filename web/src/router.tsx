@@ -33,7 +33,6 @@ import {
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import { authCallbackLoader } from '@/loaders/auth-callback-loader.ts'
-import { emailChangeVerifyLoader } from '@/loaders/email-change-verify-loader'
 import {
   redirectAuthenticatedUsersWithOrganization,
   requireAccountAuth,
@@ -45,6 +44,7 @@ import {
   requireSelfHostedImageEditorAuth,
 } from '@/loaders/auth-loader.ts'
 import { canvasEditorLoader } from '@/loaders/canvas-editor-loader.ts'
+import { emailChangeVerifyLoader } from '@/loaders/email-change-verify-loader'
 import {
   embeddedLoader,
   embeddedLoaderDeps,

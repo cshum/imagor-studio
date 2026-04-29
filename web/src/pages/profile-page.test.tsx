@@ -55,7 +55,9 @@ vi.mock('@/components/ui/button', () => ({
 }))
 
 vi.mock('@/components/ui/button-with-loading', () => ({
-  ButtonWithLoading: ({ children, isLoading, ...props }: any) => <button {...props}>{children}</button>,
+  ButtonWithLoading: ({ children, isLoading, ...props }: any) => (
+    <button {...props}>{children}</button>
+  ),
 }))
 
 vi.mock('@/components/ui/input', () => ({
@@ -104,34 +106,34 @@ const loaderData = (overrides?: Partial<any>) => ({
 })
 
 describe('ProfilePage email change rules', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
-	it('hides in-app change email for provider-managed accounts', async () => {
-		const { ProfilePage } = await import('./profile-page')
+  it('hides in-app change email for provider-managed accounts', async () => {
+    const { ProfilePage } = await import('./profile-page')
 
-		render(
-			<ProfilePage
-				loaderData={loaderData({
-					hasPassword: false,
-					authProviders: [
-						{ provider: 'google', email: 'alice@example.com', linkedAt: '2026-04-30T00:00:00Z' },
-					],
-				})}
-			/>,
-		)
+    render(
+      <ProfilePage
+        loaderData={loaderData({
+          hasPassword: false,
+          authProviders: [
+            { provider: 'google', email: 'alice@example.com', linkedAt: '2026-04-30T00:00:00Z' },
+          ],
+        })}
+      />,
+    )
 
-		expect(screen.queryByText('pages.profile.changeEmail')).toBeNull()
-		expect(screen.getByText('pages.profile.emailChangeManaged')).toBeTruthy()
-	})
+    expect(screen.queryByText('pages.profile.changeEmail')).toBeNull()
+    expect(screen.getByText('pages.profile.emailChangeManaged')).toBeTruthy()
+  })
 
-	it('does not request an email change when the email is unchanged', async () => {
-		const { ProfilePage } = await import('./profile-page')
+  it('does not request an email change when the email is unchanged', async () => {
+    const { ProfilePage } = await import('./profile-page')
 
-		render(<ProfilePage loaderData={loaderData()} />)
+    render(<ProfilePage loaderData={loaderData()} />)
 
-		const emailInputs = screen.getAllByDisplayValue('alice@example.com')
+    const emailInputs = screen.getAllByDisplayValue('alice@example.com')
     act(() => {
       fireEvent.change(emailInputs[emailInputs.length - 1], {
         target: { value: 'alice@example.com' },
@@ -139,7 +141,7 @@ describe('ProfilePage email change rules', () => {
       fireEvent.click(screen.getByText('pages.profile.requestEmailChange'))
     })
 
-		expect(mockRequestEmailChange).not.toHaveBeenCalled()
-		expect(mockToastSuccess).not.toHaveBeenCalled()
-	})
+    expect(mockRequestEmailChange).not.toHaveBeenCalled()
+    expect(mockToastSuccess).not.toHaveBeenCalled()
+  })
 })

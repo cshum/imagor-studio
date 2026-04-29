@@ -189,9 +189,11 @@
       "backToLogin": "Torna al login"
     },
     "registerVerify": {
+      "pendingEyebrow": "Conferma account",
       "title": "Conferma del tuo account in corso",
       "subtitle": "Attendi mentre completiamo il tuo accesso.",
       "verifying": "Stiamo verificando il link di conferma email.",
+      "errorEyebrow": "Errore del servizio",
       "errorTitle": "Non siamo riusciti a confermare il tuo account",
       "errorSubtitle": "Il link di conferma potrebbe non essere valido o essere scaduto.",
       "missingToken": "Nel link di conferma manca il token di verifica.",
@@ -222,6 +224,9 @@
       "backToProfile": "Torna al profilo"
     },
     "error": {
+      "eyebrowDefault": "Errore del servizio",
+      "eyebrowNotFound": "Pagina non trovata",
+      "eyebrowForbidden": "Accesso limitato",
       "defaultTitle": "Qualcosa è andato storto",
       "notFoundTitle": "Spazio non trovato",
       "forbiddenTitle": "Accesso negato",

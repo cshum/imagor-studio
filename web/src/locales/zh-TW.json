@@ -189,9 +189,11 @@
       "backToLogin": "返回登入"
     },
     "registerVerify": {
+      "pendingEyebrow": "帳戶確認",
       "title": "正在確認您的帳戶",
       "subtitle": "請稍候，我們正在完成您的登入。",
       "verifying": "正在驗證您的電子郵件確認連結。",
+      "errorEyebrow": "服務錯誤",
       "errorTitle": "我們無法確認您的帳戶",
       "errorSubtitle": "此確認連結可能已失效或過期。",
       "missingToken": "此確認連結缺少驗證令牌。",
@@ -222,6 +224,9 @@
       "backToProfile": "返回個人資料"
     },
     "error": {
+      "eyebrowDefault": "服務錯誤",
+      "eyebrowNotFound": "找不到頁面",
+      "eyebrowForbidden": "存取受限",
       "defaultTitle": "發生錯誤",
       "notFoundTitle": "找不到空間",
       "forbiddenTitle": "拒絕存取",

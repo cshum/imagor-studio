@@ -138,9 +138,11 @@
       "backToLogin": "返回登录"
     },
     "registerVerify": {
+      "pendingEyebrow": "账户确认",
       "title": "正在确认您的账户",
       "subtitle": "请稍候，我们正在完成您的登录。",
       "verifying": "正在验证您的邮箱确认链接。",
+      "errorEyebrow": "服务错误",
       "errorTitle": "我们无法确认您的账户",
       "errorSubtitle": "该确认链接可能无效或已过期。",
       "missingToken": "该确认链接缺少验证令牌。",
@@ -171,6 +173,9 @@
       "backToProfile": "返回个人资料"
     },
     "error": {
+      "eyebrowDefault": "服务错误",
+      "eyebrowNotFound": "页面未找到",
+      "eyebrowForbidden": "访问受限",
       "defaultTitle": "出现了一些问题",
       "notFoundTitle": "未找到空间",
       "forbiddenTitle": "无权访问",
