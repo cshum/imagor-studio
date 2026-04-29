@@ -297,10 +297,10 @@ export function RegisterPage() {
               {resendMessage}
             </div>
           ) : null}
-          <div className='flex flex-wrap items-center gap-2'>
+          <div className='space-y-2 pt-1'>
             <ButtonWithLoading
               type='button'
-              className='min-w-56'
+              className='w-full'
               isLoading={isResending}
               disabled={isResending || resendCooldownRemaining > 0}
               onClick={handleResendVerification}
@@ -311,8 +311,8 @@ export function RegisterPage() {
             </ButtonWithLoading>
             <Button
               type='button'
-              variant='outline'
-              className='min-w-44'
+              variant='ghost'
+              className='w-full'
               onClick={() => {
                 setPendingVerification(null)
                 setResendState('idle')
