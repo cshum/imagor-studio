@@ -378,7 +378,7 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
             setShowSecret(false)
           }
         }}
-        contentClassName='sm:max-w-md'
+        contentClassName='sm:max-w-lg'
       >
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{t('pages.spaceSettings.imagor.urlSigningSecret')}</ResponsiveDialogTitle>
@@ -395,22 +395,22 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
               render={({ field }) => (
                 <FormItem>
                   <div className='space-y-2'>
-                    <div className='flex items-center gap-2'>
-                      <Input type={showSecret ? 'text' : 'password'} autoFocus {...field} />
+                    <div className='flex items-stretch gap-0'>
+                      <Input
+                        type={showSecret ? 'text' : 'password'}
+                        autoFocus
+                        className='h-10 rounded-r-none'
+                        {...field}
+                      />
                       <Button
                         type='button'
                         variant='outline'
-                        className='shrink-0'
+                        className='h-10 shrink-0 rounded-l-none border-l-0'
                         onClick={() => setShowSecret((value) => !value)}
                       >
                         {showSecret
                           ? t('pages.spaceSettings.imagor.hideSecret')
                           : t('pages.spaceSettings.imagor.showSecret')}
-                      </Button>
-                    </div>
-                    <div className='flex justify-end'>
-                      <Button type='button' variant='outline' onClick={handleGenerateSecret}>
-                        {t('pages.spaceSettings.imagor.generateSecret')}
                       </Button>
                     </div>
                   </div>
@@ -419,18 +419,23 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
               )}
             />
 
-            <ResponsiveDialogFooter>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => setSecretDialogOpen(false)}
-                disabled={secretForm.formState.isSubmitting}
-              >
-                {t('common.buttons.cancel')}
+            <ResponsiveDialogFooter className='sm:justify-between'>
+              <Button type='button' variant='outline' onClick={handleGenerateSecret}>
+                {t('pages.spaceSettings.imagor.generateSecret')}
               </Button>
-              <ButtonWithLoading type='submit' isLoading={secretForm.formState.isSubmitting}>
-                {t('common.buttons.save')}
-              </ButtonWithLoading>
+              <div className='flex justify-end gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => setSecretDialogOpen(false)}
+                  disabled={secretForm.formState.isSubmitting}
+                >
+                  {t('common.buttons.cancel')}
+                </Button>
+                <ButtonWithLoading type='submit' isLoading={secretForm.formState.isSubmitting}>
+                  {t('common.buttons.save')}
+                </ButtonWithLoading>
+              </div>
             </ResponsiveDialogFooter>
           </form>
         </Form>
