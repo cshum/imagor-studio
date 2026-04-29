@@ -51,6 +51,7 @@ import {
 } from '@/loaders/embedded-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
+import { registerVerifyLoader } from '@/loaders/register-verify-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { rootPageLoader } from '@/loaders/root-page-loader'
 import {
@@ -76,7 +77,7 @@ import { ImagePage } from '@/pages/image-page.tsx'
 import { PrivacyPage, TermsPage } from '@/pages/legal-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { RegisterPage } from '@/pages/register-page.tsx'
-import { RegisterVerifyPage } from '@/pages/register-verify-page.tsx'
+import { RegisterVerifyPage, RegisterVerifyPendingPage } from '@/pages/register-verify-page.tsx'
 import { RootPage } from '@/pages/root-page'
 import { GeneralSection } from '@/pages/space-settings/general'
 import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
@@ -140,7 +141,9 @@ const registerRoute = createRoute({
 const registerVerifyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register/verify',
+  loader: registerVerifyLoader,
   component: RegisterVerifyPage,
+  pendingComponent: RegisterVerifyPendingPage,
 })
 
 const authCallbackRoute = createRoute({

@@ -27,6 +27,7 @@ server/static/
 # Database files
 storage.db
 *.db
+*.db-*
 *.sqlite
 *.sqlite3
 
