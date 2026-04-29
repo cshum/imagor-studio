@@ -755,7 +755,7 @@ const accountOrganizationMembersRoute = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
-  beforeLoad: requireOrganizationAccountAuth,
+  beforeLoad: requireAccountAuth,
   component: () => <AccountLayout />,
 })
 
