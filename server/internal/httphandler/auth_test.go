@@ -134,6 +134,64 @@ func (n *nilOrgStore) Delete(_ context.Context, _, _ string) error {
 	return nil
 }
 
+type provisioningOrgStore struct {
+	storedOrg *org.Org
+	members   []*org.OrgMemberView
+}
+
+func (p *provisioningOrgStore) CreateWithMember(_ context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*org.Org, error) {
+	orgID := "org-provisioned"
+	p.storedOrg = &org.Org{ID: orgID, OwnerID: ownerID, Name: name, Slug: slug, TrialEndsAt: trialEndsAt}
+	p.members = []*org.OrgMemberView{{OrgID: orgID, UserID: ownerID, DisplayName: name, Username: slug, Role: "owner"}}
+	copy := *p.storedOrg
+	return &copy, nil
+}
+func (p *provisioningOrgStore) GetByID(_ context.Context, id string) (*org.Org, error) {
+	if p.storedOrg == nil || p.storedOrg.ID != id {
+		return nil, nil
+	}
+	copy := *p.storedOrg
+	return &copy, nil
+}
+func (p *provisioningOrgStore) GetByUserID(_ context.Context, userID string) (*org.Org, error) {
+	if p.storedOrg == nil || p.storedOrg.OwnerID != userID {
+		return nil, nil
+	}
+	copy := *p.storedOrg
+	return &copy, nil
+}
+func (p *provisioningOrgStore) GetBySlug(_ context.Context, slug string) (*org.Org, error) {
+	if p.storedOrg == nil || p.storedOrg.Slug != slug {
+		return nil, nil
+	}
+	copy := *p.storedOrg
+	return &copy, nil
+}
+func (p *provisioningOrgStore) GetByStripeCustomerID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, nil
+}
+func (p *provisioningOrgStore) UpdateBillingState(_ context.Context, _ string, _ org.BillingStateUpdate) (*org.Org, error) {
+	return nil, nil
+}
+func (p *provisioningOrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
+	return []string{}, nil
+}
+func (p *provisioningOrgStore) ListMembers(_ context.Context, orgID string) ([]*org.OrgMemberView, error) {
+	if p.storedOrg == nil || p.storedOrg.ID != orgID {
+		return nil, nil
+	}
+	return p.members, nil
+}
+func (p *provisioningOrgStore) AddMember(_ context.Context, _, _, _ string) error { return nil }
+func (p *provisioningOrgStore) RemoveMember(_ context.Context, _, _ string) error { return nil }
+func (p *provisioningOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return nil
+}
+func (p *provisioningOrgStore) TransferOwnership(_ context.Context, _, _, _ string) error {
+	return nil
+}
+func (p *provisioningOrgStore) Delete(_ context.Context, _, _ string) error { return nil }
+
 type stubSpaceStore struct {
 	spaceByKey map[string]*space.Space
 	err        error
@@ -977,7 +1035,8 @@ func TestLogin_AcceptsPendingInvite(t *testing.T) {
 			Name: "Acme Space",
 		},
 	}}
-	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{
+	orgStore := &provisioningOrgStore{}
+	handler := NewAuthHandler(tokenManager, mockUserStore, orgStore, nil, logger, AuthHandlerConfig{
 		SpaceStore:  spaceStore,
 		InviteStore: inviteStore,
 	})
@@ -1021,7 +1080,8 @@ func TestLogin_AcceptsPendingInvite(t *testing.T) {
 	require.NoError(t, err)
 	claims, err := tokenManager.ValidateToken(loginResp.Token)
 	require.NoError(t, err)
-	assert.Empty(t, claims.OrgID)
+	require.NotEmpty(t, claims.OrgID)
+	assert.Equal(t, "org-provisioned", claims.OrgID)
 	assert.Equal(t, "/spaces/acme-space", loginResp.RedirectPath)
 	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
 	assert.NotNil(t, inviteStore.acceptedAt)

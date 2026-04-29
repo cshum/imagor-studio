@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -756,6 +757,16 @@ func (h *AuthHandler) resolveLoginOrgID(ctx context.Context, user *model.User, i
 	}
 
 	if isSpaceInvite && h.spaceStore != nil {
+		if orgID == "" {
+			provisionedOrgID, provisionErr := h.ensureWorkspaceOrgID(ctx, user)
+			if provisionErr != nil {
+				h.logger.Error("Failed to provision workspace org for invited space login",
+					zap.String("userID", user.ID),
+					zap.Error(provisionErr))
+				return "", "", apperror.InternalServerError("Failed to complete sign-in")
+			}
+			orgID = provisionedOrgID
+		}
 		if err := h.spaceStore.AddMember(ctx, invitation.SpaceID, user.ID, invitation.Role); err != nil {
 			h.logger.Error("Failed to add invited space member on login",
 				zap.String("userID", user.ID),
@@ -778,6 +789,27 @@ func (h *AuthHandler) resolveLoginOrgID(ctx context.Context, user *model.User, i
 	}
 
 	return invitation.OrgID, redirectPath, nil
+}
+
+func (h *AuthHandler) ensureWorkspaceOrgID(ctx context.Context, user *model.User) (string, error) {
+	if user == nil || !h.cloudEnabled() {
+		return "", fmt.Errorf("workspace org is not configured")
+	}
+
+	if existingOrg := h.resolvePrimaryOrgID(ctx, user.ID); existingOrg != "" {
+		return existingOrg, nil
+	}
+
+	trialEndsAt := time.Now().UTC().Add(14 * 24 * time.Hour)
+	org, err := h.orgStore.CreateWithMember(ctx, user.ID, user.DisplayName, user.Username, &trialEndsAt)
+	if err != nil {
+		return "", err
+	}
+	if org == nil || strings.TrimSpace(org.ID) == "" {
+		return "", fmt.Errorf("create organization returned no org")
+	}
+
+	return org.ID, nil
 }
 
 func (h *AuthHandler) resolveInvitationRedirectPath(ctx context.Context, invitation *space.Invitation) (string, error) {

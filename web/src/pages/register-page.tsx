@@ -313,7 +313,7 @@ export function RegisterPage() {
               <MailCheck className='h-6 w-6' />
             </div>
             <div className='space-y-2'>
-              <p className='text-muted-foreground text-xs font-medium tracking-[0.08em] uppercase'>
+              <p className='text-muted-foreground text-xs font-medium tracking-[0.08em]'>
                 {t('auth.register.pendingEyebrow')}
               </p>
               <h2 className='text-foreground text-lg font-semibold'>
