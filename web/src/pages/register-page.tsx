@@ -265,7 +265,7 @@ export function RegisterPage() {
       showLegalLinks={authState.multiTenant}
     >
       {pendingVerification ? (
-        <div className='space-y-5 rounded-2xl border border-border/60 bg-muted/20 p-6'>
+        <div className='border-border/60 bg-muted/20 space-y-5 rounded-2xl border p-6'>
           <div className='space-y-4'>
             <div className='bg-background text-foreground flex h-12 w-12 items-center justify-center rounded-full border'>
               <MailCheck className='h-6 w-6' />

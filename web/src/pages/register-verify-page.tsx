@@ -13,7 +13,10 @@ import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import type { RegisterVerifyLoaderData } from '@/loaders/register-verify-loader'
 
 function normalizeMessage(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
 }
 
 function isRedundantVerificationError(summary: string, detail: string): boolean {
@@ -124,10 +127,9 @@ export function RegisterVerifyPage() {
   const [resendMessage, setResendMessage] = useState<string | null>(null)
   const [isResending, setIsResending] = useState(false)
   const showTerminalGuidance = Boolean(verificationEmail) && !resendAvailable
-  const showErrorDetail = !showTerminalGuidance && !isRedundantVerificationError(
-    t('pages.registerVerify.errorSubtitle'),
-    errorMessage,
-  )
+  const showErrorDetail =
+    !showTerminalGuidance &&
+    !isRedundantVerificationError(t('pages.registerVerify.errorSubtitle'), errorMessage)
 
   const handleResendVerification = async () => {
     if (!verificationEmail || !resendAvailable || resendCooldownRemaining > 0 || isResending) {
