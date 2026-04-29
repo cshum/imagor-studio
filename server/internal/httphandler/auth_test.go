@@ -134,6 +134,64 @@ func (n *nilOrgStore) Delete(_ context.Context, _, _ string) error {
 	return nil
 }
 
+type provisioningOrgStore struct {
+	storedOrg *org.Org
+	members   []*org.OrgMemberView
+}
+
+func (p *provisioningOrgStore) CreateWithMember(_ context.Context, ownerID, name, slug string, trialEndsAt *time.Time) (*org.Org, error) {
+	orgID := "org-provisioned"
+	p.storedOrg = &org.Org{ID: orgID, OwnerID: ownerID, Name: name, Slug: slug, TrialEndsAt: trialEndsAt}
+	p.members = []*org.OrgMemberView{{OrgID: orgID, UserID: ownerID, DisplayName: name, Username: slug, Role: "owner"}}
+	copy := *p.storedOrg
+	return &copy, nil
+}
+func (p *provisioningOrgStore) GetByID(_ context.Context, id string) (*org.Org, error) {
+	if p.storedOrg == nil || p.storedOrg.ID != id {
+		return nil, nil
+	}
+	copy := *p.storedOrg
+	return &copy, nil
+}
+func (p *provisioningOrgStore) GetByUserID(_ context.Context, userID string) (*org.Org, error) {
+	if p.storedOrg == nil || p.storedOrg.OwnerID != userID {
+		return nil, nil
+	}
+	copy := *p.storedOrg
+	return &copy, nil
+}
+func (p *provisioningOrgStore) GetBySlug(_ context.Context, slug string) (*org.Org, error) {
+	if p.storedOrg == nil || p.storedOrg.Slug != slug {
+		return nil, nil
+	}
+	copy := *p.storedOrg
+	return &copy, nil
+}
+func (p *provisioningOrgStore) GetByStripeCustomerID(_ context.Context, _ string) (*org.Org, error) {
+	return nil, nil
+}
+func (p *provisioningOrgStore) UpdateBillingState(_ context.Context, _ string, _ org.BillingStateUpdate) (*org.Org, error) {
+	return nil, nil
+}
+func (p *provisioningOrgStore) ExpireTrials(_ context.Context, _ time.Time) ([]string, error) {
+	return []string{}, nil
+}
+func (p *provisioningOrgStore) ListMembers(_ context.Context, orgID string) ([]*org.OrgMemberView, error) {
+	if p.storedOrg == nil || p.storedOrg.ID != orgID {
+		return nil, nil
+	}
+	return p.members, nil
+}
+func (p *provisioningOrgStore) AddMember(_ context.Context, _, _, _ string) error { return nil }
+func (p *provisioningOrgStore) RemoveMember(_ context.Context, _, _ string) error { return nil }
+func (p *provisioningOrgStore) UpdateMemberRole(_ context.Context, _, _, _ string) error {
+	return nil
+}
+func (p *provisioningOrgStore) TransferOwnership(_ context.Context, _, _, _ string) error {
+	return nil
+}
+func (p *provisioningOrgStore) Delete(_ context.Context, _, _ string) error { return nil }
+
 type stubSpaceStore struct {
 	spaceByKey map[string]*space.Space
 	err        error
@@ -185,6 +243,38 @@ func (s *stubSpaceStore) AddMember(_ context.Context, _, _, _ string) error     
 func (s *stubSpaceStore) RemoveMember(_ context.Context, _, _ string) error        { return nil }
 func (s *stubSpaceStore) UpdateMemberRole(_ context.Context, _, _, _ string) error { return nil }
 func (s *stubSpaceStore) HasMember(_ context.Context, _, _ string) (bool, error)   { return false, nil }
+
+type stubInviteStore struct {
+	invite           *space.Invitation
+	err              error
+	acceptedInviteID string
+	acceptedAt       *time.Time
+}
+
+func (s *stubInviteStore) CreateOrRefreshPending(_ context.Context, _, _, _, _, _ string, _ time.Time) (*space.Invitation, error) {
+	return nil, nil
+}
+func (s *stubInviteStore) ListPendingByOrg(_ context.Context, _ string) ([]*space.Invitation, error) {
+	return nil, nil
+}
+func (s *stubInviteStore) ListPendingBySpace(_ context.Context, _, _ string) ([]*space.Invitation, error) {
+	return nil, nil
+}
+func (s *stubInviteStore) GetPendingByToken(_ context.Context, _ string) (*space.Invitation, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.invite, nil
+}
+func (s *stubInviteStore) MarkAccepted(_ context.Context, id string, acceptedAt time.Time) error {
+	if s.err != nil {
+		return s.err
+	}
+	s.acceptedInviteID = id
+	s.acceptedAt = &acceptedAt
+	return nil
+}
+func (s *stubInviteStore) DeletePending(_ context.Context, _ string) error { return nil }
 
 type MockUserStore struct {
 	mock.Mock
@@ -259,6 +349,19 @@ func (m *MockUserStore) UpdateUsername(ctx context.Context, id string, username 
 }
 
 func (m *MockUserStore) RequestEmailChange(ctx context.Context, id string, email string) (*userstore.User, error) {
+	args := m.Called(ctx, id, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
+func (m *MockUserStore) ClearPendingEmailChange(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockUserStore) ConfirmEmailChange(ctx context.Context, id string, email string) (*userstore.User, error) {
 	args := m.Called(ctx, id, email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -348,6 +451,22 @@ func (m *MockSignupRuntime) ResendPublicSignupVerification(ctx context.Context, 
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*signup.StartPublicSignupResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) RequestEmailChange(ctx context.Context, params signup.RequestEmailChangeParams) (*signup.RequestEmailChangeResult, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.RequestEmailChangeResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) VerifyEmailChange(ctx context.Context, token string) (*signup.VerifyEmailChangeResult, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.VerifyEmailChangeResult), args.Error(1)
 }
 
 func (m *MockRegistryStore) List(ctx context.Context, ownerID string, prefix *string) ([]*registrystore.Registry, error) {
@@ -924,6 +1043,139 @@ func TestLogin(t *testing.T) {
 	}
 }
 
+func TestLogin_AcceptsPendingInvite(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	inviteStore := &stubInviteStore{
+		invite: &space.Invitation{
+			ID:        "invite-1",
+			OrgID:     "org-invite",
+			SpaceID:   "space-1",
+			Email:     "testuser@example.com",
+			Role:      "editor",
+			ExpiresAt: time.Now().UTC().Add(time.Hour),
+		},
+	}
+	spaceStore := &stubSpaceStore{spaceByKey: map[string]*space.Space{
+		"acme-space": {
+			ID:   "space-1",
+			Key:  "acme-space",
+			Name: "Acme Space",
+		},
+	}}
+	orgStore := &provisioningOrgStore{}
+	handler := NewAuthHandler(tokenManager, mockUserStore, orgStore, nil, logger, AuthHandlerConfig{
+		SpaceStore:  spaceStore,
+		InviteStore: inviteStore,
+	})
+
+	hashedPassword, err := auth.HashPassword("password123")
+	require.NoError(t, err)
+	email := "testuser@example.com"
+	mockUserStore.On("GetByEmail", mock.Anything, "testuser@example.com").Return(&userstore.User{
+		ID:          "user-123",
+		DisplayName: "testuser",
+		Username:    "testuser",
+		Role:        "user",
+		Email:       &email,
+	}, nil).Once()
+	mockUserStore.On("GetByIDWithPassword", mock.Anything, "user-123").Return(&model.User{
+		ID:             "user-123",
+		DisplayName:    "testuser",
+		Username:       "testuser",
+		Role:           "user",
+		IsActive:       true,
+		HashedPassword: hashedPassword,
+		Email:          &email,
+	}, nil).Once()
+	mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil).Once()
+
+	body, err := json.Marshal(LoginRequest{
+		Username:    "testuser@example.com",
+		Password:    "password123",
+		InviteToken: "invite-token",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+
+	handler.Login()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+	var loginResp LoginResponse
+	err = json.Unmarshal(rr.Body.Bytes(), &loginResp)
+	require.NoError(t, err)
+	claims, err := tokenManager.ValidateToken(loginResp.Token)
+	require.NoError(t, err)
+	require.NotEmpty(t, claims.OrgID)
+	assert.Equal(t, "org-provisioned", claims.OrgID)
+	assert.Equal(t, "/spaces/acme-space", loginResp.RedirectPath)
+	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
+	assert.NotNil(t, inviteStore.acceptedAt)
+	mockUserStore.AssertExpectations(t)
+}
+
+func TestLogin_RejectsInviteEmailMismatch(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	inviteStore := &stubInviteStore{
+		invite: &space.Invitation{
+			ID:        "invite-1",
+			OrgID:     "org-invite",
+			Email:     "someoneelse@example.com",
+			Role:      "editor",
+			ExpiresAt: time.Now().UTC().Add(time.Hour),
+		},
+	}
+	handler := NewAuthHandler(tokenManager, mockUserStore, &nilOrgStore{}, nil, logger, AuthHandlerConfig{
+		InviteStore: inviteStore,
+	})
+
+	hashedPassword, err := auth.HashPassword("password123")
+	require.NoError(t, err)
+	email := "testuser@example.com"
+	mockUserStore.On("GetByEmail", mock.Anything, "testuser@example.com").Return(&userstore.User{
+		ID:          "user-123",
+		DisplayName: "testuser",
+		Username:    "testuser",
+		Role:        "user",
+		Email:       &email,
+	}, nil).Once()
+	mockUserStore.On("GetByIDWithPassword", mock.Anything, "user-123").Return(&model.User{
+		ID:             "user-123",
+		DisplayName:    "testuser",
+		Username:       "testuser",
+		Role:           "user",
+		IsActive:       true,
+		HashedPassword: hashedPassword,
+		Email:          &email,
+	}, nil).Once()
+	mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil).Once()
+
+	body, err := json.Marshal(LoginRequest{
+		Username:    "testuser@example.com",
+		Password:    "password123",
+		InviteToken: "invite-token",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+
+	handler.Login()(rr, req)
+
+	require.Equal(t, http.StatusBadRequest, rr.Code)
+	var errResp apperror.ErrorResponse
+	err = json.Unmarshal(rr.Body.Bytes(), &errResp)
+	require.NoError(t, err)
+	assert.Equal(t, "INVALID_INPUT", errResp.Code)
+	assert.Empty(t, inviteStore.acceptedInviteID)
+	mockUserStore.AssertExpectations(t)
+}
+
 func TestRefreshToken(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
@@ -1271,6 +1523,74 @@ func TestRegister_MultiTenant_CreatesOrg(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
+func TestRegister_MultiTenant_SpaceInviteSkipsVerificationAndRedirects(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	orgStore := &provisioningOrgStore{}
+	inviteStore := &stubInviteStore{
+		invite: &space.Invitation{
+			ID:        "invite-1",
+			OrgID:     "org-host",
+			SpaceID:   "space-123",
+			Email:     "invitee@example.com",
+			Role:      "member",
+			ExpiresAt: time.Now().UTC().Add(time.Hour),
+		},
+	}
+	spaceStore := &stubSpaceStore{
+		spaceByKey: map[string]*space.Space{
+			"acme-space": {ID: "space-123", Key: "acme-space", Name: "Acme Space"},
+		},
+	}
+	handler := NewAuthHandler(tokenManager, mockUserStore, orgStore, nil, logger, AuthHandlerConfig{
+		SpaceStore:  spaceStore,
+		InviteStore: inviteStore,
+	})
+
+	const userID = "saas-invite-user-1"
+	inviteEmail := "invitee@example.com"
+	mockUserStore.On(
+		"CreateWithEmail",
+		mock.Anything,
+		"invitee",
+		mock.MatchedBy(func(username string) bool {
+			return strings.HasPrefix(username, "u-") && len(username) == 14
+		}),
+		mock.AnythingOfType("string"),
+		"user",
+		"invitee@example.com",
+	).Return(&userstore.User{
+		ID: userID, DisplayName: "invitee", Username: "u-invitee001", Role: "user", IsActive: true, Email: &inviteEmail,
+	}, nil)
+	mockUserStore.On("SetEmailVerified", mock.Anything, userID, true).Return(nil).Once()
+
+	body, err := json.Marshal(RegisterRequest{
+		DisplayName: "invitee",
+		Email:       "invitee@example.com",
+		Password:    "password123",
+		InviteToken: "invite-token",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Register()(rr, req)
+
+	require.Equal(t, http.StatusCreated, rr.Code)
+
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	assert.Equal(t, "/spaces/acme-space", resp.RedirectPath)
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "org-provisioned", claims.OrgID)
+	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
+	assert.NotNil(t, inviteStore.acceptedAt)
+
+	mockUserStore.AssertExpectations(t)
+}
+
 // TestLogin_MultiTenant_EmbeddsOrgID verifies that logging in with a wired orgStore
 // embeds the user's org_id in the returned JWT.
 func TestLogin_MultiTenant_EmbeddsOrgID(t *testing.T) {
@@ -1489,6 +1809,56 @@ func TestResendPublicSignupVerification_CooldownActive(t *testing.T) {
 	var errResp apperror.ErrorResponse
 	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
 	assert.Equal(t, "TOO_MANY_REQUESTS", errResp.Code)
+
+	mockSignupRuntime.AssertExpectations(t)
+}
+
+func TestVerifyEmailChange(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("VerifyEmailChange", mock.Anything, "verify-token").Return(&signup.VerifyEmailChangeResult{
+		UserID: "verified-user-1",
+		Email:  "updated@example.com",
+	}, nil)
+
+	body, err := json.Marshal(VerifyEmailChangeRequest{Token: "verify-token"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/account/email/verify", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.VerifyEmailChange()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+	var resp signup.VerifyEmailChangeResult
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	assert.Equal(t, "verified-user-1", resp.UserID)
+	assert.Equal(t, "updated@example.com", resp.Email)
+
+	mockSignupRuntime.AssertExpectations(t)
+}
+
+func TestVerifyEmailChange_InvalidToken(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("VerifyEmailChange", mock.Anything, "verify-token").Return(nil, signup.ErrEmailChangeVerificationTokenInvalid)
+
+	body, err := json.Marshal(VerifyEmailChangeRequest{Token: "verify-token"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/account/email/verify", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.VerifyEmailChange()(rr, req)
+
+	require.Equal(t, http.StatusBadRequest, rr.Code)
+	var errResp apperror.ErrorResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
+	assert.Equal(t, "INVALID_INPUT", errResp.Code)
 
 	mockSignupRuntime.AssertExpectations(t)
 }

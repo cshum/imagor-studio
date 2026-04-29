@@ -11,6 +11,7 @@ import type {
   CreateBillingPortalSessionMutationVariables,
   CreateCheckoutSessionMutation,
   CreateCheckoutSessionMutationVariables,
+  CreateOrganizationMutation,
   CreateSpaceMutation,
   CreateSpaceMutationVariables,
   DeleteOrganizationMutation,
@@ -183,6 +184,15 @@ export async function deleteOrganization(): Promise<
   const sdk = getSdk(client)
   const result = await sdk.DeleteOrganization()
   return result.deleteOrganization
+}
+
+export async function createOrganization(): Promise<
+  CreateOrganizationMutation['createOrganization']
+> {
+  const client = getGraphQLClient()
+  const sdk = getSdk(client)
+  const result = await sdk.CreateOrganization()
+  return result.createOrganization
 }
 
 export async function getSpaceRegistry(

@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Outlet, useNavigate } from '@tanstack/react-router'
+import { Outlet, useNavigate, useRouter } from '@tanstack/react-router'
 import { Building2 } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
@@ -16,28 +16,38 @@ interface SpacesLayoutProps extends PropsWithChildren {
   title?: string
   description?: string
   primaryAction?: React.ReactNode
+  showOrganizationLink?: boolean
 }
 
-export function SpacesLayout({ children, title, description, primaryAction }: SpacesLayoutProps) {
+export function SpacesLayout({
+  children,
+  title,
+  description,
+  primaryAction,
+  showOrganizationLink = false,
+}: SpacesLayoutProps) {
   const { t } = useTranslation()
   const { authState, logout } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
   const { title: appTitle } = useBrand()
-  const accountLinks = authState.multiTenant
-    ? [
-        {
-          label: t('navigation.breadcrumbs.organization'),
-          href: '/account/organization',
-          icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
-        },
-      ]
-    : []
+  const accountLinks =
+    authState.multiTenant && showOrganizationLink
+      ? [
+          {
+            label: t('navigation.breadcrumbs.organization'),
+            href: '/account/organization',
+            icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
+          },
+        ]
+      : []
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
 
   const handleLogout = async () => {
     await logout()
+    await router.invalidate()
     navigate({ to: '/login' })
   }
 

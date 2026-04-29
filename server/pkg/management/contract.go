@@ -54,10 +54,12 @@ type InviteSenderConfig = sharedinvite.Config
 type SignupVerificationConfig = sharedsignup.Config
 
 type SignupVerificationServices struct {
-	DB        *bun.DB
-	UserStore shareduser.PasswordSignupStore
-	OrgStore  org.OrgStore
-	Logger    *zap.Logger
+	DB               *bun.DB
+	UserStore        shareduser.PasswordSignupStore
+	OrgStore         org.OrgStore
+	SpaceStore       space.SpaceStore
+	SpaceInviteStore space.SpaceInviteStore
+	Logger           *zap.Logger
 }
 
 type OAuthConfig struct {

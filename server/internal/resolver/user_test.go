@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -574,6 +575,26 @@ func TestRequestEmailChange_DuplicateEmailReturnsConflict(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "email already exists")
+
+	mockUserStore.AssertExpectations(t)
+}
+
+func TestRequestEmailChange_UnchangedEmailReturnsBadRequest(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	cfg := &config.Config{}
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, cfg, nil, logger)
+
+	ctx := createReadWriteContext("test-user-id")
+	mockUserStore.On("RequestEmailChange", ctx, "test-user-id", "same@example.com").Return(nil, errors.New("email is unchanged")).Once()
+
+	result, err := resolver.Mutation().RequestEmailChange(ctx, "same@example.com", nil)
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "email must be different")
 
 	mockUserStore.AssertExpectations(t)
 }

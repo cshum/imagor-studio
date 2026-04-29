@@ -187,6 +187,8 @@ extend type Query {
 }
 
 extend type Mutation {
+  # Create a personal organization for the current user when they do not already have one
+  createOrganization: Organization!
   # Create a checkout session for a paid plan (admin only)
   createCheckoutSession(plan: String!, successURL: String!, cancelURL: String!): BillingSession!
   # Create a customer billing portal session (admin only)

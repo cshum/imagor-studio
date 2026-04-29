@@ -45,6 +45,7 @@ type Documents = {
   '\n  mutation RemoveOrgMember($userId: ID!) {\n    removeOrgMember(userId: $userId)\n  }\n': typeof types.RemoveOrgMemberDocument
   '\n  mutation LeaveOrganization {\n    leaveOrganization\n  }\n': typeof types.LeaveOrganizationDocument
   '\n  mutation DeleteOrganization {\n    deleteOrganization\n  }\n': typeof types.DeleteOrganizationDocument
+  '\n  mutation CreateOrganization {\n    createOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      currentUserRole\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n': typeof types.CreateOrganizationDocument
   '\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n': typeof types.RemoveSpaceMemberDocument
   '\n  mutation LeaveSpace($spaceID: String!) {\n    leaveSpace(spaceID: $spaceID)\n  }\n': typeof types.LeaveSpaceDocument
   '\n  mutation UpdateOrgMemberRole($userId: ID!, $role: OrgMemberAssignableRole!) {\n    updateOrgMemberRole(userId: $userId, role: $role) {\n      userId\n      username\n      displayName\n      role\n      createdAt\n    }\n  }\n': typeof types.UpdateOrgMemberRoleDocument
@@ -150,6 +151,8 @@ const documents: Documents = {
   '\n  mutation LeaveOrganization {\n    leaveOrganization\n  }\n': types.LeaveOrganizationDocument,
   '\n  mutation DeleteOrganization {\n    deleteOrganization\n  }\n':
     types.DeleteOrganizationDocument,
+  '\n  mutation CreateOrganization {\n    createOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      currentUserRole\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n':
+    types.CreateOrganizationDocument,
   '\n  mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {\n    removeSpaceMember(spaceID: $spaceID, userId: $userId)\n  }\n':
     types.RemoveSpaceMemberDocument,
   '\n  mutation LeaveSpace($spaceID: String!) {\n    leaveSpace(spaceID: $spaceID)\n  }\n':
@@ -433,6 +436,12 @@ export function gql(
 export function gql(
   source: '\n  mutation DeleteOrganization {\n    deleteOrganization\n  }\n',
 ): (typeof documents)['\n  mutation DeleteOrganization {\n    deleteOrganization\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  mutation CreateOrganization {\n    createOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      currentUserRole\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n',
+): (typeof documents)['\n  mutation CreateOrganization {\n    createOrganization {\n      id\n      name\n      slug\n      ownerUserId\n      currentUserRole\n      plan\n      planStatus\n      createdAt\n      updatedAt\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

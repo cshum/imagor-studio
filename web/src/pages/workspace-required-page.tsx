@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { Building2, LogOut, Mail } from 'lucide-react'
+import { toast } from 'sonner'
 
+import { createOrganization } from '@/api/org-api'
 import { AppHeader } from '@/components/app-header'
 import { Button } from '@/components/ui/button'
 import { useBrand } from '@/hooks/use-brand'
@@ -10,15 +13,34 @@ import { useAuth } from '@/stores/auth-store'
 export function WorkspaceRequiredPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { title: appTitle } = useBrand()
-  const { authState, logout } = useAuth()
+  const { authState, logout, refreshAuthSession } = useAuth()
+  const [isCreatingOrganization, setIsCreatingOrganization] = useState(false)
 
   const profileLabel =
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
 
   const handleSignOut = async () => {
     await logout()
+    await router.invalidate()
     navigate({ to: '/login' })
+  }
+
+  const handleCreateOrganization = async () => {
+    setIsCreatingOrganization(true)
+    try {
+      await createOrganization()
+      await refreshAuthSession()
+      await router.invalidate()
+      toast.success(t('pages.workspaceRequired.actions.createSuccess'))
+      navigate({ to: '/' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('common.status.error')
+      toast.error(`${t('pages.workspaceRequired.actions.createError')}: ${message}`)
+    } finally {
+      setIsCreatingOrganization(false)
+    }
   }
 
   return (
@@ -46,6 +68,12 @@ export function WorkspaceRequiredPage() {
             </p>
 
             <div className='mt-8 flex flex-wrap gap-3'>
+              <Button onClick={handleCreateOrganization} disabled={isCreatingOrganization}>
+                <Building2 className='mr-2 h-4 w-4' />
+                {isCreatingOrganization
+                  ? t('pages.workspaceRequired.actions.creatingOrganization')
+                  : t('pages.workspaceRequired.actions.createOrganization')}
+              </Button>
               <Button onClick={handleSignOut}>
                 <LogOut className='mr-2 h-4 w-4' />
                 {t('pages.workspaceRequired.actions.signOut')}

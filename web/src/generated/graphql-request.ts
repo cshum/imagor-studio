@@ -188,6 +188,7 @@ export type Mutation = {
   createBillingPortalSession: BillingSession
   createCheckoutSession: BillingSession
   createFolder: Scalars['Boolean']['output']
+  createOrganization: Organization
   createSpace: Space
   createUser: User
   deactivateAccount: Scalars['Boolean']['output']
@@ -1354,6 +1355,24 @@ export type DeleteOrganizationMutationVariables = Exact<{ [key: string]: never }
 
 export type DeleteOrganizationMutation = { __typename?: 'Mutation'; deleteOrganization: boolean }
 
+export type CreateOrganizationMutationVariables = Exact<{ [key: string]: never }>
+
+export type CreateOrganizationMutation = {
+  __typename?: 'Mutation'
+  createOrganization: {
+    __typename?: 'Organization'
+    id: string
+    name: string
+    slug: string
+    ownerUserId: string
+    currentUserRole: OrgMemberRole
+    plan: string
+    planStatus: string
+    createdAt: string
+    updatedAt: string
+  }
+}
+
 export type RemoveSpaceMemberMutationVariables = Exact<{
   spaceID: Scalars['String']['input']
   userId: Scalars['ID']['input']
@@ -2448,6 +2467,21 @@ export const DeleteOrganizationDocument = gql`
     deleteOrganization
   }
 `
+export const CreateOrganizationDocument = gql`
+  mutation CreateOrganization {
+    createOrganization {
+      id
+      name
+      slug
+      ownerUserId
+      currentUserRole
+      plan
+      planStatus
+      createdAt
+      updatedAt
+    }
+  }
+`
 export const RemoveSpaceMemberDocument = gql`
   mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {
     removeSpaceMember(spaceID: $spaceID, userId: $userId)
@@ -3399,6 +3433,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'DeleteOrganization',
+        'mutation',
+        variables,
+      )
+    },
+    CreateOrganization(
+      variables?: CreateOrganizationMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<CreateOrganizationMutation> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<CreateOrganizationMutation>({
+            document: CreateOrganizationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'CreateOrganization',
         'mutation',
         variables,
       )

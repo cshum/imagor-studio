@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Outlet, useLocation, useNavigate } from '@tanstack/react-router'
+import { Link, Outlet, useLocation, useNavigate, useRouter } from '@tanstack/react-router'
 import {
   ArrowLeft,
   Building2,
@@ -111,26 +111,31 @@ const NAV_GROUPS = (
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function AccountLayout({ children }: PropsWithChildren) {
+export function AccountLayout({
+  children,
+  showOrganizationLink = false,
+}: PropsWithChildren<{ showOrganizationLink?: boolean }>) {
   const { t } = useTranslation()
   const { authState, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { title: appTitle } = useBrand()
   const breadcrumbs = useBreadcrumb()
   const isAdmin = authState.profile?.role === 'admin'
   const isMultiTenant = authState.multiTenant
   const showSidebar = !isMultiTenant
   const [mobileOpen, setMobileOpen] = useState(false)
-  const accountLinks = isMultiTenant
-    ? [
-        {
-          label: t('navigation.breadcrumbs.organization'),
-          href: '/account/organization',
-          icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
-        },
-      ]
-    : []
+  const accountLinks =
+    isMultiTenant && showOrganizationLink
+      ? [
+          {
+            label: t('navigation.breadcrumbs.organization'),
+            href: '/account/organization',
+            icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
+          },
+        ]
+      : []
 
   useScrollHandler(location.pathname)
 
@@ -162,6 +167,7 @@ export function AccountLayout({ children }: PropsWithChildren) {
 
   const handleLogout = async () => {
     await logout()
+    await router.invalidate()
     navigate({ to: '/login' })
   }
 

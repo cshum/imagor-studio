@@ -30,11 +30,15 @@ type PasswordSignupStore interface {
 	CreateWithEmail(ctx context.Context, displayName, username, hashedPassword, role, email string) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
+	RequestEmailChange(ctx context.Context, id string, email string) (*User, error)
+	ClearPendingEmailChange(ctx context.Context, id string) error
+	ConfirmEmailChange(ctx context.Context, id string, email string) (*User, error)
 	SetActive(ctx context.Context, id string, active bool) error
 	SetEmailVerified(ctx context.Context, id string, verified bool) error
 }
 
 type OAuthStore interface {
+	GetByID(ctx context.Context, id string) (*User, error)
 	UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*User, error)
 	UpdateRole(ctx context.Context, id string, role string) error
 }

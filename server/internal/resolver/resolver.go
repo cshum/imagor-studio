@@ -13,6 +13,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
+	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor/imagorpath"
@@ -68,6 +69,7 @@ type Resolver struct {
 
 	spaceInviteStore space.SpaceInviteStore
 	inviteSender     space.InviteSender
+	signupRuntime    signup.Runtime
 
 	storageConfigValidator StorageConfigValidator
 	spaceStorageFactory    func(*space.Space) (storage.Storage, error)
@@ -120,6 +122,12 @@ func WithStorageConfigValidator(validator StorageConfigValidator) ResolverOption
 func WithSpaceStorageFactory(factory func(*space.Space) (storage.Storage, error)) ResolverOption {
 	return func(r *Resolver) {
 		r.spaceStorageFactory = factory
+	}
+}
+
+func WithSignupRuntime(runtime signup.Runtime) ResolverOption {
+	return func(r *Resolver) {
+		r.signupRuntime = runtime
 	}
 }
 

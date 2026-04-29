@@ -11,6 +11,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/userstore"
 	"github.com/cshum/imagor-studio/server/pkg/apperror"
 	"github.com/cshum/imagor-studio/server/pkg/auth"
+	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
 	"go.uber.org/zap"
 )
@@ -243,13 +244,32 @@ func (r *mutationResolver) RequestEmailChange(ctx context.Context, email string,
 		return nil, err
 	}
 
-	updatedUser, err := r.userStore.RequestEmailChange(ctx, targetUserID, email)
+	var updatedUser *userstore.User
+	if r.signupRuntime != nil {
+		result, requestErr := r.signupRuntime.RequestEmailChange(ctx, signup.RequestEmailChangeParams{
+			UserID: targetUserID,
+			Email:  email,
+		})
+		if requestErr == nil {
+			return &gql.EmailChangeRequestResult{
+				Email:                result.Email,
+				VerificationRequired: result.VerificationRequired,
+			}, nil
+		}
+		err = requestErr
+	} else {
+		updatedUser, err = r.userStore.RequestEmailChange(ctx, targetUserID, email)
+	}
 	if err != nil {
 		switch {
-		case errors.Is(err, userstore.ErrEmailAlreadyExists):
+		case errors.Is(err, userstore.ErrEmailAlreadyExists), errors.Is(err, signup.ErrEmailAlreadyExists):
 			return nil, apperror.Conflict("email already exists", "email")
 		case strings.Contains(err.Error(), "cannot be empty"):
 			return nil, apperror.BadRequest("email is required", nil, "email")
+		case strings.Contains(err.Error(), "unchanged"):
+			return nil, apperror.BadRequest("email must be different from your current sign-in email", map[string]interface{}{"field": "email"}, "email")
+		case errors.Is(err, signup.ErrEmailChangeVerificationCooldownActive):
+			return nil, apperror.TooManyRequests("Please wait before requesting another verification email", map[string]interface{}{"field": "email"}, "email")
 		default:
 			return nil, fmt.Errorf("failed to request email change: %w", err)
 		}

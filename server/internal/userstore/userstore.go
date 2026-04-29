@@ -35,6 +35,8 @@ type Store interface {
 	UpdateDisplayName(ctx context.Context, id string, displayName string) error
 	UpdateUsername(ctx context.Context, id string, username string) error
 	RequestEmailChange(ctx context.Context, id string, email string) (*User, error)
+	ClearPendingEmailChange(ctx context.Context, id string) error
+	ConfirmEmailChange(ctx context.Context, id string, email string) (*User, error)
 	ListAuthProviders(ctx context.Context, id string) ([]*AuthProvider, error)
 	UnlinkAuthProvider(ctx context.Context, id string, provider string) error
 	SetActive(ctx context.Context, id string, active bool) error
@@ -340,6 +342,20 @@ func (s *store) RequestEmailChange(ctx context.Context, id string, email string)
 		return nil, fmt.Errorf("email cannot be empty")
 	}
 
+	currentUser, err := s.GetByIDAdmin(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if currentUser == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+	if currentUser.Email != nil && strings.EqualFold(strings.TrimSpace(*currentUser.Email), email) {
+		return nil, fmt.Errorf("email is unchanged")
+	}
+	if currentUser.PendingEmail != nil && strings.EqualFold(strings.TrimSpace(*currentUser.PendingEmail), email) {
+		return nil, fmt.Errorf("email is unchanged")
+	}
+
 	existingUser, err := s.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -356,6 +372,57 @@ func (s *store) RequestEmailChange(ctx context.Context, id string, email string)
 		Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error requesting email change: %w", err)
+	}
+
+	return s.GetByIDAdmin(ctx, id)
+}
+
+func (s *store) ClearPendingEmailChange(ctx context.Context, id string) error {
+	_, err := s.db.NewUpdate().
+		Model((*model.User)(nil)).
+		Set("pending_email = NULL").
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error clearing pending email change: %w", err)
+	}
+	return nil
+}
+
+func (s *store) ConfirmEmailChange(ctx context.Context, id string, email string) (*User, error) {
+	email = strings.TrimSpace(strings.ToLower(email))
+	if email == "" {
+		return nil, fmt.Errorf("email cannot be empty")
+	}
+
+	existingUser, err := s.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	if existingUser != nil && existingUser.ID != id {
+		return nil, fmt.Errorf("%w", ErrEmailAlreadyExists)
+	}
+
+	result, err := s.db.NewUpdate().
+		Model((*model.User)(nil)).
+		Set("email = ?", email).
+		Set("pending_email = NULL").
+		Set("email_verified = ?", true).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Where("pending_email = ?", email).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error confirming email change: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("error confirming email change: %w", err)
+	}
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("pending email change not found")
 	}
 
 	return s.GetByIDAdmin(ctx, id)

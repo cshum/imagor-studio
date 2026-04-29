@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, Navigate, useNavigate, useSearch } from '@tanstack/react-router'
+import { Link, Navigate, useNavigate, useRouter, useSearch } from '@tanstack/react-router'
 import { z } from 'zod'
 
 import { getAuthProviders, getGoogleLoginUrl, login } from '@/api/auth-api'
@@ -59,6 +59,7 @@ export function LoginPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
   const search = useSearch({ from: '/login' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
   const isMultiTenant = authState.multiTenant
@@ -68,6 +69,13 @@ export function LoginPage() {
     // Only allow relative URLs that start with /
     // This prevents open redirect vulnerabilities
     return url.startsWith('/') && !url.startsWith('//')
+  }
+
+  const resolvePostLoginRedirect = (redirectPath?: string): string => {
+    if (redirectPath && isValidRedirectUrl(redirectPath)) {
+      return redirectPath
+    }
+    return '/'
   }
 
   const identifierRequiredMessage = isMultiTenant
@@ -168,8 +176,10 @@ export function LoginPage() {
       const response = await login({
         username: values.username.trim(),
         password: values.password,
+        inviteToken: typeof search.invite_token === 'string' ? search.invite_token : undefined,
       })
       await initAuth(response.token)
+      await router.invalidate()
 
       // Reload user's language preference after login
       await initializeLocale()
@@ -181,8 +191,7 @@ export function LoginPage() {
         return
       }
 
-      // Default redirect to home if no valid redirect parameter
-      navigate({ to: '/' })
+      navigate({ to: resolvePostLoginRedirect(response.redirectPath) })
     } catch (err) {
       // Map specific error messages to translations
       let errorMessage = t('auth.login.loginFailed') // Default fallback
@@ -204,7 +213,8 @@ export function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = getGoogleLoginUrl()
+    const inviteToken = typeof search.invite_token === 'string' ? search.invite_token : undefined
+    window.location.href = getGoogleLoginUrl(inviteToken)
   }
 
   const credentialsDividerKey = isMultiTenant
@@ -304,7 +314,7 @@ export function LoginPage() {
             )}
           />
           {form.formState.errors.root && (
-            <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+            <div className='bg-destructive/5 text-destructive rounded-md p-3 text-sm'>
               {form.formState.errors.root.message}
             </div>
           )}

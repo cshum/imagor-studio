@@ -4,14 +4,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const mockNavigate = vi.fn()
 const mockRegisterWithVerificationFallback = vi.fn()
 const mockResendPublicSignupVerification = vi.fn()
+const mockResolveInvitation = vi.fn()
 const mockGetAuthProviders = vi.fn()
 const mockInitAuth = vi.fn()
 const mockInitializeLocale = vi.fn()
 const mockUseAuth = vi.fn()
+const mockInvalidate = vi.fn()
+const mockUseSearch = vi.fn()
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, values?: Record<string, string | number>) => {
+      if (key === 'auth.register.pendingDescriptionFallback') {
+        return 'auth.register.pendingDescriptionFallback'
+      }
       if (values?.email) {
         return `${key}:${values.email}`
       }
@@ -31,12 +37,16 @@ vi.mock('@tanstack/react-router', () => ({
   ),
   Navigate: ({ to }: { to: string }) => <div>{`Navigate:${to}`}</div>,
   useNavigate: () => mockNavigate,
+  useRouter: () => ({ invalidate: mockInvalidate }),
+  useSearch: () => mockUseSearch(),
 }))
 
 vi.mock('@/api/auth-api', () => ({
   getAuthProviders: mockGetAuthProviders,
-  getGoogleLoginUrl: () => '/api/auth/google/login',
+  getGoogleLoginUrl: (inviteToken?: string) =>
+    inviteToken ? `/api/auth/google/login?invite_token=${inviteToken}` : '/api/auth/google/login',
   registerWithVerificationFallback: mockRegisterWithVerificationFallback,
+  resolveInvitation: (...args: any[]) => mockResolveInvitation(...args),
   resendPublicSignupVerification: mockResendPublicSignupVerification,
 }))
 
@@ -73,6 +83,12 @@ describe('RegisterPage pending verification', () => {
     vi.useRealTimers()
     vi.clearAllMocks()
     mockGetAuthProviders.mockResolvedValue({ providers: [] })
+    mockResolveInvitation.mockResolvedValue({
+      organizationName: 'Acme Org',
+      invitedEmail: 'invitee@example.com',
+      role: 'member',
+    })
+    mockUseSearch.mockReturnValue({ invite_token: '' })
     mockUseAuth.mockReturnValue({
       authState: {
         isEmbedded: false,
@@ -245,5 +261,146 @@ describe('RegisterPage pending verification', () => {
       expect(mockResendPublicSignupVerification).toHaveBeenCalledWith('owner@example.com')
     })
     expect(screen.getByText('auth.register.resendCooldown:0')).toBeTruthy()
+  })
+
+  it('falls back to the submitted email when the masked destination is blank', async () => {
+    const { RegisterPage } = await import('./register-page')
+
+    mockRegisterWithVerificationFallback.mockResolvedValue({
+      kind: 'verification-required',
+      response: {
+        email: '',
+        verificationRequired: true,
+        cooldownSeconds: 0,
+        expiresInSeconds: 900,
+        maskedDestination: '',
+      },
+    })
+
+    render(<RegisterPage />)
+
+    fireEvent.change(screen.getByLabelText('pages.profile.displayName'), {
+      target: { value: 'Acme Owner' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.profile.email'), {
+      target: { value: 'owner@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'Password123!' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.admin.confirmPassword'), {
+      target: { value: 'Password123!' },
+    })
+
+    fireEvent.click(screen.getByText('auth.register.submit'))
+
+    await waitFor(() => {
+      expect(mockRegisterWithVerificationFallback).toHaveBeenCalled()
+    })
+
+    expect(screen.getByText('auth.register.pendingDescription:owner@example.com')).toBeTruthy()
+  })
+
+  it('passes invite_token through invite-driven signup requests', async () => {
+    const { RegisterPage } = await import('./register-page')
+
+    mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
+    mockRegisterWithVerificationFallback.mockResolvedValue({
+      kind: 'verification-required',
+      response: {
+        email: 'invitee@example.com',
+        verificationRequired: true,
+        cooldownSeconds: 0,
+        expiresInSeconds: 900,
+        maskedDestination: 'i***@example.com',
+      },
+    })
+
+    render(<RegisterPage />)
+
+    fireEvent.change(screen.getByLabelText('pages.profile.displayName'), {
+      target: { value: 'Invited User' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.profile.email'), {
+      target: { value: 'invitee@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'Password123!' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.admin.confirmPassword'), {
+      target: { value: 'Password123!' },
+    })
+
+    fireEvent.click(screen.getByText('auth.register.submit'))
+
+    await waitFor(() => {
+      expect(mockRegisterWithVerificationFallback).toHaveBeenCalledWith({
+        displayName: 'Invited User',
+        email: 'invitee@example.com',
+        password: 'Password123!',
+        inviteToken: 'invite-token-123',
+      })
+    })
+  })
+
+  it('locks the invited email when the register page is opened from an invite link', async () => {
+    const { RegisterPage } = await import('./register-page')
+
+    mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
+
+    render(<RegisterPage />)
+
+    await waitFor(() => {
+      expect(mockResolveInvitation).toHaveBeenCalledWith('invite-token-123')
+    })
+
+    const emailInput = screen.getByLabelText('pages.profile.email') as HTMLInputElement
+    expect(emailInput.value).toBe('invitee@example.com')
+    expect(emailInput.readOnly).toBe(true)
+    expect(screen.getByText('auth.register.invitedEmailHint:invitee@example.com')).toBeTruthy()
+  })
+
+  it('signs in immediately and redirects to the invite target for invite-driven email signup', async () => {
+    const { RegisterPage } = await import('./register-page')
+
+    mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
+    mockRegisterWithVerificationFallback.mockResolvedValue({
+      kind: 'authenticated',
+      response: {
+        token: 'jwt-token',
+        expiresIn: 3600,
+        redirectPath: '/spaces/acme-space',
+        user: {
+          id: 'user-123',
+          displayName: 'Invited User',
+          username: 'inviteduser',
+          role: 'user',
+        },
+      },
+    })
+
+    render(<RegisterPage />)
+
+    await waitFor(() => {
+      expect(mockResolveInvitation).toHaveBeenCalledWith('invite-token-123')
+    })
+
+    fireEvent.change(screen.getByLabelText('pages.profile.displayName'), {
+      target: { value: 'Invited User' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'Password123!' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.admin.confirmPassword'), {
+      target: { value: 'Password123!' },
+    })
+
+    fireEvent.click(screen.getByText('auth.register.submit'))
+
+    await waitFor(() => {
+      expect(mockInitAuth).toHaveBeenCalledWith('jwt-token')
+    })
+    expect(mockInitializeLocale).toHaveBeenCalled()
+    expect(mockNavigate).toHaveBeenCalledWith({ to: '/spaces/acme-space' })
   })
 })

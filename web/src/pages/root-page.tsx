@@ -66,6 +66,7 @@ export function RootPage({ loaderData }: RootPageProps) {
       <SpacesLayout
         title={t('pages.spaces.title')}
         description={t('pages.spaces.description')}
+        showOrganizationLink={data.currentOrganizationId !== null}
         primaryAction={
           isOrgAdmin ? <SpacesPageActions createSpaceDisabled={createSpaceDisabled} /> : undefined
         }

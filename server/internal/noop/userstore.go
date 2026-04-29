@@ -66,6 +66,14 @@ func (n *UserStore) RequestEmailChange(ctx context.Context, id string, email str
 	return nil, ErrEmbeddedMode
 }
 
+func (n *UserStore) ClearPendingEmailChange(ctx context.Context, id string) error {
+	return ErrEmbeddedMode
+}
+
+func (n *UserStore) ConfirmEmailChange(ctx context.Context, id string, email string) (*userstore.User, error) {
+	return nil, ErrEmbeddedMode
+}
+
 func (n *UserStore) ListAuthProviders(ctx context.Context, id string) ([]*userstore.AuthProvider, error) {
 	return nil, ErrEmbeddedMode
 }

@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Outlet, useMatches, useNavigate, useRouterState } from '@tanstack/react-router'
+import {
+  Link,
+  Outlet,
+  useMatches,
+  useNavigate,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router'
 import {
   ArrowLeft,
   Building2,
@@ -53,13 +60,18 @@ export type SectionId = 'general' | 'storage' | 'imagor' | 'members'
 
 interface SpaceSettingsLayoutProps {
   space: SpaceSettingsData
+  showOrganizationLink?: boolean
 }
 
-export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
+export function SpaceSettingsLayout({
+  space,
+  showOrganizationLink = false,
+}: SpaceSettingsLayoutProps) {
   const { t } = useTranslation()
   const { authState, logout } = useAuth()
   const { title: appTitle } = useBrand()
   const navigate = useNavigate()
+  const router = useRouter()
   const matches = useMatches()
   const [mobileOpen, setMobileOpen] = useState(false)
   const { location } = useRouterState()
@@ -80,18 +92,20 @@ export function SpaceSettingsLayout({ space }: SpaceSettingsLayoutProps) {
 
   const getUserDisplayName = () =>
     authState.profile?.displayName || authState.profile?.username || t('common.status.user')
-  const accountLinks = authState.multiTenant
-    ? [
-        {
-          label: t('navigation.breadcrumbs.organization'),
-          href: '/account/organization',
-          icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
-        },
-      ]
-    : []
+  const accountLinks =
+    authState.multiTenant && showOrganizationLink
+      ? [
+          {
+            label: t('navigation.breadcrumbs.organization'),
+            href: '/account/organization',
+            icon: <Building2 className='text-muted-foreground mr-3 h-4 w-4' />,
+          },
+        ]
+      : []
 
   const handleLogout = async () => {
     await logout()
+    await router.invalidate()
     navigate({ to: '/login' })
   }
 

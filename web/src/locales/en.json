@@ -96,8 +96,11 @@
       "googleCta": "Continue with Google",
       "credentialsDivider": "Or create an account with email and password",
       "emailPlaceholder": "name@example.com",
+      "invitedEmailHint": "This invitation is locked to {{email}}.",
+      "pendingEyebrow": "Email confirmation",
       "pendingTitle": "Check your email",
       "pendingDescription": "We sent a confirmation link to {{email}}. Open it to finish creating your account.",
+      "pendingDescriptionFallback": "We sent a confirmation link. Open it to finish creating your account.",
       "resendAction": "Resend verification email",
       "resendCountdown": "Resend available in {{seconds}}s",
       "resendSuccess": "We sent a fresh verification email.",
@@ -175,15 +178,18 @@
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
       "errors": {
-        "inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first."
+        "inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first.",
+        "inviteEmailMismatch": "This invitation was sent to a different email address. Sign in with the invited account instead."
       },
       "errorNoToken": "No authentication token received",
       "backToLogin": "Back to login"
     },
     "registerVerify": {
+      "pendingEyebrow": "Account confirmation",
       "title": "Confirming your account",
       "subtitle": "Please wait while we finish signing you in.",
       "verifying": "Verifying your email confirmation link.",
+      "errorEyebrow": "Service error",
       "errorTitle": "We couldn't confirm your account",
       "errorSubtitle": "The confirmation link may be invalid or expired.",
       "missingToken": "The confirmation link is missing its verification token.",
@@ -194,9 +200,29 @@
       "resendSuccess": "We sent a fresh confirmation email.",
       "resendCooldown": "Please wait before requesting another confirmation email.",
       "resendFailed": "Failed to resend the confirmation email. Please try again.",
+      "signInInsteadDescription": "There is no pending confirmation left for {{email}}. If you already completed sign-up, sign in instead.",
       "backToLogin": "Back to login"
     },
+    "emailChangeVerify": {
+      "pendingEyebrow": "Email change",
+      "pendingTitle": "Confirming your new email",
+      "pendingDescription": "Please wait while we verify your new sign-in email address.",
+      "verifying": "Verifying your email change confirmation link.",
+      "successEyebrow": "Email updated",
+      "successTitle": "Your sign-in email has been updated",
+      "successDescription": "{{email}} is now the email address used to sign in.",
+      "successBody": "You can continue using your account with {{email}} the next time you sign in.",
+      "errorEyebrow": "Email change",
+      "errorTitle": "We couldn't confirm your new email",
+      "errorSubtitle": "The confirmation link may be invalid or expired.",
+      "errorHelp": "Request another email change from your account settings to get a fresh confirmation link.",
+      "backToLogin": "Back to login",
+      "backToProfile": "Back to profile"
+    },
     "error": {
+      "eyebrowDefault": "Service error",
+      "eyebrowNotFound": "Page not found",
+      "eyebrowForbidden": "Access restricted",
       "defaultTitle": "Something went wrong",
       "notFoundTitle": "Space not found",
       "forbiddenTitle": "Access denied",
@@ -414,6 +440,7 @@
       "changeEmailTitle": "Change email",
       "changeEmailDescription": "Update your sign-in email address.",
       "emailChangeHelp": "We'll keep your current email until the new address is confirmed.",
+      "emailChangeUnchanged": "Enter a different email address to update your sign-in email.",
       "requestEmailChange": "Update Email",
       "emailChangeRequestedSuccess": "Email change requested successfully",
       "emailChangeRequestFailed": "Failed to request email change",
@@ -778,11 +805,38 @@
       },
       "nextSteps": {
         "title": "What to do next",
-        "description": "If you expected access already, contact the team that manages your Imagor Studio organization. Self-serve setup is not available from this state yet."
+        "description": "Create a new personal organization to continue, or join an existing one from an invite if you are supposed to work inside another team."
       },
       "actions": {
+        "createOrganization": "Create organization",
+        "creatingOrganization": "Creating organization...",
+        "createSuccess": "Organization created",
+        "createError": "Failed to create organization",
         "signOut": "Sign out"
       }
+    },
+    "joinInvite": {
+      "eyebrow": "Organization invitation",
+      "heroTitle": "Choose how you want to join",
+      "heroDescription": "Use this invitation to join an existing organization. Signing up from this flow will join the invited workspace instead of creating a separate organization.",
+      "formTitle": "Join with an invitation",
+      "invitedTo": "You were invited to join {{organization}}",
+      "organizationDescription": "This invitation was sent to {{email}} with the {{role}} role.",
+      "spaceDescription": "This invitation was sent to {{email}} with the {{role}} role for the {{space}} space.",
+      "googleAction": "Continue with Google",
+      "emailAction": "Continue with email",
+      "secondaryHelp": "Google sign-in uses the invitation directly. Email sign-up verifies your address first and then joins the invited organization.",
+      "loginInstead": "Already have an account? Sign in",
+      "acceptingTitle": "Completing your invitation",
+      "acceptingDescription": "We are adding this account to the invited organization now.",
+      "acceptFailedTitle": "We could not complete this invitation",
+      "acceptFailed": "Try opening the invitation again or sign in with the invited account.",
+      "errors": {
+        "invalid": "This invitation is no longer valid. Ask the sender to create a new one.",
+        "emailMismatch": "This invitation was sent to a different email address. Sign in with the invited account instead.",
+        "orgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first."
+      },
+      "invalidTitle": "This invitation is unavailable"
     },
     "spaces": {
       "title": "Spaces",
@@ -802,9 +856,13 @@
         "back": "Back"
       },
       "noSpacesFound": "Create your first image processing space",
+      "noOrganizationTitle": "Create an organization to get started",
+      "noOrganizationBannerTitle": "Create your own organization",
+      "noOrganizationBannerDescription": "You still have access to shared spaces, but this account no longer has a personal organization. Create one to restore your own workspace and admin flows.",
       "noSpacesAvailable": "No spaces available yet",
       "description": "Process, deliver, and manage images by team, brand, or environment.",
       "emptyDescription": "Launch your first image processing space for uploads, transforms, and delivery.",
+      "emptyDescriptionNoOrganization": "This account does not have a personal organization yet.",
       "emptyDescriptionMember": "You do not have access to any image processing spaces yet.",
       "settings": "Settings",
       "spaceCount": "{{count}} space(s)",
@@ -904,6 +962,7 @@
       },
       "configure": "Configure",
       "startDescription": "You can customize storage, delivery, and access as you grow.",
+      "startDescriptionNoOrganization": "Create a personal organization now, then come back here to create or receive access to spaces.",
       "startDescriptionMember": "Ask an organization admin to create a space or share an existing space with you.",
       "sharedLabel": "Shared",
       "leaveSpace": "Leave",

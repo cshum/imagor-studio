@@ -125,6 +125,7 @@ type ComplexityRoot struct {
 		CreateBillingPortalSession    func(childComplexity int, returnURL string) int
 		CreateCheckoutSession         func(childComplexity int, plan string, successURL string, cancelURL string) int
 		CreateFolder                  func(childComplexity int, path string, spaceID *string) int
+		CreateOrganization            func(childComplexity int) int
 		CreateSpace                   func(childComplexity int, input SpaceInput) int
 		CreateUser                    func(childComplexity int, input CreateUserInput) int
 		DeactivateAccount             func(childComplexity int, userID *string) int
@@ -413,6 +414,7 @@ type MutationResolver interface {
 	ConfigureImagor(ctx context.Context, input ImagorInput) (*ImagorConfigResult, error)
 	GenerateImagorURL(ctx context.Context, imagePath string, spaceID *string, params ImagorParamsInput) (string, error)
 	GenerateImagorURLFromTemplate(ctx context.Context, templateJSON string, spaceID *string, imagePath *string, contextPath []string, forPreview *bool, previewMaxDimensions *DimensionsInput, skipLayerID *string, appendFilters []*ImagorFilterInput) (string, error)
+	CreateOrganization(ctx context.Context) (*Organization, error)
 	CreateCheckoutSession(ctx context.Context, plan string, successURL string, cancelURL string) (*BillingSession, error)
 	CreateBillingPortalSession(ctx context.Context, returnURL string) (*BillingSession, error)
 	CreateSpace(ctx context.Context, input SpaceInput) (*Space, error)
@@ -913,6 +915,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateFolder(childComplexity, args["path"].(string), args["spaceID"].(*string)), true
+	case "Mutation.createOrganization":
+		if e.ComplexityRoot.Mutation.CreateOrganization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.CreateOrganization(childComplexity), true
 	case "Mutation.createSpace":
 		if e.ComplexityRoot.Mutation.CreateSpace == nil {
 			break
@@ -2728,6 +2736,8 @@ extend type Query {
 }
 
 extend type Mutation {
+  # Create a personal organization for the current user when they do not already have one
+  createOrganization: Organization!
   # Create a checkout session for a paid plan (admin only)
   createCheckoutSession(plan: String!, successURL: String!, cancelURL: String!): BillingSession!
   # Create a customer billing portal session (admin only)
@@ -6218,6 +6228,55 @@ func (ec *executionContext) fieldContext_Mutation_generateImagorUrlFromTemplate(
 	if fc.Args, err = ec.field_Mutation_generateImagorUrlFromTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createOrganization,
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().CreateOrganization(ctx)
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Organization_slug(ctx, field)
+			case "ownerUserId":
+				return ec.fieldContext_Organization_ownerUserId(ctx, field)
+			case "currentUserRole":
+				return ec.fieldContext_Organization_currentUserRole(ctx, field)
+			case "plan":
+				return ec.fieldContext_Organization_plan(ctx, field)
+			case "planStatus":
+				return ec.fieldContext_Organization_planStatus(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -16265,6 +16324,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "generateImagorUrlFromTemplate":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_generateImagorUrlFromTemplate(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createOrganization":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createOrganization(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

@@ -154,7 +154,7 @@ export const LicenseActivationDialog: React.FC<LicenseActivationDialogProps> = (
 
               {/* Error Message */}
               {error && (
-                <div className='bg-destructive/10 text-destructive rounded-md p-3 text-sm'>
+                <div className='bg-destructive/5 text-destructive rounded-md p-3 text-sm'>
                   {error}
                 </div>
               )}

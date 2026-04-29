@@ -131,15 +131,18 @@
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
       "errors": {
-        "inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。"
+        "inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。",
+        "inviteEmailMismatch": "此邀请发送到了其他邮箱地址。请改用受邀账户登录。"
       },
       "errorNoToken": "未收到认证令牌",
       "backToLogin": "返回登录"
     },
     "registerVerify": {
+      "pendingEyebrow": "账户确认",
       "title": "正在确认您的账户",
       "subtitle": "请稍候，我们正在完成您的登录。",
       "verifying": "正在验证您的邮箱确认链接。",
+      "errorEyebrow": "服务错误",
       "errorTitle": "我们无法确认您的账户",
       "errorSubtitle": "该确认链接可能无效或已过期。",
       "missingToken": "该确认链接缺少验证令牌。",
@@ -150,9 +153,29 @@
       "resendSuccess": "我们已发送一封新的确认邮件。",
       "resendCooldown": "请稍候后再请求新的确认邮件。",
       "resendFailed": "重新发送确认邮件失败，请重试。",
+      "signInInsteadDescription": "{{email}} 当前已经没有待完成的确认步骤。如果您已经完成注册，请直接登录。",
       "backToLogin": "返回登录"
     },
+    "emailChangeVerify": {
+      "pendingEyebrow": "邮箱变更",
+      "pendingTitle": "正在确认您的新邮箱",
+      "pendingDescription": "请稍候，我们正在验证您新的登录邮箱地址。",
+      "verifying": "正在验证您的邮箱变更确认链接。",
+      "successEyebrow": "邮箱已更新",
+      "successTitle": "您的登录邮箱已更新",
+      "successDescription": "{{email}} 现在将作为您的登录邮箱地址。",
+      "successBody": "下次登录时，您可以继续使用 {{email}} 访问您的账户。",
+      "errorEyebrow": "邮箱变更",
+      "errorTitle": "我们无法确认您的新邮箱",
+      "errorSubtitle": "该确认链接可能无效或已过期。",
+      "errorHelp": "请在账户设置中重新请求邮箱变更，以获取新的确认链接。",
+      "backToLogin": "返回登录",
+      "backToProfile": "返回个人资料"
+    },
     "error": {
+      "eyebrowDefault": "服务错误",
+      "eyebrowNotFound": "页面未找到",
+      "eyebrowForbidden": "访问受限",
       "defaultTitle": "出现了一些问题",
       "notFoundTitle": "未找到空间",
       "forbiddenTitle": "无权访问",
@@ -370,6 +393,7 @@
       "changeEmailTitle": "更改电子邮件",
       "changeEmailDescription": "更新您的登录电子邮件地址。",
       "emailChangeHelp": "在新地址确认之前，我们会继续保留您当前的电子邮件。",
+      "emailChangeUnchanged": "请输入不同的电子邮件地址以更新您的登录电子邮件。",
       "requestEmailChange": "更新电子邮件",
       "emailChangeRequestedSuccess": "已成功提交电子邮件更改请求",
       "emailChangeRequestFailed": "提交电子邮件更改请求失败",
@@ -734,11 +758,38 @@
       },
       "nextSteps": {
         "title": "接下来怎么做",
-        "description": "如果你原本就应该拥有访问权限，请联系管理 Imagor Studio 组织的团队。当前状态下暂不支持自助设置。"
+        "description": "你可以先创建一个新的个人组织继续使用；如果你本应加入别人的团队，也可以通过邀请加入现有组织。"
       },
       "actions": {
+        "createOrganization": "创建组织",
+        "creatingOrganization": "正在创建组织...",
+        "createSuccess": "组织已创建",
+        "createError": "创建组织失败",
         "signOut": "退出登录"
       }
+    },
+    "joinInvite": {
+      "eyebrow": "组织邀请",
+      "heroTitle": "选择加入方式",
+      "heroDescription": "使用此邀请加入现有组织。通过此流程注册时，你会加入被邀请的工作区，而不是创建一个新的组织。",
+      "formTitle": "通过邀请加入",
+      "invitedTo": "你已被邀请加入 {{organization}}",
+      "organizationDescription": "此邀请已发送到 {{email}}，角色为 {{role}}。",
+      "spaceDescription": "此邀请已发送到 {{email}}，角色为 {{role}}，目标空间为 {{space}}。",
+      "googleAction": "使用 Google 继续",
+      "emailAction": "使用邮箱继续",
+      "secondaryHelp": "Google 登录会直接使用此邀请。邮箱注册会先验证你的邮箱地址，然后再加入被邀请的组织。",
+      "loginInstead": "已有账号？去登录",
+      "acceptingTitle": "正在完成邀请",
+      "acceptingDescription": "我们正在将此账户加入受邀组织。",
+      "acceptFailedTitle": "无法完成此邀请",
+      "acceptFailed": "请重新打开邀请链接，或使用受邀账户登录。",
+      "errors": {
+        "invalid": "此邀请已失效。请让发送者重新创建邀请。",
+        "emailMismatch": "此邀请发送到了其他邮箱地址。请改用受邀账户登录。",
+        "orgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。"
+      },
+      "invalidTitle": "此邀请当前不可用"
     },
     "spaces": {
       "title": "空间",
@@ -752,6 +803,9 @@
       "createSpaceButton": "创建空间",
       "updateSpaceButton": "更新空间",
       "noSpacesFound": "创建你的第一个图片工作空间",
+      "noOrganizationTitle": "先创建组织再开始使用",
+      "noOrganizationBannerTitle": "创建你自己的组织",
+      "noOrganizationBannerDescription": "你仍可继续使用共享空间，但这个账号已经没有个人组织。创建一个组织即可恢复你自己的工作区和管理功能。",
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
@@ -785,6 +839,7 @@
       },
       "description": "为你的团队、品牌或环境创建并管理图片工作空间。",
       "emptyDescription": "创建你的第一个图片工作空间，用于上传、处理和交付图片。",
+      "emptyDescriptionNoOrganization": "此账户还没有个人组织。",
       "settings": "设置",
       "spaceCount": "{{count}} 个空间",
       "openGallery": "打开图库",
@@ -853,6 +908,7 @@
         "processingHostLabel": "默认主机"
       },
       "startDescription": "您可以随着成长逐步自定义存储、交付和访问权限。",
+      "startDescriptionNoOrganization": "现在先创建一个个人组织，然后回到这里创建空间或接收现有空间的访问权限。",
       "sharedLabel": "共享",
       "leaveSpace": "离开",
       "leaveSpaceDescription": "离开这个共享空间",
@@ -1516,8 +1572,11 @@
       "googleCta": "使用 Google 继续",
       "credentialsDivider": "或使用邮箱和密码创建账户",
       "emailPlaceholder": "name@example.com",
+      "invitedEmailHint": "此邀请仅限 {{email}} 使用。",
+      "pendingEyebrow": "邮箱确认",
       "pendingTitle": "请检查您的电子邮件",
       "pendingDescription": "我们已将确认链接发送到 {{email}}。打开链接以完成账户创建。",
+      "pendingDescriptionFallback": "我们已发送确认链接。打开链接以完成账户创建。",
       "resendAction": "重新发送验证邮件",
       "resendCountdown": "可在 {{seconds}} 秒后重新发送",
       "resendSuccess": "我们已重新发送验证邮件。",

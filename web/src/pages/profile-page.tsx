@@ -96,6 +96,9 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const hasPassword = profileData.hasPassword
   const authProviders = profileData.authProviders
   const primaryProvider = authProviders[0] || null
+  const canManageEmailInApp = hasPassword
+  const normalizedCurrentEmail = normalizeEmail(email || '')
+  const normalizedPendingEmail = normalizeEmail(pendingEmail || '')
 
   const passwordSchema = useMemo(
     () =>
@@ -179,9 +182,25 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   }
 
   const onEmailSubmit = async (values: EmailForm) => {
+    const nextEmail = normalizeEmail(values.email)
+    if (!canManageEmailInApp) {
+      emailForm.setError('email', {
+        type: 'manual',
+        message: t('pages.profile.emailChangeManaged'),
+      })
+      return
+    }
+    if (nextEmail === normalizedCurrentEmail || nextEmail === normalizedPendingEmail) {
+      emailForm.setError('email', {
+        type: 'manual',
+        message: t('pages.profile.emailChangeUnchanged'),
+      })
+      return
+    }
+
     setIsUpdatingEmail(true)
     try {
-      const result = await requestEmailChange(normalizeEmail(values.email))
+      const result = await requestEmailChange(nextEmail)
       await initAuth()
       emailForm.reset({ email: result.email })
       setEmailDialogOpen(false)
@@ -223,20 +242,24 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
           <SettingRow
             label={t('pages.profile.email')}
             description={
-              pendingEmail
-                ? t('pages.profile.emailChangePending')
-                : emailVerified
-                  ? t('pages.profile.emailVerified')
-                  : t('pages.profile.emailVerificationPending')
+              !canManageEmailInApp && authProviders.length > 0
+                ? t('pages.profile.emailChangeManaged')
+                : pendingEmail
+                  ? t('pages.profile.emailChangePending')
+                  : emailVerified
+                    ? t('pages.profile.emailVerified')
+                    : t('pages.profile.emailVerificationPending')
             }
             contentClassName='flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-end sm:max-w-none'
           >
             <div className='min-w-0 text-left text-sm font-medium break-all sm:text-right'>
               {email || t('pages.profile.noEmail')}
             </div>
-            <Button variant='outline' type='button' onClick={() => setEmailDialogOpen(true)}>
-              {t('pages.profile.changeEmail')}
-            </Button>
+            {canManageEmailInApp ? (
+              <Button variant='outline' type='button' onClick={() => setEmailDialogOpen(true)}>
+                {t('pages.profile.changeEmail')}
+              </Button>
+            ) : null}
           </SettingRow>
         )}
 

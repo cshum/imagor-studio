@@ -197,10 +197,12 @@ func initializeRuntimeMode(cfg *config.Config, logger *zap.Logger, args []string
 				AppTitle:           enhancedCfg.AppTitle,
 			},
 			management.SignupVerificationServices{
-				DB:        db,
-				UserStore: userStore,
-				OrgStore:  orgStore,
-				Logger:    logger,
+				DB:               db,
+				UserStore:        userStore,
+				OrgStore:         orgStore,
+				SpaceStore:       spaceStore,
+				SpaceInviteStore: spaceInviteStore,
+				Logger:           logger,
 			},
 		)
 		if err != nil {

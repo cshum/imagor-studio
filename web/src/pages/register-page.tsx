@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, Navigate, useNavigate } from '@tanstack/react-router'
+import { Link, Navigate, useNavigate, useRouter, useSearch } from '@tanstack/react-router'
+import { MailCheck } from 'lucide-react'
 import { z } from 'zod'
 
 import {
@@ -10,6 +11,7 @@ import {
   getGoogleLoginUrl,
   registerWithVerificationFallback,
   resendPublicSignupVerification,
+  resolveInvitation,
   type AuthApiError,
   type PublicSignupVerificationResponse,
 } from '@/api/auth-api'
@@ -19,6 +21,7 @@ import { ButtonWithLoading } from '@/components/ui/button-with-loading'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -66,6 +69,8 @@ export function RegisterPage() {
   const { t } = useTranslation()
   const { authState } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
+  const search = useSearch({ from: '/register' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
   const [pendingVerification, setPendingVerification] =
     useState<PublicSignupVerificationResponse | null>(null)
@@ -73,6 +78,7 @@ export function RegisterPage() {
   const [resendState, setResendState] = useState<'idle' | 'success' | 'error'>('idle')
   const [resendMessage, setResendMessage] = useState<string | null>(null)
   const [isResending, setIsResending] = useState(false)
+  const [lockedInviteEmail, setLockedInviteEmail] = useState<string | null>(null)
   const productHighlights = [
     t('auth.login.highlights.storage'),
     t('auth.login.highlights.delivery'),
@@ -113,6 +119,13 @@ export function RegisterPage() {
     },
   })
 
+  const pendingVerificationDestination = pendingVerification
+    ? pendingVerification.maskedDestination?.trim() ||
+      pendingVerification.email?.trim() ||
+      form.getValues('email').trim()
+    : ''
+  const inviteToken = typeof search.invite_token === 'string' ? search.invite_token.trim() : ''
+
   useEffect(() => {
     getAuthProviders()
       .then(({ providers }) => {
@@ -122,6 +135,42 @@ export function RegisterPage() {
         // If providers endpoint fails, just don't show OAuth buttons
       })
   }, [])
+
+  useEffect(() => {
+    if (!inviteToken) {
+      setLockedInviteEmail(null)
+      return
+    }
+
+    let cancelled = false
+
+    resolveInvitation(inviteToken)
+      .then((invitation) => {
+        if (cancelled) {
+          return
+        }
+
+        const invitedEmail = invitation.invitedEmail.trim()
+        setLockedInviteEmail(invitedEmail)
+        form.setValue('email', invitedEmail, {
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: true,
+        })
+        form.clearErrors('email')
+      })
+      .catch(() => {
+        if (cancelled) {
+          return
+        }
+
+        setLockedInviteEmail(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [form, inviteToken])
 
   useEffect(() => {
     if (!pendingVerification) {
@@ -162,12 +211,20 @@ export function RegisterPage() {
     return <Navigate to='/' replace />
   }
 
+  const resolveRedirectPath = (redirectPath?: string): string => {
+    if (redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')) {
+      return redirectPath
+    }
+    return '/'
+  }
+
   const onSubmit = async (values: RegisterFormValues) => {
     try {
       const result = await registerWithVerificationFallback({
         displayName: values.displayName.trim(),
         email: values.email.trim(),
         password: values.password,
+        inviteToken: inviteToken || undefined,
       })
 
       if (result.kind === 'verification-required') {
@@ -182,8 +239,9 @@ export function RegisterPage() {
       }
 
       await initAuth(result.response.token)
+      await router.invalidate()
       await initializeLocale()
-      navigate({ to: '/' })
+      navigate({ to: resolveRedirectPath(result.response.redirectPath) })
     } catch (error) {
       const apiError = error as AuthApiError
 
@@ -203,7 +261,7 @@ export function RegisterPage() {
   }
 
   const handleGoogleSignup = () => {
-    window.location.href = getGoogleLoginUrl()
+    window.location.href = getGoogleLoginUrl(inviteToken || undefined)
   }
 
   const handleResendVerification = async () => {
@@ -258,52 +316,63 @@ export function RegisterPage() {
       showLegalLinks={authState.multiTenant}
     >
       {pendingVerification ? (
-        <div className='space-y-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-6'>
-          <div className='space-y-2'>
-            <h2 className='text-foreground text-lg font-semibold'>
-              {t('auth.register.pendingTitle')}
-            </h2>
-            <p className='text-muted-foreground text-sm leading-6'>
-              {t('auth.register.pendingDescription', {
-                email: pendingVerification.maskedDestination || pendingVerification.email,
-              })}
-            </p>
+        <div className='border-border/60 bg-muted/20 space-y-5 rounded-2xl border p-6'>
+          <div className='space-y-4'>
+            <div className='bg-background text-foreground flex h-12 w-12 items-center justify-center rounded-full border'>
+              <MailCheck className='h-6 w-6' />
+            </div>
+            <div className='space-y-2'>
+              <p className='text-muted-foreground text-xs font-medium tracking-[0.08em]'>
+                {t('auth.register.pendingEyebrow')}
+              </p>
+              <h2 className='text-foreground text-lg font-semibold'>
+                {t('auth.register.pendingTitle')}
+              </h2>
+              <p className='text-muted-foreground text-sm leading-6'>
+                {pendingVerificationDestination
+                  ? t('auth.register.pendingDescription', {
+                      email: pendingVerificationDestination,
+                    })
+                  : t('auth.register.pendingDescriptionFallback')}
+              </p>
+            </div>
           </div>
           {resendMessage ? (
             <div
               className={
                 resendState === 'error'
-                  ? 'bg-destructive/15 text-destructive rounded-md p-3 text-sm'
-                  : 'rounded-md bg-emerald-500/15 p-3 text-sm text-emerald-700'
+                  ? 'bg-destructive/5 text-destructive rounded-md p-3 text-sm'
+                  : 'bg-background text-foreground/80 rounded-md border p-3 text-sm'
               }
             >
               {resendMessage}
             </div>
           ) : null}
-          <ButtonWithLoading
-            type='button'
-            variant='outline'
-            className='w-full'
-            isLoading={isResending}
-            disabled={isResending || resendCooldownRemaining > 0}
-            onClick={handleResendVerification}
-          >
-            {resendCooldownRemaining > 0
-              ? t('auth.register.resendCountdown', { seconds: resendCooldownRemaining })
-              : t('auth.register.resendAction')}
-          </ButtonWithLoading>
-          <Button
-            type='button'
-            variant='outline'
-            className='w-full'
-            onClick={() => {
-              setPendingVerification(null)
-              setResendState('idle')
-              setResendMessage(null)
-            }}
-          >
-            {t('auth.register.useDifferentEmail')}
-          </Button>
+          <div className='space-y-2 pt-1'>
+            <ButtonWithLoading
+              type='button'
+              className='w-full'
+              isLoading={isResending}
+              disabled={isResending || resendCooldownRemaining > 0}
+              onClick={handleResendVerification}
+            >
+              {resendCooldownRemaining > 0
+                ? t('auth.register.resendCountdown', { seconds: resendCooldownRemaining })
+                : t('auth.register.resendAction')}
+            </ButtonWithLoading>
+            <Button
+              type='button'
+              variant='ghost'
+              className='w-full'
+              onClick={() => {
+                setPendingVerification(null)
+                setResendState('idle')
+                setResendMessage(null)
+              }}
+            >
+              {t('auth.register.useDifferentEmail')}
+            </Button>
+          </div>
         </div>
       ) : (
         <>
@@ -362,9 +431,15 @@ export function RegisterPage() {
                         type='email'
                         placeholder={t('auth.register.emailPlaceholder')}
                         disabled={form.formState.isSubmitting}
+                        readOnly={Boolean(lockedInviteEmail)}
                         {...field}
                       />
                     </FormControl>
+                    {lockedInviteEmail ? (
+                      <FormDescription>
+                        {t('auth.register.invitedEmailHint', { email: lockedInviteEmail })}
+                      </FormDescription>
+                    ) : null}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -406,7 +481,7 @@ export function RegisterPage() {
                 )}
               />
               {form.formState.errors.root && (
-                <div className='bg-destructive/15 text-destructive rounded-md p-3 text-sm'>
+                <div className='bg-destructive/5 text-destructive rounded-md p-3 text-sm'>
                   {form.formState.errors.root.message}
                 </div>
               )}

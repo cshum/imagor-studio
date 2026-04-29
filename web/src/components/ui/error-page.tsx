@@ -1,12 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, Home, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, Home, ShieldAlert, type LucideIcon } from 'lucide-react'
 
 import { BrandBar } from '@/components/brand-bar'
 import { LanguageSelector } from '@/components/language-selector'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
 import { extractErrorInfo } from '@/lib/error-utils'
-import { getAuth } from '@/stores/auth-store'
 
 import { Button } from './button'
 
@@ -14,13 +13,22 @@ interface ErrorPageProps {
   error?: Error | string
   title?: string
   description?: string
+  actionLabel?: string
+  actionHref?: string
+  actionIcon?: LucideIcon
 }
 
 const isEmbeddedMode = import.meta.env.VITE_EMBEDDED_MODE === 'true'
 
-export function ErrorPage({ error, title, description }: ErrorPageProps) {
+export function ErrorPage({
+  error,
+  title,
+  description,
+  actionLabel,
+  actionHref,
+  actionIcon: ActionIcon = Home,
+}: ErrorPageProps) {
   const { t } = useTranslation()
-  const auth = getAuth()
   const errorInfo = extractErrorInfo(error)
   const isForbidden = errorInfo.code === 'FORBIDDEN'
   const isNotFound = errorInfo.code === 'NOT_FOUND' || /not found/i.test(errorInfo.message)
@@ -39,12 +47,20 @@ export function ErrorPage({ error, title, description }: ErrorPageProps) {
       : isNotFound
         ? t('pages.error.notFoundDescription')
         : t('pages.error.defaultDescription'))
-  const actionLabel = auth.multiTenant
-    ? t('pages.spaceSettings.backToSpaces')
-    : t('common.navigation.home')
+  const resolvedActionLabel = actionLabel ?? t('common.navigation.home')
+  const shouldShowAction = actionHref ? true : !isEmbeddedMode
 
   const handleGoHome = () => {
     window.location.href = '/'
+  }
+
+  const handleAction = () => {
+    if (actionHref) {
+      window.location.href = actionHref
+      return
+    }
+
+    handleGoHome()
   }
 
   const errorMessage = typeof error === 'string' ? error : errorInfo.message
@@ -54,10 +70,10 @@ export function ErrorPage({ error, title, description }: ErrorPageProps) {
     ? 'bg-amber-500/12 text-amber-700'
     : 'bg-red-500/12 text-red-600'
   const eyebrow = isForbidden
-    ? 'Access restricted'
+    ? t('pages.error.eyebrowForbidden')
     : isNotFound
-      ? 'Page not found'
-      : 'Service error'
+      ? t('pages.error.eyebrowNotFound')
+      : t('pages.error.eyebrowDefault')
 
   return (
     <div className='bg-background min-h-screen-safe flex flex-col overflow-hidden'>
@@ -101,11 +117,11 @@ export function ErrorPage({ error, title, description }: ErrorPageProps) {
               </div>
             ) : null}
 
-            {!isEmbeddedMode ? (
+            {shouldShowAction ? (
               <div className='pt-2'>
-                <Button onClick={handleGoHome} className='h-11 min-w-40'>
-                  <Home className='mr-2 h-4 w-4' />
-                  {actionLabel}
+                <Button onClick={handleAction} className='h-11 min-w-40'>
+                  <ActionIcon className='mr-2 h-4 w-4' />
+                  {resolvedActionLabel}
                 </Button>
               </div>
             ) : null}

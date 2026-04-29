@@ -12,6 +12,10 @@ import { getAuth } from '@/stores/auth-store'
 export function authCallbackLoader(): void {
   const auth = getAuth()
   if (auth.state === 'authenticated') {
+    const redirectPath = new URLSearchParams(window.location.search).get('redirect_path')?.trim()
+    if (redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')) {
+      throw redirect({ to: redirectPath })
+    }
     throw redirect({ to: '/' })
   }
 }

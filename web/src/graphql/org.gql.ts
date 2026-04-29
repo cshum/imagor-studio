@@ -361,6 +361,22 @@ export const DELETE_ORGANIZATION = gql(`
   }
 `)
 
+export const CREATE_ORGANIZATION = gql(`
+  mutation CreateOrganization {
+    createOrganization {
+      id
+      name
+      slug
+      ownerUserId
+      currentUserRole
+      plan
+      planStatus
+      createdAt
+      updatedAt
+    }
+  }
+`)
+
 export const REMOVE_SPACE_MEMBER = gql(`
   mutation RemoveSpaceMember($spaceID: String!, $userId: ID!) {
     removeSpaceMember(spaceID: $spaceID, userId: $userId)

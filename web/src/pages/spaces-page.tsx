@@ -4,7 +4,7 @@ import { Link, useRouter } from '@tanstack/react-router'
 import { Cloud, Database, LayoutGrid, LogOut, MoreHorizontal, Plus, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { leaveSpace, type SpaceItem } from '@/api/org-api'
+import { createOrganization, leaveSpace, type SpaceItem } from '@/api/org-api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -76,9 +76,10 @@ export function SpacesPage({
 }: SpacesPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
-  const { authState } = useAuth()
+  const { authState, refreshAuthSession } = useAuth()
   const [leaveSpaceItem, setLeaveSpaceItem] = useState<SpaceItem | null>(null)
   const [isLeaving, setIsLeaving] = useState(false)
+  const [isCreatingOrganization, setIsCreatingOrganization] = useState(false)
   const [openMenuSpaceKey, setOpenMenuSpaceKey] = useState<string | null>(null)
   const leaveDialogTimerRef = useRef<number | null>(null)
 
@@ -149,6 +150,7 @@ export function SpacesPage({
   const usageSummaryCardClassName = canManageOrganization
     ? 'bg-muted/30 hover:bg-muted/50 focus-visible:ring-ring block rounded-lg border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
     : 'bg-muted/30 rounded-lg border p-4'
+  const needsOrganizationRecovery = currentOrganizationId === null && !canCreateSpace
 
   const handleLeaveSpace = async () => {
     if (!leaveSpaceItem) return
@@ -179,8 +181,46 @@ export function SpacesPage({
     }, 0)
   }
 
+  const handleCreateOrganization = async () => {
+    setIsCreatingOrganization(true)
+    try {
+      await createOrganization()
+      await refreshAuthSession()
+      await router.invalidate()
+      toast.success(t('pages.workspaceRequired.actions.createSuccess'))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('common.status.error')
+      toast.error(`${t('pages.workspaceRequired.actions.createError')}: ${message}`)
+    } finally {
+      setIsCreatingOrganization(false)
+    }
+  }
+
   return (
     <div className='space-y-6'>
+      {needsOrganizationRecovery && hasSpaces ? (
+        <div className='bg-muted/30 flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='space-y-1'>
+            <h2 className='text-sm font-semibold'>{t('pages.spaces.noOrganizationBannerTitle')}</h2>
+            <p className='text-muted-foreground text-sm'>
+              {t('pages.spaces.noOrganizationBannerDescription')}
+            </p>
+          </div>
+          <ButtonWithLoading
+            className='shrink-0'
+            isLoading={isCreatingOrganization}
+            onClick={handleCreateOrganization}
+          >
+            <span className='flex items-center justify-center gap-2'>
+              <Plus className='h-4 w-4 shrink-0' />
+              <span className='whitespace-nowrap'>
+                {t('pages.workspaceRequired.actions.createOrganization')}
+              </span>
+            </span>
+          </ButtonWithLoading>
+        </div>
+      ) : null}
+
       {currentOrganizationId !== null &&
         (canManageOrganization ? (
           <Link to='/account/organization/billing' className={usageSummaryCardClassName}>
@@ -375,23 +415,46 @@ export function SpacesPage({
             <LayoutGrid className='text-muted-foreground h-7 w-7' />
           </div>
           <h3 className='mt-4 text-base font-semibold'>
-            {t(canCreateSpace ? 'pages.spaces.noSpacesFound' : 'pages.spaces.noSpacesAvailable')}
+            {t(
+              canCreateSpace
+                ? 'pages.spaces.noSpacesFound'
+                : needsOrganizationRecovery
+                  ? 'pages.spaces.noOrganizationTitle'
+                  : 'pages.spaces.noSpacesAvailable',
+            )}
           </h3>
           <p className='text-muted-foreground mt-1.5 max-w-xs text-sm'>
             {t(
               canCreateSpace
                 ? 'pages.spaces.emptyDescription'
-                : 'pages.spaces.emptyDescriptionMember',
+                : needsOrganizationRecovery
+                  ? 'pages.spaces.emptyDescriptionNoOrganization'
+                  : 'pages.spaces.emptyDescriptionMember',
             )}
           </p>
           <p className='text-muted-foreground mt-2 max-w-lg text-sm'>
             {t(
               canCreateSpace
                 ? 'pages.spaces.startDescription'
-                : 'pages.spaces.startDescriptionMember',
+                : needsOrganizationRecovery
+                  ? 'pages.spaces.startDescriptionNoOrganization'
+                  : 'pages.spaces.startDescriptionMember',
             )}
           </p>
-          {canCreateSpace && createSpaceDisabled ? (
+          {needsOrganizationRecovery ? (
+            <ButtonWithLoading
+              className='mt-6'
+              isLoading={isCreatingOrganization}
+              onClick={handleCreateOrganization}
+            >
+              <span className='flex items-center justify-center gap-2'>
+                <Plus className='h-4 w-4 shrink-0 self-start' />
+                <span className='whitespace-nowrap'>
+                  {t('pages.workspaceRequired.actions.createOrganization')}
+                </span>
+              </span>
+            </ButtonWithLoading>
+          ) : canCreateSpace && createSpaceDisabled ? (
             <Button disabled className='mt-6' title={t('pages.spaces.messages.spaceLimitReached')}>
               <Plus className='mr-2 h-4 w-4' />
               {t('pages.spaces.createSpace')}

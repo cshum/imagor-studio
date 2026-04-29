@@ -44,6 +44,7 @@ import {
   requireSelfHostedImageEditorAuth,
 } from '@/loaders/auth-loader.ts'
 import { canvasEditorLoader } from '@/loaders/canvas-editor-loader.ts'
+import { emailChangeVerifyLoader } from '@/loaders/email-change-verify-loader'
 import {
   embeddedLoader,
   embeddedLoaderDeps,
@@ -51,6 +52,8 @@ import {
 } from '@/loaders/embedded-loader.ts'
 import { galleryLoader, imageLoader } from '@/loaders/gallery-loader.ts'
 import { imageEditorLoader } from '@/loaders/image-editor-loader.ts'
+import { joinInviteLoader } from '@/loaders/join-invite-loader.ts'
+import { registerVerifyLoader } from '@/loaders/register-verify-loader.ts'
 import { rootBeforeLoad, rootLoader } from '@/loaders/root-loader.ts'
 import { rootPageLoader } from '@/loaders/root-page-loader'
 import {
@@ -70,13 +73,18 @@ import { AdminLicenseSection } from '@/pages/admin/license'
 import { AdminStorageSection } from '@/pages/admin/storage'
 import { AuthCallbackPage } from '@/pages/auth-callback-page.tsx'
 import { CreateSpacePage } from '@/pages/create-space-page'
+import {
+  EmailChangeVerifyPage,
+  EmailChangeVerifyPendingPage,
+} from '@/pages/email-change-verify-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
+import { JoinInvitePage } from '@/pages/join-invite-page.tsx'
 import { PrivacyPage, TermsPage } from '@/pages/legal-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { RegisterPage } from '@/pages/register-page.tsx'
-import { RegisterVerifyPage } from '@/pages/register-verify-page.tsx'
+import { RegisterVerifyPage, RegisterVerifyPendingPage } from '@/pages/register-verify-page.tsx'
 import { RootPage } from '@/pages/root-page'
 import { GeneralSection } from '@/pages/space-settings/general'
 import { SpaceSettingsLayout } from '@/pages/space-settings/layout'
@@ -116,7 +124,22 @@ const rootRoute = createRootRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
+    invite_token: typeof search.invite_token === 'string' ? search.invite_token : '',
+  }),
   component: LoginPage,
+})
+
+const joinRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/join',
+  validateSearch: (search: Record<string, unknown>) => ({
+    invite_token: typeof search.invite_token === 'string' ? search.invite_token : '',
+  }),
+  loaderDeps: ({ search: { invite_token } }) => ({ inviteToken: invite_token }),
+  loader: ({ deps }) => joinInviteLoader(deps.inviteToken),
+  component: JoinInvitePage,
 })
 
 const privacyRoute = createRoute({
@@ -134,13 +157,26 @@ const termsRoute = createRoute({
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
+  validateSearch: (search: Record<string, unknown>) => ({
+    invite_token: typeof search.invite_token === 'string' ? search.invite_token : '',
+  }),
   component: RegisterPage,
 })
 
 const registerVerifyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register/verify',
+  loader: registerVerifyLoader,
   component: RegisterVerifyPage,
+  pendingComponent: RegisterVerifyPendingPage,
+})
+
+const emailChangeVerifyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/account/email/verify',
+  loader: emailChangeVerifyLoader,
+  component: EmailChangeVerifyPage,
+  pendingComponent: EmailChangeVerifyPendingPage,
 })
 
 const authCallbackRoute = createRoute({
@@ -193,7 +229,7 @@ const rootPath = createRoute({
   beforeLoad: async (context) => {
     const auth = getAuth()
     if (auth.multiTenant) {
-      return requireOrganizationAccountAuth(context)
+      return requireAccountAuth(context)
     }
   },
   component: () => {
@@ -539,11 +575,15 @@ const spaceSettingsLayoutRoute = createRoute({
     await requireAccountAuth(context)
     return resolveSpaceSettingsRouteContext({ params: { routeSpaceKey: context.params.spaceKey } })
   },
-  loader: ({ context }) => ({ breadcrumb: context.breadcrumb }),
+  loader: async ({ context }) => ({
+    breadcrumb: context.breadcrumb,
+    organization: await getMyOrganization(),
+  }),
   shouldReload: false,
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useRouteContext()
-    return <SpaceSettingsLayout space={space} />
+    const { organization } = spaceSettingsLayoutRoute.useLoaderData()
+    return <SpaceSettingsLayout space={space} showOrganizationLink={Boolean(organization)} />
   },
 })
 
@@ -678,9 +718,12 @@ const accountOrganizationLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/organization',
   beforeLoad: requireOrganizationAccountAuth,
-  loader: async () => getMyOrganization(),
+  loader: async () => ({
+    breadcrumb: { translationKey: 'navigation.breadcrumbs.organization' },
+    organization: await getMyOrganization(),
+  }),
   component: () => {
-    const organization = accountOrganizationLayoutRoute.useLoaderData()
+    const { organization } = accountOrganizationLayoutRoute.useLoaderData()
     return <AccountOrganizationLayout currentUserRole={organization?.currentUserRole ?? null} />
   },
 })
@@ -732,8 +775,12 @@ const accountOrganizationMembersRoute = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
-  beforeLoad: requireOrganizationAccountAuth,
-  component: () => <AccountLayout />,
+  beforeLoad: requireAccountAuth,
+  loader: async () => getMyOrganization(),
+  component: () => {
+    const organization = accountLayoutRoute.useLoaderData()
+    return <AccountLayout showOrganizationLink={Boolean(organization)} />
+  },
 })
 
 // ─── Admin: layout route + per-section child routes ─────────────────────────
@@ -838,8 +885,10 @@ const routeTree = isEmbeddedMode
       privacyRoute,
       termsRoute,
       loginRoute,
+      joinRoute,
       registerRoute,
       registerVerifyRoute,
+      emailChangeVerifyRoute,
       authCallbackRoute,
       adminSetupRoute,
       createSpaceRoute,

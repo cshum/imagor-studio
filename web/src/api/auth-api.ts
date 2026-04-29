@@ -3,6 +3,7 @@ import { getBaseUrl } from '@/lib/api-utils'
 export interface LoginRequest {
   username: string
   password: string
+  inviteToken?: string
 }
 
 export interface RegisterRequest {
@@ -10,11 +11,13 @@ export interface RegisterRequest {
   email: string
   username?: string
   password: string
+  inviteToken?: string
 }
 
 export type AuthApiError = Error & {
   code?: string
   field?: string
+  reason?: string
   status?: number
 }
 
@@ -37,6 +40,9 @@ function createAuthApiError(errorData: unknown, fallback: string): AuthApiError 
   if (typeof details?.field === 'string') {
     error.field = details.field
   }
+  if (typeof details?.reason === 'string') {
+    error.reason = details.reason
+  }
 
   return error
 }
@@ -51,6 +57,7 @@ export interface RegisterAdminRequest {
 export interface LoginResponse {
   token: string
   expiresIn: number
+  redirectPath?: string
   user: {
     id: string
     displayName: string
@@ -66,6 +73,11 @@ export interface PublicSignupVerificationResponse {
   cooldownSeconds: number
   expiresInSeconds: number
   maskedDestination: string
+}
+
+export interface EmailChangeVerificationResponse {
+  userId: string
+  email: string
 }
 
 export type RegisterResult =
@@ -158,6 +170,13 @@ function isVerificationSignupUnavailable(error: AuthApiError): boolean {
 export async function registerWithVerificationFallback(
   credentials: RegisterRequest,
 ): Promise<RegisterResult> {
+  if (credentials.inviteToken?.trim()) {
+    return {
+      kind: 'authenticated',
+      response: await register(credentials),
+    }
+  }
+
   const response = await fetch(`${BASE_URL}/api/auth/register/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -165,6 +184,7 @@ export async function registerWithVerificationFallback(
       displayName: credentials.displayName,
       email: credentials.email,
       password: credentials.password,
+      inviteToken: credentials.inviteToken,
     }),
   })
 
@@ -182,6 +202,9 @@ export async function registerWithVerificationFallback(
   )
 
   if (isVerificationSignupUnavailable(error)) {
+    if (credentials.inviteToken?.trim()) {
+      throw error
+    }
     return {
       kind: 'authenticated',
       response: await register(credentials),
@@ -216,6 +239,24 @@ export async function resendPublicSignupVerification(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
+  }
+
+  return response.json()
+}
+
+export async function verifyEmailChange(token: string): Promise<EmailChangeVerificationResponse> {
+  const response = await fetch(`${BASE_URL}/api/auth/account/email/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
   })
 
   if (!response.ok) {
@@ -307,13 +348,66 @@ export interface AuthProvidersResponse {
   providers: string[]
 }
 
+export interface InvitationResolutionResponse {
+  organizationName: string
+  spaceName?: string
+  invitedEmail: string
+  role: string
+}
+
 /**
  * Returns the URL to redirect the browser to for Google OAuth login.
  * Uses the configured API base URL so it works correctly in dev (VITE_API_BASE_URL=http://localhost:8080)
  * and in production (same-host, empty base URL → relative /api/... path).
  */
-export function getGoogleLoginUrl(): string {
+export function getGoogleLoginUrl(inviteToken?: string): string {
+  if (inviteToken?.trim()) {
+    const query = new URLSearchParams({ invite_token: inviteToken.trim() })
+    return `${BASE_URL}/api/auth/google/login?${query.toString()}`
+  }
+
   return `${BASE_URL}/api/auth/google/login`
+}
+
+export async function resolveInvitation(
+  inviteToken: string,
+): Promise<InvitationResolutionResponse> {
+  const query = new URLSearchParams({ invite_token: inviteToken })
+  const response = await fetch(`${BASE_URL}/api/invitations/resolve?${query.toString()}`)
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
+  }
+
+  return response.json()
+}
+
+export async function acceptInvitation(
+  inviteToken: string,
+  accessToken: string,
+): Promise<LoginResponse> {
+  const response = await fetch(`${BASE_URL}/api/invitations/accept`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ inviteToken }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
+  }
+
+  return response.json()
 }
 
 /**

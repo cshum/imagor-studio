@@ -100,8 +100,11 @@
       "googleCta": "使用 Google 繼續",
       "credentialsDivider": "或使用電子郵件與密碼建立帳戶",
       "emailPlaceholder": "name@example.com",
+      "invitedEmailHint": "此邀請僅限 {{email}} 使用。",
+      "pendingEyebrow": "電子郵件確認",
       "pendingTitle": "請檢查您的電子郵件",
       "pendingDescription": "我們已將確認連結寄到 {{email}}。開啟連結以完成帳戶建立。",
+      "pendingDescriptionFallback": "我們已寄出確認連結。開啟連結以完成帳戶建立。",
       "resendAction": "重新寄送驗證郵件",
       "resendCountdown": "可於 {{seconds}} 秒後重新寄送",
       "resendSuccess": "我們已重新寄出驗證郵件。",
@@ -179,15 +182,18 @@
       "failed": "驗證失敗",
       "errorOAuth": "驗證失敗：{{error}}",
       "errors": {
-        "inviteOrgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。"
+        "inviteOrgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。",
+        "inviteEmailMismatch": "此邀請寄送到其他電子郵件地址。請改用受邀帳戶登入。"
       },
       "errorNoToken": "未收到驗證令牌",
       "backToLogin": "返回登入"
     },
     "registerVerify": {
+      "pendingEyebrow": "帳戶確認",
       "title": "正在確認您的帳戶",
       "subtitle": "請稍候，我們正在完成您的登入。",
       "verifying": "正在驗證您的電子郵件確認連結。",
+      "errorEyebrow": "服務錯誤",
       "errorTitle": "我們無法確認您的帳戶",
       "errorSubtitle": "此確認連結可能已失效或過期。",
       "missingToken": "此確認連結缺少驗證令牌。",
@@ -198,9 +204,29 @@
       "resendSuccess": "我們已寄出新的確認郵件。",
       "resendCooldown": "請稍候後再要求新的確認郵件。",
       "resendFailed": "重新寄送確認郵件失敗，請再試一次。",
+      "signInInsteadDescription": "{{email}} 目前已經沒有待完成的確認步驟。如果您已完成註冊，請直接登入。",
       "backToLogin": "返回登入"
     },
+    "emailChangeVerify": {
+      "pendingEyebrow": "電子郵件變更",
+      "pendingTitle": "正在確認您的新電子郵件",
+      "pendingDescription": "請稍候，我們正在驗證您新的登入電子郵件地址。",
+      "verifying": "正在驗證您的電子郵件變更確認連結。",
+      "successEyebrow": "電子郵件已更新",
+      "successTitle": "您的登入電子郵件已更新",
+      "successDescription": "{{email}} 現在將作為您的登入電子郵件地址。",
+      "successBody": "下次登入時，您可以繼續使用 {{email}} 存取您的帳戶。",
+      "errorEyebrow": "電子郵件變更",
+      "errorTitle": "我們無法確認您的新電子郵件",
+      "errorSubtitle": "此確認連結可能已失效或過期。",
+      "errorHelp": "請在帳戶設定中重新要求電子郵件變更，以取得新的確認連結。",
+      "backToLogin": "返回登入",
+      "backToProfile": "返回個人資料"
+    },
     "error": {
+      "eyebrowDefault": "服務錯誤",
+      "eyebrowNotFound": "找不到頁面",
+      "eyebrowForbidden": "存取受限",
       "defaultTitle": "發生錯誤",
       "notFoundTitle": "找不到空間",
       "forbiddenTitle": "拒絕存取",
@@ -418,6 +444,7 @@
       "changeEmailTitle": "更改電子郵件",
       "changeEmailDescription": "更新您的登入電子郵件地址。",
       "emailChangeHelp": "在新地址確認之前，我們會繼續保留您目前的電子郵件。",
+      "emailChangeUnchanged": "請輸入不同的電子郵件地址以更新您的登入電子郵件。",
       "requestEmailChange": "更新電子郵件",
       "emailChangeRequestedSuccess": "已成功提交電子郵件變更要求",
       "emailChangeRequestFailed": "提交電子郵件變更要求失敗",
@@ -782,11 +809,38 @@
       },
       "nextSteps": {
         "title": "接下來怎麼做",
-        "description": "如果您原本就應該有存取權，請聯絡管理 Imagor Studio 組織的團隊。此狀態下暫不提供自助設定。"
+        "description": "你可以先建立新的個人組織繼續使用；如果你原本應該加入別人的團隊，也可以透過邀請加入現有組織。"
       },
       "actions": {
+        "createOrganization": "建立組織",
+        "creatingOrganization": "正在建立組織...",
+        "createSuccess": "組織已建立",
+        "createError": "建立組織失敗",
         "signOut": "登出"
       }
+    },
+    "joinInvite": {
+      "eyebrow": "組織邀請",
+      "heroTitle": "選擇加入方式",
+      "heroDescription": "使用此邀請加入既有組織。從這個流程註冊時，你會加入受邀工作區，而不是建立新的組織。",
+      "formTitle": "透過邀請加入",
+      "invitedTo": "你已受邀加入 {{organization}}",
+      "organizationDescription": "此邀請已寄送到 {{email}}，角色為 {{role}}。",
+      "spaceDescription": "此邀請已寄送到 {{email}}，角色為 {{role}}，目標空間為 {{space}}。",
+      "googleAction": "使用 Google 繼續",
+      "emailAction": "使用電子郵件繼續",
+      "secondaryHelp": "Google 登入會直接使用此邀請。電子郵件註冊會先驗證你的信箱，然後再加入受邀組織。",
+      "loginInstead": "已經有帳號？前往登入",
+      "acceptingTitle": "正在完成邀請",
+      "acceptingDescription": "我們正在將此帳戶加入受邀組織。",
+      "acceptFailedTitle": "無法完成此邀請",
+      "acceptFailed": "請重新開啟邀請連結，或使用受邀帳戶登入。",
+      "errors": {
+        "invalid": "此邀請已失效。請請對方重新建立邀請。",
+        "emailMismatch": "此邀請寄送到其他電子郵件地址。請改用受邀帳戶登入。",
+        "orgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。"
+      },
+      "invalidTitle": "此邀請目前無法使用"
     },
     "spaces": {
       "title": "空間",
@@ -800,6 +854,9 @@
       "createSpaceButton": "建立空間",
       "updateSpaceButton": "更新空間",
       "noSpacesFound": "建立你的第一個圖片工作空間",
+      "noOrganizationTitle": "先建立組織再開始使用",
+      "noOrganizationBannerTitle": "建立你自己的組織",
+      "noOrganizationBannerDescription": "你仍可繼續使用共享空間，但這個帳號已經沒有個人組織。建立一個組織即可恢復你自己的工作區與管理流程。",
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
@@ -833,6 +890,7 @@
       },
       "description": "為你的團隊、品牌或環境建立並管理圖片工作空間。",
       "emptyDescription": "建立你的第一個圖片工作空間，用於上傳、處理與交付圖片。",
+      "emptyDescriptionNoOrganization": "此帳戶還沒有個人組織。",
       "settings": "設定",
       "spaceCount": "{{count}} 個空間",
       "openGallery": "開啟相簿",
@@ -901,6 +959,7 @@
         "processingHostLabel": "預設主機"
       },
       "startDescription": "您可以隨著成長逐步自訂儲存、交付與存取權限。",
+      "startDescriptionNoOrganization": "先建立一個個人組織，之後再回到這裡建立空間或接收既有空間的存取權。",
       "sharedLabel": "共享",
       "leaveSpace": "離開",
       "leaveSpaceDescription": "離開這個共享空間",

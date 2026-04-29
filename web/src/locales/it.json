@@ -100,8 +100,11 @@
       "googleCta": "Continua con Google",
       "credentialsDivider": "oppure crea un account con email e password",
       "emailPlaceholder": "name@example.com",
+      "invitedEmailHint": "Questo invito e bloccato per {{email}}.",
+      "pendingEyebrow": "Conferma email",
       "pendingTitle": "Controlla la tua email",
       "pendingDescription": "Abbiamo inviato un link di conferma a {{email}}. Aprilo per completare la creazione dell'account.",
+      "pendingDescriptionFallback": "Abbiamo inviato un link di conferma. Aprilo per completare la creazione dell'account.",
       "resendAction": "Invia di nuovo l'email di verifica",
       "resendCountdown": "Nuovo invio disponibile tra {{seconds}}s",
       "resendSuccess": "Abbiamo inviato una nuova email di verifica.",
@@ -179,15 +182,18 @@
       "failed": "Autenticazione non riuscita",
       "errorOAuth": "Autenticazione non riuscita: {{error}}",
       "errors": {
-        "inviteOrgConflict": "Questo account appartiene gia a un'altra organizzazione. Usa un account diverso oppure lascia prima la tua organizzazione attuale."
+        "inviteOrgConflict": "Questo account appartiene gia a un'altra organizzazione. Usa un account diverso oppure lascia prima la tua organizzazione attuale.",
+        "inviteEmailMismatch": "Questo invito e stato inviato a un altro indirizzo email. Accedi invece con l'account invitato."
       },
       "errorNoToken": "Nessun token di autenticazione ricevuto",
       "backToLogin": "Torna al login"
     },
     "registerVerify": {
+      "pendingEyebrow": "Conferma account",
       "title": "Conferma del tuo account in corso",
       "subtitle": "Attendi mentre completiamo il tuo accesso.",
       "verifying": "Stiamo verificando il link di conferma email.",
+      "errorEyebrow": "Errore del servizio",
       "errorTitle": "Non siamo riusciti a confermare il tuo account",
       "errorSubtitle": "Il link di conferma potrebbe non essere valido o essere scaduto.",
       "missingToken": "Nel link di conferma manca il token di verifica.",
@@ -198,9 +204,29 @@
       "resendSuccess": "Abbiamo inviato una nuova email di conferma.",
       "resendCooldown": "Attendi prima di richiedere un'altra email di conferma.",
       "resendFailed": "Invio della email di conferma non riuscito. Riprova.",
+      "signInInsteadDescription": "Non c\u2019è pi\u00f9 una conferma in sospeso per {{email}}. Se hai gi\u00e0 completato la registrazione, accedi invece di richiedere un nuovo link.",
       "backToLogin": "Torna al login"
     },
+    "emailChangeVerify": {
+      "pendingEyebrow": "Cambio email",
+      "pendingTitle": "Conferma del nuovo indirizzo email",
+      "pendingDescription": "Attendi mentre verifichiamo il tuo nuovo indirizzo email di accesso.",
+      "verifying": "Stiamo verificando il link di conferma del cambio email.",
+      "successEyebrow": "Email aggiornata",
+      "successTitle": "La tua email di accesso è stata aggiornata",
+      "successDescription": "{{email}} è ora l'indirizzo email usato per accedere.",
+      "successBody": "Potrai continuare a usare il tuo account con {{email}} al prossimo accesso.",
+      "errorEyebrow": "Cambio email",
+      "errorTitle": "Non siamo riusciti a confermare la nuova email",
+      "errorSubtitle": "Il link di conferma potrebbe non essere valido o essere scaduto.",
+      "errorHelp": "Richiedi un nuovo cambio email dalle impostazioni account per ricevere un nuovo link di conferma.",
+      "backToLogin": "Torna al login",
+      "backToProfile": "Torna al profilo"
+    },
     "error": {
+      "eyebrowDefault": "Errore del servizio",
+      "eyebrowNotFound": "Pagina non trovata",
+      "eyebrowForbidden": "Accesso limitato",
       "defaultTitle": "Qualcosa è andato storto",
       "notFoundTitle": "Spazio non trovato",
       "forbiddenTitle": "Accesso negato",
@@ -418,6 +444,7 @@
       "changeEmailTitle": "Cambia email",
       "changeEmailDescription": "Aggiorna il tuo indirizzo email di accesso.",
       "emailChangeHelp": "Manterremo la tua email attuale finché il nuovo indirizzo non sarà confermato.",
+      "emailChangeUnchanged": "Inserisci un indirizzo email diverso per aggiornare la tua email di accesso.",
       "requestEmailChange": "Aggiorna email",
       "emailChangeRequestedSuccess": "Richiesta di modifica email inviata correttamente",
       "emailChangeRequestFailed": "Impossibile richiedere la modifica email",
@@ -782,11 +809,38 @@
       },
       "nextSteps": {
         "title": "Cosa fare ora",
-        "description": "Se ti aspettavi di avere già accesso, contatta il team che gestisce la tua organizzazione in Imagor Studio. La configurazione self-service non è disponibile in questo stato."
+        "description": "Crea una nuova organizzazione personale per continuare oppure unisciti a una esistente tramite invito se devi lavorare nel team di qualcun altro."
       },
       "actions": {
+        "createOrganization": "Crea organizzazione",
+        "creatingOrganization": "Creazione organizzazione...",
+        "createSuccess": "Organizzazione creata",
+        "createError": "Impossibile creare l'organizzazione",
         "signOut": "Esci"
       }
+    },
+    "joinInvite": {
+      "eyebrow": "Invito organizzazione",
+      "heroTitle": "Scegli come vuoi partecipare",
+      "heroDescription": "Usa questo invito per entrare in un'organizzazione esistente. La registrazione da questo flusso ti unirà al workspace invitato invece di crearne uno separato.",
+      "formTitle": "Partecipa con un invito",
+      "invitedTo": "Sei stato invitato a partecipare a {{organization}}",
+      "organizationDescription": "Questo invito è stato inviato a {{email}} con il ruolo {{role}}.",
+      "spaceDescription": "Questo invito è stato inviato a {{email}} con il ruolo {{role}} per lo spazio {{space}}.",
+      "googleAction": "Continua con Google",
+      "emailAction": "Continua con email",
+      "secondaryHelp": "L'accesso con Google usa direttamente l'invito. La registrazione email verifica prima l'indirizzo e poi ti unisce all'organizzazione invitante.",
+      "loginInstead": "Hai già un account? Accedi",
+      "acceptingTitle": "Completamento dell'invito",
+      "acceptingDescription": "Stiamo aggiungendo questo account all'organizzazione invitata.",
+      "acceptFailedTitle": "Impossibile completare questo invito",
+      "acceptFailed": "Riprova ad aprire l'invito o accedi con l'account invitato.",
+      "errors": {
+        "invalid": "Questo invito non e piu valido. Chiedi al mittente di crearne uno nuovo.",
+        "emailMismatch": "Questo invito e stato inviato a un altro indirizzo email. Accedi invece con l'account invitato.",
+        "orgConflict": "Questo account appartiene gia a un'altra organizzazione. Usa un account diverso oppure lascia prima la tua organizzazione attuale."
+      },
+      "invalidTitle": "Questo invito non è disponibile"
     },
     "spaces": {
       "title": "Spazi",
@@ -806,8 +860,12 @@
         "back": "Indietro"
       },
       "noSpacesFound": "Crea il tuo primo workspace immagini",
+      "noOrganizationTitle": "Crea un'organizzazione per iniziare",
+      "noOrganizationBannerTitle": "Crea la tua organizzazione",
+      "noOrganizationBannerDescription": "Hai ancora accesso agli spazi condivisi, ma questo account non ha piu un'organizzazione personale. Creane una per ripristinare il tuo workspace e i flussi di amministrazione.",
       "description": "Crea e gestisci workspace immagini per ogni team, brand o ambiente.",
       "emptyDescription": "Lancia il tuo primo workspace immagini per upload, trasformazioni e distribuzione.",
+      "emptyDescriptionNoOrganization": "Questo account non ha ancora un'organizzazione personale.",
       "settings": "Settings",
       "spaceCount": "{{count}} spazio/i",
       "openGallery": "Apri galleria",
@@ -906,6 +964,7 @@
       },
       "configure": "Configura",
       "startDescription": "Puoi personalizzare storage, delivery e accesso man mano che cresci.",
+      "startDescriptionNoOrganization": "Crea subito un'organizzazione personale, poi torna qui per creare spazi o ricevere accesso a quelli esistenti.",
       "sharedLabel": "Condiviso",
       "leaveSpace": "Esci",
       "leaveSpaceDescription": "Lascia questo spazio condiviso",

@@ -146,7 +146,7 @@ function AccountStepContent({ form, error, onCreateAccount, next }: AccountStepC
             />
 
             {error && (
-              <div className='text-destructive bg-destructive/10 rounded-md p-3 text-sm'>
+              <div className='text-destructive bg-destructive/5 rounded-md p-3 text-sm'>
                 {error}
               </div>
             )}
