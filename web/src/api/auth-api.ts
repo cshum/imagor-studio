@@ -75,6 +75,11 @@ export interface PublicSignupVerificationResponse {
   maskedDestination: string
 }
 
+export interface EmailChangeVerificationResponse {
+  userId: string
+  email: string
+}
+
 export type RegisterResult =
   | {
       kind: 'authenticated'
@@ -234,6 +239,26 @@ export async function resendPublicSignupVerification(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
+  }
+
+  return response.json()
+}
+
+export async function verifyEmailChange(
+  token: string,
+): Promise<EmailChangeVerificationResponse> {
+  const response = await fetch(`${BASE_URL}/api/auth/account/email/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
   })
 
   if (!response.ok) {

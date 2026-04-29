@@ -17,6 +17,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/processing"
+	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/storage"
 	"github.com/cshum/imagor/imagorpath"
@@ -156,6 +157,19 @@ func (m *MockUserStore) RequestEmailChange(ctx context.Context, id string, email
 	return args.Get(0).(*userstore.User), args.Error(1)
 }
 
+func (m *MockUserStore) ClearPendingEmailChange(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockUserStore) ConfirmEmailChange(ctx context.Context, id string, email string) (*userstore.User, error) {
+	args := m.Called(ctx, id, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
 func (m *MockUserStore) ListAuthProviders(ctx context.Context, id string) ([]*userstore.AuthProvider, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -207,6 +221,50 @@ func (m *MockUserStore) UpdateRole(ctx context.Context, id string, role string) 
 
 type MockStorage struct {
 	mock.Mock
+}
+
+type MockSignupRuntime struct {
+	mock.Mock
+}
+
+func (m *MockSignupRuntime) StartPublicSignup(ctx context.Context, params signup.StartPublicSignupParams) (*signup.StartPublicSignupResult, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.StartPublicSignupResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) VerifyPublicSignup(ctx context.Context, token string) (*signup.VerifyPublicSignupResult, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.VerifyPublicSignupResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) ResendPublicSignupVerification(ctx context.Context, email string) (*signup.StartPublicSignupResult, error) {
+	args := m.Called(ctx, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.StartPublicSignupResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) RequestEmailChange(ctx context.Context, params signup.RequestEmailChangeParams) (*signup.RequestEmailChangeResult, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.RequestEmailChangeResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) VerifyEmailChange(ctx context.Context, token string) (*signup.VerifyEmailChangeResult, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.VerifyEmailChangeResult), args.Error(1)
 }
 
 func (m *MockStorage) List(ctx context.Context, path string, options storage.ListOptions) (storage.ListResult, error) {

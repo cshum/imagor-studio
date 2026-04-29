@@ -132,6 +132,10 @@ type VerifyPublicSignupRequest struct {
 	Token string `json:"token"`
 }
 
+type VerifyEmailChangeRequest struct {
+	Token string `json:"token"`
+}
+
 type ResendPublicSignupVerificationRequest struct {
 	Email string `json:"email"`
 }
@@ -363,6 +367,42 @@ func (h *AuthHandler) ResendPublicSignupVerification() http.HandlerFunc {
 			}
 			h.logger.Error("Failed to resend public sign-up verification", zap.Error(err))
 			return apperror.InternalServerError("Failed to resend sign-up verification")
+		}
+
+		return WriteSuccess(w, result)
+	})
+}
+
+func (h *AuthHandler) VerifyEmailChange() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.cloudEnabled() {
+			return apperror.Forbidden("Email change verification is not available in this deployment.")
+		}
+		if h.signupRuntime == nil {
+			return apperror.Forbidden("Email change verification is not available in this deployment.")
+		}
+
+		var req VerifyEmailChangeRequest
+		if err := DecodeJSON(r, &req); err != nil {
+			return err
+		}
+		if strings.TrimSpace(req.Token) == "" {
+			return apperror.BadRequest("Verification token is required", map[string]interface{}{"field": "token"})
+		}
+
+		result, err := h.signupRuntime.VerifyEmailChange(r.Context(), strings.TrimSpace(req.Token))
+		if err != nil {
+			if errors.Is(err, signup.ErrEmailChangeVerificationTokenInvalid) {
+				return apperror.BadRequest("Verification link is invalid or has expired", map[string]interface{}{"field": "token"})
+			}
+			if errors.Is(err, signup.ErrEmailAlreadyExists) {
+				return apperror.Conflict("Email already exists", "email")
+			}
+			if errors.Is(err, signup.ErrPendingEmailChangeNotFound) {
+				return apperror.BadRequest("No pending email change found for this account", map[string]interface{}{"field": "token"})
+			}
+			h.logger.Error("Failed to verify email change", zap.Error(err))
+			return apperror.InternalServerError("Failed to verify email change")
 		}
 
 		return WriteSuccess(w, result)

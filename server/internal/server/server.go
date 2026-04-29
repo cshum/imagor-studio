@@ -174,6 +174,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		resolver.WithProcessingUsageStore(services.ProcessingUsageStore),
 		resolver.WithBillingService(services.BillingService),
 		resolver.WithProcessingOriginResolver(processingOriginResolver),
+		resolver.WithSignupRuntime(services.SignupVerification),
 		templatePreviewRenderer,
 	)
 	schema := gql.NewExecutableSchema(gql.Config{Resolvers: storageResolver})
@@ -229,6 +230,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	mux.HandleFunc("/api/auth/register/start", authHandler.StartPublicSignup())
 	mux.HandleFunc("/api/auth/register/verify", authHandler.VerifyPublicSignup())
 	mux.HandleFunc("/api/auth/register/resend", authHandler.ResendPublicSignupVerification())
+	mux.HandleFunc("/api/auth/account/email/verify", authHandler.VerifyEmailChange())
 	mux.HandleFunc("/api/auth/login", authHandler.Login())
 	mux.HandleFunc("/api/auth/refresh", authHandler.RefreshToken())
 	mux.HandleFunc("/api/auth/guest", authHandler.GuestLogin())

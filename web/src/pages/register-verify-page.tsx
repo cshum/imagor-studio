@@ -39,7 +39,7 @@ function isRedundantVerificationError(summary: string, detail: string): boolean 
   return summaryLooksExpired && detailLooksExpired
 }
 
-function RegisterVerifyLayout({
+export function RegisterVerifyLayout({
   eyebrow,
   title,
   description,

@@ -154,6 +154,22 @@
       "signInInsteadDescription": "{{email}} 当前已经没有待完成的确认步骤。如果您已经完成注册，请直接登录。",
       "backToLogin": "返回登录"
     },
+    "emailChangeVerify": {
+      "pendingEyebrow": "邮箱变更",
+      "pendingTitle": "正在确认您的新邮箱",
+      "pendingDescription": "请稍候，我们正在验证您新的登录邮箱地址。",
+      "verifying": "正在验证您的邮箱变更确认链接。",
+      "successEyebrow": "邮箱已更新",
+      "successTitle": "您的登录邮箱已更新",
+      "successDescription": "{{email}} 现在将作为您的登录邮箱地址。",
+      "successBody": "下次登录时，您可以继续使用 {{email}} 访问您的账户。",
+      "errorEyebrow": "邮箱变更",
+      "errorTitle": "我们无法确认您的新邮箱",
+      "errorSubtitle": "该确认链接可能无效或已过期。",
+      "errorHelp": "请在账户设置中重新请求邮箱变更，以获取新的确认链接。",
+      "backToLogin": "返回登录",
+      "backToProfile": "返回个人资料"
+    },
     "error": {
       "defaultTitle": "出现了一些问题",
       "notFoundTitle": "未找到空间",

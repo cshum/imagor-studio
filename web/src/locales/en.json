@@ -201,6 +201,22 @@
       "signInInsteadDescription": "There is no pending confirmation left for {{email}}. If you already completed sign-up, sign in instead.",
       "backToLogin": "Back to login"
     },
+    "emailChangeVerify": {
+      "pendingEyebrow": "Email change",
+      "pendingTitle": "Confirming your new email",
+      "pendingDescription": "Please wait while we verify your new sign-in email address.",
+      "verifying": "Verifying your email change confirmation link.",
+      "successEyebrow": "Email updated",
+      "successTitle": "Your sign-in email has been updated",
+      "successDescription": "{{email}} is now the email address used to sign in.",
+      "successBody": "You can continue using your account with {{email}} the next time you sign in.",
+      "errorEyebrow": "Email change",
+      "errorTitle": "We couldn't confirm your new email",
+      "errorSubtitle": "The confirmation link may be invalid or expired.",
+      "errorHelp": "Request another email change from your account settings to get a fresh confirmation link.",
+      "backToLogin": "Back to login",
+      "backToProfile": "Back to profile"
+    },
     "error": {
       "defaultTitle": "Something went wrong",
       "notFoundTitle": "Space not found",

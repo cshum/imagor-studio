@@ -205,6 +205,22 @@
       "signInInsteadDescription": "{{email}} 目前已經沒有待完成的確認步驟。如果您已完成註冊，請直接登入。",
       "backToLogin": "返回登入"
     },
+    "emailChangeVerify": {
+      "pendingEyebrow": "電子郵件變更",
+      "pendingTitle": "正在確認您的新電子郵件",
+      "pendingDescription": "請稍候，我們正在驗證您新的登入電子郵件地址。",
+      "verifying": "正在驗證您的電子郵件變更確認連結。",
+      "successEyebrow": "電子郵件已更新",
+      "successTitle": "您的登入電子郵件已更新",
+      "successDescription": "{{email}} 現在將作為您的登入電子郵件地址。",
+      "successBody": "下次登入時，您可以繼續使用 {{email}} 存取您的帳戶。",
+      "errorEyebrow": "電子郵件變更",
+      "errorTitle": "我們無法確認您的新電子郵件",
+      "errorSubtitle": "此確認連結可能已失效或過期。",
+      "errorHelp": "請在帳戶設定中重新要求電子郵件變更，以取得新的確認連結。",
+      "backToLogin": "返回登入",
+      "backToProfile": "返回個人資料"
+    },
     "error": {
       "defaultTitle": "發生錯誤",
       "notFoundTitle": "找不到空間",

@@ -356,6 +356,19 @@ func (m *MockUserStore) RequestEmailChange(ctx context.Context, id string, email
 	return args.Get(0).(*userstore.User), args.Error(1)
 }
 
+func (m *MockUserStore) ClearPendingEmailChange(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockUserStore) ConfirmEmailChange(ctx context.Context, id string, email string) (*userstore.User, error) {
+	args := m.Called(ctx, id, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*userstore.User), args.Error(1)
+}
+
 func (m *MockUserStore) ListAuthProviders(ctx context.Context, id string) ([]*userstore.AuthProvider, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -438,6 +451,22 @@ func (m *MockSignupRuntime) ResendPublicSignupVerification(ctx context.Context, 
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*signup.StartPublicSignupResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) RequestEmailChange(ctx context.Context, params signup.RequestEmailChangeParams) (*signup.RequestEmailChangeResult, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.RequestEmailChangeResult), args.Error(1)
+}
+
+func (m *MockSignupRuntime) VerifyEmailChange(ctx context.Context, token string) (*signup.VerifyEmailChangeResult, error) {
+	args := m.Called(ctx, token)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*signup.VerifyEmailChangeResult), args.Error(1)
 }
 
 func (m *MockRegistryStore) List(ctx context.Context, ownerID string, prefix *string) ([]*registrystore.Registry, error) {
@@ -1780,6 +1809,56 @@ func TestResendPublicSignupVerification_CooldownActive(t *testing.T) {
 	var errResp apperror.ErrorResponse
 	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
 	assert.Equal(t, "TOO_MANY_REQUESTS", errResp.Code)
+
+	mockSignupRuntime.AssertExpectations(t)
+}
+
+func TestVerifyEmailChange(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("VerifyEmailChange", mock.Anything, "verify-token").Return(&signup.VerifyEmailChangeResult{
+		UserID: "verified-user-1",
+		Email:  "updated@example.com",
+	}, nil)
+
+	body, err := json.Marshal(VerifyEmailChangeRequest{Token: "verify-token"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/account/email/verify", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.VerifyEmailChange()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+	var resp signup.VerifyEmailChangeResult
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	assert.Equal(t, "verified-user-1", resp.UserID)
+	assert.Equal(t, "updated@example.com", resp.Email)
+
+	mockSignupRuntime.AssertExpectations(t)
+}
+
+func TestVerifyEmailChange_InvalidToken(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockSignupRuntime := new(MockSignupRuntime)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), &nilOrgStore{}, nil, logger, AuthHandlerConfig{SignupRuntime: mockSignupRuntime})
+
+	mockSignupRuntime.On("VerifyEmailChange", mock.Anything, "verify-token").Return(nil, signup.ErrEmailChangeVerificationTokenInvalid)
+
+	body, err := json.Marshal(VerifyEmailChangeRequest{Token: "verify-token"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/account/email/verify", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.VerifyEmailChange()(rr, req)
+
+	require.Equal(t, http.StatusBadRequest, rr.Code)
+	var errResp apperror.ErrorResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
+	assert.Equal(t, "INVALID_INPUT", errResp.Code)
 
 	mockSignupRuntime.AssertExpectations(t)
 }

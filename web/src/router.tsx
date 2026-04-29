@@ -33,6 +33,7 @@ import {
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import { authCallbackLoader } from '@/loaders/auth-callback-loader.ts'
+import { emailChangeVerifyLoader } from '@/loaders/email-change-verify-loader'
 import {
   redirectAuthenticatedUsersWithOrganization,
   requireAccountAuth,
@@ -72,6 +73,10 @@ import { AdminLicenseSection } from '@/pages/admin/license'
 import { AdminStorageSection } from '@/pages/admin/storage'
 import { AuthCallbackPage } from '@/pages/auth-callback-page.tsx'
 import { CreateSpacePage } from '@/pages/create-space-page'
+import {
+  EmailChangeVerifyPage,
+  EmailChangeVerifyPendingPage,
+} from '@/pages/email-change-verify-page'
 import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
@@ -164,6 +169,14 @@ const registerVerifyRoute = createRoute({
   loader: registerVerifyLoader,
   component: RegisterVerifyPage,
   pendingComponent: RegisterVerifyPendingPage,
+})
+
+const emailChangeVerifyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/account/email/verify',
+  loader: emailChangeVerifyLoader,
+  component: EmailChangeVerifyPage,
+  pendingComponent: EmailChangeVerifyPendingPage,
 })
 
 const authCallbackRoute = createRoute({
@@ -875,6 +888,7 @@ const routeTree = isEmbeddedMode
       joinRoute,
       registerRoute,
       registerVerifyRoute,
+      emailChangeVerifyRoute,
       authCallbackRoute,
       adminSetupRoute,
       createSpaceRoute,

@@ -205,6 +205,22 @@
       "signInInsteadDescription": "Non c\u2019è pi\u00f9 una conferma in sospeso per {{email}}. Se hai gi\u00e0 completato la registrazione, accedi invece di richiedere un nuovo link.",
       "backToLogin": "Torna al login"
     },
+    "emailChangeVerify": {
+      "pendingEyebrow": "Cambio email",
+      "pendingTitle": "Conferma del nuovo indirizzo email",
+      "pendingDescription": "Attendi mentre verifichiamo il tuo nuovo indirizzo email di accesso.",
+      "verifying": "Stiamo verificando il link di conferma del cambio email.",
+      "successEyebrow": "Email aggiornata",
+      "successTitle": "La tua email di accesso è stata aggiornata",
+      "successDescription": "{{email}} è ora l'indirizzo email usato per accedere.",
+      "successBody": "Potrai continuare a usare il tuo account con {{email}} al prossimo accesso.",
+      "errorEyebrow": "Cambio email",
+      "errorTitle": "Non siamo riusciti a confermare la nuova email",
+      "errorSubtitle": "Il link di conferma potrebbe non essere valido o essere scaduto.",
+      "errorHelp": "Richiedi un nuovo cambio email dalle impostazioni account per ricevere un nuovo link di conferma.",
+      "backToLogin": "Torna al login",
+      "backToProfile": "Torna al profilo"
+    },
     "error": {
       "defaultTitle": "Qualcosa è andato storto",
       "notFoundTitle": "Spazio non trovato",
