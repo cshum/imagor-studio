@@ -1,8 +1,9 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Navigate, useLoaderData } from '@tanstack/react-router'
+import { Link, Navigate, useLoaderData, useNavigate } from '@tanstack/react-router'
 import { ArrowRight, Mail } from 'lucide-react'
 
-import { getGoogleLoginUrl } from '@/api/auth-api'
+import { acceptInvitation, getGoogleLoginUrl } from '@/api/auth-api'
 import { AuthPageShell } from '@/components/auth-page-shell'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/stores/auth-store'
@@ -46,19 +47,66 @@ type JoinInviteLoaderResult = {
 
 export function JoinInvitePage() {
   const { t } = useTranslation()
-  const { authState } = useAuth()
+  const navigate = useNavigate()
+  const { authState, initAuth } = useAuth()
   const { invitation, inviteToken, errorMessage } = useLoaderData({ from: '/join' }) as JoinInviteLoaderResult
-
-  if (authState.isEmbedded) {
-    return <Navigate to='/' replace />
-  }
-
-  if (authState.state === 'authenticated') {
-    return <Navigate to='/' replace />
-  }
+  const [acceptState, setAcceptState] = useState<'idle' | 'loading' | 'failed'>('idle')
+  const [acceptError, setAcceptError] = useState<string | null>(null)
 
   const handleGoogle = () => {
     window.location.href = getGoogleLoginUrl(inviteToken)
+  }
+
+  useEffect(() => {
+    if (authState.state !== 'authenticated' || !authState.accessToken || !inviteToken || errorMessage) {
+      return
+    }
+
+    let cancelled = false
+
+    const run = async () => {
+      try {
+        setAcceptState('loading')
+        setAcceptError(null)
+        const response = await acceptInvitation(inviteToken, authState.accessToken as string)
+        if (cancelled) {
+          return
+        }
+        await initAuth(response.token)
+        navigate({ to: '/' })
+      } catch (error) {
+        if (cancelled) {
+          return
+        }
+        setAcceptState('failed')
+        setAcceptError(error instanceof Error ? error.message : t('pages.joinInvite.acceptFailed'))
+      }
+    }
+
+    void run()
+
+    return () => {
+      cancelled = true
+    }
+  }, [authState.accessToken, authState.state, errorMessage, initAuth, inviteToken, navigate, t])
+
+  const authenticatedAcceptanceContent = (
+    <div className='bg-muted/50 rounded-2xl border p-4'>
+      <p className='text-sm font-semibold'>
+        {acceptState === 'failed'
+          ? t('pages.joinInvite.acceptFailedTitle')
+          : t('pages.joinInvite.acceptingTitle')}
+      </p>
+      <p className='text-muted-foreground mt-2 text-sm leading-6'>
+        {acceptState === 'failed'
+          ? acceptError || t('pages.joinInvite.acceptFailed')
+          : t('pages.joinInvite.acceptingDescription')}
+      </p>
+    </div>
+  )
+
+  if (authState.isEmbedded) {
+    return <Navigate to='/' replace />
   }
 
   return (
@@ -73,6 +121,8 @@ export function JoinInvitePage() {
       formTitle={t('pages.joinInvite.formTitle')}
       showLegalLinks={authState.multiTenant}
     >
+      {authState.state === 'authenticated' ? authenticatedAcceptanceContent : null}
+
       {invitation ? (
         <div className='bg-muted/50 mb-6 rounded-2xl border p-4'>
           <p className='text-sm font-semibold'>
@@ -93,7 +143,7 @@ export function JoinInvitePage() {
         </div>
       ) : null}
 
-      {errorMessage ? (
+      {authState.state === 'authenticated' ? null : errorMessage ? (
         <div className='bg-muted/50 rounded-2xl border p-4'>
           <p className='text-sm font-semibold'>{t('pages.joinInvite.invalidTitle')}</p>
           <p className='text-muted-foreground mt-2 text-sm leading-6'>{errorMessage}</p>

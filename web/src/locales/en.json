@@ -799,6 +799,10 @@
       "emailAction": "Continue with email",
       "secondaryHelp": "Google sign-in uses the invitation directly. Email sign-up verifies your address first and then joins the invited organization.",
       "loginInstead": "Already have an account? Sign in",
+      "acceptingTitle": "Completing your invitation",
+      "acceptingDescription": "We are adding this account to the invited organization now.",
+      "acceptFailedTitle": "We could not complete this invitation",
+      "acceptFailed": "Try opening the invitation again or sign in with the invited account.",
       "invalidTitle": "This invitation is unavailable"
     },
     "spaces": {

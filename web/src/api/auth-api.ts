@@ -351,6 +351,27 @@ export async function resolveInvitation(
   return response.json()
 }
 
+export async function acceptInvitation(inviteToken: string, accessToken: string): Promise<LoginResponse> {
+  const response = await fetch(`${BASE_URL}/api/invitations/accept`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ inviteToken }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw withStatus(
+      createAuthApiError(errorData, `HTTP ${response.status}: ${response.statusText}`),
+      response.status,
+    )
+  }
+
+  return response.json()
+}
+
 /**
  * Get available auth providers (e.g. google, github)
  */

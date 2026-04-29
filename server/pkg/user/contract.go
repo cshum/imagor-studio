@@ -35,6 +35,7 @@ type PasswordSignupStore interface {
 }
 
 type OAuthStore interface {
+	GetByID(ctx context.Context, id string) (*User, error)
 	UpsertOAuth(ctx context.Context, provider, providerID, email, displayName, avatarURL string) (*User, error)
 	UpdateRole(ctx context.Context, id string, role string) error
 }

@@ -753,6 +753,10 @@
       "emailAction": "使用邮箱继续",
       "secondaryHelp": "Google 登录会直接使用此邀请。邮箱注册会先验证你的邮箱地址，然后再加入被邀请的组织。",
       "loginInstead": "已有账号？去登录",
+      "acceptingTitle": "正在完成邀请",
+      "acceptingDescription": "我们正在将此账户加入受邀组织。",
+      "acceptFailedTitle": "无法完成此邀请",
+      "acceptFailed": "请重新打开邀请链接，或使用受邀账户登录。",
       "invalidTitle": "此邀请当前不可用"
     },
     "spaces": {

@@ -803,6 +803,10 @@
       "emailAction": "使用電子郵件繼續",
       "secondaryHelp": "Google 登入會直接使用此邀請。電子郵件註冊會先驗證你的信箱，然後再加入受邀組織。",
       "loginInstead": "已經有帳號？前往登入",
+      "acceptingTitle": "正在完成邀請",
+      "acceptingDescription": "我們正在將此帳戶加入受邀組織。",
+      "acceptFailedTitle": "無法完成此邀請",
+      "acceptFailed": "請重新開啟邀請連結，或使用受邀帳戶登入。",
       "invalidTitle": "此邀請目前無法使用"
     },
     "spaces": {
