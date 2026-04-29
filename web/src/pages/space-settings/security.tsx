@@ -247,6 +247,7 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
 
     const copied = await copyToClipboard(secret)
     if (copied) {
+      setHasGeneratedSecret(false)
       toast.success(t('pages.spaceSettings.imagor.secretCopied'))
     } else {
       toast.error(t('pages.spaceSettings.imagor.secretCopyFailed'))
