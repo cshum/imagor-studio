@@ -501,51 +501,48 @@ export function SpacesPage({
                         </Link>
                       </Button>
                     ) : null}
+                    {space.canLeave && authState.profile?.id ? (
+                      <DropdownMenu
+                        open={openMenuSpaceKey === space.key}
+                        onOpenChange={(open) => setOpenMenuSpaceKey(open ? space.key : null)}
+                      >
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='pointer-events-auto h-10 w-10 shrink-0'
+                            aria-label={t('common.buttons.more')}
+                          >
+                            <MoreHorizontal className='h-5 w-5' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          {canManageSpace ? (
+                            <DropdownMenuItem asChild>
+                              <Link
+                                to='/spaces/$spaceKey/settings/$section'
+                                params={{ spaceKey: space.key, section: 'general' }}
+                              >
+                                <Settings className='mr-2 h-4 w-4' />
+                                {t('pages.spaces.configure')}
+                              </Link>
+                            </DropdownMenuItem>
+                          ) : null}
+                          <DropdownMenuItem
+                            onSelect={(event) => {
+                              event.preventDefault()
+                              requestLeaveSpace(space)
+                            }}
+                            className='text-destructive focus:text-destructive'
+                          >
+                            <LogOut className='mr-2 h-4 w-4' />
+                            {t('pages.spaces.leaveSpace')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : null}
                   </div>
                 </div>
-
-                {space.canLeave && authState.profile?.id ? (
-                  <div className='pointer-events-none relative z-20 mt-4 flex justify-end gap-2'>
-                    <DropdownMenu
-                      open={openMenuSpaceKey === space.key}
-                      onOpenChange={(open) => setOpenMenuSpaceKey(open ? space.key : null)}
-                    >
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant='outline'
-                          size='icon'
-                          className='pointer-events-auto h-9 w-9 shrink-0'
-                          aria-label={t('common.buttons.more')}
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        {canManageSpace ? (
-                          <DropdownMenuItem asChild>
-                            <Link
-                              to='/spaces/$spaceKey/settings/$section'
-                              params={{ spaceKey: space.key, section: 'general' }}
-                            >
-                              <Settings className='mr-2 h-4 w-4' />
-                              {t('pages.spaces.configure')}
-                            </Link>
-                          </DropdownMenuItem>
-                        ) : null}
-                        <DropdownMenuItem
-                          onSelect={(event) => {
-                            event.preventDefault()
-                            requestLeaveSpace(space)
-                          }}
-                          className='text-destructive focus:text-destructive'
-                        >
-                          <LogOut className='mr-2 h-4 w-4' />
-                          {t('pages.spaces.leaveSpace')}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                ) : null}
               </div>
             )
           })}
