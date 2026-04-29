@@ -8,9 +8,14 @@ export interface EmailChangeVerifyLoaderData {
   isAuthenticated: boolean
 }
 
+function normalizeEmail(value: string | null | undefined): string {
+  return value?.trim().toLowerCase() ?? ''
+}
+
 export const emailChangeVerifyLoader = async (): Promise<EmailChangeVerifyLoaderData> => {
   const searchParams = new URLSearchParams(window.location.search)
   const token = searchParams.get('token')?.trim()
+  const email = searchParams.get('email')?.trim() || null
 
   if (!token) {
     return {
@@ -36,13 +41,29 @@ export const emailChangeVerifyLoader = async (): Promise<EmailChangeVerifyLoader
     }
   } catch (error) {
     const apiError = error as AuthApiError
+    const auth = getAuth()
+    const isAuthenticated = auth.state === 'authenticated'
+
+    if (isAuthenticated && email) {
+      const refreshedAuth = await refreshAuthSession().catch(() => getAuth())
+      const currentEmail = normalizeEmail(refreshedAuth.profile?.email)
+      if (currentEmail && currentEmail === normalizeEmail(email)) {
+        return {
+          status: 'success',
+          errorMessage: '',
+          verifiedEmail: email,
+          isAuthenticated: true,
+        }
+      }
+    }
+
     return {
       status: 'error',
       errorMessage:
         apiError.message ||
         'We could not verify your email change. Please request a new change from your account settings.',
       verifiedEmail: null,
-      isAuthenticated: getAuth().state === 'authenticated',
+      isAuthenticated,
     }
   }
 }
