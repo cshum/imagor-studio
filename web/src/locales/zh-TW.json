@@ -1212,6 +1212,7 @@
         "resetConfirmDescription": "此空間將停止使用自己的簽名金鑰，並恢復為工作區預設值。現有依賴此空間簽名方式的 URL 可能也需要更新。",
         "customSigningDialogTitle": "自訂 URL 簽名",
         "customSigningDialogDescription": "為此空間設定自訂簽名金鑰，並覆寫 imagor URL 的簽名方式。已儲存的金鑰之後無法再次檢視。",
+        "customSigningDialogUpdateDescription": "將金鑰留空即可保留目前的值，輸入新值則會取代它。已儲存的金鑰之後無法再次檢視。",
         "secretDialogFieldDescription": "在此輸入您自己的金鑰，或直接產生一個。儲存後將無法再次檢視。",
         "secretDialogSignerAlgorithmDescription": "選擇此空間簽署 imagor URL 時使用的 HMAC 演算法。",
         "secretDialogSignerTruncateDescription": "選擇要保留的簽名字元數。使用 0 表示完整簽名。",

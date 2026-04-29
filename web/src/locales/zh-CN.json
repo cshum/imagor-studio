@@ -1164,6 +1164,7 @@
         "resetConfirmDescription": "此空间将停止使用自己的签名密钥，并恢复为工作区默认值。现有依赖此空间签名方式的 URL 可能需要一并更新。",
         "customSigningDialogTitle": "自定义 URL 签名",
         "customSigningDialogDescription": "为此空间设置自定义签名密钥，并覆盖 imagor URL 的签名方式。已保存的密钥之后无法再次查看。",
+        "customSigningDialogUpdateDescription": "将密钥留空即可保留当前值，输入新值则会替换它。已保存的密钥之后无法再次查看。",
         "secretDialogFieldDescription": "在此输入您自己的密钥，或直接生成一个。保存后将无法再次查看。",
         "secretDialogSignerAlgorithmDescription": "选择此空间签署 imagor URL 时使用的 HMAC 算法。",
         "secretDialogSignerTruncateDescription": "选择要保留的签名字符数。使用 0 表示完整签名。",

@@ -1221,6 +1221,7 @@
         "resetConfirmDescription": "This space will stop using its custom signing secret and return to the workspace default. Existing space-specific signed URL expectations may need to be updated.",
         "customSigningDialogTitle": "Custom URL Signing",
         "customSigningDialogDescription": "Set a custom signing secret and override how this space signs imagor URLs. Saved secrets cannot be viewed again.",
+        "customSigningDialogUpdateDescription": "Leave the secret blank to keep the current one, or enter a new value to replace it. Saved secrets cannot be viewed again.",
         "secretDialogFieldDescription": "Enter your own secret or generate one here. It cannot be viewed again after saving.",
         "secretDialogSignerAlgorithmDescription": "Choose the HMAC algorithm to use when this space signs imagor URLs.",
         "secretDialogSignerTruncateDescription": "Choose how many signature characters to keep. Use 0 for the full signature.",

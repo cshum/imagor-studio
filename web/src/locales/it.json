@@ -1222,6 +1222,7 @@
         "resetConfirmDescription": "Questo spazio smetterà di usare il proprio segreto di firma e tornerà al valore predefinito del workspace. Gli URL firmati specifici di questo spazio potrebbero dover essere aggiornati.",
         "customSigningDialogTitle": "Firma URL personalizzata",
         "customSigningDialogDescription": "Imposta un segreto di firma personalizzato e sovrascrivi il modo in cui questo spazio firma gli URL imagor. I segreti salvati non possono essere visualizzati di nuovo.",
+        "customSigningDialogUpdateDescription": "Lascia vuoto il segreto per mantenere quello attuale, oppure inserisci un nuovo valore per sostituirlo. I segreti salvati non possono essere visualizzati di nuovo.",
         "secretDialogFieldDescription": "Inserisci qui il tuo segreto oppure generane uno. Non potrà essere visualizzato di nuovo dopo il salvataggio.",
         "secretDialogSignerAlgorithmDescription": "Scegli l'algoritmo HMAC da usare quando questo spazio firma gli URL imagor.",
         "secretDialogSignerTruncateDescription": "Scegli quanti caratteri della firma mantenere. Usa 0 per la firma completa.",
