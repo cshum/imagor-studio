@@ -42,14 +42,13 @@ interface SecuritySectionProps {
 }
 
 const settingsSchema = z.object({
-  signerType: z.enum(['SHA1', 'SHA256', 'SHA512']),
-  signerTruncate: z.number().int().min(0),
   imagorCORSOrigins: z.string().optional(),
 })
 
 type SettingsFormData = z.infer<typeof settingsSchema>
+type SignerType = 'SHA1' | 'SHA256' | 'SHA512'
 
-function normalizeSignerType(value: string | null | undefined): SettingsFormData['signerType'] {
+function normalizeSignerType(value: string | null | undefined): SignerType {
   const normalized = value?.toUpperCase() ?? 'SHA256'
   if (normalized === 'SHA1' || normalized === 'SHA256' || normalized === 'SHA512') {
     return normalized
@@ -75,18 +74,24 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      signerType: normalizeSignerType(space.signerAlgorithm),
-      signerTruncate: space.signerTruncate ?? 32,
       imagorCORSOrigins: space.imagorCORSOrigins ?? '',
     },
   })
   const secretSchema = z.object({
     imagorSecret: z.string().trim().min(1, t('pages.spaceSettings.imagor.customSecretRequired')),
+    signerType: z.enum(['SHA1', 'SHA256', 'SHA512']),
+    signerTruncate: z.number().int().min(0),
   })
-  const secretForm = useForm<{ imagorSecret: string }>({
+  const secretForm = useForm<{
+    imagorSecret: string
+    signerType: SignerType
+    signerTruncate: number
+  }>({
     resolver: zodResolver(secretSchema),
     defaultValues: {
       imagorSecret: '',
+      signerType: normalizeSignerType(space.signerAlgorithm),
+      signerTruncate: space.signerTruncate ?? 32,
     },
   })
 
@@ -150,8 +155,6 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
 
   const handleSave = async (values: SettingsFormData) => {
     await saveImagorSettings({
-      signerAlgorithm: values.signerType.toLowerCase(),
-      signerTruncate: values.signerTruncate ?? null,
       imagorCORSOrigins: values.imagorCORSOrigins?.trim() ?? '',
     })
 
@@ -166,13 +169,25 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
   }
 
   const handleOpenSecretDialog = () => {
-    secretForm.reset({ imagorSecret: '' })
+    secretForm.reset({
+      imagorSecret: '',
+      signerType: normalizeSignerType(space.signerAlgorithm),
+      signerTruncate: space.signerTruncate ?? 32,
+    })
     setShowSecret(false)
     setSecretDialogOpen(true)
   }
 
-  const handleSaveCustomSecret = async (values: { imagorSecret: string }) => {
-    await saveImagorSettings({ imagorSecret: values.imagorSecret.trim() })
+  const handleSaveCustomSecret = async (values: {
+    imagorSecret: string
+    signerType: SignerType
+    signerTruncate: number
+  }) => {
+    await saveImagorSettings({
+      imagorSecret: values.imagorSecret.trim(),
+      signerAlgorithm: values.signerType.toLowerCase(),
+      signerTruncate: values.signerTruncate ?? null,
+    })
 
     rememberSpacePropagationNotice({
       action: 'updated',
@@ -214,6 +229,15 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
   }
 
   const hasCustomImagorSecret = space.hasCustomImagorSecret
+  const signerTypeLabel = t(
+    `pages.spaceSettings.imagor.${
+      normalizeSignerType(space.signerAlgorithm) === 'SHA1'
+        ? 'algorithmSha1'
+        : normalizeSignerType(space.signerAlgorithm) === 'SHA512'
+          ? 'algorithmSha512'
+          : 'algorithmSha256'
+    }`,
+  )
 
   return (
     <>
@@ -250,82 +274,26 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
                 </Button>
               </div>
             </SettingRow>
+            {hasCustomImagorSecret && (
+              <>
+                <SettingRow
+                  label={t('pages.spaceSettings.imagor.signerAlgorithm')}
+                  description={t('pages.spaceSettings.imagor.signerAlgorithmPreviewDescription')}
+                  contentClassName='flex justify-end'
+                >
+                  <div className='text-sm text-right'>{signerTypeLabel}</div>
+                </SettingRow>
 
-            <FormField
-              control={form.control}
-              name='signerType'
-              render={({ field }) => (
-                <FormItem>
-                  <SettingRow
-                    label={t('pages.spaceSettings.imagor.signerAlgorithm')}
-                    description={t(
-                      hasCustomImagorSecret
-                        ? 'pages.spaceSettings.imagor.signerAlgorithmDescription'
-                        : 'pages.spaceSettings.imagor.signerAlgorithmInheritedDescription',
-                    )}
-                  >
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={!hasCustomImagorSecret}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='SHA1'>
-                          {t('pages.spaceSettings.imagor.algorithmSha1')}
-                        </SelectItem>
-                        <SelectItem value='SHA256'>
-                          {t('pages.spaceSettings.imagor.algorithmSha256')}
-                        </SelectItem>
-                        <SelectItem value='SHA512'>
-                          {t('pages.spaceSettings.imagor.algorithmSha512')}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name='signerTruncate'
-              render={({ field }) => (
-                <FormItem>
-                  <SettingRow
-                    label={t('pages.spaceSettings.imagor.signerTruncate')}
-                    description={t(
-                      hasCustomImagorSecret
-                        ? 'pages.spaceSettings.imagor.signerTruncateDescription'
-                        : 'pages.spaceSettings.imagor.signerTruncateInheritedDescription',
-                    )}
-                    last
-                  >
-                    <FormControl>
-                      <Input
-                        type='number'
-                        min={0}
-                        placeholder='0'
-                        value={field.value ?? 0}
-                        onChange={(e) =>
-                          field.onChange(isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber)
-                        }
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                        disabled={!hasCustomImagorSecret}
-                      />
-                    </FormControl>
-                    <FormMessage className='mt-1.5' />
-                  </SettingRow>
-                </FormItem>
-              )}
-            />
+                <SettingRow
+                  label={t('pages.spaceSettings.imagor.signerTruncate')}
+                  description={t('pages.spaceSettings.imagor.signerTruncatePreviewDescription')}
+                  contentClassName='flex justify-end'
+                  last
+                >
+                  <div className='text-sm text-right'>{String(space.signerTruncate ?? 32)}</div>
+                </SettingRow>
+              </>
+            )}
           </SettingsSection>
 
           <SettingsSection
@@ -374,11 +342,15 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
         onOpenChange={(open) => {
           setSecretDialogOpen(open)
           if (!open) {
-            secretForm.reset({ imagorSecret: '' })
+            secretForm.reset({
+              imagorSecret: '',
+              signerType: normalizeSignerType(space.signerAlgorithm),
+              signerTruncate: space.signerTruncate ?? 32,
+            })
             setShowSecret(false)
           }
         }}
-        contentClassName='sm:max-w-lg'
+        contentClassName='sm:max-w-xl'
       >
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>
@@ -415,16 +387,89 @@ export function SecuritySection({ space, initialValues }: SecuritySectionProps) 
                           : t('pages.spaceSettings.imagor.showSecret')}
                       </Button>
                     </div>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='w-fit'
+                      onClick={handleGenerateSecret}
+                    >
+                      {t('pages.spaceSettings.imagor.generateSecret')}
+                    </Button>
                   </div>
                   <FormMessage className='mt-1.5' />
                 </FormItem>
               )}
             />
 
-            <ResponsiveDialogFooter className='sm:justify-between'>
-              <Button type='button' variant='outline' onClick={handleGenerateSecret}>
-                {t('pages.spaceSettings.imagor.generateSecret')}
-              </Button>
+            <FormField
+              control={secretForm.control}
+              name='signerType'
+              render={({ field }) => (
+                <FormItem>
+                  <div className='space-y-2'>
+                    <p className='text-sm font-medium'>
+                      {t('pages.spaceSettings.imagor.signerAlgorithm')}
+                    </p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('pages.spaceSettings.imagor.secretDialogSignerAlgorithmDescription')}
+                    </p>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value='SHA1'>
+                          {t('pages.spaceSettings.imagor.algorithmSha1')}
+                        </SelectItem>
+                        <SelectItem value='SHA256'>
+                          {t('pages.spaceSettings.imagor.algorithmSha256')}
+                        </SelectItem>
+                        <SelectItem value='SHA512'>
+                          {t('pages.spaceSettings.imagor.algorithmSha512')}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className='mt-1.5' />
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={secretForm.control}
+              name='signerTruncate'
+              render={({ field }) => (
+                <FormItem>
+                  <div className='space-y-2'>
+                    <p className='text-sm font-medium'>
+                      {t('pages.spaceSettings.imagor.signerTruncate')}
+                    </p>
+                    <p className='text-muted-foreground text-sm'>
+                      {t('pages.spaceSettings.imagor.secretDialogSignerTruncateDescription')}
+                    </p>
+                    <FormControl>
+                      <Input
+                        type='number'
+                        min={0}
+                        placeholder='0'
+                        value={field.value ?? 0}
+                        onChange={(e) =>
+                          field.onChange(isNaN(e.target.valueAsNumber) ? 0 : e.target.valueAsNumber)
+                        }
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    </FormControl>
+                    <FormMessage className='mt-1.5' />
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <ResponsiveDialogFooter className='sm:justify-end'>
               <div className='flex justify-end gap-2'>
                 <Button
                   type='button'
