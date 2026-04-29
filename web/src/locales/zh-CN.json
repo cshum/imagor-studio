@@ -1137,9 +1137,6 @@
           "admin": "管理员",
           "spaceManager": "管理员",
           "member": "成员"
-        },
-        "roleSource": {
-          "organization": "继承自组织"
         }
       },
       "imagor": {

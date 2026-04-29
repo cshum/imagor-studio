@@ -1196,9 +1196,6 @@
           "admin": "管理員",
           "spaceManager": "管理員",
           "member": "成員"
-        },
-        "roleSource": {
-          "organization": "繼承自組織"
         }
       },
       "imagor": {

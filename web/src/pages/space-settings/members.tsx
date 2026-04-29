@@ -65,16 +65,6 @@ function getRoleBadgeLabel(
   return t('pages.spaceSettings.members.roles.member')
 }
 
-function getRoleDescription(
-  member: Pick<SpaceMemberItem, 'role' | 'roleSource'>,
-  t: (key: string) => string,
-) {
-  if (member.roleSource === 'organization') {
-    return t('pages.spaceSettings.members.roleSource.organization')
-  }
-  return null
-}
-
 interface MembersSectionProps {
   spaceID: string
   initialMembers: SpaceMemberItem[]
@@ -443,11 +433,6 @@ export function MembersSection({
                         <p className='text-muted-foreground truncate text-xs'>
                           {member.email || `@${member.username}`}
                         </p>
-                        {getRoleDescription(member, t) ? (
-                          <p className='text-muted-foreground truncate text-xs'>
-                            {getRoleDescription(member, t)}
-                          </p>
-                        ) : null}
                       </div>
                     </div>
                     {options?.showActions === false ? null : (
@@ -506,11 +491,6 @@ export function MembersSection({
                         <p className='text-muted-foreground truncate text-xs'>
                           {member.email || `@${member.username}`}
                         </p>
-                        {getRoleDescription(member, t) ? (
-                          <p className='text-muted-foreground truncate text-xs'>
-                            {getRoleDescription(member, t)}
-                          </p>
-                        ) : null}
                       </div>
                       {!hasMemberActions(member) ? null : (
                         <DropdownMenu

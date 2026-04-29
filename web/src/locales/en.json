@@ -1202,9 +1202,6 @@
           "admin": "Admin",
           "spaceManager": "Admin",
           "member": "Member"
-        },
-        "roleSource": {
-          "organization": "Inherited from organization"
         }
       },
       "placeholders": {
