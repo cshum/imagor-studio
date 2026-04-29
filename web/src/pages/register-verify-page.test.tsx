@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -48,6 +49,10 @@ vi.mock('@/components/license/license-badge.tsx', () => ({
 
 vi.mock('@/components/mode-toggle', () => ({
   ModeToggle: () => <div>ModeToggle</div>,
+}))
+
+vi.mock('@/components/language-selector', () => ({
+  LanguageSelector: () => <div>LanguageSelector</div>,
 }))
 
 vi.mock('@/components/ui/button', () => ({
@@ -105,6 +110,7 @@ describe('RegisterVerifyPage', () => {
     )
 
     mockVerifyPublicSignup.mockResolvedValue({ token: 'jwt-token' })
+    mockInitAuth.mockResolvedValue({ state: 'authenticated', accessToken: 'jwt-token' })
 
     render(<RegisterVerifyPage />)
 
@@ -127,6 +133,7 @@ describe('RegisterVerifyPage', () => {
     )
 
     mockVerifyPublicSignup.mockRejectedValue(new Error('Verification link expired'))
+    mockInitAuth.mockResolvedValue({ state: 'unauthenticated', accessToken: null })
     mockResendPublicSignupVerification.mockResolvedValue({
       email: 'owner@example.com',
       verificationRequired: true,
@@ -151,5 +158,49 @@ describe('RegisterVerifyPage', () => {
       expect(mockResendPublicSignupVerification).toHaveBeenCalledWith('owner@example.com')
     })
     expect(screen.getByText('pages.registerVerify.resendSuccess')).toBeTruthy()
+  })
+
+  it('verifies only once in strict mode', async () => {
+    const { RegisterVerifyPage } = await import('./register-verify-page')
+    window.history.replaceState(
+      {},
+      '',
+      '/register/verify?token=strict-token&email=owner%40example.com',
+    )
+
+    mockVerifyPublicSignup.mockResolvedValue({ token: 'jwt-token' })
+    mockInitAuth.mockResolvedValue({ state: 'authenticated', accessToken: 'jwt-token' })
+
+    render(
+      <StrictMode>
+        <RegisterVerifyPage />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      expect(mockVerifyPublicSignup).toHaveBeenCalledTimes(1)
+      expect(mockVerifyPublicSignup).toHaveBeenCalledWith('strict-token')
+    })
+  })
+
+  it('redirects home when the token is already consumed but the session is already authenticated', async () => {
+    const { RegisterVerifyPage } = await import('./register-verify-page')
+    window.history.replaceState(
+      {},
+      '',
+      '/register/verify?token=used-token&email=owner%40example.com',
+    )
+
+    const consumedTokenError = Object.assign(new Error('Email already exists'), { status: 409 })
+    mockVerifyPublicSignup.mockRejectedValue(consumedTokenError)
+    mockInitAuth.mockResolvedValue({ state: 'authenticated', accessToken: 'stored-token' })
+
+    render(<RegisterVerifyPage />)
+
+    await waitFor(() => {
+      expect(mockInitAuth).toHaveBeenCalledWith()
+      expect(mockNavigate).toHaveBeenCalledWith({ to: '/' })
+    })
+    expect(screen.queryByText('Email already exists')).toBeNull()
   })
 })
