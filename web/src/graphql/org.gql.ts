@@ -39,6 +39,7 @@ export const LIST_SPACES = gql(`
       signerAlgorithm
       signerTruncate
       imagorCORSOrigins
+      hasCustomImagorSecret
       canManage
       canDelete
       canLeave
@@ -100,6 +101,7 @@ export const GET_SPACE = gql(`
       signerAlgorithm
       signerTruncate
       imagorCORSOrigins
+      hasCustomImagorSecret
       canManage
       canDelete
       canLeave

@@ -237,30 +237,31 @@ type ComplexityRoot struct {
 	}
 
 	Space struct {
-		Bucket               func(childComplexity int) int
-		CanDelete            func(childComplexity int) int
-		CanLeave             func(childComplexity int) int
-		CanManage            func(childComplexity int) int
-		CustomDomain         func(childComplexity int) int
-		CustomDomainVerified func(childComplexity int) int
-		Endpoint             func(childComplexity int) int
-		ID                   func(childComplexity int) int
-		ImagorCORSOrigins    func(childComplexity int) int
-		IsShared             func(childComplexity int) int
-		Key                  func(childComplexity int) int
-		Name                 func(childComplexity int) int
-		OrgID                func(childComplexity int) int
-		Prefix               func(childComplexity int) int
-		ProcessingUsageCount func(childComplexity int) int
-		Region               func(childComplexity int) int
-		SignerAlgorithm      func(childComplexity int) int
-		SignerTruncate       func(childComplexity int) int
-		StorageMode          func(childComplexity int) int
-		StorageType          func(childComplexity int) int
-		StorageUsageBytes    func(childComplexity int) int
-		Suspended            func(childComplexity int) int
-		UpdatedAt            func(childComplexity int) int
-		UsePathStyle         func(childComplexity int) int
+		Bucket                func(childComplexity int) int
+		CanDelete             func(childComplexity int) int
+		CanLeave              func(childComplexity int) int
+		CanManage             func(childComplexity int) int
+		CustomDomain          func(childComplexity int) int
+		CustomDomainVerified  func(childComplexity int) int
+		Endpoint              func(childComplexity int) int
+		HasCustomImagorSecret func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		ImagorCORSOrigins     func(childComplexity int) int
+		IsShared              func(childComplexity int) int
+		Key                   func(childComplexity int) int
+		Name                  func(childComplexity int) int
+		OrgID                 func(childComplexity int) int
+		Prefix                func(childComplexity int) int
+		ProcessingUsageCount  func(childComplexity int) int
+		Region                func(childComplexity int) int
+		SignerAlgorithm       func(childComplexity int) int
+		SignerTruncate        func(childComplexity int) int
+		StorageMode           func(childComplexity int) int
+		StorageType           func(childComplexity int) int
+		StorageUsageBytes     func(childComplexity int) int
+		Suspended             func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+		UsePathStyle          func(childComplexity int) int
 	}
 
 	SpaceInvitation struct {
@@ -1716,6 +1717,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Space.Endpoint(childComplexity), true
+	case "Space.hasCustomImagorSecret":
+		if e.ComplexityRoot.Space.HasCustomImagorSecret == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.HasCustomImagorSecret(childComplexity), true
 	case "Space.id":
 		if e.ComplexityRoot.Space.ID == nil {
 			break
@@ -2566,6 +2573,7 @@ type Space {
   signerAlgorithm: String!
   signerTruncate: Int!
   imagorCORSOrigins: String!
+  hasCustomImagorSecret: Boolean!
   canManage: Boolean!
   canDelete: Boolean!
   canLeave: Boolean!
@@ -6369,6 +6377,8 @@ func (ec *executionContext) fieldContext_Mutation_createSpace(ctx context.Contex
 				return ec.fieldContext_Space_signerTruncate(ctx, field)
 			case "imagorCORSOrigins":
 				return ec.fieldContext_Space_imagorCORSOrigins(ctx, field)
+			case "hasCustomImagorSecret":
+				return ec.fieldContext_Space_hasCustomImagorSecret(ctx, field)
 			case "canManage":
 				return ec.fieldContext_Space_canManage(ctx, field)
 			case "canDelete":
@@ -6460,6 +6470,8 @@ func (ec *executionContext) fieldContext_Mutation_updateSpace(ctx context.Contex
 				return ec.fieldContext_Space_signerTruncate(ctx, field)
 			case "imagorCORSOrigins":
 				return ec.fieldContext_Space_imagorCORSOrigins(ctx, field)
+			case "hasCustomImagorSecret":
+				return ec.fieldContext_Space_hasCustomImagorSecret(ctx, field)
 			case "canManage":
 				return ec.fieldContext_Space_canManage(ctx, field)
 			case "canDelete":
@@ -8985,6 +8997,8 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 				return ec.fieldContext_Space_signerTruncate(ctx, field)
 			case "imagorCORSOrigins":
 				return ec.fieldContext_Space_imagorCORSOrigins(ctx, field)
+			case "hasCustomImagorSecret":
+				return ec.fieldContext_Space_hasCustomImagorSecret(ctx, field)
 			case "canManage":
 				return ec.fieldContext_Space_canManage(ctx, field)
 			case "canDelete":
@@ -9114,6 +9128,8 @@ func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field 
 				return ec.fieldContext_Space_signerTruncate(ctx, field)
 			case "imagorCORSOrigins":
 				return ec.fieldContext_Space_imagorCORSOrigins(ctx, field)
+			case "hasCustomImagorSecret":
+				return ec.fieldContext_Space_hasCustomImagorSecret(ctx, field)
 			case "canManage":
 				return ec.fieldContext_Space_canManage(ctx, field)
 			case "canDelete":
@@ -10639,6 +10655,35 @@ func (ec *executionContext) fieldContext_Space_imagorCORSOrigins(_ context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_hasCustomImagorSecret(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_hasCustomImagorSecret,
+		func(ctx context.Context) (any, error) {
+			return obj.HasCustomImagorSecret, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_hasCustomImagorSecret(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -17432,6 +17477,11 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "imagorCORSOrigins":
 			out.Values[i] = ec._Space_imagorCORSOrigins(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasCustomImagorSecret":
+			out.Values[i] = ec._Space_hasCustomImagorSecret(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
