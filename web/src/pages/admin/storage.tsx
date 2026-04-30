@@ -24,6 +24,7 @@ import {
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
 import type { StorageStatusQuery } from '@/generated/graphql'
+import { extractErrorMessage } from '@/lib/error-utils'
 
 // ── Propagation countdown helper ───────────────────────────────────────────
 
@@ -193,7 +194,7 @@ export function AdminStorageSection({ storageStatus }: AdminStorageSectionProps)
       setRemainingSeconds(SYNC_INTERVAL_S)
       await router.invalidate()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      toast.error(extractErrorMessage(err))
     } finally {
       setIsSaving(false)
     }
