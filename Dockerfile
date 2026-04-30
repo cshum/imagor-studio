@@ -36,7 +36,7 @@ COPY --from=web-builder /app/server/static ./server/static
 COPY server/ ./server/
 COPY graphql/ ./graphql/
 
-RUN cd server && go build -o /go/bin/imagor-studio ./cmd/imagor-studio/main.go
+RUN cd server && go build -tags vips -o /go/bin/imagor-studio ./cmd/imagor-studio/main.go
 
 # Conditionally build migration tool (not needed for embedded mode)
 RUN if [ "$EMBEDDED_MODE" != "true" ]; then \
