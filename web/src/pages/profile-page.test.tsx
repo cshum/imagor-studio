@@ -6,6 +6,7 @@ const mockUpdateProfile = vi.fn()
 const mockChangePassword = vi.fn()
 const mockUnlinkAuthProvider = vi.fn()
 const mockInitAuth = vi.fn()
+const mockInvalidate = vi.fn()
 const mockToastSuccess = vi.fn()
 const mockToastError = vi.fn()
 
@@ -29,6 +30,10 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
+}))
+
+vi.mock('@tanstack/react-router', () => ({
+  useRouter: () => ({ invalidate: mockInvalidate }),
 }))
 
 vi.mock('sonner', () => ({
@@ -143,5 +148,80 @@ describe('ProfilePage email change rules', () => {
 
     expect(mockRequestEmailChange).not.toHaveBeenCalled()
     expect(mockToastSuccess).not.toHaveBeenCalled()
+  })
+
+  it('allows unlinking the last linked provider when a password exists', async () => {
+    const { ProfilePage } = await import('./profile-page')
+
+    render(
+      <ProfilePage
+        loaderData={loaderData({
+          hasPassword: true,
+          authProviders: [
+            {
+              provider: 'google',
+              email: 'alice@example.com',
+              linkedAt: '2026-04-30T00:00:00Z',
+            },
+          ],
+        })}
+      />,
+    )
+
+    const unlinkButton = screen.getByText('pages.profile.unlink') as HTMLButtonElement
+    expect(unlinkButton.disabled).toBe(false)
+  })
+
+  it('keeps unlink disabled when no fallback sign-in method exists', async () => {
+    const { ProfilePage } = await import('./profile-page')
+
+    render(
+      <ProfilePage
+        loaderData={loaderData({
+          hasPassword: false,
+          authProviders: [
+            {
+              provider: 'google',
+              email: 'alice@example.com',
+              linkedAt: '2026-04-30T00:00:00Z',
+            },
+          ],
+        })}
+      />,
+    )
+
+    const unlinkButton = screen.getByText('pages.profile.unlink') as HTMLButtonElement
+    expect(unlinkButton.disabled).toBe(true)
+    expect(screen.getByText('pages.profile.unlinkLastProviderWarning')).toBeTruthy()
+  })
+
+  it('invalidates the profile route after unlinking a provider', async () => {
+    const { ProfilePage } = await import('./profile-page')
+    mockUnlinkAuthProvider.mockResolvedValue(undefined)
+    mockInitAuth.mockResolvedValue(undefined)
+    mockInvalidate.mockResolvedValue(undefined)
+
+    render(
+      <ProfilePage
+        loaderData={loaderData({
+          hasPassword: true,
+          authProviders: [
+            {
+              provider: 'google',
+              email: 'alice@example.com',
+              linkedAt: '2026-04-30T00:00:00Z',
+            },
+          ],
+        })}
+      />,
+    )
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('pages.profile.unlink'))
+    })
+
+    expect(mockUnlinkAuthProvider).toHaveBeenCalledWith('google')
+    expect(mockInitAuth).toHaveBeenCalled()
+    expect(mockInvalidate).toHaveBeenCalled()
   })
 })

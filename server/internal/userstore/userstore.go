@@ -143,11 +143,16 @@ func modelUserToStore(user model.User) *User {
 		Email:         user.Email,
 		PendingEmail:  user.PendingEmail,
 		EmailVerified: user.EmailVerified,
-		HasPassword:   user.HashedPassword != "" && user.HashedPassword != "oauth",
+		HasPassword:   hasUsablePassword(user.HashedPassword),
 		AvatarUrl:     user.AvatarUrl,
 		CreatedAt:     user.CreatedAt,
 		UpdatedAt:     user.UpdatedAt,
 	}
+}
+
+func hasUsablePassword(hashedPassword string) bool {
+	hashedPassword = strings.TrimSpace(hashedPassword)
+	return hashedPassword != "" && hashedPassword != "oauth"
 }
 
 func (s *store) Create(ctx context.Context, displayName, username, hashedPassword, role string) (*User, error) {
@@ -467,7 +472,16 @@ func (s *store) UnlinkAuthProvider(ctx context.Context, id string, provider stri
 		return fmt.Errorf("error counting auth providers: %w", err)
 	}
 	if count <= 1 {
-		return fmt.Errorf("cannot unlink the last auth provider")
+		user, err := s.GetByIDWithPassword(ctx, id)
+		if err != nil {
+			return fmt.Errorf("error loading user password state: %w", err)
+		}
+		if user == nil {
+			return fmt.Errorf("user not found")
+		}
+		if !hasUsablePassword(user.HashedPassword) {
+			return fmt.Errorf("cannot unlink the last auth provider")
+		}
 	}
 
 	res, err := s.db.NewDelete().

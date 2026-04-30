@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import * as z from 'zod'
 
@@ -43,6 +44,7 @@ interface ProfilePageProps {
 export function ProfilePage({ loaderData }: ProfilePageProps) {
   const { t } = useTranslation()
   const { authState } = useAuth()
+  const router = useRouter()
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false)
@@ -96,6 +98,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
   const hasPassword = profileData.hasPassword
   const authProviders = profileData.authProviders
   const primaryProvider = authProviders[0] || null
+  const canUnlinkProvider = hasPassword || authProviders.length > 1
   const canManageEmailInApp = hasPassword
   const normalizedCurrentEmail = normalizeEmail(email || '')
   const normalizedPendingEmail = normalizeEmail(pendingEmail || '')
@@ -222,6 +225,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
     try {
       await unlinkAuthProvider(provider)
       await initAuth()
+      await router.invalidate()
       setProviderDialogOpen(false)
       toast.success(t('pages.profile.providerUnlinkedSuccess'))
     } catch (err) {
@@ -522,7 +526,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
                     type='button'
                     variant='outline'
                     isLoading={isUnlinking}
-                    disabled={authProviders.length <= 1 || isUnlinking}
+                    disabled={!canUnlinkProvider || isUnlinking}
                     onClick={() => handleUnlinkProvider(provider.provider)}
                   >
                     {t('pages.profile.unlink')}
@@ -537,7 +541,7 @@ export function ProfilePage({ loaderData }: ProfilePageProps) {
           )}
 
           <div className='text-muted-foreground text-sm'>
-            {authProviders.length <= 1
+            {!canUnlinkProvider
               ? t('pages.profile.unlinkLastProviderWarning')
               : t('pages.profile.unlinkProviderDescription')}
           </div>

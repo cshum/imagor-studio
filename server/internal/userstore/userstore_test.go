@@ -605,6 +605,48 @@ func TestUserStore_RequestEmailChange(t *testing.T) {
 	assert.Contains(t, err.Error(), "email cannot be empty")
 }
 
+func TestUserStore_UnlinkAuthProvider_RequiresRemainingSignInMethod(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger, _ := zap.NewDevelopment()
+	store := New(db, logger)
+	ctx := context.Background()
+
+	t.Run("blocks unlink when oauth is the only sign-in method", func(t *testing.T) {
+		user, err := store.CreateWithEmail(ctx, "oauth-only", "oauth-only", "oauth", "user", "oauth-only@example.com")
+		require.NoError(t, err)
+
+		_, err = db.ExecContext(ctx, `
+			INSERT INTO oauth_identities (id, user_id, provider, provider_id, email)
+			VALUES (?, ?, ?, ?, ?)
+		`, "identity-google-only", user.ID, "google", "google-only", "oauth-only@example.com")
+		require.NoError(t, err)
+
+		err = store.UnlinkAuthProvider(ctx, user.ID, "google")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot unlink the last auth provider")
+	})
+
+	t.Run("allows unlink when password remains available", func(t *testing.T) {
+		user, err := store.CreateWithEmail(ctx, "password-user", "password-user", "hashedpassword123", "user", "password@example.com")
+		require.NoError(t, err)
+
+		_, err = db.ExecContext(ctx, `
+			INSERT INTO oauth_identities (id, user_id, provider, provider_id, email)
+			VALUES (?, ?, ?, ?, ?)
+		`, "identity-google-password", user.ID, "google", "google-password", "password@example.com")
+		require.NoError(t, err)
+
+		err = store.UnlinkAuthProvider(ctx, user.ID, "google")
+		require.NoError(t, err)
+
+		providers, err := store.ListAuthProviders(ctx, user.ID)
+		require.NoError(t, err)
+		assert.Empty(t, providers)
+	})
+}
+
 func BenchmarkUserStore_Create(b *testing.B) {
 	db, cleanup := setupTestDB(&testing.T{})
 	defer cleanup()
