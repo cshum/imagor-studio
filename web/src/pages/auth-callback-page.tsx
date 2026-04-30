@@ -4,6 +4,7 @@ import { LogIn } from 'lucide-react'
 import { ErrorPage } from '@/components/ui/error-page'
 
 const authCallbackErrorMessageKeys = {
+  invite_invalid: 'pages.authCallback.errors.inviteInvalid',
   invite_org_conflict: 'pages.authCallback.errors.inviteOrgConflict',
   invite_email_mismatch: 'pages.authCallback.errors.inviteEmailMismatch',
   oauth_invalid_state: 'pages.authCallback.errors.oauthInvalidState',

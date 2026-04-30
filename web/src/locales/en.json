@@ -183,6 +183,7 @@
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
       "errors": {
+        "inviteInvalid": "This invitation is no longer valid. Ask for a new invitation and try again.",
         "oauthInvalidState": "Your sign-in session expired or became invalid. Please try again.",
         "oauthMissingCode": "Google did not return an authorization code. Please try again.",
         "oauthEmailUnverified": "Your Google account email is not verified. Verify it with Google and try again.",

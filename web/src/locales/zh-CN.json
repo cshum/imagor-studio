@@ -131,6 +131,7 @@
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
       "errors": {
+        "inviteInvalid": "此邀请已失效。请请求新的邀请后再试。",
         "oauthInvalidState": "登录会话已过期或无效，请重试。",
         "oauthMissingCode": "Google 没有返回授权码，请重试。",
         "oauthEmailUnverified": "你的 Google 账户邮箱尚未验证。请先在 Google 完成验证后再试。",

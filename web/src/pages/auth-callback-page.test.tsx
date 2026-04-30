@@ -57,6 +57,20 @@ describe('AuthCallbackPage', () => {
     )
   })
 
+  it('maps invalid invites into the shared error page with preserved invite context', async () => {
+    const { AuthCallbackPage } = await import('./auth-callback-page')
+    window.history.replaceState(
+      {},
+      '',
+      '/auth/callback?error=invite_invalid&invite_token=invite-token-123',
+    )
+
+    render(<AuthCallbackPage />)
+
+    expect(screen.getByText('/login?invite_token=invite-token-123')).toBeTruthy()
+    expect(screen.getByText('pages.authCallback.errors.inviteInvalid')).toBeTruthy()
+  })
+
   it('falls back to a formatted OAuth error message for unknown errors', async () => {
     const { AuthCallbackPage } = await import('./auth-callback-page')
     window.history.replaceState({}, '', '/auth/callback?error=provider_timeout')

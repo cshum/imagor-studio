@@ -187,6 +187,7 @@
       "failed": "驗證失敗",
       "errorOAuth": "驗證失敗：{{error}}",
       "errors": {
+        "inviteInvalid": "此邀請已失效。請要求新的邀請後再試一次。",
         "oauthInvalidState": "登入工作階段已過期或無效，請再試一次。",
         "oauthMissingCode": "Google 沒有回傳授權碼，請再試一次。",
         "oauthEmailUnverified": "你的 Google 帳戶電子郵件尚未驗證。請先在 Google 完成驗證後再試。",
