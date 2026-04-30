@@ -14,6 +14,7 @@ import { LicenseActivationDialog } from '@/components/license/license-activation
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
+import { getInviteTokenSearchValue } from '@/lib/route-search'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
@@ -126,7 +127,7 @@ const loginRoute = createRoute({
   path: '/login',
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
-    invite_token: typeof search.invite_token === 'string' ? search.invite_token : undefined,
+    invite_token: getInviteTokenSearchValue(search),
   }),
   component: LoginPage,
 })
@@ -135,7 +136,7 @@ const joinRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/join',
   validateSearch: (search: Record<string, unknown>) => ({
-    invite_token: typeof search.invite_token === 'string' ? search.invite_token : undefined,
+    invite_token: getInviteTokenSearchValue(search),
   }),
   loaderDeps: ({ search: { invite_token } }) => ({ inviteToken: invite_token ?? '' }),
   loader: ({ deps }) => joinInviteLoader(deps.inviteToken),
@@ -158,7 +159,7 @@ const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
   validateSearch: (search: Record<string, unknown>) => ({
-    invite_token: typeof search.invite_token === 'string' ? search.invite_token : undefined,
+    invite_token: getInviteTokenSearchValue(search),
   }),
   component: RegisterPage,
 })
