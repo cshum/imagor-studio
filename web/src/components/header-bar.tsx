@@ -243,18 +243,20 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                       // Authenticated user menu
                       <>
                         <DropdownMenuItem
-                          className='interactive:cursor-pointer gap-3 px-2 py-2'
+                          className={`interactive:cursor-pointer px-2 py-2 ${authState.multiTenant ? 'gap-3' : ''}`}
                           onClick={handleAccountClick}
                         >
-                          <Avatar className='h-8 w-8'>
-                            <AvatarImage
-                              src={authState.profile?.avatarUrl ?? undefined}
-                              alt={getUserDisplayName()}
-                            />
-                            <AvatarFallback className='text-xs font-semibold'>
-                              {getUserInitials()}
-                            </AvatarFallback>
-                          </Avatar>
+                          {authState.multiTenant && (
+                            <Avatar className='h-8 w-8'>
+                              <AvatarImage
+                                src={authState.profile?.avatarUrl ?? undefined}
+                                alt={getUserDisplayName()}
+                              />
+                              <AvatarFallback className='text-xs font-semibold'>
+                                {getUserInitials()}
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
 
                           <div className='flex min-w-0 flex-1 flex-col'>
                             <p className='truncate text-sm leading-none font-medium'>
