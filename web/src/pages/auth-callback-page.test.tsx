@@ -34,18 +34,22 @@ describe('AuthCallbackPage', () => {
 
   it('maps invite email mismatch into the shared error page with a login action', async () => {
     const { AuthCallbackPage } = await import('./auth-callback-page')
-    window.history.replaceState({}, '', '/auth/callback?error=invite_email_mismatch')
+    window.history.replaceState(
+      {},
+      '',
+      '/auth/callback?error=invite_email_mismatch&invite_token=invite-token-123',
+    )
 
     render(<AuthCallbackPage />)
 
     expect(screen.getByText('pages.authCallback.title')).toBeTruthy()
     expect(screen.getByText('pages.authCallback.subtitle')).toBeTruthy()
     expect(screen.getByText('pages.authCallback.backToLogin')).toBeTruthy()
-    expect(screen.getByText('/login')).toBeTruthy()
+    expect(screen.getByText('/login?invite_token=invite-token-123')).toBeTruthy()
     expect(screen.getByText('pages.authCallback.errors.inviteEmailMismatch')).toBeTruthy()
     expect(mockErrorPage).toHaveBeenCalledWith(
       expect.objectContaining({
-        actionHref: '/login',
+        actionHref: '/login?invite_token=invite-token-123',
         actionLabel: 'pages.authCallback.backToLogin',
         error: 'pages.authCallback.errors.inviteEmailMismatch',
         title: 'pages.authCallback.title',

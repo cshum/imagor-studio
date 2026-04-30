@@ -63,6 +63,7 @@ export function LoginPage() {
   const search = useSearch({ from: '/login' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
   const isMultiTenant = authState.multiTenant
+  const inviteToken = typeof search.invite_token === 'string' ? search.invite_token : undefined
 
   // Helper function to validate redirect URL for security
   const isValidRedirectUrl = (url: string): boolean => {
@@ -176,7 +177,7 @@ export function LoginPage() {
       const response = await login({
         username: values.username.trim(),
         password: values.password,
-        inviteToken: typeof search.invite_token === 'string' ? search.invite_token : undefined,
+        inviteToken,
       })
       await initAuth(response.token)
       await router.invalidate()
@@ -213,7 +214,6 @@ export function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    const inviteToken = typeof search.invite_token === 'string' ? search.invite_token : undefined
     window.location.href = getGoogleLoginUrl(inviteToken)
   }
 
@@ -331,7 +331,11 @@ export function LoginPage() {
       {isMultiTenant ? (
         <p className='text-muted-foreground text-center text-sm'>
           {t('auth.login.createAccountPrompt')}{' '}
-          <Link to='/register' className='text-foreground font-medium underline underline-offset-4'>
+          <Link
+            to='/register'
+            search={inviteToken ? { invite_token: inviteToken } : undefined}
+            className='text-foreground font-medium underline underline-offset-4'
+          >
             {t('auth.login.createAccountLink')}
           </Link>
         </p>

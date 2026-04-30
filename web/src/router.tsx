@@ -126,7 +126,7 @@ const loginRoute = createRoute({
   path: '/login',
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
-    invite_token: typeof search.invite_token === 'string' ? search.invite_token : '',
+    invite_token: typeof search.invite_token === 'string' ? search.invite_token : undefined,
   }),
   component: LoginPage,
 })
@@ -135,9 +135,9 @@ const joinRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/join',
   validateSearch: (search: Record<string, unknown>) => ({
-    invite_token: typeof search.invite_token === 'string' ? search.invite_token : '',
+    invite_token: typeof search.invite_token === 'string' ? search.invite_token : undefined,
   }),
-  loaderDeps: ({ search: { invite_token } }) => ({ inviteToken: invite_token }),
+  loaderDeps: ({ search: { invite_token } }) => ({ inviteToken: invite_token ?? '' }),
   loader: ({ deps }) => joinInviteLoader(deps.inviteToken),
   component: JoinInvitePage,
 })
@@ -158,7 +158,7 @@ const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
   validateSearch: (search: Record<string, unknown>) => ({
-    invite_token: typeof search.invite_token === 'string' ? search.invite_token : '',
+    invite_token: typeof search.invite_token === 'string' ? search.invite_token : undefined,
   }),
   component: RegisterPage,
 })
