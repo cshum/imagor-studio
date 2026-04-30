@@ -280,7 +280,7 @@ export function SpaceSettingsLayout({
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   params={{ spaceKey: space.key } as any}
                   className={[
-                    '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap',
+                    'flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap',
                     activeSection === item.id
                       ? 'border-primary text-foreground'
                       : 'text-muted-foreground hover:text-foreground border-transparent',

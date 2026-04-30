@@ -37,7 +37,7 @@ export function AccountOrganizationLayout({ currentUserRole }: AccountOrganizati
               key={tab.id}
               to={tab.path}
               className={[
-                '-mb-px flex shrink-0 items-center border-b-2 px-4 py-3 text-sm font-medium whitespace-nowrap',
+                'flex shrink-0 items-center border-b-2 px-4 py-3 text-sm font-medium whitespace-nowrap',
                 isActive(tab.path)
                   ? 'border-primary text-foreground'
                   : 'text-muted-foreground hover:text-foreground border-transparent',

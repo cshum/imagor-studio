@@ -284,7 +284,7 @@ export function AccountLayout({
                       key={item.id}
                       to={item.path}
                       className={[
-                        '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap',
+                        'flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-3 text-sm font-medium whitespace-nowrap',
                         isActive(item.path)
                           ? 'border-primary text-foreground'
                           : 'text-muted-foreground hover:text-foreground border-transparent',
