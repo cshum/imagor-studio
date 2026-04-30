@@ -210,6 +210,7 @@ export const galleryLoader = async ({
   const breadcrumbs: BreadcrumbItem[] = [
     {
       label: homeTitle,
+      path: routeSpaceKey ? `/spaces/${routeSpaceKey}` : '/',
       ...(routeSpaceKey && galleryKey === '' ? { preserveLabelInTitle: true } : {}),
       ...(galleryKey ? { href: routeSpaceKey ? `/spaces/${routeSpaceKey}` : '/' } : {}),
     },
@@ -232,6 +233,7 @@ export const galleryLoader = async ({
 
       breadcrumbs.push({
         label: segment,
+        path: segmentHref,
         ...(isLastSegment ? {} : { href: segmentHref }),
       })
     }

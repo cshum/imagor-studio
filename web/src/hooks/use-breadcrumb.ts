@@ -38,6 +38,19 @@ export function useBreadcrumb(): BreadcrumbItem[] {
   return useMemo(() => {
     const breadcrumbs: BreadcrumbItem[] = []
 
+    const appendBreadcrumb = (breadcrumb: BreadcrumbItem) => {
+      const previousBreadcrumb = breadcrumbs[breadcrumbs.length - 1]
+      const previousTarget = previousBreadcrumb?.path || previousBreadcrumb?.href
+      const nextTarget = breadcrumb.path || breadcrumb.href
+
+      if (previousBreadcrumb && previousTarget && nextTarget && previousTarget === nextTarget) {
+        breadcrumbs[breadcrumbs.length - 1] = breadcrumb
+        return
+      }
+
+      breadcrumbs.push(breadcrumb)
+    }
+
     // Process matches that have breadcrumb data
     matches.forEach((match, index) => {
       const typedMatch = match as RouteMatch
@@ -58,9 +71,10 @@ export function useBreadcrumb(): BreadcrumbItem[] {
             ? t(breadcrumb.translationKey)
             : breadcrumb.label || ''
 
-          breadcrumbs.push({
+          appendBreadcrumb({
             ...breadcrumb,
             label: translatedLabel,
+            path: breadcrumb.path || breadcrumb.href || typedMatch.pathname,
             href: isActive ? undefined : breadcrumb.href,
             isActive,
           })
@@ -75,9 +89,10 @@ export function useBreadcrumb(): BreadcrumbItem[] {
           ? t(breadcrumb.translationKey)
           : breadcrumb.label || ''
 
-        breadcrumbs.push({
+        appendBreadcrumb({
           ...breadcrumb,
           label: translatedLabel,
+          path: breadcrumb.path || breadcrumb.href || typedMatch.pathname,
           href: isActive ? undefined : breadcrumb.href || typedMatch.pathname,
           isActive,
         })
