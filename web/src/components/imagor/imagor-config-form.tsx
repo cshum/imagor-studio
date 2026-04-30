@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select'
 import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
+import { extractErrorMessage } from '@/lib/error-utils'
 
 // ── Schema ─────────────────────────────────────────────────────────────────
 
@@ -96,7 +97,7 @@ export function ImagorConfigForm({
       form.setValue('secret', '')
       setShowSecret(false)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      toast.error(extractErrorMessage(err))
     } finally {
       setIsSaving(false)
     }

@@ -215,7 +215,7 @@ export function MembersSection({
       setPendingRemoveId(null)
       await reload()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      toast.error(extractErrorMessage(err))
     } finally {
       setIsRemoving(false)
     }
@@ -229,7 +229,7 @@ export function MembersSection({
       toast.success(t('pages.spaceSettings.members.roleUpdated'))
       await reload()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err))
+      toast.error(extractErrorMessage(err))
     } finally {
       setUpdatingRoleUserId(null)
     }
@@ -245,7 +245,7 @@ export function MembersSection({
       window.location.href = '/spaces'
     } catch (err) {
       toast.error(
-        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
+        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${extractErrorMessage(err)}`,
       )
     } finally {
       setIsLeaving(false)

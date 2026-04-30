@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/responsive-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { GetUsageSummaryQuery, ListSpacesQuery } from '@/generated/graphql'
+import { extractErrorMessage } from '@/lib/error-utils'
 import { isUnlimitedLimit } from '@/lib/plan-entitlements'
 import { useAuth } from '@/stores/auth-store'
 
@@ -163,7 +164,7 @@ export function SpacesPage({
       await router.invalidate()
     } catch (err) {
       toast.error(
-        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${err instanceof Error ? err.message : String(err)}`,
+        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${extractErrorMessage(err)}`,
       )
     } finally {
       setIsLeaving(false)
