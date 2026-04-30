@@ -1180,6 +1180,36 @@ func TestGetSystemRegistry_LicenseRequired_OmittedWhenUnlicensed(t *testing.T) {
 	mockRegistryStore.AssertExpectations(t)
 }
 
+func TestGetSystemRegistry_ConfigOnlyOverrideReturnedWhenRegistryMissing(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	logger, _ := zap.NewDevelopment()
+	mockConfig := &MockConfigMultiple{
+		configs: map[string]MockConfigEntry{
+			"config.app_home_title": {exists: true, value: "Env Home"},
+		},
+	}
+
+	mockStorageProvider := NewMockStorageProvider(mockStorage)
+	resolver := newTestResolver(mockStorageProvider, mockRegistryStore, mockUserStore, nil, mockConfig, nil, logger)
+
+	ctx := createReadWriteContext("user-id")
+	keys := []string{"config.app_home_title"}
+
+	mockRegistryStore.On("GetMulti", ctx, "system:global", keys).Return([]*registrystore.Registry{}, nil)
+
+	result, err := resolver.Query().GetSystemRegistry(ctx, nil, keys)
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, "config.app_home_title", result[0].Key)
+	assert.Equal(t, "Env Home", result[0].Value)
+	assert.True(t, result[0].IsOverriddenByConfig)
+
+	mockRegistryStore.AssertExpectations(t)
+}
+
 func TestGetSystemRegistry_LicenseRequired_ShowConfigOverrideWhenLicensed(t *testing.T) {
 	// When licensed, the config-override value should be visible as usual.
 	mockStorage := new(MockStorage)

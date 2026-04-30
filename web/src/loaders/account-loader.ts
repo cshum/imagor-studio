@@ -9,7 +9,11 @@ import {
   listOrgMembers,
   listSpaces,
 } from '@/api/org-api'
-import { getSystemRegistryObject, listSystemRegistry } from '@/api/registry-api'
+import {
+  getSystemRegistryMultiple,
+  getSystemRegistryObject,
+  listSystemRegistry,
+} from '@/api/registry-api'
 import { getStorageStatus } from '@/api/storage-api'
 import { listUsers } from '@/api/user-api'
 import type {
@@ -98,6 +102,15 @@ export interface OrgMembersLoaderData {
   breadcrumb: BreadcrumbItem
 }
 
+const ADMIN_GENERAL_REGISTRY_KEYS = [
+  'config.app_home_title',
+  'config.allow_guest_mode',
+  'config.app_default_language',
+  'config.app_default_sort_by',
+  'config.app_default_sort_order',
+  'config.app_show_file_names',
+] as const
+
 /**
  * Load profile data for the profile page
  */
@@ -154,10 +167,13 @@ export const adminLoader = async (): Promise<AdminLoaderData> => {
 
 /** Load general settings for the admin general sub-route */
 export const adminGeneralLoader = async (): Promise<AdminGeneralLoaderData> => {
-  const [registry, systemRegistryList] = await Promise.all([
-    getSystemRegistryObject(),
-    listSystemRegistry(),
-  ])
+  const systemRegistryList = await getSystemRegistryMultiple([...ADMIN_GENERAL_REGISTRY_KEYS])
+  const registry = Object.fromEntries(
+    systemRegistryList
+      .filter((entry) => !entry.isEncrypted)
+      .map((entry) => [entry.key, entry.value]),
+  )
+
   return {
     registry,
     systemRegistryList,

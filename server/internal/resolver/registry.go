@@ -723,31 +723,31 @@ func (r *queryResolver) GetSystemRegistry(ctx context.Context, key *string, keys
 		})
 	}
 
-	// In embedded mode, also check for config-only values that weren't in database
-	if r.config.IsEmbeddedMode() {
-		for _, k := range keysToCheck {
-			// Skip license-required keys if not licensed (suppress env/flag values)
-			if licenseRequiredRegistryKeys[k] && !getLicensed() {
-				continue
+	// Also surface config-only values that don't exist in the registry store yet.
+	// Self-hosted deployments commonly set these via env vars / flags, and keyed reads
+	// must still expose them so the UI can render effective values as read-only.
+	for _, k := range keysToCheck {
+		// Skip license-required keys if not licensed (suppress env/flag values)
+		if licenseRequiredRegistryKeys[k] && !getLicensed() {
+			continue
+		}
+		configValue, configExists := r.config.GetByRegistryKey(k)
+		if configExists {
+			// Check if we already added this key from database results
+			found := false
+			for _, existing := range result {
+				if existing.Key == k {
+					found = true
+					break
+				}
 			}
-			configValue, configExists := r.config.GetByRegistryKey(k)
-			if configExists {
-				// Check if we already added this key from database results
-				found := false
-				for _, existing := range result {
-					if existing.Key == k {
-						found = true
-						break
-					}
-				}
-				if !found {
-					result = append(result, &gql.SystemRegistry{
-						Key:                  k,
-						Value:                configValue,
-						IsEncrypted:          false, // Config values are never encrypted
-						IsOverriddenByConfig: true,
-					})
-				}
+			if !found {
+				result = append(result, &gql.SystemRegistry{
+					Key:                  k,
+					Value:                configValue,
+					IsEncrypted:          false, // Config values are never encrypted
+					IsOverriddenByConfig: true,
+				})
 			}
 		}
 	}
