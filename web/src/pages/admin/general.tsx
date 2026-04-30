@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -83,28 +83,31 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
     return override ? `${description}\n${t('pages.systemSettings.settingOverridden')}` : description
   }
 
-  const effectiveValue = useMemo(
-    () => ({
-      homeTitle: getOverrideEntry('config.app_home_title')?.value ?? form.watch('homeTitle'),
-      guestMode:
-        (getOverrideEntry('config.allow_guest_mode')?.value ?? String(form.watch('guestMode'))) ===
-        'true',
-      defaultLanguage:
-        getOverrideEntry('config.app_default_language')?.value ?? form.watch('defaultLanguage'),
-      defaultSortBy:
-        (getOverrideEntry('config.app_default_sort_by')?.value as
-          | AdminGeneralFormData['defaultSortBy']
-          | undefined) ?? form.watch('defaultSortBy'),
-      defaultSortOrder:
-        (getOverrideEntry('config.app_default_sort_order')?.value as
-          | AdminGeneralFormData['defaultSortOrder']
-          | undefined) ?? form.watch('defaultSortOrder'),
-      showFileNames:
-        (getOverrideEntry('config.app_show_file_names')?.value ??
-          String(form.watch('showFileNames'))) === 'true',
-    }),
-    [form, loaderData.systemRegistryList],
-  )
+  const watchedHomeTitle = form.watch('homeTitle')
+  const watchedGuestMode = form.watch('guestMode')
+  const watchedDefaultLanguage = form.watch('defaultLanguage')
+  const watchedDefaultSortBy = form.watch('defaultSortBy')
+  const watchedDefaultSortOrder = form.watch('defaultSortOrder')
+  const watchedShowFileNames = form.watch('showFileNames')
+
+  const effectiveValue = {
+    homeTitle: getOverrideEntry('config.app_home_title')?.value ?? watchedHomeTitle,
+    guestMode:
+      (getOverrideEntry('config.allow_guest_mode')?.value ?? String(watchedGuestMode)) === 'true',
+    defaultLanguage:
+      getOverrideEntry('config.app_default_language')?.value ?? watchedDefaultLanguage,
+    defaultSortBy:
+      (getOverrideEntry('config.app_default_sort_by')?.value as
+        | AdminGeneralFormData['defaultSortBy']
+        | undefined) ?? watchedDefaultSortBy,
+    defaultSortOrder:
+      (getOverrideEntry('config.app_default_sort_order')?.value as
+        | AdminGeneralFormData['defaultSortOrder']
+        | undefined) ?? watchedDefaultSortOrder,
+    showFileNames:
+      (getOverrideEntry('config.app_show_file_names')?.value ?? String(watchedShowFileNames)) ===
+      'true',
+  }
 
   const handleSave = async (values: AdminGeneralFormData) => {
     setIsSaving(true)

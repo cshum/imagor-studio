@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -90,18 +90,15 @@ export function SystemSettingsForm({
     return lines.join('\n')
   }
 
-  // Current form state - map of registry keys to string values
-  const [formValues, setFormValues] = useState<Record<string, string>>(() => {
+  const buildInitialFormValues = () => {
     const initial: Record<string, string> = {}
 
-    // Initialize with default values
     settings.forEach((setting) => {
       initial[setting.key] =
         typeof setting.defaultValue === 'boolean'
           ? setting.defaultValue.toString()
           : setting.defaultValue
 
-      // Initialize secondary key for dual-select
       if (setting.type === 'dual-select' && setting.secondaryKey) {
         initial[setting.secondaryKey] =
           typeof setting.secondaryDefaultValue === 'boolean'
@@ -110,13 +107,32 @@ export function SystemSettingsForm({
       }
     })
 
-    // Override with initial values
     Object.entries(initialValues).forEach(([key, value]) => {
       initial[key] = value
     })
 
     return initial
-  })
+  }
+
+  const seededFormValues = useMemo(buildInitialFormValues, [initialValues, settings])
+
+  // Current form state - map of registry keys to string values
+  const [formValues, setFormValues] = useState<Record<string, string>>(() => seededFormValues)
+  const previousSeededValuesRef = useRef(seededFormValues)
+
+  useEffect(() => {
+    const previousSeededValues = previousSeededValuesRef.current
+    const seededValuesChanged =
+      Object.keys(previousSeededValues).length !== Object.keys(seededFormValues).length ||
+      Object.entries(seededFormValues).some(([key, value]) => previousSeededValues[key] !== value)
+
+    if (!seededValuesChanged) {
+      return
+    }
+
+    previousSeededValuesRef.current = seededFormValues
+    setFormValues(seededFormValues)
+  }, [seededFormValues])
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = useMemo(() => {
