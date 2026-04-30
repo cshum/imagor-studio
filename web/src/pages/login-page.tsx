@@ -244,6 +244,7 @@ export function LoginPage() {
     <AuthPageShell
       eyebrow={t('auth.login.eyebrow')}
       heroTitle={t('auth.login.title')}
+      showHero={isMultiTenant}
       heroBody={
         <ul className='mt-6 space-y-4'>
           {productHighlights.map((highlight) => (

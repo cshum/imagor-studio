@@ -6,6 +6,7 @@ const mockGetAuthProviders = vi.fn()
 const mockLogin = vi.fn()
 const mockUseAuth = vi.fn()
 const mockUseSearch = vi.fn()
+const mockAuthPageShell = vi.fn()
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -45,12 +46,15 @@ vi.mock('@/stores/locale-store', () => ({
 }))
 
 vi.mock('@/components/auth-page-shell', () => ({
-  AuthPageShell: ({ children, formTitle }: any) => (
-    <div>
-      <h1>{formTitle}</h1>
-      {children}
-    </div>
-  ),
+  AuthPageShell: (props: any) => {
+    mockAuthPageShell(props)
+    return (
+      <div>
+        <h1>{props.formTitle}</h1>
+        {props.children}
+      </div>
+    )
+  },
 }))
 
 vi.mock('@/components/ui/button', () => ({
@@ -92,6 +96,26 @@ describe('LoginPage', () => {
     expect(
       screen.getByRole('link', { name: 'auth.login.createAccountLink' }).getAttribute('href'),
     ).toBe('/register?invite_token=invite-token-123')
+  })
+
+  it('renders the self-hosted login in single-column mode', async () => {
+    mockUseAuth.mockReturnValue({
+      authState: {
+        isEmbedded: false,
+        isFirstRun: false,
+        multiTenant: false,
+        state: 'unauthenticated',
+      },
+    })
+
+    const { LoginPage } = await import('./login-page')
+
+    render(<LoginPage />)
+
+    expect(mockAuthPageShell).toHaveBeenCalled()
+    const lastShellCall = mockAuthPageShell.mock.calls[mockAuthPageShell.mock.calls.length - 1]
+    expect(lastShellCall?.[0].showHero).toBe(false)
+    expect(screen.queryByRole('link', { name: 'auth.login.createAccountLink' })).toBeNull()
   })
 
   it('maps invite email mismatch into a user-facing login error', async () => {
