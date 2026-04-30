@@ -63,6 +63,7 @@ export function LoginPage() {
   const search = useSearch({ from: '/login' })
   const [googleEnabled, setGoogleEnabled] = useState(false)
   const isMultiTenant = authState.multiTenant
+  const inviteToken = typeof search.invite_token === 'string' ? search.invite_token : undefined
 
   // Helper function to validate redirect URL for security
   const isValidRedirectUrl = (url: string): boolean => {
@@ -176,7 +177,7 @@ export function LoginPage() {
       const response = await login({
         username: values.username.trim(),
         password: values.password,
-        inviteToken: typeof search.invite_token === 'string' ? search.invite_token : undefined,
+        inviteToken,
       })
       await initAuth(response.token)
       await router.invalidate()
@@ -197,9 +198,17 @@ export function LoginPage() {
       let errorMessage = t('auth.login.loginFailed') // Default fallback
 
       if (err instanceof Error) {
+        const apiError = err as Error & { reason?: string }
+
         // Check if this is a login credential error
         if (err.message === 'LOGIN_FAILED') {
           errorMessage = t('auth.login.loginFailed')
+        } else if (apiError.reason === 'invite_invalid') {
+          errorMessage = t('auth.login.errors.inviteInvalid')
+        } else if (apiError.reason === 'invite_org_conflict') {
+          errorMessage = t('auth.login.errors.inviteOrgConflict')
+        } else if (apiError.reason === 'invite_email_mismatch') {
+          errorMessage = t('auth.login.errors.inviteEmailMismatch')
         } else {
           // For system errors, show the technical message
           errorMessage = err.message
@@ -213,7 +222,6 @@ export function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    const inviteToken = typeof search.invite_token === 'string' ? search.invite_token : undefined
     window.location.href = getGoogleLoginUrl(inviteToken)
   }
 
@@ -331,7 +339,11 @@ export function LoginPage() {
       {isMultiTenant ? (
         <p className='text-muted-foreground text-center text-sm'>
           {t('auth.login.createAccountPrompt')}{' '}
-          <Link to='/register' className='text-foreground font-medium underline underline-offset-4'>
+          <Link
+            to='/register'
+            search={inviteToken ? { invite_token: inviteToken } : undefined}
+            className='text-foreground font-medium underline underline-offset-4'
+          >
             {t('auth.login.createAccountLink')}
           </Link>
         </p>

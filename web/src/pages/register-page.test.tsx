@@ -30,11 +30,14 @@ vi.mock('react-i18next', () => ({
 }))
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ children, to, ...props }: any) => (
-    <a href={to} {...props}>
-      {children}
-    </a>
-  ),
+  Link: ({ children, to, search, ...props }: any) => {
+    const href = search?.invite_token ? `${to}?invite_token=${search.invite_token}` : to
+    return (
+      <a href={href} {...props}>
+        {children}
+      </a>
+    )
+  },
   Navigate: ({ to }: { to: string }) => <div>{`Navigate:${to}`}</div>,
   useNavigate: () => mockNavigate,
   useRouter: () => ({ invalidate: mockInvalidate }),
@@ -402,5 +405,17 @@ describe('RegisterPage pending verification', () => {
     })
     expect(mockInitializeLocale).toHaveBeenCalled()
     expect(mockNavigate).toHaveBeenCalledWith({ to: '/spaces/acme-space' })
+  })
+
+  it('preserves invite_token on the sign-in link', async () => {
+    const { RegisterPage } = await import('./register-page')
+
+    mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
+
+    render(<RegisterPage />)
+
+    expect(
+      screen.getByRole('link', { name: 'auth.register.signInLink' }).getAttribute('href'),
+    ).toBe('/login?invite_token=invite-token-123')
   })
 })

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockUseLoaderData = vi.fn()
 const mockNavigate = vi.fn()
+const mockInvalidate = vi.fn()
 const mockUseAuth = vi.fn()
 const mockAcceptInvitation = vi.fn()
 const mockInitAuth = vi.fn()
@@ -37,6 +38,7 @@ vi.mock('@tanstack/react-router', () => ({
   Navigate: ({ to }: { to: string }) => <div>{`Navigate:${to}`}</div>,
   useLoaderData: () => mockUseLoaderData(),
   useNavigate: () => mockNavigate,
+  useRouter: () => ({ invalidate: mockInvalidate }),
 }))
 
 vi.mock('@/api/auth-api', () => ({

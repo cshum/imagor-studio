@@ -499,7 +499,11 @@ export function RegisterPage() {
 
       <p className='text-muted-foreground text-center text-sm'>
         {t('auth.register.signInPrompt')}{' '}
-        <Link to='/login' className='text-foreground font-medium underline underline-offset-4'>
+        <Link
+          to='/login'
+          search={inviteToken ? { invite_token: inviteToken } : undefined}
+          className='text-foreground font-medium underline underline-offset-4'
+        >
           {t('auth.register.signInLink')}
         </Link>
       </p>
