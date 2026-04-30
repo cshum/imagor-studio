@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -367,6 +368,48 @@ func TestCreateBillingPortalSession_CreatesPortalSession(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, "https://billing.example/portal", result.URL)
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_SanitizesProviderError(t *testing.T) {
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+
+	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
+		OrgID:      "org-1",
+		Plan:       "pro",
+		SuccessURL: "https://app.example/success",
+		CancelURL:  "https://app.example/cancel",
+	}).Return(nil, fmt.Errorf("create stripe checkout session: {\"status\":403,\"message\":\"too much detail\"}"))
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInternalServer, gqlErr.Extensions["code"])
+	assert.Equal(t, "checkout is temporarily unavailable", gqlErr.Message)
+	assert.NotContains(t, gqlErr.Message, "403")
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateBillingPortalSession_SanitizesProviderError(t *testing.T) {
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+
+	billingService.On("CreatePortalSession", mock.Anything, billing.PortalSessionInput{
+		OrgID:     "org-1",
+		ReturnURL: "https://app.example/account",
+	}).Return(nil, fmt.Errorf("create stripe billing portal session: {\"status\":403,\"message\":\"too much detail\"}"))
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateBillingPortalSession(ctx, "https://app.example/account")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInternalServer, gqlErr.Extensions["code"])
+	assert.Equal(t, "billing portal is temporarily unavailable", gqlErr.Message)
+	assert.NotContains(t, gqlErr.Message, "403")
 	billingService.AssertExpectations(t)
 }
 

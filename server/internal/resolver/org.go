@@ -1112,7 +1112,12 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 		CancelURL:  strings.TrimSpace(cancelURL),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create checkout session: %w", err)
+		r.logger.Error("CreateCheckoutSession: billing provider failed",
+			zap.String("orgID", orgID),
+			zap.String("plan", strings.TrimSpace(plan)),
+			zap.Error(err),
+		)
+		return nil, apperror.InternalServerError("checkout is temporarily unavailable")
 	}
 	if session == nil || strings.TrimSpace(session.URL) == "" {
 		return nil, fmt.Errorf("billing service returned an empty checkout session")
@@ -1142,7 +1147,11 @@ func (r *mutationResolver) CreateBillingPortalSession(ctx context.Context, retur
 		ReturnURL: strings.TrimSpace(returnURL),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create billing portal session: %w", err)
+		r.logger.Error("CreateBillingPortalSession: billing provider failed",
+			zap.String("orgID", orgID),
+			zap.Error(err),
+		)
+		return nil, apperror.InternalServerError("billing portal is temporarily unavailable")
 	}
 	if session == nil || strings.TrimSpace(session.URL) == "" {
 		return nil, fmt.Errorf("billing service returned an empty portal session")
