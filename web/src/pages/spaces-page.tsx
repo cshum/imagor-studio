@@ -163,9 +163,7 @@ export function SpacesPage({
       setLeaveSpaceItem(null)
       await router.invalidate()
     } catch (err) {
-      toast.error(
-        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${extractErrorMessage(err)}`,
-      )
+      toast.error(`${t('pages.spaces.messages.leaveSpaceFailed')}: ${extractErrorMessage(err)}`)
     } finally {
       setIsLeaving(false)
     }

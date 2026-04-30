@@ -244,9 +244,7 @@ export function MembersSection({
       toast.success(t('pages.spaces.messages.leaveSpaceSuccess'))
       window.location.href = '/spaces'
     } catch (err) {
-      toast.error(
-        `${t('pages.spaces.messages.leaveSpaceFailed')}: ${extractErrorMessage(err)}`,
-      )
+      toast.error(`${t('pages.spaces.messages.leaveSpaceFailed')}: ${extractErrorMessage(err)}`)
     } finally {
       setIsLeaving(false)
       setLeaveDialogOpen(false)
