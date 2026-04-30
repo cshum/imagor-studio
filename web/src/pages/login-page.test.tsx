@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockNavigate = vi.fn()
 const mockGetAuthProviders = vi.fn()
+const mockLogin = vi.fn()
 const mockUseAuth = vi.fn()
 const mockUseSearch = vi.fn()
 
@@ -31,7 +32,7 @@ vi.mock('@/api/auth-api', () => ({
   getAuthProviders: mockGetAuthProviders,
   getGoogleLoginUrl: (inviteToken?: string) =>
     inviteToken ? `/api/auth/google/login?invite_token=${inviteToken}` : '/api/auth/google/login',
-  login: vi.fn(),
+  login: (...args: unknown[]) => mockLogin(...args),
 }))
 
 vi.mock('@/stores/auth-store', () => ({
@@ -64,8 +65,10 @@ vi.mock('@/components/ui/button-with-loading', () => ({
 
 describe('LoginPage', () => {
   beforeEach(() => {
+    vi.useRealTimers()
     vi.clearAllMocks()
     mockGetAuthProviders.mockResolvedValue({ providers: ['google'] })
+    mockLogin.mockResolvedValue({ token: 'token-123', redirectPath: '/' })
     mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
     mockUseAuth.mockReturnValue({
       authState: {
@@ -77,6 +80,10 @@ describe('LoginPage', () => {
     })
   })
 
+  afterEach(() => {
+    vi.useFakeTimers()
+  })
+
   it('preserves invite_token on the create-account link', async () => {
     const { LoginPage } = await import('./login-page')
 
@@ -85,5 +92,26 @@ describe('LoginPage', () => {
     expect(
       screen.getByRole('link', { name: 'auth.login.createAccountLink' }).getAttribute('href'),
     ).toBe('/register?invite_token=invite-token-123')
+  })
+
+  it('maps invite email mismatch into a user-facing login error', async () => {
+    const { LoginPage } = await import('./login-page')
+    mockLogin.mockRejectedValueOnce(
+      Object.assign(new Error('raw backend message'), { reason: 'invite_email_mismatch' }),
+    )
+
+    render(<LoginPage />)
+
+    fireEvent.change(screen.getByLabelText('auth.login.identifierLabelCloud'), {
+      target: { value: 'invitee@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'password123' },
+    })
+    fireEvent.submit(screen.getByRole('button', { name: 'auth.login.signIn' }).closest('form')!)
+
+    await waitFor(() => {
+      expect(screen.getByText('auth.login.errors.inviteEmailMismatch')).toBeTruthy()
+    })
   })
 })

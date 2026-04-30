@@ -858,7 +858,7 @@ func (h *AuthHandler) resolveLoginOrgID(ctx context.Context, user *model.User, i
 		return "", "", apperror.InternalServerError("Failed to complete sign-in")
 	}
 	if invitation == nil || invitation.AcceptedAt != nil || invitation.ExpiresAt.Before(time.Now().UTC()) {
-		return "", "", apperror.BadRequest("Invitation is no longer valid", map[string]interface{}{"field": "inviteToken"})
+		return "", "", apperror.BadRequest("Invitation is no longer valid", map[string]interface{}{"field": "inviteToken", "reason": "invite_invalid"})
 	}
 
 	redirectPath, err := h.resolveInvitationRedirectPath(ctx, invitation)
@@ -872,12 +872,12 @@ func (h *AuthHandler) resolveLoginOrgID(ctx context.Context, user *model.User, i
 		userEmail = validation.NormalizeEmail(*user.Email)
 	}
 	if userEmail == "" || userEmail != validation.NormalizeEmail(invitation.Email) {
-		return "", "", apperror.BadRequest("This invitation was sent to a different email address", map[string]interface{}{"field": "username"})
+		return "", "", apperror.BadRequest("This invitation was sent to a different email address", map[string]interface{}{"field": "username", "reason": "invite_email_mismatch"})
 	}
 
 	isSpaceInvite := strings.TrimSpace(invitation.SpaceID) != ""
 	if !isSpaceInvite && orgID != "" && orgID != invitation.OrgID {
-		return "", "", apperror.Conflict("This invitation belongs to a different organization", "inviteToken")
+		return "", "", apperror.BadRequest("This invitation belongs to a different organization", map[string]interface{}{"field": "inviteToken", "reason": "invite_org_conflict"})
 	}
 
 	if !isSpaceInvite {

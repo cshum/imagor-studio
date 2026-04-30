@@ -1117,6 +1117,70 @@ func TestLogin_AcceptsPendingInvite(t *testing.T) {
 	mockUserStore.AssertExpectations(t)
 }
 
+func TestLogin_AcceptsPendingOrganizationInvite(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	inviteStore := &stubInviteStore{
+		invite: &space.Invitation{
+			ID:        "invite-1",
+			OrgID:     "org-invite",
+			Email:     "testuser@example.com",
+			Role:      "member",
+			ExpiresAt: time.Now().UTC().Add(time.Hour),
+		},
+	}
+	orgStore := &provisioningOrgStore{}
+	handler := NewAuthHandler(tokenManager, mockUserStore, orgStore, nil, logger, AuthHandlerConfig{
+		InviteStore: inviteStore,
+	})
+
+	hashedPassword, err := auth.HashPassword("password123")
+	require.NoError(t, err)
+	email := "testuser@example.com"
+	mockUserStore.On("GetByEmail", mock.Anything, "testuser@example.com").Return(&userstore.User{
+		ID:          "user-123",
+		DisplayName: "testuser",
+		Username:    "testuser",
+		Role:        "user",
+		Email:       &email,
+	}, nil).Once()
+	mockUserStore.On("GetByIDWithPassword", mock.Anything, "user-123").Return(&model.User{
+		ID:             "user-123",
+		DisplayName:    "testuser",
+		Username:       "testuser",
+		Role:           "user",
+		IsActive:       true,
+		HashedPassword: hashedPassword,
+		Email:          &email,
+	}, nil).Once()
+	mockUserStore.On("UpdateLastLogin", mock.Anything, "user-123").Return(nil).Once()
+
+	body, err := json.Marshal(LoginRequest{
+		Username:    "testuser@example.com",
+		Password:    "password123",
+		InviteToken: "invite-token",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+
+	handler.Login()(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+	var loginResp LoginResponse
+	err = json.Unmarshal(rr.Body.Bytes(), &loginResp)
+	require.NoError(t, err)
+	claims, err := tokenManager.ValidateToken(loginResp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "org-invite", claims.OrgID)
+	assert.Empty(t, loginResp.RedirectPath)
+	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
+	assert.NotNil(t, inviteStore.acceptedAt)
+	mockUserStore.AssertExpectations(t)
+}
+
 func TestLogin_RejectsInviteEmailMismatch(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
@@ -1585,6 +1649,67 @@ func TestRegister_MultiTenant_SpaceInviteSkipsVerificationAndRedirects(t *testin
 	claims, err := tokenManager.ValidateToken(resp.Token)
 	require.NoError(t, err)
 	assert.Equal(t, "org-provisioned", claims.OrgID)
+	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
+	assert.NotNil(t, inviteStore.acceptedAt)
+
+	mockUserStore.AssertExpectations(t)
+}
+
+func TestRegister_MultiTenant_OrganizationInviteSkipsVerification(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	mockUserStore := new(MockUserStore)
+	orgStore := &provisioningOrgStore{}
+	inviteStore := &stubInviteStore{
+		invite: &space.Invitation{
+			ID:        "invite-1",
+			OrgID:     "org-host",
+			Email:     "invitee@example.com",
+			Role:      "member",
+			ExpiresAt: time.Now().UTC().Add(time.Hour),
+		},
+	}
+	handler := NewAuthHandler(tokenManager, mockUserStore, orgStore, nil, logger, AuthHandlerConfig{
+		InviteStore: inviteStore,
+	})
+
+	const userID = "saas-invite-user-1"
+	inviteEmail := "invitee@example.com"
+	mockUserStore.On(
+		"CreateWithEmail",
+		mock.Anything,
+		"invitee",
+		mock.MatchedBy(func(username string) bool {
+			return strings.HasPrefix(username, "u-") && len(username) == 14
+		}),
+		mock.AnythingOfType("string"),
+		"user",
+		"invitee@example.com",
+	).Return(&userstore.User{
+		ID: userID, DisplayName: "invitee", Username: "u-invitee001", Role: "user", IsActive: true, Email: &inviteEmail,
+	}, nil)
+	mockUserStore.On("SetEmailVerified", mock.Anything, userID, true).Return(nil).Once()
+
+	body, err := json.Marshal(RegisterRequest{
+		DisplayName: "invitee",
+		Email:       "invitee@example.com",
+		Password:    "password123",
+		InviteToken: "invite-token",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewReader(body))
+	rr := httptest.NewRecorder()
+	handler.Register()(rr, req)
+
+	require.Equal(t, http.StatusCreated, rr.Code)
+
+	var resp LoginResponse
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &resp))
+	assert.Empty(t, resp.RedirectPath)
+	claims, err := tokenManager.ValidateToken(resp.Token)
+	require.NoError(t, err)
+	assert.Equal(t, "org-host", claims.OrgID)
 	assert.Equal(t, "invite-1", inviteStore.acceptedInviteID)
 	assert.NotNil(t, inviteStore.acceptedAt)
 

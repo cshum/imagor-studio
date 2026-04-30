@@ -14,12 +14,12 @@ import { LicenseActivationDialog } from '@/components/license/license-activation
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
-import { getInviteTokenSearchValue } from '@/lib/route-search'
 import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
+import { getInviteTokenSearchValue } from '@/lib/route-search'
 import { getSpaceIdentity, resolveSpace } from '@/lib/space'
 import {
   adminGeneralLoader,

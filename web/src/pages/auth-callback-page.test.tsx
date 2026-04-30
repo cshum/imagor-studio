@@ -65,4 +65,13 @@ describe('AuthCallbackPage', () => {
 
     expect(screen.getByText('pages.authCallback.errorOAuth:provider timeout')).toBeTruthy()
   })
+
+  it('maps OAuth state errors into a user-facing callback message', async () => {
+    const { AuthCallbackPage } = await import('./auth-callback-page')
+    window.history.replaceState({}, '', '/auth/callback?error=oauth_invalid_state')
+
+    render(<AuthCallbackPage />)
+
+    expect(screen.getByText('pages.authCallback.errors.oauthInvalidState')).toBeTruthy()
+  })
 })

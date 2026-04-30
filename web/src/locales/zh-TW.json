@@ -92,6 +92,11 @@
       },
       "signIn": "登入",
       "loginFailed": "登入憑證無效。請再試一次。",
+      "errors": {
+        "inviteInvalid": "此邀請已失效。請要求新的邀請後再試一次。",
+        "inviteOrgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。",
+        "inviteEmailMismatch": "此邀請寄送到其他電子郵件地址。請改用受邀帳戶登入。"
+      },
       "createAccountPrompt": "第一次使用？",
       "createAccountLink": "建立帳戶"
     },
@@ -182,6 +187,11 @@
       "failed": "驗證失敗",
       "errorOAuth": "驗證失敗：{{error}}",
       "errors": {
+        "oauthInvalidState": "登入工作階段已過期或無效，請再試一次。",
+        "oauthMissingCode": "Google 沒有回傳授權碼，請再試一次。",
+        "oauthEmailUnverified": "你的 Google 帳戶電子郵件尚未驗證。請先在 Google 完成驗證後再試。",
+        "oauthNotConfigured": "目前無法使用 Google 登入。",
+        "oauthFailed": "我們無法完成 Google 登入，請再試一次。",
         "inviteOrgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。",
         "inviteEmailMismatch": "此邀請寄送到其他電子郵件地址。請改用受邀帳戶登入。"
       },

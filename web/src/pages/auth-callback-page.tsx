@@ -3,6 +3,16 @@ import { LogIn } from 'lucide-react'
 
 import { ErrorPage } from '@/components/ui/error-page'
 
+const authCallbackErrorMessageKeys = {
+  invite_org_conflict: 'pages.authCallback.errors.inviteOrgConflict',
+  invite_email_mismatch: 'pages.authCallback.errors.inviteEmailMismatch',
+  oauth_invalid_state: 'pages.authCallback.errors.oauthInvalidState',
+  oauth_missing_code: 'pages.authCallback.errors.oauthMissingCode',
+  oauth_email_unverified: 'pages.authCallback.errors.oauthEmailUnverified',
+  oauth_not_configured: 'pages.authCallback.errors.oauthNotConfigured',
+  oauth_failed: 'pages.authCallback.errors.oauthFailed',
+} as const
+
 /**
  * Rendered only when OAuth authentication fails.
  * On success, authCallbackLoader throws a redirect before this ever mounts.
@@ -13,12 +23,10 @@ export function AuthCallbackPage() {
   const params = new URLSearchParams(window.location.search)
   const errorParam = params.get('error')
   const inviteToken = params.get('invite_token')?.trim()
-  const errorMessageKey =
-    errorParam === 'invite_org_conflict'
-      ? 'pages.authCallback.errors.inviteOrgConflict'
-      : errorParam === 'invite_email_mismatch'
-        ? 'pages.authCallback.errors.inviteEmailMismatch'
-        : null
+  const errorMessageKey = errorParam
+    ? (authCallbackErrorMessageKeys[errorParam as keyof typeof authCallbackErrorMessageKeys] ??
+      null)
+    : null
   const actionHref = inviteToken
     ? `/login?invite_token=${encodeURIComponent(inviteToken)}`
     : '/login'

@@ -198,9 +198,17 @@ export function LoginPage() {
       let errorMessage = t('auth.login.loginFailed') // Default fallback
 
       if (err instanceof Error) {
+        const apiError = err as Error & { reason?: string }
+
         // Check if this is a login credential error
         if (err.message === 'LOGIN_FAILED') {
           errorMessage = t('auth.login.loginFailed')
+        } else if (apiError.reason === 'invite_invalid') {
+          errorMessage = t('auth.login.errors.inviteInvalid')
+        } else if (apiError.reason === 'invite_org_conflict') {
+          errorMessage = t('auth.login.errors.inviteOrgConflict')
+        } else if (apiError.reason === 'invite_email_mismatch') {
+          errorMessage = t('auth.login.errors.inviteEmailMismatch')
         } else {
           // For system errors, show the technical message
           errorMessage = err.message
