@@ -713,7 +713,6 @@ const accountLegacyMembersRoute = createRoute({
 const accountOrganizationLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/organization',
-  beforeLoad: requireAccountAuth,
   loader: async ({ context }) => {
     await requireOrganizationAccountAuth({ organization: context.organization })
 
@@ -753,7 +752,6 @@ const accountOrganizationBillingRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/billing',
   validateSearch: billingValidateSearch,
-  beforeLoad: requireAccountAuth,
   loader: async ({ context }) => {
     await requireOrganizationAdminAccountAuth({ organization: context.organization })
     return billingLoader({ organization: context.organization })
