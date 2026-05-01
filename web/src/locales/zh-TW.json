@@ -1049,6 +1049,11 @@
         "overLimitDescription": "請使用計費入口變更這項訂閱。降級後，組織可能會暫時處於超限狀態，直到用量降回限制內，因此現有空間與處理可能持續運作，但受限制的操作仍會維持阻擋。",
         "refreshAction": "刷新計費狀態"
       },
+      "portalSync": {
+        "title": "我們正在同步你最新的計費變更",
+        "syncingDescription": "你的 Stripe 更新已提交。我們正在刷新最新的訂閱狀態。",
+        "waitingDescription": "我們已要求最新的訂閱狀態。如果方案尚未更新，請稍後再刷新一次。"
+      },
       "sharedFeaturesTitle": "所有付費方案另外皆包含",
       "sharedFeatures": {
         "collaboration": "共享空間存取",

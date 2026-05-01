@@ -1047,6 +1047,11 @@
         "overLimitDescription": "Use the billing portal to change this subscription. Downgrades can leave the organization over limit until usage is reduced, so existing spaces and processing may keep running while blocked actions stay restricted.",
         "refreshAction": "Refresh billing status"
       },
+      "portalSync": {
+        "title": "We’re syncing your latest billing changes",
+        "syncingDescription": "Your Stripe update was submitted. We’re refreshing the latest subscription status now.",
+        "waitingDescription": "We requested the latest subscription status. If your plan has not updated yet, refresh again in a moment."
+      },
       "sharedFeaturesTitle": "Every paid plan also includes",
       "sharedFeatures": {
         "collaboration": "Shared space access",

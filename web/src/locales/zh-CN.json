@@ -993,6 +993,11 @@
         "overLimitDescription": "请使用计费门户变更此订阅。降级后，组织可能会暂时处于超限状态，直到用量回落，因此现有空间和处理可能继续运行，但被限制的操作仍会保持阻止。",
         "refreshAction": "刷新计费状态"
       },
+      "portalSync": {
+        "title": "我们正在同步你最新的计费变更",
+        "syncingDescription": "你的 Stripe 更新已提交。我们正在刷新最新的订阅状态。",
+        "waitingDescription": "我们已请求最新的订阅状态。如果套餐尚未更新，请稍后再刷新一次。"
+      },
       "sharedFeaturesTitle": "所有付费套餐另外均包含",
       "sharedFeatures": {
         "collaboration": "共享空间访问",

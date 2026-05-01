@@ -1048,6 +1048,11 @@
         "overLimitDescription": "Usa il portale di fatturazione per modificare questo abbonamento. Un downgrade può lasciare l'organizzazione oltre i limiti finché l'utilizzo non viene ridotto, quindi gli spazi esistenti e il processing possono continuare mentre le azioni bloccate restano limitate.",
         "refreshAction": "Aggiorna stato fatturazione"
       },
+      "portalSync": {
+        "title": "Stiamo sincronizzando le ultime modifiche di fatturazione",
+        "syncingDescription": "L'aggiornamento Stripe è stato inviato. Stiamo aggiornando ora lo stato più recente della sottoscrizione.",
+        "waitingDescription": "Abbiamo richiesto lo stato più recente della sottoscrizione. Se il piano non è ancora aggiornato, riprova ad aggiornare tra un momento."
+      },
       "sharedFeaturesTitle": "Ogni piano a pagamento include anche",
       "sharedFeatures": {
         "collaboration": "Accesso condiviso agli spazi",

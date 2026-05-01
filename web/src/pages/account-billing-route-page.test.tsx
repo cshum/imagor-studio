@@ -136,6 +136,7 @@ function createLoaderData(
 describe('AccountBillingRoutePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockNavigate.mockResolvedValue(undefined)
     vi.stubGlobal('location', {
       ...window.location,
       assign: mockLocationAssign,
@@ -370,5 +371,36 @@ describe('AccountBillingRoutePage', () => {
 
     expect(mockInvalidate).toHaveBeenCalled()
     expect(mockToastError).not.toHaveBeenCalled()
+  })
+
+  it('auto-refreshes once and shows a syncing banner after returning from the billing portal', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+    vi.stubGlobal('location', {
+      ...window.location,
+      assign: mockLocationAssign,
+      href: 'http://localhost/account/organization/billing?portal_returned=1',
+      search: '?portal_returned=1',
+    })
+
+    await act(async () => {
+      render(
+        <AccountBillingRoutePage
+          loaderData={createLoaderData({
+            plan: 'pro',
+            planStatus: 'active',
+          })}
+        />,
+      )
+      await Promise.resolve()
+    })
+
+    expect(screen.getByText('pages.billing.portalSync.title')).toBeTruthy()
+    expect(screen.getByText('pages.billing.portalSync.waitingDescription')).toBeTruthy()
+    expect(mockNavigate).toHaveBeenCalledWith({
+      to: '/account/organization/billing',
+      search: { portal_returned: false },
+      replace: true,
+    })
+    expect(mockInvalidate).toHaveBeenCalled()
   })
 })

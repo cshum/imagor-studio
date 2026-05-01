@@ -26,6 +26,7 @@ import {
   adminImagorLoader,
   adminLicenseLoader,
   adminStorageLoader,
+  billingValidateSearch,
   billingLoader,
   orgMembersLoader,
   profileLoader,
@@ -755,6 +756,7 @@ const accountOrganizationOverviewRoute = createRoute({
 const accountOrganizationBillingRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/billing',
+  validateSearch: billingValidateSearch,
   beforeLoad: requireOrganizationAdminAccountAuth,
   loader: billingLoader,
   component: () => {

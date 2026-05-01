@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { ChevronDown, ChevronRight } from 'lucide-react'
@@ -87,10 +87,15 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const { t } = useTranslation()
   const navigate = useNavigate()
   const router = useRouter()
+  const portalReturned =
+    typeof window !== 'undefined' &&
+    ['1', 'true'].includes(new URLSearchParams(window.location.search).get('portal_returned') ?? '')
   const { logout } = useAuth()
   const [pendingPlan, setPendingPlan] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
   const [refreshLoading, setRefreshLoading] = useState(false)
+  const [showPortalSyncNotice, setShowPortalSyncNotice] = useState(portalReturned)
+  const [portalSyncing, setPortalSyncing] = useState(portalReturned)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [dangerZoneOpen, setDangerZoneOpen] = useState(false)
@@ -206,7 +211,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const handleManageBilling = async () => {
     setPortalLoading(true)
     try {
-      const session = await createBillingPortalSession({ returnURL: window.location.href })
+      const returnURL = new URL(window.location.href)
+      returnURL.searchParams.set('portal_returned', '1')
+      const session = await createBillingPortalSession({ returnURL: returnURL.toString() })
       window.location.assign(session.url)
     } catch (error) {
       if (isOrganizationRequiredError(error)) {
@@ -220,17 +227,46 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     }
   }
 
-  const handleRefreshBillingStatus = async () => {
+  const handleRefreshBillingStatus = async ({ silent = false }: { silent?: boolean } = {}) => {
     setRefreshLoading(true)
     try {
       await router.invalidate()
     } catch (error) {
-      const message = error instanceof Error ? error.message : t('common.status.error')
-      toast.error(`${t('pages.billing.messages.refreshFailed')}: ${message}`)
+      if (!silent) {
+        const message = error instanceof Error ? error.message : t('common.status.error')
+        toast.error(`${t('pages.billing.messages.refreshFailed')}: ${message}`)
+      }
     } finally {
       setRefreshLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!portalReturned) {
+      return
+    }
+
+    let cancelled = false
+
+    setShowPortalSyncNotice(true)
+    setPortalSyncing(true)
+
+    void navigate({
+      to: '/account/organization/billing',
+      search: { portal_returned: false },
+      replace: true,
+    })
+
+    void handleRefreshBillingStatus({ silent: true }).finally(() => {
+      if (!cancelled) {
+        setPortalSyncing(false)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [navigate, portalReturned])
 
   const handleDeleteOrganization = async () => {
     setDeleteLoading(true)
@@ -355,6 +391,32 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
       )}
 
+      {showPortalSyncNotice && (
+        <div className='rounded-lg border border-sky-500/30 bg-sky-500/10 p-4 text-sky-950 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-50'>
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+            <div className='space-y-1'>
+              <p className='text-sm font-semibold'>{t('pages.billing.portalSync.title')}</p>
+              <p className='text-sm'>
+                {t(
+                  portalSyncing
+                    ? 'pages.billing.portalSync.syncingDescription'
+                    : 'pages.billing.portalSync.waitingDescription',
+                )}
+              </p>
+            </div>
+
+            <ButtonWithLoading
+              variant='outline'
+              isLoading={refreshLoading}
+              onClick={() => void handleRefreshBillingStatus()}
+              className='w-full shrink-0 sm:w-auto'
+            >
+              {t('pages.billing.portalManaged.refreshAction')}
+            </ButtonWithLoading>
+          </div>
+        </div>
+      )}
+
       {isPortalManagedBilling && (
         <div className='bg-muted/20 rounded-lg border p-4'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
@@ -372,7 +434,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
             <ButtonWithLoading
               variant='outline'
               isLoading={refreshLoading}
-              onClick={handleRefreshBillingStatus}
+              onClick={() => void handleRefreshBillingStatus()}
               className='w-full shrink-0 sm:w-auto'
             >
               {t('pages.billing.portalManaged.refreshAction')}

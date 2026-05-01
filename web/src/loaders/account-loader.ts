@@ -89,6 +89,10 @@ export interface BillingLoaderData {
   breadcrumb: BreadcrumbItem
 }
 
+export interface BillingSearch {
+  portal_returned: boolean
+}
+
 export interface OrgOverviewLoaderData {
   organization: MyOrganizationQuery['myOrganization']
   usageSummary: GetUsageSummaryQuery['usageSummary']
@@ -134,6 +138,13 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
     },
   }
 }
+
+export const billingValidateSearch = (search: Record<string, unknown>): BillingSearch => ({
+  portal_returned:
+    search.portal_returned === true ||
+    search.portal_returned === 'true' ||
+    search.portal_returned === '1',
+})
 
 /**
  * Load admin settings for the admin page
