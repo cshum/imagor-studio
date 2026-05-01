@@ -210,6 +210,10 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     await handleCheckout(selectedPlan as (typeof PAID_PLANS)[number])
   }
 
+  const handlePlanSelection = (plan: (typeof PAID_PLANS)[number]) => {
+    setSelectedPlan((currentSelection) => (currentSelection === plan ? null : plan))
+  }
+
   const usageItems = [
     {
       key: 'spaces',
@@ -581,7 +585,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
               onClick={
                 isSelectable
                   ? () => {
-                      setSelectedPlan(plan)
+                      handlePlanSelection(plan)
                     }
                   : undefined
               }
@@ -590,7 +594,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                   ? (event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault()
-                        setSelectedPlan(plan)
+                        handlePlanSelection(plan)
                       }
                     }
                   : undefined
@@ -641,11 +645,6 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                   </div>
                 </div>
 
-                {isCurrentPlan ? (
-                  <p className='text-muted-foreground border-border rounded-md border px-3 py-2 text-center text-sm'>
-                    {t('pages.billing.currentPlanStatus')}
-                  </p>
-                ) : null}
               </CardContent>
             </Card>
           )

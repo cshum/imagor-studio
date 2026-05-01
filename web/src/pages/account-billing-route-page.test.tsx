@@ -246,11 +246,18 @@ describe('AccountBillingRoutePage', () => {
     expect(screen.getByText('pages.billing.selectedPlanBadge')).toBeTruthy()
 
     await act(async () => {
-      fireEvent.click(
-        screen.getByRole('button', {
-          name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.pro"}',
-        }),
-      )
+      fireEvent.click(screen.getByText('pages.spaces.plan.pro'))
+    })
+
+    expect(
+      screen.queryByRole('button', {
+        name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.pro"}',
+      }),
+    ).toBeNull()
+    expect(screen.getByRole('button', { name: 'pages.billing.manageBilling' })).toBeTruthy()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'pages.billing.manageBilling' }))
     })
 
     expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
@@ -275,7 +282,7 @@ describe('AccountBillingRoutePage', () => {
     )
 
     expect(screen.queryByRole('button', { name: 'pages.billing.currentPlanButton' })).toBeNull()
-    expect(screen.getByText('pages.billing.currentPlanStatus')).toBeTruthy()
+    expect(screen.getByText('pages.billing.currentPlanBadge')).toBeTruthy()
 
     expect(screen.queryByRole('button', { name: 'pages.billing.managePlanInBilling' })).toBeNull()
     expect(screen.getByText('pages.billing.portalManaged.comparePlansHint')).toBeTruthy()
