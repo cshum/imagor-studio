@@ -76,6 +76,10 @@ export function LoginPage() {
   }
 
   const resolvePostLoginRedirect = (redirectPath?: string): string => {
+    if (isMultiTenant) {
+      return '/'
+    }
+
     if (redirectPath && isValidRedirectUrl(redirectPath)) {
       return redirectPath
     }

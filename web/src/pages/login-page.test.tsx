@@ -160,4 +160,53 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: 'auth.login.googleCta' })).toBeTruthy()
     expect(mockGetAuthProviders).not.toHaveBeenCalled()
   })
+
+  it('redirects multi-tenant login to root instead of backend landing page fallback', async () => {
+    const { LoginPage } = await import('./login-page')
+    mockLogin.mockResolvedValueOnce({ token: 'token-123', redirectPath: '/landing' })
+    mockUseSearch.mockReturnValue({})
+
+    render(<LoginPage />)
+
+    fireEvent.change(screen.getByLabelText('auth.login.identifierLabelCloud'), {
+      target: { value: 'owner@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'password123' },
+    })
+    fireEvent.submit(screen.getByRole('button', { name: 'auth.login.signIn' }).closest('form')!)
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith({ to: '/' })
+    })
+  })
+
+  it('keeps backend redirectPath fallback for self-hosted login', async () => {
+    mockUseAuth.mockReturnValue({
+      authState: {
+        isEmbedded: false,
+        isFirstRun: false,
+        multiTenant: false,
+        state: 'unauthenticated',
+      },
+    })
+
+    const { LoginPage } = await import('./login-page')
+    mockLogin.mockResolvedValueOnce({ token: 'token-123', redirectPath: '/landing' })
+    mockUseSearch.mockReturnValue({})
+
+    render(<LoginPage />)
+
+    fireEvent.change(screen.getByLabelText('auth.login.identifierLabelSelfHosted'), {
+      target: { value: 'admin' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'password123' },
+    })
+    fireEvent.submit(screen.getByRole('button', { name: 'auth.login.signIn' }).closest('form')!)
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith({ to: '/landing' })
+    })
+  })
 })
