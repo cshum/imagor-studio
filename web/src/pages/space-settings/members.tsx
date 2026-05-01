@@ -1,13 +1,12 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useRouter } from '@tanstack/react-router'
 import { Check, Clock3, MoreHorizontal, UserRound, UserX } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
   inviteSpaceMember,
   leaveSpace,
-  listSpaceInvitations,
-  listSpaceMembers,
   removeSpaceMember,
   updateSpaceMemberRole,
   type SpaceInvitationItem,
@@ -72,6 +71,21 @@ interface MembersSectionProps {
   canLeave?: boolean
 }
 
+export function mergeSpaceInvitations(
+  initialInvitations: SpaceInvitationItem[],
+  addedInvitations: SpaceInvitationItem[],
+) {
+  const invitationIds = new Set(initialInvitations.map((invitation) => invitation.id))
+  const optimisticInvitations = addedInvitations.filter(
+    (invitation) => !invitationIds.has(invitation.id),
+  )
+  return [...initialInvitations, ...optimisticInvitations]
+}
+
+export function shouldInvalidateAfterSpaceInvite(result: SpaceInviteResultItem) {
+  return result.status === 'added'
+}
+
 export function MembersSection({
   spaceID,
   initialMembers,
@@ -79,10 +93,8 @@ export function MembersSection({
   canLeave = false,
 }: MembersSectionProps) {
   const { t } = useTranslation()
+  const router = useRouter()
   const { authState } = useAuth()
-  const [members, setMembers] = useState<SpaceMemberItem[]>(initialMembers)
-  const [invitations, setInvitations] = useState<SpaceInvitationItem[]>(initialInvitations)
-  const [isLoading, setIsLoading] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteFieldError, setInviteFieldError] = useState<string | null>(null)
   const [isInviting, setIsInviting] = useState(false)
@@ -92,28 +104,19 @@ export function MembersSection({
   const [openMenuMemberId, setOpenMenuMemberId] = useState<string | null>(null)
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
   const [isLeaving, setIsLeaving] = useState(false)
+  const [addedInvitations, setAddedInvitations] = useState<SpaceInvitationItem[]>([])
   const removeDialogTimerRef = useRef<number | null>(null)
+
+  const members = initialMembers
+  const invitations = useMemo(
+    () => mergeSpaceInvitations(initialInvitations, addedInvitations),
+    [addedInvitations, initialInvitations],
+  )
 
   const currentUserId = authState.profile?.id ?? null
   const pendingMember = members.find((member) => member.userId === pendingRemoveId)
   const organizationMembers = members.filter((member) => member.roleSource === 'organization')
   const directMembers = members.filter((member) => member.roleSource !== 'organization')
-
-  const reload = async () => {
-    setIsLoading(true)
-    try {
-      const [spaceMembers, pendingInvitations] = await Promise.all([
-        listSpaceMembers(spaceID),
-        listSpaceInvitations(spaceID),
-      ])
-      setMembers(spaceMembers)
-      setInvitations(pendingInvitations)
-    } catch {
-      // ignore refresh failures in the settings view
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const mapInviteError = (message: string) => {
     const normalized = message.toLowerCase()
@@ -159,15 +162,24 @@ export function MembersSection({
       role: 'member',
     })
 
-    if (result.status === 'added') {
+    if (shouldInvalidateAfterSpaceInvite(result)) {
       toast.success(t('pages.spaceSettings.members.addSuccess'))
+      await router.invalidate()
     } else {
       toast.success(t('pages.spaceSettings.members.inviteSent'))
+      const invitation = result.invitation
+      if (invitation) {
+        setAddedInvitations((current) => {
+          const nextInvitations = current.filter(
+            (currentInvitation) => currentInvitation.id !== invitation.id,
+          )
+          return [...nextInvitations, invitation]
+        })
+      }
     }
 
     setInviteEmail('')
     setInviteFieldError(null)
-    await reload()
   }
 
   const handleInvite = async () => {
@@ -213,7 +225,7 @@ export function MembersSection({
       await removeSpaceMember({ spaceID, userId: pendingRemoveId })
       toast.success(t('pages.spaceSettings.members.removeSuccess'))
       setPendingRemoveId(null)
-      await reload()
+      await router.invalidate()
     } catch (err) {
       toast.error(extractErrorMessage(err))
     } finally {
@@ -227,7 +239,7 @@ export function MembersSection({
     try {
       await updateSpaceMemberRole({ spaceID, userId, role })
       toast.success(t('pages.spaceSettings.members.roleUpdated'))
-      await reload()
+      await router.invalidate()
     } catch (err) {
       toast.error(extractErrorMessage(err))
     } finally {
@@ -370,13 +382,7 @@ export function MembersSection({
     sectionMembers: SpaceMemberItem[],
     options?: { emptyState?: React.ReactNode; showActions?: boolean },
   ) =>
-    isLoading ? (
-      <Card>
-        <CardContent className='p-4'>
-          <p className='text-muted-foreground text-sm'>{t('common.status.loading')}</p>
-        </CardContent>
-      </Card>
-    ) : sectionMembers.length === 0 ? (
+    sectionMembers.length === 0 ? (
       (options?.emptyState ?? null)
     ) : (
       <Card>
