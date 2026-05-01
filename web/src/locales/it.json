@@ -971,12 +971,12 @@
       "currentBillingPeriod": "{{start}} - {{end}}",
       "overLimit": {
         "title": "La tua organizzazione ha superato i limiti del piano corrente",
-        "description": "Gli spazi esistenti e il processing continuano a funzionare per ora, ma alcune azioni restano bloccate finché l'utilizzo non viene ridotto o il piano non viene aggiornato.",
+        "description": "Gli spazi esistenti continuano a funzionare e il processing di produzione non viene sospeso automaticamente per ora, ma alcune azioni restano bloccate finché l'utilizzo non viene ridotto o il piano non viene aggiornato.",
         "reviewBilling": "Controlla fatturazione",
         "messages": {
           "spaces": "Puoi mantenere gli spazi esistenti, ma non puoi crearne altri finché l'utilizzo non rientra nel piano.",
           "storage": "I file esistenti restano disponibili, ma i nuovi caricamenti gestiti sono bloccati finché lo storage supera il limite.",
-          "processing": "Il processing di produzione continua per ora, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
+          "processing": "Il processing di produzione non viene sospeso automaticamente al momento, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
         }
       },
       "processingUsage": "{{count}} trasformazioni",
@@ -1002,11 +1002,11 @@
       "titleDescription": "Scegli il piano più adatto a come il tuo team archivia, elabora e distribuisce le immagini.",
       "overLimit": {
         "title": "La tua organizzazione ha superato i limiti del piano corrente",
-        "description": "Gli spazi esistenti e il processing continuano a funzionare per ora, ma alcune azioni restano bloccate finché l'utilizzo non viene ridotto o il piano non viene aggiornato.",
+        "description": "Gli spazi esistenti continuano a funzionare e il processing di produzione non viene sospeso automaticamente per ora, ma alcune azioni restano bloccate finché l'utilizzo non viene ridotto o il piano non viene aggiornato.",
         "messages": {
           "spaces": "Puoi mantenere gli spazi esistenti, ma non puoi crearne altri finché l'utilizzo non rientra nel piano.",
           "storage": "I file esistenti restano disponibili, ma i nuovi caricamenti gestiti sono bloccati finché lo storage supera il limite.",
-          "processing": "Il processing di produzione continua per ora, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
+          "processing": "Il processing di produzione non viene sospeso automaticamente al momento, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
         }
       },
       "currentPlan": "Piano attuale",
@@ -1157,11 +1157,11 @@
       "summaryDescription": "Una vista rapida dello stato attuale dell'organizzazione.",
       "overLimit": {
         "title": "La tua organizzazione ha superato i limiti del piano corrente",
-        "description": "Gli spazi esistenti e il processing continuano a funzionare per ora, ma alcune azioni restano bloccate finché l'utilizzo non viene ridotto o il piano non viene aggiornato.",
+        "description": "Gli spazi esistenti continuano a funzionare e il processing di produzione non viene sospeso automaticamente per ora, ma alcune azioni restano bloccate finché l'utilizzo non viene ridotto o il piano non viene aggiornato.",
         "messages": {
           "spaces": "Puoi mantenere gli spazi esistenti, ma non puoi crearne altri finché l'utilizzo non rientra nel piano.",
           "storage": "I file esistenti restano disponibili, ma i nuovi caricamenti gestiti sono bloccati finché lo storage supera il limite.",
-          "processing": "Il processing di produzione continua per ora, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
+          "processing": "Il processing di produzione non viene sospeso automaticamente al momento, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
         }
       },
       "usageTitle": "Utilizzo attuale",
