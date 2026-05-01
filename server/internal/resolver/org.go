@@ -1948,7 +1948,7 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context) (bool, error)
 	}
 
 	isPaidPlan := currentOrg.Plan == org.PlanStarter || currentOrg.Plan == org.PlanPro || currentOrg.Plan == org.PlanTeam
-	hasActiveBilling := currentOrg.PlanStatus == org.PlanStatusActive || currentOrg.PlanStatus == org.PlanStatusPastDue
+	hasActiveBilling := currentOrg.PlanStatus == org.PlanStatusActive || currentOrg.PlanStatus == org.PlanStatusTrialing || currentOrg.PlanStatus == org.PlanStatusPastDue
 	if isPaidPlan && hasActiveBilling && currentOrg.StripeSubscriptionID != "" {
 		return false, apperror.BadRequest("cancel paid billing before deleting the organization", map[string]interface{}{"reason": "org_delete_billing_active"})
 	}
