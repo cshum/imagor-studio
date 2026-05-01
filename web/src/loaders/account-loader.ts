@@ -90,7 +90,7 @@ export interface BillingLoaderData {
 }
 
 export interface BillingSearch {
-  portal_returned: boolean
+  portal_returned?: boolean
 }
 
 export interface OrgOverviewLoaderData {
@@ -139,12 +139,14 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
   }
 }
 
-export const billingValidateSearch = (search: Record<string, unknown>): BillingSearch => ({
-  portal_returned:
+export const billingValidateSearch = (search: Record<string, unknown>): BillingSearch => {
+  const portalReturned =
     search.portal_returned === true ||
     search.portal_returned === 'true' ||
-    search.portal_returned === '1',
-})
+    search.portal_returned === '1'
+
+  return portalReturned ? { portal_returned: true } : {}
+}
 
 /**
  * Load admin settings for the admin page
