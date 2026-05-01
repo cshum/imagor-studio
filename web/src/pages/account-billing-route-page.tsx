@@ -189,9 +189,13 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         return
       }
 
-      toast.error(
-        `${t('pages.billing.messages.checkoutFailed')}: ${extractErrorInfo(error).message}`,
-      )
+	  const errorInfo = extractErrorInfo(error)
+	  if (errorInfo.reason === 'billing_checkout_requires_portal') {
+		await handleManageBilling()
+		return
+	  }
+
+      toast.error(`${t('pages.billing.messages.checkoutFailed')}: ${errorInfo.message}`)
     } finally {
       setPendingPlan(null)
     }

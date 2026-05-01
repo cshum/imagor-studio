@@ -1105,6 +1105,19 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 	if err := validateBillingRedirectURL(cancelURL, "billing_redirect_url_invalid"); err != nil {
 		return nil, err
 	}
+	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		r.logger.Error("CreateCheckoutSession: failed to load organization", zap.String("orgID", orgID), zap.Error(err))
+		return nil, apperror.InternalServerError("failed to load organization")
+	}
+	if currentOrg == nil {
+		return nil, apperror.BadRequest("organization not found", map[string]interface{}{"reason": "organization_required"})
+	}
+	isPaidPlan := currentOrg.Plan == org.PlanStarter || currentOrg.Plan == org.PlanPro || currentOrg.Plan == org.PlanTeam
+	isPortalManagedStatus := currentOrg.PlanStatus == org.PlanStatusActive || currentOrg.PlanStatus == org.PlanStatusTrialing || currentOrg.PlanStatus == org.PlanStatusPastDue
+	if isPaidPlan && isPortalManagedStatus {
+		return nil, apperror.BadRequest("existing paid subscriptions must use the billing portal", map[string]interface{}{"reason": "billing_checkout_requires_portal"})
+	}
 	session, err := r.billingService.CreateCheckoutSession(ctx, billing.CheckoutSessionInput{
 		OrgID:      orgID,
 		Plan:       strings.TrimSpace(plan),

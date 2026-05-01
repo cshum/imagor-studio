@@ -303,8 +303,15 @@ func TestUsageSummary_ReturnsPlanLimitsAndUsage(t *testing.T) {
 }
 
 func TestCreateCheckoutSession_CreatesBillingSession(t *testing.T) {
+	orgStore := &MockOrgStore{}
 	billingService := &MockBillingService{}
-	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, billingService)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanTrial,
+		PlanStatus: org.PlanStatusTrialing,
+	}, nil).Once()
 
 	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
 		OrgID:      "org-1",
@@ -318,7 +325,55 @@ func TestCreateCheckoutSession_CreatesBillingSession(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, "https://checkout.example/session", result.URL)
+	orgStore.AssertExpectations(t)
 	billingService.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_AllowsInternalLapsedFreeState(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, billingService)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanFree,
+		PlanStatus: org.PlanStatusCanceled,
+	}, nil).Once()
+
+	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
+		OrgID:      "org-1",
+		Plan:       "starter",
+		SuccessURL: "https://app.example/success",
+		CancelURL:  "https://app.example/cancel",
+	}).Return(&billing.Session{URL: "https://checkout.example/session"}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().CreateCheckoutSession(ctx, "starter", "https://app.example/success", "https://app.example/cancel")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "https://checkout.example/session", result.URL)
+	orgStore.AssertExpectations(t)
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_RejectsPaidOrganizationsThatMustUsePortal(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, &MockBillingService{})
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanPro,
+		PlanStatus: org.PlanStatusActive,
+	}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "team", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "billing_checkout_requires_portal", gqlErr.Extensions["reason"])
+	orgStore.AssertExpectations(t)
 }
 
 func TestCreateCheckoutSession_RejectsUnsupportedPlan(t *testing.T) {

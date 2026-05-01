@@ -266,6 +266,40 @@ describe('AccountBillingRoutePage', () => {
     expect(mockToastError).toHaveBeenCalledWith('pages.billing.messages.portalFailed: portal down')
   })
 
+  it('falls back to the billing portal when checkout must use portal-managed billing', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+    mockCreateCheckoutSession.mockRejectedValue({
+      response: {
+        errors: [
+          {
+            message: 'existing paid subscriptions must use the billing portal',
+            extensions: {
+              reason: 'billing_checkout_requires_portal',
+            },
+          },
+        ],
+      },
+    })
+
+    render(<AccountBillingRoutePage loaderData={createLoaderData()} />)
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })[0])
+    })
+
+    expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        plan: 'starter',
+      }),
+    )
+    expect(mockCreateBillingPortalSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        returnURL: expect.any(String),
+      }),
+    )
+    expect(mockToastError).not.toHaveBeenCalled()
+  })
+
   it('shows recovery messaging when the organization is over the processing limit', async () => {
     const { AccountBillingRoutePage } = await import('./account-billing-route-page')
 
