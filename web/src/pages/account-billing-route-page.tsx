@@ -575,7 +575,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                   isCurrentPlan && 'border-primary shadow-sm',
                   isSelectedPlan && 'border-primary bg-muted/30 ring-primary/20 shadow-md ring-2',
                   isSelectable &&
-                    'hover:border-primary/60 cursor-pointer transition-[border-color,box-shadow,background-color]',
+                    'focus-visible:ring-ring/50 hover:border-primary/60 cursor-pointer transition-[border-color,box-shadow,background-color] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
                 )}
                 role={isSelectable ? 'button' : undefined}
                 aria-pressed={isSelectable ? isSelectedPlan : undefined}

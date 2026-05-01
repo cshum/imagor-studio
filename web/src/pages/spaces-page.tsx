@@ -526,19 +526,19 @@ export function SpacesPage({
             return (
               <div
                 key={space.key}
-                className='group bg-card hover:border-border hover:bg-accent/20 dark:hover:border-border/80 dark:hover:bg-accent/30 relative flex flex-col rounded-lg border p-5 transition-[background-color,border-color,box-shadow] hover:shadow-md'
+                className='group bg-card hover:border-primary/30 hover:bg-accent/20 focus-within:border-primary/30 focus-within:ring-ring/50 dark:hover:border-primary/25 dark:hover:bg-accent/30 relative flex flex-col rounded-lg border p-5 transition-[background-color,border-color,box-shadow] focus-within:ring-2 focus-within:ring-offset-2 hover:shadow-md'
               >
                 <Link
                   to='/spaces/$spaceKey'
                   params={{ spaceKey: space.key }}
                   aria-label={`${t('pages.spaces.openGallery')}: ${space.name}`}
-                  className='focus-visible:ring-ring absolute inset-0 z-10 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+                  className='absolute inset-0 z-10 rounded-lg focus-visible:outline-none'
                 />
 
                 {/* Card header row */}
                 <div className='flex items-center justify-between gap-2'>
                   <div className='flex min-w-0 items-center gap-3'>
-                    <div className='bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg'>
+                    <div className='bg-muted group-hover:bg-accent flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors'>
                       {space.storageMode === 'platform' ? (
                         <Cloud className='text-muted-foreground h-5 w-5' />
                       ) : (
@@ -561,23 +561,16 @@ export function SpacesPage({
                   </div>
 
                   <div className='pointer-events-none relative z-20 flex shrink-0 items-center gap-2 self-center'>
-                    <Link
-                      to='/spaces/$spaceKey'
-                      params={{ spaceKey: space.key }}
-                      aria-label={`${t('pages.spaces.openGallery')}: ${space.name}`}
-                      className='pointer-events-auto'
+                    <Badge
+                      variant={space.storageMode === 'byob' ? 'outline' : 'secondary'}
+                      className={
+                        space.storageMode === 'byob'
+                          ? 'border-sky-500/15 bg-sky-500/6 text-sky-700 dark:border-sky-400/15 dark:bg-sky-400/8 dark:text-sky-300'
+                          : undefined
+                      }
                     >
-                      <Badge
-                        variant={space.storageMode === 'byob' ? 'outline' : 'secondary'}
-                        className={
-                          space.storageMode === 'byob'
-                            ? 'cursor-pointer border-sky-500/15 bg-sky-500/6 text-sky-700 dark:border-sky-400/15 dark:bg-sky-400/8 dark:text-sky-300'
-                            : 'cursor-pointer'
-                        }
-                      >
-                        {storageBadgeLabel}
-                      </Badge>
-                    </Link>
+                      {storageBadgeLabel}
+                    </Badge>
                     {processingUsageLabel && (
                       <Badge variant='outline' className='pointer-events-auto'>
                         {processingUsageLabel}

@@ -198,4 +198,51 @@ describe('SpacesPage', () => {
     expect(screen.getByText('pages.spaces.overLimit.messages.processing')).toBeTruthy()
     expect(screen.getByText('pages.spaces.overLimit.reviewBilling')).toBeTruthy()
   })
+
+  it('exposes only one keyboard target for opening a space card', async () => {
+    const { SpacesPage } = await import('./spaces-page')
+
+    render(
+      <SpacesPage
+        loaderData={[
+          {
+            __typename: 'Space',
+            id: 'space-1',
+            orgId: 'org-1',
+            key: 'alpha',
+            name: 'Alpha Space',
+            storageUsageBytes: 512,
+            processingUsageCount: 12,
+            storageMode: 'platform',
+            storageType: 'managed',
+            bucket: '',
+            prefix: '',
+            region: '',
+            endpoint: '',
+            usePathStyle: false,
+            customDomain: '',
+            customDomainVerified: false,
+            suspended: false,
+            isShared: false,
+            signerAlgorithm: '',
+            signerTruncate: 0,
+            imagorCORSOrigins: '',
+            hasCustomImagorSecret: false,
+            canManage: true,
+            canDelete: false,
+            canLeave: false,
+            updatedAt: '2026-04-30T00:00:00Z',
+          },
+        ]}
+        usageSummary={null}
+        currentOrganizationId='org-1'
+        currentOrganizationPlan='pro'
+        canCreateSpace={true}
+        canManageOrganization={true}
+      />,
+    )
+
+    expect(screen.getAllByLabelText('pages.spaces.openGallery: Alpha Space')).toHaveLength(1)
+    expect(screen.getByLabelText('pages.spaces.configure')).toBeTruthy()
+  })
 })
