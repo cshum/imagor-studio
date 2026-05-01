@@ -376,6 +376,28 @@ func TestCreateCheckoutSession_RejectsPaidOrganizationsThatMustUsePortal(t *test
 	orgStore.AssertExpectations(t)
 }
 
+func TestCreateCheckoutSession_RejectsCanceledPaidOrganizationsWithStripeLinkage(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, &MockBillingService{})
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:                   "org-1",
+		Plan:                 org.PlanPro,
+		PlanStatus:           org.PlanStatusCanceled,
+		StripeCustomerID:     "cus_123",
+		StripeSubscriptionID: "sub_123",
+	}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "team", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "billing_checkout_requires_portal", gqlErr.Extensions["reason"])
+	orgStore.AssertExpectations(t)
+}
+
 func TestCreateCheckoutSession_RejectsUnsupportedPlan(t *testing.T) {
 	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, &MockBillingService{})
 	ctx := createAdminContextWithOrg("user-1", "org-1")

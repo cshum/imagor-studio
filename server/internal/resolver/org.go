@@ -1116,7 +1116,8 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 	}
 	isPaidPlan := currentOrg.Plan == org.PlanStarter || currentOrg.Plan == org.PlanPro || currentOrg.Plan == org.PlanTeam
 	isPortalManagedStatus := currentOrg.PlanStatus == org.PlanStatusActive || currentOrg.PlanStatus == org.PlanStatusTrialing || currentOrg.PlanStatus == org.PlanStatusPastDue
-	if isPaidPlan && isPortalManagedStatus {
+	hasExistingStripeLinkage := strings.TrimSpace(currentOrg.StripeCustomerID) != "" || strings.TrimSpace(currentOrg.StripeSubscriptionID) != ""
+	if isPaidPlan && (isPortalManagedStatus || hasExistingStripeLinkage) {
 		return nil, apperror.BadRequest("existing paid subscriptions must use the billing portal", map[string]interface{}{"reason": "billing_checkout_requires_portal"})
 	}
 	session, err := r.billingService.CreateCheckoutSession(ctx, billing.CheckoutSessionInput{
