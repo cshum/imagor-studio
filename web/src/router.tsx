@@ -721,15 +721,17 @@ const accountLegacyMembersRoute = createRoute({
 const accountOrganizationLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/organization',
-  beforeLoad: async (context) => {
-    await requireOrganizationAccountAuth(context)
-    return { organization: context.organization }
+  beforeLoad: requireAccountAuth,
+  loader: async ({ context }) => {
+    await requireOrganizationAccountAuth({ organization: context.organization })
+
+    return {
+      breadcrumb: { translationKey: 'navigation.breadcrumbs.organization', href: '/' },
+      organization: context.organization,
+    }
   },
-  loader: async () => ({
-    breadcrumb: { translationKey: 'navigation.breadcrumbs.organization', href: '/' },
-  }),
   component: () => {
-    const { organization } = accountOrganizationLayoutRoute.useRouteContext()
+    const { organization } = accountOrganizationLayoutRoute.useLoaderData()
     return <AccountOrganizationLayout currentUserRole={organization?.currentUserRole ?? null} />
   },
 })
@@ -737,8 +739,7 @@ const accountOrganizationLayoutRoute = createRoute({
 const accountOrganizationIndexRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/',
-  beforeLoad: async (context) => {
-    await requireOrganizationAccountAuth(context)
+  loader: async ({ context }) => {
     const organization = context.organization
     throw redirect({
       to:
@@ -761,8 +762,11 @@ const accountOrganizationBillingRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/billing',
   validateSearch: billingValidateSearch,
-  beforeLoad: requireOrganizationAdminAccountAuth,
-  loader: ({ context }) => billingLoader({ organization: context.organization }),
+  beforeLoad: requireAccountAuth,
+  loader: async ({ context }) => {
+    await requireOrganizationAdminAccountAuth({ organization: context.organization })
+    return billingLoader({ organization: context.organization })
+  },
   component: () => {
     const loaderData = accountOrganizationBillingRoute.useLoaderData()
     return <AccountBillingRoutePage loaderData={loaderData} />

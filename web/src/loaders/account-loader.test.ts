@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { MyOrganizationQuery } from '@/generated/graphql'
+
 const mockGetMyOrganization = vi.fn()
 const mockGetSpace = vi.fn()
 const mockGetUsageSummary = vi.fn()
@@ -331,7 +333,7 @@ describe('account-loader', () => {
       periodEnd: '2026-05-01T00:00:00Z',
     })
 
-    const organization = {
+    const organization: NonNullable<MyOrganizationQuery['myOrganization']> = {
       __typename: 'Organization' as const,
       id: 'org-1',
       name: 'Acme Org',
@@ -389,7 +391,7 @@ describe('account-loader', () => {
     mockListOrgMembers.mockResolvedValue([])
     mockListOrgInvitations.mockResolvedValue([])
 
-    const organization = {
+    const organization: NonNullable<MyOrganizationQuery['myOrganization']> = {
       __typename: 'Organization' as const,
       id: 'org-1',
       name: 'Acme Org',
