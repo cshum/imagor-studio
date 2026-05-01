@@ -131,7 +131,7 @@
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
       "errors": {
-        "inviteInvalid": "此邀请已失效。请请求新的邀请后再试。",
+        "inviteInvalid": "此邀请已失效。请联系发送者重新发送邀请后再试。",
         "oauthInvalidState": "登录会话已过期或无效，请重试。",
         "oauthMissingCode": "Google 没有返回授权码，请重试。",
         "oauthEmailUnverified": "你的 Google 账户邮箱尚未验证。请先在 Google 完成验证后再试。",
@@ -1602,7 +1602,7 @@
       "signIn": "登录",
       "loginFailed": "登录凭证无效，请重试。",
       "errors": {
-        "inviteInvalid": "此邀请已失效。请请求新的邀请后再试。",
+        "inviteInvalid": "此邀请已失效。请联系发送者重新发送邀请后再试。",
         "inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。",
         "inviteEmailMismatch": "此邀请发送到了其他邮箱地址。请改用受邀账户登录。"
       },

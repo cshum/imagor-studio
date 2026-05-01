@@ -93,7 +93,7 @@
       "signIn": "Accedi",
       "loginFailed": "Credenziali non valide. Riprova.",
       "errors": {
-        "inviteInvalid": "Questo invito non e piu valido. Chiedi un nuovo invito e riprova.",
+        "inviteInvalid": "Questo invito non e piu valido. Chiedi al mittente un nuovo invito e riprova.",
         "inviteOrgConflict": "Questo account appartiene gia a un'altra organizzazione. Usa un account diverso oppure lascia prima la tua organizzazione attuale.",
         "inviteEmailMismatch": "Questo invito e stato inviato a un altro indirizzo email. Accedi invece con l'account invitato."
       },
@@ -187,7 +187,7 @@
       "failed": "Autenticazione non riuscita",
       "errorOAuth": "Autenticazione non riuscita: {{error}}",
       "errors": {
-        "inviteInvalid": "Questo invito non e piu valido. Chiedi un nuovo invito e riprova.",
+        "inviteInvalid": "Questo invito non e piu valido. Chiedi al mittente un nuovo invito e riprova.",
         "oauthInvalidState": "La sessione di accesso e scaduta o non e piu valida. Riprova.",
         "oauthMissingCode": "Google non ha restituito un codice di autorizzazione. Riprova.",
         "oauthEmailUnverified": "L'indirizzo email del tuo account Google non e verificato. Verificalo con Google e riprova.",

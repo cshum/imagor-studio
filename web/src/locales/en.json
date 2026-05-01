@@ -89,7 +89,7 @@
       "signIn": "Sign In",
       "loginFailed": "Invalid credentials. Please try again.",
       "errors": {
-        "inviteInvalid": "This invitation is no longer valid. Ask for a new invitation and try again.",
+        "inviteInvalid": "This invitation is no longer valid. Ask the sender for a new invitation and try again.",
         "inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first.",
         "inviteEmailMismatch": "This invitation was sent to a different email address. Sign in with the invited account instead."
       },
@@ -183,7 +183,7 @@
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
       "errors": {
-        "inviteInvalid": "This invitation is no longer valid. Ask for a new invitation and try again.",
+        "inviteInvalid": "This invitation is no longer valid. Ask the sender for a new invitation and try again.",
         "oauthInvalidState": "Your sign-in session expired or became invalid. Please try again.",
         "oauthMissingCode": "Google did not return an authorization code. Please try again.",
         "oauthEmailUnverified": "Your Google account email is not verified. Verify it with Google and try again.",
