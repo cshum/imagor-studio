@@ -473,12 +473,9 @@ const spaceImagePage = createRoute({
 
 // /spaces/$spaceKey/$imageKey/editor  →  image editor at the root of a space
 const spaceImageEditorRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey/$imageKey/editor',
-  beforeLoad: async (context) => {
-    await requireImageEditorAuth(context)
-    return { space: await resolveSpace(context.params.spaceKey) }
-  },
+  getParentRoute: () => spaceBaseLayoutRoute,
+  path: '/$imageKey/editor',
+  beforeLoad: requireImageEditorAuth,
   loader: ({ params, context }) => {
     const { space } = context
     return imageEditorLoader({
@@ -488,19 +485,16 @@ const spaceImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceImageEditorRoute.useLoaderData()
-    const { space } = spaceImageEditorRoute.useRouteContext()
+    const { space } = spaceBaseLayoutRoute.useRouteContext()
     return <ImageEditorPage loaderData={loaderData} galleryKey='' space={getSpaceIdentity(space)} />
   },
 })
 
 // /spaces/$spaceKey/f/$galleryKey/$imageKey/editor  →  image editor inside a space folder
 const spaceGalleryImageEditorRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor',
-  beforeLoad: async (context) => {
-    await requireImageEditorAuth(context)
-    return { space: await resolveSpace(context.params.spaceKey) }
-  },
+  getParentRoute: () => spaceBaseLayoutRoute,
+  path: '/f/$galleryKey/$imageKey/editor',
+  beforeLoad: requireImageEditorAuth,
   loader: ({ params, context }) => {
     const { space } = context
     return imageEditorLoader({ params: { ...params, spaceID: space.id, spaceName: space.name } })
@@ -508,7 +502,7 @@ const spaceGalleryImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceGalleryImageEditorRoute.useLoaderData()
-    const { space } = spaceGalleryImageEditorRoute.useRouteContext()
+    const { space } = spaceBaseLayoutRoute.useRouteContext()
     const { galleryKey } = spaceGalleryImageEditorRoute.useParams()
     return (
       <ImageEditorPage
@@ -522,12 +516,9 @@ const spaceGalleryImageEditorRoute = createRoute({
 
 // /spaces/$spaceKey/editor/new  →  new canvas editor inside a space
 const spaceCanvasEditorRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey/editor/new',
-  beforeLoad: async (context) => {
-    await requireImageEditorAuth(context)
-    return { space: await resolveSpace(context.params.spaceKey) }
-  },
+  getParentRoute: () => spaceBaseLayoutRoute,
+  path: '/editor/new',
+  beforeLoad: requireImageEditorAuth,
   loader: ({ location, context }) => {
     const { space } = context
     return canvasEditorLoader({ search: location.searchStr, spaceID: space?.id })
@@ -535,19 +526,16 @@ const spaceCanvasEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceCanvasEditorRoute.useLoaderData()
-    const { space } = spaceCanvasEditorRoute.useRouteContext()
+    const { space } = spaceBaseLayoutRoute.useRouteContext()
     return <ImageEditorPage loaderData={loaderData} galleryKey='' space={getSpaceIdentity(space)} />
   },
 })
 
 // /spaces/$spaceKey/f/$galleryKey/editor/new  →  new canvas editor inside a space folder
 const spaceGalleryCanvasEditorRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey/f/$galleryKey/editor/new',
-  beforeLoad: async (context) => {
-    await requireImageEditorAuth(context)
-    return { space: await resolveSpace(context.params.spaceKey) }
-  },
+  getParentRoute: () => spaceBaseLayoutRoute,
+  path: '/f/$galleryKey/editor/new',
+  beforeLoad: requireImageEditorAuth,
   loader: ({ location, context }) => {
     const { space } = context
     return canvasEditorLoader({ search: location.searchStr, spaceID: space?.id })
@@ -555,7 +543,7 @@ const spaceGalleryCanvasEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceGalleryCanvasEditorRoute.useLoaderData()
-    const { space } = spaceGalleryCanvasEditorRoute.useRouteContext()
+    const { space } = spaceBaseLayoutRoute.useRouteContext()
     const { galleryKey } = spaceGalleryCanvasEditorRoute.useParams()
     return (
       <ImageEditorPage
@@ -912,10 +900,6 @@ const routeTree = isEmbeddedMode
       galleryCanvasEditorRoute,
       rootImageEditorRoute,
       galleryImageEditorRoute,
-      spaceImageEditorRoute,
-      spaceGalleryImageEditorRoute,
-      spaceCanvasEditorRoute,
-      spaceGalleryCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
         workspaceRequiredRoute,
         rootPath.addChildren([rootImagePage]),
@@ -952,6 +936,10 @@ const routeTree = isEmbeddedMode
       spaceBaseLayoutRoute.addChildren([
         spaceRootRoute.addChildren([spaceRootImagePage]),
         spaceGalleryRoute.addChildren([spaceImagePage]),
+        spaceImageEditorRoute,
+        spaceGalleryImageEditorRoute,
+        spaceCanvasEditorRoute,
+        spaceGalleryCanvasEditorRoute,
       ]),
     ])
 
