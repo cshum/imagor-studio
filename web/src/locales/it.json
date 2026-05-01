@@ -1047,7 +1047,8 @@
       "portalSync": {
         "title": "Stiamo sincronizzando le ultime modifiche di fatturazione",
         "syncingDescription": "L'aggiornamento Stripe è stato inviato. Stiamo aggiornando ora lo stato più recente della sottoscrizione.",
-        "waitingDescription": "Abbiamo richiesto lo stato più recente della sottoscrizione. Se il piano non è ancora aggiornato, riprova ad aggiornare tra un momento.",
+        "waitingTitle": "Sei tornato nella fatturazione",
+        "waitingDescription": "Abbiamo controllato gli ultimi dettagli di fatturazione. Se hai modificato qualcosa che non è ancora visibile qui, puoi aggiornare di nuovo tra un momento.",
         "successUpgradeTitle": "L'upgrade è ora sincronizzato",
         "successDowngradeTitle": "Il downgrade è ora sincronizzato",
         "successUpdatedTitle": "Le modifiche di fatturazione sono ora sincronizzate",

@@ -515,7 +515,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                       : portalSyncOutcome === 'downgrade'
                         ? 'pages.billing.portalSync.successDowngradeTitle'
                         : 'pages.billing.portalSync.successUpdatedTitle'
-                    : 'pages.billing.portalSync.title',
+                    : portalSyncing
+                      ? 'pages.billing.portalSync.title'
+                      : 'pages.billing.portalSync.waitingTitle',
                 )}
               </p>
               <p className='text-sm'>

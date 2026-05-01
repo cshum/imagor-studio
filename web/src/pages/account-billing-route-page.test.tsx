@@ -491,6 +491,7 @@ describe('AccountBillingRoutePage', () => {
     })
 
     expect(mockInvalidate).toHaveBeenCalledTimes(4)
+    expect(screen.getByText('pages.billing.portalSync.waitingTitle')).toBeTruthy()
     expect(screen.getByText('pages.billing.portalSync.waitingDescription')).toBeTruthy()
     expect(
       screen.getByRole('button', { name: 'pages.billing.portalManaged.refreshAction' }),

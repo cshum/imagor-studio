@@ -1046,7 +1046,8 @@
       "portalSync": {
         "title": "We’re syncing your latest billing changes",
         "syncingDescription": "Your Stripe update was submitted. We’re refreshing the latest subscription status now.",
-        "waitingDescription": "We requested the latest subscription status. If your plan has not updated yet, refresh again in a moment.",
+        "waitingTitle": "You’re back in billing",
+        "waitingDescription": "We checked for updated billing details. If you changed something that is not shown here yet, you can refresh again in a moment.",
         "successUpgradeTitle": "Your upgrade is now synced",
         "successDowngradeTitle": "Your downgrade is now synced",
         "successUpdatedTitle": "Your billing changes are now synced",

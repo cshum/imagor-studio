@@ -1048,7 +1048,8 @@
       "portalSync": {
         "title": "我們正在同步你最新的計費變更",
         "syncingDescription": "你的 Stripe 更新已提交。我們正在刷新最新的訂閱狀態。",
-        "waitingDescription": "我們已要求最新的訂閱狀態。如果方案尚未更新，請稍後再刷新一次。",
+        "waitingTitle": "你已返回計費頁面",
+        "waitingDescription": "我們已檢查最新的計費詳情。如果你修改的內容暫時還沒有顯示在這裡，請稍後再刷新一次。",
         "successUpgradeTitle": "你的升級現已同步",
         "successDowngradeTitle": "你的降級現已同步",
         "successUpdatedTitle": "你的計費變更現已同步",

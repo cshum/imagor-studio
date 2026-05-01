@@ -991,7 +991,8 @@
       "portalSync": {
         "title": "我们正在同步你最新的计费变更",
         "syncingDescription": "你的 Stripe 更新已提交。我们正在刷新最新的订阅状态。",
-        "waitingDescription": "我们已请求最新的订阅状态。如果套餐尚未更新，请稍后再刷新一次。",
+        "waitingTitle": "你已返回计费页面",
+        "waitingDescription": "我们已检查最新的计费详情。如果你修改的内容暂时还没有显示在这里，请稍后再刷新一次。",
         "successUpgradeTitle": "你的升级现已同步",
         "successDowngradeTitle": "你的降级现已同步",
         "successUpdatedTitle": "你的计费变更现已同步",
