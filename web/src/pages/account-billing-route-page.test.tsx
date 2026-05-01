@@ -460,7 +460,7 @@ describe('AccountBillingRoutePage', () => {
     expect(screen.getByText('pages.billing.portalSync.successUpgradeTitle')).toBeTruthy()
     expect(
       screen.getByText(
-        'pages.billing.portalSync.successDescription:{"plan":"pages.spaces.plan.team","status":"pages.billing.status.active"}',
+        'pages.billing.portalSync.successUpgradeDescription:{"previousPlan":"pages.spaces.plan.starter","previousStatus":"pages.billing.status.active","plan":"pages.spaces.plan.team","status":"pages.billing.status.active"}',
       ),
     ).toBeTruthy()
     expect(screen.getAllByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toHaveLength(1)
@@ -511,7 +511,7 @@ describe('AccountBillingRoutePage', () => {
     expect(screen.getByText('pages.billing.portalSync.successDowngradeTitle')).toBeTruthy()
     expect(
       screen.getByText(
-        'pages.billing.portalSync.successDescription:{"plan":"pages.spaces.plan.starter","status":"pages.billing.status.active"}',
+        'pages.billing.portalSync.successDowngradeDescription:{"previousPlan":"pages.spaces.plan.team","previousStatus":"pages.billing.status.active","plan":"pages.spaces.plan.starter","status":"pages.billing.status.active"}',
       ),
     ).toBeTruthy()
   })

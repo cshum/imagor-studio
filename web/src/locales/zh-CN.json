@@ -1000,7 +1000,9 @@
         "successUpgradeTitle": "你的升级现已同步",
         "successDowngradeTitle": "你的降级现已同步",
         "successUpdatedTitle": "你的计费变更现已同步",
-        "successDescription": "这个组织现在使用的是 {{plan}} 套餐，计费状态为 {{status}}。"
+        "successUpgradeDescription": "这个组织已从 {{previousPlan}} 升级到 {{plan}}，计费状态为 {{status}}。",
+        "successDowngradeDescription": "这个组织已从 {{previousPlan}} 降级到 {{plan}}，计费状态为 {{status}}。",
+        "successUpdatedDescription": "这个组织现在使用的是 {{plan}} 套餐，计费状态为 {{status}}。"
       },
       "sharedFeaturesTitle": "所有付费套餐另外均包含",
       "sharedFeatures": {

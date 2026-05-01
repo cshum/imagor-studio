@@ -1056,7 +1056,9 @@
         "successUpgradeTitle": "你的升級現已同步",
         "successDowngradeTitle": "你的降級現已同步",
         "successUpdatedTitle": "你的計費變更現已同步",
-        "successDescription": "這個組織現在使用的是 {{plan}} 方案，計費狀態為 {{status}}。"
+        "successUpgradeDescription": "這個組織已從 {{previousPlan}} 升級到 {{plan}}，計費狀態為 {{status}}。",
+        "successDowngradeDescription": "這個組織已從 {{previousPlan}} 降級到 {{plan}}，計費狀態為 {{status}}。",
+        "successUpdatedDescription": "這個組織現在使用的是 {{plan}} 方案，計費狀態為 {{status}}。"
       },
       "sharedFeaturesTitle": "所有付費方案另外皆包含",
       "sharedFeatures": {

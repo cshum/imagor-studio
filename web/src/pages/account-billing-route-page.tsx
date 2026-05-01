@@ -125,6 +125,10 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const [portalSyncOutcome, setPortalSyncOutcome] = useState<'upgrade' | 'downgrade' | 'updated'>(
     'updated',
   )
+  const [portalSyncSuccessDetails, setPortalSyncSuccessDetails] = useState<{
+    previousPlan: string
+    previousStatus: string
+  } | null>(null)
   const portalSyncBaselineRef = useRef<{ plan: string; status: string } | null>(null)
   const portalSyncActiveRef = useRef(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -288,6 +292,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     portalSyncBaselineRef.current = null
     setPortalSyncing(false)
     setPortalSyncOutcome(getPortalSyncOutcome(baseline.plan, currentPlan))
+    setPortalSyncSuccessDetails({ previousPlan: baseline.plan, previousStatus: baseline.status })
     setPortalSyncSucceeded(true)
     setShowPortalSyncNotice(true)
   }, [currentPlan, currentStatus])
@@ -300,6 +305,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     const timeout = window.setTimeout(() => {
       setShowPortalSyncNotice(false)
       setPortalSyncSucceeded(false)
+      setPortalSyncSuccessDetails(null)
     }, PORTAL_SYNC_SUCCESS_NOTICE_MS)
 
     return () => {
@@ -320,6 +326,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     setPortalSyncing(true)
     setPortalSyncSucceeded(false)
     setPortalSyncOutcome('updated')
+    setPortalSyncSuccessDetails(null)
 
     void navigate({
       to: '/account/organization/billing',
@@ -502,12 +509,22 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
               <p className='text-sm'>
                 {t(
                   portalSyncSucceeded
-                    ? 'pages.billing.portalSync.successDescription'
+                    ? portalSyncOutcome === 'upgrade'
+                      ? 'pages.billing.portalSync.successUpgradeDescription'
+                      : portalSyncOutcome === 'downgrade'
+                        ? 'pages.billing.portalSync.successDowngradeDescription'
+                        : 'pages.billing.portalSync.successUpdatedDescription'
                     : portalSyncing
                     ? 'pages.billing.portalSync.syncingDescription'
                     : 'pages.billing.portalSync.waitingDescription',
                   portalSyncSucceeded
                     ? {
+                        previousPlan: portalSyncSuccessDetails
+                          ? t(`pages.spaces.plan.${portalSyncSuccessDetails.previousPlan}`)
+                          : currentPlanLabel,
+                        previousStatus: portalSyncSuccessDetails
+                          ? t(`pages.billing.status.${portalSyncSuccessDetails.previousStatus}`)
+                          : currentStatusLabel,
                         plan: currentPlanLabel,
                         status: currentStatusLabel,
                       }
