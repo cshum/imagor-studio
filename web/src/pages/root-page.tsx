@@ -54,7 +54,8 @@ export function RootPage({ spacesData, galleryLoaderData }: RootPageProps) {
 
   if (spacesData) {
     const isOrgAdmin =
-      spacesData.currentOrganizationRole === 'owner' || spacesData.currentOrganizationRole === 'admin'
+      spacesData.currentOrganizationRole === 'owner' ||
+      spacesData.currentOrganizationRole === 'admin'
     const createSpaceDisabled =
       spacesData.usageSummary.maxSpaces !== null &&
       spacesData.usageSummary.usedSpaces >= spacesData.usageSummary.maxSpaces

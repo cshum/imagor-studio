@@ -587,13 +587,11 @@ const spaceSettingsLayoutRoute = createRoute({
   },
   loader: async ({ context }) => ({
     breadcrumb: context.breadcrumb,
-    organization: await getMyOrganization(),
   }),
   shouldReload: false,
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useRouteContext()
-    const { organization } = spaceSettingsLayoutRoute.useLoaderData()
-    return <SpaceSettingsLayout space={space} showOrganizationLink={Boolean(organization)} />
+    return <SpaceSettingsLayout space={space} showOrganizationLink={Boolean(space.orgId)} />
   },
 })
 
@@ -733,11 +731,10 @@ const accountOrganizationLayoutRoute = createRoute({
 
     return {
       breadcrumb: { translationKey: 'navigation.breadcrumbs.organization', href: '/' },
-      organization: context.organization,
     }
   },
   component: () => {
-    const { organization } = accountOrganizationLayoutRoute.useLoaderData()
+    const { organization } = accountOrganizationLayoutRoute.useRouteContext()
     return <AccountOrganizationLayout currentUserRole={organization?.currentUserRole ?? null} />
   },
 })
