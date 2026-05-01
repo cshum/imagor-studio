@@ -1009,18 +1009,12 @@
           "processing": "Il processing di produzione non viene sospeso automaticamente al momento, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
         }
       },
-      "currentPlan": "Piano attuale",
-      "currentPlanDescription": "L'utilizzo viene monitorato per periodo di fatturazione e si azzera automaticamente.",
       "currentPlanBadge": "Attuale",
       "selectedPlanBadge": "Selezionato",
-      "currentPlanButton": "Piano attuale",
-      "currentPlanStatus": "Incluso nel piano attuale",
       "manageBilling": "Gestisci fatturazione",
       "manageBillingTarget": "Passa a {{plan}}",
-      "managePlanInBilling": "Modifica nel portale di fatturazione",
       "selectPlan": "Scegli piano",
       "selectPlanTarget": "Scegli {{plan}}",
-      "checkoutHint": "Confronta qui i piani, selezionane uno, poi continua al checkout.",
       "priceSuffix": "/mese",
       "unlimited": "Illimitato",
       "customDomainsIncluded": "{{count}} inclusi",
@@ -1048,11 +1042,7 @@
         "team": "Per organizzazioni che gestiscono operazioni immagini condivise tra più team o brand."
       },
       "portalManaged": {
-        "title": "Gestisci le modifiche del piano nel portale di fatturazione",
-        "description": "Usa il portale di fatturazione per upgrade o downgrade. Le modifiche compaiono qui dopo la sincronizzazione della sottoscrizione da parte di Stripe.",
-        "overLimitDescription": "Usa il portale di fatturazione per modificare questa sottoscrizione. Se l'utilizzo è già sopra il nuovo piano, le azioni bloccate restano limitate finché l'utilizzo non viene ridotto.",
-        "refreshAction": "Aggiorna ora",
-        "comparePlansHint": "Confronta qui i piani, seleziona il piano desiderato, poi usa il portale di fatturazione per cambiare la sottoscrizione."
+        "refreshAction": "Aggiorna ora"
       },
       "portalSync": {
         "title": "Stiamo sincronizzando le ultime modifiche di fatturazione",
@@ -1064,12 +1054,6 @@
         "successUpgradeDescription": "Questa organizzazione è passata da {{previousPlan}} a {{plan}} con stato di fatturazione {{status}}.",
         "successDowngradeDescription": "Questa organizzazione è passata da {{previousPlan}} a {{plan}} con stato di fatturazione {{status}}.",
         "successUpdatedDescription": "Questa organizzazione è ora nel piano {{plan}} con stato di fatturazione {{status}}."
-      },
-      "sharedFeaturesTitle": "Ogni piano a pagamento include anche",
-      "sharedFeatures": {
-        "collaboration": "Accesso condiviso agli spazi",
-        "orgSharing": "Inviti del team e accesso condiviso",
-        "byob": "Collega il tuo bucket S3"
       },
       "danger": {
         "title": "Zona di pericolo",

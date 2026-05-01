@@ -663,18 +663,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
       </section>
 
-      <div className='space-y-2 pt-1'>
-        <p className='text-muted-foreground text-sm font-medium'>
-          {t('pages.billing.sharedFeaturesTitle')}
-        </p>
-        <div className='text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-sm'>
-          <span>{t('pages.billing.sharedFeatures.collaboration')}</span>
-          <span>{t('pages.billing.sharedFeatures.orgSharing')}</span>
-          <span>{t('pages.billing.sharedFeatures.byob')}</span>
-        </div>
-      </div>
-
-      <div className='border-t pt-6'>
+      <div className='mt-4 border-t pt-8'>
         <Button
           type='button'
           variant='ghost'

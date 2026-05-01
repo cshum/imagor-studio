@@ -953,18 +953,12 @@
           "processing": "生产处理当前不会被自动暂停，但该组织在本计费周期内已超出当前套餐的处理额度。"
         }
       },
-      "currentPlan": "当前套餐",
-      "currentPlanDescription": "用量按计费周期统计，并会自动重置。",
       "currentPlanBadge": "当前",
       "selectedPlanBadge": "已选择",
-      "currentPlanButton": "当前套餐",
-      "currentPlanStatus": "当前方案已包含",
       "manageBilling": "管理计费",
       "manageBillingTarget": "切换到 {{plan}}",
-      "managePlanInBilling": "在计费门户中更改",
       "selectPlan": "选择套餐",
       "selectPlanTarget": "选择 {{plan}}",
-      "checkoutHint": "先在这里比较套餐并选择一个方案，再继续前往结账。",
       "priceSuffix": "/月",
       "unlimited": "不限",
       "customDomainsIncluded": "含 {{count}} 个",
@@ -992,11 +986,7 @@
         "team": "适合跨多个团队或品牌管理共享图片运营的大型组织。"
       },
       "portalManaged": {
-        "title": "在计费门户中管理套餐变更",
-        "description": "请使用计费门户进行升级或降级。Stripe 完成订阅同步后，变更会显示在这里。",
-        "overLimitDescription": "请使用计费门户变更此订阅。如果当前用量已经高于新套餐，受限操作会继续保持阻止，直到用量降回限制内。",
-        "refreshAction": "立即刷新",
-        "comparePlansHint": "先在这里比较套餐并选择目标套餐，再前往计费门户变更订阅。"
+        "refreshAction": "立即刷新"
       },
       "portalSync": {
         "title": "我们正在同步你最新的计费变更",
@@ -1008,12 +998,6 @@
         "successUpgradeDescription": "这个组织已从 {{previousPlan}} 升级到 {{plan}}，计费状态为 {{status}}。",
         "successDowngradeDescription": "这个组织已从 {{previousPlan}} 降级到 {{plan}}，计费状态为 {{status}}。",
         "successUpdatedDescription": "这个组织现在使用的是 {{plan}} 套餐，计费状态为 {{status}}。"
-      },
-      "sharedFeaturesTitle": "所有付费套餐另外均包含",
-      "sharedFeatures": {
-        "collaboration": "共享空间访问",
-        "orgSharing": "团队邀请与共享访问",
-        "byob": "连接自己的 S3 兼容存储桶"
       },
       "danger": {
         "title": "危险区域",

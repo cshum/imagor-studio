@@ -1008,17 +1008,12 @@
           "processing": "Production processing is not automatically paused right now, but this organization is above the current plan allowance for this billing period."
         }
       },
-      "currentPlan": "Current plan",
-      "currentPlanDescription": "Usage is tracked per billing period and resets automatically.",
       "currentPlanBadge": "Current",
       "selectedPlanBadge": "Selected",
-      "currentPlanButton": "Current plan",
-      "currentPlanStatus": "Included with current plan",
       "manageBilling": "Manage billing",
       "manageBillingTarget": "Change to {{plan}}",
       "selectPlan": "Choose plan",
       "selectPlanTarget": "Choose {{plan}}",
-      "checkoutHint": "Compare plans here, select a plan, then continue to checkout.",
       "priceSuffix": "/mo",
       "unlimited": "Unlimited",
       "customDomainsIncluded": "{{count}} included",
@@ -1046,11 +1041,7 @@
         "team": "For organizations managing shared image operations across multiple teams or brands."
       },
       "portalManaged": {
-        "title": "Manage plan changes in the billing portal",
-        "description": "Use the billing portal for upgrades or downgrades. Changes appear here after Stripe syncs the subscription.",
-        "overLimitDescription": "Use the billing portal to change this subscription. If usage is already above the new plan, blocked actions stay restricted until usage is reduced.",
-        "refreshAction": "Refresh now",
-        "comparePlansHint": "Compare plans here, select your target plan, then use the billing portal to change the subscription."
+        "refreshAction": "Refresh now"
       },
       "portalSync": {
         "title": "We’re syncing your latest billing changes",
@@ -1062,12 +1053,6 @@
         "successUpgradeDescription": "This organization moved from {{previousPlan}} to {{plan}} with billing status {{status}}.",
         "successDowngradeDescription": "This organization moved from {{previousPlan}} to {{plan}} with billing status {{status}}.",
         "successUpdatedDescription": "This organization is now on the {{plan}} plan with billing status {{status}}."
-      },
-      "sharedFeaturesTitle": "Every paid plan also includes",
-      "sharedFeatures": {
-        "collaboration": "Shared space access",
-        "orgSharing": "Team invites and shared access",
-        "byob": "Connect your own S3 bucket"
       },
       "danger": {
         "title": "Danger zone",

@@ -1010,18 +1010,12 @@
           "processing": "正式環境處理目前不會被自動暫停，但此組織在本計費週期內已超出目前方案的處理額度。"
         }
       },
-      "currentPlan": "目前方案",
-      "currentPlanDescription": "用量會依計費週期統計，並自動重置。",
       "currentPlanBadge": "目前",
       "selectedPlanBadge": "已選取",
-      "currentPlanButton": "目前方案",
-      "currentPlanStatus": "目前方案已包含",
       "manageBilling": "管理計費",
       "manageBillingTarget": "切換到 {{plan}}",
-      "managePlanInBilling": "在計費入口中變更",
       "selectPlan": "選擇方案",
       "selectPlanTarget": "選擇 {{plan}}",
-      "checkoutHint": "先在這裡比較方案並選擇一個方案，再繼續前往結帳。",
       "priceSuffix": "/月",
       "unlimited": "不限",
       "customDomainsIncluded": "含 {{count}} 個",
@@ -1049,11 +1043,7 @@
         "team": "適合跨多個團隊或品牌管理共享圖片營運的大型組織。"
       },
       "portalManaged": {
-        "title": "在計費入口管理方案變更",
-        "description": "請使用計費入口進行升級或降級。Stripe 完成訂閱同步後，變更會顯示在這裡。",
-        "overLimitDescription": "請使用計費入口變更這項訂閱。如果目前用量已高於新方案，受限操作會持續維持阻擋，直到用量降回限制內。",
-        "refreshAction": "立即刷新",
-        "comparePlansHint": "先在這裡比較方案並選擇目標方案，再前往計費入口變更訂閱。"
+        "refreshAction": "立即刷新"
       },
       "portalSync": {
         "title": "我們正在同步你最新的計費變更",
@@ -1065,12 +1055,6 @@
         "successUpgradeDescription": "這個組織已從 {{previousPlan}} 升級到 {{plan}}，計費狀態為 {{status}}。",
         "successDowngradeDescription": "這個組織已從 {{previousPlan}} 降級到 {{plan}}，計費狀態為 {{status}}。",
         "successUpdatedDescription": "這個組織現在使用的是 {{plan}} 方案，計費狀態為 {{status}}。"
-      },
-      "sharedFeaturesTitle": "所有付費方案另外皆包含",
-      "sharedFeatures": {
-        "collaboration": "共享空間存取",
-        "orgSharing": "團隊邀請與共享存取",
-        "byob": "連接自己的 S3 相容儲存桶"
       },
       "danger": {
         "title": "危險區域",
