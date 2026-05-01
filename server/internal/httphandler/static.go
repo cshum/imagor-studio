@@ -1,6 +1,8 @@
 package httphandler
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"io/fs"
 	"net/http"
@@ -13,7 +15,16 @@ import (
 const (
 	spaDocumentCacheControl = "no-cache, no-store, must-revalidate"
 	staticAssetCacheControl = "public, max-age=31536000, immutable"
+	htmlBootstrapTarget     = "</head>"
 )
+
+type AppBootstrap struct {
+	AuthProviders []string `json:"authProviders,omitempty"`
+}
+
+func (b AppBootstrap) enabled() bool {
+	return len(b.AuthProviders) > 0
+}
 
 // imagorPathRegex matches imagor-style paths using the same logic as imagorpath package
 var imagorPathRegex = regexp.MustCompile(
@@ -78,10 +89,49 @@ func setStaticCacheHeaders(w http.ResponseWriter, path string) {
 	w.Header().Set("Cache-Control", staticAssetCacheControl)
 }
 
+func serveHTMLDocument(w http.ResponseWriter, staticFS fs.FS, path string, bootstrap AppBootstrap, logger *zap.Logger) bool {
+	htmlFile, err := staticFS.Open(path)
+	if err != nil {
+		return false
+	}
+	defer htmlFile.Close()
+
+	body, err := io.ReadAll(htmlFile)
+	if err != nil {
+		if logger != nil {
+			logger.Error("Failed to read HTML document", zap.String("path", path), zap.Error(err))
+		}
+		http.NotFound(w, nil)
+		return true
+	}
+
+	if bootstrap.enabled() {
+		payload, err := json.Marshal(bootstrap)
+		if err == nil {
+			payload = bytes.ReplaceAll(payload, []byte("<"), []byte(`\u003c`))
+			payload = bytes.ReplaceAll(payload, []byte(">"), []byte(`\u003e`))
+			payload = bytes.ReplaceAll(payload, []byte("&"), []byte(`\u0026`))
+			injection := []byte("<script>window.__IMAGOR_STUDIO_BOOTSTRAP__ = " + string(payload) + ";</script>")
+			if idx := bytes.Index(bytes.ToLower(body), []byte(htmlBootstrapTarget)); idx >= 0 {
+				body = append(body[:idx], append(injection, body[idx:]...)...)
+			} else {
+				body = append(body, injection...)
+			}
+		} else if logger != nil {
+			logger.Warn("Failed to marshal HTML bootstrap payload", zap.Error(err))
+		}
+	}
+
+	setStaticCacheHeaders(w, path)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = w.Write(body)
+	return true
+}
+
 // SPAHandler creates a handler for serving static files with SPA fallback and imagor routing.
 // imagorHandler is an http.Handler whose ServeHTTP is called for imagor-style paths;
 // pass nil when no imagor instance is available.
-func SPAHandler(staticFS fs.FS, imagorHandler http.Handler, logger *zap.Logger) http.Handler {
+func SPAHandler(staticFS fs.FS, imagorHandler http.Handler, logger *zap.Logger, bootstrap AppBootstrap) http.Handler {
 	fileServer := http.FileServer(http.FS(staticFS))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
@@ -107,20 +157,20 @@ func SPAHandler(staticFS fs.FS, imagorHandler http.Handler, logger *zap.Logger) 
 
 		if _, err := staticFS.Open(trimmedPath); err != nil {
 			// File doesn't exist, serve index.html for SPA routes
-			indexFile, err := staticFS.Open("index.html")
-			if err != nil {
-				logger.Error("Failed to open index.html for SPA route",
-					zap.String("path", path),
-					zap.Error(err))
+			if !serveHTMLDocument(w, staticFS, "index.html", bootstrap, logger) {
+				if logger != nil {
+					logger.Error("Failed to open index.html for SPA route",
+						zap.String("path", path),
+						zap.Error(err))
+				}
 				http.NotFound(w, r)
-				return
 			}
-			defer indexFile.Close()
+			return
+		}
 
-			setStaticCacheHeaders(w, "index.html")
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			if _, err := io.Copy(w, indexFile); err != nil {
-				logger.Error("Failed to serve index.html", zap.Error(err))
+		if trimmedPath == "index.html" || strings.HasSuffix(trimmedPath, ".html") {
+			if !serveHTMLDocument(w, staticFS, trimmedPath, bootstrap, logger) {
+				http.NotFound(w, r)
 			}
 			return
 		}

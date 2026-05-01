@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { getBootstrappedAuthProviders } from '@/lib/app-bootstrap'
 import { isValidEmail } from '@/lib/email'
 import { initAuth, useAuth } from '@/stores/auth-store'
 import { initializeLocale } from '@/stores/locale-store'
@@ -61,7 +62,9 @@ export function LoginPage() {
   const navigate = useNavigate()
   const router = useRouter()
   const search = useSearch({ from: '/login' })
-  const [googleEnabled, setGoogleEnabled] = useState(false)
+  const [googleEnabled, setGoogleEnabled] = useState(
+    () => getBootstrappedAuthProviders()?.includes('google') ?? false,
+  )
   const isMultiTenant = authState.multiTenant
   const inviteToken = typeof search.invite_token === 'string' ? search.invite_token : undefined
 
@@ -144,6 +147,10 @@ export function LoginPage() {
   })
 
   useEffect(() => {
+    if (getBootstrappedAuthProviders() !== null) {
+      return
+    }
+
     getAuthProviders()
       .then(({ providers }) => {
         setGoogleEnabled(providers.includes('google'))

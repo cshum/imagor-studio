@@ -72,6 +72,8 @@ describe('LoginPage', () => {
   beforeEach(() => {
     vi.useRealTimers()
     vi.clearAllMocks()
+    delete (window as Window & { __IMAGOR_STUDIO_BOOTSTRAP__?: unknown })
+      .__IMAGOR_STUDIO_BOOTSTRAP__
     mockGetAuthProviders.mockResolvedValue({ providers: ['google'] })
     mockLogin.mockResolvedValue({ token: 'token-123', redirectPath: '/' })
     mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
@@ -142,5 +144,20 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(screen.getByText('auth.login.errors.inviteEmailMismatch')).toBeTruthy()
     })
+  })
+
+  it('uses bootstrapped auth providers without fetching them again', async () => {
+    ;(window as Window & { __IMAGOR_STUDIO_BOOTSTRAP__?: unknown }).__IMAGOR_STUDIO_BOOTSTRAP__ = {
+      authProviders: ['google'],
+    }
+
+    const { LoginPage } = await import('./login-page')
+
+    await act(async () => {
+      render(<LoginPage />)
+    })
+
+    expect(screen.getByRole('button', { name: 'auth.login.googleCta' })).toBeTruthy()
+    expect(mockGetAuthProviders).not.toHaveBeenCalled()
   })
 })

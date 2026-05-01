@@ -290,7 +290,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		registerProcessingInternalRoutes(mux, services)
 	}
 
-	if err := registerProcessingOrSPA(mux, cfg, embedFS, services); err != nil {
+	if err := registerProcessingOrSPA(mux, cfg, embedFS, services, cloudConfig); err != nil {
 		return nil, err
 	}
 
@@ -392,7 +392,7 @@ func NewProcessingFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Lo
 		registerProcessingInternalRoutes(mux, services)
 	}
 
-	if err := registerProcessingOrSPA(mux, cfg, embedFS, services); err != nil {
+	if err := registerProcessingOrSPA(mux, cfg, embedFS, services, management.CloudConfig{}); err != nil {
 		return nil, err
 	}
 
@@ -464,6 +464,7 @@ func registerProcessingOrSPA(
 	cfg *config.Config,
 	embedFS fs.FS,
 	services *bootstrap.Services,
+	cloudConfig management.CloudConfig,
 ) error {
 	if services.SpaceConfigStore != nil {
 		baseDomain := ""
@@ -486,7 +487,11 @@ func registerProcessingOrSPA(
 	if err != nil {
 		return err
 	}
-	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger))
+	bootstrap := httphandler.AppBootstrap{}
+	if strings.TrimSpace(cloudConfig.GoogleClientID) != "" {
+		bootstrap.AuthProviders = []string{"google"}
+	}
+	mux.Handle("/", httphandler.SPAHandler(staticFS, services.ImagorProvider.Imagor(), services.Logger, bootstrap))
 	return nil
 }
 
