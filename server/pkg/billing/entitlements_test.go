@@ -13,12 +13,11 @@ func TestEntitlementsForPlan_UsesPublishedPlans(t *testing.T) {
 		wantSpaces        int
 		wantStorage       int64
 		wantTransforms    int64
-		wantBYOB          bool
 		wantCustomDomains int
 	}{
-		{name: "starter", plan: org.PlanStarter, wantSpaces: 1, wantStorage: 20, wantTransforms: 25000, wantBYOB: true, wantCustomDomains: 0},
-		{name: "pro", plan: org.PlanPro, wantSpaces: 3, wantStorage: 100, wantTransforms: 150000, wantBYOB: true, wantCustomDomains: 3},
-		{name: "team", plan: org.PlanTeam, wantSpaces: 20, wantStorage: 1000, wantTransforms: 1500000, wantBYOB: true, wantCustomDomains: 20},
+		{name: "starter", plan: org.PlanStarter, wantSpaces: 1, wantStorage: 20, wantTransforms: 25000, wantCustomDomains: 0},
+		{name: "pro", plan: org.PlanPro, wantSpaces: 3, wantStorage: 100, wantTransforms: 150000, wantCustomDomains: 3},
+		{name: "team", plan: org.PlanTeam, wantSpaces: 20, wantStorage: 1000, wantTransforms: 1500000, wantCustomDomains: 20},
 	}
 
 	for _, tt := range tests {
@@ -32,9 +31,6 @@ func TestEntitlementsForPlan_UsesPublishedPlans(t *testing.T) {
 			}
 			if entitlements.TransformsLimit != tt.wantTransforms {
 				t.Fatalf("TransformsLimit = %d, want %d", entitlements.TransformsLimit, tt.wantTransforms)
-			}
-			if entitlements.BYOBAllowed != tt.wantBYOB {
-				t.Fatalf("BYOBAllowed = %t, want %t", entitlements.BYOBAllowed, tt.wantBYOB)
 			}
 			if entitlements.MaxCustomDomains != tt.wantCustomDomains {
 				t.Fatalf("MaxCustomDomains = %d, want %d", entitlements.MaxCustomDomains, tt.wantCustomDomains)

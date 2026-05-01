@@ -427,8 +427,15 @@ func TestCreateBillingPortalSession_CreatesPortalSession(t *testing.T) {
 }
 
 func TestCreateCheckoutSession_SanitizesProviderError(t *testing.T) {
+	orgStore := &MockOrgStore{}
 	billingService := &MockBillingService{}
-	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, billingService)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanTrial,
+		PlanStatus: org.PlanStatusTrialing,
+	}, nil).Once()
 
 	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
 		OrgID:      "org-1",
@@ -445,6 +452,7 @@ func TestCreateCheckoutSession_SanitizesProviderError(t *testing.T) {
 	assert.Equal(t, apperror.ErrInternalServer, gqlErr.Extensions["code"])
 	assert.Equal(t, "checkout is temporarily unavailable", gqlErr.Message)
 	assert.NotContains(t, gqlErr.Message, "403")
+	orgStore.AssertExpectations(t)
 	billingService.AssertExpectations(t)
 }
 
