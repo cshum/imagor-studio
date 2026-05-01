@@ -98,7 +98,8 @@ vi.mock('@/components/ui/responsive-dialog', () => ({
 }))
 
 function createLoaderData(
-  overrides: Partial<NonNullable<BillingLoaderData['organization']>> = {},
+  organizationOverrides: Partial<NonNullable<BillingLoaderData['organization']>> = {},
+  usageSummaryOverrides: Partial<NonNullable<BillingLoaderData['usageSummary']>> = {},
 ): BillingLoaderData {
   return {
     breadcrumb: { translationKey: 'navigation.breadcrumbs.billing' },
@@ -113,7 +114,7 @@ function createLoaderData(
       planStatus: 'trialing',
       createdAt: '2026-05-01T00:00:00Z',
       updatedAt: '2026-05-01T00:00:00Z',
-      ...overrides,
+      ...organizationOverrides,
     } as BillingLoaderData['organization'],
     usageSummary: {
       __typename: 'UsageSummary',
@@ -125,6 +126,7 @@ function createLoaderData(
       transformsLimit: 1000,
       periodStart: '2026-05-01T00:00:00Z',
       periodEnd: '2026-06-01T00:00:00Z',
+      ...usageSummaryOverrides,
     } as BillingLoaderData['usageSummary'],
   }
 }
@@ -262,5 +264,29 @@ describe('AccountBillingRoutePage', () => {
 
     expect(mockToastError).toHaveBeenCalledTimes(1)
     expect(mockToastError).toHaveBeenCalledWith('pages.billing.messages.portalFailed: portal down')
+  })
+
+  it('shows recovery messaging when the organization is over the processing limit', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+
+    render(
+      <AccountBillingRoutePage
+        loaderData={createLoaderData(
+          {
+            plan: 'pro',
+            planStatus: 'active',
+          },
+          {
+            usedTransforms: 160000,
+            transformsLimit: 150000,
+          },
+        )}
+      />,
+    )
+
+    expect(screen.getByText('pages.billing.overLimit.title')).toBeTruthy()
+    expect(screen.getByText('pages.billing.overLimit.description')).toBeTruthy()
+    expect(screen.getByText('pages.billing.overLimit.messages.processing')).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: 'pages.billing.manageBilling' }).length).toBe(2)
   })
 })

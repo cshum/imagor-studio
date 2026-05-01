@@ -120,6 +120,11 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     !isUnlimitedLimit(transformsLimit) &&
     usedTransforms > transformsLimit
   const hasAnyOverLimit = spacesOverLimit || storageOverLimit || processingOverLimit
+  const overLimitMessages = [
+    spacesOverLimit ? t('pages.billing.overLimit.messages.spaces') : null,
+    storageOverLimit ? t('pages.billing.overLimit.messages.storage') : null,
+    processingOverLimit ? t('pages.billing.overLimit.messages.processing') : null,
+  ].filter((message): message is string => message !== null)
   const usagePeriod =
     usageSummary?.periodStart && usageSummary?.periodEnd
       ? t('pages.spaces.currentBillingPeriod', {
@@ -304,6 +309,33 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           ))}
         </div>
       </div>
+
+      {hasAnyOverLimit && (
+        <div className='rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-50'>
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+            <div className='space-y-2'>
+              <p className='text-sm font-semibold'>{t('pages.billing.overLimit.title')}</p>
+              <p className='text-sm'>{t('pages.billing.overLimit.description')}</p>
+              <div className='space-y-1 text-sm'>
+                {overLimitMessages.map((message) => (
+                  <p key={message}>{message}</p>
+                ))}
+              </div>
+            </div>
+
+            {canOpenPortal && (
+              <ButtonWithLoading
+                variant='outline'
+                isLoading={portalLoading}
+                onClick={handleManageBilling}
+                className='w-full shrink-0 sm:w-auto'
+              >
+                {t('pages.billing.manageBilling')}
+              </ButtonWithLoading>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className='grid gap-4 xl:grid-cols-3'>
         {PAID_PLANS.map((plan) => {

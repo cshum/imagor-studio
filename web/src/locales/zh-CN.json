@@ -901,6 +901,16 @@
       "leaveOrganizationDescription": "要离开当前组织吗？你将失去其共享空间的访问权限，并需要重新登录。",
       "usageSummaryMeta": "{{owned}} 个由你拥有 · {{shared}} 个与你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
+      "overLimit": {
+        "title": "你的组织已超出当前套餐限制",
+        "description": "现有空间和处理目前仍可继续使用，但在降低用量或升级套餐之前，部分操作会继续被阻止。",
+        "reviewBilling": "查看计费",
+        "messages": {
+          "spaces": "你可以保留现有空间，但在用量回到套餐范围内之前，无法再创建新空间。",
+          "storage": "现有文件仍可访问，但在存储超限期间，新的平台托管上传会被阻止。",
+          "processing": "生产处理目前仍会继续，但该组织在本计费周期内已超出当前套餐的处理额度。"
+        }
+      },
       "processingUsage": "{{count}} 次处理",
       "usage": {
         "spaces": "空间",
@@ -932,6 +942,15 @@
     "billing": {
       "title": "计费",
       "titleDescription": "选择最适合团队存储、处理和交付图片方式的套餐。",
+      "overLimit": {
+        "title": "你的组织已超出当前套餐限制",
+        "description": "现有空间和处理目前仍可继续使用，但在降低用量或升级套餐之前，部分操作会继续被阻止。",
+        "messages": {
+          "spaces": "你可以保留现有空间，但在用量回到套餐范围内之前，无法再创建新空间。",
+          "storage": "现有文件仍可访问，但在存储超限期间，新的平台托管上传会被阻止。",
+          "processing": "生产处理目前仍会继续，但该组织在本计费周期内已超出当前套餐的处理额度。"
+        }
+      },
       "currentPlan": "当前套餐",
       "currentPlanDescription": "用量按计费周期统计，并会自动重置。",
       "currentPlanBadge": "当前",
@@ -1059,6 +1078,15 @@
       "title": "组织",
       "titleDescription": "在一个位置查看套餐、用量和组织管理。",
       "summaryDescription": "快速查看当前组织状态。",
+      "overLimit": {
+        "title": "你的组织已超出当前套餐限制",
+        "description": "现有空间和处理目前仍可继续使用，但在降低用量或升级套餐之前，部分操作会继续被阻止。",
+        "messages": {
+          "spaces": "你可以保留现有空间，但在用量回到套餐范围内之前，无法再创建新空间。",
+          "storage": "现有文件仍可访问，但在存储超限期间，新的平台托管上传会被阻止。",
+          "processing": "生产处理目前仍会继续，但该组织在本计费周期内已超出当前套餐的处理额度。"
+        }
+      },
       "usageTitle": "当前用量",
       "usageDescription": "用量按计费周期重置，并应用于整个组织。",
       "unlimited": "不限",

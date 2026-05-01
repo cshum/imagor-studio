@@ -964,6 +964,16 @@
       "leaveOrganizationDescription": "Leave your current organization? You will lose access to its shared spaces and will need to sign in again.",
       "usageSummaryMeta": "{{owned}} owned · {{shared}} shared",
       "currentBillingPeriod": "{{start}} - {{end}}",
+      "overLimit": {
+        "title": "Your organization is over its current plan limits",
+        "description": "Existing spaces and processing continue to work for now, but some actions stay blocked until usage is reduced or the plan is upgraded.",
+        "reviewBilling": "Review billing",
+        "messages": {
+          "spaces": "You can keep existing spaces, but you cannot create more until usage is back within the plan.",
+          "storage": "Existing files remain available, but new managed uploads are blocked while storage is over limit.",
+          "processing": "Production processing continues for now, but this organization is above the current plan allowance for this billing period."
+        }
+      },
       "processingUsage": "{{count}} transforms",
       "usage": {
         "spaces": "Spaces",
@@ -986,6 +996,15 @@
     "billing": {
       "title": "Billing",
       "titleDescription": "Choose the plan that fits how your team stores, processes, and delivers images.",
+      "overLimit": {
+        "title": "Your organization is over its current plan limits",
+        "description": "Existing spaces and processing continue to work for now, but some actions stay blocked until usage is reduced or the plan is upgraded.",
+        "messages": {
+          "spaces": "You can keep existing spaces, but you cannot create more until usage is back within the plan.",
+          "storage": "Existing files remain available, but new managed uploads are blocked while storage is over limit.",
+          "processing": "Production processing continues for now, but this organization is above the current plan allowance for this billing period."
+        }
+      },
       "currentPlan": "Current plan",
       "currentPlanDescription": "Usage is tracked per billing period and resets automatically.",
       "currentPlanBadge": "Current",
@@ -1113,6 +1132,15 @@
       "title": "Organization",
       "titleDescription": "Review your plan, usage, and organization administration in one place.",
       "summaryDescription": "A quick view of the current organization state.",
+      "overLimit": {
+        "title": "Your organization is over its current plan limits",
+        "description": "Existing spaces and processing continue to work for now, but some actions stay blocked until usage is reduced or the plan is upgraded.",
+        "messages": {
+          "spaces": "You can keep existing spaces, but you cannot create more until usage is back within the plan.",
+          "storage": "Existing files remain available, but new managed uploads are blocked while storage is over limit.",
+          "processing": "Production processing continues for now, but this organization is above the current plan allowance for this billing period."
+        }
+      },
       "usageTitle": "Current usage",
       "usageDescription": "Usage resets by billing period and applies across the organization.",
       "unlimited": "Unlimited",

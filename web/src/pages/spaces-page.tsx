@@ -127,14 +127,28 @@ export function SpacesPage({
   const usedHostedStorageBytes = usageSummary?.usedHostedStorageBytes ?? hostedUsageBytes
   const storageLimitGB = usageSummary?.storageLimitGB ?? null
   const storageLimitBytes = storageLimitGB !== null ? storageLimitGB * 1024 * 1024 * 1024 : null
+  const storageOverLimit =
+    storageLimitGB !== null &&
+    !isUnlimitedOrMissing(storageLimitGB) &&
+    (usedHostedStorageBytes ?? 0) > (storageLimitBytes ?? 0)
   const hostedStorageSummary = isUnlimitedOrMissing(storageLimitGB)
     ? t('pages.spaces.stats.unlimited')
     : `${formatBytes(usedHostedStorageBytes ?? 0)} / ${formatBytes(storageLimitBytes ?? 0)}`
   const usedTransforms = usageSummary?.usedTransforms ?? null
   const transformsLimit = usageSummary?.transformsLimit ?? null
+  const processingOverLimit =
+    transformsLimit !== null &&
+    !isUnlimitedOrMissing(transformsLimit) &&
+    (usedTransforms ?? 0) > transformsLimit
+  const hasAnyOverLimit = spacesOverLimit || storageOverLimit || processingOverLimit
   const processingSummary = isUnlimitedOrMissing(transformsLimit)
     ? t('pages.spaces.stats.unlimited')
     : `${formatCount(usedTransforms ?? 0)} / ${formatCount(transformsLimit ?? 0)}`
+  const overLimitMessages = [
+    spacesOverLimit ? t('pages.spaces.overLimit.messages.spaces') : null,
+    storageOverLimit ? t('pages.spaces.overLimit.messages.storage') : null,
+    processingOverLimit ? t('pages.spaces.overLimit.messages.processing') : null,
+  ].filter((message): message is string => message !== null)
   const usagePeriod =
     usageSummary?.periodStart && usageSummary?.periodEnd
       ? t('pages.spaces.currentBillingPeriod', {
@@ -217,6 +231,28 @@ export function SpacesPage({
               </span>
             </span>
           </ButtonWithLoading>
+        </div>
+      ) : null}
+
+      {currentOrganizationId !== null && canManageOrganization && hasAnyOverLimit ? (
+        <div className='rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-50'>
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+            <div className='space-y-2'>
+              <p className='text-sm font-semibold'>{t('pages.spaces.overLimit.title')}</p>
+              <p className='text-sm'>{t('pages.spaces.overLimit.description')}</p>
+              <div className='space-y-1 text-sm'>
+                {overLimitMessages.map((message) => (
+                  <p key={message}>{message}</p>
+                ))}
+              </div>
+            </div>
+
+            <Button asChild className='w-full shrink-0 sm:w-auto'>
+              <Link to='/account/organization/billing'>
+                {t('pages.spaces.overLimit.reviewBilling')}
+              </Link>
+            </Button>
+          </div>
         </div>
       ) : null}
 

@@ -957,6 +957,16 @@
       "leaveOrganizationDescription": "要離開目前組織嗎？你將失去其共享空間的存取權，並需要重新登入。",
       "usageSummaryMeta": "{{owned}} 個由你擁有 · {{shared}} 個與你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
+      "overLimit": {
+        "title": "你的組織已超出目前方案限制",
+        "description": "現有空間與處理目前仍可繼續使用，但在降低用量或升級方案之前，部分操作仍會被阻止。",
+        "reviewBilling": "檢視計費",
+        "messages": {
+          "spaces": "你可以保留現有空間，但在用量回到方案範圍內之前，無法再建立新空間。",
+          "storage": "現有檔案仍可使用，但在儲存超限期間，新的託管上傳會被阻止。",
+          "processing": "正式環境的處理目前仍會繼續，但此組織在本計費週期內已超出目前方案的處理額度。"
+        }
+      },
       "processingUsage": "{{count}} 次處理",
       "usage": {
         "spaces": "空間",
@@ -988,6 +998,15 @@
     "billing": {
       "title": "計費",
       "titleDescription": "選擇最適合團隊儲存、處理與交付圖片方式的方案。",
+      "overLimit": {
+        "title": "你的組織已超出目前方案限制",
+        "description": "現有空間與處理目前仍可繼續使用，但在降低用量或升級方案之前，部分操作仍會被阻止。",
+        "messages": {
+          "spaces": "你可以保留現有空間，但在用量回到方案範圍內之前，無法再建立新空間。",
+          "storage": "現有檔案仍可使用，但在儲存超限期間，新的託管上傳會被阻止。",
+          "processing": "正式環境的處理目前仍會繼續，但此組織在本計費週期內已超出目前方案的處理額度。"
+        }
+      },
       "currentPlan": "目前方案",
       "currentPlanDescription": "用量會依計費週期統計，並自動重置。",
       "currentPlanBadge": "目前",
@@ -1115,6 +1134,15 @@
       "title": "組織",
       "titleDescription": "在同一處檢視方案、用量與組織管理。",
       "summaryDescription": "快速檢視目前組織狀態。",
+      "overLimit": {
+        "title": "你的組織已超出目前方案限制",
+        "description": "現有空間與處理目前仍可繼續使用，但在降低用量或升級方案之前，部分操作仍會被阻止。",
+        "messages": {
+          "spaces": "你可以保留現有空間，但在用量回到方案範圍內之前，無法再建立新空間。",
+          "storage": "現有檔案仍可使用，但在儲存超限期間，新的託管上傳會被阻止。",
+          "processing": "正式環境的處理目前仍會繼續，但此組織在本計費週期內已超出目前方案的處理額度。"
+        }
+      },
       "usageTitle": "目前用量",
       "usageDescription": "用量會依計費週期重置，並套用到整個組織。",
       "unlimited": "不限",
