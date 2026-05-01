@@ -9,7 +9,6 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import { getMyOrganization } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
@@ -45,6 +44,7 @@ import {
   requireOrganizationAdminAccountAuth,
   requireSelfHostedAdminAccountAuth,
   requireSelfHostedImageEditorAuth,
+  resolveAccountRouteContext,
 } from '@/loaders/auth-loader.ts'
 import { canvasEditorLoader } from '@/loaders/canvas-editor-loader.ts'
 import { emailChangeVerifyLoader } from '@/loaders/email-change-verify-loader'
@@ -777,10 +777,7 @@ const accountOrganizationMembersRoute = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
-  beforeLoad: async (context) => {
-    await requireAccountAuth(context)
-    return { organization: await getMyOrganization() }
-  },
+  beforeLoad: resolveAccountRouteContext,
   component: () => {
     const { organization } = accountLayoutRoute.useRouteContext()
     return <AccountLayout showOrganizationLink={Boolean(organization)} />

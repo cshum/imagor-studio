@@ -86,6 +86,17 @@ export const requireAccountAuth = async (context?: { location?: AuthRouteLocatio
   return currentAuth
 }
 
+/**
+ * Shared account layout context.
+ * Only multi-tenant account surfaces need the current organization eagerly.
+ */
+export const resolveAccountRouteContext = async (context?: { location?: AuthRouteLocation }) => {
+  const auth = await requireAccountAuth(context)
+  return {
+    organization: auth.multiTenant ? await getMyOrganization() : null,
+  }
+}
+
 const ensureOrganization = async (organization?: MyOrganizationQuery['myOrganization']) => {
   const nextOrganization = organization === undefined ? await getMyOrganization() : organization
   if (!nextOrganization) {

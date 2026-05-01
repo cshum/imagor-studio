@@ -91,6 +91,52 @@ describe('auth-loader redirects', () => {
     expect(mockGetMyOrganization).not.toHaveBeenCalled()
   })
 
+  it('does not fetch organization for self-hosted account route context', async () => {
+    mockWaitFor.mockResolvedValue({
+      state: 'authenticated',
+      error: null,
+      isEmbedded: false,
+      isFirstRun: false,
+      multiTenant: false,
+    })
+
+    const { resolveAccountRouteContext } = await import('./auth-loader')
+
+    await expect(resolveAccountRouteContext()).resolves.toEqual({ organization: null })
+
+    expect(mockGetMyOrganization).not.toHaveBeenCalled()
+  })
+
+  it('fetches organization for multi-tenant account route context', async () => {
+    mockWaitFor.mockResolvedValue({
+      state: 'authenticated',
+      error: null,
+      isEmbedded: false,
+      isFirstRun: false,
+      multiTenant: true,
+    })
+    mockGetMyOrganization.mockResolvedValue({
+      __typename: 'Organization',
+      id: 'org-1',
+      name: 'Acme Org',
+      slug: 'acme',
+      ownerUserId: 'user-1',
+      currentUserRole: 'owner',
+      plan: 'trial',
+      planStatus: 'active',
+      createdAt: '2026-04-18T00:00:00Z',
+      updatedAt: '2026-04-18T00:00:00Z',
+    })
+
+    const { resolveAccountRouteContext } = await import('./auth-loader')
+
+    await expect(resolveAccountRouteContext()).resolves.toEqual({
+      organization: expect.objectContaining({ id: 'org-1' }),
+    })
+
+    expect(mockGetMyOrganization).toHaveBeenCalledTimes(1)
+  })
+
   it('reuses a provided organization for multi-tenant org admin auth', async () => {
     mockWaitFor.mockResolvedValue({
       state: 'authenticated',
