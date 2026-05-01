@@ -118,7 +118,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     ['1', 'true'].includes(new URLSearchParams(window.location.search).get('portal_returned') ?? '')
   const { logout } = useAuth()
   const [pendingPlan, setPendingPlan] = useState<string | null>(null)
-  const [selectedPortalPlan, setSelectedPortalPlan] = useState<string | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
   const [refreshLoading, setRefreshLoading] = useState(false)
   const [showPortalSyncNotice, setShowPortalSyncNotice] = useState(portalReturned)
@@ -180,22 +180,35 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       : null
 
   useEffect(() => {
-    if (!isPortalManagedBilling) {
-      setSelectedPortalPlan(null)
+    if (selectedPlan === currentPlan) {
+      setSelectedPlan(null)
+    }
+  }, [currentPlan, selectedPlan])
+
+  const selectedPlanLabel = selectedPlan != null ? t(`pages.spaces.plan.${selectedPlan}`) : null
+  const primaryBillingActionLabel = isPortalManagedBilling
+    ? selectedPlanLabel != null
+      ? t('pages.billing.manageBillingTarget', { plan: selectedPlanLabel })
+      : t('pages.billing.manageBilling')
+    : selectedPlanLabel != null
+      ? t('pages.billing.selectPlanTarget', { plan: selectedPlanLabel })
+      : t('pages.billing.selectPlan')
+  const primaryBillingActionHelp = isPortalManagedBilling
+    ? t('pages.billing.portalManaged.comparePlansHint')
+    : t('pages.billing.checkoutHint')
+
+  const handlePrimaryBillingAction = async () => {
+    if (isPortalManagedBilling) {
+      await handleManageBilling()
       return
     }
 
-    if (selectedPortalPlan === currentPlan) {
-      setSelectedPortalPlan(null)
+    if (selectedPlan == null) {
+      return
     }
-  }, [currentPlan, isPortalManagedBilling, selectedPortalPlan])
 
-  const selectedPortalPlanLabel =
-    selectedPortalPlan != null ? t(`pages.spaces.plan.${selectedPortalPlan}`) : null
-  const manageBillingLabel =
-    isPortalManagedBilling && selectedPortalPlanLabel != null
-      ? t('pages.billing.manageBillingTarget', { plan: selectedPortalPlanLabel })
-      : t('pages.billing.manageBilling')
+    await handleCheckout(selectedPlan as (typeof PAID_PLANS)[number])
+  }
 
   const usageItems = [
     {
@@ -400,24 +413,13 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
 
   return (
     <div className='space-y-8'>
-      <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+      <div>
         <div>
           <h1 className='text-2xl font-semibold tracking-tight'>{t('pages.billing.title')}</h1>
           <p className='text-muted-foreground mt-1 text-sm'>
             {t('pages.billing.titleDescription')}
           </p>
         </div>
-
-        {canOpenPortal && (
-          <ButtonWithLoading
-            variant='default'
-            isLoading={portalLoading}
-            onClick={handleManageBilling}
-            className='w-full sm:w-auto'
-          >
-            {manageBillingLabel}
-          </ButtonWithLoading>
-        )}
       </div>
 
       <div className='bg-muted/30 rounded-lg border p-4'>
@@ -557,45 +559,38 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
       )}
 
-      <div className='space-y-3'>
-        {isPortalManagedBilling && (
-          <p className='text-muted-foreground text-sm'>
-            {t('pages.billing.portalManaged.comparePlansHint')}
-          </p>
-        )}
-
+      <div className='space-y-4'>
         <div className='grid gap-4 xl:grid-cols-3'>
         {PAID_PLANS.map((plan) => {
           const entitlements = getPlanEntitlements(plan)
           const isCurrentPlan = plan === currentPlan
-          const isSelectedPortalPlan = isPortalManagedBilling && selectedPortalPlan === plan
-          const showCheckoutAction = !isPortalManagedBilling && !isCurrentPlan
+          const isSelectedPlan = selectedPlan === plan
           const customDomainAllowance = entitlements.maxCustomDomains
-          const isPortalSelectable = isPortalManagedBilling && !isCurrentPlan
+          const isSelectable = !isCurrentPlan
 
           return (
             <Card
               key={plan}
               className={cn(
                 isCurrentPlan && 'border-primary shadow-sm',
-                isSelectedPortalPlan && 'border-primary bg-muted/30 shadow-sm',
-                isPortalSelectable && 'cursor-pointer transition-colors hover:border-primary/60',
+                isSelectedPlan && 'border-primary bg-muted/30 shadow-sm',
+                isSelectable && 'cursor-pointer transition-colors hover:border-primary/60',
               )}
-              role={isPortalSelectable ? 'button' : undefined}
-              tabIndex={isPortalSelectable ? 0 : undefined}
+              role={isSelectable ? 'button' : undefined}
+              tabIndex={isSelectable ? 0 : undefined}
               onClick={
-                isPortalSelectable
+                isSelectable
                   ? () => {
-                      setSelectedPortalPlan(plan)
+                      setSelectedPlan(plan)
                     }
                   : undefined
               }
               onKeyDown={
-                isPortalSelectable
+                isSelectable
                   ? (event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault()
-                        setSelectedPortalPlan(plan)
+                        setSelectedPlan(plan)
                       }
                     }
                   : undefined
@@ -606,7 +601,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                   <CardTitle>{t(`pages.spaces.plan.${plan}`)}</CardTitle>
                   {isCurrentPlan ? (
                     <Badge>{t('pages.billing.currentPlanBadge')}</Badge>
-                  ) : isSelectedPortalPlan ? (
+                  ) : isSelectedPlan ? (
                     <Badge variant='outline'>{t('pages.billing.selectedPlanBadge')}</Badge>
                   ) : null}
                 </div>
@@ -647,25 +642,33 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                 </div>
 
                 {isCurrentPlan ? (
-                  <ButtonWithLoading disabled className='w-full'>
-                    {t('pages.billing.currentPlanButton')}
-                  </ButtonWithLoading>
-                ) : showCheckoutAction ? (
-                  <ButtonWithLoading
-                    isLoading={pendingPlan === plan}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      void handleCheckout(plan)
-                    }}
-                    className='w-full'
-                  >
-                    {t('pages.billing.selectPlan')}
-                  </ButtonWithLoading>
+                  <p className='text-muted-foreground border-border rounded-md border px-3 py-2 text-center text-sm'>
+                    {t('pages.billing.currentPlanStatus')}
+                  </p>
                 ) : null}
               </CardContent>
             </Card>
           )
         })}
+        </div>
+
+        <div className='bg-muted/20 rounded-lg border p-4'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='space-y-1'>
+              <p className='text-sm font-medium'>{primaryBillingActionLabel}</p>
+              <p className='text-muted-foreground text-sm'>{primaryBillingActionHelp}</p>
+            </div>
+
+            <ButtonWithLoading
+              variant='default'
+              isLoading={portalLoading || (selectedPlan != null && pendingPlan === selectedPlan)}
+              onClick={() => void handlePrimaryBillingAction()}
+              disabled={!isPortalManagedBilling && selectedPlan == null}
+              className='w-full sm:w-auto'
+            >
+              {primaryBillingActionLabel}
+            </ButtonWithLoading>
+          </div>
         </div>
       </div>
 

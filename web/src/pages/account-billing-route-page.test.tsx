@@ -160,8 +160,22 @@ describe('AccountBillingRoutePage', () => {
 
     render(<AccountBillingRoutePage loaderData={createLoaderData()} />)
 
+    expect(
+      (screen.getByRole('button', { name: 'pages.billing.selectPlan' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true)
+    expect(screen.getByText('pages.billing.checkoutHint')).toBeTruthy()
+
     await act(async () => {
-      fireEvent.click(screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })[0])
+      fireEvent.click(screen.getByText('pages.spaces.plan.starter'))
+    })
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'pages.billing.selectPlanTarget:{"plan":"pages.spaces.plan.starter"}',
+        }),
+      )
     })
 
     expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
@@ -185,7 +199,15 @@ describe('AccountBillingRoutePage', () => {
     )
 
     await act(async () => {
-      fireEvent.click(screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })[1])
+      fireEvent.click(screen.getByText('pages.spaces.plan.pro'))
+    })
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'pages.billing.selectPlanTarget:{"plan":"pages.spaces.plan.pro"}',
+        }),
+      )
     })
 
     expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
@@ -252,10 +274,8 @@ describe('AccountBillingRoutePage', () => {
       />,
     )
 
-    expect(
-      (screen.getByRole('button', { name: 'pages.billing.currentPlanButton' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true)
+    expect(screen.queryByRole('button', { name: 'pages.billing.currentPlanButton' })).toBeNull()
+    expect(screen.getByText('pages.billing.currentPlanStatus')).toBeTruthy()
 
     expect(screen.queryByRole('button', { name: 'pages.billing.managePlanInBilling' })).toBeNull()
     expect(screen.getByText('pages.billing.portalManaged.comparePlansHint')).toBeTruthy()
@@ -325,7 +345,15 @@ describe('AccountBillingRoutePage', () => {
     render(<AccountBillingRoutePage loaderData={createLoaderData()} />)
 
     await act(async () => {
-      fireEvent.click(screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })[0])
+      fireEvent.click(screen.getByText('pages.spaces.plan.starter'))
+    })
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'pages.billing.selectPlanTarget:{"plan":"pages.spaces.plan.starter"}',
+        }),
+      )
     })
 
     expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
