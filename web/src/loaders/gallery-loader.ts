@@ -95,14 +95,13 @@ export const galleryLoader = async ({
           'config.app_default_sort_by',
           'config.app_default_sort_order',
           'config.app_show_file_names',
-        ])
-          .catch(() =>
-            getSystemRegistryMultiple([
-              'config.app_default_sort_by',
-              'config.app_default_sort_order',
-              'config.app_show_file_names',
-            ]),
-          )
+        ]).catch(() =>
+          getSystemRegistryMultiple([
+            'config.app_default_sort_by',
+            'config.app_default_sort_order',
+            'config.app_show_file_names',
+          ]),
+        )
       : getSystemRegistryMultiple([
           'config.app_default_sort_by',
           'config.app_default_sort_order',

@@ -8,6 +8,8 @@ export interface ImageDimensions {
   height: number
 }
 
+type StatFileResult = Awaited<ReturnType<typeof statFile>>
+
 /**
  * Fetch image dimensions using metadata API or by loading the image
  * Prefers metadata API (fast, no image download) and falls back to loading image
@@ -18,8 +20,9 @@ export interface ImageDimensions {
 export async function fetchImageDimensions(
   imagePath: string,
   spaceID?: string,
+  existingFileStat?: StatFileResult,
 ): Promise<ImageDimensions> {
-  const fileStat = await statFile(imagePath, spaceID)
+  const fileStat = existingFileStat ?? (await statFile(imagePath, spaceID))
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found or invalid')

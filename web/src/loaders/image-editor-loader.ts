@@ -46,7 +46,10 @@ export const imageEditorLoader = async ({
   // Load user preferences for editor open sections using storage service
   const authState = getAuth()
   const storage = new EditorSectionStorage(authState)
-  const [fileStat, editorOpenSections] = await Promise.all([statFile(imagePath, spaceID), storage.get()])
+  const [fileStat, editorOpenSections] = await Promise.all([
+    statFile(imagePath, spaceID),
+    storage.get(),
+  ])
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found')
@@ -102,10 +105,10 @@ export const imageEditorLoader = async ({
       originalDimensions = { width: 1, height: 1 }
     } else {
       const sourceFileStat = await statFile(actualImagePath, spaceID)
-      if (!sourceFileStat || sourceFileStat.isDirectory) {
+      if (!sourceFileStat || sourceFileStat.isDirectory || !sourceFileStat.thumbnailUrls) {
         throw new Error(`Template source image not found: ${actualImagePath}`)
       }
-      originalDimensions = await fetchImageDimensions(actualImagePath, spaceID)
+      originalDimensions = await fetchImageDimensions(actualImagePath, spaceID, sourceFileStat)
     }
 
     // Clear image position for better transition
@@ -140,7 +143,7 @@ export const imageEditorLoader = async ({
   } else {
     // Normal image (not a template)
     // Fetch dimensions using utility (handles metadata API + fallback)
-    const originalDimensions = await fetchImageDimensions(imagePath, spaceID)
+    const originalDimensions = await fetchImageDimensions(imagePath, spaceID, fileStat)
 
     // Clear image position for better transition
     clearPosition(galleryKey, imageKey)
