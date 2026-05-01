@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"sort"
@@ -1125,6 +1126,9 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 		CancelURL:  strings.TrimSpace(cancelURL),
 	})
 	if err != nil {
+		if errors.Is(err, billing.ErrCheckoutRequiresPortal) {
+			return nil, apperror.BadRequest("existing paid subscriptions must use the billing portal", map[string]interface{}{"reason": "billing_checkout_requires_portal"})
+		}
 		r.logger.Error("CreateCheckoutSession: billing provider failed",
 			zap.String("orgID", orgID),
 			zap.String("plan", strings.TrimSpace(plan)),

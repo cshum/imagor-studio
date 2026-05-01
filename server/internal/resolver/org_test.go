@@ -456,6 +456,36 @@ func TestCreateCheckoutSession_SanitizesProviderError(t *testing.T) {
 	billingService.AssertExpectations(t)
 }
 
+func TestCreateCheckoutSession_MapsProviderPortalRequirement(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, billingService)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanTrial,
+		PlanStatus: org.PlanStatusTrialing,
+	}, nil).Once()
+
+	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
+		OrgID:      "org-1",
+		Plan:       "pro",
+		SuccessURL: "https://app.example/success",
+		CancelURL:  "https://app.example/cancel",
+	}).Return(nil, billing.ErrCheckoutRequiresPortal)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "billing_checkout_requires_portal", gqlErr.Extensions["reason"])
+	assert.Equal(t, "existing paid subscriptions must use the billing portal", gqlErr.Message)
+	orgStore.AssertExpectations(t)
+	billingService.AssertExpectations(t)
+}
+
 func TestCreateBillingPortalSession_SanitizesProviderError(t *testing.T) {
 	billingService := &MockBillingService{}
 	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
