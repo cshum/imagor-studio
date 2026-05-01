@@ -858,7 +858,6 @@
         "next": "下一步",
         "back": "上一步"
       },
-      "createSpaceDescription": "创建专属图片工作空间，拥有自己的存储、交付设置和访问权限。",
       "messages": {
         "spaceCreatedSuccess": "空间创建成功",
         "spaceUpdatedSuccess": "空间更新成功",
@@ -957,8 +956,10 @@
       "currentPlan": "当前套餐",
       "currentPlanDescription": "用量按计费周期统计，并会自动重置。",
       "currentPlanBadge": "当前",
+      "selectedPlanBadge": "已选择",
       "currentPlanButton": "当前套餐",
       "manageBilling": "管理计费",
+      "manageBillingTarget": "切换到 {{plan}}",
       "managePlanInBilling": "在计费门户中更改",
       "selectPlan": "选择套餐",
       "priceSuffix": "/月",
@@ -988,10 +989,11 @@
         "team": "适合跨多个团队或品牌管理共享图片运营的大型组织。"
       },
       "portalManaged": {
-        "title": "付费套餐变更需在计费门户中完成",
-        "description": "请使用计费门户升级或降级此订阅。只有在 Stripe 更新订阅并且这里的组织同步状态刷新后，套餐变更才会最终生效。",
-        "overLimitDescription": "请使用计费门户变更此订阅。降级后，组织可能会暂时处于超限状态，直到用量回落，因此现有空间和处理可能继续运行，但被限制的操作仍会保持阻止。",
-        "refreshAction": "刷新计费状态"
+        "title": "在计费门户中管理套餐变更",
+        "description": "请使用计费门户进行升级或降级。Stripe 完成订阅同步后，变更会显示在这里。",
+        "overLimitDescription": "请使用计费门户变更此订阅。如果当前用量已经高于新套餐，受限操作会继续保持阻止，直到用量降回限制内。",
+        "refreshAction": "立即刷新",
+        "comparePlansHint": "先在这里比较套餐并选择目标套餐，再前往计费门户变更订阅。"
       },
       "portalSync": {
         "title": "我们正在同步你最新的计费变更",

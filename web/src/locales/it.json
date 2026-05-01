@@ -1012,8 +1012,10 @@
       "currentPlan": "Piano attuale",
       "currentPlanDescription": "L'utilizzo viene monitorato per periodo di fatturazione e si azzera automaticamente.",
       "currentPlanBadge": "Attuale",
+      "selectedPlanBadge": "Selezionato",
       "currentPlanButton": "Piano attuale",
       "manageBilling": "Gestisci fatturazione",
+      "manageBillingTarget": "Passa a {{plan}}",
       "managePlanInBilling": "Modifica nel portale di fatturazione",
       "selectPlan": "Scegli piano",
       "priceSuffix": "/mese",
@@ -1043,10 +1045,11 @@
         "team": "Per organizzazioni che gestiscono operazioni immagini condivise tra più team o brand."
       },
       "portalManaged": {
-        "title": "Le modifiche ai piani a pagamento si gestiscono nel portale di fatturazione",
-        "description": "Usa il portale di fatturazione per effettuare upgrade o downgrade di questo abbonamento. La modifica del piano diventa definitiva dopo l'aggiornamento della sottoscrizione in Stripe e il refresh qui dello stato sincronizzato dell'organizzazione.",
-        "overLimitDescription": "Usa il portale di fatturazione per modificare questo abbonamento. Un downgrade può lasciare l'organizzazione oltre i limiti finché l'utilizzo non viene ridotto, quindi gli spazi esistenti e il processing possono continuare mentre le azioni bloccate restano limitate.",
-        "refreshAction": "Aggiorna stato fatturazione"
+        "title": "Gestisci le modifiche del piano nel portale di fatturazione",
+        "description": "Usa il portale di fatturazione per upgrade o downgrade. Le modifiche compaiono qui dopo la sincronizzazione della sottoscrizione da parte di Stripe.",
+        "overLimitDescription": "Usa il portale di fatturazione per modificare questa sottoscrizione. Se l'utilizzo è già sopra il nuovo piano, le azioni bloccate restano limitate finché l'utilizzo non viene ridotto.",
+        "refreshAction": "Aggiorna ora",
+        "comparePlansHint": "Confronta qui i piani, seleziona il piano desiderato, poi usa il portale di fatturazione per cambiare la sottoscrizione."
       },
       "portalSync": {
         "title": "Stiamo sincronizzando le ultime modifiche di fatturazione",

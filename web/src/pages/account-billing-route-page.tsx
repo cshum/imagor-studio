@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/responsive-dialog'
 import { extractErrorInfo, isOrganizationRequiredError } from '@/lib/error-utils'
 import { getPlanEntitlements, isUnlimitedLimit } from '@/lib/plan-entitlements'
+import { cn } from '@/lib/utils'
 import type { BillingLoaderData } from '@/loaders/account-loader'
 import { useAuth } from '@/stores/auth-store'
 
@@ -117,6 +118,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     ['1', 'true'].includes(new URLSearchParams(window.location.search).get('portal_returned') ?? '')
   const { logout } = useAuth()
   const [pendingPlan, setPendingPlan] = useState<string | null>(null)
+  const [selectedPortalPlan, setSelectedPortalPlan] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
   const [refreshLoading, setRefreshLoading] = useState(false)
   const [showPortalSyncNotice, setShowPortalSyncNotice] = useState(portalReturned)
@@ -176,6 +178,24 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           end: formatUsagePeriodDate(usageSummary.periodEnd),
         })
       : null
+
+  useEffect(() => {
+    if (!isPortalManagedBilling) {
+      setSelectedPortalPlan(null)
+      return
+    }
+
+    if (selectedPortalPlan === currentPlan) {
+      setSelectedPortalPlan(null)
+    }
+  }, [currentPlan, isPortalManagedBilling, selectedPortalPlan])
+
+  const selectedPortalPlanLabel =
+    selectedPortalPlan != null ? t(`pages.spaces.plan.${selectedPortalPlan}`) : null
+  const manageBillingLabel =
+    isPortalManagedBilling && selectedPortalPlanLabel != null
+      ? t('pages.billing.manageBillingTarget', { plan: selectedPortalPlanLabel })
+      : t('pages.billing.manageBilling')
 
   const usageItems = [
     {
@@ -330,7 +350,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
 
     void navigate({
       to: '/account/organization/billing',
-      search: { portal_returned: false },
+      search: {},
       replace: true,
     })
 
@@ -390,12 +410,12 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
 
         {canOpenPortal && (
           <ButtonWithLoading
-            variant='outline'
+            variant='default'
             isLoading={portalLoading}
             onClick={handleManageBilling}
             className='w-full sm:w-auto'
           >
-            {t('pages.billing.manageBilling')}
+            {manageBillingLabel}
           </ButtonWithLoading>
         )}
       </div>
@@ -471,16 +491,6 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
               </div>
             </div>
 
-            {canOpenPortal && (
-              <ButtonWithLoading
-                variant='outline'
-                isLoading={portalLoading}
-                onClick={handleManageBilling}
-                className='w-full shrink-0 sm:w-auto'
-              >
-                {t('pages.billing.manageBilling')}
-              </ButtonWithLoading>
-            )}
           </div>
         </div>
       )}
@@ -533,7 +543,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
               </p>
             </div>
 
-            {!portalSyncSucceeded && (
+            {!portalSyncSucceeded && !portalSyncing && (
               <ButtonWithLoading
                 variant='outline'
                 isLoading={refreshLoading}
@@ -547,51 +557,58 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
       )}
 
-      {isPortalManagedBilling && (
-        <div className='bg-muted/20 rounded-lg border p-4'>
-          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-            <div>
-              <p className='text-sm font-medium'>{t('pages.billing.portalManaged.title')}</p>
-              <p className='text-muted-foreground mt-1 text-sm'>
-                {t(
-                  hasAnyOverLimit
-                    ? 'pages.billing.portalManaged.overLimitDescription'
-                    : 'pages.billing.portalManaged.description',
-                )}
-              </p>
-            </div>
+      <div className='space-y-3'>
+        {isPortalManagedBilling && (
+          <p className='text-muted-foreground text-sm'>
+            {t('pages.billing.portalManaged.comparePlansHint')}
+          </p>
+        )}
 
-            <ButtonWithLoading
-              variant='outline'
-              isLoading={refreshLoading}
-              onClick={() => void handleRefreshBillingStatus()}
-              className='w-full shrink-0 sm:w-auto'
-            >
-              {t('pages.billing.portalManaged.refreshAction')}
-            </ButtonWithLoading>
-          </div>
-        </div>
-      )}
-
-      <div className='grid gap-4 xl:grid-cols-3'>
+        <div className='grid gap-4 xl:grid-cols-3'>
         {PAID_PLANS.map((plan) => {
           const entitlements = getPlanEntitlements(plan)
           const isCurrentPlan = plan === currentPlan
-          const isPortalManagedPlanAction = isPortalManagedBilling && !isCurrentPlan
-          const isPlanActionDisabled = isCurrentPlan
-          const buttonLabel = isCurrentPlan
-            ? t('pages.billing.currentPlanButton')
-            : isPortalManagedPlanAction
-              ? t('pages.billing.managePlanInBilling')
-              : t('pages.billing.selectPlan')
+          const isSelectedPortalPlan = isPortalManagedBilling && selectedPortalPlan === plan
+          const showCheckoutAction = !isPortalManagedBilling && !isCurrentPlan
           const customDomainAllowance = entitlements.maxCustomDomains
+          const isPortalSelectable = isPortalManagedBilling && !isCurrentPlan
 
           return (
-            <Card key={plan} className={isCurrentPlan ? 'border-primary shadow-sm' : undefined}>
+            <Card
+              key={plan}
+              className={cn(
+                isCurrentPlan && 'border-primary shadow-sm',
+                isSelectedPortalPlan && 'border-primary bg-muted/30 shadow-sm',
+                isPortalSelectable && 'cursor-pointer transition-colors hover:border-primary/60',
+              )}
+              role={isPortalSelectable ? 'button' : undefined}
+              tabIndex={isPortalSelectable ? 0 : undefined}
+              onClick={
+                isPortalSelectable
+                  ? () => {
+                      setSelectedPortalPlan(plan)
+                    }
+                  : undefined
+              }
+              onKeyDown={
+                isPortalSelectable
+                  ? (event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setSelectedPortalPlan(plan)
+                      }
+                    }
+                  : undefined
+              }
+            >
               <CardHeader>
                 <div className='flex items-center justify-between gap-3'>
                   <CardTitle>{t(`pages.spaces.plan.${plan}`)}</CardTitle>
-                  {isCurrentPlan && <Badge>{t('pages.billing.currentPlanBadge')}</Badge>}
+                  {isCurrentPlan ? (
+                    <Badge>{t('pages.billing.currentPlanBadge')}</Badge>
+                  ) : isSelectedPortalPlan ? (
+                    <Badge variant='outline'>{t('pages.billing.selectedPlanBadge')}</Badge>
+                  ) : null}
                 </div>
                 <CardDescription>{t(`pages.billing.planDescriptions.${plan}`)}</CardDescription>
                 <div className='flex items-end gap-1 pt-1'>
@@ -629,25 +646,27 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                   </div>
                 </div>
 
-                <ButtonWithLoading
-                  isLoading={isPortalManagedPlanAction ? portalLoading : pendingPlan === plan}
-                  disabled={isPlanActionDisabled}
-                  onClick={() => {
-                    if (isPortalManagedPlanAction) {
-                      void handleManageBilling()
-                      return
-                    }
-
-                    void handleCheckout(plan)
-                  }}
-                  className='w-full'
-                >
-                  {buttonLabel}
-                </ButtonWithLoading>
+                {isCurrentPlan ? (
+                  <ButtonWithLoading disabled className='w-full'>
+                    {t('pages.billing.currentPlanButton')}
+                  </ButtonWithLoading>
+                ) : showCheckoutAction ? (
+                  <ButtonWithLoading
+                    isLoading={pendingPlan === plan}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      void handleCheckout(plan)
+                    }}
+                    className='w-full'
+                  >
+                    {t('pages.billing.selectPlan')}
+                  </ButtonWithLoading>
+                ) : null}
               </CardContent>
             </Card>
           )
         })}
+        </div>
       </div>
 
       <div className='bg-muted/20 rounded-lg border p-4'>

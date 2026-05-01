@@ -208,12 +208,27 @@ describe('AccountBillingRoutePage', () => {
       />,
     )
 
-    const planButtons = screen.getAllByRole('button', { name: 'pages.billing.managePlanInBilling' })
-    expect(planButtons).toHaveLength(2)
-    expect(planButtons.every((button) => !(button as HTMLButtonElement).disabled)).toBe(true)
+    expect(screen.queryByRole('button', { name: 'pages.billing.managePlanInBilling' })).toBeNull()
+    expect(screen.getByText('pages.billing.portalManaged.comparePlansHint')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'pages.billing.manageBilling' })).toBeTruthy()
 
     await act(async () => {
-      fireEvent.click(planButtons[0])
+      fireEvent.click(screen.getByText('pages.spaces.plan.pro'))
+    })
+
+    expect(
+      screen.getByRole('button', {
+        name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.pro"}',
+      }),
+    ).toBeTruthy()
+    expect(screen.getByText('pages.billing.selectedPlanBadge')).toBeTruthy()
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.pro"}',
+        }),
+      )
     })
 
     expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
@@ -242,12 +257,25 @@ describe('AccountBillingRoutePage', () => {
         .disabled,
     ).toBe(true)
 
-    const planButtons = screen.getAllByRole('button', { name: 'pages.billing.managePlanInBilling' })
-    expect(planButtons).toHaveLength(2)
-    expect(planButtons.every((button) => !(button as HTMLButtonElement).disabled)).toBe(true)
+    expect(screen.queryByRole('button', { name: 'pages.billing.managePlanInBilling' })).toBeNull()
+    expect(screen.getByText('pages.billing.portalManaged.comparePlansHint')).toBeTruthy()
 
     await act(async () => {
-      fireEvent.click(planButtons[0])
+      fireEvent.click(screen.getByText('pages.spaces.plan.team'))
+    })
+
+    expect(
+      screen.getByRole('button', {
+        name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.team"}',
+      }),
+    ).toBeTruthy()
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.team"}',
+        }),
+      )
     })
 
     expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
@@ -334,10 +362,10 @@ describe('AccountBillingRoutePage', () => {
     expect(screen.getByText('pages.billing.overLimit.title')).toBeTruthy()
     expect(screen.getByText('pages.billing.overLimit.description')).toBeTruthy()
     expect(screen.getByText('pages.billing.overLimit.messages.processing')).toBeTruthy()
-    expect(screen.getAllByRole('button', { name: 'pages.billing.manageBilling' }).length).toBe(2)
+    expect(screen.getAllByRole('button', { name: 'pages.billing.manageBilling' }).length).toBe(1)
   })
 
-  it('shows portal-managed downgrade guidance for paid organizations over limit', async () => {
+  it('keeps portal-managed guidance in the comparison hint instead of a persistent banner', async () => {
     const { AccountBillingRoutePage } = await import('./account-billing-route-page')
 
     render(
@@ -355,11 +383,11 @@ describe('AccountBillingRoutePage', () => {
       />,
     )
 
-    expect(screen.getByText('pages.billing.portalManaged.title')).toBeTruthy()
-    expect(screen.getByText('pages.billing.portalManaged.overLimitDescription')).toBeTruthy()
+    expect(screen.getByText('pages.billing.portalManaged.comparePlansHint')).toBeTruthy()
+    expect(screen.queryByText('pages.billing.portalManaged.title')).toBeNull()
   })
 
-  it('lets portal-managed billing refresh synced status after returning from the portal', async () => {
+  it('does not show manual refresh for steady-state portal-managed billing', async () => {
     const { AccountBillingRoutePage } = await import('./account-billing-route-page')
 
     render(
@@ -371,11 +399,8 @@ describe('AccountBillingRoutePage', () => {
       />,
     )
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'pages.billing.portalManaged.refreshAction' }))
-    })
-
-    expect(mockInvalidate).toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toBeNull()
+    expect(mockInvalidate).not.toHaveBeenCalled()
     expect(mockToastError).not.toHaveBeenCalled()
   })
 
@@ -405,9 +430,10 @@ describe('AccountBillingRoutePage', () => {
     expect(screen.getByText('pages.billing.portalSync.syncingDescription')).toBeTruthy()
     expect(mockNavigate).toHaveBeenCalledWith({
       to: '/account/organization/billing',
-      search: { portal_returned: false },
+      search: {},
       replace: true,
     })
+    expect(screen.queryByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toBeNull()
 
     expect(mockInvalidate).toHaveBeenCalledTimes(1)
 
@@ -417,6 +443,7 @@ describe('AccountBillingRoutePage', () => {
 
     expect(mockInvalidate).toHaveBeenCalledTimes(4)
     expect(screen.getByText('pages.billing.portalSync.waitingDescription')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toBeTruthy()
   })
 
   it('stops retrying early when synced billing state changes after portal return', async () => {
@@ -463,7 +490,7 @@ describe('AccountBillingRoutePage', () => {
         'pages.billing.portalSync.successUpgradeDescription:{"previousPlan":"pages.spaces.plan.starter","previousStatus":"pages.billing.status.active","plan":"pages.spaces.plan.team","status":"pages.billing.status.active"}',
       ),
     ).toBeTruthy()
-    expect(screen.getAllByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toBeNull()
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(12000)

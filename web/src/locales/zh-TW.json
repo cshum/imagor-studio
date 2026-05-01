@@ -1013,8 +1013,10 @@
       "currentPlan": "目前方案",
       "currentPlanDescription": "用量會依計費週期統計，並自動重置。",
       "currentPlanBadge": "目前",
+      "selectedPlanBadge": "已選取",
       "currentPlanButton": "目前方案",
       "manageBilling": "管理計費",
+      "manageBillingTarget": "切換到 {{plan}}",
       "managePlanInBilling": "在計費入口中變更",
       "selectPlan": "選擇方案",
       "priceSuffix": "/月",
@@ -1044,10 +1046,11 @@
         "team": "適合跨多個團隊或品牌管理共享圖片營運的大型組織。"
       },
       "portalManaged": {
-        "title": "付費方案變更需在計費入口完成",
-        "description": "請使用計費入口升級或降級這項訂閱。只有在 Stripe 更新訂閱，且這裡同步的組織狀態刷新後，方案變更才會正式生效。",
-        "overLimitDescription": "請使用計費入口變更這項訂閱。降級後，組織可能會暫時處於超限狀態，直到用量降回限制內，因此現有空間與處理可能持續運作，但受限制的操作仍會維持阻擋。",
-        "refreshAction": "刷新計費狀態"
+        "title": "在計費入口管理方案變更",
+        "description": "請使用計費入口進行升級或降級。Stripe 完成訂閱同步後，變更會顯示在這裡。",
+        "overLimitDescription": "請使用計費入口變更這項訂閱。如果目前用量已高於新方案，受限操作會持續維持阻擋，直到用量降回限制內。",
+        "refreshAction": "立即刷新",
+        "comparePlansHint": "先在這裡比較方案並選擇目標方案，再前往計費入口變更訂閱。"
       },
       "portalSync": {
         "title": "我們正在同步你最新的計費變更",

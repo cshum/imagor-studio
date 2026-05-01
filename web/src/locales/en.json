@@ -969,7 +969,7 @@
       "currentBillingPeriod": "{{start}} - {{end}}",
       "overLimit": {
         "title": "Your organization is over its current plan limits",
-        "description": "Existing spaces continue to work, and production processing is not automatically paused for now, but some actions stay blocked until usage is reduced or the plan is upgraded.",
+        "description": "Some actions stay blocked until usage is reduced or the plan changes. Review billing to see plan details and next steps.",
         "reviewBilling": "Review billing",
         "messages": {
           "spaces": "You can keep existing spaces, but you cannot create more until usage is back within the plan.",
@@ -1001,7 +1001,7 @@
       "titleDescription": "Choose the plan that fits how your team stores, processes, and delivers images.",
       "overLimit": {
         "title": "Your organization is over its current plan limits",
-        "description": "Existing spaces continue to work, and production processing is not automatically paused for now, but some actions stay blocked until usage is reduced or the plan is upgraded.",
+        "description": "Some actions stay blocked until usage is reduced or the plan changes. Review billing to see plan details and next steps.",
         "messages": {
           "spaces": "You can keep existing spaces, but you cannot create more until usage is back within the plan.",
           "storage": "Existing files remain available, but new managed uploads are blocked while storage is over limit.",
@@ -1011,9 +1011,10 @@
       "currentPlan": "Current plan",
       "currentPlanDescription": "Usage is tracked per billing period and resets automatically.",
       "currentPlanBadge": "Current",
+      "selectedPlanBadge": "Selected",
       "currentPlanButton": "Current plan",
       "manageBilling": "Manage billing",
-      "managePlanInBilling": "Change in billing portal",
+      "manageBillingTarget": "Change to {{plan}}",
       "selectPlan": "Choose plan",
       "priceSuffix": "/mo",
       "unlimited": "Unlimited",
@@ -1042,10 +1043,11 @@
         "team": "For organizations managing shared image operations across multiple teams or brands."
       },
       "portalManaged": {
-        "title": "Paid plan changes are managed in the billing portal",
-        "description": "Use the billing portal to upgrade or downgrade this subscription. The plan change becomes final after Stripe updates the subscription and the synced organization state refreshes here.",
-        "overLimitDescription": "Use the billing portal to change this subscription. Downgrades can leave the organization over limit until usage is reduced, so existing spaces and processing may keep running while blocked actions stay restricted.",
-        "refreshAction": "Refresh billing status"
+        "title": "Manage plan changes in the billing portal",
+        "description": "Use the billing portal for upgrades or downgrades. Changes appear here after Stripe syncs the subscription.",
+        "overLimitDescription": "Use the billing portal to change this subscription. If usage is already above the new plan, blocked actions stay restricted until usage is reduced.",
+        "refreshAction": "Refresh now",
+        "comparePlansHint": "Compare plans here, select your target plan, then use the billing portal to change the subscription."
       },
       "portalSync": {
         "title": "We’re syncing your latest billing changes",
