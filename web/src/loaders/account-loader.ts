@@ -106,6 +106,10 @@ export interface OrgMembersLoaderData {
   breadcrumb: BreadcrumbItem
 }
 
+interface OrganizationLoaderOptions {
+  organization?: MyOrganizationQuery['myOrganization']
+}
+
 const ADMIN_GENERAL_REGISTRY_KEYS = [
   'config.app_home_title',
   'config.allow_guest_mode',
@@ -235,8 +239,12 @@ export const usersLoader = async ({
   }
 }
 
-export const billingLoader = async (): Promise<BillingLoaderData> => {
-  const [organization, usageSummary] = await Promise.all([getMyOrganization(), getUsageSummary()])
+export const billingLoader = async ({
+  organization: providedOrganization,
+}: OrganizationLoaderOptions = {}): Promise<BillingLoaderData> => {
+  const organization =
+    providedOrganization === undefined ? await getMyOrganization() : providedOrganization
+  const usageSummary = await getUsageSummary()
 
   return {
     organization,
@@ -261,8 +269,11 @@ export const orgOverviewLoader = async (): Promise<OrgOverviewLoaderData> => {
 
 const isOrganizationAdminRole = (role?: string | null) => role === 'owner' || role === 'admin'
 
-export const orgMembersLoader = async (): Promise<OrgMembersLoaderData> => {
-  const organization = await getMyOrganization()
+export const orgMembersLoader = async ({
+  organization: providedOrganization,
+}: OrganizationLoaderOptions = {}): Promise<OrgMembersLoaderData> => {
+  const organization =
+    providedOrganization === undefined ? await getMyOrganization() : providedOrganization
   const [members, invitations] = await Promise.all([
     listOrgMembers(),
     isOrganizationAdminRole(organization?.currentUserRole)

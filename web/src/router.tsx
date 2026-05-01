@@ -721,13 +721,15 @@ const accountLegacyMembersRoute = createRoute({
 const accountOrganizationLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/organization',
-  beforeLoad: requireOrganizationAccountAuth,
+  beforeLoad: async (context) => {
+    await requireOrganizationAccountAuth(context)
+    return { organization: context.organization }
+  },
   loader: async () => ({
     breadcrumb: { translationKey: 'navigation.breadcrumbs.organization', href: '/' },
-    organization: await getMyOrganization(),
   }),
   component: () => {
-    const { organization } = accountOrganizationLayoutRoute.useLoaderData()
+    const { organization } = accountOrganizationLayoutRoute.useRouteContext()
     return <AccountOrganizationLayout currentUserRole={organization?.currentUserRole ?? null} />
   },
 })
@@ -737,7 +739,7 @@ const accountOrganizationIndexRoute = createRoute({
   path: '/',
   beforeLoad: async (context) => {
     await requireOrganizationAccountAuth(context)
-    const organization = await getMyOrganization()
+    const organization = context.organization
     throw redirect({
       to:
         organization?.currentUserRole === 'owner' || organization?.currentUserRole === 'admin'
@@ -760,7 +762,7 @@ const accountOrganizationBillingRoute = createRoute({
   path: '/billing',
   validateSearch: billingValidateSearch,
   beforeLoad: requireOrganizationAdminAccountAuth,
-  loader: billingLoader,
+  loader: ({ context }) => billingLoader({ organization: context.organization }),
   component: () => {
     const loaderData = accountOrganizationBillingRoute.useLoaderData()
     return <AccountBillingRoutePage loaderData={loaderData} />
@@ -770,7 +772,7 @@ const accountOrganizationBillingRoute = createRoute({
 const accountOrganizationMembersRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/members',
-  loader: orgMembersLoader,
+  loader: ({ context }) => orgMembersLoader({ organization: context.organization }),
   component: () => {
     const loaderData = accountOrganizationMembersRoute.useLoaderData()
     return <AccountMembersRoutePage loaderData={loaderData} />
@@ -780,10 +782,12 @@ const accountOrganizationMembersRoute = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
-  beforeLoad: requireAccountAuth,
-  loader: async () => getMyOrganization(),
+  beforeLoad: async (context) => {
+    await requireAccountAuth(context)
+    return { organization: await getMyOrganization() }
+  },
   component: () => {
-    const organization = accountLayoutRoute.useLoaderData()
+    const { organization } = accountLayoutRoute.useRouteContext()
     return <AccountLayout showOrganizationLink={Boolean(organization)} />
   },
 })
