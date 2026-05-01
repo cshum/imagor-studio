@@ -21,6 +21,7 @@ describe('auth-store refreshAuthSession', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    vi.unstubAllEnvs()
     window.localStorage.clear()
   })
 
@@ -115,5 +116,58 @@ describe('auth-store refreshAuthSession', () => {
 
     expect(mockRefreshToken).not.toHaveBeenCalled()
     expect(result.accessToken).toBe('embedded-token')
+  })
+
+  it('skips guest bootstrap on multi-tenant login routes without a token', async () => {
+    vi.stubEnv('VITE_MULTI_TENANT', 'true')
+
+    const authStoreModule = await import('./auth-store')
+
+    mockCheckFirstRun.mockResolvedValue({
+      isFirstRun: false,
+      multiTenant: true,
+      timestamp: Date.now(),
+    })
+
+    const result = await authStoreModule.initAuth(undefined, '/login')
+
+    expect(mockCheckFirstRun).toHaveBeenCalledTimes(1)
+    expect(mockGuestLogin).not.toHaveBeenCalled()
+    expect(mockGetCurrentUser).not.toHaveBeenCalled()
+    expect(result.state).toBe('unauthenticated')
+  })
+
+  it('still probes guest auth on multi-tenant space routes without a token', async () => {
+    vi.stubEnv('VITE_MULTI_TENANT', 'true')
+
+    const authStoreModule = await import('./auth-store')
+
+    mockCheckFirstRun.mockResolvedValue({
+      isFirstRun: false,
+      multiTenant: true,
+      timestamp: Date.now(),
+    })
+    mockGuestLogin.mockResolvedValue({
+      token: 'guest-token',
+      expiresIn: 3600,
+      user: {
+        id: 'guest-1',
+        displayName: 'Guest',
+        username: 'guest',
+        role: 'guest',
+      },
+    })
+    mockGetCurrentUser.mockResolvedValue({
+      id: 'guest-1',
+      displayName: 'Guest',
+      username: 'guest',
+      role: 'guest',
+    })
+
+    const result = await authStoreModule.initAuth(undefined, '/spaces/acme-space')
+
+    expect(mockGuestLogin).toHaveBeenCalledWith('acme-space')
+    expect(mockGetCurrentUser).toHaveBeenCalledWith('guest-token')
+    expect(result.state).toBe('guest')
   })
 })

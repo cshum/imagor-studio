@@ -4,17 +4,24 @@ import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-co
 
 const userLocaleStorage = new UserRegistryConfigStorage('app_default_language')
 
+interface InitializeLocaleOptions {
+  includeUserRegistry?: boolean
+  includeSystemRegistry?: boolean
+}
+
 /**
  * Initialize locale system
  * Priority: User registry > System registry (read-only default) > Default ('en')
  */
-export const initializeLocale = async () => {
+export const initializeLocale = async (options: InitializeLocaleOptions = {}) => {
+  const { includeUserRegistry = true, includeSystemRegistry = true } = options
+
   try {
     // Try to get from user registry first
-    let storedLocale = await userLocaleStorage.get()
+    let storedLocale = includeUserRegistry ? await userLocaleStorage.get() : null
 
     // If not found in user registry, check system registry as a default
-    if (!storedLocale) {
+    if (!storedLocale && includeSystemRegistry) {
       try {
         const systemRegistryEntries = await getSystemRegistry('config.app_default_language')
         if (systemRegistryEntries && systemRegistryEntries.length > 0) {

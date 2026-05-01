@@ -102,6 +102,8 @@ import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
 import { initializeTheme } from '@/stores/theme-store.ts'
 
+const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
+
 const RootComponent = () => {
   useTitle()
   const { showDialog, setShowDialog } = useLicense()
@@ -954,7 +956,9 @@ initializeSidebar(localSidebarStorage)
 initializeScrollPositions(new SessionConfigStorage('scroll_positions'))
 initializeFolderTreeCache(new SessionConfigStorage('folder_tree'))
 initAuth()
-checkLicense()
+if (!isMultiTenantMode) {
+  checkLicense()
+}
 
 export function AppRouter() {
   const router = useMemo(() => createAppRouter(), [])

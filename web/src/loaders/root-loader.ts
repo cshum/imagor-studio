@@ -15,18 +15,24 @@ export interface RootLoaderData {
 }
 
 export const rootLoader = async (): Promise<RootLoaderData> => {
-  // Initialize locale for all users (guests and authenticated)
-  // This ensures system default language is respected
-  await initializeLocale()
-
   const auth = getAuth()
   if (!auth.accessToken) {
+    if (!auth.multiTenant) {
+      // Unauthenticated self-hosted pages can still use the public system default language,
+      // but there is no user registry to read yet.
+      await initializeLocale({ includeUserRegistry: false, includeSystemRegistry: true })
+    }
     return {}
   }
-  await licenseStore.waitFor((state) => state.isBrandLoaded)
+
+  await initializeLocale()
+
   if (auth.multiTenant) {
     return {}
   }
+
+  await licenseStore.waitFor((state) => state.isBrandLoaded)
+
   // Get home title from the folder tree store
   const folderTreeState = await folderTreeStore.waitFor((state) => state.isHomeTitleLoaded)
   const homeTitle = folderTreeState.homeTitle
