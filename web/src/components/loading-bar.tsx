@@ -54,7 +54,9 @@ export function LoadingBar({ isLoading, theme = 'auto', size = 'default' }: Load
   const heightClassName = size === 'thin' ? 'h-px' : 'h-0.75'
 
   return (
-    <div className={`fixed top-0 left-0 ${heightClassName} w-full ${themeClasses.background} z-[100]`}>
+    <div
+      className={`fixed top-0 left-0 ${heightClassName} w-full ${themeClasses.background} z-[100]`}
+    >
       <div
         className={`h-full ${themeClasses.bar} transition-all duration-200 ease-out`}
         style={{ width: `${progress}%` }}

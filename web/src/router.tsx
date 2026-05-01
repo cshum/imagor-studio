@@ -7,11 +7,9 @@ import {
   Outlet,
   redirect,
   RouterProvider,
-  useRouterState,
 } from '@tanstack/react-router'
 
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
-import { LoadingBar } from '@/components/loading-bar'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
 import { useTitle } from '@/hooks/use-title'
@@ -110,21 +108,9 @@ const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
 const RootComponent = () => {
   useTitle()
   const { showDialog, setShowDialog } = useLicense()
-  const { isLoading, location, pendingMatches } = useRouterState()
-  const pendingMatch = pendingMatches?.[pendingMatches.length - 1] as
-    | { pathname?: string; routeId?: string }
-    | undefined
-  const pendingPathname = pendingMatch?.pathname ? String(pendingMatch.pathname) : ''
-  const pendingRouteId = pendingMatch?.routeId ? String(pendingMatch.routeId) : ''
-  const showRootSpacesTransitionBar =
-    isLoading &&
-    location.pathname === '/' &&
-    pendingPathname.startsWith('/spaces/') &&
-    !pendingRouteId.includes('$imageKey')
 
   return (
     <>
-      {showRootSpacesTransitionBar && <LoadingBar isLoading={isLoading} size='thin' />}
       <Outlet />
       <Toaster />
       <LicenseActivationDialog open={showDialog} onOpenChange={setShowDialog} />
