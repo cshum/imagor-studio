@@ -73,10 +73,7 @@
     "login": {
       "eyebrow": "Imagor Studio",
       "title": "適合團隊的高效能圖片處理",
-      "subtitle": "在同一個地方管理圖片儲存、交付與存取權限。",
       "formTitle": "登入",
-      "formSubtitleCloud": "請使用團隊邀請您的帳號登入。",
-      "formSubtitleSelfHosted": "請使用您的帳號憑證登入。",
       "googleCta": "使用 Google 繼續",
       "credentialsDividerCloud": "或使用電子郵件與密碼",
       "credentialsDividerSelfHosted": "或使用使用者名稱與密碼",
@@ -84,7 +81,6 @@
       "identifierLabelSelfHosted": "使用者名稱",
       "identifierPlaceholderCloud": "",
       "identifierPlaceholderSelfHosted": "輸入您的使用者名稱",
-      "inviteHint": "使用您的團隊帳號登入，以存取共享空間、交付設定與儲存配置。",
       "highlights": {
         "storage": "依團隊或環境控管儲存與交付",
         "delivery": "無須共用憑證即可管理圖片基礎架構",
@@ -871,6 +867,7 @@
       "noOrganizationTitle": "先建立組織再開始使用",
       "noOrganizationBannerTitle": "建立你自己的組織",
       "noOrganizationBannerDescription": "你仍可繼續使用共享空間，但這個帳號已經沒有個人組織。建立一個組織即可恢復你自己的工作區與管理流程。",
+      "noSpacesAvailable": "目前尚無可用空間",
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
@@ -905,6 +902,7 @@
       "description": "為你的團隊、品牌或環境建立並管理圖片工作空間。",
       "emptyDescription": "建立你的第一個圖片工作空間，用於上傳、處理與交付圖片。",
       "emptyDescriptionNoOrganization": "此帳戶還沒有個人組織。",
+      "emptyDescriptionMember": "您目前尚未獲得任何圖片處理空間的存取權。",
       "settings": "設定",
       "spaceCount": "{{count}} 個空間",
       "openGallery": "開啟相簿",
@@ -984,6 +982,7 @@
       },
       "startDescription": "您可以隨著成長逐步自訂儲存、交付與存取權限。",
       "startDescriptionNoOrganization": "先建立一個個人組織，之後再回到這裡建立空間或接收既有空間的存取權。",
+      "startDescriptionMember": "請洽組織管理員建立空間，或與您共享現有空間。",
       "sharedLabel": "共享",
       "leaveSpace": "離開",
       "leaveSpaceDescription": "離開這個共享空間",
@@ -1208,6 +1207,9 @@
       },
       "general": {
         "description": "此空間的基本資訊。",
+        "identity": "識別",
+        "access": "存取",
+        "experience": "體驗",
         "name": "顯示名稱",
         "nameDescription": "導覽列中和空間清單中顯示的名稱。",
         "updateForbidden": "您沒有管理此空間的權限。",
@@ -1311,6 +1313,8 @@
       },
       "imagor": {
         "description": "為此空間設定 imagor 設定。",
+        "media": "媒體",
+        "mediaDescription": "控制此空間的影片縮圖生成方式。",
         "urlSigning": "URL 簽名",
         "urlSigningDescription": "大多數空間都可以使用工作區預設值。只有當此空間需要以不同方式簽署 imagor URL 時，才設定自訂金鑰。",
         "urlSigningSecret": "URL 簽名金鑰",

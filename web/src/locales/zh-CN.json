@@ -3,26 +3,15 @@
     "account": {
       "title": "设置",
       "backToApp": "返回应用",
-      "secretMode": "密钥来源",
-      "secretModeDescription": "选择此空间是保留当前签名配置、使用工作区默认值，还是使用自己的自定义签名密钥。",
-      "secretModeKeep": "保留当前配置",
-      "secretModeKeepDescription": "在不显示当前密钥的情况下保留现有密钥。适用于只想更新其他签名设置时。",
-      "secretModeWorkspace": "使用工作区默认值",
-      "secretModeWorkspaceDescription": "移除此空间的自定义密钥，并继承工作区签名配置。",
-      "secretModeCustom": "设置自定义密钥",
-      "secretModeCustomDescription": "为此空间使用不同的签名密钥。保存后该值将保持隐藏。",
-      "imagorSecret": "URL 签名密钥",
-      "imagorSecretDescription": "仅在此空间使用自定义签名密钥时生效。输入新值会替换现有密钥。",
-      "imagorSecretHiddenHint": "已保存的密钥不会显示。选择“设置自定义密钥”可替换，或选择“使用工作区默认值”以移除覆盖。",
-      "signerAlgorithm": "签名算法",
-      "signerAlgorithmDescription": "当此空间使用自定义密钥时，用于签署变换 URL 的 HMAC 算法。",
-      "signerAlgorithmInheritedDescription": "使用工作区默认密钥时，此空间将继承工作区签名算法。",
+      "sections": {
+        "account": "账户",
+        "administration": "管理"
+      },
       "tabs": {
         "profile": "账户设置",
         "billing": "计费",
         "system": "系统",
-        "signerTruncateDescription": "将 URL 签名缩短为此字符长度。值越小，URL 越短，但安全性越低。使用 0 表示完整签名。",
-        "signerTruncateInheritedDescription": "使用工作区默认密钥时，此空间将继承工作区签名长度。",
+        "users": "用户",
         "spaces": "空间"
       }
     }
@@ -32,10 +21,6 @@
     "buttons": {
       "save": "保存",
       "cancel": "取消",
-      "corsOrigins": "附加 CORS 来源",
-      "corsOriginsDescription": "允许额外的浏览器来源访问此空间的 imagor 响应。",
-      "corsOriginsHelp": "输入以逗号分隔的来源列表，例如：https://editor.customer.test, https://cms.customer.test",
-      "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
       "delete": "删除",
       "remove": "移除",
       "edit": "编辑",
@@ -85,10 +70,12 @@
     }
   },
   "forms": {
-    "enterUsername": "输入您的用户名",
-    "enterPassword": "输入您的密码",
-    "confirmPassword": "确认您的密码",
-    "enterName": "输入您的名称",
+    "placeholders": {
+      "enterUsername": "输入您的用户名",
+      "enterPassword": "输入您的密码",
+      "confirmPassword": "确认您的密码",
+      "enterName": "输入您的名称"
+    },
     "validation": {
       "required": "此字段为必填项",
       "invalidUsername": "请输入有效的用户名",
@@ -815,6 +802,7 @@
       "noOrganizationTitle": "先创建组织再开始使用",
       "noOrganizationBannerTitle": "创建你自己的组织",
       "noOrganizationBannerDescription": "你仍可继续使用共享空间，但这个账号已经没有个人组织。创建一个组织即可恢复你自己的工作区和管理功能。",
+      "noSpacesAvailable": "目前还没有可用空间",
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
@@ -849,6 +837,7 @@
       "description": "为你的团队、品牌或环境创建并管理图片工作空间。",
       "emptyDescription": "创建你的第一个图片工作空间，用于上传、处理和交付图片。",
       "emptyDescriptionNoOrganization": "此账户还没有个人组织。",
+      "emptyDescriptionMember": "你目前还没有任何图片处理空间的访问权限。",
       "settings": "设置",
       "spaceCount": "{{count}} 个空间",
       "openGallery": "打开图库",
@@ -927,6 +916,7 @@
       },
       "startDescription": "您可以随着成长逐步自定义存储、交付和访问权限。",
       "startDescriptionNoOrganization": "现在先创建一个个人组织，然后回到这里创建空间或接收现有空间的访问权限。",
+      "startDescriptionMember": "请组织管理员创建一个空间，或将现有空间共享给你。",
       "sharedLabel": "共享",
       "leaveSpace": "离开",
       "leaveSpaceDescription": "离开这个共享空间",
@@ -1151,6 +1141,9 @@
       },
       "general": {
         "description": "此空间的基本信息。",
+        "identity": "标识",
+        "access": "访问",
+        "experience": "体验",
         "name": "显示名称",
         "nameDescription": "导航栏和空间列表中显示的名称。",
         "updateForbidden": "你没有管理这个空间的权限。",
@@ -1254,6 +1247,8 @@
       },
       "imagor": {
         "description": "为此空间配置 imagor 设置。",
+        "media": "媒体",
+        "mediaDescription": "控制此空间的视频缩略图生成方式。",
         "urlSigning": "URL 签名",
         "urlSigningDescription": "大多数空间都可以使用工作区默认值。只有当此空间需要以不同方式签署 imagor URL 时，才设置自定义密钥。",
         "urlSigningSecret": "URL 签名密钥",
@@ -1288,6 +1283,10 @@
         "signerTruncatePreviewDescription": "此空间自定义签名器当前使用的签名长度。",
         "signerTruncateDescription": "将 URL 签名缩短为此字符长度。值越小，URL 越短，但安全性越低。使用 0 表示完整签名。",
         "signerTruncateInheritedDescription": "使用工作区默认密钥时，此空间将继承工作区签名长度。",
+        "corsOrigins": "附加 CORS 来源",
+        "corsOriginsDescription": "允许额外的浏览器来源访问此空间的 imagor 响应。",
+        "corsOriginsHelp": "输入以逗号分隔的来源列表，例如：https://editor.customer.test, https://cms.customer.test",
+        "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
         "saved": "安全设置已保存",
         "customSecretSaved": "自定义 URL 签名密钥已保存",
         "workspaceDefaultRestored": "已恢复工作区默认签名密钥",
@@ -1591,10 +1590,7 @@
     "login": {
       "eyebrow": "Imagor Studio",
       "title": "适合团队的高性能图片处理",
-      "subtitle": "在一个地方管理图片存储、交付和访问权限。",
       "formTitle": "登录",
-      "formSubtitleCloud": "请使用团队邀请你的账号登录。",
-      "formSubtitleSelfHosted": "请使用你的账户凭证登录。",
       "googleCta": "使用 Google 继续",
       "credentialsDividerCloud": "或使用邮箱和密码",
       "credentialsDividerSelfHosted": "或使用用户名和密码",
@@ -1602,7 +1598,6 @@
       "identifierLabelSelfHosted": "用户名",
       "identifierPlaceholderCloud": "",
       "identifierPlaceholderSelfHosted": "输入你的用户名",
-      "inviteHint": "使用你的团队账号登录，以访问共享空间、交付设置和存储配置。",
       "highlights": {
         "storage": "按团队或环境控制存储与交付",
         "delivery": "无需共享凭证即可管理图片基础设施",

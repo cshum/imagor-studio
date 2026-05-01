@@ -1209,6 +1209,9 @@
       },
       "general": {
         "description": "Basic information about this space.",
+        "identity": "Identity",
+        "access": "Access",
+        "experience": "Experience",
         "name": "Display Name",
         "nameDescription": "The name shown in the navigation and spaces list.",
         "updateForbidden": "You do not have permission to manage this space.",
@@ -1320,6 +1323,8 @@
       },
       "imagor": {
         "description": "Configure imagor settings for this space.",
+        "media": "Media",
+        "mediaDescription": "Control how video thumbnails are generated for this space.",
         "urlSigning": "URL Signing",
         "urlSigningDescription": "Most spaces can use the workspace default. Set a custom secret only if this space must sign imagor URLs differently.",
         "urlSigningSecret": "URL Signing Secret",
