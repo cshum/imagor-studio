@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BillingLoaderData } from '@/loaders/account-loader'
 
 const mockNavigate = vi.fn()
+const mockInvalidate = vi.fn()
 const mockCreateCheckoutSession = vi.fn()
 const mockCreateBillingPortalSession = vi.fn()
 const mockDeleteOrganization = vi.fn()
@@ -20,6 +21,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => mockNavigate,
+  useRouter: () => ({ invalidate: mockInvalidate }),
 }))
 
 vi.mock('lucide-react', () => {
@@ -143,6 +145,7 @@ describe('AccountBillingRoutePage', () => {
     mockCreateBillingPortalSession.mockResolvedValue({ url: 'https://billing.example/portal' })
     mockDeleteOrganization.mockResolvedValue(true)
     mockLogout.mockResolvedValue(undefined)
+    mockInvalidate.mockResolvedValue(undefined)
   })
 
   it('starts checkout for a trial organization selecting a paid plan', async () => {
@@ -198,18 +201,15 @@ describe('AccountBillingRoutePage', () => {
       />,
     )
 
-    const planButtons = screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })
+    const planButtons = screen.getAllByRole('button', { name: 'pages.billing.managePlanInBilling' })
     expect(planButtons).toHaveLength(2)
-    expect(planButtons.every((button) => (button as HTMLButtonElement).disabled)).toBe(true)
-
-    fireEvent.click(planButtons[0])
-    fireEvent.click(planButtons[1])
-
-    expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
+    expect(planButtons.every((button) => !(button as HTMLButtonElement).disabled)).toBe(true)
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'pages.billing.manageBilling' }))
+      fireEvent.click(planButtons[0])
     })
+
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
 
     expect(mockCreateBillingPortalSession).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -235,14 +235,20 @@ describe('AccountBillingRoutePage', () => {
         .disabled,
     ).toBe(true)
 
-    const planButtons = screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })
+    const planButtons = screen.getAllByRole('button', { name: 'pages.billing.managePlanInBilling' })
     expect(planButtons).toHaveLength(2)
-    expect(planButtons.every((button) => (button as HTMLButtonElement).disabled)).toBe(true)
+    expect(planButtons.every((button) => !(button as HTMLButtonElement).disabled)).toBe(true)
 
-    fireEvent.click(planButtons[0])
-    fireEvent.click(planButtons[1])
+    await act(async () => {
+      fireEvent.click(planButtons[0])
+    })
 
     expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
+    expect(mockCreateBillingPortalSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        returnURL: expect.any(String),
+      }),
+    )
   })
 
   it('shows the existing sanitized portal error path when portal creation fails', async () => {
@@ -322,5 +328,47 @@ describe('AccountBillingRoutePage', () => {
     expect(screen.getByText('pages.billing.overLimit.description')).toBeTruthy()
     expect(screen.getByText('pages.billing.overLimit.messages.processing')).toBeTruthy()
     expect(screen.getAllByRole('button', { name: 'pages.billing.manageBilling' }).length).toBe(2)
+  })
+
+  it('shows portal-managed downgrade guidance for paid organizations over limit', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+
+    render(
+      <AccountBillingRoutePage
+        loaderData={createLoaderData(
+          {
+            plan: 'pro',
+            planStatus: 'active',
+          },
+          {
+            usedHostedStorageBytes: 3 * 1024 * 1024 * 1024,
+            storageLimitGB: 2,
+          },
+        )}
+      />,
+    )
+
+    expect(screen.getByText('pages.billing.portalManaged.title')).toBeTruthy()
+    expect(screen.getByText('pages.billing.portalManaged.overLimitDescription')).toBeTruthy()
+  })
+
+  it('lets portal-managed billing refresh synced status after returning from the portal', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+
+    render(
+      <AccountBillingRoutePage
+        loaderData={createLoaderData({
+          plan: 'team',
+          planStatus: 'active',
+        })}
+      />,
+    )
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'pages.billing.portalManaged.refreshAction' }))
+    })
+
+    expect(mockInvalidate).toHaveBeenCalled()
+    expect(mockToastError).not.toHaveBeenCalled()
   })
 })

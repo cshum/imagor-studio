@@ -1014,6 +1014,7 @@
       "currentPlanBadge": "Attuale",
       "currentPlanButton": "Piano attuale",
       "manageBilling": "Gestisci fatturazione",
+      "managePlanInBilling": "Modifica nel portale di fatturazione",
       "selectPlan": "Scegli piano",
       "priceSuffix": "/mese",
       "unlimited": "Illimitato",
@@ -1040,6 +1041,12 @@
         "starter": "Per team che vogliono lanciare una pipeline immagini di produzione con storage ospitato incluso.",
         "pro": "Per team in crescita che gestiscono più flussi immagini, domini personalizzati e volumi mensili più alti.",
         "team": "Per organizzazioni che gestiscono operazioni immagini condivise tra più team o brand."
+      },
+      "portalManaged": {
+        "title": "Le modifiche ai piani a pagamento si gestiscono nel portale di fatturazione",
+        "description": "Usa il portale di fatturazione per effettuare upgrade o downgrade di questo abbonamento. La modifica del piano diventa definitiva dopo l'aggiornamento della sottoscrizione in Stripe e il refresh qui dello stato sincronizzato dell'organizzazione.",
+        "overLimitDescription": "Usa il portale di fatturazione per modificare questo abbonamento. Un downgrade può lasciare l'organizzazione oltre i limiti finché l'utilizzo non viene ridotto, quindi gli spazi esistenti e il processing possono continuare mentre le azioni bloccate restano limitate.",
+        "refreshAction": "Aggiorna stato fatturazione"
       },
       "sharedFeaturesTitle": "Ogni piano a pagamento include anche",
       "sharedFeatures": {
@@ -1068,7 +1075,8 @@
       },
       "messages": {
         "checkoutFailed": "Impossibile avviare il checkout",
-        "portalFailed": "Impossibile aprire il portale di fatturazione"
+        "portalFailed": "Impossibile aprire il portale di fatturazione",
+        "refreshFailed": "Impossibile aggiornare lo stato della fatturazione"
       }
     },
     "organizationMembers": {

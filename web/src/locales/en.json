@@ -1013,6 +1013,7 @@
       "currentPlanBadge": "Current",
       "currentPlanButton": "Current plan",
       "manageBilling": "Manage billing",
+      "managePlanInBilling": "Change in billing portal",
       "selectPlan": "Choose plan",
       "priceSuffix": "/mo",
       "unlimited": "Unlimited",
@@ -1039,6 +1040,12 @@
         "starter": "For teams launching one production image pipeline with hosted storage included.",
         "pro": "For growing teams running multiple image workflows with custom domains and higher monthly volume.",
         "team": "For organizations managing shared image operations across multiple teams or brands."
+      },
+      "portalManaged": {
+        "title": "Paid plan changes are managed in the billing portal",
+        "description": "Use the billing portal to upgrade or downgrade this subscription. The plan change becomes final after Stripe updates the subscription and the synced organization state refreshes here.",
+        "overLimitDescription": "Use the billing portal to change this subscription. Downgrades can leave the organization over limit until usage is reduced, so existing spaces and processing may keep running while blocked actions stay restricted.",
+        "refreshAction": "Refresh billing status"
       },
       "sharedFeaturesTitle": "Every paid plan also includes",
       "sharedFeatures": {
@@ -1067,7 +1074,8 @@
       },
       "messages": {
         "checkoutFailed": "Failed to start checkout",
-        "portalFailed": "Failed to open billing portal"
+        "portalFailed": "Failed to open billing portal",
+        "refreshFailed": "Failed to refresh billing status"
       }
     },
     "organizationMembers": {

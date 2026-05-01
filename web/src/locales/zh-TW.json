@@ -1015,6 +1015,7 @@
       "currentPlanBadge": "目前",
       "currentPlanButton": "目前方案",
       "manageBilling": "管理計費",
+      "managePlanInBilling": "在計費入口中變更",
       "selectPlan": "選擇方案",
       "priceSuffix": "/月",
       "unlimited": "不限",
@@ -1041,6 +1042,12 @@
         "starter": "適合要上線單一正式圖片處理流程，並直接使用託管儲存的團隊。",
         "pro": "適合管理多條圖片流程、需要自訂網域與更高月處理量的成長團隊。",
         "team": "適合跨多個團隊或品牌管理共享圖片營運的大型組織。"
+      },
+      "portalManaged": {
+        "title": "付費方案變更需在計費入口完成",
+        "description": "請使用計費入口升級或降級這項訂閱。只有在 Stripe 更新訂閱，且這裡同步的組織狀態刷新後，方案變更才會正式生效。",
+        "overLimitDescription": "請使用計費入口變更這項訂閱。降級後，組織可能會暫時處於超限狀態，直到用量降回限制內，因此現有空間與處理可能持續運作，但受限制的操作仍會維持阻擋。",
+        "refreshAction": "刷新計費狀態"
       },
       "sharedFeaturesTitle": "所有付費方案另外皆包含",
       "sharedFeatures": {
@@ -1069,7 +1076,8 @@
       },
       "messages": {
         "checkoutFailed": "無法啟動結帳流程",
-        "portalFailed": "無法開啟計費入口"
+        "portalFailed": "無法開啟計費入口",
+        "refreshFailed": "無法刷新計費狀態"
       }
     },
     "organizationMembers": {

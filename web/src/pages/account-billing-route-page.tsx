@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -86,9 +86,11 @@ function getDeleteOrganizationErrorMessage(error: unknown, t: (key: string) => s
 export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const router = useRouter()
   const { logout } = useAuth()
   const [pendingPlan, setPendingPlan] = useState<string | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
+  const [refreshLoading, setRefreshLoading] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [dangerZoneOpen, setDangerZoneOpen] = useState(false)
@@ -218,6 +220,18 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     }
   }
 
+  const handleRefreshBillingStatus = async () => {
+    setRefreshLoading(true)
+    try {
+      await router.invalidate()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('common.status.error')
+      toast.error(`${t('pages.billing.messages.refreshFailed')}: ${message}`)
+    } finally {
+      setRefreshLoading(false)
+    }
+  }
+
   const handleDeleteOrganization = async () => {
     setDeleteLoading(true)
     try {
@@ -341,14 +355,43 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
       )}
 
+      {isPortalManagedBilling && (
+        <div className='bg-muted/20 rounded-lg border p-4'>
+          <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+            <div>
+              <p className='text-sm font-medium'>{t('pages.billing.portalManaged.title')}</p>
+              <p className='text-muted-foreground mt-1 text-sm'>
+                {t(
+                  hasAnyOverLimit
+                    ? 'pages.billing.portalManaged.overLimitDescription'
+                    : 'pages.billing.portalManaged.description',
+                )}
+              </p>
+            </div>
+
+            <ButtonWithLoading
+              variant='outline'
+              isLoading={refreshLoading}
+              onClick={handleRefreshBillingStatus}
+              className='w-full shrink-0 sm:w-auto'
+            >
+              {t('pages.billing.portalManaged.refreshAction')}
+            </ButtonWithLoading>
+          </div>
+        </div>
+      )}
+
       <div className='grid gap-4 xl:grid-cols-3'>
         {PAID_PLANS.map((plan) => {
           const entitlements = getPlanEntitlements(plan)
           const isCurrentPlan = plan === currentPlan
-          const isPlanActionDisabled = isCurrentPlan || isPortalManagedBilling
+          const isPortalManagedPlanAction = isPortalManagedBilling && !isCurrentPlan
+          const isPlanActionDisabled = isCurrentPlan
           const buttonLabel = isCurrentPlan
             ? t('pages.billing.currentPlanButton')
-            : t('pages.billing.selectPlan')
+            : isPortalManagedPlanAction
+              ? t('pages.billing.managePlanInBilling')
+              : t('pages.billing.selectPlan')
           const customDomainAllowance = entitlements.maxCustomDomains
 
           return (
@@ -395,9 +438,16 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                 </div>
 
                 <ButtonWithLoading
-                  isLoading={pendingPlan === plan}
+                  isLoading={isPortalManagedPlanAction ? portalLoading : pendingPlan === plan}
                   disabled={isPlanActionDisabled}
-                  onClick={() => handleCheckout(plan)}
+                  onClick={() => {
+                    if (isPortalManagedPlanAction) {
+                      void handleManageBilling()
+                      return
+                    }
+
+                    void handleCheckout(plan)
+                  }}
                   className='w-full'
                 >
                   {buttonLabel}

@@ -959,6 +959,7 @@
       "currentPlanBadge": "当前",
       "currentPlanButton": "当前套餐",
       "manageBilling": "管理计费",
+      "managePlanInBilling": "在计费门户中更改",
       "selectPlan": "选择套餐",
       "priceSuffix": "/月",
       "unlimited": "不限",
@@ -985,6 +986,12 @@
         "starter": "适合要上线单个正式图片处理流程，并直接使用平台存储的团队。",
         "pro": "适合管理多条图片流程、需要自定义域名和更高月处理量的成长团队。",
         "team": "适合跨多个团队或品牌管理共享图片运营的大型组织。"
+      },
+      "portalManaged": {
+        "title": "付费套餐变更需在计费门户中完成",
+        "description": "请使用计费门户升级或降级此订阅。只有在 Stripe 更新订阅并且这里的组织同步状态刷新后，套餐变更才会最终生效。",
+        "overLimitDescription": "请使用计费门户变更此订阅。降级后，组织可能会暂时处于超限状态，直到用量回落，因此现有空间和处理可能继续运行，但被限制的操作仍会保持阻止。",
+        "refreshAction": "刷新计费状态"
       },
       "sharedFeaturesTitle": "所有付费套餐另外均包含",
       "sharedFeatures": {
@@ -1013,7 +1020,8 @@
       },
       "messages": {
         "checkoutFailed": "无法启动结账流程",
-        "portalFailed": "无法打开计费门户"
+        "portalFailed": "无法打开计费门户",
+        "refreshFailed": "无法刷新计费状态"
       }
     },
     "organizationMembers": {
