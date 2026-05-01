@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { BillingLoaderData } from '@/loaders/account-loader'
 
@@ -136,6 +136,7 @@ function createLoaderData(
 describe('AccountBillingRoutePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useRealTimers()
     mockNavigate.mockResolvedValue(undefined)
     vi.stubGlobal('location', {
       ...window.location,
@@ -147,6 +148,10 @@ describe('AccountBillingRoutePage', () => {
     mockDeleteOrganization.mockResolvedValue(true)
     mockLogout.mockResolvedValue(undefined)
     mockInvalidate.mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('starts checkout for a trial organization selecting a paid plan', async () => {
@@ -373,8 +378,9 @@ describe('AccountBillingRoutePage', () => {
     expect(mockToastError).not.toHaveBeenCalled()
   })
 
-  it('auto-refreshes once and shows a syncing banner after returning from the billing portal', async () => {
+  it('retries billing sync after returning from the billing portal before falling back to waiting state', async () => {
     const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+    vi.useFakeTimers()
     vi.stubGlobal('location', {
       ...window.location,
       assign: mockLocationAssign,
@@ -395,12 +401,67 @@ describe('AccountBillingRoutePage', () => {
     })
 
     expect(screen.getByText('pages.billing.portalSync.title')).toBeTruthy()
-    expect(screen.getByText('pages.billing.portalSync.waitingDescription')).toBeTruthy()
+    expect(screen.getByText('pages.billing.portalSync.syncingDescription')).toBeTruthy()
     expect(mockNavigate).toHaveBeenCalledWith({
       to: '/account/organization/billing',
       search: { portal_returned: false },
       replace: true,
     })
-    expect(mockInvalidate).toHaveBeenCalled()
+
+    expect(mockInvalidate).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(12000)
+    })
+
+    expect(mockInvalidate).toHaveBeenCalledTimes(4)
+    expect(screen.getByText('pages.billing.portalSync.waitingDescription')).toBeTruthy()
+  })
+
+  it('stops retrying early when synced billing state changes after portal return', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+    vi.useFakeTimers()
+    vi.stubGlobal('location', {
+      ...window.location,
+      assign: mockLocationAssign,
+      href: 'http://localhost/account/organization/billing?portal_returned=1',
+      search: '?portal_returned=1',
+    })
+
+    const view = render(
+      <AccountBillingRoutePage
+        loaderData={createLoaderData({
+          plan: 'starter',
+          planStatus: 'active',
+        })}
+      />,
+    )
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(mockInvalidate).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('pages.billing.portalSync.syncingDescription')).toBeTruthy()
+
+    await act(async () => {
+      view.rerender(
+        <AccountBillingRoutePage
+          loaderData={createLoaderData({
+            plan: 'team',
+            planStatus: 'active',
+          })}
+        />,
+      )
+      await Promise.resolve()
+    })
+
+    expect(screen.queryByText('pages.billing.portalSync.title')).toBeNull()
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(12000)
+    })
+
+    expect(mockInvalidate).toHaveBeenCalledTimes(1)
   })
 })

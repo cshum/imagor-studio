@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { ChevronDown, ChevronRight } from 'lucide-react'
@@ -32,10 +32,17 @@ interface AccountBillingRoutePageProps {
 
 const PAID_PLANS = ['starter', 'pro', 'team'] as const
 const PORTAL_MANAGED_STATUSES = ['active', 'trialing', 'past_due'] as const
+const PORTAL_SYNC_RETRY_DELAYS_MS = [0, 4000, 4000, 4000] as const
 const PLAN_PRICES: Record<(typeof PAID_PLANS)[number], string> = {
   starter: '$19',
   pro: '$69',
   team: '$199',
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
 }
 
 function formatBytes(bytes: number) {
@@ -96,6 +103,8 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const [refreshLoading, setRefreshLoading] = useState(false)
   const [showPortalSyncNotice, setShowPortalSyncNotice] = useState(portalReturned)
   const [portalSyncing, setPortalSyncing] = useState(portalReturned)
+  const portalSyncBaselineRef = useRef<{ plan: string; status: string } | null>(null)
+  const portalSyncActiveRef = useRef(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [dangerZoneOpen, setDangerZoneOpen] = useState(false)
@@ -242,11 +251,29 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   }
 
   useEffect(() => {
+    const baseline = portalSyncBaselineRef.current
+    if (!portalSyncActiveRef.current || baseline == null) {
+      return
+    }
+
+    if (baseline.plan === currentPlan && baseline.status === currentStatus) {
+      return
+    }
+
+    portalSyncActiveRef.current = false
+    portalSyncBaselineRef.current = null
+    setPortalSyncing(false)
+    setShowPortalSyncNotice(false)
+  }, [currentPlan, currentStatus])
+
+  useEffect(() => {
     if (!portalReturned) {
       return
     }
 
     let cancelled = false
+    portalSyncBaselineRef.current = { plan: currentPlan, status: currentStatus }
+    portalSyncActiveRef.current = true
 
     setShowPortalSyncNotice(true)
     setPortalSyncing(true)
@@ -257,14 +284,31 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       replace: true,
     })
 
-    void handleRefreshBillingStatus({ silent: true }).finally(() => {
-      if (!cancelled) {
-        setPortalSyncing(false)
+    void (async () => {
+      for (const delayMs of PORTAL_SYNC_RETRY_DELAYS_MS) {
+        if (delayMs > 0) {
+          await wait(delayMs)
+        }
+
+        if (cancelled || !portalSyncActiveRef.current) {
+          return
+        }
+
+        await handleRefreshBillingStatus({ silent: true })
+
+        if (cancelled || !portalSyncActiveRef.current) {
+          return
+        }
       }
-    })
+
+      portalSyncActiveRef.current = false
+      portalSyncBaselineRef.current = null
+      setPortalSyncing(false)
+    })()
 
     return () => {
       cancelled = true
+      portalSyncActiveRef.current = false
     }
   }, [navigate, portalReturned])
 
