@@ -31,6 +31,7 @@ import {
   orgMembersLoader,
   profileLoader,
   resolveSpaceSettingsRouteContext,
+  spacesLoader,
   usersLoader,
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
@@ -233,12 +234,14 @@ const rootPath = createRoute({
   beforeLoad: async (context) => {
     const auth = getAuth()
     if (auth.multiTenant) {
-      return requireAccountAuth(context)
+      await requireAccountAuth(context)
+      return { spacesData: await spacesLoader() }
     }
   },
   component: () => {
-    const loaderData = rootPath.useLoaderData()
-    return <RootPage loaderData={loaderData} />
+    const { spacesData } = rootPath.useRouteContext()
+    const galleryLoaderData = rootPath.useLoaderData()
+    return <RootPage spacesData={spacesData} galleryLoaderData={galleryLoaderData} />
   },
   loader: rootPageLoader,
   shouldReload: false,
@@ -252,6 +255,9 @@ const rootImagePage = createRoute({
     const galleryLoaderData = rootPath.useLoaderData()
     const imageLoaderData = rootImagePage.useLoaderData()
     const { imageKey } = rootImagePage.useParams()
+    if (!galleryLoaderData) {
+      throw new Error('Root image route requires gallery loader data')
+    }
     return (
       <ImagePage
         imageLoaderData={imageLoaderData}
