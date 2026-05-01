@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+import { cn } from '@/lib/utils'
+
 interface LoadingBarProps {
   isLoading: boolean
   theme?: 'light' | 'dark' | 'auto'
@@ -51,14 +53,14 @@ export function LoadingBar({ isLoading, theme = 'auto', size = 'default' }: Load
   if (progress === 0) return null
 
   const themeClasses = themeClassesMap[theme] || themeClassesMap.auto
-  const heightClassName = size === 'thin' ? 'h-px' : 'h-0.75'
+  const heightClassName = size === 'thin' ? 'h-0.5' : 'h-0.75'
+  const backgroundClassName = cn(themeClasses.background, size === 'thin' && 'opacity-40')
+  const barClassName = cn(themeClasses.bar, size === 'thin' && 'opacity-95')
 
   return (
-    <div
-      className={`fixed top-0 left-0 ${heightClassName} w-full ${themeClasses.background} z-[100]`}
-    >
+    <div className={cn('fixed top-0 left-0 z-[100] w-full', heightClassName, backgroundClassName)}>
       <div
-        className={`h-full ${themeClasses.bar} transition-all duration-200 ease-out`}
+        className={cn('h-full transition-all duration-200 ease-out', barClassName)}
         style={{ width: `${progress}%` }}
       />
     </div>
