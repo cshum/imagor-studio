@@ -16,6 +16,7 @@ import type { SpaceIdentity } from '@/lib/space'
 import { getScopedUserRegistryValues, setScopedUserRegistryValue } from '@/lib/user-config'
 import { useAuth } from '@/stores/auth-store'
 import { ensureFolderTreeReady } from '@/stores/folder-tree-store'
+
 import type { FilePickerListItem } from './file-picker-content'
 
 export interface FilePickerSelection {
@@ -64,7 +65,9 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   const { authState } = useAuth()
   const [currentPath, setDialogCurrentPath] = useState<string>(initialPath || '')
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set())
-  const [currentItemsByPath, setCurrentItemsByPath] = useState<Record<string, FilePickerListItem>>({})
+  const [currentItemsByPath, setCurrentItemsByPath] = useState<Record<string, FilePickerListItem>>(
+    {},
+  )
   const [dialogSessionKey, setDialogSessionKey] = useState(0)
 
   const dialogTitle = title || t('components.filePicker.title')

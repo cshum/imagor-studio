@@ -1511,6 +1511,38 @@ export type GetSystemRegistryQuery = {
   }>
 }
 
+export type GetResolvedGalleryDisplayPreferencesQueryVariables = Exact<{
+  includeUser: Scalars['Boolean']['input']
+  includeSpace: Scalars['Boolean']['input']
+  userKeys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
+  ownerID?: InputMaybe<Scalars['String']['input']>
+  spaceID: Scalars['String']['input']
+  systemKeys: Array<Scalars['String']['input']> | Scalars['String']['input']
+}>
+
+export type GetResolvedGalleryDisplayPreferencesQuery = {
+  __typename?: 'Query'
+  userRegistryEntries?: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+  spaceRegistryEntries?: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+  systemRegistryEntries: Array<{
+    __typename?: 'SystemRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+    isOverriddenByConfig: boolean
+  }>
+}
+
 export type SetUserRegistryMutationVariables = Exact<{
   entry?: InputMaybe<RegistryEntryInput>
   entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
@@ -4225,6 +4257,197 @@ export const GetSystemRegistryDocument = {
     },
   ],
 } as unknown as DocumentNode<GetSystemRegistryQuery, GetSystemRegistryQueryVariables>
+export const GetResolvedGalleryDisplayPreferencesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'GetResolvedGalleryDisplayPreferences' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'includeUser' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'includeSpace' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userKeys' } },
+          type: {
+            kind: 'ListType',
+            type: {
+              kind: 'NonNullType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'systemKeys' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'userRegistryEntries' },
+            name: { kind: 'Name', value: 'getUserRegistry' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'keys' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'userKeys' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ownerID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ownerID' } },
+              },
+            ],
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: { kind: 'Variable', name: { kind: 'Name', value: 'includeUser' } },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'spaceRegistryEntries' },
+            name: { kind: 'Name', value: 'spaceRegistry' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'spaceID' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'spaceID' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'keys' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'systemKeys' } },
+              },
+            ],
+            directives: [
+              {
+                kind: 'Directive',
+                name: { kind: 'Name', value: 'include' },
+                arguments: [
+                  {
+                    kind: 'Argument',
+                    name: { kind: 'Name', value: 'if' },
+                    value: { kind: 'Variable', name: { kind: 'Name', value: 'includeSpace' } },
+                  },
+                ],
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'RegistryInfo' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            alias: { kind: 'Name', value: 'systemRegistryEntries' },
+            name: { kind: 'Name', value: 'getSystemRegistry' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'keys' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'systemKeys' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'SystemRegistryInfo' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'RegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'UserRegistry' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'SystemRegistryInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'SystemRegistry' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isEncrypted' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isOverriddenByConfig' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  GetResolvedGalleryDisplayPreferencesQuery,
+  GetResolvedGalleryDisplayPreferencesQueryVariables
+>
 export const SetUserRegistryDocument = {
   kind: 'Document',
   definitions: [

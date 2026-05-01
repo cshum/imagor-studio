@@ -51,6 +51,29 @@ export const GetSystemRegistryQuery = gql(`
   }
 `)
 
+export const GetResolvedGalleryDisplayPreferencesQuery = gql(`
+  query GetResolvedGalleryDisplayPreferences(
+    $includeUser: Boolean!
+    $includeSpace: Boolean!
+    $userKeys: [String!]
+    $ownerID: String
+    $spaceID: String!
+    $systemKeys: [String!]!
+  ) {
+    userRegistryEntries: getUserRegistry(keys: $userKeys, ownerID: $ownerID)
+      @include(if: $includeUser) {
+      ...RegistryInfo
+    }
+    spaceRegistryEntries: spaceRegistry(spaceID: $spaceID, keys: $systemKeys)
+      @include(if: $includeSpace) {
+      ...RegistryInfo
+    }
+    systemRegistryEntries: getSystemRegistry(keys: $systemKeys) {
+      ...SystemRegistryInfo
+    }
+  }
+`)
+
 // User Registry Mutations
 export const SetUserRegistryMutation = gql(`
   mutation SetUserRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!], $ownerID: String) {

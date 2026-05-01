@@ -1512,6 +1512,38 @@ export type GetSystemRegistryQuery = {
   }>
 }
 
+export type GetResolvedGalleryDisplayPreferencesQueryVariables = Exact<{
+  includeUser: Scalars['Boolean']['input']
+  includeSpace: Scalars['Boolean']['input']
+  userKeys?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>
+  ownerID?: InputMaybe<Scalars['String']['input']>
+  spaceID: Scalars['String']['input']
+  systemKeys: Array<Scalars['String']['input']> | Scalars['String']['input']
+}>
+
+export type GetResolvedGalleryDisplayPreferencesQuery = {
+  __typename?: 'Query'
+  userRegistryEntries?: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+  spaceRegistryEntries?: Array<{
+    __typename?: 'UserRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+  }>
+  systemRegistryEntries: Array<{
+    __typename?: 'SystemRegistry'
+    key: string
+    value: string
+    isEncrypted: boolean
+    isOverriddenByConfig: boolean
+  }>
+}
+
 export type SetUserRegistryMutationVariables = Exact<{
   entry?: InputMaybe<RegistryEntryInput>
   entries?: InputMaybe<Array<RegistryEntryInput> | RegistryEntryInput>
@@ -2557,6 +2589,30 @@ export const GetSystemRegistryDocument = gql`
       ...SystemRegistryInfo
     }
   }
+  ${SystemRegistryInfoFragmentDoc}
+`
+export const GetResolvedGalleryDisplayPreferencesDocument = gql`
+  query GetResolvedGalleryDisplayPreferences(
+    $includeUser: Boolean!
+    $includeSpace: Boolean!
+    $userKeys: [String!]
+    $ownerID: String
+    $spaceID: String!
+    $systemKeys: [String!]!
+  ) {
+    userRegistryEntries: getUserRegistry(keys: $userKeys, ownerID: $ownerID)
+      @include(if: $includeUser) {
+      ...RegistryInfo
+    }
+    spaceRegistryEntries: spaceRegistry(spaceID: $spaceID, keys: $systemKeys)
+      @include(if: $includeSpace) {
+      ...RegistryInfo
+    }
+    systemRegistryEntries: getSystemRegistry(keys: $systemKeys) {
+      ...SystemRegistryInfo
+    }
+  }
+  ${RegistryInfoFragmentDoc}
   ${SystemRegistryInfoFragmentDoc}
 `
 export const SetUserRegistryDocument = gql`
@@ -3613,6 +3669,24 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
             signal,
           }),
         'GetSystemRegistry',
+        'query',
+        variables,
+      )
+    },
+    GetResolvedGalleryDisplayPreferences(
+      variables: GetResolvedGalleryDisplayPreferencesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<GetResolvedGalleryDisplayPreferencesQuery> {
+      return withWrapper(
+        (wrappedRequestHeaders) =>
+          client.request<GetResolvedGalleryDisplayPreferencesQuery>({
+            document: GetResolvedGalleryDisplayPreferencesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'GetResolvedGalleryDisplayPreferences',
         'query',
         variables,
       )

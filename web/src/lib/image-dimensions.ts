@@ -1,8 +1,8 @@
 import { statFile } from '@/api/storage-api'
+import type { ListFilesQuery } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { fetchImageMetadata } from '@/lib/exif-utils'
 import { preloadImage } from '@/lib/preload-image'
-import type { ListFilesQuery } from '@/generated/graphql'
 
 export interface ImageDimensions {
   width: number
