@@ -747,10 +747,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
     space,
   })
 
-  const isNavigateToImage = !!(
-    pendingMatches?.length &&
-    pendingMatches[pendingMatches.length - 1].routeId?.toString()?.includes('$imageKey')
-  )
+  const pendingRouteId = pendingMatches?.[pendingMatches.length - 1].routeId?.toString() ?? ''
+  const hasPendingNavigation = Boolean(pendingMatches?.length)
+  const isNavigateToImage = hasPendingNavigation && pendingRouteId.includes('$imageKey')
+  const isNavigateWithinGallery = hasPendingNavigation && !isNavigateToImage
 
   // Detect if the image view child route is currently active (URL contains an imageKey param)
   const isImageViewOpen = matches.some((m) => m.routeId?.toString()?.includes('$imageKey'))
@@ -1115,6 +1115,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
 
   return (
     <>
+      {isNavigateWithinGallery && <LoadingBar isLoading={isLoading} size='thin' />}
       {isNavigateToImage && <LoadingBar isLoading={isLoading} />}
       <ContentLayout title={galleryName}>
         <GalleryDropZone
