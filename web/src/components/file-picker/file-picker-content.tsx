@@ -48,6 +48,8 @@ import { TEMPLATE_EXTENSION } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
 
+export type FilePickerListItem = import('@/generated/graphql').ListFilesQuery['listFiles']['items'][number]
+
 export interface FilePickerContentProps {
   currentPath: string
   selectedPaths: Set<string>
@@ -58,6 +60,7 @@ export interface FilePickerContentProps {
   onPathChange: (path: string) => void
   onSelectionChange: (path: string) => void
   onLoadingChange?: (isLoading: boolean) => void
+  onItemsChange?: (items: FilePickerListItem[]) => void
 }
 
 export const FilePickerContent: React.FC<FilePickerContentProps> = ({
@@ -70,6 +73,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   onPathChange,
   onSelectionChange,
   onLoadingChange,
+  onItemsChange,
 }) => {
   const { t } = useTranslation()
   const { authState } = useAuth()
@@ -292,6 +296,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           sortOrder: config.sortOrder,
         })
 
+        onItemsChange?.(result.items)
+
         // Process folders
         const folderItems: Gallery[] = result.items
           .filter((item) => item.isDirectory)
@@ -327,13 +333,14 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         toast.error(loadFilesErrorRef.current)
         setFolders([])
         setImages([])
+        onItemsChange?.([])
       } finally {
         setIsLoading(false)
       }
     }
 
     loadFilesData()
-  }, [currentPath, configReady, sortBy, sortOrder, spaceKey])
+  }, [currentPath, configReady, sortBy, sortOrder, spaceKey, onItemsChange])
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement
