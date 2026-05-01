@@ -1,15 +1,13 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useRouter } from '@tanstack/react-router'
 import { Clock3, MoreHorizontal, UserMinus } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
   addOrgMember,
   cancelOrgInvitation,
-  getMyOrganization,
   inviteOrgMember,
-  listOrgInvitations,
-  listOrgMembers,
   removeOrgMember,
   transferOrganizationOwnership,
   updateOrgMemberRole,
@@ -109,35 +107,17 @@ function getIdentifierFieldErrorMessage(error: unknown, t: (key: string) => stri
 }
 
 export async function reloadOrganizationMembersData({
-  currentRole,
-  refreshAuthSession,
+  invalidate,
 }: {
-  currentRole?: string | null
-  refreshAuthSession: () => Promise<unknown>
+  invalidate: () => Promise<unknown>
 }) {
-  const [nextOrganization, nextMembers, nextInvitations] = await Promise.all([
-    getMyOrganization(),
-    listOrgMembers(),
-    listOrgInvitations(),
-  ])
-
-  if ((currentRole ?? null) !== (nextOrganization?.currentUserRole ?? null)) {
-    await refreshAuthSession()
-  }
-
-  return {
-    nextOrganization,
-    nextMembers,
-    nextInvitations,
-  }
+  await invalidate()
 }
 
 export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageProps) {
   const { t } = useTranslation()
+  const router = useRouter()
   const { authState, refreshAuthSession } = useAuth()
-  const [organization, setOrganization] = useState(loaderData.organization)
-  const [members, setMembers] = useState(loaderData.members)
-  const [invitations, setInvitations] = useState<OrgInvitationItem[]>(loaderData.invitations)
   const [identifier, setIdentifier] = useState('')
   const [identifierFieldError, setIdentifierFieldError] = useState<string | null>(null)
   const [role, setRole] = useState<'admin' | 'member'>('member')
@@ -148,6 +128,22 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
   const [pendingTransferUserId, setPendingTransferUserId] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState(false)
   const [isTransferring, setIsTransferring] = useState(false)
+  const [addedInvitations, setAddedInvitations] = useState<OrgInvitationItem[]>([])
+  const [removedInvitationIds, setRemovedInvitationIds] = useState<string[]>([])
+
+  const organization = loaderData.organization
+  const members = loaderData.members
+  const invitations = useMemo(() => {
+    const visibleInvitations = loaderData.invitations.filter(
+      (invitation) => !removedInvitationIds.includes(invitation.id),
+    )
+    const visibleInvitationIds = new Set(visibleInvitations.map((invitation) => invitation.id))
+    const optimisticInvitations = addedInvitations.filter(
+      (invitation) => !visibleInvitationIds.has(invitation.id),
+    )
+
+    return [...visibleInvitations, ...optimisticInvitations]
+  }, [addedInvitations, loaderData.invitations, removedInvitationIds])
 
   const currentUserId = authState.profile?.id ?? null
   const pendingRemoveMember =
@@ -159,14 +155,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
     organization?.currentUserRole === 'owner' || organization?.currentUserRole === 'admin'
 
   const reloadOrganizationMembers = async () => {
-    const { nextOrganization, nextMembers, nextInvitations } = await reloadOrganizationMembersData({
-      currentRole: organization?.currentUserRole,
-      refreshAuthSession,
-    })
-
-    setOrganization(nextOrganization)
-    setMembers(nextMembers)
-    setInvitations(nextInvitations)
+    await reloadOrganizationMembersData({ invalidate: () => router.invalidate() })
   }
 
   const handleAddMember = async () => {
@@ -198,7 +187,10 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
           await reloadOrganizationMembers()
         } else if (result.invitation) {
           const invitation = result.invitation
-          setInvitations((current) => {
+          setRemovedInvitationIds((current) =>
+            current.filter((currentInvitationId) => currentInvitationId !== invitation.id),
+          )
+          setAddedInvitations((current) => {
             const nextInvitations = current.filter(
               (currentInvitation) => currentInvitation.id !== invitation.id,
             )
@@ -272,6 +264,7 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
       toast.success(t('pages.organizationMembers.messages.ownershipTransferred'))
       setPendingTransferUserId(null)
       await reloadOrganizationMembers()
+      await refreshAuthSession()
     } catch (error) {
       const message = getOrganizationMembersErrorMessage(error, t)
       toast.error(`${t('pages.organizationMembers.messages.ownershipTransferFailed')}: ${message}`)
@@ -289,12 +282,18 @@ export function AccountMembersRoutePage({ loaderData }: AccountMembersRoutePageP
     try {
       await cancelOrgInvitation({ invitationId })
       toast.success(t('pages.organizationMembers.messages.inviteCanceled'))
-      setInvitations((current) => current.filter((invitation) => invitation.id !== invitationId))
+      setRemovedInvitationIds((current) => [...current, invitationId])
+      setAddedInvitations((current) =>
+        current.filter((invitation) => invitation.id !== invitationId),
+      )
     } catch (error) {
       const errorInfo = extractErrorInfo(error)
       if (errorInfo.reason === 'org_invitation_not_found') {
         toast.success(t('pages.organizationMembers.messages.inviteCanceled'))
-        setInvitations((current) => current.filter((invitation) => invitation.id !== invitationId))
+        setRemovedInvitationIds((current) => [...current, invitationId])
+        setAddedInvitations((current) =>
+          current.filter((invitation) => invitation.id !== invitationId),
+        )
         return
       }
 
