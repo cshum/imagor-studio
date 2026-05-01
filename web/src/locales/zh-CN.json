@@ -760,11 +760,11 @@
       "description": "Imagor Studio 需要组织访问权限后，才能加载账户区域和空间管理功能。",
       "invite": {
         "title": "通过邀请加入",
-        "description": "登录后打开你的邀请链接；如果原邀请已过期，请联系组织管理员重新发送。"
+        "description": "登录后打开你的邀请链接；如果原邀请已过期，请联系发送者重新分享一份新的邀请。"
       },
       "nextSteps": {
         "title": "接下来怎么做",
-        "description": "你可以先创建一个新的个人组织继续使用；如果你本应加入别人的团队，也可以通过邀请加入现有组织。"
+        "description": "你可以先创建一个新的个人组织继续使用；如果你本应加入别人的团队，也可以通过邀请加入现有组织或共享空间。"
       },
       "actions": {
         "createOrganization": "创建组织",
@@ -776,8 +776,10 @@
     },
     "joinInvite": {
       "eyebrow": "组织邀请",
+      "spaceEyebrow": "空间邀请",
       "heroTitle": "选择加入方式",
       "heroDescription": "使用此邀请加入现有组织。通过此流程注册时，你会加入被邀请的工作区，而不是创建一个新的组织。",
+      "spaceHeroDescription": "使用此邀请加入现有共享空间。通过此流程注册时，你会获得被邀请空间的访问权限，而不会改变你当前的主要组织成员关系。",
       "formTitle": "通过邀请加入",
       "invitedTo": "你已被邀请加入 {{organization}}",
       "organizationDescription": "此邀请已发送到 {{email}}，角色为 {{role}}。",
@@ -785,6 +787,7 @@
       "googleAction": "使用 Google 继续",
       "emailAction": "使用邮箱继续",
       "secondaryHelp": "Google 登录会直接使用此邀请。邮箱注册会先验证你的邮箱地址，然后再加入被邀请的组织。",
+      "spaceSecondaryHelp": "Google 登录会直接使用此邀请。邮箱注册会先验证你的邮箱地址，然后授予你对被邀请空间的访问权限。",
       "loginInstead": "已有账号？去登录",
       "acceptingTitle": "正在完成邀请",
       "acceptingDescription": "我们正在将此账户加入受邀组织。",

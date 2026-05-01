@@ -816,11 +816,11 @@
       "description": "Imagor Studio richiede l'accesso a un'organizzazione prima di caricare l'area account e la gestione degli spazi.",
       "invite": {
         "title": "Accedi con un invito",
-        "description": "Apri il link di invito dopo l'accesso, oppure chiedi a un amministratore dell'organizzazione di inviartene uno nuovo se il precedente è scaduto."
+        "description": "Apri il link di invito dopo l'accesso, oppure chiedi al mittente di condividerne uno nuovo se il precedente è scaduto."
       },
       "nextSteps": {
         "title": "Cosa fare ora",
-        "description": "Crea una nuova organizzazione personale per continuare oppure unisciti a una esistente tramite invito se devi lavorare nel team di qualcun altro."
+        "description": "Crea una nuova organizzazione personale per continuare, oppure accetta un invito a un'organizzazione esistente o a uno spazio condiviso se devi lavorare nel team di qualcun altro."
       },
       "actions": {
         "createOrganization": "Crea organizzazione",
@@ -832,8 +832,10 @@
     },
     "joinInvite": {
       "eyebrow": "Invito organizzazione",
+      "spaceEyebrow": "Invito spazio",
       "heroTitle": "Scegli come vuoi partecipare",
       "heroDescription": "Usa questo invito per entrare in un'organizzazione esistente. La registrazione da questo flusso ti unirà al workspace invitato invece di crearne uno separato.",
+      "spaceHeroDescription": "Usa questo invito per unirti a uno spazio condiviso esistente. Registrandoti da questo flusso otterrai accesso allo spazio invitato senza cambiare l'appartenenza alla tua organizzazione principale.",
       "formTitle": "Partecipa con un invito",
       "invitedTo": "Sei stato invitato a partecipare a {{organization}}",
       "organizationDescription": "Questo invito è stato inviato a {{email}} con il ruolo {{role}}.",
@@ -841,6 +843,7 @@
       "googleAction": "Continua con Google",
       "emailAction": "Continua con email",
       "secondaryHelp": "L'accesso con Google usa direttamente l'invito. La registrazione email verifica prima l'indirizzo e poi ti unisce all'organizzazione invitante.",
+      "spaceSecondaryHelp": "L'accesso con Google usa direttamente l'invito. La registrazione via email verifica prima il tuo indirizzo e poi concede accesso allo spazio invitato.",
       "loginInstead": "Hai già un account? Accedi",
       "acceptingTitle": "Completamento dell'invito",
       "acceptingDescription": "Stiamo aggiungendo questo account all'organizzazione invitata.",

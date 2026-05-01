@@ -812,11 +812,11 @@
       "description": "Imagor Studio needs organization access before account and space management can load.",
       "invite": {
         "title": "Join with an invite",
-        "description": "Open your invitation link after sign-in, or ask an organization admin to send a fresh invite if the original one expired."
+        "description": "Open your invitation link after sign-in, or ask the sender to share a fresh invite if the original one expired."
       },
       "nextSteps": {
         "title": "What to do next",
-        "description": "Create a new personal organization to continue, or join an existing one from an invite if you are supposed to work inside another team."
+        "description": "Create a new personal organization to continue, or accept an invite to an existing organization or shared space if you are supposed to work inside another team."
       },
       "actions": {
         "createOrganization": "Create organization",
@@ -828,8 +828,10 @@
     },
     "joinInvite": {
       "eyebrow": "Organization invitation",
+      "spaceEyebrow": "Space invitation",
       "heroTitle": "Choose how you want to join",
       "heroDescription": "Use this invitation to join an existing organization. Signing up from this flow will join the invited workspace instead of creating a separate organization.",
+      "spaceHeroDescription": "Use this invitation to join an existing shared space. Signing up from this flow grants access to the invited space without changing your primary organization membership.",
       "formTitle": "Join with an invitation",
       "invitedTo": "You were invited to join {{organization}}",
       "organizationDescription": "This invitation was sent to {{email}} with the {{role}} role.",
@@ -837,6 +839,7 @@
       "googleAction": "Continue with Google",
       "emailAction": "Continue with email",
       "secondaryHelp": "Google sign-in uses the invitation directly. Email sign-up verifies your address first and then joins the invited organization.",
+      "spaceSecondaryHelp": "Google sign-in uses the invitation directly. Email sign-up verifies your address first and then grants access to the invited space.",
       "loginInstead": "Already have an account? Sign in",
       "acceptingTitle": "Completing your invitation",
       "acceptingDescription": "We are adding this account to the invited organization now.",

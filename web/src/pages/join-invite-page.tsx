@@ -56,6 +56,7 @@ export function JoinInvitePage() {
   }) as JoinInviteLoaderResult
   const [acceptState, setAcceptState] = useState<'idle' | 'loading' | 'failed'>('idle')
   const [acceptError, setAcceptError] = useState<string | null>(null)
+  const isSpaceInvite = Boolean(invitation?.spaceName)
 
   const resolveRedirectPath = (redirectPath?: string): string => {
     if (redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')) {
@@ -148,11 +149,15 @@ export function JoinInvitePage() {
 
   return (
     <AuthPageShell
-      eyebrow={t('pages.joinInvite.eyebrow')}
+      eyebrow={t(isSpaceInvite ? 'pages.joinInvite.spaceEyebrow' : 'pages.joinInvite.eyebrow')}
       heroTitle={t('pages.joinInvite.heroTitle')}
       heroBody={
         <p className='text-foreground/85 mt-6 max-w-lg text-sm leading-6 sm:text-base'>
-          {t('pages.joinInvite.heroDescription')}
+          {t(
+            isSpaceInvite
+              ? 'pages.joinInvite.spaceHeroDescription'
+              : 'pages.joinInvite.heroDescription',
+          )}
         </p>
       }
       formTitle={t('pages.joinInvite.formTitle')}
@@ -207,7 +212,11 @@ export function JoinInvitePage() {
           </Button>
 
           <p className='text-muted-foreground pt-2 text-xs leading-5'>
-            {t('pages.joinInvite.secondaryHelp')}
+            {t(
+              isSpaceInvite
+                ? 'pages.joinInvite.spaceSecondaryHelp'
+                : 'pages.joinInvite.secondaryHelp',
+            )}
           </p>
 
           <div className='pt-1'>

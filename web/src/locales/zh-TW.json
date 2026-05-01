@@ -816,11 +816,11 @@
       "description": "Imagor Studio 需要組織存取權，才能載入帳戶區域與空間管理功能。",
       "invite": {
         "title": "透過邀請加入",
-        "description": "登入後開啟您的邀請連結；如果原邀請已過期，請聯絡組織管理員重新寄送。"
+        "description": "登入後開啟您的邀請連結；如果原邀請已過期，請聯絡寄件者重新分享新的邀請。"
       },
       "nextSteps": {
         "title": "接下來怎麼做",
-        "description": "你可以先建立新的個人組織繼續使用；如果你原本應該加入別人的團隊，也可以透過邀請加入現有組織。"
+        "description": "你可以先建立新的個人組織繼續使用；如果你原本應該加入別人的團隊，也可以透過邀請加入現有組織或共享空間。"
       },
       "actions": {
         "createOrganization": "建立組織",
@@ -832,8 +832,10 @@
     },
     "joinInvite": {
       "eyebrow": "組織邀請",
+      "spaceEyebrow": "空間邀請",
       "heroTitle": "選擇加入方式",
       "heroDescription": "使用此邀請加入既有組織。從這個流程註冊時，你會加入受邀工作區，而不是建立新的組織。",
+      "spaceHeroDescription": "使用此邀請加入既有共享空間。從這個流程註冊時，你會取得受邀空間的存取權，而不會改變你目前主要的組織成員身分。",
       "formTitle": "透過邀請加入",
       "invitedTo": "你已受邀加入 {{organization}}",
       "organizationDescription": "此邀請已寄送到 {{email}}，角色為 {{role}}。",
@@ -841,6 +843,7 @@
       "googleAction": "使用 Google 繼續",
       "emailAction": "使用電子郵件繼續",
       "secondaryHelp": "Google 登入會直接使用此邀請。電子郵件註冊會先驗證你的信箱，然後再加入受邀組織。",
+      "spaceSecondaryHelp": "Google 登入會直接使用此邀請。電子郵件註冊會先驗證你的信箱，然後授予你對受邀空間的存取權。",
       "loginInstead": "已經有帳號？前往登入",
       "acceptingTitle": "正在完成邀請",
       "acceptingDescription": "我們正在將此帳戶加入受邀組織。",

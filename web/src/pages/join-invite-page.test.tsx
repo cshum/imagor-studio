@@ -48,9 +48,11 @@ vi.mock('@/api/auth-api', () => ({
 }))
 
 vi.mock('@/components/auth-page-shell', () => ({
-  AuthPageShell: ({ children, formTitle }: any) => (
+  AuthPageShell: ({ children, eyebrow, heroBody, formTitle }: any) => (
     <div>
+      <div>{eyebrow}</div>
       <h1>{formTitle}</h1>
+      <div>{heroBody}</div>
       {children}
     </div>
   ),
@@ -121,5 +123,29 @@ describe('JoinInvitePage', () => {
     expect(
       screen.getByRole('link', { name: 'pages.joinInvite.loginInstead' }).getAttribute('href'),
     ).toBe('/login?invite_token=invite-token-123')
+  })
+
+  it('uses space-specific copy for space invites', async () => {
+    const { JoinInvitePage } = await import('./join-invite-page')
+    mockUseLoaderData.mockReturnValue({
+      invitation: {
+        organizationName: 'Acme Org',
+        spaceName: 'Campaign Assets',
+        invitedEmail: 'owner@example.com',
+        role: 'viewer',
+      },
+      inviteToken: 'invite-token-123',
+      errorMessage: null,
+      errorReason: null,
+    })
+
+    render(<JoinInvitePage />)
+
+    expect(screen.getByText('pages.joinInvite.spaceEyebrow')).toBeTruthy()
+    expect(screen.getByText('pages.joinInvite.spaceHeroDescription')).toBeTruthy()
+    expect(screen.getByText('pages.joinInvite.spaceSecondaryHelp')).toBeTruthy()
+    expect(
+      screen.getByText('pages.joinInvite.spaceDescription:owner@example.com:viewer:Campaign Assets'),
+    ).toBeTruthy()
   })
 })
