@@ -31,6 +31,7 @@ interface AccountBillingRoutePageProps {
 }
 
 const PAID_PLANS = ['starter', 'pro', 'team'] as const
+const PORTAL_MANAGED_STATUSES = ['active', 'trialing', 'past_due'] as const
 const PLAN_PRICES: Record<(typeof PAID_PLANS)[number], string> = {
   starter: '$19',
   pro: '$69',
@@ -97,6 +98,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const currentPlan = organization?.plan ?? 'free'
   const currentStatus = organization?.planStatus ?? 'canceled'
   const canOpenPortal = PAID_PLANS.includes(currentPlan as (typeof PAID_PLANS)[number])
+  const isPortalManagedBilling =
+    canOpenPortal &&
+    PORTAL_MANAGED_STATUSES.includes(currentStatus as (typeof PORTAL_MANAGED_STATUSES)[number])
   const maxSpaces = usageSummary?.maxSpaces ?? null
   const usedSpaces = usageSummary?.usedSpaces ?? 0
   const spacesOverLimit =
@@ -161,6 +165,10 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   ]
 
   const handleCheckout = async (plan: (typeof PAID_PLANS)[number]) => {
+    if (isPortalManagedBilling) {
+      return
+    }
+
     setPendingPlan(plan)
     try {
       const currentURL = window.location.href
@@ -301,6 +309,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         {PAID_PLANS.map((plan) => {
           const entitlements = getPlanEntitlements(plan)
           const isCurrentPlan = plan === currentPlan
+          const isPlanActionDisabled = isCurrentPlan || isPortalManagedBilling
           const buttonLabel = isCurrentPlan
             ? t('pages.billing.currentPlanButton')
             : t('pages.billing.selectPlan')
@@ -351,7 +360,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
 
                 <ButtonWithLoading
                   isLoading={pendingPlan === plan}
-                  disabled={isCurrentPlan}
+                  disabled={isPlanActionDisabled}
                   onClick={() => handleCheckout(plan)}
                   className='w-full'
                 >

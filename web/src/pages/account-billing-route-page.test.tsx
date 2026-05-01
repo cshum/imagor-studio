@@ -1,0 +1,266 @@
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { BillingLoaderData } from '@/loaders/account-loader'
+
+const mockNavigate = vi.fn()
+const mockCreateCheckoutSession = vi.fn()
+const mockCreateBillingPortalSession = vi.fn()
+const mockDeleteOrganization = vi.fn()
+const mockLogout = vi.fn()
+const mockLocationAssign = vi.fn()
+const mockToastError = vi.fn()
+const mockToastSuccess = vi.fn()
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+  }),
+}))
+
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => mockNavigate,
+}))
+
+vi.mock('lucide-react', () => {
+  const Icon = () => <svg />
+  return {
+    ChevronDown: Icon,
+    ChevronRight: Icon,
+  }
+})
+
+vi.mock('sonner', () => ({
+  toast: {
+    error: mockToastError,
+    success: mockToastSuccess,
+  },
+}))
+
+vi.mock('@/api/org-api', async () => {
+  const actual = await vi.importActual<typeof import('@/api/org-api')>('@/api/org-api')
+  return {
+    ...actual,
+    createBillingPortalSession: mockCreateBillingPortalSession,
+    createCheckoutSession: mockCreateCheckoutSession,
+    deleteOrganization: mockDeleteOrganization,
+  }
+})
+
+vi.mock('@/stores/auth-store', () => ({
+  useAuth: () => ({
+    logout: mockLogout,
+  }),
+}))
+
+vi.mock('@/lib/error-utils', () => ({
+  extractErrorInfo: (error: any) => ({
+    message:
+      error?.response?.errors?.[0]?.message ?? error?.message ?? error?.reason ?? 'Unknown error',
+    reason: error?.response?.errors?.[0]?.extensions?.reason ?? error?.reason,
+  }),
+  isOrganizationRequiredError: (error: any) =>
+    error?.response?.errors?.[0]?.extensions?.reason === 'organization_required',
+}))
+
+vi.mock('@/components/ui/badge', () => ({
+  Badge: ({ children }: any) => <span>{children}</span>,
+}))
+
+vi.mock('@/components/ui/button', () => ({
+  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+}))
+
+vi.mock('@/components/ui/button-with-loading', () => ({
+  ButtonWithLoading: ({ children, isLoading, ...props }: any) => (
+    <button {...props}>{isLoading ? 'loading' : children}</button>
+  ),
+}))
+
+vi.mock('@/components/ui/card', () => ({
+  Card: ({ children, ...props }: any) => <section {...props}>{children}</section>,
+  CardContent: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  CardDescription: ({ children, ...props }: any) => <p {...props}>{children}</p>,
+  CardHeader: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+  CardTitle: ({ children, ...props }: any) => <h2 {...props}>{children}</h2>,
+}))
+
+vi.mock('@/components/ui/progress', () => ({
+  Progress: () => <div data-testid='progress' />,
+}))
+
+vi.mock('@/components/ui/responsive-dialog', () => ({
+  ResponsiveDialog: ({ children }: any) => <div>{children}</div>,
+  ResponsiveDialogDescription: ({ children }: any) => <div>{children}</div>,
+  ResponsiveDialogFooter: ({ children }: any) => <div>{children}</div>,
+  ResponsiveDialogHeader: ({ children }: any) => <div>{children}</div>,
+  ResponsiveDialogTitle: ({ children }: any) => <div>{children}</div>,
+}))
+
+function createLoaderData(
+  overrides: Partial<NonNullable<BillingLoaderData['organization']>> = {},
+): BillingLoaderData {
+  return {
+    breadcrumb: { translationKey: 'navigation.breadcrumbs.billing' },
+    organization: {
+      __typename: 'Organization',
+      id: 'org-1',
+      name: 'Acme Org',
+      slug: 'acme',
+      ownerUserId: 'user-1',
+      currentUserRole: 'owner',
+      plan: 'trial',
+      planStatus: 'trialing',
+      createdAt: '2026-05-01T00:00:00Z',
+      updatedAt: '2026-05-01T00:00:00Z',
+      ...overrides,
+    } as BillingLoaderData['organization'],
+    usageSummary: {
+      __typename: 'UsageSummary',
+      usedSpaces: 0,
+      maxSpaces: 1,
+      usedHostedStorageBytes: 0,
+      storageLimitGB: 1,
+      usedTransforms: 0,
+      transformsLimit: 1000,
+      periodStart: '2026-05-01T00:00:00Z',
+      periodEnd: '2026-06-01T00:00:00Z',
+    } as BillingLoaderData['usageSummary'],
+  }
+}
+
+describe('AccountBillingRoutePage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.stubGlobal('location', {
+      ...window.location,
+      assign: mockLocationAssign,
+      href: 'http://localhost/',
+    })
+    mockCreateCheckoutSession.mockResolvedValue({ url: 'https://checkout.example/session' })
+    mockCreateBillingPortalSession.mockResolvedValue({ url: 'https://billing.example/portal' })
+    mockDeleteOrganization.mockResolvedValue(true)
+    mockLogout.mockResolvedValue(undefined)
+  })
+
+  it('starts checkout for a trial organization selecting a paid plan', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+
+    render(<AccountBillingRoutePage loaderData={createLoaderData()} />)
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })[0])
+    })
+
+    expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        plan: 'starter',
+      }),
+    )
+    expect(mockCreateBillingPortalSession).not.toHaveBeenCalled()
+  })
+
+  it('starts checkout for the internal lapsed free state selecting a paid plan', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+
+    render(
+      <AccountBillingRoutePage
+        loaderData={createLoaderData({
+          plan: 'free',
+          planStatus: 'canceled',
+        })}
+      />,
+    )
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })[1])
+    })
+
+    expect(mockCreateCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        plan: 'pro',
+      }),
+    )
+    expect(mockCreateBillingPortalSession).not.toHaveBeenCalled()
+  })
+
+  it('routes active paid organizations through the billing portal instead of checkout', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+
+    render(
+      <AccountBillingRoutePage
+        loaderData={createLoaderData({
+          plan: 'starter',
+          planStatus: 'active',
+        })}
+      />,
+    )
+
+    const planButtons = screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })
+    expect(planButtons).toHaveLength(2)
+    expect(planButtons.every((button) => (button as HTMLButtonElement).disabled)).toBe(true)
+
+    fireEvent.click(planButtons[0])
+    fireEvent.click(planButtons[1])
+
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'pages.billing.manageBilling' }))
+    })
+
+    expect(mockCreateBillingPortalSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        returnURL: expect.any(String),
+      }),
+    )
+  })
+
+  it('keeps the current plan disabled for past due paid organizations', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+
+    render(
+      <AccountBillingRoutePage
+        loaderData={createLoaderData({
+          plan: 'pro',
+          planStatus: 'past_due',
+        })}
+      />,
+    )
+
+    expect(
+      (screen.getByRole('button', { name: 'pages.billing.currentPlanButton' }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true)
+
+    const planButtons = screen.getAllByRole('button', { name: 'pages.billing.selectPlan' })
+    expect(planButtons).toHaveLength(2)
+    expect(planButtons.every((button) => (button as HTMLButtonElement).disabled)).toBe(true)
+
+    fireEvent.click(planButtons[0])
+    fireEvent.click(planButtons[1])
+
+    expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
+  })
+
+  it('shows the existing sanitized portal error path when portal creation fails', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+    mockCreateBillingPortalSession.mockRejectedValue(new Error('portal down'))
+
+    render(
+      <AccountBillingRoutePage
+        loaderData={createLoaderData({
+          plan: 'team',
+          planStatus: 'active',
+        })}
+      />,
+    )
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'pages.billing.manageBilling' }))
+    })
+
+    expect(mockToastError).toHaveBeenCalledTimes(1)
+    expect(mockToastError).toHaveBeenCalledWith('pages.billing.messages.portalFailed: portal down')
+  })
+})
