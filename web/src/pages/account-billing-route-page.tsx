@@ -563,7 +563,11 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
       )}
 
-      <div className='space-y-4'>
+      <section className='bg-muted/10 space-y-5 rounded-xl border p-4 md:p-5'>
+        <div className='space-y-1'>
+          <p className='text-sm font-medium'>{t('pages.billing.selectPlan')}</p>
+        </div>
+
         <div className='grid gap-4 xl:grid-cols-3'>
         {PAID_PLANS.map((plan) => {
           const entitlements = getPlanEntitlements(plan)
@@ -651,7 +655,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         })}
         </div>
 
-        <div className='bg-muted/20 rounded-lg border p-4'>
+        <div className='border-t pt-4'>
           <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
             <div className='space-y-1'>
               <p className='text-sm font-medium'>{primaryBillingActionLabel}</p>
@@ -669,7 +673,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
             </ButtonWithLoading>
           </div>
         </div>
-      </div>
+      </section>
 
       <div className='bg-muted/20 rounded-lg border p-4'>
         <p className='text-sm font-medium'>{t('pages.billing.sharedFeaturesTitle')}</p>
