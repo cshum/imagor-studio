@@ -237,9 +237,10 @@ describe('AccountBillingRoutePage', () => {
     })
 
     expect(
-      screen.getByText('pages.spaces.plan.pro').closest('[role="button"]')?.getAttribute(
-        'aria-pressed',
-      ),
+      screen
+        .getByText('pages.spaces.plan.pro')
+        .closest('[role="button"]')
+        ?.getAttribute('aria-pressed'),
     ).toBe('true')
 
     expect(
@@ -259,9 +260,10 @@ describe('AccountBillingRoutePage', () => {
       }),
     ).toBeNull()
     expect(
-      screen.getByText('pages.spaces.plan.pro').closest('[role="button"]')?.getAttribute(
-        'aria-pressed',
-      ),
+      screen
+        .getByText('pages.spaces.plan.pro')
+        .closest('[role="button"]')
+        ?.getAttribute('aria-pressed'),
     ).toBe('false')
     expect(screen.getByRole('button', { name: 'pages.billing.manageBilling' })).toBeTruthy()
 

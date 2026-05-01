@@ -573,8 +573,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                 key={plan}
                 className={cn(
                   isCurrentPlan && 'border-primary shadow-sm',
-                  isSelectedPlan && 'border-primary bg-muted/30 shadow-sm',
-                  isSelectable && 'hover:border-primary/60 cursor-pointer transition-colors',
+                  isSelectedPlan && 'border-primary bg-muted/30 ring-primary/20 shadow-md ring-2',
+                  isSelectable &&
+                    'hover:border-primary/60 cursor-pointer transition-[border-color,box-shadow,background-color]',
                 )}
                 role={isSelectable ? 'button' : undefined}
                 aria-pressed={isSelectable ? isSelectedPlan : undefined}
