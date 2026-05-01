@@ -164,7 +164,6 @@ describe('AccountBillingRoutePage', () => {
       (screen.getByRole('button', { name: 'pages.billing.selectPlan' }) as HTMLButtonElement)
         .disabled,
     ).toBe(true)
-    expect(screen.getByText('pages.billing.checkoutHint')).toBeTruthy()
 
     await act(async () => {
       fireEvent.click(screen.getByText('pages.spaces.plan.starter'))
@@ -231,7 +230,6 @@ describe('AccountBillingRoutePage', () => {
     )
 
     expect(screen.queryByRole('button', { name: 'pages.billing.managePlanInBilling' })).toBeNull()
-    expect(screen.getByText('pages.billing.portalManaged.comparePlansHint')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'pages.billing.manageBilling' })).toBeTruthy()
 
     await act(async () => {
@@ -285,7 +283,6 @@ describe('AccountBillingRoutePage', () => {
     expect(screen.getByText('pages.billing.currentPlanBadge')).toBeTruthy()
 
     expect(screen.queryByRole('button', { name: 'pages.billing.managePlanInBilling' })).toBeNull()
-    expect(screen.getByText('pages.billing.portalManaged.comparePlansHint')).toBeTruthy()
 
     await act(async () => {
       fireEvent.click(screen.getByText('pages.spaces.plan.team'))
@@ -400,7 +397,7 @@ describe('AccountBillingRoutePage', () => {
     expect(screen.getAllByRole('button', { name: 'pages.billing.manageBilling' }).length).toBe(1)
   })
 
-  it('keeps portal-managed guidance in the comparison hint instead of a persistent banner', async () => {
+  it('does not show a persistent portal-managed banner in steady state', async () => {
     const { AccountBillingRoutePage } = await import('./account-billing-route-page')
 
     render(
@@ -418,7 +415,7 @@ describe('AccountBillingRoutePage', () => {
       />,
     )
 
-    expect(screen.getByText('pages.billing.portalManaged.comparePlansHint')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'pages.billing.manageBilling' })).toBeTruthy()
     expect(screen.queryByText('pages.billing.portalManaged.title')).toBeNull()
   })
 
@@ -434,7 +431,9 @@ describe('AccountBillingRoutePage', () => {
       />,
     )
 
-    expect(screen.queryByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: 'pages.billing.portalManaged.refreshAction' }),
+    ).toBeNull()
     expect(mockInvalidate).not.toHaveBeenCalled()
     expect(mockToastError).not.toHaveBeenCalled()
   })
@@ -468,7 +467,9 @@ describe('AccountBillingRoutePage', () => {
       search: {},
       replace: true,
     })
-    expect(screen.queryByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: 'pages.billing.portalManaged.refreshAction' }),
+    ).toBeNull()
 
     expect(mockInvalidate).toHaveBeenCalledTimes(1)
 
@@ -478,7 +479,9 @@ describe('AccountBillingRoutePage', () => {
 
     expect(mockInvalidate).toHaveBeenCalledTimes(4)
     expect(screen.getByText('pages.billing.portalSync.waitingDescription')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toBeTruthy()
+    expect(
+      screen.getByRole('button', { name: 'pages.billing.portalManaged.refreshAction' }),
+    ).toBeTruthy()
   })
 
   it('stops retrying early when synced billing state changes after portal return', async () => {
@@ -525,7 +528,9 @@ describe('AccountBillingRoutePage', () => {
         'pages.billing.portalSync.successUpgradeDescription:{"previousPlan":"pages.spaces.plan.starter","previousStatus":"pages.billing.status.active","plan":"pages.spaces.plan.team","status":"pages.billing.status.active"}',
       ),
     ).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: 'pages.billing.portalManaged.refreshAction' }),
+    ).toBeNull()
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(12000)

@@ -193,9 +193,6 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     : selectedPlanLabel != null
       ? t('pages.billing.selectPlanTarget', { plan: selectedPlanLabel })
       : t('pages.billing.selectPlan')
-  const primaryBillingActionHelp = isPortalManagedBilling
-    ? t('pages.billing.portalManaged.comparePlansHint')
-    : t('pages.billing.checkoutHint')
 
   const handlePrimaryBillingAction = async () => {
     if (isPortalManagedBilling) {
@@ -270,11 +267,11 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         return
       }
 
-	  const errorInfo = extractErrorInfo(error)
-	  if (errorInfo.reason === 'billing_checkout_requires_portal') {
-		await handleManageBilling()
-		return
-	  }
+      const errorInfo = extractErrorInfo(error)
+      if (errorInfo.reason === 'billing_checkout_requires_portal') {
+        await handleManageBilling()
+        return
+      }
 
       toast.error(`${t('pages.billing.messages.checkoutFailed')}: ${errorInfo.message}`)
     } finally {
@@ -496,7 +493,6 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       )}
@@ -505,8 +501,8 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         <div
           className={
             portalSyncSucceeded
-              ? 'rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-50'
-              : 'rounded-lg border border-sky-500/30 bg-sky-500/10 p-4 text-sky-950 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-50'
+              ? 'rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 text-emerald-950 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-50'
+              : 'bg-muted/30 text-foreground border-border/60 rounded-lg border p-4'
           }
         >
           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
@@ -531,8 +527,8 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                         ? 'pages.billing.portalSync.successDowngradeDescription'
                         : 'pages.billing.portalSync.successUpdatedDescription'
                     : portalSyncing
-                    ? 'pages.billing.portalSync.syncingDescription'
-                    : 'pages.billing.portalSync.waitingDescription',
+                      ? 'pages.billing.portalSync.syncingDescription'
+                      : 'pages.billing.portalSync.waitingDescription',
                   portalSyncSucceeded
                     ? {
                         previousPlan: portalSyncSuccessDetails
@@ -563,105 +559,97 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
       )}
 
-      <section className='bg-muted/10 space-y-5 rounded-xl border p-4 md:p-5'>
-        <div className='space-y-1'>
-          <p className='text-sm font-medium'>{t('pages.billing.selectPlan')}</p>
-        </div>
-
+      <section className='border-border/60 space-y-5 rounded-xl border bg-transparent p-4 md:p-5'>
         <div className='grid gap-4 xl:grid-cols-3'>
-        {PAID_PLANS.map((plan) => {
-          const entitlements = getPlanEntitlements(plan)
-          const isCurrentPlan = plan === currentPlan
-          const isSelectedPlan = selectedPlan === plan
-          const customDomainAllowance = entitlements.maxCustomDomains
-          const isSelectable = !isCurrentPlan
+          {PAID_PLANS.map((plan) => {
+            const entitlements = getPlanEntitlements(plan)
+            const isCurrentPlan = plan === currentPlan
+            const isSelectedPlan = selectedPlan === plan
+            const customDomainAllowance = entitlements.maxCustomDomains
+            const isSelectable = !isCurrentPlan
 
-          return (
-            <Card
-              key={plan}
-              className={cn(
-                isCurrentPlan && 'border-primary shadow-sm',
-                isSelectedPlan && 'border-primary bg-muted/30 shadow-sm',
-                isSelectable && 'cursor-pointer transition-colors hover:border-primary/60',
-              )}
-              role={isSelectable ? 'button' : undefined}
-              tabIndex={isSelectable ? 0 : undefined}
-              onClick={
-                isSelectable
-                  ? () => {
-                      handlePlanSelection(plan)
-                    }
-                  : undefined
-              }
-              onKeyDown={
-                isSelectable
-                  ? (event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
+            return (
+              <Card
+                key={plan}
+                className={cn(
+                  isCurrentPlan && 'border-primary shadow-sm',
+                  isSelectedPlan && 'border-primary bg-muted/30 shadow-sm',
+                  isSelectable && 'hover:border-primary/60 cursor-pointer transition-colors',
+                )}
+                role={isSelectable ? 'button' : undefined}
+                tabIndex={isSelectable ? 0 : undefined}
+                onClick={
+                  isSelectable
+                    ? () => {
                         handlePlanSelection(plan)
                       }
-                    }
-                  : undefined
-              }
-            >
-              <CardHeader>
-                <div className='flex items-center justify-between gap-3'>
-                  <CardTitle>{t(`pages.spaces.plan.${plan}`)}</CardTitle>
-                  {isCurrentPlan ? (
-                    <Badge>{t('pages.billing.currentPlanBadge')}</Badge>
-                  ) : isSelectedPlan ? (
-                    <Badge variant='outline'>{t('pages.billing.selectedPlanBadge')}</Badge>
-                  ) : null}
-                </div>
-                <CardDescription>{t(`pages.billing.planDescriptions.${plan}`)}</CardDescription>
-                <div className='flex items-end gap-1 pt-1'>
-                  <span className='text-2xl font-semibold tracking-tight'>{PLAN_PRICES[plan]}</span>
-                  <span className='text-muted-foreground text-sm'>
-                    {t('pages.billing.priceSuffix')}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='space-y-2 text-sm'>
-                  <div className='flex items-center justify-between gap-4'>
-                    <span>{t('pages.billing.planMetrics.spaces')}</span>
-                    <span className='font-medium'>{formatNumber(entitlements.maxSpaces)}</span>
+                    : undefined
+                }
+                onKeyDown={
+                  isSelectable
+                    ? (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          handlePlanSelection(plan)
+                        }
+                      }
+                    : undefined
+                }
+              >
+                <CardHeader>
+                  <div className='flex items-center justify-between gap-3'>
+                    <CardTitle>{t(`pages.spaces.plan.${plan}`)}</CardTitle>
+                    {isCurrentPlan ? (
+                      <Badge>{t('pages.billing.currentPlanBadge')}</Badge>
+                    ) : isSelectedPlan ? (
+                      <Badge variant='outline'>{t('pages.billing.selectedPlanBadge')}</Badge>
+                    ) : null}
                   </div>
-                  <div className='flex items-center justify-between gap-4'>
-                    <span>{t('pages.billing.planMetrics.hostedStorage')}</span>
-                    <span className='font-medium'>{entitlements.storageLimitGB} GB</span>
-                  </div>
-                  <div className='flex items-center justify-between gap-4'>
-                    <span>{t('pages.billing.planMetrics.processing')}</span>
-                    <span className='font-medium'>
-                      {formatNumber(entitlements.transformsLimit)}
+                  <CardDescription>{t(`pages.billing.planDescriptions.${plan}`)}</CardDescription>
+                  <div className='flex items-end gap-1 pt-1'>
+                    <span className='text-2xl font-semibold tracking-tight'>
+                      {PLAN_PRICES[plan]}
+                    </span>
+                    <span className='text-muted-foreground text-sm'>
+                      {t('pages.billing.priceSuffix')}
                     </span>
                   </div>
-                  <div className='flex items-center justify-between gap-4'>
-                    <span>{t('pages.billing.planMetrics.customDomains')}</span>
-                    <span className='font-medium'>
-                      {customDomainAllowance > 0
-                        ? t('pages.billing.customDomainsIncluded', {
-                            count: customDomainAllowance,
-                          })
-                        : t('pages.billing.customDomainsUnavailable')}
-                    </span>
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  <div className='space-y-2 text-sm'>
+                    <div className='flex items-center justify-between gap-4'>
+                      <span>{t('pages.billing.planMetrics.spaces')}</span>
+                      <span className='font-medium'>{formatNumber(entitlements.maxSpaces)}</span>
+                    </div>
+                    <div className='flex items-center justify-between gap-4'>
+                      <span>{t('pages.billing.planMetrics.hostedStorage')}</span>
+                      <span className='font-medium'>{entitlements.storageLimitGB} GB</span>
+                    </div>
+                    <div className='flex items-center justify-between gap-4'>
+                      <span>{t('pages.billing.planMetrics.processing')}</span>
+                      <span className='font-medium'>
+                        {formatNumber(entitlements.transformsLimit)}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between gap-4'>
+                      <span>{t('pages.billing.planMetrics.customDomains')}</span>
+                      <span className='font-medium'>
+                        {customDomainAllowance > 0
+                          ? t('pages.billing.customDomainsIncluded', {
+                              count: customDomainAllowance,
+                            })
+                          : t('pages.billing.customDomainsUnavailable')}
+                      </span>
+                    </div>
                   </div>
-                </div>
-
-              </CardContent>
-            </Card>
-          )
-        })}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
-        <div className='border-t pt-4'>
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-            <div className='space-y-1'>
-              <p className='text-sm font-medium'>{primaryBillingActionLabel}</p>
-              <p className='text-muted-foreground text-sm'>{primaryBillingActionHelp}</p>
-            </div>
-
+        <div className='border-border/60 border-t pt-4'>
+          <div className='flex justify-end'>
             <ButtonWithLoading
               variant='default'
               isLoading={portalLoading || (selectedPlan != null && pendingPlan === selectedPlan)}
@@ -675,9 +663,11 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
       </section>
 
-      <div className='bg-muted/20 rounded-lg border p-4'>
-        <p className='text-sm font-medium'>{t('pages.billing.sharedFeaturesTitle')}</p>
-        <div className='text-muted-foreground mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm'>
+      <div className='space-y-2 pt-1'>
+        <p className='text-muted-foreground text-sm font-medium'>
+          {t('pages.billing.sharedFeaturesTitle')}
+        </p>
+        <div className='text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-sm'>
           <span>{t('pages.billing.sharedFeatures.collaboration')}</span>
           <span>{t('pages.billing.sharedFeatures.orgSharing')}</span>
           <span>{t('pages.billing.sharedFeatures.byob')}</span>

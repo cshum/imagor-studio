@@ -89,7 +89,9 @@ describe('AccountOrganizationOverviewRoutePage', () => {
 
     expect(screen.getByText('pages.organizationOverview.overLimit.title')).toBeTruthy()
     expect(screen.getByText('pages.organizationOverview.overLimit.description')).toBeTruthy()
-    expect(screen.getByText('pages.organizationOverview.overLimit.messages.processing')).toBeTruthy()
+    expect(
+      screen.getByText('pages.organizationOverview.overLimit.messages.processing'),
+    ).toBeTruthy()
     expect(screen.getAllByText('pages.organizationOverview.actions.reviewBilling').length).toBe(2)
   })
 })

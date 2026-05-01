@@ -145,7 +145,9 @@ describe('JoinInvitePage', () => {
     expect(screen.getByText('pages.joinInvite.spaceHeroDescription')).toBeTruthy()
     expect(screen.getByText('pages.joinInvite.spaceSecondaryHelp')).toBeTruthy()
     expect(
-      screen.getByText('pages.joinInvite.spaceDescription:owner@example.com:viewer:Campaign Assets'),
+      screen.getByText(
+        'pages.joinInvite.spaceDescription:owner@example.com:viewer:Campaign Assets',
+      ),
     ).toBeTruthy()
   })
 })
