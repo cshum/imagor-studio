@@ -1,3 +1,4 @@
+import { act } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -91,7 +92,9 @@ describe('LoginPage', () => {
   it('preserves invite_token on the create-account link', async () => {
     const { LoginPage } = await import('./login-page')
 
-    render(<LoginPage />)
+    await act(async () => {
+      render(<LoginPage />)
+    })
 
     expect(
       screen.getByRole('link', { name: 'auth.login.createAccountLink' }).getAttribute('href'),
@@ -110,7 +113,9 @@ describe('LoginPage', () => {
 
     const { LoginPage } = await import('./login-page')
 
-    render(<LoginPage />)
+    await act(async () => {
+      render(<LoginPage />)
+    })
 
     expect(mockAuthPageShell).toHaveBeenCalled()
     const lastShellCall = mockAuthPageShell.mock.calls[mockAuthPageShell.mock.calls.length - 1]

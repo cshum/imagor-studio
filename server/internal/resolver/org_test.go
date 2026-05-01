@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -302,8 +303,15 @@ func TestUsageSummary_ReturnsPlanLimitsAndUsage(t *testing.T) {
 }
 
 func TestCreateCheckoutSession_CreatesBillingSession(t *testing.T) {
+	orgStore := &MockOrgStore{}
 	billingService := &MockBillingService{}
-	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, billingService)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanTrial,
+		PlanStatus: org.PlanStatusTrialing,
+	}, nil).Once()
 
 	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
 		OrgID:      "org-1",
@@ -317,7 +325,77 @@ func TestCreateCheckoutSession_CreatesBillingSession(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, "https://checkout.example/session", result.URL)
+	orgStore.AssertExpectations(t)
 	billingService.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_AllowsInternalLapsedFreeState(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, billingService)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanFree,
+		PlanStatus: org.PlanStatusCanceled,
+	}, nil).Once()
+
+	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
+		OrgID:      "org-1",
+		Plan:       "starter",
+		SuccessURL: "https://app.example/success",
+		CancelURL:  "https://app.example/cancel",
+	}).Return(&billing.Session{URL: "https://checkout.example/session"}, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Mutation().CreateCheckoutSession(ctx, "starter", "https://app.example/success", "https://app.example/cancel")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "https://checkout.example/session", result.URL)
+	orgStore.AssertExpectations(t)
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_RejectsPaidOrganizationsThatMustUsePortal(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, &MockBillingService{})
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanPro,
+		PlanStatus: org.PlanStatusActive,
+	}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "team", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "billing_checkout_requires_portal", gqlErr.Extensions["reason"])
+	orgStore.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_RejectsCanceledPaidOrganizationsWithStripeLinkage(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, &MockBillingService{})
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:                   "org-1",
+		Plan:                 org.PlanPro,
+		PlanStatus:           org.PlanStatusCanceled,
+		StripeCustomerID:     "cus_123",
+		StripeSubscriptionID: "sub_123",
+	}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "team", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "billing_checkout_requires_portal", gqlErr.Extensions["reason"])
+	orgStore.AssertExpectations(t)
 }
 
 func TestCreateCheckoutSession_RejectsUnsupportedPlan(t *testing.T) {
@@ -367,6 +445,86 @@ func TestCreateBillingPortalSession_CreatesPortalSession(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, "https://billing.example/portal", result.URL)
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_SanitizesProviderError(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, billingService)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanTrial,
+		PlanStatus: org.PlanStatusTrialing,
+	}, nil).Once()
+
+	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
+		OrgID:      "org-1",
+		Plan:       "pro",
+		SuccessURL: "https://app.example/success",
+		CancelURL:  "https://app.example/cancel",
+	}).Return(nil, fmt.Errorf("create stripe checkout session: {\"status\":403,\"message\":\"too much detail\"}"))
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInternalServer, gqlErr.Extensions["code"])
+	assert.Equal(t, "checkout is temporarily unavailable", gqlErr.Message)
+	assert.NotContains(t, gqlErr.Message, "403")
+	orgStore.AssertExpectations(t)
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateCheckoutSession_MapsProviderPortalRequirement(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(orgStore, &MockSpaceStore{}, billingService)
+
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(&org.Org{
+		ID:         "org-1",
+		Plan:       org.PlanTrial,
+		PlanStatus: org.PlanStatusTrialing,
+	}, nil).Once()
+
+	billingService.On("CreateCheckoutSession", mock.Anything, billing.CheckoutSessionInput{
+		OrgID:      "org-1",
+		Plan:       "pro",
+		SuccessURL: "https://app.example/success",
+		CancelURL:  "https://app.example/cancel",
+	}).Return(nil, billing.ErrCheckoutRequiresPortal)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateCheckoutSession(ctx, "pro", "https://app.example/success", "https://app.example/cancel")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "billing_checkout_requires_portal", gqlErr.Extensions["reason"])
+	assert.Equal(t, "existing paid subscriptions must use the billing portal", gqlErr.Message)
+	orgStore.AssertExpectations(t)
+	billingService.AssertExpectations(t)
+}
+
+func TestCreateBillingPortalSession_SanitizesProviderError(t *testing.T) {
+	billingService := &MockBillingService{}
+	r := newOrgResolverWithBilling(&MockOrgStore{}, &MockSpaceStore{}, billingService)
+
+	billingService.On("CreatePortalSession", mock.Anything, billing.PortalSessionInput{
+		OrgID:     "org-1",
+		ReturnURL: "https://app.example/account",
+	}).Return(nil, fmt.Errorf("create stripe billing portal session: {\"status\":403,\"message\":\"too much detail\"}"))
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	_, err := r.Mutation().CreateBillingPortalSession(ctx, "https://app.example/account")
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInternalServer, gqlErr.Extensions["code"])
+	assert.Equal(t, "billing portal is temporarily unavailable", gqlErr.Message)
+	assert.NotContains(t, gqlErr.Message, "403")
 	billingService.AssertExpectations(t)
 }
 
@@ -1100,7 +1258,10 @@ func TestDeleteOrganization_Success(t *testing.T) {
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
 
-	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil).Once()
+	deletableOrg := makeTestOrg("org-1", "user-1")
+	deletableOrg.Plan = org.PlanFree
+	deletableOrg.PlanStatus = org.PlanStatusCanceled
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(deletableOrg, nil).Once()
 	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
 	orgStore.On("Delete", mock.Anything, "org-1", "user-1").Return(nil).Once()
 
@@ -1161,6 +1322,56 @@ func TestDeleteOrganization_RejectsActivePaidBilling(t *testing.T) {
 	paidOrg := makeTestOrg("org-1", "user-1")
 	paidOrg.Plan = org.PlanStarter
 	paidOrg.PlanStatus = org.PlanStatusActive
+	paidOrg.StripeSubscriptionID = "sub_123"
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(paidOrg, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_delete_billing_active", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_RejectsActivePaidBillingWithoutStripeSubscriptionLinkage(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	paidOrg := makeTestOrg("org-1", "user-1")
+	paidOrg.Plan = org.PlanStarter
+	paidOrg.PlanStatus = org.PlanStatusActive
+	paidOrg.StripeSubscriptionID = ""
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(paidOrg, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_delete_billing_active", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_RejectsTrialingPaidBilling(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	paidOrg := makeTestOrg("org-1", "user-1")
+	paidOrg.Plan = org.PlanStarter
+	paidOrg.PlanStatus = org.PlanStatusTrialing
 	paidOrg.StripeSubscriptionID = "sub_123"
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(paidOrg, nil).Once()
 	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()

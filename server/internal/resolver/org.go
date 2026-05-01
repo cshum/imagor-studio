@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"sort"
@@ -1105,6 +1106,20 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 	if err := validateBillingRedirectURL(cancelURL, "billing_redirect_url_invalid"); err != nil {
 		return nil, err
 	}
+	currentOrg, err := r.orgStore.GetByID(ctx, orgID)
+	if err != nil {
+		r.logger.Error("CreateCheckoutSession: failed to load organization", zap.String("orgID", orgID), zap.Error(err))
+		return nil, apperror.InternalServerError("failed to load organization")
+	}
+	if currentOrg == nil {
+		return nil, apperror.BadRequest("organization not found", map[string]interface{}{"reason": "organization_required"})
+	}
+	isPaidPlan := currentOrg.Plan == org.PlanStarter || currentOrg.Plan == org.PlanPro || currentOrg.Plan == org.PlanTeam
+	isPortalManagedStatus := currentOrg.PlanStatus == org.PlanStatusActive || currentOrg.PlanStatus == org.PlanStatusTrialing || currentOrg.PlanStatus == org.PlanStatusPastDue
+	hasExistingStripeLinkage := strings.TrimSpace(currentOrg.StripeCustomerID) != "" || strings.TrimSpace(currentOrg.StripeSubscriptionID) != ""
+	if isPaidPlan && (isPortalManagedStatus || hasExistingStripeLinkage) {
+		return nil, apperror.BadRequest("existing paid subscriptions must use the billing portal", map[string]interface{}{"reason": "billing_checkout_requires_portal"})
+	}
 	session, err := r.billingService.CreateCheckoutSession(ctx, billing.CheckoutSessionInput{
 		OrgID:      orgID,
 		Plan:       strings.TrimSpace(plan),
@@ -1112,7 +1127,15 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, plan strin
 		CancelURL:  strings.TrimSpace(cancelURL),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create checkout session: %w", err)
+		if errors.Is(err, billing.ErrCheckoutRequiresPortal) {
+			return nil, apperror.BadRequest("existing paid subscriptions must use the billing portal", map[string]interface{}{"reason": "billing_checkout_requires_portal"})
+		}
+		r.logger.Error("CreateCheckoutSession: billing provider failed",
+			zap.String("orgID", orgID),
+			zap.String("plan", strings.TrimSpace(plan)),
+			zap.Error(err),
+		)
+		return nil, apperror.InternalServerError("checkout is temporarily unavailable")
 	}
 	if session == nil || strings.TrimSpace(session.URL) == "" {
 		return nil, fmt.Errorf("billing service returned an empty checkout session")
@@ -1142,7 +1165,11 @@ func (r *mutationResolver) CreateBillingPortalSession(ctx context.Context, retur
 		ReturnURL: strings.TrimSpace(returnURL),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create billing portal session: %w", err)
+		r.logger.Error("CreateBillingPortalSession: billing provider failed",
+			zap.String("orgID", orgID),
+			zap.Error(err),
+		)
+		return nil, apperror.InternalServerError("billing portal is temporarily unavailable")
 	}
 	if session == nil || strings.TrimSpace(session.URL) == "" {
 		return nil, fmt.Errorf("billing service returned an empty portal session")
@@ -1926,8 +1953,8 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context) (bool, error)
 	}
 
 	isPaidPlan := currentOrg.Plan == org.PlanStarter || currentOrg.Plan == org.PlanPro || currentOrg.Plan == org.PlanTeam
-	hasActiveBilling := currentOrg.PlanStatus == org.PlanStatusActive || currentOrg.PlanStatus == org.PlanStatusPastDue
-	if isPaidPlan && hasActiveBilling && currentOrg.StripeSubscriptionID != "" {
+	hasActiveBilling := currentOrg.PlanStatus == org.PlanStatusActive || currentOrg.PlanStatus == org.PlanStatusTrialing || currentOrg.PlanStatus == org.PlanStatusPastDue
+	if isPaidPlan && hasActiveBilling {
 		return false, apperror.BadRequest("cancel paid billing before deleting the organization", map[string]interface{}{"reason": "org_delete_billing_active"})
 	}
 

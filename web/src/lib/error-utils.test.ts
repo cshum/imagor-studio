@@ -42,6 +42,41 @@ describe('error-utils', () => {
     })
   })
 
+  it('sanitizes Stripe-like secrets and request log URLs in GraphQL messages', () => {
+    const error = {
+      response: {
+        status: 200,
+        errors: [
+          {
+            message:
+              'failed to create billing portal session: create stripe billing portal session: {"status":403,"message":"The provided key \"rk_test_1234567890abcdef\" does not have the required permissions","request_log_url":"https://dashboard.stripe.com/acct_123/test/workbench/logs?object=req_123","type":"invalid_request_error"}',
+          },
+        ],
+      },
+    }
+
+    expect(extractErrorMessage(error)).toBe('Billing provider request failed. Please try again.')
+    expect(extractErrorInfo(error)).toEqual({
+      message: 'Billing provider request failed. Please try again.',
+      field: undefined,
+      code: undefined,
+      reason: undefined,
+      argumentName: undefined,
+    })
+  })
+
+  it('sanitizes Stripe-like secrets in direct error messages', () => {
+    const error = {
+      message:
+        'The provided key rk_test_1234567890abcdef does not have the required permissions. request_log_url=https://dashboard.stripe.com/acct_123/test/workbench/logs?object=req_123',
+    }
+
+    expect(extractErrorMessage(error)).toBe('Billing provider request failed. Please try again.')
+    expect(extractErrorInfo(error)).toEqual({
+      message: 'Billing provider request failed. Please try again.',
+    })
+  })
+
   it('extracts graphql error reasons when present', () => {
     const error = {
       response: {

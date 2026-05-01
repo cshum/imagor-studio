@@ -89,6 +89,10 @@ export interface BillingLoaderData {
   breadcrumb: BreadcrumbItem
 }
 
+export interface BillingSearch {
+  portal_returned?: boolean
+}
+
 export interface OrgOverviewLoaderData {
   organization: MyOrganizationQuery['myOrganization']
   usageSummary: GetUsageSummaryQuery['usageSummary']
@@ -133,6 +137,15 @@ export const profileLoader = async (): Promise<ProfileLoaderData> => {
       translationKey: 'navigation.breadcrumbs.account',
     },
   }
+}
+
+export const billingValidateSearch = (search: Record<string, unknown>): BillingSearch => {
+  const portalReturned =
+    search.portal_returned === true ||
+    search.portal_returned === 'true' ||
+    search.portal_returned === '1'
+
+  return portalReturned ? { portal_returned: true } : {}
 }
 
 /**

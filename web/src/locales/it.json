@@ -73,10 +73,7 @@
     "login": {
       "eyebrow": "Imagor Studio",
       "title": "Elaborazione immagini ad alte prestazioni per i team",
-      "subtitle": "Gestisci storage, delivery e accessi delle immagini da un unico posto.",
       "formTitle": "Accedi",
-      "formSubtitleCloud": "Accedi con l'account con cui il tuo team ti ha invitato.",
-      "formSubtitleSelfHosted": "Accedi con le credenziali del tuo account.",
       "googleCta": "Continua con Google",
       "credentialsDividerCloud": "oppure usa email e password",
       "credentialsDividerSelfHosted": "oppure usa nome utente e password",
@@ -84,7 +81,6 @@
       "identifierLabelSelfHosted": "Nome utente",
       "identifierPlaceholderCloud": "",
       "identifierPlaceholderSelfHosted": "Inserisci il tuo nome utente",
-      "inviteHint": "Usa il tuo account di team per accedere a spazi condivisi, impostazioni di delivery e configurazione dello storage.",
       "highlights": {
         "storage": "Controlla storage e delivery per team o ambiente",
         "delivery": "Gestisci l'infrastruttura immagini senza condividere credenziali",
@@ -93,7 +89,7 @@
       "signIn": "Accedi",
       "loginFailed": "Credenziali non valide. Riprova.",
       "errors": {
-        "inviteInvalid": "Questo invito non e piu valido. Chiedi un nuovo invito e riprova.",
+        "inviteInvalid": "Questo invito non e piu valido. Chiedi al mittente un nuovo invito e riprova.",
         "inviteOrgConflict": "Questo account appartiene gia a un'altra organizzazione. Usa un account diverso oppure lascia prima la tua organizzazione attuale.",
         "inviteEmailMismatch": "Questo invito e stato inviato a un altro indirizzo email. Accedi invece con l'account invitato."
       },
@@ -187,7 +183,7 @@
       "failed": "Autenticazione non riuscita",
       "errorOAuth": "Autenticazione non riuscita: {{error}}",
       "errors": {
-        "inviteInvalid": "Questo invito non e piu valido. Chiedi un nuovo invito e riprova.",
+        "inviteInvalid": "Questo invito non e piu valido. Chiedi al mittente un nuovo invito e riprova.",
         "oauthInvalidState": "La sessione di accesso e scaduta o non e piu valida. Riprova.",
         "oauthMissingCode": "Google non ha restituito un codice di autorizzazione. Riprova.",
         "oauthEmailUnverified": "L'indirizzo email del tuo account Google non e verificato. Verificalo con Google e riprova.",
@@ -816,11 +812,11 @@
       "description": "Imagor Studio richiede l'accesso a un'organizzazione prima di caricare l'area account e la gestione degli spazi.",
       "invite": {
         "title": "Accedi con un invito",
-        "description": "Apri il link di invito dopo l'accesso, oppure chiedi a un amministratore dell'organizzazione di inviartene uno nuovo se il precedente è scaduto."
+        "description": "Apri il link di invito dopo l'accesso, oppure chiedi al mittente di condividerne uno nuovo se il precedente è scaduto."
       },
       "nextSteps": {
         "title": "Cosa fare ora",
-        "description": "Crea una nuova organizzazione personale per continuare oppure unisciti a una esistente tramite invito se devi lavorare nel team di qualcun altro."
+        "description": "Crea una nuova organizzazione personale per continuare, oppure accetta un invito a un'organizzazione esistente o a uno spazio condiviso se devi lavorare nel team di qualcun altro."
       },
       "actions": {
         "createOrganization": "Crea organizzazione",
@@ -832,8 +828,10 @@
     },
     "joinInvite": {
       "eyebrow": "Invito organizzazione",
+      "spaceEyebrow": "Invito spazio",
       "heroTitle": "Scegli come vuoi partecipare",
       "heroDescription": "Usa questo invito per entrare in un'organizzazione esistente. La registrazione da questo flusso ti unirà al workspace invitato invece di crearne uno separato.",
+      "spaceHeroDescription": "Usa questo invito per unirti a uno spazio condiviso esistente. Registrandoti da questo flusso otterrai accesso allo spazio invitato senza cambiare l'appartenenza alla tua organizzazione principale.",
       "formTitle": "Partecipa con un invito",
       "invitedTo": "Sei stato invitato a partecipare a {{organization}}",
       "organizationDescription": "Questo invito è stato inviato a {{email}} con il ruolo {{role}}.",
@@ -841,6 +839,7 @@
       "googleAction": "Continua con Google",
       "emailAction": "Continua con email",
       "secondaryHelp": "L'accesso con Google usa direttamente l'invito. La registrazione email verifica prima l'indirizzo e poi ti unisce all'organizzazione invitante.",
+      "spaceSecondaryHelp": "L'accesso con Google usa direttamente l'invito. La registrazione via email verifica prima il tuo indirizzo e poi concede accesso allo spazio invitato.",
       "loginInstead": "Hai già un account? Accedi",
       "acceptingTitle": "Completamento dell'invito",
       "acceptingDescription": "Stiamo aggiungendo questo account all'organizzazione invitata.",
@@ -874,9 +873,11 @@
       "noOrganizationTitle": "Crea un'organizzazione per iniziare",
       "noOrganizationBannerTitle": "Crea la tua organizzazione",
       "noOrganizationBannerDescription": "Hai ancora accesso agli spazi condivisi, ma questo account non ha piu un'organizzazione personale. Creane una per ripristinare il tuo workspace e i flussi di amministrazione.",
+      "noSpacesAvailable": "Nessuno spazio disponibile al momento",
       "description": "Crea e gestisci workspace immagini per ogni team, brand o ambiente.",
       "emptyDescription": "Lancia il tuo primo workspace immagini per upload, trasformazioni e distribuzione.",
       "emptyDescriptionNoOrganization": "Questo account non ha ancora un'organizzazione personale.",
+      "emptyDescriptionMember": "Non hai ancora accesso ad alcuno spazio di elaborazione immagini.",
       "settings": "Settings",
       "spaceCount": "{{count}} spazio/i",
       "openGallery": "Apri galleria",
@@ -966,6 +967,16 @@
       "leaveOrganizationDescription": "Lasciare l'organizzazione corrente? Perderai l'accesso ai suoi spazi condivisi e dovrai accedere di nuovo.",
       "usageSummaryMeta": "{{owned}} tuoi · {{shared}} condivisi",
       "currentBillingPeriod": "{{start}} - {{end}}",
+      "overLimit": {
+        "title": "La tua organizzazione ha superato i limiti del piano corrente",
+        "description": "Gli spazi esistenti continuano a funzionare e il processing di produzione non viene sospeso automaticamente per ora, ma alcune azioni restano bloccate finché l'utilizzo non viene ridotto o il piano non viene aggiornato.",
+        "reviewBilling": "Controlla fatturazione",
+        "messages": {
+          "spaces": "Puoi mantenere gli spazi esistenti, ma non puoi crearne altri finché l'utilizzo non rientra nel piano.",
+          "storage": "I file esistenti restano disponibili, ma i nuovi caricamenti gestiti sono bloccati finché lo storage supera il limite.",
+          "processing": "Il processing di produzione non viene sospeso automaticamente al momento, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
+        }
+      },
       "processingUsage": "{{count}} trasformazioni",
       "usage": {
         "spaces": "Spazi",
@@ -976,6 +987,7 @@
       "configure": "Configura",
       "startDescription": "Puoi personalizzare storage, delivery e accesso man mano che cresci.",
       "startDescriptionNoOrganization": "Crea subito un'organizzazione personale, poi torna qui per creare spazi o ricevere accesso a quelli esistenti.",
+      "startDescriptionMember": "Chiedi a un amministratore dell'organizzazione di creare uno spazio o di condividere con te uno spazio esistente.",
       "sharedLabel": "Condiviso",
       "leaveSpace": "Esci",
       "leaveSpaceDescription": "Lascia questo spazio condiviso",
@@ -987,12 +999,21 @@
     "billing": {
       "title": "Fatturazione",
       "titleDescription": "Scegli il piano più adatto a come il tuo team archivia, elabora e distribuisce le immagini.",
-      "currentPlan": "Piano attuale",
-      "currentPlanDescription": "L'utilizzo viene monitorato per periodo di fatturazione e si azzera automaticamente.",
+      "overLimit": {
+        "title": "La tua organizzazione ha superato i limiti del piano corrente",
+        "description": "Gli spazi esistenti continuano a funzionare e il processing di produzione non viene sospeso automaticamente per ora, ma alcune azioni restano bloccate finché l'utilizzo non viene ridotto o il piano non viene aggiornato.",
+        "messages": {
+          "spaces": "Puoi mantenere gli spazi esistenti, ma non puoi crearne altri finché l'utilizzo non rientra nel piano.",
+          "storage": "I file esistenti restano disponibili, ma i nuovi caricamenti gestiti sono bloccati finché lo storage supera il limite.",
+          "processing": "Il processing di produzione non viene sospeso automaticamente al momento, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
+        }
+      },
       "currentPlanBadge": "Attuale",
-      "currentPlanButton": "Piano attuale",
+      "selectedPlanBadge": "Selezionato",
       "manageBilling": "Gestisci fatturazione",
+      "manageBillingTarget": "Passa a {{plan}}",
       "selectPlan": "Scegli piano",
+      "selectPlanTarget": "Scegli {{plan}}",
       "priceSuffix": "/mese",
       "unlimited": "Illimitato",
       "customDomainsIncluded": "{{count}} inclusi",
@@ -1019,11 +1040,20 @@
         "pro": "Per team in crescita che gestiscono più flussi immagini, domini personalizzati e volumi mensili più alti.",
         "team": "Per organizzazioni che gestiscono operazioni immagini condivise tra più team o brand."
       },
-      "sharedFeaturesTitle": "Ogni piano a pagamento include anche",
-      "sharedFeatures": {
-        "collaboration": "Accesso condiviso agli spazi",
-        "orgSharing": "Inviti del team e accesso condiviso",
-        "byob": "Collega il tuo bucket S3"
+      "portalManaged": {
+        "refreshAction": "Aggiorna ora"
+      },
+      "portalSync": {
+        "title": "Stiamo sincronizzando le ultime modifiche di fatturazione",
+        "syncingDescription": "L'aggiornamento Stripe è stato inviato. Stiamo aggiornando ora lo stato più recente della sottoscrizione.",
+        "waitingTitle": "Sei tornato nella fatturazione",
+        "waitingDescription": "Abbiamo controllato gli ultimi dettagli di fatturazione. Se hai modificato qualcosa che non è ancora visibile qui, puoi aggiornare di nuovo tra un momento.",
+        "successUpgradeTitle": "L'upgrade è ora sincronizzato",
+        "successDowngradeTitle": "Il downgrade è ora sincronizzato",
+        "successUpdatedTitle": "Le modifiche di fatturazione sono ora sincronizzate",
+        "successUpgradeDescription": "Questa organizzazione è passata da {{previousPlan}} a {{plan}} con stato di fatturazione {{status}}.",
+        "successDowngradeDescription": "Questa organizzazione è passata da {{previousPlan}} a {{plan}} con stato di fatturazione {{status}}.",
+        "successUpdatedDescription": "Questa organizzazione è ora nel piano {{plan}} con stato di fatturazione {{status}}."
       },
       "danger": {
         "title": "Zona di pericolo",
@@ -1046,7 +1076,8 @@
       },
       "messages": {
         "checkoutFailed": "Impossibile avviare il checkout",
-        "portalFailed": "Impossibile aprire il portale di fatturazione"
+        "portalFailed": "Impossibile aprire il portale di fatturazione",
+        "refreshFailed": "Impossibile aggiornare lo stato della fatturazione"
       }
     },
     "organizationMembers": {
@@ -1114,6 +1145,15 @@
       "title": "Organizzazione",
       "titleDescription": "Controlla piano, utilizzo e amministrazione dell'organizzazione in un unico punto.",
       "summaryDescription": "Una vista rapida dello stato attuale dell'organizzazione.",
+      "overLimit": {
+        "title": "La tua organizzazione ha superato i limiti del piano corrente",
+        "description": "Gli spazi esistenti continuano a funzionare e il processing di produzione non viene sospeso automaticamente per ora, ma alcune azioni restano bloccate finché l'utilizzo non viene ridotto o il piano non viene aggiornato.",
+        "messages": {
+          "spaces": "Puoi mantenere gli spazi esistenti, ma non puoi crearne altri finché l'utilizzo non rientra nel piano.",
+          "storage": "I file esistenti restano disponibili, ma i nuovi caricamenti gestiti sono bloccati finché lo storage supera il limite.",
+          "processing": "Il processing di produzione non viene sospeso automaticamente al momento, ma questa organizzazione è oltre l'uso consentito dal piano corrente per questo periodo di fatturazione."
+        }
+      },
       "usageTitle": "Utilizzo attuale",
       "usageDescription": "L'utilizzo si azzera a ogni periodo di fatturazione e si applica a tutta l'organizzazione.",
       "unlimited": "Illimitato",
@@ -1169,6 +1209,9 @@
       },
       "general": {
         "description": "Informazioni di base su questo spazio.",
+        "identity": "Identita",
+        "access": "Accesso",
+        "experience": "Esperienza",
         "name": "Nome visualizzato",
         "nameDescription": "Il nome mostrato nella navigazione e nell'elenco spazi.",
         "updateForbidden": "Non hai i permessi per gestire questo spazio.",
@@ -1280,6 +1323,8 @@
       },
       "imagor": {
         "description": "Configura le impostazioni di imagor per questo spazio.",
+        "media": "Media",
+        "mediaDescription": "Controlla come vengono generate le miniature video per questo spazio.",
         "urlSigning": "Firma URL",
         "urlSigningDescription": "La maggior parte degli spazi può usare il valore predefinito del workspace. Imposta un segreto personalizzato solo se questo spazio deve firmare gli URL imagor in modo diverso.",
         "urlSigningSecret": "Segreto di firma URL",

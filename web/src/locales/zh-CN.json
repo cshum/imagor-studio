@@ -3,26 +3,15 @@
     "account": {
       "title": "设置",
       "backToApp": "返回应用",
-      "secretMode": "密钥来源",
-      "secretModeDescription": "选择此空间是保留当前签名配置、使用工作区默认值，还是使用自己的自定义签名密钥。",
-      "secretModeKeep": "保留当前配置",
-      "secretModeKeepDescription": "在不显示当前密钥的情况下保留现有密钥。适用于只想更新其他签名设置时。",
-      "secretModeWorkspace": "使用工作区默认值",
-      "secretModeWorkspaceDescription": "移除此空间的自定义密钥，并继承工作区签名配置。",
-      "secretModeCustom": "设置自定义密钥",
-      "secretModeCustomDescription": "为此空间使用不同的签名密钥。保存后该值将保持隐藏。",
-      "imagorSecret": "URL 签名密钥",
-      "imagorSecretDescription": "仅在此空间使用自定义签名密钥时生效。输入新值会替换现有密钥。",
-      "imagorSecretHiddenHint": "已保存的密钥不会显示。选择“设置自定义密钥”可替换，或选择“使用工作区默认值”以移除覆盖。",
-      "signerAlgorithm": "签名算法",
-      "signerAlgorithmDescription": "当此空间使用自定义密钥时，用于签署变换 URL 的 HMAC 算法。",
-      "signerAlgorithmInheritedDescription": "使用工作区默认密钥时，此空间将继承工作区签名算法。",
+      "sections": {
+        "account": "账户",
+        "administration": "管理"
+      },
       "tabs": {
         "profile": "账户设置",
         "billing": "计费",
         "system": "系统",
-        "signerTruncateDescription": "将 URL 签名缩短为此字符长度。值越小，URL 越短，但安全性越低。使用 0 表示完整签名。",
-        "signerTruncateInheritedDescription": "使用工作区默认密钥时，此空间将继承工作区签名长度。",
+        "users": "用户",
         "spaces": "空间"
       }
     }
@@ -32,10 +21,6 @@
     "buttons": {
       "save": "保存",
       "cancel": "取消",
-      "corsOrigins": "附加 CORS 来源",
-      "corsOriginsDescription": "允许额外的浏览器来源访问此空间的 imagor 响应。",
-      "corsOriginsHelp": "输入以逗号分隔的来源列表，例如：https://editor.customer.test, https://cms.customer.test",
-      "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
       "delete": "删除",
       "remove": "移除",
       "edit": "编辑",
@@ -85,10 +70,12 @@
     }
   },
   "forms": {
-    "enterUsername": "输入您的用户名",
-    "enterPassword": "输入您的密码",
-    "confirmPassword": "确认您的密码",
-    "enterName": "输入您的名称",
+    "placeholders": {
+      "enterUsername": "输入您的用户名",
+      "enterPassword": "输入您的密码",
+      "confirmPassword": "确认您的密码",
+      "enterName": "输入您的名称"
+    },
     "validation": {
       "required": "此字段为必填项",
       "invalidUsername": "请输入有效的用户名",
@@ -131,7 +118,7 @@
       "failed": "认证失败",
       "errorOAuth": "认证失败：{{error}}",
       "errors": {
-        "inviteInvalid": "此邀请已失效。请请求新的邀请后再试。",
+        "inviteInvalid": "此邀请已失效。请联系发送者重新发送邀请后再试。",
         "oauthInvalidState": "登录会话已过期或无效，请重试。",
         "oauthMissingCode": "Google 没有返回授权码，请重试。",
         "oauthEmailUnverified": "你的 Google 账户邮箱尚未验证。请先在 Google 完成验证后再试。",
@@ -760,11 +747,11 @@
       "description": "Imagor Studio 需要组织访问权限后，才能加载账户区域和空间管理功能。",
       "invite": {
         "title": "通过邀请加入",
-        "description": "登录后打开你的邀请链接；如果原邀请已过期，请联系组织管理员重新发送。"
+        "description": "登录后打开你的邀请链接；如果原邀请已过期，请联系发送者重新分享一份新的邀请。"
       },
       "nextSteps": {
         "title": "接下来怎么做",
-        "description": "你可以先创建一个新的个人组织继续使用；如果你本应加入别人的团队，也可以通过邀请加入现有组织。"
+        "description": "你可以先创建一个新的个人组织继续使用；如果你本应加入别人的团队，也可以通过邀请加入现有组织或共享空间。"
       },
       "actions": {
         "createOrganization": "创建组织",
@@ -776,8 +763,10 @@
     },
     "joinInvite": {
       "eyebrow": "组织邀请",
+      "spaceEyebrow": "空间邀请",
       "heroTitle": "选择加入方式",
       "heroDescription": "使用此邀请加入现有组织。通过此流程注册时，你会加入被邀请的工作区，而不是创建一个新的组织。",
+      "spaceHeroDescription": "使用此邀请加入现有共享空间。通过此流程注册时，你会获得被邀请空间的访问权限，而不会改变你当前的主要组织成员关系。",
       "formTitle": "通过邀请加入",
       "invitedTo": "你已被邀请加入 {{organization}}",
       "organizationDescription": "此邀请已发送到 {{email}}，角色为 {{role}}。",
@@ -785,6 +774,7 @@
       "googleAction": "使用 Google 继续",
       "emailAction": "使用邮箱继续",
       "secondaryHelp": "Google 登录会直接使用此邀请。邮箱注册会先验证你的邮箱地址，然后再加入被邀请的组织。",
+      "spaceSecondaryHelp": "Google 登录会直接使用此邀请。邮箱注册会先验证你的邮箱地址，然后授予你对被邀请空间的访问权限。",
       "loginInstead": "已有账号？去登录",
       "acceptingTitle": "正在完成邀请",
       "acceptingDescription": "我们正在将此账户加入受邀组织。",
@@ -812,6 +802,7 @@
       "noOrganizationTitle": "先创建组织再开始使用",
       "noOrganizationBannerTitle": "创建你自己的组织",
       "noOrganizationBannerDescription": "你仍可继续使用共享空间，但这个账号已经没有个人组织。创建一个组织即可恢复你自己的工作区和管理功能。",
+      "noSpacesAvailable": "目前还没有可用空间",
       "storageTypeLabel": "存储类型",
       "credentialsEncrypted": "凭据使用 AES-256 加密存储，保存后不会再次明文显示。",
       "storageType": {
@@ -846,6 +837,7 @@
       "description": "为你的团队、品牌或环境创建并管理图片工作空间。",
       "emptyDescription": "创建你的第一个图片工作空间，用于上传、处理和交付图片。",
       "emptyDescriptionNoOrganization": "此账户还没有个人组织。",
+      "emptyDescriptionMember": "你目前还没有任何图片处理空间的访问权限。",
       "settings": "设置",
       "spaceCount": "{{count}} 个空间",
       "openGallery": "打开图库",
@@ -855,7 +847,6 @@
         "next": "下一步",
         "back": "上一步"
       },
-      "createSpaceDescription": "创建专属图片工作空间，拥有自己的存储、交付设置和访问权限。",
       "messages": {
         "spaceCreatedSuccess": "空间创建成功",
         "spaceUpdatedSuccess": "空间更新成功",
@@ -901,6 +892,16 @@
       "leaveOrganizationDescription": "要离开当前组织吗？你将失去其共享空间的访问权限，并需要重新登录。",
       "usageSummaryMeta": "{{owned}} 个由你拥有 · {{shared}} 个与你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
+      "overLimit": {
+        "title": "你的组织已超出当前套餐限制",
+        "description": "现有空间仍可继续使用，且生产处理目前不会被自动暂停，但在降低用量或升级套餐之前，部分操作会继续被阻止。",
+        "reviewBilling": "查看计费",
+        "messages": {
+          "spaces": "你可以保留现有空间，但在用量回到套餐范围内之前，无法再创建新空间。",
+          "storage": "现有文件仍可访问，但在存储超限期间，新的平台托管上传会被阻止。",
+          "processing": "生产处理当前不会被自动暂停，但该组织在本计费周期内已超出当前套餐的处理额度。"
+        }
+      },
       "processingUsage": "{{count}} 次处理",
       "usage": {
         "spaces": "空间",
@@ -915,6 +916,7 @@
       },
       "startDescription": "您可以随着成长逐步自定义存储、交付和访问权限。",
       "startDescriptionNoOrganization": "现在先创建一个个人组织，然后回到这里创建空间或接收现有空间的访问权限。",
+      "startDescriptionMember": "请组织管理员创建一个空间，或将现有空间共享给你。",
       "sharedLabel": "共享",
       "leaveSpace": "离开",
       "leaveSpaceDescription": "离开这个共享空间",
@@ -932,12 +934,21 @@
     "billing": {
       "title": "计费",
       "titleDescription": "选择最适合团队存储、处理和交付图片方式的套餐。",
-      "currentPlan": "当前套餐",
-      "currentPlanDescription": "用量按计费周期统计，并会自动重置。",
+      "overLimit": {
+        "title": "你的组织已超出当前套餐限制",
+        "description": "现有空间仍可继续使用，且生产处理目前不会被自动暂停，但在降低用量或升级套餐之前，部分操作会继续被阻止。",
+        "messages": {
+          "spaces": "你可以保留现有空间，但在用量回到套餐范围内之前，无法再创建新空间。",
+          "storage": "现有文件仍可访问，但在存储超限期间，新的平台托管上传会被阻止。",
+          "processing": "生产处理当前不会被自动暂停，但该组织在本计费周期内已超出当前套餐的处理额度。"
+        }
+      },
       "currentPlanBadge": "当前",
-      "currentPlanButton": "当前套餐",
+      "selectedPlanBadge": "已选择",
       "manageBilling": "管理计费",
+      "manageBillingTarget": "切换到 {{plan}}",
       "selectPlan": "选择套餐",
+      "selectPlanTarget": "选择 {{plan}}",
       "priceSuffix": "/月",
       "unlimited": "不限",
       "customDomainsIncluded": "含 {{count}} 个",
@@ -964,11 +975,20 @@
         "pro": "适合管理多条图片流程、需要自定义域名和更高月处理量的成长团队。",
         "team": "适合跨多个团队或品牌管理共享图片运营的大型组织。"
       },
-      "sharedFeaturesTitle": "所有付费套餐另外均包含",
-      "sharedFeatures": {
-        "collaboration": "共享空间访问",
-        "orgSharing": "团队邀请与共享访问",
-        "byob": "连接自己的 S3 兼容存储桶"
+      "portalManaged": {
+        "refreshAction": "立即刷新"
+      },
+      "portalSync": {
+        "title": "我们正在同步你最新的计费变更",
+        "syncingDescription": "你的 Stripe 更新已提交。我们正在刷新最新的订阅状态。",
+        "waitingTitle": "你已返回计费页面",
+        "waitingDescription": "我们已检查最新的计费详情。如果你修改的内容暂时还没有显示在这里，请稍后再刷新一次。",
+        "successUpgradeTitle": "你的升级现已同步",
+        "successDowngradeTitle": "你的降级现已同步",
+        "successUpdatedTitle": "你的计费变更现已同步",
+        "successUpgradeDescription": "这个组织已从 {{previousPlan}} 升级到 {{plan}}，计费状态为 {{status}}。",
+        "successDowngradeDescription": "这个组织已从 {{previousPlan}} 降级到 {{plan}}，计费状态为 {{status}}。",
+        "successUpdatedDescription": "这个组织现在使用的是 {{plan}} 套餐，计费状态为 {{status}}。"
       },
       "danger": {
         "title": "危险区域",
@@ -991,7 +1011,8 @@
       },
       "messages": {
         "checkoutFailed": "无法启动结账流程",
-        "portalFailed": "无法打开计费门户"
+        "portalFailed": "无法打开计费门户",
+        "refreshFailed": "无法刷新计费状态"
       }
     },
     "organizationMembers": {
@@ -1059,6 +1080,15 @@
       "title": "组织",
       "titleDescription": "在一个位置查看套餐、用量和组织管理。",
       "summaryDescription": "快速查看当前组织状态。",
+      "overLimit": {
+        "title": "你的组织已超出当前套餐限制",
+        "description": "现有空间和处理目前仍可继续使用，但在降低用量或升级套餐之前，部分操作会继续被阻止。",
+        "messages": {
+          "spaces": "你可以保留现有空间，但在用量回到套餐范围内之前，无法再创建新空间。",
+          "storage": "现有文件仍可访问，但在存储超限期间，新的平台托管上传会被阻止。",
+          "processing": "生产处理目前仍会继续，但该组织在本计费周期内已超出当前套餐的处理额度。"
+        }
+      },
       "usageTitle": "当前用量",
       "usageDescription": "用量按计费周期重置，并应用于整个组织。",
       "unlimited": "不限",
@@ -1111,6 +1141,9 @@
       },
       "general": {
         "description": "此空间的基本信息。",
+        "identity": "标识",
+        "access": "访问",
+        "experience": "体验",
         "name": "显示名称",
         "nameDescription": "导航栏和空间列表中显示的名称。",
         "updateForbidden": "你没有管理这个空间的权限。",
@@ -1214,6 +1247,8 @@
       },
       "imagor": {
         "description": "为此空间配置 imagor 设置。",
+        "media": "媒体",
+        "mediaDescription": "控制此空间的视频缩略图生成方式。",
         "urlSigning": "URL 签名",
         "urlSigningDescription": "大多数空间都可以使用工作区默认值。只有当此空间需要以不同方式签署 imagor URL 时，才设置自定义密钥。",
         "urlSigningSecret": "URL 签名密钥",
@@ -1248,6 +1283,10 @@
         "signerTruncatePreviewDescription": "此空间自定义签名器当前使用的签名长度。",
         "signerTruncateDescription": "将 URL 签名缩短为此字符长度。值越小，URL 越短，但安全性越低。使用 0 表示完整签名。",
         "signerTruncateInheritedDescription": "使用工作区默认密钥时，此空间将继承工作区签名长度。",
+        "corsOrigins": "附加 CORS 来源",
+        "corsOriginsDescription": "允许额外的浏览器来源访问此空间的 imagor 响应。",
+        "corsOriginsHelp": "输入以逗号分隔的来源列表，例如：https://editor.customer.test, https://cms.customer.test",
+        "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
         "saved": "安全设置已保存",
         "customSecretSaved": "自定义 URL 签名密钥已保存",
         "workspaceDefaultRestored": "已恢复工作区默认签名密钥",
@@ -1551,10 +1590,7 @@
     "login": {
       "eyebrow": "Imagor Studio",
       "title": "适合团队的高性能图片处理",
-      "subtitle": "在一个地方管理图片存储、交付和访问权限。",
       "formTitle": "登录",
-      "formSubtitleCloud": "请使用团队邀请你的账号登录。",
-      "formSubtitleSelfHosted": "请使用你的账户凭证登录。",
       "googleCta": "使用 Google 继续",
       "credentialsDividerCloud": "或使用邮箱和密码",
       "credentialsDividerSelfHosted": "或使用用户名和密码",
@@ -1562,7 +1598,6 @@
       "identifierLabelSelfHosted": "用户名",
       "identifierPlaceholderCloud": "",
       "identifierPlaceholderSelfHosted": "输入你的用户名",
-      "inviteHint": "使用你的团队账号登录，以访问共享空间、交付设置和存储配置。",
       "highlights": {
         "storage": "按团队或环境控制存储与交付",
         "delivery": "无需共享凭证即可管理图片基础设施",
@@ -1571,7 +1606,7 @@
       "signIn": "登录",
       "loginFailed": "登录凭证无效，请重试。",
       "errors": {
-        "inviteInvalid": "此邀请已失效。请请求新的邀请后再试。",
+        "inviteInvalid": "此邀请已失效。请联系发送者重新发送邀请后再试。",
         "inviteOrgConflict": "该账户已属于其他组织。请改用其他账户，或先退出当前组织。",
         "inviteEmailMismatch": "此邀请发送到了其他邮箱地址。请改用受邀账户登录。"
       },

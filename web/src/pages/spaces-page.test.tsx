@@ -1,5 +1,5 @@
 import { act } from 'react'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockInvalidate = vi.fn()
@@ -39,7 +39,12 @@ vi.mock('@/components/ui/badge', () => ({
 }))
 
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  Button: ({ children, asChild, ...props }: any) => {
+    if (asChild) {
+      return <div>{children}</div>
+    }
+    return <button {...props}>{children}</button>
+  },
 }))
 
 vi.mock('@/components/ui/button-with-loading', () => ({
@@ -162,5 +167,82 @@ describe('SpacesPage', () => {
     expect(mockRefreshAuthSession).toHaveBeenCalled()
     expect(mockInvalidate).toHaveBeenCalled()
     expect(mockToastSuccess).toHaveBeenCalledWith('pages.workspaceRequired.actions.createSuccess')
+  })
+
+  it('shows over-limit recovery messaging for organization admins', async () => {
+    const { SpacesPage } = await import('./spaces-page')
+
+    render(
+      <SpacesPage
+        loaderData={[]}
+        usageSummary={{
+          __typename: 'UsageSummary',
+          usedSpaces: 1,
+          maxSpaces: 3,
+          usedHostedStorageBytes: 10,
+          storageLimitGB: 100,
+          usedTransforms: 160000,
+          transformsLimit: 150000,
+          periodStart: '2026-05-01T00:00:00Z',
+          periodEnd: '2026-06-01T00:00:00Z',
+        }}
+        currentOrganizationId='org-1'
+        currentOrganizationPlan='pro'
+        canCreateSpace={true}
+        canManageOrganization={true}
+      />,
+    )
+
+    expect(screen.getByText('pages.spaces.overLimit.title')).toBeTruthy()
+    expect(screen.getByText('pages.spaces.overLimit.description')).toBeTruthy()
+    expect(screen.getByText('pages.spaces.overLimit.messages.processing')).toBeTruthy()
+    expect(screen.getByText('pages.spaces.overLimit.reviewBilling')).toBeTruthy()
+  })
+
+  it('exposes only one keyboard target for opening a space card', async () => {
+    const { SpacesPage } = await import('./spaces-page')
+
+    render(
+      <SpacesPage
+        loaderData={[
+          {
+            __typename: 'Space',
+            id: 'space-1',
+            orgId: 'org-1',
+            key: 'alpha',
+            name: 'Alpha Space',
+            storageUsageBytes: 512,
+            processingUsageCount: 12,
+            storageMode: 'platform',
+            storageType: 'managed',
+            bucket: '',
+            prefix: '',
+            region: '',
+            endpoint: '',
+            usePathStyle: false,
+            customDomain: '',
+            customDomainVerified: false,
+            suspended: false,
+            isShared: false,
+            signerAlgorithm: '',
+            signerTruncate: 0,
+            imagorCORSOrigins: '',
+            hasCustomImagorSecret: false,
+            canManage: true,
+            canDelete: false,
+            canLeave: false,
+            updatedAt: '2026-04-30T00:00:00Z',
+          },
+        ]}
+        usageSummary={null}
+        currentOrganizationId='org-1'
+        currentOrganizationPlan='pro'
+        canCreateSpace={true}
+        canManageOrganization={true}
+      />,
+    )
+
+    expect(screen.getAllByLabelText('pages.spaces.openGallery: Alpha Space')).toHaveLength(1)
+    expect(screen.getByLabelText('pages.spaces.configure')).toBeTruthy()
   })
 })

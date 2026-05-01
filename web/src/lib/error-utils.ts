@@ -71,13 +71,25 @@ function getResponseStatus(error: unknown): number | null {
   return typeof responseRecord?.status === 'number' ? responseRecord.status : null
 }
 
+function sanitizeSensitiveProviderMessage(message: string): string {
+  const hasStripeSecret = /\b(?:sk|rk|pk)_(?:test|live)_[A-Za-z0-9]+\b/.test(message)
+  const hasWebhookSecret = /\bwhsec_[A-Za-z0-9]+\b/.test(message)
+  const hasStripeRequestLog = /https:\/\/dashboard\.stripe\.com\/[^\s"')]+/.test(message)
+
+  if (hasStripeSecret || hasWebhookSecret || hasStripeRequestLog) {
+    return 'Billing provider request failed. Please try again.'
+  }
+
+  return message
+}
+
 function sanitizeErrorMessage(error: unknown, message: string): string {
   if (/^GraphQL Error \(Code: \d+\):/i.test(message)) {
     const status = getResponseStatus(error)
     return status ? `GraphQL request failed with status ${status}` : 'GraphQL request failed'
   }
 
-  return message
+  return sanitizeSensitiveProviderMessage(message)
 }
 
 export function hasErrorCode(error: unknown, code: string): boolean {
@@ -103,7 +115,7 @@ export function extractErrorMessage(error: unknown): string {
 
   const firstError = getGraphQLErrors(error)[0]
   if (firstError?.message) {
-    return firstError.message
+    return sanitizeErrorMessage(error, firstError.message)
   }
 
   const message = getErrorMessageValue(error)
@@ -127,7 +139,7 @@ export function extractErrorInfo(error: unknown): ErrorInfo {
   const firstError = getGraphQLErrors(error)[0]
   if (firstError?.message) {
     return {
-      message: firstError.message,
+      message: sanitizeErrorMessage(error, firstError.message),
       field: firstError.extensions?.field,
       code: firstError.extensions?.code,
       reason: firstError.extensions?.reason,

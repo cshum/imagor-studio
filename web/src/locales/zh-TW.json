@@ -73,10 +73,7 @@
     "login": {
       "eyebrow": "Imagor Studio",
       "title": "適合團隊的高效能圖片處理",
-      "subtitle": "在同一個地方管理圖片儲存、交付與存取權限。",
       "formTitle": "登入",
-      "formSubtitleCloud": "請使用團隊邀請您的帳號登入。",
-      "formSubtitleSelfHosted": "請使用您的帳號憑證登入。",
       "googleCta": "使用 Google 繼續",
       "credentialsDividerCloud": "或使用電子郵件與密碼",
       "credentialsDividerSelfHosted": "或使用使用者名稱與密碼",
@@ -84,7 +81,6 @@
       "identifierLabelSelfHosted": "使用者名稱",
       "identifierPlaceholderCloud": "",
       "identifierPlaceholderSelfHosted": "輸入您的使用者名稱",
-      "inviteHint": "使用您的團隊帳號登入，以存取共享空間、交付設定與儲存配置。",
       "highlights": {
         "storage": "依團隊或環境控管儲存與交付",
         "delivery": "無須共用憑證即可管理圖片基礎架構",
@@ -93,7 +89,7 @@
       "signIn": "登入",
       "loginFailed": "登入憑證無效。請再試一次。",
       "errors": {
-        "inviteInvalid": "此邀請已失效。請要求新的邀請後再試一次。",
+        "inviteInvalid": "此邀請已失效。請聯絡寄件者重新寄送邀請後再試一次。",
         "inviteOrgConflict": "此帳戶已屬於另一個組織。請改用其他帳戶，或先離開目前的組織。",
         "inviteEmailMismatch": "此邀請寄送到其他電子郵件地址。請改用受邀帳戶登入。"
       },
@@ -187,7 +183,7 @@
       "failed": "驗證失敗",
       "errorOAuth": "驗證失敗：{{error}}",
       "errors": {
-        "inviteInvalid": "此邀請已失效。請要求新的邀請後再試一次。",
+        "inviteInvalid": "此邀請已失效。請聯絡寄件者重新寄送邀請後再試一次。",
         "oauthInvalidState": "登入工作階段已過期或無效，請再試一次。",
         "oauthMissingCode": "Google 沒有回傳授權碼，請再試一次。",
         "oauthEmailUnverified": "你的 Google 帳戶電子郵件尚未驗證。請先在 Google 完成驗證後再試。",
@@ -816,11 +812,11 @@
       "description": "Imagor Studio 需要組織存取權，才能載入帳戶區域與空間管理功能。",
       "invite": {
         "title": "透過邀請加入",
-        "description": "登入後開啟您的邀請連結；如果原邀請已過期，請聯絡組織管理員重新寄送。"
+        "description": "登入後開啟您的邀請連結；如果原邀請已過期，請聯絡寄件者重新分享新的邀請。"
       },
       "nextSteps": {
         "title": "接下來怎麼做",
-        "description": "你可以先建立新的個人組織繼續使用；如果你原本應該加入別人的團隊，也可以透過邀請加入現有組織。"
+        "description": "你可以先建立新的個人組織繼續使用；如果你原本應該加入別人的團隊，也可以透過邀請加入現有組織或共享空間。"
       },
       "actions": {
         "createOrganization": "建立組織",
@@ -832,8 +828,10 @@
     },
     "joinInvite": {
       "eyebrow": "組織邀請",
+      "spaceEyebrow": "空間邀請",
       "heroTitle": "選擇加入方式",
       "heroDescription": "使用此邀請加入既有組織。從這個流程註冊時，你會加入受邀工作區，而不是建立新的組織。",
+      "spaceHeroDescription": "使用此邀請加入既有共享空間。從這個流程註冊時，你會取得受邀空間的存取權，而不會改變你目前主要的組織成員身分。",
       "formTitle": "透過邀請加入",
       "invitedTo": "你已受邀加入 {{organization}}",
       "organizationDescription": "此邀請已寄送到 {{email}}，角色為 {{role}}。",
@@ -841,6 +839,7 @@
       "googleAction": "使用 Google 繼續",
       "emailAction": "使用電子郵件繼續",
       "secondaryHelp": "Google 登入會直接使用此邀請。電子郵件註冊會先驗證你的信箱，然後再加入受邀組織。",
+      "spaceSecondaryHelp": "Google 登入會直接使用此邀請。電子郵件註冊會先驗證你的信箱，然後授予你對受邀空間的存取權。",
       "loginInstead": "已經有帳號？前往登入",
       "acceptingTitle": "正在完成邀請",
       "acceptingDescription": "我們正在將此帳戶加入受邀組織。",
@@ -868,6 +867,7 @@
       "noOrganizationTitle": "先建立組織再開始使用",
       "noOrganizationBannerTitle": "建立你自己的組織",
       "noOrganizationBannerDescription": "你仍可繼續使用共享空間，但這個帳號已經沒有個人組織。建立一個組織即可恢復你自己的工作區與管理流程。",
+      "noSpacesAvailable": "目前尚無可用空間",
       "storageTypeLabel": "儲存類型",
       "credentialsEncrypted": "憑證以 AES-256 加密儲存，儲存後不會再次明文顯示。",
       "storageType": {
@@ -902,6 +902,7 @@
       "description": "為你的團隊、品牌或環境建立並管理圖片工作空間。",
       "emptyDescription": "建立你的第一個圖片工作空間，用於上傳、處理與交付圖片。",
       "emptyDescriptionNoOrganization": "此帳戶還沒有個人組織。",
+      "emptyDescriptionMember": "您目前尚未獲得任何圖片處理空間的存取權。",
       "settings": "設定",
       "spaceCount": "{{count}} 個空間",
       "openGallery": "開啟相簿",
@@ -957,6 +958,16 @@
       "leaveOrganizationDescription": "要離開目前組織嗎？你將失去其共享空間的存取權，並需要重新登入。",
       "usageSummaryMeta": "{{owned}} 個由你擁有 · {{shared}} 個與你共享",
       "currentBillingPeriod": "{{start}} - {{end}}",
+      "overLimit": {
+        "title": "你的組織已超出目前方案限制",
+        "description": "現有空間仍可繼續使用，且正式環境處理目前不會被自動暫停，但在降低用量或升級方案之前，部分操作仍會被阻止。",
+        "reviewBilling": "檢視計費",
+        "messages": {
+          "spaces": "你可以保留現有空間，但在用量回到方案範圍內之前，無法再建立新空間。",
+          "storage": "現有檔案仍可使用，但在儲存超限期間，新的託管上傳會被阻止。",
+          "processing": "正式環境處理目前不會被自動暫停，但此組織在本計費週期內已超出目前方案的處理額度。"
+        }
+      },
       "processingUsage": "{{count}} 次處理",
       "usage": {
         "spaces": "空間",
@@ -971,6 +982,7 @@
       },
       "startDescription": "您可以隨著成長逐步自訂儲存、交付與存取權限。",
       "startDescriptionNoOrganization": "先建立一個個人組織，之後再回到這裡建立空間或接收既有空間的存取權。",
+      "startDescriptionMember": "請洽組織管理員建立空間，或與您共享現有空間。",
       "sharedLabel": "共享",
       "leaveSpace": "離開",
       "leaveSpaceDescription": "離開這個共享空間",
@@ -988,12 +1000,21 @@
     "billing": {
       "title": "計費",
       "titleDescription": "選擇最適合團隊儲存、處理與交付圖片方式的方案。",
-      "currentPlan": "目前方案",
-      "currentPlanDescription": "用量會依計費週期統計，並自動重置。",
+      "overLimit": {
+        "title": "你的組織已超出目前方案限制",
+        "description": "現有空間仍可繼續使用，且正式環境處理目前不會被自動暫停，但在降低用量或升級方案之前，部分操作仍會被阻止。",
+        "messages": {
+          "spaces": "你可以保留現有空間，但在用量回到方案範圍內之前，無法再建立新空間。",
+          "storage": "現有檔案仍可使用，但在儲存超限期間，新的託管上傳會被阻止。",
+          "processing": "正式環境處理目前不會被自動暫停，但此組織在本計費週期內已超出目前方案的處理額度。"
+        }
+      },
       "currentPlanBadge": "目前",
-      "currentPlanButton": "目前方案",
+      "selectedPlanBadge": "已選取",
       "manageBilling": "管理計費",
+      "manageBillingTarget": "切換到 {{plan}}",
       "selectPlan": "選擇方案",
+      "selectPlanTarget": "選擇 {{plan}}",
       "priceSuffix": "/月",
       "unlimited": "不限",
       "customDomainsIncluded": "含 {{count}} 個",
@@ -1020,11 +1041,20 @@
         "pro": "適合管理多條圖片流程、需要自訂網域與更高月處理量的成長團隊。",
         "team": "適合跨多個團隊或品牌管理共享圖片營運的大型組織。"
       },
-      "sharedFeaturesTitle": "所有付費方案另外皆包含",
-      "sharedFeatures": {
-        "collaboration": "共享空間存取",
-        "orgSharing": "團隊邀請與共享存取",
-        "byob": "連接自己的 S3 相容儲存桶"
+      "portalManaged": {
+        "refreshAction": "立即刷新"
+      },
+      "portalSync": {
+        "title": "我們正在同步你最新的計費變更",
+        "syncingDescription": "你的 Stripe 更新已提交。我們正在刷新最新的訂閱狀態。",
+        "waitingTitle": "你已返回計費頁面",
+        "waitingDescription": "我們已檢查最新的計費詳情。如果你修改的內容暫時還沒有顯示在這裡，請稍後再刷新一次。",
+        "successUpgradeTitle": "你的升級現已同步",
+        "successDowngradeTitle": "你的降級現已同步",
+        "successUpdatedTitle": "你的計費變更現已同步",
+        "successUpgradeDescription": "這個組織已從 {{previousPlan}} 升級到 {{plan}}，計費狀態為 {{status}}。",
+        "successDowngradeDescription": "這個組織已從 {{previousPlan}} 降級到 {{plan}}，計費狀態為 {{status}}。",
+        "successUpdatedDescription": "這個組織現在使用的是 {{plan}} 方案，計費狀態為 {{status}}。"
       },
       "danger": {
         "title": "危險區域",
@@ -1047,7 +1077,8 @@
       },
       "messages": {
         "checkoutFailed": "無法啟動結帳流程",
-        "portalFailed": "無法開啟計費入口"
+        "portalFailed": "無法開啟計費入口",
+        "refreshFailed": "無法刷新計費狀態"
       }
     },
     "organizationMembers": {
@@ -1115,6 +1146,15 @@
       "title": "組織",
       "titleDescription": "在同一處檢視方案、用量與組織管理。",
       "summaryDescription": "快速檢視目前組織狀態。",
+      "overLimit": {
+        "title": "你的組織已超出目前方案限制",
+        "description": "現有空間與處理目前仍可繼續使用，但在降低用量或升級方案之前，部分操作仍會被阻止。",
+        "messages": {
+          "spaces": "你可以保留現有空間，但在用量回到方案範圍內之前，無法再建立新空間。",
+          "storage": "現有檔案仍可使用，但在儲存超限期間，新的託管上傳會被阻止。",
+          "processing": "正式環境的處理目前仍會繼續，但此組織在本計費週期內已超出目前方案的處理額度。"
+        }
+      },
       "usageTitle": "目前用量",
       "usageDescription": "用量會依計費週期重置，並套用到整個組織。",
       "unlimited": "不限",
@@ -1167,6 +1207,9 @@
       },
       "general": {
         "description": "此空間的基本資訊。",
+        "identity": "識別",
+        "access": "存取",
+        "experience": "體驗",
         "name": "顯示名稱",
         "nameDescription": "導覽列中和空間清單中顯示的名稱。",
         "updateForbidden": "您沒有管理此空間的權限。",
@@ -1270,6 +1313,8 @@
       },
       "imagor": {
         "description": "為此空間設定 imagor 設定。",
+        "media": "媒體",
+        "mediaDescription": "控制此空間的影片縮圖生成方式。",
         "urlSigning": "URL 簽名",
         "urlSigningDescription": "大多數空間都可以使用工作區預設值。只有當此空間需要以不同方式簽署 imagor URL 時，才設定自訂金鑰。",
         "urlSigningSecret": "URL 簽名金鑰",

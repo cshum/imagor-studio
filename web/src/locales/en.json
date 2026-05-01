@@ -89,7 +89,7 @@
       "signIn": "Sign In",
       "loginFailed": "Invalid credentials. Please try again.",
       "errors": {
-        "inviteInvalid": "This invitation is no longer valid. Ask for a new invitation and try again.",
+        "inviteInvalid": "This invitation is no longer valid. Ask the sender for a new invitation and try again.",
         "inviteOrgConflict": "This account already belongs to another organization. Use a different account or leave your current organization first.",
         "inviteEmailMismatch": "This invitation was sent to a different email address. Sign in with the invited account instead."
       },
@@ -183,7 +183,7 @@
       "failed": "Authentication failed",
       "errorOAuth": "Authentication failed: {{error}}",
       "errors": {
-        "inviteInvalid": "This invitation is no longer valid. Ask for a new invitation and try again.",
+        "inviteInvalid": "This invitation is no longer valid. Ask the sender for a new invitation and try again.",
         "oauthInvalidState": "Your sign-in session expired or became invalid. Please try again.",
         "oauthMissingCode": "Google did not return an authorization code. Please try again.",
         "oauthEmailUnverified": "Your Google account email is not verified. Verify it with Google and try again.",
@@ -812,11 +812,11 @@
       "description": "Imagor Studio needs organization access before account and space management can load.",
       "invite": {
         "title": "Join with an invite",
-        "description": "Open your invitation link after sign-in, or ask an organization admin to send a fresh invite if the original one expired."
+        "description": "Open your invitation link after sign-in, or ask the sender to share a fresh invite if the original one expired."
       },
       "nextSteps": {
         "title": "What to do next",
-        "description": "Create a new personal organization to continue, or join an existing one from an invite if you are supposed to work inside another team."
+        "description": "Create a new personal organization to continue, or accept an invite to an existing organization or shared space if you are supposed to work inside another team."
       },
       "actions": {
         "createOrganization": "Create organization",
@@ -828,8 +828,10 @@
     },
     "joinInvite": {
       "eyebrow": "Organization invitation",
+      "spaceEyebrow": "Space invitation",
       "heroTitle": "Choose how you want to join",
       "heroDescription": "Use this invitation to join an existing organization. Signing up from this flow will join the invited workspace instead of creating a separate organization.",
+      "spaceHeroDescription": "Use this invitation to join an existing shared space. Signing up from this flow grants access to the invited space without changing your primary organization membership.",
       "formTitle": "Join with an invitation",
       "invitedTo": "You were invited to join {{organization}}",
       "organizationDescription": "This invitation was sent to {{email}} with the {{role}} role.",
@@ -837,6 +839,7 @@
       "googleAction": "Continue with Google",
       "emailAction": "Continue with email",
       "secondaryHelp": "Google sign-in uses the invitation directly. Email sign-up verifies your address first and then joins the invited organization.",
+      "spaceSecondaryHelp": "Google sign-in uses the invitation directly. Email sign-up verifies your address first and then grants access to the invited space.",
       "loginInstead": "Already have an account? Sign in",
       "acceptingTitle": "Completing your invitation",
       "acceptingDescription": "We are adding this account to the invited organization now.",
@@ -964,6 +967,16 @@
       "leaveOrganizationDescription": "Leave your current organization? You will lose access to its shared spaces and will need to sign in again.",
       "usageSummaryMeta": "{{owned}} owned · {{shared}} shared",
       "currentBillingPeriod": "{{start}} - {{end}}",
+      "overLimit": {
+        "title": "Your organization is over its current plan limits",
+        "description": "Some actions stay blocked until usage is reduced or the plan changes. Review billing to see plan details and next steps.",
+        "reviewBilling": "Review billing",
+        "messages": {
+          "spaces": "You can keep existing spaces, but you cannot create more until usage is back within the plan.",
+          "storage": "Existing files remain available, but new managed uploads are blocked while storage is over limit.",
+          "processing": "Production processing is not automatically paused right now, but this organization is above the current plan allowance for this billing period."
+        }
+      },
       "processingUsage": "{{count}} transforms",
       "usage": {
         "spaces": "Spaces",
@@ -986,12 +999,21 @@
     "billing": {
       "title": "Billing",
       "titleDescription": "Choose the plan that fits how your team stores, processes, and delivers images.",
-      "currentPlan": "Current plan",
-      "currentPlanDescription": "Usage is tracked per billing period and resets automatically.",
+      "overLimit": {
+        "title": "Your organization is over its current plan limits",
+        "description": "Some actions stay blocked until usage is reduced or the plan changes. Review billing to see plan details and next steps.",
+        "messages": {
+          "spaces": "You can keep existing spaces, but you cannot create more until usage is back within the plan.",
+          "storage": "Existing files remain available, but new managed uploads are blocked while storage is over limit.",
+          "processing": "Production processing is not automatically paused right now, but this organization is above the current plan allowance for this billing period."
+        }
+      },
       "currentPlanBadge": "Current",
-      "currentPlanButton": "Current plan",
+      "selectedPlanBadge": "Selected",
       "manageBilling": "Manage billing",
+      "manageBillingTarget": "Change to {{plan}}",
       "selectPlan": "Choose plan",
+      "selectPlanTarget": "Choose {{plan}}",
       "priceSuffix": "/mo",
       "unlimited": "Unlimited",
       "customDomainsIncluded": "{{count}} included",
@@ -1018,11 +1040,20 @@
         "pro": "For growing teams running multiple image workflows with custom domains and higher monthly volume.",
         "team": "For organizations managing shared image operations across multiple teams or brands."
       },
-      "sharedFeaturesTitle": "Every paid plan also includes",
-      "sharedFeatures": {
-        "collaboration": "Shared space access",
-        "orgSharing": "Team invites and shared access",
-        "byob": "Connect your own S3 bucket"
+      "portalManaged": {
+        "refreshAction": "Refresh now"
+      },
+      "portalSync": {
+        "title": "We’re syncing your latest billing changes",
+        "syncingDescription": "Your Stripe update was submitted. We’re refreshing the latest subscription status now.",
+        "waitingTitle": "You’re back in billing",
+        "waitingDescription": "We checked for updated billing details. If you changed something that is not shown here yet, you can refresh again in a moment.",
+        "successUpgradeTitle": "Your upgrade is now synced",
+        "successDowngradeTitle": "Your downgrade is now synced",
+        "successUpdatedTitle": "Your billing changes are now synced",
+        "successUpgradeDescription": "This organization moved from {{previousPlan}} to {{plan}} with billing status {{status}}.",
+        "successDowngradeDescription": "This organization moved from {{previousPlan}} to {{plan}} with billing status {{status}}.",
+        "successUpdatedDescription": "This organization is now on the {{plan}} plan with billing status {{status}}."
       },
       "danger": {
         "title": "Danger zone",
@@ -1045,7 +1076,8 @@
       },
       "messages": {
         "checkoutFailed": "Failed to start checkout",
-        "portalFailed": "Failed to open billing portal"
+        "portalFailed": "Failed to open billing portal",
+        "refreshFailed": "Failed to refresh billing status"
       }
     },
     "organizationMembers": {
@@ -1113,6 +1145,15 @@
       "title": "Organization",
       "titleDescription": "Review your plan, usage, and organization administration in one place.",
       "summaryDescription": "A quick view of the current organization state.",
+      "overLimit": {
+        "title": "Your organization is over its current plan limits",
+        "description": "Existing spaces continue to work, and production processing is not automatically paused for now, but some actions stay blocked until usage is reduced or the plan is upgraded.",
+        "messages": {
+          "spaces": "You can keep existing spaces, but you cannot create more until usage is back within the plan.",
+          "storage": "Existing files remain available, but new managed uploads are blocked while storage is over limit.",
+          "processing": "Production processing is not automatically paused right now, but this organization is above the current plan allowance for this billing period."
+        }
+      },
       "usageTitle": "Current usage",
       "usageDescription": "Usage resets by billing period and applies across the organization.",
       "unlimited": "Unlimited",
@@ -1168,6 +1209,9 @@
       },
       "general": {
         "description": "Basic information about this space.",
+        "identity": "Identity",
+        "access": "Access",
+        "experience": "Experience",
         "name": "Display Name",
         "nameDescription": "The name shown in the navigation and spaces list.",
         "updateForbidden": "You do not have permission to manage this space.",
@@ -1279,6 +1323,8 @@
       },
       "imagor": {
         "description": "Configure imagor settings for this space.",
+        "media": "Media",
+        "mediaDescription": "Control how video thumbnails are generated for this space.",
         "urlSigning": "URL Signing",
         "urlSigningDescription": "Most spaces can use the workspace default. Set a custom secret only if this space must sign imagor URLs differently.",
         "urlSigningSecret": "URL Signing Secret",

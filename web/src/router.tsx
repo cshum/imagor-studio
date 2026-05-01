@@ -27,6 +27,7 @@ import {
   adminLicenseLoader,
   adminStorageLoader,
   billingLoader,
+  billingValidateSearch,
   orgMembersLoader,
   profileLoader,
   resolveSpaceSettingsRouteContext,
@@ -720,7 +721,7 @@ const accountOrganizationLayoutRoute = createRoute({
   path: '/account/organization',
   beforeLoad: requireOrganizationAccountAuth,
   loader: async () => ({
-    breadcrumb: { translationKey: 'navigation.breadcrumbs.organization' },
+    breadcrumb: { translationKey: 'navigation.breadcrumbs.organization', href: '/' },
     organization: await getMyOrganization(),
   }),
   component: () => {
@@ -755,6 +756,7 @@ const accountOrganizationOverviewRoute = createRoute({
 const accountOrganizationBillingRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/billing',
+  validateSearch: billingValidateSearch,
   beforeLoad: requireOrganizationAdminAccountAuth,
   loader: billingLoader,
   component: () => {
