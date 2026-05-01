@@ -10,6 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	spaDocumentCacheControl = "no-cache, no-store, must-revalidate"
+	staticAssetCacheControl = "public, max-age=31536000, immutable"
+)
+
 // imagorPathRegex matches imagor-style paths using the same logic as imagorpath package
 var imagorPathRegex = regexp.MustCompile(
 	"^/*" +
@@ -64,6 +69,15 @@ func isValidBase64URLHash(hash string) bool {
 	return true
 }
 
+func setStaticCacheHeaders(w http.ResponseWriter, path string) {
+	if path == "index.html" || strings.HasSuffix(path, ".html") {
+		w.Header().Set("Cache-Control", spaDocumentCacheControl)
+		return
+	}
+
+	w.Header().Set("Cache-Control", staticAssetCacheControl)
+}
+
 // SPAHandler creates a handler for serving static files with SPA fallback and imagor routing.
 // imagorHandler is an http.Handler whose ServeHTTP is called for imagor-style paths;
 // pass nil when no imagor instance is available.
@@ -103,12 +117,15 @@ func SPAHandler(staticFS fs.FS, imagorHandler http.Handler, logger *zap.Logger) 
 			}
 			defer indexFile.Close()
 
+			setStaticCacheHeaders(w, "index.html")
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			if _, err := io.Copy(w, indexFile); err != nil {
 				logger.Error("Failed to serve index.html", zap.Error(err))
 			}
 			return
 		}
+
+		setStaticCacheHeaders(w, trimmedPath)
 		fileServer.ServeHTTP(w, r)
 	})
 }

@@ -12,7 +12,6 @@ import (
 	shareduser "github.com/cshum/imagor-studio/server/pkg/user"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
-	"github.com/mattn/go-sqlite3"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"go.uber.org/zap"
@@ -85,9 +84,8 @@ func isDuplicateUsernameError(err error) bool {
 		}
 	}
 
-	var sqliteErr sqlite3.Error
-	if errors.As(err, &sqliteErr) {
-		return sqliteErr.Code == sqlite3.ErrConstraint && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique
+	if isSQLiteUniqueConstraint(err) {
+		return true
 	}
 
 	errStr := strings.ToLower(err.Error())
@@ -107,9 +105,8 @@ func isDuplicateEmailError(err error) bool {
 		}
 	}
 
-	var sqliteErr sqlite3.Error
-	if errors.As(err, &sqliteErr) {
-		return sqliteErr.Code == sqlite3.ErrConstraint && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique
+	if isSQLiteUniqueConstraint(err) {
+		return true
 	}
 
 	errStr := strings.ToLower(err.Error())

@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"go.uber.org/zap/zaptest"
@@ -203,5 +204,38 @@ func TestSPAHandlerFallback(t *testing.T) {
 	contentType := w.Header().Get("Content-Type")
 	if !strings.Contains(contentType, "text/html") {
 		t.Errorf("Expected HTML content type, got %q", contentType)
+	}
+
+	cacheControl := w.Header().Get("Cache-Control")
+	if cacheControl != spaDocumentCacheControl {
+		t.Errorf("Expected Cache-Control %q, got %q", spaDocumentCacheControl, cacheControl)
+	}
+}
+
+func TestSPAHandlerStaticAssetCacheHeaders(t *testing.T) {
+	logger := zaptest.NewLogger(t)
+
+	staticFS := fstest.MapFS{
+		"index.html": {
+			Data: []byte("<html><body>Mock HTML</body></html>"),
+		},
+		"assets/app-abc123.js": {
+			Data: []byte("console.log('ok')"),
+		},
+	}
+
+	handler := SPAHandler(staticFS, nil, logger)
+	req := httptest.NewRequest("GET", "/assets/app-abc123.js", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", w.Code)
+	}
+
+	cacheControl := w.Header().Get("Cache-Control")
+	if cacheControl != staticAssetCacheControl {
+		t.Errorf("Expected Cache-Control %q, got %q", staticAssetCacheControl, cacheControl)
 	}
 }
