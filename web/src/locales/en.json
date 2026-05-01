@@ -1050,7 +1050,9 @@
       "portalSync": {
         "title": "We’re syncing your latest billing changes",
         "syncingDescription": "Your Stripe update was submitted. We’re refreshing the latest subscription status now.",
-        "waitingDescription": "We requested the latest subscription status. If your plan has not updated yet, refresh again in a moment."
+        "waitingDescription": "We requested the latest subscription status. If your plan has not updated yet, refresh again in a moment.",
+        "successTitle": "Your billing changes are now synced",
+        "successDescription": "This organization is now on the {{plan}} plan with billing status {{status}}."
       },
       "sharedFeaturesTitle": "Every paid plan also includes",
       "sharedFeatures": {

@@ -996,7 +996,9 @@
       "portalSync": {
         "title": "我们正在同步你最新的计费变更",
         "syncingDescription": "你的 Stripe 更新已提交。我们正在刷新最新的订阅状态。",
-        "waitingDescription": "我们已请求最新的订阅状态。如果套餐尚未更新，请稍后再刷新一次。"
+        "waitingDescription": "我们已请求最新的订阅状态。如果套餐尚未更新，请稍后再刷新一次。",
+        "successTitle": "你的计费变更现已同步",
+        "successDescription": "这个组织现在使用的是 {{plan}} 套餐，计费状态为 {{status}}。"
       },
       "sharedFeaturesTitle": "所有付费套餐另外均包含",
       "sharedFeatures": {

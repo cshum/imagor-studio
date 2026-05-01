@@ -33,6 +33,7 @@ interface AccountBillingRoutePageProps {
 const PAID_PLANS = ['starter', 'pro', 'team'] as const
 const PORTAL_MANAGED_STATUSES = ['active', 'trialing', 'past_due'] as const
 const PORTAL_SYNC_RETRY_DELAYS_MS = [0, 4000, 4000, 4000] as const
+const PORTAL_SYNC_SUCCESS_NOTICE_MS = 5000
 const PLAN_PRICES: Record<(typeof PAID_PLANS)[number], string> = {
   starter: '$19',
   pro: '$69',
@@ -103,6 +104,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const [refreshLoading, setRefreshLoading] = useState(false)
   const [showPortalSyncNotice, setShowPortalSyncNotice] = useState(portalReturned)
   const [portalSyncing, setPortalSyncing] = useState(portalReturned)
+  const [portalSyncSucceeded, setPortalSyncSucceeded] = useState(false)
   const portalSyncBaselineRef = useRef<{ plan: string; status: string } | null>(null)
   const portalSyncActiveRef = useRef(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -113,6 +115,8 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const usageSummary = loaderData.usageSummary
   const currentPlan = organization?.plan ?? 'free'
   const currentStatus = organization?.planStatus ?? 'canceled'
+  const currentPlanLabel = t(`pages.spaces.plan.${currentPlan}`)
+  const currentStatusLabel = t(`pages.billing.status.${currentStatus}`)
   const canOpenPortal = PAID_PLANS.includes(currentPlan as (typeof PAID_PLANS)[number])
   const isPortalManagedBilling =
     canOpenPortal &&
@@ -263,8 +267,24 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     portalSyncActiveRef.current = false
     portalSyncBaselineRef.current = null
     setPortalSyncing(false)
-    setShowPortalSyncNotice(false)
+    setPortalSyncSucceeded(true)
+    setShowPortalSyncNotice(true)
   }, [currentPlan, currentStatus])
+
+  useEffect(() => {
+    if (!portalSyncSucceeded) {
+      return
+    }
+
+    const timeout = window.setTimeout(() => {
+      setShowPortalSyncNotice(false)
+      setPortalSyncSucceeded(false)
+    }, PORTAL_SYNC_SUCCESS_NOTICE_MS)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [portalSyncSucceeded])
 
   useEffect(() => {
     if (!portalReturned) {
@@ -277,6 +297,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
 
     setShowPortalSyncNotice(true)
     setPortalSyncing(true)
+    setPortalSyncSucceeded(false)
 
     void navigate({
       to: '/account/organization/billing',
@@ -436,27 +457,49 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       )}
 
       {showPortalSyncNotice && (
-        <div className='rounded-lg border border-sky-500/30 bg-sky-500/10 p-4 text-sky-950 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-50'>
+        <div
+          className={
+            portalSyncSucceeded
+              ? 'rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-400/10 dark:text-emerald-50'
+              : 'rounded-lg border border-sky-500/30 bg-sky-500/10 p-4 text-sky-950 dark:border-sky-400/30 dark:bg-sky-400/10 dark:text-sky-50'
+          }
+        >
           <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
             <div className='space-y-1'>
-              <p className='text-sm font-semibold'>{t('pages.billing.portalSync.title')}</p>
+              <p className='text-sm font-semibold'>
+                {t(
+                  portalSyncSucceeded
+                    ? 'pages.billing.portalSync.successTitle'
+                    : 'pages.billing.portalSync.title',
+                )}
+              </p>
               <p className='text-sm'>
                 {t(
-                  portalSyncing
+                  portalSyncSucceeded
+                    ? 'pages.billing.portalSync.successDescription'
+                    : portalSyncing
                     ? 'pages.billing.portalSync.syncingDescription'
                     : 'pages.billing.portalSync.waitingDescription',
+                  portalSyncSucceeded
+                    ? {
+                        plan: currentPlanLabel,
+                        status: currentStatusLabel,
+                      }
+                    : undefined,
                 )}
               </p>
             </div>
 
-            <ButtonWithLoading
-              variant='outline'
-              isLoading={refreshLoading}
-              onClick={() => void handleRefreshBillingStatus()}
-              className='w-full shrink-0 sm:w-auto'
-            >
-              {t('pages.billing.portalManaged.refreshAction')}
-            </ButtonWithLoading>
+            {!portalSyncSucceeded && (
+              <ButtonWithLoading
+                variant='outline'
+                isLoading={refreshLoading}
+                onClick={() => void handleRefreshBillingStatus()}
+                className='w-full shrink-0 sm:w-auto'
+              >
+                {t('pages.billing.portalManaged.refreshAction')}
+              </ButtonWithLoading>
+            )}
           </div>
         </div>
       )}

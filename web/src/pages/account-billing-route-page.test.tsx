@@ -15,7 +15,8 @@ const mockToastSuccess = vi.fn()
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string, options?: Record<string, unknown>) =>
+      options ? `${key}:${JSON.stringify(options)}` : key,
   }),
 }))
 
@@ -456,12 +457,19 @@ describe('AccountBillingRoutePage', () => {
       await Promise.resolve()
     })
 
-    expect(screen.queryByText('pages.billing.portalSync.title')).toBeNull()
+    expect(screen.getByText('pages.billing.portalSync.successTitle')).toBeTruthy()
+    expect(
+      screen.getByText(
+        'pages.billing.portalSync.successDescription:{"plan":"pages.spaces.plan.team","status":"pages.billing.status.active"}',
+      ),
+    ).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: 'pages.billing.portalManaged.refreshAction' })).toHaveLength(1)
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(12000)
     })
 
     expect(mockInvalidate).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('pages.billing.portalSync.successTitle')).toBeNull()
   })
 })
