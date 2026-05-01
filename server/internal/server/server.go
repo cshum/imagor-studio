@@ -372,6 +372,86 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	}, nil
 }
 
+func NewProcessingFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, services *bootstrap.Services) (*Server, error) {
+	mux := http.NewServeMux()
+
+	// Public processing endpoints.
+	mux.HandleFunc("/health", newHealthHandler(services.SpaceConfigStore))
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if services.SpaceConfigStore != nil && !services.SpaceConfigStore.Ready() {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte(`{"status":"not_ready"}`))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ready"}`))
+	})
+
+	if services.SpaceConfigStore != nil {
+		registerProcessingInternalRoutes(mux, services)
+	}
+
+	if err := registerProcessingOrSPA(mux, cfg, embedFS, services); err != nil {
+		return nil, err
+	}
+
+	baseHandler := middleware.ErrorMiddleware(services.Logger)(mux)
+
+	var h http.Handler
+	if services.SpaceConfigStore != nil {
+		baseDomain := ""
+		if services.ProcessingConfig != nil {
+			baseDomain = services.ProcessingConfig.Runtime.SpaceBaseDomain
+		}
+		h = newProcessingCORSMiddleware(services.SpaceConfigStore, cfg.AppUrl, cfg.CORSOrigins, baseDomain)(baseHandler)
+	} else {
+		corsConfig := middleware.DefaultCORSConfig()
+		if cfg.CORSOrigins != "" {
+			allowedOrigins := strings.Split(cfg.CORSOrigins, ",")
+			for i, origin := range allowedOrigins {
+				allowedOrigins[i] = strings.TrimSpace(origin)
+			}
+			corsConfig.AllowedOrigins = allowedOrigins
+		}
+		h = middleware.CORSMiddleware(corsConfig)(baseHandler)
+	}
+
+	addr := fmt.Sprintf(":%d", cfg.Port)
+	httpServer := &http.Server{
+		Addr:         addr,
+		Handler:      h,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	syncCtx, syncCancel := context.WithCancel(context.Background())
+
+	if err := startProcessingSyncIfNeeded(syncCtx, services); err != nil {
+		syncCancel()
+		return nil, fmt.Errorf("space config store initial sync failed: %w", err)
+	}
+
+	syncFuncs := []func() error{services.ImagorProvider.Sync}
+	if services.ProcessingUsageRecorder != nil {
+		syncFuncs = append(syncFuncs, func() error {
+			return services.ProcessingUsageRecorder.Flush(syncCtx)
+		})
+	}
+	if services.StorageProvider != nil {
+		syncFuncs = append(syncFuncs, services.StorageProvider.ReloadFromRegistry)
+	}
+	startSyncLoop(syncCtx, 30*time.Second, services.Logger, syncFuncs...)
+
+	return &Server{
+		cfg:        cfg,
+		services:   services,
+		httpServer: httpServer,
+		syncCancel: syncCancel,
+	}, nil
+}
+
 func registerSelfHostedAuthRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/auth/providers", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
