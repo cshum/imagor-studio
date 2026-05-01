@@ -577,6 +577,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                   isSelectable && 'hover:border-primary/60 cursor-pointer transition-colors',
                 )}
                 role={isSelectable ? 'button' : undefined}
+                aria-pressed={isSelectable ? isSelectedPlan : undefined}
                 tabIndex={isSelectable ? 0 : undefined}
                 onClick={
                   isSelectable

@@ -1258,7 +1258,10 @@ func TestDeleteOrganization_Success(t *testing.T) {
 	spaceStore := &MockSpaceStore{}
 	r := newOrgResolver(orgStore, spaceStore)
 
-	orgStore.On("GetByID", mock.Anything, "org-1").Return(makeTestOrg("org-1", "user-1"), nil).Once()
+	deletableOrg := makeTestOrg("org-1", "user-1")
+	deletableOrg.Plan = org.PlanFree
+	deletableOrg.PlanStatus = org.PlanStatusCanceled
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(deletableOrg, nil).Once()
 	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
 	orgStore.On("Delete", mock.Anything, "org-1", "user-1").Return(nil).Once()
 
@@ -1320,6 +1323,31 @@ func TestDeleteOrganization_RejectsActivePaidBilling(t *testing.T) {
 	paidOrg.Plan = org.PlanStarter
 	paidOrg.PlanStatus = org.PlanStatusActive
 	paidOrg.StripeSubscriptionID = "sub_123"
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(paidOrg, nil).Once()
+	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	ok, err := r.Mutation().DeleteOrganization(ctx)
+	assert.False(t, ok)
+	require.Error(t, err)
+	var gqlErr *gqlerror.Error
+	require.ErrorAs(t, err, &gqlErr)
+	assert.Equal(t, apperror.ErrInvalidInput, gqlErr.Extensions["code"])
+	assert.Equal(t, "org_delete_billing_active", gqlErr.Extensions["reason"])
+	orgStore.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+	orgStore.AssertExpectations(t)
+	spaceStore.AssertExpectations(t)
+}
+
+func TestDeleteOrganization_RejectsActivePaidBillingWithoutStripeSubscriptionLinkage(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	paidOrg := makeTestOrg("org-1", "user-1")
+	paidOrg.Plan = org.PlanStarter
+	paidOrg.PlanStatus = org.PlanStatusActive
+	paidOrg.StripeSubscriptionID = ""
 	orgStore.On("GetByID", mock.Anything, "org-1").Return(paidOrg, nil).Once()
 	spaceStore.On("ListByOrgID", mock.Anything, "org-1").Return([]*space.Space{}, nil).Once()
 
