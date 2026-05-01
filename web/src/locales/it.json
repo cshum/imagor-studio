@@ -1052,7 +1052,9 @@
         "title": "Stiamo sincronizzando le ultime modifiche di fatturazione",
         "syncingDescription": "L'aggiornamento Stripe è stato inviato. Stiamo aggiornando ora lo stato più recente della sottoscrizione.",
         "waitingDescription": "Abbiamo richiesto lo stato più recente della sottoscrizione. Se il piano non è ancora aggiornato, riprova ad aggiornare tra un momento.",
-        "successTitle": "Le modifiche di fatturazione sono ora sincronizzate",
+        "successUpgradeTitle": "L'upgrade è ora sincronizzato",
+        "successDowngradeTitle": "Il downgrade è ora sincronizzato",
+        "successUpdatedTitle": "Le modifiche di fatturazione sono ora sincronizzate",
         "successDescription": "Questa organizzazione è ora nel piano {{plan}} con stato di fatturazione {{status}}."
       },
       "sharedFeaturesTitle": "Ogni piano a pagamento include anche",

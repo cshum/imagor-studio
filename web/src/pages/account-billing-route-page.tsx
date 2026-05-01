@@ -31,6 +31,12 @@ interface AccountBillingRoutePageProps {
 }
 
 const PAID_PLANS = ['starter', 'pro', 'team'] as const
+const PLAN_RANKS: Record<string, number> = {
+  free: 0,
+  starter: 1,
+  pro: 2,
+  team: 3,
+}
 const PORTAL_MANAGED_STATUSES = ['active', 'trialing', 'past_due'] as const
 const PORTAL_SYNC_RETRY_DELAYS_MS = [0, 4000, 4000, 4000] as const
 const PORTAL_SYNC_SUCCESS_NOTICE_MS = 5000
@@ -44,6 +50,17 @@ function wait(ms: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms)
   })
+}
+
+function getPortalSyncOutcome(previousPlan: string, nextPlan: string) {
+  const previousRank = PLAN_RANKS[previousPlan]
+  const nextRank = PLAN_RANKS[nextPlan]
+
+  if (previousRank == null || nextRank == null || previousRank === nextRank) {
+    return 'updated' as const
+  }
+
+  return nextRank > previousRank ? ('upgrade' as const) : ('downgrade' as const)
 }
 
 function formatBytes(bytes: number) {
@@ -105,6 +122,9 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
   const [showPortalSyncNotice, setShowPortalSyncNotice] = useState(portalReturned)
   const [portalSyncing, setPortalSyncing] = useState(portalReturned)
   const [portalSyncSucceeded, setPortalSyncSucceeded] = useState(false)
+  const [portalSyncOutcome, setPortalSyncOutcome] = useState<'upgrade' | 'downgrade' | 'updated'>(
+    'updated',
+  )
   const portalSyncBaselineRef = useRef<{ plan: string; status: string } | null>(null)
   const portalSyncActiveRef = useRef(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -267,6 +287,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     portalSyncActiveRef.current = false
     portalSyncBaselineRef.current = null
     setPortalSyncing(false)
+    setPortalSyncOutcome(getPortalSyncOutcome(baseline.plan, currentPlan))
     setPortalSyncSucceeded(true)
     setShowPortalSyncNotice(true)
   }, [currentPlan, currentStatus])
@@ -298,6 +319,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
     setShowPortalSyncNotice(true)
     setPortalSyncing(true)
     setPortalSyncSucceeded(false)
+    setPortalSyncOutcome('updated')
 
     void navigate({
       to: '/account/organization/billing',
@@ -469,7 +491,11 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
               <p className='text-sm font-semibold'>
                 {t(
                   portalSyncSucceeded
-                    ? 'pages.billing.portalSync.successTitle'
+                    ? portalSyncOutcome === 'upgrade'
+                      ? 'pages.billing.portalSync.successUpgradeTitle'
+                      : portalSyncOutcome === 'downgrade'
+                        ? 'pages.billing.portalSync.successDowngradeTitle'
+                        : 'pages.billing.portalSync.successUpdatedTitle'
                     : 'pages.billing.portalSync.title',
                 )}
               </p>

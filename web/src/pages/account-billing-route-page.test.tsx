@@ -457,7 +457,7 @@ describe('AccountBillingRoutePage', () => {
       await Promise.resolve()
     })
 
-    expect(screen.getByText('pages.billing.portalSync.successTitle')).toBeTruthy()
+    expect(screen.getByText('pages.billing.portalSync.successUpgradeTitle')).toBeTruthy()
     expect(
       screen.getByText(
         'pages.billing.portalSync.successDescription:{"plan":"pages.spaces.plan.team","status":"pages.billing.status.active"}',
@@ -470,6 +470,49 @@ describe('AccountBillingRoutePage', () => {
     })
 
     expect(mockInvalidate).toHaveBeenCalledTimes(1)
-    expect(screen.queryByText('pages.billing.portalSync.successTitle')).toBeNull()
+    expect(screen.queryByText('pages.billing.portalSync.successUpgradeTitle')).toBeNull()
+  })
+
+  it('shows a downgrade success state when synced billing data lands on a lower plan', async () => {
+    const { AccountBillingRoutePage } = await import('./account-billing-route-page')
+    vi.useFakeTimers()
+    vi.stubGlobal('location', {
+      ...window.location,
+      assign: mockLocationAssign,
+      href: 'http://localhost/account/organization/billing?portal_returned=1',
+      search: '?portal_returned=1',
+    })
+
+    const view = render(
+      <AccountBillingRoutePage
+        loaderData={createLoaderData({
+          plan: 'team',
+          planStatus: 'active',
+        })}
+      />,
+    )
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    await act(async () => {
+      view.rerender(
+        <AccountBillingRoutePage
+          loaderData={createLoaderData({
+            plan: 'starter',
+            planStatus: 'active',
+          })}
+        />,
+      )
+      await Promise.resolve()
+    })
+
+    expect(screen.getByText('pages.billing.portalSync.successDowngradeTitle')).toBeTruthy()
+    expect(
+      screen.getByText(
+        'pages.billing.portalSync.successDescription:{"plan":"pages.spaces.plan.starter","status":"pages.billing.status.active"}',
+      ),
+    ).toBeTruthy()
   })
 })
