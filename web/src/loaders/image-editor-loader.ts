@@ -42,16 +42,15 @@ export const imageEditorLoader = async ({
   }
 }): Promise<ImageEditorLoaderData> => {
   const imagePath = joinImagePath(galleryKey, imageKey)
-  const fileStat = await statFile(imagePath, spaceID)
-
-  if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
-    throw new Error('Image not found')
-  }
 
   // Load user preferences for editor open sections using storage service
   const authState = getAuth()
   const storage = new EditorSectionStorage(authState)
-  const editorOpenSections = await storage.get()
+  const [fileStat, editorOpenSections] = await Promise.all([statFile(imagePath, spaceID), storage.get()])
+
+  if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
+    throw new Error('Image not found')
+  }
 
   // Check if this is a template file
   const isTemplate = imageKey.endsWith('.imagor.json')

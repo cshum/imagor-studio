@@ -77,52 +77,46 @@ export const galleryLoader = async ({
     const auth = getAuth()
     const userId = auth.profile?.id
 
-    // Try user registry first (if authenticated and not guest)
-    let userSortBy: string | undefined
-    let userSortOrder: string | undefined
-    let userShowFileNames: string | undefined
-    if (userId && auth.state === 'authenticated') {
-      try {
-        const userRegistryValues = await getScopedUserRegistryValues(
-          [
-            'config.app_default_sort_by',
-            'config.app_default_sort_order',
-            'config.app_show_file_names',
-          ],
-          userId,
-          { spaceID },
-        )
+    const userRegistryValuesPromise =
+      userId && auth.state === 'authenticated'
+        ? getScopedUserRegistryValues(
+            [
+              'config.app_default_sort_by',
+              'config.app_default_sort_order',
+              'config.app_show_file_names',
+            ],
+            userId,
+            { spaceID },
+          ).catch(() => undefined)
+        : Promise.resolve(undefined)
 
-        userSortBy = userRegistryValues['config.app_default_sort_by']
-        userSortOrder = userRegistryValues['config.app_default_sort_order']
-        userShowFileNames = userRegistryValues['config.app_show_file_names']
-      } catch {
-        // User registry fetch failed, will fall back to system registry
-      }
-    }
-
-    let systemRegistryResult
-    if (spaceID) {
-      try {
-        systemRegistryResult = await getSpaceRegistry(spaceID, [
+    const systemRegistryPromise = spaceID
+      ? getSpaceRegistry(spaceID, [
           'config.app_default_sort_by',
           'config.app_default_sort_order',
           'config.app_show_file_names',
         ])
-      } catch {
-        systemRegistryResult = await getSystemRegistryMultiple([
+          .catch(() =>
+            getSystemRegistryMultiple([
+              'config.app_default_sort_by',
+              'config.app_default_sort_order',
+              'config.app_show_file_names',
+            ]),
+          )
+      : getSystemRegistryMultiple([
           'config.app_default_sort_by',
           'config.app_default_sort_order',
           'config.app_show_file_names',
         ])
-      }
-    } else {
-      systemRegistryResult = await getSystemRegistryMultiple([
-        'config.app_default_sort_by',
-        'config.app_default_sort_order',
-        'config.app_show_file_names',
-      ])
-    }
+
+    const [userRegistryValues, systemRegistryResult] = await Promise.all([
+      userRegistryValuesPromise,
+      systemRegistryPromise,
+    ])
+
+    const userSortBy = userRegistryValues?.['config.app_default_sort_by']
+    const userSortOrder = userRegistryValues?.['config.app_default_sort_order']
+    const userShowFileNames = userRegistryValues?.['config.app_show_file_names']
 
     // Use user preferences if available, otherwise fall back to system registry, then defaults
     const systemSortByEntry = systemRegistryResult.find(
