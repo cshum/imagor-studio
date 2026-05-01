@@ -1,12 +1,12 @@
 package entrypoint
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/cshum/imagor-studio/server/internal/config"
 	internalserver "github.com/cshum/imagor-studio/server/internal/server"
-	"github.com/cshum/imagor-studio/server/pkg/management"
 	sharedprocessing "github.com/cshum/imagor-studio/server/pkg/processing"
 	"go.uber.org/zap"
 )
@@ -21,9 +21,9 @@ func NewProcessingHandlerForTests(args []string, nodeCfg sharedprocessing.NodeCo
 	if err != nil {
 		return nil, nil, fmt.Errorf("initialize processing services: %w", err)
 	}
-	srv, err := internalserver.NewFromServices(cfg, nil, logger, services, ModeSelfHosted, management.CloudConfig{}, management.CloudFactories{})
+	srv, err := internalserver.NewProcessingFromServices(cfg, nil, logger, services)
 	if err != nil {
-		_ = services.ImagorProvider.Shutdown(nil)
+		_ = services.ImagorProvider.Shutdown(context.TODO())
 		return nil, nil, fmt.Errorf("create processing server: %w", err)
 	}
 	cleanup := func() error {
