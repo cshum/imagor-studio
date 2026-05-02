@@ -31,7 +31,6 @@ import { Input } from '@/components/ui/input'
 import { getBootstrappedAuthProviders } from '@/lib/app-bootstrap'
 import { isValidEmail } from '@/lib/email'
 import { initAuth, useAuth } from '@/stores/auth-store'
-import { initializeLocale } from '@/stores/locale-store'
 
 type RegisterFormValues = {
   displayName: string
@@ -247,7 +246,6 @@ export function RegisterPage() {
 
       await initAuth(result.response.token)
       await router.invalidate()
-      await initializeLocale()
       navigate({ to: resolveRedirectPath(result.response.redirectPath) })
     } catch (error) {
       const apiError = error as AuthApiError

@@ -1,3 +1,4 @@
+import { getSystemRegistry, getUserRegistry } from '@/api/registry-api'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { authStore, getAuth } from '@/stores/auth-store.ts'
 import { folderTreeStore } from '@/stores/folder-tree-store.ts'
@@ -14,18 +15,46 @@ export interface RootLoaderData {
   breadcrumb?: BreadcrumbItem
 }
 
+const DEFAULT_LANGUAGE_REGISTRY_KEY = 'config.app_default_language'
+
+const resolveLocale = async (accessToken: string | null, multiTenant: boolean) => {
+  let locale: string | null = null
+
+  if (accessToken) {
+    try {
+      const userRegistryEntries = await getUserRegistry(DEFAULT_LANGUAGE_REGISTRY_KEY)
+      if (userRegistryEntries.length > 0) {
+        locale = userRegistryEntries[0]?.value || null
+      }
+    } catch {
+      // Root bootstrap falls back to system or i18n defaults.
+    }
+  }
+
+  if (!locale && (!accessToken || !multiTenant)) {
+    try {
+      const systemRegistryEntries = await getSystemRegistry(DEFAULT_LANGUAGE_REGISTRY_KEY)
+      if (systemRegistryEntries.length > 0) {
+        locale = systemRegistryEntries[0]?.value || null
+      }
+    } catch {
+      // Root bootstrap falls back to the current i18n default.
+    }
+  }
+
+  await initializeLocale(locale)
+}
+
 export const rootLoader = async (): Promise<RootLoaderData> => {
   const auth = getAuth()
   if (!auth.accessToken) {
     if (!auth.multiTenant) {
-      // Unauthenticated self-hosted pages can still use the public system default language,
-      // but there is no user registry to read yet.
-      await initializeLocale({ includeUserRegistry: false, includeSystemRegistry: true })
+      await resolveLocale(null, false)
     }
     return {}
   }
 
-  await initializeLocale()
+  await resolveLocale(auth.accessToken, auth.multiTenant)
 
   if (auth.multiTenant) {
     return {}

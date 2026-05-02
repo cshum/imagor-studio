@@ -2,10 +2,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockInitializeLocale = vi.fn()
 const mockGetAuth = vi.fn()
+const mockGetSystemRegistry = vi.fn()
+const mockGetUserRegistry = vi.fn()
 const mockThemeWaitFor = vi.fn()
 const mockAuthWaitFor = vi.fn()
 const mockLicenseWaitFor = vi.fn()
 const mockFolderTreeWaitFor = vi.fn()
+
+vi.mock('@/api/registry-api', () => ({
+  getSystemRegistry: (...args: unknown[]) => mockGetSystemRegistry(...args),
+  getUserRegistry: (...args: unknown[]) => mockGetUserRegistry(...args),
+}))
 
 vi.mock('@/stores/locale-store.ts', () => ({
   initializeLocale: (...args: unknown[]) => mockInitializeLocale(...args),
@@ -41,6 +48,8 @@ describe('rootLoader', () => {
     vi.clearAllMocks()
     mockThemeWaitFor.mockResolvedValue(undefined)
     mockAuthWaitFor.mockResolvedValue(undefined)
+    mockGetSystemRegistry.mockResolvedValue([])
+    mockGetUserRegistry.mockResolvedValue([])
   })
 
   it('skips locale and license bootstrap on unauthenticated multi-tenant pages', async () => {
@@ -54,6 +63,8 @@ describe('rootLoader', () => {
     await expect(rootLoader()).resolves.toEqual({})
 
     expect(mockInitializeLocale).not.toHaveBeenCalled()
+    expect(mockGetSystemRegistry).not.toHaveBeenCalled()
+    expect(mockGetUserRegistry).not.toHaveBeenCalled()
     expect(mockLicenseWaitFor).not.toHaveBeenCalled()
     expect(mockFolderTreeWaitFor).not.toHaveBeenCalled()
   })
@@ -65,13 +76,13 @@ describe('rootLoader', () => {
       accessToken: null,
       multiTenant: false,
     })
+    mockGetSystemRegistry.mockResolvedValue([{ key: 'config.app_default_language', value: 'fr' }])
 
     await expect(rootLoader()).resolves.toEqual({})
 
-    expect(mockInitializeLocale).toHaveBeenCalledWith({
-      includeUserRegistry: false,
-      includeSystemRegistry: true,
-    })
+    expect(mockGetUserRegistry).not.toHaveBeenCalled()
+    expect(mockGetSystemRegistry).toHaveBeenCalledWith('config.app_default_language')
+    expect(mockInitializeLocale).toHaveBeenCalledWith('fr')
     expect(mockLicenseWaitFor).not.toHaveBeenCalled()
   })
 
@@ -82,10 +93,13 @@ describe('rootLoader', () => {
       accessToken: 'token',
       multiTenant: true,
     })
+    mockGetUserRegistry.mockResolvedValue([{ key: 'config.app_default_language', value: 'zh' }])
 
     await expect(rootLoader()).resolves.toEqual({})
 
-    expect(mockInitializeLocale).toHaveBeenCalledWith()
+    expect(mockGetUserRegistry).toHaveBeenCalledWith('config.app_default_language')
+    expect(mockGetSystemRegistry).not.toHaveBeenCalled()
+    expect(mockInitializeLocale).toHaveBeenCalledWith('zh')
     expect(mockLicenseWaitFor).not.toHaveBeenCalled()
   })
 })

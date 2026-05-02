@@ -405,7 +405,7 @@ describe('RegisterPage pending verification', () => {
     await waitFor(() => {
       expect(mockInitAuth).toHaveBeenCalledWith('jwt-token')
     })
-    expect(mockInitializeLocale).toHaveBeenCalled()
+    expect(mockInitializeLocale).not.toHaveBeenCalled()
     expect(mockNavigate).toHaveBeenCalledWith({ to: '/spaces/acme-space' })
   })
 
