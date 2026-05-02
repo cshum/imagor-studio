@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockNavigate = vi.fn()
 const mockGetAuthProviders = vi.fn()
+const mockInitAuth = vi.fn()
+const mockInvalidate = vi.fn()
 const mockLogin = vi.fn()
 const mockUseAuth = vi.fn()
 const mockUseSearch = vi.fn()
@@ -26,7 +28,7 @@ vi.mock('@tanstack/react-router', () => ({
   },
   Navigate: ({ to }: { to: string }) => <div>{`Navigate:${to}`}</div>,
   useNavigate: () => mockNavigate,
-  useRouter: () => ({ invalidate: vi.fn() }),
+  useRouter: () => ({ invalidate: mockInvalidate }),
   useSearch: () => mockUseSearch(),
 }))
 
@@ -38,9 +40,16 @@ vi.mock('@/api/auth-api', () => ({
 }))
 
 vi.mock('@/stores/auth-store', () => ({
-  initAuth: vi.fn(),
+  initAuth: (...args: unknown[]) => mockInitAuth(...args),
   useAuth: () => mockUseAuth(),
 }))
+
+let currentAuthState: {
+  isEmbedded: boolean
+  isFirstRun: boolean
+  multiTenant: boolean
+  state: string
+}
 
 vi.mock('@/stores/locale-store', () => ({
   initializeLocale: vi.fn(),
@@ -77,14 +86,20 @@ describe('LoginPage', () => {
     mockGetAuthProviders.mockResolvedValue({ providers: ['google'] })
     mockLogin.mockResolvedValue({ token: 'token-123', redirectPath: '/' })
     mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
-    mockUseAuth.mockReturnValue({
-      authState: {
-        isEmbedded: false,
-        isFirstRun: false,
-        multiTenant: true,
-        state: 'unauthenticated',
-      },
+    currentAuthState = {
+      isEmbedded: false,
+      isFirstRun: false,
+      multiTenant: true,
+      state: 'unauthenticated',
+    }
+    mockUseAuth.mockImplementation(() => ({ authState: currentAuthState }))
+    mockInitAuth.mockImplementation(async () => {
+      currentAuthState = {
+        ...currentAuthState,
+        state: 'authenticated',
+      }
     })
+    mockInvalidate.mockResolvedValue(undefined)
   })
 
   afterEach(() => {
@@ -104,14 +119,13 @@ describe('LoginPage', () => {
   })
 
   it('renders the self-hosted login in single-column mode', async () => {
-    mockUseAuth.mockReturnValue({
-      authState: {
-        isEmbedded: false,
-        isFirstRun: false,
-        multiTenant: false,
-        state: 'unauthenticated',
-      },
-    })
+    currentAuthState = {
+      ...currentAuthState,
+      isEmbedded: false,
+      isFirstRun: false,
+      multiTenant: false,
+      state: 'unauthenticated',
+    }
 
     const { LoginPage } = await import('./login-page')
 
@@ -182,14 +196,13 @@ describe('LoginPage', () => {
   })
 
   it('keeps backend redirectPath fallback for self-hosted login', async () => {
-    mockUseAuth.mockReturnValue({
-      authState: {
-        isEmbedded: false,
-        isFirstRun: false,
-        multiTenant: false,
-        state: 'unauthenticated',
-      },
-    })
+    currentAuthState = {
+      ...currentAuthState,
+      isEmbedded: false,
+      isFirstRun: false,
+      multiTenant: false,
+      state: 'unauthenticated',
+    }
 
     const { LoginPage } = await import('./login-page')
     mockLogin.mockResolvedValueOnce({ token: 'token-123', redirectPath: '/landing' })
@@ -207,6 +220,41 @@ describe('LoginPage', () => {
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith({ to: '/landing' })
+    })
+  })
+
+  it('does not auto-redirect before post-login invalidation completes', async () => {
+    const { LoginPage } = await import('./login-page')
+    let resolveInvalidate: (() => void) | undefined
+    mockInvalidate.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveInvalidate = resolve
+        }),
+    )
+
+    const { rerender } = render(<LoginPage />)
+
+    fireEvent.change(screen.getByLabelText('auth.login.identifierLabelCloud'), {
+      target: { value: 'owner@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'password123' },
+    })
+    fireEvent.submit(screen.getByRole('button', { name: 'auth.login.signIn' }).closest('form')!)
+
+    await waitFor(() => {
+      expect(mockInitAuth).toHaveBeenCalledWith('token-123')
+    })
+
+    rerender(<LoginPage />)
+
+    expect(screen.queryByText('Navigate:/')).toBeNull()
+
+    resolveInvalidate?.()
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith({ to: '/' })
     })
   })
 })

@@ -61,6 +61,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const router = useRouter()
   const search = useSearch({ from: '/login' })
+  const [isCompletingLogin, setIsCompletingLogin] = useState(false)
   const [googleEnabled, setGoogleEnabled] = useState(
     () => getBootstrappedAuthProviders()?.includes('google') ?? false,
   )
@@ -169,7 +170,7 @@ export function LoginPage() {
   }
 
   // If already authenticated, redirect to intended destination or gallery
-  if (authState.state === 'authenticated') {
+  if (authState.state === 'authenticated' && !isCompletingLogin) {
     const redirectParam = search.redirect as string | undefined
     if (redirectParam && isValidRedirectUrl(redirectParam)) {
       return <Navigate to={redirectParam} replace />
@@ -183,6 +184,8 @@ export function LoginPage() {
   }
 
   const onSubmit = async (values: LoginFormValues) => {
+    setIsCompletingLogin(true)
+
     try {
       const response = await login({
         username: values.username.trim(),
@@ -225,6 +228,7 @@ export function LoginPage() {
       form.setError('root', {
         message: errorMessage,
       })
+      setIsCompletingLogin(false)
     }
   }
 
