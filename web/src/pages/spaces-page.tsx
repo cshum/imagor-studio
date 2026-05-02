@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useRouter } from '@tanstack/react-router'
+import { Link, useRouter, useRouterState } from '@tanstack/react-router'
 import { Cloud, Database, LayoutGrid, LogOut, MoreHorizontal, Plus, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { createOrganization, leaveSpace, type SpaceItem } from '@/api/org-api'
+import { LoadingBar } from '@/components/loading-bar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -77,6 +78,7 @@ export function SpacesPage({
 }: SpacesPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
+  const { isLoading } = useRouterState()
   const { authState, refreshAuthSession } = useAuth()
   const [leaveSpaceItem, setLeaveSpaceItem] = useState<SpaceItem | null>(null)
   const [isLeaving, setIsLeaving] = useState(false)
@@ -211,6 +213,7 @@ export function SpacesPage({
 
   return (
     <div className='space-y-6'>
+      <LoadingBar isLoading={isLoading} size='thin' />
       {needsOrganizationRecovery && hasSpaces ? (
         <div className='bg-muted/30 flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'>
           <div className='space-y-1'>

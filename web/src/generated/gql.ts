@@ -57,6 +57,7 @@ type Documents = {
   '\n  query GetUserRegistry($key: String, $keys: [String!], $ownerID: String) {\n    getUserRegistry(key: $key, keys: $keys, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.GetUserRegistryDocument
   '\n  query ListSystemRegistry($prefix: String) {\n    listSystemRegistry(prefix: $prefix) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.ListSystemRegistryDocument
   '\n  query GetSystemRegistry($key: String, $keys: [String!]) {\n    getSystemRegistry(key: $key, keys: $keys) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.GetSystemRegistryDocument
+  '\n  query GetResolvedGalleryDisplayPreferences(\n    $includeUser: Boolean!\n    $includeSpace: Boolean!\n    $userKeys: [String!]\n    $ownerID: String\n    $spaceID: String!\n    $systemKeys: [String!]!\n  ) {\n    userRegistryEntries: getUserRegistry(keys: $userKeys, ownerID: $ownerID)\n      @include(if: $includeUser) {\n      ...RegistryInfo\n    }\n    spaceRegistryEntries: spaceRegistry(spaceID: $spaceID, keys: $systemKeys)\n      @include(if: $includeSpace) {\n      ...RegistryInfo\n    }\n    systemRegistryEntries: getSystemRegistry(keys: $systemKeys) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.GetResolvedGalleryDisplayPreferencesDocument
   '\n  mutation SetUserRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!], $ownerID: String) {\n    setUserRegistry(entry: $entry, entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n': typeof types.SetUserRegistryDocument
   '\n  mutation DeleteUserRegistry($key: String!, $ownerID: String) {\n    deleteUserRegistry(key: $key, ownerID: $ownerID)\n  }\n': typeof types.DeleteUserRegistryDocument
   '\n  mutation SetSystemRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!]) {\n    setSystemRegistry(entry: $entry, entries: $entries) {\n      ...SystemRegistryInfo\n    }\n  }\n': typeof types.SetSystemRegistryDocument
@@ -175,6 +176,8 @@ const documents: Documents = {
     types.ListSystemRegistryDocument,
   '\n  query GetSystemRegistry($key: String, $keys: [String!]) {\n    getSystemRegistry(key: $key, keys: $keys) {\n      ...SystemRegistryInfo\n    }\n  }\n':
     types.GetSystemRegistryDocument,
+  '\n  query GetResolvedGalleryDisplayPreferences(\n    $includeUser: Boolean!\n    $includeSpace: Boolean!\n    $userKeys: [String!]\n    $ownerID: String\n    $spaceID: String!\n    $systemKeys: [String!]!\n  ) {\n    userRegistryEntries: getUserRegistry(keys: $userKeys, ownerID: $ownerID)\n      @include(if: $includeUser) {\n      ...RegistryInfo\n    }\n    spaceRegistryEntries: spaceRegistry(spaceID: $spaceID, keys: $systemKeys)\n      @include(if: $includeSpace) {\n      ...RegistryInfo\n    }\n    systemRegistryEntries: getSystemRegistry(keys: $systemKeys) {\n      ...SystemRegistryInfo\n    }\n  }\n':
+    types.GetResolvedGalleryDisplayPreferencesDocument,
   '\n  mutation SetUserRegistry($entry: RegistryEntryInput, $entries: [RegistryEntryInput!], $ownerID: String) {\n    setUserRegistry(entry: $entry, entries: $entries, ownerID: $ownerID) {\n      ...RegistryInfo\n    }\n  }\n':
     types.SetUserRegistryDocument,
   '\n  mutation DeleteUserRegistry($key: String!, $ownerID: String) {\n    deleteUserRegistry(key: $key, ownerID: $ownerID)\n  }\n':
@@ -508,6 +511,12 @@ export function gql(
 export function gql(
   source: '\n  query GetSystemRegistry($key: String, $keys: [String!]) {\n    getSystemRegistry(key: $key, keys: $keys) {\n      ...SystemRegistryInfo\n    }\n  }\n',
 ): (typeof documents)['\n  query GetSystemRegistry($key: String, $keys: [String!]) {\n    getSystemRegistry(key: $key, keys: $keys) {\n      ...SystemRegistryInfo\n    }\n  }\n']
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: '\n  query GetResolvedGalleryDisplayPreferences(\n    $includeUser: Boolean!\n    $includeSpace: Boolean!\n    $userKeys: [String!]\n    $ownerID: String\n    $spaceID: String!\n    $systemKeys: [String!]!\n  ) {\n    userRegistryEntries: getUserRegistry(keys: $userKeys, ownerID: $ownerID)\n      @include(if: $includeUser) {\n      ...RegistryInfo\n    }\n    spaceRegistryEntries: spaceRegistry(spaceID: $spaceID, keys: $systemKeys)\n      @include(if: $includeSpace) {\n      ...RegistryInfo\n    }\n    systemRegistryEntries: getSystemRegistry(keys: $systemKeys) {\n      ...SystemRegistryInfo\n    }\n  }\n',
+): (typeof documents)['\n  query GetResolvedGalleryDisplayPreferences(\n    $includeUser: Boolean!\n    $includeSpace: Boolean!\n    $userKeys: [String!]\n    $ownerID: String\n    $spaceID: String!\n    $systemKeys: [String!]!\n  ) {\n    userRegistryEntries: getUserRegistry(keys: $userKeys, ownerID: $ownerID)\n      @include(if: $includeUser) {\n      ...RegistryInfo\n    }\n    spaceRegistryEntries: spaceRegistry(spaceID: $spaceID, keys: $systemKeys)\n      @include(if: $includeSpace) {\n      ...RegistryInfo\n    }\n    systemRegistryEntries: getSystemRegistry(keys: $systemKeys) {\n      ...SystemRegistryInfo\n    }\n  }\n']
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

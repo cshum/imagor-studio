@@ -39,6 +39,7 @@ import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import { extractErrorInfo } from '@/lib/error-utils'
+import { invalidateGalleryDisplayPreferencesCache } from '@/lib/gallery-display-preferences'
 import { rememberSpacePropagationNotice } from '@/lib/space-propagation'
 
 import type { SpaceSettingsData } from './shared'
@@ -236,6 +237,13 @@ export function GeneralSection({ space, initialValues }: GeneralSectionProps) {
       }
 
       await setSpaceRegistryObject(space.id, registryChanges)
+      if (
+        registryChanges['config.app_default_sort_by'] ||
+        registryChanges['config.app_default_sort_order'] ||
+        registryChanges['config.app_show_file_names']
+      ) {
+        invalidateGalleryDisplayPreferencesCache()
+      }
       toast.success(t('pages.spaceSettings.general.saved'))
       await router.invalidate()
     } catch (err) {

@@ -59,6 +59,7 @@ import { getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
 import { hasErrorCode } from '@/lib/error-utils'
 import { getFileDisplayName } from '@/lib/file-utils'
+import { invalidateGalleryDisplayPreferencesCache } from '@/lib/gallery-display-preferences'
 import { moveGalleryItems } from '@/lib/gallery-move'
 import { joinImagePath } from '@/lib/path-utils'
 import type { SpaceIdentity } from '@/lib/space'
@@ -348,6 +349,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
         authState.profile.id,
         userConfigScope,
       )
+      invalidateGalleryDisplayPreferencesCache()
       // Invalidate only the current gallery route to trigger loader reload
       await router.invalidate()
     }
@@ -747,10 +749,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
     space,
   })
 
-  const isNavigateToImage = !!(
-    pendingMatches?.length &&
-    pendingMatches[pendingMatches.length - 1].routeId?.toString()?.includes('$imageKey')
-  )
+  const pendingRouteId = pendingMatches?.[pendingMatches.length - 1].routeId?.toString() ?? ''
+  const hasPendingNavigation = Boolean(pendingMatches?.length)
+  const isNavigateToImage = hasPendingNavigation && pendingRouteId.includes('$imageKey')
+  const isNavigateWithinGallery = hasPendingNavigation && !isNavigateToImage
 
   // Detect if the image view child route is currently active (URL contains an imageKey param)
   const isImageViewOpen = matches.some((m) => m.routeId?.toString()?.includes('$imageKey'))
@@ -764,6 +766,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
         authState.profile.id,
         userConfigScope,
       )
+      invalidateGalleryDisplayPreferencesCache()
       // Invalidate the router to reload loader data with new value
       await router.invalidate()
     }
@@ -1115,6 +1118,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
 
   return (
     <>
+      {isNavigateWithinGallery && <LoadingBar isLoading={isLoading} size='thin' />}
       {isNavigateToImage && <LoadingBar isLoading={isLoading} />}
       <ContentLayout title={galleryName}>
         <GalleryDropZone

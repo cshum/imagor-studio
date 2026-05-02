@@ -120,7 +120,7 @@ func TestSPAHandlerImagorRouting(t *testing.T) {
 		},
 	}
 
-	handler := SPAHandler(mockFS, imagorHandler, logger)
+	handler := SPAHandler(mockFS, imagorHandler, logger, AppBootstrap{})
 
 	tests := []struct {
 		path           string
@@ -166,7 +166,7 @@ func TestSPAHandlerNoImagorProvider(t *testing.T) {
 	}
 
 	// Test with nil imagor handler
-	handler := SPAHandler(mockFS, nil, logger)
+	handler := SPAHandler(mockFS, nil, logger, AppBootstrap{})
 
 	req := httptest.NewRequest("GET", "/unsafe/300x200/test.jpg", nil)
 	w := httptest.NewRecorder()
@@ -189,7 +189,7 @@ func TestSPAHandlerFallback(t *testing.T) {
 		},
 	}
 
-	handler := SPAHandler(mockFS, nil, logger)
+	handler := SPAHandler(mockFS, nil, logger, AppBootstrap{})
 
 	// Test SPA fallback for non-existent files
 	req := httptest.NewRequest("GET", "/some/spa/route", nil)
@@ -224,7 +224,7 @@ func TestSPAHandlerStaticAssetCacheHeaders(t *testing.T) {
 		},
 	}
 
-	handler := SPAHandler(staticFS, nil, logger)
+	handler := SPAHandler(staticFS, nil, logger, AppBootstrap{})
 	req := httptest.NewRequest("GET", "/assets/app-abc123.js", nil)
 	w := httptest.NewRecorder()
 
@@ -237,5 +237,33 @@ func TestSPAHandlerStaticAssetCacheHeaders(t *testing.T) {
 	cacheControl := w.Header().Get("Cache-Control")
 	if cacheControl != staticAssetCacheControl {
 		t.Errorf("Expected Cache-Control %q, got %q", staticAssetCacheControl, cacheControl)
+	}
+}
+
+func TestSPAHandlerInjectsBootstrapIntoHTML(t *testing.T) {
+	logger := zaptest.NewLogger(t)
+
+	staticFS := fstest.MapFS{
+		"index.html": {
+			Data: []byte("<html><head><title>Imagor Studio</title></head><body>Mock HTML</body></html>"),
+		},
+	}
+
+	handler := SPAHandler(staticFS, nil, logger, AppBootstrap{AuthProviders: []string{"google"}})
+	req := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", w.Code)
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, `window.__IMAGOR_STUDIO_BOOTSTRAP__ = {"authProviders":["google"]};`) {
+		t.Fatalf("Expected bootstrap payload in HTML, got %q", body)
+	}
+	if !strings.Contains(body, "</script></head>") {
+		t.Fatalf("Expected bootstrap payload before </head>, got %q", body)
 	}
 }

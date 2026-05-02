@@ -18,9 +18,9 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { getBootstrappedAuthProviders } from '@/lib/app-bootstrap'
 import { isValidEmail } from '@/lib/email'
 import { initAuth, useAuth } from '@/stores/auth-store'
-import { initializeLocale } from '@/stores/locale-store'
 
 type LoginFormValues = {
   username: string
@@ -61,7 +61,9 @@ export function LoginPage() {
   const navigate = useNavigate()
   const router = useRouter()
   const search = useSearch({ from: '/login' })
-  const [googleEnabled, setGoogleEnabled] = useState(false)
+  const [googleEnabled, setGoogleEnabled] = useState(
+    () => getBootstrappedAuthProviders()?.includes('google') ?? false,
+  )
   const isMultiTenant = authState.multiTenant
   const inviteToken = typeof search.invite_token === 'string' ? search.invite_token : undefined
 
@@ -73,6 +75,10 @@ export function LoginPage() {
   }
 
   const resolvePostLoginRedirect = (redirectPath?: string): string => {
+    if (isMultiTenant) {
+      return '/'
+    }
+
     if (redirectPath && isValidRedirectUrl(redirectPath)) {
       return redirectPath
     }
@@ -144,6 +150,10 @@ export function LoginPage() {
   })
 
   useEffect(() => {
+    if (getBootstrappedAuthProviders() !== null) {
+      return
+    }
+
     getAuthProviders()
       .then(({ providers }) => {
         setGoogleEnabled(providers.includes('google'))
@@ -181,9 +191,6 @@ export function LoginPage() {
       })
       await initAuth(response.token)
       await router.invalidate()
-
-      // Reload user's language preference after login
-      await initializeLocale()
 
       // Handle redirect after successful login
       const redirectParam = search.redirect as string | undefined

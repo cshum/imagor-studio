@@ -93,17 +93,15 @@ export interface BillingSearch {
   portal_returned?: boolean
 }
 
-export interface OrgOverviewLoaderData {
-  organization: MyOrganizationQuery['myOrganization']
-  usageSummary: GetUsageSummaryQuery['usageSummary']
-  breadcrumb: BreadcrumbItem
-}
-
 export interface OrgMembersLoaderData {
   organization: MyOrganizationQuery['myOrganization']
   members: ListOrgMembersQuery['orgMembers']
   invitations: import('@/generated/graphql').ListOrgInvitationsQuery['orgInvitations']
   breadcrumb: BreadcrumbItem
+}
+
+interface OrganizationLoaderOptions {
+  organization?: MyOrganizationQuery['myOrganization']
 }
 
 const ADMIN_GENERAL_REGISTRY_KEYS = [
@@ -235,8 +233,12 @@ export const usersLoader = async ({
   }
 }
 
-export const billingLoader = async (): Promise<BillingLoaderData> => {
-  const [organization, usageSummary] = await Promise.all([getMyOrganization(), getUsageSummary()])
+export const billingLoader = async ({
+  organization: providedOrganization,
+}: OrganizationLoaderOptions = {}): Promise<BillingLoaderData> => {
+  const organization =
+    providedOrganization === undefined ? await getMyOrganization() : providedOrganization
+  const usageSummary = await getUsageSummary()
 
   return {
     organization,
@@ -247,22 +249,13 @@ export const billingLoader = async (): Promise<BillingLoaderData> => {
   }
 }
 
-export const orgOverviewLoader = async (): Promise<OrgOverviewLoaderData> => {
-  const [organization, usageSummary] = await Promise.all([getMyOrganization(), getUsageSummary()])
-
-  return {
-    organization,
-    usageSummary,
-    breadcrumb: {
-      translationKey: 'navigation.breadcrumbs.organization',
-    },
-  }
-}
-
 const isOrganizationAdminRole = (role?: string | null) => role === 'owner' || role === 'admin'
 
-export const orgMembersLoader = async (): Promise<OrgMembersLoaderData> => {
-  const organization = await getMyOrganization()
+export const orgMembersLoader = async ({
+  organization: providedOrganization,
+}: OrganizationLoaderOptions = {}): Promise<OrgMembersLoaderData> => {
+  const organization =
+    providedOrganization === undefined ? await getMyOrganization() : providedOrganization
   const [members, invitations] = await Promise.all([
     listOrgMembers(),
     isOrganizationAdminRole(organization?.currentUserRole)

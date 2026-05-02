@@ -20,6 +20,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
   useRouter: () => ({ invalidate: mockInvalidate }),
+  useRouterState: () => ({ isLoading: false }),
 }))
 
 vi.mock('sonner', () => ({

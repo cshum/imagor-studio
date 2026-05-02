@@ -9,7 +9,6 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 
-import { getMyOrganization } from '@/api/org-api'
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
 import { ErrorPage } from '@/components/ui/error-page'
 import { Toaster } from '@/components/ui/sonner'
@@ -18,7 +17,6 @@ import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
-import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { getInviteTokenSearchValue } from '@/lib/route-search'
 import { getSpaceIdentity, resolveSpace } from '@/lib/space'
 import {
@@ -31,6 +29,7 @@ import {
   orgMembersLoader,
   profileLoader,
   resolveSpaceSettingsRouteContext,
+  spacesLoader,
   usersLoader,
 } from '@/loaders/account-loader.ts'
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
@@ -44,6 +43,7 @@ import {
   requireOrganizationAdminAccountAuth,
   requireSelfHostedAdminAccountAuth,
   requireSelfHostedImageEditorAuth,
+  resolveAccountRouteContext,
 } from '@/loaders/auth-loader.ts'
 import { canvasEditorLoader } from '@/loaders/canvas-editor-loader.ts'
 import { emailChangeVerifyLoader } from '@/loaders/email-change-verify-loader'
@@ -101,6 +101,8 @@ import { checkLicense, useLicense } from '@/stores/license-store'
 import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
 import { initializeTheme } from '@/stores/theme-store.ts'
+
+const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
 
 const RootComponent = () => {
   useTitle()
@@ -206,21 +208,34 @@ const baseLayoutRoute = createRoute({
   ),
 })
 
-const spaceBaseLayoutRoute = createRoute({
+const spaceRouteContextRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey',
+  id: 'space-route-context',
   beforeLoad: async (context) => {
     await requireAuth(context)
-    return { space: await resolveSpace(context.params.spaceKey) }
+    const { spaceKey } = context.params as { spaceKey: string }
+    return { space: await resolveSpace(spaceKey) }
   },
+  component: () => <Outlet />,
+})
+
+const spaceSidebarLayoutRoute = createRoute({
+  getParentRoute: () => spaceRouteContextRoute,
+  id: 'space-sidebar-layout',
   component: () => {
-    const { space } = spaceBaseLayoutRoute.useRouteContext()
+    const { space } = spaceRouteContextRoute.useRouteContext()
     return (
       <SidebarLayout space={getSpaceIdentity(space)}>
         <Outlet />
       </SidebarLayout>
     )
   },
+})
+
+const spaceEditorBaseRoute = createRoute({
+  getParentRoute: () => spaceRouteContextRoute,
+  path: '/spaces/$spaceKey',
+  component: () => <Outlet />,
 })
 
 const rootPath = createRoute({
@@ -231,12 +246,14 @@ const rootPath = createRoute({
   beforeLoad: async (context) => {
     const auth = getAuth()
     if (auth.multiTenant) {
-      return requireAccountAuth(context)
+      await requireAccountAuth(context)
+      return { spacesData: await spacesLoader() }
     }
   },
   component: () => {
-    const loaderData = rootPath.useLoaderData()
-    return <RootPage loaderData={loaderData} />
+    const { spacesData } = rootPath.useRouteContext()
+    const galleryLoaderData = rootPath.useLoaderData()
+    return <RootPage spacesData={spacesData} galleryLoaderData={galleryLoaderData} />
   },
   loader: rootPageLoader,
   shouldReload: false,
@@ -250,6 +267,9 @@ const rootImagePage = createRoute({
     const galleryLoaderData = rootPath.useLoaderData()
     const imageLoaderData = rootImagePage.useLoaderData()
     const { imageKey } = rootImagePage.useParams()
+    if (!galleryLoaderData) {
+      throw new Error('Root image route requires gallery loader data')
+    }
     return (
       <ImagePage
         imageLoaderData={imageLoaderData}
@@ -350,11 +370,11 @@ const galleryImageEditorRoute = createRoute({
 
 // /spaces/$spaceKey  →  root gallery for this space (galleryKey = '')
 const spaceRootRoute = createRoute({
-  getParentRoute: () => spaceBaseLayoutRoute,
-  path: '/',
+  getParentRoute: () => spaceSidebarLayoutRoute,
+  path: '/spaces/$spaceKey',
   component: () => {
     const galleryLoaderData = spaceRootRoute.useLoaderData()
-    const { space } = spaceBaseLayoutRoute.useRouteContext()
+    const { space } = spaceRouteContextRoute.useRouteContext()
     return (
       <GalleryPage
         galleryLoaderData={galleryLoaderData}
@@ -392,7 +412,7 @@ const spaceRootImagePage = createRoute({
   component: () => {
     const galleryLoaderData = spaceRootRoute.useLoaderData()
     const imageLoaderData = spaceRootImagePage.useLoaderData()
-    const { space } = spaceBaseLayoutRoute.useRouteContext()
+    const { space } = spaceRouteContextRoute.useRouteContext()
     const { imageKey } = spaceRootImagePage.useParams()
     return (
       <ImagePage
@@ -408,11 +428,11 @@ const spaceRootImagePage = createRoute({
 
 // /spaces/$spaceKey/f/$galleryKey  →  nested folder inside a space
 const spaceGalleryRoute = createRoute({
-  getParentRoute: () => spaceBaseLayoutRoute,
-  path: '/f/$galleryKey',
+  getParentRoute: () => spaceSidebarLayoutRoute,
+  path: '/spaces/$spaceKey/f/$galleryKey',
   component: () => {
     const galleryLoaderData = spaceGalleryRoute.useLoaderData()
-    const { space } = spaceBaseLayoutRoute.useRouteContext()
+    const { space } = spaceRouteContextRoute.useRouteContext()
     const { galleryKey } = spaceGalleryRoute.useParams()
     return (
       <GalleryPage
@@ -449,7 +469,7 @@ const spaceImagePage = createRoute({
   component: () => {
     const galleryLoaderData = spaceGalleryRoute.useLoaderData()
     const imageLoaderData = spaceImagePage.useLoaderData()
-    const { space } = spaceBaseLayoutRoute.useRouteContext()
+    const { space } = spaceRouteContextRoute.useRouteContext()
     const { galleryKey, imageKey } = spaceImagePage.useParams()
     return (
       <ImagePage
@@ -465,12 +485,9 @@ const spaceImagePage = createRoute({
 
 // /spaces/$spaceKey/$imageKey/editor  →  image editor at the root of a space
 const spaceImageEditorRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey/$imageKey/editor',
-  beforeLoad: async (context) => {
-    await requireImageEditorAuth(context)
-    return { space: await resolveSpace(context.params.spaceKey) }
-  },
+  getParentRoute: () => spaceEditorBaseRoute,
+  path: '/$imageKey/editor',
+  beforeLoad: requireImageEditorAuth,
   loader: ({ params, context }) => {
     const { space } = context
     return imageEditorLoader({
@@ -480,19 +497,16 @@ const spaceImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceImageEditorRoute.useLoaderData()
-    const { space } = spaceImageEditorRoute.useRouteContext()
+    const { space } = spaceRouteContextRoute.useRouteContext()
     return <ImageEditorPage loaderData={loaderData} galleryKey='' space={getSpaceIdentity(space)} />
   },
 })
 
 // /spaces/$spaceKey/f/$galleryKey/$imageKey/editor  →  image editor inside a space folder
 const spaceGalleryImageEditorRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor',
-  beforeLoad: async (context) => {
-    await requireImageEditorAuth(context)
-    return { space: await resolveSpace(context.params.spaceKey) }
-  },
+  getParentRoute: () => spaceEditorBaseRoute,
+  path: '/f/$galleryKey/$imageKey/editor',
+  beforeLoad: requireImageEditorAuth,
   loader: ({ params, context }) => {
     const { space } = context
     return imageEditorLoader({ params: { ...params, spaceID: space.id, spaceName: space.name } })
@@ -500,7 +514,7 @@ const spaceGalleryImageEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceGalleryImageEditorRoute.useLoaderData()
-    const { space } = spaceGalleryImageEditorRoute.useRouteContext()
+    const { space } = spaceRouteContextRoute.useRouteContext()
     const { galleryKey } = spaceGalleryImageEditorRoute.useParams()
     return (
       <ImageEditorPage
@@ -514,12 +528,9 @@ const spaceGalleryImageEditorRoute = createRoute({
 
 // /spaces/$spaceKey/editor/new  →  new canvas editor inside a space
 const spaceCanvasEditorRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey/editor/new',
-  beforeLoad: async (context) => {
-    await requireImageEditorAuth(context)
-    return { space: await resolveSpace(context.params.spaceKey) }
-  },
+  getParentRoute: () => spaceEditorBaseRoute,
+  path: '/editor/new',
+  beforeLoad: requireImageEditorAuth,
   loader: ({ location, context }) => {
     const { space } = context
     return canvasEditorLoader({ search: location.searchStr, spaceID: space?.id })
@@ -527,19 +538,16 @@ const spaceCanvasEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceCanvasEditorRoute.useLoaderData()
-    const { space } = spaceCanvasEditorRoute.useRouteContext()
+    const { space } = spaceRouteContextRoute.useRouteContext()
     return <ImageEditorPage loaderData={loaderData} galleryKey='' space={getSpaceIdentity(space)} />
   },
 })
 
 // /spaces/$spaceKey/f/$galleryKey/editor/new  →  new canvas editor inside a space folder
 const spaceGalleryCanvasEditorRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/spaces/$spaceKey/f/$galleryKey/editor/new',
-  beforeLoad: async (context) => {
-    await requireImageEditorAuth(context)
-    return { space: await resolveSpace(context.params.spaceKey) }
-  },
+  getParentRoute: () => spaceEditorBaseRoute,
+  path: '/f/$galleryKey/editor/new',
+  beforeLoad: requireImageEditorAuth,
   loader: ({ location, context }) => {
     const { space } = context
     return canvasEditorLoader({ search: location.searchStr, spaceID: space?.id })
@@ -547,7 +555,7 @@ const spaceGalleryCanvasEditorRoute = createRoute({
   shouldReload: false,
   component: () => {
     const loaderData = spaceGalleryCanvasEditorRoute.useLoaderData()
-    const { space } = spaceGalleryCanvasEditorRoute.useRouteContext()
+    const { space } = spaceRouteContextRoute.useRouteContext()
     const { galleryKey } = spaceGalleryCanvasEditorRoute.useParams()
     return (
       <ImageEditorPage
@@ -579,13 +587,11 @@ const spaceSettingsLayoutRoute = createRoute({
   },
   loader: async ({ context }) => ({
     breadcrumb: context.breadcrumb,
-    organization: await getMyOrganization(),
   }),
   shouldReload: false,
   component: () => {
     const { space } = spaceSettingsLayoutRoute.useRouteContext()
-    const { organization } = spaceSettingsLayoutRoute.useLoaderData()
-    return <SpaceSettingsLayout space={space} showOrganizationLink={Boolean(organization)} />
+    return <SpaceSettingsLayout space={space} showOrganizationLink={Boolean(space.orgId)} />
   },
 })
 
@@ -719,13 +725,15 @@ const accountLegacyMembersRoute = createRoute({
 const accountOrganizationLayoutRoute = createRoute({
   getParentRoute: () => accountLayoutRoute,
   path: '/account/organization',
-  beforeLoad: requireOrganizationAccountAuth,
-  loader: async () => ({
-    breadcrumb: { translationKey: 'navigation.breadcrumbs.organization', href: '/' },
-    organization: await getMyOrganization(),
-  }),
+  loader: async ({ context }) => {
+    await requireOrganizationAccountAuth({ organization: context.organization })
+
+    return {
+      breadcrumb: { translationKey: 'navigation.breadcrumbs.organization', href: '/' },
+    }
+  },
   component: () => {
-    const { organization } = accountOrganizationLayoutRoute.useLoaderData()
+    const { organization } = accountOrganizationLayoutRoute.useRouteContext()
     return <AccountOrganizationLayout currentUserRole={organization?.currentUserRole ?? null} />
   },
 })
@@ -733,9 +741,8 @@ const accountOrganizationLayoutRoute = createRoute({
 const accountOrganizationIndexRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/',
-  beforeLoad: async (context) => {
-    await requireOrganizationAccountAuth(context)
-    const organization = await getMyOrganization()
+  loader: async ({ context }) => {
+    const organization = context.organization
     throw redirect({
       to:
         organization?.currentUserRole === 'owner' || organization?.currentUserRole === 'admin'
@@ -757,8 +764,10 @@ const accountOrganizationBillingRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/billing',
   validateSearch: billingValidateSearch,
-  beforeLoad: requireOrganizationAdminAccountAuth,
-  loader: billingLoader,
+  loader: async ({ context }) => {
+    await requireOrganizationAdminAccountAuth({ organization: context.organization })
+    return billingLoader({ organization: context.organization })
+  },
   component: () => {
     const loaderData = accountOrganizationBillingRoute.useLoaderData()
     return <AccountBillingRoutePage loaderData={loaderData} />
@@ -768,7 +777,7 @@ const accountOrganizationBillingRoute = createRoute({
 const accountOrganizationMembersRoute = createRoute({
   getParentRoute: () => accountOrganizationLayoutRoute,
   path: '/members',
-  loader: orgMembersLoader,
+  loader: ({ context }) => orgMembersLoader({ organization: context.organization }),
   component: () => {
     const loaderData = accountOrganizationMembersRoute.useLoaderData()
     return <AccountMembersRoutePage loaderData={loaderData} />
@@ -778,10 +787,9 @@ const accountOrganizationMembersRoute = createRoute({
 const accountLayoutRoute = createRoute({
   getParentRoute: () => settingsLayoutRoute,
   id: 'account-layout',
-  beforeLoad: requireAccountAuth,
-  loader: async () => getMyOrganization(),
+  beforeLoad: resolveAccountRouteContext,
   component: () => {
-    const organization = accountLayoutRoute.useLoaderData()
+    const { organization } = accountLayoutRoute.useRouteContext()
     return <AccountLayout showOrganizationLink={Boolean(organization)} />
   },
 })
@@ -899,10 +907,6 @@ const routeTree = isEmbeddedMode
       galleryCanvasEditorRoute,
       rootImageEditorRoute,
       galleryImageEditorRoute,
-      spaceImageEditorRoute,
-      spaceGalleryImageEditorRoute,
-      spaceCanvasEditorRoute,
-      spaceGalleryCanvasEditorRoute,
       settingsLayoutRoute.addChildren([
         workspaceRequiredRoute,
         rootPath.addChildren([rootImagePage]),
@@ -936,9 +940,17 @@ const routeTree = isEmbeddedMode
         ]),
       ]),
       baseLayoutRoute.addChildren([galleryRoute.addChildren([imagePage])]),
-      spaceBaseLayoutRoute.addChildren([
-        spaceRootRoute.addChildren([spaceRootImagePage]),
-        spaceGalleryRoute.addChildren([spaceImagePage]),
+      spaceRouteContextRoute.addChildren([
+        spaceSidebarLayoutRoute.addChildren([
+          spaceRootRoute.addChildren([spaceRootImagePage]),
+          spaceGalleryRoute.addChildren([spaceImagePage]),
+        ]),
+        spaceEditorBaseRoute.addChildren([
+          spaceImageEditorRoute,
+          spaceGalleryImageEditorRoute,
+          spaceCanvasEditorRoute,
+          spaceGalleryCanvasEditorRoute,
+        ]),
       ]),
     ])
 
@@ -946,15 +958,15 @@ const createAppRouter = () => createRouter({ routeTree })
 
 const localThemeStorage = new LocalConfigStorage('theme')
 const localSidebarStorage = new LocalConfigStorage('sidebar_state')
-const userThemeStorage = new UserRegistryConfigStorage('theme', localThemeStorage)
-const userSidebarStorage = new UserRegistryConfigStorage('sidebar_state', localSidebarStorage)
 
 initializeTheme(localThemeStorage, 'class')
 initializeSidebar(localSidebarStorage)
 initializeScrollPositions(new SessionConfigStorage('scroll_positions'))
 initializeFolderTreeCache(new SessionConfigStorage('folder_tree'))
 initAuth()
-checkLicense()
+if (!isMultiTenantMode) {
+  checkLicense()
+}
 
 export function AppRouter() {
   const router = useMemo(() => createAppRouter(), [])
@@ -962,8 +974,8 @@ export function AppRouter() {
   useAuthEffect((authState, action) => {
     if (action.type === 'INIT') {
       if (authState.state === 'authenticated') {
-        initializeTheme(userThemeStorage, 'class')
-        initializeSidebar(userSidebarStorage)
+        initializeTheme(localThemeStorage, 'class')
+        initializeSidebar(localSidebarStorage)
       }
     } else if (action.type === 'LOGOUT') {
       initializeTheme(localThemeStorage, 'class')

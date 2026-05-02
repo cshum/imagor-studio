@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
+import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -120,6 +121,7 @@ export function AccountLayout({
   const location = useLocation()
   const navigate = useNavigate()
   const router = useRouter()
+  const { isLoading } = router.state
   const { title: appTitle } = useBrand()
   const breadcrumbs = useBreadcrumb()
   const isAdmin = authState.profile?.role === 'admin'
@@ -260,6 +262,7 @@ export function AccountLayout({
 
       {/* ── Main area ────────────────────────────────────────────────────────── */}
       <SidebarInset className={showSidebar ? 'lg:pl-[var(--sidebar-width)]' : undefined}>
+        <LoadingBar isLoading={isLoading} size='thin' />
         <AppHeader
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}

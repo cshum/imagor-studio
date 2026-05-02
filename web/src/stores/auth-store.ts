@@ -52,6 +52,18 @@ function getPublicSpaceKeyFromPath(pathname: string): string | undefined {
   }
 }
 
+function shouldAttemptGuestLogin(pathname: string, multiTenant: boolean): boolean {
+  if (getPublicSpaceKeyFromPath(pathname)) {
+    return true
+  }
+
+  if (multiTenant) {
+    return false
+  }
+
+  return true
+}
+
 export type AuthAction =
   | {
       type: 'INIT'
@@ -208,8 +220,8 @@ export const initAuth = async (
       // Ignore first run check failures
     }
 
-    // If not first run and no token, try guest login
-    if (!isFirstRun) {
+    // If not first run and no token, only probe guest auth on routes that can use it.
+    if (!isFirstRun && shouldAttemptGuestLogin(pathname, authStore.getState().multiTenant)) {
       try {
         const guestResponse = await guestLogin(getPublicSpaceKeyFromPath(pathname))
         const profile = await getCurrentUser(guestResponse.token)

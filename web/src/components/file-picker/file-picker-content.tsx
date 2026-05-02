@@ -14,8 +14,6 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { getSpaceRegistry } from '@/api/org-api'
-import { getSystemRegistryMultiple } from '@/api/registry-api'
 import { listFiles } from '@/api/storage-api'
 import { FilePickerBreadcrumb } from '@/components/file-picker/file-picker-breadcrumb'
 import { FolderNode, FolderPickerNode } from '@/components/folder-picker/folder-picker-node.tsx'
@@ -42,11 +40,14 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { addCacheBuster } from '@/lib/api-utils'
 import { hasExtension } from '@/lib/file-extensions'
 import { IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/gallery-config'
+import { loadGalleryDisplayPreferences } from '@/lib/gallery-display-preferences'
 import type { SpaceIdentity } from '@/lib/space'
-import { getScopedUserRegistryValues } from '@/lib/user-config'
 import { TEMPLATE_EXTENSION } from '@/loaders/gallery-loader.ts'
 import { useAuth } from '@/stores/auth-store'
 import { useFolderTree } from '@/stores/folder-tree-store'
+
+export type FilePickerListItem =
+  import('@/generated/graphql').ListFilesQuery['listFiles']['items'][number]
 
 export interface FilePickerContentProps {
   currentPath: string
@@ -58,6 +59,7 @@ export interface FilePickerContentProps {
   onPathChange: (path: string) => void
   onSelectionChange: (path: string) => void
   onLoadingChange?: (isLoading: boolean) => void
+  onItemsChange?: (items: FilePickerListItem[]) => void
 }
 
 export const FilePickerContent: React.FC<FilePickerContentProps> = ({
@@ -70,6 +72,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   onPathChange,
   onSelectionChange,
   onLoadingChange,
+  onItemsChange,
 }) => {
   const { t } = useTranslation()
   const { authState } = useAuth()
@@ -163,66 +166,19 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
   useEffect(() => {
     const loadPreferences = async () => {
       try {
-        const userId = authState.profile?.id
-        let userSortBy: string | undefined
-        let userSortOrder: string | undefined
-        let userShowFileNames: string | undefined
+        const preferences = await loadGalleryDisplayPreferences({
+          userID: authState.state === 'authenticated' ? authState.profile?.id : undefined,
+          spaceID: space?.spaceID,
+          defaults: {
+            sortBy: 'NAME',
+            sortOrder: 'ASC',
+            showFileNames: true,
+          },
+        })
 
-        if (userId && authState.state === 'authenticated') {
-          try {
-            const userRegistryValues = await getScopedUserRegistryValues(
-              [
-                'config.app_default_sort_by',
-                'config.app_default_sort_order',
-                'config.app_show_file_names',
-              ],
-              userId,
-              { spaceID: space?.spaceID },
-            )
-
-            userSortBy = userRegistryValues['config.app_default_sort_by']
-            userSortOrder = userRegistryValues['config.app_default_sort_order']
-            userShowFileNames = userRegistryValues['config.app_show_file_names']
-          } catch {
-            // User registry fetch failed
-          }
-        }
-
-        let systemRegistryResult
-        if (space?.spaceID) {
-          try {
-            systemRegistryResult = await getSpaceRegistry(space.spaceID, [
-              'config.app_default_sort_by',
-              'config.app_default_sort_order',
-              'config.app_show_file_names',
-            ])
-          } catch {
-            systemRegistryResult = await getSystemRegistryMultiple([
-              'config.app_default_sort_by',
-              'config.app_default_sort_order',
-              'config.app_show_file_names',
-            ])
-          }
-        } else {
-          systemRegistryResult = await getSystemRegistryMultiple([
-            'config.app_default_sort_by',
-            'config.app_default_sort_order',
-            'config.app_show_file_names',
-          ])
-        }
-
-        const systemSortBy = systemRegistryResult.find(
-          (r) => r.key === 'config.app_default_sort_by',
-        )?.value
-        const systemSortOrder = systemRegistryResult.find(
-          (r) => r.key === 'config.app_default_sort_order',
-        )?.value
-        const systemShowFileNames = systemRegistryResult.find(
-          (r) => r.key === 'config.app_show_file_names',
-        )?.value
-        setSortBy((userSortBy || systemSortBy || 'NAME') as SortOption)
-        setSortOrder((userSortOrder || systemSortOrder || 'ASC') as SortOrder)
-        setShowFileNames((userShowFileNames || systemShowFileNames || 'true') === 'true')
+        setSortBy(preferences.sortBy)
+        setSortOrder(preferences.sortOrder)
+        setShowFileNames(preferences.showFileNames)
         setConfigReady(true)
       } catch {
         setSortBy('NAME')
@@ -292,6 +248,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
           sortOrder: config.sortOrder,
         })
 
+        onItemsChange?.(result.items)
+
         // Process folders
         const folderItems: Gallery[] = result.items
           .filter((item) => item.isDirectory)
@@ -327,13 +285,14 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
         toast.error(loadFilesErrorRef.current)
         setFolders([])
         setImages([])
+        onItemsChange?.([])
       } finally {
         setIsLoading(false)
       }
     }
 
     loadFilesData()
-  }, [currentPath, configReady, sortBy, sortOrder, spaceKey])
+  }, [currentPath, configReady, sortBy, sortOrder, spaceKey, onItemsChange])
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement

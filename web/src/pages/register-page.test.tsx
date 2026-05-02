@@ -85,6 +85,8 @@ describe('RegisterPage pending verification', () => {
   beforeEach(() => {
     vi.useRealTimers()
     vi.clearAllMocks()
+    delete (window as Window & { __IMAGOR_STUDIO_BOOTSTRAP__?: unknown })
+      .__IMAGOR_STUDIO_BOOTSTRAP__
     mockGetAuthProviders.mockResolvedValue({ providers: [] })
     mockResolveInvitation.mockResolvedValue({
       organizationName: 'Acme Org',
@@ -403,7 +405,7 @@ describe('RegisterPage pending verification', () => {
     await waitFor(() => {
       expect(mockInitAuth).toHaveBeenCalledWith('jwt-token')
     })
-    expect(mockInitializeLocale).toHaveBeenCalled()
+    expect(mockInitializeLocale).not.toHaveBeenCalled()
     expect(mockNavigate).toHaveBeenCalledWith({ to: '/spaces/acme-space' })
   })
 

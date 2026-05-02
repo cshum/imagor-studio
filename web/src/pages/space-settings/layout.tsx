@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
+import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -245,6 +246,7 @@ export function SpaceSettingsLayout({
 
       {/* Main area */}
       <SidebarInset className='lg:pl-[var(--sidebar-width)]'>
+        <LoadingBar isLoading={Boolean(router.state.isLoading)} size='thin' />
         <AppHeader
           profileLabel={getUserDisplayName()}
           roleLabel={authState.profile?.role}

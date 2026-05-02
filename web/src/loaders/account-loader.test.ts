@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { MyOrganizationQuery } from '@/generated/graphql'
+
 const mockGetMyOrganization = vi.fn()
 const mockGetSpace = vi.fn()
 const mockGetUsageSummary = vi.fn()
@@ -316,6 +318,40 @@ describe('account-loader', () => {
     expect(result.invitations).toEqual([])
   })
 
+  it('reuses the provided organization in billing loader', async () => {
+    const { billingLoader } = await import('@/loaders/account-loader')
+
+    mockGetUsageSummary.mockResolvedValue({
+      __typename: 'UsageSummary',
+      usedSpaces: 1,
+      maxSpaces: 3,
+      usedHostedStorageBytes: 1024,
+      storageLimitGB: 5,
+      usedTransforms: 10,
+      transformsLimit: 1000,
+      periodStart: '2026-04-01T00:00:00Z',
+      periodEnd: '2026-05-01T00:00:00Z',
+    })
+
+    const organization: NonNullable<MyOrganizationQuery['myOrganization']> = {
+      __typename: 'Organization' as const,
+      id: 'org-1',
+      name: 'Acme Org',
+      slug: 'acme',
+      ownerUserId: 'user-1',
+      currentUserRole: 'owner',
+      plan: 'trial',
+      planStatus: 'active',
+      createdAt: '2026-04-18T00:00:00Z',
+      updatedAt: '2026-04-18T00:00:00Z',
+    }
+
+    const result = await billingLoader({ organization })
+
+    expect(mockGetMyOrganization).not.toHaveBeenCalled()
+    expect(result.organization).toEqual(organization)
+  })
+
   it('requests pending invitations for organization admins', async () => {
     const { orgMembersLoader } = await import('@/loaders/account-loader')
 
@@ -347,5 +383,31 @@ describe('account-loader', () => {
 
     expect(mockListOrgInvitations).toHaveBeenCalledTimes(1)
     expect(result.invitations).toHaveLength(1)
+  })
+
+  it('reuses the provided organization in org members loader', async () => {
+    const { orgMembersLoader } = await import('@/loaders/account-loader')
+
+    mockListOrgMembers.mockResolvedValue([])
+    mockListOrgInvitations.mockResolvedValue([])
+
+    const organization: NonNullable<MyOrganizationQuery['myOrganization']> = {
+      __typename: 'Organization' as const,
+      id: 'org-1',
+      name: 'Acme Org',
+      slug: 'acme',
+      ownerUserId: 'user-1',
+      currentUserRole: 'admin',
+      plan: 'trial',
+      planStatus: 'active',
+      createdAt: '2026-04-18T00:00:00Z',
+      updatedAt: '2026-04-18T00:00:00Z',
+    }
+
+    const result = await orgMembersLoader({ organization })
+
+    expect(mockGetMyOrganization).not.toHaveBeenCalled()
+    expect(result.organization).toEqual(organization)
+    expect(mockListOrgInvitations).toHaveBeenCalledTimes(1)
   })
 })

@@ -7,10 +7,8 @@ import { SidebarLayout } from '@/layouts/sidebar-layout'
 import { SpacesLayout } from '@/layouts/spaces-layout'
 import { spacesLoader } from '@/loaders/account-loader'
 import { galleryLoader } from '@/loaders/gallery-loader'
-import { rootPageLoader } from '@/loaders/root-page-loader'
 import { GalleryPage } from '@/pages/gallery-page'
 import { SpacesPage } from '@/pages/spaces-page'
-import { getAuth } from '@/stores/auth-store'
 
 // ── Create-space trigger (used in the spaces list header) ─────────────────────
 
@@ -47,36 +45,36 @@ function SpacesPageActions({ createSpaceDisabled }: { createSpaceDisabled: boole
 // ── Page component ─────────────────────────────────────────────────────────────
 
 interface RootPageProps {
-  loaderData: Awaited<ReturnType<typeof rootPageLoader>>
+  spacesData?: Awaited<ReturnType<typeof spacesLoader>>
+  galleryLoaderData?: Awaited<ReturnType<typeof galleryLoader>> | null
 }
 
-export function RootPage({ loaderData }: RootPageProps) {
+export function RootPage({ spacesData, galleryLoaderData }: RootPageProps) {
   const { t } = useTranslation()
-  const auth = getAuth()
 
-  if (auth.multiTenant) {
-    const data = loaderData as Awaited<ReturnType<typeof spacesLoader>>
+  if (spacesData) {
     const isOrgAdmin =
-      data.currentOrganizationRole === 'owner' || data.currentOrganizationRole === 'admin'
+      spacesData.currentOrganizationRole === 'owner' ||
+      spacesData.currentOrganizationRole === 'admin'
     const createSpaceDisabled =
-      data.usageSummary.maxSpaces !== null &&
-      data.usageSummary.usedSpaces >= data.usageSummary.maxSpaces
+      spacesData.usageSummary.maxSpaces !== null &&
+      spacesData.usageSummary.usedSpaces >= spacesData.usageSummary.maxSpaces
 
     return (
       <SpacesLayout
         title={t('pages.spaces.title')}
         description={t('pages.spaces.description')}
-        showOrganizationLink={data.currentOrganizationId !== null}
+        showOrganizationLink={spacesData.currentOrganizationId !== null}
         primaryAction={
           isOrgAdmin ? <SpacesPageActions createSpaceDisabled={createSpaceDisabled} /> : undefined
         }
       >
         <SpacesPage
-          loaderData={data.spaces}
-          usageSummary={data.usageSummary}
-          currentOrganizationId={data.currentOrganizationId}
-          currentOrganizationPlan={data.currentOrganizationPlan}
-          currentOrganizationPlanStatus={data.currentOrganizationPlanStatus}
+          loaderData={spacesData.spaces}
+          usageSummary={spacesData.usageSummary}
+          currentOrganizationId={spacesData.currentOrganizationId}
+          currentOrganizationPlan={spacesData.currentOrganizationPlan}
+          currentOrganizationPlanStatus={spacesData.currentOrganizationPlanStatus}
           canCreateSpace={isOrgAdmin}
           canManageOrganization={isOrgAdmin}
         />
@@ -84,7 +82,10 @@ export function RootPage({ loaderData }: RootPageProps) {
     )
   }
 
-  const galleryLoaderData = loaderData as Awaited<ReturnType<typeof galleryLoader>>
+  if (!galleryLoaderData) {
+    throw new Error('RootPage requires gallery loader data for the self-hosted surface')
+  }
+
   return (
     <SidebarLayout>
       <GalleryPage galleryLoaderData={galleryLoaderData} galleryKey=''>

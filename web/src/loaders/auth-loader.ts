@@ -1,6 +1,7 @@
 import { redirect } from '@tanstack/react-router'
 
 import { getMyOrganization } from '@/api/org-api'
+import type { MyOrganizationQuery } from '@/generated/graphql'
 import { appendSearchParams } from '@/lib/route-search'
 import { authStore } from '@/stores/auth-store'
 
@@ -10,6 +11,11 @@ export const WORKSPACE_REQUIRED_PATH = '/account/workspace-required'
 type AuthRouteLocation = {
   pathname: string
   search: Record<string, unknown>
+}
+
+type OrganizationAuthContext = {
+  location?: AuthRouteLocation
+  organization?: MyOrganizationQuery['myOrganization']
 }
 
 const waitForResolvedAuth = () => authStore.waitFor((state) => state.state !== 'loading')
@@ -80,12 +86,23 @@ export const requireAccountAuth = async (context?: { location?: AuthRouteLocatio
   return currentAuth
 }
 
-const ensureOrganization = async () => {
-  const organization = await getMyOrganization()
-  if (!organization) {
+/**
+ * Shared account layout context.
+ * Only multi-tenant account surfaces need the current organization eagerly.
+ */
+export const resolveAccountRouteContext = async (context?: { location?: AuthRouteLocation }) => {
+  const auth = await requireAccountAuth(context)
+  return {
+    organization: auth.multiTenant ? await getMyOrganization() : null,
+  }
+}
+
+const ensureOrganization = async (organization?: MyOrganizationQuery['myOrganization']) => {
+  const nextOrganization = organization === undefined ? await getMyOrganization() : organization
+  if (!nextOrganization) {
     throw redirect({ to: WORKSPACE_REQUIRED_PATH })
   }
-  return organization
+  return nextOrganization
 }
 
 const isOrganizationAdminRole = (role?: string | null) => role === 'owner' || role === 'admin'
@@ -93,12 +110,10 @@ const isOrganizationAdminRole = (role?: string | null) => role === 'owner' || ro
 /**
  * Authentication check for multi-tenant account pages that require an active organization.
  */
-export const requireOrganizationAccountAuth = async (context?: {
-  location?: AuthRouteLocation
-}) => {
+export const requireOrganizationAccountAuth = async (context?: OrganizationAuthContext) => {
   const auth = await requireAccountAuth(context)
   if (auth.multiTenant) {
-    await ensureOrganization()
+    await ensureOrganization(context?.organization)
   }
   return auth
 }
@@ -106,16 +121,14 @@ export const requireOrganizationAccountAuth = async (context?: {
 /**
  * Admin account auth plus organization requirement for multi-tenant routes.
  */
-export const requireOrganizationAdminAccountAuth = async (context?: {
-  location?: AuthRouteLocation
-}) => {
+export const requireOrganizationAdminAccountAuth = async (context?: OrganizationAuthContext) => {
   const auth = await requireAccountAuth(context)
   if (!auth.multiTenant) {
     return requireAdminAccountAuth(context)
   }
 
-  const organization = await ensureOrganization()
-  if (!isOrganizationAdminRole(organization.currentUserRole)) {
+  const nextOrganization = await ensureOrganization(context?.organization)
+  if (!isOrganizationAdminRole(nextOrganization.currentUserRole)) {
     throw redirect({ to: '/account/organization/members' })
   }
 
@@ -134,11 +147,11 @@ export const redirectAuthenticatedUsersWithOrganization = async (context?: {
   }
 
   const organization = await getMyOrganization()
-  if (organization) {
-    throw redirect({ to: '/' })
+  if (!organization) {
+    return auth
   }
 
-  return auth
+  throw redirect({ to: '/' })
 }
 
 /**

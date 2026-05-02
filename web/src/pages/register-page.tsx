@@ -28,9 +28,9 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { getBootstrappedAuthProviders } from '@/lib/app-bootstrap'
 import { isValidEmail } from '@/lib/email'
 import { initAuth, useAuth } from '@/stores/auth-store'
-import { initializeLocale } from '@/stores/locale-store'
 
 type RegisterFormValues = {
   displayName: string
@@ -71,7 +71,9 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const router = useRouter()
   const search = useSearch({ from: '/register' })
-  const [googleEnabled, setGoogleEnabled] = useState(false)
+  const [googleEnabled, setGoogleEnabled] = useState(
+    () => getBootstrappedAuthProviders()?.includes('google') ?? false,
+  )
   const [pendingVerification, setPendingVerification] =
     useState<PublicSignupVerificationResponse | null>(null)
   const [resendCooldownRemaining, setResendCooldownRemaining] = useState(0)
@@ -127,6 +129,10 @@ export function RegisterPage() {
   const inviteToken = typeof search.invite_token === 'string' ? search.invite_token.trim() : ''
 
   useEffect(() => {
+    if (getBootstrappedAuthProviders() !== null) {
+      return
+    }
+
     getAuthProviders()
       .then(({ providers }) => {
         setGoogleEnabled(providers.includes('google'))
@@ -240,7 +246,6 @@ export function RegisterPage() {
 
       await initAuth(result.response.token)
       await router.invalidate()
-      await initializeLocale()
       navigate({ to: resolveRedirectPath(result.response.redirectPath) })
     } catch (error) {
       const apiError = error as AuthApiError

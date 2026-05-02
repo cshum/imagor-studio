@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 import { regenerateTemplatePreview, saveTemplate, statFile } from '@/api/storage-api'
 import { FilePickerDialog } from '@/components/file-picker/file-picker-dialog'
+import type { FilePickerSelection } from '@/components/file-picker/file-picker-dialog'
 import { ColorControl } from '@/components/image-editor/controls/color-control.tsx'
 import { CropAspectControl } from '@/components/image-editor/controls/crop-aspect-control.tsx'
 import { DimensionControl } from '@/components/image-editor/controls/dimension-control.tsx'
@@ -588,6 +589,60 @@ export function ImageEditorPage({
     [imageEditor, replaceImageLayerId, t],
   )
 
+  const handleReplaceImageSelectItems = useCallback(
+    async (selections: FilePickerSelection[]) => {
+      const selection = selections[0]
+      if (!selection) return
+
+      try {
+        const dimensions = await fetchImageDimensions(
+          selection.path,
+          activeSpace?.spaceID,
+          selection.item,
+        )
+
+        imageEditor.replaceImage(selection.path, dimensions, replaceImageLayerId)
+        setZoom('fit')
+      } catch (error) {
+        console.error('Failed to replace image:', error)
+        toast.error(t('imageEditor.layers.replaceImageError'))
+      }
+    },
+    [activeSpace?.spaceID, imageEditor, replaceImageLayerId, t],
+  )
+
+  const handleAddLayerWithViewportSelections = useCallback(
+    async (selections: FilePickerSelection[]) => {
+      const selection = selections[0]
+      if (!selection) return
+
+      try {
+        const dimensions = await fetchImageDimensions(
+          selection.path,
+          activeSpace?.spaceID,
+          selection.item,
+        )
+        const filename = getFileDisplayName(selection.path.split('/').pop() || selection.path)
+        const outputDims = imageEditor.getOutputDimensions()
+        const layerPosition = calculateLayerPositionForCurrentView({
+          layerDimensions: dimensions,
+          outputDimensions: outputDims,
+          zoom,
+          previewContainerRef,
+          previewImageDimensions,
+          scaleFactor: 0.9,
+          positioning: 'center',
+        })
+
+        imageEditor.addImageLayer(selection.path, dimensions, filename, layerPosition)
+      } catch (error) {
+        console.error('Failed to add layer:', error)
+        toast.error(t('imageEditor.layers.failedToAddLayer'))
+      }
+    },
+    [activeSpace?.spaceID, imageEditor, previewImageDimensions, previewContainerRef, t, zoom],
+  )
+
   const handleVisualCropToggle = useCallback(
     async (enabled: boolean) => {
       setIsVisualCropToggling(true)
@@ -1024,6 +1079,7 @@ export function ImageEditorPage({
         title={t('imageEditor.layers.selectImageToReplace')}
         description={t('imageEditor.layers.selectImageToReplaceDescription')}
         onSelect={handleReplaceImageSelect}
+        onSelectItems={handleReplaceImageSelectItems}
         fileType='images'
         selectionMode='single'
       />
@@ -1036,6 +1092,10 @@ export function ImageEditorPage({
         onSelect={async (paths) => {
           setAddLayerDialogOpen(false)
           await handleAddLayerWithViewport(paths)
+        }}
+        onSelectItems={async (selections) => {
+          setAddLayerDialogOpen(false)
+          await handleAddLayerWithViewportSelections(selections)
         }}
         fileType='images'
         selectionMode='single'

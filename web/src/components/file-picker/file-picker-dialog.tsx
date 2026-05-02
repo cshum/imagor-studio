@@ -17,10 +17,18 @@ import { getScopedUserRegistryValues, setScopedUserRegistryValue } from '@/lib/u
 import { useAuth } from '@/stores/auth-store'
 import { ensureFolderTreeReady } from '@/stores/folder-tree-store'
 
+import type { FilePickerListItem } from './file-picker-content'
+
+export interface FilePickerSelection {
+  path: string
+  item?: FilePickerListItem
+}
+
 export interface FilePickerDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (paths: string[]) => void
+  onSelectItems?: (selections: FilePickerSelection[]) => void
   space?: SpaceIdentity
 
   // Configuration
@@ -41,6 +49,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   open,
   onOpenChange,
   onSelect,
+  onSelectItems,
   space,
   selectionMode = 'single',
   currentPath: initialPath,
@@ -56,6 +65,9 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   const { authState } = useAuth()
   const [currentPath, setDialogCurrentPath] = useState<string>(initialPath || '')
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set())
+  const [currentItemsByPath, setCurrentItemsByPath] = useState<Record<string, FilePickerListItem>>(
+    {},
+  )
   const [dialogSessionKey, setDialogSessionKey] = useState(0)
 
   const dialogTitle = title || t('components.filePicker.title')
@@ -104,6 +116,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
         setDialogCurrentPath(pathToUse)
         setSelectedPaths(new Set())
+        setCurrentItemsByPath({})
         await ensureFolderTreeReady(space)
         hasLoadedInitialPath.current = true
       }
@@ -151,6 +164,8 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
 
   const handleConfirm = () => {
     if (selectedPaths.size > 0) {
+      const selectedPathList = Array.from(selectedPaths)
+
       // Save the current path to user registry when user confirms selection
       if (authState.profile?.id && authState.state === 'authenticated') {
         void setScopedUserRegistryValue(
@@ -162,7 +177,16 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
         )
       }
 
-      onSelect(Array.from(selectedPaths))
+      if (onSelectItems) {
+        onSelectItems(
+          selectedPathList.map((path) => ({
+            path,
+            item: currentItemsByPath[path],
+          })),
+        )
+      } else {
+        onSelect(selectedPathList)
+      }
       onOpenChange(false)
     }
   }
@@ -192,6 +216,9 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
               maxItemWidth={maxItemWidth}
               onPathChange={handlePathChange}
               onSelectionChange={handleSelectionChange}
+              onItemsChange={(items) => {
+                setCurrentItemsByPath(Object.fromEntries(items.map((item) => [item.path, item])))
+              }}
             />
           </div>
 

@@ -1,5 +1,3 @@
-import { getSpaceRegistry } from '@/api/org-api.ts'
-import { getSystemRegistryMultiple } from '@/api/registry-api.ts'
 import { listFiles, statFile } from '@/api/storage-api.ts'
 import { Gallery } from '@/components/image-gallery/folder-grid.tsx'
 import { GalleryImage } from '@/components/image-gallery/image-view.tsx'
@@ -9,10 +7,10 @@ import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils.ts'
 import { convertMetadataToImageInfo, fetchImageMetadata } from '@/lib/exif-utils.ts'
 import { hasExtension } from '@/lib/file-extensions.ts'
 import { FILE_EXTENSIONS, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS } from '@/lib/gallery-config'
+import { loadGalleryDisplayPreferences } from '@/lib/gallery-display-preferences'
 import { createLatestRequestTracker } from '@/lib/latest-request-tracker'
 import { normalizeScopedDirectoryPath } from '@/lib/path-utils'
 import { preloadImage } from '@/lib/preload-image.ts'
-import { getScopedUserRegistryValues } from '@/lib/user-config'
 import { getAuth } from '@/stores/auth-store.ts'
 import {
   ensureFolderTreeReady,
@@ -73,71 +71,16 @@ export const galleryLoader = async ({
   let showFileNames: boolean
 
   try {
-    // Get current user for user registry lookup
     const auth = getAuth()
-    const userId = auth.profile?.id
-
-    // Try user registry first (if authenticated and not guest)
-    let userSortBy: string | undefined
-    let userSortOrder: string | undefined
-    let userShowFileNames: string | undefined
-    if (userId && auth.state === 'authenticated') {
-      try {
-        const userRegistryValues = await getScopedUserRegistryValues(
-          [
-            'config.app_default_sort_by',
-            'config.app_default_sort_order',
-            'config.app_show_file_names',
-          ],
-          userId,
-          { spaceID },
-        )
-
-        userSortBy = userRegistryValues['config.app_default_sort_by']
-        userSortOrder = userRegistryValues['config.app_default_sort_order']
-        userShowFileNames = userRegistryValues['config.app_show_file_names']
-      } catch {
-        // User registry fetch failed, will fall back to system registry
-      }
-    }
-
-    let systemRegistryResult
-    if (spaceID) {
-      try {
-        systemRegistryResult = await getSpaceRegistry(spaceID, [
-          'config.app_default_sort_by',
-          'config.app_default_sort_order',
-          'config.app_show_file_names',
-        ])
-      } catch {
-        systemRegistryResult = await getSystemRegistryMultiple([
-          'config.app_default_sort_by',
-          'config.app_default_sort_order',
-          'config.app_show_file_names',
-        ])
-      }
-    } else {
-      systemRegistryResult = await getSystemRegistryMultiple([
-        'config.app_default_sort_by',
-        'config.app_default_sort_order',
-        'config.app_show_file_names',
-      ])
-    }
-
-    // Use user preferences if available, otherwise fall back to system registry, then defaults
-    const systemSortByEntry = systemRegistryResult.find(
-      (r) => r.key === 'config.app_default_sort_by',
-    )
-    const systemSortOrderEntry = systemRegistryResult.find(
-      (r) => r.key === 'config.app_default_sort_order',
-    )
-    const systemShowFileNamesEntry = systemRegistryResult.find(
-      (r) => r.key === 'config.app_show_file_names',
-    )
-
-    sortBy = (userSortBy || systemSortByEntry?.value || 'MODIFIED_TIME') as SortOption
-    sortOrder = (userSortOrder || systemSortOrderEntry?.value || 'DESC') as SortOrder
-    showFileNames = (userShowFileNames || systemShowFileNamesEntry?.value || 'false') === 'true'
+    ;({ sortBy, sortOrder, showFileNames } = await loadGalleryDisplayPreferences({
+      userID: auth.state === 'authenticated' ? auth.profile?.id : undefined,
+      spaceID,
+      defaults: {
+        sortBy: 'MODIFIED_TIME',
+        sortOrder: 'DESC',
+        showFileNames: false,
+      },
+    }))
   } catch {
     sortBy = 'MODIFIED_TIME'
     sortOrder = 'DESC'

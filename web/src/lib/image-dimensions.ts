@@ -1,4 +1,5 @@
 import { statFile } from '@/api/storage-api'
+import type { ListFilesQuery } from '@/generated/graphql'
 import { getFullImageUrl } from '@/lib/api-utils'
 import { fetchImageMetadata } from '@/lib/exif-utils'
 import { preloadImage } from '@/lib/preload-image'
@@ -7,6 +8,10 @@ export interface ImageDimensions {
   width: number
   height: number
 }
+
+type StatFileResult = Awaited<ReturnType<typeof statFile>>
+type ListFileItem = ListFilesQuery['listFiles']['items'][number]
+type ImageDimensionSource = Pick<ListFileItem, 'isDirectory' | 'modifiedTime' | 'thumbnailUrls'>
 
 /**
  * Fetch image dimensions using metadata API or by loading the image
@@ -18,8 +23,9 @@ export interface ImageDimensions {
 export async function fetchImageDimensions(
   imagePath: string,
   spaceID?: string,
+  existingFileStat?: StatFileResult | ImageDimensionSource,
 ): Promise<ImageDimensions> {
-  const fileStat = await statFile(imagePath, spaceID)
+  const fileStat = existingFileStat ?? (await statFile(imagePath, spaceID))
 
   if (!fileStat || fileStat.isDirectory || !fileStat.thumbnailUrls) {
     throw new Error('Image not found or invalid')
