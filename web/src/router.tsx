@@ -17,7 +17,6 @@ import { AccountLayout } from '@/layouts/account-layout'
 import { SidebarLayout } from '@/layouts/sidebar-layout.tsx'
 import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
-import { UserRegistryConfigStorage } from '@/lib/config-storage/user-registry-config-storage.ts'
 import { getInviteTokenSearchValue } from '@/lib/route-search'
 import { getSpaceIdentity, resolveSpace } from '@/lib/space'
 import {
@@ -959,8 +958,6 @@ const createAppRouter = () => createRouter({ routeTree })
 
 const localThemeStorage = new LocalConfigStorage('theme')
 const localSidebarStorage = new LocalConfigStorage('sidebar_state')
-const userThemeStorage = new UserRegistryConfigStorage('theme', localThemeStorage)
-const userSidebarStorage = new UserRegistryConfigStorage('sidebar_state', localSidebarStorage)
 
 initializeTheme(localThemeStorage, 'class')
 initializeSidebar(localSidebarStorage)
@@ -977,8 +974,8 @@ export function AppRouter() {
   useAuthEffect((authState, action) => {
     if (action.type === 'INIT') {
       if (authState.state === 'authenticated') {
-        initializeTheme(userThemeStorage, 'class')
-        initializeSidebar(userSidebarStorage)
+        initializeTheme(localThemeStorage, 'class')
+        initializeSidebar(localSidebarStorage)
       }
     } else if (action.type === 'LOGOUT') {
       initializeTheme(localThemeStorage, 'class')

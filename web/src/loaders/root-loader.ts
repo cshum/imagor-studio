@@ -1,4 +1,4 @@
-import { getSystemRegistry, getUserRegistry } from '@/api/registry-api'
+import { getBootstrapRegistryPreferences } from '@/api/registry-api'
 import { BreadcrumbItem } from '@/hooks/use-breadcrumb.ts'
 import { authStore, getAuth } from '@/stores/auth-store.ts'
 import { folderTreeStore } from '@/stores/folder-tree-store.ts'
@@ -20,26 +20,16 @@ const DEFAULT_LANGUAGE_REGISTRY_KEY = 'config.app_default_language'
 const resolveLocale = async (accessToken: string | null, multiTenant: boolean) => {
   let locale: string | null = null
 
-  if (accessToken) {
-    try {
-      const userRegistryEntries = await getUserRegistry(DEFAULT_LANGUAGE_REGISTRY_KEY)
-      if (userRegistryEntries.length > 0) {
-        locale = userRegistryEntries[0]?.value || null
-      }
-    } catch {
-      // Root bootstrap falls back to system or i18n defaults.
-    }
-  }
+  try {
+    const { userRegistryEntries, systemRegistryEntries } = await getBootstrapRegistryPreferences(
+      accessToken ? [DEFAULT_LANGUAGE_REGISTRY_KEY] : [],
+      !accessToken || !multiTenant ? [DEFAULT_LANGUAGE_REGISTRY_KEY] : [],
+      { includeUser: Boolean(accessToken) },
+    )
 
-  if (!locale && (!accessToken || !multiTenant)) {
-    try {
-      const systemRegistryEntries = await getSystemRegistry(DEFAULT_LANGUAGE_REGISTRY_KEY)
-      if (systemRegistryEntries.length > 0) {
-        locale = systemRegistryEntries[0]?.value || null
-      }
-    } catch {
-      // Root bootstrap falls back to the current i18n default.
-    }
+    locale = userRegistryEntries[0]?.value || systemRegistryEntries[0]?.value || null
+  } catch {
+    // Root bootstrap falls back to the current i18n default.
   }
 
   await initializeLocale(locale)

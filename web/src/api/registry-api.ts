@@ -20,6 +20,21 @@ import type {
 } from '../generated/graphql'
 import { getSdk } from '../generated/graphql-request'
 
+type BootstrapRegistryEntry = {
+  key: string
+  value: string
+  isEncrypted: boolean
+}
+
+type BootstrapSystemRegistryEntry = BootstrapRegistryEntry & {
+  isOverriddenByConfig: boolean
+}
+
+type BootstrapRegistryPreferencesResponse = {
+  userRegistryEntries: BootstrapRegistryEntry[]
+  systemRegistryEntries: BootstrapSystemRegistryEntry[]
+}
+
 /**
  * Display value for a registry entry, showing dots for encrypted values
  */
@@ -84,6 +99,51 @@ export async function getUserRegistryMultiple(
 
   const result = await sdk.GetUserRegistry(variables)
   return result.getUserRegistry
+}
+
+/**
+ * Fetch user and system registry entries needed during app bootstrap in a single request.
+ */
+export async function getBootstrapRegistryPreferences(
+  userKeys: string[],
+  systemKeys: string[],
+  options?: { includeUser?: boolean; ownerID?: string },
+): Promise<BootstrapRegistryPreferencesResponse> {
+  const client = getGraphQLClient()
+  const result = await client.request<BootstrapRegistryPreferencesResponse>(
+    `
+      query GetBootstrapRegistryPreferences(
+        $includeUser: Boolean!
+        $userKeys: [String!]
+        $ownerID: String
+        $systemKeys: [String!]!
+      ) {
+        userRegistryEntries: getUserRegistry(keys: $userKeys, ownerID: $ownerID)
+          @include(if: $includeUser) {
+          key
+          value
+          isEncrypted
+        }
+        systemRegistryEntries: getSystemRegistry(keys: $systemKeys) {
+          key
+          value
+          isEncrypted
+          isOverriddenByConfig
+        }
+      }
+    `,
+    {
+      includeUser: options?.includeUser ?? false,
+      userKeys: userKeys.length > 0 ? userKeys : undefined,
+      ownerID: options?.ownerID,
+      systemKeys,
+    },
+  )
+
+  return {
+    userRegistryEntries: result.userRegistryEntries ?? [],
+    systemRegistryEntries: result.systemRegistryEntries ?? [],
+  }
 }
 
 /**
