@@ -24,7 +24,10 @@ const resolveLocale = async (accessToken: string | null, multiTenant: boolean) =
     const { userRegistryEntries, systemRegistryEntries } = await getBootstrapRegistryPreferences(
       accessToken ? [DEFAULT_LANGUAGE_REGISTRY_KEY] : [],
       !accessToken || !multiTenant ? [DEFAULT_LANGUAGE_REGISTRY_KEY] : [],
-      { includeUser: Boolean(accessToken) },
+      {
+        includeUser: Boolean(accessToken),
+        includeSystem: !accessToken || !multiTenant,
+      },
     )
 
     locale = userRegistryEntries[0]?.value || systemRegistryEntries[0]?.value || null

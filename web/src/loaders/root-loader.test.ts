@@ -88,6 +88,7 @@ describe('rootLoader', () => {
       ['config.app_default_language'],
       {
         includeUser: false,
+        includeSystem: true,
       },
     )
     expect(mockInitializeLocale).toHaveBeenCalledWith('fr')
@@ -113,6 +114,7 @@ describe('rootLoader', () => {
       [],
       {
         includeUser: true,
+        includeSystem: false,
       },
     )
     expect(mockInitializeLocale).toHaveBeenCalledWith('zh')

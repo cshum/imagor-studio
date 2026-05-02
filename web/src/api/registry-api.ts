@@ -107,16 +107,17 @@ export async function getUserRegistryMultiple(
 export async function getBootstrapRegistryPreferences(
   userKeys: string[],
   systemKeys: string[],
-  options?: { includeUser?: boolean; ownerID?: string },
+  options?: { includeUser?: boolean; includeSystem?: boolean; ownerID?: string },
 ): Promise<BootstrapRegistryPreferencesResponse> {
   const client = getGraphQLClient()
   const result = await client.request<BootstrapRegistryPreferencesResponse>(
     `
       query GetBootstrapRegistryPreferences(
         $includeUser: Boolean!
+        $includeSystem: Boolean!
         $userKeys: [String!]
         $ownerID: String
-        $systemKeys: [String!]!
+        $systemKeys: [String!]
       ) {
         userRegistryEntries: getUserRegistry(keys: $userKeys, ownerID: $ownerID)
           @include(if: $includeUser) {
@@ -124,7 +125,7 @@ export async function getBootstrapRegistryPreferences(
           value
           isEncrypted
         }
-        systemRegistryEntries: getSystemRegistry(keys: $systemKeys) {
+        systemRegistryEntries: getSystemRegistry(keys: $systemKeys) @include(if: $includeSystem) {
           key
           value
           isEncrypted
@@ -134,9 +135,10 @@ export async function getBootstrapRegistryPreferences(
     `,
     {
       includeUser: options?.includeUser ?? false,
+      includeSystem: options?.includeSystem ?? systemKeys.length > 0,
       userKeys: userKeys.length > 0 ? userKeys : undefined,
       ownerID: options?.ownerID,
-      systemKeys,
+      systemKeys: systemKeys.length > 0 ? systemKeys : undefined,
     },
   )
 
