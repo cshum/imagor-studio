@@ -55,6 +55,7 @@ jobs:
             type=raw,value=${{ steps.args.outputs.version_tag }}
 
       - name: Build and push builder image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
