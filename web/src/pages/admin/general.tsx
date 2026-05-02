@@ -29,6 +29,7 @@ import { SettingRow } from '@/components/ui/setting-row'
 import { SettingsSection } from '@/components/ui/settings-section'
 import { getLanguageCodes, getLanguageLabels } from '@/i18n'
 import { extractErrorMessage } from '@/lib/error-utils'
+import { invalidateGalleryDisplayPreferencesCache } from '@/lib/gallery-display-preferences'
 import type { AdminGeneralLoaderData } from '@/loaders/account-loader'
 import { useAuth } from '@/stores/auth-store'
 import { setHomeTitle } from '@/stores/folder-tree-store'
@@ -136,6 +137,13 @@ export function AdminGeneralSection({ loaderData }: AdminGeneralSectionProps) {
       }
 
       await setSystemRegistryObject(changedValues)
+      if (
+        changedValues['config.app_default_sort_by'] ||
+        changedValues['config.app_default_sort_order'] ||
+        changedValues['config.app_show_file_names']
+      ) {
+        invalidateGalleryDisplayPreferencesCache()
+      }
       if (changedValues['config.app_home_title']) {
         setHomeTitle(changedValues['config.app_home_title'])
       }
