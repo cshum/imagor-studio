@@ -830,22 +830,10 @@ func (h *AuthHandler) canUsePreviewSession(ctx context.Context, spaceRecord *spa
 
 	orgID := h.resolvePrimaryOrgID(ctx, claims.UserID)
 	if orgID != "" && spaceRecord.OrgID == orgID {
-		isPublic, publicErr := h.isPublicSpaceAccessEnabled(ctx, spaceRecord)
-		if publicErr != nil {
-			return false, publicErr
-		}
-		return !isPublic, nil
+		return true, nil
 	}
 
 	if !h.cloudEnabled() || h.spaceStore == nil {
-		return false, nil
-	}
-
-	isPublic, err := h.isPublicSpaceAccessEnabled(ctx, spaceRecord)
-	if err != nil {
-		return false, err
-	}
-	if isPublic {
 		return false, nil
 	}
 
