@@ -6,6 +6,7 @@ type Organization {
   currentUserRole: OrgMemberRole!
   plan: String!
   planStatus: String!
+  trialDaysRemaining: Int
   createdAt: String!
   updatedAt: String!
 }

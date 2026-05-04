@@ -10,6 +10,7 @@ export const MY_ORGANIZATION = gql(`
       currentUserRole
       plan
       planStatus
+      trialDaysRemaining
       createdAt
       updatedAt
     }

@@ -506,6 +506,7 @@ export type Organization = {
   plan: Scalars['String']['output']
   planStatus: Scalars['String']['output']
   slug: Scalars['String']['output']
+  trialDaysRemaining: Maybe<Scalars['Int']['output']>
   updatedAt: Scalars['String']['output']
 }
 
@@ -933,6 +934,7 @@ export type MyOrganizationQuery = {
     currentUserRole: OrgMemberRole
     plan: string
     planStatus: string
+    trialDaysRemaining: number | null
     createdAt: string
     updatedAt: string
   } | null
@@ -2426,6 +2428,7 @@ export const MyOrganizationDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'currentUserRole' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'plan' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'planStatus' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'trialDaysRemaining' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
               ],

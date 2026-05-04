@@ -187,15 +187,16 @@ type ComplexityRoot struct {
 	}
 
 	Organization struct {
-		CreatedAt       func(childComplexity int) int
-		CurrentUserRole func(childComplexity int) int
-		ID              func(childComplexity int) int
-		Name            func(childComplexity int) int
-		OwnerUserID     func(childComplexity int) int
-		Plan            func(childComplexity int) int
-		PlanStatus      func(childComplexity int) int
-		Slug            func(childComplexity int) int
-		UpdatedAt       func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		CurrentUserRole    func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		Name               func(childComplexity int) int
+		OwnerUserID        func(childComplexity int) int
+		Plan               func(childComplexity int) int
+		PlanStatus         func(childComplexity int) int
+		Slug               func(childComplexity int) int
+		TrialDaysRemaining func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
 	}
 
 	PresignedUpload struct {
@@ -1427,6 +1428,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Organization.Slug(childComplexity), true
+	case "Organization.trialDaysRemaining":
+		if e.ComplexityRoot.Organization.TrialDaysRemaining == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.TrialDaysRemaining(childComplexity), true
 	case "Organization.updatedAt":
 		if e.ComplexityRoot.Organization.UpdatedAt == nil {
 			break
@@ -2555,6 +2562,7 @@ enum ImagorSignerType {
   currentUserRole: OrgMemberRole!
   plan: String!
   planStatus: String!
+  trialDaysRemaining: Int
   createdAt: String!
   updatedAt: String!
 }
@@ -6270,6 +6278,8 @@ func (ec *executionContext) fieldContext_Mutation_createOrganization(_ context.C
 				return ec.fieldContext_Organization_plan(ctx, field)
 			case "planStatus":
 				return ec.fieldContext_Organization_planStatus(ctx, field)
+			case "trialDaysRemaining":
+				return ec.fieldContext_Organization_trialDaysRemaining(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -7281,6 +7291,8 @@ func (ec *executionContext) fieldContext_Mutation_transferOrganizationOwnership(
 				return ec.fieldContext_Organization_plan(ctx, field)
 			case "planStatus":
 				return ec.fieldContext_Organization_planStatus(ctx, field)
+			case "trialDaysRemaining":
+				return ec.fieldContext_Organization_trialDaysRemaining(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -8563,6 +8575,35 @@ func (ec *executionContext) fieldContext_Organization_planStatus(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_trialDaysRemaining(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_trialDaysRemaining,
+		func(ctx context.Context) (any, error) {
+			return obj.TrialDaysRemaining, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_trialDaysRemaining(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_createdAt(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8940,6 +8981,8 @@ func (ec *executionContext) fieldContext_Query_myOrganization(_ context.Context,
 				return ec.fieldContext_Organization_plan(ctx, field)
 			case "planStatus":
 				return ec.fieldContext_Organization_planStatus(ctx, field)
+			case "trialDaysRemaining":
+				return ec.fieldContext_Organization_trialDaysRemaining(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -16793,6 +16836,8 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "trialDaysRemaining":
+			out.Values[i] = ec._Organization_trialDaysRemaining(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Organization_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

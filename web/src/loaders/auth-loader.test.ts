@@ -82,6 +82,7 @@ describe('auth-loader redirects', () => {
           currentUserRole: 'owner',
           plan: 'trial',
           planStatus: 'active',
+          trialDaysRemaining: null,
           createdAt: '2026-04-18T00:00:00Z',
           updatedAt: '2026-04-18T00:00:00Z',
         },
@@ -124,6 +125,7 @@ describe('auth-loader redirects', () => {
       currentUserRole: 'owner',
       plan: 'trial',
       planStatus: 'active',
+      trialDaysRemaining: null,
       createdAt: '2026-04-18T00:00:00Z',
       updatedAt: '2026-04-18T00:00:00Z',
     })
@@ -159,6 +161,7 @@ describe('auth-loader redirects', () => {
           currentUserRole: 'admin',
           plan: 'trial',
           planStatus: 'active',
+          trialDaysRemaining: null,
           createdAt: '2026-04-18T00:00:00Z',
           updatedAt: '2026-04-18T00:00:00Z',
         },

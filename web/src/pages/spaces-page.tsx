@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 import { createOrganization, leaveSpace, type SpaceItem } from '@/api/org-api'
 import { LoadingBar } from '@/components/loading-bar'
+import { TrialSummaryCallout } from '@/components/trial-summary-callout'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -35,6 +36,7 @@ interface SpacesPageProps {
   currentOrganizationId?: string | null
   currentOrganizationPlan?: string | null
   currentOrganizationPlanStatus?: string | null
+  currentOrganizationTrialDaysRemaining?: number | null
   canCreateSpace?: boolean
   canManageOrganization?: boolean
 }
@@ -73,6 +75,8 @@ export function SpacesPage({
   usageSummary = null,
   currentOrganizationId = null,
   currentOrganizationPlan = null,
+  currentOrganizationPlanStatus = null,
+  currentOrganizationTrialDaysRemaining = null,
   canCreateSpace = false,
   canManageOrganization = false,
 }: SpacesPageProps) {
@@ -168,6 +172,10 @@ export function SpacesPage({
     ? 'bg-muted/30 hover:bg-muted/50 focus-visible:ring-ring block rounded-lg border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
     : 'bg-muted/30 rounded-lg border p-4'
   const needsOrganizationRecovery = currentOrganizationId === null && !canCreateSpace
+  const isTrialOrganization =
+    currentOrganizationId !== null &&
+    currentOrganizationPlan === 'trial' &&
+    currentOrganizationPlanStatus !== 'canceled'
 
   const handleLeaveSpace = async () => {
     if (!leaveSpaceItem) return
@@ -262,7 +270,7 @@ export function SpacesPage({
       {currentOrganizationId !== null &&
         (canManageOrganization ? (
           <Link to='/account/organization/billing' className={usageSummaryCardClassName}>
-            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
               <div className='space-y-1'>
                 <div className='flex flex-wrap items-center gap-2'>
                   <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
@@ -278,17 +286,30 @@ export function SpacesPage({
                   </p>
                 )}
               </div>
+
               {createSpaceDisabled && (
-                <Badge
-                  variant='outline'
-                  className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
-                >
-                  {spacesOverLimit
-                    ? t('pages.spaces.messages.overPlanLimit')
-                    : t('pages.spaces.messages.spaceLimitReached')}
-                </Badge>
+                <div className='flex flex-col gap-2 sm:ml-auto sm:items-end sm:self-start'>
+                  {createSpaceDisabled && (
+                    <Badge
+                      variant='outline'
+                      className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 sm:self-end dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                    >
+                      {spacesOverLimit
+                        ? t('pages.spaces.messages.overPlanLimit')
+                        : t('pages.spaces.messages.spaceLimitReached')}
+                    </Badge>
+                  )}
+                </div>
               )}
             </div>
+
+            {isTrialOrganization ? (
+              <TrialSummaryCallout
+                daysRemaining={currentOrganizationTrialDaysRemaining}
+                canManageOrganization={canManageOrganization}
+                className='mt-3'
+              />
+            ) : null}
 
             <div className='mt-4 grid gap-4 sm:grid-cols-3'>
               <div className='space-y-2'>
@@ -344,7 +365,7 @@ export function SpacesPage({
           </Link>
         ) : (
           <div className={usageSummaryCardClassName}>
-            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
               <div className='space-y-1'>
                 <div className='flex flex-wrap items-center gap-2'>
                   <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
@@ -360,17 +381,30 @@ export function SpacesPage({
                   </p>
                 )}
               </div>
+
               {createSpaceDisabled && (
-                <Badge
-                  variant='outline'
-                  className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
-                >
-                  {spacesOverLimit
-                    ? t('pages.spaces.messages.overPlanLimit')
-                    : t('pages.spaces.messages.spaceLimitReached')}
-                </Badge>
+                <div className='flex flex-col gap-2 sm:ml-auto sm:items-end sm:self-start'>
+                  {createSpaceDisabled && (
+                    <Badge
+                      variant='outline'
+                      className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 sm:self-end dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                    >
+                      {spacesOverLimit
+                        ? t('pages.spaces.messages.overPlanLimit')
+                        : t('pages.spaces.messages.spaceLimitReached')}
+                    </Badge>
+                  )}
+                </div>
               )}
             </div>
+
+            {isTrialOrganization ? (
+              <TrialSummaryCallout
+                daysRemaining={currentOrganizationTrialDaysRemaining}
+                canManageOrganization={canManageOrganization}
+                className='mt-3'
+              />
+            ) : null}
 
             <div className='mt-4 grid gap-4 sm:grid-cols-3'>
               <div className='space-y-2'>

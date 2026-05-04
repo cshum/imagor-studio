@@ -280,6 +280,7 @@ export interface SpacesLoaderData {
   currentOrganizationRole: string | null
   currentOrganizationPlan: string | null
   currentOrganizationPlanStatus: string | null
+  currentOrganizationTrialDaysRemaining: number | null
   breadcrumb: BreadcrumbItem
 }
 
@@ -299,6 +300,7 @@ export const spacesLoader = async (): Promise<SpacesLoaderData> => {
     currentOrganizationRole: organization?.currentUserRole ?? null,
     currentOrganizationPlan: organization?.plan ?? null,
     currentOrganizationPlanStatus: organization?.planStatus ?? null,
+    currentOrganizationTrialDaysRemaining: organization?.trialDaysRemaining ?? null,
     breadcrumb: {
       translationKey: 'navigation.breadcrumbs.spaces',
     },

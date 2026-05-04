@@ -9,6 +9,7 @@ import {
   createCheckoutSession,
   deleteOrganization,
 } from '@/api/org-api'
+import { TrialSummaryCallout } from '@/components/trial-summary-callout'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ButtonWithLoading } from '@/components/ui/button-with-loading'
@@ -178,6 +179,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           end: formatUsagePeriodDate(usageSummary.periodEnd),
         })
       : null
+  const isTrialOrganization = currentPlan === 'trial' && currentStatus !== 'canceled'
 
   useEffect(() => {
     if (selectedPlan === currentPlan) {
@@ -424,7 +426,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       </div>
 
       <div className='bg-muted/30 rounded-lg border p-4'>
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='space-y-1'>
             <div className='flex flex-wrap items-center gap-2'>
               <p className='text-sm font-medium'>{t('pages.spaces.usageSummaryTitle')}</p>
@@ -437,14 +439,26 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           </div>
 
           {hasAnyOverLimit && (
-            <Badge
-              variant='outline'
-              className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
-            >
-              {t('pages.spaces.messages.overPlanLimit')}
-            </Badge>
+            <div className='flex flex-col gap-2 sm:ml-auto sm:items-end sm:self-start'>
+              {hasAnyOverLimit && (
+                <Badge
+                  variant='outline'
+                  className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 sm:self-end dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
+                >
+                  {t('pages.spaces.messages.overPlanLimit')}
+                </Badge>
+              )}
+            </div>
           )}
         </div>
+
+        {isTrialOrganization ? (
+          <TrialSummaryCallout
+            daysRemaining={organization?.trialDaysRemaining ?? null}
+            canManageOrganization={true}
+            className='mt-3'
+          />
+        ) : null}
 
         <div className='mt-4 grid gap-4 lg:grid-cols-3'>
           {usageItems.map((item) => (

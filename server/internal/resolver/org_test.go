@@ -149,6 +149,27 @@ func TestMyOrganization_ReturnsOrg(t *testing.T) {
 	orgStore.AssertExpectations(t)
 }
 
+func TestMyOrganization_ReturnsTrialDaysRemaining(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	organization := makeTestOrg("org-1", "user-1")
+	organization.Plan = org.PlanTrial
+	organization.PlanStatus = org.PlanStatusTrialing
+	trialEndsAt := time.Now().UTC().Add(49 * time.Hour)
+	organization.TrialEndsAt = &trialEndsAt
+	orgStore.On("GetByID", mock.Anything, "org-1").Return(organization, nil)
+
+	ctx := createAdminContextWithOrg("user-1", "org-1")
+	result, err := r.Query().MyOrganization(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.NotNil(t, result.TrialDaysRemaining)
+	assert.Equal(t, 3, *result.TrialDaysRemaining)
+	orgStore.AssertExpectations(t)
+}
+
 func TestMyOrganization_ReturnsMembershipRoleForNonAdminToken(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}

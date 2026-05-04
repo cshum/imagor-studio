@@ -200,6 +200,66 @@ describe('SpacesPage', () => {
     expect(screen.getByText('pages.spaces.overLimit.reviewBilling')).toBeTruthy()
   })
 
+  it('shows a trial billing CTA for organization managers', async () => {
+    const { SpacesPage } = await import('./spaces-page')
+
+    render(
+      <SpacesPage
+        loaderData={[]}
+        usageSummary={null}
+        currentOrganizationId='org-1'
+        currentOrganizationPlan='trial'
+        currentOrganizationPlanStatus='active'
+        currentOrganizationTrialDaysRemaining={7}
+        canCreateSpace={true}
+        canManageOrganization={true}
+      />,
+    )
+
+    expect(screen.getByText('common.trialSummary.daysRemaining')).toBeTruthy()
+    expect(screen.getByText('common.trialSummary.manageDescription')).toBeTruthy()
+  })
+
+  it('shows trial messaging without billing CTA for non-managers', async () => {
+    const { SpacesPage } = await import('./spaces-page')
+
+    render(
+      <SpacesPage
+        loaderData={[]}
+        usageSummary={null}
+        currentOrganizationId='org-1'
+        currentOrganizationPlan='trial'
+        currentOrganizationPlanStatus='active'
+        currentOrganizationTrialDaysRemaining={3}
+        canCreateSpace={false}
+        canManageOrganization={false}
+      />,
+    )
+
+    expect(screen.getByText('common.trialSummary.daysRemaining')).toBeTruthy()
+    expect(screen.getByText('common.trialSummary.memberDescription')).toBeTruthy()
+  })
+
+  it('falls back to generic trial messaging when remaining days are unavailable', async () => {
+    const { SpacesPage } = await import('./spaces-page')
+
+    render(
+      <SpacesPage
+        loaderData={[]}
+        usageSummary={null}
+        currentOrganizationId='org-1'
+        currentOrganizationPlan='trial'
+        currentOrganizationPlanStatus='active'
+        canCreateSpace={true}
+        canManageOrganization={true}
+      />,
+    )
+
+    expect(screen.queryByText('common.trialSummary.daysRemaining')).toBeNull()
+    expect(screen.getByText('common.trialSummary.title')).toBeTruthy()
+    expect(screen.getByText('common.trialSummary.manageDescription')).toBeTruthy()
+  })
+
   it('exposes only one keyboard target for opening a space card', async () => {
     const { SpacesPage } = await import('./spaces-page')
 

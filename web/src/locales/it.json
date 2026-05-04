@@ -67,6 +67,13 @@
       "password": "Password",
       "name": "Nome",
       "role": "Ruolo"
+    },
+    "trialSummary": {
+      "title": "In prova",
+      "daysRemaining_one": "1 giorno rimanente di prova",
+      "daysRemaining_other": "{{count}} giorni rimanenti di prova",
+      "manageDescription": "Scegli un piano a pagamento per mantenere attivi gli spazi.",
+      "memberDescription": "Chiedi a un amministratore di scegliere un piano a pagamento prima della fine della prova."
     }
   },
   "auth": {

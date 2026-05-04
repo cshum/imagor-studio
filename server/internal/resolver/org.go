@@ -27,19 +27,35 @@ var billablePlans = map[string]struct{}{
 	org.PlanTeam:    {},
 }
 
+func trialDaysRemaining(trialEndsAt *time.Time, now time.Time) *int {
+	if trialEndsAt == nil {
+		return nil
+	}
+
+	remaining := trialEndsAt.UTC().Sub(now.UTC())
+	if remaining <= 0 {
+		zero := 0
+		return &zero
+	}
+
+	days := int((remaining + (24 * time.Hour) - 1) / (24 * time.Hour))
+	return &days
+}
+
 // ---------- helpers ----------------------------------------------------------
 
 func mapOrgToGQL(o *org.Org) *gql.Organization {
 	return &gql.Organization{
-		ID:              o.ID,
-		Name:            o.Name,
-		Slug:            o.Slug,
-		OwnerUserID:     o.OwnerID,
-		CurrentUserRole: gql.OrgMemberRoleMember,
-		Plan:            o.Plan,
-		PlanStatus:      o.PlanStatus,
-		CreatedAt:       o.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:       o.UpdatedAt.Format(time.RFC3339),
+		ID:                 o.ID,
+		Name:               o.Name,
+		Slug:               o.Slug,
+		OwnerUserID:        o.OwnerID,
+		CurrentUserRole:    gql.OrgMemberRoleMember,
+		Plan:               o.Plan,
+		PlanStatus:         o.PlanStatus,
+		TrialDaysRemaining: trialDaysRemaining(o.TrialEndsAt, time.Now().UTC()),
+		CreatedAt:          o.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:          o.UpdatedAt.Format(time.RFC3339),
 	}
 }
 

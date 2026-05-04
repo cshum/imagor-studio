@@ -73,6 +73,7 @@ describe('RootPage', () => {
           currentOrganizationRole: 'owner',
           currentOrganizationPlan: 'trial',
           currentOrganizationPlanStatus: 'active',
+          currentOrganizationTrialDaysRemaining: null,
         }}
       />,
     )

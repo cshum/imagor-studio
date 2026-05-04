@@ -64,6 +64,12 @@
       "name": "名稱",
       "role": "角色"
     },
+    "trialSummary": {
+      "title": "試用中",
+      "daysRemaining": "試用還剩 {{count}} 天",
+      "manageDescription": "選擇付費方案以繼續保持空間可用。",
+      "memberDescription": "請聯絡管理員在試用結束前選擇付費方案。"
+    },
     "language": {
       "title": "語言",
       "changeLanguage": "切換語言"

@@ -507,6 +507,7 @@ export type Organization = {
   plan: Scalars['String']['output']
   planStatus: Scalars['String']['output']
   slug: Scalars['String']['output']
+  trialDaysRemaining: Maybe<Scalars['Int']['output']>
   updatedAt: Scalars['String']['output']
 }
 
@@ -934,6 +935,7 @@ export type MyOrganizationQuery = {
     currentUserRole: OrgMemberRole
     plan: string
     planStatus: string
+    trialDaysRemaining: number | null
     createdAt: string
     updatedAt: string
   } | null
@@ -2170,6 +2172,7 @@ export const MyOrganizationDocument = gql`
       currentUserRole
       plan
       planStatus
+      trialDaysRemaining
       createdAt
       updatedAt
     }

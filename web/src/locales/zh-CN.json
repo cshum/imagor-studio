@@ -64,6 +64,12 @@
       "name": "名称",
       "role": "角色"
     },
+    "trialSummary": {
+      "title": "试用中",
+      "daysRemaining": "试用还剩 {{count}} 天",
+      "manageDescription": "选择付费套餐以继续保持空间可用。",
+      "memberDescription": "请联系管理员在试用结束前选择付费套餐。"
+    },
     "language": {
       "title": "语言",
       "changeLanguage": "切换语言"

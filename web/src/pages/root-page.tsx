@@ -75,6 +75,7 @@ export function RootPage({ spacesData, galleryLoaderData }: RootPageProps) {
           currentOrganizationId={spacesData.currentOrganizationId}
           currentOrganizationPlan={spacesData.currentOrganizationPlan}
           currentOrganizationPlanStatus={spacesData.currentOrganizationPlanStatus}
+          currentOrganizationTrialDaysRemaining={spacesData.currentOrganizationTrialDaysRemaining}
           canCreateSpace={isOrgAdmin}
           canManageOrganization={isOrgAdmin}
         />
