@@ -28,15 +28,11 @@ const shouldShowInitialLoadingLogo = () => {
 
 const useInitialLoadingLogoVisibility = () => {
   const [isVisible, setIsVisible] = useState(() => {
-    if (
+    return !(
       typeof window === 'undefined' ||
       hasCompletedInitialRoute ||
       !shouldShowInitialLoadingLogo()
-    ) {
-      return false
-    }
-
-    return true
+    )
   })
 
   useEffect(() => {
