@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    name: Host Test
+    name: Test
     runs-on: ubuntu-24.04
     steps:
       - name: Check out code
