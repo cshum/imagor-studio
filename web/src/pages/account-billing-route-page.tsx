@@ -438,7 +438,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
             {usagePeriod && <p className='text-muted-foreground text-xs'>{usagePeriod}</p>}
           </div>
 
-          {hasAnyOverLimit && (
+          {(hasAnyOverLimit || isTrialOrganization) && (
             <div className='flex flex-col gap-2 sm:ml-auto sm:items-end sm:self-start'>
               {hasAnyOverLimit && (
                 <Badge
@@ -448,17 +448,13 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
                   {t('pages.spaces.messages.overPlanLimit')}
                 </Badge>
               )}
+
+              {isTrialOrganization ? (
+                <TrialSummaryCallout daysRemaining={organization?.trialDaysRemaining ?? null} />
+              ) : null}
             </div>
           )}
         </div>
-
-        {isTrialOrganization ? (
-          <TrialSummaryCallout
-            daysRemaining={organization?.trialDaysRemaining ?? null}
-            canManageOrganization={true}
-            className='mt-3'
-          />
-        ) : null}
 
         <div className='mt-4 grid gap-4 lg:grid-cols-3'>
           {usageItems.map((item) => (

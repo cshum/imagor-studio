@@ -287,7 +287,7 @@ export function SpacesPage({
                 )}
               </div>
 
-              {createSpaceDisabled && (
+              {(createSpaceDisabled || isTrialOrganization) && (
                 <div className='flex flex-col gap-2 sm:ml-auto sm:items-end sm:self-start'>
                   {createSpaceDisabled && (
                     <Badge
@@ -299,17 +299,13 @@ export function SpacesPage({
                         : t('pages.spaces.messages.spaceLimitReached')}
                     </Badge>
                   )}
+
+                  {isTrialOrganization ? (
+                    <TrialSummaryCallout daysRemaining={currentOrganizationTrialDaysRemaining} />
+                  ) : null}
                 </div>
               )}
             </div>
-
-            {isTrialOrganization ? (
-              <TrialSummaryCallout
-                daysRemaining={currentOrganizationTrialDaysRemaining}
-                canManageOrganization={canManageOrganization}
-                className='mt-3'
-              />
-            ) : null}
 
             <div className='mt-4 grid gap-4 sm:grid-cols-3'>
               <div className='space-y-2'>
@@ -382,7 +378,7 @@ export function SpacesPage({
                 )}
               </div>
 
-              {createSpaceDisabled && (
+              {(createSpaceDisabled || isTrialOrganization) && (
                 <div className='flex flex-col gap-2 sm:ml-auto sm:items-end sm:self-start'>
                   {createSpaceDisabled && (
                     <Badge
@@ -394,17 +390,13 @@ export function SpacesPage({
                         : t('pages.spaces.messages.spaceLimitReached')}
                     </Badge>
                   )}
+
+                  {isTrialOrganization ? (
+                    <TrialSummaryCallout daysRemaining={currentOrganizationTrialDaysRemaining} />
+                  ) : null}
                 </div>
               )}
             </div>
-
-            {isTrialOrganization ? (
-              <TrialSummaryCallout
-                daysRemaining={currentOrganizationTrialDaysRemaining}
-                canManageOrganization={canManageOrganization}
-                className='mt-3'
-              />
-            ) : null}
 
             <div className='mt-4 grid gap-4 sm:grid-cols-3'>
               <div className='space-y-2'>

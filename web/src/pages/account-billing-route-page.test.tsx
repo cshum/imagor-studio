@@ -172,7 +172,7 @@ describe('AccountBillingRoutePage', () => {
     expect((getBillingActionButton('pages.billing.selectPlan') as HTMLButtonElement).disabled).toBe(
       true,
     )
-    expect(screen.getByText('common.trialSummary.manageDescription')).toBeTruthy()
+    expect(screen.getByText('common.trialSummary.title')).toBeTruthy()
 
     await act(async () => {
       fireEvent.click(screen.getByText('pages.spaces.plan.starter'))

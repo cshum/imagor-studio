@@ -200,7 +200,7 @@ describe('SpacesPage', () => {
     expect(screen.getByText('pages.spaces.overLimit.reviewBilling')).toBeTruthy()
   })
 
-  it('shows a trial billing CTA for organization managers', async () => {
+  it('shows trial countdown for organization managers', async () => {
     const { SpacesPage } = await import('./spaces-page')
 
     render(
@@ -217,10 +217,9 @@ describe('SpacesPage', () => {
     )
 
     expect(screen.getByText('common.trialSummary.daysRemaining')).toBeTruthy()
-    expect(screen.getByText('common.trialSummary.manageDescription')).toBeTruthy()
   })
 
-  it('shows trial messaging without billing CTA for non-managers', async () => {
+  it('shows trial countdown for non-managers', async () => {
     const { SpacesPage } = await import('./spaces-page')
 
     render(
@@ -237,7 +236,6 @@ describe('SpacesPage', () => {
     )
 
     expect(screen.getByText('common.trialSummary.daysRemaining')).toBeTruthy()
-    expect(screen.getByText('common.trialSummary.memberDescription')).toBeTruthy()
   })
 
   it('falls back to generic trial messaging when remaining days are unavailable', async () => {
@@ -257,7 +255,6 @@ describe('SpacesPage', () => {
 
     expect(screen.queryByText('common.trialSummary.daysRemaining')).toBeNull()
     expect(screen.getByText('common.trialSummary.title')).toBeTruthy()
-    expect(screen.getByText('common.trialSummary.manageDescription')).toBeTruthy()
   })
 
   it('exposes only one keyboard target for opening a space card', async () => {

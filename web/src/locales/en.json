@@ -71,9 +71,7 @@
     "trialSummary": {
       "title": "On trial",
       "daysRemaining_one": "1 day left in trial",
-      "daysRemaining_other": "{{count}} days left in trial",
-      "manageDescription": "Pick a paid plan to keep your spaces active.",
-      "memberDescription": "Ask an admin to pick a paid plan before trial ends."
+      "daysRemaining_other": "{{count}} days left in trial"
     }
   },
   "auth": {
