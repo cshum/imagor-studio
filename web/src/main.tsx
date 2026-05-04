@@ -15,10 +15,29 @@ import '@fontsource/dejavu-mono/700.css'
 import 'non.geist'
 import './index.css'
 
+import { bootstrapRootLoaderData } from '@/loaders/root-loader.ts'
 import { AppRouter } from '@/router.tsx'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <AppRouter />
-  </StrictMode>,
-)
+const rootElement = document.getElementById('root')
+
+if (!rootElement) {
+  throw new Error('Root element not found')
+}
+
+const root = createRoot(rootElement)
+
+async function bootstrap() {
+  try {
+    await bootstrapRootLoaderData()
+  } catch {
+    // Fall through and let the mounted app render its own error states.
+  }
+
+  root.render(
+    <StrictMode>
+      <AppRouter />
+    </StrictMode>,
+  )
+}
+
+void bootstrap()

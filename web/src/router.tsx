@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import {
   createRootRoute,
   createRoute,
@@ -981,9 +980,9 @@ if (!isMultiTenantMode) {
   checkLicense()
 }
 
-export function AppRouter() {
-  const router = useMemo(() => createAppRouter(), [])
+export const appRouter = createAppRouter()
 
+export function AppRouter() {
   useAuthEffect((authState, action) => {
     if (action.type === 'INIT') {
       if (authState.state === 'authenticated') {
@@ -995,5 +994,5 @@ export function AppRouter() {
       initializeSidebar(localSidebarStorage)
     }
   })
-  return <RouterProvider router={router} />
+  return <RouterProvider router={appRouter} />
 }
