@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { getPosition, setPosition } from '@/stores/scroll-position-store'
+import { getPosition, setPosition } from '@/stores/gallery-scroll-position-store'
 
-export const useScrollHandler = (
+export const useGalleryScrollHandler = (
   scrollKey: string, // Unique identifier for this scroll context
   debounceDelay: number = 10,
 ) => {
@@ -66,7 +66,7 @@ export const useScrollHandler = (
   }
 }
 
-export const restoreScrollPosition = (scrollKey: string) => {
+export const restoreGalleryScrollPosition = (scrollKey: string) => {
   const savedPosition = getPosition(scrollKey)
   const scrollHeight = Math.max(
     document.body.scrollHeight,

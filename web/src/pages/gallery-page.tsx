@@ -48,10 +48,13 @@ import { useBulkSelectionMenu } from '@/hooks/use-bulk-selection-menu'
 import { DragDropFile } from '@/hooks/use-drag-drop'
 import { useFolderContextMenu } from '@/hooks/use-folder-context-menu'
 import { useGalleryKeyboardNavigation } from '@/hooks/use-gallery-keyboard-navigation'
+import {
+  restoreGalleryScrollPosition,
+  useGalleryScrollHandler,
+} from '@/hooks/use-gallery-scroll-handler'
 import { useImageContextMenu } from '@/hooks/use-image-context-menu'
 import { DragItem, useItemDragDrop } from '@/hooks/use-item-drag-drop'
 import { useResizeHandler } from '@/hooks/use-resize-handler'
-import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useSpacePropagationNotice } from '@/hooks/use-space-propagation-notice'
 import { useWidthHandler } from '@/hooks/use-width-handler'
 import { ContentLayout } from '@/layouts/content-layout'
@@ -358,7 +361,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
   const isDesktop = useBreakpoint('md')
   const maxItemWidth = 250
 
-  const { scrollPosition } = useScrollHandler(galleryKey)
+  const { scrollPosition } = useGalleryScrollHandler(galleryKey)
   const { contentWidth, updateWidth } = useWidthHandler(
     contentRef,
     sidebar.open,
@@ -472,7 +475,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
 
   useEffect(() => {
     void setCurrentPath(galleryKey, space)
-    requestAnimationFrame(() => restoreScrollPosition(galleryKey))
+    requestAnimationFrame(() => restoreGalleryScrollPosition(galleryKey))
     setFilterText('')
     // Initialize selection context for this gallery (clears selection)
     setGalleryContext(galleryKey)

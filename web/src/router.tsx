@@ -97,8 +97,8 @@ import { UsersPage } from '@/pages/users-page'
 import { WorkspaceRequiredPage } from '@/pages/workspace-required-page'
 import { getAuth, initAuth, useAuthEffect } from '@/stores/auth-store.ts'
 import { initializeFolderTreeCache } from '@/stores/folder-tree-store.ts'
+import { initializeGalleryScrollPositions } from '@/stores/gallery-scroll-position-store.ts'
 import { checkLicense, useLicense } from '@/stores/license-store'
-import { initializeScrollPositions } from '@/stores/scroll-position-store.ts'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
 import { initializeTheme } from '@/stores/theme-store.ts'
 
@@ -974,7 +974,7 @@ const localSidebarStorage = new LocalConfigStorage('sidebar_state')
 
 initializeTheme(localThemeStorage, 'class')
 initializeSidebar(localSidebarStorage)
-initializeScrollPositions(new SessionConfigStorage('scroll_positions'))
+initializeGalleryScrollPositions(new SessionConfigStorage('scroll_positions'))
 initializeFolderTreeCache(new SessionConfigStorage('folder_tree'))
 initAuth()
 if (!isMultiTenantMode) {

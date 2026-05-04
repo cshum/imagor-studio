@@ -79,7 +79,7 @@ const reducer = (state: ScrollPositionState, action: ScrollPositionAction): Scro
 }
 
 // Create the store
-export const scrollPositionStore = createStore(initialState, reducer)
+export const galleryScrollPositionStore = createStore(initialState, reducer)
 
 // Storage management
 let storage: ConfigStorage | null = null
@@ -97,7 +97,7 @@ const debouncedSaveToStorage = async () => {
   }
 
   saveTimeout = window.setTimeout(async () => {
-    const state = scrollPositionStore.getState()
+    const state = galleryScrollPositionStore.getState()
     const positionsJson = JSON.stringify(state.positions)
     await storage!.set(positionsJson)
   }, saveDelay)
@@ -106,7 +106,7 @@ const debouncedSaveToStorage = async () => {
 /**
  * Initialize scroll position system with storage
  */
-export const initializeScrollPositions = async (
+export const initializeGalleryScrollPositions = async (
   configStorage: ConfigStorage,
   debounceDelay: number = 300,
 ) => {
@@ -117,26 +117,26 @@ export const initializeScrollPositions = async (
     const savedPositions = await storage.get()
     if (savedPositions) {
       const positions = JSON.parse(savedPositions)
-      scrollPositionStore.dispatch({
+      galleryScrollPositionStore.dispatch({
         type: 'LOAD_POSITIONS',
         payload: { positions },
       })
     } else {
-      scrollPositionStore.dispatch({
+      galleryScrollPositionStore.dispatch({
         type: 'SET_LOADED',
         payload: { isLoaded: true },
       })
     }
   } catch {
     // Failed to load from storage - continue with empty state
-    scrollPositionStore.dispatch({
+    galleryScrollPositionStore.dispatch({
       type: 'SET_LOADED',
       payload: { isLoaded: true },
     })
   }
 
   // Set up auto-save subscription for position changes
-  scrollPositionStore.subscribe((_, action) => {
+  galleryScrollPositionStore.subscribe((_, action) => {
     if (
       action.type === 'SET_POSITION' ||
       action.type === 'CLEAR_POSITION' ||
@@ -151,7 +151,7 @@ export const initializeScrollPositions = async (
  * Set scroll position for a key
  */
 export const setPosition = (key: string, position: number) => {
-  scrollPositionStore.dispatch({
+  galleryScrollPositionStore.dispatch({
     type: 'SET_POSITION',
     payload: { key, position },
   })
@@ -161,7 +161,7 @@ export const setPosition = (key: string, position: number) => {
  * Set scrolling state for a key
  */
 export const setScrolling = (key: string, isScrolling: boolean) => {
-  scrollPositionStore.dispatch({
+  galleryScrollPositionStore.dispatch({
     type: 'SET_SCROLLING',
     payload: { key, isScrolling },
   })
@@ -171,7 +171,7 @@ export const setScrolling = (key: string, isScrolling: boolean) => {
  * Get scroll position for a key
  */
 export const getPosition = (key: string): number => {
-  const state = scrollPositionStore.getState()
+  const state = galleryScrollPositionStore.getState()
   return state.positions[key] || 0
 }
 
@@ -179,7 +179,7 @@ export const getPosition = (key: string): number => {
  * Check if scrolling for a key
  */
 export const isScrolling = (key: string): boolean => {
-  const state = scrollPositionStore.getState()
+  const state = galleryScrollPositionStore.getState()
   return state.isScrolling[key] || false
 }
 
@@ -187,7 +187,7 @@ export const isScrolling = (key: string): boolean => {
  * Clear position for a key
  */
 export const clearPosition = (key: string) => {
-  scrollPositionStore.dispatch({
+  galleryScrollPositionStore.dispatch({
     type: 'CLEAR_POSITION',
     payload: { key },
   })
@@ -197,7 +197,7 @@ export const clearPosition = (key: string) => {
  * Clear all positions
  */
 export const clearAllPositions = () => {
-  scrollPositionStore.dispatch({
+  galleryScrollPositionStore.dispatch({
     type: 'CLEAR_ALL_POSITIONS',
   })
 }
@@ -213,7 +213,7 @@ export const forceSave = async () => {
     saveTimeout = null
   }
 
-  const state = scrollPositionStore.getState()
+  const state = galleryScrollPositionStore.getState()
   const positionsJson = JSON.stringify(state.positions)
   await storage.set(positionsJson)
 }
@@ -222,7 +222,7 @@ export const forceSave = async () => {
  * Check if scroll positions are loaded
  */
 export const isLoaded = (): boolean => {
-  return scrollPositionStore.getState().isLoaded
+  return galleryScrollPositionStore.getState().isLoaded
 }
 
 /**
@@ -237,8 +237,8 @@ export const cleanup = () => {
 }
 
 // Hook for components to use the scroll position store
-export const useScrollPositions = () => {
-  const state = scrollPositionStore.useStore()
+export const useGalleryScrollPositions = () => {
+  const state = galleryScrollPositionStore.useStore()
 
   return {
     positions: state.positions,
