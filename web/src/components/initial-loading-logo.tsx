@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 
 import { appRouter } from '@/router.tsx'
 
+const routesWithoutInitialLoadingLogo = new Set(['/login', '/register', '/terms', '/privacy'])
+
 let hasCompletedInitialRoute = false
 
 const markInitialRouteComplete = () => {
@@ -16,9 +18,21 @@ const hasResolvedInitialRoute = () => {
   )
 }
 
+const shouldShowInitialLoadingLogo = () => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  return !routesWithoutInitialLoadingLogo.has(window.location.pathname)
+}
+
 const useInitialLoadingLogoVisibility = () => {
   const [isVisible, setIsVisible] = useState(() => {
-    if (typeof window === 'undefined' || hasCompletedInitialRoute) {
+    if (
+      typeof window === 'undefined' ||
+      hasCompletedInitialRoute ||
+      !shouldShowInitialLoadingLogo()
+    ) {
       return false
     }
 
@@ -26,6 +40,11 @@ const useInitialLoadingLogoVisibility = () => {
   })
 
   useEffect(() => {
+    if (!shouldShowInitialLoadingLogo()) {
+      setIsVisible(false)
+      return
+    }
+
     if (hasCompletedInitialRoute) {
       setIsVisible(false)
       return
