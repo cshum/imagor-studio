@@ -720,7 +720,7 @@ func (h *AuthHandler) PreviewSession() http.HandlerFunc {
 			return apperror.NotFound("Space not found")
 		}
 
-		allowed, err := h.canReadSpace(ctx, spaceRecord)
+		allowed, err := h.canUsePreviewSession(ctx, spaceRecord)
 		if err != nil {
 			h.logger.Error("Failed to verify preview session space access", zap.String("spaceID", spaceID), zap.Error(err))
 			return apperror.InternalServerError("Failed to create preview session")
@@ -816,6 +816,53 @@ func (h *AuthHandler) canReadSpace(ctx context.Context, spaceRecord *space.Space
 		return false, nil
 	}
 	return h.spaceStore.HasMember(ctx, spaceRecord.ID, claims.UserID)
+}
+
+func (h *AuthHandler) canUsePreviewSession(ctx context.Context, spaceRecord *space.Space) (bool, error) {
+	if spaceRecord == nil {
+		return false, nil
+	}
+
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	orgID := h.resolvePrimaryOrgID(ctx, claims.UserID)
+	if orgID != "" && spaceRecord.OrgID == orgID {
+		isPublic, publicErr := h.isPublicSpaceAccessEnabled(ctx, spaceRecord)
+		if publicErr != nil {
+			return false, publicErr
+		}
+		return !isPublic, nil
+	}
+
+	if !h.cloudEnabled() || h.spaceStore == nil {
+		return false, nil
+	}
+
+	isPublic, err := h.isPublicSpaceAccessEnabled(ctx, spaceRecord)
+	if err != nil {
+		return false, err
+	}
+	if isPublic {
+		return false, nil
+	}
+
+	return h.spaceStore.HasMember(ctx, spaceRecord.ID, claims.UserID)
+}
+
+func (h *AuthHandler) isPublicSpaceAccessEnabled(ctx context.Context, spaceRecord *space.Space) (bool, error) {
+	if spaceRecord == nil || h.registryStore == nil {
+		return false, nil
+	}
+
+	publicAccess, err := h.registryStore.Get(ctx, registrystore.SpaceOwnerID(spaceRecord.ID), "config.allow_guest_mode")
+	if err != nil {
+		return false, fmt.Errorf("failed to check space public access: %w", err)
+	}
+
+	return publicAccess != nil && publicAccess.Value == "true", nil
 }
 
 func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role string) (*LoginResponse, error) {

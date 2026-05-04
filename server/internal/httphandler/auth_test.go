@@ -19,6 +19,7 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/org"
 	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -195,6 +196,7 @@ func (p *provisioningOrgStore) Delete(_ context.Context, _, _ string) error { re
 type stubSpaceStore struct {
 	spaceByKey map[string]*space.Space
 	err        error
+	hasMember  bool
 }
 
 func (s *stubSpaceStore) Create(_ context.Context, _ *space.Space) error                { return nil }
@@ -242,7 +244,17 @@ func (s *stubSpaceStore) ListMembers(_ context.Context, _ string) ([]*space.Spac
 func (s *stubSpaceStore) AddMember(_ context.Context, _, _, _ string) error        { return nil }
 func (s *stubSpaceStore) RemoveMember(_ context.Context, _, _ string) error        { return nil }
 func (s *stubSpaceStore) UpdateMemberRole(_ context.Context, _, _, _ string) error { return nil }
-func (s *stubSpaceStore) HasMember(_ context.Context, _, _ string) (bool, error)   { return false, nil }
+func (s *stubSpaceStore) HasMember(_ context.Context, _, _ string) (bool, error) {
+	return s.hasMember, nil
+}
+
+type stubProcessingOriginResolver struct {
+	origin string
+}
+
+func (s stubProcessingOriginResolver) ResolveProcessingOrigin(_ context.Context, _ string) string {
+	return s.origin
+}
 
 type stubInviteStore struct {
 	invite           *space.Invitation
@@ -1524,6 +1536,80 @@ func TestGuestLogin(t *testing.T) {
 			mockRegistryStore.AssertExpectations(t)
 		})
 	}
+}
+
+func TestPreviewSession(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	userStore := new(MockUserStore)
+	mockRegistryStore := new(MockRegistryStore)
+
+	makeToken := func(t *testing.T, userID, orgID string, scopes []string, role string) string {
+		t.Helper()
+		token, err := tokenManager.GenerateTokenWithClaims(auth.Claims{
+			UserID:           userID,
+			OrgID:            orgID,
+			Role:             role,
+			Scopes:           scopes,
+			RegisteredClaims: jwt.RegisteredClaims{},
+		}, time.Hour)
+		require.NoError(t, err)
+		return token
+	}
+
+	t.Run("allows same org private space", func(t *testing.T) {
+		mockRegistryStore.ExpectedCalls = nil
+		mockRegistryStore.On("Get", mock.Anything, registrystore.SpaceOwnerID("space-1"), "config.allow_guest_mode").Return(nil, nil).Once()
+		spaceStore := &stubSpaceStore{spaceByKey: map[string]*space.Space{
+			"space-key": {ID: "space-1", OrgID: "org-1", Key: "space-key"},
+		}}
+		handler := NewAuthHandler(tokenManager, userStore, &provisioningOrgStore{storedOrg: &org.Org{ID: "org-1", OwnerID: "user-1"}}, mockRegistryStore, logger, AuthHandlerConfig{
+			SpaceStore:               spaceStore,
+			PreviewTTL:               time.Minute,
+			ProcessingOriginResolver: stubProcessingOriginResolver{origin: "https://space-key.imagor.app"},
+		})
+
+		body, err := json.Marshal(PreviewSessionRequest{SpaceID: "space-1"})
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, "/api/auth/preview-session", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+makeToken(t, "user-1", "org-1", []string{"edit", "write"}, "user"))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+
+		handler.PreviewSession()(rr, req)
+
+		require.Equal(t, http.StatusOK, rr.Code)
+		mockRegistryStore.AssertExpectations(t)
+	})
+
+	t.Run("rejects public access space even for same org editor", func(t *testing.T) {
+		mockRegistryStore.ExpectedCalls = nil
+		mockRegistryStore.On("Get", mock.Anything, registrystore.SpaceOwnerID("space-1"), "config.allow_guest_mode").Return(&registrystore.Registry{
+			Key:   "config.allow_guest_mode",
+			Value: "true",
+		}, nil).Once()
+
+		spaceStore := &stubSpaceStore{spaceByKey: map[string]*space.Space{
+			"space-key": {ID: "space-1", OrgID: "org-1", Key: "space-key"},
+		}}
+		handler := NewAuthHandler(tokenManager, userStore, &provisioningOrgStore{storedOrg: &org.Org{ID: "org-1", OwnerID: "user-1"}}, mockRegistryStore, logger, AuthHandlerConfig{
+			SpaceStore:               spaceStore,
+			PreviewTTL:               time.Minute,
+			ProcessingOriginResolver: stubProcessingOriginResolver{origin: "https://space-key.imagor.app"},
+		})
+
+		body, err := json.Marshal(PreviewSessionRequest{SpaceID: "space-1"})
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, "/api/auth/preview-session", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+makeToken(t, "user-1", "org-1", []string{"edit", "write"}, "user"))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+
+		handler.PreviewSession()(rr, req)
+
+		require.Equal(t, http.StatusForbidden, rr.Code)
+		mockRegistryStore.AssertExpectations(t)
+	})
 }
 
 // ── Multi-tenant org integration tests ───────────────────────────────────────────────
