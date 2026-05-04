@@ -38,7 +38,6 @@ import {
 } from '@/components/ui/sidebar'
 import { useBrand } from '@/hooks/use-brand'
 import { useBreadcrumb } from '@/hooks/use-breadcrumb'
-import { restoreScrollPosition, useScrollHandler } from '@/hooks/use-scroll-handler'
 import { useAuth } from '@/stores/auth-store'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -138,13 +137,6 @@ export function AccountLayout({
           },
         ]
       : []
-
-  useScrollHandler(location.pathname)
-
-  useEffect(() => {
-    requestAnimationFrame(() => restoreScrollPosition(location.pathname))
-  }, [location.pathname])
-
   // Close mobile sheet on navigation
   useEffect(() => {
     setMobileOpen(false)
