@@ -18,7 +18,7 @@ export interface TemplateMetadata {
 
 export interface ImageEditorLoaderData {
   initialEditorOpenSections: EditorSections
-  breadcrumb?: { label: string }
+  breadcrumb?: { label: string; preserveLabelInTitle?: boolean }
   imageEditor: ImageEditor
   isTemplate: boolean
   spaceID?: string
@@ -170,7 +170,7 @@ export const imageEditorLoader = async ({
 
   return {
     initialEditorOpenSections: editorOpenSections,
-    breadcrumb: { label: breadcrumbLabel },
+    breadcrumb: { label: breadcrumbLabel, preserveLabelInTitle: true },
     imageEditor,
     isTemplate,
     spaceID,
