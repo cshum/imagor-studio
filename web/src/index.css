@@ -239,3 +239,43 @@
     width: 100%;
   }
 }
+
+.boot-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: hsl(var(--background));
+}
+
+.boot-splash {
+  box-sizing: border-box;
+  display: grid;
+  min-height: 100%;
+  place-items: center;
+  padding: 24px;
+}
+
+.boot-logo {
+  width: 108px;
+  height: 108px;
+  color: hsl(var(--foreground) / 0.8);
+  overflow: visible;
+}
+
+.boot-logo .boot-spinner {
+  stroke-dasharray: 22 78;
+  stroke-dashoffset: 0;
+  animation: boot-spin 1.05s linear infinite;
+}
+
+@keyframes boot-spin {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-logo .boot-spinner {
+    animation: none;
+  }
+}

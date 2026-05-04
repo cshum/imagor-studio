@@ -15,7 +15,7 @@ import '@fontsource/dejavu-mono/700.css'
 import 'non.geist'
 import './index.css'
 
-import { bootstrapRootLoaderData } from '@/loaders/root-loader.ts'
+import { InitialLoadingLogo } from '@/components/initial-loading-logo.tsx'
 import { AppRouter } from '@/router.tsx'
 
 const rootElement = document.getElementById('root')
@@ -26,18 +26,11 @@ if (!rootElement) {
 
 const root = createRoot(rootElement)
 
-async function bootstrap() {
-  try {
-    await bootstrapRootLoaderData()
-  } catch {
-    // Fall through and let the mounted app render its own error states.
-  }
-
-  root.render(
-    <StrictMode>
+root.render(
+  <StrictMode>
+    <>
+      <InitialLoadingLogo />
       <AppRouter />
-    </StrictMode>,
-  )
-}
-
-void bootstrap()
+    </>
+  </StrictMode>,
+)
