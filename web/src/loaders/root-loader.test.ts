@@ -120,4 +120,82 @@ describe('rootLoader', () => {
     expect(mockInitializeLocale).toHaveBeenCalledWith('zh')
     expect(mockLicenseWaitFor).not.toHaveBeenCalled()
   })
+
+  it('loads brand and breadcrumb data for authenticated self-hosted pages', async () => {
+    const { rootLoader } = await import('./root-loader')
+
+    mockGetAuth.mockReturnValue({
+      accessToken: 'token',
+      multiTenant: false,
+    })
+    mockGetBootstrapRegistryPreferences.mockResolvedValue({
+      userRegistryEntries: [{ key: 'config.app_default_language', value: 'en' }],
+      systemRegistryEntries: [],
+    })
+    mockFolderTreeWaitFor.mockResolvedValue({
+      homeTitle: 'Library',
+    })
+
+    await expect(rootLoader()).resolves.toEqual({
+      breadcrumb: {
+        label: 'Library',
+        href: '/',
+      },
+    })
+
+    expect(mockGetBootstrapRegistryPreferences).toHaveBeenCalledWith(
+      ['config.app_default_language'],
+      ['config.app_default_language'],
+      {
+        includeUser: true,
+        includeSystem: true,
+      },
+    )
+    expect(mockInitializeLocale).toHaveBeenCalledWith('en')
+    expect(mockLicenseWaitFor).toHaveBeenCalledTimes(1)
+    expect(mockFolderTreeWaitFor).toHaveBeenCalledTimes(1)
+  })
+
+  it('reuses bootstrapped root loader data only once', async () => {
+    const { bootstrapRootLoaderData, rootLoader } = await import('./root-loader')
+
+    mockGetAuth.mockReturnValue({
+      accessToken: 'token',
+      multiTenant: false,
+    })
+    mockGetBootstrapRegistryPreferences.mockResolvedValue({
+      userRegistryEntries: [{ key: 'config.app_default_language', value: 'en' }],
+      systemRegistryEntries: [],
+    })
+    mockFolderTreeWaitFor.mockResolvedValue({
+      homeTitle: 'Library',
+    })
+
+    await expect(bootstrapRootLoaderData()).resolves.toBeUndefined()
+    expect(mockGetBootstrapRegistryPreferences).toHaveBeenCalledTimes(1)
+    expect(mockLicenseWaitFor).toHaveBeenCalledTimes(1)
+    expect(mockFolderTreeWaitFor).toHaveBeenCalledTimes(1)
+
+    await expect(rootLoader()).resolves.toEqual({
+      breadcrumb: {
+        label: 'Library',
+        href: '/',
+      },
+    })
+
+    expect(mockGetBootstrapRegistryPreferences).toHaveBeenCalledTimes(1)
+    expect(mockLicenseWaitFor).toHaveBeenCalledTimes(1)
+    expect(mockFolderTreeWaitFor).toHaveBeenCalledTimes(1)
+
+    await expect(rootLoader()).resolves.toEqual({
+      breadcrumb: {
+        label: 'Library',
+        href: '/',
+      },
+    })
+
+    expect(mockGetBootstrapRegistryPreferences).toHaveBeenCalledTimes(2)
+    expect(mockLicenseWaitFor).toHaveBeenCalledTimes(2)
+    expect(mockFolderTreeWaitFor).toHaveBeenCalledTimes(2)
+  })
 })
