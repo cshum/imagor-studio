@@ -433,8 +433,10 @@ describe('editorStateToImagorPath', () => {
       )
     })
 
-    it('suppresses format filter in preview mode', () => {
-      expect(editorStateToImagorPath({ format: 'webp' }, 'p.jpg', 1, true)).not.toContain('format')
+    it('forces preview webp filter in preview mode', () => {
+      expect(editorStateToImagorPath({ format: 'jpeg' }, 'p.jpg', 1, true)).toContain(
+        'preview():format(webp)',
+      )
     })
 
     it('emits quality filter when format is set (non-preview)', () => {
