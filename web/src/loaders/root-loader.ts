@@ -11,16 +11,37 @@ export interface RootLoaderData {
 }
 
 const DEFAULT_LANGUAGE_REGISTRY_KEY = 'config.app_default_language'
+const immediatePublicBootPaths = new Set([
+  '/login',
+  '/join',
+  '/privacy',
+  '/terms',
+  '/register',
+  '/register/verify',
+  '/account/email/verify',
+])
 
 let bootstrappedRootLoaderData: RootLoaderData | null = null
 
+const isImmediatePublicBootPath = (pathname = window.location.pathname) => {
+  return immediatePublicBootPaths.has(pathname)
+}
+
 export const rootBeforeLoad = async () => {
+  if (isImmediatePublicBootPath()) {
+    return
+  }
+
   await themeStore.waitFor((state) => state.isLoaded)
   await authStore.waitFor((state) => state.state !== 'loading')
 }
 
 const loadRootLoaderData = async (): Promise<RootLoaderData> => {
   await rootBeforeLoad()
+
+  if (isImmediatePublicBootPath()) {
+    return {}
+  }
 
   const auth = getAuth()
 
@@ -63,6 +84,10 @@ const loadRootLoaderData = async (): Promise<RootLoaderData> => {
 }
 
 export const bootstrapRootLoaderData = async () => {
+  if (isImmediatePublicBootPath()) {
+    return
+  }
+
   bootstrappedRootLoaderData = await loadRootLoaderData()
 }
 

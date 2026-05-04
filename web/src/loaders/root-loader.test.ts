@@ -198,4 +198,21 @@ describe('rootLoader', () => {
     expect(mockLicenseWaitFor).toHaveBeenCalledTimes(2)
     expect(mockFolderTreeWaitFor).toHaveBeenCalledTimes(2)
   })
+
+  it('skips root beforeLoad and root loader work on immediate public routes like login', async () => {
+    const { bootstrapRootLoaderData, rootBeforeLoad, rootLoader } = await import('./root-loader')
+
+    window.history.replaceState({}, '', '/login')
+
+    await expect(rootBeforeLoad()).resolves.toBeUndefined()
+    await expect(bootstrapRootLoaderData()).resolves.toBeUndefined()
+    await expect(rootLoader()).resolves.toEqual({})
+
+    expect(mockThemeWaitFor).not.toHaveBeenCalled()
+    expect(mockAuthWaitFor).not.toHaveBeenCalled()
+    expect(mockGetBootstrapRegistryPreferences).not.toHaveBeenCalled()
+    expect(mockInitializeLocale).not.toHaveBeenCalled()
+    expect(mockLicenseWaitFor).not.toHaveBeenCalled()
+    expect(mockFolderTreeWaitFor).not.toHaveBeenCalled()
+  })
 })
