@@ -11,10 +11,15 @@
     <script>
       ;(() => {
         const root = document.documentElement
+        const bootstrap = window.__IMAGOR_STUDIO_BOOTSTRAP__
         const applyTheme = (resolvedTheme) => {
           root.classList.remove('light', 'dark')
           root.classList.add(resolvedTheme)
           root.style.colorScheme = resolvedTheme
+        }
+
+        if (bootstrap?.bootMode === 'minimal') {
+          root.classList.add('boot-minimal')
         }
 
         try {
@@ -65,6 +70,10 @@
         min-height: 100%;
         place-items: center;
         padding: 24px;
+      }
+
+      .boot-minimal .boot-splash {
+        display: none;
       }
 
       .boot-logo {

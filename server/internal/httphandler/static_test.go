@@ -267,3 +267,28 @@ func TestSPAHandlerInjectsBootstrapIntoHTML(t *testing.T) {
 		t.Fatalf("Expected bootstrap payload before </head>, got %q", body)
 	}
 }
+
+func TestSPAHandlerInjectsMinimalBootModeForPublicEntryRoutes(t *testing.T) {
+	logger := zaptest.NewLogger(t)
+
+	staticFS := fstest.MapFS{
+		"index.html": {
+			Data: []byte("<html><head><title>Imagor Studio</title></head><body>Mock HTML</body></html>"),
+		},
+	}
+
+	handler := SPAHandler(staticFS, nil, logger, AppBootstrap{})
+	req := httptest.NewRequest("GET", "/login", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", w.Code)
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, `window.__IMAGOR_STUDIO_BOOTSTRAP__ = {"bootMode":"minimal"};`) {
+		t.Fatalf("Expected minimal boot mode bootstrap payload in HTML, got %q", body)
+	}
+}

@@ -20,10 +20,29 @@ const (
 
 type AppBootstrap struct {
 	AuthProviders []string `json:"authProviders,omitempty"`
+	BootMode      string   `json:"bootMode,omitempty"`
 }
 
 func (b AppBootstrap) enabled() bool {
-	return len(b.AuthProviders) > 0
+	return len(b.AuthProviders) > 0 || strings.TrimSpace(b.BootMode) != ""
+}
+
+var immediatePublicBootPaths = map[string]struct{}{
+	"/login":                {},
+	"/join":                 {},
+	"/privacy":              {},
+	"/terms":                {},
+	"/register":             {},
+	"/register/verify":      {},
+	"/account/email/verify": {},
+}
+
+func bootstrapForPath(path string, bootstrap AppBootstrap) AppBootstrap {
+	if _, ok := immediatePublicBootPaths[path]; ok {
+		bootstrap.BootMode = "minimal"
+	}
+
+	return bootstrap
 }
 
 // imagorPathRegex matches imagor-style paths using the same logic as imagorpath package
@@ -155,9 +174,11 @@ func SPAHandler(staticFS fs.FS, imagorHandler http.Handler, logger *zap.Logger, 
 			trimmedPath = "index.html"
 		}
 
+		requestBootstrap := bootstrapForPath(path, bootstrap)
+
 		if _, err := staticFS.Open(trimmedPath); err != nil {
 			// File doesn't exist, serve index.html for SPA routes
-			if !serveHTMLDocument(w, staticFS, "index.html", bootstrap, logger) {
+			if !serveHTMLDocument(w, staticFS, "index.html", requestBootstrap, logger) {
 				if logger != nil {
 					logger.Error("Failed to open index.html for SPA route",
 						zap.String("path", path),
@@ -169,7 +190,7 @@ func SPAHandler(staticFS fs.FS, imagorHandler http.Handler, logger *zap.Logger, 
 		}
 
 		if trimmedPath == "index.html" || strings.HasSuffix(trimmedPath, ".html") {
-			if !serveHTMLDocument(w, staticFS, trimmedPath, bootstrap, logger) {
+			if !serveHTMLDocument(w, staticFS, trimmedPath, requestBootstrap, logger) {
 				http.NotFound(w, r)
 			}
 			return
