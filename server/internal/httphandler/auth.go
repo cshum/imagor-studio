@@ -17,32 +17,48 @@ import (
 	"github.com/cshum/imagor-studio/server/pkg/auth"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	"github.com/cshum/imagor-studio/server/pkg/org"
+	"github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/signup"
 	"github.com/cshum/imagor-studio/server/pkg/space"
 	"github.com/cshum/imagor-studio/server/pkg/uuid"
 	"github.com/cshum/imagor-studio/server/pkg/validation"
+	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
 
 type AuthHandler struct {
-	tokenManager  *auth.TokenManager
-	userStore     userstore.Store
-	orgStore      org.OrgStore
-	spaceStore    space.SpaceStore
-	inviteStore   space.SpaceInviteStore
-	registryStore registrystore.Store
-	logger        *zap.Logger
-	embeddedMode  bool
-	multiTenant   bool
-	signupRuntime signup.Runtime
+	tokenManager             *auth.TokenManager
+	userStore                userstore.Store
+	orgStore                 org.OrgStore
+	spaceStore               space.SpaceStore
+	inviteStore              space.SpaceInviteStore
+	registryStore            registrystore.Store
+	logger                   *zap.Logger
+	embeddedMode             bool
+	multiTenant              bool
+	signupRuntime            signup.Runtime
+	previewTTL               time.Duration
+	processingOriginResolver space.ProcessingOriginResolver
 }
 
 type AuthHandlerConfig struct {
-	EmbeddedMode  bool
-	MultiTenant   bool
-	SpaceStore    space.SpaceStore
-	InviteStore   space.SpaceInviteStore
-	SignupRuntime signup.Runtime
+	EmbeddedMode             bool
+	MultiTenant              bool
+	SpaceStore               space.SpaceStore
+	InviteStore              space.SpaceInviteStore
+	SignupRuntime            signup.Runtime
+	PreviewTTL               time.Duration
+	ProcessingOriginResolver space.ProcessingOriginResolver
+}
+
+type PreviewSessionRequest struct {
+	SpaceID string `json:"spaceID"`
+}
+
+type PreviewSessionResponse struct {
+	Token            string `json:"token"`
+	ExpiresAt        string `json:"expiresAt"`
+	ProcessingOrigin string `json:"processingOrigin"`
 }
 
 type GuestLoginRequest struct {
@@ -58,16 +74,18 @@ func NewAuthHandler(
 	cfg AuthHandlerConfig,
 ) *AuthHandler {
 	return &AuthHandler{
-		tokenManager:  tokenManager,
-		userStore:     userStore,
-		orgStore:      orgStore,
-		spaceStore:    cfg.SpaceStore,
-		inviteStore:   cfg.InviteStore,
-		registryStore: registryStore,
-		logger:        logger,
-		embeddedMode:  cfg.EmbeddedMode,
-		multiTenant:   cfg.MultiTenant,
-		signupRuntime: cfg.SignupRuntime,
+		tokenManager:             tokenManager,
+		userStore:                userStore,
+		orgStore:                 orgStore,
+		spaceStore:               cfg.SpaceStore,
+		inviteStore:              cfg.InviteStore,
+		registryStore:            registryStore,
+		logger:                   logger,
+		embeddedMode:             cfg.EmbeddedMode,
+		multiTenant:              cfg.MultiTenant,
+		signupRuntime:            cfg.SignupRuntime,
+		previewTTL:               cfg.PreviewTTL,
+		processingOriginResolver: cfg.ProcessingOriginResolver,
 	}
 }
 
@@ -664,6 +682,140 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 
 		return WriteSuccess(w, response)
 	})
+}
+
+func (h *AuthHandler) PreviewSession() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		var req PreviewSessionRequest
+		if err := DecodeJSON(r, &req); err != nil {
+			return err
+		}
+		spaceID := strings.TrimSpace(req.SpaceID)
+		if spaceID == "" {
+			return apperror.BadRequest("spaceID is required", map[string]interface{}{"field": "spaceID"})
+		}
+
+		authHeader := r.Header.Get("Authorization")
+		jwtToken, err := auth.ExtractTokenFromHeader(authHeader)
+		if err != nil {
+			return apperror.Unauthorized("Authorization header is missing or invalid")
+		}
+
+		claims, err := h.tokenManager.ValidateToken(jwtToken)
+		if err != nil {
+			return apperror.Unauthorized("Invalid or expired token")
+		}
+		ctx := auth.SetClaimsInContext(r.Context(), claims)
+
+		if err := h.requirePreviewSessionPermission(ctx); err != nil {
+			return err
+		}
+
+		spaceRecord, err := h.spaceStore.GetByID(ctx, spaceID)
+		if err != nil {
+			h.logger.Error("Failed to load preview session space", zap.String("spaceID", spaceID), zap.Error(err))
+			return apperror.InternalServerError("Failed to create preview session")
+		}
+		if spaceRecord == nil {
+			return apperror.NotFound("Space not found")
+		}
+
+		allowed, err := h.canReadSpace(ctx, spaceRecord)
+		if err != nil {
+			h.logger.Error("Failed to verify preview session space access", zap.String("spaceID", spaceID), zap.Error(err))
+			return apperror.InternalServerError("Failed to create preview session")
+		}
+		if !allowed {
+			return apperror.Forbidden("You do not have access to this space")
+		}
+
+		processingOrigin := ""
+		if h.processingOriginResolver != nil {
+			processingOrigin = h.processingOriginResolver.ResolveProcessingOrigin(ctx, spaceRecord.Key)
+		}
+		if strings.TrimSpace(processingOrigin) == "" {
+			return apperror.InternalServerError("Processing origin is not configured for this space")
+		}
+
+		ttl := h.previewTTL
+		if ttl <= 0 {
+			ttl = 15 * time.Minute
+		}
+		expiresAt := time.Now().UTC().Add(ttl)
+		previewToken, err := h.tokenManager.GenerateTokenWithClaims(auth.Claims{
+			UserID:   claims.UserID,
+			OrgID:    claims.OrgID,
+			Role:     claims.Role,
+			Scopes:   []string{"preview"},
+			Kind:     processing.PreviewTokenKind,
+			SpaceKey: spaceRecord.Key,
+			RegisteredClaims: jwt.RegisteredClaims{
+				Audience: jwt.ClaimStrings{processing.PreviewTokenAudience},
+			},
+		}, ttl)
+		if err != nil {
+			h.logger.Error("Failed to generate preview session token", zap.String("spaceID", spaceID), zap.Error(err))
+			return apperror.InternalServerError("Failed to create preview session")
+		}
+
+		response := PreviewSessionResponse{
+			Token:            previewToken,
+			ExpiresAt:        expiresAt.Format(time.RFC3339),
+			ProcessingOrigin: processingOrigin,
+		}
+		return WriteSuccess(w, response)
+	})
+}
+
+func (h *AuthHandler) requirePreviewSessionPermission(ctx context.Context) error {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return apperror.Unauthorized("Unauthorized")
+	}
+	for _, scope := range claims.Scopes {
+		if scope == "edit" || scope == "write" {
+			return nil
+		}
+	}
+	if claims.Role == "admin" {
+		return nil
+	}
+	{
+		return apperror.Forbidden("Edit access required")
+	}
+}
+
+func (h *AuthHandler) canReadSpace(ctx context.Context, spaceRecord *space.Space) (bool, error) {
+	if spaceRecord == nil {
+		return false, nil
+	}
+
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	orgID := h.resolvePrimaryOrgID(ctx, claims.UserID)
+	if orgID != "" && spaceRecord.OrgID == orgID {
+		return true, nil
+	}
+
+	if !h.cloudEnabled() {
+		return false, nil
+	}
+
+	if h.registryStore != nil {
+		publicAccess, registryErr := h.registryStore.Get(ctx, registrystore.SpaceOwnerID(spaceRecord.ID), "config.allow_guest_mode")
+		if registryErr != nil {
+			return false, fmt.Errorf("failed to check space public access: %w", registryErr)
+		}
+		if publicAccess != nil && publicAccess.Value == "true" {
+			return true, nil
+		}
+	}
+	if h.spaceStore == nil {
+		return false, nil
+	}
+	return h.spaceStore.HasMember(ctx, spaceRecord.ID, claims.UserID)
 }
 
 func (h *AuthHandler) createUser(ctx context.Context, req RegisterRequest, role string) (*LoginResponse, error) {

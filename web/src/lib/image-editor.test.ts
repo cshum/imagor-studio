@@ -13,6 +13,14 @@ vi.mock('@/api/imagor-api', () => ({
   generateImagorUrlFromTemplate: vi.fn().mockResolvedValue('http://localhost:8000/mocked-url'),
 }))
 
+vi.mock('@/lib/preview-session', () => ({
+  getPreviewSession: vi.fn().mockResolvedValue({
+    token: 'preview-token',
+    expiresAt: Date.now() + 15 * 60 * 1000,
+    processingOrigin: 'https://space.imagor.app',
+  }),
+}))
+
 describe('ImageEditor', () => {
   let editor: ImageEditor
   let mockConfig: ImageEditorConfig
@@ -2431,6 +2439,27 @@ describe('ImageEditor', () => {
 
         // Should not call onPreviewUpdate again (URL unchanged)
         expect(onPreviewUpdate).not.toHaveBeenCalled()
+      })
+
+      it('should generate direct processing preview URLs for space-scoped previews', async () => {
+        const { getPreviewSession } = await import('@/lib/preview-session')
+        const directPreviewEditor = new ImageEditor({
+          imagePath: 'test-image.jpg',
+          spaceID: 'space-123',
+          originalDimensions: { width: 1920, height: 1080 },
+          previewMaxDimensions: { width: 960, height: 540 },
+        })
+        const onPreviewUpdate = vi.fn()
+
+        directPreviewEditor.initialize({ onPreviewUpdate })
+        directPreviewEditor.updateParams({ brightness: 50 })
+
+        await vi.runAllTimersAsync()
+
+        expect(getPreviewSession).toHaveBeenCalledWith('space-123', expect.any(Object))
+        expect(onPreviewUpdate).toHaveBeenCalledWith(
+          'https://space.imagor.app/preview/960x540/filters:brightness(50):preview():format(webp)/test-image.jpg?pt=preview-token',
+        )
       })
     })
 
