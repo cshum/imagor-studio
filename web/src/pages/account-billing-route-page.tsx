@@ -446,7 +446,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           )}
         </div>
 
-        <div className='mt-4 grid gap-4 sm:grid-cols-3'>
+        <div className='mt-4 grid gap-4 lg:grid-cols-3'>
           {usageItems.map((item) => (
             <div key={item.key} className='space-y-2'>
               <div className='flex items-center justify-between gap-3 text-sm'>
@@ -562,7 +562,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
       )}
 
       <section className='border-border/60 space-y-5 rounded-xl border bg-transparent p-4 md:p-5'>
-        <div className='grid gap-4 xl:grid-cols-3'>
+        <div className='grid gap-4 lg:grid-cols-3'>
           {PAID_PLANS.map((plan) => {
             const entitlements = getPlanEntitlements(plan)
             const isCurrentPlan = plan === currentPlan
@@ -652,7 +652,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           })}
         </div>
 
-        <div className='border-border/60 border-t pt-4'>
+        <div className='border-border/60 hidden border-t pt-4 lg:block'>
           <div className='flex justify-end'>
             <ButtonWithLoading
               variant='default'
@@ -703,6 +703,20 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
             </Button>
           </div>
         ) : null}
+      </div>
+
+      <div aria-hidden='true' className='h-[calc(11rem+env(safe-area-inset-bottom))] lg:hidden' />
+
+      <div className='bg-background/95 ios-bottom-safe supports-[backdrop-filter]:bg-background/80 fixed inset-x-0 bottom-0 z-30 border-t p-4 backdrop-blur lg:hidden'>
+        <ButtonWithLoading
+          variant='default'
+          isLoading={portalLoading || (selectedPlan != null && pendingPlan === selectedPlan)}
+          onClick={() => void handlePrimaryBillingAction()}
+          disabled={!isPortalManagedBilling && selectedPlan == null}
+          className='w-full'
+        >
+          {primaryBillingActionLabel}
+        </ButtonWithLoading>
       </div>
 
       <ResponsiveDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

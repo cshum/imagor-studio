@@ -100,6 +100,15 @@ vi.mock('@/components/ui/responsive-dialog', () => ({
   ResponsiveDialogTitle: ({ children }: any) => <div>{children}</div>,
 }))
 
+function getBillingActionButtons(name: string) {
+  return screen.queryAllByRole('button', { name })
+}
+
+function getBillingActionButton(name: string) {
+  const buttons = screen.getAllByRole('button', { name })
+  return buttons[0]
+}
+
 function createLoaderData(
   organizationOverrides: Partial<NonNullable<BillingLoaderData['organization']>> = {},
   usageSummaryOverrides: Partial<NonNullable<BillingLoaderData['usageSummary']>> = {},
@@ -160,10 +169,9 @@ describe('AccountBillingRoutePage', () => {
 
     render(<AccountBillingRoutePage loaderData={createLoaderData()} />)
 
-    expect(
-      (screen.getByRole('button', { name: 'pages.billing.selectPlan' }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true)
+    expect((getBillingActionButton('pages.billing.selectPlan') as HTMLButtonElement).disabled).toBe(
+      true,
+    )
 
     await act(async () => {
       fireEvent.click(screen.getByText('pages.spaces.plan.starter'))
@@ -171,9 +179,7 @@ describe('AccountBillingRoutePage', () => {
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole('button', {
-          name: 'pages.billing.selectPlanTarget:{"plan":"pages.spaces.plan.starter"}',
-        }),
+        getBillingActionButton('pages.billing.selectPlanTarget:{"plan":"pages.spaces.plan.starter"}'),
       )
     })
 
@@ -203,9 +209,7 @@ describe('AccountBillingRoutePage', () => {
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole('button', {
-          name: 'pages.billing.selectPlanTarget:{"plan":"pages.spaces.plan.pro"}',
-        }),
+        getBillingActionButton('pages.billing.selectPlanTarget:{"plan":"pages.spaces.plan.pro"}'),
       )
     })
 
@@ -230,7 +234,7 @@ describe('AccountBillingRoutePage', () => {
     )
 
     expect(screen.queryByRole('button', { name: 'pages.billing.managePlanInBilling' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'pages.billing.manageBilling' })).toBeTruthy()
+    expect(getBillingActionButtons('pages.billing.manageBilling').length).toBeGreaterThan(0)
 
     await act(async () => {
       fireEvent.click(screen.getByText('pages.spaces.plan.pro'))
@@ -244,9 +248,7 @@ describe('AccountBillingRoutePage', () => {
     ).toBe('true')
 
     expect(
-      screen.getByRole('button', {
-        name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.pro"}',
-      }),
+      getBillingActionButton('pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.pro"}'),
     ).toBeTruthy()
     expect(screen.getByText('pages.billing.selectedPlanBadge')).toBeTruthy()
 
@@ -255,20 +257,19 @@ describe('AccountBillingRoutePage', () => {
     })
 
     expect(
-      screen.queryByRole('button', {
-        name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.pro"}',
-      }),
-    ).toBeNull()
+      getBillingActionButtons('pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.pro"}')
+        .length,
+    ).toBe(0)
     expect(
       screen
         .getByText('pages.spaces.plan.pro')
         .closest('[role="button"]')
         ?.getAttribute('aria-pressed'),
     ).toBe('false')
-    expect(screen.getByRole('button', { name: 'pages.billing.manageBilling' })).toBeTruthy()
+    expect(getBillingActionButtons('pages.billing.manageBilling').length).toBeGreaterThan(0)
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'pages.billing.manageBilling' }))
+      fireEvent.click(getBillingActionButton('pages.billing.manageBilling'))
     })
 
     expect(mockCreateCheckoutSession).not.toHaveBeenCalled()
@@ -302,16 +303,12 @@ describe('AccountBillingRoutePage', () => {
     })
 
     expect(
-      screen.getByRole('button', {
-        name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.team"}',
-      }),
+      getBillingActionButton('pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.team"}'),
     ).toBeTruthy()
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole('button', {
-          name: 'pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.team"}',
-        }),
+        getBillingActionButton('pages.billing.manageBillingTarget:{"plan":"pages.spaces.plan.team"}'),
       )
     })
 
@@ -337,7 +334,7 @@ describe('AccountBillingRoutePage', () => {
     )
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'pages.billing.manageBilling' }))
+      fireEvent.click(getBillingActionButton('pages.billing.manageBilling'))
     })
 
     expect(mockToastError).toHaveBeenCalledTimes(1)
@@ -367,9 +364,7 @@ describe('AccountBillingRoutePage', () => {
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole('button', {
-          name: 'pages.billing.selectPlanTarget:{"plan":"pages.spaces.plan.starter"}',
-        }),
+        getBillingActionButton('pages.billing.selectPlanTarget:{"plan":"pages.spaces.plan.starter"}'),
       )
     })
 
@@ -407,7 +402,7 @@ describe('AccountBillingRoutePage', () => {
     expect(screen.getByText('pages.billing.overLimit.title')).toBeTruthy()
     expect(screen.getByText('pages.billing.overLimit.description')).toBeTruthy()
     expect(screen.getByText('pages.billing.overLimit.messages.processing')).toBeTruthy()
-    expect(screen.getAllByRole('button', { name: 'pages.billing.manageBilling' }).length).toBe(1)
+    expect(getBillingActionButtons('pages.billing.manageBilling').length).toBeGreaterThan(0)
   })
 
   it('does not show a persistent portal-managed banner in steady state', async () => {
@@ -428,7 +423,7 @@ describe('AccountBillingRoutePage', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'pages.billing.manageBilling' })).toBeTruthy()
+    expect(getBillingActionButtons('pages.billing.manageBilling').length).toBeGreaterThan(0)
     expect(screen.queryByText('pages.billing.portalManaged.title')).toBeNull()
   })
 
