@@ -10,55 +10,45 @@ on:
 
 jobs:
   test:
-    name: Docker Test
+    name: Test
     runs-on: ubuntu-24.04
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build server-builder test image
-        uses: docker/build-push-action@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          context: .
-          target: server-builder
-          tags: imagor-studio-server-test
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
 
-      - name: Build web-builder test image
-        uses: docker/build-push-action@v5
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          context: .
-          target: web-builder
-          tags: imagor-studio-web-test
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
 
-      - name: Run web tests in Docker
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace/web \
-            imagor-studio-web-test \
-            sh -c "npm ci && npm run type-check && npm run test:run && npm run build"
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
 
-      - name: Run server tests in Docker
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            imagor-studio-server-test \
-            sh -c "cd server && go test ./... -v"
+      - name: Run web type check
+        working-directory: web
+        run: npm run type-check
 
-      - name: Run server tests with coverage in Docker
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            imagor-studio-server-test \
-            sh -c "cd server && go test -coverprofile=coverage.out ./..."
+      - name: Run web tests
+        working-directory: web
+        run: npm run test:run
+
+      - name: Build web
+        working-directory: web
+        run: npm run build
+
+      - name: Run server tests
+        working-directory: server
+        run: go test ./... -v
+
+      - name: Run server tests with coverage
+        working-directory: server
+        run: go test -coverprofile=coverage.out ./...
