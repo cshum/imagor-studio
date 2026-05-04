@@ -1,5 +1,6 @@
 import { generateImagorUrlFromTemplate } from '@/api/imagor-api'
 import { editorStateToImagorPath, editorStateToImagorTransformationsPath } from '@/lib/imagor-path'
+import { getPreviewSession } from '@/lib/preview-session'
 
 export interface ImageDimensions {
   width: number
@@ -725,6 +726,168 @@ export class ImageEditor {
     return JSON.stringify({ version: '1.0', transformations })
   }
 
+  private resolvePreviewContext(previewTransformations: ImageEditorState): {
+    imagePath: string
+    originalDimensions: ImageDimensions
+    parentDimensions: ImageDimensions | null
+    state: ImageEditorState
+    isVisualCrop: boolean
+  } {
+    const rootOriginalDimensions =
+      (previewTransformations.originalDimensions as ImageDimensions | undefined) ||
+      this.savedBaseImageDimensions ||
+      this.config.originalDimensions
+    const rootImagePath = previewTransformations.imagePath || this.baseImagePath
+    const isVisualCrop = !!previewTransformations.visualCropEnabled
+
+    if (this.editingContext.length === 0) {
+      return {
+        imagePath: rootImagePath,
+        originalDimensions: rootOriginalDimensions,
+        parentDimensions: null,
+        state: previewTransformations,
+        isVisualCrop,
+      }
+    }
+
+    let currentLayers = previewTransformations.layers || []
+    let lastParentDimensions = this.computeOutputDimensionsFromState(
+      previewTransformations,
+      rootOriginalDimensions,
+      null,
+    )
+
+    for (let index = 0; index < this.editingContext.length; index++) {
+      const layerID = this.editingContext[index]
+      const layer = currentLayers.find((item) => item.id === layerID)
+      if (!layer || layer.type === 'text') {
+        break
+      }
+
+      if (index === this.editingContext.length - 1) {
+        return {
+          imagePath: layer.imagePath,
+          originalDimensions: layer.originalDimensions,
+          parentDimensions: lastParentDimensions,
+          state: { ...(layer.transforms || {}), visualCropEnabled: isVisualCrop },
+          isVisualCrop,
+        }
+      }
+
+      lastParentDimensions = this.computeOutputDimensionsFromState(
+        (layer.transforms || {}) as ImageEditorState,
+        layer.originalDimensions,
+        lastParentDimensions,
+      )
+      currentLayers = layer.transforms?.layers || []
+    }
+
+    return {
+      imagePath: rootImagePath,
+      originalDimensions: rootOriginalDimensions,
+      parentDimensions: null,
+      state: previewTransformations,
+      isVisualCrop,
+    }
+  }
+
+  private buildDirectPreviewPath(previewTransformations: ImageEditorState): string {
+    const resolution = this.resolvePreviewContext(previewTransformations)
+    const previewState: ImageEditorState = { ...resolution.state }
+
+    if (resolution.isVisualCrop) {
+      delete previewState.cropLeft
+      delete previewState.cropTop
+      delete previewState.cropWidth
+      delete previewState.cropHeight
+    }
+
+    let sourceWidth = resolution.originalDimensions.width
+    let sourceHeight = resolution.originalDimensions.height
+    if (
+      !resolution.isVisualCrop &&
+      previewState.cropWidth !== undefined &&
+      previewState.cropHeight !== undefined
+    ) {
+      sourceWidth = previewState.cropWidth
+      sourceHeight = previewState.cropHeight
+    }
+
+    let resolvedWidth = previewState.width
+    let resolvedHeight = previewState.height
+    if (previewState.widthFull && resolution.parentDimensions) {
+      resolvedWidth = Math.max(
+        1,
+        resolution.parentDimensions.width - (previewState.widthFullOffset || 0),
+      )
+    }
+    if (previewState.heightFull && resolution.parentDimensions) {
+      resolvedHeight = Math.max(
+        1,
+        resolution.parentDimensions.height - (previewState.heightFullOffset || 0),
+      )
+    }
+    if (resolution.isVisualCrop) {
+      resolvedWidth = resolution.originalDimensions.width
+      resolvedHeight = resolution.originalDimensions.height
+    }
+
+    const outWidth = resolvedWidth ?? sourceWidth
+    const outHeight = resolvedHeight ?? sourceHeight
+    let actualOutWidth = outWidth
+    let actualOutHeight = outHeight
+    if (previewState.fitIn) {
+      const fitScale = Math.min(outWidth / sourceWidth, outHeight / sourceHeight, 1)
+      actualOutWidth = Math.round(sourceWidth * fitScale)
+      actualOutHeight = Math.round(sourceHeight * fitScale)
+    }
+
+    const proportionScale =
+      previewState.proportion !== undefined && previewState.proportion !== 100
+        ? previewState.proportion / 100
+        : 1
+    const proportionedWidth = Math.round(actualOutWidth * proportionScale)
+    const proportionedHeight = Math.round(actualOutHeight * proportionScale)
+
+    let scaleFactor = 1
+    let bakeProportionIntoPreview = false
+    if (this.config.previewMaxDimensions) {
+      // Keep the pre-preview output box here. editorStateToImagorPath scales
+      // width/height by scaleFactor when building the path, so setting already
+      // scaled preview dims here would shrink the preview twice.
+      previewState.width = actualOutWidth
+      previewState.height = actualOutHeight
+
+      const scale = Math.min(
+        this.config.previewMaxDimensions.width / proportionedWidth,
+        this.config.previewMaxDimensions.height / proportionedHeight,
+      )
+      if (scale < 1) {
+        scaleFactor = scale
+      }
+      if (proportionScale !== 1) {
+        bakeProportionIntoPreview = true
+        scaleFactor *= proportionScale
+      }
+    }
+
+    previewState.widthFull = false
+    previewState.heightFull = false
+    delete previewState.widthFullOffset
+    delete previewState.heightFullOffset
+    if (bakeProportionIntoPreview) {
+      previewState.proportion = 100
+    }
+
+    return editorStateToImagorPath(
+      previewState,
+      resolution.imagePath,
+      scaleFactor,
+      true,
+      this.textEditingLayerId || undefined,
+    )
+  }
+
   /**
    * Generate preview URL and trigger callbacks
    */
@@ -761,17 +924,28 @@ export class ImageEditor {
         })
         previewTransformations = { ...previewTransformations, layers: strippedLayers }
       }
-      const url = await generateImagorUrlFromTemplate(
-        {
-          templateJson: this.buildTemplateJson(previewTransformations),
-          spaceID: this.config.spaceID ?? null,
-          contextPath: this.editingContext.length > 0 ? this.editingContext : null,
-          forPreview: true,
-          previewMaxDimensions: this.config.previewMaxDimensions ?? null,
-          skipLayerId: this.textEditingLayerId,
-        },
-        this.abortController.signal,
-      )
+      let url: string
+      if (this.config.spaceID) {
+        const previewSession = await getPreviewSession(this.config.spaceID, {
+          signal: this.abortController.signal,
+        })
+        const previewPath = this.buildDirectPreviewPath(previewTransformations)
+        const previewOrigin = previewSession.processingOrigin.replace(/\/$/, '')
+        const query = new URLSearchParams({ pt: previewSession.token })
+        url = `${previewOrigin}/preview${previewPath}?${query.toString()}`
+      } else {
+        url = await generateImagorUrlFromTemplate(
+          {
+            templateJson: this.buildTemplateJson(previewTransformations),
+            spaceID: this.config.spaceID ?? null,
+            contextPath: this.editingContext.length > 0 ? this.editingContext : null,
+            forPreview: true,
+            previewMaxDimensions: this.config.previewMaxDimensions ?? null,
+            skipLayerId: this.textEditingLayerId,
+          },
+          this.abortController.signal,
+        )
+      }
 
       // When in text-editing mode, append a URL fragment to differentiate the
       // "text-skipped" preview from the normal preview. Fragments are stripped by the

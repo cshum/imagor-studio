@@ -201,11 +201,13 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.RegistryStore,
 		services.Logger,
 		httphandler.AuthHandlerConfig{
-			EmbeddedMode:  cfg.EmbeddedMode,
-			MultiTenant:   multiTenant,
-			SpaceStore:    services.SpaceStore,
-			InviteStore:   services.SpaceInviteStore,
-			SignupRuntime: services.SignupVerification,
+			EmbeddedMode:             cfg.EmbeddedMode,
+			MultiTenant:              multiTenant,
+			SpaceStore:               services.SpaceStore,
+			InviteStore:              services.SpaceInviteStore,
+			SignupRuntime:            services.SignupVerification,
+			PreviewTTL:               15 * time.Minute,
+			ProcessingOriginResolver: processingOriginResolver,
 		},
 	)
 
@@ -233,6 +235,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	mux.HandleFunc("/api/auth/account/email/verify", authHandler.VerifyEmailChange())
 	mux.HandleFunc("/api/auth/login", authHandler.Login())
 	mux.HandleFunc("/api/auth/refresh", authHandler.RefreshToken())
+	mux.HandleFunc("/api/auth/preview-session", authHandler.PreviewSession())
 	mux.HandleFunc("/api/auth/guest", authHandler.GuestLogin())
 	mux.HandleFunc("/api/auth/embedded-guest", authHandler.EmbeddedGuestLogin())
 
@@ -288,6 +291,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 
 	if services.SpaceConfigStore != nil {
 		registerProcessingInternalRoutes(mux, services)
+		registerProcessingPreviewRoutes(mux, services)
 	}
 
 	if err := registerProcessingOrSPA(mux, cfg, embedFS, services, cloudConfig); err != nil {
@@ -390,6 +394,7 @@ func NewProcessingFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Lo
 
 	if services.SpaceConfigStore != nil {
 		registerProcessingInternalRoutes(mux, services)
+		registerProcessingPreviewRoutes(mux, services)
 	}
 
 	if err := registerProcessingOrSPA(mux, cfg, embedFS, services, management.CloudConfig{}); err != nil {

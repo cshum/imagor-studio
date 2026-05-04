@@ -156,9 +156,14 @@ function buildImagorPathParts(
 ): string[] {
   const parts: string[] = []
 
+  // During visual crop preview, suppress crop and resize-mode-affecting options
+  // so the preview shows the plain uncropped image at its natural dimensions.
+  const isVisualCropPreview = forPreview && !!state.visualCropEnabled
+
   // Add crop if present (before resize).
   // Crop coordinates are absolute to original image — never scale them.
   if (
+    !isVisualCropPreview &&
     state.cropLeft !== undefined &&
     state.cropTop !== undefined &&
     state.cropWidth !== undefined &&
@@ -168,10 +173,6 @@ function buildImagorPathParts(
     const bottom = state.cropTop + state.cropHeight
     parts.push(`${state.cropLeft}x${state.cropTop}:${right}x${bottom}`)
   }
-
-  // During visual crop preview, suppress resize mode (fitIn/stretch/smart/flip/alignment/fill)
-  // so the preview shows the plain uncropped image at its natural dimensions.
-  const isVisualCropPreview = forPreview && !!state.visualCropEnabled
 
   // Add dimensions with flip integration (scaled by scaleFactor).
   // Format: /fit-in/-200x-300 where minus signs indicate flips.
@@ -221,7 +222,7 @@ function buildImagorPathParts(
     (state.paddingBottom !== undefined && state.paddingBottom > 0) ||
     (state.paddingLeft !== undefined && state.paddingLeft > 0)
 
-  if (hasPadding) {
+  if (!isVisualCropPreview && hasPadding) {
     const top = state.paddingTop ? Math.round(state.paddingTop * scaleFactor) : 0
     const right = state.paddingRight ? Math.round(state.paddingRight * scaleFactor) : 0
     const bottom = state.paddingBottom ? Math.round(state.paddingBottom * scaleFactor) : 0
@@ -408,8 +409,16 @@ function buildImagorPathParts(
     filters.push(`proportion(${state.proportion})`)
   }
 
-  // Format/Quality/MaxBytes (only for non-preview paths).
-  if (!forPreview) {
+  if (forPreview) {
+    filters.push('preview()')
+    filters.push('format(webp)')
+    if (state.quality) {
+      filters.push(`quality(${state.quality})`)
+    }
+    if (state.maxBytes) {
+      filters.push(`max_bytes(${state.maxBytes})`)
+    }
+  } else {
     if (state.format) {
       filters.push(`format(${state.format})`)
     }

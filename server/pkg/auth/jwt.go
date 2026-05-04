@@ -18,6 +18,8 @@ type Claims struct {
 	Scopes     []string `json:"scopes"`
 	PathPrefix string   `json:"path_prefix,omitempty"`
 	IsEmbedded bool     `json:"is_embedded,omitempty"`
+	Kind       string   `json:"kind,omitempty"`
+	SpaceKey   string   `json:"space_key,omitempty"`
 }
 
 // TokenManager handles JWT operations
@@ -132,9 +134,31 @@ func (tm *TokenManager) RefreshToken(claims *Claims) (string, error) {
 		Scopes:     claims.Scopes,
 		PathPrefix: claims.PathPrefix,
 		IsEmbedded: claims.IsEmbedded,
+		Kind:       claims.Kind,
+		SpaceKey:   claims.SpaceKey,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
+	return token.SignedString(tm.secret)
+}
+
+// GenerateTokenWithClaims creates a JWT token from the provided claims using the
+// supplied TTL. When ttl <= 0, the token manager default duration is used.
+func (tm *TokenManager) GenerateTokenWithClaims(claims Claims, ttl time.Duration) (string, error) {
+	now := time.Now()
+	if ttl <= 0 {
+		ttl = tm.tokenDuration
+	}
+
+	if claims.Subject == "" {
+		claims.Subject = claims.UserID
+	}
+	claims.ExpiresAt = jwt.NewNumericDate(now.Add(ttl))
+	claims.NotBefore = jwt.NewNumericDate(now)
+	claims.IssuedAt = jwt.NewNumericDate(now)
+	claims.ID = fmt.Sprintf("%d", now.UnixNano())
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(tm.secret)
 }
 

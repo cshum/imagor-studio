@@ -15,6 +15,7 @@ type Space struct {
 	Bucket               string
 	Prefix               string
 	Region               string
+	PlatformRegion       string
 	Endpoint             string
 	AccessKeyID          string
 	SecretKey            string
