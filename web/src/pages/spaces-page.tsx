@@ -127,6 +127,7 @@ export function SpacesPage({
   const maxSpaces = usageSummary?.maxSpaces ?? null
   const spacesOverLimit = maxSpaces !== null && usedSpaces > maxSpaces
   const createSpaceDisabled = maxSpaces !== null && usedSpaces >= maxSpaces
+  const showSpaceLimitBadge = spacesOverLimit
   const spacesSummary = isUnlimitedOrMissing(maxSpaces)
     ? t('pages.spaces.stats.unlimited')
     : `${usedSpaces}/${maxSpaces}`
@@ -287,16 +288,14 @@ export function SpacesPage({
                 )}
               </div>
 
-              {(createSpaceDisabled || isTrialOrganization) && (
+              {(showSpaceLimitBadge || isTrialOrganization) && (
                 <div className='flex flex-col gap-2 sm:ml-auto sm:items-end sm:self-start'>
-                  {createSpaceDisabled && (
+                  {showSpaceLimitBadge && (
                     <Badge
                       variant='outline'
                       className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 sm:self-end dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
                     >
-                      {spacesOverLimit
-                        ? t('pages.spaces.messages.overPlanLimit')
-                        : t('pages.spaces.messages.spaceLimitReached')}
+                      {t('pages.spaces.messages.overPlanLimit')}
                     </Badge>
                   )}
 
@@ -378,16 +377,14 @@ export function SpacesPage({
                 )}
               </div>
 
-              {(createSpaceDisabled || isTrialOrganization) && (
+              {(showSpaceLimitBadge || isTrialOrganization) && (
                 <div className='flex flex-col gap-2 sm:ml-auto sm:items-end sm:self-start'>
-                  {createSpaceDisabled && (
+                  {showSpaceLimitBadge && (
                     <Badge
                       variant='outline'
                       className='w-fit border-amber-500/30 bg-amber-500/10 text-amber-700 sm:self-end dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-300'
                     >
-                      {spacesOverLimit
-                        ? t('pages.spaces.messages.overPlanLimit')
-                        : t('pages.spaces.messages.spaceLimitReached')}
+                      {t('pages.spaces.messages.overPlanLimit')}
                     </Badge>
                   )}
 

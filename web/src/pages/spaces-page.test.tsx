@@ -238,6 +238,34 @@ describe('SpacesPage', () => {
     expect(screen.getByText('common.trialSummary.daysRemaining')).toBeTruthy()
   })
 
+  it('does not show a limit badge when spaces are exactly at plan capacity', async () => {
+    const { SpacesPage } = await import('./spaces-page')
+
+    render(
+      <SpacesPage
+        loaderData={[]}
+        usageSummary={{
+          __typename: 'UsageSummary',
+          usedSpaces: 1,
+          maxSpaces: 1,
+          usedHostedStorageBytes: 0,
+          storageLimitGB: 100,
+          usedTransforms: 0,
+          transformsLimit: 1000,
+          periodStart: '2026-05-01T00:00:00Z',
+          periodEnd: '2026-06-01T00:00:00Z',
+        }}
+        currentOrganizationId='org-1'
+        currentOrganizationPlan='starter'
+        canCreateSpace={true}
+        canManageOrganization={true}
+      />,
+    )
+
+    expect(screen.queryByText('pages.spaces.messages.spaceLimitReached')).toBeNull()
+    expect(screen.queryByText('pages.spaces.messages.overPlanLimit')).toBeNull()
+  })
+
   it('falls back to generic trial messaging when remaining days are unavailable', async () => {
     const { SpacesPage } = await import('./spaces-page')
 
