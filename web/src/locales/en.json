@@ -77,7 +77,7 @@
   "auth": {
     "login": {
       "eyebrow": "Imagor Studio",
-      "title": "High-performance image processing for teams",
+      "title": "Managed image workspace for teams",
       "formTitle": "Sign in",
       "googleCta": "Continue with Google",
       "credentialsDividerCloud": "Or use email and password",
@@ -87,9 +87,9 @@
       "identifierPlaceholderCloud": "",
       "identifierPlaceholderSelfHosted": "Enter your username",
       "highlights": {
-        "storage": "Control storage and delivery by team or environment",
-        "delivery": "Manage image infrastructure without sharing credentials",
-        "access": "Review, edit, and organize images and templates in one place"
+        "storage": "Managed image transformation and delivery",
+        "delivery": "Image variants without infrastructure overhead",
+        "access": "One workspace for images, edits, and templates"
       },
       "signIn": "Sign In",
       "loginFailed": "Invalid credentials. Please try again.",

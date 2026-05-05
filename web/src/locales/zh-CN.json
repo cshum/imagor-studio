@@ -1593,7 +1593,7 @@
   "auth": {
     "login": {
       "eyebrow": "Imagor Studio",
-      "title": "适合团队的高性能图片处理",
+      "title": "适合团队的托管图片工作区",
       "formTitle": "登录",
       "googleCta": "使用 Google 继续",
       "credentialsDividerCloud": "或使用邮箱和密码",
@@ -1603,9 +1603,9 @@
       "identifierPlaceholderCloud": "",
       "identifierPlaceholderSelfHosted": "输入你的用户名",
       "highlights": {
-        "storage": "按团队或环境控制存储与交付",
-        "delivery": "无需共享凭证即可管理图片基础设施",
-        "access": "在一个地方审阅、编辑并整理图片与模板"
+        "storage": "托管式图片转换与交付",
+        "delivery": "无需自建基础设施的图片变体",
+        "access": "一个工作区管理图片、编辑内容与模板"
       },
       "signIn": "登录",
       "loginFailed": "登录凭证无效，请重试。",
