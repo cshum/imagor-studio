@@ -103,10 +103,6 @@ import { initializeTheme } from '@/stores/theme-store.ts'
 
 const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
 
-const usesPathnameScrollRestoration = (pathname: string) => {
-  return pathname === '/' || pathname.startsWith('/account') || pathname.startsWith('/spaces/')
-}
-
 const RootComponent = () => {
   useTitle()
   const { showDialog, setShowDialog } = useLicense()
@@ -957,15 +953,34 @@ const routeTree = isEmbeddedMode
       ]),
     ])
 
+const getScrollRestorationKey = (location: {
+  pathname: string
+  href: string
+  state: { __TSR_key?: string }
+}) => {
+  const { pathname } = location
+  if (pathname === '/' || pathname.startsWith('/account')) {
+    return pathname
+  }
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments[0] !== 'spaces') {
+    return location.state.__TSR_key ?? location.href
+  }
+  if (segments.length === 2) {
+    return pathname
+  }
+  if (segments[2] === 'f') {
+    return segments.length === 4 ? pathname : (location.state.__TSR_key ?? location.href)
+  }
+  return segments[2] === 'settings' ? pathname : (location.state.__TSR_key ?? location.href)
+}
+
 const createAppRouter = () =>
   createRouter({
     routeTree,
     scrollRestoration: true,
     scrollRestorationBehavior: 'instant',
-    getScrollRestorationKey: (location) =>
-      usesPathnameScrollRestoration(location.pathname)
-        ? location.pathname
-        : (location.state.__TSR_key ?? location.href),
+    getScrollRestorationKey,
   })
 
 const localThemeStorage = new LocalConfigStorage('theme')

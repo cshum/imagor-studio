@@ -54,7 +54,7 @@ export function LoadingBar({ isLoading, theme = 'auto', size = 'default' }: Load
 
   const themeClasses = themeClassesMap[theme] || themeClassesMap.auto
   const heightClassName = size === 'thin' ? 'h-0.5' : 'h-0.75'
-  const backgroundClassName = cn(themeClasses.background, size === 'thin' && 'opacity-40')
+  const backgroundClassName = cn(themeClasses.background, size === 'thin' && 'opacity-60')
   const barClassName = cn(themeClasses.bar, size === 'thin' && 'opacity-95')
 
   return (
