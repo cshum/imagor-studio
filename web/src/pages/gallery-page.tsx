@@ -427,6 +427,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
       return navigate({
         to: routeSpaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
         params: routeSpaceKey ? { spaceKey: routeSpaceKey, imageKey } : { imageKey },
+        resetScroll: false,
       })
     } else {
       return navigate({
@@ -436,6 +437,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
         params: routeSpaceKey
           ? { spaceKey: routeSpaceKey, galleryKey, imageKey }
           : { galleryKey, imageKey },
+        resetScroll: false,
       })
     }
   }

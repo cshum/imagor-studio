@@ -67,6 +67,7 @@ export function ImagePage({
       navigate({
         to: routeSpaceKey ? '/spaces/$spaceKey/$imageKey' : '/$imageKey',
         params: routeSpaceKey ? { spaceKey: routeSpaceKey, imageKey } : { imageKey },
+        resetScroll: false,
       })
     } else {
       navigate({
@@ -76,6 +77,7 @@ export function ImagePage({
         params: routeSpaceKey
           ? { spaceKey: routeSpaceKey, galleryKey, imageKey }
           : { galleryKey, imageKey },
+        resetScroll: false,
       })
     }
   }
@@ -148,6 +150,7 @@ export function ImagePage({
             params: routeSpaceKey
               ? { spaceKey: routeSpaceKey, imageKey: nextImage.imageKey }
               : { imageKey: nextImage.imageKey },
+            resetScroll: false,
           })
         } else {
           navigate({
@@ -157,6 +160,7 @@ export function ImagePage({
             params: routeSpaceKey
               ? { spaceKey: routeSpaceKey, galleryKey, imageKey: nextImage.imageKey }
               : { galleryKey, imageKey: nextImage.imageKey },
+            resetScroll: false,
           })
         }
       }, 5000)
