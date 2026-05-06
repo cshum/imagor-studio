@@ -34,6 +34,7 @@ import {
 import { adminSetupLoader } from '@/loaders/admin-setup-loader.ts'
 import { authCallbackLoader } from '@/loaders/auth-callback-loader.ts'
 import {
+  redirectAuthenticatedUsers,
   redirectAuthenticatedUsersWithOrganization,
   requireAccountAuth,
   requireAuth,
@@ -127,6 +128,7 @@ const rootRoute = createRootRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
+  beforeLoad: redirectAuthenticatedUsers,
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === 'string' ? search.redirect : undefined,
     invite_token: getInviteTokenSearchValue(search),

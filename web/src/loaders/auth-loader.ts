@@ -18,7 +18,16 @@ type OrganizationAuthContext = {
   organization?: MyOrganizationQuery['myOrganization']
 }
 
+type AuthenticatedRedirectContext = {
+  search?: {
+    redirect?: string
+  }
+}
+
 const waitForResolvedAuth = () => authStore.waitFor((state) => state.state !== 'loading')
+
+const isValidRedirectPath = (path?: string): path is string =>
+  typeof path === 'string' && path.startsWith('/') && !path.startsWith('//')
 
 /**
  * Helper function to create login redirect with current location
@@ -149,6 +158,23 @@ export const redirectAuthenticatedUsersWithOrganization = async (context?: {
   const organization = await getMyOrganization()
   if (!organization) {
     return auth
+  }
+
+  throw redirect({ to: '/' })
+}
+
+/**
+ * Redirect authenticated users away from auth entry routes like /login.
+ */
+export const redirectAuthenticatedUsers = async (context?: AuthenticatedRedirectContext) => {
+  const auth = await waitForResolvedAuth()
+
+  if (auth.state !== 'authenticated') {
+    return auth
+  }
+
+  if (isValidRedirectPath(context?.search?.redirect)) {
+    throw redirect({ to: context.search.redirect })
   }
 
   throw redirect({ to: '/' })
