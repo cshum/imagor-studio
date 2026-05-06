@@ -67,6 +67,7 @@ export function LoginPage() {
   )
   const isMultiTenant = authState.multiTenant
   const inviteToken = typeof search.invite_token === 'string' ? search.invite_token : undefined
+  const redirectParam = typeof search.redirect === 'string' ? search.redirect : undefined
 
   // Helper function to validate redirect URL for security
   const isValidRedirectUrl = (url: string): boolean => {
@@ -171,7 +172,6 @@ export function LoginPage() {
 
   // If already authenticated, redirect to intended destination or gallery
   if (authState.state === 'authenticated' && !isCompletingLogin) {
-    const redirectParam = search.redirect as string | undefined
     if (redirectParam && isValidRedirectUrl(redirectParam)) {
       return <Navigate to={redirectParam} replace />
     }
@@ -196,7 +196,6 @@ export function LoginPage() {
       await router.invalidate()
 
       // Handle redirect after successful login
-      const redirectParam = search.redirect as string | undefined
       if (redirectParam && isValidRedirectUrl(redirectParam)) {
         navigate({ to: redirectParam })
         return
@@ -233,7 +232,10 @@ export function LoginPage() {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = getGoogleLoginUrl(inviteToken)
+    window.location.href = getGoogleLoginUrl(
+      inviteToken,
+      redirectParam && isValidRedirectUrl(redirectParam) ? redirectParam : undefined,
+    )
   }
 
   const credentialsDividerKey = isMultiTenant

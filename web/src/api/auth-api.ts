@@ -360,10 +360,21 @@ export interface InvitationResolutionResponse {
  * Uses the configured API base URL so it works correctly in dev (VITE_API_BASE_URL=http://localhost:8080)
  * and in production (same-host, empty base URL → relative /api/... path).
  */
-export function getGoogleLoginUrl(inviteToken?: string): string {
+export function getGoogleLoginUrl(inviteToken?: string, redirectPath?: string): string {
+  const query = new URLSearchParams()
+
   if (inviteToken?.trim()) {
-    const query = new URLSearchParams({ invite_token: inviteToken.trim() })
-    return `${BASE_URL}/api/auth/google/login?${query.toString()}`
+    query.set('invite_token', inviteToken.trim())
+  }
+
+  if (redirectPath?.trim()) {
+    query.set('redirect_path', redirectPath.trim())
+  }
+
+  const queryString = query.toString()
+
+  if (queryString) {
+    return `${BASE_URL}/api/auth/google/login?${queryString}`
   }
 
   return `${BASE_URL}/api/auth/google/login`

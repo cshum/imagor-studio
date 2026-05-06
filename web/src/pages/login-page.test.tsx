@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockNavigate = vi.fn()
 const mockGetAuthProviders = vi.fn()
+const mockGetGoogleLoginUrl = vi.fn()
 const mockInitAuth = vi.fn()
 const mockInvalidate = vi.fn()
 const mockLogin = vi.fn()
@@ -34,8 +35,7 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('@/api/auth-api', () => ({
   getAuthProviders: mockGetAuthProviders,
-  getGoogleLoginUrl: (inviteToken?: string) =>
-    inviteToken ? `/api/auth/google/login?invite_token=${inviteToken}` : '/api/auth/google/login',
+  getGoogleLoginUrl: (...args: unknown[]) => mockGetGoogleLoginUrl(...args),
   login: (...args: unknown[]) => mockLogin(...args),
 }))
 
@@ -84,6 +84,18 @@ describe('LoginPage', () => {
     delete (window as Window & { __IMAGOR_STUDIO_BOOTSTRAP__?: unknown })
       .__IMAGOR_STUDIO_BOOTSTRAP__
     mockGetAuthProviders.mockResolvedValue({ providers: ['google'] })
+    mockGetGoogleLoginUrl.mockImplementation((inviteToken?: string, redirectPath?: string) => {
+      const params = new URLSearchParams()
+      if (typeof inviteToken === 'string' && inviteToken) {
+        params.set('invite_token', inviteToken)
+      }
+      if (typeof redirectPath === 'string' && redirectPath) {
+        params.set('redirect_path', redirectPath)
+      }
+
+      const query = params.toString()
+      return query ? `/api/auth/google/login?${query}` : '/api/auth/google/login'
+    })
     mockLogin.mockResolvedValue({ token: 'token-123', redirectPath: '/' })
     mockUseSearch.mockReturnValue({ invite_token: 'invite-token-123' })
     currentAuthState = {
@@ -173,6 +185,22 @@ describe('LoginPage', () => {
 
     expect(screen.getByRole('button', { name: 'auth.login.googleCta' })).toBeTruthy()
     expect(mockGetAuthProviders).not.toHaveBeenCalled()
+  })
+
+  it('passes redirect through Google login when present', async () => {
+    const { LoginPage } = await import('./login-page')
+    mockUseSearch.mockReturnValue({
+      invite_token: 'invite-token-123',
+      redirect: '/spaces/adrian',
+    })
+
+    await act(async () => {
+      render(<LoginPage />)
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'auth.login.googleCta' }))
+
+    expect(mockGetGoogleLoginUrl).toHaveBeenCalledWith('invite-token-123', '/spaces/adrian')
   })
 
   it('redirects multi-tenant login to root instead of backend landing page fallback', async () => {
