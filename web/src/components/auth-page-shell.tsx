@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react'
-import { Link } from '@tanstack/react-router'
 
 import { BrandBar } from '@/components/brand-bar'
 import { LanguageSelector } from '@/components/language-selector'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
+
+const PRIVACY_POLICY_URL = 'https://imagor.net/privacy'
+const TERMS_OF_SERVICE_URL = 'https://imagor.net/terms'
 
 type AuthPageShellProps = {
   eyebrow: string
@@ -82,12 +84,18 @@ export function AuthPageShell({
 
         {showLegalLinks ? (
           <div className='text-muted-foreground mt-8 flex items-center justify-center gap-4 pt-6 text-xs'>
-            <Link to='/privacy' className='hover:text-foreground underline underline-offset-4'>
+            <a
+              href={PRIVACY_POLICY_URL}
+              className='hover:text-foreground underline underline-offset-4'
+            >
               Privacy Policy
-            </Link>
-            <Link to='/terms' className='hover:text-foreground underline underline-offset-4'>
+            </a>
+            <a
+              href={TERMS_OF_SERVICE_URL}
+              className='hover:text-foreground underline underline-offset-4'
+            >
               Terms of Service
-            </Link>
+            </a>
           </div>
         ) : null}
       </div>
