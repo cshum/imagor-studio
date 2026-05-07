@@ -11,6 +11,7 @@ import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useBrand } from '@/hooks/use-brand'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
@@ -103,8 +104,8 @@ export function ImageEditorLayout({
   imagorPath,
   activeStatusBarKeys = [],
   zoomControl,
-  mobileSheetOpen: _mobileSheetOpen,
-  onMobileSheetOpenChange: _onMobileSheetOpenChange,
+  mobileSheetOpen,
+  onMobileSheetOpenChange,
   sectionComponents,
   hiddenSections,
 }: ImageEditorLayoutProps) {
@@ -272,6 +273,80 @@ export function ImageEditorLayout({
   const statusBar = (
     <ImageEditorStatusBar imagorPath={imagorPath} activeStatusBarKeys={activeStatusBarKeys} />
   )
+
+  // --- Mobile Layout ---
+  if (isMobile) {
+    return (
+      <div className='bg-background ios-no-drag min-h-screen-safe flex overflow-hidden overscroll-none select-none'>
+        <LoadingBar isLoading={isLoading} />
+
+        <div className='ios-preview-container-fix flex flex-1 flex-col'>
+          <div className='flex items-center gap-2 border-b p-3'>
+            {backButton}
+            {centeredTitle}
+            <div className='ml-auto flex items-center gap-2'>
+              <ModeToggle />
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='ghost' size='sm'>
+                    <MoreVertical className='h-4 w-4' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <EditorMenuDropdown
+                  onDownload={onDownload}
+                  onCopyUrl={onCopyUrl}
+                  onSaveTemplate={onSaveTemplateAs}
+                  onApplyTemplate={onApplyTemplate}
+                  onLanguageChange={onLanguageChange}
+                  onToggleSectionVisibility={onToggleSectionVisibility}
+                  editorOpenSections={editorOpenSections}
+                  includeUndoRedo={true}
+                  onUndo={onUndo}
+                  onRedo={onRedo}
+                  canUndo={canUndo}
+                  canRedo={canRedo}
+                  hiddenSections={hiddenSections}
+                />
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {renderedPreviewArea}
+
+          <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
+            <SheetTrigger asChild>
+              <button className='hidden' />
+            </SheetTrigger>
+            <SheetContent
+              side='right'
+              hideClose={true}
+              className='flex w-full flex-col gap-0 p-0 sm:w-96'
+            >
+              <SheetHeader className='border-b p-3'>
+                <div className='flex items-center gap-3'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => onMobileSheetOpenChange(false)}
+                  >
+                    <ChevronLeft className='mr-1 h-4 w-4' />
+                    {t('imageEditor.page.back')}
+                  </Button>
+                  <SheetTitle className='flex-1 text-center'>
+                    {t('imageEditor.page.controls')}
+                  </SheetTitle>
+                  <div className='w-[72px]' />
+                </div>
+              </SheetHeader>
+              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                {singleColumnControls}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    )
+  }
 
   // --- Tablet Layout ---
   if (isTablet) {
