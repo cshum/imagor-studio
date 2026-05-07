@@ -172,7 +172,7 @@ export function ImageEditorStatusBar({
     }
 
     highlightedPart.scrollIntoView({
-      behavior: 'smooth',
+      behavior: 'auto',
       block: 'nearest',
       inline: 'center',
     })
