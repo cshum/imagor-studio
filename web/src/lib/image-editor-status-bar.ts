@@ -7,6 +7,8 @@ export interface StatusBarSegmentHint {
 
 export type StatusBarMatchKey =
   | 'filters'
+  | 'image'
+  | 'text'
   | 'crop'
   | 'dimensions'
   | 'alignment'
