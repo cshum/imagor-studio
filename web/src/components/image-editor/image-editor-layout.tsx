@@ -2,7 +2,16 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { closestCenter, DndContext } from '@dnd-kit/core'
 import { Link } from '@tanstack/react-router'
-import { ChevronLeft, CircleHelp, Copy, ExternalLink, FileText, MoreVertical, Redo2, Undo2 } from 'lucide-react'
+import {
+  ChevronLeft,
+  CircleHelp,
+  Copy,
+  ExternalLink,
+  FileText,
+  MoreVertical,
+  Redo2,
+  Undo2,
+} from 'lucide-react'
 
 import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
 import { SectionDragOverlay } from '@/components/image-editor/section-drag-overlay'
@@ -341,7 +350,12 @@ export function ImageEditorLayout({
           }
         }
 
-        if (segment === 'left' || segment === 'right' || segment === 'top' || segment === 'bottom') {
+        if (
+          segment === 'left' ||
+          segment === 'right' ||
+          segment === 'top' ||
+          segment === 'bottom'
+        ) {
           return {
             parts: [
               {
@@ -574,9 +588,9 @@ export function ImageEditorLayout({
 
   const statusBar = (
     <TooltipProvider delayDuration={150}>
-      <div className='bg-background scrollbar-hide flex h-12 items-center gap-3 overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
+      <div className='bg-background scrollbar-hide flex h-12 items-center gap-3 overflow-x-auto overflow-y-hidden overscroll-none border-t px-4 pr-28'>
         <div className='scrollbar-hide min-w-0 flex-1 overflow-x-auto'>
-          <code className='text-muted-foreground flex items-center font-mono text-xs whitespace-nowrap select-text'>
+          <code className='text-muted-foreground flex items-center pr-36 font-mono text-xs whitespace-nowrap select-text'>
             {statusBarSegments.map((segment, index) => (
               <React.Fragment key={`${index}-${segment.parts.map((part) => part.text).join(':')}`}>
                 <span className='text-muted-foreground/60'>/</span>
@@ -650,7 +664,9 @@ export function ImageEditorLayout({
               </p>
             </div>
             <div className='space-y-1'>
-              <div className='text-xs font-medium'>{t('imageEditor.page.statusBar.endpointFormatLabel')}</div>
+              <div className='text-xs font-medium'>
+                {t('imageEditor.page.statusBar.endpointFormatLabel')}
+              </div>
               <code className='bg-muted block overflow-x-auto rounded px-2 py-1 font-mono text-xs'>
                 /unsafe-or-signature/transformations/source-image
               </code>
