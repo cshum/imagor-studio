@@ -56,6 +56,13 @@ export interface BuildStatusBarSegmentsOptions {
   filtersDocsUrl?: string
 }
 
+export interface StatusBarLayerLike {
+  id: string
+  type: 'image' | 'text'
+  visible: boolean
+  text?: string
+}
+
 export const SECTION_STATUS_BAR_KEYS: Record<string, StatusBarMatchKey[]> = {
   crop: ['crop'],
   effects: [
@@ -239,6 +246,38 @@ export function getFilterHintTitle(filterText: string, filterName: string | null
   }
 
   return filterText
+}
+
+export function getActiveLayerStatusBarKeys(
+  layers: StatusBarLayerLike[] | undefined,
+  selectedLayerId: string | null,
+  textEditingLayerId: string | null,
+): StatusBarMatchKey[] | null {
+  const activeLayerId = textEditingLayerId || selectedLayerId
+  if (!activeLayerId || !layers?.length) {
+    return null
+  }
+
+  const visibleSerializableLayers = layers.filter((layer) => {
+    if (!layer.visible) {
+      return false
+    }
+
+    if (layer.type === 'text') {
+      return !!layer.text?.trim().length
+    }
+
+    return true
+  })
+
+  const activeLayerIndex = visibleSerializableLayers.findIndex(
+    (layer) => layer.id === activeLayerId,
+  )
+  if (activeLayerIndex === -1) {
+    return null
+  }
+
+  return [`layer:${activeLayerIndex}`]
 }
 
 export function buildStatusBarSegments({

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildStatusBarSegments,
+  getActiveLayerStatusBarKeys,
   getFilterHintTitle,
   getFilterName,
   splitTopLevelFilters,
@@ -168,5 +169,45 @@ describe('buildStatusBarSegments', () => {
     expect(segments[0]?.parts[1]?.matchKeys).toEqual(['filters', 'image', 'layer:0'])
     expect(segments[0]?.parts[2]?.matchKeys).toEqual(['filters', 'text', 'layer:1'])
     expect(segments[0]?.parts[3]?.matchKeys).toEqual(['filters', 'image', 'layer:2'])
+  })
+})
+
+describe('getActiveLayerStatusBarKeys', () => {
+  it('returns the ordinal layer key among visible serializable layers', () => {
+    expect(
+      getActiveLayerStatusBarKeys(
+        [
+          { id: 'hidden-image', type: 'image', visible: false },
+          { id: 'empty-text', type: 'text', visible: true, text: '   ' },
+          { id: 'visible-image', type: 'image', visible: true },
+          { id: 'visible-text', type: 'text', visible: true, text: 'hello' },
+        ],
+        'visible-text',
+        null,
+      ),
+    ).toEqual(['layer:1'])
+  })
+
+  it('prefers the text editing layer over the selected layer', () => {
+    expect(
+      getActiveLayerStatusBarKeys(
+        [
+          { id: 'image-layer', type: 'image', visible: true },
+          { id: 'text-layer', type: 'text', visible: true, text: 'hello' },
+        ],
+        'image-layer',
+        'text-layer',
+      ),
+    ).toEqual(['layer:1'])
+  })
+
+  it('returns null when the active layer is not serializable', () => {
+    expect(
+      getActiveLayerStatusBarKeys(
+        [{ id: 'empty-text', type: 'text', visible: true, text: '' }],
+        'empty-text',
+        null,
+      ),
+    ).toBeNull()
   })
 })
