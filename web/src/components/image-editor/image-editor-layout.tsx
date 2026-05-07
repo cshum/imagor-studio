@@ -2,36 +2,21 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { closestCenter, DndContext } from '@dnd-kit/core'
 import { Link } from '@tanstack/react-router'
-import {
-  ChevronLeft,
-  CircleHelp,
-  Copy,
-  ExternalLink,
-  FileText,
-  MoreVertical,
-  Redo2,
-  Undo2,
-} from 'lucide-react'
+import { ChevronLeft, Copy, FileText, MoreVertical, Redo2, Undo2 } from 'lucide-react'
 
 import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
+import { ImageEditorStatusBar } from '@/components/image-editor/image-editor-status-bar'
 import { SectionDragOverlay } from '@/components/image-editor/section-drag-overlay'
 import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useBrand } from '@/hooks/use-brand'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
 import { useNoBodyOverscroll } from '@/hooks/use-no-body-overscroll'
 import type { EditorSections, SectionKey } from '@/lib/editor-sections'
-import {
-  buildStatusBarSegments,
-  type StatusBarMatchKey,
-  type StatusBarSegment,
-} from '@/lib/image-editor-status-bar'
+import { type StatusBarMatchKey } from '@/lib/image-editor-status-bar'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/stores/auth-store'
 
@@ -118,30 +103,18 @@ export function ImageEditorLayout({
   imagorPath,
   activeStatusBarKeys = [],
   zoomControl,
-  mobileSheetOpen,
-  onMobileSheetOpenChange,
+  mobileSheetOpen: _mobileSheetOpen,
+  onMobileSheetOpenChange: _onMobileSheetOpenChange,
   sectionComponents,
   hiddenSections,
 }: ImageEditorLayoutProps) {
   const { t } = useTranslation()
-  const hasActiveStatusBarKeys = activeStatusBarKeys.length > 0
   const isMobile = !useBreakpoint('md')
   const isDesktop = useBreakpoint('lg')
   const isTablet = !isMobile && !isDesktop
   const { title: appTitle, url: appUrl } = useBrand()
   const { authState } = useAuth()
   const useInternalBrandLink = authState.multiTenant && appUrl === 'https://imagor.net'
-  const imageEndpointDocsUrl = 'https://docs.imagor.net/image-endpoint'
-  const filtersDocsUrl = 'https://docs.imagor.net/filters'
-
-  const statusBarSegments = useMemo<StatusBarSegment[]>(() => {
-    return buildStatusBarSegments({
-      imagorPath,
-      t,
-      imageEndpointDocsUrl,
-      filtersDocsUrl,
-    })
-  }, [filtersDocsUrl, imageEndpointDocsUrl, imagorPath, t])
 
   // Prevent macOS document-level bounce while editor is open,
   // without affecting inner scrollable panels or other pages.
@@ -297,217 +270,8 @@ export function ImageEditorLayout({
   )
 
   const statusBar = (
-    <TooltipProvider delayDuration={150}>
-      <div className='bg-background scrollbar-hide flex h-12 items-center gap-3 overflow-x-auto overflow-y-hidden overscroll-none border-t px-4 pr-28'>
-        <div className='scrollbar-hide min-w-0 flex-1 overflow-x-auto'>
-          <code className='text-muted-foreground flex items-center pr-36 font-mono text-xs whitespace-nowrap select-text'>
-            {statusBarSegments.map((segment, index) => (
-              <React.Fragment key={`${index}-${segment.parts.map((part) => part.text).join(':')}`}>
-                <span className='text-muted-foreground/60'>/</span>
-                {segment.parts.map((part, partIndex) => (
-                  <React.Fragment key={`${part.text}-${partIndex}`}>
-                    {part.prefix ? (
-                      <span className='sr-only'>{part.prefix}</span>
-                    ) : (
-                      partIndex > 0 &&
-                      !segment.parts[partIndex - 1]?.text.endsWith(':') && (
-                        <span className='text-muted-foreground/60'>:</span>
-                      )
-                    )}
-                    {(() => {
-                      const isHighlighted =
-                        hasActiveStatusBarKeys &&
-                        !!part.matchKeys?.length &&
-                        part.matchKeys.some((key) => activeStatusBarKeys.includes(key))
-
-                      const textClassName = cn(
-                        'transition-colors',
-                        isHighlighted ? 'text-foreground' : 'text-muted-foreground/70',
-                      )
-
-                      if (part.hint) {
-                        return (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type='button'
-                                className={cn(
-                                  'rounded no-underline decoration-dotted underline-offset-3 hover:underline',
-                                  textClassName,
-                                  isHighlighted
-                                    ? 'hover:text-foreground'
-                                    : 'hover:text-foreground/85',
-                                )}
-                              >
-                                {part.prefix}
-                                {part.text}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className='max-w-xs space-y-2 px-3 py-2'>
-                              <div className='text-sm font-medium'>{part.hint.title}</div>
-                              <p className='text-muted-foreground text-xs leading-relaxed'>
-                                {part.hint.description}
-                              </p>
-                              {part.hint.docsUrl && part.hint.docsLabel && (
-                                <a
-                                  href={part.hint.docsUrl}
-                                  target='_blank'
-                                  rel='noreferrer'
-                                  className='text-primary inline-flex items-center gap-1 text-xs hover:underline'
-                                >
-                                  {part.hint.docsLabel}
-                                  <ExternalLink className='h-3 w-3' />
-                                </a>
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        )
-                      }
-
-                      return (
-                        <span className={textClassName}>
-                          {part.prefix}
-                          {part.text}
-                        </span>
-                      )
-                    })()}
-                  </React.Fragment>
-                ))}
-              </React.Fragment>
-            ))}
-          </code>
-        </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant='ghost'
-              size='icon'
-              className='text-muted-foreground hover:text-foreground h-7 w-7 shrink-0'
-              aria-label={t('imageEditor.page.statusBar.helpTitle')}
-            >
-              <CircleHelp className='h-4 w-4' />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align='end' className='w-80 space-y-3'>
-            <div className='space-y-1'>
-              <h4 className='text-sm font-semibold'>{t('imageEditor.page.statusBar.helpTitle')}</h4>
-              <p className='text-muted-foreground text-sm'>
-                {t('imageEditor.page.statusBar.helpDescription')}
-              </p>
-            </div>
-            <div className='space-y-1'>
-              <div className='text-xs font-medium'>
-                {t('imageEditor.page.statusBar.endpointFormatLabel')}
-              </div>
-              <code className='bg-muted block overflow-x-auto rounded px-2 py-1 font-mono text-xs'>
-                /unsafe-or-signature/transformations/source-image
-              </code>
-            </div>
-            <p className='text-muted-foreground text-sm'>
-              {t('imageEditor.page.statusBar.copyUrlHint')}
-            </p>
-            <div className='flex flex-col gap-2 text-sm'>
-              <a
-                href={imageEndpointDocsUrl}
-                target='_blank'
-                rel='noreferrer'
-                className='text-primary inline-flex items-center gap-1 hover:underline'
-              >
-                {t('imageEditor.page.statusBar.imageEndpointDocs')}
-                <ExternalLink className='h-3.5 w-3.5' />
-              </a>
-              <a
-                href={filtersDocsUrl}
-                target='_blank'
-                rel='noreferrer'
-                className='text-primary inline-flex items-center gap-1 hover:underline'
-              >
-                {t('imageEditor.page.statusBar.filtersDocs')}
-                <ExternalLink className='h-3.5 w-3.5' />
-              </a>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-    </TooltipProvider>
+    <ImageEditorStatusBar imagorPath={imagorPath} activeStatusBarKeys={activeStatusBarKeys} />
   )
-
-  // --- Mobile Layout ---
-  if (isMobile) {
-    return (
-      <div className='bg-background ios-no-drag min-h-screen-safe flex overflow-hidden overscroll-none select-none'>
-        <LoadingBar isLoading={isLoading} />
-
-        <div className='ios-preview-container-fix flex flex-1 flex-col'>
-          {/* Header */}
-          <div className='flex items-center gap-2 border-b p-3'>
-            {backButton}
-            {centeredTitle}
-            <div className='ml-auto flex items-center gap-2'>
-              <ModeToggle />
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant='ghost' size='sm'>
-                    <MoreVertical className='h-4 w-4' />
-                  </Button>
-                </DropdownMenuTrigger>
-                <EditorMenuDropdown
-                  onDownload={onDownload}
-                  onCopyUrl={onCopyUrl}
-                  onSaveTemplate={onSaveTemplateAs}
-                  onApplyTemplate={onApplyTemplate}
-                  onLanguageChange={onLanguageChange}
-                  onToggleSectionVisibility={onToggleSectionVisibility}
-                  editorOpenSections={editorOpenSections}
-                  includeUndoRedo={true}
-                  onUndo={onUndo}
-                  onRedo={onRedo}
-                  canUndo={canUndo}
-                  canRedo={canRedo}
-                  hiddenSections={hiddenSections}
-                />
-              </DropdownMenu>
-            </div>
-          </div>
-
-          {/* Preview */}
-          {renderedPreviewArea}
-
-          {/* Controls Sheet */}
-          <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
-            <SheetTrigger asChild>
-              <button className='hidden' />
-            </SheetTrigger>
-            <SheetContent
-              side='right'
-              hideClose={true}
-              className='flex w-full flex-col gap-0 p-0 sm:w-96'
-            >
-              <SheetHeader className='border-b p-3'>
-                <div className='flex items-center gap-3'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onMobileSheetOpenChange(false)}
-                  >
-                    <ChevronLeft className='mr-1 h-4 w-4' />
-                    {t('imageEditor.page.back')}
-                  </Button>
-                  <SheetTitle className='flex-1 text-center'>
-                    {t('imageEditor.page.controls')}
-                  </SheetTitle>
-                  <div className='w-[72px]' />
-                </div>
-              </SheetHeader>
-              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-                {singleColumnControls}
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-    )
-  }
 
   // --- Tablet Layout ---
   if (isTablet) {
