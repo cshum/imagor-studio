@@ -213,7 +213,9 @@ export function buildStatusBarSegments({
           ...filterItems.map((filterItem) => {
             const filterName = getFilterName(filterItem)
             const filterAnchor = filterName ? FILTER_DOC_ANCHORS[filterName] : undefined
-            const filterDescriptionKey = filterName ? FILTER_DESCRIPTION_KEYS[filterName] : undefined
+            const filterDescriptionKey = filterName
+              ? FILTER_DESCRIPTION_KEYS[filterName]
+              : undefined
             return {
               prefix: ':',
               text: filterItem,

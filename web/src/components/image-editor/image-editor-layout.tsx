@@ -27,10 +27,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
 import { useNoBodyOverscroll } from '@/hooks/use-no-body-overscroll'
 import type { EditorSections, SectionKey } from '@/lib/editor-sections'
-import {
-  buildStatusBarSegments,
-  type StatusBarSegment,
-} from '@/lib/image-editor-status-bar'
+import { buildStatusBarSegments, type StatusBarSegment } from '@/lib/image-editor-status-bar'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/stores/auth-store'
 
@@ -315,7 +312,7 @@ export function ImageEditorLayout({
                         <TooltipTrigger asChild>
                           <button
                             type='button'
-                            className='text-muted-foreground hover:text-foreground rounded underline decoration-dotted underline-offset-3'
+                            className='text-muted-foreground hover:text-foreground rounded no-underline decoration-dotted underline-offset-3 hover:underline'
                           >
                             {part.prefix}
                             {part.text}
