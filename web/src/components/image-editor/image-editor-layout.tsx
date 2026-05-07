@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { closestCenter, DndContext } from '@dnd-kit/core'
 import { Link } from '@tanstack/react-router'
-import { ChevronLeft, Copy, FileText, MoreVertical, Redo2, Undo2 } from 'lucide-react'
+import { ChevronLeft, CircleHelp, Copy, ExternalLink, FileText, MoreVertical, Redo2, Undo2 } from 'lucide-react'
 
 import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
 import { SectionDragOverlay } from '@/components/image-editor/section-drag-overlay'
@@ -10,7 +10,9 @@ import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useBrand } from '@/hooks/use-brand'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
@@ -18,6 +20,151 @@ import { useNoBodyOverscroll } from '@/hooks/use-no-body-overscroll'
 import type { EditorSections, SectionKey } from '@/lib/editor-sections'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/stores/auth-store'
+
+interface StatusBarSegmentHint {
+  title: string
+  description: string
+  docsUrl?: string
+  docsLabel?: string
+}
+
+interface StatusBarSegmentPart {
+  text: string
+  hint?: StatusBarSegmentHint
+}
+
+interface StatusBarSegment {
+  parts: StatusBarSegmentPart[]
+}
+
+const FILTER_DOC_ANCHORS: Record<string, string> = {
+  attachment: 'attachmentfilename',
+  background_color: 'background_colorcolor',
+  blur: 'blursigma',
+  brightness: 'brightnessamount',
+  contrast: 'contrastamount',
+  crop: 'croplefttopwidthheight',
+  dpi: 'dpinum',
+  draw_detections: 'draw_detections',
+  expire: 'expiretimestamp',
+  fill: 'fillcolor',
+  focal: 'focalaxbcxd-or-focalxy',
+  format: 'formatformat',
+  grayscale: 'grayscale',
+  hue: 'hueangle',
+  image: 'imageimagorpath-x-y-alpha-blend_mode',
+  max_bytes: 'max_bytesamount',
+  max_frames: 'max_framesn',
+  no_upscale: 'no_upscale',
+  orient: 'orientangle',
+  page: 'pagenum',
+  pixelate: 'pixelateblock_size',
+  preview: 'preview',
+  proportion: 'proportionpercentage',
+  quality: 'qualityamount',
+  raw: 'raw',
+  redact: 'redactmode-strength',
+  redact_oval: 'redact_ovalmode-strength',
+  rgb: 'rgbrgb',
+  rotate: 'rotateangle',
+  round_corner: 'round_cornerrx--ry--color',
+  saturation: 'saturationamount',
+  sharpen: 'sharpensigma',
+  strip_exif: 'strip_exif',
+  strip_icc: 'strip_icc',
+  text: 'texttext-x-y-font-color-alpha-blend_mode-width-align-justify-wrap-spacing-dpi',
+  to_colorspace: 'to_colorspaceprofile',
+  upscale: 'upscale',
+  watermark: 'watermarkimage-x-y-alpha--w_ratio--h_ratio',
+}
+
+const FILTER_DESCRIPTION_KEYS: Record<string, string> = {
+  attachment: 'attachmentDescription',
+  blur: 'blurDescription',
+  brightness: 'brightnessDescription',
+  contrast: 'contrastDescription',
+  crop: 'filterCropDescription',
+  expire: 'expireDescription',
+  fill: 'fillDescription',
+  format: 'formatDescription',
+  grayscale: 'grayscaleDescription',
+  hue: 'hueDescription',
+  image: 'imageDescription',
+  max_bytes: 'maxBytesDescription',
+  max_frames: 'maxFramesDescription',
+  no_upscale: 'noUpscaleDescription',
+  orient: 'orientDescription',
+  page: 'pageDescription',
+  pixelate: 'pixelateDescription',
+  preview: 'previewDescription',
+  proportion: 'proportionDescription',
+  quality: 'qualityDescription',
+  raw: 'rawDescription',
+  rgb: 'rgbDescription',
+  rotate: 'rotateDescription',
+  round_corner: 'roundCornerDescription',
+  saturation: 'saturationDescription',
+  sharpen: 'sharpenDescription',
+  text: 'textDescription',
+  to_colorspace: 'toColorspaceDescription',
+  upscale: 'upscaleDescription',
+  watermark: 'watermarkDescription',
+}
+
+function splitTopLevelFilters(filtersText: string): string[] {
+  const items: string[] = []
+  let current = ''
+  let depth = 0
+
+  for (const char of filtersText) {
+    if (char === '(') {
+      depth += 1
+      current += char
+      continue
+    }
+
+    if (char === ')') {
+      depth = Math.max(0, depth - 1)
+      current += char
+      continue
+    }
+
+    if (char === ':' && depth === 0) {
+      if (current) {
+        items.push(current)
+        current = ''
+      }
+      continue
+    }
+
+    current += char
+  }
+
+  if (current) {
+    items.push(current)
+  }
+
+  return items
+}
+
+function getFilterName(filterText: string): string | null {
+  const match = filterText.match(/^([a-z_]+)\(/i)
+  return match ? match[1] : null
+}
+
+function getFilterHintTitle(filterText: string, filterName: string | null): string {
+  if (!filterName) return filterText
+
+  if (['text', 'image', 'watermark'].includes(filterName)) {
+    return `${filterName}(...)`
+  }
+
+  if (filterText.length > 36) {
+    return `${filterName}(...)`
+  }
+
+  return filterText
+}
 
 export interface ImageEditorLayoutProps {
   // Loading
@@ -113,6 +260,162 @@ export function ImageEditorLayout({
   const { authState } = useAuth()
   const useInternalBrandLink = authState.multiTenant && appUrl === 'https://imagor.net'
   const statusBarImagorPath = imagorPath === '/' ? '' : imagorPath
+  const imageEndpointDocsUrl = 'https://docs.imagor.net/image-endpoint'
+  const filtersDocsUrl = 'https://docs.imagor.net/filters'
+
+  const statusBarSegments = useMemo<StatusBarSegment[]>(() => {
+    let hasSizeSegment = false
+
+    return statusBarImagorPath
+      .split('/')
+      .filter(Boolean)
+      .map((segment) => {
+        if (segment.startsWith('filters:')) {
+          const filterItems = splitTopLevelFilters(segment.slice('filters:'.length))
+          return {
+            parts: [
+              {
+                text: 'filters:',
+                hint: {
+                  title: t('imageEditor.page.statusBar.segmentHints.filtersTitle'),
+                  description: t('imageEditor.page.statusBar.segmentHints.filtersDescription'),
+                  docsUrl: filtersDocsUrl,
+                  docsLabel: t('imageEditor.page.statusBar.filtersDocs'),
+                },
+              },
+              ...filterItems.map((filterItem) => {
+                const filterName = getFilterName(filterItem)
+                const filterAnchor = filterName ? FILTER_DOC_ANCHORS[filterName] : undefined
+                const filterDescriptionKey = filterName
+                  ? FILTER_DESCRIPTION_KEYS[filterName]
+                  : undefined
+                return {
+                  text: filterItem,
+                  hint: {
+                    title: getFilterHintTitle(filterItem, filterName),
+                    description: filterDescriptionKey
+                      ? t(`imageEditor.page.statusBar.segmentHints.${filterDescriptionKey}`)
+                      : t('imageEditor.page.statusBar.segmentHints.filterItemDescription', {
+                          name: filterName || filterItem,
+                        }),
+                    docsUrl: filterAnchor ? `${filtersDocsUrl}/#${filterAnchor}` : filtersDocsUrl,
+                    docsLabel: t('imageEditor.page.statusBar.filtersDocs'),
+                  },
+                }
+              }),
+            ],
+          }
+        }
+
+        if (segment === 'stretch') {
+          return {
+            parts: [
+              {
+                text: segment,
+                hint: {
+                  title: segment,
+                  description: t('imageEditor.page.statusBar.segmentHints.stretchDescription'),
+                  docsUrl: imageEndpointDocsUrl,
+                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
+                },
+              },
+            ],
+          }
+        }
+
+        if (segment === 'smart') {
+          return {
+            parts: [
+              {
+                text: segment,
+                hint: {
+                  title: segment,
+                  description: t('imageEditor.page.statusBar.segmentHints.smartDescription'),
+                  docsUrl: imageEndpointDocsUrl,
+                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
+                },
+              },
+            ],
+          }
+        }
+
+        if (segment === 'left' || segment === 'right' || segment === 'top' || segment === 'bottom') {
+          return {
+            parts: [
+              {
+                text: segment,
+                hint: {
+                  title: t('imageEditor.page.statusBar.segmentHints.alignmentTitle'),
+                  description: t('imageEditor.page.statusBar.segmentHints.alignmentDescription'),
+                  docsUrl: imageEndpointDocsUrl,
+                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
+                },
+              },
+            ],
+          }
+        }
+
+        if (segment.endsWith('fit-in')) {
+          return {
+            parts: [
+              {
+                text: segment,
+                hint: {
+                  title: segment,
+                  description: t('imageEditor.page.statusBar.segmentHints.fitInDescription'),
+                  docsUrl: imageEndpointDocsUrl,
+                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
+                },
+              },
+            ],
+          }
+        }
+
+        if (/^-?(?:f(?:-\d+)?|\d+)x-?(?:f(?:-\d+)?|\d+)$/.test(segment)) {
+          hasSizeSegment = true
+          return {
+            parts: [
+              {
+                text: segment,
+                hint: {
+                  title: t('imageEditor.page.statusBar.segmentHints.sizeTitle'),
+                  description: t('imageEditor.page.statusBar.segmentHints.sizeDescription'),
+                  docsUrl: imageEndpointDocsUrl,
+                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
+                },
+              },
+            ],
+          }
+        }
+
+        if (/^-?\d+(?:\.\d+)?x-?\d+(?:\.\d+)?:-?\d+(?:\.\d+)?x-?\d+(?:\.\d+)?$/.test(segment)) {
+          const isPadding = hasSizeSegment
+          return {
+            parts: [
+              {
+                text: segment,
+                hint: {
+                  title: t(
+                    isPadding
+                      ? 'imageEditor.page.statusBar.segmentHints.paddingTitle'
+                      : 'imageEditor.page.statusBar.segmentHints.cropTitle',
+                  ),
+                  description: t(
+                    isPadding
+                      ? 'imageEditor.page.statusBar.segmentHints.paddingDescription'
+                      : 'imageEditor.page.statusBar.segmentHints.cropDescription',
+                  ),
+                  docsUrl: imageEndpointDocsUrl,
+                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
+                },
+              },
+            ],
+          }
+        }
+
+        return { parts: [{ text: segment }] }
+      })
+  }, [filtersDocsUrl, imageEndpointDocsUrl, statusBarImagorPath, t])
 
   // Prevent macOS document-level bounce while editor is open,
   // without affecting inner scrollable panels or other pages.
@@ -267,6 +570,109 @@ export function ImageEditorLayout({
     </>
   )
 
+  const statusBar = (
+    <TooltipProvider delayDuration={150}>
+      <div className='bg-background scrollbar-hide flex h-12 items-center gap-3 overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
+        <div className='scrollbar-hide min-w-0 flex-1 overflow-x-auto'>
+          <code className='text-muted-foreground flex items-center font-mono text-xs whitespace-nowrap select-text'>
+            {statusBarSegments.map((segment, index) => (
+              <React.Fragment key={`${index}-${segment.parts.map((part) => part.text).join(':')}`}>
+                <span className='text-muted-foreground/60'>/</span>
+                {segment.parts.map((part, partIndex) => (
+                  <React.Fragment key={`${part.text}-${partIndex}`}>
+                    {partIndex > 0 && !segment.parts[partIndex - 1]?.text.endsWith(':') && (
+                      <span className='text-muted-foreground/60'>:</span>
+                    )}
+                    {part.hint ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type='button'
+                            className='text-muted-foreground hover:text-foreground rounded px-0.5 underline decoration-dotted underline-offset-3'
+                          >
+                            {part.text}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className='max-w-xs space-y-2 px-3 py-2'>
+                          <div className='text-sm font-medium'>{part.hint.title}</div>
+                          <p className='text-muted-foreground text-xs leading-relaxed'>
+                            {part.hint.description}
+                          </p>
+                          {part.hint.docsUrl && part.hint.docsLabel && (
+                            <a
+                              href={part.hint.docsUrl}
+                              target='_blank'
+                              rel='noreferrer'
+                              className='text-primary inline-flex items-center gap-1 text-xs hover:underline'
+                            >
+                              {part.hint.docsLabel}
+                              <ExternalLink className='h-3 w-3' />
+                            </a>
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <span className='px-0.5'>{part.text}</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </React.Fragment>
+            ))}
+          </code>
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='text-muted-foreground hover:text-foreground h-7 w-7 shrink-0'
+              aria-label={t('imageEditor.page.statusBar.helpTitle')}
+            >
+              <CircleHelp className='h-4 w-4' />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align='end' className='w-80 space-y-3'>
+            <div className='space-y-1'>
+              <h4 className='text-sm font-semibold'>{t('imageEditor.page.statusBar.helpTitle')}</h4>
+              <p className='text-muted-foreground text-sm'>
+                {t('imageEditor.page.statusBar.helpDescription')}
+              </p>
+            </div>
+            <div className='space-y-1'>
+              <div className='text-xs font-medium'>{t('imageEditor.page.statusBar.endpointFormatLabel')}</div>
+              <code className='bg-muted block overflow-x-auto rounded px-2 py-1 font-mono text-xs'>
+                /unsafe-or-signature/transformations/source-image
+              </code>
+            </div>
+            <p className='text-muted-foreground text-sm'>
+              {t('imageEditor.page.statusBar.copyUrlHint')}
+            </p>
+            <div className='flex flex-col gap-2 text-sm'>
+              <a
+                href={imageEndpointDocsUrl}
+                target='_blank'
+                rel='noreferrer'
+                className='text-primary inline-flex items-center gap-1 hover:underline'
+              >
+                {t('imageEditor.page.statusBar.imageEndpointDocs')}
+                <ExternalLink className='h-3.5 w-3.5' />
+              </a>
+              <a
+                href={filtersDocsUrl}
+                target='_blank'
+                rel='noreferrer'
+                className='text-primary inline-flex items-center gap-1 hover:underline'
+              >
+                {t('imageEditor.page.statusBar.filtersDocs')}
+                <ExternalLink className='h-3.5 w-3.5' />
+              </a>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+    </TooltipProvider>
+  )
+
   // --- Mobile Layout ---
   if (isMobile) {
     return (
@@ -372,11 +778,7 @@ export function ImageEditorLayout({
         </div>
 
         {/* Status bar */}
-        <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
-          <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
-            {statusBarImagorPath}
-          </code>
-        </div>
+        {statusBar}
 
         {/* Zoom Controls */}
         <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
@@ -444,11 +846,7 @@ export function ImageEditorLayout({
       </DndContext>
 
       {/* Status bar */}
-      <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
-        <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
-          {statusBarImagorPath}
-        </code>
-      </div>
+      {statusBar}
 
       {/* Zoom Controls */}
       <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
