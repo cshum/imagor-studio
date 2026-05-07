@@ -186,7 +186,10 @@ export function DimensionControl({
             <span className='text-xs'>{t('imageEditor.dimensions.reset')}</span>
           </Button>
         </div>
-        <div className='grid grid-cols-[1fr_auto_1fr] items-end gap-2' data-status-bar-keys='dimensions'>
+        <div
+          className='grid grid-cols-[1fr_auto_1fr] items-end gap-2'
+          data-status-bar-keys='dimensions'
+        >
           <div>
             <Label htmlFor='width' className='text-muted-foreground text-xs'>
               {t('imageEditor.dimensions.width')}

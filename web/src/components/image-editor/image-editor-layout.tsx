@@ -364,7 +364,12 @@ export function ImageEditorLayout({
                         )
                       }
 
-                      return <span className={textClassName}>{part.prefix}{part.text}</span>
+                      return (
+                        <span className={textClassName}>
+                          {part.prefix}
+                          {part.text}
+                        </span>
+                      )
                     })()}
                   </React.Fragment>
                 ))}

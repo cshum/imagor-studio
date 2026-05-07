@@ -205,7 +205,7 @@ func buildLayerParams(state Transformations, imagePath string, origDims Dimensio
 		params.CropBottom = *state.CropTop + *state.CropHeight
 	}
 
-	if state.Width != nil || state.Height != nil || state.WidthFull || state.HeightFull {
+	if hasDimensionSegment(state) {
 		hFlip := boolPtrVal(state.HFlip, false)
 		vFlip := boolPtrVal(state.VFlip, false)
 
@@ -215,7 +215,11 @@ func buildLayerParams(state Transformations, imagePath string, origDims Dimensio
 				w = int(math.Round(float64(*state.Width) * scaleFactor))
 			}
 			if hFlip {
-				w = -w
+				if w == 0 {
+					params.HFlip = true
+				} else {
+					w = -w
+				}
 			}
 			params.Width = w
 		}
@@ -226,7 +230,11 @@ func buildLayerParams(state Transformations, imagePath string, origDims Dimensio
 				h = int(math.Round(float64(*state.Height) * scaleFactor))
 			}
 			if vFlip {
-				h = -h
+				if h == 0 {
+					params.VFlip = true
+				} else {
+					h = -h
+				}
 			}
 			params.Height = h
 		}
@@ -341,6 +349,11 @@ func buildLayerParams(state Transformations, imagePath string, origDims Dimensio
 		params.Base64Image = true
 	}
 	return params
+}
+
+func hasDimensionSegment(state Transformations) bool {
+	return state.Width != nil || state.Height != nil || state.WidthFull || state.HeightFull ||
+		boolPtrVal(state.HFlip, false) || boolPtrVal(state.VFlip, false)
 }
 
 func buildLayerInlinePath(layer *Layer, scaleFactor float64, forPreview bool) string {
@@ -672,8 +685,19 @@ func ConvertToImagorParams(
 	}
 
 	if !forPreview {
-		width = &actualOutW
-		height = &actualOutH
+		switch {
+		case state.Width != nil || state.Height != nil || state.WidthFull || state.HeightFull:
+			width = &actualOutW
+			height = &actualOutH
+		case boolPtrVal(state.HFlip, false) || boolPtrVal(state.VFlip, false):
+			zeroWidth := 0
+			zeroHeight := 0
+			width = &zeroWidth
+			height = &zeroHeight
+		default:
+			width = nil
+			height = nil
+		}
 	}
 
 	if width != nil {
