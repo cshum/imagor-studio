@@ -8,8 +8,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import {
   buildStatusBarSegments,
   type StatusBarMatchKey,
-  type StatusBarSegmentPart,
   type StatusBarSegment,
+  type StatusBarSegmentPart,
 } from '@/lib/image-editor-status-bar'
 import { cn } from '@/lib/utils'
 
@@ -46,9 +46,8 @@ function StatusBarToken({
       {part.prefix ? (
         <span className='sr-only'>{part.prefix}</span>
       ) : (
-        previousPart && !previousPart.text.endsWith(':') && (
-          <span className='text-muted-foreground/60'>:</span>
-        )
+        previousPart &&
+        !previousPart.text.endsWith(':') && <span className='text-muted-foreground/60'>:</span>
       )}
       {part.hint ? (
         <Tooltip>
