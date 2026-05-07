@@ -36,7 +36,12 @@ import {
 import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
 import type { StatusBarMatchKey } from '@/lib/image-editor-status-bar'
-import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
+import {
+  isColorLayer,
+  isGroupLayer,
+  type ImageEditorState,
+  type Layer,
+} from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
 import type { SpaceIdentity } from '@/lib/space'
 import { debounce } from '@/lib/utils.ts'
@@ -295,17 +300,33 @@ export function ImageEditorPage({
   }, [imageEditor, params])
 
   useEffect(() => {
-    const activeLayerId = textEditingLayerId || selectedLayerId || editingContext
-    if (!activeLayerId) {
+    const activeLayerId = textEditingLayerId || selectedLayerId
+    if (!activeLayerId || !params.layers?.length) {
       return
     }
-    const activeLayer = imageEditor.getLayer(activeLayerId)
-    if (!activeLayer) {
+
+    const visibleSerializableLayers = params.layers.filter((layer): layer is Layer => {
+      if (!layer.visible) {
+        return false
+      }
+
+      if (layer.type === 'text') {
+        return layer.text.trim().length > 0
+      }
+
+      return true
+    })
+
+    const activeLayerIndex = visibleSerializableLayers.findIndex(
+      (layer) => layer.id === activeLayerId,
+    )
+    if (activeLayerIndex === -1) {
       return
     }
-    const layerKeys: StatusBarMatchKey[] = activeLayer.type === 'text' ? ['text'] : ['image']
+
+    const layerKeys: StatusBarMatchKey[] = [`layer:${activeLayerIndex}`]
     setActiveStatusBarKeys(layerKeys)
-  }, [imageEditor, editingContext, selectedLayerId, textEditingLayerId])
+  }, [params.layers, selectedLayerId, textEditingLayerId])
 
   // Handle shift key pressed state
   useEffect(() => {

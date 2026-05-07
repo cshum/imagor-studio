@@ -9,6 +9,7 @@ export type StatusBarMatchKey =
   | 'filters'
   | 'image'
   | 'text'
+  | `layer:${number}`
   | 'crop'
   | 'dimensions'
   | 'alignment'
@@ -252,6 +253,7 @@ export function buildStatusBarSegments({
   return splitTopLevelPathSegments(normalizedImagorPath).map((segment) => {
     if (segment.startsWith('filters:')) {
       const filterItems = splitTopLevelFilters(segment.slice('filters:'.length))
+      let layerFilterIndex = 0
       return {
         parts: [
           {
@@ -273,6 +275,12 @@ export function buildStatusBarSegments({
             const matchKeys: StatusBarMatchKey[] = filterName
               ? ['filters', filterName as StatusBarMatchKey]
               : ['filters']
+
+            if (filterName === 'image' || filterName === 'text') {
+              matchKeys.push(`layer:${layerFilterIndex}`)
+              layerFilterIndex += 1
+            }
+
             return {
               prefix: ':',
               text: filterItem,

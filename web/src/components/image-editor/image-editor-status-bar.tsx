@@ -69,7 +69,11 @@ export function ImageEditorStatusBar({
   return (
     <TooltipProvider delayDuration={150}>
       <div className='bg-background scrollbar-hide flex h-12 items-center gap-3 overflow-x-auto overflow-y-hidden overscroll-none border-t px-4 pr-28'>
-        <div ref={statusBarScrollerRef} className='scrollbar-hide min-w-0 flex-1 overflow-x-auto'>
+        <div
+          ref={statusBarScrollerRef}
+          data-status-bar-scroller='true'
+          className='scrollbar-hide min-w-0 flex-1 overflow-x-auto'
+        >
           <code className='text-muted-foreground flex items-center pr-36 font-mono text-xs whitespace-nowrap select-text'>
             {statusBarSegments.map((segment, index) => (
               <React.Fragment key={`${index}-${segment.parts.map((part) => part.text).join(':')}`}>

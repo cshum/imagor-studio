@@ -87,7 +87,7 @@ describe('buildStatusBarSegments', () => {
         {
           prefix: ':',
           text: 'image(/fit-in/100x200/filters:brightness(10):text(hello)/cat.jpg,10,20)',
-          matchKeys: ['filters', 'image'],
+          matchKeys: ['filters', 'image', 'layer:0'],
           hint: {
             title: 'image(...)',
             description: 'imageEditor.page.statusBar.segmentHints.imageDescription',
@@ -156,5 +156,17 @@ describe('buildStatusBarSegments', () => {
 
     expect(stretchSegments[0]?.parts[0]?.matchKeys).toEqual(['dimensions', 'stretch'])
     expect(smartSegments[0]?.parts[0]?.matchKeys).toEqual(['dimensions', 'smart'])
+  })
+
+  it('assigns distinct layer match keys to mixed image and text filters', () => {
+    const segments = buildStatusBarSegments({
+      imagorPath:
+        '/filters:image(/fit-in/100x200/cat.jpg,10,20):text(hello,20,30):image(/200x100/dog.jpg,40,50)/',
+      t,
+    })
+
+    expect(segments[0]?.parts[1]?.matchKeys).toEqual(['filters', 'image', 'layer:0'])
+    expect(segments[0]?.parts[2]?.matchKeys).toEqual(['filters', 'text', 'layer:1'])
+    expect(segments[0]?.parts[3]?.matchKeys).toEqual(['filters', 'image', 'layer:2'])
   })
 })
