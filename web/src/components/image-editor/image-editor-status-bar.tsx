@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import {
   buildStatusBarSegments,
   type StatusBarMatchKey,
+  type StatusBarSegmentPart,
   type StatusBarSegment,
 } from '@/lib/image-editor-status-bar'
 import { cn } from '@/lib/utils'
@@ -15,6 +16,118 @@ import { cn } from '@/lib/utils'
 interface ImageEditorStatusBarProps {
   imagorPath: string
   activeStatusBarKeys?: StatusBarMatchKey[]
+}
+
+interface StatusBarTokenProps {
+  part: StatusBarSegmentPart
+  previousPart?: StatusBarSegmentPart
+  hasActiveStatusBarKeys: boolean
+  activeStatusBarKeys: StatusBarMatchKey[]
+}
+
+function StatusBarToken({
+  part,
+  previousPart,
+  hasActiveStatusBarKeys,
+  activeStatusBarKeys,
+}: StatusBarTokenProps) {
+  const isHighlighted =
+    hasActiveStatusBarKeys &&
+    !!part.matchKeys?.length &&
+    part.matchKeys.some((key) => activeStatusBarKeys.includes(key))
+
+  const textClassName = cn(
+    'transition-colors',
+    isHighlighted ? 'text-foreground' : 'text-muted-foreground/70',
+  )
+
+  return (
+    <>
+      {part.prefix ? (
+        <span className='sr-only'>{part.prefix}</span>
+      ) : (
+        previousPart && !previousPart.text.endsWith(':') && (
+          <span className='text-muted-foreground/60'>:</span>
+        )
+      )}
+      {part.hint ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type='button'
+              data-status-bar-highlighted={isHighlighted ? 'true' : undefined}
+              className={cn(
+                'rounded no-underline decoration-dotted underline-offset-3 hover:underline',
+                textClassName,
+                isHighlighted ? 'hover:text-foreground' : 'hover:text-foreground/85',
+              )}
+            >
+              {part.prefix}
+              {part.text}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className='max-w-xs space-y-2 px-3 py-2'>
+            <div className='text-sm font-medium'>{part.hint.title}</div>
+            <p className='text-muted-foreground text-xs leading-relaxed'>{part.hint.description}</p>
+            {part.hint.docsUrl && part.hint.docsLabel && (
+              <a
+                href={part.hint.docsUrl}
+                target='_blank'
+                rel='noreferrer'
+                className='text-primary inline-flex items-center gap-1 text-xs hover:underline'
+              >
+                {part.hint.docsLabel}
+                <ExternalLink className='h-3 w-3' />
+              </a>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <span
+          data-status-bar-highlighted={isHighlighted ? 'true' : undefined}
+          className={textClassName}
+        >
+          {part.prefix}
+          {part.text}
+        </span>
+      )}
+    </>
+  )
+}
+
+function StatusBarHelpPopover() {
+  const { t } = useTranslation()
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant='ghost'
+          size='icon'
+          className='text-muted-foreground hover:text-foreground h-7 w-7 shrink-0'
+          aria-label={t('imageEditor.page.statusBar.helpTitle')}
+        >
+          <CircleHelp className='h-4 w-4' />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align='end' className='w-80 space-y-3'>
+        <div className='space-y-1'>
+          <h4 className='text-sm font-semibold'>{t('imageEditor.page.statusBar.helpTitle')}</h4>
+          <p className='text-muted-foreground text-sm'>
+            {t('imageEditor.page.statusBar.helpDescription')}
+          </p>
+        </div>
+        <div className='space-y-1'>
+          <div className='text-xs font-medium tracking-wide uppercase'>
+            {t('imageEditor.page.statusBar.syntaxTitle')}
+          </div>
+          <code className='bg-muted block overflow-x-auto rounded px-2 py-1 font-mono text-xs'>
+            {t('imageEditor.page.statusBar.syntaxExample')}
+          </code>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 export function ImageEditorStatusBar({
@@ -80,109 +193,19 @@ export function ImageEditorStatusBar({
                 <span className='text-muted-foreground/60'>/</span>
                 {segment.parts.map((part, partIndex) => (
                   <React.Fragment key={`${part.text}-${partIndex}`}>
-                    {part.prefix ? (
-                      <span className='sr-only'>{part.prefix}</span>
-                    ) : (
-                      partIndex > 0 &&
-                      !segment.parts[partIndex - 1]?.text.endsWith(':') && (
-                        <span className='text-muted-foreground/60'>:</span>
-                      )
-                    )}
-                    {(() => {
-                      const isHighlighted =
-                        hasActiveStatusBarKeys &&
-                        !!part.matchKeys?.length &&
-                        part.matchKeys.some((key) => activeStatusBarKeys.includes(key))
-
-                      const textClassName = cn(
-                        'transition-colors',
-                        isHighlighted ? 'text-foreground' : 'text-muted-foreground/70',
-                      )
-
-                      if (part.hint) {
-                        return (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type='button'
-                                data-status-bar-highlighted={isHighlighted ? 'true' : undefined}
-                                className={cn(
-                                  'rounded no-underline decoration-dotted underline-offset-3 hover:underline',
-                                  textClassName,
-                                  isHighlighted
-                                    ? 'hover:text-foreground'
-                                    : 'hover:text-foreground/85',
-                                )}
-                              >
-                                {part.prefix}
-                                {part.text}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className='max-w-xs space-y-2 px-3 py-2'>
-                              <div className='text-sm font-medium'>{part.hint.title}</div>
-                              <p className='text-muted-foreground text-xs leading-relaxed'>
-                                {part.hint.description}
-                              </p>
-                              {part.hint.docsUrl && part.hint.docsLabel && (
-                                <a
-                                  href={part.hint.docsUrl}
-                                  target='_blank'
-                                  rel='noreferrer'
-                                  className='text-primary inline-flex items-center gap-1 text-xs hover:underline'
-                                >
-                                  {part.hint.docsLabel}
-                                  <ExternalLink className='h-3 w-3' />
-                                </a>
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        )
-                      }
-
-                      return (
-                        <span
-                          data-status-bar-highlighted={isHighlighted ? 'true' : undefined}
-                          className={textClassName}
-                        >
-                          {part.prefix}
-                          {part.text}
-                        </span>
-                      )
-                    })()}
+                    <StatusBarToken
+                      part={part}
+                      previousPart={segment.parts[partIndex - 1]}
+                      hasActiveStatusBarKeys={hasActiveStatusBarKeys}
+                      activeStatusBarKeys={activeStatusBarKeys}
+                    />
                   </React.Fragment>
                 ))}
               </React.Fragment>
             ))}
           </code>
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant='ghost'
-              size='icon'
-              className='text-muted-foreground hover:text-foreground h-7 w-7 shrink-0'
-              aria-label={t('imageEditor.page.statusBar.helpTitle')}
-            >
-              <CircleHelp className='h-4 w-4' />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align='end' className='w-80 space-y-3'>
-            <div className='space-y-1'>
-              <h4 className='text-sm font-semibold'>{t('imageEditor.page.statusBar.helpTitle')}</h4>
-              <p className='text-muted-foreground text-sm'>
-                {t('imageEditor.page.statusBar.helpDescription')}
-              </p>
-            </div>
-            <div className='space-y-1'>
-              <div className='text-xs font-medium tracking-wide uppercase'>
-                {t('imageEditor.page.statusBar.syntaxTitle')}
-              </div>
-              <code className='bg-muted block overflow-x-auto rounded px-2 py-1 font-mono text-xs'>
-                {t('imageEditor.page.statusBar.syntaxExample')}
-              </code>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <StatusBarHelpPopover />
       </div>
     </TooltipProvider>
   )
