@@ -294,6 +294,19 @@ export function ImageEditorPage({
     setImagorPath(imageEditor.getImagorTransformationsPath())
   }, [imageEditor, params])
 
+  useEffect(() => {
+    const activeLayerId = textEditingLayerId || selectedLayerId || editingContext
+    if (!activeLayerId) {
+      return
+    }
+    const activeLayer = imageEditor.getLayer(activeLayerId)
+    if (!activeLayer) {
+      return
+    }
+    const layerKeys: StatusBarMatchKey[] = activeLayer.type === 'text' ? ['text'] : ['image']
+    setActiveStatusBarKeys(layerKeys)
+  }, [imageEditor, editingContext, selectedLayerId, textEditingLayerId])
+
   // Handle shift key pressed state
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
