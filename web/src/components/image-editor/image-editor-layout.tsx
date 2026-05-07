@@ -29,6 +29,7 @@ interface StatusBarSegmentHint {
 }
 
 interface StatusBarSegmentPart {
+  prefix?: string
   text: string
   hint?: StatusBarSegmentHint
 }
@@ -290,6 +291,7 @@ export function ImageEditorLayout({
                   ? FILTER_DESCRIPTION_KEYS[filterName]
                   : undefined
                 return {
+                  prefix: ':',
                   text: filterItem,
                   hint: {
                     title: getFilterHintTitle(filterItem, filterName),
@@ -580,8 +582,13 @@ export function ImageEditorLayout({
                 <span className='text-muted-foreground/60'>/</span>
                 {segment.parts.map((part, partIndex) => (
                   <React.Fragment key={`${part.text}-${partIndex}`}>
-                    {partIndex > 0 && !segment.parts[partIndex - 1]?.text.endsWith(':') && (
-                      <span className='text-muted-foreground/60'>:</span>
+                    {part.prefix ? (
+                      <span className='sr-only'>{part.prefix}</span>
+                    ) : (
+                      partIndex > 0 &&
+                      !segment.parts[partIndex - 1]?.text.endsWith(':') && (
+                        <span className='text-muted-foreground/60'>:</span>
+                      )
                     )}
                     {part.hint ? (
                       <Tooltip>
@@ -590,6 +597,7 @@ export function ImageEditorLayout({
                             type='button'
                             className='text-muted-foreground hover:text-foreground rounded px-0.5 underline decoration-dotted underline-offset-3'
                           >
+                            {part.prefix}
                             {part.text}
                           </button>
                         </TooltipTrigger>
@@ -612,7 +620,10 @@ export function ImageEditorLayout({
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      <span className='px-0.5'>{part.text}</span>
+                      <span className='px-0.5'>
+                        {part.prefix}
+                        {part.text}
+                      </span>
                     )}
                   </React.Fragment>
                 ))}
