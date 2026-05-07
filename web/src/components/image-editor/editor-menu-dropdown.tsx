@@ -24,7 +24,7 @@ interface EditorMenuDropdownProps {
   onCopyUrl: () => void
   onSaveTemplate: () => void
   onApplyTemplate?: () => void
-  showDownload?: boolean
+  showCopyUrl?: boolean
   onLanguageChange: (languageCode: string) => void
   onToggleSectionVisibility: (sectionKey: SectionKey) => void
   editorOpenSections: EditorSections
@@ -43,7 +43,7 @@ export function EditorMenuDropdown({
   onCopyUrl,
   onSaveTemplate,
   onApplyTemplate,
-  showDownload = true,
+  showCopyUrl = true,
   onLanguageChange,
   onToggleSectionVisibility,
   editorOpenSections,
@@ -75,15 +75,15 @@ export function EditorMenuDropdown({
             <Redo2 className='mr-3 h-4 w-4' />
             {t('imageEditor.page.redo')}
           </DropdownMenuItem>
-          {showDownload && (
-            <DropdownMenuItem onClick={onDownload}>
-              <Download className='mr-3 h-4 w-4' />
-              {t('imageEditor.page.download')}
+          {showCopyUrl && (
+            <DropdownMenuItem onClick={onCopyUrl}>
+              <Copy className='mr-3 h-4 w-4' />
+              {t('imageEditor.page.copyUrl')}
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={onCopyUrl}>
-            <Copy className='mr-3 h-4 w-4' />
-            {t('imageEditor.page.copyUrl')}
+          <DropdownMenuItem onClick={onDownload}>
+            <Download className='mr-3 h-4 w-4' />
+            {t('imageEditor.page.download')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(e) => {
@@ -117,15 +117,15 @@ export function EditorMenuDropdown({
       {/* Main actions (Desktop/Tablet) */}
       {!includeUndoRedo && (
         <>
-          {showDownload && (
-            <DropdownMenuItem onClick={onDownload}>
-              <Download className='mr-3 h-4 w-4' />
-              {t('imageEditor.page.download')}
+          {showCopyUrl && (
+            <DropdownMenuItem onClick={onCopyUrl}>
+              <Copy className='mr-3 h-4 w-4' />
+              {t('imageEditor.page.copyUrl')}
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={onCopyUrl}>
-            <Copy className='mr-3 h-4 w-4' />
-            {t('imageEditor.page.copyUrl')}
+          <DropdownMenuItem onClick={onDownload}>
+            <Download className='mr-3 h-4 w-4' />
+            {t('imageEditor.page.download')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {

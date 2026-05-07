@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { closestCenter, DndContext } from '@dnd-kit/core'
 import { Link } from '@tanstack/react-router'
-import { ChevronLeft, Download, FileText, MoreVertical, Redo2, Undo2 } from 'lucide-react'
+import { ChevronLeft, Copy, FileText, MoreVertical, Redo2, Undo2 } from 'lucide-react'
 
 import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
 import { SectionDragOverlay } from '@/components/image-editor/section-drag-overlay'
@@ -185,14 +185,9 @@ export function ImageEditorLayout({
     </>
   ) : (
     <>
-      <Button
-        variant='outline'
-        size='sm'
-        onClick={onDownload}
-        className='rounded-r-none border-r-0'
-      >
-        <Download className='mr-1 h-4 w-4' />
-        {t('imageEditor.page.download')}
+      <Button variant='outline' size='sm' onClick={onCopyUrl} className='rounded-r-none border-r-0'>
+        <Copy className='mr-1 h-4 w-4' />
+        {t('imageEditor.page.copyUrl')}
       </Button>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
@@ -205,7 +200,7 @@ export function ImageEditorLayout({
           onCopyUrl={onCopyUrl}
           onSaveTemplate={onSaveTemplateAs}
           onApplyTemplate={onApplyTemplate}
-          showDownload={false}
+          showCopyUrl={false}
           onLanguageChange={onLanguageChange}
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
