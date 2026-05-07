@@ -5,6 +5,7 @@ import {
   getActiveLayerStatusBarKeys,
   getFilterHintTitle,
   getFilterName,
+  resolveStatusBarKeys,
   splitTopLevelFilters,
   splitTopLevelPathSegments,
 } from './image-editor-status-bar'
@@ -209,5 +210,35 @@ describe('getActiveLayerStatusBarKeys', () => {
         null,
       ),
     ).toBeNull()
+  })
+})
+
+describe('resolveStatusBarKeys', () => {
+  it('expands section aliases into their status bar match keys', () => {
+    expect(resolveStatusBarKeys('output')).toEqual([
+      'filters',
+      'output',
+      'format',
+      'quality',
+      'max_bytes',
+      'strip_icc',
+      'strip_exif',
+    ])
+  })
+
+  it('keeps exact keys and deduplicates overlaps', () => {
+    expect(resolveStatusBarKeys('output,quality,output')).toEqual([
+      'filters',
+      'output',
+      'format',
+      'quality',
+      'max_bytes',
+      'strip_icc',
+      'strip_exif',
+    ])
+  })
+
+  it('returns an empty list for missing values', () => {
+    expect(resolveStatusBarKeys(undefined)).toEqual([])
   })
 })

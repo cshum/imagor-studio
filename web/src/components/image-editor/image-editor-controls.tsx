@@ -9,7 +9,7 @@ import { SectionDragOverlay } from '@/components/image-editor/section-drag-overl
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
 import { SECTION_METADATA, type EditorSections, type SectionKey } from '@/lib/editor-sections'
-import type { StatusBarMatchKey } from '@/lib/image-editor-status-bar'
+import { resolveStatusBarKeys, type StatusBarMatchKey } from '@/lib/image-editor-status-bar'
 import { cn } from '@/lib/utils'
 
 interface ImageEditorControlsProps {
@@ -63,15 +63,7 @@ function SortableSection({
     }
 
     const keyedElement = target.closest<HTMLElement>('[data-status-bar-keys]')
-    const keysValue = keyedElement?.dataset.statusBarKeys
-    if (!keysValue) {
-      return []
-    }
-
-    return keysValue
-      .split(',')
-      .map((key) => key.trim())
-      .filter(Boolean) as StatusBarMatchKey[]
+    return resolveStatusBarKeys(keyedElement?.dataset.statusBarKeys)
   }
 
   return (

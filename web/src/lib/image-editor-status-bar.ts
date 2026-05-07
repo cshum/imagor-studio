@@ -280,6 +280,20 @@ export function getActiveLayerStatusBarKeys(
   return [`layer:${activeLayerIndex}`]
 }
 
+export function resolveStatusBarKeys(keysValue: string | undefined): StatusBarMatchKey[] {
+  if (!keysValue) {
+    return []
+  }
+
+  const resolvedKeys = keysValue
+    .split(',')
+    .map((key) => key.trim())
+    .filter(Boolean)
+    .flatMap((key) => SECTION_STATUS_BAR_KEYS[key] ?? [key as StatusBarMatchKey])
+
+  return Array.from(new Set(resolvedKeys))
+}
+
 export function buildStatusBarSegments({
   imagorPath,
   t,
