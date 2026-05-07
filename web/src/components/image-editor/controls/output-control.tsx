@@ -104,7 +104,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
   return (
     <div className='space-y-3'>
       {/* Format Selection */}
-      <div className='space-y-2'>
+      <div className='space-y-2' data-status-bar-keys='format'>
         <Label className='text-sm font-medium'>{t('imageEditor.output.outputFormat')}</Label>
         <Select value={formatValue} onValueChange={handleFormatChange}>
           <SelectTrigger>
@@ -129,6 +129,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
           max={100}
           step={1}
           unit='%'
+          statusBarKeys={['quality']}
           onChange={handleQualityChange}
           className={params.maxBytes ? 'pointer-events-none opacity-50' : ''}
         />
@@ -143,7 +144,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
       <div className='space-y-2'>
         <Label className='text-sm font-medium'>{t('imageEditor.output.metadata')}</Label>
 
-        <div className='flex items-center space-x-3'>
+        <div className='flex items-center space-x-3' data-status-bar-keys='strip_icc'>
           <Checkbox
             id='stripIcc'
             checked={params.stripIcc ?? false}
@@ -155,7 +156,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
           </Label>
         </div>
 
-        <div className='flex items-center space-x-3'>
+        <div className='flex items-center space-x-3' data-status-bar-keys='strip_exif'>
           <Checkbox
             id='stripExif'
             checked={params.stripExif ?? false}
@@ -173,7 +174,7 @@ export function OutputControl({ params, onUpdateParams }: OutputControlProps) {
       </div>
 
       {/* Max File Size */}
-      <div className='space-y-2'>
+      <div className='space-y-2' data-status-bar-keys='max_bytes'>
         <Label className='text-sm font-medium'>{t('imageEditor.output.maxFileSize')}</Label>
 
         {/* Size Presets */}

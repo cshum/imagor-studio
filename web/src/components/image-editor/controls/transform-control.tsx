@@ -26,6 +26,7 @@ export function TransformControl({ params, onUpdateParams }: TransformControlPro
           variant={params.hFlip ? 'default' : 'outline'}
           size='sm'
           onClick={() => onUpdateParams({ hFlip: !params.hFlip })}
+          data-status-bar-keys='flip'
         >
           <FlipHorizontal className='mr-2 h-4 w-4' />
           {t('imageEditor.transform.horizontal')}
@@ -34,6 +35,7 @@ export function TransformControl({ params, onUpdateParams }: TransformControlPro
           variant={params.vFlip ? 'default' : 'outline'}
           size='sm'
           onClick={() => onUpdateParams({ vFlip: !params.vFlip })}
+          data-status-bar-keys='flip'
         >
           <FlipVertical className='mr-2 h-4 w-4' />
           {t('imageEditor.transform.vertical')}
@@ -46,6 +48,7 @@ export function TransformControl({ params, onUpdateParams }: TransformControlPro
           variant={!params.rotation || params.rotation === 0 ? 'default' : 'outline'}
           size='sm'
           onClick={() => handleRotationToggle(0)}
+          data-status-bar-keys='rotate'
         >
           0°
         </Button>
@@ -53,6 +56,7 @@ export function TransformControl({ params, onUpdateParams }: TransformControlPro
           variant={params.rotation === 90 ? 'default' : 'outline'}
           size='sm'
           onClick={() => handleRotationToggle(90)}
+          data-status-bar-keys='rotate'
         >
           90°
         </Button>
@@ -60,6 +64,7 @@ export function TransformControl({ params, onUpdateParams }: TransformControlPro
           variant={params.rotation === 180 ? 'default' : 'outline'}
           size='sm'
           onClick={() => handleRotationToggle(180)}
+          data-status-bar-keys='rotate'
         >
           180°
         </Button>
@@ -67,6 +72,7 @@ export function TransformControl({ params, onUpdateParams }: TransformControlPro
           variant={params.rotation === 270 ? 'default' : 'outline'}
           size='sm'
           onClick={() => handleRotationToggle(270)}
+          data-status-bar-keys='rotate'
         >
           270°
         </Button>

@@ -5,6 +5,7 @@ import { Link } from '@tanstack/react-router'
 import { ChevronLeft, Copy, FileText, MoreVertical, Redo2, Undo2 } from 'lucide-react'
 
 import { EditorMenuDropdown } from '@/components/image-editor/editor-menu-dropdown'
+import { ImageEditorStatusBar } from '@/components/image-editor/image-editor-status-bar'
 import { SectionDragOverlay } from '@/components/image-editor/section-drag-overlay'
 import { LoadingBar } from '@/components/loading-bar'
 import { ModeToggle } from '@/components/mode-toggle'
@@ -16,6 +17,7 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
 import { useNoBodyOverscroll } from '@/hooks/use-no-body-overscroll'
 import type { EditorSections, SectionKey } from '@/lib/editor-sections'
+import { type StatusBarMatchKey } from '@/lib/image-editor-status-bar'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/stores/auth-store'
 
@@ -59,6 +61,7 @@ export interface ImageEditorLayoutProps {
 
   // Status bar
   imagorPath: string
+  activeStatusBarKeys?: StatusBarMatchKey[]
 
   // Zoom control (desktop and tablet only)
   zoomControl: React.ReactNode
@@ -99,6 +102,7 @@ export function ImageEditorLayout({
   rightControls,
   singleColumnControls,
   imagorPath,
+  activeStatusBarKeys = [],
   zoomControl,
   mobileSheetOpen,
   onMobileSheetOpenChange,
@@ -112,7 +116,6 @@ export function ImageEditorLayout({
   const { title: appTitle, url: appUrl } = useBrand()
   const { authState } = useAuth()
   const useInternalBrandLink = authState.multiTenant && appUrl === 'https://imagor.net'
-  const statusBarImagorPath = imagorPath === '/' ? '' : imagorPath
 
   // Prevent macOS document-level bounce while editor is open,
   // without affecting inner scrollable panels or other pages.
@@ -267,6 +270,10 @@ export function ImageEditorLayout({
     </>
   )
 
+  const statusBar = (
+    <ImageEditorStatusBar imagorPath={imagorPath} activeStatusBarKeys={activeStatusBarKeys} />
+  )
+
   // --- Mobile Layout ---
   if (isMobile) {
     return (
@@ -274,7 +281,6 @@ export function ImageEditorLayout({
         <LoadingBar isLoading={isLoading} />
 
         <div className='ios-preview-container-fix flex flex-1 flex-col'>
-          {/* Header */}
           <div className='flex items-center gap-2 border-b p-3'>
             {backButton}
             {centeredTitle}
@@ -305,10 +311,8 @@ export function ImageEditorLayout({
             </div>
           </div>
 
-          {/* Preview */}
           {renderedPreviewArea}
 
-          {/* Controls Sheet */}
           <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
             <SheetTrigger asChild>
               <button className='hidden' />
@@ -372,11 +376,7 @@ export function ImageEditorLayout({
         </div>
 
         {/* Status bar */}
-        <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
-          <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
-            {statusBarImagorPath}
-          </code>
-        </div>
+        {statusBar}
 
         {/* Zoom Controls */}
         <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
@@ -444,11 +444,7 @@ export function ImageEditorLayout({
       </DndContext>
 
       {/* Status bar */}
-      <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
-        <code className='text-muted-foreground pr-36 font-mono text-xs whitespace-nowrap select-text'>
-          {statusBarImagorPath}
-        </code>
-      </div>
+      {statusBar}
 
       {/* Zoom Controls */}
       <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>

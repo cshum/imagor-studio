@@ -3,6 +3,8 @@ package imagortemplate
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/cshum/imagor/imagorpath"
 )
 
 func intPtr(v int) *int             { return &v }
@@ -288,6 +290,15 @@ func TestConvertToImagorParams_Dimensions(t *testing.T) {
 	}
 }
 
+func TestConvertToImagorParams_FlipOnlySerializesZeroDimensions(t *testing.T) {
+	state := Transformations{HFlip: boolPtr(true)}
+	params := ConvertToImagorParams(state, Dimensions{600, 400}, nil, false, nil, "", false)
+	raw := imagorpath.GenerateUnsafe(params)
+	if raw != "unsafe/-0x0/" {
+		t.Errorf("raw = %q, want unsafe/-0x0/", raw)
+	}
+}
+
 func TestConvertToImagorParams_Crop(t *testing.T) {
 	state := Transformations{
 		CropLeft: float64Ptr(10), CropTop: float64Ptr(20),
@@ -544,6 +555,19 @@ func TestConvertToImagorParams_LayerNoTransformsPreview(t *testing.T) {
 	}
 	if !found {
 		t.Error("no image filter found")
+	}
+}
+
+func TestBuildLayerInlinePath_FlipOnlySerializesZeroDimensions(t *testing.T) {
+	ip := "layer.jpg"
+	layer := &Layer{
+		ID: "l1", Type: "image", Visible: true,
+		ImagePath:  &ip,
+		Transforms: &Transformations{VFlip: boolPtr(true)},
+	}
+	raw := buildLayerInlinePath(layer, 1, false)
+	if raw != "/0x-0/layer.jpg" {
+		t.Errorf("raw = %q, want /0x-0/layer.jpg", raw)
 	}
 }
 

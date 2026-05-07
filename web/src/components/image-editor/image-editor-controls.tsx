@@ -9,6 +9,7 @@ import { SectionDragOverlay } from '@/components/image-editor/section-drag-overl
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
 import { SECTION_METADATA, type EditorSections, type SectionKey } from '@/lib/editor-sections'
+import type { StatusBarMatchKey } from '@/lib/image-editor-status-bar'
 import { cn } from '@/lib/utils'
 
 interface ImageEditorControlsProps {
@@ -18,6 +19,7 @@ interface ImageEditorControlsProps {
   column?: 'left' | 'right' | 'both'
   /** Sections to hide entirely (e.g. crop is irrelevant for color images) */
   hiddenSections?: SectionKey[]
+  onActiveStatusBarKeysChange?: (keys: StatusBarMatchKey[]) => void
 }
 
 interface SectionConfig {
@@ -31,9 +33,15 @@ interface SortableSectionProps {
   section: SectionConfig
   isOpen: boolean
   onToggle: (open: boolean) => void
+  onActiveStatusBarKeysChange?: (keys: StatusBarMatchKey[]) => void
 }
 
-function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
+function SortableSection({
+  section,
+  isOpen,
+  onToggle,
+  onActiveStatusBarKeysChange,
+}: SortableSectionProps) {
   const { t } = useTranslation()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: section.key,
@@ -49,11 +57,36 @@ function SortableSection({ section, isOpen, onToggle }: SortableSectionProps) {
 
   const Icon = section.icon
 
+  const getStatusBarKeys = (target: EventTarget | null): StatusBarMatchKey[] => {
+    if (!(target instanceof HTMLElement)) {
+      return []
+    }
+
+    const keyedElement = target.closest<HTMLElement>('[data-status-bar-keys]')
+    const keysValue = keyedElement?.dataset.statusBarKeys
+    if (!keysValue) {
+      return []
+    }
+
+    return keysValue
+      .split(',')
+      .map((key) => key.trim())
+      .filter(Boolean) as StatusBarMatchKey[]
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(isDragging && 'opacity-0', 'bg-card relative rounded-md border')}
+      onFocusCapture={(event) => {
+        const keys = getStatusBarKeys(event.target)
+        if (keys.length === 0) {
+          return
+        }
+
+        onActiveStatusBarKeysChange?.(keys)
+      }}
     >
       <Collapsible open={isOpen} onOpenChange={onToggle}>
         <div className='flex w-full items-center'>
@@ -108,6 +141,7 @@ export function ImageEditorControls({
   onOpenSectionsChange,
   column = 'both',
   hiddenSections,
+  onActiveStatusBarKeysChange,
 }: ImageEditorControlsProps) {
   // Use shared DnD hook
   const { activeId, sensors, handleDragStart, handleDragOver, handleDragEnd } = useEditorSectionDnd(
@@ -184,6 +218,7 @@ export function ImageEditorControls({
                 section={section}
                 isOpen={openSections[section.key]}
                 onToggle={(open) => handleSectionToggle(section.key, open)}
+                onActiveStatusBarKeysChange={onActiveStatusBarKeysChange}
               />
             ))}
           </div>
@@ -205,6 +240,7 @@ export function ImageEditorControls({
                 section={section}
                 isOpen={openSections[section.key]}
                 onToggle={(open) => handleSectionToggle(section.key, open)}
+                onActiveStatusBarKeysChange={onActiveStatusBarKeysChange}
               />
             ))}
           </div>
@@ -233,6 +269,7 @@ export function ImageEditorControls({
                 section={section}
                 isOpen={openSections[section.key]}
                 onToggle={(open) => handleSectionToggle(section.key, open)}
+                onActiveStatusBarKeysChange={onActiveStatusBarKeysChange}
               />
             ))}
           </div>
@@ -247,6 +284,7 @@ export function ImageEditorControls({
                 section={section}
                 isOpen={openSections[section.key]}
                 onToggle={(open) => handleSectionToggle(section.key, open)}
+                onActiveStatusBarKeysChange={onActiveStatusBarKeysChange}
               />
             ))}
           </div>

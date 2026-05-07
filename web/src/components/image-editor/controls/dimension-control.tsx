@@ -186,7 +186,10 @@ export function DimensionControl({
             <span className='text-xs'>{t('imageEditor.dimensions.reset')}</span>
           </Button>
         </div>
-        <div className='grid grid-cols-[1fr_auto_1fr] items-end gap-2'>
+        <div
+          className='grid grid-cols-[1fr_auto_1fr] items-end gap-2'
+          data-status-bar-keys='dimensions'
+        >
           <div>
             <Label htmlFor='width' className='text-muted-foreground text-xs'>
               {t('imageEditor.dimensions.width')}
@@ -266,25 +269,25 @@ export function DimensionControl({
               onValueChange={handleFitModeChange}
               className='grid grid-cols-2 gap-2'
             >
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center space-x-2' data-status-bar-keys='fit_in'>
                 <RadioGroupItem value='fit-in' id='fit-in' />
                 <Label htmlFor='fit-in' className='text-sm'>
                   {t('imageEditor.dimensions.modes.fitIn')}
                 </Label>
               </div>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center space-x-2' data-status-bar-keys='dimensions'>
                 <RadioGroupItem value='fill' id='fill' />
                 <Label htmlFor='fill' className='text-sm'>
                   {t('imageEditor.dimensions.modes.fill')}
                 </Label>
               </div>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center space-x-2' data-status-bar-keys='stretch'>
                 <RadioGroupItem value='stretch' id='stretch' />
                 <Label htmlFor='stretch' className='text-sm'>
                   {t('imageEditor.dimensions.modes.stretch')}
                 </Label>
               </div>
-              <div className='flex items-center space-x-2'>
+              <div className='flex items-center space-x-2' data-status-bar-keys='smart'>
                 <RadioGroupItem value='smart' id='smart' />
                 <Label htmlFor='smart' className='text-sm'>
                   {t('imageEditor.dimensions.modes.smart')}
@@ -295,7 +298,7 @@ export function DimensionControl({
 
           {/* Alignment - Only show when Fill mode is selected */}
           {getCurrentFitMode() === 'fill' && (
-            <div className='space-y-2'>
+            <div className='space-y-2' data-status-bar-keys='alignment'>
               <div className='grid grid-cols-2 gap-3'>
                 <div>
                   <Label htmlFor='h-align' className='text-muted-foreground text-xs'>
@@ -384,6 +387,7 @@ export function DimensionControl({
           max={100}
           step={1}
           unit='%'
+          statusBarKeys={['proportion']}
           onChange={(value) => onUpdateParams({ proportion: value === 100 ? undefined : value })}
         />
       )}

@@ -130,6 +130,7 @@ export function CropAspectControl({
             onClick={handleVisualCropToggle}
             disabled={isToggling}
             className='w-full'
+            data-status-bar-keys='crop'
           >
             {isToggling ? (
               <LoaderCircle className='mr-2 h-4 w-4 animate-spin' />
@@ -145,7 +146,7 @@ export function CropAspectControl({
         )}
 
         {/* Aspect Ratio Presets */}
-        <div className='grid grid-cols-3 gap-1.5'>
+        <div className='grid grid-cols-3 gap-1.5' data-status-bar-keys='crop'>
           {ASPECT_RATIO_PRESETS.map((preset) => (
             <Button
               key={preset.key}
@@ -165,7 +166,7 @@ export function CropAspectControl({
           params.cropTop !== undefined ||
           params.cropWidth !== undefined ||
           params.cropHeight !== undefined) && (
-          <div className='grid grid-cols-2 gap-1.5'>
+          <div className='grid grid-cols-2 gap-1.5' data-status-bar-keys='crop'>
             {(
               [
                 { field: 'cropLeft', label: 'X' },

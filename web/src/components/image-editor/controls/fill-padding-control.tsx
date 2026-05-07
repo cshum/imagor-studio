@@ -77,7 +77,7 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
   return (
     <div className='space-y-3'>
       {/* Fill — always-visible color picker; clicking it auto-switches to Color mode */}
-      <div className='flex items-center gap-2'>
+      <div className='flex items-center gap-2' data-status-bar-keys='fill'>
         <Select value={fillMode} onValueChange={handleFillModeChange}>
           <SelectTrigger className='h-9 flex-1'>
             <SelectValue />
@@ -98,6 +98,7 @@ export function FillPaddingControl({ params, onUpdateParams }: FillPaddingContro
 
       {/* Padding — arrow icons, disabled when no fill */}
       <div
+        data-status-bar-keys='padding'
         className={`grid grid-cols-2 gap-1.5 ${
           !isPaddingEnabled ? 'pointer-events-none opacity-50' : ''
         }`}

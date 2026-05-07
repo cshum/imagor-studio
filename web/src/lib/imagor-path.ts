@@ -177,7 +177,14 @@ function buildImagorPathParts(
   // Add dimensions with flip integration (scaled by scaleFactor).
   // Format: /fit-in/-200x-300 where minus signs indicate flips.
   // Fill mode (layer-only): widthFull/heightFull emit imagor f-tokens (e.g. "f", "f-20").
-  if (state.width || state.height || state.widthFull || state.heightFull) {
+  if (
+    state.width ||
+    state.height ||
+    state.widthFull ||
+    state.heightFull ||
+    state.hFlip ||
+    state.vFlip
+  ) {
     let prefix = ''
     if (!isVisualCropPreview) {
       if (state.stretch) {

@@ -35,6 +35,7 @@ import {
 } from '@/lib/editor-state-url'
 import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
+import { getActiveLayerStatusBarKeys, type StatusBarMatchKey } from '@/lib/image-editor-status-bar'
 import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
 import type { SpaceIdentity } from '@/lib/space'
@@ -117,6 +118,7 @@ export function ImageEditorPage({
   } | null>(() => imageEditor.getContextParentDimensions())
   const [previewUrl, setPreviewUrl] = useState<string>()
   const [imagorPath, setImagorPath] = useState<string>(imageEditor.getImagorTransformationsPath())
+  const [activeStatusBarKeys, setActiveStatusBarKeys] = useState<StatusBarMatchKey[]>([])
   const [error, setError] = useState<Error | null>(null)
   const [previewMaxDimensions, setPreviewMaxDimensions] = useState<{
     width: number
@@ -291,6 +293,18 @@ export function ImageEditorPage({
   useEffect(() => {
     setImagorPath(imageEditor.getImagorTransformationsPath())
   }, [imageEditor, params])
+
+  useEffect(() => {
+    const layerKeys = getActiveLayerStatusBarKeys(
+      params.layers,
+      selectedLayerId,
+      textEditingLayerId,
+    )
+    if (!layerKeys) {
+      return
+    }
+    setActiveStatusBarKeys(layerKeys)
+  }, [params.layers, selectedLayerId, textEditingLayerId])
 
   // Handle shift key pressed state
   useEffect(() => {
@@ -988,6 +1002,7 @@ export function ImageEditorPage({
             onOpenSectionsChange={handleOpenSectionsChange}
             column='left'
             hiddenSections={hiddenSections}
+            onActiveStatusBarKeysChange={setActiveStatusBarKeys}
           />
         }
         rightControls={
@@ -997,6 +1012,7 @@ export function ImageEditorPage({
             onOpenSectionsChange={handleOpenSectionsChange}
             column='right'
             hiddenSections={hiddenSections}
+            onActiveStatusBarKeysChange={setActiveStatusBarKeys}
           />
         }
         singleColumnControls={
@@ -1006,9 +1022,11 @@ export function ImageEditorPage({
             onOpenSectionsChange={handleOpenSectionsChange}
             column='both'
             hiddenSections={hiddenSections}
+            onActiveStatusBarKeysChange={setActiveStatusBarKeys}
           />
         }
         imagorPath={imagorPath}
+        activeStatusBarKeys={activeStatusBarKeys}
         zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}
         mobileSheetOpen={mobileSheetOpen}
         onMobileSheetOpenChange={setMobileSheetOpen}
