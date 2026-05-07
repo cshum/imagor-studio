@@ -300,11 +300,9 @@ export function ImageEditorPage({
       selectedLayerId,
       textEditingLayerId,
     )
-
     if (!layerKeys) {
       return
     }
-
     setActiveStatusBarKeys(layerKeys)
   }, [params.layers, selectedLayerId, textEditingLayerId])
 
