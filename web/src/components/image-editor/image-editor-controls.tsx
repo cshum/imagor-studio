@@ -80,14 +80,12 @@ function SortableSection({
       style={style}
       className={cn(isDragging && 'opacity-0', 'bg-card relative rounded-md border')}
       onFocusCapture={(event) => {
-        onActiveStatusBarKeysChange?.(getStatusBarKeys(event.target))
-      }}
-      onBlurCapture={(event) => {
-        const nextTarget = event.relatedTarget
-        if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+        const keys = getStatusBarKeys(event.target)
+        if (keys.length === 0) {
           return
         }
-        onActiveStatusBarKeysChange?.([])
+
+        onActiveStatusBarKeysChange?.(keys)
       }}
     >
       <Collapsible open={isOpen} onOpenChange={onToggle}>
