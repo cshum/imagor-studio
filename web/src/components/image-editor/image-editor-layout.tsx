@@ -315,7 +315,7 @@ export function ImageEditorLayout({
                         <TooltipTrigger asChild>
                           <button
                             type='button'
-                            className='text-muted-foreground hover:text-foreground rounded px-0.5 underline decoration-dotted underline-offset-3'
+                            className='text-muted-foreground hover:text-foreground rounded underline decoration-dotted underline-offset-3'
                           >
                             {part.prefix}
                             {part.text}
@@ -340,7 +340,7 @@ export function ImageEditorLayout({
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      <span className='px-0.5'>
+                      <span>
                         {part.prefix}
                         {part.text}
                       </span>
