@@ -157,6 +157,42 @@ function splitTopLevelFilters(filtersText: string): string[] {
   return items
 }
 
+function splitTopLevelPathSegments(pathText: string): string[] {
+  const items: string[] = []
+  let current = ''
+  let depth = 0
+
+  for (const char of pathText) {
+    if (char === '(') {
+      depth += 1
+      current += char
+      continue
+    }
+
+    if (char === ')') {
+      depth = Math.max(0, depth - 1)
+      current += char
+      continue
+    }
+
+    if (char === '/' && depth === 0) {
+      if (current) {
+        items.push(current)
+        current = ''
+      }
+      continue
+    }
+
+    current += char
+  }
+
+  if (current) {
+    items.push(current)
+  }
+
+  return items
+}
+
 function getFilterName(filterText: string): string | null {
   const match = filterText.match(/^([a-z_]+)\(/i)
   return match ? match[1] : null
@@ -276,161 +312,153 @@ export function ImageEditorLayout({
   const statusBarSegments = useMemo<StatusBarSegment[]>(() => {
     let hasSizeSegment = false
 
-    return statusBarImagorPath
-      .split('/')
-      .filter(Boolean)
-      .map((segment) => {
-        if (segment.startsWith('filters:')) {
-          const filterItems = splitTopLevelFilters(segment.slice('filters:'.length))
-          return {
-            parts: [
-              {
-                text: 'filters:',
+    return splitTopLevelPathSegments(statusBarImagorPath).map((segment) => {
+      if (segment.startsWith('filters:')) {
+        const filterItems = splitTopLevelFilters(segment.slice('filters:'.length))
+        return {
+          parts: [
+            {
+              text: 'filters:',
+              hint: {
+                title: t('imageEditor.page.statusBar.segmentHints.filtersTitle'),
+                description: t('imageEditor.page.statusBar.segmentHints.filtersDescription'),
+                docsUrl: filtersDocsUrl,
+                docsLabel: t('imageEditor.page.statusBar.filtersDocs'),
+              },
+            },
+            ...filterItems.map((filterItem) => {
+              const filterName = getFilterName(filterItem)
+              const filterAnchor = filterName ? FILTER_DOC_ANCHORS[filterName] : undefined
+              const filterDescriptionKey = filterName
+                ? FILTER_DESCRIPTION_KEYS[filterName]
+                : undefined
+              return {
+                prefix: ':',
+                text: filterItem,
                 hint: {
-                  title: t('imageEditor.page.statusBar.segmentHints.filtersTitle'),
-                  description: t('imageEditor.page.statusBar.segmentHints.filtersDescription'),
-                  docsUrl: filtersDocsUrl,
+                  title: getFilterHintTitle(filterItem, filterName),
+                  description: filterDescriptionKey
+                    ? t(`imageEditor.page.statusBar.segmentHints.${filterDescriptionKey}`)
+                    : t('imageEditor.page.statusBar.segmentHints.filterItemDescription', {
+                        name: filterName || filterItem,
+                      }),
+                  docsUrl: filterAnchor ? `${filtersDocsUrl}/#${filterAnchor}` : filtersDocsUrl,
                   docsLabel: t('imageEditor.page.statusBar.filtersDocs'),
                 },
-              },
-              ...filterItems.map((filterItem) => {
-                const filterName = getFilterName(filterItem)
-                const filterAnchor = filterName ? FILTER_DOC_ANCHORS[filterName] : undefined
-                const filterDescriptionKey = filterName
-                  ? FILTER_DESCRIPTION_KEYS[filterName]
-                  : undefined
-                return {
-                  prefix: ':',
-                  text: filterItem,
-                  hint: {
-                    title: getFilterHintTitle(filterItem, filterName),
-                    description: filterDescriptionKey
-                      ? t(`imageEditor.page.statusBar.segmentHints.${filterDescriptionKey}`)
-                      : t('imageEditor.page.statusBar.segmentHints.filterItemDescription', {
-                          name: filterName || filterItem,
-                        }),
-                    docsUrl: filterAnchor ? `${filtersDocsUrl}/#${filterAnchor}` : filtersDocsUrl,
-                    docsLabel: t('imageEditor.page.statusBar.filtersDocs'),
-                  },
-                }
-              }),
-            ],
-          }
+              }
+            }),
+          ],
         }
+      }
 
-        if (segment === 'stretch') {
-          return {
-            parts: [
-              {
-                text: segment,
-                hint: {
-                  title: segment,
-                  description: t('imageEditor.page.statusBar.segmentHints.stretchDescription'),
-                  docsUrl: imageEndpointDocsUrl,
-                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
-                },
+      if (segment === 'stretch') {
+        return {
+          parts: [
+            {
+              text: segment,
+              hint: {
+                title: segment,
+                description: t('imageEditor.page.statusBar.segmentHints.stretchDescription'),
+                docsUrl: imageEndpointDocsUrl,
+                docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
               },
-            ],
-          }
+            },
+          ],
         }
+      }
 
-        if (segment === 'smart') {
-          return {
-            parts: [
-              {
-                text: segment,
-                hint: {
-                  title: segment,
-                  description: t('imageEditor.page.statusBar.segmentHints.smartDescription'),
-                  docsUrl: imageEndpointDocsUrl,
-                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
-                },
+      if (segment === 'smart') {
+        return {
+          parts: [
+            {
+              text: segment,
+              hint: {
+                title: segment,
+                description: t('imageEditor.page.statusBar.segmentHints.smartDescription'),
+                docsUrl: imageEndpointDocsUrl,
+                docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
               },
-            ],
-          }
+            },
+          ],
         }
+      }
 
-        if (
-          segment === 'left' ||
-          segment === 'right' ||
-          segment === 'top' ||
-          segment === 'bottom'
-        ) {
-          return {
-            parts: [
-              {
-                text: segment,
-                hint: {
-                  title: t('imageEditor.page.statusBar.segmentHints.alignmentTitle'),
-                  description: t('imageEditor.page.statusBar.segmentHints.alignmentDescription'),
-                  docsUrl: imageEndpointDocsUrl,
-                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
-                },
+      if (segment === 'left' || segment === 'right' || segment === 'top' || segment === 'bottom') {
+        return {
+          parts: [
+            {
+              text: segment,
+              hint: {
+                title: t('imageEditor.page.statusBar.segmentHints.alignmentTitle'),
+                description: t('imageEditor.page.statusBar.segmentHints.alignmentDescription'),
+                docsUrl: imageEndpointDocsUrl,
+                docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
               },
-            ],
-          }
+            },
+          ],
         }
+      }
 
-        if (segment.endsWith('fit-in')) {
-          return {
-            parts: [
-              {
-                text: segment,
-                hint: {
-                  title: segment,
-                  description: t('imageEditor.page.statusBar.segmentHints.fitInDescription'),
-                  docsUrl: imageEndpointDocsUrl,
-                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
-                },
+      if (segment.endsWith('fit-in')) {
+        return {
+          parts: [
+            {
+              text: segment,
+              hint: {
+                title: segment,
+                description: t('imageEditor.page.statusBar.segmentHints.fitInDescription'),
+                docsUrl: imageEndpointDocsUrl,
+                docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
               },
-            ],
-          }
+            },
+          ],
         }
+      }
 
-        if (/^-?(?:f(?:-\d+)?|\d+)x-?(?:f(?:-\d+)?|\d+)$/.test(segment)) {
-          hasSizeSegment = true
-          return {
-            parts: [
-              {
-                text: segment,
-                hint: {
-                  title: t('imageEditor.page.statusBar.segmentHints.sizeTitle'),
-                  description: t('imageEditor.page.statusBar.segmentHints.sizeDescription'),
-                  docsUrl: imageEndpointDocsUrl,
-                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
-                },
+      if (/^-?(?:f(?:-\d+)?|\d+)x-?(?:f(?:-\d+)?|\d+)$/.test(segment)) {
+        hasSizeSegment = true
+        return {
+          parts: [
+            {
+              text: segment,
+              hint: {
+                title: t('imageEditor.page.statusBar.segmentHints.sizeTitle'),
+                description: t('imageEditor.page.statusBar.segmentHints.sizeDescription'),
+                docsUrl: imageEndpointDocsUrl,
+                docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
               },
-            ],
-          }
+            },
+          ],
         }
+      }
 
-        if (/^-?\d+(?:\.\d+)?x-?\d+(?:\.\d+)?:-?\d+(?:\.\d+)?x-?\d+(?:\.\d+)?$/.test(segment)) {
-          const isPadding = hasSizeSegment
-          return {
-            parts: [
-              {
-                text: segment,
-                hint: {
-                  title: t(
-                    isPadding
-                      ? 'imageEditor.page.statusBar.segmentHints.paddingTitle'
-                      : 'imageEditor.page.statusBar.segmentHints.cropTitle',
-                  ),
-                  description: t(
-                    isPadding
-                      ? 'imageEditor.page.statusBar.segmentHints.paddingDescription'
-                      : 'imageEditor.page.statusBar.segmentHints.cropDescription',
-                  ),
-                  docsUrl: imageEndpointDocsUrl,
-                  docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
-                },
+      if (/^-?\d+(?:\.\d+)?x-?\d+(?:\.\d+)?:-?\d+(?:\.\d+)?x-?\d+(?:\.\d+)?$/.test(segment)) {
+        const isPadding = hasSizeSegment
+        return {
+          parts: [
+            {
+              text: segment,
+              hint: {
+                title: t(
+                  isPadding
+                    ? 'imageEditor.page.statusBar.segmentHints.paddingTitle'
+                    : 'imageEditor.page.statusBar.segmentHints.cropTitle',
+                ),
+                description: t(
+                  isPadding
+                    ? 'imageEditor.page.statusBar.segmentHints.paddingDescription'
+                    : 'imageEditor.page.statusBar.segmentHints.cropDescription',
+                ),
+                docsUrl: imageEndpointDocsUrl,
+                docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
               },
-            ],
-          }
+            },
+          ],
         }
+      }
 
-        return { parts: [{ text: segment }] }
-      })
+      return { parts: [{ text: segment }] }
+    })
   }, [filtersDocsUrl, imageEndpointDocsUrl, statusBarImagorPath, t])
 
   // Prevent macOS document-level bounce while editor is open,
