@@ -27,7 +27,11 @@ import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useEditorSectionDnd } from '@/hooks/use-editor-section-dnd'
 import { useNoBodyOverscroll } from '@/hooks/use-no-body-overscroll'
 import type { EditorSections, SectionKey } from '@/lib/editor-sections'
-import { buildStatusBarSegments, type StatusBarSegment } from '@/lib/image-editor-status-bar'
+import {
+  buildStatusBarSegments,
+  type StatusBarMatchKey,
+  type StatusBarSegment,
+} from '@/lib/image-editor-status-bar'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/stores/auth-store'
 
@@ -71,6 +75,7 @@ export interface ImageEditorLayoutProps {
 
   // Status bar
   imagorPath: string
+  activeStatusBarKeys?: StatusBarMatchKey[]
 
   // Zoom control (desktop and tablet only)
   zoomControl: React.ReactNode
@@ -111,6 +116,7 @@ export function ImageEditorLayout({
   rightControls,
   singleColumnControls,
   imagorPath,
+  activeStatusBarKeys = [],
   zoomControl,
   mobileSheetOpen,
   onMobileSheetOpenChange,
@@ -118,6 +124,7 @@ export function ImageEditorLayout({
   hiddenSections,
 }: ImageEditorLayoutProps) {
   const { t } = useTranslation()
+  const hasActiveStatusBarKeys = activeStatusBarKeys.length > 0
   const isMobile = !useBreakpoint('md')
   const isDesktop = useBreakpoint('lg')
   const isTablet = !isMobile && !isDesktop
@@ -307,41 +314,58 @@ export function ImageEditorLayout({
                         <span className='text-muted-foreground/60'>:</span>
                       )
                     )}
-                    {part.hint ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type='button'
-                            className='text-muted-foreground hover:text-foreground rounded no-underline decoration-dotted underline-offset-3 hover:underline'
-                          >
-                            {part.prefix}
-                            {part.text}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className='max-w-xs space-y-2 px-3 py-2'>
-                          <div className='text-sm font-medium'>{part.hint.title}</div>
-                          <p className='text-muted-foreground text-xs leading-relaxed'>
-                            {part.hint.description}
-                          </p>
-                          {part.hint.docsUrl && part.hint.docsLabel && (
-                            <a
-                              href={part.hint.docsUrl}
-                              target='_blank'
-                              rel='noreferrer'
-                              className='text-primary inline-flex items-center gap-1 text-xs hover:underline'
-                            >
-                              {part.hint.docsLabel}
-                              <ExternalLink className='h-3 w-3' />
-                            </a>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <span>
-                        {part.prefix}
-                        {part.text}
-                      </span>
-                    )}
+                    {(() => {
+                      const isHighlighted =
+                        hasActiveStatusBarKeys &&
+                        !!part.matchKeys?.length &&
+                        part.matchKeys.some((key) => activeStatusBarKeys.includes(key))
+
+                      const textClassName = cn(
+                        'transition-colors',
+                        isHighlighted ? 'text-foreground' : 'text-muted-foreground/70',
+                      )
+
+                      if (part.hint) {
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type='button'
+                                className={cn(
+                                  'rounded no-underline decoration-dotted underline-offset-3 hover:underline',
+                                  textClassName,
+                                  isHighlighted
+                                    ? 'hover:text-foreground'
+                                    : 'hover:text-foreground/85',
+                                )}
+                              >
+                                {part.prefix}
+                                {part.text}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className='max-w-xs space-y-2 px-3 py-2'>
+                              <div className='text-sm font-medium'>{part.hint.title}</div>
+                              <p className='text-muted-foreground text-xs leading-relaxed'>
+                                {part.hint.description}
+                              </p>
+                              {part.hint.docsUrl && part.hint.docsLabel && (
+                                <a
+                                  href={part.hint.docsUrl}
+                                  target='_blank'
+                                  rel='noreferrer'
+                                  className='text-primary inline-flex items-center gap-1 text-xs hover:underline'
+                                >
+                                  {part.hint.docsLabel}
+                                  <ExternalLink className='h-3 w-3' />
+                                </a>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        )
+                      }
+
+                      return <span className={textClassName}>{part.prefix}{part.text}</span>
+                    })()}
                   </React.Fragment>
                 ))}
               </React.Fragment>

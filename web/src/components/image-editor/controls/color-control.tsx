@@ -22,6 +22,7 @@ export function ColorControl({ params, onUpdateParams, outputDimensions }: Color
         min={-100}
         max={100}
         step={1}
+        statusBarKeys={['brightness']}
         onChange={(value) => onUpdateParams({ brightness: value })}
       />
 
@@ -31,6 +32,7 @@ export function ColorControl({ params, onUpdateParams, outputDimensions }: Color
         min={-100}
         max={100}
         step={1}
+        statusBarKeys={['contrast']}
         onChange={(value) => onUpdateParams({ contrast: value })}
       />
 
@@ -40,6 +42,7 @@ export function ColorControl({ params, onUpdateParams, outputDimensions }: Color
         min={-100}
         max={100}
         step={1}
+        statusBarKeys={['saturation']}
         onChange={(value) => onUpdateParams({ saturation: value })}
       />
 
@@ -50,10 +53,11 @@ export function ColorControl({ params, onUpdateParams, outputDimensions }: Color
         max={360}
         step={1}
         unit='°'
+        statusBarKeys={['hue']}
         onChange={(value) => onUpdateParams({ hue: value })}
       />
 
-      <div className='flex items-center space-x-3 pt-2'>
+      <div className='flex items-center space-x-3 pt-2' data-status-bar-keys='grayscale'>
         <Checkbox
           id='grayscale'
           checked={params.grayscale ?? false}
@@ -71,6 +75,7 @@ export function ColorControl({ params, onUpdateParams, outputDimensions }: Color
         min={0}
         max={10}
         step={0.1}
+        statusBarKeys={['blur']}
         onChange={(value) => onUpdateParams({ blur: value })}
       />
 
@@ -80,6 +85,7 @@ export function ColorControl({ params, onUpdateParams, outputDimensions }: Color
         min={0}
         max={10}
         step={0.1}
+        statusBarKeys={['sharpen']}
         onChange={(value) => onUpdateParams({ sharpen: value })}
       />
 
@@ -94,6 +100,7 @@ export function ColorControl({ params, onUpdateParams, outputDimensions }: Color
         }
         step={1}
         unit='px'
+        statusBarKeys={['round_corner']}
         onChange={(value) => onUpdateParams({ roundCornerRadius: value })}
       />
     </div>

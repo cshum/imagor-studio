@@ -76,6 +76,7 @@ describe('buildStatusBarSegments', () => {
       parts: [
         {
           text: 'filters',
+          matchKeys: ['filters'],
           hint: {
             title: 'imageEditor.page.statusBar.segmentHints.filtersTitle',
             description: 'imageEditor.page.statusBar.segmentHints.filtersDescription',
@@ -86,6 +87,7 @@ describe('buildStatusBarSegments', () => {
         {
           prefix: ':',
           text: 'image(/fit-in/100x200/filters:brightness(10):text(hello)/cat.jpg,10,20)',
+          matchKeys: ['filters', 'image'],
           hint: {
             title: 'image(...)',
             description: 'imageEditor.page.statusBar.segmentHints.imageDescription',
@@ -96,6 +98,7 @@ describe('buildStatusBarSegments', () => {
         {
           prefix: ':',
           text: 'quality(80)',
+          matchKeys: ['filters', 'quality'],
           hint: {
             title: 'quality(80)',
             description: 'imageEditor.page.statusBar.segmentHints.qualityDescription',
@@ -116,6 +119,7 @@ describe('buildStatusBarSegments', () => {
     expect(segments[2]?.parts[0]?.hint?.title).toBe(
       'imageEditor.page.statusBar.segmentHints.paddingTitle',
     )
+    expect(segments[2]?.parts[0]?.matchKeys).toEqual(['padding'])
   })
 
   it('treats crop-like segments before any size segment as crop', () => {
@@ -127,5 +131,30 @@ describe('buildStatusBarSegments', () => {
     expect(segments[0]?.parts[0]?.hint?.title).toBe(
       'imageEditor.page.statusBar.segmentHints.cropTitle',
     )
+    expect(segments[0]?.parts[0]?.matchKeys).toEqual(['crop'])
+  })
+
+  it('tags fit-in and flip-only size segments with exact match keys', () => {
+    const segments = buildStatusBarSegments({
+      imagorPath: '/fit-in/-0x0/photo.jpg',
+      t,
+    })
+
+    expect(segments[0]?.parts[0]?.matchKeys).toEqual(['dimensions', 'fit_in'])
+    expect(segments[1]?.parts[0]?.matchKeys).toEqual(['dimensions', 'flip'])
+  })
+
+  it('tags stretch and smart segments with exact match keys', () => {
+    const stretchSegments = buildStatusBarSegments({
+      imagorPath: '/stretch/800x600/photo.jpg',
+      t,
+    })
+    const smartSegments = buildStatusBarSegments({
+      imagorPath: '/smart/800x600/photo.jpg',
+      t,
+    })
+
+    expect(stretchSegments[0]?.parts[0]?.matchKeys).toEqual(['dimensions', 'stretch'])
+    expect(smartSegments[0]?.parts[0]?.matchKeys).toEqual(['dimensions', 'smart'])
   })
 })

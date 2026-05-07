@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
+import type { StatusBarMatchKey } from '@/lib/image-editor-status-bar'
 import { cn } from '@/lib/utils'
 
 interface NumericControlProps {
@@ -17,6 +18,7 @@ interface NumericControlProps {
   onChange: (value: number) => void
   className?: string
   disabled?: boolean
+  statusBarKeys?: StatusBarMatchKey[]
 }
 
 export function NumericControl({
@@ -29,6 +31,7 @@ export function NumericControl({
   onChange,
   className,
   disabled = false,
+  statusBarKeys,
 }: NumericControlProps) {
   const [showInput, setShowInput] = useState(false)
 
@@ -98,7 +101,10 @@ export function NumericControl({
   }
 
   return (
-    <div className={cn('space-y-2', disabled && 'pointer-events-none opacity-50', className)}>
+    <div
+      className={cn('space-y-2', disabled && 'pointer-events-none opacity-50', className)}
+      data-status-bar-keys={statusBarKeys?.join(',')}
+    >
       <div className='flex items-center justify-between'>
         <Label className='text-sm'>{label}</Label>
         <div className='flex items-center gap-2'>

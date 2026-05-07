@@ -233,6 +233,16 @@ describe('editorStateToImagorPath', () => {
       expect(path).toContain('800x-600')
     })
 
+    it('emits -0x0 for hFlip without explicit dimensions', () => {
+      const path = editorStateToImagorPath({ hFlip: true }, 'photo.jpg', 1)
+      expect(path).toContain('/-0x0/')
+    })
+
+    it('emits 0x-0 for vFlip without explicit dimensions', () => {
+      const path = editorStateToImagorPath({ vFlip: true }, 'photo.jpg', 1)
+      expect(path).toContain('/0x-0/')
+    })
+
     it('emits f for widthFull (no offset)', () => {
       const path = editorStateToImagorPath({ widthFull: true, height: 100 }, 'photo.jpg', 1)
       expect(path).toContain('fx100')

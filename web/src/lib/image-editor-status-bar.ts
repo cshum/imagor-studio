@@ -5,10 +5,41 @@ export interface StatusBarSegmentHint {
   docsLabel?: string
 }
 
+export type StatusBarMatchKey =
+  | 'filters'
+  | 'crop'
+  | 'dimensions'
+  | 'alignment'
+  | 'padding'
+  | 'flip'
+  | 'effects'
+  | 'output'
+  | 'transform'
+  | 'fit_in'
+  | 'stretch'
+  | 'smart'
+  | 'brightness'
+  | 'contrast'
+  | 'saturation'
+  | 'hue'
+  | 'grayscale'
+  | 'blur'
+  | 'sharpen'
+  | 'round_corner'
+  | 'fill'
+  | 'rotate'
+  | 'format'
+  | 'proportion'
+  | 'quality'
+  | 'max_bytes'
+  | 'strip_icc'
+  | 'strip_exif'
+
 export interface StatusBarSegmentPart {
   prefix?: string
   text: string
   hint?: StatusBarSegmentHint
+  matchKeys?: StatusBarMatchKey[]
 }
 
 export interface StatusBarSegment {
@@ -20,6 +51,26 @@ export interface BuildStatusBarSegmentsOptions {
   t: (key: string, options?: Record<string, unknown>) => string
   imageEndpointDocsUrl?: string
   filtersDocsUrl?: string
+}
+
+export const SECTION_STATUS_BAR_KEYS: Record<string, StatusBarMatchKey[]> = {
+  crop: ['crop'],
+  effects: [
+    'filters',
+    'effects',
+    'brightness',
+    'contrast',
+    'saturation',
+    'hue',
+    'grayscale',
+    'blur',
+    'sharpen',
+    'round_corner',
+  ],
+  transform: ['filters', 'transform', 'rotate'],
+  dimensions: ['dimensions', 'alignment'],
+  fill: ['padding', 'alignment', 'filters', 'fill'],
+  output: ['filters', 'output', 'format', 'quality', 'max_bytes', 'strip_icc', 'strip_exif'],
 }
 
 const FILTER_DOC_ANCHORS: Record<string, string> = {
@@ -203,6 +254,7 @@ export function buildStatusBarSegments({
         parts: [
           {
             text: 'filters',
+            matchKeys: ['filters'],
             hint: {
               title: t('imageEditor.page.statusBar.segmentHints.filtersTitle'),
               description: t('imageEditor.page.statusBar.segmentHints.filtersDescription'),
@@ -216,9 +268,13 @@ export function buildStatusBarSegments({
             const filterDescriptionKey = filterName
               ? FILTER_DESCRIPTION_KEYS[filterName]
               : undefined
+            const matchKeys: StatusBarMatchKey[] = filterName
+              ? ['filters', filterName as StatusBarMatchKey]
+              : ['filters']
             return {
               prefix: ':',
               text: filterItem,
+              matchKeys,
               hint: {
                 title: getFilterHintTitle(filterItem, filterName),
                 description: filterDescriptionKey
@@ -240,6 +296,7 @@ export function buildStatusBarSegments({
         parts: [
           {
             text: segment,
+            matchKeys: ['dimensions', 'stretch'],
             hint: {
               title: segment,
               description: t('imageEditor.page.statusBar.segmentHints.stretchDescription'),
@@ -256,6 +313,7 @@ export function buildStatusBarSegments({
         parts: [
           {
             text: segment,
+            matchKeys: ['dimensions', 'smart'],
             hint: {
               title: segment,
               description: t('imageEditor.page.statusBar.segmentHints.smartDescription'),
@@ -272,6 +330,7 @@ export function buildStatusBarSegments({
         parts: [
           {
             text: segment,
+            matchKeys: ['alignment'],
             hint: {
               title: t('imageEditor.page.statusBar.segmentHints.alignmentTitle'),
               description: t('imageEditor.page.statusBar.segmentHints.alignmentDescription'),
@@ -288,6 +347,7 @@ export function buildStatusBarSegments({
         parts: [
           {
             text: segment,
+            matchKeys: ['dimensions', 'fit_in'],
             hint: {
               title: segment,
               description: t('imageEditor.page.statusBar.segmentHints.fitInDescription'),
@@ -301,10 +361,15 @@ export function buildStatusBarSegments({
 
     if (/^-?(?:f(?:-\d+)?|\d+)x-?(?:f(?:-\d+)?|\d+)$/.test(segment)) {
       hasSizeSegment = true
+      const matchKeys: StatusBarMatchKey[] = ['dimensions']
+      if (/^-|x-/.test(segment)) {
+        matchKeys.push('flip')
+      }
       return {
         parts: [
           {
             text: segment,
+            matchKeys,
             hint: {
               title: t('imageEditor.page.statusBar.segmentHints.sizeTitle'),
               description: t('imageEditor.page.statusBar.segmentHints.sizeDescription'),
@@ -322,6 +387,7 @@ export function buildStatusBarSegments({
         parts: [
           {
             text: segment,
+            matchKeys: [isPadding ? 'padding' : 'crop'],
             hint: {
               title: t(
                 isPadding
