@@ -79,6 +79,11 @@ type Config struct {
 	// Set via --cors-origins / CORS_ORIGINS env var.
 	CORSOrigins string
 
+	// AppFrameAncestors is a comma-separated list of origins allowed to embed the app in an iframe.
+	// When empty, the server falls back to 'self' plus APP_URL and any non-wildcard CORS origins.
+	// Set via --app-frame-ancestors / APP_FRAME_ANCESTORS env var.
+	AppFrameAncestors string
+
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
 	flagSet         *flag.FlagSet // Private field to access flag values
@@ -137,7 +142,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		appDefaultSortOrder       = fs.String("app-default-sort-order", "DESC", "default file sorting order: ASC, DESC")
 		appVideoThumbnailPosition = fs.String("app-video-thumbnail-position", "first_frame", "video thumbnail extraction position: first_frame, seek_1s, seek_3s, seek_5s, seek_10pct, seek_25pct")
 
-		corsOrigins = fs.String("cors-origins", "", "comma-separated allowed CORS origins; empty = allow all (*). Example: https://app.imagor.net")
+		corsOrigins       = fs.String("cors-origins", "", "comma-separated allowed CORS origins; empty = allow all (*). Example: https://app.imagor.net")
+		appFrameAncestors = fs.String("app-frame-ancestors", "", "comma-separated origins allowed to embed the app in an iframe; empty = derive from APP_URL and non-wildcard CORS origins")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -282,6 +288,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppDefaultSortOrder:         *appDefaultSortOrder,
 		AppVideoThumbnailPosition:   *appVideoThumbnailPosition,
 		CORSOrigins:                 *corsOrigins,
+		AppFrameAncestors:           strings.TrimSpace(*appFrameAncestors),
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}

@@ -302,6 +302,9 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	}
 
 	baseHandler := middleware.ErrorMiddleware(services.Logger)(mux)
+	baseHandler = middleware.FrameAncestorsMiddleware(
+		middleware.NewFrameAncestorsConfig(cfg.AppUrl, cfg.CORSOrigins, cfg.AppFrameAncestors),
+	)(baseHandler)
 
 	var h http.Handler
 	if services.SpaceConfigStore != nil {
