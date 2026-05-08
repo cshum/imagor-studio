@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 
 interface ImageEditorStatusBarProps {
   imagorPath: string
+  sourceImagePath?: string
   activeStatusBarKeys?: StatusBarMatchKey[]
   onTokenClick?: (matchKeys: StatusBarMatchKey[]) => void
 }
@@ -141,6 +142,7 @@ function StatusBarHelpPopover() {
 
 export function ImageEditorStatusBar({
   imagorPath,
+  sourceImagePath,
   activeStatusBarKeys = [],
   onTokenClick,
 }: ImageEditorStatusBarProps) {
@@ -153,11 +155,12 @@ export function ImageEditorStatusBar({
   const statusBarSegments = useMemo<StatusBarSegment[]>(() => {
     return buildStatusBarSegments({
       imagorPath,
+      sourceImagePath,
       t,
       imageEndpointDocsUrl,
       filtersDocsUrl,
     })
-  }, [filtersDocsUrl, imageEndpointDocsUrl, imagorPath, t])
+  }, [filtersDocsUrl, imageEndpointDocsUrl, imagorPath, sourceImagePath, t])
 
   useEffect(() => {
     if (!hasActiveStatusBarKeys) {

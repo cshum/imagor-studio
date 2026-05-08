@@ -111,6 +111,9 @@ describe('buildStatusBarSegments', () => {
         },
       ],
     })
+    expect(segments[3]).toEqual({
+      parts: [{ text: 'photo.jpg' }],
+    })
   })
 
   it('treats crop-like segments after a size segment as padding', () => {
@@ -171,6 +174,18 @@ describe('buildStatusBarSegments', () => {
     expect(segments[0]?.parts[1]?.matchKeys).toEqual(['filters', 'image', 'layer:0'])
     expect(segments[0]?.parts[2]?.matchKeys).toEqual(['filters', 'text', 'layer:1'])
     expect(segments[0]?.parts[3]?.matchKeys).toEqual(['filters', 'image', 'layer:2'])
+  })
+
+  it('appends a condensed outer source image segment when a source path is provided', () => {
+    const segments = buildStatusBarSegments({
+      imagorPath: '/fit-in/1200x800/',
+      sourceImagePath: 'color:none',
+      t,
+    })
+
+    expect(segments[2]).toEqual({
+      parts: [{ text: 'color:none' }],
+    })
   })
 })
 

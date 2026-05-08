@@ -41,6 +41,7 @@ import {
   type StatusBarMatchKey,
 } from '@/lib/image-editor-status-bar'
 import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
+import { encodeImagePath, needsBase64Encoding } from '@/lib/imagor-path'
 import { splitImagePath } from '@/lib/path-utils'
 import type { SpaceIdentity } from '@/lib/space'
 import { debounce } from '@/lib/utils.ts'
@@ -174,6 +175,10 @@ export function ImageEditorPage({
     () => layerAspectRatioLockToggle || isShiftPressed,
     [layerAspectRatioLockToggle, isShiftPressed],
   )
+  const statusBarSourceImagePath = useMemo(() => {
+    const imagePath = imageEditor.getImagePath()
+    return needsBase64Encoding(imagePath) ? encodeImagePath(imagePath) : imagePath
+  }, [imageEditor, editingContext, params])
 
   // Reset Zoom to fit when switching editing context
   useEffect(() => {
@@ -1042,6 +1047,7 @@ export function ImageEditorPage({
           />
         }
         imagorPath={imagorPath}
+        sourceImagePath={statusBarSourceImagePath}
         activeStatusBarKeys={activeStatusBarKeys}
         onStatusBarTokenClick={handleStatusBarTokenClick}
         zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}

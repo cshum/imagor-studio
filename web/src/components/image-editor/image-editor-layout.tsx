@@ -61,6 +61,7 @@ export interface ImageEditorLayoutProps {
 
   // Status bar
   imagorPath: string
+  sourceImagePath?: string
   activeStatusBarKeys?: StatusBarMatchKey[]
   onStatusBarTokenClick?: (matchKeys: StatusBarMatchKey[]) => void
 
@@ -103,6 +104,7 @@ export function ImageEditorLayout({
   rightControls,
   singleColumnControls,
   imagorPath,
+  sourceImagePath,
   activeStatusBarKeys = [],
   onStatusBarTokenClick,
   zoomControl,
@@ -275,6 +277,7 @@ export function ImageEditorLayout({
   const statusBar = (
     <ImageEditorStatusBar
       imagorPath={imagorPath}
+      sourceImagePath={sourceImagePath}
       activeStatusBarKeys={activeStatusBarKeys}
       onTokenClick={onStatusBarTokenClick}
     />

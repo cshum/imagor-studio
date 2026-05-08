@@ -154,6 +154,7 @@ describe('ImageEditorStatusBar', () => {
     render(
       <ImageEditorStatusBar
         imagorPath='/filters:image(/fit-in/100x200/cat.jpg,10,20):quality(80)/'
+        sourceImagePath='base/photo.jpg'
         onTokenClick={onTokenClick}
       />,
     )
@@ -163,5 +164,11 @@ describe('ImageEditorStatusBar', () => {
     )
 
     expect(onTokenClick).toHaveBeenCalledWith(['filters', 'image', 'layer:0'])
+  })
+
+  it('renders the raw outer source image path when provided', () => {
+    render(<ImageEditorStatusBar imagorPath='/fit-in/1200x800/' sourceImagePath='base/photo.jpg' />)
+
+    expect(screen.getByText('base/photo.jpg')).toBeTruthy()
   })
 })
