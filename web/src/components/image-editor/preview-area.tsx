@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Copy, Download, Redo2, Settings, Undo2 } from 'lucide-react'
+import { AlertCircle, Copy, Redo2, Settings, Undo2 } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
@@ -24,7 +24,6 @@ interface PreviewAreaProps {
   error: Error | null
   onLoad?: (width: number, height: number) => void
   onCopyUrl: () => void
-  onDownload: () => void
   onPreviewDimensionsChange?: (dimensions: { width: number; height: number }) => void
   visualCropEnabled?: boolean
   cropLeft?: number
@@ -66,7 +65,6 @@ export function PreviewArea({
   error,
   onLoad,
   onCopyUrl,
-  onDownload,
   onPreviewDimensionsChange,
   visualCropEnabled = false,
   cropLeft = 0,
@@ -863,42 +861,30 @@ export function PreviewArea({
 
       {/* Preview Controls - Mobile only */}
       {isMobile && (
-        <div className='bg-muted/20 ios-bottom-safe p-3'>
-          <div className='inline-flex w-full rounded-md'>
+        <>
+          <Button
+            variant='outline'
+            size='default'
+            onClick={onCopyUrl}
+            className='pointer-events-auto absolute bottom-0 left-4 z-50 h-12 rounded-full bg-background/90 px-5 text-sm font-medium shadow-lg backdrop-blur-sm md:hidden'
+            style={{ bottom: 'max(env(safe-area-inset-bottom), 16px)' }}
+          >
+            <Copy className='mr-2 h-4.5 w-4.5' />
+            {t('imageEditor.page.copyUrl')}
+          </Button>
+          {onOpenControls && (
             <Button
               variant='outline'
               size='default'
-              onClick={onCopyUrl}
-              className='flex-1 touch-manipulation rounded-r-none border-r-0'
+              onClick={onOpenControls}
+              className='pointer-events-auto absolute right-4 bottom-0 z-50 h-12 rounded-full bg-background/90 px-5 text-sm font-medium shadow-lg backdrop-blur-sm md:hidden'
+              style={{ bottom: 'max(env(safe-area-inset-bottom), 16px)' }}
             >
-              <Copy className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.copyUrl')}
+              <Settings className='mr-2 h-4.5 w-4.5' />
+              {t('imageEditor.page.controls')}
             </Button>
-            <Button
-              variant='outline'
-              size='default'
-              onClick={onDownload}
-              className={cn(
-                'flex-1 touch-manipulation',
-                onOpenControls ? 'rounded-none border-r-0' : 'rounded-l-none',
-              )}
-            >
-              <Download className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.download')}
-            </Button>
-            {onOpenControls && (
-              <Button
-                variant='outline'
-                size='default'
-                onClick={onOpenControls}
-                className='flex-1 touch-manipulation rounded-l-none'
-              >
-                <Settings className='mr-1 h-4 w-4' />
-                {t('imageEditor.page.controls')}
-              </Button>
-            )}
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   )

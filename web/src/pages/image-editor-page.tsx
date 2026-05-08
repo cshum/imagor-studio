@@ -1013,7 +1013,6 @@ export function ImageEditorPage({
             error={error}
             onLoad={handlePreviewLoad}
             onCopyUrl={handleCopyUrlClick}
-            onDownload={handleDownloadClick}
             onPreviewDimensionsChange={setPreviewMaxDimensions}
             visualCropEnabled={visualCropEnabled}
             cropLeft={params.cropLeft || 0}

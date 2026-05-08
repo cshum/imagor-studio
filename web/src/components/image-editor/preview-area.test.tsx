@@ -95,7 +95,6 @@ describe('PreviewArea', () => {
         previewUrl='/preview.jpg'
         error={null}
         onCopyUrl={() => {}}
-        onDownload={() => {}}
         onPreviewDimensionsChange={onPreviewDimensionsChange}
         isLeftColumnEmpty={true}
         isRightColumnEmpty={false}
@@ -114,7 +113,6 @@ describe('PreviewArea', () => {
         previewUrl='/preview.jpg'
         error={null}
         onCopyUrl={() => {}}
-        onDownload={() => {}}
         onPreviewDimensionsChange={onPreviewDimensionsChange}
         isLeftColumnEmpty={true}
         isRightColumnEmpty={false}
@@ -140,7 +138,6 @@ describe('PreviewArea', () => {
         previewUrl='/preview.jpg'
         error={null}
         onCopyUrl={() => {}}
-        onDownload={() => {}}
         onPreviewDimensionsChange={onPreviewDimensionsChange}
         isLeftColumnEmpty={true}
         isRightColumnEmpty={false}
@@ -156,7 +153,6 @@ describe('PreviewArea', () => {
         previewUrl='/preview.jpg'
         error={null}
         onCopyUrl={() => {}}
-        onDownload={() => {}}
         onPreviewDimensionsChange={onPreviewDimensionsChange}
         isLeftColumnEmpty={true}
         isRightColumnEmpty={false}
@@ -177,7 +173,6 @@ describe('PreviewArea', () => {
         previewUrl='/preview.jpg'
         error={null}
         onCopyUrl={() => {}}
-        onDownload={() => {}}
         showHeaderlessEditActions={true}
         canUndo={false}
         canRedo={false}
