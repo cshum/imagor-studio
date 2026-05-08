@@ -882,7 +882,22 @@ func TestSpace_ReturnsPublicAccessSpaceForAuthenticatedNonMember(t *testing.T) {
 func TestSpace_ReturnsPublicPreviewSpaceForPreviewToken(t *testing.T) {
 	orgStore := &MockOrgStore{}
 	spaceStore := &MockSpaceStore{}
-	r := newOrgResolver(orgStore, spaceStore)
+	logger, _ := zap.NewDevelopment()
+	sp := NewMockStorageProvider(nil)
+	r := NewResolver(
+		sp,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		logger,
+		orgStore,
+		spaceStore,
+		nil,
+		nil,
+		WithPublicPreviewConfig(true, "demo"),
+	)
 
 	s := makeTestSpace("demo", "org-2")
 	spaceStore.On("GetByKey", mock.Anything, "demo").Return(s, nil)
@@ -894,6 +909,7 @@ func TestSpace_ReturnsPublicPreviewSpaceForPreviewToken(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, "demo", result.Key)
 	assert.Equal(t, "org-2", result.OrgID)
+	assert.True(t, result.IsPublicPreviewSpace)
 	assert.False(t, result.CanManage)
 	assert.False(t, result.CanDelete)
 	assert.False(t, result.CanLeave)

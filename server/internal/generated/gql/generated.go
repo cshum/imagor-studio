@@ -249,6 +249,7 @@ type ComplexityRoot struct {
 		HasCustomImagorSecret func(childComplexity int) int
 		ID                    func(childComplexity int) int
 		ImagorCORSOrigins     func(childComplexity int) int
+		IsPublicPreviewSpace  func(childComplexity int) int
 		IsShared              func(childComplexity int) int
 		Key                   func(childComplexity int) int
 		Name                  func(childComplexity int) int
@@ -1750,6 +1751,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Space.ImagorCORSOrigins(childComplexity), true
+	case "Space.isPublicPreviewSpace":
+		if e.ComplexityRoot.Space.IsPublicPreviewSpace == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Space.IsPublicPreviewSpace(childComplexity), true
 	case "Space.isShared":
 		if e.ComplexityRoot.Space.IsShared == nil {
 			break
@@ -2590,6 +2597,7 @@ type Space {
   signerTruncate: Int!
   imagorCORSOrigins: String!
   hasCustomImagorSecret: Boolean!
+  isPublicPreviewSpace: Boolean!
   canManage: Boolean!
   canDelete: Boolean!
   canLeave: Boolean!
@@ -6448,6 +6456,8 @@ func (ec *executionContext) fieldContext_Mutation_createSpace(ctx context.Contex
 				return ec.fieldContext_Space_imagorCORSOrigins(ctx, field)
 			case "hasCustomImagorSecret":
 				return ec.fieldContext_Space_hasCustomImagorSecret(ctx, field)
+			case "isPublicPreviewSpace":
+				return ec.fieldContext_Space_isPublicPreviewSpace(ctx, field)
 			case "canManage":
 				return ec.fieldContext_Space_canManage(ctx, field)
 			case "canDelete":
@@ -6541,6 +6551,8 @@ func (ec *executionContext) fieldContext_Mutation_updateSpace(ctx context.Contex
 				return ec.fieldContext_Space_imagorCORSOrigins(ctx, field)
 			case "hasCustomImagorSecret":
 				return ec.fieldContext_Space_hasCustomImagorSecret(ctx, field)
+			case "isPublicPreviewSpace":
+				return ec.fieldContext_Space_isPublicPreviewSpace(ctx, field)
 			case "canManage":
 				return ec.fieldContext_Space_canManage(ctx, field)
 			case "canDelete":
@@ -9101,6 +9113,8 @@ func (ec *executionContext) fieldContext_Query_spaces(_ context.Context, field g
 				return ec.fieldContext_Space_imagorCORSOrigins(ctx, field)
 			case "hasCustomImagorSecret":
 				return ec.fieldContext_Space_hasCustomImagorSecret(ctx, field)
+			case "isPublicPreviewSpace":
+				return ec.fieldContext_Space_isPublicPreviewSpace(ctx, field)
 			case "canManage":
 				return ec.fieldContext_Space_canManage(ctx, field)
 			case "canDelete":
@@ -9232,6 +9246,8 @@ func (ec *executionContext) fieldContext_Query_space(ctx context.Context, field 
 				return ec.fieldContext_Space_imagorCORSOrigins(ctx, field)
 			case "hasCustomImagorSecret":
 				return ec.fieldContext_Space_hasCustomImagorSecret(ctx, field)
+			case "isPublicPreviewSpace":
+				return ec.fieldContext_Space_isPublicPreviewSpace(ctx, field)
 			case "canManage":
 				return ec.fieldContext_Space_canManage(ctx, field)
 			case "canDelete":
@@ -10779,6 +10795,35 @@ func (ec *executionContext) _Space_hasCustomImagorSecret(ctx context.Context, fi
 }
 
 func (ec *executionContext) fieldContext_Space_hasCustomImagorSecret(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Space",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Space_isPublicPreviewSpace(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Space_isPublicPreviewSpace,
+		func(ctx context.Context) (any, error) {
+			return obj.IsPublicPreviewSpace, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Space_isPublicPreviewSpace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Space",
 		Field:      field,
@@ -17593,6 +17638,11 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "hasCustomImagorSecret":
 			out.Values[i] = ec._Space_hasCustomImagorSecret(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isPublicPreviewSpace":
+			out.Values[i] = ec._Space_isPublicPreviewSpace(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

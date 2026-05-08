@@ -24,7 +24,15 @@ import { useBlocker } from '@tanstack/react-router'
  * )
  * ```
  */
-export function useUnsavedChangesWarning(hasUnsavedChanges: boolean | (() => boolean)) {
+interface UseUnsavedChangesWarningOptions {
+  enabled?: boolean
+}
+
+export function useUnsavedChangesWarning(
+  hasUnsavedChanges: boolean | (() => boolean),
+  options?: UseUnsavedChangesWarningOptions,
+) {
+  const enabled = options?.enabled ?? true
   const [showDialog, setShowDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null)
 
@@ -36,12 +44,16 @@ export function useUnsavedChangesWarning(hasUnsavedChanges: boolean | (() => boo
   // Block in-app navigation when there are unsaved changes
   // Using new API with withResolver to get blocker object
   const blocker = useBlocker({
-    shouldBlockFn: () => getHasUnsavedChanges(),
+    shouldBlockFn: () => enabled && getHasUnsavedChanges(),
     withResolver: true,
   })
 
   // Handle browser beforeunload event (closing tab/window or external navigation)
   useEffect(() => {
+    if (!enabled) {
+      return
+    }
+
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (getHasUnsavedChanges()) {
         e.preventDefault()
@@ -52,15 +64,25 @@ export function useUnsavedChangesWarning(hasUnsavedChanges: boolean | (() => boo
 
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [getHasUnsavedChanges])
+  }, [enabled, getHasUnsavedChanges])
 
   // Handle TanStack Router blocker (in-app navigation)
   useEffect(() => {
+    if (!enabled) {
+      if (showDialog) {
+        setShowDialog(false)
+      }
+      if (pendingNavigation) {
+        setPendingNavigation(null)
+      }
+      return
+    }
+
     if (blocker.status === 'blocked') {
       setShowDialog(true)
       setPendingNavigation(() => () => blocker.proceed())
     }
-  }, [blocker.status, blocker])
+  }, [enabled, blocker.status, blocker, pendingNavigation, showDialog])
 
   // Handle navigation confirmation (user clicks "Leave")
   const handleConfirm = useCallback(() => {
@@ -75,10 +97,10 @@ export function useUnsavedChangesWarning(hasUnsavedChanges: boolean | (() => boo
   const handleCancel = useCallback(() => {
     setShowDialog(false)
     setPendingNavigation(null)
-    if (blocker.status === 'blocked') {
+    if (enabled && blocker.status === 'blocked') {
       blocker.reset()
     }
-  }, [blocker])
+  }, [enabled, blocker])
 
   return {
     showDialog,

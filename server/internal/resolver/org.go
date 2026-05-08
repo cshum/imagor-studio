@@ -400,6 +400,7 @@ func (r *Resolver) mapSpaceToUsageSummary(spaceRecord *space.Space, hostedUsageB
 
 func (r *Resolver) mapSpaceToGQLWithPermissionsOnly(ctx context.Context, s *space.Space) (*gql.Space, error) {
 	gqlSpace := mapSpaceToGQL(s)
+	gqlSpace.IsPublicPreviewSpace = r.publicPreviewEnabled && strings.TrimSpace(r.publicPreviewSpaceKey) != "" && s.Key == strings.TrimSpace(r.publicPreviewSpaceKey)
 	permissions, err := r.getSpacePermissions(ctx, s)
 	if err != nil {
 		return nil, err

@@ -19,7 +19,7 @@ type OrganizationAuthContext = {
 }
 
 type AuthenticatedRedirectContext = {
-  search?: {
+  search?: Record<string, unknown> & {
     redirect?: string
   }
 }

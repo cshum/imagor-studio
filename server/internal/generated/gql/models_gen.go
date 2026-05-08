@@ -248,6 +248,7 @@ type Space struct {
 	SignerTruncate        int    `json:"signerTruncate"`
 	ImagorCORSOrigins     string `json:"imagorCORSOrigins"`
 	HasCustomImagorSecret bool   `json:"hasCustomImagorSecret"`
+	IsPublicPreviewSpace  bool   `json:"isPublicPreviewSpace"`
 	CanManage             bool   `json:"canManage"`
 	CanDelete             bool   `json:"canDelete"`
 	CanLeave              bool   `json:"canLeave"`

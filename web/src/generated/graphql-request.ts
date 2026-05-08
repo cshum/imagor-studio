@@ -665,6 +665,7 @@ export type Space = {
   hasCustomImagorSecret: Scalars['Boolean']['output']
   id: Scalars['ID']['output']
   imagorCORSOrigins: Scalars['String']['output']
+  isPublicPreviewSpace: Scalars['Boolean']['output']
   isShared: Scalars['Boolean']['output']
   key: Scalars['String']['output']
   name: Scalars['String']['output']
@@ -968,6 +969,7 @@ export type ListSpacesQuery = {
     signerTruncate: number
     imagorCORSOrigins: string
     hasCustomImagorSecret: boolean
+    isPublicPreviewSpace: boolean
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -1040,6 +1042,7 @@ export type GetSpaceQuery = {
     signerTruncate: number
     imagorCORSOrigins: string
     hasCustomImagorSecret: boolean
+    isPublicPreviewSpace: boolean
     canManage: boolean
     canDelete: boolean
     canLeave: boolean
@@ -2202,6 +2205,7 @@ export const ListSpacesDocument = gql`
       signerTruncate
       imagorCORSOrigins
       hasCustomImagorSecret
+      isPublicPreviewSpace
       canManage
       canDelete
       canLeave
@@ -2260,6 +2264,7 @@ export const GetSpaceDocument = gql`
       signerTruncate
       imagorCORSOrigins
       hasCustomImagorSecret
+      isPublicPreviewSpace
       canManage
       canDelete
       canLeave

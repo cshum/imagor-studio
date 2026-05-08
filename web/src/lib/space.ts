@@ -8,6 +8,7 @@ export interface SpaceIdentity {
   spaceID: string
   spaceName?: string
   canManage?: boolean
+  isPublicPreviewSpace?: boolean
 }
 
 export async function resolveSpace(spaceKey: string): Promise<ResolvedSpace> {
@@ -19,12 +20,13 @@ export async function resolveSpace(spaceKey: string): Promise<ResolvedSpace> {
 }
 
 export function getSpaceIdentity(
-  space: Pick<ResolvedSpace, 'id' | 'key' | 'name' | 'canManage'>,
+  space: Pick<ResolvedSpace, 'id' | 'key' | 'name' | 'canManage' | 'isPublicPreviewSpace'>,
 ): SpaceIdentity {
   return {
     spaceKey: space.key,
     spaceID: space.id,
     spaceName: space.name,
     canManage: space.canManage,
+    isPublicPreviewSpace: space.isPublicPreviewSpace,
   }
 }

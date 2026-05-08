@@ -73,6 +73,8 @@ type Resolver struct {
 
 	storageConfigValidator StorageConfigValidator
 	spaceStorageFactory    func(*space.Space) (storage.Storage, error)
+	publicPreviewEnabled   bool
+	publicPreviewSpaceKey  string
 }
 
 type ResolverOption func(*Resolver)
@@ -86,6 +88,13 @@ func WithProcessingOriginResolver(processingOriginResolver space.ProcessingOrigi
 func WithCloudConfig(cloudConfig management.CloudConfig) ResolverOption {
 	return func(r *Resolver) {
 		r.cloudConfig = cloudConfig
+	}
+}
+
+func WithPublicPreviewConfig(enabled bool, spaceKey string) ResolverOption {
+	return func(r *Resolver) {
+		r.publicPreviewEnabled = enabled
+		r.publicPreviewSpaceKey = spaceKey
 	}
 }
 

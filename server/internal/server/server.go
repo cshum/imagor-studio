@@ -170,6 +170,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.InviteSender,
 		resolver.WithLocalTemplatePreviewRenderer(),
 		resolver.WithCloudConfig(cloudConfig),
+		resolver.WithPublicPreviewConfig(cfg.PublicPreviewEnabled, cfg.PublicPreviewSpaceKey),
 		resolver.WithHostedStorageStore(services.HostedStorageStore),
 		resolver.WithProcessingUsageStore(services.ProcessingUsageStore),
 		resolver.WithBillingService(services.BillingService),

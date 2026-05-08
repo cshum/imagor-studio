@@ -74,6 +74,7 @@ export function ImageEditorPage({
   const isPublicPreview = authState.experienceMode === 'public-preview'
   const uiOptions = useMemo(() => getUiOptionsFromLocation(), [])
   const routeSpaceKey = space?.spaceKey
+  const isPublicPreviewSpace = space?.isPublicPreviewSpace === true
   const activeSpace: SpaceIdentity | undefined =
     space ??
     (loaderData.spaceID
@@ -179,6 +180,7 @@ export function ImageEditorPage({
   // Pass a function so it checks the ref value at navigation time, not render time
   const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(
     () => canUndo && !isSavedRef.current,
+    { enabled: !isPublicPreview && !isPublicPreviewSpace },
   )
 
   // Derive visualCropEnabled from params state (single source of truth)
