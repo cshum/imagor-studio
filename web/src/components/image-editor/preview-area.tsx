@@ -42,6 +42,7 @@ interface PreviewAreaProps {
   onOpenControls?: () => void
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
+  isSectionDragActive?: boolean
   zoom?: number | 'fit'
   previewContainerRef?: React.RefObject<HTMLDivElement | null>
   onImageDimensionsChange?: (dimensions: { width: number; height: number } | null) => void
@@ -76,6 +77,7 @@ export function PreviewArea({
   onOpenControls,
   isLeftColumnEmpty = false,
   isRightColumnEmpty = false,
+  isSectionDragActive = false,
   zoom = 'fit',
   previewContainerRef: externalPreviewContainerRef,
   onImageDimensionsChange,
@@ -300,10 +302,14 @@ export function PreviewArea({
 
   // Handle column empty state changes with delay for CSS transition
   useEffect(() => {
+    if (isSectionDragActive) {
+      return
+    }
+
     // Wait for CSS transition (300ms) to complete before recalculating
     const timeoutId = setTimeout(calculatePreviewDimensions, 300)
     return () => clearTimeout(timeoutId)
-  }, [isLeftColumnEmpty, isRightColumnEmpty, calculatePreviewDimensions])
+  }, [isLeftColumnEmpty, isRightColumnEmpty, isSectionDragActive, calculatePreviewDimensions])
 
   // Store scroll position when zoom changes (before image loads)
   useEffect(() => {

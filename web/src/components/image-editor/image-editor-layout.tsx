@@ -55,6 +55,7 @@ export interface ImageEditorLayoutProps {
   previewArea: (props: {
     isLeftColumnEmpty: boolean
     isRightColumnEmpty: boolean
+    isSectionDragActive: boolean
   }) => React.ReactNode
 
   // Controls (rendered by parent, used in sidebar and mobile sheet)
@@ -168,8 +169,8 @@ export function ImageEditorLayout({
 
   // Memoize the rendered preview area to prevent infinite render loops
   const renderedPreviewArea = useMemo(
-    () => previewArea({ isLeftColumnEmpty, isRightColumnEmpty }),
-    [previewArea, isLeftColumnEmpty, isRightColumnEmpty],
+    () => previewArea({ isLeftColumnEmpty, isRightColumnEmpty, isSectionDragActive }),
+    [previewArea, isLeftColumnEmpty, isRightColumnEmpty, isSectionDragActive],
   )
 
   // --- Shared sub-components ---

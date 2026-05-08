@@ -1000,7 +1000,7 @@ export function ImageEditorPage({
             }
           />
         }
-        previewArea={({ isLeftColumnEmpty, isRightColumnEmpty }) => (
+        previewArea={({ isLeftColumnEmpty, isRightColumnEmpty, isSectionDragActive }) => (
           <PreviewArea
             previewUrl={previewUrl || ''}
             error={error}
@@ -1029,6 +1029,7 @@ export function ImageEditorPage({
             }
             isLeftColumnEmpty={isLeftColumnEmpty}
             isRightColumnEmpty={isRightColumnEmpty}
+            isSectionDragActive={isSectionDragActive}
             textEditingLayerId={textEditingLayerId}
             isNewTextLayer={isNewTextLayer}
             onTextEdit={handleTextEdit}
