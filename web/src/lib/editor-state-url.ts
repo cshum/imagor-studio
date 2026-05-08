@@ -2,6 +2,7 @@ import type { ImageEditorState, ImageLayer, Layer } from '@/lib/image-editor'
 
 export interface ImageEditorUiOptions {
   showHeader: boolean
+  showStatusBar: boolean
   showZoomControl: boolean
   showControls: boolean
 }
@@ -31,6 +32,7 @@ export function getUiOptionsFromLocation(): ImageEditorUiOptions {
   if (typeof window === 'undefined') {
     return {
       showHeader: true,
+      showStatusBar: true,
       showZoomControl: true,
       showControls: true,
     }
@@ -40,6 +42,7 @@ export function getUiOptionsFromLocation(): ImageEditorUiOptions {
 
   return {
     showHeader: parseBooleanSearchParam(searchParams.get('uiHeader'), true),
+    showStatusBar: parseBooleanSearchParam(searchParams.get('uiStatusBar'), true),
     showZoomControl: parseBooleanSearchParam(searchParams.get('uiZoom'), true),
     showControls: parseBooleanSearchParam(searchParams.get('uiControls'), true),
   }

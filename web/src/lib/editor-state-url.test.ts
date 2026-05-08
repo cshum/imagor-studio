@@ -12,26 +12,37 @@ describe('getUiOptionsFromLocation', () => {
 
     expect(getUiOptionsFromLocation()).toEqual({
       showHeader: true,
+      showStatusBar: true,
       showZoomControl: true,
       showControls: true,
     })
   })
 
   it('parses explicit false-like UI flags from the query string', () => {
-    window.history.replaceState(null, '', '/editor?uiHeader=0&uiZoom=false&uiControls=off')
+    window.history.replaceState(
+      null,
+      '',
+      '/editor?uiHeader=0&uiStatusBar=hidden&uiZoom=false&uiControls=off',
+    )
 
     expect(getUiOptionsFromLocation()).toEqual({
       showHeader: false,
+      showStatusBar: false,
       showZoomControl: false,
       showControls: false,
     })
   })
 
   it('parses explicit true-like UI flags from the query string', () => {
-    window.history.replaceState(null, '', '/editor?uiHeader=yes&uiZoom=visible&uiControls=1')
+    window.history.replaceState(
+      null,
+      '',
+      '/editor?uiHeader=yes&uiStatusBar=visible&uiZoom=visible&uiControls=1',
+    )
 
     expect(getUiOptionsFromLocation()).toEqual({
       showHeader: true,
+      showStatusBar: true,
       showZoomControl: true,
       showControls: true,
     })

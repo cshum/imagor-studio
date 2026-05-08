@@ -975,6 +975,7 @@ export function ImageEditorPage({
         onRedo={() => imageEditor.redo()}
         isTemplate={isTemplate}
         showHeader={uiOptions.showHeader}
+        showStatusBar={uiOptions.showStatusBar}
         showControls={uiOptions.showControls}
         showTemplateActions={!isPublicPreview}
         onSaveTemplate={handleSaveTemplateClick}

@@ -1,5 +1,5 @@
 import React from 'react'
-import { act, render } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PreviewArea } from './preview-area'
@@ -169,5 +169,22 @@ describe('PreviewArea', () => {
     })
 
     expect(onPreviewDimensionsChange).not.toHaveBeenCalled()
+  })
+
+  it('hides the headerless undo redo overlay when both actions are unavailable', () => {
+    render(
+      <PreviewArea
+        previewUrl='/preview.jpg'
+        error={null}
+        onCopyUrl={() => {}}
+        onDownload={() => {}}
+        showHeaderlessEditActions={true}
+        canUndo={false}
+        canRedo={false}
+      />,
+    )
+
+    expect(screen.queryByTitle('imageEditor.page.undo')).toBeNull()
+    expect(screen.queryByTitle('imageEditor.page.redo')).toBeNull()
   })
 })

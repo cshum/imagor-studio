@@ -459,11 +459,13 @@ export function PreviewArea({
     onImageDimensionsChange?.(imageDimensions)
   }, [imageDimensions, onImageDimensionsChange])
 
+  const showHeaderlessEditOverlay = showHeaderlessEditActions && (canUndo || canRedo)
+
   return (
     <div className='relative flex h-full flex-col'>
-      {!visualCropEnabled && <LicenseBadge side={showHeaderlessEditActions ? 'left' : 'right'} />}
-      {showHeaderlessEditActions && (
-        <div className='absolute top-4 right-4 z-50 flex items-center gap-1 rounded-full border bg-background/80 p-1 shadow-lg backdrop-blur-sm md:right-6'>
+      {!visualCropEnabled && <LicenseBadge side={showHeaderlessEditOverlay ? 'left' : 'right'} />}
+      {showHeaderlessEditOverlay && (
+        <div className='bg-background/80 absolute top-4 right-4 z-50 flex items-center gap-1 rounded-full border p-1 shadow-lg backdrop-blur-sm md:right-6'>
           <Button
             variant='ghost'
             size='sm'
