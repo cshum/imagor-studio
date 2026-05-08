@@ -162,6 +162,9 @@ export function ImageEditorLayout({
 
   const isLeftColumnEmpty = leftColumnSections.length === 0
   const isRightColumnEmpty = rightColumnSections.length === 0
+  const isSectionDragActive = activeId !== null
+  const leftColumnWidth = isLeftColumnEmpty ? (isSectionDragActive ? '60px' : '0px') : '330px'
+  const rightColumnWidth = isRightColumnEmpty ? (isSectionDragActive ? '60px' : '0px') : '330px'
 
   // Memoize the rendered preview area to prevent infinite render loops
   const renderedPreviewArea = useMemo(
@@ -469,12 +472,17 @@ export function ImageEditorLayout({
           className='grid overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out'
           style={{
             gridTemplateColumns: showControls
-              ? `${isLeftColumnEmpty ? '60px' : '330px'} 1fr ${isRightColumnEmpty ? '60px' : '330px'}`
+              ? `${leftColumnWidth} 1fr ${rightColumnWidth}`
               : '1fr',
           }}
         >
           {showControls && (
-            <div className='bg-background flex flex-col overflow-hidden border-r'>
+            <div
+              className={cn(
+                'flex flex-col overflow-hidden',
+                leftColumnWidth !== '0px' && 'bg-background border-r',
+              )}
+            >
               <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
                 {leftControls}
               </div>
@@ -485,7 +493,12 @@ export function ImageEditorLayout({
           <div className='flex flex-col overflow-hidden'>{renderedPreviewArea}</div>
 
           {showControls && (
-            <div className='bg-background flex flex-col overflow-hidden border-l'>
+            <div
+              className={cn(
+                'flex flex-col overflow-hidden',
+                rightColumnWidth !== '0px' && 'bg-background border-l',
+              )}
+            >
               <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
                 {rightControls}
               </div>
