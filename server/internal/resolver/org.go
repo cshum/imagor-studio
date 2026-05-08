@@ -643,6 +643,9 @@ func (r *Resolver) canReadSpace(ctx context.Context, space *space.Space) (bool, 
 	if err != nil {
 		return false, err
 	}
+	if claims.Mode == auth.ExperienceModePublicPreview && claims.SpaceKey != "" && claims.SpaceKey == space.Key {
+		return true, nil
+	}
 	if r.registryStore != nil {
 		publicAccess, registryErr := r.registryStore.Get(ctx, registrystore.SpaceOwnerID(space.ID), "config.allow_guest_mode")
 		if registryErr != nil {

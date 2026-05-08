@@ -836,3 +836,15 @@ func createReadWriteContextWithOrg(userID, orgID string) context.Context {
 	ctx := auth.SetClaimsInContext(context.Background(), claims)
 	return context.WithValue(ctx, UserIDContextKey, userID)
 }
+
+func createPublicPreviewContext(userID, spaceKey string) context.Context {
+	claims := &auth.Claims{
+		UserID:   userID,
+		Role:     "guest",
+		Scopes:   []string{"read", "edit"},
+		Mode:     auth.ExperienceModePublicPreview,
+		SpaceKey: spaceKey,
+	}
+	ctx := auth.SetClaimsInContext(context.Background(), claims)
+	return context.WithValue(ctx, UserIDContextKey, userID)
+}

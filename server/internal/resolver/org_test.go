@@ -879,6 +879,28 @@ func TestSpace_ReturnsPublicAccessSpaceForAuthenticatedNonMember(t *testing.T) {
 	registryStore.AssertExpectations(t)
 }
 
+func TestSpace_ReturnsPublicPreviewSpaceForPreviewToken(t *testing.T) {
+	orgStore := &MockOrgStore{}
+	spaceStore := &MockSpaceStore{}
+	r := newOrgResolver(orgStore, spaceStore)
+
+	s := makeTestSpace("demo", "org-2")
+	spaceStore.On("GetByKey", mock.Anything, "demo").Return(s, nil)
+	orgStore.On("GetByUserID", mock.Anything, "preview-guest").Return(nil, nil)
+
+	ctx := createPublicPreviewContext("preview-guest", "demo")
+	result, err := r.Query().Space(ctx, "demo")
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, "demo", result.Key)
+	assert.Equal(t, "org-2", result.OrgID)
+	assert.False(t, result.CanManage)
+	assert.False(t, result.CanDelete)
+	assert.False(t, result.CanLeave)
+	spaceStore.AssertExpectations(t)
+	orgStore.AssertExpectations(t)
+}
+
 // ---------- CreateSpace ------------------------------------------------------
 
 func TestCreateSpace_RequiresAdmin(t *testing.T) {
