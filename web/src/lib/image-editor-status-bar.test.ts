@@ -5,6 +5,7 @@ import {
   getActiveLayerStatusBarKeys,
   getFilterHintTitle,
   getFilterName,
+  getLayerIdFromStatusBarKeys,
   resolveStatusBarKeys,
   splitTopLevelFilters,
   splitTopLevelPathSegments,
@@ -209,6 +210,28 @@ describe('getActiveLayerStatusBarKeys', () => {
         'empty-text',
         null,
       ),
+    ).toBeNull()
+  })
+})
+
+describe('getLayerIdFromStatusBarKeys', () => {
+  it('resolves a layer match key to the corresponding visible serializable layer id', () => {
+    expect(
+      getLayerIdFromStatusBarKeys(
+        [
+          { id: 'hidden-image', type: 'image', visible: false },
+          { id: 'empty-text', type: 'text', visible: true, text: ' ' },
+          { id: 'color-layer', type: 'image', visible: true },
+          { id: 'text-layer', type: 'text', visible: true, text: 'hello' },
+        ],
+        ['filters', 'image', 'layer:1'],
+      ),
+    ).toBe('text-layer')
+  })
+
+  it('returns null when no valid layer key is present', () => {
+    expect(
+      getLayerIdFromStatusBarKeys([{ id: 'image-layer', type: 'image', visible: true }], ['image']),
     ).toBeNull()
   })
 })

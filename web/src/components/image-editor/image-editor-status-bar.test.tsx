@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ImageEditorStatusBar } from './image-editor-status-bar'
@@ -146,5 +146,22 @@ describe('ImageEditorStatusBar', () => {
     )
 
     expect(scrollIntoView).not.toHaveBeenCalled()
+  })
+
+  it('emits layer token clicks with the token match keys', () => {
+    const onTokenClick = vi.fn()
+
+    render(
+      <ImageEditorStatusBar
+        imagorPath='/filters:image(/fit-in/100x200/cat.jpg,10,20):quality(80)/'
+        onTokenClick={onTokenClick}
+      />,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /image\(\/fit-in\/100x200\/cat\.jpg,10,20\)/ }),
+    )
+
+    expect(onTokenClick).toHaveBeenCalledWith(['filters', 'image', 'layer:0'])
   })
 })

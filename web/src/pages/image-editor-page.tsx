@@ -35,7 +35,11 @@ import {
 } from '@/lib/editor-state-url'
 import { getFileDisplayName } from '@/lib/file-utils'
 import { fetchImageDimensions } from '@/lib/image-dimensions'
-import { getActiveLayerStatusBarKeys, type StatusBarMatchKey } from '@/lib/image-editor-status-bar'
+import {
+  getActiveLayerStatusBarKeys,
+  getLayerIdFromStatusBarKeys,
+  type StatusBarMatchKey,
+} from '@/lib/image-editor-status-bar'
 import { isColorLayer, isGroupLayer, type ImageEditorState } from '@/lib/image-editor.ts'
 import { splitImagePath } from '@/lib/path-utils'
 import type { SpaceIdentity } from '@/lib/space'
@@ -400,6 +404,18 @@ export function ImageEditorPage({
     }
     // No success toast for download as it's obvious when it works
   }
+
+  const handleStatusBarTokenClick = useCallback(
+    (matchKeys: StatusBarMatchKey[]) => {
+      const layerId = getLayerIdFromStatusBarKeys(params.layers, matchKeys)
+      if (!layerId) {
+        return
+      }
+
+      imageEditor.setSelectedLayerId(layerId)
+    },
+    [imageEditor, params.layers],
+  )
 
   const handleSaveTemplateClick = useCallback(async () => {
     // Direct save for existing templates (no dialog)
@@ -1027,6 +1043,7 @@ export function ImageEditorPage({
         }
         imagorPath={imagorPath}
         activeStatusBarKeys={activeStatusBarKeys}
+        onStatusBarTokenClick={handleStatusBarTokenClick}
         zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}
         mobileSheetOpen={mobileSheetOpen}
         onMobileSheetOpenChange={setMobileSheetOpen}

@@ -280,6 +280,35 @@ export function getActiveLayerStatusBarKeys(
   return [`layer:${activeLayerIndex}`]
 }
 
+export function getLayerIdFromStatusBarKeys(
+  layers: StatusBarLayerLike[] | undefined,
+  matchKeys: StatusBarMatchKey[] | undefined,
+): string | null {
+  const layerMatchKey = matchKeys?.find((key) => key.startsWith('layer:'))
+  if (!layerMatchKey || !layers?.length) {
+    return null
+  }
+
+  const layerIndex = Number.parseInt(layerMatchKey.slice('layer:'.length), 10)
+  if (Number.isNaN(layerIndex) || layerIndex < 0) {
+    return null
+  }
+
+  const visibleSerializableLayers = layers.filter((layer) => {
+    if (!layer.visible) {
+      return false
+    }
+
+    if (layer.type === 'text') {
+      return !!layer.text?.trim().length
+    }
+
+    return true
+  })
+
+  return visibleSerializableLayers[layerIndex]?.id ?? null
+}
+
 export function resolveStatusBarKeys(keysValue: string | undefined): StatusBarMatchKey[] {
   if (!keysValue) {
     return []

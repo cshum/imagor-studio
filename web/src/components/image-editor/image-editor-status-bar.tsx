@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 interface ImageEditorStatusBarProps {
   imagorPath: string
   activeStatusBarKeys?: StatusBarMatchKey[]
+  onTokenClick?: (matchKeys: StatusBarMatchKey[]) => void
 }
 
 interface StatusBarTokenProps {
@@ -23,6 +24,7 @@ interface StatusBarTokenProps {
   previousPart?: StatusBarSegmentPart
   hasActiveStatusBarKeys: boolean
   activeStatusBarKeys: StatusBarMatchKey[]
+  onTokenClick?: (matchKeys: StatusBarMatchKey[]) => void
 }
 
 function StatusBarToken({
@@ -30,11 +32,13 @@ function StatusBarToken({
   previousPart,
   hasActiveStatusBarKeys,
   activeStatusBarKeys,
+  onTokenClick,
 }: StatusBarTokenProps) {
   const isHighlighted =
     hasActiveStatusBarKeys &&
     !!part.matchKeys?.length &&
     part.matchKeys.some((key) => activeStatusBarKeys.includes(key))
+  const isClickable = !!part.matchKeys?.some((key) => key.startsWith('layer:'))
 
   const textClassName = cn(
     'transition-colors',
@@ -55,10 +59,16 @@ function StatusBarToken({
             <button
               type='button'
               data-status-bar-highlighted={isHighlighted ? 'true' : undefined}
+              onClick={() => {
+                if (part.matchKeys?.length) {
+                  onTokenClick?.(part.matchKeys)
+                }
+              }}
               className={cn(
                 'rounded no-underline decoration-dotted underline-offset-3 hover:underline',
                 textClassName,
                 isHighlighted ? 'hover:text-foreground' : 'hover:text-foreground/85',
+                isClickable && 'cursor-pointer',
               )}
             >
               {part.prefix}
@@ -132,6 +142,7 @@ function StatusBarHelpPopover() {
 export function ImageEditorStatusBar({
   imagorPath,
   activeStatusBarKeys = [],
+  onTokenClick,
 }: ImageEditorStatusBarProps) {
   const { t } = useTranslation()
   const hasActiveStatusBarKeys = activeStatusBarKeys.length > 0
@@ -197,6 +208,7 @@ export function ImageEditorStatusBar({
                       previousPart={segment.parts[partIndex - 1]}
                       hasActiveStatusBarKeys={hasActiveStatusBarKeys}
                       activeStatusBarKeys={activeStatusBarKeys}
+                      onTokenClick={onTokenClick}
                     />
                   </React.Fragment>
                 ))}

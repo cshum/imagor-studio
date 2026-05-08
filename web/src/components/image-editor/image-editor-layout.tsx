@@ -62,6 +62,7 @@ export interface ImageEditorLayoutProps {
   // Status bar
   imagorPath: string
   activeStatusBarKeys?: StatusBarMatchKey[]
+  onStatusBarTokenClick?: (matchKeys: StatusBarMatchKey[]) => void
 
   // Zoom control (desktop and tablet only)
   zoomControl: React.ReactNode
@@ -103,6 +104,7 @@ export function ImageEditorLayout({
   singleColumnControls,
   imagorPath,
   activeStatusBarKeys = [],
+  onStatusBarTokenClick,
   zoomControl,
   mobileSheetOpen,
   onMobileSheetOpenChange,
@@ -271,7 +273,11 @@ export function ImageEditorLayout({
   )
 
   const statusBar = (
-    <ImageEditorStatusBar imagorPath={imagorPath} activeStatusBarKeys={activeStatusBarKeys} />
+    <ImageEditorStatusBar
+      imagorPath={imagorPath}
+      activeStatusBarKeys={activeStatusBarKeys}
+      onTokenClick={onStatusBarTokenClick}
+    />
   )
 
   // --- Mobile Layout ---
