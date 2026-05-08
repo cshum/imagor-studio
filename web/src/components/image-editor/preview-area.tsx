@@ -532,9 +532,9 @@ export function PreviewArea({
                         : isTablet
                           ? 'max-w-[calc(100vw-362px)]'
                           : isLeftColumnEmpty && isRightColumnEmpty
-                            ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
+                            ? 'max-w-[calc(100vw-32px)]' // Both empty: 0 + 0 + 32 = 32px
                             : isLeftColumnEmpty || isRightColumnEmpty
-                              ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
+                              ? 'max-w-[calc(100vw-362px)]' // One empty: 0 + 330 + 32 = 362px
                               : 'max-w-[calc(100vw-692px)]'), // Both full: 330 + 330 + 32 = 692px
                   )}
                 />
