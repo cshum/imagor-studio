@@ -170,6 +170,7 @@ const termsRoute = createRoute({
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
+  beforeLoad: redirectAuthenticatedUsers,
   validateSearch: (search: Record<string, unknown>) => ({
     invite_token: getInviteTokenSearchValue(search),
   }),
