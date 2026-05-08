@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react'
 import {
   createRootRoute,
   createRoute,
@@ -6,6 +7,7 @@ import {
   Outlet,
   redirect,
   RouterProvider,
+  useRouterState,
 } from '@tanstack/react-router'
 
 import { LicenseActivationDialog } from '@/components/license/license-activation-dialog.tsx'
@@ -18,6 +20,7 @@ import { LocalConfigStorage } from '@/lib/config-storage/local-config-storage'
 import { SessionConfigStorage } from '@/lib/config-storage/session-config-storage.ts'
 import { getInviteTokenSearchValue } from '@/lib/route-search'
 import { getSpaceIdentity, resolveSpace } from '@/lib/space'
+import { getThemeOverrideFromLocationSearch } from '@/lib/theme-search'
 import {
   adminGeneralLoader,
   adminImagorLoader,
@@ -100,13 +103,18 @@ import { initializeFolderTreeCache } from '@/stores/folder-tree-store.ts'
 import { initializeGalleryScrollPositions } from '@/stores/gallery-scroll-position-store.ts'
 import { checkLicense, useLicense } from '@/stores/license-store'
 import { initializeSidebar } from '@/stores/sidebar-store.ts'
-import { initializeTheme } from '@/stores/theme-store.ts'
+import { initializeTheme, setThemeOverride } from '@/stores/theme-store.ts'
 
 const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
 
 const RootComponent = () => {
   useTitle()
   const { showDialog, setShowDialog } = useLicense()
+  const { location } = useRouterState()
+
+  useLayoutEffect(() => {
+    setThemeOverride(getThemeOverrideFromLocationSearch(window.location.search))
+  }, [location.pathname, location.search])
 
   return (
     <>
