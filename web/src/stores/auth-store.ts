@@ -426,7 +426,8 @@ export const initPublicPreviewAuth = async (): Promise<Auth> => {
       },
     })
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Public preview authentication failed'
+    const errorMessage =
+      error instanceof Error ? error.message : 'Public preview authentication failed'
     return authStore.dispatch({
       type: 'LOGOUT_WITH_ERROR',
       payload: { error: errorMessage },

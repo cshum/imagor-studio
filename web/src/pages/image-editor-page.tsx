@@ -30,6 +30,7 @@ import { EditorSectionStorage, type EditorSections, type SectionKey } from '@/li
 import {
   deserializeStateFromUrl,
   getStateFromLocation,
+  getUiOptionsFromLocation,
   serializeStateToUrl,
   updateLocationState,
 } from '@/lib/editor-state-url'
@@ -69,6 +70,7 @@ export function ImageEditorPage({
   const router = useRouter()
   const { authState } = useAuth()
   const isPublicPreview = authState.experienceMode === 'public-preview'
+  const uiOptions = useMemo(() => getUiOptionsFromLocation(), [])
   const routeSpaceKey = space?.spaceKey
   const activeSpace: SpaceIdentity | undefined =
     space ??
@@ -972,7 +974,8 @@ export function ImageEditorPage({
         onUndo={() => imageEditor.undo()}
         onRedo={() => imageEditor.redo()}
         isTemplate={isTemplate}
-        showHeader={!isPublicPreview}
+        showHeader={uiOptions.showHeader}
+        showControls={uiOptions.showControls}
         showTemplateActions={!isPublicPreview}
         onSaveTemplate={handleSaveTemplateClick}
         onDownload={handleDownloadClick}
@@ -1021,7 +1024,9 @@ export function ImageEditorPage({
             zoom={zoom}
             previewContainerRef={previewContainerRef}
             onImageDimensionsChange={setPreviewImageDimensions}
-            onOpenControls={isMobile ? () => setMobileSheetOpen(true) : undefined}
+            onOpenControls={
+              isMobile && uiOptions.showControls ? () => setMobileSheetOpen(true) : undefined
+            }
             isLeftColumnEmpty={isLeftColumnEmpty}
             isRightColumnEmpty={isRightColumnEmpty}
             textEditingLayerId={textEditingLayerId}
@@ -1066,9 +1071,9 @@ export function ImageEditorPage({
         activeStatusBarKeys={activeStatusBarKeys}
         onStatusBarTokenClick={handleStatusBarTokenClick}
         zoomControl={
-          isPublicPreview ? undefined : (
+          uiOptions.showZoomControl ? (
             <ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />
-          )
+          ) : undefined
         }
         mobileSheetOpen={mobileSheetOpen}
         onMobileSheetOpenChange={setMobileSheetOpen}

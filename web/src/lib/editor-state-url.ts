@@ -1,5 +1,50 @@
 import type { ImageEditorState, ImageLayer, Layer } from '@/lib/image-editor'
 
+export interface ImageEditorUiOptions {
+  showHeader: boolean
+  showZoomControl: boolean
+  showControls: boolean
+}
+
+function parseBooleanSearchParam(value: string | null, defaultValue: boolean): boolean {
+  if (value === null) {
+    return defaultValue
+  }
+
+  const normalized = value.trim().toLowerCase()
+  if (normalized === '') {
+    return defaultValue
+  }
+
+  if (['0', 'false', 'off', 'hide', 'hidden', 'no'].includes(normalized)) {
+    return false
+  }
+
+  if (['1', 'true', 'on', 'show', 'visible', 'yes'].includes(normalized)) {
+    return true
+  }
+
+  return defaultValue
+}
+
+export function getUiOptionsFromLocation(): ImageEditorUiOptions {
+  if (typeof window === 'undefined') {
+    return {
+      showHeader: true,
+      showZoomControl: true,
+      showControls: true,
+    }
+  }
+
+  const searchParams = new URLSearchParams(window.location.search)
+
+  return {
+    showHeader: parseBooleanSearchParam(searchParams.get('uiHeader'), true),
+    showZoomControl: parseBooleanSearchParam(searchParams.get('uiZoom'), true),
+    showControls: parseBooleanSearchParam(searchParams.get('uiControls'), true),
+  }
+}
+
 /**
  * Serialize ImageEditorState to URL-safe base64 string
  * Strips UI-only state (visualCropEnabled) before serializing

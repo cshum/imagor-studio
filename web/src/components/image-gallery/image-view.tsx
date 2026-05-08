@@ -688,7 +688,9 @@ export function ImageView({
                 animate={{ opacity: !showControls ? 0 : 1 }}
                 transition={{ duration: 0.3 }}
               >
-                {(authState.state === 'authenticated' || authState.isEmbedded) &&
+                {(authState.state === 'authenticated' ||
+                  authState.isEmbedded ||
+                  authState.experienceMode === 'public-preview') &&
                   !image.isVideo && (
                     <button
                       onClick={handleImagorClick}

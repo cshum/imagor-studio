@@ -34,6 +34,7 @@ export interface ImageEditorLayoutProps {
   onRedo: () => void
   isTemplate: boolean
   showHeader?: boolean
+  showControls?: boolean
   showTemplateActions?: boolean
   onSaveTemplate: () => void
   onDownload: () => void
@@ -91,6 +92,7 @@ export function ImageEditorLayout({
   onRedo,
   isTemplate,
   showHeader = true,
+  showControls = true,
   showTemplateActions = true,
   onSaveTemplate,
   onDownload,
@@ -136,23 +138,27 @@ export function ImageEditorLayout({
   )
 
   // Calculate if columns are empty for smart sizing (desktop)
-  const leftColumnSections = editorOpenSections.leftColumn.filter((id) => {
-    if (hiddenSections?.includes(id)) return false
-    const visibleSections = editorOpenSections.visibleSections || []
-    if (visibleSections.length > 0 && !visibleSections.includes(id)) {
-      return false
-    }
-    return true
-  })
+  const leftColumnSections = showControls
+    ? editorOpenSections.leftColumn.filter((id) => {
+        if (hiddenSections?.includes(id)) return false
+        const visibleSections = editorOpenSections.visibleSections || []
+        if (visibleSections.length > 0 && !visibleSections.includes(id)) {
+          return false
+        }
+        return true
+      })
+    : []
 
-  const rightColumnSections = editorOpenSections.rightColumn.filter((id) => {
-    if (hiddenSections?.includes(id)) return false
-    const visibleSections = editorOpenSections.visibleSections || []
-    if (visibleSections.length > 0 && !visibleSections.includes(id)) {
-      return false
-    }
-    return true
-  })
+  const rightColumnSections = showControls
+    ? editorOpenSections.rightColumn.filter((id) => {
+        if (hiddenSections?.includes(id)) return false
+        const visibleSections = editorOpenSections.visibleSections || []
+        if (visibleSections.length > 0 && !visibleSections.includes(id)) {
+          return false
+        }
+        return true
+      })
+    : []
 
   const isLeftColumnEmpty = leftColumnSections.length === 0
   const isRightColumnEmpty = rightColumnSections.length === 0
@@ -164,64 +170,72 @@ export function ImageEditorLayout({
   )
 
   // --- Shared sub-components ---
-  const primaryActionButton = isTemplate && showTemplateActions ? (
-    <>
-      <Button
-        variant='outline'
-        size='sm'
-        onClick={onSaveTemplate}
-        className='rounded-r-none border-r-0'
-      >
-        <FileText className='mr-1 h-4 w-4' />
-        {t('imageEditor.template.saveTemplate')}
-      </Button>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-            <MoreVertical className='h-4 w-4' />
-          </Button>
-        </DropdownMenuTrigger>
-        <EditorMenuDropdown
-          onDownload={onDownload}
-          onCopyUrl={onCopyUrl}
-          onSaveTemplate={onSaveTemplateAs}
-          onApplyTemplate={onApplyTemplate}
-          onLanguageChange={onLanguageChange}
-          onToggleSectionVisibility={onToggleSectionVisibility}
-          editorOpenSections={editorOpenSections}
-          isTemplate={isTemplate}
-          showTemplateActions={showTemplateActions}
-          hiddenSections={hiddenSections}
-        />
-      </DropdownMenu>
-    </>
-  ) : (
-    <>
-      <Button variant='outline' size='sm' onClick={onCopyUrl} className='rounded-r-none border-r-0'>
-        <Copy className='mr-1 h-4 w-4' />
-        {t('imageEditor.page.copyUrl')}
-      </Button>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-            <MoreVertical className='h-4 w-4' />
-          </Button>
-        </DropdownMenuTrigger>
-        <EditorMenuDropdown
-          onDownload={onDownload}
-          onCopyUrl={onCopyUrl}
-          onSaveTemplate={onSaveTemplateAs}
-          onApplyTemplate={onApplyTemplate}
-          showCopyUrl={false}
-          showTemplateActions={showTemplateActions}
-          onLanguageChange={onLanguageChange}
-          onToggleSectionVisibility={onToggleSectionVisibility}
-          editorOpenSections={editorOpenSections}
-          hiddenSections={hiddenSections}
-        />
-      </DropdownMenu>
-    </>
-  )
+  const primaryActionButton =
+    isTemplate && showTemplateActions ? (
+      <>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={onSaveTemplate}
+          className='rounded-r-none border-r-0'
+        >
+          <FileText className='mr-1 h-4 w-4' />
+          {t('imageEditor.template.saveTemplate')}
+        </Button>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+              <MoreVertical className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <EditorMenuDropdown
+            onDownload={onDownload}
+            onCopyUrl={onCopyUrl}
+            onSaveTemplate={onSaveTemplateAs}
+            onApplyTemplate={onApplyTemplate}
+            onLanguageChange={onLanguageChange}
+            onToggleSectionVisibility={onToggleSectionVisibility}
+            editorOpenSections={editorOpenSections}
+            isTemplate={isTemplate}
+            showSectionVisibilityControls={showControls}
+            showTemplateActions={showTemplateActions}
+            hiddenSections={hiddenSections}
+          />
+        </DropdownMenu>
+      </>
+    ) : (
+      <>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={onCopyUrl}
+          className='rounded-r-none border-r-0'
+        >
+          <Copy className='mr-1 h-4 w-4' />
+          {t('imageEditor.page.copyUrl')}
+        </Button>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+              <MoreVertical className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <EditorMenuDropdown
+            onDownload={onDownload}
+            onCopyUrl={onCopyUrl}
+            onSaveTemplate={onSaveTemplateAs}
+            onApplyTemplate={onApplyTemplate}
+            showCopyUrl={false}
+            showSectionVisibilityControls={showControls}
+            showTemplateActions={showTemplateActions}
+            onLanguageChange={onLanguageChange}
+            onToggleSectionVisibility={onToggleSectionVisibility}
+            editorOpenSections={editorOpenSections}
+            hiddenSections={hiddenSections}
+          />
+        </DropdownMenu>
+      </>
+    )
 
   const centeredTitle = (
     <div className='flex flex-1 justify-center'>
@@ -316,6 +330,7 @@ export function ImageEditorLayout({
                   onToggleSectionVisibility={onToggleSectionVisibility}
                   editorOpenSections={editorOpenSections}
                   showTemplateActions={showTemplateActions}
+                  showSectionVisibilityControls={showControls}
                   includeUndoRedo={true}
                   onUndo={onUndo}
                   onRedo={onRedo}
@@ -329,36 +344,38 @@ export function ImageEditorLayout({
 
           {renderedPreviewArea}
 
-          <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
-            <SheetTrigger asChild>
-              <button className='hidden' />
-            </SheetTrigger>
-            <SheetContent
-              side='right'
-              hideClose={true}
-              className='flex w-full flex-col gap-0 p-0 sm:w-96'
-            >
-              <SheetHeader className='border-b p-3'>
-                <div className='flex items-center gap-3'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onMobileSheetOpenChange(false)}
-                  >
-                    <ChevronLeft className='mr-1 h-4 w-4' />
-                    {t('imageEditor.page.back')}
-                  </Button>
-                  <SheetTitle className='flex-1 text-center'>
-                    {t('imageEditor.page.controls')}
-                  </SheetTitle>
-                  <div className='w-[72px]' />
+          {showControls && (
+            <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
+              <SheetTrigger asChild>
+                <button className='hidden' />
+              </SheetTrigger>
+              <SheetContent
+                side='right'
+                hideClose={true}
+                className='flex w-full flex-col gap-0 p-0 sm:w-96'
+              >
+                <SheetHeader className='border-b p-3'>
+                  <div className='flex items-center gap-3'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => onMobileSheetOpenChange(false)}
+                    >
+                      <ChevronLeft className='mr-1 h-4 w-4' />
+                      {t('imageEditor.page.back')}
+                    </Button>
+                    <SheetTitle className='flex-1 text-center'>
+                      {t('imageEditor.page.controls')}
+                    </SheetTitle>
+                    <div className='w-[72px]' />
+                  </div>
+                </SheetHeader>
+                <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                  {singleColumnControls}
                 </div>
-              </SheetHeader>
-              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-                {singleColumnControls}
-              </div>
-            </SheetContent>
-          </Sheet>
+              </SheetContent>
+            </Sheet>
+          )}
         </div>
       </div>
     )
@@ -388,13 +405,20 @@ export function ImageEditorLayout({
         )}
 
         {/* Main content - Two columns */}
-        <div className='grid w-full grid-cols-[1fr_330px] overflow-hidden'>
+        <div
+          className={cn(
+            'grid w-full overflow-hidden',
+            showControls ? 'grid-cols-[1fr_330px]' : 'grid-cols-[1fr]',
+          )}
+        >
           <div className='flex min-w-0 flex-col overflow-hidden'>{renderedPreviewArea}</div>
-          <div className='bg-background flex flex-col overflow-hidden border-l'>
-            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-              {singleColumnControls}
+          {showControls && (
+            <div className='bg-background flex flex-col overflow-hidden border-l'>
+              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                {singleColumnControls}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Status bar */}
@@ -444,25 +468,29 @@ export function ImageEditorLayout({
         <div
           className='grid overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out'
           style={{
-            gridTemplateColumns: `${isLeftColumnEmpty ? '60px' : '330px'} 1fr ${isRightColumnEmpty ? '60px' : '330px'}`,
+            gridTemplateColumns: showControls
+              ? `${isLeftColumnEmpty ? '60px' : '330px'} 1fr ${isRightColumnEmpty ? '60px' : '330px'}`
+              : '1fr',
           }}
         >
-          {/* Left Column */}
-          <div className='bg-background flex flex-col overflow-hidden border-r'>
-            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-              {leftControls}
+          {showControls && (
+            <div className='bg-background flex flex-col overflow-hidden border-r'>
+              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                {leftControls}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Center - Preview */}
           <div className='flex flex-col overflow-hidden'>{renderedPreviewArea}</div>
 
-          {/* Right Column */}
-          <div className='bg-background flex flex-col overflow-hidden border-l'>
-            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-              {rightControls}
+          {showControls && (
+            <div className='bg-background flex flex-col overflow-hidden border-l'>
+              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                {rightControls}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Shared Drag Overlay */}
