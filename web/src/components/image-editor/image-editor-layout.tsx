@@ -170,7 +170,7 @@ export function ImageEditorLayout({
   const isSectionDragActive = activeId !== null
   const leftColumnWidth = isLeftColumnEmpty ? (isSectionDragActive ? '60px' : '0px') : '330px'
   const rightColumnWidth = isRightColumnEmpty ? (isSectionDragActive ? '60px' : '0px') : '330px'
-  const isHeaderVisible = isMobile ? true : showHeader
+  const isHeaderVisible = showHeader
   const isStatusBarVisible = !isMobile && showStatusBar
 
   // Memoize the rendered preview area to prevent infinite render loops
@@ -334,37 +334,39 @@ export function ImageEditorLayout({
         <LoadingBar isLoading={isLoading} />
 
         <div className='ios-preview-container-fix flex flex-1 flex-col'>
-          <div className='flex items-center gap-2 border-b p-3'>
-            {backButton}
-            {centeredTitle}
-            <div className='ml-auto flex items-center gap-2'>
-              <ModeToggle />
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant='ghost' size='sm'>
-                    <MoreVertical className='h-4 w-4' />
-                  </Button>
-                </DropdownMenuTrigger>
-                <EditorMenuDropdown
-                  onDownload={onDownload}
-                  onCopyUrl={onCopyUrl}
-                  onSaveTemplate={onSaveTemplateAs}
-                  onApplyTemplate={onApplyTemplate}
-                  onLanguageChange={onLanguageChange}
-                  onToggleSectionVisibility={onToggleSectionVisibility}
-                  editorOpenSections={editorOpenSections}
-                  showTemplateActions={showTemplateActions}
-                  showSectionVisibilityControls={showControls}
-                  includeUndoRedo={true}
-                  onUndo={onUndo}
-                  onRedo={onRedo}
-                  canUndo={canUndo}
-                  canRedo={canRedo}
-                  hiddenSections={hiddenSections}
-                />
-              </DropdownMenu>
+          {isHeaderVisible && (
+            <div className='flex items-center gap-2 border-b p-3'>
+              {backButton}
+              {centeredTitle}
+              <div className='ml-auto flex items-center gap-2'>
+                <ModeToggle />
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='ghost' size='sm'>
+                      <MoreVertical className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <EditorMenuDropdown
+                    onDownload={onDownload}
+                    onCopyUrl={onCopyUrl}
+                    onSaveTemplate={onSaveTemplateAs}
+                    onApplyTemplate={onApplyTemplate}
+                    onLanguageChange={onLanguageChange}
+                    onToggleSectionVisibility={onToggleSectionVisibility}
+                    editorOpenSections={editorOpenSections}
+                    showTemplateActions={showTemplateActions}
+                    showSectionVisibilityControls={showControls}
+                    includeUndoRedo={true}
+                    onUndo={onUndo}
+                    onRedo={onRedo}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    hiddenSections={hiddenSections}
+                  />
+                </DropdownMenu>
+              </div>
             </div>
-          </div>
+          )}
 
           {renderedPreviewArea}
 
