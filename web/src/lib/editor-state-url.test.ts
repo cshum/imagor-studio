@@ -23,7 +23,7 @@ describe('getUiOptionsFromLocation', () => {
     window.history.replaceState(
       null,
       '',
-      '/editor?uiHeader=0&uiStatusBar=hidden&uiZoom=false&uiControls=off&uiPostMessageUrl=no',
+      '/editor?header=0&statusBar=hidden&zoom=false&controls=off&embedSyncUrl=no',
     )
 
     expect(getUiOptionsFromLocation()).toEqual({
@@ -39,7 +39,7 @@ describe('getUiOptionsFromLocation', () => {
     window.history.replaceState(
       null,
       '',
-      '/editor?uiHeader=yes&uiStatusBar=visible&uiZoom=visible&uiControls=1&uiPostMessageUrl=on',
+      '/editor?header=yes&statusBar=visible&zoom=visible&controls=1&embedSyncUrl=on',
     )
 
     expect(getUiOptionsFromLocation()).toEqual({

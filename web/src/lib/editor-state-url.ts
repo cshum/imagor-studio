@@ -43,11 +43,11 @@ export function getUiOptionsFromLocation(): ImageEditorUiOptions {
   const searchParams = new URLSearchParams(window.location.search)
 
   return {
-    showHeader: parseBooleanSearchParam(searchParams.get('uiHeader'), true),
-    showStatusBar: parseBooleanSearchParam(searchParams.get('uiStatusBar'), true),
-    showZoomControl: parseBooleanSearchParam(searchParams.get('uiZoom'), true),
-    showControls: parseBooleanSearchParam(searchParams.get('uiControls'), true),
-    postMessageUrl: parseBooleanSearchParam(searchParams.get('uiPostMessageUrl'), false),
+    showHeader: parseBooleanSearchParam(searchParams.get('header'), true),
+    showStatusBar: parseBooleanSearchParam(searchParams.get('statusBar'), true),
+    showZoomControl: parseBooleanSearchParam(searchParams.get('zoom'), true),
+    showControls: parseBooleanSearchParam(searchParams.get('controls'), true),
+    postMessageUrl: parseBooleanSearchParam(searchParams.get('embedSyncUrl'), false),
   }
 }
 
