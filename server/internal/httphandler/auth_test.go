@@ -1487,6 +1487,21 @@ func TestGuestLogin(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectError:    false,
 		},
+		{
+			name:        "Public preview space auto issues editor-capable guest session",
+			requestBody: `{"spaceKey":"demo-space"}`,
+			spaceStore: &stubSpaceStore{spaceByKey: map[string]*space.Space{
+				"demo-space": {ID: "space-demo", Key: "demo-space"},
+			}},
+			setupMocks: func() {
+				mockRegistryStore.On("Get", mock.Anything, registrystore.SystemOwnerID, "config.allow_guest_mode").Return(&registrystore.Registry{
+					Key:   "config.allow_guest_mode",
+					Value: "false",
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectError:    false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1494,7 +1509,12 @@ func TestGuestLogin(t *testing.T) {
 			mockRegistryStore.ExpectedCalls = nil
 			tt.setupMocks()
 
-			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, AuthHandlerConfig{EmbeddedMode: true, SpaceStore: tt.spaceStore})
+			cfg := AuthHandlerConfig{EmbeddedMode: true, SpaceStore: tt.spaceStore}
+			if tt.name == "Public preview space auto issues editor-capable guest session" {
+				cfg.PublicPreviewEnabled = true
+				cfg.PublicPreviewSpaceKey = "demo-space"
+			}
+			handler := NewAuthHandler(tokenManager, mockUserStore, nil, mockRegistryStore, logger, cfg)
 
 			var body *bytes.Buffer
 			if tt.requestBody != "" {
@@ -1531,6 +1551,16 @@ func TestGuestLogin(t *testing.T) {
 				assert.Contains(t, claims.Scopes, "read")
 				assert.NotContains(t, claims.Scopes, "write")
 				assert.NotContains(t, claims.Scopes, "admin")
+				if tt.name == "Public preview space auto issues editor-capable guest session" {
+					assert.Equal(t, auth.ExperienceModePublicPreview, loginResp.Mode)
+					assert.Equal(t, auth.ExperienceModePublicPreview, claims.Mode)
+					assert.Equal(t, "demo-space", claims.SpaceKey)
+					assert.Contains(t, claims.Scopes, "edit")
+				} else {
+					assert.Empty(t, loginResp.Mode)
+					assert.Empty(t, claims.Mode)
+					assert.NotContains(t, claims.Scopes, "edit")
+				}
 			}
 
 			mockRegistryStore.AssertExpectations(t)

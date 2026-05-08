@@ -80,6 +80,10 @@ function shouldAttemptGuestLogin(pathname: string, multiTenant: boolean): boolea
   return true
 }
 
+function getExperienceModeFromResponse(mode: string | undefined): ExperienceMode {
+  return mode === 'public-preview' ? mode : null
+}
+
 export type AuthAction =
   | {
       type: 'INIT'
@@ -261,9 +265,15 @@ export const initAuth = async (
       try {
         const guestResponse = await guestLogin(getPublicSpaceKeyFromPath(pathname))
         const profile = await getCurrentUser(guestResponse.token)
+        const experienceMode = getExperienceModeFromResponse(guestResponse.mode)
         return authStore.dispatch({
           type: 'INIT',
-          payload: { accessToken: guestResponse.token, profile },
+          payload: {
+            accessToken: guestResponse.token,
+            profile,
+            experienceMode,
+            persistToken: experienceMode !== 'public-preview',
+          },
         })
       } catch {
         // Guest login failed, remain unauthenticated

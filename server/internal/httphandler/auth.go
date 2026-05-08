@@ -134,6 +134,7 @@ type LoginResponse struct {
 	Token        string       `json:"token"`
 	ExpiresIn    int64        `json:"expiresIn"`
 	User         UserResponse `json:"user"`
+	Mode         string       `json:"mode,omitempty"`
 	RedirectPath string       `json:"redirectPath,omitempty"`
 	PathPrefix   string       `json:"pathPrefix,omitempty"`
 }
@@ -522,7 +523,8 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 			}
 		}
 
-		allowed, err := h.isGuestLoginAllowed(r.Context(), strings.TrimSpace(req.SpaceKey))
+		spaceKey := strings.TrimSpace(req.SpaceKey)
+		allowed, err := h.isGuestLoginAllowed(r.Context(), spaceKey)
 		if err != nil {
 			return err
 		}
@@ -532,15 +534,7 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 		}
 
 		guestID := uuid.GenerateUUID()
-
-		token, err := h.tokenManager.GenerateToken(guestID, "guest", []string{"read"}, "")
-		if err != nil {
-			h.logger.Error("Failed to generate guest token", zap.Error(err))
-			return apperror.InternalServerError("Failed to generate token")
-		}
-
 		response := LoginResponse{
-			Token:     token,
 			ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
 			User: UserResponse{
 				ID:          guestID,
@@ -549,6 +543,31 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 				Role:        "guest",
 			},
 		}
+
+		isPublicPreviewSpace := h.publicPreviewEnabled && spaceKey != "" && spaceKey == strings.TrimSpace(h.publicPreviewSpaceKey)
+		var token string
+		if isPublicPreviewSpace {
+			token, err = h.tokenManager.GenerateTokenWithClaims(auth.Claims{
+				UserID:   guestID,
+				Role:     "guest",
+				Scopes:   []string{"read", "edit"},
+				Mode:     auth.ExperienceModePublicPreview,
+				SpaceKey: spaceKey,
+			}, 0)
+			if err != nil {
+				h.logger.Error("Failed to generate public preview guest token", zap.Error(err), zap.String("spaceKey", spaceKey))
+				return apperror.InternalServerError("Failed to generate token")
+			}
+			response.Mode = auth.ExperienceModePublicPreview
+		} else {
+			token, err = h.tokenManager.GenerateToken(guestID, "guest", []string{"read"}, "")
+			if err != nil {
+				h.logger.Error("Failed to generate guest token", zap.Error(err))
+				return apperror.InternalServerError("Failed to generate token")
+			}
+		}
+
+		response.Token = token
 
 		h.logger.Info("Guest login successful", zap.String("guestID", guestID))
 		return WriteSuccess(w, response)
@@ -571,6 +590,10 @@ func (h *AuthHandler) isGuestLoginAllowed(ctx context.Context, spaceKey string) 
 	}
 
 	if guestModeMetadata != nil && guestModeMetadata.Value == "true" {
+		return true, nil
+	}
+
+	if h.publicPreviewEnabled && spaceKey != "" && spaceKey == strings.TrimSpace(h.publicPreviewSpaceKey) {
 		return true, nil
 	}
 
