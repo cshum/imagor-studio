@@ -136,6 +136,15 @@ func SPAHandler(staticFS fs.FS, imagorHandler http.Handler, logger *zap.Logger, 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 
+		if path == "/favicon.ico" {
+			if _, err := staticFS.Open("favicon.ico"); err != nil {
+				if _, iconErr := staticFS.Open("icon.png"); iconErr == nil {
+					http.Redirect(w, r, "/icon.png", http.StatusMovedPermanently)
+					return
+				}
+			}
+		}
+
 		// Check if this looks like an imagor request
 		if isImagorPath(path) {
 			if imagorHandler != nil {

@@ -267,3 +267,30 @@ func TestSPAHandlerInjectsBootstrapIntoHTML(t *testing.T) {
 		t.Fatalf("Expected bootstrap payload before </head>, got %q", body)
 	}
 }
+
+func TestSPAHandlerRedirectsFaviconToIconPNG(t *testing.T) {
+	logger := zaptest.NewLogger(t)
+
+	staticFS := fstest.MapFS{
+		"index.html": {
+			Data: []byte("<html><body>Mock HTML</body></html>"),
+		},
+		"icon.png": {
+			Data: []byte("png"),
+		},
+	}
+
+	handler := SPAHandler(staticFS, nil, logger, AppBootstrap{})
+	req := httptest.NewRequest("GET", "/favicon.ico", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusMovedPermanently {
+		t.Fatalf("Expected status 301, got %d", w.Code)
+	}
+
+	if location := w.Header().Get("Location"); location != "/icon.png" {
+		t.Fatalf("Expected redirect to /icon.png, got %q", location)
+	}
+}
