@@ -81,8 +81,8 @@ export class EditorSectionStorage {
   private storage: ConfigStorage
 
   constructor(auth: Auth) {
-    if (auth.isEmbedded) {
-      // Embedded mode: use localStorage
+    if (auth.isEmbedded || auth.experienceMode === 'public-preview') {
+      // Embedded and public preview sessions avoid registry writes.
       this.storage = new LocalConfigStorage('editor_open_sections')
     } else {
       // Non-embedded mode: use UserRegistryConfigStorage with localStorage fallback

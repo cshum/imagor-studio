@@ -1557,6 +1557,20 @@ func TestPreviewSession(t *testing.T) {
 		return token
 	}
 
+	makePublicPreviewToken := func(t *testing.T, spaceKey string) string {
+		t.Helper()
+		token, err := tokenManager.GenerateTokenWithClaims(auth.Claims{
+			UserID:           "preview-user",
+			Role:             "guest",
+			Scopes:           []string{"read", "edit"},
+			Mode:             auth.ExperienceModePublicPreview,
+			SpaceKey:         spaceKey,
+			RegisteredClaims: jwt.RegisteredClaims{},
+		}, time.Hour)
+		require.NoError(t, err)
+		return token
+	}
+
 	t.Run("allows same org private space", func(t *testing.T) {
 		mockRegistryStore.ExpectedCalls = nil
 		spaceStore := &stubSpaceStore{spaceByKey: map[string]*space.Space{
@@ -1692,6 +1706,99 @@ func TestPreviewSession(t *testing.T) {
 		rr := httptest.NewRecorder()
 
 		handler.PreviewSession()(rr, req)
+
+		require.Equal(t, http.StatusForbidden, rr.Code)
+	})
+
+	t.Run("allows public preview token for bound space", func(t *testing.T) {
+		mockRegistryStore.ExpectedCalls = nil
+		spaceStore := &stubSpaceStore{spaceByKey: map[string]*space.Space{
+			"space-key": {ID: "space-1", OrgID: "org-host", Key: "space-key"},
+		}}
+		handler := NewAuthHandler(tokenManager, userStore, &provisioningOrgStore{storedOrg: &org.Org{ID: "org-selected", OwnerID: "user-1"}}, mockRegistryStore, logger, AuthHandlerConfig{
+			SpaceStore:               spaceStore,
+			PreviewTTL:               time.Minute,
+			ProcessingOriginResolver: stubProcessingOriginResolver{origin: "https://space-key.imagor.app"},
+		})
+
+		body, err := json.Marshal(PreviewSessionRequest{SpaceID: "space-1"})
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, "/api/auth/preview-session", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+makePublicPreviewToken(t, "space-key"))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+
+		handler.PreviewSession()(rr, req)
+
+		require.Equal(t, http.StatusOK, rr.Code)
+	})
+
+	t.Run("rejects public preview token for different space", func(t *testing.T) {
+		mockRegistryStore.ExpectedCalls = nil
+		spaceStore := &stubSpaceStore{spaceByKey: map[string]*space.Space{
+			"space-key": {ID: "space-1", OrgID: "org-host", Key: "space-key"},
+		}}
+		handler := NewAuthHandler(tokenManager, userStore, &provisioningOrgStore{storedOrg: &org.Org{ID: "org-selected", OwnerID: "user-1"}}, mockRegistryStore, logger, AuthHandlerConfig{
+			SpaceStore:               spaceStore,
+			PreviewTTL:               time.Minute,
+			ProcessingOriginResolver: stubProcessingOriginResolver{origin: "https://space-key.imagor.app"},
+		})
+
+		body, err := json.Marshal(PreviewSessionRequest{SpaceID: "space-1"})
+		require.NoError(t, err)
+		req := httptest.NewRequest(http.MethodPost, "/api/auth/preview-session", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+makePublicPreviewToken(t, "other-space"))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+
+		handler.PreviewSession()(rr, req)
+
+		require.Equal(t, http.StatusForbidden, rr.Code)
+	})
+}
+
+func TestPublicPreviewSession(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tokenManager := auth.NewTokenManager("test-secret", time.Hour)
+	handler := NewAuthHandler(tokenManager, new(MockUserStore), nil, nil, logger, AuthHandlerConfig{
+		PublicPreviewEnabled:  true,
+		PublicPreviewSpaceKey: "demo-space",
+		SpaceStore: &stubSpaceStore{spaceByKey: map[string]*space.Space{
+			"demo-space": {ID: "space-demo", Key: "demo-space"},
+		}},
+		ProcessingOriginResolver: stubProcessingOriginResolver{origin: "https://demo-space.imagor.app"},
+	})
+
+	t.Run("issues public preview session", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/auth/public-preview-session", nil)
+		rr := httptest.NewRecorder()
+
+		handler.PublicPreviewSession()(rr, req)
+
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var resp PublicPreviewSessionResponse
+		err := json.Unmarshal(rr.Body.Bytes(), &resp)
+		require.NoError(t, err)
+		assert.Equal(t, auth.ExperienceModePublicPreview, resp.Mode)
+		assert.Equal(t, "space-demo", resp.SpaceID)
+		assert.Equal(t, "demo-space", resp.SpaceKey)
+		assert.Equal(t, "https://demo-space.imagor.app", resp.ProcessingOrigin)
+
+		claims, err := tokenManager.ValidateToken(resp.Token)
+		require.NoError(t, err)
+		assert.Equal(t, auth.ExperienceModePublicPreview, claims.Mode)
+		assert.Equal(t, "demo-space", claims.SpaceKey)
+		assert.Contains(t, claims.Scopes, "read")
+		assert.Contains(t, claims.Scopes, "edit")
+	})
+
+	t.Run("rejects when feature disabled", func(t *testing.T) {
+		disabledHandler := NewAuthHandler(tokenManager, new(MockUserStore), nil, nil, logger, AuthHandlerConfig{})
+		req := httptest.NewRequest(http.MethodPost, "/api/auth/public-preview-session", nil)
+		rr := httptest.NewRecorder()
+
+		disabledHandler.PublicPreviewSession()(rr, req)
 
 		require.Equal(t, http.StatusForbidden, rr.Code)
 	})

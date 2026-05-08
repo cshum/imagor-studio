@@ -18,9 +18,12 @@ type Claims struct {
 	Scopes     []string `json:"scopes"`
 	PathPrefix string   `json:"path_prefix,omitempty"`
 	IsEmbedded bool     `json:"is_embedded,omitempty"`
+	Mode       string   `json:"mode,omitempty"`
 	Kind       string   `json:"kind,omitempty"`
 	SpaceKey   string   `json:"space_key,omitempty"`
 }
+
+const ExperienceModePublicPreview = "public-preview"
 
 // TokenManager handles JWT operations
 type TokenManager struct {
@@ -134,6 +137,7 @@ func (tm *TokenManager) RefreshToken(claims *Claims) (string, error) {
 		Scopes:     claims.Scopes,
 		PathPrefix: claims.PathPrefix,
 		IsEmbedded: claims.IsEmbedded,
+		Mode:       claims.Mode,
 		Kind:       claims.Kind,
 		SpaceKey:   claims.SpaceKey,
 	}

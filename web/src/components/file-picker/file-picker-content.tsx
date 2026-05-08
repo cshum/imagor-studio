@@ -76,6 +76,8 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
 }) => {
   const { t } = useTranslation()
   const { authState } = useAuth()
+  const canUseUserDisplayPreferences =
+    authState.state === 'authenticated' && authState.experienceMode !== 'public-preview'
   const spaceKey = space?.spaceKey
   const [folders, setFolders] = useState<Gallery[]>([])
   const [images, setImages] = useState<GalleryImage[]>([])
@@ -167,7 +169,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     const loadPreferences = async () => {
       try {
         const preferences = await loadGalleryDisplayPreferences({
-          userID: authState.state === 'authenticated' ? authState.profile?.id : undefined,
+          userID: canUseUserDisplayPreferences ? authState.profile?.id : undefined,
           spaceID: space?.spaceID,
           defaults: {
             sortBy: 'NAME',
@@ -189,7 +191,7 @@ export const FilePickerContent: React.FC<FilePickerContentProps> = ({
     }
 
     loadPreferences()
-  }, [authState.profile?.id, authState.state])
+  }, [authState.profile?.id, canUseUserDisplayPreferences, space?.spaceID])
 
   // Notify parent of loading state changes
   useEffect(() => {

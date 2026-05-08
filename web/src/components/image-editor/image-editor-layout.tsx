@@ -33,6 +33,8 @@ export interface ImageEditorLayoutProps {
   onUndo: () => void
   onRedo: () => void
   isTemplate: boolean
+  showHeader?: boolean
+  showTemplateActions?: boolean
   onSaveTemplate: () => void
   onDownload: () => void
   onCopyUrl: () => void
@@ -66,7 +68,7 @@ export interface ImageEditorLayoutProps {
   onStatusBarTokenClick?: (matchKeys: StatusBarMatchKey[]) => void
 
   // Zoom control (desktop and tablet only)
-  zoomControl: React.ReactNode
+  zoomControl?: React.ReactNode
 
   // Mobile sheet
   mobileSheetOpen: boolean
@@ -88,6 +90,8 @@ export function ImageEditorLayout({
   onUndo,
   onRedo,
   isTemplate,
+  showHeader = true,
+  showTemplateActions = true,
   onSaveTemplate,
   onDownload,
   onCopyUrl,
@@ -160,7 +164,7 @@ export function ImageEditorLayout({
   )
 
   // --- Shared sub-components ---
-  const primaryActionButton = isTemplate ? (
+  const primaryActionButton = isTemplate && showTemplateActions ? (
     <>
       <Button
         variant='outline'
@@ -186,6 +190,7 @@ export function ImageEditorLayout({
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
           isTemplate={isTemplate}
+          showTemplateActions={showTemplateActions}
           hiddenSections={hiddenSections}
         />
       </DropdownMenu>
@@ -208,6 +213,7 @@ export function ImageEditorLayout({
           onSaveTemplate={onSaveTemplateAs}
           onApplyTemplate={onApplyTemplate}
           showCopyUrl={false}
+          showTemplateActions={showTemplateActions}
           onLanguageChange={onLanguageChange}
           onToggleSectionVisibility={onToggleSectionVisibility}
           editorOpenSections={editorOpenSections}
@@ -309,6 +315,7 @@ export function ImageEditorLayout({
                   onLanguageChange={onLanguageChange}
                   onToggleSectionVisibility={onToggleSectionVisibility}
                   editorOpenSections={editorOpenSections}
+                  showTemplateActions={showTemplateActions}
                   includeUndoRedo={true}
                   onUndo={onUndo}
                   onRedo={onRedo}
@@ -360,19 +367,25 @@ export function ImageEditorLayout({
   // --- Tablet Layout ---
   if (isTablet) {
     return (
-      <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
+      <div
+        className={cn(
+          'bg-background ios-no-drag grid h-screen overscroll-none select-none',
+          showHeader ? 'grid-rows-[auto_1fr_auto]' : 'grid-rows-[1fr_auto]',
+        )}
+      >
         <LoadingBar isLoading={isLoading} />
 
-        {/* Header */}
-        <div className='flex items-center gap-2 border-b p-3'>
-          {backButton}
-          {centeredTitle}
-          <div className='ml-auto flex items-center gap-2'>
-            <ModeToggle />
-            {undoRedoButtons}
-            <div className='inline-flex items-center rounded-md'>{primaryActionButton}</div>
+        {showHeader && (
+          <div className='flex items-center gap-2 border-b p-3'>
+            {backButton}
+            {centeredTitle}
+            <div className='ml-auto flex items-center gap-2'>
+              <ModeToggle />
+              {undoRedoButtons}
+              <div className='inline-flex items-center rounded-md'>{primaryActionButton}</div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Main content - Two columns */}
         <div className='grid w-full grid-cols-[1fr_330px] overflow-hidden'>
@@ -388,29 +401,37 @@ export function ImageEditorLayout({
         {statusBar}
 
         {/* Zoom Controls */}
-        <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
-          <div className='pointer-events-auto'>{zoomControl}</div>
-        </div>
+        {zoomControl && (
+          <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
+            <div className='pointer-events-auto'>{zoomControl}</div>
+          </div>
+        )}
       </div>
     )
   }
 
   // --- Desktop Layout ---
   return (
-    <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
+    <div
+      className={cn(
+        'bg-background ios-no-drag grid h-screen overscroll-none select-none',
+        showHeader ? 'grid-rows-[auto_1fr_auto]' : 'grid-rows-[1fr_auto]',
+      )}
+    >
       <LoadingBar isLoading={isLoading} />
 
-      {/* Header */}
-      <div className='flex items-center gap-2 border-b p-3'>
-        {backButton}
-        {layerBreadcrumb && <div className='w-[220px]'>{layerBreadcrumb}</div>}
-        {centeredTitle}
-        <div className='ml-auto flex items-center gap-2'>
-          <ModeToggle />
-          {undoRedoButtons}
-          <div className='inline-flex items-center rounded-md'>{primaryActionButton}</div>
+      {showHeader && (
+        <div className='flex items-center gap-2 border-b p-3'>
+          {backButton}
+          {layerBreadcrumb && <div className='w-[220px]'>{layerBreadcrumb}</div>}
+          {centeredTitle}
+          <div className='ml-auto flex items-center gap-2'>
+            <ModeToggle />
+            {undoRedoButtons}
+            <div className='inline-flex items-center rounded-md'>{primaryActionButton}</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main content - Three columns with DndContext */}
       <DndContext
@@ -456,9 +477,11 @@ export function ImageEditorLayout({
       {statusBar}
 
       {/* Zoom Controls */}
-      <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
-        <div className='pointer-events-auto'>{zoomControl}</div>
-      </div>
+      {zoomControl && (
+        <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
+          <div className='pointer-events-auto'>{zoomControl}</div>
+        </div>
+      )}
     </div>
   )
 }

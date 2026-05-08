@@ -24,6 +24,7 @@ interface EditorMenuDropdownProps {
   onCopyUrl: () => void
   onSaveTemplate: () => void
   onApplyTemplate?: () => void
+  showTemplateActions?: boolean
   showCopyUrl?: boolean
   onLanguageChange: (languageCode: string) => void
   onToggleSectionVisibility: (sectionKey: SectionKey) => void
@@ -43,6 +44,7 @@ export function EditorMenuDropdown({
   onCopyUrl,
   onSaveTemplate,
   onApplyTemplate,
+  showTemplateActions = true,
   showCopyUrl = true,
   onLanguageChange,
   onToggleSectionVisibility,
@@ -85,21 +87,22 @@ export function EditorMenuDropdown({
             <Download className='mr-3 h-4 w-4' />
             {t('imageEditor.page.download')}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault()
-              // Close dropdown first, then open dialog after a short delay
-              setTimeout(() => onSaveTemplate(), 100)
-            }}
-          >
-            <FileDown className='mr-3 h-4 w-4' />
-            {saveTemplateLabel}
-            <span className='text-muted-foreground ml-auto pl-4 text-xs'>
-              {getKeyboardShortcut('S', { ctrl: true, shift: isTemplate })}
-            </span>
-          </DropdownMenuItem>
-          {/* Hide "Apply Template" when editing templates (doesn't make sense to apply template to itself) */}
-          {onApplyTemplate && !isTemplate && (
+          {showTemplateActions && (
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault()
+                // Close dropdown first, then open dialog after a short delay
+                setTimeout(() => onSaveTemplate(), 100)
+              }}
+            >
+              <FileDown className='mr-3 h-4 w-4' />
+              {saveTemplateLabel}
+              <span className='text-muted-foreground ml-auto pl-4 text-xs'>
+                {getKeyboardShortcut('S', { ctrl: true, shift: isTemplate })}
+              </span>
+            </DropdownMenuItem>
+          )}
+          {showTemplateActions && onApplyTemplate && !isTemplate && (
             <DropdownMenuItem
               onSelect={(e) => {
                 e.preventDefault()
@@ -110,7 +113,7 @@ export function EditorMenuDropdown({
               {t('imageEditor.template.applyTemplate')}
             </DropdownMenuItem>
           )}
-          <DropdownMenuSeparator />
+          {showTemplateActions && <DropdownMenuSeparator />}
         </>
       )}
 
@@ -127,19 +130,20 @@ export function EditorMenuDropdown({
             <Download className='mr-3 h-4 w-4' />
             {t('imageEditor.page.download')}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              setTimeout(() => onSaveTemplate(), 0)
-            }}
-          >
-            <FileDown className='mr-3 h-4 w-4' />
-            {saveTemplateLabel}
-            <span className='text-muted-foreground ml-auto pl-4 text-xs'>
-              {getKeyboardShortcut('S', { ctrl: true, shift: isTemplate })}
-            </span>
-          </DropdownMenuItem>
-          {/* Hide "Apply Template" when editing templates (doesn't make sense to apply template to itself) */}
-          {onApplyTemplate && !isTemplate && (
+          {showTemplateActions && (
+            <DropdownMenuItem
+              onSelect={() => {
+                setTimeout(() => onSaveTemplate(), 0)
+              }}
+            >
+              <FileDown className='mr-3 h-4 w-4' />
+              {saveTemplateLabel}
+              <span className='text-muted-foreground ml-auto pl-4 text-xs'>
+                {getKeyboardShortcut('S', { ctrl: true, shift: isTemplate })}
+              </span>
+            </DropdownMenuItem>
+          )}
+          {showTemplateActions && onApplyTemplate && !isTemplate && (
             <DropdownMenuItem
               onSelect={() => {
                 setTimeout(() => onApplyTemplate(), 0)
@@ -149,7 +153,7 @@ export function EditorMenuDropdown({
               {t('imageEditor.template.applyTemplate')}
             </DropdownMenuItem>
           )}
-          <DropdownMenuSeparator />
+          {showTemplateActions && <DropdownMenuSeparator />}
         </>
       )}
 

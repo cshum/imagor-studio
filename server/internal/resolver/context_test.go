@@ -246,6 +246,14 @@ func TestRequireWritePermissionWithPath(t *testing.T) {
 			expectError:   true,
 			errorContains: "path access denied",
 		},
+		{
+			name:          "Public preview cannot persist changes",
+			scopes:        []string{"read", "edit"},
+			pathPrefix:    "/user123/images",
+			requestedPath: "/user123/images/photo.jpg",
+			expectError:   true,
+			errorContains: "public preview sessions cannot persist changes",
+		},
 	}
 
 	for _, tt := range tests {
@@ -256,6 +264,9 @@ func TestRequireWritePermissionWithPath(t *testing.T) {
 				Role:       "user",
 				Scopes:     tt.scopes,
 				PathPrefix: tt.pathPrefix,
+			}
+			if tt.name == "Public preview cannot persist changes" {
+				claims.Mode = auth.ExperienceModePublicPreview
 			}
 			ctx := auth.SetClaimsInContext(context.Background(), claims)
 
@@ -271,6 +282,22 @@ func TestRequireWritePermissionWithPath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIsPublicPreviewMode(t *testing.T) {
+	t.Run("returns true when mode is public preview", func(t *testing.T) {
+		ctx := auth.SetClaimsInContext(context.Background(), &auth.Claims{Mode: auth.ExperienceModePublicPreview})
+		assert.True(t, IsPublicPreviewMode(ctx))
+	})
+
+	t.Run("returns false for non preview mode", func(t *testing.T) {
+		ctx := auth.SetClaimsInContext(context.Background(), &auth.Claims{Mode: ""})
+		assert.False(t, IsPublicPreviewMode(ctx))
+	})
+
+	t.Run("returns false without claims", func(t *testing.T) {
+		assert.False(t, IsPublicPreviewMode(context.Background()))
+	})
 }
 
 func TestIsEmbeddedMode(t *testing.T) {

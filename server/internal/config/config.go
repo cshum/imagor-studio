@@ -31,7 +31,9 @@ type Config struct {
 	LicenseKey string
 
 	// Authentication Configuration
-	AllowGuestMode bool // Allow guest mode access
+	AllowGuestMode        bool // Allow guest mode access
+	PublicPreviewEnabled  bool
+	PublicPreviewSpaceKey string
 
 	// Embedded Mode Configuration
 	EmbeddedMode bool // Enable embedded mode (stateless, no database)
@@ -102,10 +104,12 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		jwtExpiration     = fs.String("jwt-expiration", "168h", "JWT token expiration duration")
 		licenseKey        = fs.String("license-key", "", "license key for activation")
 
-		allowGuestMode   = fs.Bool("allow-guest-mode", false, "allow guest mode access")
-		embeddedMode     = fs.Bool("embedded-mode", false, "enable embedded mode (stateless, no database)")
-		forceAutoMigrate = fs.Bool("force-auto-migrate", false, "force auto-migration even for PostgreSQL/MySQL (use with caution in multi-instance environments)")
-		migrateCommand   = fs.String("migrate-command", "up", "migration command: up, down, status, reset")
+		allowGuestMode        = fs.Bool("allow-guest-mode", false, "allow guest mode access")
+		publicPreviewEnabled  = fs.Bool("public-preview-enabled", false, "enable public preview session issuance")
+		publicPreviewSpaceKey = fs.String("public-preview-space-key", "", "space key used for public preview sessions")
+		embeddedMode          = fs.Bool("embedded-mode", false, "enable embedded mode (stateless, no database)")
+		forceAutoMigrate      = fs.Bool("force-auto-migrate", false, "force auto-migration even for PostgreSQL/MySQL (use with caution in multi-instance environments)")
+		migrateCommand        = fs.String("migrate-command", "up", "migration command: up, down, status, reset")
 
 		fileStorageBaseDir          = fs.String("file-storage-base-dir", "/app/gallery", "base directory for file storage")
 		fileStorageMkdirPermissions = fs.String("file-storage-mkdir-permissions", "0755", "directory creation permissions")
@@ -249,6 +253,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		JWTExpiration:               jwtExp,
 		LicenseKey:                  *licenseKey,
 		AllowGuestMode:              *allowGuestMode,
+		PublicPreviewEnabled:        *publicPreviewEnabled,
+		PublicPreviewSpaceKey:       strings.TrimSpace(*publicPreviewSpaceKey),
 		EmbeddedMode:                *embeddedMode,
 		ForceAutoMigrate:            *forceAutoMigrate,
 		MigrateCommand:              *migrateCommand,

@@ -196,6 +196,10 @@ export const requireImageEditorAuth = async (context?: { location?: AuthRouteLoc
     return currentAuth
   }
 
+  if (currentAuth.experienceMode === 'public-preview') {
+    return currentAuth
+  }
+
   // For non-embedded users, use the existing account auth logic
   return requireAccountAuth(context)
 }

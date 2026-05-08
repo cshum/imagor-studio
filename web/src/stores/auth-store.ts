@@ -1,4 +1,10 @@
-import { checkFirstRun, embeddedGuestLogin, guestLogin, refreshToken } from '@/api/auth-api'
+import {
+  checkFirstRun,
+  embeddedGuestLogin,
+  guestLogin,
+  publicPreviewSession,
+  refreshToken,
+} from '@/api/auth-api'
 import { getCurrentUser } from '@/api/user-api.ts'
 import type { MeQuery } from '@/generated/graphql'
 import i18n from '@/i18n'
@@ -11,6 +17,7 @@ const isMultiTenantMode = import.meta.env.VITE_MULTI_TENANT === 'true'
 export type UserProfile = MeQuery['me']
 
 export type AuthState = 'loading' | 'authenticated' | 'unauthenticated' | 'guest'
+export type ExperienceMode = 'public-preview' | null
 
 export interface Auth {
   state: AuthState
@@ -21,6 +28,8 @@ export interface Auth {
   error: string | null
   isEmbedded: boolean
   pathPrefix: string
+  experienceMode: ExperienceMode
+  persistToken: boolean
 }
 
 const initialState: Auth = {
@@ -32,6 +41,13 @@ const initialState: Auth = {
   error: null,
   isEmbedded: false,
   pathPrefix: '',
+  experienceMode: null,
+  persistToken: false,
+}
+
+function getRequestedExperienceMode(search: string): ExperienceMode {
+  const value = new URLSearchParams(search).get('experience')
+  return value === 'public-preview' ? value : null
 }
 
 function getPublicSpaceKeyFromPath(pathname: string): string | undefined {
@@ -72,6 +88,8 @@ export type AuthAction =
         profile: UserProfile
         isEmbedded?: boolean
         pathPrefix?: string
+        experienceMode?: ExperienceMode
+        persistToken?: boolean
       }
     }
   | { type: 'LOGOUT' }
@@ -83,11 +101,18 @@ export type AuthAction =
 function reducer(state: Auth, action: AuthAction): Auth {
   switch (action.type) {
     case 'INIT': {
-      const { profile, accessToken, isEmbedded = false, pathPrefix = '' } = action.payload
+      const {
+        profile,
+        accessToken,
+        isEmbedded = false,
+        pathPrefix = '',
+        experienceMode = null,
+        persistToken = true,
+      } = action.payload
       const authState = profile?.role === 'guest' ? 'guest' : 'authenticated'
 
       // Only persist to localStorage if not embedded (stateless)
-      if (!isEmbedded) {
+      if (!isEmbedded && persistToken) {
         setToken(accessToken)
       }
 
@@ -99,11 +124,13 @@ function reducer(state: Auth, action: AuthAction): Auth {
         error: null,
         isEmbedded,
         pathPrefix,
+        experienceMode,
+        persistToken,
       }
     }
 
     case 'LOGOUT':
-      if (!isEmbeddedMode) {
+      if (!isEmbeddedMode && state.persistToken) {
         removeToken()
       }
       return {
@@ -113,10 +140,12 @@ function reducer(state: Auth, action: AuthAction): Auth {
         profile: null,
         error: null,
         pathPrefix: '',
+        experienceMode: null,
+        persistToken: false,
       }
 
     case 'LOGOUT_WITH_ERROR':
-      if (!isEmbeddedMode) {
+      if (!isEmbeddedMode && state.persistToken) {
         removeToken()
       }
       return {
@@ -126,6 +155,8 @@ function reducer(state: Auth, action: AuthAction): Auth {
         profile: null,
         error: action.payload.error,
         pathPrefix: '',
+        experienceMode: null,
+        persistToken: false,
       }
 
     case 'SET_ERROR':
@@ -160,6 +191,7 @@ export const authStore = createStore(initialState, reducer)
 export const initAuth = async (
   accessToken?: string,
   pathname = window.location.pathname,
+  search = window.location.search,
 ): Promise<Auth> => {
   // In embedded mode, handle embedded token from URL
   if (isEmbeddedMode) {
@@ -176,6 +208,10 @@ export const initAuth = async (
 
   // Continue with normal auth flow
   try {
+    if (!accessToken && getRequestedExperienceMode(search) === 'public-preview') {
+      return await initPublicPreviewAuth()
+    }
+
     // Token priority: explicit arg → ?token= on /auth/callback (OAuth) → localStorage
     const currentAccessToken =
       accessToken ||
@@ -342,6 +378,7 @@ export const initEmbeddedAuth = async (): Promise<Auth> => {
         profile,
         isEmbedded: true,
         pathPrefix: response.pathPrefix || '',
+        persistToken: false,
       },
     })
   } catch (error) {
@@ -361,6 +398,32 @@ export const initEmbeddedAuth = async (): Promise<Auth> => {
   }
 }
 
+/**
+ * Initialize a non-persistent public preview auth session.
+ */
+export const initPublicPreviewAuth = async (): Promise<Auth> => {
+  try {
+    const response = await publicPreviewSession()
+    const profile = await getCurrentUser(response.token)
+
+    return authStore.dispatch({
+      type: 'INIT',
+      payload: {
+        accessToken: response.token,
+        profile,
+        experienceMode: 'public-preview',
+        persistToken: false,
+      },
+    })
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Public preview authentication failed'
+    return authStore.dispatch({
+      type: 'LOGOUT_WITH_ERROR',
+      payload: { error: errorMessage },
+    })
+  }
+}
+
 export const useAuthEffect = authStore.useStoreEffect
 
 export const useAuth = () => {
@@ -368,6 +431,7 @@ export const useAuth = () => {
   return {
     authState,
     initAuth,
+    initPublicPreviewAuth,
     refreshAuthSession,
     logout,
     clearAuthError,
