@@ -34,6 +34,7 @@ export interface ImageEditorLayoutProps {
   onRedo: () => void
   isTemplate: boolean
   showHeader?: boolean
+  showStatusBar?: boolean
   showControls?: boolean
   showTemplateActions?: boolean
   onSaveTemplate: () => void
@@ -56,6 +57,8 @@ export interface ImageEditorLayoutProps {
     isLeftColumnEmpty: boolean
     isRightColumnEmpty: boolean
     isSectionDragActive: boolean
+    showHeader: boolean
+    showStatusBar: boolean
   }) => React.ReactNode
 
   // Controls (rendered by parent, used in sidebar and mobile sheet)
@@ -93,6 +96,7 @@ export function ImageEditorLayout({
   onRedo,
   isTemplate,
   showHeader = true,
+  showStatusBar = true,
   showControls = true,
   showTemplateActions = true,
   onSaveTemplate,
@@ -166,11 +170,27 @@ export function ImageEditorLayout({
   const isSectionDragActive = activeId !== null
   const leftColumnWidth = isLeftColumnEmpty ? (isSectionDragActive ? '60px' : '0px') : '330px'
   const rightColumnWidth = isRightColumnEmpty ? (isSectionDragActive ? '60px' : '0px') : '330px'
+  const isHeaderVisible = isMobile ? true : showHeader
+  const isStatusBarVisible = !isMobile && showStatusBar
 
   // Memoize the rendered preview area to prevent infinite render loops
   const renderedPreviewArea = useMemo(
-    () => previewArea({ isLeftColumnEmpty, isRightColumnEmpty, isSectionDragActive }),
-    [previewArea, isLeftColumnEmpty, isRightColumnEmpty, isSectionDragActive],
+    () =>
+      previewArea({
+        isLeftColumnEmpty,
+        isRightColumnEmpty,
+        isSectionDragActive,
+        showHeader: isHeaderVisible,
+        showStatusBar: isStatusBarVisible,
+      }),
+    [
+      previewArea,
+      isLeftColumnEmpty,
+      isRightColumnEmpty,
+      isSectionDragActive,
+      isHeaderVisible,
+      isStatusBarVisible,
+    ],
   )
 
   // --- Shared sub-components ---
@@ -391,12 +411,18 @@ export function ImageEditorLayout({
       <div
         className={cn(
           'bg-background ios-no-drag grid h-screen overscroll-none select-none',
-          showHeader ? 'grid-rows-[auto_1fr_auto]' : 'grid-rows-[1fr_auto]',
+          isHeaderVisible && isStatusBarVisible
+            ? 'grid-rows-[auto_1fr_auto]'
+            : isHeaderVisible
+              ? 'grid-rows-[auto_1fr]'
+              : isStatusBarVisible
+                ? 'grid-rows-[1fr_auto]'
+                : 'grid-rows-[1fr]',
         )}
       >
         <LoadingBar isLoading={isLoading} />
 
-        {showHeader && (
+        {isHeaderVisible && (
           <div className='flex items-center gap-2 border-b p-3'>
             {backButton}
             {centeredTitle}
@@ -426,7 +452,7 @@ export function ImageEditorLayout({
         </div>
 
         {/* Status bar */}
-        {statusBar}
+        {isStatusBarVisible && statusBar}
 
         {/* Zoom Controls */}
         {zoomControl && (
@@ -443,12 +469,18 @@ export function ImageEditorLayout({
     <div
       className={cn(
         'bg-background ios-no-drag grid h-screen overscroll-none select-none',
-        showHeader ? 'grid-rows-[auto_1fr_auto]' : 'grid-rows-[1fr_auto]',
+        isHeaderVisible && isStatusBarVisible
+          ? 'grid-rows-[auto_1fr_auto]'
+          : isHeaderVisible
+            ? 'grid-rows-[auto_1fr]'
+            : isStatusBarVisible
+              ? 'grid-rows-[1fr_auto]'
+              : 'grid-rows-[1fr]',
       )}
     >
       <LoadingBar isLoading={isLoading} />
 
-      {showHeader && (
+      {isHeaderVisible && (
         <div className='flex items-center gap-2 border-b p-3'>
           {backButton}
           {layerBreadcrumb && <div className='w-[220px]'>{layerBreadcrumb}</div>}
@@ -516,7 +548,7 @@ export function ImageEditorLayout({
       </DndContext>
 
       {/* Status bar */}
-      {statusBar}
+      {isStatusBarVisible && statusBar}
 
       {/* Zoom Controls */}
       {zoomControl && (

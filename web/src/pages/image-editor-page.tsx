@@ -1000,7 +1000,13 @@ export function ImageEditorPage({
             }
           />
         }
-        previewArea={({ isLeftColumnEmpty, isRightColumnEmpty, isSectionDragActive }) => (
+        previewArea={({
+          isLeftColumnEmpty,
+          isRightColumnEmpty,
+          isSectionDragActive,
+          showHeader,
+          showStatusBar,
+        }) => (
           <PreviewArea
             previewUrl={previewUrl || ''}
             error={error}
@@ -1030,6 +1036,8 @@ export function ImageEditorPage({
             isLeftColumnEmpty={isLeftColumnEmpty}
             isRightColumnEmpty={isRightColumnEmpty}
             isSectionDragActive={isSectionDragActive}
+            showHeader={showHeader}
+            showStatusBar={showStatusBar}
             showHeaderlessEditActions={!uiOptions.showHeader}
             canUndo={canUndo}
             canRedo={canRedo}

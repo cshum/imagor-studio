@@ -43,6 +43,8 @@ interface PreviewAreaProps {
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
   isSectionDragActive?: boolean
+  showHeader?: boolean
+  showStatusBar?: boolean
   showHeaderlessEditActions?: boolean
   canUndo?: boolean
   canRedo?: boolean
@@ -89,6 +91,8 @@ export function PreviewArea({
   onUndo,
   onRedo,
   zoom = 'fit',
+  showHeader = true,
+  showStatusBar = true,
   previewContainerRef: externalPreviewContainerRef,
   onImageDimensionsChange,
   textEditingLayerId = null,
@@ -166,6 +170,10 @@ export function PreviewArea({
 
   // Track if image fits in container (for smart centering)
   const [imageFitsInContainer, setImageFitsInContainer] = useState(true)
+
+  // Keep fit-mode height aligned with whichever chrome rows are actually visible.
+  const fitModeViewportOffset = 48 + (showHeader ? 56 : 0) + (showStatusBar ? 48 : 0)
+  const fitModeMaxHeight = `calc(100vh - ${fitModeViewportOffset}px)`
 
   // Handle mousedown on preview container to deselect layer
   const handleContainerMouseDown = useCallback(
@@ -555,7 +563,11 @@ export function PreviewArea({
                           maxHeight: `${imageDimensions.height}px`,
                           flexShrink: 0,
                         }
-                      : undefined
+                      : zoom === 'fit'
+                        ? {
+                            maxHeight: fitModeMaxHeight,
+                          }
+                        : undefined
                   }
                   className={cn(
                     // Checkerboard background — always shown so transparency is visible for any image type
@@ -563,9 +575,6 @@ export function PreviewArea({
                     // Only apply auto-sizing and object-contain in fit mode
                     // When zoomed, image renders at natural size to enable scrolling
                     zoom === 'fit' && 'h-auto w-auto object-contain',
-                    // Only apply max constraints when in 'fit' mode
-                    // This allows the image to grow beyond viewport when zoomed
-                    zoom === 'fit' && 'max-h-[calc(100vh-152px)]',
                     zoom === 'fit' &&
                       (isMobile
                         ? 'max-w-[calc(100vw-32px)]'
