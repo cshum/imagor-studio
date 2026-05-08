@@ -1,18 +1,20 @@
 import { LoaderCircle } from 'lucide-react'
 import { Toaster as Sonner } from 'sonner'
 
+import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useTheme } from '@/stores/theme-store'
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { resolvedTheme } = useTheme()
+  const isDesktopOrTablet = useBreakpoint('md')
 
   return (
     <Sonner
       theme={resolvedTheme as ToasterProps['theme']}
       className='toaster group'
-      position='bottom-center'
+      position={isDesktopOrTablet ? 'bottom-center' : 'top-center'}
       icons={{
         loading: <LoaderCircle className='h-4 w-4 animate-spin' />,
       }}
