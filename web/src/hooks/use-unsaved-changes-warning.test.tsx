@@ -40,8 +40,12 @@ describe('useUnsavedChangesWarning', () => {
 
     const useBlockerArgs = mockUseBlocker.mock.calls[0]?.[0] as {
       shouldBlockFn: () => boolean
+      enableBeforeUnload: () => boolean
+      disabled: boolean
     }
     expect(useBlockerArgs.shouldBlockFn()).toBe(false)
+    expect(useBlockerArgs.enableBeforeUnload()).toBe(false)
+    expect(useBlockerArgs.disabled).toBe(true)
 
     addEventListenerSpy.mockRestore()
   })

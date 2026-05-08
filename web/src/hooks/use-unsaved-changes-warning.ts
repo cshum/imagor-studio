@@ -45,44 +45,24 @@ export function useUnsavedChangesWarning(
   // Using new API with withResolver to get blocker object
   const blocker = useBlocker({
     shouldBlockFn: () => enabled && getHasUnsavedChanges(),
+    enableBeforeUnload: () => enabled && getHasUnsavedChanges(),
+    disabled: !enabled,
     withResolver: true,
   })
-
-  // Handle browser beforeunload event (closing tab/window or external navigation)
-  useEffect(() => {
-    if (!enabled) {
-      return
-    }
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (getHasUnsavedChanges()) {
-        e.preventDefault()
-        // Modern browsers ignore custom messages and show their own
-        e.returnValue = ''
-      }
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [enabled, getHasUnsavedChanges])
 
   // Handle TanStack Router blocker (in-app navigation)
   useEffect(() => {
     if (!enabled) {
-      if (showDialog) {
-        setShowDialog(false)
-      }
-      if (pendingNavigation) {
-        setPendingNavigation(null)
-      }
+      setShowDialog(false)
+      setPendingNavigation(null)
       return
     }
 
     if (blocker.status === 'blocked') {
-      setShowDialog(true)
-      setPendingNavigation(() => () => blocker.proceed())
+      setShowDialog((current) => current || true)
+      setPendingNavigation((current) => current ?? (() => blocker.proceed()))
     }
-  }, [enabled, blocker.status, blocker, pendingNavigation, showDialog])
+  }, [enabled, blocker.status, blocker.proceed])
 
   // Handle navigation confirmation (user clicks "Leave")
   const handleConfirm = useCallback(() => {
