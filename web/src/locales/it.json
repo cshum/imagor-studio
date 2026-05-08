@@ -1439,8 +1439,6 @@
       "stay": "Resta",
       "showHideControls": "Mostra/Nascondi controlli",
       "statusBar": {
-        "helpTitle": "Come funziona questo percorso",
-        "helpDescription": "Questa barra mostra solo il segmento di trasformazione imagor. L'URL completo include anche il prefisso unsafe o firmato e il percorso dell'immagine sorgente.",
         "endpointFormatLabel": "Formato endpoint completo",
         "copyUrlHint": "Usa Copia URL per ottenere l'URL imagor completo da incollare in codice, template o altri sistemi.",
         "imageEndpointDocs": "Documentazione image endpoint",

@@ -243,6 +243,14 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
   const getMoveProgressMessage = (completed: number, total: number) =>
     `${t('pages.gallery.moveItems.move')}... (${completed}/${total})`
 
+  const isDesktop = useBreakpoint('md')
+  const maxItemWidth = 250
+  const isPublicPreview = authState.experienceMode === 'public-preview'
+  const canManageGallery = authState.state === 'authenticated'
+  const canPreviewEdit = canManageGallery || authState.isEmbedded || isPublicPreview
+  const canCopyGalleryUrl = canManageGallery || isPublicPreview
+  const canDownloadFromGallery = canManageGallery || isPublicPreview
+
   // Drag and drop functionality
   const handleDropItems = async (items: DragItem[], targetFolderKey: string) => {
     const toastId = toast.loading(getMoveProgressMessage(0, items.length))
@@ -325,7 +333,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
     handleDrop,
   } = useItemDragDrop({
     onDrop: handleDropItems,
-    isAuthenticated: authState.state === 'authenticated',
+    isAuthenticated: canManageGallery,
   })
 
   // Filter images and folders based on search text
@@ -343,7 +351,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
   const filteredCount = filteredFolders.length + filteredImages.length
 
   const handleSortChange = async (sortBy: SortOption, sortOrder: SortOrder) => {
-    if (authState.profile?.id && authState.state === 'authenticated') {
+    if (authState.profile?.id && canManageGallery) {
       await setScopedUserRegistryMultiple(
         [
           { key: 'config.app_default_sort_by', value: sortBy, isEncrypted: false },
@@ -357,9 +365,6 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
       await router.invalidate()
     }
   }
-
-  const isDesktop = useBreakpoint('md')
-  const maxItemWidth = 250
 
   const { scrollPosition } = useGalleryScrollHandler(galleryKey)
   const { contentWidth, updateWidth } = useWidthHandler(
@@ -917,12 +922,12 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
     onClearSelection: handleClearSelection,
     onMove: handleBulkMove,
     onDelete: handleBulkDelete,
-    isAuthenticated: () => authState.state === 'authenticated',
+    isAuthenticated: () => canManageGallery,
   })
 
   // Use the shared folder context menu hook for dropdown menus (three-dots)
   const { renderMenuItems: renderFolderDropdownMenuItems } = useFolderContextMenu({
-    isAuthenticated: () => authState.state === 'authenticated',
+    isAuthenticated: () => canManageGallery,
     onRename: (folderKey, folderName) => handleRenameFromMenu(folderKey, folderName, 'folder'),
     onDelete: (folderKey, folderName) => {
       handleDeleteItemFromMenu(folderKey, folderName, 'folder')
@@ -934,8 +939,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
 
   // Use the image context menu hook for context menus (right-click)
   const { renderMenuItems: renderImageContextMenuItems } = useImageContextMenu({
-    isAuthenticated: () => authState.state === 'authenticated',
-    isEmbedded: authState.isEmbedded,
+    canEdit: canPreviewEdit,
+    canCopyUrl: canCopyGalleryUrl,
+    canDownload: canDownloadFromGallery,
+    canManage: canManageGallery,
     onOpen: handleImageClick,
     onEdit: handleEditImage,
     onCopyUrl: handleCopyUrl,
@@ -947,8 +954,10 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
 
   // Use the image context menu hook for dropdown menus (three-dots)
   const { renderMenuItems: renderImageDropdownMenuItems } = useImageContextMenu({
-    isAuthenticated: () => authState.state === 'authenticated',
-    isEmbedded: authState.isEmbedded,
+    canEdit: canPreviewEdit,
+    canCopyUrl: canCopyGalleryUrl,
+    canDownload: canDownloadFromGallery,
+    canManage: canManageGallery,
     onOpen: handleImageClick,
     onEdit: handleEditImage,
     onCopyUrl: handleCopyUrl,
@@ -961,7 +970,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
 
   // Create menu items for authenticated users
   const secondaryMenuItems =
-    authState.state === 'authenticated' && routeSpaceKey ? (
+    canManageGallery && routeSpaceKey ? (
       <>
         <DropdownMenuItem
           className='hover:cursor-pointer'
@@ -992,134 +1001,133 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
       </>
     ) : null
 
-  const customMenuItems =
-    authState.state === 'authenticated' ? (
-      <>
-        {/* Filter Section */}
-        <div className='px-2 py-1.5'>
-          <div className='relative'>
-            <Search className='text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2' />
-            <Input
-              type='text'
-              placeholder={t('pages.gallery.filter.placeholder')}
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              className='h-8 pr-8 pl-8'
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-            />
-            {filterText && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setFilterText('')
-                }}
-                className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2'
-                aria-label={t('pages.gallery.filter.clearFilter')}
-              >
-                <X className='h-4 w-4' />
-              </button>
-            )}
-          </div>
+  const customMenuItems = canManageGallery ? (
+    <>
+      {/* Filter Section */}
+      <div className='px-2 py-1.5'>
+        <div className='relative'>
+          <Search className='text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2' />
+          <Input
+            type='text'
+            placeholder={t('pages.gallery.filter.placeholder')}
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            className='h-8 pr-8 pl-8'
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          />
           {filterText && (
-            <p className='text-muted-foreground mt-1 text-xs'>
-              {t('pages.gallery.filter.showingFiltered', {
-                count: filteredCount,
-                total: totalItems,
-              })}
-            </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setFilterText('')
+              }}
+              className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2'
+              aria-label={t('pages.gallery.filter.clearFilter')}
+            >
+              <X className='h-4 w-4' />
+            </button>
           )}
         </div>
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={(event) => {
-            event.preventDefault()
-            handleToggleShowFileNames()
-          }}
-        >
-          <FileText className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.showFileNames')}
-          {showFileNames && <Check className='ml-auto h-4 w-4' />}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        {filterText && (
+          <p className='text-muted-foreground mt-1 text-xs'>
+            {t('pages.gallery.filter.showingFiltered', {
+              count: filteredCount,
+              total: totalItems,
+            })}
+          </p>
+        )}
+      </div>
+      <DropdownMenuItem
+        className='hover:cursor-pointer'
+        onSelect={(event) => {
+          event.preventDefault()
+          handleToggleShowFileNames()
+        }}
+      >
+        <FileText className='text-muted-foreground mr-3 h-4 w-4' />
+        {t('pages.gallery.showFileNames')}
+        {showFileNames && <Check className='ml-auto h-4 w-4' />}
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
 
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={() => {
-            // need to wait for dropdown close before opening dialog
-            setTimeout(() => setIsCreateFolderDialogOpen(true), 0)
-          }}
-        >
-          <FolderPlus className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.createFolder.newFolder')}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={() => {
-            // need to wait for dropdown close before triggering file dialog
-            setTimeout(() => handleUploadFiles(), 0)
-          }}
-        >
-          <Upload className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.upload.uploadFiles')}
-        </DropdownMenuItem>
-        {/*<DropdownMenuItem*/}
-        {/*  className='hover:cursor-pointer'*/}
-        {/*  onSelect={() => {*/}
-        {/*    setTimeout(() => setIsNewCanvasDialogOpen(true), 0)*/}
-        {/*  }}*/}
-        {/*>*/}
-        {/*  <Paintbrush className='text-muted-foreground mr-3 h-4 w-4' />*/}
-        {/*  {t('pages.gallery.newCanvas.menuItem')}*/}
-        {/*</DropdownMenuItem>*/}
+      <DropdownMenuItem
+        className='hover:cursor-pointer'
+        onSelect={() => {
+          // need to wait for dropdown close before opening dialog
+          setTimeout(() => setIsCreateFolderDialogOpen(true), 0)
+        }}
+      >
+        <FolderPlus className='text-muted-foreground mr-3 h-4 w-4' />
+        {t('pages.gallery.createFolder.newFolder')}
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        className='hover:cursor-pointer'
+        onSelect={() => {
+          // need to wait for dropdown close before triggering file dialog
+          setTimeout(() => handleUploadFiles(), 0)
+        }}
+      >
+        <Upload className='text-muted-foreground mr-3 h-4 w-4' />
+        {t('pages.gallery.upload.uploadFiles')}
+      </DropdownMenuItem>
+      {/*<DropdownMenuItem*/}
+      {/*  className='hover:cursor-pointer'*/}
+      {/*  onSelect={() => {*/}
+      {/*    setTimeout(() => setIsNewCanvasDialogOpen(true), 0)*/}
+      {/*  }}*/}
+      {/*>*/}
+      {/*  <Paintbrush className='text-muted-foreground mr-3 h-4 w-4' />*/}
+      {/*  {t('pages.gallery.newCanvas.menuItem')}*/}
+      {/*</DropdownMenuItem>*/}
 
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>{t('pages.gallery.sorting.sort')}</DropdownMenuLabel>
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={(event) => {
-            event.preventDefault()
-            // If already selected, toggle sort order; otherwise switch to this sort option with ASC default
-            if (currentSortBy === 'NAME') {
-              handleSortChange('NAME', currentSortOrder === 'ASC' ? 'DESC' : 'ASC')
-            } else {
-              handleSortChange('NAME', 'ASC')
-            }
-          }}
-        >
-          <FileText className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.sorting.name')}
-          {currentSortBy === 'NAME' &&
-            (currentSortOrder === 'ASC' ? (
-              <ArrowUp className='ml-auto h-4 w-4' />
-            ) : (
-              <ArrowDown className='ml-auto h-4 w-4' />
-            ))}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          className='hover:cursor-pointer'
-          onSelect={(event) => {
-            event.preventDefault()
-            // If already selected, toggle sort order; otherwise switch to this sort option with DESC default
-            if (currentSortBy === 'MODIFIED_TIME') {
-              handleSortChange('MODIFIED_TIME', currentSortOrder === 'ASC' ? 'DESC' : 'ASC')
-            } else {
-              handleSortChange('MODIFIED_TIME', 'DESC')
-            }
-          }}
-        >
-          <Clock className='text-muted-foreground mr-3 h-4 w-4' />
-          {t('pages.gallery.sorting.modifiedTime')}
-          {currentSortBy === 'MODIFIED_TIME' &&
-            (currentSortOrder === 'ASC' ? (
-              <ArrowUp className='ml-auto h-4 w-4' />
-            ) : (
-              <ArrowDown className='ml-auto h-4 w-4' />
-            ))}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-      </>
-    ) : null
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel>{t('pages.gallery.sorting.sort')}</DropdownMenuLabel>
+      <DropdownMenuItem
+        className='hover:cursor-pointer'
+        onSelect={(event) => {
+          event.preventDefault()
+          // If already selected, toggle sort order; otherwise switch to this sort option with ASC default
+          if (currentSortBy === 'NAME') {
+            handleSortChange('NAME', currentSortOrder === 'ASC' ? 'DESC' : 'ASC')
+          } else {
+            handleSortChange('NAME', 'ASC')
+          }
+        }}
+      >
+        <FileText className='text-muted-foreground mr-3 h-4 w-4' />
+        {t('pages.gallery.sorting.name')}
+        {currentSortBy === 'NAME' &&
+          (currentSortOrder === 'ASC' ? (
+            <ArrowUp className='ml-auto h-4 w-4' />
+          ) : (
+            <ArrowDown className='ml-auto h-4 w-4' />
+          ))}
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        className='hover:cursor-pointer'
+        onSelect={(event) => {
+          event.preventDefault()
+          // If already selected, toggle sort order; otherwise switch to this sort option with DESC default
+          if (currentSortBy === 'MODIFIED_TIME') {
+            handleSortChange('MODIFIED_TIME', currentSortOrder === 'ASC' ? 'DESC' : 'ASC')
+          } else {
+            handleSortChange('MODIFIED_TIME', 'DESC')
+          }
+        }}
+      >
+        <Clock className='text-muted-foreground mr-3 h-4 w-4' />
+        {t('pages.gallery.sorting.modifiedTime')}
+        {currentSortBy === 'MODIFIED_TIME' &&
+          (currentSortOrder === 'ASC' ? (
+            <ArrowUp className='ml-auto h-4 w-4' />
+          ) : (
+            <ArrowDown className='ml-auto h-4 w-4' />
+          ))}
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+    </>
+  ) : null
 
   return (
     <>
@@ -1144,7 +1152,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
             customMenuItems={customMenuItems}
             secondaryMenuItems={secondaryMenuItems}
             selectionMenu={
-              authState.state === 'authenticated' ? (
+              canManageGallery ? (
                 <SelectionMenu
                   selectedCount={selection.selectedItems.size}
                   onMove={handleBulkMove}
@@ -1154,7 +1162,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
               ) : null
             }
             dragDropHandlers={
-              authState.state === 'authenticated'
+              canManageGallery
                 ? {
                     handleDragOver,
                     handleDragEnter,
@@ -1206,9 +1214,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
                             selectedFolderKeys={selectedFolderKeys}
                             selectedImageKeys={selectedImageKeys}
                             onFolderSelectionToggle={
-                              authState.state === 'authenticated'
-                                ? handleFolderSelectionToggle
-                                : undefined
+                              canManageGallery ? handleFolderSelectionToggle : undefined
                             }
                             renderMenuItems={(folder) =>
                               renderFolderDropdownMenuItems({
@@ -1216,27 +1222,15 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
                                 folderName: folder.galleryName,
                               })
                             }
-                            onDragStart={
-                              authState.state === 'authenticated' ? handleDragStart : undefined
-                            }
-                            onDragEnd={
-                              authState.state === 'authenticated' ? handleDragEnd : undefined
-                            }
-                            onDragOver={
-                              authState.state === 'authenticated' ? handleDragOver : undefined
-                            }
-                            onDragEnter={
-                              authState.state === 'authenticated' ? handleDragEnter : undefined
-                            }
-                            onDragLeave={
-                              authState.state === 'authenticated' ? handleDragLeave : undefined
-                            }
+                            onDragStart={canManageGallery ? handleDragStart : undefined}
+                            onDragEnd={canManageGallery ? handleDragEnd : undefined}
+                            onDragOver={canManageGallery ? handleDragOver : undefined}
+                            onDragEnter={canManageGallery ? handleDragEnter : undefined}
+                            onDragLeave={canManageGallery ? handleDragLeave : undefined}
                             onContainerDragLeave={
-                              authState.state === 'authenticated'
-                                ? handleContainerDragLeave
-                                : undefined
+                              canManageGallery ? handleContainerDragLeave : undefined
                             }
-                            onDrop={authState.state === 'authenticated' ? handleDrop : undefined}
+                            onDrop={canManageGallery ? handleDrop : undefined}
                             dragOverTarget={dragState.dragOverTarget}
                             draggedItems={dragState.draggedItems}
                             galleryKey={galleryKey}
@@ -1263,9 +1257,7 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
                           selectedImageKeys={selectedImageKeys}
                           selectedFolderKeys={selectedFolderKeys}
                           onImageSelectionToggle={
-                            authState.state === 'authenticated'
-                              ? handleImageSelectionToggle
-                              : undefined
+                            canManageGallery ? handleImageSelectionToggle : undefined
                           }
                           renderMenuItems={(image) =>
                             renderImageDropdownMenuItems({
@@ -1275,12 +1267,8 @@ export function GalleryPage({ galleryLoaderData, galleryKey, children, space }: 
                               isTemplate: image.isTemplate || false,
                             })
                           }
-                          onDragStart={
-                            authState.state === 'authenticated' ? handleDragStart : undefined
-                          }
-                          onDragEnd={
-                            authState.state === 'authenticated' ? handleDragEnd : undefined
-                          }
+                          onDragStart={canManageGallery ? handleDragStart : undefined}
+                          onDragEnd={canManageGallery ? handleDragEnd : undefined}
                           draggedItems={dragState.draggedItems}
                           galleryKey={galleryKey}
                           onTemplatePreviewError={(templatePath) =>

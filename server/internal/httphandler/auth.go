@@ -35,6 +35,8 @@ type AuthHandler struct {
 	registryStore            registrystore.Store
 	logger                   *zap.Logger
 	embeddedMode             bool
+	publicPreviewEnabled     bool
+	publicPreviewSpaceKey    string
 	multiTenant              bool
 	signupRuntime            signup.Runtime
 	previewTTL               time.Duration
@@ -43,6 +45,8 @@ type AuthHandler struct {
 
 type AuthHandlerConfig struct {
 	EmbeddedMode             bool
+	PublicPreviewEnabled     bool
+	PublicPreviewSpaceKey    string
 	MultiTenant              bool
 	SpaceStore               space.SpaceStore
 	InviteStore              space.SpaceInviteStore
@@ -59,6 +63,16 @@ type PreviewSessionResponse struct {
 	Token            string `json:"token"`
 	ExpiresAt        string `json:"expiresAt"`
 	ProcessingOrigin string `json:"processingOrigin"`
+}
+
+type PublicPreviewSessionResponse struct {
+	Token            string       `json:"token"`
+	ExpiresIn        int64        `json:"expiresIn"`
+	User             UserResponse `json:"user"`
+	Mode             string       `json:"mode"`
+	SpaceID          string       `json:"spaceID"`
+	SpaceKey         string       `json:"spaceKey"`
+	ProcessingOrigin string       `json:"processingOrigin,omitempty"`
 }
 
 type GuestLoginRequest struct {
@@ -82,6 +96,8 @@ func NewAuthHandler(
 		registryStore:            registryStore,
 		logger:                   logger,
 		embeddedMode:             cfg.EmbeddedMode,
+		publicPreviewEnabled:     cfg.PublicPreviewEnabled,
+		publicPreviewSpaceKey:    strings.TrimSpace(cfg.PublicPreviewSpaceKey),
 		multiTenant:              cfg.MultiTenant,
 		signupRuntime:            cfg.SignupRuntime,
 		previewTTL:               cfg.PreviewTTL,
@@ -118,6 +134,7 @@ type LoginResponse struct {
 	Token        string       `json:"token"`
 	ExpiresIn    int64        `json:"expiresIn"`
 	User         UserResponse `json:"user"`
+	Mode         string       `json:"mode,omitempty"`
 	RedirectPath string       `json:"redirectPath,omitempty"`
 	PathPrefix   string       `json:"pathPrefix,omitempty"`
 }
@@ -506,7 +523,8 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 			}
 		}
 
-		allowed, err := h.isGuestLoginAllowed(r.Context(), strings.TrimSpace(req.SpaceKey))
+		spaceKey := strings.TrimSpace(req.SpaceKey)
+		allowed, err := h.isGuestLoginAllowed(r.Context(), spaceKey)
 		if err != nil {
 			return err
 		}
@@ -516,15 +534,7 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 		}
 
 		guestID := uuid.GenerateUUID()
-
-		token, err := h.tokenManager.GenerateToken(guestID, "guest", []string{"read"}, "")
-		if err != nil {
-			h.logger.Error("Failed to generate guest token", zap.Error(err))
-			return apperror.InternalServerError("Failed to generate token")
-		}
-
 		response := LoginResponse{
-			Token:     token,
 			ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
 			User: UserResponse{
 				ID:          guestID,
@@ -533,6 +543,31 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 				Role:        "guest",
 			},
 		}
+
+		isPublicPreviewSpace := h.publicPreviewEnabled && spaceKey != "" && spaceKey == strings.TrimSpace(h.publicPreviewSpaceKey)
+		var token string
+		if isPublicPreviewSpace {
+			token, err = h.tokenManager.GenerateTokenWithClaims(auth.Claims{
+				UserID:   guestID,
+				Role:     "guest",
+				Scopes:   []string{"read", "edit"},
+				Mode:     auth.ExperienceModePublicPreview,
+				SpaceKey: spaceKey,
+			}, 0)
+			if err != nil {
+				h.logger.Error("Failed to generate public preview guest token", zap.Error(err), zap.String("spaceKey", spaceKey))
+				return apperror.InternalServerError("Failed to generate token")
+			}
+			response.Mode = auth.ExperienceModePublicPreview
+		} else {
+			token, err = h.tokenManager.GenerateToken(guestID, "guest", []string{"read"}, "")
+			if err != nil {
+				h.logger.Error("Failed to generate guest token", zap.Error(err))
+				return apperror.InternalServerError("Failed to generate token")
+			}
+		}
+
+		response.Token = token
 
 		h.logger.Info("Guest login successful", zap.String("guestID", guestID))
 		return WriteSuccess(w, response)
@@ -555,6 +590,10 @@ func (h *AuthHandler) isGuestLoginAllowed(ctx context.Context, spaceKey string) 
 	}
 
 	if guestModeMetadata != nil && guestModeMetadata.Value == "true" {
+		return true, nil
+	}
+
+	if h.publicPreviewEnabled && spaceKey != "" && spaceKey == strings.TrimSpace(h.publicPreviewSpaceKey) {
 		return true, nil
 	}
 
@@ -684,6 +723,66 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 	})
 }
 
+func (h *AuthHandler) PublicPreviewSession() http.HandlerFunc {
+	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
+		if !h.publicPreviewEnabled {
+			return apperror.Forbidden("Public preview is not enabled")
+		}
+		if h.spaceStore == nil {
+			return apperror.InternalServerError("Public preview is not configured")
+		}
+
+		spaceKey := strings.TrimSpace(h.publicPreviewSpaceKey)
+		if spaceKey == "" {
+			return apperror.InternalServerError("Public preview space is not configured")
+		}
+
+		spaceRecord, err := h.spaceStore.GetByKey(r.Context(), spaceKey)
+		if err != nil {
+			h.logger.Error("Failed to load public preview space", zap.String("spaceKey", spaceKey), zap.Error(err))
+			return apperror.InternalServerError("Failed to create public preview session")
+		}
+		if spaceRecord == nil {
+			return apperror.InternalServerError("Public preview space is not configured")
+		}
+
+		previewUserID := uuid.GenerateUUID()
+		token, err := h.tokenManager.GenerateTokenWithClaims(auth.Claims{
+			UserID:   previewUserID,
+			Role:     "guest",
+			Scopes:   []string{"read", "edit"},
+			Mode:     auth.ExperienceModePublicPreview,
+			SpaceKey: spaceRecord.Key,
+		}, 0)
+		if err != nil {
+			h.logger.Error("Failed to generate public preview session token", zap.Error(err))
+			return apperror.InternalServerError("Failed to create public preview session")
+		}
+
+		processingOrigin := ""
+		if h.processingOriginResolver != nil {
+			processingOrigin = h.processingOriginResolver.ResolveProcessingOrigin(r.Context(), spaceRecord.Key)
+		}
+
+		response := PublicPreviewSessionResponse{
+			Token:     token,
+			ExpiresIn: h.tokenManager.TokenDuration().Milliseconds() / 1000,
+			User: UserResponse{
+				ID:          previewUserID,
+				DisplayName: "Public Preview",
+				Username:    "public-preview",
+				Role:        "guest",
+			},
+			Mode:             auth.ExperienceModePublicPreview,
+			SpaceID:          spaceRecord.ID,
+			SpaceKey:         spaceRecord.Key,
+			ProcessingOrigin: processingOrigin,
+		}
+
+		return WriteSuccess(w, response)
+	})
+}
+
 func (h *AuthHandler) PreviewSession() http.HandlerFunc {
 	return Handle(http.MethodPost, func(w http.ResponseWriter, r *http.Request) error {
 		var req PreviewSessionRequest
@@ -772,6 +871,9 @@ func (h *AuthHandler) requirePreviewSessionPermission(ctx context.Context) error
 	if err != nil {
 		return apperror.Unauthorized("Unauthorized")
 	}
+	if claims.Mode == auth.ExperienceModePublicPreview {
+		return nil
+	}
 	for _, scope := range claims.Scopes {
 		if scope == "edit" || scope == "write" {
 			return nil
@@ -826,6 +928,9 @@ func (h *AuthHandler) canUsePreviewSession(ctx context.Context, spaceRecord *spa
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return false, err
+	}
+	if claims.Mode == auth.ExperienceModePublicPreview {
+		return strings.TrimSpace(claims.SpaceKey) != "" && claims.SpaceKey == spaceRecord.Key, nil
 	}
 
 	orgID := h.resolvePrimaryOrgID(ctx, claims.UserID)

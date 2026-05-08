@@ -33,6 +33,10 @@ export interface ImageEditorLayoutProps {
   onUndo: () => void
   onRedo: () => void
   isTemplate: boolean
+  showHeader?: boolean
+  showStatusBar?: boolean
+  showControls?: boolean
+  showTemplateActions?: boolean
   onSaveTemplate: () => void
   onDownload: () => void
   onCopyUrl: () => void
@@ -52,6 +56,9 @@ export interface ImageEditorLayoutProps {
   previewArea: (props: {
     isLeftColumnEmpty: boolean
     isRightColumnEmpty: boolean
+    isSectionDragActive: boolean
+    showHeader: boolean
+    showStatusBar: boolean
   }) => React.ReactNode
 
   // Controls (rendered by parent, used in sidebar and mobile sheet)
@@ -66,7 +73,7 @@ export interface ImageEditorLayoutProps {
   onStatusBarTokenClick?: (matchKeys: StatusBarMatchKey[]) => void
 
   // Zoom control (desktop and tablet only)
-  zoomControl: React.ReactNode
+  zoomControl?: React.ReactNode
 
   // Mobile sheet
   mobileSheetOpen: boolean
@@ -88,6 +95,10 @@ export function ImageEditorLayout({
   onUndo,
   onRedo,
   isTemplate,
+  showHeader = true,
+  showStatusBar = true,
+  showControls = true,
+  showTemplateActions = true,
   onSaveTemplate,
   onDownload,
   onCopyUrl,
@@ -132,90 +143,123 @@ export function ImageEditorLayout({
   )
 
   // Calculate if columns are empty for smart sizing (desktop)
-  const leftColumnSections = editorOpenSections.leftColumn.filter((id) => {
-    if (hiddenSections?.includes(id)) return false
-    const visibleSections = editorOpenSections.visibleSections || []
-    if (visibleSections.length > 0 && !visibleSections.includes(id)) {
-      return false
-    }
-    return true
-  })
+  const leftColumnSections = showControls
+    ? editorOpenSections.leftColumn.filter((id) => {
+        if (hiddenSections?.includes(id)) return false
+        const visibleSections = editorOpenSections.visibleSections || []
+        if (visibleSections.length > 0 && !visibleSections.includes(id)) {
+          return false
+        }
+        return true
+      })
+    : []
 
-  const rightColumnSections = editorOpenSections.rightColumn.filter((id) => {
-    if (hiddenSections?.includes(id)) return false
-    const visibleSections = editorOpenSections.visibleSections || []
-    if (visibleSections.length > 0 && !visibleSections.includes(id)) {
-      return false
-    }
-    return true
-  })
+  const rightColumnSections = showControls
+    ? editorOpenSections.rightColumn.filter((id) => {
+        if (hiddenSections?.includes(id)) return false
+        const visibleSections = editorOpenSections.visibleSections || []
+        if (visibleSections.length > 0 && !visibleSections.includes(id)) {
+          return false
+        }
+        return true
+      })
+    : []
 
   const isLeftColumnEmpty = leftColumnSections.length === 0
   const isRightColumnEmpty = rightColumnSections.length === 0
+  const isSectionDragActive = activeId !== null
+  const leftColumnWidth = isLeftColumnEmpty ? (isSectionDragActive ? '60px' : '0px') : '330px'
+  const rightColumnWidth = isRightColumnEmpty ? (isSectionDragActive ? '60px' : '0px') : '330px'
+  const isHeaderVisible = showHeader
+  const isStatusBarVisible = !isMobile && showStatusBar
 
   // Memoize the rendered preview area to prevent infinite render loops
   const renderedPreviewArea = useMemo(
-    () => previewArea({ isLeftColumnEmpty, isRightColumnEmpty }),
-    [previewArea, isLeftColumnEmpty, isRightColumnEmpty],
+    () =>
+      previewArea({
+        isLeftColumnEmpty,
+        isRightColumnEmpty,
+        isSectionDragActive,
+        showHeader: isHeaderVisible,
+        showStatusBar: isStatusBarVisible,
+      }),
+    [
+      previewArea,
+      isLeftColumnEmpty,
+      isRightColumnEmpty,
+      isSectionDragActive,
+      isHeaderVisible,
+      isStatusBarVisible,
+    ],
   )
 
   // --- Shared sub-components ---
-  const primaryActionButton = isTemplate ? (
-    <>
-      <Button
-        variant='outline'
-        size='sm'
-        onClick={onSaveTemplate}
-        className='rounded-r-none border-r-0'
-      >
-        <FileText className='mr-1 h-4 w-4' />
-        {t('imageEditor.template.saveTemplate')}
-      </Button>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-            <MoreVertical className='h-4 w-4' />
-          </Button>
-        </DropdownMenuTrigger>
-        <EditorMenuDropdown
-          onDownload={onDownload}
-          onCopyUrl={onCopyUrl}
-          onSaveTemplate={onSaveTemplateAs}
-          onApplyTemplate={onApplyTemplate}
-          onLanguageChange={onLanguageChange}
-          onToggleSectionVisibility={onToggleSectionVisibility}
-          editorOpenSections={editorOpenSections}
-          isTemplate={isTemplate}
-          hiddenSections={hiddenSections}
-        />
-      </DropdownMenu>
-    </>
-  ) : (
-    <>
-      <Button variant='outline' size='sm' onClick={onCopyUrl} className='rounded-r-none border-r-0'>
-        <Copy className='mr-1 h-4 w-4' />
-        {t('imageEditor.page.copyUrl')}
-      </Button>
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button variant='outline' size='sm' className='rounded-l-none px-2'>
-            <MoreVertical className='h-4 w-4' />
-          </Button>
-        </DropdownMenuTrigger>
-        <EditorMenuDropdown
-          onDownload={onDownload}
-          onCopyUrl={onCopyUrl}
-          onSaveTemplate={onSaveTemplateAs}
-          onApplyTemplate={onApplyTemplate}
-          showCopyUrl={false}
-          onLanguageChange={onLanguageChange}
-          onToggleSectionVisibility={onToggleSectionVisibility}
-          editorOpenSections={editorOpenSections}
-          hiddenSections={hiddenSections}
-        />
-      </DropdownMenu>
-    </>
-  )
+  const primaryActionButton =
+    isTemplate && showTemplateActions ? (
+      <>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={onSaveTemplate}
+          className='rounded-r-none border-r-0'
+        >
+          <FileText className='mr-1 h-4 w-4' />
+          {t('imageEditor.template.saveTemplate')}
+        </Button>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+              <MoreVertical className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <EditorMenuDropdown
+            onDownload={onDownload}
+            onCopyUrl={onCopyUrl}
+            onSaveTemplate={onSaveTemplateAs}
+            onApplyTemplate={onApplyTemplate}
+            onLanguageChange={onLanguageChange}
+            onToggleSectionVisibility={onToggleSectionVisibility}
+            editorOpenSections={editorOpenSections}
+            isTemplate={isTemplate}
+            showSectionVisibilityControls={showControls}
+            showTemplateActions={showTemplateActions}
+            hiddenSections={hiddenSections}
+          />
+        </DropdownMenu>
+      </>
+    ) : (
+      <>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={onCopyUrl}
+          className='rounded-r-none border-r-0'
+        >
+          <Copy className='mr-1 h-4 w-4' />
+          {t('imageEditor.page.copyUrl')}
+        </Button>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button variant='outline' size='sm' className='rounded-l-none px-2'>
+              <MoreVertical className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <EditorMenuDropdown
+            onDownload={onDownload}
+            onCopyUrl={onCopyUrl}
+            onSaveTemplate={onSaveTemplateAs}
+            onApplyTemplate={onApplyTemplate}
+            showCopyUrl={false}
+            showSectionVisibilityControls={showControls}
+            showTemplateActions={showTemplateActions}
+            onLanguageChange={onLanguageChange}
+            onToggleSectionVisibility={onToggleSectionVisibility}
+            editorOpenSections={editorOpenSections}
+            hiddenSections={hiddenSections}
+          />
+        </DropdownMenu>
+      </>
+    )
 
   const centeredTitle = (
     <div className='flex flex-1 justify-center'>
@@ -290,68 +334,74 @@ export function ImageEditorLayout({
         <LoadingBar isLoading={isLoading} />
 
         <div className='ios-preview-container-fix flex flex-1 flex-col'>
-          <div className='flex items-center gap-2 border-b p-3'>
-            {backButton}
-            {centeredTitle}
-            <div className='ml-auto flex items-center gap-2'>
-              <ModeToggle />
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant='ghost' size='sm'>
-                    <MoreVertical className='h-4 w-4' />
-                  </Button>
-                </DropdownMenuTrigger>
-                <EditorMenuDropdown
-                  onDownload={onDownload}
-                  onCopyUrl={onCopyUrl}
-                  onSaveTemplate={onSaveTemplateAs}
-                  onApplyTemplate={onApplyTemplate}
-                  onLanguageChange={onLanguageChange}
-                  onToggleSectionVisibility={onToggleSectionVisibility}
-                  editorOpenSections={editorOpenSections}
-                  includeUndoRedo={true}
-                  onUndo={onUndo}
-                  onRedo={onRedo}
-                  canUndo={canUndo}
-                  canRedo={canRedo}
-                  hiddenSections={hiddenSections}
-                />
-              </DropdownMenu>
+          {isHeaderVisible && (
+            <div className='flex items-center gap-2 border-b p-3'>
+              {backButton}
+              {centeredTitle}
+              <div className='ml-auto flex items-center gap-2'>
+                <ModeToggle />
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='ghost' size='sm'>
+                      <MoreVertical className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <EditorMenuDropdown
+                    onDownload={onDownload}
+                    onCopyUrl={onCopyUrl}
+                    onSaveTemplate={onSaveTemplateAs}
+                    onApplyTemplate={onApplyTemplate}
+                    onLanguageChange={onLanguageChange}
+                    onToggleSectionVisibility={onToggleSectionVisibility}
+                    editorOpenSections={editorOpenSections}
+                    showTemplateActions={showTemplateActions}
+                    showSectionVisibilityControls={showControls}
+                    includeUndoRedo={true}
+                    onUndo={onUndo}
+                    onRedo={onRedo}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    hiddenSections={hiddenSections}
+                  />
+                </DropdownMenu>
+              </div>
             </div>
-          </div>
+          )}
 
           {renderedPreviewArea}
 
-          <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
-            <SheetTrigger asChild>
-              <button className='hidden' />
-            </SheetTrigger>
-            <SheetContent
-              side='right'
-              hideClose={true}
-              className='flex w-full flex-col gap-0 p-0 sm:w-96'
-            >
-              <SheetHeader className='border-b p-3'>
-                <div className='flex items-center gap-3'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onMobileSheetOpenChange(false)}
-                  >
-                    <ChevronLeft className='mr-1 h-4 w-4' />
-                    {t('imageEditor.page.back')}
-                  </Button>
-                  <SheetTitle className='flex-1 text-center'>
-                    {t('imageEditor.page.controls')}
-                  </SheetTitle>
-                  <div className='w-[72px]' />
+          {showControls && (
+            <Sheet open={mobileSheetOpen} onOpenChange={onMobileSheetOpenChange}>
+              <SheetTrigger asChild>
+                <button className='hidden' />
+              </SheetTrigger>
+              <SheetContent
+                side='right'
+                hideClose={true}
+                className='flex w-full flex-col gap-0 p-0 sm:w-96'
+              >
+                <SheetHeader className='border-b p-3'>
+                  <div className='flex items-center gap-3'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => onMobileSheetOpenChange(false)}
+                    >
+                      <ChevronLeft className='mr-1 h-4 w-4' />
+                      {t('imageEditor.page.back')}
+                    </Button>
+                    <SheetTitle className='flex-1 text-center'>
+                      {t('imageEditor.page.controls')}
+                    </SheetTitle>
+                    <div className='w-[72px]' />
+                  </div>
+                </SheetHeader>
+                <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                  {singleColumnControls}
                 </div>
-              </SheetHeader>
-              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-                {singleColumnControls}
-              </div>
-            </SheetContent>
-          </Sheet>
+              </SheetContent>
+            </Sheet>
+          )}
         </div>
       </div>
     )
@@ -360,12 +410,82 @@ export function ImageEditorLayout({
   // --- Tablet Layout ---
   if (isTablet) {
     return (
-      <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
+      <div
+        className={cn(
+          'bg-background ios-no-drag grid h-screen overscroll-none select-none',
+          isHeaderVisible && isStatusBarVisible
+            ? 'grid-rows-[auto_1fr_auto]'
+            : isHeaderVisible
+              ? 'grid-rows-[auto_1fr]'
+              : isStatusBarVisible
+                ? 'grid-rows-[1fr_auto]'
+                : 'grid-rows-[1fr]',
+        )}
+      >
         <LoadingBar isLoading={isLoading} />
 
-        {/* Header */}
+        {isHeaderVisible && (
+          <div className='flex items-center gap-2 border-b p-3'>
+            {backButton}
+            {centeredTitle}
+            <div className='ml-auto flex items-center gap-2'>
+              <ModeToggle />
+              {undoRedoButtons}
+              <div className='inline-flex items-center rounded-md'>{primaryActionButton}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Main content - Two columns */}
+        <div
+          className={cn(
+            'grid w-full overflow-hidden',
+            showControls ? 'grid-cols-[1fr_330px]' : 'grid-cols-[1fr]',
+          )}
+        >
+          <div className='flex min-w-0 flex-col overflow-hidden'>{renderedPreviewArea}</div>
+          {showControls && (
+            <div className='bg-background flex flex-col overflow-hidden border-l'>
+              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                {singleColumnControls}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Status bar */}
+        {isStatusBarVisible && statusBar}
+
+        {/* Zoom Controls */}
+        {zoomControl && (
+          <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
+            <div className='pointer-events-auto'>{zoomControl}</div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // --- Desktop Layout ---
+  return (
+    <div
+      className={cn(
+        'bg-background ios-no-drag grid h-screen overscroll-none select-none',
+        isHeaderVisible && isStatusBarVisible
+          ? 'grid-rows-[auto_1fr_auto]'
+          : isHeaderVisible
+            ? 'grid-rows-[auto_1fr]'
+            : isStatusBarVisible
+              ? 'grid-rows-[1fr_auto]'
+              : 'grid-rows-[1fr]',
+      )}
+    >
+      <LoadingBar isLoading={isLoading} />
+
+      {isHeaderVisible && (
         <div className='flex items-center gap-2 border-b p-3'>
           {backButton}
+          {layerBreadcrumb && <div className='w-[220px]'>{layerBreadcrumb}</div>}
           {centeredTitle}
           <div className='ml-auto flex items-center gap-2'>
             <ModeToggle />
@@ -373,44 +493,7 @@ export function ImageEditorLayout({
             <div className='inline-flex items-center rounded-md'>{primaryActionButton}</div>
           </div>
         </div>
-
-        {/* Main content - Two columns */}
-        <div className='grid w-full grid-cols-[1fr_330px] overflow-hidden'>
-          <div className='flex min-w-0 flex-col overflow-hidden'>{renderedPreviewArea}</div>
-          <div className='bg-background flex flex-col overflow-hidden border-l'>
-            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-              {singleColumnControls}
-            </div>
-          </div>
-        </div>
-
-        {/* Status bar */}
-        {statusBar}
-
-        {/* Zoom Controls */}
-        <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
-          <div className='pointer-events-auto'>{zoomControl}</div>
-        </div>
-      </div>
-    )
-  }
-
-  // --- Desktop Layout ---
-  return (
-    <div className='bg-background ios-no-drag grid h-screen grid-rows-[auto_1fr_auto] overscroll-none select-none'>
-      <LoadingBar isLoading={isLoading} />
-
-      {/* Header */}
-      <div className='flex items-center gap-2 border-b p-3'>
-        {backButton}
-        {layerBreadcrumb && <div className='w-[220px]'>{layerBreadcrumb}</div>}
-        {centeredTitle}
-        <div className='ml-auto flex items-center gap-2'>
-          <ModeToggle />
-          {undoRedoButtons}
-          <div className='inline-flex items-center rounded-md'>{primaryActionButton}</div>
-        </div>
-      </div>
+      )}
 
       {/* Main content - Three columns with DndContext */}
       <DndContext
@@ -423,25 +506,39 @@ export function ImageEditorLayout({
         <div
           className='grid overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out'
           style={{
-            gridTemplateColumns: `${isLeftColumnEmpty ? '60px' : '330px'} 1fr ${isRightColumnEmpty ? '60px' : '330px'}`,
+            gridTemplateColumns: showControls
+              ? `${leftColumnWidth} 1fr ${rightColumnWidth}`
+              : '1fr',
           }}
         >
-          {/* Left Column */}
-          <div className='bg-background flex flex-col overflow-hidden border-r'>
-            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-              {leftControls}
+          {showControls && (
+            <div
+              className={cn(
+                'flex flex-col overflow-hidden',
+                leftColumnWidth !== '0px' && 'bg-background border-r',
+              )}
+            >
+              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                {leftControls}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Center - Preview */}
           <div className='flex flex-col overflow-hidden'>{renderedPreviewArea}</div>
 
-          {/* Right Column */}
-          <div className='bg-background flex flex-col overflow-hidden border-l'>
-            <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
-              {rightControls}
+          {showControls && (
+            <div
+              className={cn(
+                'flex flex-col overflow-hidden',
+                rightColumnWidth !== '0px' && 'bg-background border-l',
+              )}
+            >
+              <div className='flex-1 touch-pan-y overflow-y-auto overscroll-y-contain p-3 select-none'>
+                {rightControls}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Shared Drag Overlay */}
@@ -453,12 +550,14 @@ export function ImageEditorLayout({
       </DndContext>
 
       {/* Status bar */}
-      {statusBar}
+      {isStatusBarVisible && statusBar}
 
       {/* Zoom Controls */}
-      <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
-        <div className='pointer-events-auto'>{zoomControl}</div>
-      </div>
+      {zoomControl && (
+        <div className='pointer-events-none fixed right-4 bottom-0 z-20 flex h-12 items-center'>
+          <div className='pointer-events-auto'>{zoomControl}</div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1373,8 +1373,6 @@
       "stay": "留下",
       "showHideControls": "显示/隐藏控制面板",
       "statusBar": {
-        "helpTitle": "这段路径如何工作",
-        "helpDescription": "这里显示的只是 imagor 的变换路径片段。完整 URL 还会包含 unsafe 或签名前缀，以及源图片路径。",
         "endpointFormatLabel": "完整端点格式",
         "copyUrlHint": "使用“复制 URL”获取可粘贴到代码、模板或其他系统中的完整 imagor URL。",
         "imageEndpointDocs": "图片端点文档",

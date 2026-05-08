@@ -41,6 +41,7 @@ export const LIST_SPACES = gql(`
       signerTruncate
       imagorCORSOrigins
       hasCustomImagorSecret
+      isPublicPreviewSpace
       canManage
       canDelete
       canLeave
@@ -103,6 +104,7 @@ export const GET_SPACE = gql(`
       signerTruncate
       imagorCORSOrigins
       hasCustomImagorSecret
+      isPublicPreviewSpace
       canManage
       canDelete
       canLeave

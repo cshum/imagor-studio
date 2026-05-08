@@ -73,6 +73,8 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
   const dialogTitle = title || t('components.filePicker.title')
   const dialogDescription = description || t('components.filePicker.description')
   const buttonText = confirmButtonText || t('components.filePicker.select')
+  const canPersistPickerState =
+    authState.state === 'authenticated' && authState.experienceMode !== 'public-preview'
 
   // Track if we've already loaded the initial path for this dialog session
   const hasLoadedInitialPath = useRef(false)
@@ -86,7 +88,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
         let pathToUse = initialPath || ''
 
         // Only load saved path if no initialPath was provided
-        if (!initialPath && authState.profile?.id && authState.state === 'authenticated') {
+        if (!initialPath && authState.profile?.id && canPersistPickerState) {
           try {
             const result = await getScopedUserRegistryValues(
               [lastLocationRegistryKey],
@@ -128,7 +130,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
     if (!open) {
       hasLoadedInitialPath.current = false
     }
-  }, [open, initialPath, authState.profile?.id, authState.state, space])
+  }, [open, initialPath, authState.profile?.id, canPersistPickerState, space])
 
   const handlePathChange = useCallback((path: string) => {
     setDialogCurrentPath(path)
@@ -167,7 +169,7 @@ export const FilePickerDialog: React.FC<FilePickerDialogProps> = ({
       const selectedPathList = Array.from(selectedPaths)
 
       // Save the current path to user registry when user confirms selection
-      if (authState.profile?.id && authState.state === 'authenticated') {
+      if (authState.profile?.id && canPersistPickerState) {
         void setScopedUserRegistryValue(
           lastLocationRegistryKey,
           currentPath,

@@ -31,7 +31,9 @@ type Config struct {
 	LicenseKey string
 
 	// Authentication Configuration
-	AllowGuestMode bool // Allow guest mode access
+	AllowGuestMode        bool // Allow guest mode access
+	PublicPreviewEnabled  bool
+	PublicPreviewSpaceKey string
 
 	// Embedded Mode Configuration
 	EmbeddedMode bool // Enable embedded mode (stateless, no database)
@@ -77,6 +79,11 @@ type Config struct {
 	// Set via --cors-origins / CORS_ORIGINS env var.
 	CORSOrigins string
 
+	// AppFrameAncestors is a comma-separated list of origins allowed to embed the app in an iframe.
+	// When empty, the server falls back to 'self' plus APP_URL and any non-wildcard CORS origins.
+	// Set via --app-frame-ancestors / APP_FRAME_ANCESTORS env var.
+	AppFrameAncestors string
+
 	// Internal tracking for config overrides
 	overriddenFlags map[string]string
 	flagSet         *flag.FlagSet // Private field to access flag values
@@ -102,10 +109,12 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		jwtExpiration     = fs.String("jwt-expiration", "168h", "JWT token expiration duration")
 		licenseKey        = fs.String("license-key", "", "license key for activation")
 
-		allowGuestMode   = fs.Bool("allow-guest-mode", false, "allow guest mode access")
-		embeddedMode     = fs.Bool("embedded-mode", false, "enable embedded mode (stateless, no database)")
-		forceAutoMigrate = fs.Bool("force-auto-migrate", false, "force auto-migration even for PostgreSQL/MySQL (use with caution in multi-instance environments)")
-		migrateCommand   = fs.String("migrate-command", "up", "migration command: up, down, status, reset")
+		allowGuestMode        = fs.Bool("allow-guest-mode", false, "allow guest mode access")
+		publicPreviewEnabled  = fs.Bool("public-preview-enabled", false, "enable public preview session issuance")
+		publicPreviewSpaceKey = fs.String("public-preview-space-key", "", "space key used for public preview sessions")
+		embeddedMode          = fs.Bool("embedded-mode", false, "enable embedded mode (stateless, no database)")
+		forceAutoMigrate      = fs.Bool("force-auto-migrate", false, "force auto-migration even for PostgreSQL/MySQL (use with caution in multi-instance environments)")
+		migrateCommand        = fs.String("migrate-command", "up", "migration command: up, down, status, reset")
 
 		fileStorageBaseDir          = fs.String("file-storage-base-dir", "/app/gallery", "base directory for file storage")
 		fileStorageMkdirPermissions = fs.String("file-storage-mkdir-permissions", "0755", "directory creation permissions")
@@ -133,7 +142,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		appDefaultSortOrder       = fs.String("app-default-sort-order", "DESC", "default file sorting order: ASC, DESC")
 		appVideoThumbnailPosition = fs.String("app-video-thumbnail-position", "first_frame", "video thumbnail extraction position: first_frame, seek_1s, seek_3s, seek_5s, seek_10pct, seek_25pct")
 
-		corsOrigins = fs.String("cors-origins", "", "comma-separated allowed CORS origins; empty = allow all (*). Example: https://app.imagor.net")
+		corsOrigins       = fs.String("cors-origins", "", "comma-separated allowed CORS origins; empty = allow all (*). Example: https://app.imagor.net")
+		appFrameAncestors = fs.String("app-frame-ancestors", "", "comma-separated origins allowed to embed the app in an iframe; empty = derive from APP_URL and non-wildcard CORS origins")
 	)
 
 	_ = fs.String("config", ".env", "config file (optional)")
@@ -249,6 +259,8 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		JWTExpiration:               jwtExp,
 		LicenseKey:                  *licenseKey,
 		AllowGuestMode:              *allowGuestMode,
+		PublicPreviewEnabled:        *publicPreviewEnabled,
+		PublicPreviewSpaceKey:       strings.TrimSpace(*publicPreviewSpaceKey),
 		EmbeddedMode:                *embeddedMode,
 		ForceAutoMigrate:            *forceAutoMigrate,
 		MigrateCommand:              *migrateCommand,
@@ -276,6 +288,7 @@ func Load(args []string, registryStore registrystore.Store) (*Config, error) {
 		AppDefaultSortOrder:         *appDefaultSortOrder,
 		AppVideoThumbnailPosition:   *appVideoThumbnailPosition,
 		CORSOrigins:                 *corsOrigins,
+		AppFrameAncestors:           strings.TrimSpace(*appFrameAncestors),
 		overriddenFlags:             overriddenFlags,
 		flagSet:                     fs, // Store the flagSet for later use
 	}

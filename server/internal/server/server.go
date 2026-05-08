@@ -170,6 +170,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.InviteSender,
 		resolver.WithLocalTemplatePreviewRenderer(),
 		resolver.WithCloudConfig(cloudConfig),
+		resolver.WithPublicPreviewConfig(cfg.PublicPreviewEnabled, cfg.PublicPreviewSpaceKey),
 		resolver.WithHostedStorageStore(services.HostedStorageStore),
 		resolver.WithProcessingUsageStore(services.ProcessingUsageStore),
 		resolver.WithBillingService(services.BillingService),
@@ -202,6 +203,8 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 		services.Logger,
 		httphandler.AuthHandlerConfig{
 			EmbeddedMode:             cfg.EmbeddedMode,
+			PublicPreviewEnabled:     cfg.PublicPreviewEnabled,
+			PublicPreviewSpaceKey:    cfg.PublicPreviewSpaceKey,
 			MultiTenant:              multiTenant,
 			SpaceStore:               services.SpaceStore,
 			InviteStore:              services.SpaceInviteStore,
@@ -235,6 +238,7 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	mux.HandleFunc("/api/auth/account/email/verify", authHandler.VerifyEmailChange())
 	mux.HandleFunc("/api/auth/login", authHandler.Login())
 	mux.HandleFunc("/api/auth/refresh", authHandler.RefreshToken())
+	mux.HandleFunc("/api/auth/public-preview-session", authHandler.PublicPreviewSession())
 	mux.HandleFunc("/api/auth/preview-session", authHandler.PreviewSession())
 	mux.HandleFunc("/api/auth/guest", authHandler.GuestLogin())
 	mux.HandleFunc("/api/auth/embedded-guest", authHandler.EmbeddedGuestLogin())
@@ -299,6 +303,9 @@ func NewFromServices(cfg *config.Config, embedFS fs.FS, logger *zap.Logger, serv
 	}
 
 	baseHandler := middleware.ErrorMiddleware(services.Logger)(mux)
+	baseHandler = middleware.FrameAncestorsMiddleware(
+		middleware.NewFrameAncestorsConfig(cfg.AppUrl, cfg.CORSOrigins, cfg.AppFrameAncestors),
+	)(baseHandler)
 
 	var h http.Handler
 	if services.SpaceConfigStore != nil {

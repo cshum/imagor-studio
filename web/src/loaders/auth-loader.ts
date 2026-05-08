@@ -19,7 +19,7 @@ type OrganizationAuthContext = {
 }
 
 type AuthenticatedRedirectContext = {
-  search?: {
+  search?: Record<string, unknown> & {
     redirect?: string
   }
 }
@@ -193,6 +193,10 @@ export const requireImageEditorAuth = async (context?: { location?: AuthRouteLoc
       throw new Error(currentAuth.error)
     }
     // Allow successful embedded guests to access image editor directly
+    return currentAuth
+  }
+
+  if (currentAuth.experienceMode === 'public-preview') {
     return currentAuth
   }
 

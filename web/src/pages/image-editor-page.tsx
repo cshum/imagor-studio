@@ -22,7 +22,9 @@ import { SaveTemplateDialog } from '@/components/image-editor/save-template-dial
 import { ZoomControl } from '@/components/image-editor/zoom-control.tsx'
 import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dialog'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
+import { useBodyDataAttribute } from '@/hooks/use-body-data-attribute'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
+import { useEditorUrlPostMessage } from '@/hooks/use-editor-url-post-message'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
@@ -30,6 +32,7 @@ import { EditorSectionStorage, type EditorSections, type SectionKey } from '@/li
 import {
   deserializeStateFromUrl,
   getStateFromLocation,
+  getUiOptionsFromLocation,
   serializeStateToUrl,
   updateLocationState,
 } from '@/lib/editor-state-url'
@@ -68,7 +71,10 @@ export function ImageEditorPage({
   const navigate = useNavigate()
   const router = useRouter()
   const { authState } = useAuth()
+  const isPublicPreview = authState.experienceMode === 'public-preview'
+  const uiOptions = useMemo(() => getUiOptionsFromLocation(), [])
   const routeSpaceKey = space?.spaceKey
+  const isPublicPreviewSpace = space?.isPublicPreviewSpace === true
   const activeSpace: SpaceIdentity | undefined =
     space ??
     (loaderData.spaceID
@@ -85,6 +91,7 @@ export function ImageEditorPage({
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
+  const isDesktop = useBreakpoint('lg')
 
   // Read state from URL on mount (single source of truth, won't change during component lifetime)
   const initialState = useMemo(() => getStateFromLocation(), [])
@@ -92,6 +99,8 @@ export function ImageEditorPage({
 
   // Initialize loading state based on whether state exists
   const [isLoading, setIsLoading] = useState<boolean>(hasInitialState)
+
+  useBodyDataAttribute('editorDesktopStatusBar', isDesktop && uiOptions.showStatusBar)
 
   // Storage service for editor open sections
   const storage = useMemo(() => new EditorSectionStorage(authState), [authState])
@@ -135,6 +144,12 @@ export function ImageEditorPage({
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [editingContext, setEditingContext] = useState<string | null>(null)
   const [layerAspectRatioLockToggle, setLayerAspectRatioLockToggle] = useState(true)
+
+  useEditorUrlPostMessage({
+    imageEditor,
+    previewUrl,
+    enabled: uiOptions.postMessageUrl,
+  })
   const [isShiftPressed, setIsShiftPressed] = useState(false)
   const [zoom, setZoom] = useState<number | 'fit'>('fit')
   const [actualScale, setActualScale] = useState<number | null>(null)
@@ -165,10 +180,15 @@ export function ImageEditorPage({
   // Pass a function so it checks the ref value at navigation time, not render time
   const { showDialog, handleConfirm, handleCancel } = useUnsavedChangesWarning(
     () => canUndo && !isSavedRef.current,
+    { enabled: !isPublicPreview && !isPublicPreviewSpace },
   )
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
+  const showHeaderlessBackButton =
+    !uiOptions.showHeader &&
+    isPublicPreview &&
+    (visualCropEnabled || textEditingLayerId !== null || editingContext !== null)
 
   // Compute effective aspect ratio lock state (button OR shift key)
   const layerAspectRatioLocked = useMemo(
@@ -357,14 +377,22 @@ export function ImageEditorPage({
       return
     }
 
-    // Priority 2: If in nested layer context, go up one level
+    // Priority 2: Exit text editing through the existing blur/commit path.
+    if (textEditingLayerId) {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
+      return
+    }
+
+    // Priority 3: If in nested layer context, go up one level
     const contextDepth = imageEditor.getContextDepth()
     if (contextDepth > 0) {
       imageEditor.switchContext(null)
       return
     }
 
-    // Priority 3: Navigate back to gallery
+    // Priority 4: Navigate back to gallery
     // For templates, navigate to the template file's folder rather than the
     // source image's folder (imageEditor.getImagePath() returns the source image).
     const backPath =
@@ -815,6 +843,11 @@ export function ImageEditorPage({
 
       // Cmd+S (Mac) or Ctrl+S (Windows/Linux) - Save/Create Template
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        if (isPublicPreview) {
+          e.preventDefault()
+          return
+        }
+
         e.preventDefault()
 
         if (e.shiftKey) {
@@ -849,7 +882,14 @@ export function ImageEditorPage({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleSaveTemplateClick, imageEditor, isTemplate, templateMetadata, textEditingLayerId])
+  }, [
+    handleSaveTemplateClick,
+    imageEditor,
+    isPublicPreview,
+    isTemplate,
+    templateMetadata,
+    textEditingLayerId,
+  ])
 
   // Hide sections that are irrelevant for the current base image type
   // (e.g. crop is meaningless for solid color images — every pixel is identical)
@@ -959,6 +999,10 @@ export function ImageEditorPage({
         onUndo={() => imageEditor.undo()}
         onRedo={() => imageEditor.redo()}
         isTemplate={isTemplate}
+        showHeader={uiOptions.showHeader}
+        showStatusBar={uiOptions.showStatusBar}
+        showControls={uiOptions.showControls}
+        showTemplateActions={!isPublicPreview}
         onSaveTemplate={handleSaveTemplateClick}
         onDownload={handleDownloadClick}
         onCopyUrl={handleCopyUrlClick}
@@ -982,13 +1026,18 @@ export function ImageEditorPage({
             }
           />
         }
-        previewArea={({ isLeftColumnEmpty, isRightColumnEmpty }) => (
+        previewArea={({
+          isLeftColumnEmpty,
+          isRightColumnEmpty,
+          isSectionDragActive,
+          showHeader,
+          showStatusBar,
+        }) => (
           <PreviewArea
             previewUrl={previewUrl || ''}
             error={error}
             onLoad={handlePreviewLoad}
             onCopyUrl={handleCopyUrlClick}
-            onDownload={handleDownloadClick}
             onPreviewDimensionsChange={setPreviewMaxDimensions}
             visualCropEnabled={visualCropEnabled}
             cropLeft={params.cropLeft || 0}
@@ -1006,9 +1055,21 @@ export function ImageEditorPage({
             zoom={zoom}
             previewContainerRef={previewContainerRef}
             onImageDimensionsChange={setPreviewImageDimensions}
-            onOpenControls={isMobile ? () => setMobileSheetOpen(true) : undefined}
+            onOpenControls={
+              isMobile && uiOptions.showControls ? () => setMobileSheetOpen(true) : undefined
+            }
             isLeftColumnEmpty={isLeftColumnEmpty}
             isRightColumnEmpty={isRightColumnEmpty}
+            isSectionDragActive={isSectionDragActive}
+            showHeader={showHeader}
+            showStatusBar={showStatusBar}
+            showHeaderlessEditActions={!uiOptions.showHeader}
+            showHeaderlessBackButton={showHeaderlessBackButton}
+            onBack={handleBack}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={() => imageEditor.undo()}
+            onRedo={() => imageEditor.redo()}
             textEditingLayerId={textEditingLayerId}
             isNewTextLayer={isNewTextLayer}
             onTextEdit={handleTextEdit}
@@ -1050,7 +1111,11 @@ export function ImageEditorPage({
         sourceImagePath={statusBarSourceImagePath}
         activeStatusBarKeys={activeStatusBarKeys}
         onStatusBarTokenClick={handleStatusBarTokenClick}
-        zoomControl={<ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />}
+        zoomControl={
+          uiOptions.showZoomControl ? (
+            <ZoomControl zoom={zoom} onZoomChange={setZoom} actualScale={actualScale} />
+          ) : undefined
+        }
         mobileSheetOpen={mobileSheetOpen}
         onMobileSheetOpenChange={setMobileSheetOpen}
         sectionComponents={sectionComponents}
@@ -1059,49 +1124,51 @@ export function ImageEditorPage({
       />
 
       <CopyUrlDialog open={copyUrlDialogOpen} onOpenChange={setCopyUrlDialogOpen} url={copyUrl} />
-      <SaveTemplateDialog
-        open={saveTemplateDialogOpen}
-        onOpenChange={setSaveTemplateDialogOpen}
-        imageEditor={imageEditor}
-        templateMetadata={templateMetadata}
-        galleryKey={propGalleryKey}
-        space={activeSpace}
-        title={
-          templateMetadata
-            ? t('imageEditor.template.saveTemplateAs')
-            : t('imageEditor.template.createTemplate')
-        }
-        onSaveSuccess={async (templatePath) => {
-          isSavedRef.current = true
-          // Invalidate except editor page
-          // This refreshes gallery cache without causing loading issues in editor
-          await router.invalidate({
-            filter: (match) => !match.id.includes('/editor'),
-          })
-          const { galleryKey: templateGalleryKey, imageKey: templateImageKey } =
-            splitImagePath(templatePath)
-          navigate({
-            to: templateGalleryKey
-              ? routeSpaceKey
-                ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
-                : '/f/$galleryKey/$imageKey/editor'
-              : routeSpaceKey
-                ? '/spaces/$spaceKey/$imageKey/editor'
-                : '/$imageKey/editor',
-            params: templateGalleryKey
-              ? routeSpaceKey
-                ? {
-                    spaceKey: routeSpaceKey,
-                    galleryKey: templateGalleryKey,
-                    imageKey: templateImageKey,
-                  }
-                : { galleryKey: templateGalleryKey, imageKey: templateImageKey }
-              : routeSpaceKey
-                ? { spaceKey: routeSpaceKey, imageKey: templateImageKey }
-                : { imageKey: templateImageKey },
-          })
-        }}
-      />
+      {!isPublicPreview && (
+        <SaveTemplateDialog
+          open={saveTemplateDialogOpen}
+          onOpenChange={setSaveTemplateDialogOpen}
+          imageEditor={imageEditor}
+          templateMetadata={templateMetadata}
+          galleryKey={propGalleryKey}
+          space={activeSpace}
+          title={
+            templateMetadata
+              ? t('imageEditor.template.saveTemplateAs')
+              : t('imageEditor.template.createTemplate')
+          }
+          onSaveSuccess={async (templatePath) => {
+            isSavedRef.current = true
+            // Invalidate except editor page
+            // This refreshes gallery cache without causing loading issues in editor
+            await router.invalidate({
+              filter: (match) => !match.id.includes('/editor'),
+            })
+            const { galleryKey: templateGalleryKey, imageKey: templateImageKey } =
+              splitImagePath(templatePath)
+            navigate({
+              to: templateGalleryKey
+                ? routeSpaceKey
+                  ? '/spaces/$spaceKey/f/$galleryKey/$imageKey/editor'
+                  : '/f/$galleryKey/$imageKey/editor'
+                : routeSpaceKey
+                  ? '/spaces/$spaceKey/$imageKey/editor'
+                  : '/$imageKey/editor',
+              params: templateGalleryKey
+                ? routeSpaceKey
+                  ? {
+                      spaceKey: routeSpaceKey,
+                      galleryKey: templateGalleryKey,
+                      imageKey: templateImageKey,
+                    }
+                  : { galleryKey: templateGalleryKey, imageKey: templateImageKey }
+                : routeSpaceKey
+                  ? { spaceKey: routeSpaceKey, imageKey: templateImageKey }
+                  : { imageKey: templateImageKey },
+            })
+          }}
+        />
+      )}
       <FilePickerDialog
         open={applyTemplateDialogOpen}
         onOpenChange={setApplyTemplateDialogOpen}

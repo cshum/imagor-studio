@@ -57,6 +57,7 @@ export interface RegisterAdminRequest {
 export interface LoginResponse {
   token: string
   expiresIn: number
+  mode?: string
   redirectPath?: string
   user: {
     id: string
@@ -65,6 +66,13 @@ export interface LoginResponse {
     role: string
   }
   pathPrefix?: string
+}
+
+export interface PublicPreviewSessionResponse extends LoginResponse {
+  mode: string
+  spaceID: string
+  spaceKey: string
+  processingOrigin?: string
 }
 
 export interface PublicSignupVerificationResponse {
@@ -334,6 +342,23 @@ export async function embeddedGuestLogin(jwtToken: string): Promise<LoginRespons
       Authorization: `Bearer ${jwtToken}`,
       'Content-Type': 'application/json',
     },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Create a public preview browser session bound to the configured preview space.
+ */
+export async function publicPreviewSession(): Promise<PublicPreviewSessionResponse> {
+  const response = await fetch(`${BASE_URL}/api/auth/public-preview-session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
   })
 
   if (!response.ok) {

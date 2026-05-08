@@ -17,13 +17,21 @@ import type { ImagePosition } from '@/stores/image-position-store'
 
 interface UseImageContextMenuProps {
   /**
-   * Function to check if user is authenticated.
+   * Whether edit actions should be available.
    */
-  isAuthenticated: () => boolean
+  canEdit: boolean
   /**
-   * Check if in embedded mode (affects edit permission).
+   * Whether copy URL actions should be available.
    */
-  isEmbedded: boolean
+  canCopyUrl: boolean
+  /**
+   * Whether download actions should be available.
+   */
+  canDownload: boolean
+  /**
+   * Whether rename/move/delete actions should be available.
+   */
+  canManage: boolean
   /**
    * Callback to handle opening/viewing an image or template.
    */
@@ -60,8 +68,10 @@ interface UseImageContextMenuProps {
 }
 
 export function useImageContextMenu({
-  isAuthenticated,
-  isEmbedded,
+  canEdit,
+  canCopyUrl,
+  canDownload,
+  canManage,
   onOpen,
   onEdit,
   onCopyUrl,
@@ -83,8 +93,7 @@ export function useImageContextMenu({
     isVideo,
     isTemplate,
   }: ImageContextData) => {
-    const authenticated = isAuthenticated()
-    const canEdit = (authenticated || isEmbedded) && !isVideo
+    const canEditItem = canEdit && !isVideo
 
     if (!imageKey) return null
 
@@ -94,38 +103,44 @@ export function useImageContextMenu({
         <>
           <ContextMenuLabel className='break-all'>{getFileDisplayName(imageName)}</ContextMenuLabel>
           <ContextMenuSeparator />
-          {authenticated && (
+          {(canEdit || canManage) && (
             <>
-              <ContextMenuItem onClick={() => onEdit(imageKey)}>
-                <SquarePen className='mr-2 h-4 w-4' />
-                {t('pages.gallery.contextMenu.edit')}
-              </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => {
-                  setTimeout(() => onRename(imageKey, imageName, 'file'), 0)
-                }}
-              >
-                <Type className='mr-2 h-4 w-4' />
-                {t('pages.gallery.contextMenu.rename')}
-              </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => {
-                  setTimeout(() => onMove(imageKey, imageName, 'file'), 0)
-                }}
-              >
-                <FolderInput className='mr-2 h-4 w-4' />
-                {t('pages.gallery.contextMenu.move')}
-              </ContextMenuItem>
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                onClick={() => {
-                  setTimeout(() => onDelete(imageKey, imageName, 'file'), 0)
-                }}
-                className='text-destructive focus:text-destructive'
-              >
-                <Trash2 className='mr-2 h-4 w-4' />
-                {t('pages.gallery.contextMenu.delete')}
-              </ContextMenuItem>
+              {canEdit && (
+                <ContextMenuItem onClick={() => onEdit(imageKey)}>
+                  <SquarePen className='mr-2 h-4 w-4' />
+                  {t('pages.gallery.contextMenu.edit')}
+                </ContextMenuItem>
+              )}
+              {canManage && (
+                <>
+                  <ContextMenuItem
+                    onClick={() => {
+                      setTimeout(() => onRename(imageKey, imageName, 'file'), 0)
+                    }}
+                  >
+                    <Type className='mr-2 h-4 w-4' />
+                    {t('pages.gallery.contextMenu.rename')}
+                  </ContextMenuItem>
+                  <ContextMenuItem
+                    onClick={() => {
+                      setTimeout(() => onMove(imageKey, imageName, 'file'), 0)
+                    }}
+                  >
+                    <FolderInput className='mr-2 h-4 w-4' />
+                    {t('pages.gallery.contextMenu.move')}
+                  </ContextMenuItem>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem
+                    onClick={() => {
+                      setTimeout(() => onDelete(imageKey, imageName, 'file'), 0)
+                    }}
+                    className='text-destructive focus:text-destructive'
+                  >
+                    <Trash2 className='mr-2 h-4 w-4' />
+                    {t('pages.gallery.contextMenu.delete')}
+                  </ContextMenuItem>
+                </>
+              )}
             </>
           )}
         </>
@@ -141,48 +156,56 @@ export function useImageContextMenu({
           <Eye className='mr-2 h-4 w-4' />
           {t('pages.gallery.contextMenu.open')}
         </ContextMenuItem>
-        {canEdit && (
+        {canEditItem && (
           <ContextMenuItem onClick={() => onEdit(imageKey)}>
             <SquarePen className='mr-2 h-4 w-4' />
             {t('pages.gallery.contextMenu.edit')}
           </ContextMenuItem>
         )}
-        {authenticated && (
+        {(canCopyUrl || canDownload || canManage) && (
           <>
-            <ContextMenuItem onClick={() => onCopyUrl(imageKey, isVideo)}>
-              <Copy className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.copyUrl')}
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => onDownload(imageKey)}>
-              <Download className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.download')}
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                setTimeout(() => onRename(imageKey, imageName, 'file'), 0)
-              }}
-            >
-              <Type className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.rename')}
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                setTimeout(() => onMove(imageKey, imageName, 'file'), 0)
-              }}
-            >
-              <FolderInput className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.move')}
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem
-              onClick={() => {
-                setTimeout(() => onDelete(imageKey, imageName, 'file'), 0)
-              }}
-              className='text-destructive focus:text-destructive'
-            >
-              <Trash2 className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.delete')}
-            </ContextMenuItem>
+            {canCopyUrl && (
+              <ContextMenuItem onClick={() => onCopyUrl(imageKey, isVideo)}>
+                <Copy className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.copyUrl')}
+              </ContextMenuItem>
+            )}
+            {canDownload && (
+              <ContextMenuItem onClick={() => onDownload(imageKey)}>
+                <Download className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.download')}
+              </ContextMenuItem>
+            )}
+            {canManage && (
+              <>
+                <ContextMenuItem
+                  onClick={() => {
+                    setTimeout(() => onRename(imageKey, imageName, 'file'), 0)
+                  }}
+                >
+                  <Type className='mr-2 h-4 w-4' />
+                  {t('pages.gallery.contextMenu.rename')}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  onClick={() => {
+                    setTimeout(() => onMove(imageKey, imageName, 'file'), 0)
+                  }}
+                >
+                  <FolderInput className='mr-2 h-4 w-4' />
+                  {t('pages.gallery.contextMenu.move')}
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  onClick={() => {
+                    setTimeout(() => onDelete(imageKey, imageName, 'file'), 0)
+                  }}
+                  className='text-destructive focus:text-destructive'
+                >
+                  <Trash2 className='mr-2 h-4 w-4' />
+                  {t('pages.gallery.contextMenu.delete')}
+                </ContextMenuItem>
+              </>
+            )}
           </>
         )}
       </>
@@ -198,8 +221,7 @@ export function useImageContextMenu({
     isVideo,
     isTemplate,
   }: ImageContextData) => {
-    const authenticated = isAuthenticated()
-    const canEdit = (authenticated || isEmbedded) && !isVideo
+    const canEditItem = canEdit && !isVideo
 
     if (!imageKey) return null
 
@@ -211,28 +233,34 @@ export function useImageContextMenu({
             {getFileDisplayName(imageName)}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {authenticated && (
+          {(canEdit || canManage) && (
             <>
-              <DropdownMenuItem onClick={() => onEdit(imageKey)}>
-                <SquarePen className='mr-2 h-4 w-4' />
-                {t('pages.gallery.contextMenu.edit')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onRename(imageKey, imageName, 'file')}>
-                <Type className='mr-2 h-4 w-4' />
-                {t('pages.gallery.contextMenu.rename')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onMove(imageKey, imageName, 'file')}>
-                <FolderInput className='mr-2 h-4 w-4' />
-                {t('pages.gallery.contextMenu.move')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onDelete(imageKey, imageName, 'file')}
-                className='text-destructive focus:text-destructive'
-              >
-                <Trash2 className='mr-2 h-4 w-4' />
-                {t('pages.gallery.contextMenu.delete')}
-              </DropdownMenuItem>
+              {canEdit && (
+                <DropdownMenuItem onClick={() => onEdit(imageKey)}>
+                  <SquarePen className='mr-2 h-4 w-4' />
+                  {t('pages.gallery.contextMenu.edit')}
+                </DropdownMenuItem>
+              )}
+              {canManage && (
+                <>
+                  <DropdownMenuItem onClick={() => onRename(imageKey, imageName, 'file')}>
+                    <Type className='mr-2 h-4 w-4' />
+                    {t('pages.gallery.contextMenu.rename')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onMove(imageKey, imageName, 'file')}>
+                    <FolderInput className='mr-2 h-4 w-4' />
+                    {t('pages.gallery.contextMenu.move')}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onDelete(imageKey, imageName, 'file')}
+                    className='text-destructive focus:text-destructive'
+                  >
+                    <Trash2 className='mr-2 h-4 w-4' />
+                    {t('pages.gallery.contextMenu.delete')}
+                  </DropdownMenuItem>
+                </>
+              )}
             </>
           )}
         </>
@@ -248,38 +276,46 @@ export function useImageContextMenu({
           <Eye className='mr-2 h-4 w-4' />
           {t('pages.gallery.contextMenu.open')}
         </DropdownMenuItem>
-        {canEdit && (
+        {canEditItem && (
           <DropdownMenuItem onClick={() => onEdit(imageKey)}>
             <SquarePen className='mr-2 h-4 w-4' />
             {t('pages.gallery.contextMenu.edit')}
           </DropdownMenuItem>
         )}
-        {authenticated && (
+        {(canCopyUrl || canDownload || canManage) && (
           <>
-            <DropdownMenuItem onClick={() => onCopyUrl(imageKey, isVideo)}>
-              <Copy className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.copyUrl')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDownload(imageKey)}>
-              <Download className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.download')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onRename(imageKey, imageName, 'file')}>
-              <Type className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.rename')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onMove(imageKey, imageName, 'file')}>
-              <FolderInput className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.move')}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(imageKey, imageName, 'file')}
-              className='text-destructive focus:text-destructive'
-            >
-              <Trash2 className='mr-2 h-4 w-4' />
-              {t('pages.gallery.contextMenu.delete')}
-            </DropdownMenuItem>
+            {canCopyUrl && (
+              <DropdownMenuItem onClick={() => onCopyUrl(imageKey, isVideo)}>
+                <Copy className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.copyUrl')}
+              </DropdownMenuItem>
+            )}
+            {canDownload && (
+              <DropdownMenuItem onClick={() => onDownload(imageKey)}>
+                <Download className='mr-2 h-4 w-4' />
+                {t('pages.gallery.contextMenu.download')}
+              </DropdownMenuItem>
+            )}
+            {canManage && (
+              <>
+                <DropdownMenuItem onClick={() => onRename(imageKey, imageName, 'file')}>
+                  <Type className='mr-2 h-4 w-4' />
+                  {t('pages.gallery.contextMenu.rename')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onMove(imageKey, imageName, 'file')}>
+                  <FolderInput className='mr-2 h-4 w-4' />
+                  {t('pages.gallery.contextMenu.move')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete(imageKey, imageName, 'file')}
+                  className='text-destructive focus:text-destructive'
+                >
+                  <Trash2 className='mr-2 h-4 w-4' />
+                  {t('pages.gallery.contextMenu.delete')}
+                </DropdownMenuItem>
+              </>
+            )}
           </>
         )}
       </>

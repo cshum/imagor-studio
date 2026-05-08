@@ -52,6 +52,10 @@ func RequirePermission(ctx context.Context, requiredScopes ...string) error {
 
 // RequireWritePermission to check write permissions with optional path validation
 func RequireWritePermission(ctx context.Context, path ...string) error {
+	if IsPublicPreviewMode(ctx) {
+		return fmt.Errorf("public preview sessions cannot persist changes")
+	}
+
 	if err := RequirePermission(ctx, "write"); err != nil {
 		return err
 	}
@@ -95,6 +99,15 @@ func RequireReadPermission(ctx context.Context, path ...string) error {
 // RequireAdminPermission to check admin permissions
 func RequireAdminPermission(ctx context.Context) error {
 	return RequirePermission(ctx, "admin")
+}
+
+// IsPublicPreviewMode checks whether the current session is a public preview session.
+func IsPublicPreviewMode(ctx context.Context) bool {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return false
+	}
+	return claims.Mode == auth.ExperienceModePublicPreview
 }
 
 // IsGuestUser to check if user is a guest

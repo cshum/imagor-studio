@@ -1,5 +1,56 @@
 import type { ImageEditorState, ImageLayer, Layer } from '@/lib/image-editor'
 
+export interface ImageEditorUiOptions {
+  showHeader: boolean
+  showStatusBar: boolean
+  showZoomControl: boolean
+  showControls: boolean
+  postMessageUrl: boolean
+}
+
+function parseBooleanSearchParam(value: string | null, defaultValue: boolean): boolean {
+  if (value === null) {
+    return defaultValue
+  }
+
+  const normalized = value.trim().toLowerCase()
+  if (normalized === '') {
+    return defaultValue
+  }
+
+  if (['0', 'false', 'off', 'hide', 'hidden', 'no'].includes(normalized)) {
+    return false
+  }
+
+  if (['1', 'true', 'on', 'show', 'visible', 'yes'].includes(normalized)) {
+    return true
+  }
+
+  return defaultValue
+}
+
+export function getUiOptionsFromLocation(): ImageEditorUiOptions {
+  if (typeof window === 'undefined') {
+    return {
+      showHeader: true,
+      showStatusBar: true,
+      showZoomControl: true,
+      showControls: true,
+      postMessageUrl: false,
+    }
+  }
+
+  const searchParams = new URLSearchParams(window.location.search)
+
+  return {
+    showHeader: parseBooleanSearchParam(searchParams.get('header'), true),
+    showStatusBar: parseBooleanSearchParam(searchParams.get('statusBar'), true),
+    showZoomControl: parseBooleanSearchParam(searchParams.get('zoom'), true),
+    showControls: parseBooleanSearchParam(searchParams.get('controls'), true),
+    postMessageUrl: parseBooleanSearchParam(searchParams.get('embedSyncUrl'), false),
+  }
+}
+
 /**
  * Serialize ImageEditorState to URL-safe base64 string
  * Strips UI-only state (visualCropEnabled) before serializing

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Copy, Download, Settings } from 'lucide-react'
+import { AlertCircle, ChevronLeft, Copy, Redo2, Settings, Undo2 } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
@@ -24,7 +24,6 @@ interface PreviewAreaProps {
   error: Error | null
   onLoad?: (width: number, height: number) => void
   onCopyUrl: () => void
-  onDownload: () => void
   onPreviewDimensionsChange?: (dimensions: { width: number; height: number }) => void
   visualCropEnabled?: boolean
   cropLeft?: number
@@ -42,6 +41,16 @@ interface PreviewAreaProps {
   onOpenControls?: () => void
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
+  isSectionDragActive?: boolean
+  showHeader?: boolean
+  showStatusBar?: boolean
+  showHeaderlessEditActions?: boolean
+  showHeaderlessBackButton?: boolean
+  onBack?: () => void
+  canUndo?: boolean
+  canRedo?: boolean
+  onUndo?: () => void
+  onRedo?: () => void
   zoom?: number | 'fit'
   previewContainerRef?: React.RefObject<HTMLDivElement | null>
   onImageDimensionsChange?: (dimensions: { width: number; height: number } | null) => void
@@ -58,7 +67,6 @@ export function PreviewArea({
   error,
   onLoad,
   onCopyUrl,
-  onDownload,
   onPreviewDimensionsChange,
   visualCropEnabled = false,
   cropLeft = 0,
@@ -76,7 +84,17 @@ export function PreviewArea({
   onOpenControls,
   isLeftColumnEmpty = false,
   isRightColumnEmpty = false,
+  isSectionDragActive = false,
+  showHeaderlessEditActions = false,
+  showHeaderlessBackButton = false,
+  onBack,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
   zoom = 'fit',
+  showHeader = true,
+  showStatusBar = true,
   previewContainerRef: externalPreviewContainerRef,
   onImageDimensionsChange,
   textEditingLayerId = null,
@@ -154,6 +172,10 @@ export function PreviewArea({
 
   // Track if image fits in container (for smart centering)
   const [imageFitsInContainer, setImageFitsInContainer] = useState(true)
+
+  // Keep fit-mode height aligned with whichever chrome rows are actually visible.
+  const fitModeViewportOffset = 48 + (showHeader ? 56 : 0) + (showStatusBar ? 48 : 0)
+  const fitModeMaxHeight = `calc(100vh - ${fitModeViewportOffset}px)`
 
   // Handle mousedown on preview container to deselect layer
   const handleContainerMouseDown = useCallback(
@@ -300,10 +322,14 @@ export function PreviewArea({
 
   // Handle column empty state changes with delay for CSS transition
   useEffect(() => {
+    if (isSectionDragActive) {
+      return
+    }
+
     // Wait for CSS transition (300ms) to complete before recalculating
     const timeoutId = setTimeout(calculatePreviewDimensions, 300)
     return () => clearTimeout(timeoutId)
-  }, [isLeftColumnEmpty, isRightColumnEmpty, calculatePreviewDimensions])
+  }, [isLeftColumnEmpty, isRightColumnEmpty, isSectionDragActive, calculatePreviewDimensions])
 
   // Store scroll position when zoom changes (before image loads)
   useEffect(() => {
@@ -435,9 +461,57 @@ export function PreviewArea({
     onImageDimensionsChange?.(imageDimensions)
   }, [imageDimensions, onImageDimensionsChange])
 
+  const showHeaderlessEditOverlay = showHeaderlessEditActions && (canUndo || canRedo)
+  const showHeaderlessBackOverlay = showHeaderlessBackButton && !!onBack
+
   return (
     <div className='relative flex h-full flex-col'>
-      {!visualCropEnabled && <LicenseBadge />}
+      {!visualCropEnabled && (
+        <LicenseBadge
+          side={showHeaderlessEditOverlay && !showHeaderlessBackOverlay ? 'left' : 'right'}
+        />
+      )}
+      {showHeaderlessBackOverlay && (
+        <div className='bg-background/80 absolute top-4 left-4 z-50 rounded-full border p-1 shadow-lg backdrop-blur-sm md:left-6'>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={onBack}
+            title={t('imageEditor.page.back')}
+            aria-label={t('imageEditor.page.back')}
+            className='h-9 rounded-full px-3'
+          >
+            <ChevronLeft className='mr-1 h-4 w-4' />
+            {t('imageEditor.page.back')}
+          </Button>
+        </div>
+      )}
+      {showHeaderlessEditOverlay && (
+        <div className='bg-background/80 absolute top-4 right-4 z-50 flex items-center gap-1 rounded-full border p-1 shadow-lg backdrop-blur-sm md:right-6'>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={onUndo}
+            disabled={!canUndo}
+            title={t('imageEditor.page.undo')}
+            aria-label={t('imageEditor.page.undo')}
+            className='h-9 w-9 rounded-full p-0'
+          >
+            <Undo2 className='h-4 w-4' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={onRedo}
+            disabled={!canRedo}
+            title={t('imageEditor.page.redo')}
+            aria-label={t('imageEditor.page.redo')}
+            className='h-9 w-9 rounded-full p-0'
+          >
+            <Redo2 className='h-4 w-4' />
+          </Button>
+        </div>
+      )}
       {/* Mobile & Tablet Breadcrumb - shown when editing nested layers */}
       {!isDesktop && imageEditor && imageEditor.getContextDepth() > 0 && (
         <div className='border-b px-3 py-2'>
@@ -515,7 +589,11 @@ export function PreviewArea({
                           maxHeight: `${imageDimensions.height}px`,
                           flexShrink: 0,
                         }
-                      : undefined
+                      : zoom === 'fit'
+                        ? {
+                            maxHeight: fitModeMaxHeight,
+                          }
+                        : undefined
                   }
                   className={cn(
                     // Checkerboard background — always shown so transparency is visible for any image type
@@ -523,18 +601,15 @@ export function PreviewArea({
                     // Only apply auto-sizing and object-contain in fit mode
                     // When zoomed, image renders at natural size to enable scrolling
                     zoom === 'fit' && 'h-auto w-auto object-contain',
-                    // Only apply max constraints when in 'fit' mode
-                    // This allows the image to grow beyond viewport when zoomed
-                    zoom === 'fit' && 'max-h-[calc(100vh-152px)]',
                     zoom === 'fit' &&
                       (isMobile
                         ? 'max-w-[calc(100vw-32px)]'
                         : isTablet
                           ? 'max-w-[calc(100vw-362px)]'
                           : isLeftColumnEmpty && isRightColumnEmpty
-                            ? 'max-w-[calc(100vw-152px)]' // Both empty: 60 + 60 + 32 = 152px
+                            ? 'max-w-[calc(100vw-32px)]' // Both empty: 0 + 0 + 32 = 32px
                             : isLeftColumnEmpty || isRightColumnEmpty
-                              ? 'max-w-[calc(100vw-422px)]' // One empty: 60 + 330 + 32 = 422px
+                              ? 'max-w-[calc(100vw-362px)]' // One empty: 0 + 330 + 32 = 362px
                               : 'max-w-[calc(100vw-692px)]'), // Both full: 330 + 330 + 32 = 692px
                   )}
                 />
@@ -812,42 +887,30 @@ export function PreviewArea({
 
       {/* Preview Controls - Mobile only */}
       {isMobile && (
-        <div className='bg-muted/20 ios-bottom-safe p-3'>
-          <div className='inline-flex w-full rounded-md'>
+        <>
+          <Button
+            variant='outline'
+            size='default'
+            onClick={onCopyUrl}
+            className='bg-background/90 pointer-events-auto absolute bottom-0 left-4 z-50 h-12 rounded-full px-5 text-sm font-medium shadow-lg backdrop-blur-sm md:hidden'
+            style={{ bottom: 'max(env(safe-area-inset-bottom), 16px)' }}
+          >
+            <Copy className='mr-2 h-4.5 w-4.5' />
+            {t('imageEditor.page.copyUrl')}
+          </Button>
+          {onOpenControls && (
             <Button
               variant='outline'
               size='default'
-              onClick={onCopyUrl}
-              className='flex-1 touch-manipulation rounded-r-none border-r-0'
+              onClick={onOpenControls}
+              className='bg-background/90 pointer-events-auto absolute right-4 bottom-0 z-50 h-12 rounded-full px-5 text-sm font-medium shadow-lg backdrop-blur-sm md:hidden'
+              style={{ bottom: 'max(env(safe-area-inset-bottom), 16px)' }}
             >
-              <Copy className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.copyUrl')}
+              <Settings className='mr-2 h-4.5 w-4.5' />
+              {t('imageEditor.page.controls')}
             </Button>
-            <Button
-              variant='outline'
-              size='default'
-              onClick={onDownload}
-              className={cn(
-                'flex-1 touch-manipulation',
-                onOpenControls ? 'rounded-none border-r-0' : 'rounded-l-none',
-              )}
-            >
-              <Download className='mr-1 h-4 w-4' />
-              {t('imageEditor.page.download')}
-            </Button>
-            {onOpenControls && (
-              <Button
-                variant='outline'
-                size='default'
-                onClick={onOpenControls}
-                className='flex-1 touch-manipulation rounded-l-none'
-              >
-                <Settings className='mr-1 h-4 w-4' />
-                {t('imageEditor.page.controls')}
-              </Button>
-            )}
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   )

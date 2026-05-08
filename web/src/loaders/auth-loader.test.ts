@@ -60,6 +60,57 @@ describe('auth-loader redirects', () => {
     ).rejects.toEqual({ to: '/login' })
   })
 
+  it('redirects authenticated users away from auth entry routes', async () => {
+    mockWaitFor.mockResolvedValue({
+      state: 'authenticated',
+      error: null,
+      isEmbedded: false,
+      isFirstRun: false,
+      multiTenant: true,
+    })
+
+    const { redirectAuthenticatedUsers } = await import('./auth-loader')
+
+    await expect(redirectAuthenticatedUsers()).rejects.toEqual({ to: '/' })
+  })
+
+  it('reuses a valid redirect target for authenticated auth-entry redirects', async () => {
+    mockWaitFor.mockResolvedValue({
+      state: 'authenticated',
+      error: null,
+      isEmbedded: false,
+      isFirstRun: false,
+      multiTenant: true,
+    })
+
+    const { redirectAuthenticatedUsers } = await import('./auth-loader')
+
+    await expect(
+      redirectAuthenticatedUsers({
+        search: {
+          redirect: '/spaces/acme-space',
+        },
+      }),
+    ).rejects.toEqual({ to: '/spaces/acme-space' })
+  })
+
+  it('allows public preview sessions to access image editor routes', async () => {
+    mockWaitFor.mockResolvedValue({
+      state: 'guest',
+      error: null,
+      isEmbedded: false,
+      isFirstRun: false,
+      experienceMode: 'public-preview',
+    })
+
+    const { requireImageEditorAuth } = await import('./auth-loader')
+
+    await expect(requireImageEditorAuth()).resolves.toMatchObject({
+      state: 'guest',
+      experienceMode: 'public-preview',
+    })
+  })
+
   it('reuses a provided organization for multi-tenant org auth', async () => {
     mockWaitFor.mockResolvedValue({
       state: 'authenticated',

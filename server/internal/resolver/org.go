@@ -400,6 +400,7 @@ func (r *Resolver) mapSpaceToUsageSummary(spaceRecord *space.Space, hostedUsageB
 
 func (r *Resolver) mapSpaceToGQLWithPermissionsOnly(ctx context.Context, s *space.Space) (*gql.Space, error) {
 	gqlSpace := mapSpaceToGQL(s)
+	gqlSpace.IsPublicPreviewSpace = r.publicPreviewEnabled && strings.TrimSpace(r.publicPreviewSpaceKey) != "" && s.Key == strings.TrimSpace(r.publicPreviewSpaceKey)
 	permissions, err := r.getSpacePermissions(ctx, s)
 	if err != nil {
 		return nil, err
@@ -642,6 +643,9 @@ func (r *Resolver) canReadSpace(ctx context.Context, space *space.Space) (bool, 
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return false, err
+	}
+	if claims.Mode == auth.ExperienceModePublicPreview && claims.SpaceKey != "" && claims.SpaceKey == space.Key {
+		return true, nil
 	}
 	if r.registryStore != nil {
 		publicAccess, registryErr := r.registryStore.Get(ctx, registrystore.SpaceOwnerID(space.ID), "config.allow_guest_mode")

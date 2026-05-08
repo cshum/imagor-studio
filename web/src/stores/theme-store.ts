@@ -2,20 +2,24 @@ import { ConfigStorage } from '@/lib/config-storage/config-storage'
 import { createStore } from '@/lib/create-store'
 
 export type Theme = 'system' | 'light' | 'dark'
+export type ThemeOverride = Exclude<Theme, 'system'>
 
 export interface ThemeState {
   theme: Theme
+  themeOverride: ThemeOverride | null
   resolvedTheme: 'light' | 'dark' // The actual theme being applied
   isLoaded: boolean
 }
 
 export type ThemeAction =
   | { type: 'SET_THEME'; payload: { theme: Theme } }
+  | { type: 'SET_THEME_OVERRIDE'; payload: { themeOverride: ThemeOverride | null } }
   | { type: 'SET_RESOLVED_THEME'; payload: { resolvedTheme: 'light' | 'dark' } }
   | { type: 'SET_LOADED'; payload: { isLoaded: boolean } }
 
 const initialState: ThemeState = {
   theme: 'system',
+  themeOverride: null,
   resolvedTheme: 'light',
   isLoaded: false,
 }
@@ -26,6 +30,12 @@ const reducer = (state: ThemeState, action: ThemeAction): ThemeState => {
       return {
         ...state,
         theme: action.payload.theme,
+      }
+
+    case 'SET_THEME_OVERRIDE':
+      return {
+        ...state,
+        themeOverride: action.payload.themeOverride,
       }
 
     case 'SET_RESOLVED_THEME':
@@ -77,7 +87,8 @@ const applyTheme = (theme: 'light' | 'dark') => {
  */
 const updateResolvedTheme = () => {
   const state = themeStore.getState()
-  const resolvedTheme = state.theme === 'system' ? getSystemTheme() : state.theme
+  const resolvedTheme =
+    state.themeOverride ?? (state.theme === 'system' ? getSystemTheme() : state.theme)
 
   themeStore.dispatch({
     type: 'SET_RESOLVED_THEME',
@@ -157,6 +168,16 @@ export const setTheme = async (theme: Theme) => {
   updateResolvedTheme()
   await storage?.set(theme)
 }
+
+export const setThemeOverride = (themeOverride: ThemeOverride | null) => {
+  themeStore.dispatch({
+    type: 'SET_THEME_OVERRIDE',
+    payload: { themeOverride },
+  })
+
+  updateResolvedTheme()
+}
+
 /**
  * Reset theme to system default and clear storage
  */
@@ -184,6 +205,7 @@ export const useTheme = () => {
 
   return {
     theme: state.theme,
+    themeOverride: state.themeOverride,
     resolvedTheme: state.resolvedTheme,
     isLoaded: state.isLoaded,
     setTheme,
