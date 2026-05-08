@@ -22,6 +22,7 @@ import { SaveTemplateDialog } from '@/components/image-editor/save-template-dial
 import { ZoomControl } from '@/components/image-editor/zoom-control.tsx'
 import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dialog'
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
+import { useBodyDataAttribute } from '@/hooks/use-body-data-attribute'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
@@ -88,6 +89,7 @@ export function ImageEditorPage({
   const [editorOpenSections, setEditorOpenSections] =
     useState<EditorSections>(initialEditorOpenSections)
   const isMobile = !useBreakpoint('md') // Mobile when screen < 768px
+  const isDesktop = useBreakpoint('lg')
 
   // Read state from URL on mount (single source of truth, won't change during component lifetime)
   const initialState = useMemo(() => getStateFromLocation(), [])
@@ -95,6 +97,8 @@ export function ImageEditorPage({
 
   // Initialize loading state based on whether state exists
   const [isLoading, setIsLoading] = useState<boolean>(hasInitialState)
+
+  useBodyDataAttribute('editorDesktopStatusBar', isDesktop && uiOptions.showStatusBar)
 
   // Storage service for editor open sections
   const storage = useMemo(() => new EditorSectionStorage(authState), [authState])

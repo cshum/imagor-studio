@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { Toaster as Sonner } from 'sonner'
 
@@ -9,12 +10,30 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
 const Toaster = ({ ...props }: ToasterProps) => {
   const { resolvedTheme } = useTheme()
   const isDesktopOrTablet = useBreakpoint('md')
+  const [liftAboveEditorStatusBar, setLiftAboveEditorStatusBar] = useState(false)
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return
+    }
+    const updateLiftState = () => {
+      setLiftAboveEditorStatusBar(document.body.dataset.editorDesktopStatusBar === 'true')
+    }
+    updateLiftState()
+    const observer = new MutationObserver(updateLiftState)
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['data-editor-desktop-status-bar'],
+    })
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <Sonner
       theme={resolvedTheme as ToasterProps['theme']}
       className='toaster group'
       position={isDesktopOrTablet ? 'bottom-center' : 'top-center'}
+      offset={isDesktopOrTablet ? { bottom: liftAboveEditorStatusBar ? 72 : 24 } : { top: 24 }}
       icons={{
         loading: <LoaderCircle className='h-4 w-4 animate-spin' />,
       }}
