@@ -866,7 +866,7 @@ export function PreviewArea({
             variant='outline'
             size='default'
             onClick={onCopyUrl}
-            className='pointer-events-auto absolute bottom-0 left-4 z-50 h-12 rounded-full bg-background/90 px-5 text-sm font-medium shadow-lg backdrop-blur-sm md:hidden'
+            className='bg-background/90 pointer-events-auto absolute bottom-0 left-4 z-50 h-12 rounded-full px-5 text-sm font-medium shadow-lg backdrop-blur-sm md:hidden'
             style={{ bottom: 'max(env(safe-area-inset-bottom), 16px)' }}
           >
             <Copy className='mr-2 h-4.5 w-4.5' />
@@ -877,7 +877,7 @@ export function PreviewArea({
               variant='outline'
               size='default'
               onClick={onOpenControls}
-              className='pointer-events-auto absolute right-4 bottom-0 z-50 h-12 rounded-full bg-background/90 px-5 text-sm font-medium shadow-lg backdrop-blur-sm md:hidden'
+              className='bg-background/90 pointer-events-auto absolute right-4 bottom-0 z-50 h-12 rounded-full px-5 text-sm font-medium shadow-lg backdrop-blur-sm md:hidden'
               style={{ bottom: 'max(env(safe-area-inset-bottom), 16px)' }}
             >
               <Settings className='mr-2 h-4.5 w-4.5' />
