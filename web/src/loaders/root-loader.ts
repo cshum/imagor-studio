@@ -21,6 +21,8 @@ export const rootLoader = async (): Promise<RootLoaderData> => {
   await rootBeforeLoad()
 
   const auth = getAuth()
+  const includeUserRegistry = Boolean(auth.accessToken) && auth.experienceMode !== 'public-preview'
+  const includeSystemRegistry = !auth.accessToken || !auth.multiTenant
 
   if (!auth.accessToken && auth.multiTenant) {
     return {}
@@ -29,16 +31,18 @@ export const rootLoader = async (): Promise<RootLoaderData> => {
   let locale: string | null = null
 
   try {
-    const { userRegistryEntries, systemRegistryEntries } = await getBootstrapRegistryPreferences(
-      auth.accessToken ? [DEFAULT_LANGUAGE_REGISTRY_KEY] : [],
-      !auth.accessToken || !auth.multiTenant ? [DEFAULT_LANGUAGE_REGISTRY_KEY] : [],
-      {
-        includeUser: Boolean(auth.accessToken),
-        includeSystem: !auth.accessToken || !auth.multiTenant,
-      },
-    )
+    if (includeUserRegistry || includeSystemRegistry) {
+      const { userRegistryEntries, systemRegistryEntries } = await getBootstrapRegistryPreferences(
+        includeUserRegistry ? [DEFAULT_LANGUAGE_REGISTRY_KEY] : [],
+        includeSystemRegistry ? [DEFAULT_LANGUAGE_REGISTRY_KEY] : [],
+        {
+          includeUser: includeUserRegistry,
+          includeSystem: includeSystemRegistry,
+        },
+      )
 
-    locale = userRegistryEntries[0]?.value || systemRegistryEntries[0]?.value || null
+      locale = userRegistryEntries[0]?.value || systemRegistryEntries[0]?.value || null
+    }
   } catch {
     // Root bootstrap falls back to the current i18n default.
   }

@@ -101,6 +101,7 @@ describe('rootLoader', () => {
     mockGetAuth.mockReturnValue({
       accessToken: 'token',
       multiTenant: true,
+      experienceMode: null,
     })
     mockGetBootstrapRegistryPreferences.mockResolvedValue({
       userRegistryEntries: [{ key: 'config.app_default_language', value: 'zh' }],
@@ -121,12 +122,29 @@ describe('rootLoader', () => {
     expect(mockLicenseWaitFor).not.toHaveBeenCalled()
   })
 
+  it('skips bootstrap registry fetches for public-preview sessions', async () => {
+    const { rootLoader } = await import('./root-loader')
+
+    mockGetAuth.mockReturnValue({
+      accessToken: 'token',
+      multiTenant: true,
+      experienceMode: 'public-preview',
+    })
+
+    await expect(rootLoader()).resolves.toEqual({})
+
+    expect(mockGetBootstrapRegistryPreferences).not.toHaveBeenCalled()
+    expect(mockInitializeLocale).toHaveBeenCalledWith(null)
+    expect(mockLicenseWaitFor).not.toHaveBeenCalled()
+  })
+
   it('loads brand and breadcrumb data for authenticated self-hosted pages', async () => {
     const { rootLoader } = await import('./root-loader')
 
     mockGetAuth.mockReturnValue({
       accessToken: 'token',
       multiTenant: false,
+      experienceMode: null,
     })
     mockGetBootstrapRegistryPreferences.mockResolvedValue({
       userRegistryEntries: [{ key: 'config.app_default_language', value: 'en' }],
