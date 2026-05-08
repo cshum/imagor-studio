@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useUnsavedChangesWarning } from './use-unsaved-changes-warning'
 
@@ -24,6 +24,34 @@ function HookHarness({
 }
 
 describe('useUnsavedChangesWarning', () => {
+  beforeEach(() => {
+    mockUseBlocker.mockReset()
+  })
+
+  it('enables navigation blocking and unload prompts when dirty and enabled', () => {
+    const proceed = vi.fn()
+    const reset = vi.fn()
+
+    mockUseBlocker.mockReturnValue({
+      status: 'blocked',
+      proceed,
+      reset,
+    })
+
+    render(<HookHarness enabled hasUnsavedChanges />)
+
+    expect(screen.getByText('blocked')).toBeTruthy()
+
+    const useBlockerArgs = mockUseBlocker.mock.calls[0]?.[0] as {
+      shouldBlockFn: () => boolean
+      enableBeforeUnload: () => boolean
+      disabled: boolean
+    }
+    expect(useBlockerArgs.shouldBlockFn()).toBe(true)
+    expect(useBlockerArgs.enableBeforeUnload()).toBe(true)
+    expect(useBlockerArgs.disabled).toBe(false)
+  })
+
   it('does not register a beforeunload listener when disabled', () => {
     mockUseBlocker.mockReturnValue({
       status: 'idle',

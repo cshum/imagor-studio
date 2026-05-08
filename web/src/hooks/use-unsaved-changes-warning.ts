@@ -3,7 +3,7 @@ import { useBlocker } from '@tanstack/react-router'
 
 /**
  * Hook to warn users about unsaved changes when navigating away.
- * Handles both browser navigation (closing tab/window) and in-app navigation.
+ * Uses TanStack Router's blocker for both in-app navigation and browser unload prompts.
  *
  * @param hasUnsavedChanges - Whether there are unsaved changes (boolean or function returning boolean)
  * @returns Dialog state and handlers for the confirmation dialog
@@ -41,8 +41,7 @@ export function useUnsavedChangesWarning(
     return typeof hasUnsavedChanges === 'function' ? hasUnsavedChanges() : hasUnsavedChanges
   }, [hasUnsavedChanges])
 
-  // Block in-app navigation when there are unsaved changes
-  // Using new API with withResolver to get blocker object
+  // TanStack Router owns both route blocking and beforeunload handling here.
   const blocker = useBlocker({
     shouldBlockFn: () => enabled && getHasUnsavedChanges(),
     enableBeforeUnload: () => enabled && getHasUnsavedChanges(),
