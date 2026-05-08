@@ -1459,6 +1459,8 @@
           "sizeDescription": "This segment sets the requested width and height for the transformed output.",
           "filtersTitle": "Filters",
           "filtersDescription": "This segment starts the imagor filter pipeline. Each filter after it can link to its own docs.",
+          "imagePathTitle": "Source image path",
+          "imagePathDescription": "Specifies the image URI imagor loads as the source. This can be a plain path or URL, a b64-encoded source, or a color image.",
           "filterItemDescription": "Open the imagor docs for the {{name}} filter.",
           "attachmentDescription": "Returns the image as an attachment in the Content-Disposition header.",
           "blurDescription": "Applies gaussian blur to the image.",

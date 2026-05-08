@@ -1459,6 +1459,8 @@
           "sizeDescription": "這一段用來設定轉換後輸出影像的目標寬度與高度。",
           "filtersTitle": "濾鏡",
           "filtersDescription": "這一段會啟動 imagor 的濾鏡流程，後面的每個濾鏡都可以分別查看對應文件。",
+          "imagePathTitle": "來源圖片路徑",
+          "imagePathDescription": "用來指定 imagor 載入作為來源的圖片 URI。它可以是一般路徑或 URL、b64 編碼的來源，或顏色圖片。",
           "filterItemDescription": "打開 imagor 中 {{name}} 濾鏡的文件。",
           "attachmentDescription": "以 Content-Disposition 回應標頭中的附件形式返回影像。",
           "blurDescription": "對影像套用高斯模糊。",

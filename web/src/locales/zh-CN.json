@@ -1393,6 +1393,8 @@
           "sizeDescription": "这一段用于设置变换后输出图像的目标宽度和高度。",
           "filtersTitle": "滤镜",
           "filtersDescription": "这一段会启动 imagor 的滤镜流水线，后面的每个滤镜都可以单独查看对应文档。",
+          "imagePathTitle": "源图片路径",
+          "imagePathDescription": "用于指定 imagor 作为来源加载的图片 URI。它可以是普通路径或 URL、b64 编码的来源，或颜色图片。",
           "filterItemDescription": "打开 imagor 中 {{name}} 滤镜的文档。",
           "attachmentDescription": "以 Content-Disposition 响应头中的附件形式返回图像。",
           "blurDescription": "对图像应用高斯模糊。",

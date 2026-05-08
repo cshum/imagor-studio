@@ -417,6 +417,18 @@ export function resolveStatusBarKeys(keysValue: string | undefined): StatusBarMa
   return Array.from(new Set(resolvedKeys))
 }
 
+function buildImagePathHint(
+  t: BuildStatusBarSegmentsOptions['t'],
+  imageEndpointDocsUrl: string,
+): StatusBarSegmentHint {
+  return {
+    title: t('imageEditor.page.statusBar.segmentHints.imagePathTitle'),
+    description: t('imageEditor.page.statusBar.segmentHints.imagePathDescription'),
+    docsUrl: `${imageEndpointDocsUrl}#image-uri`,
+    docsLabel: t('imageEditor.page.statusBar.imageEndpointDocs'),
+  }
+}
+
 export function buildStatusBarSegments({
   imagorPath,
   sourceImagePath,
@@ -595,7 +607,14 @@ export function buildStatusBarSegments({
         }
       }
 
-      return { parts: [{ text: segment }] }
+      return {
+        parts: [
+          {
+            text: segment,
+            hint: buildImagePathHint(t, imageEndpointDocsUrl),
+          },
+        ],
+      }
     },
   )
 
@@ -604,6 +623,7 @@ export function buildStatusBarSegments({
       parts: [
         {
           text: sourceImagePath,
+          hint: buildImagePathHint(t, imageEndpointDocsUrl),
         },
       ],
     })

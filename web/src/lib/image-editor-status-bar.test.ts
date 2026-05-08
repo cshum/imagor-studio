@@ -112,7 +112,17 @@ describe('buildStatusBarSegments', () => {
       ],
     })
     expect(segments[3]).toEqual({
-      parts: [{ text: 'photo.jpg' }],
+      parts: [
+        {
+          text: 'photo.jpg',
+          hint: {
+            title: 'imageEditor.page.statusBar.segmentHints.imagePathTitle',
+            description: 'imageEditor.page.statusBar.segmentHints.imagePathDescription',
+            docsUrl: 'https://docs.imagor.net/image-endpoint#image-uri',
+            docsLabel: 'imageEditor.page.statusBar.imageEndpointDocs',
+          },
+        },
+      ],
     })
   })
 
@@ -176,7 +186,7 @@ describe('buildStatusBarSegments', () => {
     expect(segments[0]?.parts[3]?.matchKeys).toEqual(['filters', 'image', 'layer:2'])
   })
 
-  it('appends a condensed outer source image segment when a source path is provided', () => {
+  it('appends a docs-linked outer source image segment when a source path is provided', () => {
     const segments = buildStatusBarSegments({
       imagorPath: '/fit-in/1200x800/',
       sourceImagePath: 'color:none',
@@ -184,7 +194,17 @@ describe('buildStatusBarSegments', () => {
     })
 
     expect(segments[2]).toEqual({
-      parts: [{ text: 'color:none' }],
+      parts: [
+        {
+          text: 'color:none',
+          hint: {
+            title: 'imageEditor.page.statusBar.segmentHints.imagePathTitle',
+            description: 'imageEditor.page.statusBar.segmentHints.imagePathDescription',
+            docsUrl: 'https://docs.imagor.net/image-endpoint#image-uri',
+            docsLabel: 'imageEditor.page.statusBar.imageEndpointDocs',
+          },
+        },
+      ],
     })
   })
 })

@@ -169,6 +169,17 @@ describe('ImageEditorStatusBar', () => {
   it('renders the raw outer source image path when provided', () => {
     render(<ImageEditorStatusBar imagorPath='/fit-in/1200x800/' sourceImagePath='base/photo.jpg' />)
 
-    expect(screen.getByText('base/photo.jpg')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'base/photo.jpg' })).toBeTruthy()
+  })
+
+  it('renders the encoded outer source image path when provided', () => {
+    render(
+      <ImageEditorStatusBar
+        imagorPath='/fit-in/1200x800/'
+        sourceImagePath='b64:Zm9sZGVyL215IHBob3RvLmpwZw'
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'b64:Zm9sZGVyL215IHBob3RvLmpwZw' })).toBeTruthy()
   })
 })

@@ -1459,6 +1459,8 @@
           "sizeDescription": "Questo segmento imposta la larghezza e l'altezza richieste per l'output trasformato.",
           "filtersTitle": "Filtri",
           "filtersDescription": "Questo segmento avvia la pipeline di filtri imagor. Ogni filtro successivo può aprire la propria documentazione.",
+          "imagePathTitle": "Percorso immagine sorgente",
+          "imagePathDescription": "Specifica l'URI dell'immagine che imagor carica come sorgente. Può essere un percorso o URL normale, una sorgente codificata in b64 o un'immagine colorata.",
           "filterItemDescription": "Apri la documentazione imagor per il filtro {{name}}.",
           "attachmentDescription": "Restituisce l'immagine come allegato nell'header Content-Disposition.",
           "blurDescription": "Applica una sfocatura gaussiana all'immagine.",
