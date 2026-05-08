@@ -1030,6 +1030,11 @@ export function ImageEditorPage({
             isLeftColumnEmpty={isLeftColumnEmpty}
             isRightColumnEmpty={isRightColumnEmpty}
             isSectionDragActive={isSectionDragActive}
+            showHeaderlessEditActions={!uiOptions.showHeader}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={() => imageEditor.undo()}
+            onRedo={() => imageEditor.redo()}
             textEditingLayerId={textEditingLayerId}
             isNewTextLayer={isNewTextLayer}
             onTextEdit={handleTextEdit}

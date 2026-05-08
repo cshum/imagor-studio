@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Copy, Download, Settings } from 'lucide-react'
+import { AlertCircle, Copy, Download, Redo2, Settings, Undo2 } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
@@ -43,6 +43,11 @@ interface PreviewAreaProps {
   isLeftColumnEmpty?: boolean
   isRightColumnEmpty?: boolean
   isSectionDragActive?: boolean
+  showHeaderlessEditActions?: boolean
+  canUndo?: boolean
+  canRedo?: boolean
+  onUndo?: () => void
+  onRedo?: () => void
   zoom?: number | 'fit'
   previewContainerRef?: React.RefObject<HTMLDivElement | null>
   onImageDimensionsChange?: (dimensions: { width: number; height: number } | null) => void
@@ -78,6 +83,11 @@ export function PreviewArea({
   isLeftColumnEmpty = false,
   isRightColumnEmpty = false,
   isSectionDragActive = false,
+  showHeaderlessEditActions = false,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
   zoom = 'fit',
   previewContainerRef: externalPreviewContainerRef,
   onImageDimensionsChange,
@@ -443,7 +453,31 @@ export function PreviewArea({
 
   return (
     <div className='relative flex h-full flex-col'>
-      {!visualCropEnabled && <LicenseBadge />}
+      {!visualCropEnabled && <LicenseBadge side={showHeaderlessEditActions ? 'left' : 'right'} />}
+      {showHeaderlessEditActions && (
+        <div className='absolute top-4 right-4 z-50 flex items-center gap-1 rounded-full border bg-background/80 p-1 shadow-lg backdrop-blur-sm md:right-6'>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={onUndo}
+            disabled={!canUndo}
+            title={t('imageEditor.page.undo')}
+            className='h-9 w-9 rounded-full p-0'
+          >
+            <Undo2 className='h-4 w-4' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={onRedo}
+            disabled={!canRedo}
+            title={t('imageEditor.page.redo')}
+            className='h-9 w-9 rounded-full p-0'
+          >
+            <Redo2 className='h-4 w-4' />
+          </Button>
+        </div>
+      )}
       {/* Mobile & Tablet Breadcrumb - shown when editing nested layers */}
       {!isDesktop && imageEditor && imageEditor.getContextDepth() > 0 && (
         <div className='border-b px-3 py-2'>
