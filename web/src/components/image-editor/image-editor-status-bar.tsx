@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CircleHelp, ExternalLink } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   buildStatusBarSegments,
@@ -105,41 +103,6 @@ function StatusBarToken({
   )
 }
 
-function StatusBarHelpPopover() {
-  const { t } = useTranslation()
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant='ghost'
-          size='icon'
-          className='text-muted-foreground hover:text-foreground h-7 w-7 shrink-0'
-          aria-label={t('imageEditor.page.statusBar.helpTitle')}
-        >
-          <CircleHelp className='h-4 w-4' />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align='end' className='w-80 space-y-3'>
-        <div className='space-y-1'>
-          <h4 className='text-sm font-semibold'>{t('imageEditor.page.statusBar.helpTitle')}</h4>
-          <p className='text-muted-foreground text-sm'>
-            {t('imageEditor.page.statusBar.helpDescription')}
-          </p>
-        </div>
-        <div className='space-y-1'>
-          <div className='text-xs font-medium tracking-wide uppercase'>
-            {t('imageEditor.page.statusBar.syntaxTitle')}
-          </div>
-          <code className='bg-muted block overflow-x-auto rounded px-2 py-1 font-mono text-xs'>
-            {t('imageEditor.page.statusBar.syntaxExample')}
-          </code>
-        </div>
-      </PopoverContent>
-    </Popover>
-  )
-}
-
 export function ImageEditorStatusBar({
   imagorPath,
   sourceImagePath,
@@ -194,13 +157,13 @@ export function ImageEditorStatusBar({
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className='bg-background scrollbar-hide flex h-12 items-center gap-3 overflow-x-auto overflow-y-hidden overscroll-none border-t px-4 pr-28'>
+      <div className='bg-background scrollbar-hide flex h-12 items-center overflow-x-auto overflow-y-hidden overscroll-none border-t px-4'>
         <div
           ref={statusBarScrollerRef}
           data-status-bar-scroller='true'
           className='scrollbar-hide min-w-0 flex-1 overflow-x-auto'
         >
-          <code className='text-muted-foreground flex items-center pr-36 font-mono text-xs whitespace-nowrap select-text'>
+          <code className='text-muted-foreground flex items-center font-mono text-xs whitespace-nowrap select-text'>
             {statusBarSegments.map((segment, index) => (
               <React.Fragment key={`${index}-${segment.parts.map((part) => part.text).join(':')}`}>
                 <span className='text-muted-foreground/60'>/</span>
@@ -219,7 +182,6 @@ export function ImageEditorStatusBar({
             ))}
           </code>
         </div>
-        <StatusBarHelpPopover />
       </div>
     </TooltipProvider>
   )

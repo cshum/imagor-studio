@@ -1439,8 +1439,6 @@
       "showHideControls": "顯示/隱藏控制面板",
       "copyUrlSuccess": "URL 已複製到剪貼簿",
       "statusBar": {
-        "helpTitle": "這段路徑如何運作",
-        "helpDescription": "這裡顯示的只是 imagor 的變換路徑片段。完整 URL 還會包含 unsafe 或簽名前綴，以及來源圖片路徑。",
         "endpointFormatLabel": "完整端點格式",
         "copyUrlHint": "使用「複製 URL」取得可貼到程式碼、範本或其他系統中的完整 imagor URL。",
         "imageEndpointDocs": "圖片端點文件",

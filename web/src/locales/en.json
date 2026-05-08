@@ -1439,8 +1439,6 @@
       "stay": "Stay",
       "showHideControls": "Show/Hide Controls",
       "statusBar": {
-        "helpTitle": "How this path works",
-        "helpDescription": "This bar shows the imagor transformations segment only. The full URL also includes the unsafe or signed prefix and the source image path.",
         "endpointFormatLabel": "Full endpoint format",
         "copyUrlHint": "Use Copy URL to get the complete imagor URL you can paste into code, templates, or other systems.",
         "imageEndpointDocs": "Image endpoint docs",
