@@ -45,3 +45,21 @@ http://localhost:8000
 - **[imagor](https://github.com/cshum/imagor)** - Fast, secure image processing server and Go library, using libvips
 - **[vipsgen](https://github.com/cshum/vipsgen)** - Type-safe, comprehensive Go binding generator for libvips
 - **[imagorvideo](https://github.com/cshum/imagorvideo)** - imagor video thumbnail server in Go and ffmpeg C bindings
+
+## Editor URL Flags
+
+The image editor supports lightweight UI flags in the query string:
+
+- `uiHeader=0` hides the editor header
+- `uiStatusBar=0` hides the editor status bar
+- `uiZoom=0` hides the zoom control
+- `uiControls=0` hides editor controls
+- `uiPostMessageUrl=1` posts `imagor-studio:url-change` messages to the parent window when the generated share URL changes
+
+Example:
+
+```text
+/editor/path/to/image.jpg?uiHeader=0&uiStatusBar=0&uiZoom=0&uiControls=0&uiPostMessageUrl=1
+```
+
+`uiPostMessageUrl=1` is intended for iframe demos or landing pages that want to reflect the live generated URL outside the editor.

@@ -5,6 +5,7 @@ export interface ImageEditorUiOptions {
   showStatusBar: boolean
   showZoomControl: boolean
   showControls: boolean
+  postMessageUrl: boolean
 }
 
 function parseBooleanSearchParam(value: string | null, defaultValue: boolean): boolean {
@@ -35,6 +36,7 @@ export function getUiOptionsFromLocation(): ImageEditorUiOptions {
       showStatusBar: true,
       showZoomControl: true,
       showControls: true,
+      postMessageUrl: false,
     }
   }
 
@@ -45,6 +47,7 @@ export function getUiOptionsFromLocation(): ImageEditorUiOptions {
     showStatusBar: parseBooleanSearchParam(searchParams.get('uiStatusBar'), true),
     showZoomControl: parseBooleanSearchParam(searchParams.get('uiZoom'), true),
     showControls: parseBooleanSearchParam(searchParams.get('uiControls'), true),
+    postMessageUrl: parseBooleanSearchParam(searchParams.get('uiPostMessageUrl'), false),
   }
 }
 

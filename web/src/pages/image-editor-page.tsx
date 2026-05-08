@@ -24,6 +24,7 @@ import { ConfirmNavigationDialog } from '@/components/ui/confirm-navigation-dial
 import { CopyUrlDialog } from '@/components/ui/copy-url-dialog'
 import { useBodyDataAttribute } from '@/hooks/use-body-data-attribute'
 import { useBreakpoint } from '@/hooks/use-breakpoint'
+import { useEditorUrlPostMessage } from '@/hooks/use-editor-url-post-message'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import { addCacheBuster, getFullImageUrl } from '@/lib/api-utils'
 import { copyToClipboard } from '@/lib/browser-utils'
@@ -142,6 +143,12 @@ export function ImageEditorPage({
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null)
   const [editingContext, setEditingContext] = useState<string | null>(null)
   const [layerAspectRatioLockToggle, setLayerAspectRatioLockToggle] = useState(true)
+
+  useEditorUrlPostMessage({
+    imageEditor,
+    previewUrl,
+    enabled: uiOptions.postMessageUrl,
+  })
   const [isShiftPressed, setIsShiftPressed] = useState(false)
   const [zoom, setZoom] = useState<number | 'fit'>('fit')
   const [actualScale, setActualScale] = useState<number | null>(null)

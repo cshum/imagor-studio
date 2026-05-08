@@ -15,6 +15,7 @@ describe('getUiOptionsFromLocation', () => {
       showStatusBar: true,
       showZoomControl: true,
       showControls: true,
+      postMessageUrl: false,
     })
   })
 
@@ -22,7 +23,7 @@ describe('getUiOptionsFromLocation', () => {
     window.history.replaceState(
       null,
       '',
-      '/editor?uiHeader=0&uiStatusBar=hidden&uiZoom=false&uiControls=off',
+      '/editor?uiHeader=0&uiStatusBar=hidden&uiZoom=false&uiControls=off&uiPostMessageUrl=no',
     )
 
     expect(getUiOptionsFromLocation()).toEqual({
@@ -30,6 +31,7 @@ describe('getUiOptionsFromLocation', () => {
       showStatusBar: false,
       showZoomControl: false,
       showControls: false,
+      postMessageUrl: false,
     })
   })
 
@@ -37,7 +39,7 @@ describe('getUiOptionsFromLocation', () => {
     window.history.replaceState(
       null,
       '',
-      '/editor?uiHeader=yes&uiStatusBar=visible&uiZoom=visible&uiControls=1',
+      '/editor?uiHeader=yes&uiStatusBar=visible&uiZoom=visible&uiControls=1&uiPostMessageUrl=on',
     )
 
     expect(getUiOptionsFromLocation()).toEqual({
@@ -45,6 +47,7 @@ describe('getUiOptionsFromLocation', () => {
       showStatusBar: true,
       showZoomControl: true,
       showControls: true,
+      postMessageUrl: true,
     })
   })
 })
