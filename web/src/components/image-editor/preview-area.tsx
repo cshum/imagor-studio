@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Copy, Redo2, Settings, Undo2 } from 'lucide-react'
+import { AlertCircle, ChevronLeft, Copy, Redo2, Settings, Undo2 } from 'lucide-react'
 
 import { CropOverlay } from '@/components/image-editor/crop-overlay'
 import { LayerBreadcrumb } from '@/components/image-editor/layer-breadcrumb'
@@ -45,6 +45,8 @@ interface PreviewAreaProps {
   showHeader?: boolean
   showStatusBar?: boolean
   showHeaderlessEditActions?: boolean
+  showHeaderlessBackButton?: boolean
+  onBack?: () => void
   canUndo?: boolean
   canRedo?: boolean
   onUndo?: () => void
@@ -84,6 +86,8 @@ export function PreviewArea({
   isRightColumnEmpty = false,
   isSectionDragActive = false,
   showHeaderlessEditActions = false,
+  showHeaderlessBackButton = false,
+  onBack,
   canUndo = false,
   canRedo = false,
   onUndo,
@@ -458,10 +462,30 @@ export function PreviewArea({
   }, [imageDimensions, onImageDimensionsChange])
 
   const showHeaderlessEditOverlay = showHeaderlessEditActions && (canUndo || canRedo)
+  const showHeaderlessBackOverlay = showHeaderlessBackButton && !!onBack
 
   return (
     <div className='relative flex h-full flex-col'>
-      {!visualCropEnabled && <LicenseBadge side={showHeaderlessEditOverlay ? 'left' : 'right'} />}
+      {!visualCropEnabled && (
+        <LicenseBadge
+          side={showHeaderlessEditOverlay && !showHeaderlessBackOverlay ? 'left' : 'right'}
+        />
+      )}
+      {showHeaderlessBackOverlay && (
+        <div className='bg-background/80 absolute top-4 left-4 z-50 rounded-full border p-1 shadow-lg backdrop-blur-sm md:left-6'>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={onBack}
+            title={t('imageEditor.page.back')}
+            aria-label={t('imageEditor.page.back')}
+            className='h-9 rounded-full px-3'
+          >
+            <ChevronLeft className='mr-1 h-4 w-4' />
+            {t('imageEditor.page.back')}
+          </Button>
+        </div>
+      )}
       {showHeaderlessEditOverlay && (
         <div className='bg-background/80 absolute top-4 right-4 z-50 flex items-center gap-1 rounded-full border p-1 shadow-lg backdrop-blur-sm md:right-6'>
           <Button
@@ -470,6 +494,7 @@ export function PreviewArea({
             onClick={onUndo}
             disabled={!canUndo}
             title={t('imageEditor.page.undo')}
+            aria-label={t('imageEditor.page.undo')}
             className='h-9 w-9 rounded-full p-0'
           >
             <Undo2 className='h-4 w-4' />
@@ -480,6 +505,7 @@ export function PreviewArea({
             onClick={onRedo}
             disabled={!canRedo}
             title={t('imageEditor.page.redo')}
+            aria-label={t('imageEditor.page.redo')}
             className='h-9 w-9 rounded-full p-0'
           >
             <Redo2 className='h-4 w-4' />

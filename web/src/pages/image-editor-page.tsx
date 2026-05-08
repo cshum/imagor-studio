@@ -183,6 +183,10 @@ export function ImageEditorPage({
 
   // Derive visualCropEnabled from params state (single source of truth)
   const visualCropEnabled = params.visualCropEnabled ?? false
+  const showHeaderlessBackButton =
+    !uiOptions.showHeader &&
+    isPublicPreview &&
+    (visualCropEnabled || textEditingLayerId !== null || editingContext !== null)
 
   // Compute effective aspect ratio lock state (button OR shift key)
   const layerAspectRatioLocked = useMemo(
@@ -371,14 +375,22 @@ export function ImageEditorPage({
       return
     }
 
-    // Priority 2: If in nested layer context, go up one level
+    // Priority 2: Exit text editing through the existing blur/commit path.
+    if (textEditingLayerId) {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
+      return
+    }
+
+    // Priority 3: If in nested layer context, go up one level
     const contextDepth = imageEditor.getContextDepth()
     if (contextDepth > 0) {
       imageEditor.switchContext(null)
       return
     }
 
-    // Priority 3: Navigate back to gallery
+    // Priority 4: Navigate back to gallery
     // For templates, navigate to the template file's folder rather than the
     // source image's folder (imageEditor.getImagePath() returns the source image).
     const backPath =
@@ -1050,6 +1062,8 @@ export function ImageEditorPage({
             showHeader={showHeader}
             showStatusBar={showStatusBar}
             showHeaderlessEditActions={!uiOptions.showHeader}
+            showHeaderlessBackButton={showHeaderlessBackButton}
+            onBack={handleBack}
             canUndo={canUndo}
             canRedo={canRedo}
             onUndo={() => imageEditor.undo()}

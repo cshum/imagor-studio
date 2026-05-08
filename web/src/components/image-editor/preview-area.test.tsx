@@ -182,4 +182,23 @@ describe('PreviewArea', () => {
     expect(screen.queryByTitle('imageEditor.page.undo')).toBeNull()
     expect(screen.queryByTitle('imageEditor.page.redo')).toBeNull()
   })
+
+  it('shows a headerless back button and triggers the handler', () => {
+    const onBack = vi.fn()
+
+    render(
+      <PreviewArea
+        previewUrl='/preview.jpg'
+        error={null}
+        onCopyUrl={() => {}}
+        showHeaderlessBackButton={true}
+        onBack={onBack}
+      />,
+    )
+
+    expect(screen.getByText('imageEditor.page.back')).toBeTruthy()
+    screen.getByLabelText('imageEditor.page.back').click()
+
+    expect(onBack).toHaveBeenCalledTimes(1)
+  })
 })
