@@ -170,4 +170,34 @@ describe('auth-store refreshAuthSession', () => {
     expect(mockGetCurrentUser).toHaveBeenCalledWith('guest-token')
     expect(result.state).toBe('guest')
   })
+
+  it('preserves public-preview mode when initializing from an existing token', async () => {
+    const authStoreModule = await import('./auth-store')
+
+    const publicPreviewToken = [
+      btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' })),
+      btoa(JSON.stringify({ mode: 'public-preview', role: 'guest', space_key: 'demo3' })),
+      'signature',
+    ].join('.')
+
+    mockCheckFirstRun.mockResolvedValue({
+      isFirstRun: false,
+      multiTenant: true,
+      timestamp: Date.now(),
+    })
+    mockGetCurrentUser.mockResolvedValue({
+      id: 'guest-1',
+      displayName: 'Guest',
+      username: 'guest',
+      role: 'guest',
+    })
+
+    const result = await authStoreModule.initAuth(publicPreviewToken, '/spaces/demo3/image/editor')
+
+    expect(mockGetCurrentUser).toHaveBeenCalledWith(publicPreviewToken)
+    expect(result.state).toBe('guest')
+    expect(result.experienceMode).toBe('public-preview')
+    expect(result.persistToken).toBe(false)
+    expect(window.localStorage.getItem('auth_token')).toBeNull()
+  })
 })
