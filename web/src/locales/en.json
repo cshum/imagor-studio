@@ -38,7 +38,7 @@
       "changeLanguage": "Change Language"
     },
     "navigation": {
-      "title": "Imagor Studio",
+      "title": "Imagor Cloud",
       "home": "Home",
       "account": "Account",
       "space": "Space",
@@ -76,7 +76,7 @@
   },
   "auth": {
     "login": {
-      "eyebrow": "Imagor Studio",
+      "eyebrow": "Imagor Cloud",
       "title": "Managed image workspace for teams",
       "formTitle": "Sign in",
       "googleCta": "Continue with Google",
@@ -575,7 +575,7 @@
         "configurationDetails": "Configuration Details",
         "configureStorage": "Configure Storage"
       },
-      "welcome": "Welcome to Imagor Studio",
+      "welcome": "Welcome to Imagor Cloud",
       "setupDescription": "Let's get your image gallery set up in just a few steps",
       "createAdminAccount": "Create Admin Account",
       "systemConfiguration": "System Configuration",
@@ -814,7 +814,7 @@
     "workspaceRequired": {
       "eyebrow": "Organization access required",
       "title": "This account is signed in, but it does not have organization access yet.",
-      "description": "Imagor Studio needs organization access before account and space management can load.",
+      "description": "Imagor Cloud needs organization access before account and space management can load.",
       "invite": {
         "title": "Join with an invite",
         "description": "Open your invitation link after sign-in, or ask the sender to share a fresh invite if the original one expired."
@@ -895,7 +895,7 @@
       },
       "storageUsage": "{{size}} used",
       "storageTypeDesc": {
-        "managed": "Stored in Imagor Studio. No bucket setup required.",
+        "managed": "Stored in Imagor Cloud. No bucket setup required.",
         "s3": "Use your own S3-compatible bucket."
       },
       "creationPreview": {
@@ -1235,7 +1235,7 @@
       "storage": {
         "description": "View storage settings for this space.",
         "managedTitle": "Hosted Storage",
-        "managedDescription": "Your files are stored in Imagor Studio. This storage option is set when the space is created and cannot be changed later.",
+        "managedDescription": "Your files are stored in Imagor Cloud. This storage option is set when the space is created and cannot be changed later.",
         "bucket": "Bucket",
         "region": "Region",
         "bucketLocked": "Bucket, region, and path prefix are fixed at creation time and cannot be changed.",

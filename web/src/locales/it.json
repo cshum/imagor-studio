@@ -38,7 +38,7 @@
       "changeLanguage": "Cambia lingua"
     },
     "navigation": {
-      "title": "Imagor Studio",
+      "title": "Imagor Cloud",
       "home": "Home",
       "account": "Account",
       "space": "Spazio",
@@ -76,7 +76,7 @@
   },
   "auth": {
     "login": {
-      "eyebrow": "Imagor Studio",
+      "eyebrow": "Imagor Cloud",
       "title": "Elaborazione immagini ad alte prestazioni per i team",
       "formTitle": "Accedi",
       "googleCta": "Continua con Google",
@@ -575,7 +575,7 @@
         "configurationDetails": "Dettagli configurazione",
         "configureStorage": "Configura archiviazione"
       },
-      "welcome": "Benvenuto in Imagor Studio",
+      "welcome": "Benvenuto in Imagor Cloud",
       "setupDescription": "Configuriamo la tua galleria immagini in pochi passaggi",
       "createAdminAccount": "Crea account amministratore",
       "systemConfiguration": "Configurazione sistema",
@@ -814,7 +814,7 @@
     "workspaceRequired": {
       "eyebrow": "Accesso all'organizzazione richiesto",
       "title": "Questo account ha eseguito l'accesso, ma non ha ancora accesso a un'organizzazione.",
-      "description": "Imagor Studio richiede l'accesso a un'organizzazione prima di caricare l'area account e la gestione degli spazi.",
+      "description": "Imagor Cloud richiede l'accesso a un'organizzazione prima di caricare l'area account e la gestione degli spazi.",
       "invite": {
         "title": "Accedi con un invito",
         "description": "Apri il link di invito dopo l'accesso, oppure chiedi al mittente di condividerne uno nuovo se il precedente è scaduto."
@@ -895,7 +895,7 @@
       },
       "storageUsage": "{{size}} utilizzati",
       "storageTypeDesc": {
-        "managed": "Archiviato in Imagor Studio. Nessuna configurazione del bucket richiesta.",
+        "managed": "Archiviato in Imagor Cloud. Nessuna configurazione del bucket richiesta.",
         "s3": "Usa il tuo bucket compatibile S3."
       },
       "creationPreview": {
@@ -1235,7 +1235,7 @@
       "storage": {
         "description": "Visualizza le impostazioni di archiviazione per questo spazio.",
         "managedTitle": "Storage ospitato",
-        "managedDescription": "I tuoi file sono archiviati in Imagor Studio. Questa opzione di storage viene impostata alla creazione dello spazio e non può essere cambiata in seguito.",
+        "managedDescription": "I tuoi file sono archiviati in Imagor Cloud. Questa opzione di storage viene impostata alla creazione dello spazio e non può essere cambiata in seguito.",
         "bucket": "Bucket",
         "region": "Region",
         "bucketLocked": "Bucket, regione e prefisso del percorso sono fissati al momento della creazione e non possono essere modificati.",

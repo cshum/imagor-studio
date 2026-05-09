@@ -27,7 +27,7 @@ vi.mock('@/components/app-header.tsx', () => ({
 }))
 
 vi.mock('@/hooks/use-brand', () => ({
-  useBrand: () => ({ title: 'Imagor Studio' }),
+  useBrand: () => ({ title: 'Imagor Cloud' }),
 }))
 
 vi.mock('@/stores/auth-store', () => ({

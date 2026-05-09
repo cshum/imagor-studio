@@ -34,7 +34,7 @@
       "back": "返回"
     },
     "navigation": {
-      "title": "Imagor Studio",
+      "title": "Imagor Cloud",
       "home": "首页",
       "account": "账户",
       "space": "空间",
@@ -509,7 +509,7 @@
         "configurationDetails": "配置详情",
         "configureStorage": "配置存储"
       },
-      "welcome": "欢迎使用 Imagor Studio",
+      "welcome": "欢迎使用 Imagor Cloud",
       "setupDescription": "让我们通过几个简单的步骤设置您的图库",
       "createAdminAccount": "创建管理员账户",
       "systemConfiguration": "系统配置",
@@ -748,7 +748,7 @@
     "workspaceRequired": {
       "eyebrow": "需要组织访问权限",
       "title": "该账户已登录，但尚未获得任何组织访问权限。",
-      "description": "Imagor Studio 需要组织访问权限后，才能加载账户区域和空间管理功能。",
+      "description": "Imagor Cloud 需要组织访问权限后，才能加载账户区域和空间管理功能。",
       "invite": {
         "title": "通过邀请加入",
         "description": "登录后打开你的邀请链接；如果原邀请已过期，请联系发送者重新分享一份新的邀请。"
@@ -815,7 +815,7 @@
       },
       "storageUsage": "已用 {{size}}",
       "storageTypeDesc": {
-        "managed": "存储在 Imagor Studio 中，无需配置存储桶。",
+        "managed": "存储在 Imagor Cloud 中，无需配置存储桶。",
         "s3": "使用你自己的 S3 兼容存储桶。"
       },
       "keyDescription": "这会设置此空间在应用中的 URL 以及专属的 imagor 主机。你之后可以再更改。",
@@ -1165,7 +1165,7 @@
       },
       "storage": {
         "managedTitle": "托管存储",
-        "managedDescription": "你的文件存储在 Imagor Studio 中。此存储选项会在空间创建时确定，之后无法更改。",
+        "managedDescription": "你的文件存储在 Imagor Cloud 中。此存储选项会在空间创建时确定，之后无法更改。",
         "bucketLocked": "存储桶、区域和路径前缀会在创建时固定，无法更改。",
         "description": "查看此空间的存储设置。",
         "accessKeyIdDescription": "留空以保留现有凭证。",
@@ -1646,7 +1646,7 @@
   },
   "auth": {
     "login": {
-      "eyebrow": "Imagor Studio",
+      "eyebrow": "Imagor Cloud",
       "title": "适合团队的托管图片工作区",
       "formTitle": "登录",
       "googleCta": "使用 Google 继续",

@@ -1,6 +1,6 @@
 import { licenseStore } from '@/stores/license-store'
 
-const DEFAULT_TITLE = 'Imagor Studio'
+const DEFAULT_TITLE = 'Imagor Cloud'
 const DEFAULT_URL = 'https://imagor.net'
 
 /**
