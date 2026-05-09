@@ -86,7 +86,6 @@ import { GalleryPage } from '@/pages/gallery-page.tsx'
 import { ImageEditorPage } from '@/pages/image-editor-page.tsx'
 import { ImagePage } from '@/pages/image-page.tsx'
 import { JoinInvitePage } from '@/pages/join-invite-page.tsx'
-import { PrivacyPage, TermsPage } from '@/pages/legal-page.tsx'
 import { LoginPage } from '@/pages/login-page.tsx'
 import { RegisterPage } from '@/pages/register-page.tsx'
 import { RegisterVerifyPage, RegisterVerifyPendingPage } from '@/pages/register-verify-page.tsx'
@@ -153,18 +152,6 @@ const joinRoute = createRoute({
   loaderDeps: ({ search: { invite_token } }) => ({ inviteToken: invite_token ?? '' }),
   loader: ({ deps }) => joinInviteLoader(deps.inviteToken),
   component: JoinInvitePage,
-})
-
-const privacyRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/privacy',
-  component: PrivacyPage,
-})
-
-const termsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/terms',
-  component: TermsPage,
 })
 
 const registerRoute = createRoute({
@@ -903,8 +890,6 @@ const routeTree = isEmbeddedMode
     rootRoute.addChildren([embeddedEditorRoute])
   : // Normal mode: full route tree
     rootRoute.addChildren([
-      privacyRoute,
-      termsRoute,
       loginRoute,
       joinRoute,
       registerRoute,
