@@ -55,16 +55,16 @@ export async function getPreviewSession(
   }
 
   const accessToken = getAuth().accessToken
-  if (!accessToken) {
-    throw new Error('Authentication required for preview session')
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  }
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`
   }
 
   const request = fetch(`${getBaseUrl()}/api/auth/preview-session`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
+    headers,
     body: JSON.stringify({ spaceID: normalizedSpaceID }),
     signal: options.signal,
   })

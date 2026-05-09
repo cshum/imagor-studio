@@ -6,8 +6,7 @@ function htmlTitlePlugin(): Plugin {
   return {
     name: 'html-title',
     transformIndexHtml(html) {
-      const title =
-        process.env.VITE_MULTI_TENANT === 'true' ? 'Imagor Cloud' : 'Imagor Studio'
+      const title = process.env.VITE_MULTI_TENANT === 'true' ? 'Imagor Cloud' : 'Imagor Studio'
       return html.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
     },
   }

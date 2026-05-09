@@ -84,6 +84,24 @@ function getExperienceModeFromResponse(mode: string | undefined): ExperienceMode
   return mode === 'public-preview' ? mode : null
 }
 
+function getExperienceModeFromToken(token: string): ExperienceMode {
+  try {
+    const [, payload] = token.split('.')
+    if (!payload) {
+      return null
+    }
+
+    const padded = payload
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(payload.length / 4) * 4, '=')
+    const decoded = JSON.parse(atob(padded)) as { mode?: string }
+    return getExperienceModeFromResponse(decoded.mode)
+  } catch {
+    return null
+  }
+}
+
 export type AuthAction =
   | {
       type: 'INIT'
@@ -225,6 +243,7 @@ export const initAuth = async (
       getToken()
 
     if (currentAccessToken) {
+      const experienceMode = getExperienceModeFromToken(currentAccessToken)
       // Run token validation and first-run check in parallel — zero extra latency.
       // Multi-tenant mode can be forced by env, or discovered
       // from the backend during local/private development against cloud APIs.
@@ -243,7 +262,12 @@ export const initAuth = async (
       }
       return authStore.dispatch({
         type: 'INIT',
-        payload: { accessToken: currentAccessToken, profile },
+        payload: {
+          accessToken: currentAccessToken,
+          profile,
+          experienceMode,
+          persistToken: experienceMode !== 'public-preview',
+        },
       })
     }
 
