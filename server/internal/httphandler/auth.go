@@ -75,6 +75,11 @@ type PublicPreviewSessionResponse struct {
 	ProcessingOrigin string       `json:"processingOrigin,omitempty"`
 }
 
+func (h *AuthHandler) isConfiguredPublicPreviewSpace(spaceKey string) bool {
+	trimmed := strings.TrimSpace(spaceKey)
+	return h.publicPreviewEnabled && trimmed != "" && trimmed == strings.TrimSpace(h.publicPreviewSpaceKey)
+}
+
 type GuestLoginRequest struct {
 	SpaceKey string `json:"spaceKey"`
 }
@@ -794,23 +799,11 @@ func (h *AuthHandler) PreviewSession() http.HandlerFunc {
 			return apperror.BadRequest("spaceID is required", map[string]interface{}{"field": "spaceID"})
 		}
 
-		authHeader := r.Header.Get("Authorization")
-		jwtToken, err := auth.ExtractTokenFromHeader(authHeader)
-		if err != nil {
-			return apperror.Unauthorized("Authorization header is missing or invalid")
+		if h.spaceStore == nil {
+			return apperror.InternalServerError("Failed to create preview session")
 		}
 
-		claims, err := h.tokenManager.ValidateToken(jwtToken)
-		if err != nil {
-			return apperror.Unauthorized("Invalid or expired token")
-		}
-		ctx := auth.SetClaimsInContext(r.Context(), claims)
-
-		if err := h.requirePreviewSessionPermission(ctx); err != nil {
-			return err
-		}
-
-		spaceRecord, err := h.spaceStore.GetByID(ctx, spaceID)
+		spaceRecord, err := h.spaceStore.GetByID(r.Context(), spaceID)
 		if err != nil {
 			h.logger.Error("Failed to load preview session space", zap.String("spaceID", spaceID), zap.Error(err))
 			return apperror.InternalServerError("Failed to create preview session")
@@ -819,13 +812,54 @@ func (h *AuthHandler) PreviewSession() http.HandlerFunc {
 			return apperror.NotFound("Space not found")
 		}
 
-		allowed, err := h.canUsePreviewSession(ctx, spaceRecord)
-		if err != nil {
-			h.logger.Error("Failed to verify preview session space access", zap.String("spaceID", spaceID), zap.Error(err))
-			return apperror.InternalServerError("Failed to create preview session")
-		}
-		if !allowed {
-			return apperror.Forbidden("You do not have access to this space")
+		isPublicPreviewSpace := h.isConfiguredPublicPreviewSpace(spaceRecord.Key)
+		ctx := r.Context()
+		claims := &auth.Claims{}
+		allowGuestPreview := false
+
+		authHeader := r.Header.Get("Authorization")
+		if strings.TrimSpace(authHeader) != "" {
+			jwtToken, err := auth.ExtractTokenFromHeader(authHeader)
+			if err != nil {
+				if !isPublicPreviewSpace {
+					return apperror.Unauthorized("Authorization header is missing or invalid")
+				}
+				allowGuestPreview = true
+			} else {
+				validatedClaims, err := h.tokenManager.ValidateToken(jwtToken)
+				if err != nil {
+					if !isPublicPreviewSpace {
+						return apperror.Unauthorized("Invalid or expired token")
+					}
+					allowGuestPreview = true
+				} else {
+					claims = validatedClaims
+					ctx = auth.SetClaimsInContext(ctx, claims)
+
+					if err := h.requirePreviewSessionPermission(ctx); err != nil {
+						if !isPublicPreviewSpace {
+							return err
+						}
+						allowGuestPreview = true
+					} else {
+						allowed, err := h.canUsePreviewSession(ctx, spaceRecord)
+						if err != nil {
+							h.logger.Error("Failed to verify preview session space access", zap.String("spaceID", spaceID), zap.Error(err))
+							return apperror.InternalServerError("Failed to create preview session")
+						}
+						if !allowed {
+							if !isPublicPreviewSpace {
+								return apperror.Forbidden("You do not have access to this space")
+							}
+							allowGuestPreview = true
+						}
+					}
+				}
+			}
+		} else if !isPublicPreviewSpace {
+			return apperror.Unauthorized("Authorization header is missing or invalid")
+		} else {
+			allowGuestPreview = true
 		}
 
 		processingOrigin := ""
@@ -841,7 +875,7 @@ func (h *AuthHandler) PreviewSession() http.HandlerFunc {
 			ttl = 15 * time.Minute
 		}
 		expiresAt := time.Now().UTC().Add(ttl)
-		previewToken, err := h.tokenManager.GenerateTokenWithClaims(auth.Claims{
+		previewClaims := auth.Claims{
 			UserID:   claims.UserID,
 			OrgID:    claims.OrgID,
 			Role:     claims.Role,
@@ -851,6 +885,29 @@ func (h *AuthHandler) PreviewSession() http.HandlerFunc {
 			RegisteredClaims: jwt.RegisteredClaims{
 				Audience: jwt.ClaimStrings{processing.PreviewTokenAudience},
 			},
+		}
+		if allowGuestPreview {
+			previewClaims = auth.Claims{
+				UserID:   uuid.GenerateUUID(),
+				Role:     "guest",
+				Scopes:   []string{"preview"},
+				Mode:     auth.ExperienceModePublicPreview,
+				Kind:     processing.PreviewTokenKind,
+				SpaceKey: spaceRecord.Key,
+				RegisteredClaims: jwt.RegisteredClaims{
+					Audience: jwt.ClaimStrings{processing.PreviewTokenAudience},
+				},
+			}
+		}
+		previewToken, err := h.tokenManager.GenerateTokenWithClaims(auth.Claims{
+			UserID:           previewClaims.UserID,
+			OrgID:            previewClaims.OrgID,
+			Role:             previewClaims.Role,
+			Scopes:           previewClaims.Scopes,
+			Mode:             previewClaims.Mode,
+			Kind:             previewClaims.Kind,
+			SpaceKey:         previewClaims.SpaceKey,
+			RegisteredClaims: previewClaims.RegisteredClaims,
 		}, ttl)
 		if err != nil {
 			h.logger.Error("Failed to generate preview session token", zap.String("spaceID", spaceID), zap.Error(err))
