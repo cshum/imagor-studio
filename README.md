@@ -36,12 +36,9 @@ http://localhost:8000
 - Creates persistent storage for the app database (SQLite)
 - Redirects to admin setup process on first launch
 
-> [!NOTE]
-> Ready to dive deeper? Check out [Documentation](https://docs.studio.imagor.net/)
-
 ## Links
 
-- **[Documentation](https://docs.studio.imagor.net/)** - Documentation including configuration, architecture, and deployment guides
+- **[Imagor Cloud](https://imagor.net/)** - Managed imagor workspace for teams — transform and deliver images at scale
 - **[imagor](https://github.com/cshum/imagor)** - Fast, secure image processing server and Go library, using libvips
 - **[vipsgen](https://github.com/cshum/vipsgen)** - Type-safe, comprehensive Go binding generator for libvips
 - **[imagorvideo](https://github.com/cshum/imagorvideo)** - imagor video thumbnail server in Go and ffmpeg C bindings
