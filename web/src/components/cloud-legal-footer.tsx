@@ -6,6 +6,7 @@ type CloudLegalFooterProps = {
 }
 
 const DOCUMENTATION_URL = 'https://docs.imagor.net/'
+const SUPPORT_URL = 'mailto:support@imagor.net'
 const PRIVACY_POLICY_URL = 'https://imagor.net/privacy'
 const TERMS_OF_SERVICE_URL = 'https://imagor.net/terms'
 
@@ -34,6 +35,9 @@ export function CloudLegalFooter({
           className='hover:text-foreground transition-colors'
         >
           Documentation
+        </a>
+        <a href={SUPPORT_URL} className='hover:text-foreground transition-colors'>
+          Support
         </a>
         <a
           href={PRIVACY_POLICY_URL}
