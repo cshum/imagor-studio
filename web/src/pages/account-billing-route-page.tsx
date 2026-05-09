@@ -662,6 +662,10 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
           })}
         </div>
 
+        <div className='border-border/60 border-t pt-4'>
+          <p className='text-muted-foreground text-xs'>{t('pages.billing.allPlansInclude')}</p>
+        </div>
+
         <div className='border-border/60 hidden border-t pt-4 lg:block'>
           <div className='flex justify-end'>
             <ButtonWithLoading

@@ -1040,6 +1040,7 @@
         "processing": "Trasformazioni mensili",
         "customDomains": "Domini personalizzati"
       },
+      "allPlansInclude": "Tutti i piani includono la collaborazione del team e lo storage BYOB.",
       "planDescriptions": {
         "starter": "Per team che vogliono lanciare una pipeline immagini di produzione con storage ospitato incluso.",
         "pro": "Per team in crescita che gestiscono più flussi immagini, domini personalizzati e volumi mensili più alti.",

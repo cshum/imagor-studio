@@ -1040,6 +1040,7 @@
         "processing": "每月處理量",
         "customDomains": "自訂網域"
       },
+      "allPlansInclude": "所有方案均包含團隊協作與自備儲存（BYOB）。",
       "planDescriptions": {
         "starter": "適合要上線單一正式圖片處理流程，並直接使用託管儲存的團隊。",
         "pro": "適合管理多條圖片流程、需要自訂網域與更高月處理量的成長團隊。",
