@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 
 import { AppHeader } from '@/components/app-header.tsx'
+import { CloudLegalFooter } from '@/components/cloud-legal-footer'
 import { LoadingBar } from '@/components/loading-bar'
 import { Button } from '@/components/ui/button'
 import {
@@ -297,37 +298,7 @@ export function AccountLayout({
           </div>
           {isMultiTenant && (
             <footer className='border-t'>
-              <div className='mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 py-6 text-center sm:flex-row sm:justify-between sm:px-6 sm:text-left lg:px-8'>
-                <nav className='text-muted-foreground flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs sm:justify-start'>
-                  <a
-                    href='https://docs.imagor.net/'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='hover:text-foreground transition-colors'
-                  >
-                    Documentation
-                  </a>
-                  <a
-                    href='https://imagor.net/privacy'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='hover:text-foreground transition-colors'
-                  >
-                    Privacy Policy
-                  </a>
-                  <a
-                    href='https://imagor.net/terms'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='hover:text-foreground transition-colors'
-                  >
-                    Terms of Service
-                  </a>
-                </nav>
-                <p className='text-muted-foreground text-xs'>
-                  © {new Date().getFullYear()} {appTitle}
-                </p>
-              </div>
+              <CloudLegalFooter appTitle={appTitle} />
             </footer>
           )}
         </main>

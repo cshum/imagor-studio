@@ -1,12 +1,11 @@
 import type { ReactNode } from 'react'
 
 import { BrandBar } from '@/components/brand-bar'
+import { CloudLegalFooter } from '@/components/cloud-legal-footer'
 import { LanguageSelector } from '@/components/language-selector'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
 import { ModeToggle } from '@/components/mode-toggle'
-
-const PRIVACY_POLICY_URL = 'https://imagor.net/privacy'
-const TERMS_OF_SERVICE_URL = 'https://imagor.net/terms'
+import { useBrand } from '@/hooks/use-brand'
 
 type AuthPageShellProps = {
   eyebrow: string
@@ -27,6 +26,8 @@ export function AuthPageShell({
   showLegalLinks = false,
   children,
 }: AuthPageShellProps) {
+  const { title: appTitle } = useBrand()
+
   return (
     <div className='bg-background min-h-screen-safe relative flex flex-col overflow-hidden'>
       <BrandBar
@@ -83,20 +84,13 @@ export function AuthPageShell({
         </div>
 
         {showLegalLinks ? (
-          <div className='text-muted-foreground mt-8 flex items-center justify-center gap-4 pt-6 text-xs'>
-            <a
-              href={PRIVACY_POLICY_URL}
-              className='hover:text-foreground underline underline-offset-4'
-            >
-              Privacy Policy
-            </a>
-            <a
-              href={TERMS_OF_SERVICE_URL}
-              className='hover:text-foreground underline underline-offset-4'
-            >
-              Terms of Service
-            </a>
-          </div>
+          <footer className='mt-8 w-full max-w-6xl border-t pt-6'>
+            <CloudLegalFooter
+              appTitle={appTitle}
+              containerClassName='max-w-6xl'
+              contentClassName='px-2 sm:px-4 lg:px-0'
+            />
+          </footer>
         ) : null}
       </div>
     </div>
