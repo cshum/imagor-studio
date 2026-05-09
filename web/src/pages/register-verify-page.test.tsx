@@ -171,7 +171,7 @@ describe('RegisterVerifyPage', () => {
     fireEvent.click(screen.getByText('pages.registerVerify.resendAction'))
 
     await waitFor(() => {
-      expect(screen.getByText('pages.registerVerify.resendCooldownWithSeconds:27')).toBeTruthy()
+      expect(screen.getByText('pages.registerVerify.resendCooldown')).toBeTruthy()
     })
 
     const resendButton = screen.getByRole('button', {

@@ -268,7 +268,7 @@ describe('RegisterPage pending verification', () => {
     await waitFor(() => {
       expect(mockResendPublicSignupVerification).toHaveBeenCalledWith('owner@example.com')
     })
-    expect(screen.getByText('auth.register.resendCooldown:42')).toBeTruthy()
+    expect(screen.getByText('auth.register.resendCooldown')).toBeTruthy()
     const resendButton = screen.getByRole('button', {
       name: 'auth.register.resendCountdown:42',
     })
@@ -308,10 +308,8 @@ describe('RegisterPage pending verification', () => {
     })
 
     expect(screen.getByText('auth.register.pendingDescription:owner@example.com')).toBeTruthy()
-    expect(screen.getByText('auth.register.resendCooldown:18')).toBeTruthy()
-    expect(
-      screen.getByRole('button', { name: 'auth.register.resendCountdown:18' }),
-    ).toBeTruthy()
+    expect(screen.getByText('auth.register.resendCooldown')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'auth.register.resendCountdown:18' })).toBeTruthy()
   })
 
   it('falls back to the submitted email when the masked destination is blank', async () => {

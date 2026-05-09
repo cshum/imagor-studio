@@ -252,25 +252,25 @@ export function RegisterPage() {
       const apiError = error as AuthApiError
 
       if (isSignupVerificationCooldownError(apiError)) {
-    const cooldownSeconds = Math.max(0, apiError.cooldownSeconds ?? 0)
-    setPendingVerification({
-      email: values.email.trim(),
-      verificationRequired: true,
-      cooldownSeconds,
-      expiresInSeconds: 0,
-      maskedDestination: '',
-    })
-    setResendState('error')
-    setResendCooldownRemaining(cooldownSeconds)
-    setResendMessage(t('auth.register.resendCooldown', { seconds: cooldownSeconds }))
-    form.reset({
-      displayName: values.displayName.trim(),
-      email: values.email.trim(),
-      password: '',
-      confirmPassword: '',
-    })
-    return
-  }
+        const cooldownSeconds = Math.max(0, apiError.cooldownSeconds ?? 0)
+        setPendingVerification({
+          email: values.email.trim(),
+          verificationRequired: true,
+          cooldownSeconds,
+          expiresInSeconds: 0,
+          maskedDestination: '',
+        })
+        setResendState('error')
+        setResendCooldownRemaining(cooldownSeconds)
+        setResendMessage(t('auth.register.resendCooldown'))
+        form.reset({
+          displayName: values.displayName.trim(),
+          email: values.email.trim(),
+          password: '',
+          confirmPassword: '',
+        })
+        return
+      }
 
       if (
         apiError.field === 'displayName' ||
@@ -308,14 +308,10 @@ export function RegisterPage() {
     } catch (error) {
       const apiError = error as AuthApiError
       if (isSignupVerificationCooldownError(apiError)) {
-		const cooldownSeconds = Math.max(0, apiError.cooldownSeconds ?? 0)
-		setResendCooldownRemaining(cooldownSeconds)
+        const cooldownSeconds = Math.max(0, apiError.cooldownSeconds ?? 0)
+        setResendCooldownRemaining(cooldownSeconds)
         setResendState('error')
-        setResendMessage(
-          t('auth.register.resendCooldown', {
-	            seconds: cooldownSeconds,
-          }),
-        )
+        setResendMessage(t('auth.register.resendCooldown'))
         return
       }
 

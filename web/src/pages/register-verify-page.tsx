@@ -152,10 +152,10 @@ export function RegisterVerifyPage() {
     } catch (error) {
       const apiError = error as AuthApiError
       setResendState('error')
-	  if (isSignupVerificationCooldownError(apiError)) {
-		const cooldownSeconds = Math.max(0, apiError.cooldownSeconds ?? 0)
-		setResendCooldownRemaining(cooldownSeconds)
-		setResendMessage(t('pages.registerVerify.resendCooldownWithSeconds', { seconds: cooldownSeconds }))
+      if (isSignupVerificationCooldownError(apiError)) {
+        const cooldownSeconds = Math.max(0, apiError.cooldownSeconds ?? 0)
+        setResendCooldownRemaining(cooldownSeconds)
+        setResendMessage(t('pages.registerVerify.resendCooldown'))
       } else {
         if (apiError.status === 400) {
           setResendAvailable(false)
