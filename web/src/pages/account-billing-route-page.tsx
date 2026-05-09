@@ -663,20 +663,19 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
 
         <div className='border-border/60 border-t pt-4'>
-          <p className='text-muted-foreground text-xs'>{t('pages.billing.allPlansInclude')}</p>
-        </div>
-
-        <div className='border-border/60 hidden border-t pt-4 lg:block'>
-          <div className='flex justify-end'>
-            <ButtonWithLoading
-              variant='default'
-              isLoading={portalLoading || (selectedPlan != null && pendingPlan === selectedPlan)}
-              onClick={() => void handlePrimaryBillingAction()}
-              disabled={!isPortalManagedBilling && selectedPlan == null}
-              className='w-full sm:w-auto'
-            >
-              {primaryBillingActionLabel}
-            </ButtonWithLoading>
+          <div className='flex items-center justify-between gap-4'>
+            <p className='text-muted-foreground text-xs'>{t('pages.billing.allPlansInclude')}</p>
+            <div className='hidden lg:block'>
+              <ButtonWithLoading
+                variant='default'
+                isLoading={portalLoading || (selectedPlan != null && pendingPlan === selectedPlan)}
+                onClick={() => void handlePrimaryBillingAction()}
+                disabled={!isPortalManagedBilling && selectedPlan == null}
+                className='w-full sm:w-auto'
+              >
+                {primaryBillingActionLabel}
+              </ButtonWithLoading>
+            </div>
           </div>
         </div>
       </section>
