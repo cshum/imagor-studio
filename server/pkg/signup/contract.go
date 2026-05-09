@@ -4,6 +4,7 @@ import "context"
 
 type Config struct {
 	SESFromEmail       string
+	SESReplyToEmail    string
 	SESRegion          string
 	AWSRegion          string
 	AWSAccessKeyID     string

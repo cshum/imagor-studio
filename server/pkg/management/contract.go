@@ -28,6 +28,7 @@ type CloudConfig struct {
 	GoogleClientSecret                   string
 	SESRegion                            string
 	SESFromEmail                         string
+	SESReplyToEmail                      string
 	AppAPIURL                            string
 	StripeSecretKey                      string
 	StripeWebhookSecret                  string
