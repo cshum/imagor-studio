@@ -2234,7 +2234,9 @@ func TestStartPublicSignup_CooldownActive(t *testing.T) {
 	require.Equal(t, http.StatusTooManyRequests, rr.Code)
 	var errResp apperror.ErrorResponse
 	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
-	assert.Equal(t, "TOO_MANY_REQUESTS", errResp.Code)
+	assert.Equal(t, "SIGNUP_VERIFICATION_COOLDOWN_ACTIVE", errResp.Code)
+	assert.Equal(t, "signup_verification_cooldown", errResp.Details["reason"])
+	assert.Equal(t, float64(0), errResp.Details["cooldownSeconds"])
 
 	mockSignupRuntime.AssertExpectations(t)
 }
@@ -2309,7 +2311,9 @@ func TestResendPublicSignupVerification_CooldownActive(t *testing.T) {
 	require.Equal(t, http.StatusTooManyRequests, rr.Code)
 	var errResp apperror.ErrorResponse
 	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &errResp))
-	assert.Equal(t, "TOO_MANY_REQUESTS", errResp.Code)
+	assert.Equal(t, "SIGNUP_VERIFICATION_COOLDOWN_ACTIVE", errResp.Code)
+	assert.Equal(t, "signup_verification_cooldown", errResp.Details["reason"])
+	assert.Equal(t, float64(0), errResp.Details["cooldownSeconds"])
 
 	mockSignupRuntime.AssertExpectations(t)
 }

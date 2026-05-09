@@ -9,6 +9,7 @@ import { z } from 'zod'
 import {
   getAuthProviders,
   getGoogleLoginUrl,
+  isSignupVerificationCooldownError,
   registerWithVerificationFallback,
   resendPublicSignupVerification,
   resolveInvitation,
@@ -250,6 +251,27 @@ export function RegisterPage() {
     } catch (error) {
       const apiError = error as AuthApiError
 
+      if (isSignupVerificationCooldownError(apiError)) {
+    const cooldownSeconds = Math.max(0, apiError.cooldownSeconds ?? 0)
+    setPendingVerification({
+      email: values.email.trim(),
+      verificationRequired: true,
+      cooldownSeconds,
+      expiresInSeconds: 0,
+      maskedDestination: '',
+    })
+    setResendState('error')
+    setResendCooldownRemaining(cooldownSeconds)
+    setResendMessage(t('auth.register.resendCooldown', { seconds: cooldownSeconds }))
+    form.reset({
+      displayName: values.displayName.trim(),
+      email: values.email.trim(),
+      password: '',
+      confirmPassword: '',
+    })
+    return
+  }
+
       if (
         apiError.field === 'displayName' ||
         apiError.field === 'email' ||
@@ -285,11 +307,13 @@ export function RegisterPage() {
       setResendMessage(t('auth.register.resendSuccess'))
     } catch (error) {
       const apiError = error as AuthApiError
-      if (apiError.status === 429) {
+      if (isSignupVerificationCooldownError(apiError)) {
+		const cooldownSeconds = Math.max(0, apiError.cooldownSeconds ?? 0)
+		setResendCooldownRemaining(cooldownSeconds)
         setResendState('error')
         setResendMessage(
           t('auth.register.resendCooldown', {
-            seconds: resendCooldownRemaining || pendingVerification.cooldownSeconds,
+	            seconds: cooldownSeconds,
           }),
         )
         return

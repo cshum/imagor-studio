@@ -29,6 +29,8 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 
 vi.mock('@/api/auth-api', () => ({
+  isSignupVerificationCooldownError: (error: { code?: string }) =>
+    error.code === 'SIGNUP_VERIFICATION_COOLDOWN_ACTIVE',
   resendPublicSignupVerification: mockResendPublicSignupVerification,
 }))
 
@@ -153,6 +155,29 @@ describe('RegisterVerifyPage', () => {
     expect(screen.queryByText('pages.registerVerify.resendAction')).toBeNull()
     expect(screen.queryByText(/pages\.registerVerify\.resendDescription/)).toBeNull()
     expect(screen.queryByText('No pending sign-up found for this email')).toBeNull()
+  })
+
+  it('shows cooldown seconds and disables resend when the backend reports signup cooldown', async () => {
+    const { RegisterVerifyPage } = await import('./register-verify-page')
+    mockResendPublicSignupVerification.mockRejectedValue(
+      Object.assign(new Error('Please wait before requesting another verification email'), {
+        code: 'SIGNUP_VERIFICATION_COOLDOWN_ACTIVE',
+        cooldownSeconds: 27,
+      }),
+    )
+
+    render(<RegisterVerifyPage />)
+
+    fireEvent.click(screen.getByText('pages.registerVerify.resendAction'))
+
+    await waitFor(() => {
+      expect(screen.getByText('pages.registerVerify.resendCooldownWithSeconds:27')).toBeTruthy()
+    })
+
+    const resendButton = screen.getByRole('button', {
+      name: 'pages.registerVerify.resendCountdown:27',
+    })
+    expect((resendButton as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('renders the full-page pending state without the old card layout', async () => {

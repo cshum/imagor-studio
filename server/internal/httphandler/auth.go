@@ -314,7 +314,17 @@ func (h *AuthHandler) StartPublicSignup() http.HandlerFunc {
 				return apperror.BadRequest("This invitation was sent to a different email address", map[string]interface{}{"field": "email"})
 			}
 			if errors.Is(err, signup.ErrVerificationCooldownActive) {
-				return apperror.TooManyRequests("Please wait before requesting another verification email", map[string]interface{}{"field": "email"}, "email")
+				cooldownSeconds, _ := signup.VerificationCooldownRemainingSeconds(err)
+				return apperror.TooManyRequestsWithCode(
+					apperror.ErrSignupVerificationCooldownActive,
+					"Please wait before requesting another verification email",
+					map[string]interface{}{
+						"field":           "email",
+						"reason":          "signup_verification_cooldown",
+						"cooldownSeconds": cooldownSeconds,
+					},
+					"email",
+				)
 			}
 			h.logger.Error("Failed to start public sign-up verification", zap.Error(err))
 			return apperror.InternalServerError("Failed to start sign-up")
@@ -403,7 +413,17 @@ func (h *AuthHandler) ResendPublicSignupVerification() http.HandlerFunc {
 				return apperror.BadRequest("No pending sign-up found for this email", map[string]interface{}{"field": "email"})
 			}
 			if errors.Is(err, signup.ErrVerificationCooldownActive) {
-				return apperror.TooManyRequests("Please wait before requesting another verification email", map[string]interface{}{"field": "email"}, "email")
+				cooldownSeconds, _ := signup.VerificationCooldownRemainingSeconds(err)
+				return apperror.TooManyRequestsWithCode(
+					apperror.ErrSignupVerificationCooldownActive,
+					"Please wait before requesting another verification email",
+					map[string]interface{}{
+						"field":           "email",
+						"reason":          "signup_verification_cooldown",
+						"cooldownSeconds": cooldownSeconds,
+					},
+					"email",
+				)
 			}
 			h.logger.Error("Failed to resend public sign-up verification", zap.Error(err))
 			return apperror.InternalServerError("Failed to resend sign-up verification")

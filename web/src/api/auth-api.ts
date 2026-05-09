@@ -16,6 +16,7 @@ export interface RegisterRequest {
 
 export type AuthApiError = Error & {
   code?: string
+  cooldownSeconds?: number
   field?: string
   reason?: string
   status?: number
@@ -36,6 +37,9 @@ function createAuthApiError(errorData: unknown, fallback: string): AuthApiError 
 
   if (typeof payload.code === 'string') {
     error.code = payload.code
+  }
+  if (typeof details?.cooldownSeconds === 'number') {
+    error.cooldownSeconds = details.cooldownSeconds
   }
   if (typeof details?.field === 'string') {
     error.field = details.field
@@ -173,6 +177,10 @@ function isVerificationSignupUnavailable(error: AuthApiError): boolean {
     (error.status === 403 &&
       error.message === 'Email verification sign-up is not available in this deployment.')
   )
+}
+
+export function isSignupVerificationCooldownError(error: AuthApiError): boolean {
+  return error.code === 'SIGNUP_VERIFICATION_COOLDOWN_ACTIVE'
 }
 
 export async function registerWithVerificationFallback(

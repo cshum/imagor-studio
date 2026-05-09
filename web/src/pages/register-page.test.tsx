@@ -48,6 +48,8 @@ vi.mock('@/api/auth-api', () => ({
   getAuthProviders: mockGetAuthProviders,
   getGoogleLoginUrl: (inviteToken?: string) =>
     inviteToken ? `/api/auth/google/login?invite_token=${inviteToken}` : '/api/auth/google/login',
+  isSignupVerificationCooldownError: (error: { code?: string }) =>
+    error.code === 'SIGNUP_VERIFICATION_COOLDOWN_ACTIVE',
   registerWithVerificationFallback: mockRegisterWithVerificationFallback,
   resolveInvitation: (...args: any[]) => mockResolveInvitation(...args),
   resendPublicSignupVerification: mockResendPublicSignupVerification,
@@ -216,7 +218,7 @@ describe('RegisterPage pending verification', () => {
     expect(mockResendPublicSignupVerification).not.toHaveBeenCalled()
   })
 
-  it('shows the resend cooldown error state when resend returns 429', async () => {
+  it('shows the resend cooldown error state when resend returns a signup cooldown code', async () => {
     const { RegisterPage } = await import('./register-page')
 
     mockRegisterWithVerificationFallback.mockResolvedValue({
@@ -231,7 +233,8 @@ describe('RegisterPage pending verification', () => {
     })
     mockResendPublicSignupVerification.mockRejectedValue(
       Object.assign(new Error('Please wait before requesting another verification email'), {
-        status: 429,
+        code: 'SIGNUP_VERIFICATION_COOLDOWN_ACTIVE',
+        cooldownSeconds: 42,
       }),
     )
 
@@ -265,7 +268,50 @@ describe('RegisterPage pending verification', () => {
     await waitFor(() => {
       expect(mockResendPublicSignupVerification).toHaveBeenCalledWith('owner@example.com')
     })
-    expect(screen.getByText('auth.register.resendCooldown:0')).toBeTruthy()
+    expect(screen.getByText('auth.register.resendCooldown:42')).toBeTruthy()
+    const resendButton = screen.getByRole('button', {
+      name: 'auth.register.resendCountdown:42',
+    })
+    expect((resendButton as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('switches into pending verification UI when start signup hits the verification cooldown', async () => {
+    const { RegisterPage } = await import('./register-page')
+
+    mockRegisterWithVerificationFallback.mockRejectedValue(
+      Object.assign(new Error('Please wait before requesting another verification email'), {
+        code: 'SIGNUP_VERIFICATION_COOLDOWN_ACTIVE',
+        cooldownSeconds: 18,
+        field: 'email',
+      }),
+    )
+
+    render(<RegisterPage />)
+
+    fireEvent.change(screen.getByLabelText('pages.profile.displayName'), {
+      target: { value: 'Acme Owner' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.profile.email'), {
+      target: { value: 'owner@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText('common.labels.password'), {
+      target: { value: 'Password123!' },
+    })
+    fireEvent.change(screen.getByLabelText('pages.admin.confirmPassword'), {
+      target: { value: 'Password123!' },
+    })
+
+    fireEvent.click(screen.getByText('auth.register.submit'))
+
+    await waitFor(() => {
+      expect(screen.getByText('auth.register.pendingTitle')).toBeTruthy()
+    })
+
+    expect(screen.getByText('auth.register.pendingDescription:owner@example.com')).toBeTruthy()
+    expect(screen.getByText('auth.register.resendCooldown:18')).toBeTruthy()
+    expect(
+      screen.getByRole('button', { name: 'auth.register.resendCountdown:18' }),
+    ).toBeTruthy()
   })
 
   it('falls back to the submitted email when the masked destination is blank', async () => {

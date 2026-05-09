@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { useLoaderData } from '@tanstack/react-router'
 import { AlertTriangle, LoaderCircle } from 'lucide-react'
 
-import { resendPublicSignupVerification, type AuthApiError } from '@/api/auth-api'
+import {
+  isSignupVerificationCooldownError,
+  resendPublicSignupVerification,
+  type AuthApiError,
+} from '@/api/auth-api'
 import { BrandBar } from '@/components/brand-bar'
 import { LanguageSelector } from '@/components/language-selector'
 import { LicenseBadge } from '@/components/license/license-badge.tsx'
@@ -148,8 +152,10 @@ export function RegisterVerifyPage() {
     } catch (error) {
       const apiError = error as AuthApiError
       setResendState('error')
-      if (apiError.status === 429) {
-        setResendMessage(t('pages.registerVerify.resendCooldown'))
+	  if (isSignupVerificationCooldownError(apiError)) {
+		const cooldownSeconds = Math.max(0, apiError.cooldownSeconds ?? 0)
+		setResendCooldownRemaining(cooldownSeconds)
+		setResendMessage(t('pages.registerVerify.resendCooldownWithSeconds', { seconds: cooldownSeconds }))
       } else {
         if (apiError.status === 400) {
           setResendAvailable(false)
