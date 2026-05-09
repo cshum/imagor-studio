@@ -113,7 +113,7 @@
       "resendAction": "重新寄送驗證郵件",
       "resendCountdown": "可於 {{seconds}} 秒後重新寄送",
       "resendSuccess": "我們已重新寄出驗證郵件。",
-      "resendCooldown": "請等待 {{seconds}} 秒後再要求新的驗證郵件。",
+      "resendCooldown": "請稍候後再要求新的驗證郵件。",
       "resendFailed": "重新寄送驗證郵件失敗，請再試一次。",
       "submit": "建立帳戶",
       "useDifferentEmail": "改用其他電子郵件",
