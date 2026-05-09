@@ -663,7 +663,7 @@ export function AccountBillingRoutePage({ loaderData }: AccountBillingRoutePageP
         </div>
 
         <div className='border-border/60 border-t pt-4'>
-          <div className='flex items-center justify-between gap-4'>
+          <div className='flex items-start justify-between gap-4'>
             <p className='text-muted-foreground text-xs'>{t('pages.billing.allPlansInclude')}</p>
             <div className='hidden lg:block'>
               <ButtonWithLoading
