@@ -1040,7 +1040,7 @@
         "processing": "Monthly transforms",
         "customDomains": "Custom domains"
       },
-      "allPlansInclude": "All plans include team collaboration and BYOB storage.",
+      "allPlansInclude": "All plans include team collaboration and your own S3/R2 storage.",
       "planDescriptions": {
         "starter": "For teams launching one production image pipeline with hosted storage included.",
         "pro": "For growing teams running multiple image workflows at higher volume.",

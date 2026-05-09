@@ -974,7 +974,7 @@
         "processing": "每月处理量",
         "customDomains": "自定义域名"
       },
-      "allPlansInclude": "所有方案均包含团队协作与自备存储（BYOB）。",
+      "allPlansInclude": "所有方案均包含团队协作与自备 S3/R2 存储。",
       "planDescriptions": {
         "starter": "适合要上线单个正式图片处理流程，并直接使用平台存储的团队。",
         "pro": "适合管理多条图片流程、需要自定义域名和更高月处理量的成长团队。",
