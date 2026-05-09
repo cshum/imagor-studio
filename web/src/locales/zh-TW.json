@@ -34,7 +34,7 @@
       "back": "返回"
     },
     "navigation": {
-      "title": "Imagor Studio",
+      "title": "Imagor Cloud",
       "home": "首頁",
       "account": "帳戶",
       "space": "空間",
@@ -75,7 +75,7 @@
   },
   "auth": {
     "login": {
-      "eyebrow": "Imagor Studio",
+      "eyebrow": "Imagor Cloud",
       "title": "適合團隊的託管圖片工作區",
       "formTitle": "登入",
       "googleCta": "使用 Google 繼續",
@@ -813,7 +813,7 @@
     "workspaceRequired": {
       "eyebrow": "需要組織存取權",
       "title": "此帳戶已登入，但尚未取得任何組織存取權。",
-      "description": "Imagor Studio 需要組織存取權，才能載入帳戶區域與空間管理功能。",
+      "description": "Imagor Cloud 需要組織存取權，才能載入帳戶區域與空間管理功能。",
       "invite": {
         "title": "透過邀請加入",
         "description": "登入後開啟您的邀請連結；如果原邀請已過期，請聯絡寄件者重新分享新的邀請。"
@@ -880,7 +880,7 @@
       },
       "storageUsage": "已使用 {{size}}",
       "storageTypeDesc": {
-        "managed": "儲存在 Imagor Studio 中，無需設定儲存桶。",
+        "managed": "儲存在 Imagor Cloud 中，無需設定儲存桶。",
         "s3": "使用你自己的 S3 相容儲存桶。"
       },
       "keyDescription": "這會設定此空間在應用中的 URL 與專屬的 imagor 主機。之後仍可變更。",
@@ -1231,7 +1231,7 @@
       },
       "storage": {
         "managedTitle": "託管儲存",
-        "managedDescription": "你的檔案儲存在 Imagor Studio 中。此儲存選項會在空間建立時確定，之後無法更改。",
+        "managedDescription": "你的檔案儲存在 Imagor Cloud 中。此儲存選項會在空間建立時確定，之後無法更改。",
         "bucketLocked": "儲存桶、區域和路徑前綴會在建立時固定，無法更改。",
         "description": "檢視此空間的儲存設定。",
         "accessKeyIdDescription": "留空以保留現有憑証。",

@@ -79,15 +79,15 @@ function LegalPageLayout({ eyebrow, title, updatedAt, intro, sections }: LegalPa
 export function PrivacyPage() {
   return (
     <LegalPageLayout
-      eyebrow='Imagor Studio'
+      eyebrow='Imagor Cloud'
       title='Privacy Policy'
       updatedAt='29 April 2026'
-      intro='This Privacy Policy explains how Imagor Studio collects, uses, discloses, and protects information when you use the cloud service, including when you sign in with Google, join an organization by invitation, manage spaces, upload images, or use hosted collaboration and delivery features.'
+      intro='This Privacy Policy explains how Imagor Cloud collects, uses, discloses, and protects information when you use the cloud service, including when you sign in with Google, join an organization by invitation, manage spaces, upload images, or use hosted collaboration and delivery features.'
       sections={[
         {
           title: 'Scope of this policy',
           paragraphs: [
-            'This Privacy Policy applies to the hosted Imagor Studio service, including account access, organization and space collaboration, image management, editing workflows, hosted storage features, invite and verification flows, and related support, billing, and security operations.',
+            'This Privacy Policy applies to the hosted Imagor Cloud service, including account access, organization and space collaboration, image management, editing workflows, hosted storage features, invite and verification flows, and related support, billing, and security operations.',
             'It does not automatically apply to self-hosted deployments of the open-source software operated entirely by third parties, where the deployer acts as the controller or operator of that environment.',
           ],
         },
@@ -116,7 +116,7 @@ export function PrivacyPage() {
         {
           title: 'How information is shared',
           paragraphs: [
-            'We do not sell personal information. We may share information with service providers and infrastructure partners that help us operate Imagor Studio, such as cloud hosting, storage, authentication, email delivery, payment processing, analytics, observability, security, and support providers, but only as needed to provide and operate the service.',
+            'We do not sell personal information. We may share information with service providers and infrastructure partners that help us operate Imagor Cloud, such as cloud hosting, storage, authentication, email delivery, payment processing, analytics, observability, security, and support providers, but only as needed to provide and operate the service.',
             'Information may also be shared within your organization according to the permissions and administration model of the service. Organization owners and administrators may be able to view and manage account, membership, workspace, billing, and content-related information associated with their organization.',
             'We may disclose information if required by law, regulation, legal process, or governmental request, or when reasonably necessary to protect the rights, safety, security, integrity, or operations of the service, our users, or the public, including in connection with fraud prevention, abuse response, or a merger, acquisition, or business transfer.',
           ],
@@ -124,7 +124,7 @@ export function PrivacyPage() {
         {
           title: 'Cookies, sessions, and similar technologies',
           paragraphs: [
-            'Imagor Studio may use cookies, local storage, session storage, and similar technologies to maintain sign-in state, complete OAuth and invite flows, remember interface preferences such as theme or language, protect the service, and support normal product functionality.',
+            'Imagor Cloud may use cookies, local storage, session storage, and similar technologies to maintain sign-in state, complete OAuth and invite flows, remember interface preferences such as theme or language, protect the service, and support normal product functionality.',
             'These technologies may also be used for reliability, diagnostics, abuse prevention, and analytics or operational measurement. We use analytics tools such as Google Analytics, which may collect usage and device information through cookies or similar technologies to help us understand product usage and improve the service. You can control some browser storage behavior through your browser settings, but disabling it may affect service functionality.',
           ],
         },
@@ -150,22 +150,22 @@ export function PrivacyPage() {
 export function TermsPage() {
   return (
     <LegalPageLayout
-      eyebrow='Imagor Studio'
+      eyebrow='Imagor Cloud'
       title='Terms of Service'
       updatedAt='29 April 2026'
-      intro='These Terms of Service govern your access to and use of the hosted Imagor Studio service. By accessing or using the service, you agree to these terms.'
+      intro='These Terms of Service govern your access to and use of the hosted Imagor Cloud service. By accessing or using the service, you agree to these terms.'
       sections={[
         {
           title: 'Eligibility and account use',
           paragraphs: [
-            'You may use Imagor Studio only in compliance with these Terms and applicable law. You are responsible for activity under your account, for safeguarding your credentials, and for ensuring that information associated with your account is accurate and current.',
+            'You may use Imagor Cloud only in compliance with these Terms and applicable law. You are responsible for activity under your account, for safeguarding your credentials, and for ensuring that information associated with your account is accurate and current.',
             'Access to some features may require an account, an invitation, or membership in an organization. If you sign in through Google or another provider, you must be authorized to use that authentication method and the account connected to it.',
           ],
         },
         {
           title: 'Organizations, spaces, and administration',
           paragraphs: [
-            'Imagor Studio is organized around organizations and spaces. Organization owners and administrators may control membership, roles, billing settings, storage configuration, sharing settings, and access to content or collaboration features within their organization.',
+            'Imagor Cloud is organized around organizations and spaces. Organization owners and administrators may control membership, roles, billing settings, storage configuration, sharing settings, and access to content or collaboration features within their organization.',
             'If you use the service as part of an organization, your use may also be subject to that organization’s internal policies, instructions, or administrator decisions. We are not responsible for disputes between organization administrators and end users regarding internal access, content ownership, or workspace management.',
           ],
         },
