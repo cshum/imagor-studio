@@ -594,7 +594,7 @@ func (h *AuthHandler) GuestLogin() http.HandlerFunc {
 
 		response.Token = token
 
-		h.logger.Info("Guest login successful", zap.String("guestID", guestID))
+		h.logger.Debug("Guest login successful", zap.String("guestID", guestID))
 		return WriteSuccess(w, response)
 	})
 }
@@ -739,7 +739,7 @@ func (h *AuthHandler) EmbeddedGuestLogin() http.HandlerFunc {
 			PathPrefix: pathPrefix,
 		}
 
-		h.logger.Info("Embedded guest login successful",
+		h.logger.Debug("Embedded guest login successful",
 			zap.String("embeddedGuestID", embeddedGuestID),
 			zap.String("pathPrefix", pathPrefix),
 			zap.String("userAgent", r.Header.Get("User-Agent")))
