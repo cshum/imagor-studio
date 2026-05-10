@@ -44,6 +44,16 @@ describe('BrandBar', () => {
     expect(link.getAttribute('target')).toBeNull()
   })
 
+  it('can prefer the external marketing link on cloud unauthenticated pages', async () => {
+    const { BrandBar } = await import('./brand-bar')
+
+    render(<BrandBar preferExternalDefaultBrandLink />)
+
+    const link = screen.getByRole('link', { name: 'Imagor Studio' })
+    expect(link.getAttribute('href')).toBe('https://imagor.net')
+    expect(link.getAttribute('target')).toBeNull()
+  })
+
   it('keeps the external brand URL for self-hosted branding', async () => {
     mockUseAuth.mockReturnValue({
       authState: {

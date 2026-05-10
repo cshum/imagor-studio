@@ -78,6 +78,7 @@ export function ErrorPage({
   return (
     <div className='bg-background min-h-screen-safe flex flex-col overflow-hidden'>
       <BrandBar
+        preferExternalDefaultBrandLink
         rightSlot={
           <div className='flex items-center gap-1.5 sm:gap-2'>
             <LicenseBadge />

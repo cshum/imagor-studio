@@ -12,17 +12,20 @@ const DEFAULT_BRAND_URL = 'https://imagor.net'
 interface BrandBarProps {
   /** Extra controls placed on the right (e.g. ModeToggle, LanguageSelector) */
   rightSlot?: React.ReactNode
+  /** On cloud unauthenticated pages, prefer the marketing site over the app root. */
+  preferExternalDefaultBrandLink?: boolean
 }
 
-export function BrandBar({ rightSlot }: BrandBarProps) {
+export function BrandBar({ rightSlot, preferExternalDefaultBrandLink = false }: BrandBarProps) {
   const { title: appTitle, url: appUrl } = useBrand()
   const { authState } = useAuth()
   const useInternalBrandLink = authState.multiTenant && appUrl === DEFAULT_BRAND_URL
+  const useExternalDefaultBrandLink = useInternalBrandLink && preferExternalDefaultBrandLink
 
   return (
     <div className='flex items-center gap-2 border-b px-4 py-3 sm:px-6'>
       <div className='flex min-w-0 flex-1'>
-        {useInternalBrandLink ? (
+        {useInternalBrandLink && !useExternalDefaultBrandLink ? (
           <Link
             to='/'
             className='text-foreground hover:text-foreground/80 truncate text-lg font-bold sm:text-xl'
@@ -32,8 +35,8 @@ export function BrandBar({ rightSlot }: BrandBarProps) {
         ) : (
           <a
             href={appUrl}
-            target='_blank'
-            rel='noreferrer'
+            target={useExternalDefaultBrandLink ? undefined : '_blank'}
+            rel={useExternalDefaultBrandLink ? undefined : 'noreferrer'}
             className='text-foreground hover:text-foreground/80 truncate text-lg font-bold sm:text-xl'
           >
             {appTitle}
