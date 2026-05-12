@@ -36,6 +36,9 @@ http://localhost:8000
 - Creates persistent storage for the app database (SQLite)
 - Redirects to admin setup process on first launch
 
+> [!NOTE]
+> Ready to dive deeper? Check out [Documentation](https://docs.studio.imagor.net/)
+
 ## Links
 
 - **[Imagor Cloud](https://imagor.net/)** - Managed imagor workspace for teams — transform and deliver images at scale
