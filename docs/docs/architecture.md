@@ -71,25 +71,27 @@ graph LR
   3. Output static assets to `../server/static`
 - **Output**: Compiled HTML, CSS, JavaScript files
 
-#### Stage 2: Server Builder (`imagor-studio-builder`)
+#### Stage 2: Server Builder (`imagor-base ...-magick-ffmpeg-dev`)
 
 - **Purpose**: Compile Go server with embedded frontend
 - **Input**: Go source code + static assets from Stage 1
 - **Process**:
   1. Download Go module dependencies
   2. Copy static assets from web builder
-  3. Use Go's `embed.FS` to embed static files into binary
-  4. Compile optimized Go binaries
+    3. Use the shared `imagor-base` magick+ffmpeg dev image for CGO headers and libraries
+    4. Use Go's `embed.FS` to embed static files into binary
+    5. Compile optimized Go binaries
 - **Output**: Self-contained binaries with embedded web assets
 
-#### Stage 3: Runtime (`debian:trixie-slim`)
+#### Stage 3: Runtime (`imagor-base ...-magick-ffmpeg`)
 
 - **Purpose**: Minimal runtime environment
 - **Input**: Compiled binaries from Stage 2
 - **Process**:
-  1. Install only essential runtime libraries
-  2. Copy binaries and required shared libraries
-  3. Configure unprivileged user
+    1. Reuse the shared `imagor-base` runtime image with libvips, ImageMagick, and FFmpeg libs preinstalled
+    2. Copy application binaries
+    3. Install only small app-specific runtime packages
+    4. Configure unprivileged user
 - **Output**: Lean production image (~200MB)
 
 ### Benefits of Multi-Stage Build
