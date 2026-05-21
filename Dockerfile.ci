@@ -1,11 +1,25 @@
-ARG BUILDER_IMAGE_TAG=ffmpeg-7.1.1-vips-8.18.1-go-1.26.1
+ARG GOLANG_VERSION=1.26.1
+ARG BASE_IMAGE=ghcr.io/cshum/imagor-base:vips8.18.2-r7-magick-ffmpeg
+ARG DEV_BASE_IMAGE=${BASE_IMAGE}-dev
 ARG EMBEDDED_MODE=false
 
 # CI-oriented Dockerfile: web assets are prebuilt in GitHub Actions into server/static.
-FROM ghcr.io/cshum/imagor-studio-builder:${BUILDER_IMAGE_TAG} AS server-builder
+FROM golang:${GOLANG_VERSION}-bookworm AS golang-base
+
+FROM ${BASE_IMAGE} AS native-base
+
+FROM ${DEV_BASE_IMAGE} AS server-builder
 
 ARG EMBEDDED_MODE
-ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+COPY --from=golang-base /usr/local/go /usr/local/go
+
+ENV GOPATH=/go
+ENV PATH=/usr/local/go/bin:/go/bin:$PATH
+ENV CGO_ENABLED=1
+ENV PKG_CONFIG_PATH=/opt/imagor/lib/pkgconfig
+ENV CGO_CFLAGS=-I/opt/imagor/include
+ENV CGO_LDFLAGS="-L/opt/imagor/lib -Wl,-rpath,/opt/imagor/lib"
 
 WORKDIR /app
 
@@ -24,22 +38,13 @@ RUN if [ "$EMBEDDED_MODE" != "true" ]; then \
       touch /go/bin/imagor-studio-migrate; \
     fi
 
-FROM debian:trixie-slim AS runtime
+FROM native-base AS runtime
 LABEL maintainer="imagor-studio"
-
-COPY --from=server-builder /usr/local/lib /usr/local/lib
-COPY --from=server-builder /etc/ssl/certs /etc/ssl/certs
 
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
   apt-get install --no-install-recommends -y \
-  procps curl libglib2.0-0 libjpeg62-turbo libpng16-16 libopenexr-3-1-30 \
-  libwebp7 libwebpmux3 libwebpdemux2 libtiff6 libexif12 libxml2 libpoppler-glib8t64 \
-  libpango-1.0-0 libmatio13 libopenslide0 libopenjp2-7 libjemalloc2 \
-  libgsf-1-114 libfftw3-bin liborc-0.4-0 librsvg2-2 libcfitsio10t64 libimagequant0 libaom3 \
-  libspng0 libcgif0 libheif1 libheif-plugin-x265 libheif-plugin-aomenc libjxl0.11 libraw23t64 \
-  libmagickwand-7.q16-10 \
-  libdav1d7 libx264-dev libx265-dev libnuma-dev libvpx9 libtheora0 libvorbis-dev gosu \
+  curl gosu passwd procps \
   fontconfig fonts-dejavu-core && \
   ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
   apt-get autoremove -y && \

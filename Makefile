@@ -5,6 +5,7 @@
 PROJECT_NAME=imagor-studio
 DOCKER_IMAGE=$(PROJECT_NAME)
 DOCKER_TAG=latest
+IMAGOR_BASE_IMAGE ?= ghcr.io/cshum/imagor-base:vips8.18.2-r7-magick-ffmpeg
 
 # Directories
 WEB_DIR=web
@@ -170,7 +171,7 @@ server-reset-db: ## Reset server database
 docker-build: ## Build Docker image
 	@echo "$(GREEN)Building Docker image...$(NC)"
 	@echo "$(YELLOW)Image: $(DOCKER_IMAGE):$(DOCKER_TAG)$(NC)"
-	docker build -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
+	docker build --build-arg BASE_IMAGE=$(IMAGOR_BASE_IMAGE) --build-arg DEV_BASE_IMAGE=$(IMAGOR_BASE_IMAGE)-dev -t $(DOCKER_IMAGE):$(DOCKER_TAG) .
 	@echo "$(GREEN)✓ Docker image built successfully$(NC)"
 	@echo "$(YELLOW)To run: make docker-run$(NC)"
 

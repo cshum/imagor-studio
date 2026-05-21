@@ -6,6 +6,9 @@ on:
       - main
     tags: ["v*.*.*"]
 
+env:
+  IMAGOR_BASE_IMAGE: ghcr.io/cshum/imagor-base:vips8.18.2-r7-magick-ffmpeg
+
 jobs:
   build-variants:
     name: Docker variants
@@ -78,8 +81,11 @@ jobs:
           file: ./Dockerfile.ci
           platforms: ${{ startsWith(github.ref, 'refs/tags/v') && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           push: true
+          build-args: |
+            BASE_IMAGE=${{ env.IMAGOR_BASE_IMAGE }}
+            DEV_BASE_IMAGE=${{ env.IMAGOR_BASE_IMAGE }}-dev
+            ${{ matrix.variant.build_args }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: ${{ matrix.variant.build_args }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
