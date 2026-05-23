@@ -1,6 +1,6 @@
 ARG NODE_VERSION=22.19.0
-ARG GOLANG_VERSION=1.26.1
-ARG BASE_IMAGE=ghcr.io/cshum/imagor-base:vips8.18.2-r7-magick-ffmpeg
+ARG GOLANG_VERSION=1.26.3
+ARG BASE_IMAGE=ghcr.io/cshum/imagor-base:vips8.18.2-r9-magick-ffmpeg
 ARG DEV_BASE_IMAGE=${BASE_IMAGE}-dev
 ARG EMBEDDED_MODE=false
 
@@ -50,11 +50,11 @@ COPY --from=web-builder /app/server/static ./server/static
 COPY server/ ./server/
 COPY graphql/ ./graphql/
 
-RUN cd server && go build -tags vips -o /go/bin/imagor-studio ./cmd/imagor-studio/main.go
+RUN cd server && go build -ldflags "-s -w" -tags vips -o /go/bin/imagor-studio ./cmd/imagor-studio/main.go
 
 # Conditionally build migration tool (not needed for embedded mode)
 RUN if [ "$EMBEDDED_MODE" != "true" ]; then \
-      cd server && go build -o /go/bin/imagor-studio-migrate ./cmd/imagor-studio-migrate/main.go; \
+      cd server && go build -ldflags "-s -w" -o /go/bin/imagor-studio-migrate ./cmd/imagor-studio-migrate/main.go; \
     else \
       touch /go/bin/imagor-studio-migrate; \
     fi
@@ -65,6 +65,7 @@ LABEL maintainer="imagor-studio"
 
 RUN DEBIAN_FRONTEND=noninteractive \
   apt-get update && \
+  apt-get upgrade -y && \
   apt-get install --no-install-recommends -y \
   curl gosu passwd procps \
   fontconfig fonts-dejavu-core && \
