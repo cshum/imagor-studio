@@ -1,15 +1,15 @@
 module github.com/cshum/imagor-studio/server
 
-go 1.25.0
+go 1.25.8
 
 require (
 	github.com/99designs/gqlgen v0.17.90
 	github.com/aws/aws-sdk-go-v2 v1.41.7
-	github.com/aws/aws-sdk-go-v2/config v1.32.17
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.16
+	github.com/aws/aws-sdk-go-v2/config v1.32.18
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.17
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0
-	github.com/cshum/imagor v1.8.8-0.20260509193411-b079543cf989
-	github.com/cshum/imagorvideo v1.1.10
+	github.com/cshum/imagor v1.9.1
+	github.com/cshum/imagorvideo v1.1.14
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
@@ -26,7 +26,7 @@ require (
 	github.com/uptrace/bun/driver/sqliteshim v1.2.18
 	github.com/vektah/gqlparser/v2 v2.5.33
 	go.uber.org/zap v1.28.0
-	golang.org/x/crypto v0.51.0
+	golang.org/x/crypto v0.52.0
 )
 
 require (
@@ -46,7 +46,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.23 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.17 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.21 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.36.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.42.1 // indirect
 	github.com/aws/smithy-go v1.25.1 // indirect
 	github.com/bbrks/go-blurhash v1.2.0 // indirect
@@ -57,7 +57,7 @@ require (
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
-	github.com/cshum/vipsgen v1.3.9 // indirect
+	github.com/cshum/vipsgen v1.3.10 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dgraph-io/ristretto/v2 v2.4.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
@@ -119,10 +119,10 @@ require (
 	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.shabbyrobe.org/gocovmerge v0.0.0-20230507111327-fa4f82cfbf4d // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/image v0.40.0 // indirect
+	golang.org/x/image v0.41.0 // indirect
 	golang.org/x/mod v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
