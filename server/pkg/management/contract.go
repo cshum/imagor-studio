@@ -36,6 +36,10 @@ type CloudConfig struct {
 	StripeProPriceID                     string
 	StripeTeamPriceID                    string
 	StripeBillingPortalConfigurationID   string
+	ImagorStudioLicensePriceID           string
+	ImagorStudioLicensePrivateKeyBase64  string
+	ImagorStudioLicenseType              string
+	ImagorStudioLicenseProductName       string
 	ProcessingURLTemplate                string
 	ManagementJobsEnabled                bool
 	ProcessingUsageBatchCleanupRetention time.Duration
