@@ -1,10 +1,19 @@
 ---
 sidebar_position: 7
+description: Understand the Imagor Studio architecture, including the imagor image-processing engine, storage backends, and deployment model.
+keywords:
+    - imagor studio architecture
+    - imagor docs
+    - imagor image processing
+    - imagor pipeline
+    - imagor studio deployment
 ---
 
 # Architecture
 
 Understanding the technical architecture of Imagor Studio.
+
+For the upstream image-processing reference behind the runtime pipeline, see the [imagor docs](https://docs.imagor.net/). For measured performance comparisons, see [imagor benchmarks](https://docs.imagor.net/benchmarks).
 
 ## System Overview
 

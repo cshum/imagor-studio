@@ -1,5 +1,12 @@
 ---
 sidebar_position: 8
+description: Explore the Imagor Studio ecosystem, including imagor, vipsgen, imagorvideo, and links to upstream imagor documentation and benchmarks.
+keywords:
+  - imagor ecosystem
+  - imagor docs
+  - imagor benchmarks
+  - imagor studio ecosystem
+  - vipsgen imagorvideo
 ---
 
 # Ecosystem
@@ -13,10 +20,14 @@ Imagor Studio is part of a larger ecosystem of image processing tools and librar
 **Fast, secure image processing server and Go library**
 
 - **Repository**: [github.com/cshum/imagor](https://github.com/cshum/imagor)
+- **Documentation**: [docs.imagor.net](https://docs.imagor.net/)
+- **Benchmarks**: [docs.imagor.net/benchmarks](https://docs.imagor.net/benchmarks)
 - **Language**: Go
 - **Purpose**: High-performance image processing server
 
 imagor is a fast, secure image processing server and Go library that uses [libvips](https://github.com/libvips/libvips) with Go binding [vipsgen](https://github.com/cshum/vipsgen). libvips is one of the most efficient image processing libraries available, and imagor implements libvips [streaming](https://www.libvips.org/2019/11/29/True-streaming-for-libvips.html) that facilitates parallel processing pipelines, achieving high network throughput.
+
+For the full operation reference, deployment guidance, and security documentation, see the [imagor docs](https://docs.imagor.net/). For measured benchmark results and methodology, see [imagor benchmarks](https://docs.imagor.net/benchmarks).
 
 #### Key Features
 
@@ -25,7 +36,7 @@ imagor is a fast, secure image processing server and Go library that uses [libvi
 - **Comprehensive operations** - Resize, crop, filters, format conversion, watermarks, and more
 - **Multiple storage backends** - HTTP(s), File System, AWS S3, Google Cloud Storage
 - **HMAC URL signing** - Prevent URL tampering and DDoS attacks
-- **thumbor compatibility** - Drop-in replacement for thumbor with better performance
+- **thumbor compatibility** - Compatible URL model for thumbor-style integrations
 - **Docker support** - First-class Docker images and deployment
 - **Extensive filters** - Brightness, contrast, blur, sharpen, saturation, and many more
 

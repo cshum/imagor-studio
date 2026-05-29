@@ -1,6 +1,13 @@
 ---
 sidebar_position: 1
 slug: /
+description: Self-hosted image gallery and live editor powered by imagor, with upstream imagor docs for image processing, URL syntax, storage, and benchmarks.
+keywords:
+  - imagor studio
+  - imagor docs
+  - imagor image processing
+  - imagor benchmarks
+  - self hosted image gallery
 ---
 
 # Introduction
@@ -68,11 +75,15 @@ Imagor Studio is powered by [imagor](https://github.com/cshum/imagor), a fast an
 
 All image transformations benefit from imagor's high-performance architecture, comprehensive operation support, and proven reliability in production environments.
 
+For the upstream image-processing reference, see the [imagor documentation](https://docs.imagor.net/). For measured throughput and methodology, see [imagor benchmarks](https://docs.imagor.net/benchmarks).
+
 ## Quick Links
 
 - [Quick Start Guide](./getting-started/quick-start) - Get up and running in minutes
 - [Configuration](./configuration/overview) - Customize Imagor Studio for your needs
 - [Architecture](./architecture) - Understand how it works
+- [imagor Documentation](https://docs.imagor.net/) - Upstream reference for URL syntax, filters, storage, and security
+- [imagor Benchmarks](https://docs.imagor.net/benchmarks) - Performance comparisons and benchmark methodology
 - [GitHub Repository](https://github.com/cshum/imagor-studio) - Source code and issues
 
 ---

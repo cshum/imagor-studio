@@ -1,10 +1,19 @@
 ---
 sidebar_position: 1
+description: Get Imagor Studio running with Docker and follow upstream imagor docs for image processing, storage, security, and benchmarks.
+keywords:
+  - imagor studio quick start
+  - imagor docs
+  - imagor benchmarks
+  - imagor studio docker
+  - self hosted image gallery docker
 ---
 
 # Quick Start
 
 Get Imagor Studio up and running in minutes with Docker.
+
+For the upstream image-processing reference that powers transformations inside Imagor Studio, see the [imagor docs](https://docs.imagor.net/). For measured throughput and comparison details, see [imagor benchmarks](https://docs.imagor.net/benchmarks).
 
 ## Prerequisites
 

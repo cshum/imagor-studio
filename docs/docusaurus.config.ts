@@ -65,6 +65,16 @@ const config: Config = {
 
   themeConfig: {
     image: "img/social-card.jpg",
+    metadata: [
+      {
+        property: "og:site_name",
+        content: "Imagor Studio Docs",
+      },
+      {
+        name: "twitter:card",
+        content: "summary_large_image",
+      },
+    ],
     navbar: {
       title: "Imagor Studio",
       items: [
@@ -80,7 +90,7 @@ const config: Config = {
           items: [
             {
               label: "imagor",
-              href: "https://github.com/cshum/imagor",
+              href: "https://docs.imagor.net/",
             },
             {
               label: "imagor Studio",
@@ -113,11 +123,32 @@ const config: Config = {
       style: "dark",
       links: [
         {
+          title: "imagor Docs",
+          items: [
+            {
+              label: "Documentation",
+              href: "https://docs.imagor.net/",
+            },
+            {
+              label: "Benchmarks",
+              href: "https://docs.imagor.net/benchmarks",
+            },
+            {
+              label: "Security",
+              href: "https://docs.imagor.net/security",
+            },
+            {
+              label: "Configuration",
+              href: "https://docs.imagor.net/configuration",
+            },
+          ],
+        },
+        {
           title: "Ecosystem",
           items: [
             {
               label: "imagor",
-              href: "https://github.com/cshum/imagor",
+              href: "https://docs.imagor.net/",
             },
             {
               label: "imagor Studio",
