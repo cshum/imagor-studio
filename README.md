@@ -41,7 +41,6 @@ http://localhost:8000
 
 ## Links
 
-- **[Imagor Cloud](https://imagor.net/)** - Managed imagor workspace for teams — transform and deliver images at scale
 - **[imagor](https://github.com/cshum/imagor)** - Fast, secure image processing server and Go library, using libvips
 - **[vipsgen](https://github.com/cshum/vipsgen)** - Type-safe, comprehensive Go binding generator for libvips
 - **[imagorvideo](https://github.com/cshum/imagorvideo)** - imagor video thumbnail server in Go and ffmpeg C bindings
