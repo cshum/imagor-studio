@@ -5,7 +5,7 @@
 PROJECT_NAME=imagor-studio
 DOCKER_IMAGE=$(PROJECT_NAME)
 DOCKER_TAG=latest
-IMAGOR_BASE_IMAGE ?= ghcr.io/cshum/imagor-base:vips8.18.3-r13-magick-ffmpeg
+IMAGOR_BASE_IMAGE ?= ghcr.io/cshum/imagor-base:vips8.18.4-r14-magick-ffmpeg
 
 # Directories
 WEB_DIR=web
