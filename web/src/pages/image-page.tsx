@@ -88,11 +88,13 @@ export function ImagePage({
       navigate({
         to: routeSpaceKey ? '/spaces/$spaceKey' : '/',
         params: routeSpaceKey ? { spaceKey: routeSpaceKey } : undefined,
+        resetScroll: false,
       })
     } else {
       navigate({
         to: routeSpaceKey ? '/spaces/$spaceKey/f/$galleryKey' : '/f/$galleryKey',
         params: routeSpaceKey ? { spaceKey: routeSpaceKey, galleryKey } : { galleryKey },
+        resetScroll: false,
       })
     }
   }
