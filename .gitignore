@@ -42,6 +42,7 @@ web/.env.local
 server/storage/
 data/
 test-data/
+server/gallery/
 imagor-studio-data/
 
 # Temporary files

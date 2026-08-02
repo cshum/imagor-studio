@@ -56,7 +56,7 @@ tidy:
 LOCAL_GALLERY ?= ./gallery
 
 dev:
-	CGO_ENABLED=0 $(GOCMD) run $(MAIN_PACKAGE) \
+	$(GOCMD) run -tags vips $(MAIN_PACKAGE) \
 		--port=8080 \
 		--file-storage-base-dir=$(LOCAL_GALLERY)
 
