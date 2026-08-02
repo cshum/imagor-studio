@@ -1,6 +1,6 @@
 ARG NODE_VERSION=22.19.0
-ARG GOLANG_VERSION=1.26.3
-ARG BASE_IMAGE=ghcr.io/cshum/imagor-base:vips8.18.3-r13-magick-ffmpeg
+ARG GOLANG_VERSION=1.26.5
+ARG BASE_IMAGE=ghcr.io/cshum/imagor-base:vips8.18.4-r14-magick-ffmpeg
 ARG DEV_BASE_IMAGE=${BASE_IMAGE}-dev
 ARG EMBEDDED_MODE=false
 
