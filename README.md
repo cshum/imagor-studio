@@ -39,6 +39,17 @@ http://localhost:8000
 > [!NOTE]
 > Ready to dive deeper? Check out [Documentation](https://docs.studio.imagor.net/)
 
+## Easypanel
+
+[Easypanel](https://easypanel.io) is a self-hosted Docker deployment platform, and Imagor Studio has a one-click deployment template there.
+
+[![Deploy on Easypanel](https://easypanel.io/img/deploy-on-easypanel-40.svg)](https://easypanel.io/templates/imagor-studio)
+
+The template sets up persistent volumes for the app database and gallery directory automatically.
+
+![Imagor Studio running in the Easypanel panel](assets/easypanel-panel.jpg)
+
+
 ## Links
 
 - **[imagor](https://github.com/cshum/imagor)** - Fast, secure image processing server and Go library, using libvips
