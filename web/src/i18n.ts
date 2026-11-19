@@ -2,6 +2,7 @@ import { initReactI18next } from 'react-i18next'
 import i18n from 'i18next'
 
 import enTranslations from '@/locales/en.json'
+import esTranslations from '@/locales/es.json'
 import itTranslations from '@/locales/it.json'
 import zhCNTranslations from '@/locales/zh-CN.json'
 import zhTWTranslations from '@/locales/zh-TW.json'
@@ -9,6 +10,9 @@ import zhTWTranslations from '@/locales/zh-TW.json'
 const resources = {
   en: {
     translation: enTranslations,
+  },
+  es: {
+    translation: esTranslations,
   },
   it: {
     translation: itTranslations,
@@ -24,6 +28,7 @@ const resources = {
 // Available languages for the language selector
 export const availableLanguages = [
   { code: 'en', name: 'English' },
+  { code: 'es', name: 'Español' },
   { code: 'it', name: 'Italiano' },
   { code: 'zh-CN', name: '简体中文' },
   { code: 'zh-TW', name: '繁體中文' },

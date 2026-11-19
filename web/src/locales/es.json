@@ -1,0 +1,1715 @@
+{
+  "layouts": {
+    "account": {
+      "title": "Configuración",
+      "backToApp": "Volver a la aplicación",
+      "sections": {
+        "account": "Cuenta",
+        "administration": "Administración"
+      },
+      "tabs": {
+        "profile": "Configuración de la cuenta",
+        "billing": "Facturación",
+        "system": "Sistema",
+        "users": "Usuarios",
+        "spaces": "Espacios"
+      }
+    }
+  },
+  "common": {
+    "optional": "(opcional)",
+    "buttons": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "remove": "Quitar",
+      "edit": "Editar",
+      "create": "Crear",
+      "update": "Actualizar",
+      "updateSettings": "Guardar",
+      "close": "Cerrar",
+      "more": "Más",
+      "switchTheme": "Cambiar tema",
+      "select": "Seleccionar",
+      "back": "Atrás"
+    },
+    "language": {
+      "title": "Idioma",
+      "changeLanguage": "Cambiar idioma"
+    },
+    "navigation": {
+      "title": "Imagor Cloud",
+      "home": "Inicio",
+      "account": "Cuenta",
+      "space": "Espacio",
+      "profile": "Perfil",
+      "dashboard": "Panel",
+      "users": "Usuarios",
+      "signOut": "Cerrar sesión",
+      "login": "Iniciar sesión",
+      "accountSettings": "Cuenta",
+      "settings": "Configuración"
+    },
+    "status": {
+      "loading": "Cargando...",
+      "error": "Error",
+      "success": "Correcto",
+      "guest": "Invitado",
+      "user": "Usuario",
+      "yes": "Sí",
+      "no": "No",
+      "enabled": "Activado",
+      "disabled": "Desactivado",
+      "creating": "Creando..."
+    },
+    "labels": {
+      "username": "Nombre de usuario",
+      "password": "Contraseña",
+      "name": "Nombre",
+      "role": "Rol"
+    },
+    "trialSummary": {
+      "title": "En periodo de prueba",
+      "daysRemaining_one": "Queda 1 día de prueba",
+      "daysRemaining_other": "Quedan {{count}} días de prueba"
+    }
+  },
+  "auth": {
+    "login": {
+      "eyebrow": "Imagor Cloud",
+      "title": "Espacio de trabajo de imágenes gestionado para equipos",
+      "formTitle": "Iniciar sesión",
+      "googleCta": "Continuar con Google",
+      "credentialsDividerCloud": "O usa tu correo electrónico y contraseña",
+      "credentialsDividerSelfHosted": "O usa tu nombre de usuario y contraseña",
+      "identifierLabelCloud": "Correo electrónico o nombre de usuario",
+      "identifierLabelSelfHosted": "Nombre de usuario",
+      "identifierPlaceholderCloud": "",
+      "identifierPlaceholderSelfHosted": "Introduce tu nombre de usuario",
+      "highlights": {
+        "storage": "Transformación y entrega de imágenes gestionadas",
+        "delivery": "Variantes de imagen sin la carga de mantener infraestructura",
+        "access": "Un único espacio de trabajo para imágenes, ediciones y plantillas"
+      },
+      "signIn": "Iniciar sesión",
+      "loginFailed": "Credenciales no válidas. Inténtalo de nuevo.",
+      "errors": {
+        "inviteInvalid": "Esta invitación ya no es válida. Pide una nueva a quien te la envió e inténtalo de nuevo.",
+        "inviteOrgConflict": "Esta cuenta ya pertenece a otra organización. Usa otra cuenta o abandona primero tu organización actual.",
+        "inviteEmailMismatch": "Esta invitación se envió a otra dirección de correo electrónico. Inicia sesión con la cuenta invitada."
+      },
+      "createAccountPrompt": "¿Primera vez por aquí?",
+      "createAccountLink": "Crear una cuenta"
+    },
+    "register": {
+      "formTitle": "Crear cuenta",
+      "googleCta": "Continuar con Google",
+      "credentialsDivider": "O crea una cuenta con tu correo electrónico y contraseña",
+      "emailPlaceholder": "nombre@example.com",
+      "invitedEmailHint": "Esta invitación está vinculada a {{email}}.",
+      "pendingEyebrow": "Confirmación del correo electrónico",
+      "pendingTitle": "Revisa tu correo electrónico",
+      "pendingDescription": "Hemos enviado un enlace de confirmación a {{email}}. Ábrelo para terminar de crear tu cuenta.",
+      "pendingDescriptionFallback": "Hemos enviado un enlace de confirmación. Ábrelo para terminar de crear tu cuenta.",
+      "resendAction": "Reenviar correo de verificación",
+      "resendCountdown": "Podrás reenviarlo dentro de {{seconds}} segundos",
+      "resendSuccess": "Te hemos enviado un nuevo correo de verificación.",
+      "resendCooldown": "Espera un poco antes de solicitar otro correo de verificación.",
+      "resendFailed": "No se ha podido reenviar el correo de verificación. Inténtalo de nuevo.",
+      "submit": "Crear cuenta",
+      "useDifferentEmail": "Usar otro correo electrónico",
+      "signInPrompt": "¿Ya tienes una cuenta?",
+      "signInLink": "Iniciar sesión",
+      "failed": "No se ha podido crear la cuenta. Inténtalo de nuevo."
+    },
+    "validation": {
+      "identifierRequiredCloud": "El correo electrónico o el nombre de usuario es obligatorio",
+      "invalidEmailOrUsername": "Introduce un correo electrónico o un nombre de usuario válido",
+      "usernameRequired": "El nombre de usuario es obligatorio",
+      "usernameMinLength": "El nombre de usuario debe tener al menos 3 caracteres",
+      "usernameMaxLength": "El nombre de usuario debe tener como máximo 30 caracteres",
+      "passwordRequired": "La contraseña es obligatoria",
+      "invalidUsername": "Introduce un nombre de usuario válido"
+    },
+    "embedded": {
+      "tokenMissing": "Falta el token de autenticación. El modo integrado requiere un token JWT en la URL. Formato esperado: /?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "tokenInvalid": "El token de autenticación no es válido o ha caducado. Comprueba tu token JWT e inténtalo de nuevo.",
+      "authenticationFailed": "Ha fallado la autenticación en modo integrado. Comprueba que tu token sea válido y no haya caducado.",
+      "pathMissing": "El parámetro path es obligatorio. Formato esperado: /?token=YOUR_JWT_TOKEN&path=image.jpg",
+      "pathInvalid": "Formato de ruta no válido. Se esperaba: gallery/folder/image.jpg o image.jpg"
+    }
+  },
+  "forms": {
+    "placeholders": {
+      "enterUsername": "Introduce tu nombre de usuario",
+      "enterPassword": "Introduce tu contraseña",
+      "confirmPassword": "Confirma tu contraseña",
+      "enterName": "Introduce tu nombre"
+    },
+    "validation": {
+      "required": "Este campo es obligatorio",
+      "invalidUsername": "Introduce un nombre de usuario válido",
+      "passwordTooShort": "La contraseña debe tener al menos {{min}} caracteres",
+      "usernameInvalid": "Introduce un nombre de usuario válido",
+      "displayNameMinLength": "El nombre visible debe tener al menos 3 caracteres",
+      "displayNameMaxLength": "El nombre visible debe tener menos de 100 caracteres",
+      "usernameMinLength": "El nombre de usuario debe tener al menos 3 caracteres",
+      "usernameMaxLength": "El nombre de usuario debe tener como máximo 30 caracteres",
+      "usernamePattern": "El nombre de usuario solo puede contener letras, números, guiones bajos y guiones",
+      "currentPasswordRequired": "La contraseña actual es obligatoria",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+      "passwordMaxLength": "La contraseña debe tener menos de 72 caracteres",
+      "passwordsDoNotMatch": "Las contraseñas no coinciden",
+      "confirmPasswordMinLength": "La contraseña debe tener al menos 8 caracteres",
+      "confirmPasswordMaxLength": "La contraseña debe tener menos de 72 caracteres"
+    }
+  },
+  "navigation": {
+    "breadcrumbs": {
+      "home": "Inicio",
+      "gallery": "Galería",
+      "profile": "Perfil",
+      "account": "Cuenta",
+      "organization": "Organización",
+      "billing": "Facturación",
+      "organizationMembers": "Miembros",
+      "settings": "Configuración",
+      "users": "Usuarios",
+      "admin": "Sistema",
+      "adminSetup": "Configuración inicial",
+      "spaces": "Espacios",
+      "spaceSettings": "Configuración"
+    }
+  },
+  "pages": {
+    "authCallback": {
+      "title": "Inicio de sesión interrumpido",
+      "subtitle": "No hemos podido completar el inicio de sesión. Inténtalo de nuevo.",
+      "failed": "Error de autenticación",
+      "errorOAuth": "Error de autenticación: {{error}}",
+      "errors": {
+        "inviteInvalid": "Esta invitación ya no es válida. Pide una nueva a quien te la envió e inténtalo de nuevo.",
+        "oauthInvalidState": "Tu sesión de inicio de sesión ha caducado o ya no es válida. Inténtalo de nuevo.",
+        "oauthMissingCode": "Google no ha devuelto ningún código de autorización. Inténtalo de nuevo.",
+        "oauthEmailUnverified": "El correo electrónico de tu cuenta de Google no está verificado. Verifícalo con Google e inténtalo de nuevo.",
+        "oauthNotConfigured": "El inicio de sesión con Google no está disponible en este momento.",
+        "oauthFailed": "No hemos podido completar el inicio de sesión con Google. Inténtalo de nuevo.",
+        "inviteOrgConflict": "Esta cuenta ya pertenece a otra organización. Usa otra cuenta o abandona primero tu organización actual.",
+        "inviteEmailMismatch": "Esta invitación se envió a otra dirección de correo electrónico. Inicia sesión con la cuenta invitada."
+      },
+      "errorNoToken": "No se ha recibido ningún token de autenticación",
+      "backToLogin": "Volver al inicio de sesión"
+    },
+    "registerVerify": {
+      "pendingEyebrow": "Confirmación de la cuenta",
+      "title": "Confirmando tu cuenta",
+      "subtitle": "Espera mientras terminamos de iniciar tu sesión.",
+      "verifying": "Verificando tu enlace de confirmación del correo electrónico.",
+      "errorEyebrow": "Error del servicio",
+      "errorTitle": "No hemos podido confirmar tu cuenta",
+      "errorSubtitle": "Puede que el enlace de confirmación no sea válido o haya caducado.",
+      "missingToken": "Al enlace de confirmación le falta el token de verificación.",
+      "failed": "No hemos podido verificar tu cuenta. Solicita un nuevo correo de confirmación.",
+      "resendDescription": "Podemos enviarte un nuevo enlace de confirmación a {{email}}.",
+      "resendAction": "Reenviar correo de confirmación",
+      "resendCountdown": "Podrás reenviarlo dentro de {{seconds}} segundos",
+      "resendSuccess": "Te hemos enviado un nuevo correo de confirmación.",
+      "resendCooldown": "Espera un poco antes de solicitar otro correo de confirmación.",
+      "resendCooldownWithSeconds": "Espera {{seconds}} segundos antes de solicitar otro correo de confirmación.",
+      "resendFailed": "No se ha podido reenviar el correo de confirmación. Inténtalo de nuevo.",
+      "signInInsteadDescription": "No queda ninguna confirmación pendiente para {{email}}. Si ya has completado el registro, inicia sesión.",
+      "backToLogin": "Volver al inicio de sesión"
+    },
+    "emailChangeVerify": {
+      "pendingEyebrow": "Cambio de correo electrónico",
+      "pendingTitle": "Confirmando tu nuevo correo electrónico",
+      "pendingDescription": "Espera mientras verificamos tu nueva dirección de correo electrónico de inicio de sesión.",
+      "verifying": "Verificando tu enlace de confirmación del cambio de correo electrónico.",
+      "successEyebrow": "Correo electrónico actualizado",
+      "successTitle": "Se ha actualizado tu correo electrónico de inicio de sesión",
+      "successDescription": "Ahora {{email}} es la dirección de correo electrónico con la que inicias sesión.",
+      "successBody": "La próxima vez que inicies sesión, podrás seguir usando tu cuenta con {{email}}.",
+      "errorEyebrow": "Cambio de correo electrónico",
+      "errorTitle": "No hemos podido confirmar tu nuevo correo electrónico",
+      "errorSubtitle": "Puede que el enlace de confirmación no sea válido o haya caducado.",
+      "errorHelp": "Solicita otro cambio de correo electrónico desde la configuración de tu cuenta para recibir un nuevo enlace de confirmación.",
+      "backToLogin": "Volver al inicio de sesión",
+      "backToProfile": "Volver al perfil"
+    },
+    "error": {
+      "eyebrowDefault": "Error del servicio",
+      "eyebrowNotFound": "Página no encontrada",
+      "eyebrowForbidden": "Acceso restringido",
+      "defaultTitle": "Algo ha ido mal",
+      "notFoundTitle": "Espacio no encontrado",
+      "forbiddenTitle": "Acceso denegado",
+      "defaultDescription": "Se ha producido un error al cargar la página. Prueba a volver a la página de inicio.",
+      "notFoundDescription": "No hemos encontrado ese espacio. Comprueba el enlace o vuelve a tus espacios.",
+      "forbiddenDescription": "Has iniciado sesión, pero este espacio no está disponible para tu cuenta. Pide acceso a un administrador del espacio o vuelve a tus espacios."
+    },
+    "gallery": {
+      "title": "Galería",
+      "selectFolder": "Seleccionar carpeta",
+      "selectFolderDescription": "Elige una carpeta del árbol de abajo.",
+      "noImages": "No se han encontrado imágenes",
+      "noImagesInGallery": "No hay imágenes en tu galería",
+      "folderEmpty": "Esta carpeta está vacía",
+      "dragAndDropHint": "Arrastra y suelta archivos aquí para subirlos a tu galería",
+      "sorting": {
+        "sort": "Ordenar",
+        "name": "Nombre",
+        "modifiedTime": "Fecha de modificación"
+      },
+      "filter": {
+        "filter": "Filtrar",
+        "placeholder": "Filtrar",
+        "showingFiltered": "Mostrando {{count}} de {{total}} elementos",
+        "clearFilter": "Borrar filtro"
+      },
+      "showFileNames": "Mostrar nombres de archivo",
+      "newCanvas": {
+        "menuItem": "Lienzo nuevo",
+        "title": "Lienzo nuevo",
+        "description": "Crea un lienzo en blanco para empezar a editar desde cero.",
+        "preset": "Tamaño del lienzo",
+        "custom": "Personalizado",
+        "width": "Ancho",
+        "height": "Alto",
+        "background": "Fondo",
+        "create": "Crear"
+      },
+      "createFolder": {
+        "newFolder": "Carpeta nueva",
+        "title": "Crear carpeta nueva",
+        "description": "Introduce un nombre para la carpeta nueva.",
+        "folderName": "Nombre de la carpeta",
+        "placeholder": "Introduce el nombre de la carpeta",
+        "success": "Carpeta {{folderName}} creada correctamente",
+        "errors": {
+          "nameRequired": "El nombre de la carpeta es obligatorio",
+          "invalidCharacters": "El nombre de la carpeta contiene caracteres no válidos",
+          "createFailed": "No se ha podido crear la carpeta"
+        }
+      },
+      "upload": {
+        "dropZone": {
+          "dropToUpload": "Suelta los archivos para subirlos",
+          "releaseToAdd": "Suelta para añadir los archivos a tu galería"
+        },
+        "progress": {
+          "uploadProgress": "Progreso de la subida",
+          "filesCompleted": "{{completed}} de {{total}} archivos completados",
+          "failed": "{{count}} con errores",
+          "uploading": "{{count}} subiendo",
+          "completed": "{{count}} completados"
+        },
+        "summary": {
+          "fileReady": "{{count}} archivo listo",
+          "filesReady": "{{count}} archivos listos",
+          "allFilesProcessed": "Todos los archivos procesados",
+          "pendingUpload": "{{count}} pendientes de subir",
+          "clear": "Borrar",
+          "upload": "Subir {{count}} archivo",
+          "uploadFiles": "Subir {{count}} archivos",
+          "uploading": "Subiendo..."
+        },
+        "uploadFiles": "Subir archivos",
+        "messages": {
+          "uploadSuccess": "Archivos subidos correctamente",
+          "uploadFailed": "No se ha podido subir {{fileName}}",
+          "fileExists": "No se puede subir {{fileName}} porque ya existe un archivo con este nombre",
+          "fileTooLarge": "No se puede subir {{fileName}} porque es demasiado grande para una subida única",
+          "previewWarmupTitle": "Se están preparando las vistas previas",
+          "previewWarmupHint": "Las vistas previas aún se están preparando y suelen aparecer en menos de 30 segundos.",
+          "previewWarmupDescription": "Tus archivos se han subido correctamente. Las vistas previas de las imágenes suelen aparecer en menos de 30 segundos.",
+          "spaceWarmupDescription": "Este espacio aún se está publicando. Las vistas previas de las imágenes suelen aparecer en menos de 30 segundos."
+        }
+      },
+      "contextMenu": {
+        "open": "Abrir",
+        "edit": "Editar",
+        "copyUrl": "Copiar URL",
+        "copyUrlSuccess": "URL copiada al portapapeles",
+        "download": "Descargar",
+        "rename": "Cambiar nombre",
+        "move": "Mover",
+        "delete": "Eliminar",
+        "copyUrlError": "No se ha podido copiar la URL",
+        "downloadError": "No se ha podido descargar"
+      },
+      "copyUrlDialog": {
+        "title": "Copiar URL",
+        "description": "Copia la URL de abajo. Hemos intentado copiarla automáticamente, pero puede que tengas que copiarla a mano.",
+        "closeButton": "Cerrar",
+        "copyButton": "Seleccionar y copiar"
+      },
+      "deleteImage": {
+        "title": "Eliminar imagen",
+        "description": "¿Seguro que quieres eliminar <1>{{imageName}}</1>?",
+        "success": "Se ha eliminado \"{{fileName}}\"",
+        "error": "No se ha podido eliminar la imagen"
+      },
+      "folderContextMenu": {
+        "delete": "Eliminar carpeta"
+      },
+      "deleteFolder": {
+        "title": "Eliminar carpeta",
+        "description": "¿Seguro que quieres eliminar <1>{{folderName}}</1>?",
+        "success": "Se ha eliminado \"{{folderName}}\"",
+        "error": "No se ha podido eliminar la carpeta"
+      },
+      "renameItem": {
+        "file": {
+          "title": "Cambiar nombre del archivo",
+          "description": "Introduce un nombre nuevo para este archivo."
+        },
+        "folder": {
+          "title": "Cambiar nombre de la carpeta",
+          "description": "Introduce un nombre nuevo para esta carpeta."
+        },
+        "newName": "Nombre nuevo",
+        "placeholder": "Introduce el nombre nuevo",
+        "rename": "Cambiar nombre",
+        "success": "Se ha cambiado el nombre de \"{{name}}\"",
+        "error": "No se ha podido cambiar el nombre ({{type}})",
+        "fileExists": "No se puede cambiar el nombre: ya existe un archivo o una carpeta con este nombre",
+        "errors": {
+          "nameRequired": "El nombre es obligatorio",
+          "invalidCharacters": "El nombre contiene caracteres no válidos",
+          "alreadyExists": "Ya existe un elemento ({{type}}) con este nombre"
+        }
+      },
+      "moveItem": {
+        "title": "Mover {{name}}",
+        "success": "Se ha movido {{name}} correctamente"
+      },
+      "moveItems": {
+        "title": "Mover elementos",
+        "dialogTitle": "Mover elementos ({{count}})",
+        "selectDestination": "Seleccionar carpeta de destino",
+        "selectDestinationDescription": "Elige adónde mover los elementos seleccionados.",
+        "select": "Seleccionar",
+        "move": "Mover",
+        "success": "Se han movido {{count}} elementos correctamente",
+        "partialSuccess": "{{success}} elementos movidos, {{failed}} con errores",
+        "partialSkipped": "{{success}} elementos movidos, {{skipped}} omitidos porque ya existen",
+        "partialMixed": "{{success}} elementos movidos, {{skipped}} omitidos, {{failed}} con errores",
+        "skipped_one": "Se ha omitido 1 duplicado",
+        "skipped_other": "Se han omitido {{count}} duplicados",
+        "skippedWithErrors": "{{skipped}} elementos omitidos, {{failed}} con errores",
+        "error": "No se han podido mover los elementos",
+        "fileExists": "No se puede mover: ya existe un archivo o una carpeta con este nombre en el destino",
+        "cannotMoveToSelf": "No se puede mover una carpeta dentro de sí misma",
+        "cannotMoveToSubfolder": "No se puede mover una carpeta a una de sus propias subcarpetas"
+      },
+      "dragDrop": {
+        "itemCount": "{{count}} elementos",
+        "moveSuccess": "Se han movido {{count}} elementos correctamente",
+        "partialSuccess": "Se han movido {{success}} elementos correctamente, {{failed}} con errores",
+        "partialSkipped": "Se han movido {{success}} elementos correctamente, {{skipped}} omitidos porque ya existen",
+        "partialMixed": "Se han movido {{success}} elementos correctamente, {{skipped}} omitidos, {{failed}} con errores",
+        "skipped_one": "Se ha omitido 1 duplicado",
+        "skipped_other": "Se han omitido {{count}} duplicados",
+        "skippedWithErrors": "{{skipped}} elementos omitidos, {{failed}} con errores",
+        "moveError": "No se han podido mover los elementos",
+        "fileExists": "No se puede mover: ya existe un archivo o una carpeta con este nombre en el destino"
+      },
+      "selection": {
+        "menu": "Menú de selección",
+        "title": "{{count}} elementos seleccionados",
+        "downloadAll": "Descargar todo",
+        "moveSelected": "Mover a carpeta",
+        "deleteSelected": "Eliminar seleccionados",
+        "clearSelection": "Quitar selección",
+        "downloadNotImplemented": "La descarga masiva estará disponible próximamente",
+        "deleteNotImplemented": "La eliminación masiva estará disponible próximamente"
+      },
+      "bulkDelete": {
+        "title": "Eliminar elementos seleccionados",
+        "description_one": "¿Seguro que quieres eliminar {{count}} elemento?",
+        "description_other": "¿Seguro que quieres eliminar {{count}} elementos?",
+        "confirmButton_one": "Eliminar {{count}} elemento",
+        "confirmButton_other": "Eliminar {{count}} elementos",
+        "success_one": "Se ha eliminado {{count}} elemento",
+        "success_other": "Se han eliminado {{count}} elementos",
+        "partialSuccess": "{{success}} elementos eliminados, {{failed}} con errores",
+        "error": "No se han podido eliminar los elementos seleccionados"
+      }
+    },
+    "profile": {
+      "title": "Cuenta",
+      "profileInformation": "Información del perfil",
+      "profileInformationDescription": "Actualiza la información del perfil de tu cuenta.",
+      "displayName": "Nombre visible",
+      "displayNameDescription": "Tu nombre público, visible en toda la aplicación.",
+      "displayNamePlaceholder": "Introduce tu nombre visible",
+      "email": "Correo electrónico",
+      "emailDescription": "Tu dirección de correo electrónico actual para iniciar sesión.",
+      "invalidEmail": "Introduce una dirección de correo electrónico válida.",
+      "noEmail": "No hay ninguna dirección de correo electrónico disponible",
+      "emailChangeManaged": "Por ahora, los cambios y la verificación del correo electrónico los gestiona tu proveedor de inicio de sesión.",
+      "pendingEmailNotice": "Pendiente de confirmación para {{email}}.",
+      "emailChangePending": "Cambio de correo electrónico solicitado.",
+      "emailVerified": "Correo electrónico verificado.",
+      "emailVerificationRequired": "Después de cambiar la dirección, hay que verificar el correo electrónico.",
+      "emailVerificationPending": "Hay que completar un paso de confirmación antes de usar el nuevo correo electrónico.",
+      "changeEmail": "Cambiar",
+      "changeEmailTitle": "Cambiar correo electrónico",
+      "changeEmailDescription": "Actualiza tu dirección de correo electrónico de inicio de sesión.",
+      "emailChangeHelp": "Mantendremos tu correo electrónico actual hasta que se confirme la nueva dirección.",
+      "emailChangeUnchanged": "Introduce una dirección de correo electrónico diferente para actualizar tu correo de inicio de sesión.",
+      "requestEmailChange": "Actualizar correo electrónico",
+      "emailChangeRequestedSuccess": "Cambio de correo electrónico solicitado correctamente",
+      "emailChangeRequestFailed": "No se ha podido solicitar el cambio de correo electrónico",
+      "emailAlreadyInUse": "Este correo electrónico ya está en uso",
+      "usernameDescription": "Se usa para iniciar sesión. Puede contener letras, números, guiones bajos y guiones.",
+      "usernamePlaceholder": "Introduce tu nombre de usuario",
+      "updateProfile": "Actualizar perfil",
+      "securitySettings": "Configuración de seguridad",
+      "securitySettingsDescription": "Gestiona la seguridad y la contraseña de tu cuenta.",
+      "loginMethods": "Métodos de inicio de sesión",
+      "signInMethod": "Método de inicio de sesión",
+      "signInMethodDescription": "Cómo te autenticas actualmente en esta cuenta.",
+      "signInMethodSummary": "Se usa para iniciar sesión en la cuenta.",
+      "loginMethodsSummary": "Se usa para iniciar sesión en la cuenta.",
+      "manage": "Gestionar",
+      "manageSignInTitle": "Gestionar métodos de inicio de sesión",
+      "manageSignInDescription": "Revisa los proveedores vinculados y quita los que ya no necesites.",
+      "googleSignIn": "Cuenta de Google conectada",
+      "unlinkNotAvailable": "Todavía no se pueden desvincular cuentas.",
+      "unlink": "Desvincular",
+      "unlinkProviderDescription": "Puedes desvincular un proveedor si te queda otro método de inicio de sesión disponible.",
+      "unlinkLastProviderWarning": "No puedes desvincular tu último método de inicio de sesión.",
+      "providerUnlinkedSuccess": "Proveedor desvinculado correctamente",
+      "providerUnlinkFailed": "No se ha podido desvincular el proveedor",
+      "noAuthProviders": "No hay proveedores de inicio de sesión vinculados.",
+      "noProviderEmail": "El proveedor no ha facilitado ningún correo electrónico",
+      "providers": {
+        "google": "Google"
+      },
+      "password": "Contraseña",
+      "passwordDescription": "Cambia la contraseña de tu cuenta",
+      "passwordNotSetDescription": "Esta cuenta todavía no tiene contraseña.",
+      "changePassword": "Cambiar contraseña",
+      "setPassword": "Establecer contraseña",
+      "changePasswordTitle": "Cambiar contraseña",
+      "changePasswordDescription": "Introduce tu contraseña actual y elige una nueva.",
+      "setPasswordTitle": "Establecer contraseña",
+      "setPasswordDescription": "Crea una contraseña para poder iniciar sesión también sin tu proveedor.",
+      "currentPassword": "Contraseña actual",
+      "currentPasswordPlaceholder": "Introduce tu contraseña actual",
+      "newPassword": "Nueva contraseña",
+      "newPasswordPlaceholder": "Introduce tu nueva contraseña",
+      "confirmPassword": "Confirmar nueva contraseña",
+      "confirmPasswordPlaceholder": "Confirma tu nueva contraseña",
+      "updatePassword": "Actualizar contraseña",
+      "profileUpdatedSuccess": "Perfil actualizado correctamente",
+      "passwordUpdatedSuccess": "Contraseña actualizada correctamente",
+      "updateProfileFailed": "No se ha podido actualizar el perfil",
+      "updatePasswordFailed": "No se ha podido actualizar la contraseña",
+      "usernameAlreadyInUse": "Este nombre de usuario ya está en uso",
+      "currentPasswordIncorrect": "La contraseña actual no es correcta",
+      "titleDescription": "Gestiona la información de tu cuenta, los métodos de inicio de sesión y la configuración de seguridad."
+    },
+    "admin": {
+      "title": "Administración",
+      "setup": "Configuración inicial",
+      "systemSettings": {
+        "title": "Configuración del sistema",
+        "description": "Configura las opciones de todo el sistema. Estas opciones solo están disponibles para los administradores.",
+        "fields": {
+          "homeTitle": {
+            "label": "Título de inicio",
+            "description": "Personaliza el título que se muestra para la página de inicio en la navegación y en la ruta de navegación"
+          },
+          "appTitle": {
+            "label": "Título de la aplicación",
+            "description": "Nombre personalizado de la aplicación que se muestra en la barra de navegación, en la pestaña del navegador y en todos los enlaces de marca (requiere licencia)"
+          },
+          "appUrl": {
+            "label": "URL de la aplicación",
+            "description": "URL que se abre cuando los usuarios hacen clic en el título de la aplicación (requiere licencia)"
+          },
+          "defaultLanguage": {
+            "label": "Idioma predeterminado",
+            "description": "Establece el idioma predeterminado de la aplicación"
+          },
+          "guestMode": {
+            "label": "Acceso público",
+            "description": "Permite que personas sin cuenta naveguen por esta galería. Los usuarios públicos no pueden subir, editar ni gestionar contenido."
+          },
+          "defaultSorting": {
+            "label": "Orden predeterminado de archivos",
+            "description": "Elige cómo se ordenan por defecto los archivos y las carpetas",
+            "sortBy": "Ordenar por",
+            "order": "Orden",
+            "options": {
+              "name": "Nombre",
+              "modifiedTime": "Fecha de modificación",
+              "ascending": "Ascendente",
+              "descending": "Descendente"
+            }
+          },
+          "showFileNames": {
+            "label": "Mostrar nombres de archivo",
+            "description": "Muestra por defecto los nombres de archivo en las miniaturas de la galería"
+          },
+          "videoThumbnailPosition": {
+            "label": "Posición de la miniatura de vídeo",
+            "description": "Elige de qué punto se extraen las miniaturas de los vídeos. El primer fotograma es lo más rápido. Las opciones de avance ayudan a obtener un fotograma más representativo y a evitar fotogramas negros.",
+            "options": {
+              "firstFrame": "Primer fotograma",
+              "seek1s": "Avanzar 1 segundo",
+              "seek3s": "Avanzar 3 segundos",
+              "seek5s": "Avanzar 5 segundos",
+              "seek10pct": "Avanzar al 10 %",
+              "seek25pct": "Avanzar al 25 %"
+            }
+          }
+        }
+      },
+      "storage": {
+        "title": "Configuración del almacenamiento",
+        "description": "Gestiona dónde se almacenan tus imágenes y archivos. Los cambios pueden requerir reiniciar el servidor.",
+        "storageType": "Tipo de almacenamiento",
+        "status": "Estado",
+        "configurationDetails": "Detalles de la configuración",
+        "configureStorage": "Configurar almacenamiento"
+      },
+      "welcome": "Te damos la bienvenida a Imagor Studio",
+      "setupDescription": "Vamos a configurar tu galería de imágenes en unos pocos pasos",
+      "createAdminAccount": "Crear cuenta de administrador",
+      "systemConfiguration": "Configuración del sistema",
+      "storageConfiguration": "Configuración del almacenamiento",
+      "username": "Nombre de usuario",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "createAccount": "Crear cuenta",
+      "skipForNow": "Omitir por ahora",
+      "next": "Siguiente",
+      "guestMode": "Acceso público",
+      "guestModeDescription": "Permite que personas sin cuenta naveguen por esta galería. Los usuarios públicos no pueden subir, editar ni gestionar contenido.",
+      "homeTitle": "Título de inicio",
+      "homeTitleDescription": "Personaliza el título que se muestra para la carpeta de inicio (raíz) en la galería",
+      "systemSettingsDescription": "Podrás cambiar esta configuración más adelante en el panel de administración",
+      "storageDescription": "Configura dónde se almacenarán tus imágenes",
+      "failedToCreateAccount": "No se ha podido crear la cuenta de administrador",
+      "failedToSaveSettings": "No se ha podido guardar la configuración",
+      "settingsUpdatedSuccess": "Configuración actualizada correctamente",
+      "storageConfiguredSuccess": "Almacenamiento configurado correctamente",
+      "storageConfiguredRestart": "Almacenamiento configurado correctamente. Reinicia el servidor para aplicar los cambios.",
+      "sections": {
+        "general": "General",
+        "storage": "Almacenamiento",
+        "imagor": "Imagor",
+        "license": "Licencia"
+      },
+      "sectionDescriptions": {
+        "general": "Configura las opciones de toda la plataforma. Estas opciones solo están disponibles para los administradores.",
+        "storage": "Configura el backend de almacenamiento predeterminado para los espacios gestionados por la plataforma.",
+        "imagor": "Configura los valores predeterminados de procesamiento de imágenes y de firma de URL de imagor para la plataforma.",
+        "license": "Gestiona tu clave de licencia y consulta tu plan actual."
+      }
+    },
+    "storage": {
+      "configureStorage": "Configurar almacenamiento",
+      "storageType": "Tipo de almacenamiento",
+      "storageTypeSelector": {
+        "fileStorageDescription": "Almacena las imágenes en el sistema de archivos local",
+        "s3StorageDescription": "Almacena las imágenes en Amazon S3 o en un almacenamiento en la nube compatible"
+      },
+      "advancedSettings": "Configuración avanzada",
+      "dirPermissionsDescription": "Permisos para crear directorios nuevos (formato octal, p. ej., 0755)",
+      "filePermissionsDescription": "Permisos para escribir archivos nuevos (formato octal, p. ej., 0644)",
+      "fileStorage": "Almacenamiento local",
+      "s3Storage": "Almacenamiento S3",
+      "fileStorageConfig": "Configuración del almacenamiento local",
+      "s3StorageConfig": "Configuración del almacenamiento S3",
+      "baseDir": "Directorio base",
+      "baseDirDescription": "Directorio del sistema de archivos donde se almacenarán las imágenes",
+      "directoryPermissions": "Permisos de directorios",
+      "filePermissions": "Permisos de archivos",
+      "bucketName": "Nombre del bucket",
+      "bucketNameRequired": "El nombre del bucket es obligatorio",
+      "bucketDescription": "Nombre del bucket de S3 donde se almacenarán las imágenes",
+      "region": "Región",
+      "regionDescription": "Región de AWS donde se encuentra tu bucket (p. ej., us-east-1, eu-west-1)",
+      "customEndpoint": "Endpoint personalizado",
+      "customEndpointDescription": "Endpoint de S3 personalizado para servicios compatibles con S3 (déjalo vacío para AWS S3)",
+      "forcePathStyle": "Forzar estilo de ruta",
+      "forcePathStyleDescription": "Actívalo para MinIO y LocalStack. La mayoría de los demás servicios compatibles con S3 funcionan mejor con esta opción desactivada.",
+      "accessKeyId": "ID de clave de acceso",
+      "accessKeyIdDescription": "ID de clave de acceso de AWS (déjalo vacío para usar roles de IAM o variables de entorno)",
+      "secretAccessKey": "Clave de acceso secreta",
+      "secretAccessKeyDescription": "Clave de acceso secreta de AWS (déjala vacía para usar roles de IAM o variables de entorno)",
+      "sessionToken": "Token de sesión",
+      "sessionTokenDescription": "Token de sesión de AWS (solo es necesario para credenciales temporales)",
+      "baseDirectory": "Directorio base",
+      "baseDirectoryDescription": "Prefijo opcional para todas las claves de objeto del bucket (p. ej., \"images/\")",
+      "testConfiguration": "Probar configuración",
+      "testConfigurationFirst": "Completa primero la configuración de {{storageType}}",
+      "testPassed": "La configuración del almacenamiento ha superado la prueba",
+      "testFailed": "La configuración del almacenamiento no ha superado la prueba",
+      "testError": "No se ha podido probar la configuración del almacenamiento",
+      "configurationSuccess": "Almacenamiento configurado correctamente",
+      "configurationError": "No se ha podido configurar el almacenamiento {{storageType}}",
+      "configurationOverridden": "La configuración del almacenamiento se gestiona mediante una configuración externa",
+      "baseDirRequired": "El directorio base es obligatorio",
+      "notConfigured": "Sin configurar",
+      "active": "Activo",
+      "s3Bucket": "Bucket de S3",
+      "endpoint": "Endpoint",
+      "takingEffect": "Configuración guardada. Los cambios pueden tardar hasta 1 minuto en aplicarse.",
+      "testConfigFirst": "Completa primero la configuración de {{storageType}}",
+      "storageTypeDescription": "Selecciona dónde se almacenarán las imágenes y los archivos",
+      "s3Requirements": {
+        "permissions": "El acceso al bucket debe permitir listar, leer, escribir y eliminar objetos.",
+        "cors": "Añade <1>{{origin}}</1> a los orígenes CORS permitidos de tu bucket y permite las subidas <2>PUT</2>.",
+        "appOriginFallback": "la URL de esta aplicación"
+      },
+      "validationErrors": {
+        "endpointUnreachable": "No se ha podido conectar con el endpoint de S3. Comprueba el nombre del bucket, la región y la URL del endpoint.",
+        "invalidAccessKey": "El formato del ID de clave de acceso no parece válido.",
+        "invalidRegion": "La región no parece válida. Comprueba el campo de región de S3.",
+        "accessDenied": "Se ha denegado el acceso. Comprueba los permisos del bucket y las credenciales.",
+        "authentication": "No se ha podido autenticar en S3. Comprueba el ID de clave de acceso y la clave de acceso secreta.",
+        "timeout": "Se ha agotado el tiempo de conexión con S3. Comprueba el nombre del bucket, la región, el endpoint y el acceso a la red.",
+        "cors": "Se ha bloqueado la subida desde el navegador. Comprueba la configuración CORS del bucket para la URL de esta aplicación."
+      }
+    },
+    "systemSettings": {
+      "settingOverridden": "Esta opción está anulada por el archivo de configuración o por una variable de entorno",
+      "licenseRequired": "Se necesita una licencia válida para usar esta opción"
+    },
+    "imagor": {
+      "imagorConfiguration": "Configuración de Imagor",
+      "imagorConfigurationDescription": "Configura las opciones de procesamiento de imágenes. Imagor se encarga de las transformaciones y optimizaciones de las imágenes.",
+      "secret": "Clave secreta",
+      "secretDescription": "Déjalo vacío y generaremos automáticamente una clave de firma segura.",
+      "signerType": "Tipo de firma",
+      "selectSignerType": "Selecciona el tipo de firma",
+      "signerTypeDescription": "Algoritmo hash usado para firmar las URL",
+      "signerTruncate": "Truncado de firma",
+      "signerTruncateDescription": "Acorta la firma de la URL a esta longitud en caracteres. Los valores más bajos acortan las URL, pero reducen la seguridad. Usa 0 para la firma completa.",
+      "configureImagor": "Configurar Imagor",
+      "configurationSuccess": "Imagor configurado correctamente",
+      "configurationError": "No se ha podido configurar Imagor",
+      "configurationOverridden": "La configuración de Imagor se gestiona mediante una configuración externa",
+      "configuredSuccess": "Imagor configurado correctamente",
+      "configurationDetails": "Detalles de la configuración",
+      "hasSecret": "Tiene secreto",
+      "takingEffect": "Configuración guardada. Los cambios pueden tardar hasta 1 minuto en aplicarse.",
+      "algorithmSha1": "SHA-1 — Heredado",
+      "algorithmSha256": "SHA-256 — Recomendado",
+      "algorithmSha512": "SHA-512 — Máxima seguridad"
+    },
+    "license": {
+      "licenseManagement": "Gestión de licencias",
+      "licenseManagementDescription": "Gestiona tu licencia de Imagor Studio y consulta la información de la licencia.",
+      "licenseType": "Tipo de licencia",
+      "status": "Estado",
+      "notLicensed": "Sin licencia",
+      "licensed": "Con licencia",
+      "configurationDetails": "Detalles de la licencia",
+      "licensedTo": "Titular de la licencia",
+      "activatedOn": "Fecha de activación",
+      "licenseKey": "Clave de licencia",
+      "updateLicense": "Actualizar licencia",
+      "activateLicense": "Activar licencia",
+      "configurationOverridden": "La configuración de la licencia se gestiona mediante una configuración externa",
+      "purchaseLicense": "Comprar licencia",
+      "supportDevelopment": "Apoyar el desarrollo",
+      "activationSuccess": "¡Gracias por tu apoyo! Licencia activada correctamente.",
+      "updateSuccess": "Licencia actualizada correctamente. Gracias por seguir apoyándonos.",
+      "activationError": "No se ha podido activar la licencia",
+      "unableToLoad": "No se ha podido cargar la información de la licencia",
+      "updateDialogDescription": "Introduce una clave de licencia nueva para actualizar tu licencia actual.",
+      "activateDialogDescription": "Introduce tu clave de licencia para activar Imagor Studio.",
+      "newLicenseKeyLabel": "Clave de licencia nueva",
+      "licenseKeyLabel": "Clave de licencia",
+      "newLicenseKeyDescription": "Pega aquí tu clave de licencia nueva. Sustituirá a tu licencia actual.",
+      "licenseKeyDescription": "Pega aquí tu clave de licencia para activar Imagor Studio.",
+      "licenseKeyRequired": "La clave de licencia es obligatoria",
+      "registerForLicense": "Registrar Imagor Studio",
+      "registerDescription": "Introduce tu clave de licencia para activar Imagor Studio.",
+      "supportTitle": "💝 Apoya Imagor Studio - del creador de imagor",
+      "creatorStory": "Servíamos millones de imágenes, pero necesitábamos mejores herramientas para gestionarlas y editarlas. Así que creamos Imagor Studio: de código abierto, autoalojado y fruto de años de desarrollo, desde vipsgen hasta imagor.",
+      "features": {
+        "virtualScrollingGallery": "Galería con desplazamiento virtual — explora miles de imágenes al instante, sin indexación ni esperas",
+        "imageEditing": "Edición de imágenes — composición multicapa y flujos de trabajo con plantillas que generan la URL al instante",
+        "dragAndDrop": "Gestión con arrastrar y soltar — sube, organiza y selecciona varios elementos para hacer operaciones en bloque",
+        "nonDestructiveWorkflow": "Flujo de trabajo no destructivo — los originales quedan intactos y todas las transformaciones se hacen mediante la URL"
+      },
+      "supportOngoingDevelopment": "Sin suscripciones. Sin dependencia de proveedores. Tu apoyo hace posible que el desarrollo continúe.",
+      "getEarlyBirdLicense": "Obtener licencia Early Bird (39 $)",
+      "licenseTypes": {
+        "early_bird": "Early Bird",
+        "personal": "Personal",
+        "commercial": "Comercial",
+        "enterprise": "Empresarial"
+      }
+    },
+    "users": {
+      "title": "Usuarios",
+      "description": "Gestiona las cuentas de usuario y los roles.",
+      "createUser": "Crear usuario",
+      "createNewUser": "Crear usuario nuevo",
+      "createUserDescription": "Añade un usuario nuevo al sistema. Podrá iniciar sesión con las credenciales proporcionadas.",
+      "formLabels": {
+        "displayName": "Nombre visible",
+        "username": "Nombre de usuario",
+        "password": "Contraseña",
+        "confirmPassword": "Confirmar contraseña",
+        "role": "Rol"
+      },
+      "editUser": "Editar usuario",
+      "editUserDescription": "Actualiza la información del usuario. Los cambios se aplicarán de inmediato.",
+      "updateUser": "Actualizar usuario",
+      "createUserButton": "Crear usuario",
+      "deactivateUser": "Desactivar usuario",
+      "reactivateUser": "Reactivar usuario",
+      "deactivateUserDescription": "¿Seguro que quieres desactivar a",
+      "deactivateUserWarning": "El usuario ya no podrá iniciar sesión",
+      "reactivateUserWarning": "El usuario podrá volver a iniciar sesión",
+      "searchPlaceholder": "Buscar usuarios por nombre o nombre de usuario...",
+      "noUsersFound": "No se han encontrado usuarios",
+      "showingUsers": "Mostrando {{filtered}} de {{total}} usuarios",
+      "tableHeaders": {
+        "name": "Nombre",
+        "username": "Nombre de usuario",
+        "role": "Rol",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo"
+      },
+      "roles": {
+        "user": "Usuario",
+        "admin": "Administrador"
+      },
+      "actions": {
+        "edit": "Editar",
+        "deactivate": "Desactivar",
+        "reactivate": "Reactivar"
+      },
+      "messages": {
+        "userCreatedSuccess": "Usuario creado correctamente",
+        "userUpdatedSuccess": "Usuario actualizado correctamente",
+        "userDeactivatedSuccess": "Usuario desactivado correctamente",
+        "userReactivatedSuccess": "Usuario reactivado correctamente",
+        "createUserFailed": "No se ha podido crear el usuario",
+        "updateUserFailed": "No se ha podido actualizar el usuario",
+        "deactivateUserFailed": "No se ha podido desactivar el usuario",
+        "reactivateUserFailed": "No se ha podido reactivar el usuario",
+        "usernameAlreadyExists": "Este nombre de usuario ya está en uso"
+      },
+      "placeholders": {
+        "enterDisplayName": "Introduce el nombre visible",
+        "enterUsername": "Introduce el nombre de usuario",
+        "enterPassword": "Introduce la contraseña",
+        "confirmPassword": "Confirma la contraseña"
+      }
+    },
+    "workspaceRequired": {
+      "eyebrow": "Se requiere acceso a una organización",
+      "title": "Has iniciado sesión con esta cuenta, pero todavía no tiene acceso a ninguna organización.",
+      "description": "Imagor Cloud necesita acceso a una organización para poder cargar la gestión de la cuenta y de los espacios.",
+      "invite": {
+        "title": "Únete con una invitación",
+        "description": "Abre el enlace de invitación después de iniciar sesión o, si la invitación original ha caducado, pide a quien te la envió que te mande una nueva."
+      },
+      "nextSteps": {
+        "title": "Qué hacer a continuación",
+        "description": "Crea una organización personal nueva para continuar o, si vas a trabajar dentro de otro equipo, acepta una invitación a una organización existente o a un espacio compartido."
+      },
+      "actions": {
+        "createOrganization": "Crear organización",
+        "creatingOrganization": "Creando organización...",
+        "createSuccess": "Organización creada",
+        "createError": "No se ha podido crear la organización",
+        "signOut": "Cerrar sesión"
+      }
+    },
+    "joinInvite": {
+      "eyebrow": "Invitación a una organización",
+      "spaceEyebrow": "Invitación a un espacio",
+      "heroTitle": "Elige cómo quieres unirte",
+      "heroDescription": "Usa esta invitación para unirte a una organización existente. Si te registras desde aquí, te unirás al espacio de trabajo al que te han invitado en lugar de crear una organización aparte.",
+      "spaceHeroDescription": "Usa esta invitación para unirte a un espacio compartido existente. Si te registras desde aquí, obtendrás acceso al espacio al que te han invitado sin que cambie tu pertenencia a tu organización principal.",
+      "formTitle": "Únete con una invitación",
+      "invitedTo": "Te han invitado a unirte a {{organization}}",
+      "organizationDescription": "Esta invitación se envió a {{email}} con el rol {{role}}.",
+      "spaceDescription": "Esta invitación se envió a {{email}} con el rol {{role}} para el espacio {{space}}.",
+      "googleAction": "Continuar con Google",
+      "emailAction": "Continuar con correo electrónico",
+      "secondaryHelp": "El inicio de sesión con Google usa la invitación directamente. El registro con correo electrónico verifica primero tu dirección y después te une a la organización a la que te han invitado.",
+      "spaceSecondaryHelp": "El inicio de sesión con Google usa la invitación directamente. El registro con correo electrónico verifica primero tu dirección y después te da acceso al espacio al que te han invitado.",
+      "loginInstead": "¿Ya tienes una cuenta? Inicia sesión",
+      "acceptingTitle": "Completando tu invitación",
+      "acceptingDescription": "Estamos añadiendo esta cuenta a la organización a la que te han invitado.",
+      "acceptFailedTitle": "No hemos podido completar esta invitación",
+      "acceptFailed": "Vuelve a abrir la invitación o inicia sesión con la cuenta invitada.",
+      "errors": {
+        "invalid": "Esta invitación ya no es válida. Pide una nueva a quien te la envió.",
+        "emailMismatch": "Esta invitación se envió a otra dirección de correo electrónico. Inicia sesión con la cuenta invitada.",
+        "orgConflict": "Esta cuenta ya pertenece a otra organización. Usa otra cuenta o abandona primero tu organización actual."
+      },
+      "invalidTitle": "Esta invitación no está disponible"
+    },
+    "spaces": {
+      "title": "Espacios",
+      "createSpace": "Crear espacio",
+      "createNewSpace": "Crear espacio nuevo",
+      "createSpaceDescription": "Crea un espacio de procesamiento de imágenes con su propio almacenamiento, configuración de entrega y controles de acceso.",
+      "editSpace": "Editar espacio",
+      "editSpaceDescription": "Actualiza la configuración del espacio. Los cambios se aplicarán de inmediato.",
+      "deleteSpace": "Eliminar espacio",
+      "deleteSpaceDescription": "¿Seguro que quieres eliminar permanentemente el espacio",
+      "createSpaceButton": "Crear espacio",
+      "updateSpaceButton": "Actualizar espacio",
+      "wizard": {
+        "stepIdentity": "Detalles del espacio",
+        "stepStorage": "Almacenamiento",
+        "next": "Siguiente",
+        "back": "Atrás"
+      },
+      "noSpacesFound": "Crea tu primer espacio de procesamiento de imágenes",
+      "noOrganizationTitle": "Crea una organización para empezar",
+      "noOrganizationBannerTitle": "Crea tu propia organización",
+      "noOrganizationBannerDescription": "Sigues teniendo acceso a los espacios compartidos, pero esta cuenta ya no tiene una organización personal. Crea una para recuperar tu propio espacio de trabajo y las funciones de administración.",
+      "noSpacesAvailable": "Todavía no hay espacios disponibles",
+      "description": "Procesa, entrega y gestiona imágenes por equipo, marca o entorno.",
+      "emptyDescription": "Pon en marcha tu primer espacio de procesamiento de imágenes para subidas, transformaciones y entrega.",
+      "emptyDescriptionNoOrganization": "Esta cuenta todavía no tiene una organización personal.",
+      "emptyDescriptionMember": "Todavía no tienes acceso a ningún espacio de procesamiento de imágenes.",
+      "settings": "Configuración",
+      "spaceCount": "{{count}} espacio(s)",
+      "openGallery": "Abrir galería",
+      "storageNotConfigured": "Sin configurar",
+      "storageTypeLabel": "Tipo de almacenamiento",
+      "credentialsEncrypted": "Las credenciales se cifran en reposo con AES-256 y nunca se muestran después de guardarlas.",
+      "storageType": {
+        "managed": "Almacenamiento alojado",
+        "s3": "Bucket S3"
+      },
+      "storageUsage": "{{size}} en uso",
+      "storageTypeDesc": {
+        "managed": "Se almacena en Imagor Cloud. No hace falta configurar ningún bucket.",
+        "s3": "Usa tu propio bucket compatible con S3."
+      },
+      "creationPreview": {
+        "appUrlLabel": "URL de la aplicación",
+        "processingHostLabel": "Host predeterminado"
+      },
+      "keyDescription": "Define la URL de tu espacio en la aplicación y su host de imagor dedicado. Puedes cambiarlo más adelante.",
+      "tableHeaders": {
+        "key": "Identificador de URL",
+        "name": "Nombre",
+        "storage": "Almacenamiento",
+        "actions": "Acciones"
+      },
+      "formLabels": {
+        "key": "Identificador de URL",
+        "name": "Nombre visible",
+        "storageType": "Tipo de almacenamiento",
+        "bucket": "Bucket",
+        "region": "Región",
+        "endpoint": "Endpoint",
+        "prefix": "Prefijo",
+        "accessKeyId": "ID de clave de acceso",
+        "secretKey": "Clave secreta",
+        "customDomain": "Dominio personalizado",
+        "imagorSecret": "Secreto de Imagor"
+      },
+      "placeholders": {
+        "name": "Mi espacio",
+        "selectStorageType": "Selecciona el tipo de almacenamiento",
+        "unchanged": "(sin cambios)"
+      },
+      "messages": {
+        "spaceCreatedSuccess": "Espacio creado correctamente",
+        "spaceUpdatedSuccess": "Espacio actualizado correctamente",
+        "spaceDeletedSuccess": "Espacio eliminado correctamente",
+        "leftSpaceSuccess": "Has abandonado el espacio compartido.",
+        "leftOrganizationSuccess": "Has abandonado la organización. Vuelve a iniciar sesión para continuar.",
+        "createSpaceFailed": "No se ha podido crear el espacio",
+        "createSpaceForbidden": "No tienes permiso para crear espacios.",
+        "keyAlreadyTaken": "El identificador de URL ya está en uso",
+        "spaceLimitReached": "Tu plan actual ha alcanzado su límite de espacios.",
+        "overPlanLimit": "Por encima del límite del plan",
+        "updateSpaceFailed": "No se ha podido actualizar el espacio",
+        "deleteSpaceFailed": "No se ha podido eliminar el espacio",
+        "deleteSpaceForbidden": "Solo los administradores de la organización pueden eliminar este espacio.",
+        "leaveSpaceFailed": "No se ha podido abandonar el espacio compartido",
+        "leaveOrganizationFailed": "No se ha podido abandonar la organización",
+        "cannotLeaveOrganizationAsOwner": "Transfiere la propiedad de la organización antes de abandonarla.",
+        "cannotLeaveOrganizationAsLastMember": "No puedes abandonar la organización si eres su último miembro."
+      },
+      "plan": {
+        "free": "Gratis",
+        "trial": "Prueba",
+        "starter": "Starter",
+        "pro": "Pro",
+        "team": "Team"
+      },
+      "validation": {
+        "keyFormat": "El identificador de URL solo puede contener letras minúsculas, números y guiones"
+      },
+      "stats": {
+        "totalSpaces": "Total de espacios",
+        "managedStorage": "Almacenamiento gestionado",
+        "externalStorage": "Almacenamiento externo",
+        "yourSpaces": "Tus espacios",
+        "sharedWithYou": "Compartidos contigo",
+        "spaceQuota": "Cuota de espacios",
+        "unlimited": "Ilimitado"
+      },
+      "usageSummaryTitle": "Uso del plan",
+      "manageOrganization": "Organización",
+      "leaveOrganization": "Abandonar la organización",
+      "leaveOrganizationTitle": "Abandonar la organización",
+      "leaveOrganizationDescription": "¿Quieres abandonar tu organización actual? Perderás el acceso a sus espacios compartidos y tendrás que volver a iniciar sesión.",
+      "usageSummaryMeta": "{{owned}} propios · {{shared}} compartidos",
+      "currentBillingPeriod": "{{start}} - {{end}}",
+      "overLimit": {
+        "title": "Tu organización ha superado los límites de su plan actual",
+        "description": "Algunas acciones seguirán bloqueadas hasta que se reduzca el uso o cambie el plan. Revisa la facturación para ver los detalles del plan y los siguientes pasos.",
+        "reviewBilling": "Revisar facturación",
+        "messages": {
+          "spaces": "Puedes conservar los espacios existentes, pero no podrás crear más hasta que el uso vuelva a estar dentro del plan.",
+          "storage": "Los archivos existentes siguen disponibles, pero las nuevas subidas gestionadas están bloqueadas mientras el almacenamiento supere el límite.",
+          "processing": "Por ahora, el procesamiento en producción no se pausa automáticamente, pero esta organización ha superado lo que permite el plan actual en este periodo de facturación."
+        }
+      },
+      "processingUsage": "{{count}} transformaciones",
+      "usage": {
+        "spaces": "Espacios",
+        "hostedStorage": "Almacenamiento alojado",
+        "processing": "Procesamiento",
+        "overLimit": "Límite superado"
+      },
+      "configure": "Configurar",
+      "startDescription": "Puedes personalizar el almacenamiento, la entrega y el acceso a medida que crezcas.",
+      "startDescriptionNoOrganization": "Crea ahora una organización personal y vuelve aquí para crear espacios o recibir acceso a ellos.",
+      "startDescriptionMember": "Pide a un administrador de la organización que cree un espacio o que comparta contigo uno existente.",
+      "sharedLabel": "Compartido",
+      "leaveSpace": "Abandonar",
+      "leaveSpaceDescription": "¿Quieres abandonar el espacio compartido",
+      "access": {
+        "ownedByYou": "De tu propiedad",
+        "sharedWithYou": "Compartido contigo"
+      }
+    },
+    "billing": {
+      "title": "Facturación",
+      "titleDescription": "Elige el plan que mejor se adapte a cómo tu equipo almacena, procesa y entrega imágenes.",
+      "overLimit": {
+        "title": "Tu organización ha superado los límites de su plan actual",
+        "description": "Algunas acciones seguirán bloqueadas hasta que se reduzca el uso o cambie el plan. Revisa la facturación para ver los detalles del plan y los siguientes pasos.",
+        "messages": {
+          "spaces": "Puedes conservar los espacios existentes, pero no podrás crear más hasta que el uso vuelva a estar dentro del plan.",
+          "storage": "Los archivos existentes siguen disponibles, pero las nuevas subidas gestionadas están bloqueadas mientras el almacenamiento supere el límite.",
+          "processing": "Por ahora, el procesamiento en producción no se pausa automáticamente, pero esta organización ha superado lo que permite el plan actual en este periodo de facturación."
+        }
+      },
+      "currentPlanBadge": "Actual",
+      "selectedPlanBadge": "Seleccionado",
+      "manageBilling": "Gestionar facturación",
+      "manageBillingTarget": "Cambiar a {{plan}}",
+      "selectPlan": "Elegir plan",
+      "selectPlanTarget": "Elegir {{plan}}",
+      "priceSuffix": "/mes",
+      "unlimited": "Ilimitado",
+      "customDomainsIncluded": "Incluidos: {{count}}",
+      "customDomainsUnavailable": "No incluidos",
+      "status": {
+        "trialing": "En periodo de prueba",
+        "active": "Activo",
+        "past_due": "Pago vencido",
+        "canceled": "Cancelado"
+      },
+      "usage": {
+        "spaces": "Espacios",
+        "hostedStorage": "Almacenamiento alojado",
+        "processing": "Procesamiento"
+      },
+      "planMetrics": {
+        "spaces": "Espacios incluidos",
+        "hostedStorage": "Almacenamiento alojado",
+        "processing": "Transformaciones mensuales",
+        "customDomains": "Dominios personalizados"
+      },
+      "allPlansInclude": "Todos los planes incluyen colaboración en equipo y uso de tu propio almacenamiento S3/R2.",
+      "planDescriptions": {
+        "starter": "Para equipos que ponen en marcha un flujo de imágenes en producción, con almacenamiento alojado incluido.",
+        "pro": "Para equipos en crecimiento que gestionan varios flujos de trabajo de imágenes con mayor volumen.",
+        "team": "Para organizaciones que gestionan operaciones de imágenes compartidas entre varios equipos o marcas."
+      },
+      "portalManaged": {
+        "refreshAction": "Actualizar ahora"
+      },
+      "portalSync": {
+        "title": "Estamos sincronizando tus últimos cambios de facturación",
+        "syncingDescription": "Se ha enviado tu actualización de Stripe. Estamos actualizando el estado más reciente de la suscripción.",
+        "waitingTitle": "Has vuelto a la facturación",
+        "waitingDescription": "Hemos comprobado si hay datos de facturación actualizados. Si has cambiado algo que todavía no aparece aquí, puedes volver a actualizar dentro de un momento.",
+        "successUpgradeTitle": "Tu mejora de plan ya está sincronizada",
+        "successDowngradeTitle": "Tu cambio a un plan inferior ya está sincronizado",
+        "successUpdatedTitle": "Tus cambios de facturación ya están sincronizados",
+        "successUpgradeDescription": "Esta organización ha pasado de {{previousPlan}} a {{plan}}. Estado de facturación: {{status}}.",
+        "successDowngradeDescription": "Esta organización ha pasado de {{previousPlan}} a {{plan}}. Estado de facturación: {{status}}.",
+        "successUpdatedDescription": "Esta organización tiene ahora el plan {{plan}}. Estado de facturación: {{status}}."
+      },
+      "danger": {
+        "title": "Zona de peligro",
+        "deleteTitle": "Eliminar organización",
+        "deleteDescription": "Elimina permanentemente esta organización y revoca el acceso restante a nivel de organización vinculado a ella.",
+        "deleteChecklist": "Antes de eliminarla, borra todos los espacios. Si aún tienes una suscripción de pago activa, cancela primero la facturación.",
+        "deleteButton": "Eliminar organización",
+        "confirmTitle": "Eliminar organización",
+        "confirmDescription": "¿Quieres eliminar {{name}} permanentemente? Esta acción no se puede deshacer y después tendrás que volver a iniciar sesión.",
+        "organizationFallback": "esta organización",
+        "messages": {
+          "deleted": "Organización eliminada. Vuelve a iniciar sesión para continuar.",
+          "deleteFailed": "No se ha podido eliminar la organización"
+        },
+        "errors": {
+          "ownerRequired": "Solo el propietario actual de la organización puede eliminarla.",
+          "deleteSpacesFirst": "Elimina todos los espacios antes de eliminar la organización.",
+          "cancelBillingFirst": "Cancela la facturación de pago antes de eliminar la organización."
+        }
+      },
+      "messages": {
+        "checkoutFailed": "No se ha podido iniciar el pago",
+        "portalFailed": "No se ha podido abrir el portal de facturación",
+        "refreshFailed": "No se ha podido actualizar el estado de facturación"
+      }
+    },
+    "organizationMembers": {
+      "title": "Miembros",
+      "titleDescription": "Gestiona el acceso a esta organización y a sus espacios compartidos.",
+      "addTitle": "Añadir personas",
+      "addDescription": "Añade personas por correo electrónico o nombre de usuario. Las cuentas existentes se añaden al instante. Las personas nuevas reciben una invitación por correo electrónico.",
+      "identifierPlaceholder": "correo electrónico o nombre de usuario",
+      "addButton": "Añadir",
+      "listTitle": "Personas con acceso",
+      "pendingTitle": "Invitaciones pendientes",
+      "listDescription": "Personas con acceso a {{name}}.",
+      "listDescriptionFallback": "Personas con acceso a esta organización.",
+      "pendingDescription": "Invitaciones enviadas que todavía no se han aceptado.",
+      "pendingEmpty": "No hay invitaciones pendientes en este momento.",
+      "pendingExpiresAt": "Caduca el {{expiresAt}}",
+      "empty": "Todavía nadie tiene acceso",
+      "emptyDescription": "Añade aquí a tus compañeros de equipo para darles acceso a la organización y a sus espacios compartidos.",
+      "listHeaders": {
+        "member": "Miembro",
+        "action": "Acción"
+      },
+      "actionsTitle": "Acciones",
+      "transferOwnership": "Transferir la propiedad",
+      "promoteToAdmin": "Cambiar a administrador",
+      "changeToMember": "Cambiar a miembro",
+      "removeMember": "Eliminar miembro",
+      "cancelInvite": "Cancelar invitación",
+      "removeTitle": "Eliminar miembro",
+      "removeDescription": "¿Quieres eliminar a {{name}} de esta organización? Perderá el acceso heredado de la organización a los espacios compartidos.",
+      "transferTitle": "Transferir la propiedad de la organización",
+      "transferDescription": "¿Quieres transferir la propiedad de la organización a {{name}}? Seguirás en la organización como administrador.",
+      "youBadge": "Tú",
+      "roles": {
+        "owner": "Propietario",
+        "admin": "Administrador",
+        "member": "Miembro"
+      },
+      "messages": {
+        "identifierRequired": "Introduce un nombre de usuario o una dirección de correo electrónico.",
+        "identifierInvalidEmail": "Introduce una dirección de correo electrónico válida.",
+        "memberAdded": "Miembro añadido.",
+        "inviteSent": "Correo de invitación enviado.",
+        "inviteCanceled": "Invitación cancelada.",
+        "inviteCancelFailed": "No se ha podido cancelar la invitación",
+        "memberAddFailed": "No se ha podido añadir al miembro",
+        "roleUpdated": "Rol del miembro actualizado.",
+        "roleUpdateFailed": "No se ha podido actualizar el rol del miembro",
+        "memberRemoved": "Miembro eliminado.",
+        "memberRemoveFailed": "No se ha podido eliminar al miembro",
+        "ownershipTransferred": "Propiedad de la organización transferida.",
+        "ownershipTransferFailed": "No se ha podido transferir la propiedad de la organización",
+        "errors": {
+          "otherOrganization": "Esta cuenta ya pertenece a otra organización.",
+          "alreadyMember": "Esta cuenta ya es miembro de tu organización.",
+          "cannotRemoveYourself": "No puedes eliminarte de la organización.",
+          "cannotRemoveOwner": "No puedes eliminar al propietario de la organización.",
+          "cannotRemoveLastMember": "No puedes eliminar al último miembro de la organización.",
+          "mustBeCurrentOwner": "Solo el propietario actual de la organización puede transferir la propiedad.",
+          "targetMustAlreadyBeMember": "La propiedad solo se puede transferir a un miembro existente de la organización."
+        }
+      }
+    },
+    "organizationOverview": {
+      "title": "Organización",
+      "titleDescription": "Revisa tu plan, el uso y la administración de la organización en un solo lugar.",
+      "summaryDescription": "Un vistazo rápido al estado actual de la organización.",
+      "overLimit": {
+        "title": "Tu organización ha superado los límites de su plan actual",
+        "description": "Los espacios existentes siguen funcionando y, por ahora, el procesamiento en producción no se pausa automáticamente, pero algunas acciones seguirán bloqueadas hasta que se reduzca el uso o se mejore el plan.",
+        "messages": {
+          "spaces": "Puedes conservar los espacios existentes, pero no podrás crear más hasta que el uso vuelva a estar dentro del plan.",
+          "storage": "Los archivos existentes siguen disponibles, pero las nuevas subidas gestionadas están bloqueadas mientras el almacenamiento supere el límite.",
+          "processing": "Por ahora, el procesamiento en producción no se pausa automáticamente, pero esta organización ha superado lo que permite el plan actual en este periodo de facturación."
+        }
+      },
+      "usageTitle": "Uso actual",
+      "usageDescription": "El uso se restablece en cada periodo de facturación y se aplica a toda la organización.",
+      "unlimited": "Ilimitado",
+      "notAvailable": "No disponible",
+      "summaryCards": {
+        "planLabel": "Plan actual",
+        "planDescription": "El nivel de suscripción que se aplica actualmente a esta organización.",
+        "statusLabel": "Estado del plan",
+        "statusDescription": "Estado del ciclo de facturación que se usa para aplicar el acceso y los límites.",
+        "organizationLabel": "Organización",
+        "organizationDescription": "La organización propietaria de los espacios, la facturación y el acceso compartido.",
+        "billingPeriodLabel": "Periodo de facturación",
+        "billingPeriodDescription": "El periodo de cómputo actual para los límites basados en el uso."
+      },
+      "usage": {
+        "spaces": "Espacios",
+        "hostedStorage": "Almacenamiento alojado",
+        "processing": "Procesamiento",
+        "periodScoped": "El uso se calcula sobre el periodo de facturación actual."
+      },
+      "actions": {
+        "reviewBilling": "Revisar facturación",
+        "manageMembers": "Gestionar miembros"
+      }
+    },
+    "spacePropagation": {
+      "title": "Los cambios se están propagando",
+      "description": "Los cambios suelen aplicarse en menos de 30 segundos.",
+      "createDescription": "El nuevo espacio se está publicando en los nodos de procesamiento y suele estar listo en menos de 30 segundos.",
+      "deleteDescription": "La eliminación del espacio se está propagando a los nodos de procesamiento y puede tardar hasta 30 segundos en aplicarse por completo."
+    },
+    "spaceSettings": {
+      "spaceSettings": "Configuración del espacio",
+      "backToSpaces": "Volver a espacios",
+      "openGallery": "Abrir galería",
+      "sections": {
+        "general": "General",
+        "storage": "Almacenamiento",
+        "dangerZone": "Zona de peligro",
+        "members": "Acceso",
+        "imagor": "Imagor"
+      },
+      "gallery": {
+        "description": "Personaliza la visualización y el comportamiento de la galería en este espacio. La configuración del espacio prevalece sobre los valores predeterminados de la plataforma."
+      },
+      "branding": {
+        "title": "Marca",
+        "description": "Título y enlace de la aplicación que se muestran en el editor para este espacio. Sustituye al valor predeterminado de la plataforma (requiere licencia).",
+        "appTitle": "Título de la aplicación del editor",
+        "appTitleDescription": "Título personalizado de la aplicación que se muestra en la barra de navegación al explorar este espacio. Sustituye al valor predeterminado de la plataforma (requiere licencia).",
+        "appUrl": "URL de la aplicación del editor",
+        "appUrlDescription": "URL que se abre al hacer clic en el título de la aplicación mientras exploras este espacio."
+      },
+      "general": {
+        "description": "Información básica sobre este espacio.",
+        "identity": "Identidad",
+        "access": "Acceso",
+        "experience": "Experiencia",
+        "name": "Nombre visible",
+        "nameDescription": "El nombre que se muestra en la navegación y en la lista de espacios.",
+        "updateForbidden": "No tienes permiso para gestionar este espacio.",
+        "customDomain": "Dominio personalizado",
+        "customDomainDescription": "Dominio personalizado para este espacio. Si lo dejas vacío, se servirá en {{spaceKey}}.imagor.app.",
+        "customDomainCurrentLabel": "Nombre de host actual",
+        "customDomainDefaultLabel": "Host predeterminado",
+        "customDomainActiveDescription": "Este nombre de host está activo para las URL de imagen generadas.",
+        "customDomainComingSoonCompact": "Próximamente en los planes Pro.",
+        "customDomainFeedbackRequestedCompact": "Interés registrado{{dateSuffix}}.",
+        "customDomainFeedbackSaved": "Gracias. Hemos registrado tu interés en la beta de dominios personalizados.",
+        "customDomainFeedbackUpdateButton": "Actualizar interés",
+        "customDomainFeedbackButtonCompact": "Avisarme",
+        "saved": "Configuración general guardada"
+      },
+      "storage": {
+        "description": "Consulta la configuración de almacenamiento de este espacio.",
+        "managedTitle": "Almacenamiento alojado",
+        "managedDescription": "Tus archivos se guardan en Imagor Cloud. Esta opción de almacenamiento se define al crear el espacio y no se puede cambiar después.",
+        "bucket": "Bucket",
+        "region": "Región",
+        "bucketLocked": "El bucket, la región y el prefijo de ruta se fijan al crear el espacio y no se pueden cambiar.",
+        "endpoint": "Endpoint",
+        "endpointDescription": "URL de endpoint personalizada compatible con S3. Déjala vacía para usar AWS S3.",
+        "prefix": "Prefijo de ruta",
+        "prefixDescription": "Prefijo de ruta opcional dentro del bucket (p. ej., media/).",
+        "accessKeyId": "ID de clave de acceso",
+        "accessKeyIdDescription": "Déjalo vacío para conservar las credenciales actuales.",
+        "secretKey": "Clave de acceso secreta",
+        "secretKeyDescription": "Déjala vacía para conservar las credenciales actuales.",
+        "urlSigning": "Firma de URL",
+        "urlSigningDescription": "Firma HMAC para generar de forma segura las URL de transformación de imagor.",
+        "imagorSecret": "Secreto de firma",
+        "imagorSecretDescription": "Se usa para firmar las URL de transformación de imagor. Déjalo vacío para conservar el secreto actual.",
+        "signerAlgorithm": "Algoritmo de firma",
+        "signerAlgorithmDescription": "Algoritmo HMAC que se usa para firmar las URL de transformación.",
+        "signerTruncate": "Truncado de firma",
+        "signerTruncateDescription": "Acorta la firma de la URL a esta longitud en caracteres. Los valores más bajos acortan las URL, pero reducen la seguridad. Usa 0 para la firma completa.",
+        "saved": "Credenciales de almacenamiento guardadas"
+      },
+      "danger": {
+        "deleteTitle": "Eliminar este espacio",
+        "deleteDescription": "Una vez eliminado, toda la configuración de este espacio se borrará de forma permanente. Los archivos de tu bucket de S3 no se verán afectados.",
+        "deleteButton": "Eliminar espacio"
+      },
+      "members": {
+        "description": "Gestiona el acceso a este espacio.",
+        "addLabel": "Añadir miembro",
+        "usernamePlaceholder": "Nombre de usuario",
+        "roleLabel": "Rol",
+        "addButton": "Añadir directamente",
+        "tableHeaders": {
+          "member": "Miembro",
+          "role": "Rol",
+          "action": "Acción"
+        },
+        "inviteDescription": "Comparte por correo electrónico. Los usuarios existentes obtienen acceso al instante, aunque pertenezcan a otra organización. Las personas nuevas siguen recibiendo una invitación por correo electrónico.",
+        "addExistingDescription": "O añade rápidamente a alguien que ya forme parte de tu organización.",
+        "emailPlaceholder": "nombre@example.com",
+        "sendInviteButton": "Compartir",
+        "inviteHelp": "Las cuentas existentes se añaden a este espacio de inmediato. Las personas nuevas tienen que aceptar una invitación por correo electrónico para obtener acceso.",
+        "inviteErrors": {
+          "required": "Introduce una dirección de correo electrónico.",
+          "invalidEmail": "Introduce una dirección de correo electrónico válida.",
+          "alreadyHasAccess": "Esta persona ya tiene acceso a este espacio.",
+          "notConfigured": "Las invitaciones por correo electrónico aún no están configuradas.",
+          "unavailable": "La opción de compartir no está disponible en este despliegue.",
+          "default": "No se ha podido compartir este espacio en este momento. Inténtalo de nuevo."
+        },
+        "memberPlaceholder": "Elige un compañero de equipo",
+        "memberPlaceholderEmpty": "Todos los miembros de tu organización ya tienen acceso",
+        "sharedTitle": "Miembros de la organización",
+        "sharedDescription": "Heredado de tu organización.",
+        "sharedManageHint": "Gestiónalo en el acceso de la organización.",
+        "emptyDescription": "Añade a alguien como invitado o asigna un rol en el espacio.",
+        "accessLabel": "Acceso directo",
+        "accessDescription": "Invitados y roles adicionales del espacio.",
+        "addSuccess": "Miembro añadido correctamente.",
+        "inviteSent": "Correo de invitación enviado.",
+        "roleUpdated": "Rol actualizado.",
+        "removeSuccess": "Miembro eliminado.",
+        "removeSelfDisabled": "Tú",
+        "removeSelfNotAllowed": "No puedes eliminarte de este espacio.",
+        "empty": "Aún no hay acceso directo.",
+        "pendingTitle": "Invitaciones pendientes",
+        "listHeaders": {
+          "member": "Miembro",
+          "action": "Acción"
+        },
+        "pendingHeaders": {
+          "email": "Correo electrónico",
+          "role": "Rol",
+          "expires": "Caduca"
+        },
+        "removeTitle": "Quitar acceso directo",
+        "removeDescription": "¿Quitar el acceso directo de {{name}}? Los miembros de la organización conservarán su acceso heredado.",
+        "roleSectionLabel": "Cambiar rol",
+        "promoteToManager": "Cambiar a administrador",
+        "changeToMember": "Cambiar a miembro",
+        "roles": {
+          "owner": "Propietario",
+          "admin": "Administrador",
+          "spaceManager": "Administrador",
+          "member": "Miembro"
+        }
+      },
+      "placeholders": {
+        "unchanged": "(déjalo vacío para conservar el valor actual)"
+      },
+      "imagor": {
+        "description": "Configura imagor para este espacio.",
+        "media": "Multimedia",
+        "mediaDescription": "Controla cómo se generan las miniaturas de vídeo en este espacio.",
+        "urlSigning": "Firma de URL",
+        "urlSigningDescription": "La mayoría de los espacios pueden usar el valor predeterminado del espacio de trabajo. Define un secreto personalizado solo si este espacio tiene que firmar las URL de imagor de otra forma.",
+        "urlSigningSecret": "Secreto de firma de URL",
+        "workspaceDefaultDescription": "Este espacio usa actualmente el secreto de firma predeterminado del espacio de trabajo.",
+        "customSecretConfiguredDescription": "Este espacio tiene configurado un secreto de firma personalizado. Los secretos almacenados no se pueden mostrar después de guardarlos.",
+        "setCustomSecret": "Definir secreto",
+        "replaceCustomSecret": "Sustituir secreto",
+        "useWorkspaceDefault": "Restablecer valor predeterminado",
+        "resetConfirmTitle": "¿Restablecer la firma personalizada?",
+        "resetConfirmDescription": "Este espacio dejará de usar su secreto de firma personalizado y volverá al valor predeterminado del espacio de trabajo. Puede que haya que actualizar lo que dependa de las URL firmadas específicas de este espacio.",
+        "customSigningDialogTitle": "Firma de URL personalizada",
+        "customSigningDialogDescription": "Define un secreto de firma personalizado y cambia cómo firma este espacio las URL de imagor. Los secretos guardados no se pueden volver a ver.",
+        "customSigningDialogUpdateDescription": "Deja el secreto vacío para conservar el actual o introduce un valor nuevo para sustituirlo. Los secretos guardados no se pueden volver a ver.",
+        "secretDialogFieldDescription": "Introduce tu propio secreto o genera uno aquí. No podrás volver a verlo después de guardarlo.",
+        "secretDialogSignerAlgorithmDescription": "Elige el algoritmo HMAC que usará este espacio para firmar las URL de imagor. SHA-256 es el valor predeterminado recomendado.",
+        "secretDialogSignerTruncateDescription": "Elige cuántos caracteres de la firma quieres conservar. Usa 0 para la firma completa.",
+        "generateSecret": "Generar secreto",
+        "copySecret": "Copiar secreto",
+        "secretCopied": "Secreto copiado al portapapeles",
+        "secretCopyFailed": "No se ha podido copiar el secreto",
+        "showSecret": "Mostrar",
+        "hideSecret": "Ocultar",
+        "signerAlgorithm": "Algoritmo de firma",
+        "signerAlgorithmPreviewDescription": "Algoritmo actual de la firma personalizada de este espacio.",
+        "signerAlgorithmDescription": "Algoritmo HMAC que se usa para firmar las URL de transformación cuando este espacio usa un secreto personalizado.",
+        "signerAlgorithmInheritedDescription": "Este espacio heredará el algoritmo de firma del espacio de trabajo mientras use el secreto predeterminado del espacio de trabajo.",
+        "inheritedFromWorkspaceDefault": "Heredado del valor predeterminado del espacio de trabajo",
+        "algorithmSha1": "SHA-1",
+        "algorithmSha256": "SHA-256",
+        "algorithmSha512": "SHA-512",
+        "signerTruncate": "Truncado de firma",
+        "signerTruncatePreviewDescription": "Longitud actual de la firma personalizada de este espacio.",
+        "signerTruncateDescription": "Acorta la firma de la URL a esta longitud en caracteres. Los valores más bajos acortan las URL, pero reducen la seguridad. Usa 0 para la firma completa.",
+        "signerTruncateInheritedDescription": "Este espacio heredará la longitud de firma del espacio de trabajo mientras use el secreto predeterminado del espacio de trabajo.",
+        "corsOrigins": "Orígenes CORS adicionales",
+        "corsOriginsDescription": "Permite que otros orígenes del navegador accedan a las respuestas de imagor de este espacio.",
+        "corsOriginsHelp": "Introduce una lista de orígenes separados por comas, por ejemplo: https://editor.customer.test, https://cms.customer.test",
+        "corsOriginsPlaceholder": "https://editor.customer.test, https://cms.customer.test",
+        "saved": "Configuración de seguridad guardada",
+        "customSecretSaved": "Secreto de firma de URL personalizado guardado",
+        "workspaceDefaultRestored": "Secreto de firma predeterminado del espacio de trabajo restaurado",
+        "customSecretRequired": "Introduce un secreto de firma de URL."
+      }
+    }
+  },
+  "components": {
+    "folderTree": {
+      "folders": "Carpetas",
+      "home": "Inicio",
+      "noFoldersFound": "No se han encontrado carpetas",
+      "loadFolderError": "No se ha podido cargar el contenido de la carpeta"
+    },
+    "filePicker": {
+      "title": "Seleccionar archivo",
+      "description": "Elige un archivo de tu galería",
+      "select": "Seleccionar",
+      "resetSelection": "Restablecer selección",
+      "selectedCount": "{{count}} seleccionados",
+      "noFiles": "No se han encontrado archivos en esta carpeta",
+      "loadFilesError": "No se han podido cargar los archivos"
+    },
+    "licenseBadge": {
+      "unregistered": "Sin registrar"
+    }
+  },
+  "home": "Inicio",
+  "posts": "Publicaciones",
+  "categories": "Categorías",
+  "tags": "Etiquetas",
+  "users": "Usuarios",
+  "account": "Cuenta",
+  "signOut": "Cerrar sesión",
+  "allPosts": "Todas las publicaciones",
+  "newPost": "Nueva publicación",
+  "profile": "Perfil",
+  "dashboard": "Panel",
+  "footerText": "Creado sobre {{uiLink}}. El código fuente está disponible en {{githubLink}}.",
+  "placeholderImageAttribution": "Diseñado por Freepik",
+  "switchTheme": "Cambiar tema",
+  "close": "Cerrar",
+  "snooze": "Posponer",
+  "replyAll": "Responder a todos",
+  "forward": "Reenviar",
+  "more": "Más",
+  "markAsUnread": "Marcar como no leído",
+  "starThread": "Destacar conversación",
+  "addLabel": "Añadir etiqueta",
+  "muteThread": "Silenciar conversación",
+  "imageInformation": "Información de la imagen",
+  "noImageInfo": "No hay información disponible sobre la imagen.",
+  "imageEditor": {
+    "newCanvas": "Lienzo nuevo",
+    "page": {
+      "back": "Volver",
+      "controls": "Controles",
+      "resetAll": "Restablecer todo",
+      "download": "Descargar",
+      "copyUrl": "Copiar URL",
+      "copyUrlSuccess": "URL copiada al portapapeles",
+      "retry": "Reintentar",
+      "failedToDownload": "No se ha podido descargar la imagen",
+      "undo": "Deshacer",
+      "redo": "Rehacer",
+      "confirmLeave": "¿Salir del editor?",
+      "confirmLeaveMessage": "¿Seguro que quieres volver?",
+      "leave": "Salir",
+      "stay": "Quedarme",
+      "showHideControls": "Mostrar/ocultar controles",
+      "statusBar": {
+        "endpointFormatLabel": "Formato completo del endpoint",
+        "copyUrlHint": "Usa \"Copiar URL\" para obtener la URL completa de imagor y pegarla en código, plantillas u otros sistemas.",
+        "imageEndpointDocs": "Documentación del endpoint de imagen",
+        "filtersDocs": "Documentación de filtros",
+        "segmentHints": {
+          "cropTitle": "Recorte manual",
+          "cropDescription": "Este segmento recorta la imagen de origen antes de redimensionarla para que el editor trabaje con una región concreta.",
+          "fitInDescription": "Redimensiona la imagen para que quepa en el recuadro solicitado sin recortarla.",
+          "paddingTitle": "Margen",
+          "paddingDescription": "Este segmento añade margen después de redimensionar. Se suele usar con colores de relleno alrededor de los resultados de fit-in.",
+          "alignmentTitle": "Alineación",
+          "alignmentDescription": "Este segmento controla cómo ancla imagor el resultado del recorte o del redimensionado dentro del marco solicitado.",
+          "stretchDescription": "Fuerza la salida a las dimensiones solicitadas sin conservar la relación de aspecto.",
+          "smartDescription": "Usa la detección de recorte inteligente de imagor para mantener en el encuadre la parte más relevante de la imagen.",
+          "sizeTitle": "Tamaño de salida",
+          "sizeDescription": "Este segmento define el ancho y el alto solicitados para la salida transformada.",
+          "filtersTitle": "Filtros",
+          "filtersDescription": "Este segmento inicia la cadena de filtros de imagor. Cada filtro posterior puede enlazar a su propia documentación.",
+          "imagePathTitle": "Ruta de la imagen de origen",
+          "imagePathDescription": "Especifica el URI de la imagen que imagor carga como origen. Puede ser una ruta o URL simple, un origen codificado en b64 o una imagen de color.",
+          "filterItemDescription": "Abrir la documentación de imagor del filtro {{name}}.",
+          "attachmentDescription": "Devuelve la imagen como archivo adjunto en la cabecera Content-Disposition.",
+          "blurDescription": "Aplica un desenfoque gaussiano a la imagen.",
+          "brightnessDescription": "Aumenta o reduce el brillo de la imagen.",
+          "contrastDescription": "Aumenta o reduce el contraste de la imagen.",
+          "expireDescription": "Añade un tiempo de caducidad al contenido.",
+          "filterCropDescription": "Recorta la imagen después de redimensionarla.",
+          "fillDescription": "Rellena las zonas vacías o transparentes con el color especificado.",
+          "formatDescription": "Especifica el formato de salida de la imagen.",
+          "grayscaleDescription": "Convierte la imagen a escala de grises.",
+          "hueDescription": "Aumenta o reduce el tono de la imagen.",
+          "imageDescription": "Compone una imagen procesada sobre la imagen actual con compatibilidad total con las transformaciones de imagor.",
+          "maxBytesDescription": "Reduce automáticamente la calidad hasta que la imagen quede por debajo del límite de bytes especificado.",
+          "maxFramesDescription": "Limita cuántos fotogramas de animación carga imagor.",
+          "noUpscaleDescription": "Impide que la imagen se amplíe por encima de sus dimensiones originales.",
+          "orientDescription": "Gira la imagen antes de redimensionarla y recortarla.",
+          "pageDescription": "Especifica el número de página de un PDF o el número de fotograma de una imagen animada.",
+          "pixelateDescription": "Aplica un efecto pixelado reduciendo la escala y volviéndola a ampliar con interpolación por vecino más próximo.",
+          "previewDescription": "Omite el almacenamiento del resultado y aplica a la solicitud un comportamiento de caché orientado a la vista previa.",
+          "proportionDescription": "Escala la imagen al porcentaje especificado de sus dimensiones.",
+          "qualityDescription": "Cambia la calidad general de la imagen.",
+          "rawDescription": "Responde con la imagen de origen sin procesar, aunque se siga cargando a través de imagor.",
+          "rgbDescription": "Ajusta la cantidad de color de cada canal RGB.",
+          "rotateDescription": "Gira la imagen según el ángulo indicado.",
+          "roundCornerDescription": "Añade esquinas redondeadas a la imagen con un color de fondo opcional.",
+          "saturationDescription": "Aumenta o reduce la saturación de la imagen.",
+          "sharpenDescription": "Aumenta la nitidez de la imagen.",
+          "textDescription": "Superpone texto sobre la imagen con soporte multilínea y de fuentes Pango, incluida la entrada de texto codificada en URL o en b64.",
+          "toColorspaceDescription": "Convierte la imagen al perfil de color ICC especificado.",
+          "upscaleDescription": "Permite ampliar la imagen en los modos fit-in y adaptive-fit-in.",
+          "watermarkDescription": "Añade una marca de agua a la imagen con posicionamiento, transparencia y proporciones de redimensionado opcionales."
+        }
+      }
+    },
+    "controls": {
+      "cropAspect": "Recorte y relación de aspecto",
+      "dimensionsResize": "Dimensiones y cambio de tamaño",
+      "outputCompression": "Salida y compresión",
+      "colorEffects": "Color y efectos",
+      "transformRotate": "Voltear y girar",
+      "cropResize": "Recortar y redimensionar",
+      "fillPadding": "Relleno y margen"
+    },
+    "transform": {
+      "horizontalFlip": "Volteo horizontal",
+      "verticalFlip": "Volteo vertical",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "normal": "Normal",
+      "flipped": "Volteado"
+    },
+    "effects": {
+      "brightness": "Brillo",
+      "contrast": "Contraste",
+      "saturation": "Saturación",
+      "hue": "Tono",
+      "blur": "Desenfoque",
+      "sharpen": "Enfocar",
+      "roundCorner": "Esquinas redondeadas",
+      "grayscale": "Escala de grises"
+    },
+    "dimensions": {
+      "title": "Dimensiones",
+      "width": "Ancho",
+      "height": "Alto",
+      "auto": "Auto",
+      "reset": "Restablecer",
+      "resetSize": "Restablecer tamaño original",
+      "lockAspectRatio": "Bloquear relación de aspecto",
+      "unlockAspectRatio": "Desbloquear relación de aspecto",
+      "scale": "Escala",
+      "resizeMode": "Modo de redimensionado",
+      "modes": {
+        "fitIn": "Ajustar",
+        "fill": "Rellenar",
+        "stretch": "Estirar",
+        "smart": "Inteligente"
+      },
+      "modeDescriptions": {
+        "fitIn": "Redimensiona para que quepa en las dimensiones, manteniendo la relación de aspecto",
+        "fill": "Redimensiona y recorta para rellenar las dimensiones",
+        "stretch": "Redimensiona a las dimensiones exactas, sin respetar la relación de aspecto",
+        "smart": "Recorte inteligente con detección de contenido para rellenar las dimensiones"
+      },
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "alignments": {
+        "left": "Izquierda",
+        "center": "Centro",
+        "right": "Derecha",
+        "top": "Arriba",
+        "middle": "Medio",
+        "bottom": "Abajo"
+      },
+      "originalRatio": "Original: {{ratio}}",
+      "outputSize": "Tamaño de salida"
+    },
+    "resize": {
+      "title": "Redimensionar"
+    },
+    "output": {
+      "outputFormat": "Formato",
+      "formatOptions": {
+        "original": "Formato original",
+        "jpeg": "JPEG",
+        "png": "PNG",
+        "gif": "GIF",
+        "webp": "WebP",
+        "avif": "AVIF",
+        "jxl": "JPEG XL",
+        "tiff": "TIFF",
+        "jp2": "JPEG 2000"
+      },
+      "quality": "Calidad",
+      "qualityAutoOptimized": "La calidad se optimizará automáticamente para cumplir el límite de tamaño",
+      "maxFileSize": "Tamaño máximo",
+      "maxSizeDescription": "Ajusta automáticamente la calidad para cumplir el tamaño de archivo",
+      "customSizeInBytes": "Tamaño personalizado en bytes",
+      "bytes": "bytes",
+      "clear": "Borrar",
+      "targetSize": "Objetivo: {{size}} - La calidad se reducirá automáticamente para cumplir este límite",
+      "metadata": "Metadatos",
+      "stripIcc": "Eliminar perfil ICC",
+      "stripExif": "Eliminar datos EXIF",
+      "metadataDescription": "Elimina los metadatos para reducir el tamaño del archivo"
+    },
+    "crop": {
+      "startCrop": "Recortar",
+      "applyCrop": "Aplicar recorte"
+    },
+    "zoom": {
+      "zoomIn": "Acercar",
+      "zoomOut": "Alejar",
+      "fit": "Ajustar a la ventana"
+    },
+    "preview": {
+      "previewError": "Error de vista previa",
+      "failedToGenerate": "No se ha podido generar la vista previa"
+    },
+    "fillPadding": {
+      "noFill": "Sin relleno",
+      "transparent": "Transparente",
+      "customColor": "Color personalizado"
+    },
+    "layers": {
+      "title": "Capas",
+      "addLayer": "Añadir capa",
+      "addImage": "Imagen",
+      "addImageAction": "Añadir imagen",
+      "addText": "Texto",
+      "addTextAction": "Añadir texto",
+      "pressKey": "Pulsa {{key}}",
+      "addColor": "Color",
+      "addGroup": "Grupo",
+      "colorLayer": "Color",
+      "groupLayer": "Grupo",
+      "textLayer": "Texto",
+      "textLayerDefaultText": "Texto",
+      "editText": "Editar texto",
+      "applyTextEdit": "Aplicar edición de texto",
+      "textColor": "Color",
+      "noLayers": "Aún no se han añadido capas",
+      "layerNumber": "Capa {{number}}",
+      "dragToReorder": "Arrastra para reordenar",
+      "hideLayer": "Ocultar capa",
+      "showLayer": "Mostrar capa",
+      "lockLayer": "Bloquear capa",
+      "unlockLayer": "Desbloquear capa",
+      "lockedLayer": "Bloqueada",
+      "deleteLayer": "Eliminar capa",
+      "duplicateLayer": "Duplicar capa",
+      "moveUp": "Subir",
+      "moveDown": "Bajar",
+      "layerActions": "Acciones de capa",
+      "failedToAddLayer": "No se ha podido añadir la capa",
+      "selectImage": "Seleccionar imagen para la capa",
+      "selectImageDescription": "Elige una imagen para añadirla como capa nueva",
+      "baseImage": "Base",
+      "replaceImage": "Reemplazar imagen",
+      "setColor": "Definir color",
+      "replaceImageError": "No se ha podido reemplazar la imagen",
+      "addImageLayer": "Añadir capa de imagen",
+      "addTextLayer": "Añadir capa de texto",
+      "addImageLayerDescription": "Elige una imagen de tu almacenamiento para añadirla como capa nueva.",
+      "selectImageToReplace": "Seleccionar imagen de reemplazo",
+      "selectImageToReplaceDescription": "Elige una imagen nueva para reemplazar la actual.",
+      "baseLayer": "Imagen base (capa inferior)",
+      "editing": "EDICIÓN",
+      "editLayer": "Editar capa",
+      "editImage": "Editar imagen",
+      "editColor": "Editar color",
+      "editGroup": "Editar grupo",
+      "renameLayer": "Cambiar nombre de la capa",
+      "renameLayerDescription": "Introduce un nombre nuevo para esta capa.",
+      "layerName": "Nombre de la capa",
+      "enterLayerName": "Introduce el nombre de la capa",
+      "layerColor": "Color",
+      "transparent": "Transparente",
+      "exitEditMode": "Aplicar",
+      "transparency": "Opacidad",
+      "blendMode": "Modo de fusión",
+      "blendModes": {
+        "normal": "Normal",
+        "multiply": "Multiplicar",
+        "screen": "Trama",
+        "overlay": "Superponer",
+        "soft-light": "Luz suave",
+        "darken": "Oscurecer",
+        "lighten": "Aclarar",
+        "mask": "Máscara"
+      },
+      "blendModeDescriptions": {
+        "normal": "Fusión estándar",
+        "multiply": "Añade sombras y profundidad",
+        "screen": "Añade brillos y luz",
+        "overlay": "Aumenta el contraste",
+        "soft-light": "Iluminación sutil",
+        "darken": "Muestra las zonas más oscuras",
+        "lighten": "Muestra las zonas más claras",
+        "mask": "Máscara de transparencia"
+      }
+    },
+    "template": {
+      "editingTemplate": "Editando plantilla",
+      "saveTemplate": "Guardar plantilla",
+      "createTemplate": "Crear plantilla",
+      "saveTemplateAs": "Guardar plantilla como...",
+      "downloadImage": "Descargar imagen",
+      "saveDescription": "Guarda las transformaciones actuales como una plantilla reutilizable",
+      "templateName": "Nombre de la plantilla",
+      "templateNamePlaceholder": "p. ej., Instagram cuadrado, Miniatura de producto",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describe qué hace esta plantilla...",
+      "filenamePreview": "El archivo se guardará como",
+      "saveLocation": "Ubicación de guardado",
+      "rootFolder": "Carpeta raíz",
+      "selectFolder": "Seleccionar carpeta de plantillas",
+      "selectFolderDescription": "Elige dónde guardar el archivo de plantilla",
+      "nameRequired": "El nombre de la plantilla es obligatorio",
+      "saveSuccess": "Plantilla \"{{name}}\" guardada correctamente",
+      "saveError": "No se ha podido guardar la plantilla",
+      "overwriteTitle": "¿Sobrescribir plantilla?",
+      "overwriteConfirm": "Ya existe una plantilla llamada \"{{name}}\". ¿Quieres reemplazarla?",
+      "overwrite": "Sobrescribir",
+      "applyTemplate": "Aplicar plantilla...",
+      "selectTemplate": "Seleccionar plantilla",
+      "selectTemplateDescription": "Elige una plantilla para aplicarla a esta imagen",
+      "applySuccess": "Plantilla aplicada correctamente",
+      "applyError": "No se ha podido aplicar la plantilla"
+    }
+  }
+}

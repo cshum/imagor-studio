@@ -12,6 +12,7 @@ Imagor Studio interface is available in multiple languages.
 - **Chinese (Simplified)** - 简体中文
 - **Chinese (Traditional)** - 繁體中文
 - **Italian** - Italiano
+- **Spanish** - Español
 
 ## Language Selection
 
@@ -68,4 +69,5 @@ web/src/locales/
   zh-CN.json    # Chinese (Simplified)
   zh-TW.json    # Chinese (Traditional)
   it.json       # Italian
+  es.json       # Spanish
 ```
