@@ -22,7 +22,7 @@ import (
 
 // GenerateImagorURL is the resolver for the generateImagorUrl field.
 func (r *mutationResolver) GenerateImagorURL(ctx context.Context, imagePath string, spaceID *string, params gql.ImagorParamsInput) (string, error) {
-	if err := RequireEditPermission(ctx); err != nil {
+	if err := RequireEditPermission(ctx, imagePath); err != nil {
 		return "", err
 	}
 
@@ -80,6 +80,15 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		return "", err
 	}
 
+	if imagePath != nil && *imagePath != "" {
+		if err := ValidatePathAccess(ctx, *imagePath); err != nil {
+			return "", err
+		}
+	}
+	if err := validateTemplatePaths(ctx, &tmpl); err != nil {
+		return "", err
+	}
+
 	// If an imagePath override is provided, apply the frontend's applyTemplateState logic:
 	// fetch the target image's actual dimensions via the imagor meta URL, then apply
 	// crop-validation and dimension-mode rules before proceeding.
@@ -131,6 +140,37 @@ func (r *mutationResolver) GenerateImagorURLFromTemplate(
 		url = r.appendInternalTrafficSignature(url, res.ImagePath, params)
 	}
 	return absolutizeURL(r.processingOriginForResolvedSpace(ctx, spaceConfig), url), nil
+}
+
+// validateTemplatePaths denies a template whose base or layer images fall outside
+// the session's path prefix.
+func validateTemplatePaths(ctx context.Context, tmpl *imagortemplate.Template) error {
+	return validateTransformationPaths(ctx, &tmpl.Transformations)
+}
+
+func validateTransformationPaths(ctx context.Context, transforms *imagortemplate.Transformations) error {
+	if transforms == nil {
+		return nil
+	}
+	if transforms.ImagePath != nil && *transforms.ImagePath != "" {
+		if err := ValidatePathAccess(ctx, *transforms.ImagePath); err != nil {
+			return err
+		}
+	}
+	for _, layer := range transforms.Layers {
+		if layer == nil {
+			continue
+		}
+		if layer.ImagePath != nil && *layer.ImagePath != "" {
+			if err := ValidatePathAccess(ctx, *layer.ImagePath); err != nil {
+				return err
+			}
+		}
+		if err := validateTransformationPaths(ctx, layer.Transforms); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // fetchImageDimensions fetches the width and height of an image via the imagor meta URL.

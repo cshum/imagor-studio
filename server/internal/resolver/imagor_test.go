@@ -14,6 +14,7 @@ import (
 	"github.com/cshum/imagor-studio/server/internal/config"
 	"github.com/cshum/imagor-studio/server/internal/generated/gql"
 	"github.com/cshum/imagor-studio/server/internal/imagorprovider"
+	"github.com/cshum/imagor-studio/server/internal/imagortemplate"
 	"github.com/cshum/imagor-studio/server/pkg/management"
 	sharedprocessing "github.com/cshum/imagor-studio/server/pkg/processing"
 	"github.com/cshum/imagor-studio/server/pkg/space"
@@ -93,6 +94,106 @@ func TestGenerateImagorURL(t *testing.T) {
 
 		mockImagorProvider.AssertExpectations(t)
 	})
+}
+
+func TestGenerateImagorURL_PathPrefix(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockImagorProvider := new(MockImagorProvider)
+	logger := zap.NewNop()
+	cfg := &config.Config{}
+	resolver := newTestResolver(NewMockStorageProvider(mockStorage), mockRegistryStore, mockUserStore,
+		mockImagorProvider, cfg, nil, logger)
+
+	ctx := createPathScopedContext("guest-1", "users/1", "read", "edit")
+	params := gql.ImagorParamsInput{Width: intPtr(200)}
+
+	t.Run("InPrefix", func(t *testing.T) {
+		mockImagorProvider.On("GenerateURL", "users/1/photo.jpg", mock.Anything).
+			Return("/unsafe/200x0/users/1/photo.jpg", nil).Once()
+		url, err := resolver.Mutation().GenerateImagorURL(ctx, "users/1/photo.jpg", nil, params)
+		require.NoError(t, err)
+		assert.Contains(t, url, "users/1/photo.jpg")
+	})
+
+	t.Run("OtherUser", func(t *testing.T) {
+		_, err := resolver.Mutation().GenerateImagorURL(ctx, "users/2/secret.jpg", nil, params)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "path access denied")
+	})
+
+	t.Run("SiblingSharingPrefix", func(t *testing.T) {
+		_, err := resolver.Mutation().GenerateImagorURL(ctx, "users/12/secret.jpg", nil, params)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "path access denied")
+	})
+}
+
+func TestGenerateImagorURLFromTemplate_PathPrefix(t *testing.T) {
+	mockStorage := new(MockStorage)
+	mockRegistryStore := new(MockRegistryStore)
+	mockUserStore := new(MockUserStore)
+	mockImagorProvider := new(MockImagorProvider)
+	logger := zap.NewNop()
+	resolver := newTestResolver(NewMockStorageProvider(mockStorage), mockRegistryStore, mockUserStore,
+		mockImagorProvider, &config.Config{}, nil, logger)
+
+	ctx := createPathScopedContext("guest-1", "users/1", "read", "edit")
+	override := "users/2/secret.jpg"
+
+	_, err := resolver.Mutation().GenerateImagorURLFromTemplate(ctx, "{}", nil, &override, nil, nil, nil, nil, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "path access denied")
+
+	// No provider call should have happened before the path check.
+	mockImagorProvider.AssertNotCalled(t, "GenerateURL", mock.Anything, mock.Anything)
+}
+
+func TestValidateTemplatePaths(t *testing.T) {
+	ctx := createPathScopedContext("guest-1", "users/1", "read", "edit")
+
+	path := func(p string) *string { return &p }
+
+	tests := []struct {
+		name   string
+		trans  imagortemplate.Transformations
+		denied bool
+	}{
+		{name: "no image path", trans: imagortemplate.Transformations{}},
+		{name: "base in prefix", trans: imagortemplate.Transformations{ImagePath: path("users/1/a.jpg")}},
+		{name: "base outside prefix", trans: imagortemplate.Transformations{ImagePath: path("users/2/a.jpg")}, denied: true},
+		{name: "layer outside prefix", trans: imagortemplate.Transformations{
+			ImagePath: path("users/1/a.jpg"),
+			Layers:    []*imagortemplate.Layer{{Type: "image", ImagePath: path("users/2/l.png")}},
+		}, denied: true},
+		{name: "nested layer outside prefix", trans: imagortemplate.Transformations{
+			ImagePath: path("users/1/a.jpg"),
+			Layers: []*imagortemplate.Layer{{
+				Type:      "image",
+				ImagePath: path("users/1/l.png"),
+				Transforms: &imagortemplate.Transformations{
+					Layers: []*imagortemplate.Layer{{Type: "image", ImagePath: path("users/2/deep.png")}},
+				},
+			}},
+		}, denied: true},
+		{name: "colour layer without path", trans: imagortemplate.Transformations{
+			Layers: []*imagortemplate.Layer{{Type: "color", ImagePath: nil}},
+		}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpl := &imagortemplate.Template{Transformations: tt.trans}
+			err := validateTemplatePaths(ctx, tmpl)
+			if tt.denied {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "path access denied")
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }
 
 func TestBuildImagePath(t *testing.T) {

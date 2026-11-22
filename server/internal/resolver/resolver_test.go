@@ -837,6 +837,20 @@ func createReadWriteContextWithOrg(userID, orgID string) context.Context {
 	return context.WithValue(ctx, UserIDContextKey, userID)
 }
 
+// createPathScopedContext creates a session confined to a storage path prefix,
+// as an embedded integration signs it.
+func createPathScopedContext(userID, prefix string, scopes ...string) context.Context {
+	claims := &auth.Claims{
+		UserID:     userID,
+		Role:       "guest",
+		Scopes:     scopes,
+		PathPrefix: prefix,
+		IsEmbedded: true,
+	}
+	ctx := auth.SetClaimsInContext(context.Background(), claims)
+	return context.WithValue(ctx, UserIDContextKey, userID)
+}
+
 func createPublicPreviewContext(userID, spaceKey string) context.Context {
 	claims := &auth.Claims{
 		UserID:   userID,
