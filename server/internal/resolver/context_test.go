@@ -121,6 +121,26 @@ func TestValidatePathAccess(t *testing.T) {
 			requestedPath: "/user123/images",
 			expectError:   false,
 		},
+		{
+			name:          "Sibling sharing the prefix - denied",
+			pathPrefix:    "/users/1",
+			requestedPath: "/users/12/photo.jpg",
+			expectError:   true,
+			errorContains: "path access denied",
+		},
+		{
+			name:          "Prefix without a separator - denied",
+			pathPrefix:    "users/1",
+			requestedPath: "users/1x/photo.jpg",
+			expectError:   true,
+			errorContains: "path access denied",
+		},
+		{
+			name:          "Relative path within prefix",
+			pathPrefix:    "users/1",
+			requestedPath: "users/1/photo.jpg",
+			expectError:   false,
+		},
 	}
 
 	for _, tt := range tests {

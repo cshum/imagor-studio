@@ -184,8 +184,9 @@ func ValidatePathAccess(ctx context.Context, requestedPath string) error {
 		return nil
 	}
 
-	// Check if the requested path starts with the allowed prefix
-	if !strings.HasPrefix(normalizedRequested, normalizedPrefix) {
+	// Check the prefix on a path boundary so /users/1 does not admit /users/12
+	if normalizedRequested != normalizedPrefix &&
+		!strings.HasPrefix(normalizedRequested, normalizedPrefix+"/") {
 		return fmt.Errorf("path access denied: %s not within allowed prefix %s", requestedPath, claims.PathPrefix)
 	}
 
