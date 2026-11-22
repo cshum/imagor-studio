@@ -7,7 +7,7 @@ on:
     tags: ["v*.*.*"]
 
 env:
-  IMAGOR_BASE_IMAGE: ghcr.io/cshum/imagor-base:vips8.18.4-r14-magick-ffmpeg
+  IMAGOR_BASE_IMAGE: ghcr.io/cshum/imagor-base:vips8.18.7-r21-magick-ffmpeg9.0.2
 
 jobs:
   build-variants:

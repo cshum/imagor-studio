@@ -570,10 +570,10 @@ func (s *store) List(ctx context.Context, offset, limit int, search string) ([]*
 	}
 
 	if offset > 0 {
-		dataQ = dataQ.Offset(offset)
+		dataQ = dataQ.Offset(int64(offset))
 	}
 	if limit > 0 {
-		dataQ = dataQ.Limit(limit)
+		dataQ = dataQ.Limit(int64(limit))
 	} else if offset > 0 {
 		dataQ = dataQ.Limit(1000000)
 	}
@@ -587,7 +587,7 @@ func (s *store) List(ctx context.Context, offset, limit int, search string) ([]*
 		result[i] = modelUserToStore(user)
 	}
 
-	return result, totalCount, nil
+	return result, int(totalCount), nil
 }
 
 // UpsertOAuth finds or creates a user for a given OAuth provider identity.
