@@ -2372,21 +2372,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputChangePasswordInput,
-		ec.unmarshalInputCreateUserInput,
-		ec.unmarshalInputDimensionsInput,
-		ec.unmarshalInputFileStorageInput,
-		ec.unmarshalInputImagorFilterInput,
-		ec.unmarshalInputImagorInput,
-		ec.unmarshalInputImagorParamsInput,
-		ec.unmarshalInputRegistryEntryInput,
-		ec.unmarshalInputS3StorageInput,
-		ec.unmarshalInputSaveTemplateInput,
-		ec.unmarshalInputSpaceInput,
-		ec.unmarshalInputStorageConfigInput,
-		ec.unmarshalInputUpdateProfileInput,
-	)
+	inputUnmarshalers := func() *graphql.InputUnmarshalerIndex {
+		return graphql.NewInputUnmarshalerIndex(
+			graphql.NewInputUnmarshaler("ChangePasswordInput", ec.unmarshalInputChangePasswordInput),
+			graphql.NewInputUnmarshaler("CreateUserInput", ec.unmarshalInputCreateUserInput),
+			graphql.NewInputUnmarshaler("DimensionsInput", ec.unmarshalInputDimensionsInput),
+			graphql.NewInputUnmarshaler("FileStorageInput", ec.unmarshalInputFileStorageInput),
+			graphql.NewInputUnmarshaler("ImagorFilterInput", ec.unmarshalInputImagorFilterInput),
+			graphql.NewInputUnmarshaler("ImagorInput", ec.unmarshalInputImagorInput),
+			graphql.NewInputUnmarshaler("ImagorParamsInput", ec.unmarshalInputImagorParamsInput),
+			graphql.NewInputUnmarshaler("RegistryEntryInput", ec.unmarshalInputRegistryEntryInput),
+			graphql.NewInputUnmarshaler("S3StorageInput", ec.unmarshalInputS3StorageInput),
+			graphql.NewInputUnmarshaler("SaveTemplateInput", ec.unmarshalInputSaveTemplateInput),
+			graphql.NewInputUnmarshaler("SpaceInput", ec.unmarshalInputSpaceInput),
+			graphql.NewInputUnmarshaler("StorageConfigInput", ec.unmarshalInputStorageConfigInput),
+			graphql.NewInputUnmarshaler("UpdateProfileInput", ec.unmarshalInputUpdateProfileInput),
+		)
+	}
 	first := true
 
 	switch opCtx.Operation.Operation {
@@ -2396,7 +2398,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			var data graphql.Marshaler
 			if first {
 				first = false
-				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+				ctx = graphql.WithLazyInputUnmarshalerIndex(ctx, inputUnmarshalers)
 				data = ec._Query(ctx, opCtx.Operation.SelectionSet)
 			} else {
 				if atomic.LoadInt32(&ec.PendingDeferred) > 0 {
@@ -2426,7 +2428,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				return nil
 			}
 			first = false
-			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			ctx = graphql.WithLazyInputUnmarshalerIndex(ctx, inputUnmarshalers)
 			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
@@ -5257,8 +5259,8 @@ func (ec *executionContext) field___Directive_args_args(ctx context.Context, raw
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "includeDeprecated",
-		func(ctx context.Context, v any) (*bool, error) {
-			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		func(ctx context.Context, v any) (bool, error) {
+			return ec.unmarshalOBoolean2bool(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5271,8 +5273,8 @@ func (ec *executionContext) field___Field_args_args(ctx context.Context, rawArgs
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "includeDeprecated",
-		func(ctx context.Context, v any) (*bool, error) {
-			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		func(ctx context.Context, v any) (bool, error) {
+			return ec.unmarshalOBoolean2bool(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5296,6 +5298,20 @@ func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, ra
 }
 
 func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "includeDeprecated",
+		func(ctx context.Context, v any) (bool, error) {
+			return ec.unmarshalOBoolean2bool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["includeDeprecated"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field___Type_inputFields_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "includeDeprecated",
@@ -5333,7 +5349,7 @@ func (ec *executionContext) _AuthProvider_provider(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_AuthProvider_provider(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("AuthProvider", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("AuthProvider", field, false, false, "String")
 }
 
 func (ec *executionContext) _AuthProvider_email(ctx context.Context, field graphql.CollectedField, obj *AuthProvider) (ret graphql.Marshaler) {
@@ -5356,7 +5372,7 @@ func (ec *executionContext) _AuthProvider_email(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_AuthProvider_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("AuthProvider", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("AuthProvider", field, false, false, "String")
 }
 
 func (ec *executionContext) _AuthProvider_linkedAt(ctx context.Context, field graphql.CollectedField, obj *AuthProvider) (ret graphql.Marshaler) {
@@ -5379,7 +5395,7 @@ func (ec *executionContext) _AuthProvider_linkedAt(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_AuthProvider_linkedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("AuthProvider", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("AuthProvider", field, false, false, "String")
 }
 
 func (ec *executionContext) _BillingSession_url(ctx context.Context, field graphql.CollectedField, obj *BillingSession) (ret graphql.Marshaler) {
@@ -5402,7 +5418,7 @@ func (ec *executionContext) _BillingSession_url(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_BillingSession_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("BillingSession", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("BillingSession", field, false, false, "String")
 }
 
 func (ec *executionContext) _EmailChangeRequestResult_email(ctx context.Context, field graphql.CollectedField, obj *EmailChangeRequestResult) (ret graphql.Marshaler) {
@@ -5425,7 +5441,7 @@ func (ec *executionContext) _EmailChangeRequestResult_email(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext_EmailChangeRequestResult_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("EmailChangeRequestResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("EmailChangeRequestResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _EmailChangeRequestResult_verificationRequired(ctx context.Context, field graphql.CollectedField, obj *EmailChangeRequestResult) (ret graphql.Marshaler) {
@@ -5448,7 +5464,7 @@ func (ec *executionContext) _EmailChangeRequestResult_verificationRequired(ctx c
 	)
 }
 func (ec *executionContext) fieldContext_EmailChangeRequestResult_verificationRequired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("EmailChangeRequestResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("EmailChangeRequestResult", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _FileItem_name(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
@@ -5471,7 +5487,7 @@ func (ec *executionContext) _FileItem_name(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_FileItem_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileItem", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileItem", field, false, false, "String")
 }
 
 func (ec *executionContext) _FileItem_path(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
@@ -5494,7 +5510,7 @@ func (ec *executionContext) _FileItem_path(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_FileItem_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileItem", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileItem", field, false, false, "String")
 }
 
 func (ec *executionContext) _FileItem_size(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
@@ -5517,7 +5533,7 @@ func (ec *executionContext) _FileItem_size(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_FileItem_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileItem", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("FileItem", field, false, false, "Int")
 }
 
 func (ec *executionContext) _FileItem_isDirectory(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
@@ -5540,7 +5556,7 @@ func (ec *executionContext) _FileItem_isDirectory(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_FileItem_isDirectory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileItem", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("FileItem", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _FileItem_modifiedTime(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
@@ -5563,7 +5579,7 @@ func (ec *executionContext) _FileItem_modifiedTime(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_FileItem_modifiedTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileItem", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileItem", field, false, false, "String")
 }
 
 func (ec *executionContext) _FileItem_thumbnailUrls(ctx context.Context, field graphql.CollectedField, obj *FileItem) (ret graphql.Marshaler) {
@@ -5650,7 +5666,7 @@ func (ec *executionContext) _FileList_totalCount(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_FileList_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileList", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("FileList", field, false, false, "Int")
 }
 
 func (ec *executionContext) _FileStat_name(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
@@ -5673,7 +5689,7 @@ func (ec *executionContext) _FileStat_name(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_FileStat_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileStat", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileStat", field, false, false, "String")
 }
 
 func (ec *executionContext) _FileStat_path(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
@@ -5696,7 +5712,7 @@ func (ec *executionContext) _FileStat_path(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_FileStat_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileStat", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileStat", field, false, false, "String")
 }
 
 func (ec *executionContext) _FileStat_size(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
@@ -5719,7 +5735,7 @@ func (ec *executionContext) _FileStat_size(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_FileStat_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileStat", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("FileStat", field, false, false, "Int")
 }
 
 func (ec *executionContext) _FileStat_isDirectory(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
@@ -5742,7 +5758,7 @@ func (ec *executionContext) _FileStat_isDirectory(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_FileStat_isDirectory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileStat", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("FileStat", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _FileStat_modifiedTime(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
@@ -5765,7 +5781,7 @@ func (ec *executionContext) _FileStat_modifiedTime(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_FileStat_modifiedTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileStat", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileStat", field, false, false, "String")
 }
 
 func (ec *executionContext) _FileStat_etag(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
@@ -5788,7 +5804,7 @@ func (ec *executionContext) _FileStat_etag(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_FileStat_etag(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileStat", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileStat", field, false, false, "String")
 }
 
 func (ec *executionContext) _FileStat_thumbnailUrls(ctx context.Context, field graphql.CollectedField, obj *FileStat) (ret graphql.Marshaler) {
@@ -5843,7 +5859,7 @@ func (ec *executionContext) _FileStorageConfig_baseDir(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_FileStorageConfig_baseDir(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileStorageConfig", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileStorageConfig", field, false, false, "String")
 }
 
 func (ec *executionContext) _FileStorageConfig_mkdirPermissions(ctx context.Context, field graphql.CollectedField, obj *FileStorageConfig) (ret graphql.Marshaler) {
@@ -5866,7 +5882,7 @@ func (ec *executionContext) _FileStorageConfig_mkdirPermissions(ctx context.Cont
 	)
 }
 func (ec *executionContext) fieldContext_FileStorageConfig_mkdirPermissions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileStorageConfig", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileStorageConfig", field, false, false, "String")
 }
 
 func (ec *executionContext) _FileStorageConfig_writePermissions(ctx context.Context, field graphql.CollectedField, obj *FileStorageConfig) (ret graphql.Marshaler) {
@@ -5889,7 +5905,7 @@ func (ec *executionContext) _FileStorageConfig_writePermissions(ctx context.Cont
 	)
 }
 func (ec *executionContext) fieldContext_FileStorageConfig_writePermissions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("FileStorageConfig", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("FileStorageConfig", field, false, false, "String")
 }
 
 func (ec *executionContext) _ImagorConfig_hasSecret(ctx context.Context, field graphql.CollectedField, obj *ImagorConfig) (ret graphql.Marshaler) {
@@ -5912,7 +5928,7 @@ func (ec *executionContext) _ImagorConfig_hasSecret(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_ImagorConfig_hasSecret(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ImagorConfig", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("ImagorConfig", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _ImagorConfig_signerType(ctx context.Context, field graphql.CollectedField, obj *ImagorConfig) (ret graphql.Marshaler) {
@@ -5935,7 +5951,7 @@ func (ec *executionContext) _ImagorConfig_signerType(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_ImagorConfig_signerType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ImagorConfig", field, false, false, errors.New("field of type ImagorSignerType does not have child fields"))
+	return graphql.NewScalarFieldContext("ImagorConfig", field, false, false, "ImagorSignerType")
 }
 
 func (ec *executionContext) _ImagorConfig_signerTruncate(ctx context.Context, field graphql.CollectedField, obj *ImagorConfig) (ret graphql.Marshaler) {
@@ -5958,7 +5974,7 @@ func (ec *executionContext) _ImagorConfig_signerTruncate(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_ImagorConfig_signerTruncate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ImagorConfig", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("ImagorConfig", field, false, false, "Int")
 }
 
 func (ec *executionContext) _ImagorConfigResult_success(ctx context.Context, field graphql.CollectedField, obj *ImagorConfigResult) (ret graphql.Marshaler) {
@@ -5981,7 +5997,7 @@ func (ec *executionContext) _ImagorConfigResult_success(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_ImagorConfigResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ImagorConfigResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("ImagorConfigResult", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _ImagorConfigResult_timestamp(ctx context.Context, field graphql.CollectedField, obj *ImagorConfigResult) (ret graphql.Marshaler) {
@@ -6004,7 +6020,7 @@ func (ec *executionContext) _ImagorConfigResult_timestamp(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_ImagorConfigResult_timestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ImagorConfigResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("ImagorConfigResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _ImagorConfigResult_message(ctx context.Context, field graphql.CollectedField, obj *ImagorConfigResult) (ret graphql.Marshaler) {
@@ -6027,7 +6043,7 @@ func (ec *executionContext) _ImagorConfigResult_message(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_ImagorConfigResult_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ImagorConfigResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("ImagorConfigResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _ImagorStatus_configured(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
@@ -6050,7 +6066,7 @@ func (ec *executionContext) _ImagorStatus_configured(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_ImagorStatus_configured(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ImagorStatus", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("ImagorStatus", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _ImagorStatus_lastUpdated(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
@@ -6073,7 +6089,7 @@ func (ec *executionContext) _ImagorStatus_lastUpdated(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_ImagorStatus_lastUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ImagorStatus", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("ImagorStatus", field, false, false, "String")
 }
 
 func (ec *executionContext) _ImagorStatus_isOverriddenByConfig(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
@@ -6096,7 +6112,7 @@ func (ec *executionContext) _ImagorStatus_isOverriddenByConfig(ctx context.Conte
 	)
 }
 func (ec *executionContext) fieldContext_ImagorStatus_isOverriddenByConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ImagorStatus", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("ImagorStatus", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _ImagorStatus_config(ctx context.Context, field graphql.CollectedField, obj *ImagorStatus) (ret graphql.Marshaler) {
@@ -6151,7 +6167,7 @@ func (ec *executionContext) _LicenseStatus_isLicensed(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_LicenseStatus_isLicensed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _LicenseStatus_licenseType(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
@@ -6174,7 +6190,7 @@ func (ec *executionContext) _LicenseStatus_licenseType(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_LicenseStatus_licenseType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, "String")
 }
 
 func (ec *executionContext) _LicenseStatus_email(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
@@ -6197,7 +6213,7 @@ func (ec *executionContext) _LicenseStatus_email(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_LicenseStatus_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, "String")
 }
 
 func (ec *executionContext) _LicenseStatus_message(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
@@ -6220,7 +6236,7 @@ func (ec *executionContext) _LicenseStatus_message(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_LicenseStatus_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, "String")
 }
 
 func (ec *executionContext) _LicenseStatus_isOverriddenByConfig(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
@@ -6243,7 +6259,7 @@ func (ec *executionContext) _LicenseStatus_isOverriddenByConfig(ctx context.Cont
 	)
 }
 func (ec *executionContext) fieldContext_LicenseStatus_isOverriddenByConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _LicenseStatus_supportMessage(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
@@ -6266,7 +6282,7 @@ func (ec *executionContext) _LicenseStatus_supportMessage(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_LicenseStatus_supportMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, "String")
 }
 
 func (ec *executionContext) _LicenseStatus_maskedLicenseKey(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
@@ -6289,7 +6305,7 @@ func (ec *executionContext) _LicenseStatus_maskedLicenseKey(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext_LicenseStatus_maskedLicenseKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, "String")
 }
 
 func (ec *executionContext) _LicenseStatus_activatedAt(ctx context.Context, field graphql.CollectedField, obj *LicenseStatus) (ret graphql.Marshaler) {
@@ -6312,7 +6328,7 @@ func (ec *executionContext) _LicenseStatus_activatedAt(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_LicenseStatus_activatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("LicenseStatus", field, false, false, "String")
 }
 
 func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7775,7 +7791,7 @@ func (ec *executionContext) _Mutation_leaveOrganization(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_Mutation_leaveOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Mutation", field, true, true, "Boolean")
 }
 
 func (ec *executionContext) _Mutation_deleteOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7798,7 +7814,7 @@ func (ec *executionContext) _Mutation_deleteOrganization(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_Mutation_deleteOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Mutation", field, true, true, "Boolean")
 }
 
 func (ec *executionContext) _Mutation_leaveSpace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8481,7 +8497,7 @@ func (ec *executionContext) _OrgInvitation_id(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_OrgInvitation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, "ID")
 }
 
 func (ec *executionContext) _OrgInvitation_email(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
@@ -8504,7 +8520,7 @@ func (ec *executionContext) _OrgInvitation_email(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_OrgInvitation_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, "String")
 }
 
 func (ec *executionContext) _OrgInvitation_role(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
@@ -8527,7 +8543,7 @@ func (ec *executionContext) _OrgInvitation_role(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_OrgInvitation_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, errors.New("field of type OrgMemberAssignableRole does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, "OrgMemberAssignableRole")
 }
 
 func (ec *executionContext) _OrgInvitation_createdAt(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
@@ -8550,7 +8566,7 @@ func (ec *executionContext) _OrgInvitation_createdAt(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_OrgInvitation_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, "String")
 }
 
 func (ec *executionContext) _OrgInvitation_expiresAt(ctx context.Context, field graphql.CollectedField, obj *OrgInvitation) (ret graphql.Marshaler) {
@@ -8573,7 +8589,7 @@ func (ec *executionContext) _OrgInvitation_expiresAt(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_OrgInvitation_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgInvitation", field, false, false, "String")
 }
 
 func (ec *executionContext) _OrgInviteResult_status(ctx context.Context, field graphql.CollectedField, obj *OrgInviteResult) (ret graphql.Marshaler) {
@@ -8596,7 +8612,7 @@ func (ec *executionContext) _OrgInviteResult_status(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_OrgInviteResult_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgInviteResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgInviteResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _OrgInviteResult_member(ctx context.Context, field graphql.CollectedField, obj *OrgInviteResult) (ret graphql.Marshaler) {
@@ -8683,7 +8699,7 @@ func (ec *executionContext) _OrgMember_userId(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_OrgMember_userId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgMember", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgMember", field, false, false, "ID")
 }
 
 func (ec *executionContext) _OrgMember_username(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
@@ -8706,7 +8722,7 @@ func (ec *executionContext) _OrgMember_username(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_OrgMember_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _OrgMember_displayName(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
@@ -8729,7 +8745,7 @@ func (ec *executionContext) _OrgMember_displayName(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_OrgMember_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _OrgMember_email(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
@@ -8752,7 +8768,7 @@ func (ec *executionContext) _OrgMember_email(ctx context.Context, field graphql.
 	)
 }
 func (ec *executionContext) fieldContext_OrgMember_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _OrgMember_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
@@ -8775,7 +8791,7 @@ func (ec *executionContext) _OrgMember_avatarUrl(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_OrgMember_avatarUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _OrgMember_role(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
@@ -8798,7 +8814,7 @@ func (ec *executionContext) _OrgMember_role(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_OrgMember_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgMember", field, false, false, errors.New("field of type OrgMemberRole does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgMember", field, false, false, "OrgMemberRole")
 }
 
 func (ec *executionContext) _OrgMember_createdAt(ctx context.Context, field graphql.CollectedField, obj *OrgMember) (ret graphql.Marshaler) {
@@ -8821,7 +8837,7 @@ func (ec *executionContext) _OrgMember_createdAt(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_OrgMember_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("OrgMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("OrgMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -8844,7 +8860,7 @@ func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.
 	)
 }
 func (ec *executionContext) fieldContext_Organization_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "ID")
 }
 
 func (ec *executionContext) _Organization_name(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -8867,7 +8883,7 @@ func (ec *executionContext) _Organization_name(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_Organization_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "String")
 }
 
 func (ec *executionContext) _Organization_slug(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -8890,7 +8906,7 @@ func (ec *executionContext) _Organization_slug(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_Organization_slug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "String")
 }
 
 func (ec *executionContext) _Organization_ownerUserId(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -8913,7 +8929,7 @@ func (ec *executionContext) _Organization_ownerUserId(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_Organization_ownerUserId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "String")
 }
 
 func (ec *executionContext) _Organization_currentUserRole(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -8936,7 +8952,7 @@ func (ec *executionContext) _Organization_currentUserRole(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_Organization_currentUserRole(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type OrgMemberRole does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "OrgMemberRole")
 }
 
 func (ec *executionContext) _Organization_plan(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -8959,7 +8975,7 @@ func (ec *executionContext) _Organization_plan(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_Organization_plan(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "String")
 }
 
 func (ec *executionContext) _Organization_planStatus(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -8982,7 +8998,7 @@ func (ec *executionContext) _Organization_planStatus(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_Organization_planStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "String")
 }
 
 func (ec *executionContext) _Organization_trialDaysRemaining(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -9005,7 +9021,7 @@ func (ec *executionContext) _Organization_trialDaysRemaining(ctx context.Context
 	)
 }
 func (ec *executionContext) fieldContext_Organization_trialDaysRemaining(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "Int")
 }
 
 func (ec *executionContext) _Organization_createdAt(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -9028,7 +9044,7 @@ func (ec *executionContext) _Organization_createdAt(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_Organization_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "String")
 }
 
 func (ec *executionContext) _Organization_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Organization) (ret graphql.Marshaler) {
@@ -9051,7 +9067,7 @@ func (ec *executionContext) _Organization_updatedAt(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_Organization_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Organization", field, false, false, "String")
 }
 
 func (ec *executionContext) _PresignedUpload_uploadURL(ctx context.Context, field graphql.CollectedField, obj *PresignedUpload) (ret graphql.Marshaler) {
@@ -9074,7 +9090,7 @@ func (ec *executionContext) _PresignedUpload_uploadURL(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_PresignedUpload_uploadURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("PresignedUpload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("PresignedUpload", field, false, false, "String")
 }
 
 func (ec *executionContext) _PresignedUpload_expiresAt(ctx context.Context, field graphql.CollectedField, obj *PresignedUpload) (ret graphql.Marshaler) {
@@ -9097,7 +9113,7 @@ func (ec *executionContext) _PresignedUpload_expiresAt(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_PresignedUpload_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("PresignedUpload", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("PresignedUpload", field, false, false, "String")
 }
 
 func (ec *executionContext) _PresignedUpload_requiredHeaders(ctx context.Context, field graphql.CollectedField, obj *PresignedUpload) (ret graphql.Marshaler) {
@@ -10049,10 +10065,10 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *introspection.Schema) graphql.Marshaler {
-			return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, selections, v)
+			return ec.marshalN__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, selections, v)
 		},
 		true,
-		false,
+		true,
 	)
 }
 func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10088,7 +10104,7 @@ func (ec *executionContext) _S3StorageConfig_bucket(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_S3StorageConfig_bucket(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, "String")
 }
 
 func (ec *executionContext) _S3StorageConfig_region(ctx context.Context, field graphql.CollectedField, obj *S3StorageConfig) (ret graphql.Marshaler) {
@@ -10111,7 +10127,7 @@ func (ec *executionContext) _S3StorageConfig_region(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_S3StorageConfig_region(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, "String")
 }
 
 func (ec *executionContext) _S3StorageConfig_endpoint(ctx context.Context, field graphql.CollectedField, obj *S3StorageConfig) (ret graphql.Marshaler) {
@@ -10134,7 +10150,7 @@ func (ec *executionContext) _S3StorageConfig_endpoint(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_S3StorageConfig_endpoint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, "String")
 }
 
 func (ec *executionContext) _S3StorageConfig_forcePathStyle(ctx context.Context, field graphql.CollectedField, obj *S3StorageConfig) (ret graphql.Marshaler) {
@@ -10157,7 +10173,7 @@ func (ec *executionContext) _S3StorageConfig_forcePathStyle(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext_S3StorageConfig_forcePathStyle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _S3StorageConfig_baseDir(ctx context.Context, field graphql.CollectedField, obj *S3StorageConfig) (ret graphql.Marshaler) {
@@ -10180,7 +10196,7 @@ func (ec *executionContext) _S3StorageConfig_baseDir(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_S3StorageConfig_baseDir(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("S3StorageConfig", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_id(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10203,7 +10219,7 @@ func (ec *executionContext) _Space_id(ctx context.Context, field graphql.Collect
 	)
 }
 func (ec *executionContext) fieldContext_Space_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "ID")
 }
 
 func (ec *executionContext) _Space_orgId(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10226,7 +10242,7 @@ func (ec *executionContext) _Space_orgId(ctx context.Context, field graphql.Coll
 	)
 }
 func (ec *executionContext) fieldContext_Space_orgId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "ID")
 }
 
 func (ec *executionContext) _Space_key(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10249,7 +10265,7 @@ func (ec *executionContext) _Space_key(ctx context.Context, field graphql.Collec
 	)
 }
 func (ec *executionContext) fieldContext_Space_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_name(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10272,7 +10288,7 @@ func (ec *executionContext) _Space_name(ctx context.Context, field graphql.Colle
 	)
 }
 func (ec *executionContext) fieldContext_Space_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_storageUsageBytes(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10295,7 +10311,7 @@ func (ec *executionContext) _Space_storageUsageBytes(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_Space_storageUsageBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Int")
 }
 
 func (ec *executionContext) _Space_processingUsageCount(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10318,7 +10334,7 @@ func (ec *executionContext) _Space_processingUsageCount(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_Space_processingUsageCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Int")
 }
 
 func (ec *executionContext) _Space_storageMode(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10341,7 +10357,7 @@ func (ec *executionContext) _Space_storageMode(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_Space_storageMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_storageType(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10364,7 +10380,7 @@ func (ec *executionContext) _Space_storageType(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_Space_storageType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_bucket(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10387,7 +10403,7 @@ func (ec *executionContext) _Space_bucket(ctx context.Context, field graphql.Col
 	)
 }
 func (ec *executionContext) fieldContext_Space_bucket(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_prefix(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10410,7 +10426,7 @@ func (ec *executionContext) _Space_prefix(ctx context.Context, field graphql.Col
 	)
 }
 func (ec *executionContext) fieldContext_Space_prefix(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_region(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10433,7 +10449,7 @@ func (ec *executionContext) _Space_region(ctx context.Context, field graphql.Col
 	)
 }
 func (ec *executionContext) fieldContext_Space_region(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_endpoint(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10456,7 +10472,7 @@ func (ec *executionContext) _Space_endpoint(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_Space_endpoint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_usePathStyle(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10479,7 +10495,7 @@ func (ec *executionContext) _Space_usePathStyle(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_Space_usePathStyle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _Space_customDomain(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10502,7 +10518,7 @@ func (ec *executionContext) _Space_customDomain(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_Space_customDomain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_customDomainVerified(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10525,7 +10541,7 @@ func (ec *executionContext) _Space_customDomainVerified(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_Space_customDomainVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _Space_suspended(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10548,7 +10564,7 @@ func (ec *executionContext) _Space_suspended(ctx context.Context, field graphql.
 	)
 }
 func (ec *executionContext) fieldContext_Space_suspended(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _Space_isShared(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10571,7 +10587,7 @@ func (ec *executionContext) _Space_isShared(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_Space_isShared(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _Space_signerAlgorithm(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10594,7 +10610,7 @@ func (ec *executionContext) _Space_signerAlgorithm(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_Space_signerAlgorithm(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_signerTruncate(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10617,7 +10633,7 @@ func (ec *executionContext) _Space_signerTruncate(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_Space_signerTruncate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Int")
 }
 
 func (ec *executionContext) _Space_imagorCORSOrigins(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10640,7 +10656,7 @@ func (ec *executionContext) _Space_imagorCORSOrigins(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_Space_imagorCORSOrigins(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _Space_hasCustomImagorSecret(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10663,7 +10679,7 @@ func (ec *executionContext) _Space_hasCustomImagorSecret(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_Space_hasCustomImagorSecret(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _Space_isPublicPreviewSpace(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10686,7 +10702,7 @@ func (ec *executionContext) _Space_isPublicPreviewSpace(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_Space_isPublicPreviewSpace(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _Space_canManage(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10709,7 +10725,7 @@ func (ec *executionContext) _Space_canManage(ctx context.Context, field graphql.
 	)
 }
 func (ec *executionContext) fieldContext_Space_canManage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _Space_canDelete(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10732,7 +10748,7 @@ func (ec *executionContext) _Space_canDelete(ctx context.Context, field graphql.
 	)
 }
 func (ec *executionContext) fieldContext_Space_canDelete(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _Space_canLeave(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10755,7 +10771,7 @@ func (ec *executionContext) _Space_canLeave(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_Space_canLeave(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _Space_updatedAt(ctx context.Context, field graphql.CollectedField, obj *Space) (ret graphql.Marshaler) {
@@ -10778,7 +10794,7 @@ func (ec *executionContext) _Space_updatedAt(ctx context.Context, field graphql.
 	)
 }
 func (ec *executionContext) fieldContext_Space_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("Space", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("Space", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceInvitation_id(ctx context.Context, field graphql.CollectedField, obj *SpaceInvitation) (ret graphql.Marshaler) {
@@ -10801,7 +10817,7 @@ func (ec *executionContext) _SpaceInvitation_id(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_SpaceInvitation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, "ID")
 }
 
 func (ec *executionContext) _SpaceInvitation_email(ctx context.Context, field graphql.CollectedField, obj *SpaceInvitation) (ret graphql.Marshaler) {
@@ -10824,7 +10840,7 @@ func (ec *executionContext) _SpaceInvitation_email(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_SpaceInvitation_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceInvitation_role(ctx context.Context, field graphql.CollectedField, obj *SpaceInvitation) (ret graphql.Marshaler) {
@@ -10847,7 +10863,7 @@ func (ec *executionContext) _SpaceInvitation_role(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_SpaceInvitation_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, errors.New("field of type SpaceMemberAssignableRole does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, "SpaceMemberAssignableRole")
 }
 
 func (ec *executionContext) _SpaceInvitation_createdAt(ctx context.Context, field graphql.CollectedField, obj *SpaceInvitation) (ret graphql.Marshaler) {
@@ -10870,7 +10886,7 @@ func (ec *executionContext) _SpaceInvitation_createdAt(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_SpaceInvitation_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceInvitation_expiresAt(ctx context.Context, field graphql.CollectedField, obj *SpaceInvitation) (ret graphql.Marshaler) {
@@ -10893,7 +10909,7 @@ func (ec *executionContext) _SpaceInvitation_expiresAt(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_SpaceInvitation_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceInvitation", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceInviteResult_status(ctx context.Context, field graphql.CollectedField, obj *SpaceInviteResult) (ret graphql.Marshaler) {
@@ -10916,7 +10932,7 @@ func (ec *executionContext) _SpaceInviteResult_status(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_SpaceInviteResult_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceInviteResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceInviteResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceInviteResult_member(ctx context.Context, field graphql.CollectedField, obj *SpaceInviteResult) (ret graphql.Marshaler) {
@@ -11003,7 +11019,7 @@ func (ec *executionContext) _SpaceMember_userId(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_userId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "ID")
 }
 
 func (ec *executionContext) _SpaceMember_username(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
@@ -11026,7 +11042,7 @@ func (ec *executionContext) _SpaceMember_username(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceMember_displayName(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
@@ -11049,7 +11065,7 @@ func (ec *executionContext) _SpaceMember_displayName(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceMember_email(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
@@ -11072,7 +11088,7 @@ func (ec *executionContext) _SpaceMember_email(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceMember_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
@@ -11095,7 +11111,7 @@ func (ec *executionContext) _SpaceMember_avatarUrl(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_avatarUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceMember_role(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
@@ -11118,7 +11134,7 @@ func (ec *executionContext) _SpaceMember_role(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type SpaceMemberRole does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "SpaceMemberRole")
 }
 
 func (ec *executionContext) _SpaceMember_roleSource(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
@@ -11141,7 +11157,7 @@ func (ec *executionContext) _SpaceMember_roleSource(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_roleSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type SpaceMemberRoleSource does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "SpaceMemberRoleSource")
 }
 
 func (ec *executionContext) _SpaceMember_canChangeRole(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
@@ -11164,7 +11180,7 @@ func (ec *executionContext) _SpaceMember_canChangeRole(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_canChangeRole(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _SpaceMember_canRemove(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
@@ -11187,7 +11203,7 @@ func (ec *executionContext) _SpaceMember_canRemove(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_canRemove(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _SpaceMember_createdAt(ctx context.Context, field graphql.CollectedField, obj *SpaceMember) (ret graphql.Marshaler) {
@@ -11210,7 +11226,7 @@ func (ec *executionContext) _SpaceMember_createdAt(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_SpaceMember_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceMember", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceUsage_spaceId(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
@@ -11233,7 +11249,7 @@ func (ec *executionContext) _SpaceUsage_spaceId(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_SpaceUsage_spaceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, "ID")
 }
 
 func (ec *executionContext) _SpaceUsage_key(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
@@ -11256,7 +11272,7 @@ func (ec *executionContext) _SpaceUsage_key(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_SpaceUsage_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceUsage_name(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
@@ -11279,7 +11295,7 @@ func (ec *executionContext) _SpaceUsage_name(ctx context.Context, field graphql.
 	)
 }
 func (ec *executionContext) fieldContext_SpaceUsage_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, "String")
 }
 
 func (ec *executionContext) _SpaceUsage_storageUsageBytes(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
@@ -11302,7 +11318,7 @@ func (ec *executionContext) _SpaceUsage_storageUsageBytes(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_SpaceUsage_storageUsageBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, "Int")
 }
 
 func (ec *executionContext) _SpaceUsage_processingUsageCount(ctx context.Context, field graphql.CollectedField, obj *SpaceUsage) (ret graphql.Marshaler) {
@@ -11325,7 +11341,7 @@ func (ec *executionContext) _SpaceUsage_processingUsageCount(ctx context.Context
 	)
 }
 func (ec *executionContext) fieldContext_SpaceUsage_processingUsageCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("SpaceUsage", field, false, false, "Int")
 }
 
 func (ec *executionContext) _StorageConfigResult_success(ctx context.Context, field graphql.CollectedField, obj *StorageConfigResult) (ret graphql.Marshaler) {
@@ -11348,7 +11364,7 @@ func (ec *executionContext) _StorageConfigResult_success(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_StorageConfigResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageConfigResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageConfigResult", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _StorageConfigResult_timestamp(ctx context.Context, field graphql.CollectedField, obj *StorageConfigResult) (ret graphql.Marshaler) {
@@ -11371,7 +11387,7 @@ func (ec *executionContext) _StorageConfigResult_timestamp(ctx context.Context, 
 	)
 }
 func (ec *executionContext) fieldContext_StorageConfigResult_timestamp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageConfigResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageConfigResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _StorageConfigResult_message(ctx context.Context, field graphql.CollectedField, obj *StorageConfigResult) (ret graphql.Marshaler) {
@@ -11394,7 +11410,7 @@ func (ec *executionContext) _StorageConfigResult_message(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_StorageConfigResult_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageConfigResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageConfigResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _StorageStatus_configured(ctx context.Context, field graphql.CollectedField, obj *StorageStatus) (ret graphql.Marshaler) {
@@ -11417,7 +11433,7 @@ func (ec *executionContext) _StorageStatus_configured(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_StorageStatus_configured(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _StorageStatus_supportsPresignedUpload(ctx context.Context, field graphql.CollectedField, obj *StorageStatus) (ret graphql.Marshaler) {
@@ -11440,7 +11456,7 @@ func (ec *executionContext) _StorageStatus_supportsPresignedUpload(ctx context.C
 	)
 }
 func (ec *executionContext) fieldContext_StorageStatus_supportsPresignedUpload(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _StorageStatus_type(ctx context.Context, field graphql.CollectedField, obj *StorageStatus) (ret graphql.Marshaler) {
@@ -11463,7 +11479,7 @@ func (ec *executionContext) _StorageStatus_type(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_StorageStatus_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, "String")
 }
 
 func (ec *executionContext) _StorageStatus_lastUpdated(ctx context.Context, field graphql.CollectedField, obj *StorageStatus) (ret graphql.Marshaler) {
@@ -11486,7 +11502,7 @@ func (ec *executionContext) _StorageStatus_lastUpdated(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_StorageStatus_lastUpdated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, "String")
 }
 
 func (ec *executionContext) _StorageStatus_isOverriddenByConfig(ctx context.Context, field graphql.CollectedField, obj *StorageStatus) (ret graphql.Marshaler) {
@@ -11509,7 +11525,7 @@ func (ec *executionContext) _StorageStatus_isOverriddenByConfig(ctx context.Cont
 	)
 }
 func (ec *executionContext) fieldContext_StorageStatus_isOverriddenByConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageStatus", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _StorageStatus_fileConfig(ctx context.Context, field graphql.CollectedField, obj *StorageStatus) (ret graphql.Marshaler) {
@@ -11596,7 +11612,7 @@ func (ec *executionContext) _StorageTestResult_success(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_StorageTestResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageTestResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageTestResult", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _StorageTestResult_message(ctx context.Context, field graphql.CollectedField, obj *StorageTestResult) (ret graphql.Marshaler) {
@@ -11619,7 +11635,7 @@ func (ec *executionContext) _StorageTestResult_message(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_StorageTestResult_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageTestResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageTestResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _StorageTestResult_details(ctx context.Context, field graphql.CollectedField, obj *StorageTestResult) (ret graphql.Marshaler) {
@@ -11642,7 +11658,7 @@ func (ec *executionContext) _StorageTestResult_details(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext_StorageTestResult_details(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageTestResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageTestResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _StorageTestResult_code(ctx context.Context, field graphql.CollectedField, obj *StorageTestResult) (ret graphql.Marshaler) {
@@ -11665,7 +11681,7 @@ func (ec *executionContext) _StorageTestResult_code(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_StorageTestResult_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageTestResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageTestResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _StorageUploadProbe_probePath(ctx context.Context, field graphql.CollectedField, obj *StorageUploadProbe) (ret graphql.Marshaler) {
@@ -11688,7 +11704,7 @@ func (ec *executionContext) _StorageUploadProbe_probePath(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_StorageUploadProbe_probePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageUploadProbe", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageUploadProbe", field, false, false, "String")
 }
 
 func (ec *executionContext) _StorageUploadProbe_uploadURL(ctx context.Context, field graphql.CollectedField, obj *StorageUploadProbe) (ret graphql.Marshaler) {
@@ -11711,7 +11727,7 @@ func (ec *executionContext) _StorageUploadProbe_uploadURL(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_StorageUploadProbe_uploadURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageUploadProbe", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageUploadProbe", field, false, false, "String")
 }
 
 func (ec *executionContext) _StorageUploadProbe_expiresAt(ctx context.Context, field graphql.CollectedField, obj *StorageUploadProbe) (ret graphql.Marshaler) {
@@ -11734,7 +11750,7 @@ func (ec *executionContext) _StorageUploadProbe_expiresAt(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_StorageUploadProbe_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("StorageUploadProbe", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("StorageUploadProbe", field, false, false, "String")
 }
 
 func (ec *executionContext) _SystemRegistry_key(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
@@ -11757,7 +11773,7 @@ func (ec *executionContext) _SystemRegistry_key(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_SystemRegistry_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SystemRegistry", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SystemRegistry", field, false, false, "String")
 }
 
 func (ec *executionContext) _SystemRegistry_value(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
@@ -11780,7 +11796,7 @@ func (ec *executionContext) _SystemRegistry_value(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext_SystemRegistry_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SystemRegistry", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("SystemRegistry", field, false, false, "String")
 }
 
 func (ec *executionContext) _SystemRegistry_isEncrypted(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
@@ -11803,7 +11819,7 @@ func (ec *executionContext) _SystemRegistry_isEncrypted(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_SystemRegistry_isEncrypted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SystemRegistry", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("SystemRegistry", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _SystemRegistry_isOverriddenByConfig(ctx context.Context, field graphql.CollectedField, obj *SystemRegistry) (ret graphql.Marshaler) {
@@ -11826,7 +11842,7 @@ func (ec *executionContext) _SystemRegistry_isOverriddenByConfig(ctx context.Con
 	)
 }
 func (ec *executionContext) fieldContext_SystemRegistry_isOverriddenByConfig(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("SystemRegistry", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("SystemRegistry", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _TemplateResult_success(ctx context.Context, field graphql.CollectedField, obj *TemplateResult) (ret graphql.Marshaler) {
@@ -11849,7 +11865,7 @@ func (ec *executionContext) _TemplateResult_success(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_TemplateResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("TemplateResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("TemplateResult", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _TemplateResult_templatePath(ctx context.Context, field graphql.CollectedField, obj *TemplateResult) (ret graphql.Marshaler) {
@@ -11872,7 +11888,7 @@ func (ec *executionContext) _TemplateResult_templatePath(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_TemplateResult_templatePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("TemplateResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("TemplateResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _TemplateResult_previewPath(ctx context.Context, field graphql.CollectedField, obj *TemplateResult) (ret graphql.Marshaler) {
@@ -11895,7 +11911,7 @@ func (ec *executionContext) _TemplateResult_previewPath(ctx context.Context, fie
 	)
 }
 func (ec *executionContext) fieldContext_TemplateResult_previewPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("TemplateResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("TemplateResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _TemplateResult_message(ctx context.Context, field graphql.CollectedField, obj *TemplateResult) (ret graphql.Marshaler) {
@@ -11918,7 +11934,7 @@ func (ec *executionContext) _TemplateResult_message(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_TemplateResult_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("TemplateResult", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("TemplateResult", field, false, false, "String")
 }
 
 func (ec *executionContext) _ThumbnailUrls_grid(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
@@ -11941,7 +11957,7 @@ func (ec *executionContext) _ThumbnailUrls_grid(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_ThumbnailUrls_grid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, "String")
 }
 
 func (ec *executionContext) _ThumbnailUrls_preview(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
@@ -11964,7 +11980,7 @@ func (ec *executionContext) _ThumbnailUrls_preview(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_ThumbnailUrls_preview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, "String")
 }
 
 func (ec *executionContext) _ThumbnailUrls_full(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
@@ -11987,7 +12003,7 @@ func (ec *executionContext) _ThumbnailUrls_full(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_ThumbnailUrls_full(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, "String")
 }
 
 func (ec *executionContext) _ThumbnailUrls_original(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
@@ -12010,7 +12026,7 @@ func (ec *executionContext) _ThumbnailUrls_original(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_ThumbnailUrls_original(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, "String")
 }
 
 func (ec *executionContext) _ThumbnailUrls_meta(ctx context.Context, field graphql.CollectedField, obj *ThumbnailUrls) (ret graphql.Marshaler) {
@@ -12033,7 +12049,7 @@ func (ec *executionContext) _ThumbnailUrls_meta(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_ThumbnailUrls_meta(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("ThumbnailUrls", field, false, false, "String")
 }
 
 func (ec *executionContext) _UploadHeader_name(ctx context.Context, field graphql.CollectedField, obj *UploadHeader) (ret graphql.Marshaler) {
@@ -12056,7 +12072,7 @@ func (ec *executionContext) _UploadHeader_name(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_UploadHeader_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UploadHeader", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("UploadHeader", field, false, false, "String")
 }
 
 func (ec *executionContext) _UploadHeader_value(ctx context.Context, field graphql.CollectedField, obj *UploadHeader) (ret graphql.Marshaler) {
@@ -12079,7 +12095,7 @@ func (ec *executionContext) _UploadHeader_value(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_UploadHeader_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UploadHeader", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("UploadHeader", field, false, false, "String")
 }
 
 func (ec *executionContext) _UsageSummary_usedSpaces(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
@@ -12102,7 +12118,7 @@ func (ec *executionContext) _UsageSummary_usedSpaces(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext_UsageSummary_usedSpaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, "Int")
 }
 
 func (ec *executionContext) _UsageSummary_maxSpaces(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
@@ -12125,7 +12141,7 @@ func (ec *executionContext) _UsageSummary_maxSpaces(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_UsageSummary_maxSpaces(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, "Int")
 }
 
 func (ec *executionContext) _UsageSummary_usedHostedStorageBytes(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
@@ -12148,7 +12164,7 @@ func (ec *executionContext) _UsageSummary_usedHostedStorageBytes(ctx context.Con
 	)
 }
 func (ec *executionContext) fieldContext_UsageSummary_usedHostedStorageBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, "Int")
 }
 
 func (ec *executionContext) _UsageSummary_storageLimitGB(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
@@ -12171,7 +12187,7 @@ func (ec *executionContext) _UsageSummary_storageLimitGB(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_UsageSummary_storageLimitGB(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, "Int")
 }
 
 func (ec *executionContext) _UsageSummary_usedTransforms(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
@@ -12194,7 +12210,7 @@ func (ec *executionContext) _UsageSummary_usedTransforms(ctx context.Context, fi
 	)
 }
 func (ec *executionContext) fieldContext_UsageSummary_usedTransforms(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, "Int")
 }
 
 func (ec *executionContext) _UsageSummary_transformsLimit(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
@@ -12217,7 +12233,7 @@ func (ec *executionContext) _UsageSummary_transformsLimit(ctx context.Context, f
 	)
 }
 func (ec *executionContext) fieldContext_UsageSummary_transformsLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, "Int")
 }
 
 func (ec *executionContext) _UsageSummary_periodStart(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
@@ -12240,7 +12256,7 @@ func (ec *executionContext) _UsageSummary_periodStart(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_UsageSummary_periodStart(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, "String")
 }
 
 func (ec *executionContext) _UsageSummary_periodEnd(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
@@ -12263,7 +12279,7 @@ func (ec *executionContext) _UsageSummary_periodEnd(ctx context.Context, field g
 	)
 }
 func (ec *executionContext) fieldContext_UsageSummary_periodEnd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("UsageSummary", field, false, false, "String")
 }
 
 func (ec *executionContext) _UsageSummary_spaces(ctx context.Context, field graphql.CollectedField, obj *UsageSummary) (ret graphql.Marshaler) {
@@ -12318,7 +12334,7 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 	)
 }
 func (ec *executionContext) fieldContext_User_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type ID does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "ID")
 }
 
 func (ec *executionContext) _User_displayName(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12341,7 +12357,7 @@ func (ec *executionContext) _User_displayName(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_User_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "String")
 }
 
 func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12364,7 +12380,7 @@ func (ec *executionContext) _User_username(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_User_username(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "String")
 }
 
 func (ec *executionContext) _User_role(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12387,7 +12403,7 @@ func (ec *executionContext) _User_role(ctx context.Context, field graphql.Collec
 	)
 }
 func (ec *executionContext) fieldContext_User_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "String")
 }
 
 func (ec *executionContext) _User_isActive(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12410,7 +12426,7 @@ func (ec *executionContext) _User_isActive(ctx context.Context, field graphql.Co
 	)
 }
 func (ec *executionContext) fieldContext_User_isActive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12433,7 +12449,7 @@ func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_User_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "String")
 }
 
 func (ec *executionContext) _User_updatedAt(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12456,7 +12472,7 @@ func (ec *executionContext) _User_updatedAt(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_User_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "String")
 }
 
 func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12479,7 +12495,7 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 	)
 }
 func (ec *executionContext) fieldContext_User_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "String")
 }
 
 func (ec *executionContext) _User_pendingEmail(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12502,7 +12518,7 @@ func (ec *executionContext) _User_pendingEmail(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext_User_pendingEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "String")
 }
 
 func (ec *executionContext) _User_emailVerified(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12525,7 +12541,7 @@ func (ec *executionContext) _User_emailVerified(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_User_emailVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _User_hasPassword(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12548,7 +12564,7 @@ func (ec *executionContext) _User_hasPassword(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_User_hasPassword(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) _User_avatarUrl(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12571,7 +12587,7 @@ func (ec *executionContext) _User_avatarUrl(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_User_avatarUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("User", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("User", field, false, false, "String")
 }
 
 func (ec *executionContext) _User_authProviders(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
@@ -12658,7 +12674,7 @@ func (ec *executionContext) _UserList_totalCount(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext_UserList_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UserList", field, false, false, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("UserList", field, false, false, "Int")
 }
 
 func (ec *executionContext) _UserRegistry_key(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
@@ -12681,7 +12697,7 @@ func (ec *executionContext) _UserRegistry_key(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext_UserRegistry_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UserRegistry", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("UserRegistry", field, false, false, "String")
 }
 
 func (ec *executionContext) _UserRegistry_value(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
@@ -12704,7 +12720,7 @@ func (ec *executionContext) _UserRegistry_value(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext_UserRegistry_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UserRegistry", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("UserRegistry", field, false, false, "String")
 }
 
 func (ec *executionContext) _UserRegistry_isEncrypted(ctx context.Context, field graphql.CollectedField, obj *UserRegistry) (ret graphql.Marshaler) {
@@ -12727,7 +12743,7 @@ func (ec *executionContext) _UserRegistry_isEncrypted(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext_UserRegistry_isEncrypted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("UserRegistry", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("UserRegistry", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -12750,7 +12766,7 @@ func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext___Directive_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Directive", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__Directive", field, false, false, "String")
 }
 
 func (ec *executionContext) ___Directive_description(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -12773,7 +12789,7 @@ func (ec *executionContext) ___Directive_description(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext___Directive_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Directive", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__Directive", field, true, false, "String")
 }
 
 func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -12796,7 +12812,7 @@ func (ec *executionContext) ___Directive_isRepeatable(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext___Directive_isRepeatable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Directive", field, false, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("__Directive", field, false, false, "Boolean")
 }
 
 func (ec *executionContext) ___Directive_locations(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -12819,7 +12835,7 @@ func (ec *executionContext) ___Directive_locations(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext___Directive_locations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Directive", field, false, false, errors.New("field of type __DirectiveLocation does not have child fields"))
+	return graphql.NewScalarFieldContext("__Directive", field, false, false, "__DirectiveLocation")
 }
 
 func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -12831,7 +12847,8 @@ func (ec *executionContext) ___Directive_args(ctx context.Context, field graphql
 			return ec.fieldContext___Directive_args(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Args, nil
+			fc := graphql.GetFieldContext(ctx)
+			return obj.VisibleArgs(fc.Args["includeDeprecated"].(bool)), nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []introspection.InputValue) graphql.Marshaler {
@@ -12845,7 +12862,7 @@ func (ec *executionContext) fieldContext___Directive_args(ctx context.Context, f
 	fc = &graphql.FieldContext{
 		Object:     "__Directive",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields___InputValue(ctx, field)
@@ -12885,7 +12902,7 @@ func (ec *executionContext) ___EnumValue_name(ctx context.Context, field graphql
 	)
 }
 func (ec *executionContext) fieldContext___EnumValue_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__EnumValue", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__EnumValue", field, false, false, "String")
 }
 
 func (ec *executionContext) ___EnumValue_description(ctx context.Context, field graphql.CollectedField, obj *introspection.EnumValue) (ret graphql.Marshaler) {
@@ -12908,7 +12925,7 @@ func (ec *executionContext) ___EnumValue_description(ctx context.Context, field 
 	)
 }
 func (ec *executionContext) fieldContext___EnumValue_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__EnumValue", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__EnumValue", field, true, false, "String")
 }
 
 func (ec *executionContext) ___EnumValue_isDeprecated(ctx context.Context, field graphql.CollectedField, obj *introspection.EnumValue) (ret graphql.Marshaler) {
@@ -12931,7 +12948,7 @@ func (ec *executionContext) ___EnumValue_isDeprecated(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext___EnumValue_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__EnumValue", field, true, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("__EnumValue", field, true, false, "Boolean")
 }
 
 func (ec *executionContext) ___EnumValue_deprecationReason(ctx context.Context, field graphql.CollectedField, obj *introspection.EnumValue) (ret graphql.Marshaler) {
@@ -12954,7 +12971,7 @@ func (ec *executionContext) ___EnumValue_deprecationReason(ctx context.Context, 
 	)
 }
 func (ec *executionContext) fieldContext___EnumValue_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__EnumValue", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__EnumValue", field, true, false, "String")
 }
 
 func (ec *executionContext) ___Field_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Field) (ret graphql.Marshaler) {
@@ -12977,7 +12994,7 @@ func (ec *executionContext) ___Field_name(ctx context.Context, field graphql.Col
 	)
 }
 func (ec *executionContext) fieldContext___Field_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Field", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__Field", field, false, false, "String")
 }
 
 func (ec *executionContext) ___Field_description(ctx context.Context, field graphql.CollectedField, obj *introspection.Field) (ret graphql.Marshaler) {
@@ -13000,7 +13017,7 @@ func (ec *executionContext) ___Field_description(ctx context.Context, field grap
 	)
 }
 func (ec *executionContext) fieldContext___Field_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Field", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__Field", field, true, false, "String")
 }
 
 func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.CollectedField, obj *introspection.Field) (ret graphql.Marshaler) {
@@ -13012,7 +13029,8 @@ func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.Col
 			return ec.fieldContext___Field_args(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.Args, nil
+			fc := graphql.GetFieldContext(ctx)
+			return obj.VisibleArgs(fc.Args["includeDeprecated"].(bool)), nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []introspection.InputValue) graphql.Marshaler {
@@ -13026,7 +13044,7 @@ func (ec *executionContext) fieldContext___Field_args(ctx context.Context, field
 	fc = &graphql.FieldContext{
 		Object:     "__Field",
 		Field:      field,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields___InputValue(ctx, field)
@@ -13098,7 +13116,7 @@ func (ec *executionContext) ___Field_isDeprecated(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext___Field_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Field", field, true, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("__Field", field, true, false, "Boolean")
 }
 
 func (ec *executionContext) ___Field_deprecationReason(ctx context.Context, field graphql.CollectedField, obj *introspection.Field) (ret graphql.Marshaler) {
@@ -13121,7 +13139,7 @@ func (ec *executionContext) ___Field_deprecationReason(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext___Field_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Field", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__Field", field, true, false, "String")
 }
 
 func (ec *executionContext) ___InputValue_name(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
@@ -13144,7 +13162,7 @@ func (ec *executionContext) ___InputValue_name(ctx context.Context, field graphq
 	)
 }
 func (ec *executionContext) fieldContext___InputValue_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__InputValue", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__InputValue", field, false, false, "String")
 }
 
 func (ec *executionContext) ___InputValue_description(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
@@ -13167,7 +13185,7 @@ func (ec *executionContext) ___InputValue_description(ctx context.Context, field
 	)
 }
 func (ec *executionContext) fieldContext___InputValue_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__InputValue", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__InputValue", field, true, false, "String")
 }
 
 func (ec *executionContext) ___InputValue_type(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
@@ -13222,7 +13240,7 @@ func (ec *executionContext) ___InputValue_defaultValue(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext___InputValue_defaultValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__InputValue", field, false, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__InputValue", field, false, false, "String")
 }
 
 func (ec *executionContext) ___InputValue_isDeprecated(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
@@ -13245,7 +13263,7 @@ func (ec *executionContext) ___InputValue_isDeprecated(ctx context.Context, fiel
 	)
 }
 func (ec *executionContext) fieldContext___InputValue_isDeprecated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__InputValue", field, true, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("__InputValue", field, true, false, "Boolean")
 }
 
 func (ec *executionContext) ___InputValue_deprecationReason(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
@@ -13268,7 +13286,7 @@ func (ec *executionContext) ___InputValue_deprecationReason(ctx context.Context,
 	)
 }
 func (ec *executionContext) fieldContext___InputValue_deprecationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__InputValue", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__InputValue", field, true, false, "String")
 }
 
 func (ec *executionContext) ___Schema_description(ctx context.Context, field graphql.CollectedField, obj *introspection.Schema) (ret graphql.Marshaler) {
@@ -13291,7 +13309,7 @@ func (ec *executionContext) ___Schema_description(ctx context.Context, field gra
 	)
 }
 func (ec *executionContext) fieldContext___Schema_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Schema", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__Schema", field, true, false, "String")
 }
 
 func (ec *executionContext) ___Schema_types(ctx context.Context, field graphql.CollectedField, obj *introspection.Schema) (ret graphql.Marshaler) {
@@ -13474,7 +13492,7 @@ func (ec *executionContext) ___Type_kind(ctx context.Context, field graphql.Coll
 	)
 }
 func (ec *executionContext) fieldContext___Type_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Type", field, true, false, errors.New("field of type __TypeKind does not have child fields"))
+	return graphql.NewScalarFieldContext("__Type", field, true, false, "__TypeKind")
 }
 
 func (ec *executionContext) ___Type_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
@@ -13497,7 +13515,7 @@ func (ec *executionContext) ___Type_name(ctx context.Context, field graphql.Coll
 	)
 }
 func (ec *executionContext) fieldContext___Type_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Type", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__Type", field, true, false, "String")
 }
 
 func (ec *executionContext) ___Type_description(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
@@ -13520,7 +13538,7 @@ func (ec *executionContext) ___Type_description(ctx context.Context, field graph
 	)
 }
 func (ec *executionContext) fieldContext___Type_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Type", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__Type", field, true, false, "String")
 }
 
 func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
@@ -13543,7 +13561,7 @@ func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Type", field, true, false, errors.New("field of type String does not have child fields"))
+	return graphql.NewScalarFieldContext("__Type", field, true, false, "String")
 }
 
 func (ec *executionContext) ___Type_fields(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
@@ -13707,7 +13725,8 @@ func (ec *executionContext) ___Type_inputFields(ctx context.Context, field graph
 			return ec.fieldContext___Type_inputFields(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.InputFields(), nil
+			fc := graphql.GetFieldContext(ctx)
+			return obj.VisibleInputFields(fc.Args["includeDeprecated"].(bool)), nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []introspection.InputValue) graphql.Marshaler {
@@ -13717,7 +13736,7 @@ func (ec *executionContext) ___Type_inputFields(ctx context.Context, field graph
 		false,
 	)
 }
-func (ec *executionContext) fieldContext___Type_inputFields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext___Type_inputFields(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "__Type",
 		Field:      field,
@@ -13726,6 +13745,17 @@ func (ec *executionContext) fieldContext___Type_inputFields(_ context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields___InputValue(ctx, field)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field___Type_inputFields_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -13782,7 +13812,7 @@ func (ec *executionContext) ___Type_isOneOf(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("__Type", field, true, false, errors.New("field of type Boolean does not have child fields"))
+	return graphql.NewScalarFieldContext("__Type", field, true, false, "Boolean")
 }
 
 // endregion **************************** field.gotpl *****************************
@@ -13824,6 +13854,18 @@ func (ec *executionContext) unmarshalInputChangePasswordInput(ctx context.Contex
 		}
 	}
 	return it, nil
+}
+
+// UnmarshalChangePasswordInput unmarshals raw into the ChangePasswordInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalChangePasswordInput(ctx context.Context, raw any) (ChangePasswordInput, error) {
+	var out ChangePasswordInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "ChangePasswordInput", raw, &out)
+	return out, err
 }
 
 func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, obj any) (CreateUserInput, error) {
@@ -13877,6 +13919,18 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 	return it, nil
 }
 
+// UnmarshalCreateUserInput unmarshals raw into the CreateUserInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalCreateUserInput(ctx context.Context, raw any) (CreateUserInput, error) {
+	var out CreateUserInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "CreateUserInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputDimensionsInput(ctx context.Context, obj any) (DimensionsInput, error) {
 	var it DimensionsInput
 	if obj == nil {
@@ -13912,6 +13966,18 @@ func (ec *executionContext) unmarshalInputDimensionsInput(ctx context.Context, o
 		}
 	}
 	return it, nil
+}
+
+// UnmarshalDimensionsInput unmarshals raw into the DimensionsInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalDimensionsInput(ctx context.Context, raw any) (DimensionsInput, error) {
+	var out DimensionsInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "DimensionsInput", raw, &out)
+	return out, err
 }
 
 func (ec *executionContext) unmarshalInputFileStorageInput(ctx context.Context, obj any) (FileStorageInput, error) {
@@ -13958,6 +14024,18 @@ func (ec *executionContext) unmarshalInputFileStorageInput(ctx context.Context, 
 	return it, nil
 }
 
+// UnmarshalFileStorageInput unmarshals raw into the FileStorageInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalFileStorageInput(ctx context.Context, raw any) (FileStorageInput, error) {
+	var out FileStorageInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "FileStorageInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputImagorFilterInput(ctx context.Context, obj any) (ImagorFilterInput, error) {
 	var it ImagorFilterInput
 	if obj == nil {
@@ -13993,6 +14071,18 @@ func (ec *executionContext) unmarshalInputImagorFilterInput(ctx context.Context,
 		}
 	}
 	return it, nil
+}
+
+// UnmarshalImagorFilterInput unmarshals raw into the ImagorFilterInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalImagorFilterInput(ctx context.Context, raw any) (ImagorFilterInput, error) {
+	var out ImagorFilterInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "ImagorFilterInput", raw, &out)
+	return out, err
 }
 
 func (ec *executionContext) unmarshalInputImagorInput(ctx context.Context, obj any) (ImagorInput, error) {
@@ -14037,6 +14127,18 @@ func (ec *executionContext) unmarshalInputImagorInput(ctx context.Context, obj a
 		}
 	}
 	return it, nil
+}
+
+// UnmarshalImagorInput unmarshals raw into the ImagorInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalImagorInput(ctx context.Context, raw any) (ImagorInput, error) {
+	var out ImagorInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "ImagorInput", raw, &out)
+	return out, err
 }
 
 func (ec *executionContext) unmarshalInputImagorParamsInput(ctx context.Context, obj any) (ImagorParamsInput, error) {
@@ -14209,6 +14311,18 @@ func (ec *executionContext) unmarshalInputImagorParamsInput(ctx context.Context,
 	return it, nil
 }
 
+// UnmarshalImagorParamsInput unmarshals raw into the ImagorParamsInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalImagorParamsInput(ctx context.Context, raw any) (ImagorParamsInput, error) {
+	var out ImagorParamsInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "ImagorParamsInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputRegistryEntryInput(ctx context.Context, obj any) (RegistryEntryInput, error) {
 	var it RegistryEntryInput
 	if obj == nil {
@@ -14251,6 +14365,18 @@ func (ec *executionContext) unmarshalInputRegistryEntryInput(ctx context.Context
 		}
 	}
 	return it, nil
+}
+
+// UnmarshalRegistryEntryInput unmarshals raw into the RegistryEntryInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalRegistryEntryInput(ctx context.Context, raw any) (RegistryEntryInput, error) {
+	var out RegistryEntryInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "RegistryEntryInput", raw, &out)
+	return out, err
 }
 
 func (ec *executionContext) unmarshalInputS3StorageInput(ctx context.Context, obj any) (S3StorageInput, error) {
@@ -14332,6 +14458,18 @@ func (ec *executionContext) unmarshalInputS3StorageInput(ctx context.Context, ob
 	return it, nil
 }
 
+// UnmarshalS3StorageInput unmarshals raw into the S3StorageInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalS3StorageInput(ctx context.Context, raw any) (S3StorageInput, error) {
+	var out S3StorageInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "S3StorageInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context, obj any) (SaveTemplateInput, error) {
 	var it SaveTemplateInput
 	if obj == nil {
@@ -14402,6 +14540,18 @@ func (ec *executionContext) unmarshalInputSaveTemplateInput(ctx context.Context,
 		}
 	}
 	return it, nil
+}
+
+// UnmarshalSaveTemplateInput unmarshals raw into the SaveTemplateInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalSaveTemplateInput(ctx context.Context, raw any) (SaveTemplateInput, error) {
+	var out SaveTemplateInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "SaveTemplateInput", raw, &out)
+	return out, err
 }
 
 func (ec *executionContext) unmarshalInputSpaceInput(ctx context.Context, obj any) (SpaceInput, error) {
@@ -14546,6 +14696,18 @@ func (ec *executionContext) unmarshalInputSpaceInput(ctx context.Context, obj an
 	return it, nil
 }
 
+// UnmarshalSpaceInput unmarshals raw into the SpaceInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalSpaceInput(ctx context.Context, raw any) (SpaceInput, error) {
+	var out SpaceInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "SpaceInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputStorageConfigInput(ctx context.Context, obj any) (StorageConfigInput, error) {
 	var it StorageConfigInput
 	if obj == nil {
@@ -14590,6 +14752,18 @@ func (ec *executionContext) unmarshalInputStorageConfigInput(ctx context.Context
 	return it, nil
 }
 
+// UnmarshalStorageConfigInput unmarshals raw into the StorageConfigInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalStorageConfigInput(ctx context.Context, raw any) (StorageConfigInput, error) {
+	var out StorageConfigInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "StorageConfigInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context, obj any) (UpdateProfileInput, error) {
 	var it UpdateProfileInput
 	if obj == nil {
@@ -14627,6 +14801,18 @@ func (ec *executionContext) unmarshalInputUpdateProfileInput(ctx context.Context
 	return it, nil
 }
 
+// UnmarshalUpdateProfileInput unmarshals raw into the UpdateProfileInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalUpdateProfileInput(ctx context.Context, raw any) (UpdateProfileInput, error) {
+	var out UpdateProfileInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "UpdateProfileInput", raw, &out)
+	return out, err
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -14641,8 +14827,7 @@ func (ec *executionContext) _AuthProvider(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, authProviderImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -14671,14 +14856,10 @@ func (ec *executionContext) _AuthProvider(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -14689,8 +14870,7 @@ func (ec *executionContext) _BillingSession(ctx context.Context, sel ast.Selecti
 	fields := graphql.CollectFields(ec.OperationContext, sel, billingSessionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -14709,14 +14889,10 @@ func (ec *executionContext) _BillingSession(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -14727,8 +14903,7 @@ func (ec *executionContext) _EmailChangeRequestResult(ctx context.Context, sel a
 	fields := graphql.CollectFields(ec.OperationContext, sel, emailChangeRequestResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -14752,14 +14927,10 @@ func (ec *executionContext) _EmailChangeRequestResult(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -14770,8 +14941,7 @@ func (ec *executionContext) _FileItem(ctx context.Context, sel ast.SelectionSet,
 	fields := graphql.CollectFields(ec.OperationContext, sel, fileItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -14815,14 +14985,10 @@ func (ec *executionContext) _FileItem(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -14833,8 +14999,7 @@ func (ec *executionContext) _FileList(ctx context.Context, sel ast.SelectionSet,
 	fields := graphql.CollectFields(ec.OperationContext, sel, fileListImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -14858,14 +15023,10 @@ func (ec *executionContext) _FileList(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -14876,8 +15037,7 @@ func (ec *executionContext) _FileStat(ctx context.Context, sel ast.SelectionSet,
 	fields := graphql.CollectFields(ec.OperationContext, sel, fileStatImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -14926,14 +15086,10 @@ func (ec *executionContext) _FileStat(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -14944,8 +15100,7 @@ func (ec *executionContext) _FileStorageConfig(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, fileStorageConfigImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -14974,14 +15129,10 @@ func (ec *executionContext) _FileStorageConfig(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -14992,8 +15143,7 @@ func (ec *executionContext) _ImagorConfig(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, imagorConfigImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -15022,14 +15172,10 @@ func (ec *executionContext) _ImagorConfig(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15040,8 +15186,7 @@ func (ec *executionContext) _ImagorConfigResult(ctx context.Context, sel ast.Sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, imagorConfigResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -15070,14 +15215,10 @@ func (ec *executionContext) _ImagorConfigResult(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15088,8 +15229,7 @@ func (ec *executionContext) _ImagorStatus(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, imagorStatusImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -15123,14 +15263,10 @@ func (ec *executionContext) _ImagorStatus(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15141,8 +15277,7 @@ func (ec *executionContext) _LicenseStatus(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, licenseStatusImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -15196,14 +15331,10 @@ func (ec *executionContext) _LicenseStatus(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15217,8 +15348,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	})
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -15587,14 +15717,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15605,8 +15731,7 @@ func (ec *executionContext) _OrgInvitation(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, orgInvitationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -15645,14 +15770,10 @@ func (ec *executionContext) _OrgInvitation(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15663,8 +15784,7 @@ func (ec *executionContext) _OrgInviteResult(ctx context.Context, sel ast.Select
 	fields := graphql.CollectFields(ec.OperationContext, sel, orgInviteResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -15693,14 +15813,10 @@ func (ec *executionContext) _OrgInviteResult(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15711,8 +15827,7 @@ func (ec *executionContext) _OrgMember(ctx context.Context, sel ast.SelectionSet
 	fields := graphql.CollectFields(ec.OperationContext, sel, orgMemberImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -15761,14 +15876,10 @@ func (ec *executionContext) _OrgMember(ctx context.Context, sel ast.SelectionSet
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15779,8 +15890,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, organizationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -15844,14 +15954,10 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15862,8 +15968,7 @@ func (ec *executionContext) _PresignedUpload(ctx context.Context, sel ast.Select
 	fields := graphql.CollectFields(ec.OperationContext, sel, presignedUploadImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -15892,14 +15997,10 @@ func (ec *executionContext) _PresignedUpload(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -15913,8 +16014,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	})
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -15925,489 +16025,137 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
 		case "listFiles":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_listFiles(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_listFiles(ctx, field)
+				})
 		case "statFile":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_statFile(ctx, field)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, false,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_statFile(ctx, field)
+				})
 		case "storageStatus":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_storageStatus(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_storageStatus(ctx, field)
+				})
 		case "imagorStatus":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_imagorStatus(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_imagorStatus(ctx, field)
+				})
 		case "myOrganization":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_myOrganization(ctx, field)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, false,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_myOrganization(ctx, field)
+				})
 		case "orgInvitations":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_orgInvitations(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_orgInvitations(ctx, field)
+				})
 		case "spaces":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_spaces(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_spaces(ctx, field)
+				})
 		case "usageSummary":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_usageSummary(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_usageSummary(ctx, field)
+				})
 		case "space":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_space(ctx, field)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, false,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_space(ctx, field)
+				})
 		case "spaceRegistry":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_spaceRegistry(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_spaceRegistry(ctx, field)
+				})
 		case "orgMembers":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_orgMembers(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_orgMembers(ctx, field)
+				})
 		case "spaceMembers":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_spaceMembers(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_spaceMembers(ctx, field)
+				})
 		case "spaceInvitations":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_spaceInvitations(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_spaceInvitations(ctx, field)
+				})
 		case "spaceKeyExists":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_spaceKeyExists(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_spaceKeyExists(ctx, field)
+				})
 		case "listUserRegistry":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_listUserRegistry(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_listUserRegistry(ctx, field)
+				})
 		case "getUserRegistry":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getUserRegistry(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_getUserRegistry(ctx, field)
+				})
 		case "listSystemRegistry":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_listSystemRegistry(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_listSystemRegistry(ctx, field)
+				})
 		case "getSystemRegistry":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getSystemRegistry(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_getSystemRegistry(ctx, field)
+				})
 		case "licenseStatus":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_licenseStatus(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_licenseStatus(ctx, field)
+				})
 		case "me":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_me(ctx, field)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, false,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_me(ctx, field)
+				})
 		case "user":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_user(ctx, field)
-				if res == graphql.RequiredNull {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, false,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_user(ctx, field)
+				})
 		case "users":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_users(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+			out.ResolveRootConcurrently(innerCtx, ec.OperationContext, i,
+				true, true,
+				func(ctx context.Context) graphql.Marshaler {
+					return ec._Query_users(ctx, field)
+				})
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -16419,7 +16167,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
-			if out.Values[i] == graphql.RequiredNull {
+			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
@@ -16431,14 +16179,10 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -16449,8 +16193,7 @@ func (ec *executionContext) _S3StorageConfig(ctx context.Context, sel ast.Select
 	fields := graphql.CollectFields(ec.OperationContext, sel, s3StorageConfigImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -16489,14 +16232,10 @@ func (ec *executionContext) _S3StorageConfig(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -16507,8 +16246,7 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 	fields := graphql.CollectFields(ec.OperationContext, sel, spaceImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -16652,14 +16390,10 @@ func (ec *executionContext) _Space(ctx context.Context, sel ast.SelectionSet, ob
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -16670,8 +16404,7 @@ func (ec *executionContext) _SpaceInvitation(ctx context.Context, sel ast.Select
 	fields := graphql.CollectFields(ec.OperationContext, sel, spaceInvitationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -16710,14 +16443,10 @@ func (ec *executionContext) _SpaceInvitation(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -16728,8 +16457,7 @@ func (ec *executionContext) _SpaceInviteResult(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, spaceInviteResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -16758,14 +16486,10 @@ func (ec *executionContext) _SpaceInviteResult(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -16776,8 +16500,7 @@ func (ec *executionContext) _SpaceMember(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, spaceMemberImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -16841,14 +16564,10 @@ func (ec *executionContext) _SpaceMember(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -16859,8 +16578,7 @@ func (ec *executionContext) _SpaceUsage(ctx context.Context, sel ast.SelectionSe
 	fields := graphql.CollectFields(ec.OperationContext, sel, spaceUsageImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -16899,14 +16617,10 @@ func (ec *executionContext) _SpaceUsage(ctx context.Context, sel ast.SelectionSe
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -16917,8 +16631,7 @@ func (ec *executionContext) _StorageConfigResult(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, storageConfigResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -16947,14 +16660,10 @@ func (ec *executionContext) _StorageConfigResult(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -16965,8 +16674,7 @@ func (ec *executionContext) _StorageStatus(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, storageStatusImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17015,14 +16723,10 @@ func (ec *executionContext) _StorageStatus(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17033,8 +16737,7 @@ func (ec *executionContext) _StorageTestResult(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, storageTestResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17068,14 +16771,10 @@ func (ec *executionContext) _StorageTestResult(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17086,8 +16785,7 @@ func (ec *executionContext) _StorageUploadProbe(ctx context.Context, sel ast.Sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, storageUploadProbeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17116,14 +16814,10 @@ func (ec *executionContext) _StorageUploadProbe(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17134,8 +16828,7 @@ func (ec *executionContext) _SystemRegistry(ctx context.Context, sel ast.Selecti
 	fields := graphql.CollectFields(ec.OperationContext, sel, systemRegistryImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17169,14 +16862,10 @@ func (ec *executionContext) _SystemRegistry(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17187,8 +16876,7 @@ func (ec *executionContext) _TemplateResult(ctx context.Context, sel ast.Selecti
 	fields := graphql.CollectFields(ec.OperationContext, sel, templateResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17222,14 +16910,10 @@ func (ec *executionContext) _TemplateResult(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17240,8 +16924,7 @@ func (ec *executionContext) _ThumbnailUrls(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, thumbnailUrlsImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17280,14 +16963,10 @@ func (ec *executionContext) _ThumbnailUrls(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17298,8 +16977,7 @@ func (ec *executionContext) _UploadHeader(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, uploadHeaderImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17323,14 +17001,10 @@ func (ec *executionContext) _UploadHeader(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17341,8 +17015,7 @@ func (ec *executionContext) _UsageSummary(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, usageSummaryImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17401,14 +17074,10 @@ func (ec *executionContext) _UsageSummary(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17419,8 +17088,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17499,14 +17167,10 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17517,8 +17181,7 @@ func (ec *executionContext) _UserList(ctx context.Context, sel ast.SelectionSet,
 	fields := graphql.CollectFields(ec.OperationContext, sel, userListImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17542,14 +17205,10 @@ func (ec *executionContext) _UserList(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17560,8 +17219,7 @@ func (ec *executionContext) _UserRegistry(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, userRegistryImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17590,14 +17248,10 @@ func (ec *executionContext) _UserRegistry(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17608,8 +17262,7 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, __DirectiveImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17648,14 +17301,10 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17666,8 +17315,7 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, __EnumValueImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17701,14 +17349,10 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17719,8 +17363,7 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, __FieldImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17764,14 +17407,10 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17782,8 +17421,7 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, __InputValueImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17827,14 +17465,10 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17845,8 +17479,7 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 	fields := graphql.CollectFields(ec.OperationContext, sel, __SchemaImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17890,14 +17523,10 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -17908,8 +17537,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 	fields := graphql.CollectFields(ec.OperationContext, sel, __TypeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferredFieldSet := graphql.NewFieldSet(nil)
-	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	deferred := graphql.NewDeferredGroup(ctx)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -17978,14 +17606,10 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
-
-	ec.ProcessDeferredGroup(graphql.DeferredGroup{
-		Defers:   deferLabelToView,
-		Path:     graphql.GetPath(ctx),
-		FieldSet: deferredFieldSet,
-		Context:  ctx,
-	})
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
 
 	return out
 }
@@ -18012,23 +17636,15 @@ func (ec *executionContext) marshalNAuthProvider2ᚕᚖgithubᚗcomᚋcshumᚋim
 
 func (ec *executionContext) marshalNAuthProvider2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐAuthProvider(ctx context.Context, sel ast.SelectionSet, v *AuthProvider) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "AuthProvider!")
 		return graphql.Null
 	}
 	return ec._AuthProvider(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBillingSession2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession(ctx context.Context, sel ast.SelectionSet, v BillingSession) graphql.Marshaler {
-	return ec._BillingSession(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNBillingSession2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐBillingSession(ctx context.Context, sel ast.SelectionSet, v *BillingSession) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "BillingSession!")
 		return graphql.Null
 	}
 	return ec._BillingSession(ctx, sel, v)
@@ -18043,9 +17659,7 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	_ = sel
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullFromMarshaler(ctx, "Boolean!")
 	}
 	return res
 }
@@ -18070,15 +17684,9 @@ func (ec *executionContext) marshalNDimensionMode2githubᚗcomᚋcshumᚋimagor�
 	return v
 }
 
-func (ec *executionContext) marshalNEmailChangeRequestResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmailChangeRequestResult(ctx context.Context, sel ast.SelectionSet, v EmailChangeRequestResult) graphql.Marshaler {
-	return ec._EmailChangeRequestResult(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNEmailChangeRequestResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐEmailChangeRequestResult(ctx context.Context, sel ast.SelectionSet, v *EmailChangeRequestResult) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "EmailChangeRequestResult!")
 		return graphql.Null
 	}
 	return ec._EmailChangeRequestResult(ctx, sel, v)
@@ -18102,23 +17710,15 @@ func (ec *executionContext) marshalNFileItem2ᚕᚖgithubᚗcomᚋcshumᚋimagor
 
 func (ec *executionContext) marshalNFileItem2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileItem(ctx context.Context, sel ast.SelectionSet, v *FileItem) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "FileItem!")
 		return graphql.Null
 	}
 	return ec._FileItem(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNFileList2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v FileList) graphql.Marshaler {
-	return ec._FileList(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNFileList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐFileList(ctx context.Context, sel ast.SelectionSet, v *FileList) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "FileList!")
 		return graphql.Null
 	}
 	return ec._FileList(ctx, sel, v)
@@ -18138,22 +17738,14 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	_ = sel
 	res := graphql.MarshalID(v)
 	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullFromMarshaler(ctx, "ID!")
 	}
 	return res
 }
 
-func (ec *executionContext) marshalNImagorConfigResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult(ctx context.Context, sel ast.SelectionSet, v ImagorConfigResult) graphql.Marshaler {
-	return ec._ImagorConfigResult(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNImagorConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorConfigResult(ctx context.Context, sel ast.SelectionSet, v *ImagorConfigResult) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "ImagorConfigResult!")
 		return graphql.Null
 	}
 	return ec._ImagorConfigResult(ctx, sel, v)
@@ -18184,15 +17776,9 @@ func (ec *executionContext) marshalNImagorSignerType2githubᚗcomᚋcshumᚋimag
 	return v
 }
 
-func (ec *executionContext) marshalNImagorStatus2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorStatus(ctx context.Context, sel ast.SelectionSet, v ImagorStatus) graphql.Marshaler {
-	return ec._ImagorStatus(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNImagorStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐImagorStatus(ctx context.Context, sel ast.SelectionSet, v *ImagorStatus) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "ImagorStatus!")
 		return graphql.Null
 	}
 	return ec._ImagorStatus(ctx, sel, v)
@@ -18207,22 +17793,14 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	_ = sel
 	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullFromMarshaler(ctx, "Int!")
 	}
 	return res
 }
 
-func (ec *executionContext) marshalNLicenseStatus2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐLicenseStatus(ctx context.Context, sel ast.SelectionSet, v LicenseStatus) graphql.Marshaler {
-	return ec._LicenseStatus(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNLicenseStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐLicenseStatus(ctx context.Context, sel ast.SelectionSet, v *LicenseStatus) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "LicenseStatus!")
 		return graphql.Null
 	}
 	return ec._LicenseStatus(ctx, sel, v)
@@ -18246,30 +17824,18 @@ func (ec *executionContext) marshalNOrgInvitation2ᚕᚖgithubᚗcomᚋcshumᚋi
 
 func (ec *executionContext) marshalNOrgInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInvitation(ctx context.Context, sel ast.SelectionSet, v *OrgInvitation) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "OrgInvitation!")
 		return graphql.Null
 	}
 	return ec._OrgInvitation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrgInviteResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInviteResult(ctx context.Context, sel ast.SelectionSet, v OrgInviteResult) graphql.Marshaler {
-	return ec._OrgInviteResult(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNOrgInviteResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgInviteResult(ctx context.Context, sel ast.SelectionSet, v *OrgInviteResult) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "OrgInviteResult!")
 		return graphql.Null
 	}
 	return ec._OrgInviteResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNOrgMember2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember(ctx context.Context, sel ast.SelectionSet, v OrgMember) graphql.Marshaler {
-	return ec._OrgMember(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNOrgMember2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*OrgMember) graphql.Marshaler {
@@ -18290,9 +17856,7 @@ func (ec *executionContext) marshalNOrgMember2ᚕᚖgithubᚗcomᚋcshumᚋimago
 
 func (ec *executionContext) marshalNOrgMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrgMember(ctx context.Context, sel ast.SelectionSet, v *OrgMember) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "OrgMember!")
 		return graphql.Null
 	}
 	return ec._OrgMember(ctx, sel, v)
@@ -18318,29 +17882,17 @@ func (ec *executionContext) marshalNOrgMemberRole2githubᚗcomᚋcshumᚋimagor�
 	return v
 }
 
-func (ec *executionContext) marshalNOrganization2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v Organization) graphql.Marshaler {
-	return ec._Organization(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *Organization) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "Organization!")
 		return graphql.Null
 	}
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPresignedUpload2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐPresignedUpload(ctx context.Context, sel ast.SelectionSet, v PresignedUpload) graphql.Marshaler {
-	return ec._PresignedUpload(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNPresignedUpload2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐPresignedUpload(ctx context.Context, sel ast.SelectionSet, v *PresignedUpload) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "PresignedUpload!")
 		return graphql.Null
 	}
 	return ec._PresignedUpload(ctx, sel, v)
@@ -18361,10 +17913,6 @@ func (ec *executionContext) unmarshalNSaveTemplateInput2githubᚗcomᚋcshumᚋi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSpace2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpace(ctx context.Context, sel ast.SelectionSet, v Space) graphql.Marshaler {
-	return ec._Space(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNSpace2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceᚄ(ctx context.Context, sel ast.SelectionSet, v []*Space) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -18383,9 +17931,7 @@ func (ec *executionContext) marshalNSpace2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑ
 
 func (ec *executionContext) marshalNSpace2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpace(ctx context.Context, sel ast.SelectionSet, v *Space) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "Space!")
 		return graphql.Null
 	}
 	return ec._Space(ctx, sel, v)
@@ -18414,30 +17960,18 @@ func (ec *executionContext) marshalNSpaceInvitation2ᚕᚖgithubᚗcomᚋcshum�
 
 func (ec *executionContext) marshalNSpaceInvitation2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceInvitation(ctx context.Context, sel ast.SelectionSet, v *SpaceInvitation) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "SpaceInvitation!")
 		return graphql.Null
 	}
 	return ec._SpaceInvitation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSpaceInviteResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceInviteResult(ctx context.Context, sel ast.SelectionSet, v SpaceInviteResult) graphql.Marshaler {
-	return ec._SpaceInviteResult(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNSpaceInviteResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceInviteResult(ctx context.Context, sel ast.SelectionSet, v *SpaceInviteResult) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "SpaceInviteResult!")
 		return graphql.Null
 	}
 	return ec._SpaceInviteResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNSpaceMember2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMember(ctx context.Context, sel ast.SelectionSet, v SpaceMember) graphql.Marshaler {
-	return ec._SpaceMember(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNSpaceMember2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*SpaceMember) graphql.Marshaler {
@@ -18458,9 +17992,7 @@ func (ec *executionContext) marshalNSpaceMember2ᚕᚖgithubᚗcomᚋcshumᚋima
 
 func (ec *executionContext) marshalNSpaceMember2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceMember(ctx context.Context, sel ast.SelectionSet, v *SpaceMember) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "SpaceMember!")
 		return graphql.Null
 	}
 	return ec._SpaceMember(ctx, sel, v)
@@ -18514,9 +18046,7 @@ func (ec *executionContext) marshalNSpaceUsage2ᚕᚖgithubᚗcomᚋcshumᚋimag
 
 func (ec *executionContext) marshalNSpaceUsage2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSpaceUsage(ctx context.Context, sel ast.SelectionSet, v *SpaceUsage) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "SpaceUsage!")
 		return graphql.Null
 	}
 	return ec._SpaceUsage(ctx, sel, v)
@@ -18527,43 +18057,25 @@ func (ec *executionContext) unmarshalNStorageConfigInput2githubᚗcomᚋcshumᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNStorageConfigResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigResult(ctx context.Context, sel ast.SelectionSet, v StorageConfigResult) graphql.Marshaler {
-	return ec._StorageConfigResult(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNStorageConfigResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageConfigResult(ctx context.Context, sel ast.SelectionSet, v *StorageConfigResult) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "StorageConfigResult!")
 		return graphql.Null
 	}
 	return ec._StorageConfigResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStorageStatus2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageStatus(ctx context.Context, sel ast.SelectionSet, v StorageStatus) graphql.Marshaler {
-	return ec._StorageStatus(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNStorageStatus2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageStatus(ctx context.Context, sel ast.SelectionSet, v *StorageStatus) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "StorageStatus!")
 		return graphql.Null
 	}
 	return ec._StorageStatus(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNStorageTestResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageTestResult(ctx context.Context, sel ast.SelectionSet, v StorageTestResult) graphql.Marshaler {
-	return ec._StorageTestResult(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNStorageTestResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageTestResult(ctx context.Context, sel ast.SelectionSet, v *StorageTestResult) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "StorageTestResult!")
 		return graphql.Null
 	}
 	return ec._StorageTestResult(ctx, sel, v)
@@ -18579,15 +18091,9 @@ func (ec *executionContext) marshalNStorageType2githubᚗcomᚋcshumᚋimagorᚑ
 	return v
 }
 
-func (ec *executionContext) marshalNStorageUploadProbe2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageUploadProbe(ctx context.Context, sel ast.SelectionSet, v StorageUploadProbe) graphql.Marshaler {
-	return ec._StorageUploadProbe(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNStorageUploadProbe2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐStorageUploadProbe(ctx context.Context, sel ast.SelectionSet, v *StorageUploadProbe) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "StorageUploadProbe!")
 		return graphql.Null
 	}
 	return ec._StorageUploadProbe(ctx, sel, v)
@@ -18602,9 +18108,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	_ = sel
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullFromMarshaler(ctx, "String!")
 	}
 	return res
 }
@@ -18627,23 +18131,15 @@ func (ec *executionContext) marshalNSystemRegistry2ᚕᚖgithubᚗcomᚋcshumᚋ
 
 func (ec *executionContext) marshalNSystemRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐSystemRegistry(ctx context.Context, sel ast.SelectionSet, v *SystemRegistry) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "SystemRegistry!")
 		return graphql.Null
 	}
 	return ec._SystemRegistry(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTemplateResult2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐTemplateResult(ctx context.Context, sel ast.SelectionSet, v TemplateResult) graphql.Marshaler {
-	return ec._TemplateResult(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNTemplateResult2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐTemplateResult(ctx context.Context, sel ast.SelectionSet, v *TemplateResult) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "TemplateResult!")
 		return graphql.Null
 	}
 	return ec._TemplateResult(ctx, sel, v)
@@ -18663,9 +18159,7 @@ func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋg
 	_ = sel
 	res := graphql.MarshalUpload(v)
 	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullFromMarshaler(ctx, "Upload!")
 	}
 	return res
 }
@@ -18688,30 +18182,18 @@ func (ec *executionContext) marshalNUploadHeader2ᚕᚖgithubᚗcomᚋcshumᚋim
 
 func (ec *executionContext) marshalNUploadHeader2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUploadHeader(ctx context.Context, sel ast.SelectionSet, v *UploadHeader) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "UploadHeader!")
 		return graphql.Null
 	}
 	return ec._UploadHeader(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUsageSummary2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUsageSummary(ctx context.Context, sel ast.SelectionSet, v UsageSummary) graphql.Marshaler {
-	return ec._UsageSummary(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNUsageSummary2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUsageSummary(ctx context.Context, sel ast.SelectionSet, v *UsageSummary) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "UsageSummary!")
 		return graphql.Null
 	}
 	return ec._UsageSummary(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNUser2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v User) graphql.Marshaler {
-	return ec._User(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*User) graphql.Marshaler {
@@ -18732,23 +18214,15 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋcshumᚋimagorᚑs
 
 func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUser(ctx context.Context, sel ast.SelectionSet, v *User) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "User!")
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUserList2githubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserList(ctx context.Context, sel ast.SelectionSet, v UserList) graphql.Marshaler {
-	return ec._UserList(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNUserList2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserList(ctx context.Context, sel ast.SelectionSet, v *UserList) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "UserList!")
 		return graphql.Null
 	}
 	return ec._UserList(ctx, sel, v)
@@ -18772,9 +18246,7 @@ func (ec *executionContext) marshalNUserRegistry2ᚕᚖgithubᚗcomᚋcshumᚋim
 
 func (ec *executionContext) marshalNUserRegistry2ᚖgithubᚗcomᚋcshumᚋimagorᚑstudioᚋserverᚋinternalᚋgeneratedᚋgqlᚐUserRegistry(ctx context.Context, sel ast.SelectionSet, v *UserRegistry) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "UserRegistry!")
 		return graphql.Null
 	}
 	return ec._UserRegistry(ctx, sel, v)
@@ -18809,9 +18281,7 @@ func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Conte
 	_ = sel
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullFromMarshaler(ctx, "__DirectiveLocation!")
 	}
 	return res
 }
@@ -18874,6 +18344,14 @@ func (ec *executionContext) marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 	return ret
 }
 
+func (ec *executionContext) marshalN__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx context.Context, sel ast.SelectionSet, v *introspection.Schema) graphql.Marshaler {
+	if v == nil {
+		graphql.AddInvalidNullError(ctx, "__Schema!")
+		return graphql.Null
+	}
+	return ec.___Schema(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalN__Type2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx context.Context, sel ast.SelectionSet, v introspection.Type) graphql.Marshaler {
 	return ec.___Type(ctx, sel, &v)
 }
@@ -18896,9 +18374,7 @@ func (ec *executionContext) marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 
 func (ec *executionContext) marshalN__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx context.Context, sel ast.SelectionSet, v *introspection.Type) graphql.Marshaler {
 	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullError(ctx, "__Type!")
 		return graphql.Null
 	}
 	return ec.___Type(ctx, sel, v)
@@ -18913,9 +18389,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	_ = sel
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
+		graphql.AddInvalidNullFromMarshaler(ctx, "__TypeKind!")
 	}
 	return res
 }
@@ -19309,13 +18783,6 @@ func (ec *executionContext) marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 	}
 
 	return ret
-}
-
-func (ec *executionContext) marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx context.Context, sel ast.SelectionSet, v *introspection.Schema) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.___Schema(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.Type) graphql.Marshaler {

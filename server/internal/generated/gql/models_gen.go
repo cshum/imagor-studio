@@ -454,7 +454,7 @@ func (e *DimensionMode) UnmarshalGQL(v any) error {
 }
 
 func (e DimensionMode) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *DimensionMode) UnmarshalJSON(b []byte) error {
@@ -511,7 +511,7 @@ func (e *ImagorSignerType) UnmarshalGQL(v any) error {
 }
 
 func (e ImagorSignerType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *ImagorSignerType) UnmarshalJSON(b []byte) error {
@@ -566,7 +566,7 @@ func (e *OrgMemberAssignableRole) UnmarshalGQL(v any) error {
 }
 
 func (e OrgMemberAssignableRole) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *OrgMemberAssignableRole) UnmarshalJSON(b []byte) error {
@@ -623,7 +623,7 @@ func (e *OrgMemberRole) UnmarshalGQL(v any) error {
 }
 
 func (e OrgMemberRole) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *OrgMemberRole) UnmarshalJSON(b []byte) error {
@@ -680,7 +680,7 @@ func (e *SortOption) UnmarshalGQL(v any) error {
 }
 
 func (e SortOption) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SortOption) UnmarshalJSON(b []byte) error {
@@ -735,7 +735,7 @@ func (e *SortOrder) UnmarshalGQL(v any) error {
 }
 
 func (e SortOrder) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SortOrder) UnmarshalJSON(b []byte) error {
@@ -790,7 +790,7 @@ func (e *SpaceMemberAssignableRole) UnmarshalGQL(v any) error {
 }
 
 func (e SpaceMemberAssignableRole) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SpaceMemberAssignableRole) UnmarshalJSON(b []byte) error {
@@ -847,7 +847,7 @@ func (e *SpaceMemberRole) UnmarshalGQL(v any) error {
 }
 
 func (e SpaceMemberRole) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SpaceMemberRole) UnmarshalJSON(b []byte) error {
@@ -902,7 +902,7 @@ func (e *SpaceMemberRoleSource) UnmarshalGQL(v any) error {
 }
 
 func (e SpaceMemberRoleSource) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *SpaceMemberRoleSource) UnmarshalJSON(b []byte) error {
@@ -957,7 +957,7 @@ func (e *StorageType) UnmarshalGQL(v any) error {
 }
 
 func (e StorageType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 func (e *StorageType) UnmarshalJSON(b []byte) error {
