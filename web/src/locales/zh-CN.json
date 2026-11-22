@@ -66,7 +66,8 @@
     },
     "trialSummary": {
       "title": "试用中",
-      "daysRemaining": "试用还剩 {{count}} 天"
+      "daysRemaining_one": "试用还剩 {{count}} 天",
+      "daysRemaining_other": "试用还剩 {{count}} 天"
     },
     "language": {
       "title": "语言",
@@ -149,6 +150,7 @@
       "resendCountdown": "可在 {{seconds}} 秒后重新发送",
       "resendSuccess": "我们已发送一封新的确认邮件。",
       "resendCooldown": "请稍候后再请求新的确认邮件。",
+      "resendCooldownWithSeconds": "请等待 {{seconds}} 秒后再请求新的确认邮件。",
       "resendFailed": "重新发送确认邮件失败，请重试。",
       "signInInsteadDescription": "{{email}} 当前已经没有待完成的确认步骤。如果您已经完成注册，请直接登录。",
       "backToLogin": "返回登录"
@@ -1686,7 +1688,6 @@
       "resendCountdown": "可在 {{seconds}} 秒后重新发送",
       "resendSuccess": "我们已重新发送验证邮件。",
       "resendCooldown": "请稍候后再请求新的验证邮件。",
-      "resendCooldownWithSeconds": "请等待 {{seconds}} 秒后再请求新的确认邮件。",
       "resendFailed": "重新发送验证邮件失败，请重试。",
       "submit": "创建账户",
       "useDifferentEmail": "改用其他电子邮件",
