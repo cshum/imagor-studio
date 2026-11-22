@@ -5,9 +5,11 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"reflect"
@@ -45,11 +47,22 @@ func (l *StorageLoader) Get(r *http.Request, key string) (*imagor.Blob, error) {
 	blob := imagor.NewBlob(func() (io.ReadCloser, int64, error) {
 		rc, err := source.GetStorage().Get(ctx, key)
 		if err != nil {
-			return nil, -1, err
+			return nil, -1, mapLoadError(err)
 		}
 		return rc, -1, nil
 	})
 	return blob, blob.Err()
+}
+
+func mapLoadError(err error) error {
+	if errors.Is(err, fs.ErrNotExist) || errors.Is(err, imagor.ErrNotFound) {
+		return imagor.ErrNotFound
+	}
+	var status interface{ HTTPStatusCode() int }
+	if errors.As(err, &status) && status.HTTPStatusCode() == http.StatusNotFound {
+		return imagor.ErrNotFound
+	}
+	return err
 }
 
 // NewStorageLoader wraps a storageprovider.Provider as an imagor.Loader.

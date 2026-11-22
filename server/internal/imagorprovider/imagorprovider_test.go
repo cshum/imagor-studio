@@ -3,8 +3,10 @@ package imagorprovider
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -21,6 +23,44 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+func TestMapLoadError(t *testing.T) {
+	notFound := func() error {
+		return &fs.PathError{Op: "open", Path: "/app/gallery/nope.jpg", Err: fs.ErrNotExist}
+	}
+	forbidden := &httpStatusError{code: http.StatusForbidden}
+	diskError := errors.New("disk on fire")
+
+	tests := []struct {
+		name         string
+		err          error
+		wantNotFound bool
+	}{
+		{"missing file", notFound(), true},
+		{"wrapped missing file", fmt.Errorf("load: %w", fs.ErrNotExist), true},
+		{"already not found", imagor.ErrNotFound, true},
+		{"s3 404", &httpStatusError{code: http.StatusNotFound}, true},
+		{"s3 403", forbidden, false},
+		{"other error", diskError, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := mapLoadError(tt.err)
+			if tt.wantNotFound {
+				assert.Equal(t, imagor.ErrNotFound, got)
+				return
+			}
+			assert.True(t, got == tt.err, "expected the original error, got %v", got)
+		})
+	}
+}
+
+// httpStatusError mimics the AWS SDK error shape used for S3 404s.
+type httpStatusError struct{ code int }
+
+func (e *httpStatusError) Error() string { return fmt.Sprintf("status %d", e.code) }
+
+func (e *httpStatusError) HTTPStatusCode() int { return e.code }
 
 // mockRegistryStore implements a simple in-memory registry store for testing
 type mockRegistryStore struct {
@@ -482,7 +522,7 @@ func (m *mockReadStorage) Get(_ context.Context, key string) (io.ReadCloser, err
 	}
 	data, ok := m.data[key]
 	if !ok {
-		return nil, fmt.Errorf("not found: %s", key)
+		return nil, fmt.Errorf("not found: %s: %w", key, fs.ErrNotExist)
 	}
 	return io.NopCloser(bytes.NewReader(data)), nil
 }
@@ -525,13 +565,12 @@ func TestStorageLoader_Get_NotFound(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	blob, err := loader.Get(req, "missing/image.jpg")
 
-	// Matches imagor's filestorage pattern: returns (blob, err) with err != nil.
-	// The error is surfaced immediately so imagor treats missing files as 4xx.
+	// A missing source is reported as imagor.ErrNotFound so every storage
+	// backend answers 404 instead of leaking a 500 with the raw os error.
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "missing/image.jpg")
-	// blob is non-nil (same as filestorage) but its internal Err() is set
+	assert.Equal(t, imagor.ErrNotFound, err)
 	require.NotNil(t, blob)
-	assert.Error(t, blob.Err())
+	assert.Equal(t, imagor.ErrNotFound, blob.Err())
 }
 
 func TestStorageLoader_Get_DelegatesCurrentStorage(t *testing.T) {
