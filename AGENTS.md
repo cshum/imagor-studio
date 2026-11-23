@@ -85,6 +85,12 @@ docker build --build-arg BASE_IMAGE=ghcr.io/cshum/imagor-base:<tag> -t imagor-st
 
 ## Frontend conventions
 
+- **Loaders carry data.** Routes fetch in `web/src/loaders/*` and read `useLoaderData`; a mutation invalidates
+  the router. No react-query layer.
+- **`useEffect` is a guide, not a ban.** Never for fetching, derived state, prop-change resets (`key`) or event
+  handling — those go in the handler or a loader. Right for what lives outside React: observers, listeners,
+  timers, third-party init, focus and measurement, each with a cleanup. The editor's ~160 effects are that
+  kind; leave them.
 - **i18n:** every user-visible string lives in `web/src/locales/*.json` (en, es, it, zh-CN, zh-TW). English
   is the reference wording; add or change a key in **all** locales in the same change, and delete keys from
   every locale when the element goes away.
@@ -118,6 +124,8 @@ docker build --build-arg BASE_IMAGE=ghcr.io/cshum/imagor-base:<tag> -t imagor-st
 
 - Stale JWT org claims and cached router loader data show the previous user's data after logout — invalidate
   the router on login, logout and invite acceptance.
+- Data loaded in an effect keyed on a dialog's open state double-fetches under StrictMode and flashes an empty
+  list; fetch in the open handler or a loader.
 - A refactor of the editor layout that drops `mobileSheetOpen` / `onMobileSheetOpenChange` silently breaks
   the mobile sheet; diff against the mobile branch and re-run `tsc`.
 - Fully collapsing an empty editor column breaks CSS grid placement; keep the column at zero width (plus
